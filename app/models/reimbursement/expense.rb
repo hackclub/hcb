@@ -8,8 +8,9 @@
 #  aasm_state              :string
 #  amount_cents            :integer          default(0), not null
 #  approved_at             :datetime
+#  deleted_at              :datetime
 #  description             :text
-#  expense_number          :integer          default(1), not null
+#  expense_number          :integer          not null
 #  memo                    :text
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
