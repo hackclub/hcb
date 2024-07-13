@@ -112,6 +112,7 @@ class User < ApplicationRecord
 
   has_one :partner, inverse_of: :representative
   has_one :totp, class_name: "User::Totp"
+  has_one :backup_codes_list
 
   # a user does not actually belong to its payout method,
   # but this is a convenient way to set up the association.

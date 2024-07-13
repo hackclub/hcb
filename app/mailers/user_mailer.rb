@@ -13,4 +13,10 @@ class UserMailer < ApplicationMailer
     mail to: @request.replacement, subject: "Verify your new email address for HCB"
   end
 
+  def backup_codes_generated(user:)
+    @user = user
+    
+    mail to: @user.email_address_with_name, subject: "Backup Codes generated for your HCB account"
+  end
+
 end
