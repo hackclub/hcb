@@ -6,6 +6,7 @@
 #
 #  id                    :bigint           not null, primary key
 #  codes_ciphertext      :text
+#  deleted_at            :datetime
 #  last_generated_at     :datetime
 #  used_codes_ciphertext :text
 #  created_at            :datetime         not null
@@ -26,18 +27,20 @@ class User
     belongs_to :user, inverse_of: :backup_codes_list
     has_encrypted :codes, type: :array
     has_encrypted :used_codes, type: :array
-    validates :codes, presence: true
 
     has_paper_trail
 
-    before_validation do
-      self.codes ||= (1..10).map { SecureRandom.alphanumeric(8) }
+    before_create do
+      self.codes = (1..10).map { SecureRandom.alphanumeric(8) }
     end
 
     def use_code!(code:)
       if self.codes.include?(code)
-        self.used_codes.push(code)
-        self.codes.delete(code)
+        ActiveRecord::Base.transaction do
+          self.used_codes.push(code)
+          self.codes.delete(code)
+          save!
+        end
         regenerate_codes! if codes.empty?
         true
       else
@@ -53,8 +56,11 @@ class User
     private
 
     def regenerate_codes!
-      self.codes = (1..10).map { SecureRandom.alphanumeric(8) }
-      self.used_codes.clear
+      ActiveRecord::Base.transaction do
+        self.codes = (1..10).map { SecureRandom.alphanumeric(8) }
+        self.used_codes.clear
+        self.last_generated_at = Time.now
+      end
     end
 
   end

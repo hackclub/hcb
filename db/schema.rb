@@ -1974,6 +1974,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
   create_table "user_backup_codes_lists", force: :cascade do |t|
     t.text "codes_ciphertext"
     t.datetime "last_generated_at"
+    t.datetime "deleted_at"
     t.text "used_codes_ciphertext"
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
