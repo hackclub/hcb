@@ -2,16 +2,28 @@
 
 # == Schema Information
 #
-# Table name: backup_codes
+# Table name: user_backup_codes_lists
 #
-#  id                :bigint           not null, primary key
+#  id                    :bigint           not null, primary key
+#  codes_ciphertext      :text
+#  last_generated_at     :datetime
+#  used_codes_ciphertext :text
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  user_id               :bigint           not null
 #
 # Indexes
+#
+#  index_user_backup_codes_lists_on_user_id  (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (user_id => users.id)
 #
 class User
   class BackupCodesList < ApplicationRecord
     acts_as_paranoid
-    belongs_to :user
+    belongs_to :user, inverse_of: :backup_codes_list
     has_encrypted :codes, type: :array
     has_encrypted :used_codes, type: :array
     validates :codes, presence: true

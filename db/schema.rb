@@ -10,10 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
+ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
-  enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
 
   create_table "ach_payments", force: :cascade do |t|
@@ -40,8 +39,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
     t.datetime "updated_at", precision: nil, null: false
     t.string "recipient_tel"
     t.datetime "rejected_at", precision: nil
-    t.datetime "scheduled_arrival_date", precision: nil
     t.text "payment_for"
+    t.datetime "scheduled_arrival_date", precision: nil
     t.string "aasm_state"
     t.text "confirmation_number"
     t.text "account_number_ciphertext"
@@ -352,11 +351,11 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
     t.bigint "raw_pending_invoice_transaction_id"
     t.text "hcb_code"
     t.bigint "raw_pending_bank_fee_transaction_id"
-    t.bigint "raw_pending_partner_donation_transaction_id"
     t.text "custom_memo"
     t.bigint "raw_pending_incoming_disbursement_transaction_id"
     t.bigint "raw_pending_outgoing_disbursement_transaction_id"
     t.boolean "fronted", default: false
+    t.bigint "raw_pending_partner_donation_transaction_id"
     t.boolean "fee_waived", default: false
     t.bigint "ach_payment_id"
     t.bigint "increase_check_id"
@@ -830,12 +829,12 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
     t.string "increase_account_id", null: false
     t.string "website"
     t.text "description"
-    t.integer "stripe_card_shipping_type", default: 0, null: false
     t.text "donation_thank_you_message"
     t.text "donation_reply_to_email"
+    t.integer "stripe_card_shipping_type", default: 0, null: false
+    t.string "postal_code"
     t.boolean "public_reimbursement_page_enabled", default: false, null: false
     t.text "public_reimbursement_page_message"
-    t.string "postal_code"
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.index ["club_airtable_id"], name: "index_events_on_club_airtable_id", unique: true
     t.index ["partner_id", "organization_identifier"], name: "index_events_on_partner_id_and_organization_identifier", unique: true
@@ -984,7 +983,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
     t.text "unique_bank_identifier"
     t.date "date"
     t.bigint "raw_increase_transaction_id"
-    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
     t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"
@@ -1061,12 +1060,12 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
     t.string "increase_status"
     t.string "check_number"
     t.jsonb "increase_object"
+    t.string "recipient_email"
+    t.boolean "send_email_notification", default: false
     t.string "column_id"
     t.string "column_status"
     t.jsonb "column_object"
     t.string "column_delivery_status"
-    t.string "recipient_email"
-    t.boolean "send_email_notification", default: false
     t.index "(((increase_object -> 'deposit'::text) ->> 'transaction_id'::text))", name: "index_increase_checks_on_transaction_id"
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
@@ -1972,6 +1971,16 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_backup_codes_lists", force: :cascade do |t|
+    t.text "codes_ciphertext"
+    t.datetime "last_generated_at"
+    t.text "used_codes_ciphertext"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_backup_codes_lists_on_user_id"
+  end
+
   create_table "user_email_updates", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "aasm_state", null: false
@@ -2230,6 +2239,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_03_152158) do
   add_foreign_key "transactions", "fee_reimbursements"
   add_foreign_key "transactions", "fee_relationships"
   add_foreign_key "transactions", "invoice_payouts"
+  add_foreign_key "user_backup_codes_lists", "users"
   add_foreign_key "user_email_updates", "users"
   add_foreign_key "user_email_updates", "users", column: "updated_by_id"
   add_foreign_key "user_sessions", "users"
