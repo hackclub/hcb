@@ -60,6 +60,20 @@
     <%= form.submit "Continue", data: { "webauthn-auth-target" => "continueButton", "form-disable-target" => "submitButton" } %>
   <% end %>
 
-  <p class="h5 muted mt5">Need help? <%= help_email %></p>
+  <% if @user.backup_codes_list.present? %>
+    <%= form_with url: set_login_preference_users_path, method: :post, data: { "controller" => "webauthn-auth form-disable", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_return_to_value: @return_to }, class: "backup_code_form" do |form| %>
+      <%= form.hidden_field :email, value: @email, data: { "webauthn-auth-target" => "loginEmailInput" } %>
+      <%= form.hidden_field :return_to, value: @return_to if @return_to %>
+      <%= form.hidden_field :login_preference, value: "backup_code" %>
+      <div>
+        <p class="h4 muted">
+          Don't have access to any of these?<br>
+          <%= link_to 'Use a backup code.', "#", :onclick=>"$('.backup_code_form').submit()" %>
+        </p>
+      </div>
+    <% end %>
+  <% end %>
+
+  <p class="h5 muted mt3">Need help? <%= help_email %></p>
   <p class="h5 mt2"><a href="https://hackclub.com/hcb?ref=hcb_auth">What’s HCB?</a></p>
 </article>

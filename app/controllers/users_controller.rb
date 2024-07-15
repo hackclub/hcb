@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  skip_before_action :signed_in_user, only: [:auth, :auth_submit, :choose_login_preference, :set_login_preference, :webauthn_options, :webauthn_auth, :login_code, :exchange_login_code, :totp, :totp_auth]
+  skip_before_action :signed_in_user, only: [:auth, :auth_submit, :choose_login_preference, :set_login_preference, :webauthn_options, :webauthn_auth, :login_code, :exchange_login_code, :totp, :totp_auth, :backup_code, :use_backup_code]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
   skip_after_action :verify_authorized, only: [:choose_login_preference,
                                                :set_login_preference,
@@ -28,9 +28,11 @@ class UsersController < ApplicationController
                                                :complete_sms_auth_verification,
                                                :start_sms_auth_verification,
                                                :totp,
-                                               :totp_auth]
+                                               :totp_auth,
+                                               :backup_code,
+                                               :use_backup_code]
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
-  before_action :migrate_return_to, only: [:auth, :auth_submit, :choose_login_preference, :login_code, :exchange_login_code, :webauthn_auth]
+  before_action :migrate_return_to, only: [:auth, :auth_submit, :choose_login_preference, :login_code, :exchange_login_code, :webauthn_auth, :backup_code, :use_backup_code]
 
   wrap_parameters format: :url_encoded_form
 
@@ -68,9 +70,10 @@ class UsersController < ApplicationController
 
     has_webauthn_enabled = user&.webauthn_credentials&.any?
     has_totp_enabled = user&.totp&.present?
+    has_backup_codes_enabled = user&.backup_codes_list&.present?
     login_preference = session[:login_preference]
 
-    if !has_webauthn_enabled && !has_totp_enabled || login_preference == "email"
+    if !has_webauthn_enabled && !has_totp_enabled && !has_backup_codes_enabled || login_preference == "email"
       redirect_to login_code_users_path, status: :temporary_redirect
     elsif login_preference == "totp" && has_totp_enabled
       redirect_to totp_users_path, status: :temporary_redirect
@@ -102,6 +105,8 @@ class UsersController < ApplicationController
     when "totp"
       session[:login_preference] = "totp" if remember
       redirect_to totp_users_path, status: :temporary_redirect
+    when "backup_code"
+      redirect_to backup_code_users_path, status: :temporary_redirect
     when "webauthn"
       # This should never happen, because WebAuthn auth is handled on the frontend
       redirect_to choose_login_preference_users_path
@@ -234,6 +239,20 @@ class UsersController < ApplicationController
     end
   end
 
+  def backup_code
+    @email = params.require(:email)
+
+    @user = User.find_by(email: @email)
+
+    @user_id = @user.id
+
+    return render :backup_code, status: :unprocessable_entity
+
+  rescue ActionController::ParameterMissing
+    flash[:error] = "Please enter an email address."
+    redirect_to auth_users_path
+  end
+
   # post to exchange auth token for access token
   def exchange_login_code
     fingerprint_info = {
@@ -279,6 +298,27 @@ class UsersController < ApplicationController
   rescue ActiveRecord::RecordInvalid => e
     flash[:error] = e.record.errors&.messages&.values&.flatten&.join(". ")
     redirect_to auth_users_path
+  end
+
+  def use_backup_code
+    backup_code = params[:backup_code]
+    user = User.find_by(email: params[:email])
+    return redirect_to auth_users_path unless user.present?
+
+    fingerprint_info = {
+      fingerprint: params[:fingerprint],
+      device_info: params[:device_info],
+      os_info: params[:os_info],
+      timezone: params[:timezone],
+      ip: request.remote_ip
+    }
+    unless user.backup_codes_list&.use_code!(code: backup_code, session: fingerprint_info)
+      flash.now[:error] = "Invalid code!"
+      @email = params[:email]
+      return render :backup_code, status: :unprocessable_entity
+    end
+    sign_in(user:, fingerprint_info:)
+    redirect_to(params[:return_to] || root_path)
   end
 
   def logout
@@ -372,6 +412,9 @@ class UsersController < ApplicationController
                         .where("deleted_at >= ? OR expiration_at >= ?", 1.week.ago, 1.week.ago)
                         .order(created_at: :desc)
 
+    @backup_codes_last_generated = @user.backup_codes_list&.last_generated_at
+    @backup_codes_remaining = @user.backup_codes_list&.codes&.count
+
     authorize @user
   end
 
@@ -387,6 +430,16 @@ class UsersController < ApplicationController
     authorize @user
     @user.totp&.destroy!
     redirect_back_or_to security_user_path(@user)
+  end
+
+  def generate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    @user_session = UserSession.find(params[:user_session_id])
+    authorize @user
+    unless @user.backup_codes_list
+      @user.create_backup_codes_list!
+    end
+    @user.backup_codes_list&.user_regenerate_codes(session: @user_session)
   end
 
   def edit_admin

@@ -32,25 +32,27 @@ class User
 
     before_create do
       self.codes = (1..10).map { SecureRandom.alphanumeric(8) }
+      self.last_generated_at = Time.now
     end
 
-    def use_code!(code:)
+    def use_code!(code:, session:)
       if self.codes.include?(code)
         ActiveRecord::Base.transaction do
           self.used_codes.push(code)
           self.codes.delete(code)
+          UserMailer.backup_code_used(user:, session:).deliver_now
           save!
         end
-        regenerate_codes! if codes.empty?
+        # we don't regenerate their codes if they use all of them currently - this should be a user action
         true
       else
         false
       end
     end
 
-    def user_regenerate_codes
+    def user_regenerate_codes(session:)
       regenerate_codes!
-      UserMailer.backup_codes_generated(self.user).deliver_later
+      UserMailer.backup_codes_generated(user:, session:).deliver_later
     end
 
     private
@@ -60,6 +62,7 @@ class User
         self.codes = (1..10).map { SecureRandom.alphanumeric(8) }
         self.used_codes.clear
         self.last_generated_at = Time.now
+        save!
       end
     end
 

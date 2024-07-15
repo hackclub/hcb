@@ -170,7 +170,7 @@ $(document).keydown(function (e) {
 
 $(document).on('click', '[data-behavior~=toggle_theme]', () => BK.toggleDark())
 
-function loadAsyncFrames(){
+function loadAsyncFrames() {
   $.each(BK.s('async_frame'), (i, frame) => {
     const loadFrame = () => {
       $.get($(frame).data('src'), data => {
@@ -182,7 +182,7 @@ function loadAsyncFrames(){
         $(frame).children('.shimmer').first().addClass('shimmer--error')
       })
     }
-  
+
     if ($(frame).data('loading') == "lazy") {
       whenViewed(frame, loadFrame);
     } else loadFrame();
@@ -244,6 +244,20 @@ $(document).on('turbo:load', function () {
     // Allow a dash to be typed as the 4th character
     if (currentVal.at(3) === '-' && currentVal.length === 4) {
       newVal += '-'
+    }
+
+    $(this).val(newVal)
+  })
+
+  $(document).on('keyup change', "input[name='backup_code']", function () {
+    const currentVal = $(this).val()
+    let newVal = currentVal.replace(/[^a-zA-Z0-9]+/g, '')
+
+    // truncate if more than 8 digits
+    if (newVal.length >= 8 + 8) {
+      newVal = newVal.slice(-8)
+    } else if (newVal.length > 8) {
+      newVal = newVal.substring(0, 8)
     }
 
     $(this).val(newVal)
@@ -332,7 +346,7 @@ $(document).on('turbo:load', function () {
       if (e.target.checked) shippingInputs.slideUp()
     })
   }
-  
+
   if (BK.s('reimbursement_report_create_form_type_selection').length) {
     const dropdownInput = $('#reimbursement_report_user_email')
     const emailInput = $('#reimbursement_report_email')
@@ -345,7 +359,7 @@ $(document).on('turbo:load', function () {
 
     const externalInputWrapper = $('#external_contributor_wrapper')
 
-    const hideAllInputs = () => [dropdownInput, emailInput,maxInput, inviteInput].forEach(input => input.hide());
+    const hideAllInputs = () => [dropdownInput, emailInput, maxInput, inviteInput].forEach(input => input.hide());
     hideAllInputs();
 
     externalInputWrapper.slideUp()
@@ -358,7 +372,7 @@ $(document).on('turbo:load', function () {
         emailInput.val(emailInput[0].attributes["value"].value)
       }
     })
-    
+
     $(forOrganizerInput).on('change', e => {
       if (e.target.checked) {
         emailInput.val(dropdownInput.val());
@@ -373,7 +387,7 @@ $(document).on('turbo:load', function () {
         });
       }
     })
-    
+
     $(forExternalInput).on('change', e => {
       if (e.target.checked) {
         externalInputWrapper.slideUp({
@@ -389,7 +403,7 @@ $(document).on('turbo:load', function () {
 
       }
     })
-    
+
     $(dropdownInput).on('change', e => {
       emailInput.val(e.target.value)
     })
@@ -398,7 +412,7 @@ $(document).on('turbo:load', function () {
   $('[data-behavior~=mention]').on('click', e => {
     BK.s('comment').val(`${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? " " : "")}${e.target.dataset.mentionValue || e.target.innerText}`)
     BK.s('comment')[0].scrollIntoView();
-  })  
+  })
 
   if (BK.thereIs('additional_transparency_settings')) {
     const additionalTransparencySettings = BK.s(
@@ -514,7 +528,7 @@ document.addEventListener("turbo:before-stream-render", ((event) => {
       });
     } else if (streamElement.action == "close_modal") {
       $.modal.close().remove()
-      
+
     } else if (streamElement.action == "load_new_async_frames") {
       loadAsyncFrames()
     } else {

@@ -1,113 +1,119 @@
 <% title "Account Settings" %>
 <% page_md %>
 <%= render "users/nav", selected: :settings %>
-
 <h1>
   Settings
 </h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-<%= render "settings_nav", active: "security" %>
-<h2>Security</h2>
-<fieldset>
-  <% unless @user.phone_number.blank? %>
-    <%= turbo_frame_tag :sms_auth_card do %>
-      <legend class="flex flex-row justify-start items-center mt3 pb2">
-        <span class="h2">Login codes</span>
-        <%= badge_for @user.use_sms_auth ? "SMS" : "Email", class: "bg-muted" %>
-      </legend>
-      <div class="card border b--info mt1 mb3">
-        <% if @user.phone_number_verified %>
-          <% if @user.use_sms_auth %>
-            You are currently receiving login codes via SMS. Email codes can still be sent as a backup.<br>
-            <%= link_to "Turn off SMS login codes.", toggle_sms_auth_users_path, data: { turbo: true, turbo_method: "post" } %>
-          <% else %>
-            You are currently receiving login codes via email.<br>
-            <%= link_to "Turn on SMS login codes.", toggle_sms_auth_users_path, data: { turbo: true, turbo_method: "post" } %>
-          <% end %>
-        <% else %>
-          <p>Your login codes are sent to <span class="bold"><%= @user.email %></span>.</p>
-          <p>
-            To send login codes to your phone, first
-            <action data-behavior="modal_trigger" data-modal="verify_phone">
-              <a>
-                verify your phone number.
-              </a>
-            </action>
-          </p>
-        <% end %>
-      </div>
-    <% end %>
-  <% end %>
-  <% if Flipper.enabled?(:totp_2024_06_13, current_user) %>
-    <div>
-      <legend class="flex flex-row justify-start items-center mt3 pb2">
-        <span class="h2">Time-based one time passwords</span>
-        <%= badge_for "What's this?", class: "bg-muted" %>
-      </legend>
-      <%= turbo_frame_tag :totp_auth_card do %>
+  <%= render "settings_nav", active: "security" %>
+  <h2>Security</h2>
+  <fieldset>
+    <% unless @user.phone_number.blank? %>
+      <%= turbo_frame_tag :sms_auth_card do %>
+        <legend class="flex flex-row justify-start items-center mt3 pb2">
+          <span class="h2">Login codes</span>
+          <%= badge_for @user.use_sms_auth ? "SMS" : "Email", class: "bg-muted" %>
+        </legend>
         <div class="card border b--info mt1 mb3">
-          <% if @user.totp.present? %>
-            <p>
-              You set up time-based one time passwords on <%= @user.totp.created_at.strftime("%B %e, %Y") %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :POST } %>
-            </p>
+          <% if @user.phone_number_verified %>
+            <% if @user.use_sms_auth %>
+              You are currently receiving login codes via SMS. Email codes can still be sent as a backup.<br>
+              <%= link_to "Turn off SMS login codes.", toggle_sms_auth_users_path, data: { turbo: true, turbo_method: "post" } %>
+            <% else %>
+              You are currently receiving login codes via email.<br>
+              <%= link_to "Turn on SMS login codes.", toggle_sms_auth_users_path, data: { turbo: true, turbo_method: "post" } %>
+            <% end %>
           <% else %>
+            <p>Your login codes are sent to <span class="bold"><%= @user.email %></span>.</p>
             <p>
-              You currently don't have time-based one time passwords set up, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %> to setup your TOTP.
+              To send login codes to your phone, first
+              <action data-behavior="modal_trigger" data-modal="verify_phone">
+                <a>
+                  verify your phone number.
+                </a>
+              </action>
             </p>
           <% end %>
         </div>
       <% end %>
-    </div>
-  <% end %>
-  <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="security-keys">
-    <legend class="flex flex-row justify-start items-center">
-      <span class="h2">Security keys</span>
-      <%= badge_for @user.webauthn_credentials.count, class: "bg-muted" %>
-    </legend>
-    <button class="btn px2 h4" data-behavior="modal_trigger" data-modal="webauthn_register">
-      <%= inline_icon "plus", size: home_action_size %>
-      Set up
-    </button>
-    <%= render "webauthn_credentials/modal" %>
-  </div>
-  <% if @user.webauthn_credentials.length > 0 %>
-    <div class="grid grid--split mb3">
-      <%= render @user.webauthn_credentials.order(created_at: :desc) %>
-    </div>
-  <% else %>
-    <div class="secondary center mb4">
-      <%= inline_icon "fingerprint", width: "40px", class: "secondary block mx-auto mb1" %>
-      Sign in to HCB using your fingerprint or a hardware security key.
-    </div>
-  <% end %>
-  <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2">
-    <legend class="flex flex-row justify-start items-center">
-      <span class="h2">Sessions</span>
-      <%= badge_for @all_sessions.count, class: "bg-muted" %>
-    </legend>
-    <%= link_to logout_all_users_path, method: :delete,
-            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= 1 do %>
-      <%= inline_icon "door-leave", size: home_action_size %>
-      Sign out everywhere else
     <% end %>
-  </div>
-  <div class="grid grid--split">
-    <% @all_sessions.each do |session| %>
-      <% if session.is_a? UserSession %>
-        <%= render "user_session", session: %>
-      <% elsif session.is_a? ApiToken %>
-        <%= render "oauth_authorization", authorization: session %>
+    <% if Flipper.enabled?(:totp_2024_06_13, current_user) %>
+      <div>
+        <legend class="flex flex-row justify-start items-center mt3 pb2">
+          <span class="h2">Time-based one time passwords</span>
+          <%= badge_for "What's this?", class: "bg-muted" %>
+        </legend>
+        <%= turbo_frame_tag :totp_auth_card do %>
+          <div class="card border b--info mt1 mb3">
+            <% if @user.totp.present? %>
+              <p>
+                You set up time-based one time passwords on <%= @user.totp.created_at.strftime("%B %e, %Y") %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :POST } %>
+              </p>
+            <% else %>
+              <p>
+                You currently don't have time-based one time passwords set up, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %> to setup your TOTP.
+              </p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="security-keys">
+      <legend class="flex flex-row justify-start items-center">
+        <span class="h2">Security keys</span>
+        <%= badge_for @user.webauthn_credentials.count, class: "bg-muted" %>
+      </legend>
+      <button class="btn px2 h4" data-behavior="modal_trigger" data-modal="webauthn_register">
+        <%= inline_icon "plus", size: home_action_size %>
+        Set up
+      </button>
+      <%= render "webauthn_credentials/modal" %>
+    </div>
+    <% if @user.webauthn_credentials.length > 0 %>
+      <div class="grid grid--split mb3">
+        <%= render @user.webauthn_credentials.order(created_at: :desc) %>
+      </div>
+    <% else %>
+      <div class="secondary center mb4">
+        <%= inline_icon "fingerprint", width: "40px", class: "secondary block mx-auto mb1" %>
+        Sign in to HCB using your fingerprint or a hardware security key.
+      </div>
+    <% end %>
+    <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="backup-codes">
+      <legend class="flex flex-row justify-start items-center">
+        <span class="h2">Backup Codes</span>
+      </legend>
+      <%= link_to user_generate_backup_codes_path(@user, user_session_id: current_session), class: "btn px2 h4", data: { turbo_method: :POST, turbo_frame: :backup_codes_card } do %>
+        <%= inline_icon "plus", size: home_action_size %>
+        <%= @user.backup_codes_list.present? ? "Regenerate Codes" : "Generate Codes" %>
       <% end %>
+    </div>
+    <%= turbo_frame_tag :backup_codes_card do %>
+      <div class="card border b--info mt1 mb3">
+        <% if @user.backup_codes_list.present? %>
+          <p>
+            You last generated a set of 10 backup codes, of which <span class="font-bold"><%= @backup_codes_remaining %></span> are still valid, on <span class="font-bold"><%= @backup_codes_last_generated.strftime("%B %e, %Y") %></span>. If you'd like to regenerate your backup codes, click the button above to do so. Generating a new set of codes will invalidate your current codes.
+          </p>
+        <% else %>
+          <p>
+            You haven't generated any backup codes yet. We highly recommend doing so in case you lose access to your other two-factor authentication methods. Click the button above to generate a set of 10 backup codes.
+          </p>
+        <% end %>
+      </div>
     <% end %>
-  </div>
-
-  <% if @expired_sessions.any? %>
-    <h3 class="inline-flex items-center">
-      Recently logged out
-      <%= badge_for @expired_sessions.count, class: "bg-muted" %>
-    </h3>
+    <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2">
+      <legend class="flex flex-row justify-start items-center">
+        <span class="h2">Sessions</span>
+        <%= badge_for @all_sessions.count, class: "bg-muted" %>
+      </legend>
+      <%= link_to logout_all_users_path, method: :delete,
+            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= 1 do %>
+        <%= inline_icon "door-leave", size: home_action_size %>
+        Sign out everywhere else
+      <% end %>
+    </div>
     <div class="grid grid--split">
-      <% @expired_sessions.each do |session| %>
+      <% @all_sessions.each do |session| %>
         <% if session.is_a? UserSession %>
           <%= render "user_session", session: %>
         <% elsif session.is_a? ApiToken %>
@@ -115,15 +121,28 @@
         <% end %>
       <% end %>
     </div>
-  <% end %>
-</fieldset>
-
-<% if @user.phone_number.present? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
-    <%= modal_header "Verify phone number" %>
-    <%= react_component "settings/SmsVerification",
+    <% if @expired_sessions.any? %>
+      <h3 class="inline-flex items-center">
+        Recently logged out
+        <%= badge_for @expired_sessions.count, class: "bg-muted" %>
+      </h3>
+      <div class="grid grid--split">
+        <% @expired_sessions.each do |session| %>
+          <% if session.is_a? UserSession %>
+            <%= render "user_session", session: %>
+          <% elsif session.is_a? ApiToken %>
+            <%= render "oauth_authorization", authorization: session %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </fieldset>
+  <% if @user.phone_number.present? %>
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
+      <%= modal_header "Verify phone number" %>
+      <%= react_component "settings/SmsVerification",
             phone_number: @user.phone_number,
             enroll_sms_auth: true %>
-  </section>
-<% end %>
+    </section>
+  <% end %>
 </turbo-frame>

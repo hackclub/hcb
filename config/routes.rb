@@ -115,6 +115,10 @@ Rails.application.routes.draw do
       post "complete_sms_auth_verification", to: "users#complete_sms_auth_verification"
       post "toggle_sms_auth", to: "users#toggle_sms_auth"
 
+      get "backup_code"
+      post "backup_code"
+      post "use_backup_code", to: "users#use_backup_code"
+
       # Logout
       delete "logout", to: "users#logout"
       delete "logout_all", to: "users#logout_all"
@@ -141,6 +145,7 @@ Rails.application.routes.draw do
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "enable_totp"
     post "disable_totp"
+    post "generate_backup_codes", to: "users#generate_backup_codes"
     patch "stripe_cardholder_profile", to: "stripe_cardholders#update_profile"
 
     resources :webauthn_credentials, only: [:create, :destroy] do

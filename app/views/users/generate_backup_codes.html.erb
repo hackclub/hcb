@@ -1,0 +1,14 @@
+<%= turbo_frame_tag :backup_codes_card do %>
+  <div class="card border b--info mt1 mb3 items-center">
+    <p>
+      Write down or save the following codes and keep them in a safe place. You can use these codes to log in if you lose access to your other 2FA methods. <span class="font-bold">You will not be able to see these codes again.</span>
+    </p>
+    <ol class="grid grid-cols-1 md:grid-cols-2 gap-2 list-disc text-center items-center align-center m-auto">
+      <% @user.backup_codes_list.codes.each do |code| %>
+        <li class="md:w-[50%] p-0 m-0">
+          <pre class="text-lg m-1 p-2 text-center"><%= code %></pre>
+        </li>
+      <% end %>
+    </ol>
+  </div>
+<% end %>

@@ -21,6 +21,10 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
+  def generate_backup_codes?
+    user.admin? || record == user
+  end
+
   def edit_address?
     user.admin? || record == user
   end

@@ -2,25 +2,26 @@
   Hi <%= @user.first_name %>,
 </p>
 <p>
-  We're writing to let you know that you just generated new MFA backup codes for your account
-  <% if @session.device_info.present? %>
-    on <b><%= @session.device_info %></b>
+  We're writing to let you know that someone just logged in to your account using a backup code
+  <% if @session[:device_info]&.present? %>
+    on <b><%= @session[:device_info] %></b>
   <% end %>
-  <% if @session.os_info.present? %>
-    running <b><%= @session.os_info %></b>
+  <% if @session[:os_info]&.present? %>
+    running <b><%= @session[:os_info] %></b>
   <% end %>
+  . <%= @user.backup_codes_list.codes.count %> of your 10 backup codes are still valid.
 </p>
 <p>
   IP address:
   <b>
-    <% if @session.ip.present? %>
-      <%= @session.ip %>
+    <% if @session[:ip]&.present? %>
+      <%= @session[:ip] %>
     <% else %>
       Unknown
     <% end %>
   </b>
 </p>
-<% if @session.latitude %>
+<% if @session[:latitude] %>
   <img
     src="https://maps.hackclub.com/api/shipping?latitude=<%= @session.latitude %>&longitude=<%= @session.longitude %>&size=640x320"
     style="border-radius: 0.5rem; width: 80%">
