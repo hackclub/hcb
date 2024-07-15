@@ -17,6 +17,7 @@
 #  suggested_memo                  :string
 #  textual_content_bidx            :string
 #  textual_content_ciphertext      :text
+#  textual_content_source          :integer          default("pdf_text")
 #  upload_method                   :integer
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null
@@ -94,6 +95,11 @@ class Receipt < ApplicationRecord
     transaction_popover_drag_and_drop: 17,
   }
 
+  enum textual_content_source: {
+    pdf_text: 0,
+    tesseract_ocr_text: 1
+  }
+
   scope :in_receipt_bin, -> { where(receiptable: nil) }
 
   def url
@@ -111,17 +117,17 @@ class Receipt < ApplicationRecord
   end
 
   def extract_textual_content
-    text = case file.content_type
-           when "application/pdf"
-             pdf_text
-           else
-             # Unable to extract text from this file type
-             return nil
-           end
+    textual_content_source = if file.content_type == "application/pdf"
+                               :pdf_text
+                             elsif file.content_type.starts_with?("image")
+                               :tesseract_ocr_text
+                             else
+                               return { text: nil, textual_content_source: nil }
+                             end
 
-    # Clean the text
-    text ||= ""
-    text.strip
+    text = self.send(textual_content_source) || ""
+
+    { text: text.strip, textual_content_source: }
   rescue => e
     # "ArgumentError: string contains null byte" is a known error
     unless e.is_a?(ArgumentError) && e.message.include?("string contains null byte")
@@ -131,12 +137,12 @@ class Receipt < ApplicationRecord
     # Since text extraction can be a resource intensive operation, saving an
     # empty string indicates that no text was able to be extracted. This
     # prevents the text extraction from being unintentionally attempted again.
-    ""
+    { text: "", textual_content_source: nil }
   end
 
   def extract_textual_content!
-    extract_textual_content.tap do |text|
-      update!(textual_content: text)
+    extract_textual_content.tap do |result|
+      update!(textual_content: result[:text], textual_content_source: result[:textual_content_source])
     end
   end
 
@@ -184,6 +190,16 @@ class Receipt < ApplicationRecord
           end
 
     doc.pages.map(&:text).join(" ")
+  end
+
+  def tesseract_ocr_text
+    file.blob.open do |tempfile|
+      words = ::RTesseract.new(tempfile.path).to_box
+      words = words.select { |w| w[:confidence] > 85 }
+      words = words.map { |w| w[:word] }
+      text = words.join(" ")
+      text.length > 50 ? text : nil
+    end
   end
 
   def has_owner

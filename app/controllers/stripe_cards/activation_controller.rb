@@ -4,7 +4,7 @@ module StripeCards
   class ActivationController < ApplicationController
     # Form for activating a card
     def new
-      @pattern = current_user.stripe_cardholder&.stripe_cards&.where(activated: false)&.first&.id
+      @pattern = current_user.stripe_cardholder&.stripe_cards&.where(initially_activated: false)&.first&.id
       skip_authorization
     end
 
@@ -37,7 +37,7 @@ module StripeCards
         end
       end
 
-      @card.update(activated: true, initially_activated: true)
+      @card.update(initially_activated: true)
       @card.defrost!
 
       flash[:success] = "Card activated!"

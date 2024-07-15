@@ -103,9 +103,17 @@
           <%= render_money(i.item_amount) %>
         </td>
         <td>
-          <%= link_to "Details", hcb_code_url(i.local_hcb_code.hashid) if organizer_signed_in? %>
+          <%= link_to "Details", hcb_code_url(i.local_hcb_code.hashid), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{i.local_hcb_code.hashid}" } if organizer_signed_in? %>
         </td>
       </tr>
+      <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>">
+          <%= modal_header("#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}", external_link: hcb_code_url(i.local_hcb_code.hashid)) %>
+          <%= async_frame_to hcb_code_url(i.local_hcb_code.hashid, params: { frame: true }), lazy: true, as: :div do %>
+            <strong>Loading...</strong>
+          <% end %>
+        </section>
+      <% end %>
     <% end %>
   </tbody>
 </table>

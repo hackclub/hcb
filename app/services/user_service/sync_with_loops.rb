@@ -81,7 +81,7 @@ module UserService
     def loops_has_address?
       # To consider a contact as having an address, it must have a line 1, city, and country present.
       # Some international addresses don't have the concept for states or zip codes.
-      @contact_details["addressLine1"].present? &&
+      @contact_details&.[]("addressLine1").present? &&
         @contact_details["addressCity"].present? &&
         @contact_details["addressCountry"].present?
     end

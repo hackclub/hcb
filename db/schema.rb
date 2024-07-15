@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -767,6 +769,14 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
     t.index ["emburse_card_id"], name: "index_emburse_transfers_on_emburse_card_id"
     t.index ["event_id"], name: "index_emburse_transfers_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_emburse_transfers_on_fulfilled_by_id"
+  end
+
+  create_table "event_configurations", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.boolean "anonymous_donations", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_configurations_on_event_id"
   end
 
   create_table "event_tags", force: :cascade do |t|
@@ -1658,6 +1668,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
     t.string "extracted_merchant_url"
     t.string "extracted_merchant_zip_code"
     t.boolean "data_extracted", default: false, null: false
+    t.integer "textual_content_source", default: 0
     t.string "textual_content_bidx"
     t.index ["receiptable_type", "receiptable_id"], name: "index_receipts_on_receiptable_type_and_receiptable_id"
     t.index ["textual_content_bidx"], name: "index_receipts_on_textual_content_bidx"
@@ -1806,6 +1817,21 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
     t.index ["stripe_card_id"], name: "index_stripe_authorizations_on_stripe_card_id"
   end
 
+  create_table "stripe_card_personalization_designs", force: :cascade do |t|
+    t.string "stripe_id"
+    t.string "stripe_status"
+    t.string "stripe_name"
+    t.jsonb "stripe_carrier_text"
+    t.string "stripe_card_logo"
+    t.string "stripe_physical_bundle_id"
+    t.bigint "event_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "stale", default: false, null: false
+    t.boolean "common", default: false, null: false
+    t.index ["event_id"], name: "index_stripe_card_personalization_designs_on_event_id"
+  end
+
   create_table "stripe_cardholders", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.text "stripe_id"
@@ -1853,6 +1879,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
     t.boolean "is_platinum_april_fools_2023"
     t.bigint "subledger_id"
     t.boolean "lost_in_shipping", default: false
+    t.integer "stripe_card_personalization_design_id"
     t.boolean "initially_activated", default: false, null: false
     t.index ["event_id"], name: "index_stripe_cards_on_event_id"
     t.index ["replacement_for_id"], name: "index_stripe_cards_on_replacement_for_id"
@@ -2162,6 +2189,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
   add_foreign_key "emburse_transfers", "events"
   add_foreign_key "emburse_transfers", "users", column: "creator_id"
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
+  add_foreign_key "event_configurations", "events"
   add_foreign_key "events", "partners"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "fee_relationships", "events"
@@ -2227,6 +2255,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_14_123511) do
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_ach_payment_sources", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
+  add_foreign_key "stripe_card_personalization_designs", "events"
   add_foreign_key "stripe_cardholders", "users"
   add_foreign_key "stripe_cards", "events"
   add_foreign_key "stripe_cards", "stripe_cardholders"

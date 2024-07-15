@@ -2,7 +2,7 @@
   <div class="card border b--info mt1 mb3">
     <p>
       Scan the QR code below with your authenticator app or enter the secret.
-      FYI: you can only see this once! When you leave the page without configuring your authenticator app, you will need to reset your TOPT secret.
+      FYI: you can only see this once! When you leave the page without configuring your authenticator app, you will need to reset your TOTP secret.
     </p>
     <qr-code
       contents="<%= @user.totp.provisioning_uri %>"

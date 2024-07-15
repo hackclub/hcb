@@ -92,6 +92,6 @@
   </div>
 
   <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
-    <%= form.submit "Send invoice now", disabled: (!organizer_signed_in? || @event.demo_mode?) %>
+    <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || @event.demo_mode? %>
   </div>
 <% end %>

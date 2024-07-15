@@ -47,9 +47,10 @@
          },
          Misc: {
            "Bank Accounts": [bank_accounts_admin_index_path, BankAccount.failing.count, %i[counter]],
-           "Bank Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],
+           "HCB Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],
            "Column Statements": [column_statements_admin_index_url, 0, %i[]],
-           "Users": [users_admin_index_path, User.count, %i[counter]]
+           "Users": [users_admin_index_path, User.count, %i[counter]],
+           "Card Designs": [stripe_card_personalization_designs_admin_index_path, StripeCard::PersonalizationDesign.count, %i[]]
          }
        } %>
 
@@ -75,7 +76,7 @@
             <%= parent %>
           </span>
           <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
-          <b>
+          <b style="font-weight: 600;">
             <%= title %>
           </b>
         <% else %>
@@ -145,7 +146,7 @@
       <%= yield %>
     </div>
 
-    <%= render "application/footer" unless (@no_app_shell || @hide_footer) %>
+    <%= render "application/footer" unless @no_app_shell || @hide_footer %>
     <%= render "application/command_bar" %>
     <script>
       document.addEventListener("turbo:load", () => {

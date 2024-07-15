@@ -16,7 +16,36 @@ module StripeCardholderService
     private
 
     def remote_params
-      { individual: { dob: DateOfBirthAgeRestrictedExtractor.new(user: @current_user).run } }
+      {
+        individual: {
+          dob: DateOfBirthAgeRestrictedExtractor.new(user: @current_user).run,
+          first_name:,
+          last_name:
+        }
+      }
+    end
+
+    def first_name
+      clean_name(@current_user.first_name(legal: true))
+    end
+
+    def last_name
+      clean_name(@current_user.last_name(legal: true))
+    end
+
+    def clean_name(name)
+      name = ActiveSupport::Inflector.transliterate(name || "")
+
+      # Remove invalid characters
+      requirements = <<~REQ.squish
+        First and Last names must contain at least 1 letter, and may not
+        contain any numbers, non-latin letters, or special characters except
+        periods, commas, hyphens, spaces, and apostrophes.
+      REQ
+      name = name.gsub(/[^a-zA-Z.,\-\s']/, "").strip
+      raise ArgumentError, requirements if name.gsub(/[^a-z]/i, "").blank?
+
+      name
     end
 
   end

@@ -6,6 +6,12 @@
         <%= form.check_box :donation_page_enabled, disabled: !policy(event).update?, switch: true %>
         <%= form.label :donation_page_enabled, "Enable donation page" %>
       </div>
+      <%= form.fields_for :config do |config| %>
+        <div class="field field--checkbox">
+          <%= config.check_box :anonymous_donations, disabled: !policy(event).update?, switch: true %>
+          <%= config.label :anonymous_donations, "Enable anonymous donations" %>
+        </div>
+      <% end %>
       <div class="field">
         <%= form.label :donation_page_message, "Message to show on donation page" %>
         <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: !policy(event).update? %>

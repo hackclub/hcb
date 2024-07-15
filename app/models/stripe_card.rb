@@ -4,35 +4,36 @@
 #
 # Table name: stripe_cards
 #
-#  id                                  :bigint           not null, primary key
-#  activated                           :boolean          default(FALSE)
-#  card_type                           :integer          default("virtual"), not null
-#  initially_activated                 :boolean          default(FALSE), not null
-#  is_platinum_april_fools_2023        :boolean
-#  last4                               :text
-#  lost_in_shipping                    :boolean          default(FALSE)
-#  name                                :string
-#  purchased_at                        :datetime
-#  spending_limit_amount               :integer
-#  spending_limit_interval             :integer
-#  stripe_brand                        :text
-#  stripe_exp_month                    :integer
-#  stripe_exp_year                     :integer
-#  stripe_shipping_address_city        :text
-#  stripe_shipping_address_country     :text
-#  stripe_shipping_address_line1       :text
-#  stripe_shipping_address_line2       :text
-#  stripe_shipping_address_postal_code :text
-#  stripe_shipping_address_state       :text
-#  stripe_shipping_name                :text
-#  stripe_status                       :text
-#  created_at                          :datetime         not null
-#  updated_at                          :datetime         not null
-#  event_id                            :bigint           not null
-#  replacement_for_id                  :bigint
-#  stripe_cardholder_id                :bigint           not null
-#  stripe_id                           :text
-#  subledger_id                        :bigint
+#  id                                    :bigint           not null, primary key
+#  activated                             :boolean          default(FALSE)
+#  card_type                             :integer          default("virtual"), not null
+#  initially_activated                   :boolean          default(FALSE), not null
+#  is_platinum_april_fools_2023          :boolean
+#  last4                                 :text
+#  lost_in_shipping                      :boolean          default(FALSE)
+#  name                                  :string
+#  purchased_at                          :datetime
+#  spending_limit_amount                 :integer
+#  spending_limit_interval               :integer
+#  stripe_brand                          :text
+#  stripe_exp_month                      :integer
+#  stripe_exp_year                       :integer
+#  stripe_shipping_address_city          :text
+#  stripe_shipping_address_country       :text
+#  stripe_shipping_address_line1         :text
+#  stripe_shipping_address_line2         :text
+#  stripe_shipping_address_postal_code   :text
+#  stripe_shipping_address_state         :text
+#  stripe_shipping_name                  :text
+#  stripe_status                         :text
+#  created_at                            :datetime         not null
+#  updated_at                            :datetime         not null
+#  event_id                              :bigint           not null
+#  replacement_for_id                    :bigint
+#  stripe_card_personalization_design_id :integer
+#  stripe_cardholder_id                  :bigint           not null
+#  stripe_id                             :text
+#  subledger_id                          :bigint
 #
 # Indexes
 #
@@ -48,6 +49,7 @@
 #  fk_rails_...  (stripe_cardholder_id => stripe_cardholders.id)
 #
 class StripeCard < ApplicationRecord
+  self.ignored_columns = ["activated"]
   include Hashid::Rails
   include PublicIdentifiable
   set_public_id_prefix :crd
@@ -75,6 +77,7 @@ class StripeCard < ApplicationRecord
   belongs_to :subledger, optional: true
   belongs_to :stripe_cardholder
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
+  belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
   has_one :replacement, class_name: "StripeCard", foreign_key: :replacement_for_id
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
@@ -112,6 +115,8 @@ class StripeCard < ApplicationRecord
                         if: -> { self.stripe_id.present? }
 
   validate :only_physical_cards_can_be_lost_in_shipping
+  validate :only_physical_cards_can_have_personalization_design
+  validate :personalization_design_must_be_of_the_same_event
   validates_length_of :name, maximum: 40
 
   def full_card_number
@@ -266,12 +271,11 @@ class StripeCard < ApplicationRecord
     self.last4 = stripe_obj[:last4]
     self.stripe_status = stripe_obj[:status]
     self.card_type = stripe_obj[:type]
+    self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
 
     if stripe_obj[:status] == "active"
-      self.activated = true
       self.initially_activated = true
     elsif stripe_obj[:status] == "inactive" && !self.initially_activated
-      self.activated = false
       self.initially_activated = false
     end
 
@@ -422,6 +426,18 @@ class StripeCard < ApplicationRecord
   def only_physical_cards_can_be_lost_in_shipping
     if !physical? && lost_in_shipping?
       errors.add(:lost_in_shipping, "can only be true for physical cards")
+    end
+  end
+
+  def only_physical_cards_can_have_personalization_design
+    if !physical? && personalization_design.present?
+      errors.add(:personalization_design, "can only be add to for physical cards")
+    end
+  end
+
+  def personalization_design_must_be_of_the_same_event
+    if personalization_design&.event.present? && personalization_design.event != event
+      errors.add(:personalization_design, "must be of the same event")
     end
   end
 

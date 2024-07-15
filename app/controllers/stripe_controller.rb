@@ -287,4 +287,15 @@ class StripeController < ActionController::Base
   alias_method :handle_payout_failed, :handle_payout_updated
   alias_method :handle_payout_paid, :handle_payout_updated
 
+  def handle_issuing_personalization_design_updated(event)
+    design = StripeCard::PersonalizationDesign.find_by(stripe_id: event.data.object.id)
+    return unless design
+
+    design.sync_from_stripe!
+  end
+
+  alias_method :handle_issuing_personalization_design_activated, :handle_issuing_personalization_design_updated
+  alias_method :handle_issuing_personalization_design_rejected, :handle_issuing_personalization_design_updated
+  alias_method :handle_issuing_personalization_design_deactivated, :handle_issuing_personalization_design_updated
+
 end

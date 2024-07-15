@@ -11,7 +11,7 @@ gem "rails", "~> 7.1.3"
 gem "puma", "~> 6.4" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
-gem "redis", "~> 5.0" # for caching, jobs, etc.
+gem "redis", "~> 5.2" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.1.3" # background jobs
 gem "sidekiq-cron", "~> 1.12" # run Sidekiq jobs at scheduled intervals
 
@@ -123,7 +123,7 @@ gem "airbrake" # exception tracking
 gem "blazer" # business intelligence tool/dashboard
 
 gem "geo_pattern" # create procedurally generated patterns for Cards
-gem "comma", "~> 4.7" # CSV generation
+gem "comma", "~> 4.8" # CSV generation
 gem "faker" # Create mock data
 
 gem "chronic" # time/date parsing
@@ -184,7 +184,7 @@ group :development do
   gem "annotate" # comment models with database schema
 
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
-  gem "listen", "~> 3.8"
+  gem "listen", "~> 3.9"
   gem "web-console", ">= 3.3.0"
 
   gem "letter_opener_web" # preview emails
@@ -209,6 +209,8 @@ gem "doorkeeper", "~> 5.6"
 
 gem "chartkick"
 gem "cssbundling-rails", "~> 1.4"
+
+gem "rtesseract"
 
 gem "sprockets-rails", "~> 3.4"
 

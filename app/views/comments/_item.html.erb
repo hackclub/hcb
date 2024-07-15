@@ -54,7 +54,7 @@
     <%= modal_header "Edit History" %>
     <ul class="list-reset">
       <% comment.versions.where(event: "update").reverse.each do |version| %>
-        <% if version&.changeset&.[]("content_ciphertext")&.compact_blank.any? %>
+        <% if version&.changeset&.[]("content_ciphertext")&.compact_blank&.any? %>
           <li class="mb2">
             <%= version.whodunnit.nil? ? "Automatically " : user_mention(User.find(version.whodunnit)) %>
             updated <%= time_ago_in_words version.created_at %> ago

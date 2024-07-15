@@ -9,7 +9,7 @@ class CanonicalPendingTransactionPolicy < ApplicationPolicy
     admin_or_teammember
   end
 
-  def set_custom_memo?
+  def update?
     admin_or_teammember
   end
 

@@ -4,8 +4,10 @@ module StripeCardService
   class Create
     def initialize(current_user:, current_session:, event_id:,
                    card_type:, subledger: nil,
-                   stripe_shipping_name: nil, stripe_shipping_address_city: nil, stripe_shipping_address_state: nil,
-                   stripe_shipping_address_line1: nil, stripe_shipping_address_line2: nil, stripe_shipping_address_postal_code: nil, stripe_shipping_address_country: "US")
+                   stripe_shipping_name: nil, stripe_shipping_address_city: nil,
+                   stripe_shipping_address_state: nil, stripe_shipping_address_line1: nil,
+                   stripe_shipping_address_line2: nil, stripe_shipping_address_postal_code: nil,
+                   stripe_shipping_address_country: "US", stripe_card_personalization_design_id: nil)
       @current_user = current_user
       @current_session = current_session
       @event_id = event_id
@@ -19,6 +21,8 @@ module StripeCardService
       @stripe_shipping_address_line2 = stripe_shipping_address_line2
       @stripe_shipping_address_postal_code = stripe_shipping_address_postal_code
       @stripe_shipping_address_country = stripe_shipping_address_country
+      @stripe_card_personalization_design_id = stripe_card_personalization_design_id
+      @stripe_personalization_design_id = @stripe_card_personalization_design_id ? StripeCard::PersonalizationDesign.find(@stripe_card_personalization_design_id).stripe_id : nil
     end
 
     def run
@@ -52,7 +56,8 @@ module StripeCardService
         stripe_shipping_address_country: @stripe_shipping_address_country,
         stripe_shipping_address_line1: @stripe_shipping_address_line1,
         stripe_shipping_address_line2: formatted_stripe_shipping_address_line2,
-        stripe_shipping_address_postal_code: @stripe_shipping_address_postal_code
+        stripe_shipping_address_postal_code: @stripe_shipping_address_postal_code,
+        stripe_card_personalization_design_id: @stripe_card_personalization_design_id
       }.compact
     end
 
@@ -93,6 +98,7 @@ module StripeCardService
             postal_code: @stripe_shipping_address_postal_code
           }.compact
         }.compact
+        attrs[:personalization_design] = @stripe_personalization_design_id if @stripe_personalization_design_id
       end
 
       attrs

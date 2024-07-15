@@ -161,7 +161,7 @@ module StaticPagesHelper
         id: "app4kCWulfB02bV8Q",
         table: "tblNUDETwMdUlBCSM",
         query: { filterByFormula: "Status='Awaiting Fulfillment'" },
-        destination: "https://airtable.com/app4kCWulfB02bV8Q/tblNUDETwMdUlBCSM/viwM8PNakitt9nm9C"
+        destination: "https://airtable.com/app4kCWulfB02bV8Q/tblNUDETwMdUlBCSM/viwipTwk0hGHW10Py"
       },
       marketing_shipment_request: {
         id: "appK53aN0fz3sgJ4w",
