@@ -161,7 +161,7 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
-        run: bundle exec annotate --models --frozen
+        run: bundle exec annotate --models
   zeitwerk:
     name: Zeitwerk
     runs-on: ubuntu-latest
