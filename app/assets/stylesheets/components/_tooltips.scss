@@ -72,4 +72,10 @@
     margin-top: 0.5rem;
     transform: translateX(50%);
   }
+  
+  .tooltipped--xl {
+    &:after {
+      max-width: none;
+    }
+  }
 }

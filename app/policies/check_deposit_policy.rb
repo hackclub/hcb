@@ -24,7 +24,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def user_who_can_transfer?
-    user&.admin? || EventPolicy.new(user, record.event).new_transfer?
+    EventPolicy.new(user, record.event).create_transfer?
   end
 
 end

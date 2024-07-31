@@ -5,6 +5,7 @@
 # Table name: column_account_numbers
 #
 #  id                        :bigint           not null, primary key
+#  account_number_bidx       :string
 #  account_number_ciphertext :text
 #  bic_code_ciphertext       :text
 #  deposit_only              :boolean          default(TRUE), not null
@@ -16,7 +17,8 @@
 #
 # Indexes
 #
-#  index_column_account_numbers_on_event_id  (event_id)
+#  index_column_account_numbers_on_account_number_bidx  (account_number_bidx)
+#  index_column_account_numbers_on_event_id             (event_id)
 #
 # Foreign Keys
 #
@@ -27,6 +29,8 @@ module Column
     belongs_to :event
 
     has_encrypted :account_number, :routing_number, :bic_code
+
+    blind_index :account_number
 
     before_create :create_column_account_number
 

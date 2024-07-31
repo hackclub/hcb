@@ -1,10 +1,11 @@
-<% title "PARTNER ORGANIZATIONS" %>
+<% title "Partner Organizations" %>
 
-<h1>PARTNER ORGANIZATIONS</h1>
-
-<%= paginate @partner_organizations %>
-
-<%= page_entries_info @partner_organizations, entry_name: "organizations" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @partner_organizations, entry_name: "organizations" %>
+  </div>
+  <%= paginate @partner_organizations %>
+</div>
 
 <table>
   <thead>

@@ -4,7 +4,7 @@ module DisbursementService
   # Hack Club has partnered with 128 Collective (https://128collective.org/) to
   # build a directory featuring climate-focused organizations that run on HCB.
   #
-  # HCB Climate Directory: https://hackclub.com/hcb/climate/
+  # HCB Climate Directory: https://hackclub.com/fiscal-sponsorship/climate/
   #
   # The directory include an option to donate to HCB's Climate Fund.
   # This fund is distributed evenly to all 128 Collective's recommended

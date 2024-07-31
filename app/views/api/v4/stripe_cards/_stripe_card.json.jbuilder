@@ -6,8 +6,10 @@ json.type stripe_card.card_type
 json.status stripe_card.status_text.parameterize(separator: "_")
 json.name stripe_card.name
 
-if stripe_card.user == @current_user && stripe_card.activated?
+if stripe_card.user == @current_user && stripe_card.initially_activated?
   json.last4 stripe_card.last4
+  json.exp_month stripe_card.stripe_exp_month
+  json.exp_year stripe_card.stripe_exp_year
 else
   json.last4 nil
 end

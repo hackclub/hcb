@@ -9,13 +9,6 @@
 </h1>
 <p>Enter the last 4 digits of your card number to activate it.</p>
 
-<style>
-  input#last4::placeholder {
-    color: white;
-    opacity: 0.5;
-  }
-</style>
-
 <%= form_with url: stripe_cards_activation_path, method: :post do |form| %>
   <a class="text-decoration-none flex justify-start">
     <div class="stripe-card inactive ml0 mr0" data-behavior="hover_tilt" style="background-image: <%= GeoPattern.generate(@pattern || rand(1..1000000000)).to_data_uri %>">
@@ -23,10 +16,10 @@
         <span>••••</span>
         <span>••••</span>
         <span>••••</span>
-        <%= form.number_field :last4, placeholder: "XXXX", required: true, style: "width: 70px; display: inline-block; color: white; background-color: #ffffff44; backdrop-filter: blur(4px); font-weight: 600; font-size: 20px; min-height: 2rem!important; ", oninput: "this.value = this.value.replace(/[^0-9]/g, '').substring(0, 4)", class: "mono center mb1" %>
+        <%= form.number_field :last4, placeholder: "XXXX", required: true, autofocus: true, oninput: "this.value = this.value.replace(/[^0-9]/g, '').substring(0, 4)", class: "placeholder:text-white placeholder:opacity-50 !min-h-8 backdrop-blur-sm font-semibold !text-xl !inline-block font-mono center mb1 !w-20 !bg-white/30" %>
       </p>
       <p class="stripe-card__name flex justify-between items-center">
-        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <span class="truncate">
           <%= current_user.name %>
         </span>
         <span class="ml2 badge h6 stripe-card__status">

@@ -13,15 +13,17 @@
 
 .heading {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  flex-direction: column;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 1rem;
 
-  > .btn {
-    font-family: $brand-font-family;
-    margin-top: 8px;
-    margin-bottom: 4px;
+  .btn {
+    margin-left: auto;
+
+    ~ .btn,
+    ~ .pop {
+      margin-left: unset;
+    }
   }
 
   .menu__content {
@@ -38,21 +40,5 @@ h3.heading {
     font-weight: 600;
     line-height: 1.75;
     padding: 0.25rem 1rem;
-  }
-}
-
-@media (min-width: 32em) {
-  .heading {
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-
-    > .btn {
-      margin-left: auto;
-      margin-top: 0;
-      + .btn {
-        margin-left: 0.5rem;
-      }
-    }
   }
 }

@@ -4,13 +4,13 @@ class CheckDepositMailer < ApplicationMailer
   def rejected
     @check_deposit = params[:check_deposit]
 
-    mail to: @check_deposit.created_by.email, subject: "Your check failed to deposit"
+    mail to: @check_deposit.created_by.email_address_with_name, subject: "Your check failed to deposit"
   end
 
   def deposited
     @check_deposit = params[:check_deposit]
 
-    mail to: @check_deposit.created_by.email, subject: "Your check has deposited!"
+    mail to: @check_deposit.created_by.email_address_with_name, subject: "Your check has deposited!"
   end
 
 end

@@ -13,4 +13,8 @@ module Commentable
   def comment_mailer_subject
     "New comment from HCB"
   end
+
+  def comment_mentionable(current_user: nil)
+    []
+  end
 end

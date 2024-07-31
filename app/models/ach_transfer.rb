@@ -10,6 +10,8 @@
 #  amount                    :integer
 #  approved_at               :datetime
 #  bank_name                 :string
+#  company_entry_description :string
+#  company_name              :string
 #  confirmation_number       :text
 #  payment_for               :text
 #  recipient_email           :string
@@ -58,14 +60,24 @@ class AchTransfer < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "ach_transfers.created_at"
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+
   belongs_to :creator, class_name: "User", optional: true
   belongs_to :processor, class_name: "User", optional: true
   belongs_to :event
   belongs_to :payment_recipient, optional: true
 
   validates :amount, numericality: { greater_than: 0, message: "must be greater than 0" }
-  validates :routing_number, format: { with: /\A\d{9}\z/, message: "must be 9 digits" }
-  validates :account_number, format: { with: /\A\d+\z/, message: "must be only numbers" }
+
+  validates :routing_number, presence: true, unless: :payment_recipient
+  validates :account_number, presence: true, unless: :payment_recipient
+  validates :recipient_name, presence: true, unless: :payment_recipient
+
+  validates :account_number, format: { with: /\A\d+\z/, message: "must be only numbers" }, allow_blank: true
+  validates :routing_number, format: { with: /\A\d{9}\z/, message: "must be 9 digits" }, allow_blank: true
+  validates :bank_name, presence: true, on: :create, unless: :payment_recipient
+
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
   validates_presence_of :recipient_email, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
@@ -74,6 +86,9 @@ class AchTransfer < ApplicationRecord
       errors.add(:base, "You don't have enough money to send this transfer! Your balance is #{(event.balance_available_v2_cents / 100).to_money.format}.")
     end
   end
+  validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
+  validates :company_name, length: { maximum: 16 }, allow_blank: true
+  validate { errors.add(:base, "Recipient must be in the same org") if payment_recipient && event != payment_recipient.event }
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
   has_one :grant, required: false
@@ -105,6 +120,7 @@ class AchTransfer < ApplicationRecord
       after do |processed_by = nil|
         canonical_pending_transaction&.decline!
         update!(processor: processed_by) if processed_by.present?
+        create_activity(key: "ach_transfer.rejected", owner: processed_by)
       end
       transitions from: [:pending, :scheduled], to: :rejected
     end
@@ -119,18 +135,30 @@ class AchTransfer < ApplicationRecord
 
     event :mark_failed do
       after do |reason: nil|
-        AchTransferMailer.with(ach_transfer: self, reason:).notify_failed.deliver_later
+        if reimbursement_payout_holding.present?
+          ReimbursementMailer.with(reimbursement_payout_holding:, reason:).ach_failed.deliver_later
+          reimbursement_payout_holding.mark_failed!
+        else
+          AchTransferMailer.with(ach_transfer: self, reason:).notify_failed.deliver_later
+        end
+        create_activity(key: "ach_transfer.failed", owner: nil)
       end
       transitions from: [:in_transit, :deposited], to: :failed
     end
   end
 
   before_validation { self.recipient_name = recipient_name.presence&.strip }
+  before_create :set_fields_from_payment_recipient, if: -> { payment_recipient.present? }
+  before_create :create_payment_recipient, if: -> { payment_recipient_id.nil? }
+
+  before_validation do
+    company_name = event.name[0...16] if company_name.blank?
+  end
+
+  after_create :update_payment_recipient
 
   # Eagerly create HcbCode object
   after_create :local_hcb_code
-
-  after_create :create_or_link_payment_recipient, if: -> { Flipper.enabled?(:payment_recipients_2024_01_10, event) }
 
   after_create unless: -> { scheduled_on.present? } do
     create_raw_pending_outgoing_ach_transaction!(amount_cents: -amount, date_posted: scheduled_on || created_at)
@@ -158,7 +186,8 @@ class AchTransfer < ApplicationRecord
         account_number:,
         routing_number:,
       },
-      company_name: event.name[0...16],
+      company_name:,
+      company_entry_description:,
       description: payment_for,
       account_number_id:,
       same_day:,
@@ -168,6 +197,10 @@ class AchTransfer < ApplicationRecord
     self.column_id = column_ach_transfer["id"]
 
     save!
+  end
+
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
   end
 
   def approve!(processed_by = nil)
@@ -244,6 +277,22 @@ class AchTransfer < ApplicationRecord
     @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
+  def estimated_arrival
+    # https://column.com/docs/ach/timing
+
+    now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
+
+    if same_day? && now.workday?
+      return now.change(hour: 10, minute: 0, second: 0) if now < now.change(hour: 7, min: 15, sec: 0)
+      return now.change(hour: 14, minute: 0, second: 0) if now < now.change(hour: 11, min: 30, sec: 0)
+      return now.change(hour: 15, minute: 0, second: 0) if now < now.change(hour: 13, min: 30, sec: 0)
+    end
+
+    return 0.business_days.after(now).change(hour: 5, min: 30, sec: 0) unless now.workday?
+
+    return 1.business_day.after(now).change(hour: 5, min: 30, sec: 0)
+  end
+
   private
 
   def scheduled_on_must_be_in_the_future
@@ -252,21 +301,30 @@ class AchTransfer < ApplicationRecord
     end
   end
 
-  def create_or_link_payment_recipient
-    self.payment_recipient = event.payment_recipients.find_by("name ILIKE ?", AchTransfer.sanitize_sql_like(recipient_name))
+  def set_fields_from_payment_recipient
+    self.account_number ||= payment_recipient&.account_number
+    self.routing_number ||= payment_recipient&.routing_number
+    self.bank_name      ||= payment_recipient&.bank_name
+    self.recipient_name ||= payment_recipient&.name
+  end
 
-    if payment_recipient.nil? ||
-       payment_recipient.account_number != account_number ||
-       payment_recipient.routing_number != routing_number
-      self.payment_recipient = event.payment_recipients.create!(
-        name: recipient_name,
-        bank_name:,
-        account_number:,
-        routing_number:,
-      )
-    end
+  def create_payment_recipient
+    create_payment_recipient!(
+      event:,
+      name: recipient_name,
+      account_number:,
+      routing_number:,
+      bank_name:,
+    )
+  end
 
-    save!
+  def update_payment_recipient
+    payment_recipient.update!(
+      name: recipient_name,
+      account_number:,
+      routing_number:,
+      bank_name:,
+    )
   end
 
 end

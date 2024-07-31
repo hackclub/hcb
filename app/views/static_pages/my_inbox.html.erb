@@ -19,7 +19,8 @@
     <% end %>
   </p>
 
-  <%= render partial: "suggested_pairings", locals: { pairings: @pairings, current_slide: 0 } %>
+  <%= turbo_stream_from current_user, :receipt_bin %>
+  <%= turbo_frame_tag "suggested_pairings", src: suggested_pairings_path %>
 
   <h2>
     Receipt Bin
@@ -28,15 +29,16 @@
   <%= render partial: "receipts/form_v3", locals: {
         upload_method: "receipt_center",
         restricted_dropzone: true,
-        turbo: true
+        turbo: true,
+        global_paste: true
       } %>
 
   <%= render partial: "receipts/blankslate", locals: { count: @receipts.size } %>
 
   <ul class="grid grid--medium-narrow left-align w-100 mt0" id="receipts_list">
     <% @receipts.each do |receipt| %>
-      <li class="flex grid flex-column justify-between h-100 mx-auto" id="receipt_<%= receipt.id %>">
-        <%= render partial: "receipts/receipt", locals: { receipt:, show_delete_button: true, link_to_file: true, turbo_for_deletion: true } %>
+      <li class="flex grid flex-col justify-between h-100 mx-auto" id="receipt_<%= receipt.id %>">
+        <%= render partial: "receipts/receipt", locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true, turbo_for_deletion: true } %>
       </li>
     <% end %>
   </ul>

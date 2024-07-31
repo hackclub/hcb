@@ -4,18 +4,30 @@
 #
 # Table name: receipts
 #
-#  id                         :bigint           not null, primary key
-#  receiptable_type           :string
-#  textual_content_ciphertext :text
-#  upload_method              :integer
-#  created_at                 :datetime         not null
-#  updated_at                 :datetime         not null
-#  receiptable_id             :bigint
-#  user_id                    :bigint
+#  id                              :bigint           not null, primary key
+#  data_extracted                  :boolean          default(FALSE), not null
+#  extracted_card_last4_ciphertext :text
+#  extracted_date                  :datetime
+#  extracted_merchant_name         :string
+#  extracted_merchant_url          :string
+#  extracted_merchant_zip_code     :string
+#  extracted_subtotal_amount_cents :integer
+#  extracted_total_amount_cents    :integer
+#  receiptable_type                :string
+#  suggested_memo                  :string
+#  textual_content_bidx            :string
+#  textual_content_ciphertext      :text
+#  textual_content_source          :integer          default("pdf_text")
+#  upload_method                   :integer
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#  receiptable_id                  :bigint
+#  user_id                         :bigint
 #
 # Indexes
 #
 #  index_receipts_on_receiptable_type_and_receiptable_id  (receiptable_type,receiptable_id)
+#  index_receipts_on_textual_content_bidx                 (textual_content_bidx)
 #  index_receipts_on_user_id                              (user_id)
 #
 # Foreign Keys
@@ -24,6 +36,8 @@
 #
 class Receipt < ApplicationRecord
   has_encrypted :textual_content
+  blind_index :textual_content
+  has_encrypted :extracted_card_last4
 
   include PublicIdentifiable
   set_public_id_prefix :rct
@@ -47,11 +61,16 @@ class Receipt < ApplicationRecord
     end
   end
 
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin email_hcb_code].freeze
+
   after_create_commit do
     # Queue async job to extract text from newly upload receipt
     # and to suggest pairings
-    ReceiptJob::ExtractTextualContent.perform_later(self)
-    ReceiptJob::SuggestPairings.perform_later(self)
+    unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
+      # certain interfaces run suggestions synchronously
+      ReceiptJob::ExtractTextualContent.perform_later(self)
+      ReceiptJob::SuggestPairings.perform_later(self)
+    end
   end
   validate :has_owner
 
@@ -71,7 +90,14 @@ class Receipt < ApplicationRecord
     transfer_create_page: 12,
     expense_report: 13,
     expense_report_drag_and_drop: 14,
-    quick_expense: 15
+    quick_expense: 15,
+    transaction_popover: 16,
+    transaction_popover_drag_and_drop: 17,
+  }
+
+  enum textual_content_source: {
+    pdf_text: 0,
+    tesseract_ocr_text: 1
   }
 
   scope :in_receipt_bin, -> { where(receiptable: nil) }
@@ -91,17 +117,17 @@ class Receipt < ApplicationRecord
   end
 
   def extract_textual_content
-    text = case file.content_type
-           when "application/pdf"
-             pdf_text
-           else
-             # Unable to extract text from this file type
-             return nil
-           end
+    textual_content_source = if file.content_type == "application/pdf"
+                               :pdf_text
+                             elsif file.content_type.starts_with?("image")
+                               :tesseract_ocr_text
+                             else
+                               return { text: nil, textual_content_source: nil }
+                             end
 
-    # Clean the text
-    text ||= ""
-    text.strip
+    text = self.send(textual_content_source) || ""
+
+    { text: text.strip, textual_content_source: }
   rescue => e
     # "ArgumentError: string contains null byte" is a known error
     unless e.is_a?(ArgumentError) && e.message.include?("string contains null byte")
@@ -111,12 +137,12 @@ class Receipt < ApplicationRecord
     # Since text extraction can be a resource intensive operation, saving an
     # empty string indicates that no text was able to be extracted. This
     # prevents the text extraction from being unintentionally attempted again.
-    ""
+    { text: "", textual_content_source: nil }
   end
 
   def extract_textual_content!
-    extract_textual_content.tap do |text|
-      update!(textual_content: text)
+    extract_textual_content.tap do |result|
+      update!(textual_content: result[:text], textual_content_source: result[:textual_content_source])
     end
   end
 
@@ -124,11 +150,56 @@ class Receipt < ApplicationRecord
     !!(textual_content || extract_textual_content!)
   end
 
+  def extracted_incorrect_amount_cents?
+    if receiptable.respond_to?(:amount_cents) && extracted_total_amount_cents
+      return extracted_total_amount_cents.abs != receiptable.amount_cents.abs
+    end
+
+    false
+  end
+
+  def duplicated?
+    if receiptable
+      return Receipt.where.not(receiptable_type:, receiptable_id:)
+                    .where.not(receiptable_id: nil)
+                    .where.not(textual_content: nil)
+                    .where(textual_content:).any?
+    end
+
+    false
+  end
+
+  def duplicates
+    if receiptable
+      return Receipt.where.not(receiptable_type:, receiptable_id:)
+                    .where.not(receiptable_id: nil)
+                    .where.not(textual_content: nil)
+                    .where(textual_content:)
+    end
+
+    Receipt.none
+  end
+
   private
 
   def pdf_text
-    doc = Poppler::Document.new(file.download)
+    doc = if self.attachment_changes["file"]&.attachable
+            Poppler::Document.new(File.read(self.attachment_changes["file"].attachable))
+          else
+            Poppler::Document.new(file.download)
+          end
+
     doc.pages.map(&:text).join(" ")
+  end
+
+  def tesseract_ocr_text
+    file.blob.open do |tempfile|
+      words = ::RTesseract.new(tempfile.path).to_box
+      words = words.select { |w| w[:confidence] > 85 }
+      words = words.map { |w| w[:word] }
+      text = words.join(" ")
+      text.length > 50 ? text : nil
+    end
   end
 
   def has_owner

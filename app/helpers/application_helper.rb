@@ -9,7 +9,7 @@ module ApplicationHelper
     unit = opts[:unit] || "$"
     trunc = opts[:trunc] || false
 
-    num = BigDecimal(amount || 0) / 100
+    num = BigDecimal((amount || 0).to_s) / 100
     if trunc
       if num >= 1_000_000
         "#{number_to_currency(num / 1_000_000, precision: 1, unit:)}m"
@@ -30,6 +30,14 @@ module ApplicationHelper
   def render_money_amount(amount, opts = {})
     opts[:unit] = ""
     render_money(amount, opts)
+  end
+
+  def render_transaction_amount(amount)
+    if amount > 0
+      content_tag(:span, "+#{render_money amount}", class: "success-dark medium")
+    else
+      render_money amount
+    end
   end
 
   def render_percentage(decimal, params = {})
@@ -61,10 +69,6 @@ module ApplicationHelper
     content_tag(:p, text, class: "center mt0 mb0 pt2 pb2 slate bold h3 mx-auto max-width-2 #{options[:class]}", **other_options)
   end
 
-  def filterbar_blankslate(text, options = {})
-    blankslate(text, 'data-behavior': "filterbar_blankslate", class: "mt2 mb2", **options)
-  end
-
   def list_badge_for(count, item, glyph, options = { optional: false, required: false })
     return nil if options[:optional] && count == 0
 
@@ -76,8 +80,8 @@ module ApplicationHelper
                 class: "list-badge tooltipped tooltipped--w #{options[:required] && count == 0 ? 'b--warning warning' : ''} #{options[:class]}")
   end
 
-  def badge_for(count, options = {})
-    content_tag :span, count, class: "badge #{options[:class]} #{'bg-muted' if count == 0}"
+  def badge_for(value, options = {})
+    content_tag :span, value, class: "badge #{options[:class]} #{'bg-muted' if [0, "Pending"].include?(value)}"
   end
 
   def status_badge(type = :pending)
@@ -127,11 +131,11 @@ module ApplicationHelper
     pop_icon_to "external", external_link, target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
   end
 
-  def modal_header(text, level: "h0", external_link: nil)
+  def modal_header(text, external_link: nil)
     content_tag :header, class: "pb2" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
-        content_tag(:h2, text.html_safe, class: "#{level} mt0 mb0 pb0 border-none")
+        content_tag(:h2, text.html_safe, class: "h1 mt0 mb0 pb0 border-none")
     end
   end
 
@@ -154,7 +158,7 @@ module ApplicationHelper
   end
 
   def relative_timestamp(time, options = {})
-    content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago", options.merge(title: time)
+    content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
   end
 
   def auto_link_new_tab(text)
@@ -186,15 +190,9 @@ module ApplicationHelper
   end
 
   def anchor_link(id)
-    link_to "##{id}", class: "anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", 'data-anchor': id, 'data-turbo': false do
+    link_to "##{id}", class: "absolute top-0 -left-8 transition-opacity opacity-0 group-hover/summary:opacity-100 group-target/item:opacity-100 anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: id), action: "clipboard#copy" } do
       inline_icon "link", size: 28
     end
-  end
-
-  def filterbar_item(label, name, selected = false)
-    content_tag :a, label, class: "filterbar__item",
-                tabindex: 0, role: "tab", 'aria-selected': selected,
-                data: { name: name.to_s, behavior: "filterbar_item" }
   end
 
   def help_message
@@ -272,7 +270,7 @@ module ApplicationHelper
   def commit_time
     @commit_time ||= begin
       heroku_time = ENV["HEROKU_RELEASE_CREATED_AT"]
-      git_time = `git log -1 --format=%at`&.chomp
+      git_time = `git log -1 --format=%at 2> /dev/null`&.chomp
 
       return nil if heroku_time.blank? && git_time.blank?
 
@@ -318,10 +316,14 @@ module ApplicationHelper
       "More, tonight at 9.",
       "Go wild.",
       "But, the night is still young.",
-      "You pansy.",
+      "You coward.",
       "Now go write some code?",
       "AKA a world of pure imagination"
     ].sample
+  end
+
+  def tooltipped_logo?
+    !Rails.env.production? || user_birthday?
   end
 
   require "json"
@@ -360,5 +362,13 @@ module ApplicationHelper
 
     css_classes = "pointer tooltipped tooltipped--#{tooltip_direction} #{options.delete(:class)}"
     tag.span "data-controller": "clipboard", "data-clipboard-text-value": clipboard_value, class: css_classes, "aria-label": "Click to copy", "data-action": "click->clipboard#copy", **options, &block
+  end
+
+  def settings_tab(active: false, &block)
+    if active
+      tag.li(class: "active", data: { controller: "scroll-into-view" }, &block)
+    else
+      tag.li(&block)
+    end
   end
 end

@@ -109,9 +109,9 @@
 }
 
 .pwa__prompt__hide {
-  position: absolute; 
-  right: 5px; 
-  top: 5px; 
+  position: absolute;
+  right: 5px;
+  top: 5px;
   cursor: pointer;
 }
 
@@ -123,10 +123,10 @@
   @media (min-width: 56em) {
     display: none!important;
   }
-  flex: 1 0 100%; 
-  background: #ec3750; 
-  padding: 8px 16px; 
-  text-align: center; 
+  flex: 1 0 100%;
+  background: #ec3750;
+  padding: 8px 16px;
+  text-align: center;
   color: white;
   margin-bottom: -16px
 }
@@ -144,7 +144,6 @@
   font-size: 0.875rem;
   text-decoration: none;
   width: 100%;
-  font-weight: 600;
   flex-shrink: 1;
   flex: 1;
   display: inline-flex;
@@ -189,12 +188,11 @@
     border-radius: 0.75rem;
     cursor: pointer;
     line-height: 1.75;
-    font-size: 1.125rem;
+    font-size: 1rem;
     outline: 0;
     transition:
       color 0.125s ease-in-out,
       background-color 0.125s ease-in-out;
-    font-family: $brand-font-family;
     padding: 0.5rem 1.5rem 0.5rem 0.75rem;
     margin: 0 0 0 -0.75rem;
     width: fit-content;
@@ -262,7 +260,7 @@
   }
 
   &.disabled {
-    opacity: 0.5;
+    color: map-get($palette, muted);
     cursor: not-allowed;
   }
 }

@@ -19,6 +19,6 @@
     <%= paginate hcb_codes %>
   </div>
 
-<% elsif stripe_card.activated? %>
+<% elsif stripe_card.initially_activated? %>
   <%= blankslate "No transactions made on this card yet." %>
 <% end %>

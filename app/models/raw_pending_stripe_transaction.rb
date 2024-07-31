@@ -27,6 +27,9 @@ class RawPendingStripeTransaction < ApplicationRecord
   scope :reversed, -> { where("stripe_transaction->>'status' = 'reversed'") }
   scope :pending, -> { where("stripe_transaction->>'status' = 'pending'") }
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| record.stripe_card&.user || User.find_by(email: "bank@hackclub.com") }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
+
   def date
     date_posted
   end

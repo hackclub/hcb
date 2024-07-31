@@ -45,4 +45,7 @@ module.exports = {
       AIRBRAKE_API_KEY: JSON.stringify(process.env.AIRBRAKE_API_KEY || null),
     }),
   ],
+  externals: {
+    jquery: '$',
+  },
 }

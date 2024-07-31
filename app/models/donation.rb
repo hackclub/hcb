@@ -10,6 +10,7 @@
 #  amount_received                      :integer
 #  anonymous                            :boolean          default(FALSE), not null
 #  email                                :text
+#  fee_covered                          :boolean          default(FALSE), not null
 #  hcb_code                             :text
 #  in_transit_at                        :datetime
 #  ip_address                           :inet
@@ -55,6 +56,12 @@ class Donation < ApplicationRecord
   include AASM
   include Commentable
 
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "payments", :stripe_payment_intent_id
+
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: []
+
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
@@ -87,6 +94,9 @@ class Donation < ApplicationRecord
 
     event :mark_in_transit do
       transitions from: :pending, to: :in_transit
+      after do
+        create_activity(key: "donation.paid", owner: nil)
+      end
     end
 
     event :mark_deposited do
@@ -102,14 +112,18 @@ class Donation < ApplicationRecord
     end
   end
 
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
+  end
+
   def set_fields_from_stripe_payment_intent(payment_intent)
     self.amount = payment_intent.amount
     self.amount_received = payment_intent.amount_received
     self.status = payment_intent.status
     self.stripe_client_secret = payment_intent.client_secret
 
-    if status == "succeeded"
-      balance_transaction = payment_intent.charges.data.first.balance_transaction
+    if status == "succeeded" && payment_intent.latest_charge.balance_transaction
+      balance_transaction = payment_intent.latest_charge.balance_transaction
       funds_available_at = Time.at(balance_transaction.available_on)
 
       self.payout_creation_queued_for = funds_available_at + 1.day
@@ -123,10 +137,6 @@ class Donation < ApplicationRecord
 
   def donated_at
     in_transit_at || created_at
-  end
-
-  def stripe_dashboard_url
-    "https://dashboard.stripe.com/payments/#{self.stripe_payment_intent_id}"
   end
 
   def state
@@ -266,7 +276,7 @@ class Donation < ApplicationRecord
   end
 
   def remote_donation
-    @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction"])
+    @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
   end
 
   def remote_refunded?

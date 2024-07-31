@@ -3,7 +3,7 @@
 module LoginCodeService
   class Request
     def initialize(email:, ip_address:, user_agent:, sms: false)
-      @email = email.downcase
+      @email = email
       @sms = sms
       @ip_address = ip_address
       @user_agent = user_agent
@@ -20,21 +20,26 @@ module LoginCodeService
     end
 
     def send_login_code_by_sms(user)
-      return { error: "no phone number provided" } if user.phone_number.empty?
+      return { error: "no phone number provided", method: :sms } if user.phone_number.empty?
 
-      TwilioVerificationService.new.send_verification_request(user.phone_number)
+      begin
+        TwilioVerificationService.new.send_verification_request(user.phone_number)
+      rescue
+        return send_login_code_by_email(user)
+      end
 
       {
         id: user.id,
         email: user.email,
-        status: "login code sent"
+        status: "login code sent",
+        method: :sms
       }
     end
 
     def send_login_code_by_email(user)
       user.save if user.new_record?
       if user.new_record? && !user.save
-        return { error: user.errors }
+        return { error: user.errors, method: :email }
       end
 
       login_code = user.login_codes.create(
@@ -42,13 +47,13 @@ module LoginCodeService
         user_agent: @user_agent
       )
 
-      LoginCodeMailer.send_code(user.email, login_code.pretty).deliver_now
+      LoginCodeMailer.send_code(user.email_address_with_name, login_code.pretty).deliver_now
 
       {
         id: user.id,
         email: user.email,
         status: "login code sent",
-        browser_token: login_code.browser_token,
+        method: :email,
         login_code:
       }
     end

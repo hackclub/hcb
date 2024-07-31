@@ -1,5 +1,5 @@
 json.id disbursement.public_id
-json.memo disbursement.name
+json.memo disbursement.local_hcb_code.memo
 json.status disbursement.v4_api_state
 json.transaction_id disbursement.local_hcb_code.public_id
 json.amount_cents disbursement.amount

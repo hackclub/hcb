@@ -16,7 +16,7 @@ echo "$(tput setaf 9)HCB:$(tput sgr0) $(tput setaf 10)Done$(tput sgr0)"
 echo "
 $(tput setaf 9)HCB:$(tput sgr0) Step 3/5: Docker Database Setup"
 docker compose run --service-ports web bundle exec rails db:test:prepare RAILS_ENV=test
-docker compose run --service-ports web bundle exec rails db:create db:migrate
+docker compose run --service-ports web bundle exec rails db:create db:schema:load # We're not using `db:prepare` because we want to run `db:seed` later
 echo "$(tput setaf 9)HCB:$(tput sgr0) $(tput setaf 10)Done$(tput sgr0)"
 
 echo "

@@ -3,46 +3,48 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading items-center md-items-baseline justify-center md-justify-between center md-left-align w-auto">
+<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto">
   <div>
-    <a
-      class="h4 caps muted block text-decoration-none"
-      href="https://github.com/hackclub/hcb-expansions/tree/main#hcb-what-does-it-stand-for"
-      target="_blank">
-      <%= @hcb_expansion %>
-    </a>
-    <span class="<%= "nowrap" unless fall? %> <%= "warning" if fall? %>">
+    <% if current_user.hack_clubber? %>
+      <a
+        class="text-base caps muted block no-underline"
+        href="https://github.com/hackclub/hcb-expansions/tree/main#hcb-what-does-it-stand-for"
+        target="_blank">
+        <%= @hcb_expansion %>
+      </a>
+    <% end %>
+    <span class="<%= "warning" if fall? %>">
       Welcome to <span class="primary">HCB</span>
     </span>
   </div>
-  <span class="badge ml0 h5 caps <%= Rails.env.development? ? "bg-success" : by_season("", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
+  <span class="badge ml-0 text-sm caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
 <% if current_user.card_grants.not_activated.size > 0 %>
   <% current_user.card_grants.not_activated.each do |grant| %>
-    <div class="card border b--info container--sm mx-auto mb4 center">
-      <p class="mt0 h3">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
+    <div class="card border b--info container--sm mx-auto mb-12 text-center">
+      <p class="mt-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
       <%= link_to "Activate my grant", grant, class: "btn" %>
     </div>
   <% end %>
 <% end %>
 
 <% if current_user.card_grants.activated.size > 0 %>
-  <h2 class="heading h2 line-height-4 mt0 ml0 pt1 pb1 pl2 pr2 border-none">Grants</h2>
+  <h2 class="heading h2 line-height-4 mt-0 ml-0 py-2 px-4 border-none">Grants</h2>
 
-  <div class="grid grid--wide mb4">
+  <div class="grid grid--wide mb-12">
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
       <%= render grant.stripe_card, headless: true, href: card_grant_path(grant) %>
     <% end %>
   </div>
 <% end %>
 
-<main class="flex flex-column items-center center pb3">
+<main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
     <% if @events.any? %>
       <% if @show_event_reorder_tip %>
         <% if @events.size > 1 %>
-          <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1", style: "align-self: baseline", target: "_blank" do %>
+          <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
             <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
           <% end %>
         <% end %>
@@ -53,83 +55,34 @@
         data-sortable-append-to-value="body"
         data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"
         data-action="sortable:stop->event-sort#sort">
-        <% @events.not_hidden.each do |event| %>
-          <%= link_to event, style: "max-width: 90vw", class: "draggable text-decoration-none" do %>
-            <li class="card card--hover flex flex-column justify-between h-100 mx-auto <%= "card--background-image" if event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
-              <div id="event-<%= event.id %>-title" class="flex mb2">
-                <% if event.logo.attached? %>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <%= image_tag event.logo, height: 24, width: 24, class: "rounded display-inline align-bottom" %>
-                    <strong class="brand-sans h3 line-height-2 display-inline">
-                      <%= event.name %>
-                    </strong>
-                  </div>
-                <% else %>
-                  <strong class="brand-sans h3 line-height-2 display-inline">
-                    <%= event.name %>
-                  </strong>
-                <% end %>
-              </div>
-              <% if event.demo_mode? %>
-                <div class="badge bg-info ml0 mb2" style="width: fit-content;">Playground Mode</div>
-              <% end %>
-              <div class="brand-sans h4 line-height-2 mb2 flex justify-between item-center">
-                <span style="white-space: nowrap; gap: 4px;" class="flex items-center">
-                  <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
-                  <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true } do %>
-                    <strong>-</strong>
-                  <% end %>
-                </span>
-                <span style="gap: 4px;" class="flex items-center">
-                  <%= inline_icon "card", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
-                  <strong><%= event.stripe_cards.active.count %></strong>
-                </span>
-              </div>
-              <div class="avatar-row">
-                <% event.organizer_positions.each do |position| %>
-                  <%= avatar_for position.user, 24 %>
-                <% end %>
-              </div>
-            </li>
-          <% end %>
-        <% end %>
 
-        <%= link_to "https://hackclub.com/hcb/apply/?#{URI.encode_www_form({ userEmail: current_user.email, firstName: current_user.first_name, lastName: current_user.last_name, returningUser: "Yes, I have used HCB before", userPhone: current_user.phone_number, userBirthday: current_user.birthday }.compact)}" do %>
-          <li class="card card--hover bold brand-sans flex items-center justify-center align-center h-100" style="max-width: 90vw">
+        <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
+
+        <%= link_to apply_form_url do %>
+          <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
             <div class="center">
-              <div class="pop success mx-auto" style="display: flex; margin-bottom: 4px;">
+              <div class="pop success mx-auto flex mb-1">
                 <%= inline_icon "plus", size: 28 %>
               </div>
-              New Project
+              New organization
             </div>
           </li>
         <% end %>
       </ul>
 
       <% if @events.hidden.any? %>
-        <details class="w-100 left-align">
-          <summary><h4 class="inline-block pb0 border-none muted">Hidden projects</h4></summary>
-          <ul class="grid grid--narrow left-align mt0">
-            <% @events.hidden.each do |event| %>
-              <%= link_to event do %>
-                <li class="card card--hover flex flex-column justify-between">
-                  <strong class="h3 line-height-2 mb1"><%= event.name %></strong>
-                  <div class="avatar-row">
-                    <% event.organizer_positions.each do |position| %>
-                      <%= avatar_for position.user, 24 %>
-                    <% end %>
-                  </div>
-                </li>
-              <% end %>
-            <% end %>
+        <details class="w-full text-left">
+          <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
+          <ul class="grid grid--medium-narrow text-left mt-0">
+            <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
           </ul>
         </details>
       <% end %>
 
     <% end %>
     <% if @invites.any? %>
-      <h2 class="w-100 left-align mt3 pb0 border-none">Your pending invitations</h2>
-      <ul class="grid grid--narrow left-align w-100 mt0">
+      <h2 class="w-full text-left mt-8 pb-0 border-none">Your pending invitations</h2>
+      <ul class="grid grid--narrow text-left w-full mt-0">
         <% @invites.each do |invite| %>
           <%= link_to invite do %>
             <li class="card card--item">
@@ -141,11 +94,11 @@
       </ul>
     <% end %>
     <% if @events.empty? && @invites.empty? && !current_user.admin? %>
-      <%= blankslate "No projects associated with your account yet." %>
-      <a href="https://hackclub.com/hcb/apply/?userEmail=<%= current_user.email %>&firstName=<%= current_user.first_name %>&lastName=<%= current_user.last_name %>&returningUser=No,%20first%20time!&userPhone=<%= current_user.phone_number %>" class="btn bg-success">
+      <%= blankslate "No organizations associated with your account yet." %>
+      <%= link_to apply_form_url, class: "btn bg-success" do %>
         <%= inline_icon "plus" %>
-        New project
-      </a>
+        New organization
+      <% end %>
     <% end %>
   <% end %>
   <%= render partial: "static_pages/admin" %>

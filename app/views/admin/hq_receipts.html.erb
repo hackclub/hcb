@@ -1,0 +1,53 @@
+<% title "RECEIPTS FOR HQ EMPLOYEES" %>
+
+<h1>RECEIPTS FOR HQ EMPLOYEES</h1>
+
+<%= paginate @users %>
+
+<%= page_entries_info @users, entry_name: "users" %>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-16">ID</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th class="w-80">Receipts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @users.each do |user| %>
+      <tr>
+        <td><%= user.id %></td>
+        <td>
+          <%= link_to edit_user_path(user) do %>
+            <%= user.name %>
+          <% end %>
+        </td>
+        <td><%= user.email %></td>
+        <td style="width: 50rem;">
+          <% if user.transactions_missing_receipt.count > 0 %>
+            <details class="mb0" style="background: #ff8c3830;">
+              <summary>
+                <%= user.transactions_missing_receipt.count %>
+                <%= "Transaction".pluralize(user.transactions_missing_receipt.count) %> Missing Receipts
+              </summary>
+              <ul>
+                <% user.transactions_missing_receipt.each do | txn | %>
+                  <li>
+                    <%= link_to txn.memo, txn %>
+                    (<%= link_to "x#{txn.stripe_card.last4}", txn.stripe_card %>)
+                  </li>
+                <% end %>
+              </ul>
+            </details>
+          <% else %>
+            0 Transactions Missing Receipts
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @users %>

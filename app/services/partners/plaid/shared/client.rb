@@ -27,6 +27,8 @@ module Partners
             Rails.application.credentials.plaid[:development_secret]
           when "sandbox"
             Rails.application.credentials.plaid[:sandbox_secret]
+          when "production"
+            Rails.application.credentials.plaid[:production_secret]
           end
         end
 
@@ -35,10 +37,7 @@ module Partners
         end
 
         def plaid_env
-          # Since we're only using one account & Plaid's development plan supports up
-          # to 100 accounts, we're just going to stick with the development key in
-          # production for now. Plaid is essentially read-only, so this also works in development.
-          "development"
+          "production"
         end
       end
     end

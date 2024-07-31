@@ -25,7 +25,9 @@
     </li>
   </ul>
 
-  <%= render partial: "callout", locals: { type: "info", emoji: "ℹ️", title: "By default, your permissions have not changed. All existing users are now managers." } %>
+  <%= render "callout", type: "info", title: "By default, your permissions have not changed" do %>
+    <p class="m0">All existing users are now managers.</p>
+  <% end %>
 
   <h2>Detailed breakdown</h2>
 

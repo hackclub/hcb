@@ -1,4 +1,4 @@
-<% disabled = !policy(@source_event).new_transfer? %>
+<% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
 
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
@@ -9,7 +9,7 @@
                                 @allowed_source_events,
                                 :id,
                                 current_user.admin? ? :admin_dropdown_description : :disbursement_dropdown_description,
-                                { prompt: "Select one…", disabled: ->(e) { e != @source_event && !current_user.admin? && e.balance_available <= 0 } },
+                                { prompt: "Select one…", disabled: ->(e) { e != @source_event && !policy(e).create_transfer? || (!current_user.admin? && e.balance_available <= 0) } },
                                 required: true,
                                 disabled: ) %>
   </div>
@@ -64,7 +64,7 @@
 
   <div
       class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"
-      aria-label="<%= @event.demo_mode? ? "Transfers are disabled in Playground mode" : disabled ? "Only managers can make transfers!" : nil %>">
+      aria-label="<%= @event&.demo_mode? ? "Transfers are disabled in Playground mode" : disabled ? "Only managers can make transfers!" : nil %>">
     <%= form.submit "Make transfer", class: "btn", disabled: %>
   </div>
 <% end %>

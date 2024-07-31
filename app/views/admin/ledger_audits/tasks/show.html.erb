@@ -6,6 +6,18 @@
 
 <h2>Fraud-O-Matic: Ledger Auditor (<%= link_to @hcb_code.hcb_code, @hcb_code, target: "_blank" %>)</h2>
 
+<% if @hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
+  <div class="warning bold mb2">
+    ⚠️ Please check these receipts closely, we suspect that their amounts don't match
+  </div>
+<% end %>
+
+<% if @hcb_code.receipts.any? { |r| r.duplicated? } %>
+  <div class="warning bold mb2">
+    ⚠️ We suspect that one or more of these receipts have been used before
+  </div>
+<% end %>
+
 <div class="hcb_code mt2">
   <div class="hcb_code_wrapper <%= event.hack_club_hq? ? "hack_club_hq" : "" %>" style="margin-top: -16px;">
     <%= render partial: "hcb_codes/rich_metadata" %>
@@ -15,17 +27,17 @@
   </div>
   <div class="event_wrapper">
     <%= link_to event, style: "max-width: 90vw", class: "draggable text-decoration-none" do %>
-      <li style="min-width: 270px;" class="card card--hover flex flex-column justify-between h-100 mx-auto <%= "card--background-image" if event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
+      <li style="min-width: 270px;" class="card card--hover flex flex-col justify-between h-100 mx-auto <%= "card--background-image" if event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
         <div id="event-<%= event.id %>-title" class="flex mb2">
           <% if event.logo.attached? %>
             <div style="display: flex; gap: 8px; align-items: center;">
               <%= image_tag event.logo, height: 24, width: 24, class: "rounded display-inline align-bottom" %>
-              <strong class="brand-sans h3 line-height-2 display-inline">
+              <strong class="h3 line-height-2 display-inline">
                 <%= event.name %>
               </strong>
             </div>
           <% else %>
-            <strong class="brand-sans h3 line-height-2 display-inline">
+            <strong class="h3 line-height-2 display-inline">
               <%= event.name %>
             </strong>
           <% end %>
@@ -36,7 +48,7 @@
         <% if event.demo_mode? %>
           <div class="badge bg-info ml0 mb2" style="width: fit-content;">Playground Mode</div>
         <% end %>
-        <div class="brand-sans h4 line-height-2 mb2 flex justify-between item-center">
+        <div class="h4 line-height-2 mb2 flex justify-between item-center">
           <span style="white-space: nowrap; gap: 4px;" class="flex items-center">
             <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
             <%= async_frame_to event_async_balance_path(event), as: :span do %>

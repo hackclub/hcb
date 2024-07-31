@@ -32,13 +32,19 @@
     display: block!important;
   }
 
-  #summary {
+  #summary:not(.closed) {
     flex-direction: column!important;
     flex-shrink: initial!important;
     min-width: fit-content;
     .stat {
       width: fit-content;
     }
+  }
+
+  #summary.closed {
+    flex-grow: 1;
+    flex-wrap: wrap;
+    max-width: 100%;
   }
 }
 

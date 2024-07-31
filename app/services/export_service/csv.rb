@@ -28,7 +28,7 @@ module ExportService
     end
 
     def header
-      ::CSV::Row.new(headers, ["date", "memo", "amount_cents", "tags"], true)
+      ::CSV::Row.new(headers, ["date", "memo", "amount_cents", "tags", "comments"], true)
     end
 
     def row(ct)
@@ -37,14 +37,15 @@ module ExportService
         [
           ct.date,
           ct.local_hcb_code.memo,
-          ct.amount_cents,
-          ct.local_hcb_code.tags.filter { |tag| tag.event_id == @event_id }.pluck(:label).join(", ")
+          @public_only && ct.likely_account_verification_related? ? 0 : ct.amount_cents,
+          ct.local_hcb_code.tags.filter { |tag| tag.event_id == @event_id }.pluck(:label).join(", "),
+          @public_only ? "" : ct.local_hcb_code.comments.not_admin_only.pluck(:content).join("\n\n")
         ]
       )
     end
 
     def headers
-      [:date, :memo, :amount_cents, :tags]
+      [:date, :memo, :amount_cents, :tags, :comments]
     end
 
   end

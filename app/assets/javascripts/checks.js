@@ -28,7 +28,7 @@ $(document).on('change paste keyup input', '*[id^="increase_check_"]', event => 
       }
       const words = amountToCheckWords(amount)
 
-      $('[data-behavior~="check_amount"]').text(amount || '　')
+      $('[data-behavior~="check_amount"]').text(amount ? event.currentTarget.valueAsNumber?.toLocaleString("en-US", { minimumFractionDigits: 2 }) : '　')
       $('[data-behavior~="check_amount_words"]').text(words || '　')
     }
 

@@ -1,0 +1,58 @@
+<div class="rounded-lg bg-[#E2ECF5] bg-check-pattern dark:bg-[#193046] dark:bg-none shadow-lg relative flex flex-col justify-end p-6 xs-hide w-full mt3 mb3 outline-1 outline-muted outline-dotted -outline-offset-8 <%= local_assigns[:class] %>" data-behavior="hover_tilt">
+  <div class="font-check text-right"><%= check_number || "----" %></div>
+
+  <div class="flex w-full justify-end items-end mb-2 gap-3">
+    <div class="text-sm uppercase font-semibold leading-tight shrink-0">Date</div>
+    <div class="[border-bottom-style:solid] border-b border-[#1f2d3d] dark:border-slate font-check-handwriting text-2xl truncate pr-10 pl-3"><%= date %></div>
+  </div>
+
+  <div class="flex items-end mb-2">
+    <div class="text-sm uppercase font-semibold leading-tight shrink-0">Pay to the<br>order of</div>
+    <div
+      class="flex-grow [border-bottom-style:solid] border-b border-[#1f2d3d] dark:border-slate font-check-handwriting text-2xl mx-8 truncate"
+      <% if local_assigns[:editable] %>
+        data-behavior="check_orderof"
+      <% end %>>
+      <%= recipient_name %>
+    </div>
+    <div class="text-xl mr-1">$</div>
+    <div
+      class="font-check-handwriting bg-white dark:bg-transparent dark:border-2 dark:border-solid dark:border-slate text-2xl px-2 max-w-48 truncate"
+      <% if local_assigns[:editable] %>
+        data-behavior="check_amount"
+      <% end %>>
+      <%= render_money_amount amount %>
+    </div>
+  </div>
+
+  <div class="flex w-full mb-2 gap-3 items-end">
+    <div
+      class="[border-bottom-style:solid] border-b border-[#1f2d3d] dark:border-slate flex-grow font-check-handwriting text-2xl truncate pr-10"
+      data-check-amount="<%= render_money_amount amount %>"
+      data-behavior="fill_check_words <%= "check_amount_words" if local_assigns[:editable] %>"></div>
+    <div class="text-sm uppercase font-semibold leading-tight shrink-0">Dollars</div>
+  </div>
+
+  <div class="grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-4">
+    <div class="flex w-full gap-3 items-end">
+      <div class="text-sm uppercase font-semibold leading-tight shrink-0">Memo</div>
+      <div
+        class="[border-bottom-style:solid] border-b border-[#1f2d3d] dark:border-slate flex-grow font-check-handwriting text-2xl truncate pr-10"
+        <% if local_assigns[:editable] %>
+          data-behavior="check_memo"
+        <% end %>><%= memo %></div>
+    </div>
+
+    <%= image_tag "zach_signature.png", height: 64, class: "dark:invert row-span-2 place-self-end" %>
+
+    <p class="my-0 font-check">
+        &#9286;
+        <%= check_number&.rjust(10, "0") || ("0" * 10) %>
+        &#9286;
+        <%= local_assigns[:account_details]&.routing_number || "111111111" %>
+        &#9286;
+        <%= local_assigns[:account_details]&.account_number&.slice(0..2) || "123" %>[HIDDEN]
+        &#9286;
+    </p>
+  </div>
+</div>

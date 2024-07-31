@@ -1,4 +1,5 @@
 <%= form_with url: feedback_path, class: "feedback-form #{"feedback-form--with-dock" if content_for?(:nav)}", data: { "turbo" => true, "controller" => "class form focus confetti", "class-class-value" => "visible", "focus-delay-value" => 50, "action" => "turbo:submit-end->form#reset turbo:submit-end->class#remove turbo:submit-end->confetti#party" } do |form| %>
+  <div class="feedback-form__support_redirect">Looking for support? <%= link_to "Email us", "mailto:hcb@hackclub.com", target: :_blank %>.</div>
   <%= form.text_area :message, placeholder: "I wish HCB had...", required: true, class: "feedback-form__message", data: { "behavior" => "no_autosize ctrl_enter_submit", "focus-target" => "element" } %>
 
   <%= form.hidden_field :page_path, value: request.original_fullpath %>

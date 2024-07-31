@@ -16,23 +16,22 @@ class OrganizerPositionDeletionRequestsController < ApplicationController
     authorize @opdr
 
     @commentable = @opdr
-    @comment = Comment.new
     @comments = @commentable.comments
   end
 
   def new
     if params[:event_id].nil?
-      @op = OrganizerPosition.find(params[:organizer_id])
+      @op = OrganizerPosition.find(params[:organizer_position_id])
       authorize @op.organizer_position_deletion_requests.build
-      return redirect_to new_event_organizer_remove_path(event_id: @op.event.slug, organizer_id: @op.user.slug)
+      return redirect_to new_event_organizer_position_remove_path(event_id: @op.event.slug, organizer_position_id: @op.user.slug)
     end
 
     @event = Event.friendly.find(params[:event_id])
     begin
-      @user = User.friendly.find(params[:organizer_id])
+      @user = User.friendly.find(params[:organizer_position_id])
       @op = OrganizerPosition.find_by!(event: @event, user: @user)
     rescue ActiveRecord::RecordNotFound
-      @op = OrganizerPosition.find_by!(event: @event, id: params[:organizer_id])
+      @op = OrganizerPosition.find_by!(event: @event, id: params[:organizer_position_id])
     end
 
     @event = @op.event

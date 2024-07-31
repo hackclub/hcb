@@ -36,10 +36,6 @@ class InvoicePolicy < ApplicationPolicy
     admin_or_user
   end
 
-  def manual_payment?
-    user&.admin?
-  end
-
   def manually_mark_as_paid?
     user&.admin?
   end

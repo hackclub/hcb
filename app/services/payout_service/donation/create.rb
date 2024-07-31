@@ -37,7 +37,7 @@ module PayoutService
       end
 
       def funds_available?
-        Time.current.to_i > donation.remote_donation.charges.data.first.balance_transaction.available_on
+        Time.current.to_i > donation.remote_donation.latest_charge.balance_transaction.available_on
       end
 
     end

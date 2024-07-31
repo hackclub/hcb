@@ -1,10 +1,25 @@
 <% content_for(:nav) do %>
   <h1 class="flex items-center xs-hide border-none h1 mt0 mb0 pt2">
-    <%= avatar_for current_user, 36, class: "mr1" %>
+    <%= avatar_for current_user, 36, { class: "mr1" } %>
     <%= current_user.initial_name %>
   </h1>
 
-  <nav class="dock mt2">
+  <div>
+    <button
+      class="btn h-10 bg-none bg-smoke shadow-none w-100 justify-start mt1 px-3 hover:shadow-none display-none-not-important md:flex"
+      style="border-radius: 8px"
+      id="command_bar_trigger">
+      <span class="flex-grow text-left font-medium">Jump to...</span>
+      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md mr-2 text-sm">
+        ⌘
+      </span>
+      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md text-sm">
+        K
+      </span>
+    </button>
+  </div>
+
+  <nav class="dock font-medium mt1">
     <%= dock_item "Home",
       root_path,
       tooltip: "See all your organizations",
@@ -26,7 +41,7 @@
       tooltip: "See expense reimbursements",
       icon: "attachment",
       async_badge: my_draft_reimbursements_icon_path,
-      selected: local_assigns[:selected] == :reimbursements if current_user.events.flag_enabled(:reimbursements_2024_03_10).exists? || Flipper.enabled?(:reimbursements_2024_03_10) %>
+      selected: local_assigns[:selected] == :reimbursements %>
     <%= dock_item "Settings",
       my_settings_path,
       tooltip: "Edit account settings",
@@ -45,6 +60,19 @@
       </div>
     <% end %>
   </nav>
+
+  <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
+    <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
+      <span class="flex items-center w-100">
+          <span class="flex-grow">Recent Activity</span>
+          <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
+            👤 <%= User.currently_online.count %>
+          <% end %>
+      </span>
+    </h4>
+  <% end %>
+
+  <%= render partial: "static_pages/my_activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
 
   <% if current_user.events.not_demo_mode.funded.exists? && Flipper.enabled?(:bank_wrapped, current_user) %>
     <div id="bank-wrapped-dialog" style="display: none;">

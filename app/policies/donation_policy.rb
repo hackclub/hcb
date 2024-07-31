@@ -21,6 +21,10 @@ class DonationPolicy < ApplicationPolicy
     record.event.users.include?(user) || user&.admin?
   end
 
+  def export_donors?
+    record.event.users.include?(user) || user&.admin?
+  end
+
   def refund?
     user&.admin?
   end

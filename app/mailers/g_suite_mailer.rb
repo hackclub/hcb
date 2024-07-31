@@ -9,6 +9,14 @@ class GSuiteMailer < ApplicationMailer
          subject: "[Action Requested] Your Google Workspace for #{@g_suite.domain} needs configuration"
   end
 
+  def notify_of_verification_error
+    @recipient = params[:recipient]
+    @g_suite = GSuite.find(params[:g_suite_id])
+
+    mail to: @recipient.email_address_with_name,
+         subject: "[Action Required] Your Google Workspace for #{@g_suite.domain} encountered a verification error"
+  end
+
   def notify_of_verified
     @recipient = params[:recipient]
     @g_suite = GSuite.find(params[:g_suite_id])

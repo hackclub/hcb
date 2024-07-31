@@ -1,6 +1,7 @@
 <% title "My cards" %>
 <% page_md %>
 <%= render "users/nav", selected: :cards %>
+<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
 
 <h1 class="heading">
   <span class="flex items-center">
@@ -19,7 +20,7 @@
   <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
 </section>
 
-<%= async_frame_to my_cards_shipping_path %>
+<%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
 
 <% if @stripe_cards.any? %>
   <article class="grid grid--wide">
@@ -29,7 +30,7 @@
   <%= blankslate "No cards found!" %>
 <% end %>
 
-<%= async_frame_to my_missing_receipts_list_path %>
+<%= turbo_frame_tag :my_missing_receipts_list, src: my_missing_receipts_list_path, target: "_top" %>
 
 <% if @emburse_cards.any? %>
   <details class="mt3">

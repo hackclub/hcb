@@ -5,7 +5,7 @@ class CardGrantMailer < ApplicationMailer
     @card_grant = params[:card_grant]
     @custom_invite_message = @card_grant.setting.invite_message
 
-    mail to: @card_grant.user.email, subject: "[#{@card_grant.event.name}] You've received a #{@card_grant.amount.format} grant!"
+    mail to: @card_grant.user.email_address_with_name, subject: "[#{@card_grant.event.name}] You've received a #{@card_grant.amount.format} grant!"
   end
 
 end

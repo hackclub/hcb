@@ -7,16 +7,14 @@
 </h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
 <%= render "settings_nav", active: "security" %>
-<h2>Login details</h2>
+<h2>Security</h2>
 <fieldset>
   <% unless @user.phone_number.blank? %>
     <%= turbo_frame_tag :sms_auth_card do %>
-      <div class="session-header mt3 pb2">
-        <legend class="heading flex flex-row justify-start items-center">
-          <span class="h2">Login codes</span>
-          <%= badge_for @user.use_sms_auth ? "SMS" : "Email", class: "bg-muted" %>
-        </legend>
-      </div>
+      <legend class="flex flex-row justify-start items-center mt3 pb2">
+        <span class="h2">Login codes</span>
+        <%= badge_for @user.use_sms_auth ? "SMS" : "Email", class: "bg-muted" %>
+      </legend>
       <div class="card border b--info mt1 mb3">
         <% if @user.phone_number_verified %>
           <% if @user.use_sms_auth %>
@@ -40,8 +38,29 @@
       </div>
     <% end %>
   <% end %>
-  <div class="session-header mt3 pb2" id="security-keys">
-    <legend class="heading flex flex-row justify-start items-center">
+  <% if Flipper.enabled?(:totp_2024_06_13, current_user) %>
+    <div>
+      <legend class="flex flex-row justify-start items-center mt3 pb2">
+        <span class="h2">Time-based one time passwords</span>
+        <%= badge_for "What's this?", class: "bg-muted" %>
+      </legend>
+      <%= turbo_frame_tag :totp_auth_card do %>
+        <div class="card border b--info mt1 mb3">
+          <% if @user.totp.present? %>
+            <p>
+              You set up time-based one time passwords on <%= @user.totp.created_at.strftime("%B %e, %Y") %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :POST } %>
+            </p>
+          <% else %>
+            <p>
+              You currently don't have time-based one time passwords set up, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %> to setup your TOTP.
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="security-keys">
+    <legend class="flex flex-row justify-start items-center">
       <span class="h2">Security keys</span>
       <%= badge_for @user.webauthn_credentials.count, class: "bg-muted" %>
     </legend>
@@ -61,13 +80,13 @@
       Sign in to HCB using your fingerprint or a hardware security key.
     </div>
   <% end %>
-  <div class="session-header pb2">
-    <legend class="heading flex flex-row justify-start items-center">
+  <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2">
+    <legend class="flex flex-row justify-start items-center">
       <span class="h2">Sessions</span>
       <%= badge_for @all_sessions.count, class: "bg-muted" %>
     </legend>
     <%= link_to logout_all_users_path, method: :delete,
-            class: "btn bg-error mt1 py1 px2 h4", disabled: @sessions.count <= 1 do %>
+            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= 1 do %>
       <%= inline_icon "door-leave", size: home_action_size %>
       Sign out everywhere else
     <% end %>
@@ -81,6 +100,22 @@
       <% end %>
     <% end %>
   </div>
+
+  <% if @expired_sessions.any? %>
+    <h3 class="inline-flex items-center">
+      Recently logged out
+      <%= badge_for @expired_sessions.count, class: "bg-muted" %>
+    </h3>
+    <div class="grid grid--split">
+      <% @expired_sessions.each do |session| %>
+        <% if session.is_a? UserSession %>
+          <%= render "user_session", session: %>
+        <% elsif session.is_a? ApiToken %>
+          <%= render "oauth_authorization", authorization: session %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
 </fieldset>
 
 <% if @user.phone_number.present? %>

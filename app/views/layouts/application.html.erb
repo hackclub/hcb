@@ -12,8 +12,11 @@
 
     <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
     <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
-    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
     <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
+    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+
+    <%# Web component used for TOTP / donation QR codes %>
+    <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 
     <% if signed_in? %>
       <script>
@@ -30,31 +33,33 @@
       <script async src="https://cdn.headwayapp.co/widget.js"></script>
     <% end %>
 
-    <script>
-      console.log(`%c                -*%@@%*-
-            .=#@@@@@@@@@@#=.
-         .=%@@@@@*-..-*@@@@@%=.
-       -#@@@@@+:        :+@@@@@#-
-    :*@@@@@*:              :*@@@@@*:
-  =%@@@@#-                    -#@@@@%=.
-*@@@@@+.                        .+@@@@@*
-*@@*-   *@@*      *@@*      *@@*   :*@@*
-        @@@@      @@@@      @@@@
-        @@@@      @@@@      @@@@
-        @@@@      @@@@      @@@@
-        @@@@      @@@@      @@@@
-        @@@@      @@@@      @@@@
-        @@@@      @@@@      @@@@
-        @@@@      @@@@      @@@@
-        *@@*      *@@*      *@@*
+    <% if Rails.env.production? %>
+      <script>
+        console.log(`%c                -*%@@%*-
+              .=#@@@@@@@@@@#=.
+          .=%@@@@@*-..-*@@@@@%=.
+        -#@@@@@+:        :+@@@@@#-
+      :*@@@@@*:              :*@@@@@*:
+    =%@@@@#-                    -#@@@@%=.
+  *@@@@@+.                        .+@@@@@*
+  *@@*-   *@@*      *@@*      *@@*   :*@@*
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          *@@*      *@@*      *@@*
 
-  *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-  *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
-        Come hack on HCB with us!
-<%= Rails.configuration.constants.hack_on_hcb_form_url %>
-`, 'color: #ec3750; font-weight: bold; font-size: 10px;')
-    </script>
+          Come hack on HCB with us!
+  <%= Rails.configuration.constants.hack_on_hcb_form_url %>
+  `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+      </script>
+    <% end %>
 
     <meta name="format-detection" content="telephone=no">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -77,7 +82,6 @@
                         step: @tour&.step || 0,
                         options: @tour&.tourable&.try(:tourable_options) || {},
                         back_to_tour: @back_to_tour %>
-
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
@@ -87,92 +91,25 @@
     <% end %>
     <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
       <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
-        <p class="h5 medium center mt1 mb1">
-          This HCB project has been made public so you can see all its finances.
-          Hey, <%= link_to "what’s HCB?", "https://hackclub.com/hcb/", target: "_blank", class: "primary" %>
+        <p class="h5 font-medium text-center text-balance mt1 mb1">
+          This HCB organization has made their finances public.
+          Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
         </p>
       </div>
     <% end %>
 
-    <%= render "maintenance_banner",
-               datetime: Time.parse("2024-04-03T22:00:00-0700"),
-               duration: 1.hour,
-               learn_more_url: "https://changelog.hcb.hackclub.com/scheduled-maintenance-289134" %>
-
     <% if @event&.demo_mode? && !@no_app_shell && !@no_transparency_header %>
-      <style>
-        .banner-content {
-          grid-template-columns: 1fr 2fr 1fr;
-          place-items: center;
-
-          @media (max-width: 660px) {
-            display: flex;
-            flex-direction: column-reverse;
-            gap: 1rem;
-
-            .playground-desc {
-              order: 1;
-            }
-          }
-        }
-      </style>
-      <div class="w-full dev-banner dev-banner--info rounded-bottom">
-        <div class="flex flex-column container container--md center pb2">
-          <p class="h1 bold center m0">Playground Mode</p>
-          <div class="grid g3 banner-content">
-            <%= link_to event_demo_mode_request_meeting_path(@event), method: :post, class: "btn bg-primary shrink-none nowrap #{"disabled" unless policy(@event).demo_mode_request_meeting? }", data: { tour_step: "activate_account" } do %>
-              <%= inline_icon "welcome" %>Request Activation
-            <% end %>
-            <div class="center h5 playground-desc" style="text-wrap: pretty;">
-              <% meeting_req = @event.demo_mode_request_meeting_at %>
-              <p class="m0 <%= "muted" if meeting_req %>">
-                While in Playground mode, explore the dashboard with mock data, and invite your team.
-                To utilise financial features, request activation!
-              </p>
-              <p class="m0">
-                <% if meeting_req %>
-                  You requested activation on <%= format_date meeting_req %>
-                  (<%= distance_of_time_in_words_to_now meeting_req %> ago).
-                  Please expect an email from our team soon.
-                <% end %>
-              </p>
-            </div>
-            <button
-              id="mock-data-toggle"
-              data-mock-data-status="<%= show_mock_data? %>"
-              class="btn btn-small shrink-none nowrap">
-              <%= inline_icon "view" %>
-              <%= show_mock_data? ? "Hide" : "Show" %> Mock Data
-            </button>
-            <script>
-              document.getElementById("mock-data-toggle").addEventListener("click", ({ target }) => {
-                const currentStatus = target.dataset.mockDataStatus === "true" ? true : false;
-                const url = new URL(window.location.href);
-                url.searchParams.set("show_mock_data", !currentStatus);
-                window.location.href = url.toString();
-              });
-            </script>
-          </div>
+      <div class="w-full dev-banner dev-banner--info rounded-b no-underline">
+        <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+          <%= link_to "#playground-callout", class: "no-underline text-[inherit] hover:text-[inherit]" do %>
+            <p class="font-semibold text-xl m0">Playground Mode</p>
+          <% end %>
+          <%= link_to({ show_mock_data: !show_mock_data? }, class: "btn btn-small w-fit shrink-none nowrap") do %>
+            <%= inline_icon "view" %>
+            <%= show_mock_data? ? "Hide" : "Show" %> Mock Data
+          <% end %>
         </div>
       </div>
-      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="demo_mode">
-        <%= modal_header "Playground Mode" %>
-        <% if organizer_signed_in? %>
-          <p>
-            Your account is in <strong>Playground Mode</strong>. You can sign in and poke around, but many features are disabled. Once you're ready to activate your account, you can schedule a call with the HCB team.
-          </p>
-          <% if @event.demo_mode_request_meeting_at.blank? %>
-            <%= link_to event_demo_mode_request_meeting_path(@event), method: :post, class: "btn btn-success" do %>
-              Request activation
-            <% end %>
-            <p class="muted">After requesting, we'll be in touch within 24 hours on business days.</p>
-          <% else %>
-            <p class="muted">You requested to activate your account around <%= local_time_ago @event.demo_mode_request_meeting_at %>.</p>
-          <% end %>
-        <% else %>
-          <p>This is a <strong>demo account</strong>. Someone created this account about <%= local_time_ago @event.created_at %> to take it for a test drive, but hasn't fully activated their account yet.</p>
-        <% end %>
-      </section>
     <% end %>
 
     <%# LET THERE BE SNOW %>
@@ -211,6 +148,9 @@
           </div>
         <% end %>
 
+        <%= render "application/native_changelog" if @latest_changelog_post %>
+        <%= render "application/the_bin" if @the_bin %>
+
         <aside class="app__sidebar">
           <%= render "application/header" %>
           <%= render "application/flash" %>
@@ -219,7 +159,7 @@
         <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
           <%= yield(:container) %>
           <%= yield %>
-          <%= render "application/footer" unless (@no_app_shell || @hide_footer) %>
+          <%= render "application/footer" unless @no_app_shell || @hide_footer %>
         </article>
       </main>
     <% else %>
@@ -227,11 +167,11 @@
       <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
         <%= render "application/flash" %>
         <%= yield %>
-        <%= render "application/footer" unless (@no_app_shell || @hide_footer) %>
+        <%= render "application/footer" unless @no_app_shell || @hide_footer %>
       </main>
     <% end %>
 
-    <%= render "application/feedback_form" if current_user&.events&.not_demo_mode&.any? %>
+    <%= render "application/feedback_form" if !@no_app_shell && current_user&.events&.not_demo_mode&.any? %>
 
     <% if Rails.env.production? %>
       <%= render "application/fullstory" if current_user&.sessions_reported %>
@@ -255,6 +195,13 @@
           }, 100);
         });
       </script>
+    <% end %>
+    <% if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
+      <style>
+        .success-dark {
+            color: #1f8164
+        }
+      </style>
     <% end %>
   </body>
 </html>

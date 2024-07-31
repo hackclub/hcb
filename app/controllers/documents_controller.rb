@@ -3,15 +3,18 @@
 class DocumentsController < ApplicationController
   before_action :set_event, only: [:index, :new, :fiscal_sponsorship_letter]
   before_action :set_document, except: [:common_index, :index, :new, :create, :fiscal_sponsorship_letter]
+  skip_after_action :verify_authorized, only: [:index]
 
   def common_index
-    @documents = Document.common
-    authorize @documents
+    authorize @active_documents = Document.common.active
+    authorize @archived_documents = Document.common.archived
   end
 
   def index
-    @documents = @event.documents.includes(:user)
-    authorize @documents
+    @active_documents = @event.documents.includes(:user).active
+    @active_common_documents = Document.common.active
+    @archived_documents = @event.documents.includes(:user).archived
+    @archived_common_documents = Document.common.archived
   end
 
   def new
@@ -52,6 +55,20 @@ class DocumentsController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  def toggle_archive
+    authorize @document
+
+    if @document.active?
+      @document.mark_archive!(current_user)
+      flash[:success] = "Document successfully archived."
+    else
+      @document.mark_unarchive!
+      flash[:success] = "Document successfully unarchived."
+    end
+
+    redirect_to @document
   end
 
   def destroy

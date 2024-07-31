@@ -3,8 +3,13 @@
 
 $font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
   'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
-$brand-font-family: ui-rounded, $font-family;
-$mono: 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+$mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+
+:root {
+  @each $name, $value in $palette {
+    --#{"" + $name}: #{$value};
+  }
+}
 
 * {
   box-sizing: border-box;
@@ -35,24 +40,28 @@ body {
   min-height: 100vh;
 }
 
-h1,
-h2,
-h3,
-h4,
-.heading,
-.stat__value,
-.brand-sans {
-  font-family: $brand-font-family;
+.activity {
+  display: none;
 }
 
-.sans {
-  font-family: $font-family;
-}
+@media screen and (min-width: 56em) and (min-height: 640px) {
+  body:has(.activity) {
+    padding-bottom: 0rem;
+  }
 
-pre,
-code,
-.mono {
-  font-family: $mono;
+  .activity {
+    display: block;
+  }
+
+  .container:has(.activity) > .app__sidebar {
+    position: sticky;
+    position: -webkit-sticky;
+    top: 0;
+  }
+
+  .container:has(.activity) > .app__content {
+    padding-bottom: 2rem;
+  }
 }
 
 a {
@@ -60,7 +69,7 @@ a {
 }
 
 strong {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 textarea {
@@ -93,7 +102,7 @@ h2,
 h3,
 h4,
 fieldset legend {
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.125;
   letter-spacing: -0.02em;
 }
@@ -119,6 +128,7 @@ h3 {
 }
 
 h4 {
+  letter-spacing: 0;
   font-size: 1.25rem;
 }
 
@@ -156,7 +166,7 @@ td {
 }
 
 th {
-  font-weight: bold;
+  font-weight: 600;
   text-align: left;
   padding-bottom: 0.125rem;
 }
@@ -200,12 +210,10 @@ summary {
 @import 'components/diffs';
 @import 'components/dock';
 @import 'components/donations';
-@import 'components/donation_qr_codes';
 @import 'components/filters';
 @import 'components/forms';
 @import 'components/header';
 @import 'components/headings';
-@import 'components/incoming_deposits';
 @import 'components/layouts';
 @import 'components/lists';
 @import 'components/menus';
@@ -217,15 +225,11 @@ summary {
 @import 'components/steps';
 @import 'components/tooltips';
 @import 'components/transactions';
-@import 'components/withdraw_breakdown';
-@import 'components/faq';
 @import 'components/promos';
 @import 'components/features';
-@import 'components/settings';
 @import 'components/loading';
 @import 'components/partner_signup';
 @import 'components/file_dropzone';
-@import 'components/footer';
 @import 'components/feedback_form';
 @import 'components/welcome';
 @import 'components/tabs';
@@ -235,8 +239,13 @@ summary {
 @import 'components/shimmer';
 @import 'components/carousel';
 @import 'components/callout';
+@import 'components/breakdown';
+@import 'components/balance_chart';
 @import 'components/reimbursements/expenses';
 @import 'components/reimbursements/actions';
+@import 'components/event_settings';
+@import 'components/tags';
+@import 'components/filter_tabs';
 
 .turbo-progress-bar {
   height: 0.125rem;
@@ -293,19 +302,6 @@ summary {
   overflow: auto;
 }
 
-.memo-frame[busy] {
-  cursor: progress;
-}
-
-.memo-frame[busy] .memo-frame__ai-button {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.embedded .embedded-display-none {
-  display: none;
-}
-
 @keyframes flying-spook {
   from {
     left: 0;
@@ -331,6 +327,28 @@ summary {
 .flying-spook.ghost {
   animation-delay: 50s;
 }
+
+.card:target {
+  animation: highlight 2s;
+  border: 1px solid;
+  border-color: rgba(map-get($palette, warning), 0.25);
+
+  .card__banner {
+    border-color: inherit;
+  }
+}
+
+@keyframes highlight {
+  from {
+    border: 1px solid map-get($palette, warning);
+    background-color: map-get($palette, warning);
+  }
+  to {
+    border: 1px solid rgba(map-get($palette, warning), 0.25);
+    background-color: none;
+  }
+}
+
 
 // Make mobile views nice. Full-bleed separator lines
 @media screen and (max-width: 32em) {
@@ -417,3 +435,30 @@ summary {
 @import 'kbar';
 @import 'utilities';
 @import 'dark';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  pre,
+  code {
+    @apply font-mono;
+  }
+}
+
+@layer utilities {
+  .caps {
+    @apply uppercase tracking-widest;
+  }
+
+  .line-height-0 {
+    @apply leading-[0];
+  }
+
+  .text-shadow {
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.25),
+      0 2px 4px rgba(0, 0, 0, 0.125);
+  }
+}

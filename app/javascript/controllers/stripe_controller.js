@@ -47,8 +47,14 @@ export default class extends Controller {
         if (this.hasErrorsTarget) {
           const flash = document.createElement('p')
           flash.classList.add('flash', 'error', 'fit', 'mt1', 'mb3')
-          flash.textContent = `Something went wrong: ${result.error.message}`
-
+          if (
+            result.error.code == 'payment_intent_authentication_failure' ||
+            result.error.code == 'card_declined'
+          ) {
+            flash.textContent = `Something went wrong: your bank declined this transaction. Please contact them to approve it.`
+          } else {
+            flash.textContent = `Something went wrong: ${result.error.message}`
+          }
           this.errorsTarget.appendChild(flash)
         } else {
           alert(`Something went wrong: ${result.error.message}`)

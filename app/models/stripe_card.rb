@@ -4,34 +4,35 @@
 #
 # Table name: stripe_cards
 #
-#  id                                  :bigint           not null, primary key
-#  activated                           :boolean          default(FALSE)
-#  card_type                           :integer          default("virtual"), not null
-#  is_platinum_april_fools_2023        :boolean
-#  last4                               :text
-#  lost_in_shipping                    :boolean          default(FALSE)
-#  name                                :string
-#  purchased_at                        :datetime
-#  spending_limit_amount               :integer
-#  spending_limit_interval             :integer
-#  stripe_brand                        :text
-#  stripe_exp_month                    :integer
-#  stripe_exp_year                     :integer
-#  stripe_shipping_address_city        :text
-#  stripe_shipping_address_country     :text
-#  stripe_shipping_address_line1       :text
-#  stripe_shipping_address_line2       :text
-#  stripe_shipping_address_postal_code :text
-#  stripe_shipping_address_state       :text
-#  stripe_shipping_name                :text
-#  stripe_status                       :text
-#  created_at                          :datetime         not null
-#  updated_at                          :datetime         not null
-#  event_id                            :bigint           not null
-#  replacement_for_id                  :bigint
-#  stripe_cardholder_id                :bigint           not null
-#  stripe_id                           :text
-#  subledger_id                        :bigint
+#  id                                    :bigint           not null, primary key
+#  card_type                             :integer          default("virtual"), not null
+#  initially_activated                   :boolean          default(FALSE), not null
+#  is_platinum_april_fools_2023          :boolean
+#  last4                                 :text
+#  lost_in_shipping                      :boolean          default(FALSE)
+#  name                                  :string
+#  purchased_at                          :datetime
+#  spending_limit_amount                 :integer
+#  spending_limit_interval               :integer
+#  stripe_brand                          :text
+#  stripe_exp_month                      :integer
+#  stripe_exp_year                       :integer
+#  stripe_shipping_address_city          :text
+#  stripe_shipping_address_country       :text
+#  stripe_shipping_address_line1         :text
+#  stripe_shipping_address_line2         :text
+#  stripe_shipping_address_postal_code   :text
+#  stripe_shipping_address_state         :text
+#  stripe_shipping_name                  :text
+#  stripe_status                         :text
+#  created_at                            :datetime         not null
+#  updated_at                            :datetime         not null
+#  event_id                              :bigint           not null
+#  replacement_for_id                    :bigint
+#  stripe_card_personalization_design_id :integer
+#  stripe_cardholder_id                  :bigint           not null
+#  stripe_id                             :text
+#  subledger_id                          :bigint
 #
 # Indexes
 #
@@ -47,9 +48,13 @@
 #  fk_rails_...  (stripe_cardholder_id => stripe_cardholders.id)
 #
 class StripeCard < ApplicationRecord
+  self.ignored_columns = ["activated"]
   include Hashid::Rails
   include PublicIdentifiable
   set_public_id_prefix :crd
+
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/cards", :stripe_id
 
   has_paper_trail
 
@@ -71,12 +76,13 @@ class StripeCard < ApplicationRecord
   belongs_to :subledger, optional: true
   belongs_to :stripe_cardholder
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
+  belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
   has_one :replacement, class_name: "StripeCard", foreign_key: :replacement_for_id
-  alias_attribute :cardholder, :stripe_cardholder
+  alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_many :stripe_authorizations
-  alias_attribute :authorizations, :stripe_authorizations
-  alias_attribute :transactions, :stripe_authorizations
+  alias_method :authorizations, :stripe_authorizations
+  alias_method :transactions, :stripe_authorizations
   alias_attribute :platinum, :is_platinum_april_fools_2023
 
   has_one :card_grant, required: false
@@ -108,6 +114,9 @@ class StripeCard < ApplicationRecord
                         if: -> { self.stripe_id.present? }
 
   validate :only_physical_cards_can_be_lost_in_shipping
+  validate :only_physical_cards_can_have_personalization_design
+  validate :personalization_design_must_be_of_the_same_event
+  validates_length_of :name, maximum: 40
 
   def full_card_number
     secret_details[:number]
@@ -115,6 +124,14 @@ class StripeCard < ApplicationRecord
 
   def cvc
     secret_details[:cvc]
+  end
+
+  def url
+    "/stripe_cards/#{hashid}"
+  end
+
+  def popover_url
+    "/stripe_cards/#{hashid}?frame=true"
   end
 
   def formatted_card_number
@@ -132,7 +149,7 @@ class StripeCard < ApplicationRecord
   end
 
   def hidden_card_number_with_last_four
-    return hidden_card_number unless activated?
+    return hidden_card_number unless initially_activated?
 
     "•••• •••• •••• #{last4}"
   end
@@ -146,7 +163,7 @@ class StripeCard < ApplicationRecord
   end
 
   def status_text
-    return "Inactive" if !activated?
+    return "Inactive" if !initially_activated?
     return "Frozen" if stripe_status == "inactive"
 
     stripe_status.humanize
@@ -158,17 +175,13 @@ class StripeCard < ApplicationRecord
     s = stripe_status.to_sym
     return :success if s == :active
     return :error if s == :deleted
-    return :warning if s == :inactive && !activated?
+    return :warning if s == :inactive && !initially_activated?
 
     :muted
   end
 
   def state
     status_badge_type
-  end
-
-  def stripe_dashboard_url
-    "https://dashboard.stripe.com/issuing/cards/#{self.stripe_id}"
   end
 
   def freeze!
@@ -190,7 +203,7 @@ class StripeCard < ApplicationRecord
   end
 
   def frozen?
-    activated? && stripe_status == "inactive"
+    initially_activated? && stripe_status == "inactive"
   end
 
   def last_frozen_by
@@ -257,11 +270,12 @@ class StripeCard < ApplicationRecord
     self.last4 = stripe_obj[:last4]
     self.stripe_status = stripe_obj[:status]
     self.card_type = stripe_obj[:type]
+    self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
 
     if stripe_obj[:status] == "active"
-      self.activated = true
-    elsif stripe_obj[:status] == "inactive" && !self.activated
-      self.activated = false
+      self.initially_activated = true
+    elsif stripe_obj[:status] == "inactive" && !self.initially_activated
+      self.initially_activated = false
     end
 
     if stripe_obj[:shipping]
@@ -355,9 +369,17 @@ class StripeCard < ApplicationRecord
                                .pluck(:hcb_code)
   end
 
+  def active_spending_control
+    return @active_spending_control if defined?(@active_spending_control)
+
+    @active_spending_control = event.organizer_positions.find_by(user:)&.active_spending_control
+  end
+
   def balance_available
     if subledger.present?
       subledger.balance_cents
+    elsif active_spending_control
+      active_spending_control.balance_cents
     else
       event.balance_available_v2_cents
     end
@@ -403,6 +425,18 @@ class StripeCard < ApplicationRecord
   def only_physical_cards_can_be_lost_in_shipping
     if !physical? && lost_in_shipping?
       errors.add(:lost_in_shipping, "can only be true for physical cards")
+    end
+  end
+
+  def only_physical_cards_can_have_personalization_design
+    if !physical? && personalization_design.present?
+      errors.add(:personalization_design, "can only be add to for physical cards")
+    end
+  end
+
+  def personalization_design_must_be_of_the_same_event
+    if personalization_design&.event.present? && personalization_design.event != event
+      errors.add(:personalization_design, "must be of the same event")
     end
   end
 

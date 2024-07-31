@@ -1,16 +1,19 @@
-<%# locals: (hcb_code:, form: false, prepended_to_memo: "", renamed: false) -%>
+<%# locals: (hcb_code:, form: false, prepended_to_memo: "", location: "hcb_code_show_page", renamed: false) -%>
 
 <% form ||= false %>
 <% prepended_to_memo ||= "" %>
+<% location ||= "hcb_code_show_page" %>
 <% renamed ||= false %>
+<% disabled ||= false %>
 
-<% if organizer_signed_in?(hcb_code.event) && hcb_code.event && !hcb_code.event&.demo_mode? %>
-  <%= turbo_frame_tag "#{dom_id(hcb_code)}:memo", style: "flex-grow: 1"  do %>
+<% if organizer_signed_in?(@event || hcb_code.event) && (@event || hcb_code.event) && !(@event || hcb_code.event)&.demo_mode? %>
+  <%= turbo_frame_tag "#{location}:#{dom_id(hcb_code)}:memo", style: "flex-grow: 1"  do %>
     <% if form %>
-        <%= form_with model: hcb_code, data: { turbo: true, controller: "form" } do |form| %>
+        <%= form_with model: hcb_code, class: "renaming", data: { turbo: true, controller: "form" } do |form| %>
           <div class="flex items-center">
             <%= form.hidden_field :inline, value: "true" %>
             <%= form.hidden_field :prepended_to_memo, value: prepended_to_memo %>
+            <%= form.hidden_field :location, value: location %>
             <%= form.text_field :memo,
                                 list: "custom-memos",
                                 placeholder: hcb_code.memo,
@@ -25,16 +28,22 @@
       <span class="align-middle <%= "renamed" if renamed %>"
             data-controller="navigation"
             data-action="dblclick->navigation#navigate"
-            data-navigation-location-param="<%= edit_hcb_code_path(hcb_code, inline: true, prepend: prepended_to_memo) %>"
-            data-navigation-frame-param="<%= "#{ActionView::RecordIdentifier.dom_id(hcb_code)}:memo" %>"
-            style="cursor: pointer">
+            data-navigation-location-param="<%= edit_hcb_code_path(hcb_code, inline: true, prepended_to_memo:, location:) %>"
+            data-navigation-frame-param="<%= "#{location}:#{ActionView::RecordIdentifier.dom_id(hcb_code)}:memo" %>"
+            style="cursor: text">
           <span
             class="mr2 align-middle tooltipped tooltipped--s"
             style="color: inherit; text-decoration: none;"
             aria-label="Double click to rename this transaction">
-            <%= prepended_to_memo %> <%= hcb_code.memo %>
+            <%= prepended_to_memo %>
+            <span data-memo-for="<%= dom_id(hcb_code) %>">
+              <%= hcb_code.memo %>
+            </span>
           </span>
       </span>
+      <% if renamed %>
+        <%= render "hcb_codes/memo_stream", hcb_code: %>
+      <% end %>
     <% end %>
   <% end %>
 <% else %>

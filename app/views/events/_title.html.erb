@@ -1,6 +1,6 @@
 <div data-controller="menu" class="pt2">
   <%= link_to @event, class: "text-decoration-none event-title", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
-    <h1 class="pointer flex items-center border-none h1 mt0 mb0 primary break-word">
+    <h1 class="pointer flex items-center border-none h1 mt0 mb0 black break-words">
       <%= @event.name %>
       <%= inline_icon "down-caret", class: "event-title-dropdown-icon" if show_org_switcher? %>
     </h1>

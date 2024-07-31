@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ReceiptableMailer < ApplicationMailer
-  default to: -> { @user.email },
+  default to: -> { @user.email_address_with_name },
           subject: -> { @subject }
 
   def receipt_report

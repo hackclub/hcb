@@ -1,3 +1,8 @@
+<%= link_to disbursements_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to disbursements
+<% end %>
+
 <h1>Process Disbursement #<%= @disbursement.id %></h1>
 <p><small>Current Status: <%= @disbursement.state_text %></small></p>
 

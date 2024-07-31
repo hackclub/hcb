@@ -4,6 +4,7 @@ module Errors
   class InvalidLoginCode < StandardError
   end
 
-  class BrowserMismatch < StandardError
+  class ValidationError < StandardError
   end
+
 end

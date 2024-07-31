@@ -4,14 +4,12 @@
   <% end %>
   <% if @user.stripe_cardholder.present? %>
     <%= settings_tab active: active == "address" do %>
-      <%= link_to "Billing Address", @user == current_user ? settings_address_path : address_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
+      <%= link_to "Billing address", @user == current_user ? settings_address_path : address_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
   <% end %>
-  <% if Flipper.enabled?(:reimbursements_2024_03_10, @user) %>
-    <%= settings_tab active: active == "payouts" do %>
-      <%= link_to @user == current_user ? settings_payouts_path : payouts_user_path(@user), data: { turbo: true, turbo_action: "advance" } do %>
-        Reimbursement Payouts
-      <% end %>
+  <%= settings_tab active: active == "payouts" do %>
+    <%= link_to @user == current_user ? settings_payouts_path : payouts_user_path(@user), data: { turbo: true, turbo_action: "advance" } do %>
+      Reimbursement payouts
     <% end %>
   <% end %>
   <%= settings_tab active: active == "previews" do %>

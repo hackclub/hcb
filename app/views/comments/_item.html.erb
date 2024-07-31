@@ -1,9 +1,9 @@
 <% if policy(comment).show? %>
-  <div class="mt2 mb2">
-    <div class="card border b--muted pb0 pt0 mb2 max-width-4<%= " current-user" if comment.user == current_user %>  <%= " comment--admin" if comment.admin_only? %>" id="comment-<%= comment.hashid %>">
+  <div class="mt2 mb2 <%= local_assigns[:class] %>" id="<%= dom_id comment %>">
+    <div class="card border pb0 pt0 mb2 max-width-4<%= " current-user" if comment.user == current_user %>  <%= " comment--admin" if comment.admin_only? %>" id="comment-<%= comment.hashid %>">
       <div class="border-bottom card__banner secondary">
-        <%= user_mention comment.user %> <%= comment.action_text %>
-        <%= link_to "#comment-#{comment.hashid}", class: "anchor-link", 'data-anchor': "comment-#{comment.hashid}", title: comment.created_at do %>
+        <%= user_mention comment.user, click_to_mention: true %> <%= comment.action_text %>
+        <%= link_to "#comment-#{comment.hashid}", title: comment.created_at, data: { controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: "comment-#{comment.hashid}"), action: "clipboard#copy" } do %>
           <%= time_ago_in_words comment.created_at %> ago<%= inline_icon "link", size: 24, class: "align-middle" %><% end %>
         <% if comment.edited? %>
         <span class="mx1">|</span>
@@ -12,6 +12,11 @@
             class: "muted tooltipped tooltipped--s",
             'aria-label': "See all edit history" %>
         </action>
+        <% end %>
+        <% if policy(comment).destroy? %>
+          <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?" } do %>
+            <%= inline_icon "delete", size: 24, 'aria-label': "Delete" %>
+          <% end %>
         <% end %>
         <% if policy(comment).edit? %>
           <%= link_to edit_comment_path(comment), class: "tooltipped tooltipped--s right", 'aria-label': "Edit", data: { turbo: false } do %>
@@ -23,7 +28,7 @@
         <% if comment.content.blank? %>
           <span class="muted"><em>Comment left blank.</em></span>
         <% else %>
-          <%== MarkdownService.instance.renderer.render comment.content %>
+          <%== MarkdownService.instance.renderer(current_user:, record: comment).render comment.content %>
         <% end %>
       </div>
       <% if comment.has_attached_file? %>
@@ -49,7 +54,7 @@
     <%= modal_header "Edit History" %>
     <ul class="list-reset">
       <% comment.versions.where(event: "update").reverse.each do |version| %>
-        <% if version&.changeset&.[]("content_ciphertext")&.any? %>
+        <% if version&.changeset&.[]("content_ciphertext")&.compact_blank&.any? %>
           <li class="mb2">
             <%= version.whodunnit.nil? ? "Automatically " : user_mention(User.find(version.whodunnit)) %>
             updated <%= time_ago_in_words version.created_at %> ago

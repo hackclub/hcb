@@ -1,6 +1,10 @@
 g_suite_mark_verifieds_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "GSuiteJob::MarkVerifieds"
+
+g_suite_verify_all_job:
+  cron: "0 */1 * * *" # run every 1 hour
+  class: "GSuiteJob::VerifyAll"
   
 pending_transaction_engine_nightly_job:
   cron: "0 */3 * * *" # run every 3 hour
@@ -63,7 +67,7 @@ payout_nightly_job:
   class: "PayoutJob::Nightly"
 
 reimbursement_nightly_job:
-  cron: "0 0 * * *" # run every 1 day
+  cron: "*/5 * * * *" # run every 5 minutes
   class: "ReimbursementJob::Nightly"
 
 bank_fee_nightly_job:
@@ -87,7 +91,7 @@ receipt_report_weekly_job:
   class: "ReceiptReportJob::Weekly"
 
 receipt_report_monthly_job:
-  cron: "0 0 1 * *" # run first day of each month
+  cron: "0 0 3 * *" # run first day of each month
   class: "ReceiptReportJob::Monthly"
 
 column_statement_monthly_job:
@@ -122,3 +126,19 @@ calculate_subjects_metrics:
 ledger_audit_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "GenerateLedgerAuditJob"
+
+send_admin_reminders_job:
+  cron: "0 7 * * *" # run at 7am UTC each morning
+  class: "SendAdminRemindersJob"
+
+gauge_online_user_count_job:
+  cron: "*/5 * * * *" # Every 5 minutes
+  class: "StatsdJob::GaugeOnlineUserCount"
+
+transaction_report_job:
+  cron: "0 5 * * mon" # 5 AM every Monday
+  class: "TransactionReportJob"
+
+headway_job:
+  cron: "*/5 * * * *"
+  class: "HeadwayJob"

@@ -1,21 +1,21 @@
-<footer class="footer">
-  <p class="center mt4">
+<footer class="[&_*]:transition-colors [&_*]:text-muted/50 [&:hover_*]:text-muted/80 [&_a:hover]:text-muted">
+  <p class="center mt-12">
     <%= help_message if current_user %>
   </p>
 
-  <p class="center">
+  <p class="text-center space-x-2 *:inline-block">
     <%= link_to "HCB FAQs", faq_path %>
-    <span class="inline-block pl1 pr1">&middot;</span>
+    <span>&middot;</span>
     <%= link_to "Brand Guidelines", branding_path %>
-    <span class="inline-block pl1 pr1">&middot;</span>
+    <span>&middot;</span>
     <%= link_to "HCB APIs", v3_path %>
     <% if current_user&.events&.not_demo_mode&.any? %>
-      <span class="inline-block pl1 pr1">&middot;</span>
+      <span>&middot;</span>
       <%= link_to "Share Feedback", "https://hack.af/bank-userfeedback?prefill_Name=#{current_user&.name}&prefill_Email=#{current_user&.email}&prefill_Organization=#{current_user&.events&.first&.name}", target: :_blank %>
     <% end %>
   </p>
 
-  <p class="center h6">
+  <p class="text-center text-xs">
     <% if commit_hash.present? %>
       <% if commit_duration.present? %>
         Build <em aria-label="<%= commit_hash %>" class="tooltipped tooltipped--n tooltipped--lg"><%= commit_name %></em>
@@ -27,7 +27,7 @@
     <% unless Rails.env.production? %>
       <% @sql_count = QueryCount::Counter.counter %>
       <% @sql_cached_count = QueryCount::Counter.counter_cache %>
-      Loaded using <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %> cached).
+      Loaded using <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %> cached). Running on Rails <%= Rails::VERSION::STRING %>.
     <% end %>
   </p>
 </footer>

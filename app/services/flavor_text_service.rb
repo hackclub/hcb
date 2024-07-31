@@ -20,10 +20,12 @@ class FlavorTextService
     in_frc_team = @user&.events&.exists?(category: Event.categories["robotics team"])
 
     if in_frc_team
-      (flavor_texts + frc_flavor_texts).sample(random: @random)
+      flavor_text = (flavor_texts + frc_flavor_texts).sample(random: @random)
     else
-      flavor_texts.sample(random: @random)
+      flavor_text = flavor_texts.sample(random: @random)
     end
+    flavor_text = flavor_text.call if flavor_text.respond_to? :call
+    flavor_text
   end
 
   def development_flavor_texts
@@ -404,8 +406,8 @@ class FlavorTextService
       "Hey there cutie!",
       "You're looking great today :)",
       "Great! You're here!",
-      "No time to explain: #{%w[quack bark honk].sample(random: @random)} as loud as you can!",
-      "Please see attached #{%w[gif avi mp3 wav zip].sample(random: @random)}",
+      "No time to explain: #{%w[quack bark honk meow].sample(random: @random)} as loud as you can!",
+      "Please see attached #{%w[gif avi mp3 wav zip .rar docx].sample(random: @random)}",
       "Cont. on page 42",
       "See fig. 42",
       "<span class='hide-print'>Try printing this, I dare you</span><span class='hide-non-print'>Gottem!</span>".html_safe,
@@ -492,7 +494,15 @@ class FlavorTextService
       "Wow, that’s a lot of money. Need some help carrying it?",
       "I would rather check my Facebook than face my checkbook.",
       "The only part not outstanding is our balance",
+      "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
       "Wanna&nbsp;<a href='#{Rails.configuration.constants.hack_on_hcb_form_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
+      "everyone's favorite money thing!",
+      -> { "#{UserSession.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
+      "We Column like we see 'em!",
+      "Raccoon-tested, dinosaur-approved.",
+      "original recipe!",
+      "now sugar-free!",
+      "low-sodium edition",
     ]
   end
 

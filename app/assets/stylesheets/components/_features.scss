@@ -1,29 +1,29 @@
-@import 'variables';
+@import '../variables';
 
 .feature-disbursements {
   background: $snow;
-  background-image: #{image-url('feature-internal-transfer-light.png')};
+  background-image: url('feature-internal-transfer-light.png');
   background-size: 3em;
 }
 
 html[data-dark='true'] {
   .feature-disbursements {
     background: $black;
-    background-image: #{image-url('feature-internal-transfer-dark.png')};
+    background-image: url('feature-internal-transfer-dark.png');
     background-size: 3em;
   }
 }
 
 .feature-receipt-upload {
   background-color: $snow;
-  background-image: #{image-url('feature-receipt-upload-light.png')};
+  background-image: url('feature-receipt-upload-light.png');
   background-size: 6em;
 }
 
 html[data-dark='true'] {
   .feature-receipt-upload {
     background-color: $black;
-    background-image: #{image-url('feature-receipt-upload-dark.png')};
+    background-image: url('feature-receipt-upload-dark.png');
   }
 }
 
@@ -39,14 +39,27 @@ html[data-dark='true'] {
 
 .feature-sms-receipt-notification {
   background-color: $snow;
-  background-image: #{image-url('feature-sms-receipt-notification-light.png')};
+  background-image: url('feature-sms-receipt-notification-light.png');
   background-size: 8em;
 }
 
 html[data-dark='true'] {
   .feature-sms-receipt-notification {
     background-color: $black;
-    background-image: #{image-url('feature-sms-receipt-notification-dark.png')};
+    background-image: url('feature-sms-receipt-notification-dark.png');
+  }
+}
+
+.feature-ai-memos {
+  background-color: $snow;
+  background-image: url('feature-ai-memos-light.png');
+  background-size: 8em;
+}
+
+html[data-dark='true'] {
+  .feature-ai-memos {
+    background-color: $black;
+    background-image: url('feature-ai-memos-dark.png');
   }
 }
 
@@ -66,7 +79,7 @@ html[data-dark='true'] {
     bottom: 0;
     left: 0;
     right: 0;
-    background-image: #{image-url('feature-transaction-tags-dark.png')};
+    background-image: url('feature-transaction-tags-dark.png');
     background-size: 24em;
     opacity: 0.1;
   }
@@ -84,14 +97,14 @@ html[data-dark='true'] .feature-transaction-tags {
   background-color: $snow;
   background-image:
     linear-gradient(to right, rgba($snow, 0.9), rgba($snow, 0.9)),
-    #{image-url('feature-reimbursements.png')};
+    url('feature-reimbursements.png');
   background-size: 4em;
 }
 
 html[data-dark='true'] {
   .feature-reimbursements  {
     background-color: $black;
-    background-image: #{image-url('feature-reimbursements.png')};
+    background-image: url('feature-reimbursements.png');
   }
 }
 
@@ -99,14 +112,14 @@ html[data-dark='true'] {
   background-color: $snow;
   background-image:
     linear-gradient(to right, rgba($snow, 0.9), rgba($snow, 0.9)),
-    #{image-url('feature-turbo.png')};
+    url('feature-turbo.png');
   background-size: 4em;
 }
 
 html[data-dark='true'] {
   .feature-turbo {
     background-color: $black;
-    background-image: #{image-url('feature-turbo.png')};
+    background-image: url('feature-turbo.png');
   }
 }
 
@@ -117,6 +130,17 @@ html[data-dark='true'] {
 
 html[data-dark='true'] {
   .feature-check-deposits {
+    background-color: $black;
+  }
+}
+
+.feature-cover-fees {
+  background-color: $smoke;
+  background-size: 4em;
+}
+
+html[data-dark='true'] {
+  .feature-cover-fees {
     background-color: $black;
   }
 }
@@ -137,7 +161,7 @@ html[data-dark='true'] {
     bottom: 0;
     left: 0;
     right: 0;
-    background-image: #{image-url('feature-anonymous-donations-dark.png')};
+    background-image: url('feature-anonymous-donations-dark.png');
     background-size: 24em;
     opacity: 0.1;
   }
@@ -163,7 +187,7 @@ html[data-dark='true'] .feature-anonymous-donations {
     content: '';
     inset: 0;
     position: absolute;
-    background-image: #{image-url('feature-user-perms-dark.png')};
+    background-image: url('feature-user-perms-dark.png');
     background-size: 5em;
     opacity: 0.1;
   }

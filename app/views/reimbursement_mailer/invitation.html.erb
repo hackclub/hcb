@@ -4,7 +4,7 @@
 
 <% if @report.event.users.include?(@report.user) %>
   <p>
-    <%= @report.inviter.name %> has invited you to submit a reimbursement report for
+    <%= @report.inviter&.name || @report.event.name %> has invited you to submit a reimbursement report for
     <em><%= @report.name %></em> on the <%= @report.event.name %> organization.
   </p>
 <% else %>

@@ -53,6 +53,11 @@
   <%= render partial: "hcb_codes/reimbursement/expense_payout", locals: {} %>
 <% end %>
 
+<%# payout holding %>
+<% if @hcb_code.reimbursement_payout_holding? %>
+  <%= render partial: "hcb_codes/reimbursement/payout_holding", locals: {} %>
+<% end %>
+
 <%# fee revenue %>
 <% if @hcb_code.fee_revenue? && @hcb_code.fee_revenue.present? %>
   <%= render partial: "hcb_codes/fee_revenue", locals: {} %>
@@ -61,6 +66,11 @@
 <%# ach payment %>
 <% if @hcb_code.ach_payment? && @hcb_code.ach_payment.present? %>
   <%= render "ach_payment" %>
+<% end %>
+
+<%# paypal transfer %>
+<% if @hcb_code.paypal_transfer? && @hcb_code.paypal_transfer.present? %>
+  <%= render "paypal_transfer" %>
 <% end %>
 
 <%# unknown (most likely a direct to bank account transaction) %>

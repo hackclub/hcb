@@ -1,23 +1,26 @@
-<% if defined?(link) %>
-  <% if link.start_with?("#") %>
-    <%= link_to link do %>
-      <div class="callout callout--<%= type %>">
-        <span class="callout__emoji"><%= emoji %></span>
-        <span><%= sanitize(title, attributes: %w(target)) %></span>
-      </div>
-    <% end %>
-  <% else %>
-    <%= link_to link do %>
-      <div class="callout callout--<%= type %>">
-        <span class="callout__emoji"><%= emoji %></span>
-        <%= inline_icon "external", size: 28, class: "callout--external" %>
-        <span><%= sanitize(title, attributes: %w(href target)) %></span>
-      </div>
-    <% end %>
-  <% end %>
-<% else %>
-  <div class="callout callout--<%= type %>">
-    <span class="callout__emoji"><%= emoji %></span>
-    <span><%= sanitize(title, attributes: %w(href target)) %></span>
+<% icon ||= type == "error" ? "important" : (type == "success" ? "emoji" : "info") %> <%# (success | info | warning | error) %>
+<% color ||= type == "error" ? "primary" : type %>
+
+<div class="<%= "card border b--#{color} #{"pb0" if local_assigns[:footer].present? } mt3 mb3 #{local_assigns[:class]}" %>">
+  <div class="<%= "flex items-center #{color}" %>">
+    <%= inline_icon icon, size: 32, class: "mr1" %>
+    <p class="bold mt0 mb0"><%= local_assigns[:title] %></p>
   </div>
-<% end %>
+
+  <% unless (block = yield).empty? %>
+    <div class="m0 mt1">
+      <%= block %>
+    </div>
+  <% end %>
+
+  <% if local_assigns[:footer].present? %>
+    <div class="border-top card__banner card__darker secondary mt2">
+      <% if local_assigns[:footer] == :questions %>
+        <strong>Questions?</strong>
+        <%= help_message %>
+      <% else %>
+        <%= local_assigns[:footer] %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

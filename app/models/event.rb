@@ -4,58 +4,57 @@
 #
 # Table name: events
 #
-#  id                                :bigint           not null, primary key
-#  aasm_state                        :string
-#  activated_at                      :datetime
-#  address                           :text
-#  can_front_balance                 :boolean          default(TRUE), not null
-#  category                          :integer
-#  country                           :integer
-#  custom_css_url                    :string
-#  deleted_at                        :datetime
-#  demo_mode                         :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at      :datetime
-#  description                       :text
-#  donation_page_enabled             :boolean          default(TRUE)
-#  donation_page_message             :text
-#  donation_reply_to_email           :text
-#  donation_thank_you_message        :text
-#  end                               :datetime
-#  expected_budget                   :integer
-#  has_fiscal_sponsorship_document   :boolean
-#  hidden_at                         :datetime
-#  holiday_features                  :boolean          default(TRUE), not null
-#  is_indexable                      :boolean          default(TRUE)
-#  is_public                         :boolean          default(TRUE)
-#  last_fee_processed_at             :datetime
-#  name                              :text
-#  omit_stats                        :boolean          default(FALSE)
-#  organization_identifier           :string           not null
-#  owner_address                     :string
-#  owner_birthdate                   :date
-#  owner_email                       :string
-#  owner_name                        :string
-#  owner_phone                       :string
-#  pending_transaction_engine_at     :datetime         default(Sat, 13 Feb 2021 22:49:40.000000000 UTC +00:00)
-#  postal_code                       :string
-#  public_message                    :text
-#  public_reimbursement_page_enabled :boolean          default(FALSE), not null
-#  public_reimbursement_page_message :text
-#  redirect_url                      :string
-#  slug                              :text
-#  sponsorship_fee                   :decimal(, )
-#  start                             :datetime
-#  stripe_card_shipping_type         :integer          default("standard"), not null
-#  transaction_engine_v2_at          :datetime
-#  webhook_url                       :string
-#  website                           :string
-#  created_at                        :datetime         not null
-#  updated_at                        :datetime         not null
-#  club_airtable_id                  :text
-#  emburse_department_id             :string
-#  increase_account_id               :string           not null
-#  partner_id                        :bigint
-#  point_of_contact_id               :bigint
+#  id                                           :bigint           not null, primary key
+#  aasm_state                                   :string
+#  activated_at                                 :datetime
+#  address                                      :text
+#  can_front_balance                            :boolean          default(TRUE), not null
+#  category                                     :integer
+#  country                                      :integer
+#  custom_css_url                               :string
+#  deleted_at                                   :datetime
+#  demo_mode                                    :boolean          default(FALSE), not null
+#  demo_mode_request_meeting_at                 :datetime
+#  description                                  :text
+#  donation_page_enabled                        :boolean          default(TRUE)
+#  donation_page_message                        :text
+#  donation_reply_to_email                      :text
+#  donation_thank_you_message                   :text
+#  expected_budget                              :integer
+#  has_fiscal_sponsorship_document              :boolean
+#  hidden_at                                    :datetime
+#  holiday_features                             :boolean          default(TRUE), not null
+#  is_indexable                                 :boolean          default(TRUE)
+#  is_public                                    :boolean          default(TRUE)
+#  last_fee_processed_at                        :datetime
+#  name                                         :text
+#  omit_stats                                   :boolean          default(FALSE)
+#  organization_identifier                      :string           not null
+#  owner_address                                :string
+#  owner_birthdate                              :date
+#  owner_email                                  :string
+#  owner_name                                   :string
+#  owner_phone                                  :string
+#  pending_transaction_engine_at                :datetime         default(Sat, 13 Feb 2021 22:49:40.000000000 UTC +00:00)
+#  postal_code                                  :string
+#  public_message                               :text
+#  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
+#  public_reimbursement_page_message            :text
+#  redirect_url                                 :string
+#  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
+#  slug                                         :text
+#  sponsorship_fee                              :decimal(, )
+#  stripe_card_shipping_type                    :integer          default("standard"), not null
+#  transaction_engine_v2_at                     :datetime
+#  webhook_url                                  :string
+#  website                                      :string
+#  created_at                                   :datetime         not null
+#  updated_at                                   :datetime         not null
+#  club_airtable_id                             :text
+#  emburse_department_id                        :string
+#  increase_account_id                          :string           not null
+#  partner_id                                   :bigint
+#  point_of_contact_id                          :bigint
 #
 # Indexes
 #
@@ -81,6 +80,8 @@ class Event < ApplicationRecord
   include CountryEnumable
   has_country_enum
 
+  include Commentable
+
   has_paper_trail
   acts_as_paranoid
   validates_as_paranoid
@@ -95,6 +96,15 @@ class Event < ApplicationRecord
   monetize :total_fees_v2_cents
 
   default_scope { order(id: :asc) }
+
+  scope :active, -> {
+    includes(canonical_event_mappings: :canonical_transaction)
+      .where("canonical_transactions.created_at > ?", 1.year.ago)
+      .references(:canonical_transaction)
+  }
+
+  scope :inactive, -> { where.not(id: Event.active.pluck(:id)) }
+
   scope :pending, -> { where(aasm_state: :pending) }
   scope :transparent, -> { where(is_public: true) }
   scope :not_transparent, -> { where(is_public: false) }
@@ -165,6 +175,8 @@ class Event < ApplicationRecord
     where("(last_fee_processed_at is null or last_fee_processed_at <= ?) and id in (?)", MIN_WAITING_TIME_BETWEEN_FEES.ago, self.event_ids_with_pending_fees.to_a.map { |a| a["event_id"] })
   end
 
+  self.ignored_columns = %w[start end]
+
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
@@ -231,6 +243,9 @@ class Event < ApplicationRecord
 
   belongs_to :point_of_contact, class_name: "User", optional: true
 
+  has_one :config, class_name: "Event::Configuration"
+  accepts_nested_attributes_for :config
+
   # Used for tracking slug history
   has_many :slugs, -> { order(id: :desc) }, class_name: "FriendlyId::Slug", as: :sluggable, dependent: :destroy
 
@@ -246,6 +261,7 @@ class Event < ApplicationRecord
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
+  has_many :stripe_card_personalization_designs, class_name: "StripeCard::PersonalizationDesign", inverse_of: :event
 
   has_many :emburse_cards
   has_many :emburse_card_requests
@@ -265,6 +281,8 @@ class Event < ApplicationRecord
   has_many :checks, through: :lob_addresses
   has_many :increase_checks
 
+  has_many :paypal_transfers
+
   has_many :sponsors
   has_many :invoices, through: :sponsors
   has_many :payouts, through: :invoices
@@ -279,13 +297,21 @@ class Event < ApplicationRecord
   has_many :canonical_event_mappings, -> { on_main_ledger }
   has_many :canonical_transactions, through: :canonical_event_mappings
 
+  scope :engaged, -> {
+    Event.where(id: Event.joins(:canonical_transactions)
+        .where("canonical_transactions.date >= ?", 6.months.ago)
+        .distinct)
+  }
+
+  scope :dormant, -> { where.not(id: Event.engaged) }
+
   has_many :fees, through: :canonical_event_mappings
   has_many :bank_fees
 
   has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
 
-  has_many :pinned_hcb_codes, class_name: "HcbCode::Pin"
+  has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits
 
@@ -322,6 +348,7 @@ class Event < ApplicationRecord
 
   validates :name, :sponsorship_fee, :organization_identifier, presence: true
   validates :slug, presence: true, format: { without: /\s/ }
+  validates :slug, format: { without: /\A\d+\z/ }
   validates_uniqueness_of_without_deleted :slug
 
   after_save :update_slug_history
@@ -346,6 +373,8 @@ class Event < ApplicationRecord
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
+
+  after_commit :generate_stripe_card_designs, if: -> { name_previously_changed? && !Rails.env.test? }
 
   comma do
     id
@@ -388,12 +417,15 @@ class Event < ApplicationRecord
     priority: 2,
   }
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.id }, only: [:create]
+
   def admin_formatted_name
     "#{name} (#{id})"
   end
 
   def admin_dropdown_description
-    "#{name} - #{id}"
+    "#{name} - #{id}#{" (DEMO)" if demo_mode?}"
 
     # Causing n+1 queries on admin pages with an event dropdown
 
@@ -409,7 +441,7 @@ class Event < ApplicationRecord
 
   # displayed on /negative_events
   def self.negatives
-    select { |event| event.balance < 0 || event.emburse_balance < 0 || event.fee_balance < 0 }
+    select { |event| event.balance_v2_cents < 0 }
   end
 
   def emburse_department_path
@@ -544,6 +576,7 @@ class Event < ApplicationRecord
   alias balance_available balance_available_v2_cents
   alias available_balance balance_available
 
+
   # `fee_balance_v2_cents`, but it includes fees on fronted (unsettled) transactions to prevent overspending before fees are charged
   def fronted_fee_balance_v2_cents
     feed_fronted_pts = canonical_pending_transactions
@@ -570,7 +603,7 @@ class Event < ApplicationRecord
     elsif unapproved?
       "pending approval"
     elsif hack_club_hq?
-      "hack club affiliated project"
+      "Hack Club affiliated project"
     elsif salary?
       "salary account"
     elsif sponsorship_fee == 0
@@ -644,6 +677,51 @@ class Event < ApplicationRecord
     ]
 
     options[hashid.codepoints.first % options.size]
+  end
+
+  def service_level
+    return 1 if robotics_team?
+    return 1 if hack_club_hq?
+    return 1 if organized_by_hack_clubbers?
+    return 1 if organized_by_teenagers?
+    return 1 if canonical_transactions.revenue.where("date >= ?", 1.year.ago).sum(:amount_cents) >= 50_000_00
+    return 1 if balance_available_v2_cents > 50_000_00
+
+    2
+  end
+
+  def engaged?
+    canonical_transactions.where("date >= ?", 6.months.ago).any?
+  end
+
+  def dormant?
+    !engaged?
+  end
+
+  def generate_stripe_card_designs
+    ActiveRecord::Base.transaction do
+      stripe_card_personalization_designs.update(stale: true)
+
+      URI.open("https://hcb-cc.hackclub.dev/api/embeds/bank?name=#{URI.encode_uri_component(name)}") do |file|
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :black, event: self).run
+
+        file.rewind
+
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :white, event: self).run
+      end
+    end
+  end
+
+  def airtable_record
+    ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
+  end
+
+  def default_stripe_card_personalization_design
+    stripe_card_personalization_designs.where("stripe_name like ?", "#{name} Black Card%").order(created_at: :desc).first
+  end
+
+  def config
+    super || create_config
   end
 
   private

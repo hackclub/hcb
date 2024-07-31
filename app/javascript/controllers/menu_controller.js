@@ -74,7 +74,11 @@ export default class extends Controller {
           $(this.toggleTarget).find(e.target).length)
       )
         return
-      if (e.target == this.content || $(this.content).find(e.target).length)
+      if (
+        e.target == this.content ||
+        ($(this.content).find(e.target).length &&
+          !e.target.dataset?.action?.includes('menu#close'))
+      )
         return
       if (
         e.target.tagName.toLowerCase() == 'input' &&

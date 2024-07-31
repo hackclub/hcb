@@ -1,7 +1,9 @@
-<% if @stripe_cards.any? %>
-  <div class="grid grid--split mb3">
-    <% @stripe_cards.each do |card| %>
-      <%= render partial: "stripe_cards/shipping", locals: { stripe_card: card } %>
-    <% end %>
-  </div>
+<%= turbo_frame_tag :my_cards_shipping do %>
+  <% if @stripe_cards.any? %>
+    <div class="grid grid--split mb3">
+      <% @stripe_cards.each do |card| %>
+        <%= render partial: "stripe_cards/shipping", locals: { stripe_card: card } %>
+      <% end %>
+    </div>
+  <% end %>
 <% end %>

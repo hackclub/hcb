@@ -102,7 +102,7 @@
         <thead>
           <tr>
             <td colspan="2" style="text-align: right"><strong>Transfer ID:</strong></td>
-            <td style="width: 10%"><%= @disbursement.id %></td>
+            <td style="width: 10%"><%= @disbursement.public_id %></td>
           </tr>
         </thead>
         <tbody>
@@ -113,12 +113,12 @@
           </tr>
           <% end %>
           <tr>
-            <td class="bold">Destintation</td>
-            <td colspan="2"><%= @disbursement.destination_event.name %></td>
+            <td class="bold">From</td>
+            <td colspan="2"><%= @disbursement.source_event.name %></td>
           </tr>
           <tr>
-            <td class="bold">Source</td>
-            <td colspan="2"><%= @disbursement.source_event.name %></td>
+            <td class="bold">To</td>
+            <td colspan="2"><%= @disbursement.destination_event.name %></td>
           </tr>
           <tr>
             <td class="bold">Payment purpose</td>
@@ -131,8 +131,8 @@
         </tbody>
       </table>
       <p>
-        Please don't hesitate to contact me with any additional questions. I can be reached at <a
-          href="mailto:melanie@hackclub.com">melanie@hackclub.com</a>.
+        Please don't hesitate to contact us with any additional questions. My team can be reached at <a
+          href="mailto:hcb@hackclub.com">hcb@hackclub.com</a>.
       </p>
     </div>
     <br />

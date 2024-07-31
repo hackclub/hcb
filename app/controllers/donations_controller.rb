@@ -6,11 +6,12 @@ class DonationsController < ApplicationController
   include SetEvent
   include Rails::Pagination
 
-  skip_after_action :verify_authorized, except: [:start_donation, :make_donation]
+  skip_after_action :verify_authorized, only: [:export, :show, :refund, :qr_code, :finish_donation, :finished]
   skip_before_action :signed_in_user
   before_action :set_donation, only: [:show]
   before_action :set_event, only: [:start_donation, :make_donation, :qr_code]
   before_action :check_dark_param
+  before_action :check_background_param
   before_action :hide_seasonal_decorations
   skip_before_action :redirect_to_onboarding
 
@@ -73,6 +74,10 @@ class DonationsController < ApplicationController
     d_params = donation_params
     d_params[:amount] = Monetize.parse(donation_params[:amount]).cents
 
+    if d_params[:fee_covered] == "1" && Flipper.enabled?(:cover_my_fee_2024_06_25, @event)
+      d_params[:amount] = (d_params[:amount] / (1 - @event.sponsorship_fee)).ceil
+    end
+
     if d_params[:name] == "aser ras"
       skip_authorization
       redirect_to root_url and return
@@ -87,7 +92,7 @@ class DonationsController < ApplicationController
     authorize @donation
 
     if @donation.save
-      redirect_to finish_donation_donations_path(@event, @donation.url_hash)
+      redirect_to finish_donation_donations_path(@event, @donation.url_hash, background: @background)
     else
       render :start_donation, status: :unprocessable_entity
     end
@@ -153,6 +158,16 @@ class DonationsController < ApplicationController
     end
   end
 
+  def export_donors
+    @event = Event.friendly.find(params[:event])
+
+    authorize @event.donations.first
+
+    respond_to do |format|
+      format.csv { stream_donors_csv }
+    end
+  end
+
   private
 
   def stream_donations_csv
@@ -173,6 +188,16 @@ class DonationsController < ApplicationController
     self.response_body = donations_json
   end
 
+  def stream_donors_csv
+    set_file_headers_csv
+    headers["Content-disposition"] = "attachment; filename=donors.csv"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = donors_csv
+  end
+
   def set_file_headers_csv
     headers["Content-Type"] = "text/csv"
     headers["Content-disposition"] = "attachment; filename=donations.csv"
@@ -191,6 +216,10 @@ class DonationsController < ApplicationController
     ::DonationService::Export::Json.new(event_id: @event.id).run
   end
 
+  def donors_csv
+    ::DonationService::Export::Donors::Csv.new(event_id: @event.id).run
+  end
+
   def set_donation
     @donation = Donation.find(params[:id])
   end
@@ -202,12 +231,18 @@ class DonationsController < ApplicationController
     end
   end
 
+  def check_background_param
+    # because we're going to be injecting this value into a stylesheet,
+    # we ensure that it's a hex code to prevent: https://css-tricks.com/css-security-vulnerabilities/
+    @background = params[:background] unless (params[:background] =~ /\A[0-9a-fA-F]{6}\z/).nil?
+  end
+
   def hide_seasonal_decorations
     @hide_seasonal_decorations = true
   end
 
   def donation_params
-    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous)
+    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :fee_covered)
   end
 
   def redirect_to_404

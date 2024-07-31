@@ -34,6 +34,9 @@ class Sponsor < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :spr
 
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "customers", :stripe_customer_id
+
   extend FriendlyId
 
   include PgSearch::Model
@@ -106,18 +109,6 @@ class Sponsor < ApplicationRecord
 
   def destroy_invoices
     self.invoices.destroy_all
-  end
-
-  def stripe_dashboard_url
-    url = "https://dashboard.stripe.com"
-
-    if StripeService.mode == :test
-      url += "/test"
-    end
-
-    url += "/customers/#{self.stripe_customer_id}"
-
-    url
   end
 
   private

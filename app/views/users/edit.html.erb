@@ -71,12 +71,20 @@
                              prompt: @user.birthday.nil? %>
       </div>
       <div class="field">
-        <%= form.label :email, class: "muted" %>
-        <%= form.email_field :email, disabled: true %>
+        <%= form.label :email %>
+        <%= form.email_field :email, disabled: !Flipper.enabled?(:email_updates_2024_05_24, current_user) %>
+        <% if @user.email_updates.active.any? %>
+          <p style="max-width: 420px;">
+            <small>
+              You've requested to update your email to <%= mail_to @user.email_updates.active.first.replacement %>.
+              To continue, click on the verification and authorization links in both your new and old email inboxes respectively.
+            </small>
+          </p>
+        <% end %>
       </div>
       <%= form.label :profile_picture %>
       <p class="flex items-center mt1">
-        <%= avatar_for @user, 48, class: "mr2" %>
+        <%= avatar_for @user, 48, { class: "mr2" } %>
         <span>
             <% if @user.profile_picture.attached? %>
             You're currently using an uploaded profile picture.<br>
@@ -125,6 +133,59 @@
               <% end %>
             <% end %>
           <% end %>
+        </fieldset>
+      <% end %>
+      <% unless @onboarding %>
+        <fieldset>
+          <legend class="heading h2 pt2">Comment notifications</legend>
+          <p class="h5 muted mt1 mb2">
+            Which comments would you like to receive notifications for?
+          </p>
+          <div class="field field--options field--green trio">
+            <%= form.radio_button :comment_notifications, :all_threads %>
+            <%= form.label :comment_notifications, value: :all_threads do %>
+              <%= inline_icon "like-fill", size: 28 %>
+              <strong>Everything</strong>
+            <% end %>
+            <%= form.radio_button :comment_notifications, :my_threads %>
+            <%= form.label :comment_notifications, value: :my_threads do %>
+              <%= inline_icon "thread", size: 28 %>
+              <strong>My Threads</strong>
+            <% end %>
+            <%= form.radio_button :comment_notifications, :no_threads %>
+            <%= form.label :comment_notifications, value: :no_threads do %>
+              <%= inline_icon "support", size: 28 %>
+              <strong>Nothing</strong>
+            <% end %>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="heading h2 pt2">Charge notifications</legend>
+          <p class="h5 muted mt1 mb2">
+            How would you like to receive charge notifications?
+          </p>
+          <div class="field field--options field--green">
+            <%= form.radio_button :charge_notifications, :email_and_sms %>
+            <%= form.label :charge_notifications, value: :email_and_sms do %>
+              <%= inline_icon "announcement", size: 28 %>
+              <strong>Email & SMS</strong>
+            <% end %>
+            <%= form.radio_button :charge_notifications, :email %>
+            <%= form.label :charge_notifications, value: :email do %>
+              <%= inline_icon "email", size: 28 %>
+              <strong>Email</strong>
+            <% end %>
+            <%= form.radio_button :charge_notifications, :sms %>
+            <%= form.label :charge_notifications, value: :sms do %>
+              <%= inline_icon "message", size: 28 %>
+              <strong>SMS</strong>
+            <% end %>
+            <%= form.radio_button :charge_notifications, :nothing %>
+            <%= form.label :charge_notifications, value: :nothing do %>
+              <%= inline_icon "view-close", size: 28 %>
+              <strong>Nothing</strong>
+            <% end %>
+          </div>
         </fieldset>
       <% end %>
       <fieldset>

@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
+  include PublicActivity::StoreController
 
   protect_from_forgery
 
@@ -17,6 +18,9 @@ class ApplicationController < ActionController::Base
   # Redirect users to the onboarding page if they haven't completed it yet
   before_action :redirect_to_onboarding
 
+  # update the current session's last_seen_at
+  before_action { current_session&.touch_last_seen_at }
+
   # This cookie is used for Safari PWA prompts
   before_action do
     next if current_user.nil?
@@ -26,7 +30,7 @@ class ApplicationController < ActionController::Base
   end
 
   # Force usage of Pundit on actions
-  after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") }
+  after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
@@ -53,6 +57,10 @@ class ApplicationController < ActionController::Base
   rescue_from ActionController::Redirecting::UnsafeRedirectError do |exception|
     notify_airbrake(exception)
     redirect_to root_url
+  end
+
+  def find_current_auditor
+    current_user if admin_signed_in?
   end
 
   private

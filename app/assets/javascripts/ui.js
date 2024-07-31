@@ -170,6 +170,25 @@ $(document).keydown(function (e) {
 
 $(document).on('click', '[data-behavior~=toggle_theme]', () => BK.toggleDark())
 
+function loadAsyncFrames(){
+  $.each(BK.s('async_frame'), (i, frame) => {
+    const loadFrame = () => {
+      $.get($(frame).data('src'), data => {
+        const parent = $(frame).parent()
+        $(frame).replaceWith(data)
+        loadModals(parent)
+        loadTextExpander()
+      }).fail(() => {
+        $(frame).children('.shimmer').first().addClass('shimmer--error')
+      })
+    }
+  
+    if ($(frame).data('loading') == "lazy") {
+      whenViewed(frame, loadFrame);
+    } else loadFrame();
+  })
+}
+
 $(document).on('turbo:load', function () {
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
@@ -179,21 +198,7 @@ $(document).on('turbo:load', function () {
 
   BK.s('autohide').hide()
 
-  $.each(BK.s('async_frame'), (i, frame) => {
-    const loadFrame = () => {
-      $.get($(frame).data('src'), data => {
-        const parent = $(frame).parent()
-        $(frame).replaceWith(data)
-        loadModals(parent)
-      }).fail(() => {
-        $(frame).children('.shimmer').first().addClass('shimmer--error')
-      })
-    }
-
-    if ($(frame).data('loading') == "lazy") {
-      whenViewed(frame, loadFrame);
-    } else loadFrame();
-  })
+  loadAsyncFrames()
 
   if (BK.thereIs('login')) {
     let email
@@ -328,19 +333,6 @@ $(document).on('turbo:load', function () {
     })
   }
   
-  if (BK.thereIs('check_payout_method_inputs') && BK.thereIs('ach_transfer_payout_method_inputs')) {
-    const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
-    const achTransferPayoutMethodInputs = BK.s('ach_transfer_payout_method_inputs')
-    const checkPayoutMethodInput = $('#user_payout_method_type_userpayoutmethodcheck')
-    const achTransferPayoutMethodInput = $('#user_payout_method_type_userpayoutmethodachtransfer')
-    $(checkPayoutMethodInput).on('change', e => {
-      if (e.target.checked) checkPayoutMethodInputs.slideDown() && achTransferPayoutMethodInputs.slideUp()
-    })
-    $(achTransferPayoutMethodInput).on('change', e => {
-      if (e.target.checked) achTransferPayoutMethodInputs.slideDown() && checkPayoutMethodInputs.slideUp()
-    })
-  }
-  
   if (BK.s('reimbursement_report_create_form_type_selection').length) {
     const dropdownInput = $('#reimbursement_report_user_email')
     const emailInput = $('#reimbursement_report_email')
@@ -351,38 +343,50 @@ $(document).on('turbo:load', function () {
     const forOrganizerInput = $('#reimbursement_report_for_organizer')
     const forExternalInput = $('#reimbursement_report_for_external')
 
-    dropdownInput.hide()
-    emailInput.hide()
-    maxInput.hide()
-    inviteInput.hide()
+    const externalInputWrapper = $('#external_contributor_wrapper')
+
+    const hideAllInputs = () => [dropdownInput, emailInput,maxInput, inviteInput].forEach(input => input.hide());
+    hideAllInputs();
+
+    externalInputWrapper.slideUp()
 
     $(forMyselfInput).on('change', e => {
       if (e.target.checked) {
-        dropdownInput.slideUp()
-        emailInput.slideUp()
-        maxInput.slideUp()
-        inviteInput.slideUp()
+        externalInputWrapper.slideUp({
+          complete: hideAllInputs
+        })
         emailInput.val(emailInput[0].attributes["value"].value)
       }
     })
     
     $(forOrganizerInput).on('change', e => {
       if (e.target.checked) {
-        emailInput.val(dropdownInput.val())
-        dropdownInput.slideDown()
-        emailInput.slideUp()
-        maxInput.slideDown()
-        inviteInput.slideUp()
+        emailInput.val(dropdownInput.val());
+        externalInputWrapper.slideUp({
+          complete: () => {
+            dropdownInput.show()
+            maxInput.show()
+            inviteInput.hide()
+            emailInput.hide()
+            externalInputWrapper.slideDown();
+          }
+        });
       }
     })
     
     $(forExternalInput).on('change', e => {
       if (e.target.checked) {
-        emailInput.val("")
-        dropdownInput.slideUp()
-        emailInput.slideDown()
-        maxInput.slideDown()
-        inviteInput.slideDown()
+        externalInputWrapper.slideUp({
+          complete: () => {
+            emailInput.val("")
+            dropdownInput.hide()
+            emailInput.show()
+            maxInput.show()
+            inviteInput.show()
+            externalInputWrapper.slideDown()
+          }
+        });
+
       }
     })
     
@@ -392,26 +396,9 @@ $(document).on('turbo:load', function () {
   }
 
   $('[data-behavior~=mention]').on('click', e => {
-    BK.s('comment').val(`${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? " " : "")}${e.target.innerText}`)
+    BK.s('comment').val(`${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? " " : "")}${e.target.dataset.mentionValue || e.target.innerText}`)
     BK.s('comment')[0].scrollIntoView();
   })  
-
-  if (BK.thereIs('additional_transparency_settings')) {
-    const additionalTransparencySettings = BK.s(
-      'additional_transparency_settings'
-    )
-    const transparencyToggle = $('#event_is_public')
-    $(transparencyToggle).on('change', e => {
-      if (e.target.checked) {
-        // When transparency mode is enabled, also enable indexing by default
-        $('#event_is_indexable').prop('checked', true)
-
-        additionalTransparencySettings.slideDown()
-      } else {
-        additionalTransparencySettings.slideUp()
-      }
-    })
-  }
 
   const tiltElement = $('[data-behavior~=hover_tilt]')
   const enableTilt = () =>
@@ -437,9 +424,32 @@ $(document).on('turbo:load', function () {
     .addListener(() => setTilt())
 })
 
-$('[data-behavior~=ctrl_enter_submit]').keydown(function (event) {
-  if ((event.ctrlKey || event.metaKey) && event.keyCode === 13) {
+$(document).on('turbo:frame-load', function () {
+  if (BK.thereIs('check_payout_method_inputs') && BK.thereIs('ach_transfer_payout_method_inputs') && BK.thereIs('paypal_transfer_payout_method_inputs')) {
+    const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
+    const achTransferPayoutMethodInputs = BK.s('ach_transfer_payout_method_inputs')
+    const paypalTransferPayoutMethodInputs = BK.s('paypal_transfer_payout_method_inputs')
+    $(document).on("change", "#user_payout_method_type_userpayoutmethodcheck", e => {
+      if (e.target.checked) checkPayoutMethodInputs.slideDown() && achTransferPayoutMethodInputs.slideUp() && paypalTransferPayoutMethodInputs.slideUp()
+    })
+    $(document).on("change", "#user_payout_method_type_userpayoutmethodachtransfer", e => {
+      if (e.target.checked) achTransferPayoutMethodInputs.slideDown() && checkPayoutMethodInputs.slideUp() && paypalTransferPayoutMethodInputs.slideUp()
+    })
+    $(document).on("change", "#user_payout_method_type_userpayoutmethodpaypaltransfer", e => {
+      if (e.target.checked) paypalTransferPayoutMethodInputs.slideDown() && checkPayoutMethodInputs.slideUp() && achTransferPayoutMethodInputs.slideUp()
+    })
+  }
+})
+
+$(document).on('keydown', '[data-behavior~=ctrl_enter_submit]', function (event) {
+  if ((event.ctrlKey || event.metaKey) && event.key == "Enter") {
     $(this).closest('form').get(0).requestSubmit()
+  }
+})
+
+$(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
+  if(event.target.value === "0.00") {
+    event.target.select()
   }
 })
 
@@ -478,11 +488,24 @@ document.addEventListener("turbo:before-stream-render", ((event) => {
     if (streamElement.action == "refresh_link_modals") {
       const turboStreamElements = document.querySelectorAll('turbo-frame');
       turboStreamElements.forEach(element => {
-        if (element.id.startsWith('link_modal')) {
+        if (element.id.startsWith('link_modal') && window.location.pathname == "/my/inbox") {
           element.innerHTML = "<strong>Loading...</strong>"
           element.reload();
         }
       });
+    } else if (streamElement.action == "refresh_suggested_pairings") {
+      const turboStreamElements = document.querySelectorAll('turbo-frame');
+      turboStreamElements.forEach(element => {
+        if (element.id.startsWith("suggested_pairings")) {
+          element.src = "/my/receipt_bin/suggested_pairings"
+          element.reload();
+        }
+      });
+    } else if (streamElement.action == "close_modal") {
+      $.modal.close().remove()
+      
+    } else if (streamElement.action == "load_new_async_frames") {
+      loadAsyncFrames()
     } else {
       fallbackToDefaultActions(streamElement)
     }
@@ -501,3 +524,8 @@ $(document).on('keydown', function (e) {
   }
 })
 
+// Disable scrolling on <input type="number" /> elements
+$(document).on("wheel", "input[type=number]", e => {
+  e.preventDefault()
+  e.target.blur()
+})

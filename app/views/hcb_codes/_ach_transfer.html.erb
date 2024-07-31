@@ -93,6 +93,13 @@
         <%= render_money @hcb_code.ach_transfer.amount %>
       </p>
 
+      <% if @hcb_code.ach_transfer.reimbursement_payout_holding.present? %>
+        <p>
+          <strong>Reimbursing</strong>
+         <%= link_to @hcb_code.ach_transfer.reimbursement_payout_holding.report.name, @hcb_code.ach_transfer.reimbursement_payout_holding.report, data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
+
       <p>
         <strong>Status</strong>
         <span>
@@ -110,7 +117,7 @@
   </turbo-frame>
 
   <% if @hcb_code.ach_transfer.may_mark_rejected? %>
-    <div class="card__banner card__darker border-top overflow-hidden">
+    <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
       <% cancel_button = button_to "Cancel transfer", cancel_ach_transfer_path(@hcb_code.ach_transfer), class: "btn bg-error #{"disabled" unless policy(@hcb_code.ach_transfer).cancel?}" %>
       <% if policy(@hcb_code.ach_transfer).cancel? %>
         <%= cancel_button %>
@@ -118,6 +125,10 @@
         <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
           <%= cancel_button %>
         </div>
+      <% end %>
+
+      <% admin_tool do %>
+        <%= button_to "Process", ach_start_approval_admin_path(@hcb_code.ach_transfer), class: "btn", method: :get %>
       <% end %>
     </div>
   <% end %>

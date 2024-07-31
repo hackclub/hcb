@@ -1,5 +1,5 @@
 <% if @hcb_code.canonical_pending_transactions.exists? %>
-  <h2>Pending Transaction History</h2>
+  <h2>Pending Transaction history</h2>
 
   <article class="table-container">
     <table>
@@ -14,7 +14,7 @@
       <tbody>
         <% @hcb_code.canonical_pending_transactions.each do |ct| %>
           <tr>
-            <td><%= ct.date %></td>
+            <td><%= format_date ct.date %></td>
             <td><%= ct.smart_memo %></td>
             <td style="text-align: right;"><%= number_to_currency(ct.amount) %></td>
             <td class="right tooltipped tooltipped--w" aria-label="<%= organizer_signed_in? ? "Rename pending transaction" : "Sign in to rename transaction" %>">

@@ -2,6 +2,7 @@
   list-style: none;
   padding: 0;
   display: flex;
+  gap: 1.25rem;
   border-bottom: 0.5px solid map-get($palette, smoke);
   background-color: $snow;
   z-index: 5;
@@ -20,9 +21,9 @@
   }
 
   li {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.125rem 0.75rem;
     color: $muted;
-    transition: color ease 0.2s;
+    transition: color ease 125ms;
     position: relative;
     white-space: nowrap;
     a {
@@ -37,8 +38,9 @@
       bottom: 0px;
       left: 0;
       width: 100%;
-      height: 1px;
+      height: 2px;
       background-color: map-get($palette, primary);
+      border-radius: 1px 1px 0 0;
     }
     &:hover {
       color: #3c4858;

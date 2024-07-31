@@ -1,7 +1,12 @@
 <%# locals: (card_grant:) %>
 
 <div class="card mt2">
-  <h2 class="border-none mx0 mt0">Grant to &nbsp; <%= user_mention card_grant.user %></h2>
+  <h2 class="border-none mx0 mt0 inline-flex items-center">
+    <%= pop_icon_to "edit",
+        [:edit, card_grant.disbursement.local_hcb_code],
+        class: "mr2 align-middle", "aria-label": "Rename transaction" %>
+    Grant to &nbsp; <%= user_mention card_grant.user %>
+  </h2>
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
       <strong>Sent by</strong>
@@ -48,7 +53,7 @@
     <p>
       <strong>Allowed merchants</strong>
       <% if (allowed_merchants = card_grant.allowed_merchants.join(" ").presence) %>
-        <span class="mono h5"><%= allowed_merchants %></span>
+        <span class="font-mono h5"><%= allowed_merchants %></span>
       <% else %>
         <span>All merchants allowed</span>
       <% end %>
@@ -57,7 +62,7 @@
     <p>
       <strong>Allowed categories</strong>
       <% if (allowed_categories = card_grant.allowed_categories.join(" ").presence) %>
-        <span class="mono h5"><%= allowed_categories %></span>
+        <span class="font-mono h5"><%= allowed_categories %></span>
       <% else %>
         <span>All categories allowed</span>
       <% end %>

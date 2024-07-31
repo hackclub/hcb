@@ -7,6 +7,8 @@
 #  id                       :bigint           not null, primary key
 #  access_level             :integer          default("user"), not null
 #  birthday_ciphertext      :text
+#  charge_notifications     :integer          default("email_and_sms"), not null
+#  comment_notifications    :integer          default("all_threads"), not null
 #  email                    :text
 #  full_name                :string
 #  locked_at                :datetime
@@ -41,10 +43,15 @@ class User < ApplicationRecord
   include Commentable
   extend FriendlyId
 
-  has_paper_trail only: [:access_level]
+  include Turbo::Broadcastable
+
+  has_paper_trail only: [:access_level, :email]
+
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -61,6 +68,7 @@ class User < ApplicationRecord
     :superadmin,
   ], scopes: false, default: :user
 
+  has_many :logins
   has_many :login_codes
   has_many :login_tokens
   has_many :user_sessions, dependent: :destroy
@@ -71,6 +79,10 @@ class User < ApplicationRecord
   has_many :webauthn_credentials
   has_many :mailbox_addresses
   has_many :api_tokens
+  has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
+  has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+
+  has_many :messages, class_name: "Ahoy::Message", as: :user
 
   has_many :events, through: :organizer_positions
 
@@ -94,12 +106,15 @@ class User < ApplicationRecord
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
+  has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
+  has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
 
   has_many :card_grants
 
   has_one_attached :profile_picture
 
   has_one :partner, inverse_of: :representative
+  has_one :totp, class_name: "User::Totp"
 
   # a user does not actually belong to its payout method,
   # but this is a convenient way to set up the association.
@@ -117,6 +132,8 @@ class User < ApplicationRecord
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
+  after_update :sync_with_loops
+
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
@@ -127,11 +144,36 @@ class User < ApplicationRecord
 
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
+  normalizes :email, with: ->(email) { email.strip.downcase }
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
 
   validate :profile_picture_format
+
+  enum comment_notifications: { all_threads: 0, my_threads: 1, no_threads: 2 }
+
+  enum charge_notifications: { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, _prefix: :charge_notifications
+
+  comma do
+    id
+    name
+    slug "url" do |slug| "https://hcb.hackclub.com/users/#{slug}/admin" end
+    email
+    transactions_missing_receipt_count "Missing Receipts"
+  end
+
+  after_save do
+    if use_sms_auth_previously_changed?
+      if use_sms_auth
+        create_activity(key: "user.enabled_sms_auth")
+      else
+        create_activity(key: "user.disabled_sms_auth")
+      end
+    end
+  end
+
+  scope :currently_online, -> { where(id: UserSession.where("last_seen_at > ?", 15.minutes.ago).pluck(:user_id)) }
 
   # admin? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
@@ -243,12 +285,20 @@ class User < ApplicationRecord
   def transactions_missing_receipt
     @transactions_missing_receipt ||= begin
       user_cards = stripe_cards.includes(:event).where.not(event: { category: :salary }) + emburse_cards.includes(:emburse_transactions)
+      return HcbCode.none unless user_cards.any?
+
       user_hcb_code_ids = user_cards.flat_map { |card| card.hcb_codes.pluck(:id) }
+      return HcbCode.none unless user_hcb_code_ids.any?
+
       user_hcb_codes = HcbCode.where(id: user_hcb_code_ids)
 
-      hcb_codes_missing_ids = user_hcb_codes.missing_receipt.receipt_required.pluck(:id)
+      user_hcb_codes.missing_receipt.receipt_required.order(created_at: :desc)
+    end
+  end
 
-      HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
+  def transactions_missing_receipt_count
+    @transactions_missing_receipt_count ||= begin
+      transactions_missing_receipt.size
     end
   end
 
@@ -260,6 +310,34 @@ class User < ApplicationRecord
 
   def email_address_with_name
     ActionMailer::Base.email_address_with_name(email, name)
+  end
+
+  def hack_clubber?
+    return events.organized_by_hack_clubbers.any?
+  end
+
+  def teenager?
+    birthday&.after?(19.years.ago) || events.high_school_hackathon.any? || events.organized_by_teenagers.any?
+  end
+
+  def last_seen_at
+    user_sessions.maximum(:last_seen_at)
+  end
+
+  def last_login_at
+    user_sessions.maximum(:created_at)
+  end
+
+  def using_2fa?
+    Flipper.enabled?(:two_factor_authentication_2024_05_22, self) && phone_number_verified
+  end
+
+  def email_charge_notifications_enabled?
+    charge_notifications_email? || charge_notifications_email_and_sms?
+  end
+
+  def sms_charge_notifications_enabled?
+    charge_notifications_sms? || charge_notifications_email_and_sms?
   end
 
   private
@@ -313,9 +391,14 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer)
+    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer)
       errors.add(:payout_method, "is an invalid method, must be check or ACH transfer")
     end
+  end
+
+  def sync_with_loops
+    new_user = full_name_before_last_save.blank? && !onboarding?
+    UserService::SyncWithLoops.new(user_id: id, new_user:).run if teenager?
   end
 
 end

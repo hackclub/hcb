@@ -2,16 +2,20 @@
 
 <% if @comment.content? %>
 
-  <%= @comment.user.name %> has left a comment on <%= "and attached a file to" if @comment.file %> <i><%= hcb_code.memo %></i> in <i><%= hcb_code.event.name %></i>:
+  <%= @comment.user.name %> has left a comment on <%= "and attached a file to" if @comment.has_attached_file? %> <i><%= hcb_code.memo %></i> in <i><%= hcb_code.event.name %></i>:
 
-  <blockquote><%== MarkdownService.instance.renderer.render @comment.content %></blockquote>
-
-  <%= link_to "Click here to view and reply to the comment on HCB.", "#{hcb_code_url(hcb_code)}#comment-#{@comment.hashid}" %>
+  <blockquote><%== MarkdownService.instance.renderer(record: @comment, location: :email).render @comment.content %></blockquote>
 
 <% else %>
 
  <%= @comment.user.name %> has attached a file to <i><%= hcb_code.memo %></i> in <i><%= hcb_code.event.name %></i>.
 
- <%= link_to "Click here to view and reply to the comment on HCB.", "#{hcb_code_url(hcb_code)}#comment-#{@comment.hashid}" %> Alternatively, send a reply to this email.
-
 <% end %>
+
+<%= link_to "Click here to view and reply to the comment on HCB.", "#{hcb_code_url(hcb_code)}#comment-#{@comment.hashid}", class: "info" %> Alternatively, send a reply to this email.
+
+<p>
+  <small>
+    <%= link_to "Manage the comments you get notified for.", my_settings_url %>
+  </small>
+</p>

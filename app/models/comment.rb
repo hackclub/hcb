@@ -9,6 +9,7 @@
 #  admin_only         :boolean          default(FALSE), not null
 #  commentable_type   :string
 #  content_ciphertext :text
+#  deleted_at         :datetime
 #  has_untracked_edit :boolean          default(FALSE), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
@@ -34,6 +35,7 @@ class Comment < ApplicationRecord
 
   has_paper_trail skip: [:content] # ciphertext columns will still be tracked
   has_encrypted :content
+  acts_as_paranoid
 
   validates :user, presence: true
   validates :content, presence: true, unless: :has_attached_file?
@@ -50,11 +52,17 @@ class Comment < ApplicationRecord
     changes_requested: 1 # used by reimbursements
   }
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.admin_only? ? nil : record.commentable.try(:event)&.id }, only: [:create, :update, :destroy]
+
   after_create_commit :send_notification_email
+
+  broadcasts_refreshes_to ->(comment) { [comment.commentable, :comments] } unless Rails.env.test?
 
   def edited?
     has_untracked_edit? or
-      versions.where("event = 'update' OR event = 'destroy'").any?
+      versions.any? { |version| %w[update destroy].include?(version.event) }
+    # we're doing this without SQL because versions is pre-loaded. - @sampoder
   end
 
   def has_attached_file?
@@ -65,6 +73,14 @@ class Comment < ApplicationRecord
     return "requested changes" if changes_requested?
 
     return "commented"
+  end
+
+  # This regex was stolen from URI::MailTo::EMAIL_REGEXP
+  USER_MENTION_REGEX = /@([a-zA-Z0-9.!\#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*)/
+
+  def mentioned_users
+    emails = content.scan(USER_MENTION_REGEX).flatten
+    User.where(email: emails)
   end
 
   private

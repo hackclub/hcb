@@ -2,7 +2,7 @@
 
 class TwilioController < ActionController::Base
   protect_from_forgery except: :webhook
-  before_action :set_attachments, :set_user
+  before_action :set_attachments, :set_user, :set_receiptable
 
   def webhook
     return reply_with(<<~MSG.squish) if @user.nil?
@@ -11,7 +11,7 @@ class TwilioController < ActionController::Base
       (https://hcb.hackclub.com/my/settings).
     MSG
 
-    return reply_with(<<~MSG.squish) unless Flipper.enabled?(:receipt_bin_2023_04_07, @user)
+    return reply_with(<<~MSG.squish) unless Flipper.enabled?(:receipt_bin_2023_04_07, @user) || @receiptable
       Hey! Looking to upload receipts? Make sure the Receipt Bin feature preview
       is enabled on your account (https://hcb.hackclub.com/my/settings/previews).
     MSG
@@ -21,21 +21,15 @@ class TwilioController < ActionController::Base
       If you're looking for HCB support, please reach out to hcb@hackclub.com.
     MSG
 
-    receiptable = nil
-
-    if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago
-      receiptable = last_sent_message_hcb_code
-    end
-
     receipts = ::ReceiptService::Create.new(
-      receiptable:,
+      receiptable: @receiptable,
       uploader: @user,
       attachments: @attachments,
       upload_method: "sms"
     ).run!
 
-    if receiptable
-      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{receiptable.memo} (#{hcb_code_url(receiptable)})!")
+    if @receiptable
+      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@receiptable.memo} (#{hcb_code_url(@receiptable)})!")
     else
       reply_with("Added #{receipts.count} #{"receipt".pluralize(receipts.count)} to your Receipt Bin (https://hcb.hackclub.com/my/inbox)!")
     end
@@ -71,6 +65,14 @@ class TwilioController < ActionController::Base
         content_type: params["MediaContentType#{i}"],
         io: uri.open
       }
+    end
+  end
+
+  def set_receiptable
+    @receiptable = nil
+
+    if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago
+      @receiptable = last_sent_message_hcb_code
     end
   end
 

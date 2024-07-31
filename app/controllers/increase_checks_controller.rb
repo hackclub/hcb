@@ -52,7 +52,7 @@ class IncreaseChecksController < ApplicationController
 
     @check.mark_rejected!
 
-    redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been rejected!" }
+    redirect_back_or_to increase_check_process_admin_path(@check), flash: { success: "Check has been canceled." }
   end
 
   private

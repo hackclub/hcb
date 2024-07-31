@@ -29,8 +29,6 @@ class PartneredSignupsController < ApplicationController
 
     @partnered_signup.mark_submitted! unless @partnered_signup.submitted?
 
-    return unless signed_contract?
-
     redirect_to @partnered_signup.redirect_url, allow_other_host: true
 
     # Send webhook to let Partner know that the Connect from has been submitted
@@ -41,42 +39,6 @@ class PartneredSignupsController < ApplicationController
   end
 
   private
-
-  # TODO: move some of this logic into the model and integrate the rest into the
-  # controller update method
-  def signed_contract?
-    # Don't sign contract unless we have a docusign template id
-    unless @partner.docusign_template_id
-      @partnered_signup.mark_applicant_signed!
-
-      # Airbrake.notify("Partner ##{@partner.id} is missing a 'docusign_template_id'. Error creating docusign contract for SUP ##{@partnered_signup.id}")
-      # flash[:error] = "Something went wrong, please contact hcb@hackclub.com for help"
-      # render "edit"
-      # TODO: error when there's no template ID, this is temporary until all partners have docusign templates
-      return true
-    end
-
-    service = Partners::Docusign::PartneredSignupContract.new(@partnered_signup)
-
-    # if we don't have the contract, send it
-    unless @partnered_signup.docusign_envelope_id
-      data = service.create
-      @partnered_signup.docusign_envelope_id = data[:envelope].envelope_id
-      if @partnered_signup.save
-        redirect_to data[:signing_url], allow_other_host: true
-      else
-        flash.now[:error] = "Something went wrong, please contact hcb@hackclub.com for help"
-        render :edit, status: :unprocessable_entity
-      end
-      return false
-    end
-
-    # if the user didn't sign the contract yet, show it to them again
-    unless @partnered_signup.signed_contract
-      redirect_to service.get_signing_url(@partnered_signup.docusign_envelope_id), allow_other_host: true
-    end
-    false
-  end
 
   def set_partnered_signup
     @partnered_signup = PartneredSignup.find_by_public_id(params[:public_id])

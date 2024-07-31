@@ -18,6 +18,7 @@
 #  check_deposit_id                                 :bigint
 #  grant_id                                         :bigint
 #  increase_check_id                                :bigint
+#  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_donation_transaction_id              :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
@@ -36,6 +37,7 @@
 #  index_canonical_pending_transactions_on_grant_id                 (grant_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
+#  index_canonical_pending_transactions_on_paypal_transfer_id       (paypal_transfer_id)
 #  index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id        (raw_pending_bank_fee_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_donation_tx_id        (raw_pending_donation_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_invoice_tx_id         (raw_pending_invoice_transaction_id)
@@ -69,6 +71,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :ach_payment, optional: true
   belongs_to :increase_check, optional: true
+  belongs_to :paypal_transfer, optional: true
   belongs_to :check_deposit, optional: true
   belongs_to :grant, optional: true
   belongs_to :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", optional: true
@@ -126,6 +129,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :included_in_stats, -> { includes(canonical_pending_event_mapping: :event).where(events: { omit_stats: false }) }
   scope :with_custom_memo, -> { where("custom_memo is not null") }
 
+  scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }
+
   validates :custom_memo, presence: true, allow_nil: true
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
@@ -134,6 +139,10 @@ class CanonicalPendingTransaction < ApplicationRecord
   after_create_commit :write_system_event
 
   attr_writer :stripe_cardholder
+
+  def pending_expired?
+    unsettled? && created_at < 5.days.ago
+  end
 
   def mapped?
     @mapped ||= canonical_pending_event_mapping.present?

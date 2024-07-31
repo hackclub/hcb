@@ -4,16 +4,51 @@ class TopupStripeJob < ApplicationJob
   queue_as :default
 
   def perform
-    # amount of floating money that should be in stripe at any given time
-    # (msw) note this number is arbitrary at the time of writing– we have no
-    # clue how much buffer we'll need so I'll be manually updating this while
-    # we find our footing on stripe issuing
-    buffer = 80_000 * 100
+    # Stripe requires us to keep a certain amount of money in our Stripe Issuing
+    # Balance in order to approve card authorizations. The "buffer" is the
+    # amount of floating money that should be in Stripe at any given time.
+    #
+    # As of Jan 2024, our maximum Stripe issuing spending in a given week is
+    # $95k (week of Oct 1st, 2023). We want to have a buffer of double the
+    # expected max weekly spending. The week time-frame is important because it
+    # can take 5 business days for Top-ups to become available.
+    # ref: https://hcb.hackclub.com/blazer/queries/487-stripe-issuing-spending-per-week
+    #
+    # Having this buffer (double the max weekly spending) means the "age" of our
+    # money on Stripe Issuing is at least two weeks.
+    # Ex. The money from a top-up today will be spent in no earlier than two
+    #     weeks from now (FIFO order).
+    buffer = 200_000 * 100
 
     # amount of money currently in stripe
     balances = StripeService::Balance.retrieve
     pending = balances[:issuing].try(:[], :pending).try(:[], 0).try(:[], :amount) || 0 # new API changed this - it is not included when 0
     available = balances[:issuing][:available][0][:amount]
+
+    if available > buffer * 1.5
+      # Something is likely wrong if our Stripe Issuing balance is greater than
+      # the buffer by a significant amount. This could be a sign that this job
+      # is not computing the top-up amount correctly.
+      #
+      # NOTE: It is possible to have an issuing balance higher than the buffer
+      # due to `expected_tx_sum`. However, it should only be a marginal amount.
+      raise <<~MSG.squish
+        Stripe Issuing balance anomaly: We're trying to top-up, but found the
+        balance is already unexpectedly high.
+        Available: #{available},
+        Buffer: #{buffer}
+      MSG
+    elsif available < buffer / 2
+      # It appears we're spending our top-up money too quickly. Our ideal "age"
+      # of money is at least two weeks (see above). This notification is a sign
+      # we may need to increase our buffer.
+      Airbrake.notify(<<~MSG.squish)
+        Stripe Issuing balance: Low age of money.
+        We only have #{ActionController::Base.helpers.number_to_percentage((available / buffer.to_f) * 100, precision: 2)}
+        of the buffer available for spending.
+        Available: #{available}
+      MSG
+    end
 
     # amount of money already enroute to stripe through existing topups
     topups = Stripe::Topup.list(status: :pending)
@@ -33,7 +68,9 @@ class TopupStripeJob < ApplicationJob
     puts "topup amount == #{topup_amount}"
     return unless topup_amount > 0
 
-    limited_topup_amount = topup_amount.clamp(0, 50_000 * 100) # Limit to $50,000 per transaction
+    # The maximum amount for a single top-up is $300k
+    # ref: https://github.com/hackclub/hcb/issues/4462#issuecomment-1917940104
+    limited_topup_amount = topup_amount.clamp(0, 300_000 * 100)
 
     StripeService::Topup.create(
       destination_balance: "issuing",

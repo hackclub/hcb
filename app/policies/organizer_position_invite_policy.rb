@@ -6,11 +6,11 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def new?
-    user&.admin? || record.event&.users&.include?(user)
+    admin_or_manager?
   end
 
   def create?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    admin_or_manager?
   end
 
   def show?
@@ -26,7 +26,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def cancel?
-    user&.admin? || (record.event.users.include?(user) && (current_user_is_manager? || record.sender == user))
+    admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
   end
 
   def toggle_signee_status?
@@ -34,13 +34,13 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def change_position_role?
-    user&.admin? || organizer_signed_in?(as: :manager)
+    admin_or_manager?
   end
 
   private
 
-  def current_user_is_manager?
-    OrganizerPosition.find_by(user:, event: record.event)&.manager?
+  def admin_or_manager?
+    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 
 end

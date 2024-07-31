@@ -1,3 +1,8 @@
+<%= link_to ach_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to ACHs
+<% end %>
+
 <h1>Process ACH Transfer #<%= @ach_transfer.id %></h1>
 <p><small>Current Status: <%= @ach_transfer.aasm_state %></small></p>
 
@@ -42,7 +47,7 @@
   <p>
     Processed by:
     <span>
-      <%= avatar_for @ach_transfer.processor, 24, style: "margin: 0; vertical-align: bottom" %>
+      <%= avatar_for @ach_transfer.processor, 24, { style: "margin: 0; vertical-align: bottom" } %>
       <%= inline_icon "admin-badge", size: 20, style: "vertical-align: middle; margin: -0.2rem -0.3rem 0 -0.3rem;" if @ach_transfer.processor.admin? %>
       <span><%= @ach_transfer.processor.initial_name %></span>
     </span>
@@ -53,66 +58,99 @@
 
 <h3>ACH Details</h3>
 
-<table class="table--autosize">
-  <tbody>
-    <tr>
-      <td style="text-align: right;">Payee Name:</td>
-      <td><%= @ach_transfer.recipient_name %></td>
-      <td>
-        <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_name.to_json %>);">
-          copy
-        </span>
-      </td>
-    </tr>
-    <% if @ach_transfer.recipient_tel.present? %>
+<%= turbo_frame_tag "admin_ach_#{@ach_transfer.id}" do %>
+  <table class="table--autosize">
+    <tbody>
       <tr>
-        <td style="text-align: right;">Payee Phone Number:</td>
-        <td><%= @ach_transfer.recipient_tel %></td>
+        <td style="text-align: right;">ACH speed:</td>
+        <td colspan="2" style="width: 300px">
+          <%= @ach_transfer.same_day? ? "💨 Same-day" : "⌛ Standard" %>
+          <% if @ach_transfer.pending? %>
+            (<%= link_to "toggle", toggle_speed_ach_transfer_path(@ach_transfer), data: { turbo_method: :post } %>)
+          <% end %>
+        </td>
+      </tr>
+      <% if @ach_transfer.pending? %>
+        <tr>
+          <td colspan="3" class="center">
+            Estimated to arrive <%= format_datetime(@ach_transfer.estimated_arrival) %>
+            <% if @ach_transfer.same_day? %>
+              <small class="block muted">Same-day ACHs incur a fee</small>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      <tr>
+        <td style="text-align: right;">Payee Name:</td>
+        <td><%= @ach_transfer.recipient_name %></td>
         <td>
-          <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_tel.to_json %>);">
+          <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_name.to_json %>);">
             copy
           </span>
         </td>
       </tr>
-    <% end %>
-    <tr>
-      <td style="text-align: right;">Payment for:</td>
-      <td><%= @ach_transfer.payment_for %></td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">Bank Name:</td>
-      <td><%= @ach_transfer.bank_name %></td>
-    </tr>
-    <tr class="fs-exclude">
-      <td style="text-align: right;">Account Number:</td>
-      <td><%= @ach_transfer.account_number %></td>
-      <td>
-        <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.account_number.to_json %>);">
-          copy
-        </span>
-      </td>
-    </tr>
-    <tr class="fs-exclude">
-      <td style="text-align: right;">Routing Number:</td>
-      <td><%= @ach_transfer.routing_number %></td>
-      <td>
-        <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.routing_number.to_json %>);">
-          copy
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">Amount</td>
-      <td><%= render_money_amount @ach_transfer.amount %></td>
-      <td>
-        <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= render_money_amount(@ach_transfer.amount).to_json %>);">
-          copy
-        </span>
-      </td>
-    </tr>
-  </tbody>
-</table>
+      <% if @ach_transfer.recipient_tel.present? %>
+        <tr>
+          <td style="text-align: right;">Payee Phone Number:</td>
+          <td><%= @ach_transfer.recipient_tel %></td>
+          <td>
+            <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_tel.to_json %>);">
+              copy
+            </span>
+          </td>
+        </tr>
+      <% end %>
+      <tr>
+        <td style="text-align: right;">Payment for:</td>
+        <td><%= @ach_transfer.payment_for %></td>
+      </tr>
+      <tr>
+        <td style="text-align: right;">Bank Name:</td>
+        <td><%= @ach_transfer.bank_name %></td>
+      </tr>
+      <tr class="fs-exclude">
+        <td style="text-align: right;">Account Number:</td>
+        <td><%= @ach_transfer.account_number %></td>
+        <td>
+          <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.account_number.to_json %>);">
+            copy
+          </span>
+        </td>
+      </tr>
+      <tr class="fs-exclude">
+        <td style="text-align: right;">Routing Number:</td>
+        <td><%= @ach_transfer.routing_number %></td>
+        <td>
+          <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.routing_number.to_json %>);">
+            copy
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right;">Amount</td>
+        <td><%= render_money_amount @ach_transfer.amount %></td>
+        <td>
+          <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= render_money_amount(@ach_transfer.amount).to_json %>);">
+            copy
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+<% end %>
 
-<%= render partial: "receipts/receipt", collection: @ach_transfer.local_hcb_code.receipts.transfer_create_page.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
+<% if @ach_transfer.local_hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
+  <div class="warning bold mb2">
+    ⚠️ Please check these receipts closely, we suspect that their amounts don't match
+  </div>
+<% end %>
+
+<% if @ach_transfer.local_hcb_code.receipts.any? { |r| r.duplicated? } %>
+  <div class="warning bold mb2">
+    ⚠️ We suspect that one or more of these receipts have been used before
+  </div>
+<% end %>
+
+<%= render partial: "receipts/receipt", collection: @ach_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
 
 <hr>

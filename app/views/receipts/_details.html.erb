@@ -1,0 +1,26 @@
+<h2 class="mt-0">
+  <span style="vertical-align: text-bottom;"><%= user_mention(receipt.user, { avatar: { style: "vertical-align: baseline;" }, style: "color: red;" }) %></span>'s receipt
+</h2>
+
+<%= render partial: "receipts/extracted", locals: { receipt: } %>
+
+<section class="details break-words">
+  <div class="fs-mask" style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
+    <strong style="font-weight: 600;">Name</strong>
+    <span style="word-wrap: break-word; width: 100%;"><%= receipt.file.blob.filename %></span>
+  </div>
+
+  <div class="fs-mask" style="grid-template-columns: 7rem auto;">
+    <strong style="font-weight: 600;">Uploaded</strong>
+    <%= relative_timestamp receipt.created_at %>
+  </div>
+
+  <div class="fs-mask" style="grid-template-columns: 7rem auto;">
+    <strong style="font-weight: 600;">Size</strong>
+    <%= number_to_human_size receipt.file.blob.byte_size %>
+  </div>
+</section>
+
+<% admin_tool("mt3 p0") do %>
+  <pre class="m0 p1 bg-transparent"><code><%= receipt.textual_content %></code></pre>
+<% end %>

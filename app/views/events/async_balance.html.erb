@@ -1,9 +1,7 @@
 <%= turbo_frame_tag "event_balance_#{@event.public_id}" do %>
-  <strong>
-    <% if params[:symbol] == "true" %>
-      <%= render_money(@event.balance_available_v2_cents) %>
-    <% else %>
-      <%= render_money_amount(@event.balance_available_v2_cents) %>
-    <% end %>
-  </strong>
+  <% if params[:symbol] == "true" %>
+    <%= render_money(@event.balance_available_v2_cents) %>
+  <% else %>
+    <%= render_money_amount(@event.balance_available_v2_cents) %>
+  <% end %>
 <% end %>

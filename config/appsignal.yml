@@ -17,7 +17,3 @@ default: &defaults
 production:
   <<: *defaults
   active: true
-
-staging:
-  <<: *defaults
-  active: true

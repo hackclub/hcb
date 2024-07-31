@@ -145,11 +145,11 @@ class ExportsController < ApplicationController
   end
 
   def transactions_csv
-    ::ExportService::Csv.new(event_id: @event.id).run
+    ::ExportService::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
   end
 
   def transactions_json
-    ::ExportService::Json.new(event_id: @event.id).run
+    ::ExportService::Json.new(event_id: @event.id, public_only: !organizer_signed_in?).run
   end
 
   def transactions_ledger

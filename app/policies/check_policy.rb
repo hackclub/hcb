@@ -5,10 +5,6 @@ class CheckPolicy < ApplicationPolicy
     is_public || admin_or_user
   end
 
-  def view_scan?
-    admin_or_user
-  end
-
   private
 
   def admin_or_user

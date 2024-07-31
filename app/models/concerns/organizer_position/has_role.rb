@@ -8,12 +8,20 @@ class OrganizerPosition
       # For example, managers have access to everything below them.
       enum :role, { member: 25, manager: 100 }
       validate :at_least_one_manager
+
+      validate :signee_is_manager
     end
 
     private
 
     def at_least_one_manager
       event&.organizer_positions&.where(role: :manager)&.any?
+    end
+
+    def signee_is_manager
+      return unless is_signee && role != "manager"
+
+      errors.add(:role, "must be a manager because the user is a legal owner.")
     end
   end
 

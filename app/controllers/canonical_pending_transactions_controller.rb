@@ -18,7 +18,7 @@ class CanonicalPendingTransactionsController < ApplicationController
     @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @canonical_pending_transaction.local_hcb_code, event: @event).run.first(4)
   end
 
-  def set_custom_memo
+  def update
     @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
 
     authorize @canonical_pending_transaction
@@ -26,7 +26,7 @@ class CanonicalPendingTransactionsController < ApplicationController
     @canonical_pending_transaction.update!(canonical_pending_transaction_params)
 
     unless params[:no_flash]
-      flash[:success] = "Renamed pending transaction"
+      flash[:success] = "Updated pending transaction"
     end
     redirect_to params[:redirect_to] || @canonical_pending_transaction.local_hcb_code
   end

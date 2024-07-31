@@ -22,9 +22,11 @@
 
   &.visible {
     background-color: rgba($snow, 0.9);
+
     html[data-dark='true'] & {
       background-color: rgba($dark, 0.9);
     }
+
     backdrop-filter: blur(2px);
 
     .feedback-form__btn--open {
@@ -76,6 +78,26 @@
   }
 }
 
+.feedback-form__support_redirect {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(1rem);
+  transition-duration: 0.125s;
+  transition-timing-function: ease-in-out;
+  transition-property: transform, visibility, opacity, border;
+  margin-bottom: 1rem;
+
+  .visible & {
+    visibility: visible;
+    opacity: 100;
+    transform: none;
+  }
+
+  html[data-dark='true'] &:not(:focus) {
+    border-color: map-get($palette, slate) !important;
+  }
+}
+
 .feedback-form__btn {
   border: none;
   cursor: pointer;
@@ -102,6 +124,6 @@
 }
 
 .feedback-form__btn--open {
-  background-color: rgba(51, 142, 218, 0.825)!important;
+  background-color: rgba(51, 142, 218, 0.825) !important;
   color: white;
 }

@@ -1,0 +1,13 @@
+<p>
+  <b>Event:</b> <%= @opdr.event.name %>
+</p>
+
+<p>
+  <b>User:</b> <%= @opdr.organizer_position.user.name %>
+</p>
+
+<p>
+  <b>From:</b> <%= @opdr.submitted_by.name %>
+</p>
+
+<%= link_to "View Request", @opdr %>

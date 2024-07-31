@@ -7,6 +7,28 @@
 
 <% admin_tool("mt3") do %>
   <%= link_to "View on Stripe", @invoice.stripe_dashboard_url, class: "btn bg-accent" %>
+  <% if @invoice.paid? %>
+    <button class="btn bg-error" data-behavior="modal_trigger" data-modal="refund">Issue refund</button>
+  <% end %>
+<% end %>
+
+<% if current_user&.admin? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
+    <%= modal_header "Issue refund" %>
+    <%= form_with url: refund_invoice_path(id: @invoice.id) do |form| %>
+      <div class="field">
+        <%= form.label :amount, "Amount to refund" %>
+        <%= form.number_field :amount,
+                              value: ("%.2f" % (@invoice.item_amount.to_f / 100)),
+                              placeholder: ("%.2f" % (@invoice.item_amount.to_f / 100)),
+                              min: 1,
+                              max: @invoice.item_amount.to_f / 100,
+                              step: 0.01,
+                              autofocus: true %>
+      </div>
+      <%= form.submit "Refund invoice", class: "bg-error" %>
+    <% end %>
+  </section>
 <% end %>
 
 <% if @invoice.void_v2? %>
@@ -180,7 +202,7 @@
     <h2 class="h2 mt0 border-none">
       <%= @sponsor.name %>
       <span class="regular muted"> paid </span>
-      <span class="regular"><%= render_money @invoice.item_amount %></span>
+      <span class="regular"><%= render_money @hcb_code.amount %></span>
     </h2>
     <section class="card__banner card__darker details-horiz border-top border-bottom">
       <% if @invoice.payment_method_type == 'card' %>
@@ -238,14 +260,14 @@
         <p>
           <strong>Recipient email</strong>
           <% if organizer_signed_in? %>
-            <%= mail_to @sponsor.contact_email, @sponsor.contact_email.downcase, class: "slate underline" %>
+            <%= mail_to @sponsor.contact_email, @sponsor.contact_email.downcase %>
           <% else %>
             <strong>Sign in to view</strong>
           <% end %>
         </p>
         <p>
           <strong>Amount</strong>
-          +<%= render_money @invoice.item_amount %>
+          +<%= render_money @hcb_code.amount %>
         </p>
         <p>
           <strong><%= invoice_fee_type %></strong>
@@ -281,7 +303,7 @@
 
 <% if @invoice.payment_method_type == 'card' %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payment_details">
-    <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(@invoice, class: "h3 sans slate regular") %>
+    <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(@invoice, class: "h3 font-sans slate regular") %>
 
     <article class="details-horiz">
       <div class="details">

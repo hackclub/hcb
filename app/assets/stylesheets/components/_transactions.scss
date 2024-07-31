@@ -9,31 +9,31 @@
 }
 
 .transaction--fancy {
-  background-image: repeating-linear-gradient(
-    to bottom right,
-    rgb(226, 177, 66) 0px,
-    rgb(251, 232, 122) 50px,
-    rgb(226, 177, 66) 100px
-  );
+  background-image: repeating-linear-gradient(to bottom right,
+      rgb(226, 177, 66) 0px,
+      rgb(251, 232, 122) 50px,
+      rgb(226, 177, 66) 100px);
   background-attachment: fixed;
   color: $black;
 }
+
 .transaction--icy {
-  background-image: repeating-linear-gradient(
-    to bottom right,
-    #33d6a6 0px,
-    #338eda 50px,
-    #33d6a6 100px
-  );
+  background-image: repeating-linear-gradient(to bottom right,
+      #33d6a6 0px,
+      #338eda 50px,
+      #33d6a6 100px);
   background-attachment: fixed;
-  font-weight: bold;
+  font-weight: 600;
   color: $white;
 }
+
 .transaction--frc {
   font-weight: 600;
   color: $black;
+
   td {
     position: relative;
+
     &:before {
       content: '';
       position: absolute;
@@ -42,7 +42,7 @@
       right: 0;
       bottom: 0;
       opacity: 0.1;
-      background-image: #{image-url('frc-background.png')};
+      background-image: url('frc-background.png');
       background-size: 24em;
       background-position: center;
       background-attachment: fixed;
@@ -53,6 +53,7 @@
 html[data-dark='true'] {
   .transaction--frc {
     color: $white;
+
     &::after {
       opacity: 0.15;
       filter: invert(100%);
@@ -63,12 +64,12 @@ html[data-dark='true'] {
 .transaction__memo {
   max-width: 400px;
 
-  > div {
+  >div {
     display: flex;
     align-items: center;
   }
 
-  span:first-child {
+  span:not(.badge):not(.list-badge):first-of-type {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -78,17 +79,23 @@ html[data-dark='true'] {
     }
   }
 
-  + td {
+  +td {
     text-align: right; // right-align amount
   }
 
   .add-tag-badge {
+    @extend .mr1;
     visibility: hidden;
     cursor: pointer;
+    flex-shrink: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.3;
+    padding: 0.25rem 0.625rem;
   }
 }
 
-[class^='transaction--']:hover .add-tag-badge,
+.transaction:hover .add-tag-badge,
 .add-tag-badge[aria-expanded='true'] {
   visibility: visible;
 }
@@ -107,26 +114,83 @@ html[data-dark='true'] {
     width: 24px;
     height: 24px;
     fill: map-get($palette, muted);
+
     .transaction--fancy & {
       fill: $black;
     }
+
     .transaction--icy & {
       fill: $white;
     }
+
     margin: 0;
   }
 }
 
-.transaction--positive:has(.renamed), 
-.transaction--negative:has(.renamed) {
+.transaction__fee_icon {
+  svg {
+    height: 18px;
+    width: 18px;
+    margin-left: 3px;
+  }
+}
+
+.transaction:has(.renamed) {
   animation: highlight 2s;
 }
 
-@keyframes highlight {
-  from {
-    background-color: map-get($palette, warning);
+.transaction:has(.renaming) {
+  background-image: linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%);
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size: 50px 2px, 50px 2px, 2px 50px, 2px 50px;
+  background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+  animation: border-dance 1s infinite linear;
+}
+
+// "Pending" badge
+.transaction .renaming~.badge.bg-muted {
+  display: none;
+}
+
+.transaction__icon--selected {
+  display: none;
+}
+
+.transaction__icon--selected svg {
+  fill: black;
+}
+
+html[data-dark='true'] {
+  .transaction__icon--selected svg {
+    fill: white !important;
   }
-  to {
-    background-color: none;
-  }
+}
+
+.selected__transaction>.transaction__icon--selected {
+  display: table-cell !important;
+}
+
+.selected__transaction>.transaction__icon {
+  display: none;
+}
+
+.transaction__icon {
+  padding-left: 1rem;
+}
+
+.memo-frame[busy] {
+  cursor: progress;
+}
+
+.memo-frame[busy] .memo-frame__ai-button {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.embedded .embedded-display-none {
+  display: none;
+}
+
+.pending_transactions_tags:has(> div) {
+  margin-top: 2px;
 }

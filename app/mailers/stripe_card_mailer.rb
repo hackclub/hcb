@@ -27,7 +27,7 @@ class StripeCardMailer < ApplicationMailer
     @card = StripeCard.find(params[:card_id])
     @user = @card.user
     @event = @card.event
-    @recipient = @user.email
+    @recipient = @user.email_address_with_name
   end
 
 end

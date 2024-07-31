@@ -9,4 +9,8 @@ class SuggestedPairingPolicy < ApplicationPolicy
     record.receipt.user == user && record.receipt.receiptable.nil?
   end
 
+  def accept_with_memo?
+    record.receipt.user == user && record.receipt.receiptable.nil?
+  end
+
 end

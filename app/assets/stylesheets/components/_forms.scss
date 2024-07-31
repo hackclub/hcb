@@ -10,13 +10,13 @@ input[type='url'],
 select,
 textarea {
   -webkit-appearance: none;
-  background-color: $white;
+  background-color: map-get($palette, snow);
   border-radius: 6px;
   border: 1px solid map-get($palette, smoke);
   color: inherit;
   display: block;
   font-size: 1rem;
-  min-height: 3rem;
+  min-height: 2.5rem;
   margin-left: 0;
   outline: 0;
   padding: 0.25rem 0.5rem;
@@ -24,11 +24,6 @@ textarea {
   transition: border 0.2s ease;
   width: 100%;
   max-width: 24rem;
-
-  .card & {
-    background-color: map-get($palette, smoke);
-    border-color: transparent;
-  }
 
   &:focus {
     border-color: map-get($palette, info);
@@ -42,8 +37,8 @@ textarea {
 }
 
 select {
-  min-height: 0;
-  padding: 0.8rem 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
 }
 
 input[type='file'] {
@@ -72,16 +67,17 @@ input[type='file'] {
     border: 1px dashed map-get($palette, info);
 
     transition: transform 0.125s ease-in-out;
-    font-family: $brand-font-family;
     font-size: 0.875rem;
     font-weight: 600;
 
     letter-spacing: 0;
     line-height: 1.5;
+
     &:hover {
       transform: scale(1.0625);
     }
   }
+
   .field--fileupload__field {
     &::file-selector-button {
       display: none;
@@ -136,6 +132,7 @@ input[type='number'],
 input[type='search'] {
   padding-left: 1rem;
 }
+
 input[type='search']::-webkit-search-decoration {
   display: none;
 }
@@ -145,6 +142,7 @@ input[type='search']::-webkit-search-decoration {
     font-weight: 500;
     color: map-get($palette, error);
   }
+
   input {
     border-color: map-get($palette, error);
   }
@@ -153,13 +151,14 @@ input[type='search']::-webkit-search-decoration {
 .field {
   margin-bottom: 0.75rem;
 }
+
 .field--money {
   display: flex;
   align-items: center;
 
   &:before {
     content: '$';
-    font-weight: bold;
+    font-weight: 600;
     color: map-get($palette, muted);
     display: inline-block;
     width: 1rem;
@@ -169,14 +168,84 @@ input[type='search']::-webkit-search-decoration {
     max-width: 15rem !important;
   }
 }
+
+input[type='checkbox'] {
+  accent-color: map-get($palette, info);
+}
+
 .field--checkbox {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
 
-  input {
-    margin-right: 0.5rem;
+.field--checkbox--switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+
+  & input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  & .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 34px;
+    background-color: #e8e8e9;
+
+    [data-dark='true'] & {
+      background-color: #3f4245;
+    }
+  }
+
+  & .slider:before {
+    position: absolute;
+    content: "";
+    height: 28px;
+    width: 28px;
+    left: 3px;
+    bottom: 3px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.125);
+    transition: .2s;
+    border-radius: 999px;
+    background-color: #fff;
+  }
+
+  & input:checked+.slider {
+    background-color: $red;
+  }
+
+  & input:checked+.slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+
+
+
+    [data-dark='true'] & {
+      background-color: #fff;
+    }
+  }
+
+  &:active .slider:before {
+    width: 34px;
+  }
+
+  &:active input:checked+.slider:before {
+    transform: translateX(20px);
   }
 }
+
 .field--radiobox {
   display: flex;
   align-items: center;
@@ -185,6 +254,7 @@ input[type='search']::-webkit-search-decoration {
     margin-right: 0.5rem;
   }
 }
+
 .actions {
   margin-top: 1.5rem;
 }
@@ -192,17 +262,24 @@ input[type='search']::-webkit-search-decoration {
 label {
   display: block;
   color: map-get($palette, black);
+  font-weight: 500;
 }
 
 $select: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="%238492a6" viewbox="0 0 32 32"><path d="M0 6 L32 6 L16 28 z"/></svg>');
+
 select {
-  background: #{$select} right 0.75rem center / 0.5rem no-repeat $white;
+  background-image: #{$select};
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.5rem;
 }
+
 // rails date(time) inputs
 select[name$='i)]'] {
   width: 4.5rem;
   display: inline-block;
 }
+
 // rails month inputs should be wider
 select[id$='_2i'] {
   width: 9.125rem; // magic number, makes form page_sm wide
@@ -215,13 +292,14 @@ legend {
   padding: 0;
   border: 0;
 }
+
 .field--options {
   display: grid;
-  grid-gap: 1rem;
+  gap: 1rem;
   grid-template-columns: repeat(2, 1fr);
   width: 100%;
-  max-width: 384px;
-  
+  max-width: 24rem;
+
   &.trio {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -248,13 +326,15 @@ legend {
     background-color: rgba(map-get($palette, accent), 0.25);
   }
 
-  input:disabled + label {
+  input:disabled+label {
     opacity: 0.5;
     cursor: default;
   }
 
-  input:checked + label {
-    box-shadow: 0 0 0 1px white, 0 0 0 3px map-get($palette, info);
+  input:checked+label {
+    box-shadow:
+      0 0 0 1px white,
+      0 0 0 3px map-get($palette, info);
   }
 }
 
@@ -264,8 +344,10 @@ textarea.card {
   transition: 0.2s ease box-shadow;
 
   &:focus {
-    box-shadow: inset 0 0 0 1px map-get($palette, info),
-      0 0 2px 0 rgba(0, 0, 0, 0.0625), 0 4px 8px 0 rgba(0, 0, 0, 0.125);
+    box-shadow:
+      inset 0 0 0 1px map-get($palette, info),
+      0 0 2px 0 rgba(0, 0, 0, 0.0625),
+      0 4px 8px 0 rgba(0, 0, 0, 0.125);
   }
 }
 
@@ -283,6 +365,7 @@ form section.grid--split {
     margin-bottom: 0;
   }
 }
+
 .grid__half {
   grid-column: span 1 !important;
 }

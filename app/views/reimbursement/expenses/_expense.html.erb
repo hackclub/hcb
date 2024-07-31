@@ -1,14 +1,13 @@
-<%# locals: (expense:, new:) -%>
+<%# locals: (expense:, new: false) -%>
 
-<% new ||= false %>
-<% latest_state_change = expense.versions.reverse.find { |version| version.changeset["aasm_state"]&.first.present? } %>
+<% read_only = !OrganizerPosition.find_by(user: current_user, event: expense.report.event)&.manager? && current_user != expense.report.user && !admin_signed_in? %>
 
 <%= turbo_frame_tag expense do %>
   <div
     data-controller="expense-form"
     data-expense-form-enabled-value="<%= new %>"
-    data-expense-form-memo-value="<%= expense.memo.presence || "Untitled Expense" %>"
-    data-expense-form-locked-value="<%= expense.report.locked? %>">
+    data-expense-form-memo-value="<%= expense.card_label.presence || "Untitled Expense" %>"
+    data-expense-form-locked-value="<%= expense.report.locked? || read_only %>">
     <article
       id="<%= expense.expense_number %>"
       class="
@@ -16,7 +15,11 @@
         b--<%= expense.status_color %>
         <%= "translucent" if expense.rejected? && !expense.report.rejected? %>
       "
-      data-expense-form-target="card">
+      data-expense-form-target="card"
+      <% if new %>
+        data-controller="scroll-into-view"
+        data-scroll-into-view-alignment-value="center"
+      <% end %>>
       <div class="card__banner secondary mb2 border-bottom flex items-center" style="gap: 8px">
           <% if expense.report.initial_draft? %>
             <code class="bg-white click_to_mention">
@@ -32,37 +35,56 @@
             </code>
           <% end %>
           <div style="flex-grow: 1" data-expense-form-target="memo" class="bold <%= "muted" unless expense.memo.presence %>">
-            <%= expense.memo.presence || "Untitled Expense" %>
+            <%= expense.card_label.presence || "Untitled Expense" %>
           </div>
-          <% if latest_state_change %>
-            <% if latest_state_change.changeset["aasm_state"].second == "approved" %>
+          <% if expense.approved_by %>
+            <% if expense.approved? %>
               Approved by
             <% else %>
               Approval removed by
             <% end %>
-            <%= user_mention User.find_by(id: latest_state_change.whodunnit || 2891), { avatar: { style: "vertical-align: sub;" } }, "Unknown User" %>
+            <%= user_mention expense.approved_by, { avatar: { style: "vertical-align: sub;" }, disable_tooltip: true }, "Unknown User" %>
           <% end %>
-          <%= pop_icon_to "enter",
-                    "#",
-                    size: 24,
-                    class: "purple tooltipped tooltipped--w",
-                    'aria-label': "Move this expense",
-                    data: { behavior: "modal_trigger", modal: "move_#{expense.id}", "expense-form-target": "move" } if policy(expense).update? %>
-          <button id="edit-or-save" class="pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is locked. #{expense.report.closed? ? "" : "Mark it as a draft to edit."}" %>">
-            <% if expense.report.locked? %>
+          <button class="edit-or-save pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is read-only. #{"Mark it as a draft to edit." unless expense.report.closed? || read_only}" %>">
+            <% if expense.report.locked? || read_only %>
               <%= inline_icon "private" %>
             <% else %>
               <%= inline_icon "checkmark", style: new ? nil : "display: none;" %>
               <%= inline_icon "edit", style: new ? "display: none;" : nil %>
             <% end %>
           </button>
-          <%= pop_icon_to "delete",
-                    reimbursement_expense_path(expense.id),
-                    method: :delete,
-                    size: 24,
-                    class: "error tooltipped tooltipped--w",
-                    'aria-label': "Delete this expense",
-                    data: { turbo: true } if policy(expense).update? %>
+          <% if policy(expense).update? %>
+            <div data-controller="menu" data-menu-placement-value="bottom-end">
+              <%= pop_icon_to "more",
+                  "#",
+                  class: "align-middle muted",
+                  "aria-label": "More Options",
+                  color: "muted",
+                  data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+              <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
+                <% unless expense.is_standard? %>
+                  <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense", value: 0 }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
+                    <%= inline_icon "payment-docs", size: 24 %>
+                    Revert to a standard expense
+                  <% end %>
+                <% end %>
+                <% unless expense.type == "Reimbursement::Expense::Mileage" %>
+                  <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense::Mileage", value: 0 }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
+                    <%= inline_icon "car", size: 24 %>
+                    Mileage expense
+                  <% end %>
+                <% end %>
+                <%= link_to "#", data: { behavior: "modal_trigger", modal: "move_#{expense.id}", "expense-form-target": "move", "action": "menu#close" } do %>
+                  <%= inline_icon "inserter", size: 24 %>
+                  Move this expense
+                <% end %>
+                <%= link_to reimbursement_expense_path(expense.id), data: { turbo: true, "turbo-method": :delete, "action": "menu#close" } do %>
+                  <%= inline_icon "delete", size: 24 %>
+                  Delete this expense
+                <% end %>
+              </div>
+            </div>
+          <% end %>
       </div>
       <section class="grid grid--split">
         <%= render partial: "reimbursement/expenses/form", locals: { expense:, new: } %>
@@ -73,7 +95,7 @@
   </div>
   <section data-behavior="modal" role="dialog" id="move_<%= expense.id %>" class="modal modal--scroll bg-snow">
     <%= modal_header "Move Expense" %>
-    <%= form_with(model: expense, class: "mb3 mt1", style: "max-width: 600px;", html: { "x-data" => "{valid: false}" }, local: true, data: { turbo: false }) do |form| %>
+    <%= form_with(model: expense.becomes(Reimbursement::Expense), class: "mb3 mt1", style: "max-width: 600px;", html: { "x-data" => "{reportId: null, eventId: null}" }, local: true, data: { turbo: false }) do |form| %>
       <div class="field event-select-target">
         <%= form.label :reimbursement_report_id, "Move To A Pre-Existing Report", class: "mt2 bold" %>
         <%= form.select(:reimbursement_report_id,
@@ -82,7 +104,7 @@
             current_user == expense.report.user ?
               current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
               expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
-            { prompt: "Select a report…", required: true, include_blank: "Select a report..." }, "x-model": "valid") %>
+            { prompt: "Select a report…", required: true, include_blank: "Select a report..." }, "x-model": "reportId") %>
         <% unless admin_signed_in? %>
           <span class="muted mt1">You can transfer an expense to any report of yours.</span>
         <% end %>
@@ -93,18 +115,12 @@
             current_user.admin? ?
               Event.all.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
               current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
-            { prompt: "Select an event…", required: true }, "x-model": "valid") %>
+            { prompt: "Select an event…", required: true }, "x-model": "eventId") %>
         <% unless admin_signed_in? %>
           <span class="muted mt1">You can transfer an expense to any report of yours.</span>
         <% end %>
       </div>
-      <%= form.submit "Update Expense", class: "mt2", 'x-show': "valid", 'x-transition.duration.500ms': "" %>
+      <%= form.submit "Update Expense", class: "mt2", 'x-show': "reportId || eventId", 'x-transition.duration.500ms': "" %>
     <% end %>
   </section>
-<% end %>
-
-<% if new %>
-  <script>
-    document.getElementById("<%= expense.expense_number.to_json %>").scrollIntoView()
-  </script>
 <% end %>

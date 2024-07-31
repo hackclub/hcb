@@ -41,7 +41,7 @@ class CommentMailbox < ApplicationMailbox
   end
 
   def set_user
-    @user = User.find_by(email: mail.from[0].downcase)
+    @user = User.find_by(email: mail.from[0])
   end
 
   def ensure_permissions?

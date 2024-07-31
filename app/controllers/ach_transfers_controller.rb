@@ -72,18 +72,36 @@ class AchTransfersController < ApplicationController
     redirect_to @ach_transfer.local_hcb_code
   end
 
+  def toggle_speed
+    authorize @ach_transfer
+    @ach_transfer.toggle!(:same_day)
+    redirect_back_or_to ach_start_approval_admin_path(@ach_transfer)
+  end
+
   def validate_routing_number
     return render json: { valid: true } if params[:value].empty?
     return render json: { valid: false, hint: "Bank not found for this routing number." } unless /\A\d{9}\z/.match?(params[:value])
 
-    banks = Increase::RoutingNumbers.list(routing_number: params[:value])
+    bank = ColumnService.get "/institutions/#{params[:value]}" # This is safe since params[:value] is validated to only contain digits above
 
-    valid = banks.size > 0
-
-    render json: {
-      valid:,
-      hint: valid ? banks.first&.dig("name")&.titleize : "Bank not found for this routing number.",
-    }
+    if bank["routing_number_type"] != "aba"
+      render json: {
+        valid: false,
+        hint: "Please enter an ABA routing number."
+      }
+    elsif bank["ach_eligible"] == false
+      render json: {
+        valid: false,
+        hint: "This routing number cannot accept ACH transfers."
+      }
+    else
+      render json: {
+        valid: true,
+        hint: bank["full_name"].titleize,
+      }
+    end
+  rescue Faraday::BadRequestError
+    return render json: { valid: false, hint: "Bank not found for this routing number." }
   rescue => e
     notify_airbrake(e)
     render json: { valid: true }
@@ -101,7 +119,7 @@ class AchTransfersController < ApplicationController
   end
 
   def ach_transfer_params
-    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }]
+    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id]
 
     if admin_signed_in?
       permitted_params << :scheduled_on

@@ -1,5 +1,5 @@
 json.recipient_name check.recipient_name
-json.memo check.memo
+json.memo check.local_hcb_code.memo
 json.payment_for check.payment_for
 json.status check.is_a?(IncreaseCheck) ? check.state_text.parameterize(separator: "_") : nil # TODO: handle statuses for old Lob checks
 

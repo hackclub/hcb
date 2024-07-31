@@ -1,8 +1,8 @@
-<% title "Partnered Signups" %>
+<% title "Partner Signups" %>
 
-<h1>Partnered Signups</h1>
-
-<p><small><%= pluralize(@count, "result") %></small></p>
+<p>
+  Displaying <%= pluralize(@count, "partnered signup") %>.
+</p>
 
 <table>
   <thead>
@@ -13,7 +13,6 @@
       <th class="w-48">Owner Email</th>
       <th class="w-40">Owner Phone</th>
       <th class="w-48">Partner</th>
-      <th class="w-32">DocuSign Envelope ID</th>
       <th class="w-32">Status</th>
       <th class="w-32">Actions</th>
     </tr>
@@ -27,14 +26,10 @@
         <td><%= partnered_signup.owner_email %></td>
         <td><%= partnered_signup.owner_phone %></td>
         <td><%= partnered_signup.partner.name %></td>
-        <td><%= partnered_signup.docusign_envelope_id %></td>
         <td>
           <%= partnered_signup.state_text %>
         </td>
         <td>
-          <% if partnered_signup.docusign_envelope_id %>
-            <%= button_to "Go to DocuSign", partnered_signup_sign_document_admin_index_url(partnered_signup) %>
-          <% end %>
         <% if partnered_signup.applicant_signed? %>
           <%= form_with(model: nil, local: true, url: partnered_signups_accept_admin_path(id: partnered_signup.id), method: :post) do |form| %>
             <%= form.submit "Approve" %>

@@ -95,15 +95,23 @@
 #  fk_rails_...  (voided_by_id => users.id)
 #
 class Invoice < ApplicationRecord
+  MAX_CARD_AMOUNT = 10_000_00 # Maximum amount we allow to be paid via credit card, in cents
+
   has_paper_trail skip: [:payment_method_ach_credit_transfer_account_number] # ciphertext columns will still be tracked
   has_encrypted :payment_method_ach_credit_transfer_account_number
 
   include PublicIdentifiable
   set_public_id_prefix :inv
 
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "invoices", :stripe_invoice_id
+
   extend FriendlyId
   include AASM
   include Commentable
+
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   include PgSearch::Model
   pg_search_scope :search_description, associated_against: { sponsor: :name }, against: [:item_description, :item_amount], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "invoices.created_at"
@@ -144,13 +152,21 @@ class Invoice < ApplicationRecord
     state :open_v2, initial: true
     state :paid_v2
     state :void_v2
+    state :refunded_v2
 
     event :mark_paid do
       transitions from: :open_v2, to: :paid_v2
+      after do
+        create_activity(key: "invoice.paid", owner: nil)
+      end
     end
 
     event :mark_void do
       transitions from: :open_v2, to: :void_v2
+    end
+
+    event :mark_refunded do
+      transitions from: :paid_v2, to: :refunded_v2
     end
   end
 
@@ -171,6 +187,10 @@ class Invoice < ApplicationRecord
 
   # Stripe syncing…
   before_destroy :close_stripe_invoice
+
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
+  end
 
   def fee_reimbursed?
     !fee_reimbursement.nil?
@@ -243,7 +263,7 @@ class Invoice < ApplicationRecord
     self.auto_advance = inv.auto_advance
     self.due_date = Time.at(inv.due_date).to_datetime # convert from unixtime
     self.ending_balance = inv.ending_balance
-    self.finalized_at = inv.finalized_at
+    self.finalized_at = inv.respond_to?(:status_transitions) ? inv.status_transitions.finalized_at : inv.try(:finalized_at)
     self.hosted_invoice_url = inv.hosted_invoice_url
     self.invoice_pdf = inv.invoice_pdf
     self.livemode = inv.livemode
@@ -255,7 +275,7 @@ class Invoice < ApplicationRecord
     self.stripe_charge_id = inv&.charge&.id
     self.subtotal = inv.subtotal
     self.tax = inv.tax
-    self.tax_percent = inv.tax_percent
+    # self.tax_percent = inv.tax_percent
     self.total = inv.total
     # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
     self.payment_method_type = type = inv&.charge&.payment_method_details&.type
@@ -281,16 +301,6 @@ class Invoice < ApplicationRecord
       self.payment_method_ach_credit_transfer_account_number = details.account_number
       self.payment_method_ach_credit_transfer_swift_code = details.swift_code
     end
-  end
-
-  def stripe_dashboard_url
-    url = "https://dashboard.stripe.com"
-
-    url += "/test" if StripeService.mode == :test
-
-    url += "/invoices/#{self.stripe_invoice_id}"
-
-    url
   end
 
   def arrival_date

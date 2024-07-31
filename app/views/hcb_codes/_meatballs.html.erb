@@ -4,7 +4,7 @@
 <% disputable = can_dispute?(hcb_code:) %>
 
 <% if disputable || flagable || pinnable %>
-  <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end">
+  <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
         class: "align-middle", "aria-label": "More Options",

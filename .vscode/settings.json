@@ -32,5 +32,6 @@
   },
   "files.associations": {
     "apple-app-site-association": "json"
-  }
+  },
+  "css.validate": false
 }

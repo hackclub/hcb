@@ -1,0 +1,103 @@
+<div class="flex flex-col gap-4">
+  <% admin_tool do %>
+    <strong>Org’s slug history:</strong> <%= @event.slugs.pluck(:slug).join ", " %>
+  <% end %>
+
+  <%= render partial: "admin_viewer", locals: { record: @event } %>
+
+  <% admin_tool do %>
+    <details>
+      <summary>Audit log</summary>
+
+      <%= turbo_frame_tag :audit_log, src: audit_log_event_path(@event), loading: :lazy do %>
+        <p class="center muted mt3 h3">One moment...</p>
+      <% end %>
+    </details>
+  <% end %>
+
+  <%= form_with(model: event, local: true, class: "mb3") do |form| %>
+    <%= form_errors event, "organization" %>
+    <% admin_tool do %>
+      <%= link_to (event.hidden? ? "Un-hide project" : "Hide project"),
+                  event_toggle_hidden_path(event),
+                  method: :put,
+                  "data-confirm": "Do you really want to #{event.hidden? ? "un-hide" : "hide"} #{event.name}?",
+                  class: "btn bg-success mb2" if event.persisted? %>
+
+      <div class="field" id="admin_settings">
+        <%= form.label :name %>
+        <%= form.text_field :name %>
+      </div>
+
+      <div class="field">
+        <%= form.label :sponsorship_fee, "Sponsorship fee (as fraction of revenue)" %>
+        <%= form.text_field :sponsorship_fee, value: event.sponsorship_fee || 0.07, placeholder: "0.07", required: true %>
+      </div>
+
+      <div class="field">
+        <%= form.label :stripe_card_shipping_type, "Card shipping method" %>
+        <%= form.collection_select :stripe_card_shipping_type, Event.stripe_card_shipping_types, :first, :first %>
+      </div>
+
+      <div class="field">
+        <%= form.label :postal_code %>
+        <%= form.text_field :postal_code, placeholder: "90069" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :country %>
+        <%= form.collection_select :country, Event.countries_for_select, :first, :last, { include_blank: "Select a country" } %>
+      </div>
+
+      <div class="field">
+        <%= form.label :category %>
+        <%= form.collection_select :category, Event.categories, :first, :first, { include_blank: "Select a category" } %>
+      </div>
+
+      <div class="field">
+        <%= form.label :point_of_contact_id, capture { %>
+          Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(@event), method: :post %>
+        <% } %>
+        <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email %>
+      </div>
+
+      <div class="field field--checkbox">
+        <%= form.check_box :demo_mode, switch: true %>
+        <%= form.label :demo_mode, "Is in Playground Mode?" %>
+      </div>
+
+      <div class="field field--checkbox">
+        <%= form.check_box :omit_stats, switch: true %>
+        <%= form.label :omit_stats, "Omit from public stats?" %>
+      </div>
+
+      <div class="field field--checkbox">
+        <%= form.check_box :can_front_balance, switch: true %>
+        <%= form.label :can_front_balance, "Front incoming transactions?" %>
+      </div>
+
+      <div class="action">
+        <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% admin_tool do %>
+    <%= render "events/settings/admin/tags" %>
+  <% end %>
+
+  <% admin_tool do %>
+    <%= button_to "Delete organization", event_path(@event), method: :delete, class: "btn bg-error", disabled: !@event.demo_mode?, data: { confirm: "⚠️ Are you sure you'd like to delete this organization?" } %>
+    <% unless @event.demo_mode? %>
+      <p class="h5 muted mt0 mb1">
+        Only demo accounts can be deleted.
+      </p>
+    <% end %>
+  <% end %>
+
+  <% admin_tool do %>
+    <%= render "comments/list", comments: @event.comments %>
+    <%= render "comments/form", commentable: @event, admin_only: true %>
+  <% end %>
+
+</div>

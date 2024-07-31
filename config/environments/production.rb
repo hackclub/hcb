@@ -63,7 +63,7 @@ Rails.application.configure do
   config.log_tags = [:request_id]
 
   # Use a different cache store in production.
-  config.cache_store = :redis_cache_store, { url: ENV["REDIS_URL"], ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+  config.cache_store = :redis_cache_store, { url: ENV["REDIS_CACHE_URL"], ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
 
   # Use Sidekiq
   config.active_job.queue_adapter = :sidekiq
@@ -103,6 +103,17 @@ Rails.application.configure do
     logger.formatter = config.log_formatter
     config.logger    = ActiveSupport::TaggedLogging.new(logger)
   end
+
+  # Use lograge to tame log output to AppSignal.
+  config.lograge.enabled = true
+  config.lograge.ignore_actions = ["Rails::HealthController#show"]
+  config.log_tags = [:request_id]
+  config.lograge.custom_payload { |controller| { request_id: controller.request.uuid } }
+  config.lograge.keep_original_rails_log = true
+  config.lograge.logger = Appsignal::Logger.new(
+    "rails",
+    format: Appsignal::Logger::LOGFMT
+  )
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false

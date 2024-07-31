@@ -1,30 +1,31 @@
-<% title "GOOGLE WORKSPACES" %>
-
-<h1>GOOGLE WORKSPACES</h1>
-
-<%= paginate @g_suites %>
+<% title "Google Workspace Requests" %>
 
 <%= form_with local: true, url: google_workspaces_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :needs_ops_review do %>
-    <%= form.check_box :needs_ops_review, checked: @needs_ops_review %>
-    Needs Ops Review
-  <% end %>
-  |
-
-  <%= form.label :configuring do %>
-    <%= form.check_box :configuring, checked: @configuring %>
-    Configuring
-  <% end %>
-  |
-
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <fieldset>
+    <%= form.label :needs_ops_review do %>
+      <%= form.check_box :needs_ops_review, checked: @needs_ops_review %>
+      Needs Ops Review
+    <% end %>
+    <%= form.label :configuring do %>
+      <%= form.check_box :configuring, checked: @configuring, class: "ml1" %>
+      Configuring
+    <% end %>
+  </fieldset>
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @g_suites, entry_name: "Google Workspaces" %>
+<%= form_with(model: nil, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
+  <%= form.submit "Attempt to verify all currently verifying domains" %>
+<% end %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @g_suites, entry_name: "Google Workspaces" %>
+  </div>
+  <%= paginate @g_suites %>
+</div>
 
 <table>
   <thead>

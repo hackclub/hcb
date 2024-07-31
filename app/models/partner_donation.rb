@@ -31,6 +31,9 @@ class PartnerDonation < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :pdn
 
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "payments", :stripe_charge_id
+
   include PgSearch::Model
   pg_search_scope :search_name, against: [:hcb_code], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "partner_donations.created_at"
   # @msw - ^ This only searches for hcb codes right now. regular donations
@@ -87,10 +90,6 @@ class PartnerDonation < ApplicationRecord
 
   def local_hcb_code
     @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
-
-  def stripe_dashboard_url
-    "https://dashboard.stripe.com/payments/#{stripe_charge_id}"
   end
 
   def paid?

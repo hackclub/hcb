@@ -15,7 +15,7 @@
 
     <ul class="grid grid--narrow left-align w-100 mt0 grid--spacious">
       <% @receipts.each do |receipt| %>
-        <li class="flex grid flex-column justify-between h-100 mx4">
+        <li class="flex grid flex-col justify-between h-100 mx4">
           <%= render partial: "receipts/receipt", locals: { receipt: receipt, select_target: true } %>
         </li>
       <% end %>

@@ -1,0 +1,7 @@
+<%= turbo_frame_tag event_reimbursements_pending_review_icon_path(@event) do %>
+  <% if @reimbursements_pending_review_count != 0 %>
+    <div class="dock__item--badge">
+      <%= @reimbursements_pending_review_count %>
+    </div>
+  <% end %>
+<% end %>

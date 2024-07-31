@@ -62,21 +62,15 @@
 <% end %>
 
 <% if @g_suite.configuring? %>
-  <p>Nothing to do at the moment. The user now needs to configure their MX records.
+  <p>Nothing to do at the moment. The user now needs to configure their MX records. </p>
 <% end %>
 
 <% if @g_suite.verifying? %>
-  <p>HCB is now trying to automatically verify if the user has configured their domain correctly with the TXT record.</p>
-  <p>If you would like to check yourself:</p>
-  <ul>
-    <li>Use the <%= link_to "HCB Ops Plugin", "https://github.com/hackclub/hcb-ops-plugin", target: "_blank" %> to verify the TXT & MX records and see the current status. Reach out to kunal@hackclub.com or @kunal on Slack to get setup with the HCB Ops Plugin.</li>
-  </ul>
-  <p>or</p>
-  <ol>
-    <li>Visit <%= link_to "Google Webmaster Central", @g_suite.verification_url %></li>
-    <li>Choose 'Other' from the drop down menu</li>
-    <li>Click 'Verify' on Google Webmaster Central</li>
-  </ol>
+  <p>HCB is now trying to automatically verify if the user has configured their domain correctly with the TXT record. This happens once every hour.</p>
+  <p>If you would like to manually attempt to verify this domain:</p>
+  <%= form_with(model: nil, local: true, url: google_workspace_verify_admin_path(@g_suite), method: :post) do |form| %>
+    <%= form.submit "Click Here" %>
+  <% end %>
   <p>You can additionally verify that the TXT record they have matches the verification key we have on file:</p>
   <p><code>google-site-verification=<%= @g_suite.verification_key %></code></p>
   <p><%= link_to "DNS Check", @g_suite.dns_check_url, target: "_blank" %></p>
@@ -95,6 +89,15 @@
       <li>Click 'Submit' below</li>
     </ol>
   <% end %>
+<% end %>
+
+<% if @g_suite.verification_error? %>
+  <p>Nothing to do at the moment. The user now needs to check for missing/misspelled DNS records. They need the following to successfully verify their domain:</p>
+  <ul>
+    <li>SPF record containing <code>v=spf1</code> and <code>include:_spf.google.com</code></li>
+    <li>At least 1 MX record (<code>ASPMX.L.GOOGLE.COM</code>)</li>
+    <li>TXT domain ownership verification record (<code>google-site-verification=<%= @g_suite.verification_key %></code>)</li>
+  </ul>
 <% end %>
 
 <% if @g_suite.verified? %>

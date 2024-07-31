@@ -63,13 +63,13 @@
 .emburse-card {
   background-color: #54d;
   background-image: radial-gradient(ellipse at top right, #867ae7, transparent);
-  background-image: #{image-url('emburse-swoosh-plastic.svg')},
+  background-image: url('emburse-swoosh-plastic.svg'),
     radial-gradient(ellipse at top right, #867ae7, transparent);
   &:before {
     content: '';
     width: 10rem;
     height: 3rem;
-    background: #{image-url('emburse-logo-plastic.svg')};
+    background: url('emburse-logo-plastic.svg');
     background-repeat: no-repeat !important;
     background-size: 100% !important;
     flex: 1 1 auto;
@@ -77,10 +77,10 @@
   }
 
   &.virtual {
-    background-image: #{image-url('emburse-swoosh-digital.svg')},
+    background-image: url('emburse-swoosh-digital.svg'),
       radial-gradient(ellipse at top right, #867ae7, transparent);
     &:before {
-      background: #{image-url('emburse-logo-digital.svg')};
+      background: url('emburse-logo-digital.svg');
     }
   }
 
@@ -91,7 +91,7 @@
     top: 35%;
     height: 3.5rem;
     width: 3.5rem;
-    background: #{image-url('emburse-chip.svg')} no-repeat;
+    background: url('emburse-chip.svg') no-repeat;
     background-size: contain;
     // transform: translateZ(10px);
   }
@@ -162,7 +162,7 @@
     top: 35%;
     height: 3.5rem;
     width: 3.5rem;
-    background: #{image-url('emburse-chip.svg')} no-repeat;
+    background: url('emburse-chip.svg') no-repeat;
     background-size: contain;
     mix-blend-mode: add;
   }
@@ -184,4 +184,44 @@
 
 .stripe-card__status {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.stripe-card__overlay {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+.stripe-card--white {
+  background-image: none;
+  background-color: #fff;
+  color: #000;
+  img {
+    filter: grayscale(1);
+  }
+  .stripe-card__status {
+    color: #000!important;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  .stripe-card__overlay {
+    background-image: radial-gradient(ellipse at bottom right, #ddddef49, transparent);
+  }
+}
+
+.stripe-card--black {
+  background-image: none;
+  background-color: #000;
+  color: #fff;
+  img {
+    filter: invert(1) grayscale(1);
+  }
+  .stripe-card__overlay {
+    background-image: radial-gradient(ellipse at bottom right, #4a4a4f49, transparent);
+  }
+}
+
+.stripe-card__personalization-image {
+  height: 40px
 }

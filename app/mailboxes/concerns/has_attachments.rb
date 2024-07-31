@@ -7,7 +7,7 @@ module HasAttachments
     private
 
     def set_attachments(include_body: true)
-      files = mail.attachments.map do |atta|
+      files = mail.attachments.select { |a| valid_content_type(a.content_type) }.map do |atta|
         {
           io: StringIO.new(atta.decoded),
           content_type: atta.content_type,
@@ -28,6 +28,10 @@ module HasAttachments
 
     def bounce_missing_attachments
       bounce_with HcbCodeMailer.with(mail: inbound_email, reply_to: mail.to.first).bounce_missing_attachment
+    end
+
+    def valid_content_type(content_type)
+      content_type.start_with?("application/pdf") || content_type.start_with?("image")
     end
 
   end

@@ -26,7 +26,7 @@
     }
   }
 
-  &:hover { 
+  &:hover {
     .receipt__delete-button {
       opacity: 1;
     }
@@ -45,11 +45,11 @@
   margin-bottom: -2px;
 
   background-color: rgba($red, 0.2);
-  
+
   &, &:not(.receipt--pairing) { /* for additional specificity; jank, but better than !important */
     margin-bottom: -2px;
   }
-  
+
   > footer {
     border-top: none!important;
   }
@@ -67,7 +67,7 @@
     opacity: 1;
     padding: 8px;
     line-height: 26px;
-    font-weight: bold;
+    font-weight: 600;
     border-radius: 50%;
     z-index: 1002;
     font-size: 20px;
@@ -132,8 +132,9 @@
   display: none;
 }
 
-.modal--popover--receipt-expanded > :not(.receipt--expanded):not(header) {
-  display: none;
+.modal--popover--receipt-expanded > :not(.receipt--expanded):not(header):not(#receipts_list),
+.modal--popover--receipt-expanded > #receipts_list > :not(.receipt--expanded) {
+  display: none!important;
 }
 
 .receipt--expanded > span > .receipt--image {

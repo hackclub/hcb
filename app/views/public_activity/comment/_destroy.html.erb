@@ -1,0 +1,5 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+  deleted a comment
+<% end %>

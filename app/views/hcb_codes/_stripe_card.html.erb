@@ -30,24 +30,36 @@
               data-action="dblclick->navigation#navigate"
               data-navigation-location-param="<%= edit_hcb_code_path(@hcb_code) %>"
               data-navigation-frame-param="<%= dom_id(@hcb_code) %>">
-          <%= @hcb_code.memo %>
+          <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
           <span class="regular muted"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
           <%= number_to_currency(@hcb_code.amount.abs) %>
         </span>
+
+        <%= render "hcb_codes/memo_stream", hcb_code: @hcb_code %>
+
+        <span style="flex-grow: 1;"></span>
+
+        <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: @hcb_code } if Flipper.enabled?(:ai_memos_2024_06_20, current_user) %>
       <% end %>
     </span>
 
-      <% if @hcb_code.pt&.declined? %>
-        <span class="badge h4 md-right bg-accent">
-          Declined
-          <%= inline_icon :info, size: 20 %>
-        </span>
-      <% end %>
-      <% if @hcb_code.pt&.unsettled? %>
-        <span class="badge h4 md-right bg-muted">
-          Pending
-          <%= inline_icon :info, size: 20 %>
-        </span>
+      <% if @hcb_code.pt && !@hcb_code.pt.settled? %>
+        <% if @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed" %>
+          <span class="badge h4 md-right bg-accent">
+            Reversed
+            <%= inline_icon :info, size: 20 %>
+          </span>
+        <% elsif @hcb_code.pt.declined? %>
+          <span class="badge h4 md-right bg-accent">
+            Declined
+            <%= inline_icon :info, size: 20 %>
+          </span>
+        <% else %>
+          <span class="badge h4 md-right bg-muted">
+            Pending
+            <%= inline_icon :info, size: 20 %>
+          </span>
+        <% end %>
       <% end %>
 
       <% if @hcb_code.personal_transaction.present? %>
@@ -91,7 +103,7 @@
         <p>
         <strong>Declined</strong>
         <span>
-          <% if reason == "card_inactive" && !@hcb_code.stripe_card.activated? %>
+          <% if reason == "card_inactive" && !@hcb_code.stripe_card.initially_activated? %>
             <em>This transaction was declined by HCB as this card isn't activated.</em>
           <% elsif reason == "card_inactive" %>
             <em>This transaction was declined by HCB as this card is frozen.</em>
@@ -250,34 +262,21 @@
             <%= link_to @hcb_code.personal_transaction.invoice.local_hcb_code.memo, @hcb_code.personal_transaction.invoice %>
           </p>
         <% end %>
+        <% if @hcb_code.card.card_grant.present? %>
+          <p>
+            <strong>Merchant ID</strong>
+            <%= @hcb_code.stripe_merchant["network_id"] %>
+          </p>
+          <p>
+            <strong>Category</strong>
+            <%= @hcb_code.stripe_merchant["category"]&.humanize %>
+          </p>
+        <% end %>
       <% end %>
       <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
     </section>
 
-    <% unless @hcb_code.stripe_refund? %>
-      <% if @hcb_code.receipts.any? %>
-        <p class="card__banner bg-success white bold flex items-center mt0 mb0">
-          <%= inline_icon "checkmark", size: 24, class: "mr2" %>
-          <%= pluralize @hcb_code.receipts.count, "receipt" %>
-          added
-        </p>
-      <% elsif @hcb_code.no_or_lost_receipt? %>
-        <p class="card__banner bg-muted white bold flex items-center mt0 mb0">
-          <%= inline_icon "view-close", size: 24, class: "mr2" %>
-          Marked no/lost receipt
-        </p>
-      <% elsif @hcb_code.pt&.declined? %>
-        <p class="card__banner bg-muted white bold flex items-center mt0 mb0">
-          <%= inline_icon "important", size: 24, class: "mr2" %>
-          This transaction has no receipt
-        </p>
-      <% else %>
-        <p class="card__banner bg-pending slate bold flex items-center mt0 mb0">
-          <%= inline_icon "important", size: 24, class: "mr2" %>
-          This transaction is missing a receipt
-        </p>
-      <% end %>
-    <% end %>
+    <%= render "hcb_codes/stripe_card_receipts" %>
 
   </article>
 </div>

@@ -34,7 +34,7 @@ module StripeAuthorizationService
 
         if remote_stripe_transaction.approved
           CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_approved.deliver_later
-          if Flipper.enabled?(:sms_receipt_notifications_2022_11_23, user)
+          if user.sms_charge_notifications_enabled?
             CanonicalPendingTransactionJob::SendTwilioReceiptMessage.perform_later(cpt_id: cpt.id, user_id: user.id)
           end
         else

@@ -46,8 +46,6 @@ module EventService
     def attrs
       {
         name: @name,
-        start: Date.current,
-        end: Date.current,
         address: "N/A",
         country: @country,
         category: @category,

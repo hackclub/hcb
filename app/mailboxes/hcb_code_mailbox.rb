@@ -84,7 +84,7 @@ class HcbCodeMailbox < ApplicationMailbox
   end
 
   def set_user
-    @user = User.find_by(email: mail.from[0].downcase)
+    @user = User.find_by(email: mail.from[0])
   end
 
   def bounce_missing_user

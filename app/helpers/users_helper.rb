@@ -13,22 +13,22 @@ module UsersHelper
     "https://gravatar.com/avatar/#{hex}?s=#{size}&d=https%3A%2F%2Fui-avatars.com%2Fapi%2F/#{CGI.escape(name)}/#{size}/#{get_user_color(id)}/fff"
   end
 
-  def profile_picture_for(user, size = 24)
+  def profile_picture_for(user, size = 24, default_image: nil)
+    default_image ||= "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png"
+
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
-      src = "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png"
+      default_image
     elsif Rails.env.production? && (user.is_a?(User) && user&.profile_picture&.attached?)
-      src = Rails.application.routes.url_helpers.url_for(user.profile_picture.variant(
-                                                           thumbnail: "#{size * 2}x#{size * 2}^",
-                                                           gravity: "center",
-                                                           extent: "#{size * 2}x#{size * 2}"
-                                                         ))
+      Rails.application.routes.url_helpers.url_for(user.profile_picture.variant(
+                                                     thumbnail: "#{size * 2}x#{size * 2}^",
+                                                     gravity: "center",
+                                                     extent: "#{size * 2}x#{size * 2}"
+                                                   ))
     else
-      src = gravatar_url(user.email, user.initials, user.id, size * 2)
+      gravatar_url(user.email, user.initials, user.id, size * 2)
     end
-
-    src
   end
 
   def current_user_flavor_text
@@ -55,11 +55,12 @@ module UsersHelper
     ]
   end
 
-  def avatar_for(user, size = 24, options = {})
-    src = profile_picture_for(user, size)
+  def avatar_for(user, size = 24, options = {}, click_to_mention: false, default_image: nil)
+    src = profile_picture_for(user, size, default_image:)
+    current_user = defined?(current_user) ? current_user : nil
 
-    klasses = ["circle", "shrink-none"]
-    klasses << "avatar--current-user" if user == current_user
+    klasses = ["rounded-full", "shrink-none"]
+    klasses << "avatar--current-user" if user && user == current_user
     klasses << options[:class] if options[:class]
     klass = klasses.join(" ")
 
@@ -67,16 +68,20 @@ module UsersHelper
     alt ||= user&.initials
     alt ||= "Brown dog grinning and gazing off into the distance"
 
+    options[:data] = (options[:data] || {}).merge(behavior: "mention", mention_value: "@#{user.email}") if click_to_mention && user
+
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
-  def user_mention(user, options = {}, default_name = "No User")
+  def user_mention(user, options = {}, default_name = "No User", click_to_mention: false, comment_mention: false, default_image: nil)
     name = content_tag :span, (user&.initial_name || default_name)
-    avi = avatar_for user, 24, options[:avatar] || {}
+    current_user = defined?(current_user) ? current_user : nil
+    avi = avatar_for(user, 24, options[:avatar] || {}, click_to_mention:, default_image:)
 
     klasses = ["mention"]
-    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.admin?
-    klasses << %w[mention--current-user tooltipped tooltipped--n] if current_user && (user&.id == current_user.id)
+    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.admin? && !options[:disable_tooltip]
+    klasses << %w[mention--current-user tooltipped tooltipped--n] if current_user && (user&.id == current_user.id) && !options[:disable_tooltip]
+    klasses << %w[badge bg-muted ml0] if comment_mention
     klasses << options[:class] if options[:class]
     klass = klasses.uniq.join(" ")
 
@@ -152,13 +157,5 @@ module UsersHelper
     alphabet = ("A".."Z").to_a
     colors = ["ec3750", "ff8c37", "f1c40f", "33d6a6", "5bc0de", "338eda"]
     colors[id.to_i % colors.length] || colors.last
-  end
-
-  def settings_tab(active: false, &block)
-    if active
-      tag.li(class: "active", data: { controller: "scroll-into-view" }, &block)
-    else
-      tag.li(&block)
-    end
   end
 end

@@ -19,6 +19,14 @@ module CanonicalPendingTransactionService
           @canonical_transaction.save!
         end
       end
+
+      if @canonical_transaction.amount_cents < 0 && @canonical_pending_transaction.raw_pending_stripe_transaction && (@canonical_pending_transaction.amount_cents != @canonical_transaction.amount_cents)
+        CanonicalPendingTransactionMailer.with(
+          canonical_pending_transaction_id: @canonical_pending_transaction.id,
+          canonical_transaction_id: @canonical_transaction.id,
+        ).notify_settled.deliver_later
+      end
+
     end
 
   end

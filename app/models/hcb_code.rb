@@ -26,11 +26,14 @@ class HcbCode < ApplicationRecord
   include Commentable
   include Receiptable
 
+  include Turbo::Broadcastable
+
   include Memo
 
   monetize :amount_cents
 
-  has_and_belongs_to_many :tags
+  has_many :hcb_code_tags
+  has_many :tags, through: :hcb_code_tags
 
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
@@ -85,6 +88,10 @@ class HcbCode < ApplicationRecord
     @date ||= ct.try(:date) || pt.try(:date)
   end
 
+  def has_pending_expired?
+    canonical_pending_transactions.pending_expired.any?
+  end
+
   def type
     return :unknown if unknown?
     return :invoice if invoice?
@@ -96,6 +103,7 @@ class HcbCode < ApplicationRecord
     return :card_charge if stripe_card?
     return :bank_fee if bank_fee?
     return :reimbursement_expense_payout if reimbursement_expense_payout?
+    return :paypal_transfer if paypal_transfer?
 
     nil
   end
@@ -112,7 +120,7 @@ class HcbCode < ApplicationRecord
 
   def amount_cents
     @amount_cents ||= begin
-      return canonical_transactions.sum(:amount_cents) if canonical_transactions.exists?
+      return canonical_transactions.sum(:amount_cents) if canonical_transactions.any?
 
       # ACH transfers that haven't been sent don't have any CPTs
       return -ach_transfer.amount if ach_transfer?
@@ -122,7 +130,7 @@ class HcbCode < ApplicationRecord
   end
 
   def amount_cents_by_event(event)
-    if canonical_transactions.exists?
+    if canonical_transactions.any?
       return canonical_transactions
              .includes(:canonical_event_mapping)
              .where(canonical_event_mapping: { event_id: event.id })
@@ -183,7 +191,7 @@ class HcbCode < ApplicationRecord
       end
   end
 
-  def pretty_title(show_event_name: true, show_amount: false)
+  def pretty_title(show_event_name: true, show_amount: false, event_name: event.name, amount_cents: self.amount_cents)
     event_preposition = [:unknown, :invoice, :ach, :check, :card_charge, :bank_fee].include?(type || :unknown) ? "in" : "to"
     amount_preposition = [:transaction, :donation, :partner_donation, :disbursement, :card_charge, :bank_fee].include?(type || :unknown) ? "of" : "for"
 
@@ -191,7 +199,7 @@ class HcbCode < ApplicationRecord
 
     title = [humanized_type]
     title << amount_preposition << ApplicationController.helpers.render_money(stripe_card? ? amount_cents.abs : amount_cents) if show_amount
-    title << event_preposition << event.name if show_event_name
+    title << event_preposition << event_name if show_event_name && event_name
 
     title.join(" ")
   end
@@ -217,7 +225,7 @@ class HcbCode < ApplicationRecord
   end
 
   def stripe_refund?
-    (stripe_force_capture? || (stripe_card? && amount_cents > 0)) && ct&.stripe_refund?
+    ct&.stripe_refund? && (stripe_force_capture? || (stripe_card? && amount_cents > 0))
   end
 
   def stripe_auth_dashboard_url
@@ -264,6 +272,10 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE
   end
 
+  def paypal_transfer?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::PAYPAL_TRANSFER_CODE
+  end
+
   def check?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
   end
@@ -306,6 +318,10 @@ class HcbCode < ApplicationRecord
 
   def ach_transfer
     @ach_transfer ||= AchTransfer.find_by(id: hcb_i2) if ach_transfer?
+  end
+
+  def paypal_transfer
+    @paypal_transfer ||= PaypalTransfer.find_by(id: hcb_i2) if paypal_transfer?
   end
 
   def check
@@ -357,6 +373,8 @@ class HcbCode < ApplicationRecord
       increase_check
     elsif ach_transfer? && ach_transfer.reimbursement_payout_holding.present?
       ach_transfer
+    elsif paypal_transfer? && paypal_transfer&.reimbursement_payout_holding.present?
+      paypal_transfer
     else
       nil
     end
@@ -372,6 +390,10 @@ class HcbCode < ApplicationRecord
 
   def unknown?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE
+  end
+
+  def unused?
+    unknown? && no_transactions?
   end
 
   def hcb_i1
@@ -413,6 +435,7 @@ class HcbCode < ApplicationRecord
   # The `:receipt_required` scope determines the type of
   # transaction based on its HCB Code, for reference:
   # HCB-300: ACH Transfers (receipts required starting from Feb. 2024)
+  # HCB-350: PayPal Transfers
   # HCB-400 & HCB-402: Checks & Increase Checks (receipts required starting from Feb. 2024)
   # HCB-600: Stripe card charges (always required)
   # @sampoder
@@ -424,6 +447,7 @@ class HcbCode < ApplicationRecord
               OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-402%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-350%' AND canonical_pending_declined_mappings.id IS NULL)
               ")
   }
 
@@ -432,11 +456,17 @@ class HcbCode < ApplicationRecord
 
     (type == :card_charge) ||
       # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check].include?(type) && created_at > Time.utc(2024, 2, 1))
+      ([:ach, :check, :paypal_transfer].include?(type) && created_at > Time.utc(2024, 2, 1))
   end
 
   def receipt_optional?
     !receipt_required?
+  end
+
+  def receipts
+    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout.present?
+
+    super
   end
 
   def local_hcb_code
@@ -450,18 +480,29 @@ class HcbCode < ApplicationRecord
   def comment_recipients_for(comment)
     users = []
     users += self.comments.map(&:user)
-    users += self.events.flat_map(&:users)
+    users += self.comments.flat_map(&:mentioned_users)
+    users += self.events.flat_map(&:users).reject(&:my_threads?)
 
     if comment.admin_only?
       users += self.events.map(&:point_of_contact)
-      return users.select(&:admin?).collect(&:email).excluding(comment.user.email)
+      return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
     end
 
-    users.excluding(comment.user).collect(&:email_address_with_name)
+    users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)
   end
 
   def comment_mailer_subject
     return "New comment on #{self.memo}."
+  end
+
+  def comment_mentionable(current_user: nil)
+    users = []
+    users += self.comments.includes(:user).map(&:user)
+    users += self.comments.flat_map(&:mentioned_users)
+    users += self.events.includes(:users).select { |e| !current_user || Pundit.policy(current_user, e).team? }.flat_map(&:users)
+    users += self.events.includes(:point_of_contact).map(&:point_of_contact)
+
+    users.compact.uniq
   end
 
   def not_admin_only_comments_count
@@ -475,52 +516,16 @@ class HcbCode < ApplicationRecord
                                        end
   end
 
-  def usage_breakdown
-    spent_on = []
-    spent_on_event = disbursement? ? self.disbursement.destination_event : self.event
-    available = 0
-    if self.canonical_transactions.any? { |ct| ct.amount_cents.positive? }
-
-      income = ::EventService::PairIncomeWithSpending.new(event: self.event).run
-
-      # PairIncomeWithSpending is done on a per CanonicalTransaction basis
-      # This compute it for this specific HcbCode
-
-      self.canonical_transactions.each do |ct|
-        if (ct.amount_cents > 0) && income[ct.id]
-          spent_on.concat income[ct.id][:spent_on]
-          available += income[ct.id][:available]
-        end
-      end
-
-      spent_on.map! { |transaction|
-        hcb_code = HcbCode.find_by(hcb_code: transaction[:hcb_code])
-        {
-          id: ct.id,
-          memo: hcb_code.memo,
-          url: Rails.application.routes.url_helpers.hcb_code_url(hcb_code),
-          amount: transaction[:amount]
-        }
-      }
-
-      spent_on = spent_on.group_by { |hash| hash[:memo] }.map do |memo, group|
-        total_amount = group.sum(0) { |item| item[:amount] }
-        significant_transaction = group.max_by { |t| t[:amount] }
-        { id: significant_transaction[:id], memo:, amount: total_amount, url: significant_transaction[:url] }
-      end
-
-      spent_on.sort_by! { |t| t[:id] }
-
-    end
-    return { spent_on:, available: }
-  end
-
   def pinnable?
     !no_transactions? && event
   end
 
   def accepts_receipts?
     !reimbursement_expense_payout?
+  end
+
+  def suggested_memos
+    receipts.pluck(:suggested_memo).compact
   end
 
 end

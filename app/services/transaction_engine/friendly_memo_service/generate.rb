@@ -58,7 +58,7 @@ module TransactionEngine
       end
 
       def hack_club_fee?
-        @canonical_transaction.fee_payment?
+        @canonical_transaction.likely_hack_club_fee?
       end
 
     end

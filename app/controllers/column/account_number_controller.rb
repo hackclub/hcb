@@ -23,5 +23,11 @@ module Column
 
     end
 
+    def update
+      authorize @event.column_account_number
+      @event.column_account_number.update!(params.require(:column_account_number).permit(:deposit_only))
+      redirect_back_or_to account_number_event_path(@event)
+    end
+
   end
 end

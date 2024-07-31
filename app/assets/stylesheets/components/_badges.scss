@@ -6,9 +6,8 @@
   background-color: map-get($palette, primary);
   color: $white;
   border-radius: 9999px;
-  font-family: $brand-font-family;
   font-size: 0.75rem;
-  font-weight: bold;
+  font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.125;
   margin-left: 1rem;
@@ -30,6 +29,10 @@
     background-color: rgba(map-get($palette, purple), 0.125);
     color: map-get($palette, purple);
   }
+  &.ai {
+    background-color: rgba(map-get($palette, ai), 0.125);
+    color: map-get($palette, ai);
+  }
   &.error {
     background-color: rgba(map-get($palette, error), 0.125);
     color: map-get($palette, error);
@@ -46,6 +49,10 @@
     background-color: rgba(map-get($palette, muted), 0.125);
     color: map-get($palette, muted);
   }
+  &.muted {
+    background-color: map-get($palette, muted);
+    color: $white;
+  }
 
   svg:last-child {
     margin-left: 0.25rem;
@@ -58,6 +65,10 @@
     border: 1px solid;
     border-color: rgba(0, 0, 0, 0.125);
     border-width: 0.5px;
+    max-width: 20rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -71,7 +82,6 @@
   border-width: 0.5px;
   border-radius: 9999px;
   background-color: rgba(255, 255, 255, 0.25);
-  font-family: $brand-font-family;
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.125;
@@ -130,6 +140,9 @@
   &.purple {
     background-color: rgba(map-get($palette, purple), 0.125);
   }
+  &.ai {
+    background-color: rgba(map-get($palette, ai), 0.125);
+  }
   &.muted {
     background-color: rgba(map-get($palette, muted), 0.125);
   }
@@ -155,7 +168,8 @@ summary.pop::-webkit-details-marker {
 // User mentions, use the user_mention helper
 .mention {
   color: map-get($palette, muted);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-weight: 500;
   margin-right: 0.25rem;
   text-decoration: none;
@@ -178,11 +192,17 @@ summary.pop::-webkit-details-marker {
     margin-right: 0.5rem;
 
     + svg {
-      margin: -0.25rem -0.2rem 0 -0.625rem;
+      margin: 0 -0.2rem 0 -0.625rem;
     }
   }
 
   svg:first-child {
     vertical-align: bottom;
   }
+}
+
+.mention.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9em;
 }

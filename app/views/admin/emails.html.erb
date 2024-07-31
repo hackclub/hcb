@@ -1,0 +1,58 @@
+<% title "Emails" %>
+
+<%= form_with local: true, url: emails_admin_index_path, method: :get do |form| %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+
+  <%= form.collection_select(:user_id, User.all, :id, :admin_dropdown_description, { include_blank: "Select a user", selected: @user_id }, { width: 250, style: "max-width: 250px" }) %>
+
+  <div>
+    <%= form.submit "Search" %>
+  </div>
+<% end %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @messages, entry_name: "email".pluralize(@count) %>
+  </div>
+  <%= paginate @messages %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-16">ID</th>
+      <th class="w-32">Sent at</th>
+      <th>Content</th>
+      <th>Recipient</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @messages.each do |msg| %>
+      <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
+        <%= modal_header "Email to #{msg.user&.name || "unknown user"}" %>
+        <iframe loading="lazy" src="<%= url_for(controller: "admin", action: "email", message_id: msg.id) %>" class="w-full h-full absolute border-none -mt-8 -ml-8 pb-24">iframes are not supported</iframe>
+      </section>
+      <tr>
+        <td><%= msg.id %></td>
+        <td><%= msg.sent_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= link_to "#",
+            data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } do %>
+            <%= msg.subject %>
+          <% end %>
+        </td>
+        <td>
+          <% if user = msg.user %>
+            <%= link_to admin_user_path(user) do %>
+              <%= user.full_name ? "#{user.full_name} (#{user.email})" : user.email %>
+            <% end %>
+          <% else %>
+            <span class="error"><%= msg.to %></span>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @messages %>

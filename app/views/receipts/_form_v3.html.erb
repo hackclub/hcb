@@ -1,7 +1,7 @@
 <% instance = local_assigns.__id__ %>
 <div id="receipt_upload_form">
   <div class="<%= "mb3" if defined?(include_spacing) %>" style="position: relative;">
-    <%= form_with model: nil, url: receipts_path, method: :post, remote: true, class: "flex flex-column justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
+    <%= form_with model: nil, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
           turbo: defined?(turbo) ? turbo : "false",
           controller: "file-drop form",
           action: "
@@ -11,7 +11,8 @@
             dragleave#{"@window" unless defined?(restricted_dropzone)}->file-drop#dragleave
           ",
           "file-drop-target" => ("dropzone" if defined?(restricted_dropzone)),
-          "file-drop-title-value" => defined?(restricted_dropzone) ? "Drop to add to Receipt Bin." : "Drop to instantly add a receipt."
+          "file-drop-title-value" => defined?(restricted_dropzone) ? "Drop to add to Receipt Bin." : "Drop to instantly add a receipt.",
+          "file-drop-global-paste-value" => defined?(global_paste) && global_paste ? "true" : "false"
         }.compact, html: {
           onsubmit: "
             const button = $('#upload-receipt-button', this);
@@ -20,7 +21,7 @@
           "
         } do |form| %>
 
-      <div class="card <%= "mt2" if defined?(include_spacing) %> flex flex-column<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form">
+      <div class="card <%= "mt2" if defined?(include_spacing) %> flex flex-col<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form">
         <% if defined?(show_banner) %>
           <% if defined?(receiptable) && receiptable.receipts.any? %>
             <p class="card__banner bg-success white bold flex items-center mt0 mb2">
@@ -69,12 +70,12 @@
                   <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
                   <script>
                     // JavaScript to revert changes after 2 seconds
-                    if (document.getElementById("upload-receipt-button") && document.getElementById("upload-receipt-button-text")) {
-                      setTimeout(function() {
+                    setTimeout(function() {
+                      if (document.getElementById("upload-receipt-button") && document.getElementById("upload-receipt-button-text")) {
                         document.getElementById("upload-receipt-button-text").innerHTML = 'Upload receipt';
                         document.getElementById("upload-receipt-button").classList.remove("bg-success", "bg-error");
-                      }, 2000);
-                    }
+                      }
+                    }, 2000);
                   </script>
                 <% else %>
                   <span>Upload receipt</span>
@@ -111,7 +112,7 @@
       </section>
     <% end %>
 
-    <% if defined?(receiptable) && receiptable.missing_receipt? %>
+    <% if defined?(receiptable) && receiptable&.missing_receipt? %>
       <div class="flex muted justify-end items-center mt1">
         <%= inline_icon "forbidden", size: 20 %>
         <%= link_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id), method: :post do %>
@@ -130,6 +131,7 @@
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
         <%= async_frame_to link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false"), as: :span do %>
+          <img style="display: none;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" onload="let e = this.parentElement; $.get($(e).data('src'), data => $(e).replaceWith(data));">  <!-- This inline JS is needed to load an async frame that enters the DOM after the initial page load. -->
           <strong>Loading...</strong>
         <% end %>
       </section>

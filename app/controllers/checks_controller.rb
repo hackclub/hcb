@@ -10,12 +10,6 @@ class ChecksController < ApplicationController
     redirect_to @check.local_hcb_code
   end
 
-  def view_scan
-    authorize @check
-
-    redirect_to @check.lob_url, allow_other_host: true
-  end
-
   private
 
   def set_check

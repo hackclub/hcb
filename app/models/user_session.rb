@@ -10,6 +10,7 @@
 #  expiration_at            :datetime         not null
 #  fingerprint              :string
 #  ip                       :string
+#  last_seen_at             :datetime
 #  latitude                 :decimal(, )
 #  longitude                :decimal(, )
 #  os_info                  :string
@@ -47,6 +48,9 @@ class UserSession < ApplicationRecord
   belongs_to :webauthn_credential, optional: true
   has_one :login_token, required: false
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| record.user }, recipient: proc { |controller, record| record.user }, only: [:create]
+
   scope :impersonated, -> { where.not(impersonated_by_id: nil) }
   scope :not_impersonated, -> { where(impersonated_by_id: nil) }
 
@@ -81,6 +85,12 @@ class UserSession < ApplicationRecord
   scope :peacefully_expired, -> { where(peacefully_expired: true) }
   scope :not_peacefully_expired, -> { where.not(peacefully_expired: true) }
 
+  after_create_commit do
+    if fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
+      UserSessionMailer.new_login(user_session: self).deliver_later
+    end
+  end
+
   extend Geocoder::Model::ActiveRecord
   geocoded_by :ip
   after_validation :geocode, if: ->(session){ session.ip.present? and session.ip_changed? }
@@ -102,6 +112,13 @@ class UserSession < ApplicationRecord
 
     # Return self to allow chaining
     self
+  end
+
+  LAST_SEEN_AT_COOLDOWN = 5.minutes
+  def touch_last_seen_at
+    return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
+
+    update_columns(last_seen_at: Time.now)
   end
 
   private

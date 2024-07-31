@@ -12,4 +12,14 @@
   </p>
 </div>
 
+<% if @background.present? %>
+  <%# @background is defined in the donations controller's check_background_param method %>
+  <%# it's used for organisations to set a custom background colour when embedding the form %>
+  <style>
+    body {
+      background-color: #<%= @background %>!important;
+    }
+  </style>
+<% end %>
+
 <%= render "footer" %>

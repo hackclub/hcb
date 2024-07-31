@@ -3,13 +3,9 @@
 <%= render "events/nav" if @event %>
 
 <%= render partial: "hcb_codes/admin_tools" %>
-<%= render partial: "hcb_codes/rich_metadata" %>
-
-<% if @hcb_code.canonical_transactions.any? {|ct| ct.amount_cents.positive? } && !@hcb_code.event&.hcb_internals? %>
-  <% admin_tool("mt3") do %>
-    <%= link_to "View Usage Breakdown", breakdown_hcb_code_path(@hcb_code, format: :pdf), class: "btn bg-accent" %>
-  <% end %>
-<% end %>
+<div id="rich_metadata">
+  <%= render partial: "hcb_codes/rich_metadata" %>
+</div>
 
 <% if @hcb_code.accepts_receipts? %>
   <%= render "receipts/list_v2" %>
@@ -19,11 +15,12 @@
           enable_linking: true,
           upload_method: "transaction_page",
           include_spacing: true,
-          turbo: false
+          turbo: true
         }
 
               receipt_upload_form_config[:restricted_dropzone] = true if @frame
               receipt_upload_form_config[:inline_linking] = true if @frame
+              receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
               receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
               render partial: "receipts/form_v3", locals: receipt_upload_form_config end %>
   <% end %>

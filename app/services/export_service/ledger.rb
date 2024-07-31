@@ -14,6 +14,8 @@ module ExportService
     def run
       journal = ::Ledger::Journal.new
       event.canonical_transactions.order("date desc").each do |ct|
+        clean_amount = @public_only && ct.likely_account_verification_related? ? 0 : ct.amount_cents
+
         if ct.amount_cents <= 0
           hcb_code = ct.local_hcb_code
           merchant = ct.raw_stripe_transaction ? ct.raw_stripe_transaction.stripe_transaction["merchant_data"] : nil
@@ -22,6 +24,7 @@ module ExportService
           if merchant && !@public_only
             category = merchant["category"].humanize.titleize.delete(" ")
             metadata[:merchant] = merchant
+            metadata[:comments] = ct.local_hcb_code.comments.not_admin_only.pluck(:content) unless @public_only && ct.local_hcb_code.comments.count.zero?
           elsif merchant
             category = "CardCharge"
           end
@@ -30,7 +33,7 @@ module ExportService
             payee: ct.local_hcb_code.memo,
             metadata:,
             postings: [
-              ::Ledger::Posting.new(account: "Expenses:#{category}", currency: "USD", amount: BigDecimal(ct.amount_cents.to_f, 2))
+              ::Ledger::Posting.new(account: "Expenses:#{category}", currency: "USD", amount: BigDecimal(clean_amount, 2) / 100)
             ]
           )
         else
@@ -45,7 +48,7 @@ module ExportService
             date: ct.date,
             payee: ct.local_hcb_code.memo,
             postings: [
-              ::Ledger::Posting.new(account: "Income:#{income_type}", currency: "USD", amount: BigDecimal(ct.amount_cents.to_f, 2))
+              ::Ledger::Posting.new(account: "Income:#{income_type}", currency: "USD", amount: BigDecimal(clean_amount, 2) / 100)
             ]
           )
         end

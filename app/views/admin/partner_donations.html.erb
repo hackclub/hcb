@@ -1,35 +1,34 @@
-<% title "PARTNER DONATIONS" %>
-
-<h1>Partner Donations</h1>
-
-<%= paginate @partner_donations %>
+<% title "Partner Donations" %>
 
 <%= form_with local: true, url: partner_donations_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :deposited do %>
-    <%= form.check_box :deposited, checked: @deposited %>
-    Deposited
-  <% end %>
-  |
-  <%= form.label :in_transit do %>
-    <%= form.check_box :in_transit, checked: @in_transit %>
-    In transit
-  <% end %>
-  |
-  <%= form.label :pending do %>
-    <%= form.check_box :pending, checked: @pending %>
-    Pending
-  <% end %>
-  |
-  <%= form.label :not_unpaid do %>
-    <%= form.check_box :not_unpaid, checked: @not_unpaid %>
-    Not unpaid
-  <% end %>
-  |
+  <%= form.text_field :q, value: params[:q], placeholder: "Search Query", class: "mt2" %>
+  <fieldset>
+    <%= form.label :deposited do %>
+      <%= form.check_box :deposited, checked: @deposited %>
+      Deposited
+    <% end %>
+    <%= form.label :in_transit do %>
+      <%= form.check_box :in_transit, checked: @in_transit, class: "ml1" %>
+      In transit
+    <% end %>
+    <%= form.label :pending do %>
+      <%= form.check_box :pending, checked: @pending, class: "ml1" %>
+      Pending
+    <% end %>
+    <%= form.label :not_unpaid do %>
+      <%= form.check_box :not_unpaid, checked: @not_unpaid, class: "ml1" %>
+      Not unpaid
+    <% end %>
+  </fieldset>
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @partner_donations, entry_name: "donations" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @partner_donations, entry_name: "donations" %>
+  </div>
+  <%= paginate @partner_donations %>
+</div>
 
 <table>
   <thead>

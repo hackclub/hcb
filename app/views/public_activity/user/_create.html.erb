@@ -1,0 +1,12 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user:, icon: "welcome", color: "info", hide_owner: true } do %>
+  <% if activity.recipient == current_user %>
+    <i>You</i>
+  <% else %>
+    <span class="muted">
+      <%= activity.recipient&.name || "A user" %>
+    </span>
+  <% end %>
+  <i>joined HCB!</i>
+<% end %>

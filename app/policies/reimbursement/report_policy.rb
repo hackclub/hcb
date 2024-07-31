@@ -15,35 +15,35 @@ module Reimbursement
     end
 
     def edit?
-      admin || team_member || (creator && unlocked)
+      admin || manager || (creator && unlocked)
     end
 
     def update?
-      admin || team_member || (creator && unlocked)
+      admin || manager || (creator && open)
     end
 
     def submit?
-      unlocked && (admin || team_member || creator)
+      unlocked && (admin || manager || creator)
     end
 
     def draft?
-      (admin || team_member || creator) && open
+      (admin || manager || creator) && open
     end
 
     def request_reimbursement?
-      (admin || team_member) && open
+      (admin || (manager && !creator)) && open
     end
 
     def request_changes?
-      (admin || team_member) && open
+      (admin || manager) && open
     end
 
     def approve_all_expenses?
-      (admin || team_member) && open
+      (admin || (manager && !creator)) && open
     end
 
     def reject?
-      (admin || team_member) && open
+      (admin || manager) && open
     end
 
     def admin_approve?
@@ -51,13 +51,17 @@ module Reimbursement
     end
 
     def destroy?
-      ((team_member || creator) && record.initial_draft?) || (admin && !record.reimbursed?)
+      ((manager || creator) && record.initial_draft?) || (admin && !record.reimbursed?)
     end
 
     private
 
     def admin
       user&.admin?
+    end
+
+    def manager
+      OrganizerPosition.find_by(user:, event: record.event)&.manager?
     end
 
     def team_member

@@ -4,7 +4,7 @@ require "cgi"
 
 module EventsHelper
   def dock_item(name, url = nil, icon:, tooltip: nil, async_badge: nil, disabled: false, selected: false, **options)
-    link_to (url unless disabled), options.merge(
+    link_to (disabled ? "javascript:" : url), options.merge(
       class: "dock__item #{"dock__item--selected" if selected} #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled}",
       'aria-label': tooltip
     ) do
@@ -74,6 +74,10 @@ module EventsHelper
       return Event.find(value).name
     end
 
+    if field == "reviewer_id"
+      return User.find(value).name
+    end
+
     return "Yes" if value == true
     return "No" if value == false
 
@@ -87,6 +91,6 @@ module EventsHelper
   end
 
   def show_org_switcher?
-    Flipper.enabled?(:org_switcher_2024_01_31, current_user) && current_user.events.not_hidden.count > 1
+    signed_in? && Flipper.enabled?(:org_switcher_2024_01_31, current_user) && current_user.events.not_hidden.count > 1
   end
 end

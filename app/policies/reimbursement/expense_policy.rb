@@ -3,27 +3,27 @@
 module Reimbursement
   class ExpensePolicy < ApplicationPolicy
     def create?
-      unlocked && (admin || team_member || creator)
+      unlocked && (admin || manager || creator)
     end
 
     def edit?
-      unlocked && (admin || team_member || creator)
+      unlocked && (admin || manager || creator)
     end
 
     def update?
-      unlocked && (admin || team_member || creator)
+      unlocked && (admin || manager || creator)
     end
 
     def destroy?
-      unlocked && (admin || team_member || creator)
+      unlocked && (admin || manager || creator)
     end
 
     def approve?
-      (admin || team_member) && record.report.submitted?
+      (admin || (manager && !creator)) && record.report.submitted?
     end
 
     def unapprove?
-      (admin || team_member) && record.report.submitted?
+      (admin || (manager && !creator)) && record.report.submitted?
     end
 
     def user_made_expense?
@@ -36,6 +36,10 @@ module Reimbursement
 
     def admin
       user&.admin?
+    end
+
+    def manager
+      OrganizerPosition.find_by(user:, event: record.event)&.manager?
     end
 
     def team_member

@@ -15,6 +15,12 @@ class StaticPagesController < ApplicationController
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
 
+      if admin_signed_in? && Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user)
+        @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+      elsif Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user)
+        @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
+      end
+
       @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
 
       @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
@@ -22,6 +28,14 @@ class StaticPagesController < ApplicationController
     end
     if admin_signed_in?
       @transaction_volume = CanonicalTransaction.included_in_stats.sum("@amount_cents")
+    end
+  end
+
+  def my_activities
+    if admin_signed_in?
+      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+    else
+      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
     end
   end
 
@@ -88,6 +102,11 @@ class StaticPagesController < ApplicationController
         "View card expiration date": :member,
         "View card billing address": :member,
       },
+      Reimbursements: {
+        "Get reimbursed through HCB": :member,
+        "View reimbursement reports": :member,
+        "Review, approve, and reject reports": :manager,
+      },
       "Google Workspace": {
         "Create an account": :manager,
         "Suspend an account": :manager,
@@ -146,7 +165,7 @@ class StaticPagesController < ApplicationController
 
     if Flipper.enabled?(:receipt_bin_2023_04_07, current_user)
       @mailbox_address = current_user.active_mailbox_address
-      @receipts = Receipt.in_receipt_bin.where(user: current_user)
+      @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
       @pairings = current_user.receipt_bin.suggested_receipt_pairings
     end
 
@@ -156,17 +175,23 @@ class StaticPagesController < ApplicationController
     end
   end
 
+  def suggested_pairings
+    render partial: "static_pages/suggested_pairings", locals: {
+      pairings: current_user.receipt_bin.suggested_receipt_pairings,
+      current_slide: 0
+    }
+  end
+
   def my_reimbursements
-    @reports = current_user.reimbursement_reports
-    @reports = @reports.pending if params[:filter] == "pending"
-    @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:filter] == "reimbursed"
-    @reports = @reports.rejected if params[:filter] == "rejected"
+    @reports = current_user.reimbursement_reports unless params[:filter] == "review_requested"
+    @reports = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted) if params[:filter] == "review_requested"
     @reports = @reports.search(params[:q]) if params[:q].present?
     @payout_method = current_user.payout_method
   end
 
   def my_draft_reimbursements_icon
     @draft_reimbursements_count = current_user.reimbursement_reports.draft.count
+    @review_requested_reimbursements_count = current_user.assigned_reimbursement_reports.submitted.count
 
     render :my_draft_reimbursements_icon, layout: false
   end

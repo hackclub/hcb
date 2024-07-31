@@ -40,22 +40,33 @@
   background-color: mix(map-get($palette, white), map-get($palette, warning), 90%);
 }
 
-.comments .card.hash-highlight {
-  animation: highlight 2s;
-  border: 1px solid;
-  border-color: rgba(map-get($palette, warning), 0.25);
-  .card__banner {
-    border-color: inherit;
+.mention-suggestions {
+  min-width: 180px!important; 
+  padding: 0px; 
+  padding-top: 0px; 
+  margin: 0; 
+  margin-top: 24px; 
+  list-style: none; 
+  position: absolute; 
+  border-radius: 4px;
+  border: 1px solid map-get($palette, smoke);
+}
+
+.mention-suggestion {
+  padding: 4px 8px;
+}
+
+.mention-suggestion:hover {
+  background-color: map-get($palette, info);
+  .mention {
+    color: map-get($palette, smoke);
   }
 }
 
-@keyframes highlight {
-  from {
-    border: 1px solid map-get($palette, warning);
-    background-color: map-get($palette, warning);
-  }
-  to {
-    border: 1px solid rgba(map-get($palette, warning), 0.25);
-    background-color: unset;
+
+.mention-suggestion[aria-selected='true'] {
+  background: map-get($palette, info);
+  .mention {
+    color: map-get($palette, smoke);
   }
 }

@@ -5,17 +5,11 @@ require "rails_helper"
 RSpec.describe UserService::ExchangeLoginCodeForUser, type: :model do
   let(:login_code) { create(:login_code) }
   let(:user) { login_code.user }
-  let(:cookies) {
-    Struct.new(:signed).new({
-                              "browser_token_#{login_code.id}": login_code.browser_token
-                            })
-  }
 
   let(:service) {
     UserService::ExchangeLoginCodeForUser.new(
       user_id: user.id,
       login_code: login_code.code,
-      cookies:,
       sms:,
     )
   }
@@ -41,7 +35,6 @@ RSpec.describe UserService::ExchangeLoginCodeForUser, type: :model do
         UserService::ExchangeLoginCodeForUser.new(
           user_id: user.id,
           login_code: "does not exist",
-          cookies: Rack::Test::CookieJar.new,
           sms:
         )
       }

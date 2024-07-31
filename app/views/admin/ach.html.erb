@@ -1,24 +1,23 @@
-<% title "ACH" %>
-
-<h1>ACH</h1>
-
-<%= paginate @ach_transfers %>
+<% title "ACHs" %>
 
 <%= form_with local: true, url: ach_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :pending do %>
-    <%= form.check_box :pending, checked: @pending %>
-    Pending
-  <% end %>
-  |
-
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <div class="mb1">
+    <%= form.label :pending do %>
+      <%= form.check_box :pending, checked: @pending %>
+      Pending
+    <% end %>
+  </div>
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @ach_transfers, entry_name: "transfers" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @ach_transfers, entry_name: "ACH transfers" %>
+  </div>
+  <%= paginate @ach_transfers %>
+</div>
 
 <table>
   <thead>
@@ -42,8 +41,13 @@
             <%= ach.event.name.upcase %>: <%= ach.recipient_name.upcase %>
           <% end %>
         </td>
-        <td><%= render_money(ach.amount) %></td>
-        <td><%= ach.aasm_state.upcase %></td>
+        <td><%= render_money_amount(ach.amount) %></td>
+        <td>
+          <%= ach.aasm_state.upcase %>
+          <% if ach.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td><%= ach.confirmation_number %></td>
         <td>
           <%= link_to "Process", ach_start_approval_admin_path(ach) if ach.pending? %>

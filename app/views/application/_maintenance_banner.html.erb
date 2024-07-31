@@ -5,7 +5,7 @@
   <% if (datetime + duration) > Time.now %><%# if it hasn't already passed %>
 
     <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
-      <p class="h5 medium center mt1 mb1">
+      <p class="h5 medium center mt1 mb1" style="text-wrap: balance;">
         HCB will be under maintenance
         <strong>
           <%= local_time(datetime, format: "%B %e") %>

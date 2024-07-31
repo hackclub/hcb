@@ -6,6 +6,10 @@ module Column
       admin_or_manager?
     end
 
+    def update?
+      user&.admin?
+    end
+
     private
 
     def admin_or_manager?

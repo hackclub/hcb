@@ -16,7 +16,7 @@ module EventMappingEngine
 
       def likely_increase_checks
         ::CanonicalTransaction.unmapped.likely_increase_checks.order("date asc") +
-          ::CanonicalTransaction.unmapped.with_column_transaction_type("check")
+          ::CanonicalTransaction.unmapped.with_column_transaction_type("check.incoming_debit")
       end
 
     end

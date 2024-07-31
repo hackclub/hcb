@@ -15,11 +15,7 @@ RSpec.describe Event, type: :model do
 
   describe "#transaction_engine_v2_at" do
     it "has a value" do
-      expect(event.transaction_engine_v2_at).to be_nil
-
-      event.save!
-
-      expect(event.reload.transaction_engine_v2_at).not_to be_nil
+      expect(event.transaction_engine_v2_at).not_to be_nil
     end
   end
 
@@ -69,7 +65,7 @@ RSpec.describe Event, type: :model do
           :canonical_event_mapping,
           canonical_transaction: create(:canonical_transaction, amount_cents: -1000, hcb_code: "HCB-000-1"),
           event:,
-          fee: create(:fee, reason: "HACK CLUB FEE"),
+          fee: create(:fee, reason: :hack_club_fee),
         )
       }.to change { event.reload.total_fee_payments_v2_cents }.from(0).to(1000)
     end

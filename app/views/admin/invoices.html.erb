@@ -1,47 +1,43 @@
-<% title "INVOICES" %>
-
-<h1>INVOICES</h1>
-
-<%= paginate @invoices %>
+<% title "Invoices" %>
 
 <%= form_with local: true, url: invoices_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :open do %>
-    <%= form.check_box :open, checked: @open %>
-    Open
-  <% end %>
-  |
-  <%= form.label :paid do %>
-    <%= form.check_box :paid, checked: @paid %>
-    Paid
-  <% end %>
-  |
-  <%= form.label :missing_payout do %>
-    <%= form.check_box :missing_payout, checked: @missing_payout %>
-    Missing Payout
-  <% end %>
-  |
-  <%= form.label :missing_fee_reimbursement do %>
-    <%= form.check_box :missing_fee_reimbursement, checked: @missing_fee_reimbursement %>
-    Missing Fee Reimbursement
-  <% end %>
-  |
-  <%= form.label :past_due do %>
-    <%= form.check_box :past_due, checked: @past_due %>
-    Past due
-  <% end %>
-  |
-  <%= form.label :voided do %>
-    <%= form.check_box :voided, checked: @voided %>
-    Voided
-  <% end %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <fieldset>
+    <%= form.label :open do %>
+      <%= form.check_box :open, checked: @open %>
+      Open
+    <% end %>
+    <%= form.label :paid do %>
+      <%= form.check_box :paid, checked: @paid, class: "ml1" %>
+      Paid
+    <% end %>
+    <%= form.label :missing_payout do %>
+      <%= form.check_box :missing_payout, checked: @missing_payout, class: "ml1" %>
+      Missing Payout
+    <% end %>
+    <%= form.label :missing_fee_reimbursement do %>
+      <%= form.check_box :missing_fee_reimbursement, checked: @missing_fee_reimbursement, class: "ml1" %>
+      Missing Fee Reimbursement
+    <% end %>
+    <%= form.label :past_due do %>
+      <%= form.check_box :past_due, checked: @past_due, class: "ml1" %>
+      Past due
+    <% end %>
+    <%= form.label :voided do %>
+      <%= form.check_box :voided, checked: @voided %>
+      Voided
+    <% end %>
+  </fieldset>
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @invoices, entry_name: "invoices" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @invoices, entry_name: "invoices" %>
+  </div>
+  <%= paginate @invoices %>
+</div>
 
 <table>
   <thead>
@@ -60,7 +56,12 @@
     <% @invoices.each do |invoice| %>
       <tr class="<%= "admin-bg-pending" if invoice.open? %>">
         <td><%= invoice.id %></td>
-        <td><%= invoice.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= invoice.created_at.strftime("%Y-%m-%d") %>
+          <% if invoice.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td>
           <%= link_to invoice_path(invoice) do %>
             <%= invoice.event.name.upcase %>: <%= invoice.sponsor.name %>

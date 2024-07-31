@@ -130,7 +130,7 @@ class InvoicesController < ApplicationController
 
     flash[:success] = "Invoice successfully created and emailed to #{@invoice.sponsor.contact_email}."
 
-    unless OrganizerPosition.find_by(user: @invoice.creator, event: @event).manager?
+    unless OrganizerPosition.find_by(user: @invoice.creator, event: @event)&.manager?
       InvoiceMailer.with(invoice: @invoice).notify_organizers_sent.deliver_later
     end
 
@@ -215,6 +215,15 @@ class InvoicesController < ApplicationController
     @invoice.reload
 
     redirect_to @invoice.invoice_pdf, allow_other_host: true
+  end
+
+  def refund
+    @invoice = Invoice.find(params[:id])
+    @hcb_code = @invoice.local_hcb_code
+
+    ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
+
+    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
   end
 
   private

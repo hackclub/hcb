@@ -12,4 +12,10 @@ class ErrorsController < ApplicationController
     render status: :internal_server_error, layout: "application"
   end
 
+  def error
+    @code = params[:code]
+    Airbrake.notify("/#{@code} rendered.")
+    render status: params[:code], layout: "application"
+  end
+
 end

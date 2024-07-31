@@ -3,11 +3,6 @@
 class DisbursementsController < ApplicationController
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
-  def index
-    @disbursements = Disbursement.all.order(created_at: :desc).includes(:t_transactions, :event, :source_event)
-    authorize @disbursements
-  end
-
   def show
     authorize @disbursement
 
@@ -105,7 +100,7 @@ class DisbursementsController < ApplicationController
       if Disbursement.pending.any?
         redirect_to pending_disbursements_path
       else
-        redirect_to disbursements_path
+        redirect_to disbursements_admin_index_path
       end
     end
   end

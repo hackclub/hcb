@@ -14,6 +14,7 @@ export default class extends Controller {
 
     if (split.length == 2 && split[1].length > this.placesValue) {
       e.target.value = [split[0], split[1].slice(0, this.placesValue)].join('.')
+      e.target.dispatchEvent(new Event('input'))
     }
   }
 }

@@ -1,10 +1,11 @@
 <% title "Grants" %>
 
-<h1>Grants</h1>
-
-<%= paginate @grants %>
-
-<%= page_entries_info @grants %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @grants %>
+  </div>
+  <%= paginate @grants %>
+</div>
 
 <table>
   <thead>

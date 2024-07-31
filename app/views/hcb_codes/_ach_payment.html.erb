@@ -14,10 +14,12 @@
                 data-action="dblclick->navigation#navigate"
                 data-navigation-location-param="<%= edit_hcb_code_path(@hcb_code) %>"
                 data-navigation-frame-param="<%= dom_id(@hcb_code) %>">
-            <%= @hcb_code.memo %>
+            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
             <span class="regular muted"> for </span>
             <%= number_to_currency(@hcb_code.amount) %>
           </span>
+
+          <%= render "hcb_codes/memo_stream", hcb_code: @hcb_code %>
         <% end %>
       </div>
       <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>

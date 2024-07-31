@@ -68,6 +68,7 @@
   .details-horiz__col {
     display: flex;
     flex-direction: column;
+    overflow: visible;
 
     @media (max-width: 32em) {
       &:first-of-type {

@@ -2,6 +2,15 @@ import csrf from '../../common/csrf'
 import React, { useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
 
+function renderPhoneNumber(phoneNumber) {
+  if (phoneNumber.substring(0, 2) != '+1' || phoneNumber.length != 12)
+    return phoneNumber
+  let areaCode = phoneNumber.substring(2, 5)
+  let middleThree = phoneNumber.substring(5, 8)
+  let lastFour = phoneNumber.substring(8)
+  return `+1 (${areaCode}) ${middleThree}-${lastFour}`
+}
+
 const SmsVerification = ({ phoneNumber, enrollSmsAuth = false }) => {
   const [errors, setErrors] = useState([])
   const [validationSent, setValidationSent] = useState(false)
@@ -89,7 +98,9 @@ const SmsVerification = ({ phoneNumber, enrollSmsAuth = false }) => {
           <p>
             ✅ Verified!{' '}
             {enrollSmsAuth &&
-              `Next time you sign in your login code will go to ${phoneNumber}.`}
+              `Next time you sign in your login code will go to ${renderPhoneNumber(
+                phoneNumber
+              )}.`}
           </p>
           <button className="btn btn-success" onClick={refresh}>
             Refresh to continue
@@ -98,11 +109,12 @@ const SmsVerification = ({ phoneNumber, enrollSmsAuth = false }) => {
       )}
       {!validationSuccess && (
         <>
-          {validationSent && (
+          {validationSent ? (
             <>
               <p>
-                We&apos;ve just sent a code to {phoneNumber}. It should arrive
-                in the next 5 to 30 seconds depending on your connection.
+                We&apos;ve just sent a code to {renderPhoneNumber(phoneNumber)}.
+                It should arrive in the next 5 to 30 seconds depending on your
+                connection.
               </p>
               <div className="flex">
                 <form onSubmit={handleSubmit}>
@@ -125,18 +137,31 @@ const SmsVerification = ({ phoneNumber, enrollSmsAuth = false }) => {
                   />
                 </form>
               </div>
+              <p>
+                <a
+                  href="#"
+                  onClick={handleClick}
+                  className={loading ? 'muted wait' : 'pointer'}
+                >
+                  Resend code
+                </a>{' '}
+                to {renderPhoneNumber(phoneNumber)}.
+              </p>
+            </>
+          ) : (
+            <>
+              <p>
+                To verify your phone number, we&apos;ll send a code to{' '}
+                {renderPhoneNumber(phoneNumber)}.
+              </p>
+              <button
+                onClick={handleClick}
+                className={loading ? 'bg-muted wait btn' : 'pointer btn'}
+              >
+                Send Verification Code
+              </button>
             </>
           )}
-          <p>
-            <a
-              href="#"
-              onClick={handleClick}
-              className={loading ? 'muted wait' : 'pointer'}
-            >
-              {validationSent ? 'Resend code' : 'Send verification code'}
-            </a>{' '}
-            to {phoneNumber}.
-          </p>
         </>
       )}
     </>

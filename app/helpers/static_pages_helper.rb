@@ -13,10 +13,15 @@ module StaticPagesHelper
             else
               content_tag(:div, "") # Empty div if no badge is present
             end
-    pin = inline_icon("pin", class: "pin", size: 28, ':color': "isPinned($el.closest('a').parentElement.id) ? 'orange' : 'inherit'", '@click.prevent': "pin($el.closest('a').parentElement.id, $el.closest('.grid').id)")
-    content_tag(:div, id: "card-#{name.parameterize}") do
+    pin = inline_icon("pin", class: "pin transition-opacity group-hover:opacity-100 absolute top-0 right-0", size: 24, ':color': "isPinned($el.closest('a').parentElement.id) ? 'orange' : 'var(--muted)'", '@click.prevent': "pin($el.closest('a').parentElement.id, $el.closest('.grid').id)", ":class": "isPinned($el.closest('a').parentElement.id) ? 'opacity-100' : 'opacity-0'")
+    content_tag(:div, id: "card-#{name.parameterize}", class: "group relative") do
       link_to content_tag(:div,
-                          [pin, content_tag(:strong, name, class: "card-name"), badge].join.html_safe,
+                          [
+                            content_tag(:strong, name, class: "card-name"),
+                            pin,
+                            content_tag(:span, "", style: "flex-grow: 1"),
+                            badge
+                          ].join.html_safe,
                           class: "card card--item card--hover flex justify-between items-center"),
               path, class: "link-reset", method: options[:method]
     end
@@ -47,7 +52,7 @@ module StaticPagesHelper
       bank_applications: {
         id: "apppALh5FEOKkhjLR",
         table: "Events",
-        query: { filterByFormula: "Pending='Pending'" },
+        query: { filterByFormula: "OR(Status='⭐️ New Application', Status='Applied - Approved', Status='Applied - Need Rejection')" },
         destination: "https://airtable.com/tblctmRFEeluG4do7/viwGhv19cV1ZRj61a"
       },
       stickers: {
@@ -110,12 +115,6 @@ module StaticPagesHelper
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tbloFbH16HI7t3mfG/viwzgt8VLHOC82m8n"
       },
-      paypal_transfers: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "PayPal%20Transfers",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbloGiW2jhja8ivtV/viwzhAnWYhpFNhvmC"
-      },
       disputed_transactions: {
         id: "appEzv7w2IBMoxxHe",
         table: "Disputed%20Transactions",
@@ -139,8 +138,41 @@ module StaticPagesHelper
         table: "Google%20Workspace%20Waitlist",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/appEzv7w2IBMoxxHe/tbl9CkfZHKZYrXf1T/viwgfJvrrD9Jn9VLj"
+      },
+      you_ship_we_ship: {
+        id: "appre1xwKlj49p0d4",
+        table: "Users",
+        query: { filterByFormula: "{Verification Status}='Unknown'" },
+        destination: "https://airtable.com/appre1xwKlj49p0d4/tbl2Q2aCWqyBGi9mj/viwVYhUQYyNJOi0EH"
+      },
+      boba: {
+        id: "app05mIKwNPO2l1vT",
+        table: "Event%20Codes",
+        query: { filterByFormula: "Status='Under Review'" },
+        destination: "https://airtable.com/app05mIKwNPO2l1vT/tblcIuVemD63IbBuY/viw1Zo5lX8e7t2Vzu"
+      },
+      power_hour: {
+        id: "app1VxI7f3twOIs2g",
+        table: "tblKgmsperK0QHEQX",
+        query: { filterByFormula: "Status='Awaiting Fulfillment'" },
+        destination: "https://airtable.com/app1VxI7f3twOIs2g/tblKgmsperK0QHEQX"
+      },
+      arcade: {
+        id: "app4kCWulfB02bV8Q",
+        table: "tblNUDETwMdUlBCSM",
+        query: { filterByFormula: "AND(Status='Awaiting Fulfillment', OR({Verification Status (from YSWS Verification User)}='Eligible L1', {Verification Status (from YSWS Verification User)}='Eligible L2'))" },
+        destination: "https://airtable.com/app4kCWulfB02bV8Q/tblNUDETwMdUlBCSM/viwipTwk0hGHW10Py"
+      },
+      marketing_shipment_request: {
+        id: "appK53aN0fz3sgJ4w",
+        table: "tblvSJMqoXnQyN7co",
+        destination: "https://airtable.com/appK53aN0fz3sgJ4w/tblvSJMqoXnQyN7co/viwk107ZoZqAsFfRS"
       }
     }
+  end
+
+  def apply_form_url(user = current_user)
+    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form({ userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year }.compact)}"
   end
 
   def render_permissions(permissions, depth = 0)

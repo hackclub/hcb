@@ -1,0 +1,6 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+  rejected a <%= render_money activity.trackable.amount %> PayPal transfer to <%= activity.trackable.recipient_name %>
+  from <%= link_to activity.trackable.event.name, activity.trackable.event %>
+<% end %>

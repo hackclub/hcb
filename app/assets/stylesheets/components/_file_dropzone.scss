@@ -1,5 +1,5 @@
 .dropzone {
-  &[class^="transaction--"] {
+  &[class^="transaction"] {
     outline: 5px dashed $orange;
     outline-offset: -5px;
   }

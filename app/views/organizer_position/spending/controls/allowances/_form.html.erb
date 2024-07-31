@@ -1,0 +1,31 @@
+<%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false }, class: "w-full", html: { "x-data" => "{amount: null, balance: #{@active_control.balance_cents} / 100, operation: 'add', formatter: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }) }" }) do |form| %>
+  <div class="field field--options w-full max-w-none">
+    <%= form.radio_button :operation, "add", "x-model" => "operation", required: true, checked: true %>
+    <%= form.label :operation, value: "add", class: "w-full inline-flex" do %>
+      <%= inline_icon "plus" %>
+      <strong>Increase allowance</strong>
+    <% end %>
+
+    <%= form.radio_button :operation, "subtract", "x-model" => "operation", required: true %>
+    <%= form.label :operation, value: "subtract", class: "w-full inline-flex" do %>
+      <%= inline_icon "minus" %>
+      <strong>Decrease allowance</strong>
+    <% end %>
+  </div>
+
+  <div class="field">
+    <%= form.label :amount %>
+    <%= form.number_field :amount, placeholder: "500.00", required: true, step: 0.01, min: 0, "x-on:input": "amount = $el.value" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :memo, "Memo" %>
+    <%= form.text_field :memo, placeholder: "Lunch for layover at SFO", required: true %>
+  </div>
+
+  <p x-show="amount && amount >= 0 && operation"><%= @active_control.organizer_position.user.name %>'s spending balance will be <span x-html="formatter.format(balance + (operation == 'add' ? Number(amount) : -Number(amount)))"></span></p>
+
+  <div class="actions">
+    <%= form.submit %>
+  </div>
+<% end %>

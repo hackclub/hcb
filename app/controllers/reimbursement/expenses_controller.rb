@@ -11,12 +11,13 @@ module Reimbursement
       authorize @expense
 
       if params[:file]
-        ::ReceiptService::Create.new(
+        receipt = ::ReceiptService::Create.new(
           receiptable: @expense,
           uploader: current_user,
           attachments: params[:file],
           upload_method: :quick_expense
         ).run!
+        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt.first.suggested_memo
       end
 
       if @expense.save
@@ -37,7 +38,7 @@ module Reimbursement
       authorize @expense
 
       if expense_params[:reimbursement_report_id] && @expense.reimbursement_report_id != expense_params[:reimbursement_report_id]
-        @expense.assign_attributes(expense_number: nil)
+        @expense.assign_attributes(expense_number: nil, aasm_state: :pending, approved_by_id: nil)
       end
       @expense.assign_attributes(expense_params.except(:event_id))
 
@@ -49,7 +50,7 @@ module Reimbursement
         authorize report
         ActiveRecord::Base.transaction do
           report.save!
-          @expense.update!(reimbursement_report_id: report.id, expense_number: nil)
+          @expense.update!(reimbursement_report_id: report.id, expense_number: nil, aasm_state: :pending, approved_by_id: nil)
         end
       end
 
@@ -66,7 +67,7 @@ module Reimbursement
     def approve
       authorize @expense
 
-      @expense.mark_approved! if @expense.may_mark_approved?
+      @expense.mark_approved!(current_user) if @expense.may_mark_approved?
 
       respond_to do |format|
         format.turbo_stream { render turbo_stream: on_update_streams }
@@ -77,7 +78,7 @@ module Reimbursement
     def unapprove
       authorize @expense
 
-      @expense.mark_pending! if @expense.may_mark_pending?
+      @expense.mark_pending!(current_user) if @expense.may_mark_pending?
 
       respond_to do |format|
         format.turbo_stream { render turbo_stream: on_update_streams }
@@ -101,7 +102,7 @@ module Reimbursement
     private
 
     def expense_params
-      params.require(:reimbursement_expense).permit(:amount, :memo, :description, :reimbursement_report_id, :event_id).compact_blank
+      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type).compact_blank
     end
 
     def set_expense
@@ -121,7 +122,9 @@ module Reimbursement
     end
 
     def replace_expense_turbo_stream
-      turbo_stream.replace(@expense, partial: "reimbursement/expenses/expense", locals: { expense: @expense })
+      turbo_stream.replace(@expense, partial: "reimbursement/expenses/expense", locals: {
+                             expense: @expense.becomes(@expense.type&.constantize || Reimbursement::Expense)
+                           })
     end
 
     def new_expense_turbo_stream

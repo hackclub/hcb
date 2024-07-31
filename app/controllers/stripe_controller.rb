@@ -99,6 +99,13 @@ class StripeController < ActionController::Base
     invoice = Invoice.find_by(stripe_invoice_id: stripe_invoice[:id])
     return unless invoice
 
+    safely do
+      StripeService::Charge.update(
+        stripe_invoice[:charge],
+        { metadata: { event_id: invoice.event.id } },
+      )
+    end
+
     # Mark invoice as paid
     InvoiceService::OpenToPaid.new(invoice_id: invoice.id).run
 
@@ -183,16 +190,27 @@ class StripeController < ActionController::Base
     charge = event[:data][:object]
 
     donation = Donation.find_by(stripe_payment_intent_id: charge[:payment_intent])
-    return unless donation
+    invoice = Invoice.find_by(stripe_charge_id: charge[:id])
 
-    donation.mark_refunded! unless donation.refunded?
+    if donation
+      donation.mark_refunded! unless donation.refunded?
 
-    StripeService::Topup.create(
-      amount: charge[:amount_refunded],
-      currency: "usd",
-      description: "Refund for donation #{donation.id}",
-      statement_descriptor: "HCB-#{donation.local_hcb_code.short_code}"
-    )
+      StripeService::Topup.create(
+        amount: charge[:amount_refunded],
+        currency: "usd",
+        description: "Refund for donation #{donation.id}",
+        statement_descriptor: "HCB-#{donation.local_hcb_code.short_code}"
+      )
+    elsif invoice
+      invoice.mark_refunded! unless invoice.refunded_v2?
+
+      StripeService::Topup.create(
+        amount: charge[:amount_refunded],
+        currency: "usd",
+        description: "Refund for invoice #{invoice.id}",
+        statement_descriptor: "HCB-#{invoice.local_hcb_code.short_code}"
+      )
+    end
   end
 
   def handle_payment_intent_succeeded(event)
@@ -204,7 +222,7 @@ class StripeController < ActionController::Base
 
     pi = StripeService::PaymentIntent.retrieve(
       id: donation.stripe_payment_intent_id,
-      expand: ["charges.data.balance_transaction"]
+      expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"]
     )
     donation.set_fields_from_stripe_payment_intent(pi)
     donation.save!
@@ -215,6 +233,21 @@ class StripeController < ActionController::Base
     rpdt = ::PendingTransactionEngine::RawPendingDonationTransactionService::Donation::ImportSingle.new(donation:).run
     cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Donation.new(raw_pending_donation_transaction: rpdt).run
     ::PendingEventMappingEngine::Map::Single::Donation.new(canonical_pending_transaction: cpt).run
+  end
+
+  def handle_charge_updated(event)
+    # only proceed if charge is related to a donation and not an invoice
+    return unless event.data.object.metadata[:donation].present?
+
+    # get donation to process
+    donation = Donation.find_by_stripe_payment_intent_id(event.data.object[:payment_intent])
+
+    pi = StripeService::PaymentIntent.retrieve(
+      id: donation.stripe_payment_intent_id,
+      expand: ["latest_charge.balance_transaction"]
+    )
+    donation.set_fields_from_stripe_payment_intent(pi)
+    donation.save!
   end
 
   def handle_source_transaction_created(event)
@@ -253,5 +286,16 @@ class StripeController < ActionController::Base
   alias_method :handle_payout_canceled, :handle_payout_updated
   alias_method :handle_payout_failed, :handle_payout_updated
   alias_method :handle_payout_paid, :handle_payout_updated
+
+  def handle_issuing_personalization_design_updated(event)
+    design = StripeCard::PersonalizationDesign.find_by(stripe_id: event.data.object.id)
+    return unless design
+
+    design.sync_from_stripe!
+  end
+
+  alias_method :handle_issuing_personalization_design_activated, :handle_issuing_personalization_design_updated
+  alias_method :handle_issuing_personalization_design_rejected, :handle_issuing_personalization_design_updated
+  alias_method :handle_issuing_personalization_design_deactivated, :handle_issuing_personalization_design_updated
 
 end

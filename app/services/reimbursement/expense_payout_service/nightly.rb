@@ -20,7 +20,6 @@ module Reimbursement
           )
 
           report.mark_reimbursed!
-
         end
 
         Reimbursement::ExpensePayout.pending.find_each(batch_size: 100) do |expense_payout|

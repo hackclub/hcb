@@ -7,6 +7,12 @@ class CommentMailer < ApplicationMailer
 
     return if @commentable.comment_recipients_for(@comment).empty?
 
+    # the bank@hackclub.com is used for automated comments,
+    # for now, these automated comments won't notify users.
+    # see OneTimeJobs::BackfillLostReceipts for an example
+    # - @sampoder
+    return if @comment.user == User.find_by(email: "bank@hackclub.com")
+
     return unless @comment.content || @comment.file
 
     mail_settings = {

@@ -12,7 +12,7 @@ module SetEvent
       id = params[:event_name] || params[:event_id] || params[:id]
       @event = Event.friendly.find(id)
       @organizer_position = @event.organizer_positions.find_by(user: current_user) if signed_in?
-      @first_time = params[:first_time] || (Flipper.enabled?(:in_app_onboarding, current_user) && @organizer_position&.first_time?)
+      @first_time = params[:first_time] || @organizer_position&.first_time?
 
     rescue ActiveRecord::RecordNotFound
       # Attempt to find this slug in the history

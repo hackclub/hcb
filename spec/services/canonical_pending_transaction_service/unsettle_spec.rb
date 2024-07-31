@@ -6,6 +6,8 @@ RSpec.describe CanonicalPendingTransactionService::Unsettle do
   let!(:canonical_transaction) { create(:canonical_transaction) }
   let(:canonical_pending_transaction) { create(:canonical_pending_transaction) }
   let(:event) { create(:event) }
+
+  # Create enough balance to cover the ach_transfer amount.
   let!(:incoming_transaction) { create(:canonical_transaction, event:, amount_cents: 1000) }
 
   let(:service) {

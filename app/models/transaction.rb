@@ -297,7 +297,6 @@ class Transaction < ApplicationRecord
   end
 
   def potential_ach_transfer?
-    # Based on observations, SVB does not guarantee this TX memo
     self.name.include?("BUSBILLPAY")
   end
 

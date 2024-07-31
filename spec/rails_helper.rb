@@ -12,6 +12,10 @@ require "rspec/rails"
 # Add additional requires below this line. Rails is not loaded until this point!
 require_relative "support/factory_bot"
 
+# see https://github.com/public-activity/public_activity#testing
+# for context around testing PublicActivity
+require "public_activity/testing"
+PublicActivity.enabled = false
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are

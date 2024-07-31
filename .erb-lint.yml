@@ -1,6 +1,8 @@
 EnableDefaultLinters: true
 exclude:
   - app/views/grants/_activate_form.html.erb
+  - app/views/ach_transfers/_form.html.erb # erb-lint _really_ doesn't like Alpine
+  - app/views/doorkeeper/authorizations/new.html.erb
 linters:
   ErbSafety:
     enabled: true
@@ -56,3 +58,18 @@ linters:
         Enabled: false
       Rails/Present:
         Enabled: false
+  DeprecatedClasses:
+    enabled: true
+    rule_set:
+      - deprecated: ['circle']
+        suggestion: 'Use rounded-full instead'
+      - deprecated: ['flex-column']
+        suggestion: 'Use flex-col instead'
+      - deprecated: ['mono']
+        suggestion: 'Use font-mono instead'
+      - deprecated: ['rounded-top', 'rounded-bottom']
+        suggestion: 'Use rounded-t/rounded-b instead'
+      - deprecated: ['strikethrough']
+        suggestion: 'Use line-through instead'
+      - deprecated: ['sans']
+        suggestion: 'Use font-sans instead'

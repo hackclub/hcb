@@ -104,7 +104,7 @@ export default class extends Controller {
   #memo() {
     this.memoTarget.innerText =
       this.enabledValue && !this.lockedValue
-        ? `Unsaved Changes`
+        ? `Unsaved changes`
         : this.memoValue
     if (this.enabledValue && !this.lockedValue) {
       this.memoTarget.classList.add('warning')

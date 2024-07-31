@@ -30,7 +30,7 @@ class LoginCode < ApplicationRecord
 
   belongs_to :user
 
-  has_secure_token :browser_token
+  self.ignored_columns = ["browser_token"]
 
   after_initialize :generate_code
 

@@ -33,7 +33,7 @@ module PublicIdentifiable
 
     def find_by_public_id!(id)
       obj = find_by_public_id id
-      raise ActiveRecord::RecordNotFound if obj.nil?
+      raise ActiveRecord::RecordNotFound.new(nil, self.name) if obj.nil?
 
       obj
     end

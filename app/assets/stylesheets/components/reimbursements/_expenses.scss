@@ -20,17 +20,17 @@
   }
 }
 
-[data-expense-form-enabled-value=true] #edit-or-save {
+[data-expense-form-enabled-value=true] .edit-or-save {
   color: #33d6a6;
   background-color: #33d6a620;
 }
-[data-expense-form-locked-value=true] #edit-or-save {
+[data-expense-form-locked-value=true] .edit-or-save {
   color: #ff8c37;
   background-color: #ff8c3720;
   cursor: no-drop!important;
 }
 
-[data-expense-form-locked-value=true] #edit-or-save:hover {
+[data-expense-form-locked-value=true] .edit-or-save:hover {
   transform: none;
   box-shadow: none!important;
 }

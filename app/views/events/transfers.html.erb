@@ -9,11 +9,6 @@
   </span>
 
   <% if organizer_signed_in? %>
-    <% if Flipper.enabled?(:reimbursements_2024_03_10, @event) %>
-      <%= link_to "Reimbursement", event_reimbursements_path(@event), class: "btn" %>
-    <% else %>
-      <%= link_to "Reimbursement", "expensify", class: "btn" %>
-    <% end %>
     <%= link_to event_transfers_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
       <%= inline_icon "payment-transfer" %>
       Send
@@ -22,7 +17,7 @@
 </h1>
 
 <div class="statset mt3 mb2">
-  <div class="stat stat--small">
+  <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
   </div>
@@ -38,20 +33,19 @@
 
 <hr>
 
-<div style="text-align: center;">
-  <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
-  <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
-  <%= link_to "In Transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>
-  <%= link_to "Canceled", "?filter=canceled", class: "filterbar__item", "aria-selected": params[:filter] == "canceled", role: "tab" %>
-</div>
-
-<%= form_with(model: nil, local: true, method: :get) do |form| %>
-  <div class="filterbar flex flex-wrap items-center width-100">
-
-    <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
-
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
+  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <div class="filterbar flex flex-wrap items-center width-100 flex-1">
+      <%= form.text_field :q, placeholder: "Search…", class: "flex-auto", style: "width auto; max-width: none;", value: params[:q] %>
+    </div>
+  <% end %>
+  <div>
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
+    <%= link_to "In Transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>
+    <%= link_to "Canceled", "?filter=canceled", class: "filterbar__item", "aria-selected": params[:filter] == "canceled", role: "tab" %>
   </div>
-<% end %>
+</div>
 
 <% if @transfers.size > 0 %>
 <article class="table-container">
@@ -60,16 +54,24 @@
     <thead>
       <tr>
         <th></th>
-        <th>STATUS</th>
-        <th>DATE</th>
-        <th>TO</th>
-        <th style="text-align: right;">AMOUNT</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>To</th>
+        <th class="text-right">Amount</th>
         <th></th>
       </tr>
     </thead>
 
     <tbody>
       <% @transfers.each do |d| %>
+        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>">
+            <%= modal_header("Transfer of #{render_money(d.amount)}", external_link: hcb_code_url(d.hcb_code)) %>
+            <%= async_frame_to hcb_code_url(d.hcb_code, params: { frame: true }), lazy: true, as: :div do %>
+              <strong>Loading...</strong>
+            <% end %>
+          </section>
+        <% end %>
         <tr>
           <td class="transaction__icon">
             <% if d.is_a?(Check) || d.is_a?(IncreaseCheck) %>
@@ -83,6 +85,10 @@
             <% elsif d.is_a?(CardGrant) %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="Card Grant">
                 <%= inline_icon "bag" %>
+              </span>
+            <% elsif d.is_a?(PaypalTransfer) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="PayPal Transfer">
+                <%= inline_icon "paypal" %>
               </span>
             <% else %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
@@ -117,7 +123,7 @@
           </td>
           <td style="text-align: right;">
             <% if d.is_a? CardGrant %>
-              <span class="<%= "muted strikethrough" if d.balance.zero? %>"><%= d.balance.format %></span>
+              <span class="<%= "muted line-through" if d.balance.zero? %>"><%= d.balance.format %></span>
             <% else %>
               <%= render_money(d.amount) %>
             <% end %>
@@ -128,7 +134,7 @@
                 <%= render "card_grant_actions", card_grant: d %>
               <% else %>
                 <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-                <%= link_to "Details", hcb_code_url(d.hcb_code) %>
+                <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) ? { behavior: "modal_trigger", modal: "transfer_modal_#{d.hcb_code}" } : nil %>
               <% end %>
             <% end %>
           </td>
@@ -148,32 +154,9 @@
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_transfer">
     <%= turbo_frame_tag :transfer_form do %>
       <%= modal_header "Transfer money" %>
-      <% if !policy(@event).new_transfer? %>
-        <div class="card border b--info pb0 mt3 mb3">
-          <div class="flex items-center info">
-            <%= inline_icon "info", size: 32, class: "mr1" %>
-            <p class="bold mt0 mb0">You can't transfer money.</p>
-          </div>
-          <ul>
-            <% if @event.demo_mode? %>
-              <li>This is because your organization is in demo mode.</li>
-            <% else %>
-              <%# They're not authorized due to role lacking permissions %>
-              <li>
-                This is because you're not a Manager.
-                (You're a <%= OrganizerPosition.find_by(user: current_user, event: @event)&.role&.titleize %>)
-              </li>
-              <li>If you need to move money, ask your manager to change your role on the <%= link_to "team page", event_team_path, target: "_blank" %>.</li>
-            <% end %>
-            <li>You can view the forms, but not submit them.</li>
-          </ul>
-          <% unless @event.demo_mode? %>
-            <div class="border-top card__banner card__darker secondary">
-              <%= link_to "Read more about roles", roles_path, target: "_blank" %>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
+
+      <%= render "events/transfers/unauthorized_callout" unless policy(@event).create_transfer? %>
+
       <%= render "transfer_form" %>
     <% end %>
   </section>

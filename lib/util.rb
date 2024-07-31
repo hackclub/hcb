@@ -29,7 +29,7 @@ module Util
     @commit_hash ||= begin
       result = ENV["HEROKU_SLUG_COMMIT"]
       result ||= source_version
-      result ||= `git show --pretty=%H -q`&.chomp
+      result ||= `git show --pretty=%H -q 2> /dev/null`&.chomp
     end
 
     @commit_hash

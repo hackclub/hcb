@@ -24,7 +24,7 @@ module CanonicalPendingTransactionJob
 
       humanized_reason = case @reason
                          when "card_inactive"
-                           if !@card.activated?
+                           if !@card.initially_activated?
                              "at #{@merchant} because this card hasn't been activated yet"
                            else
                              "at #{@merchant} because this card has been frozen"

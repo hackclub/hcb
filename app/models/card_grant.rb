@@ -50,6 +50,7 @@ class CardGrant < ApplicationRecord
 
   enum :status, [:active, :canceled], default: :active
 
+  before_validation :create_card_grant_setting, on: :create
   before_create :create_user
   before_create :create_subledger
   after_create :transfer_money
@@ -59,8 +60,8 @@ class CardGrant < ApplicationRecord
 
   delegate :balance, to: :subledger
 
-  serialize :merchant_lock, CommaSeparatedCoder # convert comma-separated merchant list to an array
-  serialize :category_lock, CommaSeparatedCoder
+  serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
+  serialize :category_lock, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
@@ -149,6 +150,10 @@ class CardGrant < ApplicationRecord
   end
 
   private
+
+  def create_card_grant_setting
+    CardGrantSetting.find_or_create_by!(event_id:)
+  end
 
   def create_user
     self.user = User.find_or_create_by!(email:)

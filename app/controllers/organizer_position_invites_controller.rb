@@ -19,9 +19,12 @@ class OrganizerPositionInvitesController < ApplicationController
   def create
     user_email = invite_params[:email]
     role = invite_params[:role]
-    is_signee = invite_params[:is_signee]
+    is_signee = invite_params[:is_signee] || false
 
-    service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email:, is_signee:, role:)
+    enable_spending_controls = (invite_params[:enable_controls] == "true") && (role != "manager")
+    initial_control_allowance_amount = invite_params[:initial_control_allowance_amount]
+
+    service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email:, is_signee:, role:, enable_spending_controls:, initial_control_allowance_amount:)
 
     @invite = service.model
 
@@ -91,7 +94,9 @@ class OrganizerPositionInvitesController < ApplicationController
 
   def toggle_signee_status
     authorize @invite
-    @invite.toggle!(:is_signee)
+    unless @invite.update(is_signee: !@invite.is_signee?)
+      flash[:error] = @invite.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
+    end
     redirect_back(fallback_location: event_team_path(@invite.event))
   end
 
@@ -110,7 +115,7 @@ class OrganizerPositionInvitesController < ApplicationController
 
   rescue => e
     Airbrake.notify(e)
-    flash[:error] = "Failed to change the role."
+    flash[:error] = organizer_position_invite&.errors&.full_messages&.to_sentence.presence || "Failed to change the role."
   ensure
     redirect_back(fallback_location: event_team_path(organizer_position_invite.event))
   end
@@ -122,7 +127,7 @@ class OrganizerPositionInvitesController < ApplicationController
   end
 
   def invite_params
-    params.require(:organizer_position_invite).permit(:email, :is_signee, :role)
+    params.require(:organizer_position_invite).permit(:email, :is_signee, :role, :enable_controls, :initial_control_allowance_amount)
   end
 
 end

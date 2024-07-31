@@ -13,6 +13,8 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
+    @prefill_email = params[:email]
+
     last_card_grant = @event.card_grants.order(created_at: :desc).first
 
     if last_card_grant.present?
@@ -20,6 +22,8 @@ class CardGrantsController < ApplicationController
       @card_grant.merchant_lock = last_card_grant.merchant_lock
       @card_grant.category_lock = last_card_grant.category_lock
     end
+
+    @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
 
   def create
@@ -53,6 +57,11 @@ class CardGrantsController < ApplicationController
     @event = @card_grant.event
     @card = @card_grant.stripe_card
     @hcb_codes = @card&.hcb_codes
+
+    @frame = params[:frame].present?
+    @force_no_popover = @frame
+
+    render :show, layout: !@frame
 
   rescue Pundit::NotAuthorizedError
     redirect_to auth_users_path(email: @card_grant.user.email, return_to: card_grant_path(@card_grant)), flash: { info: "Please sign in with the same email you received the invitation at." }

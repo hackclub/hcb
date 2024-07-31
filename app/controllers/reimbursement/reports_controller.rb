@@ -3,28 +3,31 @@
 module Reimbursement
   class ReportsController < ApplicationController
     include SetEvent
-    before_action :set_report_user_and_event, except: [:create, :quick_expense, :start]
-    before_action :set_event, only: [:start]
-    skip_before_action :signed_in_user, only: [:show, :start, :create]
-    skip_after_action :verify_authorized, only: [:start]
+    before_action :set_report_user_and_event, except: [:create, :quick_expense, :start, :finished]
+    before_action :set_event, only: [:start, :finished]
+    skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
+    skip_after_action :verify_authorized, only: [:start, :finished]
 
     # POST /reimbursement_reports
     def create
       @event = Event.friendly.find(report_params[:event_id])
       user = User.find_or_create_by!(email: report_params[:email])
-      @report = @event.reimbursement_reports.build(report_params.except(:email).merge(user:, inviter: current_user))
+      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: current_user))
 
       authorize @report
 
       if @report.save
+        if report_params[:receipt_id]
+          @expense = @report.expenses.create!(value: report_params[:value], memo: report_params[:report_name])
+          Receipt.find(report_params[:receipt_id]).update!(receiptable: @expense)
+        end
         if current_user && user == current_user
           redirect_to @report
         elsif admin_signed_in? || organizer_signed_in?
           redirect_to event_reimbursements_path(@event), flash: { success: "Report successfully created." }
         else
           # User not signed in (creating via public page)
-          flash[:success] = "We've sent an invitation to your email."
-          redirect_back(fallback_location: reimbursement_start_reimbursement_report_path(@event))
+          redirect_to finished_reimbursement_reports_path(@event)
         end
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
@@ -39,12 +42,13 @@ module Reimbursement
 
       if @report.save
         @expense = @report.expenses.create!(amount_cents: 0)
-        ::ReceiptService::Create.new(
+        receipt = ::ReceiptService::Create.new(
           receiptable: @expense,
           uploader: current_user,
           attachments: params[:reimbursement_report][:file],
           upload_method: :quick_expense
         ).run!
+        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt.first.suggested_memo
         redirect_to reimbursement_report_path(@report, edit: @expense.id)
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
@@ -62,7 +66,6 @@ module Reimbursement
       authorize @report
       @commentable = @report
       @comments = @commentable.comments
-      @comment = Comment.new
       @use_user_nav = current_user == @user && !@event.users.include?(@user) && !admin_signed_in?
       @editing = params[:edit].to_i
 
@@ -74,6 +77,9 @@ module Reimbursement
       end
     end
 
+    def finished
+    end
+
     def edit
       authorize @report
     end
@@ -83,6 +89,11 @@ module Reimbursement
 
       if @report.update(update_reimbursement_report_params)
         flash[:success] = "Report successfully updated."
+        if @report.event_id_previously_changed?
+          PaperTrail.request(whodunnit: nil) do
+            @report.expenses.update(aasm_state: :pending)
+          end
+        end
         redirect_to @report
       else
         render :edit, status: :unprocessable_entity
@@ -110,6 +121,17 @@ module Reimbursement
 
       begin
         @report.mark_submitted!
+
+        comment_params = params[:comment]&.permit(:content, :admin_only, :action)
+
+        unless comment_params.nil? || comment_params[:content].blank? && comment_params[:file].blank?
+          @comment = @report.comments.build(comment_params.merge(user: current_user))
+          unless @comment.save
+            flash[:error] = @report.errors.full_messages.to_sentence
+            redirect_to @report and return
+          end
+        end
+
         flash[:success] = {
           text: "You report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.user.payout_method.name}.",
           link: settings_payouts_path,
@@ -239,11 +261,11 @@ module Reimbursement
     end
 
     def report_params
-      params.require(:reimbursement_report).permit(:report_name, :maximum_amount, :event_id, :email, :invite_message).compact_blank
+      params.require(:reimbursement_report).permit(:report_name, :maximum_amount, :event_id, :email, :invite_message, :receipt_id, :value).compact_blank
     end
 
     def update_reimbursement_report_params
-      reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount).compact
+      reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
       reimbursement_report_params.delete(:maximum_amount) unless current_user.admin? || @event.users.include?(current_user)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft?
       reimbursement_report_params

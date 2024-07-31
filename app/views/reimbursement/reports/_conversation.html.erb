@@ -1,12 +1,3 @@
-<% changes = {
-     "submitted"               => ["send", "info", "submitted this report"],
-     "rejected"                => ["thumbsdown", "error", "rejected this report"],
-     "reimbursement_requested" => ["thumbsup", "success", "approved on behalf of #{@report.event.name}"],
-     "reimbursement_approved"  => ["admin", "warning", "approved this report on behalf of the HCB team"],
-     "draft"                   => ["docs", "muted", "converted this report to a draft"],
-     "draft_created"           => ["plus", "success", "created this draft report"],
-     "reimbursed"              => ["docs", "purple", "initiated a reimbursement"],
-   } %>
 <h2 class="flex items-center">
   <span style="flex-grow: 1">Conversation</span>
 </h2>
@@ -16,48 +7,62 @@
     <% comments = policy_scope(@report.comments) %>
     <% (versions + comments).sort_by(&:created_at).each do |item| %>
       <% if item.instance_of?(Comment) %>
-        <div class="conversation_item">
-          <%= render "comments/item", comment: item %>
-        </div>
+        <%= render "comments/item", comment: item, class: "conversation_item" %>
       <% else %>
+        <% changes = {
+             "submitted"               => ["send", "info", "submitted this report"],
+             "rejected"                => ["thumbsdown", "error", "rejected this report"],
+             "reimbursement_requested" => ["thumbsup", "success", "approved on behalf of #{Event.find(item.object&.[]("event_id") || @report.event_id).name}"],
+             "reimbursement_approved"  => ["admin", "warning", "approved this report on behalf of the HCB team"],
+             "draft"                   => ["docs", "muted", "converted this report to a draft"],
+             "draft_created"           => ["plus", "success", "created this draft report"],
+             "reimbursed"              => ["docs", "purple", "initiated a reimbursement"],
+           } %>
         <% state_change = item.changeset["aasm_state"]&.second %>
-        <li class="conversation_item mt2" style="margin-bottom: 24px;">
-          <% if state_change %>
-            <% if state_change == "draft" && item.changeset["aasm_state"]&.first.nil? %>
-              <% icon, color, message = changes["draft_created"] %>
-            <% else %>
-              <% icon, color, message = changes[state_change] %>
-            <% end %>
-            <div class="flex flex-row items-center" style="gap: 16px">
-              <div class="flex items-center justify-center z2 pop no_hover bg-<%= color %>-important" style="color: white;">
-                <%= inline_icon icon, width: 30 %>
-              </div>
-              <div style="display: flex; align-items: end; gap: 4px">
-                <span class="muted" style="margin-right: -0.25em;">
-                  <%= user_mention User.find_by(id: item.whodunnit || 2891), { avatar: { style: "vertical-align: sub;" } }, "Unknown User" %>
-                </span>
-                <% if state_change == "reimbursement_requested" %>
-                  <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
-                    <%= message %>
-                  </span>
-                <% else %>
-                  <span class="align-middle">
-                    <%= message %>
-                  </span>
-                <% end %>
-                <span class="tooltipped tooltipped--n align-middle timestamp" style="cursor: default" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
-                  <%= time_ago_in_words item.created_at %> ago
-                </span>
-              </div>
-            </div>
+        <% if state_change %>
+          <% if state_change == "draft" && item.changeset["aasm_state"]&.first.nil? %>
+            <% icon, color, message = changes["draft_created"] %>
           <% else %>
+            <% icon, color, message = changes[state_change] %>
+          <% end %>
+          <% whodunnit = User.find_by(id: item.whodunnit) %>
+          <%# if "whodunnit" is the report's creator, team review was not required for this report. %>
+          <%# if a team re-enables team reviews, we'll show each report as approved by it's creator.  %>
+          <% unless state_change == "reimbursement_requested" && whodunnit == @report.user && !@report.team_review_required? %>
+            <li class="conversation_item mt2" style="margin-bottom: 24px;">
+              <div class="flex flex-row items-center" style="gap: 16px">
+                <div class="flex items-center justify-center z2 pop no_hover bg-<%= color %>-important" style="color: white;">
+                  <%= inline_icon icon, width: 30 %>
+                </div>
+                <div class="conversation_item_text">
+                  <span class="muted" style="margin-right: -0.25em;">
+                    <%= user_mention whodunnit, { avatar: { style: "vertical-align: sub;" } }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                  </span>
+                  <% if state_change == "reimbursement_requested" %>
+                    <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
+                      <%= message %>
+                    </span>
+                  <% else %>
+                    <span class="align-middle">
+                      <%= message %>
+                    </span>
+                  <% end %>
+                  <span class="tooltipped tooltipped--n align-middle timestamp" style="cursor: default" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
+                    <%= time_ago_in_words item.created_at %> ago
+                  </span>
+                </div>
+              </div>
+            </li>
+          <% end %>
+        <% else %>
+          <li class="conversation_item mt2" style="margin-bottom: 24px;">
             <div class="flex flex-row items-center" style="gap: 16px">
               <div class="pop bg-smoke-important no_hover relative z2">
                 <%= inline_icon "post", width: 30 %>
               </div>
               <div style="display: flex; align-items: center; gap: 4px">
                 <span class="muted; margin-right: -0.25em;">
-                  <%= user_mention User.find_by(id: item.whodunnit || 2891), { hide_avatar: true }, "Unknown User" %>
+                  <%= user_mention User.find_by(id: item.whodunnit), { hide_avatar: true }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
                 </span>
                 <span class="align-middle"><%= item.event %>d this report</span>
                 <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
@@ -75,8 +80,8 @@
                 <% end %>
               </ul>
             <% end %>
-          <% end %>
-        </li>
+          </li>
+        <% end %>
       <% end %>
     <% end %>
   </ul>

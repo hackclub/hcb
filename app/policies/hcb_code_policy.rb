@@ -49,10 +49,6 @@ class HcbCodePolicy < ApplicationPolicy
     user&.admin? || present_in_events?
   end
 
-  def breakdown?
-    user&.admin? || present_in_events?
-  end
-
   def user_made_purchase?
     record.stripe_card? && record.stripe_cardholder&.user == user
   end

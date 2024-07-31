@@ -1,16 +1,20 @@
 <%# This partial combines `CanonicalPendingTransaction`, `CanonicalTransaction`, and `CanonicalTransactionGrouped` icons. `tx` can be either of these! %>
 
 <% if tx.local_hcb_code.bank_fee? || tx.try(:fee_payment?) %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Fiscal sponsorship payment">
-    <%= inline_icon "minus-fill" %>
+  <td class="transaction__icon transaction__fee_icon tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
+    <%= inline_icon "bank-icon" %>
   </td>
 <% elsif tx.local_hcb_code.fee_revenue? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Fee revenue">
-    <%= inline_icon "plus-fill" %>
+  <td class="transaction__icon transaction__fee_icon tooltipped tooltipped--e" aria-label="Fee revenue">
+    <%= inline_icon "bank-icon" %>
   </td>
 <% elsif tx.local_hcb_code.check? || tx.local_hcb_code.increase_check? %>
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Mailed check">
     <%= inline_icon "email" %>
+  </td>
+<% elsif tx.local_hcb_code.paypal_transfer? %>
+  <td class="transaction__icon tooltipped tooltipped--e" aria-label="PayPal transfer">
+    <%= inline_icon "paypal" %>
   </td>
 <% elsif tx.local_hcb_code.check_deposit? %>
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Check deposit">
@@ -20,14 +24,14 @@
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Outgoing ACH">
     <%= inline_icon "payment-transfer" %>
   </td>
+<% elsif tx.local_hcb_code.reimbursement_expense_payout? %>
+  <% user = tx.local_hcb_code.reimbursement_expense_payout.expense.report.user %>
+  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Reimbursed to <%= user.initial_name %>">
+    <%= avatar_for user, 24 %>
+  </td>
 <% elsif tx.try(:stripe_refund?) || tx.local_hcb_code.stripe_refund? %>
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Card transaction refund">
     <%= inline_icon "view-reload" %>
-  </td>
-<% elsif tx.local_hcb_code.reimbursement_expense_payout? %>
-  <% user = tx.local_hcb_code.reimbursement_expense_payout.expense.report.user %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Reimbursed to <%= user.name %>">
-    <%= avatar_for user, 24 %>
   </td>
 <% elsif tx.try(:raw_stripe_transaction) || tx.try(:raw_pending_stripe_transaction_id) %>
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Card transaction<%= !local_assigns[:authorless] && tx.stripe_cardholder ? " by " + tx.stripe_cardholder.user.initial_name : "" %>">
@@ -40,6 +44,10 @@
 <% elsif tx.local_hcb_code.invoice? %>
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Invoice">
     <%= inline_icon "briefcase" %>
+  </td>
+<% elsif tx.local_hcb_code.donation&.recurring? %>
+  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Recurring donation">
+    <%= inline_icon "support-recurring" %>
   </td>
 <% elsif tx.local_hcb_code.donation? %>
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Donation">
@@ -75,6 +83,6 @@
   <% end %>
 <% else %>
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Bank account transaction">
-    <%= inline_icon "bank-account" %>
+    <%= inline_icon "cash" %>
   </td>
 <% end %>

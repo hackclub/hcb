@@ -55,6 +55,8 @@
 
   h1:first-child {
     margin-top: 2rem;
+    text-box-trim: start;
+    text-box-edge: cap alphabetic;
   }
 }
 

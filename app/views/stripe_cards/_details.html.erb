@@ -1,9 +1,9 @@
 <%# locals: (stripe_card:) %>
 
-<article class="card max-width-2 mx-auto mt3">
+<article class="card max-width-2 mx-auto">
   <h2 class="mt0 heading">
     <span class="flex-auto">
-      <%= user_mention stripe_card.user, class: "align-bottom tooltipped--s" %><span class="medium muted">'s</span>
+      <%= user_mention stripe_card.user, { class: "align-bottom tooltipped--s" } %><span class="medium muted">'s</span>
       <%= stripe_card.name %> <span class="medium muted">Card</span>
     </span>
   </h2>
@@ -17,7 +17,7 @@
       </p>
     <% end %>
 
-    <% eta = stripe_card.stripe_obj.to_hash.dig(:shipping, :eta) %>
+    <% eta = stripe_card.stripe_obj.to_hash&.dig(:shipping, :eta) %>
     <% if eta && Time.now.before?(Time.at(eta) + 3.days) %>
       <p>
         <strong>Expected arrival</strong>
@@ -35,7 +35,7 @@
 
     <div class="fs-mask">
       <strong>Card number</strong>
-      <div class="flex justify-between mono items-center">
+      <div class="flex justify-between font-mono items-center">
         <% if stripe_card.user == current_user && stripe_card.virtual? %>
           <% if @show_card_details %>
             <%= copy_to_clipboard(stripe_card.full_card_number, class: "w-fit", tooltip_direction: "e") do %>
@@ -44,7 +44,7 @@
           <% else %>
             <%= stripe_card.hidden_card_number_with_last_four %>
           <% end %>
-          <%= link_to stripe_card_path(stripe_card, show_details: (!@show_card_details).to_s), data: { turbo: true } do %>
+          <%= link_to stripe_card_path(stripe_card, show_details: (!@show_card_details).to_s, frame: @frame), data: { turbo: true } do %>
             <%= inline_icon @show_card_details ? "view-fill" : "view", class: "align-middle" %>
           <% end %>
         <% else %>
@@ -58,7 +58,7 @@
 
     <div class="fs-mask">
       <strong>CVC</strong>
-      <div class="flex justify-between mono items-center">
+      <div class="flex justify-between font-mono items-center">
         <% if stripe_card.user == current_user && stripe_card.virtual? %>
           <% if @show_card_details %>
             <%= copy_to_clipboard(stripe_card.cvc, class: "w-fit", tooltip_direction: "e") do %>
@@ -104,7 +104,13 @@
       <strong>Type</strong>
       <%= stripe_card.virtual? ? "Virtual" : "Physical" %>
     </div>
+
+    <div>
+      <strong>Network</strong>
+      Visa
+    </div>
   </section>
+
   <% admin_tool "details" do %>
     <div>
       <strong>Ordered at</strong>

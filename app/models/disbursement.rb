@@ -106,6 +106,9 @@ class Disbursement < ApplicationRecord
     }
   }.freeze
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.destination_event }, event_id: proc { |controller, record| record.source_event.id }, only: [:create]
+
   aasm timestamps: true, whiny_persistence: true do
     state :reviewing, initial: true # Being reviewed by an admin
     state :pending                  # Waiting to be processed by the TX engine
@@ -141,9 +144,14 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        create_activity(key: "disbursement.rejected", owner: fulfilled_by)
       end
       transitions from: [:reviewing, :pending], to: :rejected
     end
+  end
+
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
   end
 
   # Eagerly create HcbCode object
@@ -265,7 +273,7 @@ class Disbursement < ApplicationRecord
   end
 
   def special_appearance_name
-    return nil if canonical_pending_transactions.with_custom_memo.exists? || canonical_transactions.with_custom_memo.exists?
+    return nil if canonical_pending_transactions.with_custom_memo.any? || canonical_transactions.with_custom_memo.any?
 
     SPECIAL_APPEARANCES.each do |key, value|
       return key if value[:qualifier].call(self)

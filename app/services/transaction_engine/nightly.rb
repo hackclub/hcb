@@ -10,29 +10,29 @@ module TransactionEngine
 
     def run
       # (1) Import transactions
-      try_to { import_raw_plaid_transactions! }
-      try_to { import_other_raw_plaid_transactions! }
+      safely { import_raw_plaid_transactions! }
+      safely { import_other_raw_plaid_transactions! }
       # import_raw_emburse_transactions! TODO: remove completely
-      try_to { import_raw_stripe_transactions! }
-      try_to { import_raw_csv_transactions! }
-      try_to { import_raw_increase_transactions! }
-      try_to { import_raw_column_transactions! }
+      safely { import_raw_stripe_transactions! }
+      safely { import_raw_csv_transactions! }
+      safely { import_raw_increase_transactions! }
+      safely { import_raw_column_transactions! }
 
       # (2) Hash transactions
-      try_to { hash_raw_plaid_transactions! }
+      safely { hash_raw_plaid_transactions! }
       # hash_raw_emburse_transactions! TODO: remove completely
-      try_to { hash_raw_stripe_transactions! }
-      try_to { hash_raw_csv_transactions! }
-      try_to { hash_raw_increase_transactions! }
+      safely { hash_raw_stripe_transactions! }
+      safely { hash_raw_csv_transactions! }
+      safely { hash_raw_increase_transactions! }
 
       # (3) Canonize transactions
-      try_to { canonize_hashed_transactions! }
+      safely { canonize_hashed_transactions! }
 
       # (4) Fix plaid mistakes
       fix_plaid_mistakes!
 
       # (5) Fix memo mistakes
-      try_to { fix_memo_mistakes! }
+      safely { fix_memo_mistakes! }
     end
 
     private
@@ -136,14 +136,6 @@ module TransactionEngine
 
     def fix_memo_mistakes!
       ::TransactionEngine::FixMistakes::Memos.new(start_date: @start_date).run
-    end
-
-    private
-
-    def try_to
-      yield
-    rescue => e
-      Airbrake.notify(e)
     end
 
   end

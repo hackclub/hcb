@@ -16,7 +16,6 @@
 #  webhook_url               :string
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
-#  docusign_template_id      :string
 #  representative_id         :bigint
 #
 # Indexes
@@ -29,6 +28,8 @@
 #  fk_rails_...  (representative_id => users.id)
 #
 class Partner < ApplicationRecord
+  self.ignored_columns = ["docusign_envelope_id", "signed_contract"]
+
   has_paper_trail skip: [:stripe_api_key, :api_key] # ciphertext columns will still be tracked
   has_encrypted :stripe_api_key, :api_key
 

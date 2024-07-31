@@ -7,7 +7,7 @@
 #  id         :bigint           not null, primary key
 #  deleted_at :datetime
 #  first_time :boolean          default(TRUE)
-#  is_signee  :boolean
+#  is_signee  :boolean          default(FALSE)
 #  role       :integer          default("manager"), not null
 #  sort_index :integer
 #  created_at :datetime         not null
@@ -29,6 +29,7 @@ class OrganizerPosition < ApplicationRecord
   acts_as_paranoid
   has_paper_trail
   include OrganizerPosition::HasRole
+  include OrganizerPosition::HasSpending
 
   scope :not_hidden, -> { where(event: { hidden_at: nil }) }
 
@@ -42,6 +43,7 @@ class OrganizerPosition < ApplicationRecord
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
+  has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
 
   alias_attribute :signee, :is_signee
 

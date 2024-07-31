@@ -1,0 +1,5 @@
+<%= turbo_stream.append "hcb_code_#{hcb_code.hashid}_tags", partial: "canonical_transactions/tag", locals: { tag:, hcb_code:, streamed: local_assigns[:streamed] } %>
+<%= turbo_stream.update_all tag_dom_class(hcb_code, tag, "_toggle") do %>
+  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+  <%= tag.label %> ✓
+<% end %>

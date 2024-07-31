@@ -1,0 +1,5 @@
+<%= turbo_stream.remove tag_dom_id(hcb_code, tag) %>
+<%= turbo_stream.update_all tag_dom_class(hcb_code, tag, "_toggle") do %>
+  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+  <%= tag.label %>
+<% end %>

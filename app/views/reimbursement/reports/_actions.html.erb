@@ -1,4 +1,6 @@
-<div style="display: flex; flex-direction: column-reverse;" id="action-wrapper">
+<% member_viewing = !OrganizerPosition.find_by(user: current_user, event: report.event)&.manager? && current_user != report.user && !admin_signed_in? %>
+
+<div class="flex flex-col-reverse" id="action-wrapper">
   <%# Using a reverse column flex container, we can
       define the button hint next to the button states,
       and it will get rendered above the button %>
@@ -7,13 +9,13 @@
   <% button_hint = "The creator of this report has been reimbursed." if report.reimbursed? %>
   <% button_hint = "This report has been approved by #{@event.name}, but it's still pending approval from the HCB team." if report.reimbursement_requested? %>
 
-  <% unless report.closed? %>
+  <% unless (report.closed? && !report.payout_holding&.failed?) || member_viewing %>
     <div class="flex items-center justify-between mt2 mb3" style="gap: 1rem;" id="actions">
-      <div style="flex-grow: 1;" class="flex justify-start">
+      <div class="flex justify-start">
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
             <button class="btn bg-success add-expense-dropzone" data-file-drop-target="dropzone" data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave">
-                <%= inline_icon "docs" %>
+                <%= inline_icon "plus" %>
                 Add <%= report.expenses.count > 0 ? "Another" : "An" %> Expense
             </button>
             <%= form.file_field :file,
@@ -24,63 +26,62 @@
                 class: "display-none",
                 data: { "file-drop-target" => "fileInput" } %>
           <% end %>
-        <% elsif !report.event.users.include?(current_user) %>
+        <% elsif current_user == report.user && !admin_signed_in? %>
           <div class="btn bg-success disabled" class="tooltipped tooltipped--n" aria-label="Expenses can't be added to locked reports">
-            <%= inline_icon "docs" %>
+            <%= inline_icon "plus" %>
             Add <%= report.expenses.count > 0 ? "Another" : "An" %> Expense
           </div>
-        <% else %>
-          <%= link_to reimbursement_report_reject_path(report_id: report.id), class: "btn bg-primary", data: { turbo: true, turbo_method: :post } do %>
-            <%= inline_icon "docs" %>
-            Reject & Close Report
+        <% elsif !report.closed? %>
+          <%= link_to reimbursement_report_reject_path(report_id: report.id), class: "btn bg-error", data: { turbo: true, turbo_method: :post } do %>
+            <%= inline_icon "thumbsdown" %>
+            Reject & close report
           <% end %>
         <% end %>
       </div>
 
-      <% if report.locked? && (!(report.event.users.include?(current_user) || admin_signed_in?) || report.submitted? || report.reimbursement_requested?) %>
-        <div style="flex-grow: 1;" class="flex justify-center items-center" style="gap: 4px;">
-          <% if !report.event.users.include?(current_user) && !admin_signed_in? && report.locked? %>
-            <%= inline_icon "private" %>
-            Expense Report Locked
-          <% elsif report.locked? && report.submitted? && report.expenses.approved.count > 0 && report.amount_to_reimburse > 0 && ::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) %>
-            <%= link_to reimbursement_report_request_reimbursement_path(report_id: report.id), class: "btn bg-info", method: :post do %>
-              <%= inline_icon "payment-transfer" %>
-              Reimburse <%= render_money report.amount_to_reimburse %>
-            <% end %>
-          <% elsif report.locked? && report.submitted? && !::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) %>
-            <div class="tooltipped tooltipped--n" aria-label="This event can not fulfill this request.">
-              <div class="btn bg-info disabled">
-                <%= inline_icon "payment-transfer" %>
-                Reimburse <%= render_money report.amount_to_reimburse %>
-              </div>
-            </div>
-          <% elsif report.locked? && report.submitted? %>
-            <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", method: :post do %>
-              <%= inline_icon "thumbsup" %>
-              Approve All Expenses
-            <% end %>
-          <% elsif report.locked? && report.reimbursement_requested? && !admin_signed_in? %>
-            <div class="btn bg-info disabled" style="opacity: 0.75" disabled>
-              <%= inline_icon "clock" %>
-              Pending HCB Team Review
-            </div>
-          <% elsif report.locked? && report.reimbursement_requested? %>
-            <% admin_tool("overflow-visible") do %>
-              <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post do %>
-                <%= inline_icon "thumbsup" %>
-                Approve Reimbursement
+      <% if report.locked? %>
+        <div style="flex-grow: 1;" class="flex justify-start items-center" style="gap: 4px;">
+          <% if report.reimbursement_requested? && !admin_signed_in? %>
+            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
+              <%= inline_icon "reply" %>
+              Mark As Draft
+              <% button_hint = capture do %>
+                <span class="bold">Status:</span> the HCB team is reviewing this report. To make further changes, mark it as a draft.
               <% end %>
             <% end %>
+          <% elsif current_user == report.user && report.submitted? %>
+            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
+              <%= inline_icon "reply" %>
+              Mark As Draft
+              <% button_hint = capture do %>
+                <span class="bold">Status:</span> your report is currently under review by the <%= report.event.name %> team. To make further changes, mark it as a draft.
+              <% end %>
+            <% end %>
+          <% elsif !report.closed? %>
+            <%= link_to "#", class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "request_changes" } do %>
+              <%= inline_icon "reply" %>
+              Return to <%= report.user.first_name %>
+              <% button_hint = capture do %>
+                <span class="bold">Your next step:</span> approve individual expenses and reimburse the report. Or, return the report to <%= report.user.first_name %>.
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      <% elsif report.initial_draft? %>
+        <div style="flex-grow: 1;" class="flex justify-start items-center" style="gap: 4px;">
+          <%= button_to reimbursement_report_path(report), class: "btn bg-error", method: :delete, type: "button" do %>
+            <%= inline_icon "delete" %>
+            Cancel report
           <% end %>
         </div>
       <% end %>
 
       <div style="flex-grow: 1;" class="flex justify-end">
-        <% if !user.payout_method.present? %>
+        <% if !user.payout_method.present? || report.payout_holding&.failed? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
-              Add Payout Information
+              <%= report.payout_holding&.failed? ? "Edit" : "Add" %> Payout Information
               <% button_hint = capture do %>
                 <span class="bold">Your next step:</span> before you can be reimbursed, you need to provide HCB your payout information.
               <% end %>
@@ -88,72 +89,98 @@
           <% elsif admin_signed_in? %>
             <%= link_to payouts_user_path(user), class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" }  do %>
               <%= inline_icon "profile" %>
-              Add <%= user.first_name %>'s Payout Information
+              <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s Payout Information
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
               <% end %>
             <% end %>
-          <% else %>
+          <% elsif !user.payout_method.present? %>
             <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
               <div class="btn bg-info disabled">
                 <%= inline_icon "send" %>
-                Submit & Request Review
+                Submit & request review
                 <% button_hint = capture do %>
                   <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
                 <% end %>
               </div>
             </div>
           <% end %>
-        <% elsif report.expenses.complete.with_receipt.count != report.expenses.count || report.expenses.count == 0 %>
+          <% if report.payout_holding&.failed? %>
+            <% if user == current_user %>
+              <% button_hint = capture do %>
+                <span class="bold">Warning:</span> your <%= user.payout_method.human_kind %> information was flagged as invalid, please edit your payout settings and HCB will retry the payment.
+              <% end %>
+            <% else %>
+              <% button_hint = capture do %>
+                <span class="bold">Warning:</span> <%= user.first_name %>'s <%= user.payout_method.human_kind %> information was flagged as invalid, please ask them to edit their payout settings and HCB will retry the payment.
+              <% end %>
+            <% end %>
+          <% end %>
+        <% elsif !report.may_mark_submitted? && report.draft? %>
           <div class="btn bg-info disabled">
             <%= inline_icon "send" %>
-            Submit & Request Review
+            Submit & request review
             <% button_hint = capture do %>
-              <% if report.expenses.count == 0 %>
+              <% if report.expenses.none? %>
                 Get started by adding an expense to this report.
-              <% else %>
+              <% elsif report.missing_receipts? %>
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
+              <% elsif report.exceeds_maximum_amount? %>
+               <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
               <% end %>
             <% end %>
           </div>
-        <% elsif report.maximum_amount_cents && report.amount_cents >= report.maximum_amount_cents %>
+        <% elsif report.draft? && !::Shared::AmpleBalance.ample_balance?(report.amount_cents, report.event) && !report.team_review_required? %>
           <div class="btn bg-info disabled">
             <%= inline_icon "send" %>
-            Submit & Request Review
+            Submit & request review
             <% button_hint = capture do %>
-              <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
+              <span class="bold warning">Warning</span>: your report is beyond your balance. To continue, lower the amount requested.
             <% end %>
           </div>
-        <% elsif report.draft? %>
+        <% elsif report.initial_draft? %>
           <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info", method: :post do %>
             <%= inline_icon "send" %>
-            Submit & Request Review
+            Submit & request review
             <% button_hint = capture do %>
               <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
             <% end %>
           <% end %>
-        <% elsif !report.event.users.include?(current_user) && report.unlockable? && !admin_signed_in? %>
-          <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
-            <%= inline_icon "reply" %>
-            Mark As Draft
+        <% elsif report.draft? %>
+          <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "submit" } do %>
+            <%= inline_icon "send" %>
+            Submit & request review
             <% button_hint = capture do %>
-              <span class="bold">Status:</span> your report is currently under review. To make further changes, mark it as a draft.
+              <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
             <% end %>
           <% end %>
-        <% elsif !report.event.users.include?(current_user) && !admin_signed_in? %>
-          <div class="btn bg-success disabled">
-            <%= inline_icon "docs" %>
-            Mark As Draft
-            <% button_hint = capture do %>
-              <span class="bold">Status:</span> your report is currently locked, it can no longer be marked as a draft.
-            <% end %>
+        <% elsif report.may_mark_reimbursement_requested? && policy(report).request_reimbursement? %>
+          <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: "post" } do %>
+            <%= inline_icon "payment-transfer" %>
+            Reimburse <%= render_money report.amount_to_reimburse %>
+          <% end %>
+        <% elsif report.submitted? && !::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) && policy(report).request_reimbursement? %>
+          <div class="tooltipped tooltipped--n" aria-label="This event can not fulfill this request.">
+            <div class="btn bg-info disabled">
+              <%= inline_icon "payment-transfer" %>
+              Reimburse <%= render_money report.amount_to_reimburse %>
+            </div>
           </div>
-        <% else %>
-          <%= link_to "#", class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "request_changes" } do %>
-            <%= inline_icon "reply" %>
-            Return to <%= report.user.first_name %>
-            <% button_hint = capture do %>
-              <span class="bold">Your next step:</span> approve individual expenses and reimburse the report. Or, return the report to <%= report.user.first_name %>.
+        <% elsif report.submitted? && policy(report).approve_all_expenses? %>
+          <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", method: :post do %>
+            <%= inline_icon "thumbsup" %>
+            Approve All Expenses
+          <% end %>
+        <% elsif report.reimbursement_requested? && !admin_signed_in? %>
+          <div class="btn bg-info disabled" style="opacity: 0.75" disabled>
+            <%= inline_icon "clock" %>
+            Pending HCB Team Review
+          </div>
+        <% elsif report.reimbursement_requested? %>
+          <% admin_tool("overflow-visible") do %>
+            <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post do %>
+              <%= inline_icon "thumbsup" %>
+              Approve <%= report.user.payout_method.title_kind %> Reimbursement
             <% end %>
           <% end %>
         <% end %>
@@ -166,7 +193,7 @@
     </div>
   <% end %>
   <% if report.expenses.any? %>
-    <div class="card mt2" id="summary">
+    <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>" id="summary">
       <div class="stat stat--small" style="flex-shrink: 0;">
         <span class="stat__label">Amount Requested</span>
         <span class="stat__value"><%= render_money report.amount_cents, unit: "" %></span>
@@ -196,8 +223,3 @@
     </div>
   <% end %>
 </div>
-
-<section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
-  <%= modal_header "Add Payout Information" %>
-  <%= render "/users/payout_form", user: report.user, report: %>
-</section>

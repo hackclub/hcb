@@ -27,7 +27,7 @@ export default function SnowToggle() {
   return (
     <>
       <div
-        className="card card--hover cursor-pointer circle h5 center flex items-center justify-center tooltipped tooltipped--e"
+        className="card card--hover cursor-pointer rounded-full h5 center flex items-center justify-center tooltipped tooltipped--e"
         style={{ width: '48px', height: '48px' }}
         onClick={handleToggle}
         aria-label="Toggle snow"

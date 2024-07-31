@@ -1,0 +1,43 @@
+<p>
+  Hi <%= @user.first_name %>.
+</p>
+
+<p>
+  We're writing to let you know that you just signed into HCB from a new device
+  <% if @session.device_info.present? %>
+    on <b><%= @session.device_info %></b>
+  <% end %>
+
+  <% if @session.os_info.present? %>
+    running <b><%= @session.os_info %></b>
+  <% end %>
+</p>
+
+<p>
+  IP address:
+  <b>
+    <% if @session.ip.present? %>
+      <%= @session.ip %>
+    <% else %>
+      Unknown
+    <% end %>
+  </b>
+</p>
+
+<% if @session.latitude %>
+  <img
+    src="https://maps.hackclub.com/api/shipping?latitude=<%= @session.latitude %>&longitude=<%= @session.longitude %>&size=640x320"
+    style="border-radius: 0.5rem; width: 80%">
+<% end %>
+
+<p>
+  If this is unexpected, please review
+  <%= link_to "your HCB account's security settings", "https://hcb.hackclub.com/my/settings/security" %>
+  and contact us at
+  <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %>.
+</p>
+
+<p>
+  Thanks,<br>
+  The HCB Team
+</p>

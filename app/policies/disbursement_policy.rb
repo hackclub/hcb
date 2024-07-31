@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class DisbursementPolicy < ApplicationPolicy
-  def index?
-    user.admin?
-  end
-
   def show?
     user.admin?
   end
@@ -19,7 +15,7 @@ class DisbursementPolicy < ApplicationPolicy
   def create?
     user&.admin? || (
       record.destination_event.users.include?(user) &&
-      Pundit.policy(user, record.source_event).new_transfer?
+      Pundit.policy(user, record.source_event).create_transfer?
     )
   end
 

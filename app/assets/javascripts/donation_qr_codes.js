@@ -1,10 +1,10 @@
 function changeCode(id) {
-  const activeQRCode = document.querySelector(".qrCode--active");
+  const activeQRCode = document.querySelector("qr-code.\\!block");
   document.getElementById("downloadButton").innerText = "Download";
   if (activeQRCode) {
-    activeQRCode.classList.remove("qrCode--active");
+    activeQRCode.classList.remove("!block");
   }
-  document.getElementById(`qrCode--${id}`).classList.add("qrCode--active");
+  document.getElementById(`qrCode--${id}`).classList.add("!block");
 }
 
 function saveActiveQRCodeAsImage() {

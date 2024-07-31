@@ -65,6 +65,10 @@ module TransactionEngine
         @canonical_transaction.raw_increase_transaction&.increase_transaction&.dig("source", "category") == "check_deposit_acceptance"
       end
 
+      def column_check_deposit?
+        @canonical_transaction.column_transaction_type&.start_with?("check.outgoing_debit")
+      end
+
       def outgoing_ach?
         memo_upcase.include?(OUTGOING_ACH_MEMO_PART)
       end

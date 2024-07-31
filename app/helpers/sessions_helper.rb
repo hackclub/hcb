@@ -43,6 +43,8 @@ module SessionsHelper
 
     user_session.save!
     self.current_user = user
+
+    user_session
   end
 
   def signed_in?
@@ -64,14 +66,14 @@ module SessionsHelper
   end
 
   def organizer_signed_in?(event = @event, as: :member)
-    run = -> do
+    run = ->(inner_event:, inner_as:) do
       next true if admin_signed_in?
-      next false unless signed_in? && event.present?
+      next false unless signed_in? && inner_event.present?
 
-      required_role_num = OrganizerPosition.roles[as]
-      raise ArgumentError, "invalid role #{as}" unless required_role_num.present?
+      required_role_num = OrganizerPosition.roles[inner_as]
+      raise ArgumentError, "invalid role #{inner_as}" unless required_role_num.present?
 
-      valid_position = event.organizer_positions.find do |op|
+      valid_position = inner_event.organizer_positions.find do |op|
         next false unless op.user == current_user
 
         role_num = OrganizerPosition.roles[op.role]
@@ -87,9 +89,9 @@ module SessionsHelper
 
     # Memoize results based on method arguments
     @organizer_signed_in ||= Hash.new do |h, key|
-      h[key] = run.call
+      h[key] = run.call(**key)
     end
-    key = [event, as]
+    key = { inner_event: event, inner_as: as }
     @organizer_signed_in[key]
   end
 

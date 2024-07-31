@@ -20,12 +20,14 @@
 #  updated_at                 :datetime         not null
 #  event_id                   :bigint           not null
 #  invited_by_id              :bigint
+#  reviewer_id                :bigint
 #  user_id                    :bigint           not null
 #
 # Indexes
 #
 #  index_reimbursement_reports_on_event_id       (event_id)
 #  index_reimbursement_reports_on_invited_by_id  (invited_by_id)
+#  index_reimbursement_reports_on_reviewer_id    (reviewer_id)
 #  index_reimbursement_reports_on_user_id        (user_id)
 #
 # Foreign Keys
@@ -40,6 +42,7 @@ module Reimbursement
     belongs_to :user
     belongs_to :event
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
+    belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
 
     has_paper_trail ignore: :expense_number
 
@@ -50,7 +53,7 @@ module Reimbursement
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :delete_all
     has_one :payout_holding, inverse_of: :report
     alias_attribute :report_name, :name
-    attribute :name, :string, default: "Expenses from #{Time.now.strftime("%B %e, %Y")}"
+    attribute :name, :string, default: -> { "Expenses from #{Time.now.strftime("%B %e, %Y")}" }
 
     scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
     scope :pending, -> { where(aasm_state: ["draft", "submitted", "reimbursement_requested"]) }
@@ -59,6 +62,11 @@ module Reimbursement
     include AASM
     include Commentable
     include Hashid::Rails
+
+    include PublicActivity::Model
+    tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+
+    broadcasts_refreshes_to ->(report) { report }
 
     acts_as_paranoid
 
@@ -77,11 +85,19 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && (!maximum_amount_cents || amount_cents <= maximum_amount_cents)
+            user.payout_method.present? && !exceeds_maximum_amount? && expenses.any? && !missing_receipts?
           end
         end
         after do
-          ReimbursementMailer.with(report: self).review_requested.deliver_later
+          if team_review_required?
+            ReimbursementMailer.with(report: self).review_requested.deliver_later
+            create_activity(key: "reimbursement_report.review_requested", owner: user, recipient: (reviewer.presence || event), event_id: event.id)
+          else
+            expenses.pending.each do |expense|
+              expense.mark_approved!
+            end
+            self.mark_reimbursement_requested!
+          end
         end
       end
 
@@ -90,6 +106,9 @@ module Reimbursement
           guard do
             expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
           end
+        end
+        after do
+          # ReimbursementJob::Nightly.perform_later
         end
       end
 
@@ -100,7 +119,9 @@ module Reimbursement
           end
         end
         after do
+          # ReimbursementJob::Nightly.perform_later
           ReimbursementMailer.with(report: self).reimbursement_approved.deliver_later
+          create_activity(key: "reimbursement_report.approved", owner: user)
         end
       end
 
@@ -121,10 +142,20 @@ module Reimbursement
     end
 
     def status_text
-      return "Pending" if reimbursement_requested?
-      return "Approved" if reimbursement_approved?
+      return "Review Requested" if submitted?
+      return "Processing" if reimbursement_requested?
+      return "⚠️ Processing" if reimbursed? && payout_holding&.failed?
+      return "In Transit" if reimbursement_approved?
+      return "In Transit" if reimbursed? && !payout_holding.sent?
 
       aasm_state.humanize.titleize
+    end
+
+    def admin_status_text
+      return "HCB Review Requested" if reimbursement_requested?
+      return "Organizers Reviewing" if submitted?
+
+      status_text
     end
 
     def status_color
@@ -132,9 +163,17 @@ module Reimbursement
       return "info" if submitted?
       return "error" if rejected?
       return "purple" if reimbursement_requested?
+      return "warning" if reimbursed? && payout_holding&.failed?
       return "success" if reimbursement_approved? || reimbursed?
 
       return "primary"
+    end
+
+    def status_description
+      return "Review requested from #{event.name}" if submitted?
+      return "HCB is reviewing this report" if reimbursement_requested?
+
+      nil
     end
 
     def locked?
@@ -176,14 +215,25 @@ module Reimbursement
     def comment_recipients_for(comment)
       users = []
       users += self.comments.map(&:user)
+      users += self.comments.flat_map(&:mentioned_users)
       users << self.user
 
       if comment.admin_only?
         users << self.event.point_of_contact
-        return users.select(&:admin?).collect(&:email).excluding(comment.user.email)
+        return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
       end
 
-      users.excluding(comment.user).collect(&:email_address_with_name)
+      users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)
+    end
+
+    def comment_mentionable(current_user: nil)
+      users = []
+      users += self.comments.includes(:user).map(&:user)
+      users += self.comments.flat_map(&:mentioned_users)
+      users += self.event.users
+      users << self.user
+
+      users.uniq
     end
 
     def comment_mailer_subject
@@ -192,6 +242,24 @@ module Reimbursement
 
     def initial_draft?
       draft? && submitted_at.nil?
+    end
+
+    def team_review_required?
+      !event.users.include?(user) || OrganizerPosition.find_by(user:, event:)&.member? || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+    end
+
+    def reimbursement_confirmation_message
+      return nil if expenses.pending.none?
+
+      "#{expenses.pending.count} #{"expense".pluralize(expenses.pending.count)} #{expenses.pending.count == 1 ? "hasn't" : "haven't"} been approved; if you continue, #{expenses.pending.count == 1 ? "it" : "these"} will not be reimbursed."
+    end
+
+    def missing_receipts?
+      expenses.complete.with_receipt.count != expenses.count
+    end
+
+    def exceeds_maximum_amount?
+      maximum_amount_cents && amount_cents > maximum_amount_cents
     end
 
     private

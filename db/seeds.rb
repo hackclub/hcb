@@ -11,6 +11,11 @@ puts "Continuing with #{user.email}..."
 
 user.make_admin! unless user.admin?
 
+if User.find_by(email: "bank@hackclub.com").nil?
+  admin = User.create!(email: "bank@hackclub.com")
+  admin.make_admin!
+end
+
 demo_event = Event.create_with(
   name: "DevHacks (Demo Event)",
   slug: "devhacks",

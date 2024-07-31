@@ -48,6 +48,7 @@ class GSuite < ApplicationRecord
     state :creating, initial: true
     state :configuring
     state :verifying
+    state :verification_error
     state :verified
 
     event :mark_creating do
@@ -59,7 +60,14 @@ class GSuite < ApplicationRecord
     end
 
     event :mark_verifying do
-      transitions from: :configuring, to: :verifying
+      transitions from: [:configuring, :verification_error], to: :verifying
+    end
+
+    event :mark_verification_error do
+      after do
+        GSuiteMailer.with(recipient: self.created_by, g_suite_id: self.id).notify_of_verification_error.deliver_later
+      end
+      transitions from: :verifying, to: :verification_error
     end
 
     event :mark_verified do

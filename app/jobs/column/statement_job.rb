@@ -3,7 +3,7 @@
 module Column
   class StatementJob < ApplicationJob
     queue_as :low
-    def perform(date = Date.today.prev_month)
+    def perform(date = DateTime.current.prev_month)
       start_date = date.beginning_of_month
       end_date = date.end_of_month
 
@@ -30,6 +30,8 @@ module Column
                          "TRANSACTION"
                        }],
         [:amount_cents, ->(t) { t["available_amount"] }],
+        [:bank_account_id, ->(t) { t["bank_account_id"] }],
+        [:available_balance, ->(t) { t["available_balance"] }],
         [:check_number, ->(t) {
           transaction_id = t["transaction_id"]
           if transaction_id.start_with? "chkt"
@@ -51,7 +53,7 @@ module Column
       rows = []
 
       transactions_by_report.each do |report_id, transactions|
-        transactions.each_with_index do |transaction, transaction_index|
+        transactions.reverse.each_with_index do |transaction, transaction_index|
           rows << serializer.call(transaction).values
         end
       end
@@ -65,6 +67,10 @@ module Column
         column_statement.file.attach(io: File.open(file), filename: "column_statement_report_#{end_date.iso8601}.csv")
         column_statement.start_date = start_date
         column_statement.end_date = end_date
+        first_txn = transactions_by_report[transactions_by_report.keys.last].first
+        last_txn = transactions_by_report[transactions_by_report.keys.first].last
+        column_statement.starting_balance = first_txn["available_balance"] - first_txn["available_amount"]
+        column_statement.closing_balance = last_txn["available_balance"]
         column_statement.save!
       end
 

@@ -21,6 +21,14 @@ class EventPolicy < ApplicationPolicy
     is_public || admin_or_user?
   end
 
+  def breakdown?
+    (admin_or_user? && Flipper.enabled?(:breakdown_2024_06_18, record)) || user&.admin?
+  end
+
+  def balance_by_date?
+    is_public || admin_or_user?
+  end
+
   # NOTE(@lachlanjc): this is bad, I’m sorry.
   # This is the StripeCardsController#shipping method when rendered on the event
   # card overview page. This should be moved out of here.
@@ -85,12 +93,12 @@ class EventPolicy < ApplicationPolicy
     is_public || admin_or_user?
   end
 
-  def new_transfer?
+  def create_transfer?
     admin_or_manager? && !record.demo_mode?
   end
 
-  def receive_check?
-    is_public || admin_or_user?
+  def new_transfer?
+    admin_or_manager? && !record.demo_mode?
   end
 
   def sell_merch?
@@ -115,6 +123,10 @@ class EventPolicy < ApplicationPolicy
 
   def promotions?
     (is_public || admin_or_user?) && !record.hardware_grant? && !record.outernet_guild?
+  end
+
+  def reimbursements_pending_review_icon?
+    is_public || admin_or_user?
   end
 
   def reimbursements?
@@ -175,6 +187,26 @@ class EventPolicy < ApplicationPolicy
 
   def termination?
     user&.admin?
+  end
+
+  def finish_signee_backfill?
+    user&.admin?
+  end
+
+  def can_invite_user?
+    admin_or_manager?
+  end
+
+  def claim_point_of_contact?
+    user&.admin?
+  end
+
+  def activation_flow?
+    user&.admin? && record.demo_mode?
+  end
+
+  def activate?
+    user&.admin? && record.demo_mode?
   end
 
   private

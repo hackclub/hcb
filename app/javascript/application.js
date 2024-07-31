@@ -3,6 +3,7 @@ import $ from 'jquery'
 // Support component names relative to this directory:
 var componentRequireContext = require.context('./components', true)
 import ReactRailsUJS from 'react_ujs'
+// eslint-disable-next-line react-hooks/rules-of-hooks
 ReactRailsUJS.useContext(componentRequireContext)
 
 ReactRailsUJS.handleEvent('turbo:load', ReactRailsUJS.handleMount)
@@ -15,11 +16,11 @@ ReactRailsUJS.handleEvent('turbo:frame-render', ReactRailsUJS.handleUnmount)
 // Bad stuff happens if you don't do this. Trust me. ~ @cjdenio
 document.addEventListener('turbo:frame-render', () => {
   // prettier-ignore
-  window.$('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').remove()
+  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').remove()
 })
 
 document.addEventListener('turbo:before-cache', () => {
-  const currentModal = window.$.modal.getCurrent()
+  const currentModal = $.modal.getCurrent()
 
   if (currentModal) {
     currentModal.options.doFade = false
@@ -36,10 +37,17 @@ window.Turbo = Turbo
 
 import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
+import ach_form from './datas/ach_form'
 
 window.Alpine = Alpine
 Alpine.plugin(persist)
+Alpine.data('ach', ach_form)
+
 Alpine.start()
 
 import LocalTime from 'local-time'
 LocalTime.start()
+
+import 'chartkick/chart.js'
+import '@github/text-expander-element'
+import '@oddbird/popover-polyfill'

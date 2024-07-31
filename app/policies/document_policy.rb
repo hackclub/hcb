@@ -46,4 +46,8 @@ class DocumentPolicy < ApplicationPolicy
     !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.admin?)
   end
 
+  def toggle_archive?
+    user.admin?
+  end
+
 end

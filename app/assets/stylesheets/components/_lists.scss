@@ -1,4 +1,4 @@
-$chevron: "#{image-url('icons/view-forward.svg')} right 12px center no-repeat";
+$chevron: "url('icons/view-forward.svg') right 12px center no-repeat";
 .list {
   list-style: none;
   padding: 0;
@@ -20,14 +20,14 @@ $chevron: "#{image-url('icons/view-forward.svg')} right 12px center no-repeat";
     flex-direction: column;
     background: #{$chevron};
     background-color: initial;
+    > p {
+      margin: 0;
+    }
     &.transaction--positive {
       background: rgba(map-get($palette, success), 0.125) #{$chevron};
     }
     &.transaction--negative {
       background: rgba(map-get($palette, error), 0.125) #{$chevron};
-    }
-    > p {
-      margin: 0;
     }
   }
   &.list--row > li,

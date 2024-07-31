@@ -1,0 +1,20 @@
+<% title "Get reimbursed by " + @event.name %>
+<% page_sm %>
+<% no_app_shell %>
+
+<% content_for :head do %>
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:site_name" content="HCB">
+  <meta property="og:url" content="<%= reimbursement_start_reimbursement_report_url @event %>">
+  <meta property="og:title" content="Get reimbursed by <%= @event.name %>">
+  <meta name="twitter:title" content="Get reimbursed by <%= @event.name %>">
+<% end %>
+
+<%= render "events/landing/header", lead: "Get reimbursed by" %>
+
+<div class="card mb3 pt3 pb3">
+  <%= inline_icon :checkmark, size: 48, class: "success block mx-auto mb1" %>
+  <h2 class="border-none center mt1 ml0 mr0 regular">Check your email for an invite to your reimbursement report.</h2>
+</div>
+
+<%= render "events/landing/footer" %>

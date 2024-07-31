@@ -5,34 +5,5 @@
     PENDING:
   <% end %>
 
-  <% if @ai_memo %>
-    <span style="overflow-text: ellipsis">
-      <%= @ai_memo %>
-    </span>
-
-    <%= form_with(
-          model: @hcb_code.ct || @hcb_code.pt,
-          url: @hcb_code.ct ?
-            set_custom_memo_canonical_transaction_path(
-              @hcb_code.ct,
-              redirect_to: memo_frame_hcb_code_path(@hcb_code.ct.local_hcb_code),
-              no_flash: true
-            ) :
-            set_custom_memo_canonical_pending_transaction_path(
-              @hcb_code.pt,
-              redirect_to: memo_frame_hcb_code_path(@hcb_code.pt.local_hcb_code),
-              no_flash: true
-            ),
-          method: :post,
-          class: "inline-block",
-          data: { turbo: true }
-        ) do |form| %>
-      <%= form.hidden_field :custom_memo, value: @ai_memo %>
-      <button type="submit" class="m0 ml1 badge bg-muted admin-tools pointer memo-frame__ai-button" style="padding: 4px 6px; border-color: lime;">
-        ✅ Save
-      </button>
-    <% end %>
-  <% else %>
-    <%= @hcb_code.memo %>
-  <% end %>
+  <%= @hcb_code.memo %>
 <% end %>

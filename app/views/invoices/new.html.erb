@@ -12,17 +12,13 @@
 <% end %>
 
 <% if @event.invoices.none? %>
-  <p class="flex items-center info line-height-3">
-    <%= inline_icon "important", size: 32, class: "mr1" %>
-    We recommend sending yourself an invoice for $1 to understand what your
-    sponsors will see.
-  </p>
+  <%= render "callout", type: "info", title: "We recommend sending yourself an invoice for $1 to understand what your sponsors will see." %>
 <% else %>
   <p class="h5 line-height-3 muted mt0 mb2">
     Invoices can be paid with a card or bank transfer (ACH / Wire). If your
     sponsor wants to pay via a mailed check instead, please reach out to the
     HCB team and we'll help you coordinate the receival of the check.
-        <%= help_message %>
+    <%= help_message %>
   </p>
 <% end %>
 

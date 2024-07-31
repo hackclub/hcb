@@ -4,6 +4,18 @@ module TurboStreamActionsHelper
   def refresh_link_modals
     turbo_stream_action_tag :refresh_link_modals
   end
+
+  def refresh_suggested_pairings
+    turbo_stream_action_tag :refresh_suggested_pairings
+  end
+
+  def load_new_async_frames
+    turbo_stream_action_tag :load_new_async_frames
+  end
+
+  def close_modal
+    turbo_stream_action_tag :close_modal
+  end
 end
 
 Turbo::Streams::TagBuilder.prepend(TurboStreamActionsHelper)

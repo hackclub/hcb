@@ -1,25 +1,25 @@
 <% if @event.pinned_hcb_codes.any? %>
-  <div class="flex pinned__container">
+  <div class="flex gap-4 mt-4 pinned__container">
     <% @event.pinned_hcb_codes.each do |pin| %>
-      <%= link_to pin.hcb_code, style: "color: inherit !important" do %>
-        <div class="pinned__transaction bg-smoke">
-          <% if organizer_signed_in? %>
-            <%= form_with url: pin_hcb_code_path(pin.hcb_code), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
-              <button type="submit" class="pinned__transaction__pin tooltipped tooltipped--n" aria-label="Unpin" style="margin-left: auto" onclick="event.stopPropagation()">
-                <%= inline_icon "view-close", size: 20 %>
-              </button>
-            <% end %>
-          <% end %>
+      <%= link_to pin.hcb_code, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
+        <%= form_with url: pin_hcb_code_path(pin.hcb_code), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
+          <button type="submit" class="pinned__transaction__pin pointer pop tooltipped tooltipped--w" aria-label="Unpin" style="margin-left: auto" onclick="event.stopPropagation()">
+            <%= inline_icon "pin-remove", size: 28 %>
+          </button>
+        <% end if organizer_signed_in? %>
 
+        <p class="block font-bold m0">
+          <%= format_date pin.hcb_code.date %>
+        </p>
+        <p class="pinned__transaction__text pinned__transaction__text--memo mt1 mb1 line-height-3 h3">
+          <%= pin.hcb_code.memo %>
+        </p>
+        <footer class="flex items-center justify-between -mb-1 gap-2 w-full">
+          <span class="m0 muted">
+            <%= render_money pin.hcb_code.amount_cents_by_event(@event) %>
+          </span>
           <%= render "hcb_codes/icon", tx: pin.hcb_code.ct || pin.hcb_code.pt %>
-
-          <p class="eyebrow mb1 mt1" style="font-weight: 900; opacity: 0.7">
-            <%= pin.hcb_code.date.strftime("%b #{pin.hcb_code.date.day.ordinalize}, %Y") %> &bull; <%= render_money pin.hcb_code.amount_cents_by_event(@event) %>
-          </p>
-          <p class="pinned__transaction__text pinned__transaction__text--memo">
-            <%= pin.hcb_code.memo %>
-          </p>
-        </div>
+        </footer>
       <% end %>
     <% end %>
   </div>

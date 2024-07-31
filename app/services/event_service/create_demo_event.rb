@@ -4,7 +4,7 @@ module EventService
   class CreateDemoEvent
     # include ::UserService::CanOpenDemoMode
 
-    def initialize(email:, name:, country:, category: nil, point_of_contact_id: nil, partner_id: nil, is_public: true)
+    def initialize(email:, name:, country:, category: nil, point_of_contact_id: nil, partner_id: nil, is_public: true, postal_code: nil)
       @email = email
       @point_of_contact = point_of_contact_id ? User.find(point_of_contact_id) : User.find_by_email("bank@hackclub.com")
       @default_partner = ::Partner.find_by!(slug: "bank")
@@ -13,6 +13,7 @@ module EventService
         name:,
         country:,
         category:,
+        postal_code:,
         point_of_contact_id: @point_of_contact.id,
         is_public:,
         sponsorship_fee: 0.07,

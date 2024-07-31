@@ -25,7 +25,7 @@
         <td><%= grant.amount.format %></td>
         <td><strong><%= grant.recipient_name %></strong> (<%= mail_to grant.recipient.email %>)</td>
         <td>
-          <span class="mono h6 pointer muted tooltipped tooltipped--n" data-controller="clipboard" data-clipboard-text-value="<%= grant.hashid %>" data-action="click->clipboard#copy" aria-label="Click to copy">
+          <span class="font-mono h6 pointer muted tooltipped tooltipped--n" data-controller="clipboard" data-clipboard-text-value="<%= grant.hashid %>" data-action="click->clipboard#copy" aria-label="Click to copy">
             <%= grant.hashid %>
           </span>
         </td>

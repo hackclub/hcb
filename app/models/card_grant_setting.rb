@@ -20,8 +20,8 @@
 #
 class CardGrantSetting < ApplicationRecord
   belongs_to :event
-  serialize :merchant_lock, CommaSeparatedCoder # convert comma-separated merchant list to an array
-  serialize :category_lock, CommaSeparatedCoder
+  serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
+  serialize :category_lock, coder: CommaSeparatedCoder
   alias_attribute :allowed_merchants, :merchant_lock
   alias_attribute :allowed_categories, :category_lock
   has_many :card_grants, through: :event

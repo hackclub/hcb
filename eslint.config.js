@@ -1,5 +1,6 @@
 const js = require('@eslint/js')
 const react = require('eslint-plugin-react/configs/recommended.js')
+const reactHooks = require('eslint-plugin-react-hooks')
 const globals = require('globals')
 
 module.exports = [
@@ -9,6 +10,7 @@ module.exports = [
     files: ['app/javascript/**/*.js'],
     rules: {
       'react/forbid-dom-props': ['error', { forbid: ['id'] }],
+      ...reactHooks.configs.recommended.rules,
     },
     languageOptions: {
       globals: {
@@ -24,6 +26,9 @@ module.exports = [
       react: {
         version: 'detect',
       },
+    },
+    plugins: {
+      'react-hooks': reactHooks,
     },
   },
 ]
