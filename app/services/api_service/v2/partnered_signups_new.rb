@@ -34,7 +34,6 @@ module ApiService
           organization_identifier: clean_organization_identifier,
           name: smart_name,
           slug: smart_slug,
-          sponsorship_fee:,
           redirect_url: @redirect_url,
           webhook_url: @webhook_url
         }

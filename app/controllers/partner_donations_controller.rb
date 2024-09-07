@@ -3,6 +3,9 @@
 require "csv"
 
 class PartnerDonationsController < ApplicationController
+  include SetEvent
+  before_action :set_event, only: [:export]
+
   def show
     @partner_donation = PartnerDonation.find(params[:id])
 
@@ -16,8 +19,6 @@ class PartnerDonationsController < ApplicationController
   end
 
   def export
-    @event = Event.friendly.find(params[:event])
-
     authorize @event.partner_donations.first
 
     respond_to do |format|

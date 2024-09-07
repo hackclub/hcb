@@ -42,14 +42,54 @@
     background-position: -50px -50px;
   }
 
+  &__shine_text {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: #ec375040;
+
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 1) 50%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    background-repeat: no-repeat;
+    background-position: -50px -50px;
+
+    &_head {
+      opacity: 0.65;
+      color: map-get($palette, snow);
+      font-size: 0.7em;
+    }
+  }
+
   &__content {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 
+    & li {
+      list-style-type: none !important;
+      margin: 0;
+      padding: 0;
+    }
+
+    & img {
+      width: 75% !important;
+    }
+
     > * {
       opacity: 0;
     }
+  }
+}
+
+@media (max-width: 48em) {
+  .welcome {
+    justify-content: flex-start;
+    padding: 8px;
+    padding-top: 36px;
+    overflow-y: scroll;
   }
 }

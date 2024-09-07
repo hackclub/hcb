@@ -1,4 +1,6 @@
-<%= render layout: "/public_activity/common", locals: { activity:, hide_owner: true, icon: "briefcase", color: "info" } do %>
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user:, hide_owner: true, icon: "briefcase", color: "info" } do %>
   <%= activity.trackable.sponsor.name %> paid a <%= render_money activity.trackable.local_hcb_code.amount %>
   invoice on <%= link_to activity.trackable.event.name, activity.trackable.event %>
 <% end %>

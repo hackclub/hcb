@@ -1,0 +1,41 @@
+<% title "Create an card design" %>
+
+<h1>Create a new card design</h1>
+
+<%= form_with(model: nil, local: true, url: stripe_card_personalization_design_create_admin_index_path, data: {
+                turbo: "false",
+              }) do |form| %>
+  <fieldset>
+    <legend>Card design</legend>
+    <p>
+      <%= form.label :name, "Name" %>
+      <br>
+      <%= form.text_field :name, placeholder: "HCB Sapphire Platinum X Preferred 0% Cashback Rewards Card", style: "width: 500px; max-width: 80vw;", required: true %>
+    </p>
+
+    <p>
+      <%= form.label :color %>
+      <br>
+      <%= form.select :color, {
+            "⚪ US Visa Credit White" => :white,
+            "⚫ US Visa Credit Black" => :black
+          } %>
+    </p>
+
+    <div class="field">
+      <%= form.label :logo, "Logo" %>
+      <div class="field--image-upload" data-controller="image-upload-preview">
+        <%= form.label :logo, "Click to upload PNG logo", data: { image_upload_preview_target: "preview" } %>
+        <%= form.file_field :logo, accept: "image/png", required: true, data: { action: "image-upload-preview#set" } %>
+      </div>
+    </div>
+
+    <small>As per Stripe's guidelines, please ensure logo is .png format, no larger than 512kb, with a legible size of 1000px by 200px binary image containing a black logo on a white background with no grayscale.</small>
+
+  </fieldset>
+
+  <p>
+    <%= form.submit "Create design", class: "mr1" %>
+    By default, new card designs are private, but this can be changed later.
+  </p>
+<% end %>

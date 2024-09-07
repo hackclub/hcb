@@ -50,6 +50,45 @@ html[data-dark='true'] {
   }
 }
 
+.feature-ai-memos {
+  background-color: $snow;
+  background-image: url('feature-ai-memos-light.png');
+  background-size: 8em;
+}
+
+html[data-dark='true'] {
+  .feature-ai-memos {
+    background-color: $black;
+    background-image: url('feature-ai-memos-dark.png');
+  }
+}
+
+.feature-two-factor-authentication {
+  background-color: $snow;
+  background-image: url('feature-two-factor-authentication-light.png');
+  background-size: 150px;
+}
+
+html[data-dark='true'] {
+  .feature-two-factor-authentication {
+    background-color: $black;
+    background-image: url('feature-two-factor-authentication-dark.png');
+  }
+}
+
+.feature-totp {
+  background-color: $snow;
+  background-image: url('feature-totp-light.png');
+  background-size: 8em;
+}
+
+html[data-dark='true'] {
+  .feature-totp {
+    background-color: $black;
+    background-image: url('feature-totp-dark.png');
+  }
+}
+
 .feature-transaction-tags {
   background-size: 24em;
   background-color: $snow;
@@ -80,16 +119,19 @@ html[data-dark='true'] .feature-transaction-tags {
   }
 }
 
-.feature-reimbursements  {
+.feature-reimbursements {
   background-color: $snow;
-  background-image:
-    linear-gradient(to right, rgba($snow, 0.9), rgba($snow, 0.9)),
+  background-image: linear-gradient(
+      to right,
+      rgba($snow, 0.9),
+      rgba($snow, 0.9)
+    ),
     url('feature-reimbursements.png');
   background-size: 4em;
 }
 
 html[data-dark='true'] {
-  .feature-reimbursements  {
+  .feature-reimbursements {
     background-color: $black;
     background-image: url('feature-reimbursements.png');
   }
@@ -97,8 +139,11 @@ html[data-dark='true'] {
 
 .feature-turbo {
   background-color: $snow;
-  background-image:
-    linear-gradient(to right, rgba($snow, 0.9), rgba($snow, 0.9)),
+  background-image: linear-gradient(
+      to right,
+      rgba($snow, 0.9),
+      rgba($snow, 0.9)
+    ),
     url('feature-turbo.png');
   background-size: 4em;
 }
@@ -117,6 +162,17 @@ html[data-dark='true'] {
 
 html[data-dark='true'] {
   .feature-check-deposits {
+    background-color: $black;
+  }
+}
+
+.feature-cover-fees {
+  background-color: $smoke;
+  background-size: 4em;
+}
+
+html[data-dark='true'] {
+  .feature-cover-fees {
     background-color: $black;
   }
 }

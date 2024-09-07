@@ -5,10 +5,10 @@ module StaticPagesHelper
 
   def card_to(name, path, options = {})
     badge = if options[:badge].present?
-              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted pr2 h-fit-content" : "bg-accent pr2 h-fit-content")
+              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit-content" : "bg-accent h-fit-content")
             elsif options[:async_badge].present?
               turbo_frame_tag options[:async_badge], src: admin_task_size_path(task_name: options[:async_badge]) do
-                badge_for "⏳", class: "bg-muted pr2"
+                badge_for "⏳", class: "bg-muted"
               end
             else
               content_tag(:div, "") # Empty div if no badge is present
@@ -20,9 +20,10 @@ module StaticPagesHelper
                             content_tag(:strong, name, class: "card-name"),
                             pin,
                             content_tag(:span, "", style: "flex-grow: 1"),
-                            badge
+                            badge,
+                            inline_icon("view-forward", size: 24, class: "ml-1 -mr-2 muted fill-current")
                           ].join.html_safe,
-                          class: "card card--item card--hover flex justify-between items-center"),
+                          class: "card card--hover flex justify-between items-center"),
               path, class: "link-reset", method: options[:method]
     end
   end
@@ -52,7 +53,7 @@ module StaticPagesHelper
       bank_applications: {
         id: "apppALh5FEOKkhjLR",
         table: "Events",
-        query: { filterByFormula: "Pending='Pending'" },
+        query: { filterByFormula: "OR(Status='⭐️ New Application', Status='Applied - Approved', Status='Applied - Need Rejection')" },
         destination: "https://airtable.com/tblctmRFEeluG4do7/viwGhv19cV1ZRj61a"
       },
       stickers: {
@@ -115,12 +116,6 @@ module StaticPagesHelper
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tbloFbH16HI7t3mfG/viwzgt8VLHOC82m8n"
       },
-      paypal_transfers: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "PayPal%20Transfers",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbloGiW2jhja8ivtV/viwzhAnWYhpFNhvmC"
-      },
       disputed_transactions: {
         id: "appEzv7w2IBMoxxHe",
         table: "Disputed%20Transactions",
@@ -144,6 +139,35 @@ module StaticPagesHelper
         table: "Google%20Workspace%20Waitlist",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/appEzv7w2IBMoxxHe/tbl9CkfZHKZYrXf1T/viwgfJvrrD9Jn9VLj"
+      },
+      you_ship_we_ship: {
+        id: "appre1xwKlj49p0d4",
+        table: "Users",
+        query: { filterByFormula: "{Verification Status}='Unknown'" },
+        destination: "https://airtable.com/appre1xwKlj49p0d4/tbl2Q2aCWqyBGi9mj/viwVYhUQYyNJOi0EH"
+      },
+      boba: {
+        id: "app05mIKwNPO2l1vT",
+        table: "Event%20Codes",
+        query: { filterByFormula: "Status='Under Review'" },
+        destination: "https://airtable.com/app05mIKwNPO2l1vT/tblcIuVemD63IbBuY/viw1Zo5lX8e7t2Vzu"
+      },
+      power_hour: {
+        id: "app1VxI7f3twOIs2g",
+        table: "tblKgmsperK0QHEQX",
+        query: { filterByFormula: "Status='Awaiting Fulfillment'" },
+        destination: "https://airtable.com/app1VxI7f3twOIs2g/tblKgmsperK0QHEQX"
+      },
+      arcade: {
+        id: "app4kCWulfB02bV8Q",
+        table: "tblNUDETwMdUlBCSM",
+        query: { filterByFormula: "AND(Status='Awaiting Fulfillment', OR({Verification Status (from YSWS Verification User)}='Eligible L1', {Verification Status (from YSWS Verification User)}='Eligible L2'))" },
+        destination: "https://airtable.com/app4kCWulfB02bV8Q/tblNUDETwMdUlBCSM/viwipTwk0hGHW10Py"
+      },
+      marketing_shipment_request: {
+        id: "appK53aN0fz3sgJ4w",
+        table: "tblvSJMqoXnQyN7co",
+        destination: "https://airtable.com/appK53aN0fz3sgJ4w/tblvSJMqoXnQyN7co/viwk107ZoZqAsFfRS"
       }
     }
   end
@@ -177,7 +201,7 @@ module StaticPagesHelper
 
             needed_role_num = OrganizerPosition.roles[v]
 
-            OrganizerPosition.roles.each do |_role, role_num|
+            OrganizerPosition.roles.each_value do |role_num|
               if role_num >= needed_role_num
                 concat content_tag(:td, "✅")
               else

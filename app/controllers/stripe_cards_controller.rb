@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class StripeCardsController < ApplicationController
+  include SetEvent
+  before_action :set_event, only: [:new]
+
   def index
     @cards = StripeCard.all
     authorize @cards
@@ -30,6 +33,18 @@ class StripeCardsController < ApplicationController
     end
   end
 
+  def cancel
+    @card = StripeCard.find(params[:id])
+    authorize @card
+
+    @card.cancel!
+    flash[:success] = "Card cancelled"
+    redirect_back_or_to @card
+  rescue => e
+    flash[:error] = e.message
+    render :show, status: :unprocessable_entity
+  end
+
   def defrost
     @card = StripeCard.find(params[:id])
     authorize @card
@@ -45,11 +60,12 @@ class StripeCardsController < ApplicationController
   def show
     @card = StripeCard.includes(:event, :user).find(params[:id])
 
-    authorize @card
-
     if @card.card_grant.present? && !current_user&.admin?
-      return redirect_to @card.card_grant
+      authorize @card.card_grant
+      return redirect_to card_grant_path(@card.card_grant, frame: params[:frame])
     end
+
+    authorize @card
 
     if params[:show_details] == "true"
       ahoy.track "Card details shown", stripe_card_id: @card.id
@@ -61,16 +77,23 @@ class StripeCardsController < ApplicationController
     @hcb_codes = @card.hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
                       .page(params[:page]).per(25)
+
+    if params[:frame] == "true"
+      @frame = true
+      @force_no_popover = true
+      render :show, layout: false
+    else
+      @frame = false
+      render :show
+    end
   end
 
   def new
-    @event = Event.friendly.find(params[:event_id])
-
     authorize @event, :new_stripe_card?, policy_class: EventPolicy
   end
 
   def create
-    event = Event.friendly.find(params[:stripe_card][:event_id])
+    event = Event.find(params[:stripe_card][:event_id])
     authorize event, :create_stripe_card?, policy_class: EventPolicy
 
     sc = stripe_card_params
@@ -96,6 +119,7 @@ class StripeCardsController < ApplicationController
       stripe_shipping_address_line2: sc[:stripe_shipping_address_line2],
       stripe_shipping_address_postal_code: sc[:stripe_shipping_address_postal_code],
       stripe_shipping_address_country: sc[:stripe_shipping_address_country],
+      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
     ).run
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
@@ -121,6 +145,18 @@ class StripeCardsController < ApplicationController
     end
 
     redirect_to stripe_card_url(card)
+  end
+
+  def ephemeral_keys
+    card = StripeCard.find(params[:id])
+
+    authorize card
+
+    ephemeral_key = card.ephemeral_key(nonce: params[:nonce])
+
+    ahoy.track "Card details shown", stripe_card_id: card.id
+
+    render json: { ephemeralKeySecret: ephemeral_key.secret, stripe_id: card.stripe_id }
   end
 
   private
@@ -170,6 +206,7 @@ class StripeCardsController < ApplicationController
       :stripe_shipping_address_line2,
       :stripe_shipping_address_state,
       :stripe_shipping_address_country,
+      :stripe_card_personalization_design_id,
       :birthday
     )
   end

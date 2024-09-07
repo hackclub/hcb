@@ -49,9 +49,14 @@
   <tbody>
     <% @hcb_codes.each do |hcb_code| %>
       <tr>
-        <td><%= hcb_code.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= hcb_code.created_at.strftime("%Y-%m-%d") %>
+          <% if hcb_code.has_pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td><%= link_to hcb_code.memo, hcb_code.url %></td>
-        <td><%= link_to hcb_code.event.name, hcb_code.event %></td>
+        <td><%= link_to hcb_code.event&.name, hcb_code.event %></td>
         <td>
           <% if hcb_code.stripe_card? && hcb_code.card&.user %>
            <%= link_to hcb_code.card.user.name, hcb_code.card.user %>

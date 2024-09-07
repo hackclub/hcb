@@ -7,27 +7,16 @@
       event: @event
     } %>
 
-<% non_manager_count = @event.organizer_positions.where.not(role: :manager).count %>
-<% non_manager_invite_count = @event.organizer_position_invites.pending.where.not(role: :manager).count %>
-
+<% active_spending_control_count = @event.organizer_positions.map(&:active_spending_control).compact.count %>
 <%= render partial: "features/preview", locals: {
-      id: "user-permissions",
-      classes: ["feature-user-permissions"],
-      feature_flag: :user_permissions_2024_03_09,
-      name: "User Roles",
+      id: "spending-controls",
+      classes: ["feature-spending-controls"],
+      feature_flag: :spending_controls_2024_06_03,
+      name: "Spending Controls",
       description: content_tag(:span) do
-        concat "Disallow certain users from performing critical financial actions! "
-        concat link_to("Read more about user roles here.", roles_path)
+        concat "Control your members' spending with preauthorized card limits!"
       end,
       event: @event,
-      disable_warning: non_manager_count > 0 || non_manager_invite_count > 0 ? "⚠️ You have #{non_manager_count} non-manager user#{"s" unless non_manager_count == 1} #{"and #{non_manager_invite_count} non-manager pending user invite#{"s" unless non_manager_invite_count == 1} " if non_manager_invite_count > 0}in your org ⚠️\n\nDisabling the user permissions feature will turn them into #{non_manager_count + non_manager_invite_count > 1 ? "managers" : "a manager"}. Are you sure you want to disable this feature?" : nil
-    } %>
+      disable_warning: active_spending_control_count > 0 ? "⚠️ #{active_spending_control_count} users have spending controls in place ⚠️\n\nAre you sure you want to disable this feature?" : nil
 
-<%= render partial: "features/preview", locals: {
-      id: "anonymous-donations",
-      classes: ["feature-anonymous-donations"],
-      feature_flag: :anonymous_donations_2024_01_29,
-      name: "Anonymous Donations",
-      description: "Allow donors to appear anonymously in Transparency Mode!",
-      event: @event
     } %>

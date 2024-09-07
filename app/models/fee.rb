@@ -30,7 +30,6 @@ class Fee < ApplicationRecord
   validates :amount_cents_as_decimal, numericality: { greater_than_or_equal_to: 0 }
   validates :event_sponsorship_fee, numericality: { greater_than_or_equal_to: 0 }
 
-  scope :hack_club_fee, -> { where(reason: "HACK CLUB FEE") }
   scope :greater_than_0, -> { where("amount_cents_as_decimal > 0") }
   scope :exclude_free_events, -> { where("event_sponsorship_fee > 0") }
   scope :exclude_outflows, -> { where("canonical_transactions.amount_cents > 0") }
@@ -38,13 +37,13 @@ class Fee < ApplicationRecord
 
   delegate :date, :memo, :smart_memo, :amount, :amount_cents, to: :canonical_transaction
 
-  def revenue_waived?
-    reason == "REVENUE WAIVED"
-  end
-
-  def hack_club_fee?
-    reason == "HACK CLUB FEE"
-  end
+  enum :reason, {
+    revenue: "REVENUE",                     # (Charges fee) Normal revenue
+    donation_refunded: "DONATION REFUNDED", # (Doesn't charge fee) Donation refunds
+    hack_club_fee: "HACK CLUB FEE",         # (Doesn't charge fee) HCB fee transactions
+    revenue_waived: "REVENUE WAIVED",       # (Doesn't charge fee) Revenue transactions with fee waived (either manually or automatically in certain cases)
+    tbd: "TBD",                             # (Doesn't charge fee) Everything else (including non-revenue transactions)
+  }
 
   def amount_decimal
     amount_cents_as_decimal / 100.0

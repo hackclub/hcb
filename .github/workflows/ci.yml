@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -38,11 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version-file: package.json
       - run: yarn install
       - name: Run ESLint
         run: yarn lint
@@ -51,11 +51,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version-file: package.json
       - run: yarn install
       - name: Run Prettier
         run: yarn format:check
@@ -77,7 +77,7 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -87,9 +87,9 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"
@@ -116,13 +116,19 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
+          CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
         run: bundle exec rspec --tag ~skip
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: simplecov-report
+          path: coverage/coverage.json
   zeitwerk:
     name: Zeitwerk
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -132,9 +138,9 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"

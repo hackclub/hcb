@@ -1,8 +1,17 @@
 @import 'variables';
 @import 'guidelines';
 
-$font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-  'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
+$font-family:
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  'Fira Sans',
+  Oxygen,
+  Ubuntu,
+  'Helvetica Neue',
+  sans-serif;
 $mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
 
 :root {
@@ -48,12 +57,19 @@ body {
   body:has(.activity) {
     padding-bottom: 0rem;
   }
+
   .activity {
     display: block;
   }
+
+  .container:has(.activity) > .app__sidebar {
+    position: sticky;
+    position: -webkit-sticky;
+    top: 0;
+  }
+
   .container:has(.activity) > .app__content {
-    max-height: 100vh;
-    overflow: scroll;
+    padding-bottom: 2rem;
   }
 }
 
@@ -94,7 +110,7 @@ h1,
 h2,
 h3,
 h4,
-fieldset legend {
+fieldset legend.h2 {
   font-weight: 600;
   line-height: 1.125;
   letter-spacing: -0.02em;
@@ -110,9 +126,6 @@ h1 {
 
 h2 {
   font-size: 1.75rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid map-get($palette, smoke);
-  border-bottom-width: 0.5px;
   margin-bottom: 0.5rem;
 }
 
@@ -125,7 +138,7 @@ h4 {
   font-size: 1.25rem;
 }
 
-p+p {
+p + p {
   margin-top: 0;
 }
 
@@ -152,6 +165,7 @@ td {
   padding: 0.5rem;
   white-space: nowrap;
   -webkit-text-size-adjust: 100%;
+  font-variant-numeric: tabular-nums;
 
   &:first-child {
     padding-left: 1rem;
@@ -223,7 +237,7 @@ summary {
 @import 'components/loading';
 @import 'components/partner_signup';
 @import 'components/file_dropzone';
-@import 'components/feedback_form';
+@import 'components/support_button';
 @import 'components/welcome';
 @import 'components/tabs';
 @import 'components/team';
@@ -232,8 +246,14 @@ summary {
 @import 'components/shimmer';
 @import 'components/carousel';
 @import 'components/callout';
+@import 'components/breakdown';
+@import 'components/balance_chart';
 @import 'components/reimbursements/expenses';
 @import 'components/reimbursements/actions';
+@import 'components/event_settings';
+@import 'components/reactions';
+@import 'components/tags';
+@import 'components/filter_tabs';
 
 .turbo-progress-bar {
   height: 0.125rem;
@@ -290,19 +310,6 @@ summary {
   overflow: auto;
 }
 
-.memo-frame[busy] {
-  cursor: progress;
-}
-
-.memo-frame[busy] .memo-frame__ai-button {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.embedded .embedded-display-none {
-  display: none;
-}
-
 @keyframes flying-spook {
   from {
     left: 0;
@@ -350,10 +357,8 @@ summary {
   }
 }
 
-
 // Make mobile views nice. Full-bleed separator lines
 @media screen and (max-width: 32em) {
-
   table:not(.table-container > table),
   .table-container,
   .list,
@@ -378,11 +383,11 @@ summary {
     }
   }
 
-  .list>a>li,
-  .list>li,
+  .list > a > li,
+  .list > li,
   .heading,
-  .details>p,
-  .details>div,
+  .details > p,
+  .details > div,
   h1,
   h2,
   h3 {
@@ -398,7 +403,6 @@ summary {
 }
 
 @media print {
-
   .home,
   .dock,
   .heading .btn,
@@ -429,7 +433,10 @@ summary {
   }
 }
 
-[x-cloak], [hidden] { display: none !important; }
+[x-cloak],
+[hidden] {
+  display: none !important;
+}
 
 @import 'basscss';
 @import 'space';

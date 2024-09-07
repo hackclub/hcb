@@ -22,7 +22,8 @@
 
 .modal {
   background-color: $white;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.125),
+  box-shadow:
+    0 2px 4px 0 rgba(0, 0, 0, 0.125),
     0 12px 24px 0 rgba(0, 0, 0, 0.25);
   padding: 2rem 1rem;
   border-radius: 0.75rem;
@@ -47,8 +48,12 @@
     width: 66vw;
     transition: transform 0.1s ease-in-out;
 
-    .jquery-modal:not(:not([style*="opacity: 1"])) & {
+    .jquery-modal:not(:not([style*='opacity: 1'])) & {
       transform: translateX(0%);
+    }
+
+    &.modal--popover--sm {
+      max-width: 500px;
     }
 
     @media (max-width: 48em) {
@@ -65,11 +70,18 @@
   }
 
   &.modal--huge {
-    width: 54rem;
-    max-width: 95vw;
+    width: 100vw;
+    max-width: 100vw;
+
+    @media (min-width: 48em) {
+      width: 70rem;
+      max-width: 90vw;
+    }
   }
 
-  &.modal--flexible, &.modal--huge.modal--flexible, &.modal--wide.modal--flexible {
+  &.modal--flexible,
+  &.modal--huge.modal--flexible,
+  &.modal--wide.modal--flexible {
     width: auto;
   }
 
@@ -81,11 +93,6 @@
 
     &.modal--wide {
       width: 52rem;
-      max-width: 95vw;
-    }
-
-    &.modal--huge {
-      width: 58rem;
       max-width: 95vw;
     }
   }
@@ -107,7 +114,8 @@
       padding-bottom: calc(3rem + env(safe-area-inset-bottom));
     }
 
-    &.modal--wide, &.modal--huge {
+    &.modal--wide,
+    &.modal--huge {
       max-width: 100vw;
     }
   }
@@ -136,7 +144,8 @@
     border-bottom: 1px solid rgba(48, 48, 48, 0.125);
   }
 
-  &:not(.modal--popover) > footer, &:not(.modal--popover) > * > footer {
+  &:not(.modal--popover) > footer,
+  &:not(.modal--popover) > * > footer {
     background-color: $white;
     position: -webkit-sticky;
     position: sticky;

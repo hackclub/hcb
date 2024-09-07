@@ -43,16 +43,18 @@
             <% else %>
               Approval removed by
             <% end %>
-            <%= user_mention expense.approved_by, { avatar: { style: "vertical-align: sub;" } }, "Unknown User" %>
+            <%= user_mention expense.approved_by, { avatar: { style: "vertical-align: sub;" }, disable_tooltip: true }, "Unknown User" %>
           <% end %>
-          <button class="edit-or-save pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is read-only. #{"Mark it as a draft to edit." unless expense.report.closed? || read_only}" %>">
-            <% if expense.report.locked? || read_only %>
-              <%= inline_icon "private" %>
-            <% else %>
-              <%= inline_icon "checkmark", style: new ? nil : "display: none;" %>
-              <%= inline_icon "edit", style: new ? "display: none;" : nil %>
-            <% end %>
-          </button>
+          <% unless expense.report.reimbursed? %>
+            <button class="edit-or-save pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is read-only. #{"Mark it as a draft to edit." unless expense.report.closed? || read_only}" %>">
+              <% if expense.report.locked? || read_only %>
+                <%= inline_icon "private" %>
+              <% else %>
+                <%= inline_icon "checkmark", style: new ? nil : "display: none;" %>
+                <%= inline_icon "edit", style: new ? "display: none;" : nil %>
+              <% end %>
+            </button>
+          <% end %>
           <% if policy(expense).update? %>
             <div data-controller="menu" data-menu-placement-value="bottom-end">
               <%= pop_icon_to "more",

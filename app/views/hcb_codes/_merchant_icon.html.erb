@@ -1,0 +1,18 @@
+<% stripe_tx = tx.try(:raw_stripe_transaction) || tx.try(:raw_pending_stripe_transaction) %>
+<% if stripe_tx %>
+  <% merchant = YellowPages::Merchant.lookup(network_id: stripe_tx.stripe_transaction["merchant_data"]["network_id"]) %>
+  <% category = stripe_tx.stripe_transaction["merchant_data"]["category"] %>
+  <% categorised_category = BreakdownEngine::Categorizer.new(category).run %>
+
+  <% if icon = merchant_icon(merchant, style: "height: 1.2em") %>
+    <%= icon %>
+  <% elsif %w[passenger_railways railroads commuter_transport_and_ferries].include?(category) %>
+    <%= inline_icon "train", style: "height: 1.2em;" %>
+  <% elsif categorised_category == "Food" %>
+    <%= inline_icon "food", style: "height: 2.2em;" %>
+  <% elsif categorised_category == "Apparel" %>
+    <%= inline_icon "shirt" %>
+  <% else %>
+    <%= inline_icon "card" %>
+  <% end %>
+<% end %>

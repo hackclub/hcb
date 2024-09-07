@@ -3,7 +3,7 @@
 <% if stripe_card.stripe_status == "active" %>
   <div class="tooltipped tooltipped--n" aria-label="<%= policy(stripe_card).update? ? "Rename your card" : "You don't have permission to rename this card" %>">
     <%= link_to edit_stripe_card_path(stripe_card),
-                class: "btn bg-success ml1",
+                class: "btn bg-success",
                 disabled: !policy(stripe_card).update?,
                 data: { behavior: "modal_trigger", modal: "name_card" } do %>
       <%= inline_icon "edit" %>

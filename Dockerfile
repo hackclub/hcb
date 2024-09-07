@@ -1,4 +1,4 @@
-FROM ruby:3.1.5
+FROM ruby:3.3.4
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -10,16 +10,15 @@ RUN apt-get -y update -qq
 RUN apt-get -y install postgresql-client vim poppler-utils
 ENV EDITOR=vim
 
-# Install node18 & yarn
+# Install node22 & yarn
 
-RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
+  bash nodesource_setup.sh && \
+  apt-get install -y nodejs
 
-RUN curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /usr/share/keyrings/yarnkey.gpg >/dev/null
-RUN echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt-get update; apt-get install -y nodejs yarn
+RUN corepack enable
 
-RUN gem install bundler -v 2.4.12
+RUN gem install bundler -v 2.5.17
 
 ADD yarn.lock /usr/src/app/yarn.lock
 ADD package.json /usr/src/app/package.json

@@ -1,0 +1,14 @@
+<p>Hi there,</p>
+
+<p>
+  During a regular scan of your domain, <strong><%= @g_suite.domain %></strong>, we detected that at least one critical DNS record required by Google Workspace is missing. If this is not remedied, all users on your Google Workspace may be unable to send or receive emails.
+</p>
+
+<p>
+  Check <%= link_to "your organization's Google Workspace page", event_g_suite_overview_url(event_id: @g_suite.event.slug) %> to see which DNS records are missing. Once you've confirmed that all DNS records are properly configured, click the "Retry Verification" button. Please don't hesitate to <%= link_to "send us an email", "mailto:hcb@hackclub.com?subject=Google Workspace Support" %> if you have any questions.
+</p>
+
+<p>
+  Best,<br>
+  The HCB Team
+</p>

@@ -2,6 +2,7 @@
 
 class ProcessColumnCheckDepositJob < ApplicationJob
   class UnconfidentError < StandardError; end
+  class ApiError < StandardError; end
 
   def perform(check_deposit:, validate: true)
     raise ArgumentError, "check deposit already processed" if check_deposit.column_id.present? || check_deposit.increase_id.present?
@@ -33,10 +34,16 @@ class ProcessColumnCheckDepositJob < ApplicationJob
                                                                            image_front: front["image_front"],
                                                                            image_back: back["image_back"])
 
-    check_deposit.update!(column_id: column_check_deposit["id"])
+    check_deposit.update!(column_id: column_check_deposit["id"], status: :submitted)
+
+    check_deposit.broadcast_replace(target: [check_deposit, :status], partial: "check_deposits/status", locals: { check_deposit: })
 
     check_deposit
 
+  rescue Faraday::Error => e
+    check_deposit.update!(status: :manual_submission_required)
+    Airbrake.notify("Check deposit ##{check_deposit.id} needs to be manually submitted to Column.")
+    raise ApiError, e.response_body["message"]
   end
 
 end

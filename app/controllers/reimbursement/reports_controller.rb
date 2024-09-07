@@ -10,13 +10,17 @@ module Reimbursement
 
     # POST /reimbursement_reports
     def create
-      @event = Event.friendly.find(report_params[:event_id])
+      @event = Event.find(report_params[:event_id])
       user = User.find_or_create_by!(email: report_params[:email])
-      @report = @event.reimbursement_reports.build(report_params.except(:email).merge(user:, inviter: current_user))
+      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: current_user))
 
       authorize @report
 
       if @report.save
+        if report_params[:receipt_id]
+          @expense = @report.expenses.create!(value: report_params[:value], memo: report_params[:report_name])
+          Receipt.find(report_params[:receipt_id]).update!(receiptable: @expense)
+        end
         if current_user && user == current_user
           redirect_to @report
         elsif admin_signed_in? || organizer_signed_in?
@@ -31,19 +35,20 @@ module Reimbursement
     end
 
     def quick_expense
-      @event = Event.friendly.find(report_params[:event_id])
+      @event = Event.find(report_params[:event_id])
       @report = @event.reimbursement_reports.build({ user: current_user, inviter: current_user })
 
       authorize @report, :create?
 
       if @report.save
         @expense = @report.expenses.create!(amount_cents: 0)
-        ::ReceiptService::Create.new(
+        receipt = ::ReceiptService::Create.new(
           receiptable: @expense,
           uploader: current_user,
           attachments: params[:reimbursement_report][:file],
           upload_method: :quick_expense
         ).run!
+        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt.first.suggested_memo
         redirect_to reimbursement_report_path(@report, edit: @expense.id)
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
@@ -61,14 +66,13 @@ module Reimbursement
       authorize @report
       @commentable = @report
       @comments = @commentable.comments
-      @comment = Comment.new
-      @use_user_nav = current_user == @user && !@event.users.include?(@user) && !admin_signed_in?
+      @use_user_nav = @event.nil? || current_user == @user && !@event.users.include?(@user) && !admin_signed_in?
       @editing = params[:edit].to_i
 
     end
 
     def start
-      if !@event.public_reimbursement_page_enabled?
+      unless @event.public_reimbursement_page_available?
         return not_found
       end
     end
@@ -104,7 +108,7 @@ module Reimbursement
 
       begin
         @report.mark_draft!
-        flash[:success] = "Report marked as a draft, you can now make edits."
+        flash[:success] = "Report marked as a draft."
       rescue => e
         flash[:error] = e.message
       end
@@ -239,7 +243,7 @@ module Reimbursement
 
       @report.destroy
 
-      if organizer_signed_in?
+      if organizer_signed_in? && @event
         redirect_to event_reimbursements_path(@event)
       else
         redirect_to my_reimbursements_path
@@ -257,13 +261,13 @@ module Reimbursement
     end
 
     def report_params
-      params.require(:reimbursement_report).permit(:report_name, :maximum_amount, :event_id, :email, :invite_message).compact_blank
+      params.require(:reimbursement_report).permit(:report_name, :maximum_amount, :event_id, :email, :invite_message, :receipt_id, :value).compact_blank
     end
 
     def update_reimbursement_report_params
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
       reimbursement_report_params.delete(:maximum_amount) unless current_user.admin? || @event.users.include?(current_user)
-      reimbursement_report_params.delete(:maximum_amount) unless @report.draft?
+      reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
       reimbursement_report_params
     end
 

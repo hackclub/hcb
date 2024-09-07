@@ -1,0 +1,26 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+<% hcb_code = activity.trackable&.canonical_pending_transaction&.local_hcb_code %>
+
+<% if hcb_code %>
+  <% if hcb_code.stripe_refund? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
+      was refunded <%= render_money hcb_code.amount_cents.abs %> from <i><%= hcb_code.memo %></i>
+    <% end %>
+  <% elsif hcb_code.pt&.declined? %>
+    <%= render layout: "/public_activity/common", locals: { possessive: true, current_user:, activity:, url: hcb_code_path(hcb_code) } do %>
+      card was declined for <%= render_money activity.trackable.amount_cents.abs %> at <i><%= hcb_code.memo %></i>
+    <% end %>
+  <% elsif hcb_code.stripe_cash_withdrawal? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
+      withdrew <%= render_money hcb_code.stripe_atm_fee ? hcb_code.amount_cents.abs - hcb_code.stripe_atm_fee : hcb_code.amount_cents.abs %> from <i><%= humanized_merchant_name(hcb_code.stripe_merchant) %></i>
+    <% end %>
+  <% else %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
+      spent <%= render_money hcb_code.amount_cents.abs %> on <i><%= hcb_code.memo %></i>
+    <% end %>
+  <% end %>
+<% else %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    spent <%= render_money activity.trackable.amount_cents.abs %> on <i><%= activity.trackable.memo %></i>
+  <% end %>
+<% end %>

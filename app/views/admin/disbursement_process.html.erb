@@ -1,3 +1,8 @@
+<%= link_to disbursements_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to disbursements
+<% end %>
+
 <h1>Process Disbursement #<%= @disbursement.id %></h1>
 <p><small>Current Status: <%= @disbursement.state_text %></small></p>
 
@@ -53,6 +58,11 @@
 <% else %>
 
     <p>This is a human review check.</p>
+
+    <% if @disbursement.scheduled_on.present? %>
+      <br>
+      <small>When approved, this disbursement will automatically send on <%= @disbursement.scheduled_on.strftime("%Y-%m-%d") %>.</small>
+    <% end %>
 
     <%= form_with(model: nil, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
       <%= form.submit "Approve disbursement" %>

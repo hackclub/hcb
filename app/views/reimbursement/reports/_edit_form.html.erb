@@ -16,22 +16,22 @@
       <%= form.select(:event_id,
           current_user.admin? ?
             Event.not_demo_mode.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
-            ([@report.event] + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
+            ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
           { prompt: "Select an event…", required: true }) %>
       <% unless admin_signed_in? %>
         <span class="muted">You can transfer a report to any organization you're a part of.</span>
       <% end %>
     </div>
   <% end %>
-  <% if organizer_signed_in? && (@report.submitted? || @report.draft?) %>
+  <% if organizer_signed_in? && (@report.submitted? || @report.draft?) && @report.event %>
    <div class="field">
       <%= form.label :reviewer_id, "Assigned Reviewer", class: "mt2 bold" %>
       <%= form.collection_select :reviewer_id, @report.event.users, :id, :name, include_blank: "Anyone" %>
     </div>
   <% end %>
-  <%= form.submit "Update report", class: "mt2" %>
+  <%= form.submit "Update report", class: "left mt2" %>
 <% end %>
 
 <% admin_tool_if !@report.initial_draft? do %>
-  <%= button_to "Delete report", reimbursement_report_path(@report), class: "ml0 bg-error btn", method: :delete, type: "button" %>
+  <%= button_to "Delete report", reimbursement_report_path(@report), class: "right mt2 bg-error btn", method: :delete, type: "button" %>
 <% end %>

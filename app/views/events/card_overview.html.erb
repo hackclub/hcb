@@ -1,6 +1,7 @@
 <% title "Cards for #{@event.name}" %>
 <% page_md %>
 <%= render "nav", selected: :cards %>
+<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
 <% if current_user.try(:full_name).try(:blank?) %>
 
   <h1 class="heading">
@@ -12,55 +13,39 @@
   <%= render "cards/name_required" %>
 <% else %>
 
-  <h1 class="heading">
-    <span class="flex items-center">
+  <h1 class="flex heading items-center">
+    <span class="flex-grow flex items-center flex-1">
       Cards
       <%= badge_for @event.stripe_cards.count, class: "bg-muted" %>
     </span>
 
+    <%= pop_icon_to params[:view] == "list" ? "grid" : "list",
+        "?view=#{params[:view] == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+    <%= render partial: "filter_cards" %>
     <% if organizer_signed_in? %>
       <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
         <%= inline_icon "card-add" %>
         Order a card
       <% end %>
     <% end %>
-
-    <button
-      type="button"
-      data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
-      class="btn menu__toggle overflow-visible z1">
-      <%= inline_icon "view", size: 16 %>
-      View
-      <div class="menu__content h5" data-behavior="menu_content">
-        <%= link_to "List view  #{'✔' if params[:view] == 'list'}", "?view=list" %>
-        <%= link_to "Grid view  #{'✔' if params[:view] != 'list'}", "?view=grid" %>
-      </div>
-    </button>
   </h1>
 
-  <% unless show_mock_data? %>
-    <div style="text-align: center;" class="mb2">
-      <%= link_to "All", event_cards_overview_path(event_id: @event.slug), class: "filterbar__item", "aria-selected": @status.nil?, role: "tab" %>
-      <% %w[virtual physical active inactive].each do |status| %>
-        <%= link_to status.humanize, "?status=#{status}#{"&q=#{@q}" if @q}", class: "filterbar__item", "aria-selected": @status == status, role: "tab" %>
-      <% end %>
-    </div>
+  <% if control = @organizer_position&.active_spending_control %>
+    <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
+    <%= render "callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
+      <ul class="m0">
+        <li>Spending controls are enabled for this organization.</li>
+        <li>Since you're a <%= @organizer_position.role %>, you must request allowances to spend money.</li>
+        <li>Managers can issue allowances from <%= link_to "your spending controls page", event_organizer_position_spending_controls_path(organizer_position_id: @organizer_position) %>, which can be accessed from the <%= link_to "team page", event_team_path(@event) %>.</li>
+      </ul>
+    <% end %>
   <% end %>
 
   <% if organizer_signed_in? %>
-
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
       <%= modal_header "Order a card" %>
       <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
     </section>
-
-  <% end %>
-
-  <%= form_with method: :get do |form| %>
-    <% if @status %>
-      <%= form.hidden_field :status, value: @status %>
-    <% end %>
-    <%= form.text_field :q, value: @q, placeholder: "Search by cardholder", class: "mb3 w-100", style: "max-width: 100%" %>
   <% end %>
 
   <% if params[:view] == "list" %>
@@ -86,17 +71,17 @@
     <div class="flex flex-col justify-center mt4">
       <section class="grid">
         <% if organizer_signed_in? %>
-          <%= link_to my_cards_path,
-                      class: "card card--hover block pt4 pb4 card--promo card--sunset cursor-pointer" do %>
-            <h3 class="mt0 mb0">See all your cards →</h3>
-          <% end %>
-        <% end %>
-        <% if @event.used_emburse? %>
-          <%= link_to event_emburse_cards_overview_path(event_id: @event.slug),
-                      class: "card card--hover block pt4 pb4 card--promo cursor-pointer",
-                      style: "background-image: url(https://cloud-awvmmj0xe.vercel.app/grey_card.png);" do %>
-            <h3 class="mt0 mb0">Previous Emburse cards →</h3>
-          <% end %>
+          <div class="text-center">
+            <div class="menu__divider mb3"></div>
+            <%= link_to my_cards_path, class: "btn bg-accent" do %>
+              All your cards →
+            <% end %>
+            <% if @event.used_emburse? %>
+              <%= link_to event_emburse_cards_overview_path(event_id: @event.slug), class: "mt-3 block no-underline" do %>
+                See previous Emburse cards
+              <% end %>
+            <% end %>
+          </div>
         <% end %>
       </section>
     </div>

@@ -16,7 +16,13 @@ module StripeCardholderService
     private
 
     def remote_params
-      { individual: { dob: DateOfBirthAgeRestrictedExtractor.new(user: @current_user).run } }
+      {
+        individual: {
+          dob: DateOfBirthAgeRestrictedExtractor.new(user: @current_user).run,
+          first_name: StripeCardholder.first_name(@current_user),
+          last_name: StripeCardholder.last_name(@current_user),
+        }
+      }
     end
 
   end

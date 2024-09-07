@@ -1,5 +1,14 @@
-$font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-  'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
+$font-family:
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  'Fira Sans',
+  Oxygen,
+  Ubuntu,
+  'Helvetica Neue',
+  sans-serif;
 $mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
 
 @import 'variables';
@@ -9,8 +18,10 @@ $mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace
 @import 'components/badges';
 @import 'components/receipts';
 @import 'components/modals';
+@import 'components/tooltips';
 
 @import 'components/buttons';
+@import 'components/steps';
 
 // // https://raw.githubusercontent.com/waldyrious/downstyler/master/downstyler.css
 // /* ---------------------------------------------------------------------------------------------- */
@@ -101,8 +112,9 @@ html {
 /* ---------------------------------------------------------------------------------------------- */
 
 :root {
-  --hcb-font-sans: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Fira Sans', Oxygen,
-    Ubuntu, 'Helvetica Neue', sans-serif;
+  --hcb-font-sans: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue',
+    sans-serif;
   --hcb-font-mono: 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 }
 
@@ -149,14 +161,14 @@ html[data-dark='true'] {
   --kbar-background: #ffffff;
   --kbar-foreground: #252429;
   --kbar-overlay: rgba(0 0 0 / 0.05);
-  --kbar-admin-overlay: rgba(241,196,15,0.125)
+  --kbar-admin-overlay: rgba(241, 196, 15, 0.125);
 }
 
 html[data-dark='true'] {
   --kbar-background: #252429;
   --kbar-foreground: #e0e6ed;
   --kbar-overlay: rgba(255 255 255 / 0.05);
-  --kbar-admin-overlay: rgba(255,140,55,0.0625);
+  --kbar-admin-overlay: rgba(255, 140, 55, 0.0625);
 }
 
 * {
@@ -696,18 +708,17 @@ video {
 }
 
 .pagination {
-  margin-bottom: 0rem!important;
+  margin-bottom: 0rem !important;
   gap: 4px;
 }
 
 .pagination > li {
-  margin-top: 0rem!important;
+  margin-top: 0rem !important;
 }
 
 .flex-grow {
   flex-grow: 1;
 }
-
 
 /* The navigation bar used for admin pages */
 
@@ -717,7 +728,7 @@ video {
 }
 
 .nav-row > *:not(:last-child) > summary {
-  border-right: 1px solid var(--hcb-bg-3)!important;
+  border-right: 1px solid var(--hcb-bg-3) !important;
 }
 
 @media screen and (min-width: 800px) {
@@ -738,12 +749,12 @@ video {
   .admin-nav-item[open] {
     /* Adjust the <details> padding while open */
     padding-bottom: 0rem;
-    margin-bottom: 0!important;
+    margin-bottom: 0 !important;
   }
 
   .admin-nav-item[open] summary {
     /* Adjust the <details> padding while open */
-    margin-bottom: 0px!important;
+    margin-bottom: 0px !important;
   }
 
   .dropdown {
@@ -752,16 +763,19 @@ video {
     padding-top: 4px;
   }
 
-  summary:hover + detail, detail:hover, details:hover > .dropdown {
+  summary:hover + detail,
+  detail:hover,
+  details:hover > .dropdown {
     display: block;
   }
 
-  detail, .dropdown {
+  detail,
+  .dropdown {
     display: none;
   }
 
   .role-badge {
-    margin-bottom: 0px!important;
+    margin-bottom: 0px !important;
   }
 }
 
@@ -792,7 +806,9 @@ video {
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  &:not(:first-child) { border-top: 1px solid var(--hcb-bg-3); }
+  &:not(:first-child) {
+    border-top: 1px solid var(--hcb-bg-3);
+  }
 }
 
 .badge {
@@ -819,7 +835,6 @@ video {
   background: var(--hcb-bg-2-5);
 }
 
-
 .role-badge {
   padding-right: 12px;
   margin-bottom: 16px;
@@ -843,10 +858,10 @@ video {
 
 .admin-nav-item {
   /* Make the <details> look more "clickable" */
-  padding: 0!important;
-  background: none!important;
-  border: none!important;
-  border-radius: none!important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: none !important;
 }
 
 summary {
@@ -856,23 +871,39 @@ summary {
 }
 
 .events-filter-select {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 300px);
-  gap: 0px 16px;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .events-filter-select > label {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 300px;
+  margin-right: 16px;
 }
 
-.events-filter-select > label > select, .events-filter-select > label > input {
-  flex-grow: 1
+.events-filter-select > label > select,
+.events-filter-select > label > input {
+  flex-grow: 1;
 }
 
 .logo {
   height: 36px;
+}
+
+#admin-theme-toggle,
+#admin-logout-button {
+  color: var(--hcb-link-1);
+  background: none;
+  padding: 0px;
+}
+#admin-theme-toggle:hover,
+#admin-logout-button:hover {
+  color: var(--hcb-link-2);
+}
+form:has(> #admin-logout-button) {
+  margin: 0px;
 }
 
 @tailwind base;

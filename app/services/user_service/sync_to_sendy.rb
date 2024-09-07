@@ -44,14 +44,14 @@ module UserService
 
     def is_active?
       # onboarded in last 6 months
-      true if @user.created_at > 6.months.ago
-      true if @user.organizer_positions.where("created_at > ?", 6.months.ago)
+      return true if @user.created_at > 6.months.ago
+      return true if @user.organizer_positions.where("created_at > ?", 6.months.ago)
 
       # has signed in over the last year
-      true if @user.user_sessions.with_deleted.where("created_at > ?", 1.year.ago).exists?
+      return true if @user.user_sessions.with_deleted.where("created_at > ?", 1.year.ago).exists?
 
       # any transaction history over last year
-      true if @user.stripe_cards(&:hcb_codes).any? { |x| x.created_at > 1.year.ago }
+      return true if @user.stripe_cards(&:hcb_codes).any? { |x| x.created_at > 1.year.ago }
 
       false
     end

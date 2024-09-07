@@ -4,8 +4,8 @@
   gap: 0.5rem;
   grid-auto-flow: row;
   grid-template-areas:
-      "invite-info invite-cancel"
-      "invite-date invite-cancel";
+    'invite-info invite-cancel'
+    'invite-date invite-cancel';
 
   & .organizer-position__cancel {
     grid-area: invite-cancel;
@@ -18,7 +18,7 @@
   & .organizer-position__date {
     grid-area: invite-date;
   }
-  
+
   & .organizer-position__contact-block {
     flex-wrap: wrap;
   }
@@ -31,7 +31,8 @@
 }
 
 @media (max-width: 26rem) {
-  .organizer-position__main-info, .organizer-position__contact-block {
+  .organizer-position__main-info,
+  .organizer-position__contact-block {
     flex-direction: column;
     gap: 0.5rem;
   }

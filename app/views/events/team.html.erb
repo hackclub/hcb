@@ -1,18 +1,18 @@
 <% title "Team overview" %>
-<% page_sm %>
+<% page_md %>
 <%= render "nav", selected: :team %>
 
 <h1 class="heading">
-  <span class="flex items-center">
+  <span class="flex flex-grow items-center">
     Team
     <%= badge_for @all_positions.size, class: "bg-muted" %>
   </span>
 
+  <%= pop_icon_to params[:view] == "list" ? "grid" : "list",
+   "?view=#{params[:view] == 'list' ? 'grid' : 'list'}#{"&q=#{params[:q]}" if params[:q]}#{"&filter=#{params[:filter]}" if params[:filter]}" %>
+
   <% if organizer_signed_in? %>
-    <%= mail_to @all_positions.map { |op| op.user.email_address_with_name }.join(","), class: "btn btn--icon bg-info" do %>
-      <%= inline_icon "email" %>
-      Email everyone
-    <% end %>
+    <%= pop_icon_to "email", "mailto:#{@all_positions.map { |op| op.user.email_address_with_name }.join(",")}" %>
   <% end %>
 
   <% if policy(@event).can_invite_user? %>
@@ -30,13 +30,61 @@
   </section>
 <% end %>
 
-<% if @all_positions.any? %>
-  <%= turbo_frame_tag "team_position" do %>
-    <%= render partial: "organization_position", collection: @positions, as: :position %>
-    <%= paginate @positions %>
+<div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
+  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+    <div class="input input-group max-w-none" tabindex="0">
+    <%= inline_icon "search" %>
+      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
+    <% if params[:q] && params[:q] != "" %>
+      <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+        <%= inline_icon "view-close", size: 24 %>
+      </button>
+    <% end %>
+  </div>
+    <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
+    <%= form.hidden_field :view, value: params[:view] if params[:view] %>
+  <% end %>
+  <div style="text-align: center;">
+    <% ["all", "members", "managers"].each do |filter| %>
+      <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if params[:view] == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
+    <% end %>
+  </div>
+</div>
+<% if params[:view] == "list" %>
+  <% if @all_positions.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Date invited</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Contact</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    <% if @all_positions.any? %>
+      <%= turbo_frame_tag "team_position" do %>
+        <%= render partial: "organizer_positions/organizer_position_row", collection: @positions, as: :organizer_position %>
+      <% end %>
+    <% end %>
+  </table>
+  <%= paginate @positions %>
+  <% else %>
+    <%= blankslate "No #{params[:filter] == "all" ? "others" : params[:filter] || "others"} on your team yet" %>
   <% end %>
 <% else %>
-  <%= blankslate "No others on your team yet" %>
+
+  <% if @all_positions.any? %>
+    <%= turbo_frame_tag "team_position" do %>
+      <div class="grid grid-cols-1 lg:grid-cols-2">
+        <%= render @positions %>
+      </div>
+      <%= paginate @positions %>
+    <% end %>
+  <% else %>
+    <%= blankslate "No others on your team yet" %>
+  <% end %>
 <% end %>
 
 <% if @pending.any? %>
@@ -46,7 +94,7 @@
   </h2>
 
   <div class="flex flex-col" style="gap: 0.5rem">
-    <%= render partial: "organization_position_invite_pending", collection: @pending, as: :invite %>
+    <%= render @pending %>
   </div>
 <% end %>
 

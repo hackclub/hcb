@@ -1,16 +1,25 @@
 <% source = activity.trackable.source_event %>
 <% destination = activity.trackable.destination_event %>
+<% current_user ||= local_assigns[:p][:current_user] %>
 
-<% unless activity.trackable.rejected? %>
-  <% if activity.trackable.card_grant.present? %>
-    <%= render layout: "/public_activity/common", locals: { activity: } do %>
-      created a <%= render_money activity.trackable.amount %> card grant on
-      <%= link_to source.name, source %> for
-      <span class="muted"><%= activity.trackable.card_grant.user&.name || activity.trackable.card_grant.email %></span>
-    <% end %>
-  <% else %>
-    <%= render layout: "/public_activity/common", locals: { activity: } do %>
-      transferred <%= render_money activity.trackable.amount %> from <%= link_to source.name, source %> to <%= link_to destination.name, destination %>
-    <% end %>
+<% if activity.trackable.card_grant.present? %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    created a <%= render_money activity.trackable.amount %> card grant on
+    <%= link_to source.name, source %> for
+    <span class="muted"><%= activity.trackable.card_grant.user&.name || activity.trackable.card_grant.email %></span>
+    <%= "(rejected)" if activity.trackable.rejected? %>
+  <% end %>
+<% elsif activity.trackable.destination_subledger_id && activity.trackable.source_subledger_id.nil? %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    sent a <%= render_money activity.trackable.amount %> top-up from <%= link_to source.name, source %>
+  <% end %>
+<% elsif activity.trackable.source_subledger_id && activity.trackable.destination_subledger_id.nil? %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    returned <%= render_money activity.trackable.amount %> to <%= link_to destination.name, destination %>
+  <% end %>
+<% else %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    transferred <%= render_money activity.trackable.amount %> from <%= link_to source.name, source %> to <%= link_to destination.name, destination %>
+    <%= "(rejected)" if activity.trackable.rejected? %>
   <% end %>
 <% end %>

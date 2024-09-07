@@ -3,31 +3,17 @@
     <%= help_message if current_user %>
   </p>
 
-  <p class="text-center space-x-2 *:inline-block">
-    <%= link_to "HCB FAQs", faq_path %>
-    <span>&middot;</span>
-    <%= link_to "Brand Guidelines", branding_path %>
-    <span>&middot;</span>
-    <%= link_to "HCB APIs", v3_path %>
-    <% if current_user&.events&.not_demo_mode&.any? %>
-      <span>&middot;</span>
-      <%= link_to "Share Feedback", "https://hack.af/bank-userfeedback?prefill_Name=#{current_user&.name}&prefill_Email=#{current_user&.email}&prefill_Organization=#{current_user&.events&.first&.name}", target: :_blank %>
-    <% end %>
-  </p>
-
   <p class="text-center text-xs">
     <% if commit_hash.present? %>
+      Build <em><%= commit_name %></em>
       <% if commit_duration.present? %>
-        Build <em aria-label="<%= commit_hash %>" class="tooltipped tooltipped--n tooltipped--lg"><%= commit_name %></em>
         from <%= commit_duration %> ago.
-      <% else %>
-        Build <em aria-label="<%= commit_hash %>" class="tooltipped tooltipped--n tooltipped--lg"><%= commit_name %></em>.
       <% end %>
     <% end %>
     <% unless Rails.env.production? %>
       <% @sql_count = QueryCount::Counter.counter %>
       <% @sql_cached_count = QueryCount::Counter.counter_cache %>
-      Loaded using <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %> cached). Running on Rails <%= Rails::VERSION::STRING %>.
+      Loaded using <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %> cached). Running on Rails <%= Rails::VERSION::STRING %> with Ruby <%= RUBY_VERSION %>.
     <% end %>
   </p>
 </footer>

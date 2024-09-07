@@ -33,6 +33,8 @@ class HcbCodesController < ApplicationController
 
     authorize @hcb_code
 
+    return not_found if @hcb_code.unused?
+
     if params[:show_details] == "true" && @hcb_code.ach_transfer?
       ahoy.track "ACH details shown", hcb_code_id: @hcb_code.id
       @show_ach_details = true
@@ -46,40 +48,41 @@ class HcbCodesController < ApplicationController
       render :show
     end
   rescue Pundit::NotAuthorizedError => e
-    raise unless @event.is_public? && !params[:redirect_to_sign_in]
-
-    if @hcb_code.canonical_transactions.any?
-      txs = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
-      pos = txs.index { |tx| tx.hcb_code == hcb } + 1
-      page = (pos.to_f / EventsController::TRANSACTIONS_PER_PAGE).ceil
-
-      redirect_to event_path(@event, page:, anchor: hcb_id)
+    if @hcb_code.stripe_card.card_grant.present? && current_user == @hcb_code.stripe_card.card_grant.user
+      redirect_to card_grant_path(@hcb_code.stripe_card.card_grant, frame: params[:frame])
     else
-      redirect_to event_path(@event, anchor: hcb_id)
+      raise unless @event.is_public? && !params[:redirect_to_sign_in]
+
+      if @hcb_code.canonical_transactions.any?
+        txs = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
+        pos = txs.index { |tx| tx.hcb_code == hcb } + 1
+        page = (pos.to_f / EventsController::TRANSACTIONS_PER_PAGE).ceil
+
+        redirect_to event_path(@event, page:, anchor: hcb_id)
+      else
+        redirect_to event_path(@event, anchor: hcb_id)
+      end
     end
   end
 
   def memo_frame
     @hcb_code = HcbCode.find(params[:id])
     authorize @hcb_code
-
-    if params[:gen_memo]
-      @ai_memo = HcbCodeService::AiGenerateMemo.new(hcb_code: @hcb_code).run
-    end
   end
 
   def edit
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
     @event = @hcb_code.event
+    @ai_memo = params[:display_ai_memo] == "true" ? @hcb_code.suggested_memos.last : nil
 
     authorize @hcb_code
 
     if params[:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location] }
+      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
     end
 
     @frame = turbo_frame_request?
-    @suggested_memos = [::HcbCodeService::AiGenerateMemo.new(hcb_code: @hcb_code).run].compact + ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
+    @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
   end
 
   def pin
@@ -110,14 +113,14 @@ class HcbCodesController < ApplicationController
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
 
     authorize @hcb_code
-    hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location)
+    hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location, :ledger_instance)
     hcb_code_params[:memo] = hcb_code_params[:memo].presence
 
     @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: hcb_code_params[:memo]) }
     @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: hcb_code_params[:memo]) }
 
     if params[:hcb_code][:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], renamed: true }
+      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
     redirect_to @hcb_code
@@ -207,9 +210,9 @@ class HcbCodesController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         if removed
-          render turbo_stream: turbo_stream.remove(tag_dom_id(hcb_code, tag)) + turbo_stream.update_all(tag_dom_class(hcb_code, tag, "_toggle"), tag.label)
+          render partial: "tags/destroy", locals: { hcb_code:, tag: }
         else
-          render turbo_stream: turbo_stream.append("hcb_code_#{hcb_code.hashid}_tags", partial: "canonical_transactions/tag", locals: { tag:, hcb_code: }) + turbo_stream.update_all(tag_dom_class(hcb_code, tag, "_toggle"), "✓ #{tag.label}")
+          render partial: "tags/create", locals: { hcb_code:, tag: }
         end
       end
       format.any { redirect_back fallback_location: @event }
@@ -237,35 +240,6 @@ class HcbCodesController < ApplicationController
     flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
 
     redirect_to personal_tx.invoice
-  end
-
-  def breakdown
-    @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
-    authorize @hcb_code
-
-    unless @hcb_code.canonical_transactions.any? { |ct| ct.amount_cents.positive? }
-      return redirect_to @hcb_code
-    end
-
-    @event = @hcb_code.event
-    @event = @hcb_code.disbursement.destination_event if @hcb_code.disbursement?
-
-    usage_breakdown = @hcb_code.usage_breakdown
-
-    @spent_on = usage_breakdown[:spent_on]
-    @available = usage_breakdown[:available]
-
-    respond_to do |format|
-
-      format.html do
-        redirect_to @hcb_code
-      end
-
-      format.pdf do
-        render pdf: "breakdown", page_height: "11in", page_width: "8.5in"
-      end
-
-    end
   end
 
 end

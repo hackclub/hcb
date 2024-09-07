@@ -3,7 +3,7 @@
 class InvoicesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :new]
+  before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
   def index
@@ -100,8 +100,6 @@ class InvoicesController < ApplicationController
   end
 
   def create
-    @event = Event.friendly.find(params[:event_id])
-
     authorize @event, policy_class: InvoicePolicy
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
@@ -111,7 +109,7 @@ class InvoicesController < ApplicationController
                           filtered_params["due_date(3i)"].to_i)
 
     @invoice = ::InvoiceService::Create.new(
-      event_id: params[:event_id],
+      event_id: @event.id,
       due_date:,
       item_description: filtered_params[:item_description],
       item_amount: filtered_params[:item_amount],
@@ -138,7 +136,6 @@ class InvoicesController < ApplicationController
   rescue => e
     notify_airbrake(e)
 
-    @event = Event.friendly.find(params[:event_id])
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor)
 
@@ -220,6 +217,8 @@ class InvoicesController < ApplicationController
   def refund
     @invoice = Invoice.find(params[:id])
     @hcb_code = @invoice.local_hcb_code
+
+    authorize @invoice
 
     ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
 

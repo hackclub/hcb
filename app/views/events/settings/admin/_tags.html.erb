@@ -1,0 +1,48 @@
+<%= turbo_frame_tag "organization_tags" do %>
+  <h3 id="admin_organization_tags" class="mb2 mt1">Organization tags</h3>
+  <div class="mb1">
+    <div class="flex items-center flex-wrap" style="gap: 0.25rem">
+      <% @event.event_tags.each do |tag| %>
+        <span class="badge bg-muted ml0 mr1">
+          <% if tag.purpose.present? %>
+            <span class="bold italic"><%= tag.purpose.titleize %>:</span>&nbsp;
+          <% end %>
+          <%= tag.name %>
+          <%= button_to toggle_event_tag_event_path(id: @event.id, event_tag_id: tag.id), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
+            <%= inline_icon "view-close", size: 16 %>
+          <% end %>
+        </span>
+      <% end %>
+
+      <div class="overflow-visible relative line-height-0" data-controller="menu" data-menu-append-to-value="turbo-frame#organization_tags">
+        <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+
+          Add tag
+        </button>
+        <div class="menu__content menu__content--2 menu__content--compact menu__content--left h6" data-menu-target="content">
+          <% EventTag.find_each do |tag| %>
+            <div class="flex items-center">
+              <%= button_to toggle_event_tag_event_path(id: @event.id, event_tag_id: tag.id), class: "menu__action", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                <%= "✓" if @event.event_tags.include?(tag) %>
+
+                <% if tag.purpose.present? %>
+                  <span class="bold italic"><%= tag.purpose.titleize %>:</span>&nbsp;
+                <% end %>
+                <%= tag.name %>
+              <% end %>
+              <%= button_to event_event_tag_path(@event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
+                <%= inline_icon "delete", size: 16, style: "margin: 0" %>
+              <% end %>
+            </div>
+          <% end %>
+          <% if @event.event_tags.any? %>
+            <div class="menu__divider"></div>
+          <% end %>
+          <%= form_with url: event_event_tags_path(@event), data: { turbo: true } do |form| %>
+            <%= form.hidden_field :event_id, value: @event.id %>
+            <%= form.text_field :name, data: { "behavior" => @event.event_tags.none? ? "autofocus" : "" }, class: "menu__input", placeholder: "+ Create tag", autocomplete: "off", required: true %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

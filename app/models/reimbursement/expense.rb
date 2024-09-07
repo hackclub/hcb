@@ -54,6 +54,8 @@ module Reimbursement
     validates :expense_number, uniqueness: { scope: :reimbursement_report_id }
     validate :valid_expense_type
 
+    broadcasts_refreshes_to ->(expense) { expense.report }
+
     before_validation do
       unless self.expense_number
         self.expense_number = (self.report.expenses.with_deleted.pluck(:expense_number).max || 0) + 1
@@ -69,11 +71,14 @@ module Reimbursement
       event :mark_approved do
         transitions from: :pending, to: :approved
         after do |current_user|
-          if report.team_review_required? && current_user
-            update(approved_by: current_user)
-            create_activity(key: "reimbursement_expense.approved", owner: current_user)
+          if report.team_review_required?
+            ReimbursementMailer.with(report: self.report, expense: self).expense_approved.deliver_later
+            if current_user
+              update(approved_by: current_user)
+              create_activity(key: "reimbursement_expense.approved", owner: current_user)
+            end
           end
-          ReimbursementMailer.with(report: self.report, expense: self).expense_approved.deliver_later
+
         end
       end
 
@@ -135,7 +140,7 @@ module Reimbursement
     def status_color
       return "muted" if pending? && report.draft?
       return "primary" if rejected?
-      return "warning" if pending?
+      return "warning" if pending? || report.reversed?
 
       "success"
     end

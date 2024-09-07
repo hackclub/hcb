@@ -11,6 +11,11 @@ class TwilioController < ActionController::Base
       (https://hcb.hackclub.com/my/settings).
     MSG
 
+    if reimbursement?
+      @report = @user.reimbursement_reports.create(inviter: @user)
+      @receiptable = @report.expenses.create!(amount_cents: 0)
+    end
+
     return reply_with(<<~MSG.squish) unless Flipper.enabled?(:receipt_bin_2023_04_07, @user) || @receiptable
       Hey! Looking to upload receipts? Make sure the Receipt Bin feature preview
       is enabled on your account (https://hcb.hackclub.com/my/settings/previews).
@@ -25,13 +30,19 @@ class TwilioController < ActionController::Base
       receiptable: @receiptable,
       uploader: @user,
       attachments: @attachments,
-      upload_method: "sms"
+      upload_method: reimbursement? ? "sms_reimbursement" : "sms"
     ).run!
 
-    if @receiptable
-      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@receiptable.memo} (#{hcb_code_url(@receiptable)})!")
+    if reimbursement? && receipts.first.suggested_memo
+      @receiptable.update(memo: receipts.first.suggested_memo, value: receipts.first.extracted_total_amount_cents.to_f / 100)
+    end
+
+    if reimbursement?
+      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to a new reimbursement report! #{reimbursement_report_url(@report)}")
+    elsif @receiptable
+      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@receiptable.memo}! #{hcb_code_url(@receiptable)}")
     else
-      reply_with("Added #{receipts.count} #{"receipt".pluralize(receipts.count)} to your Receipt Bin (https://hcb.hackclub.com/my/inbox)!")
+      reply_with("Added #{receipts.count} #{"receipt".pluralize(receipts.count)} to your Receipt Bin! https://hcb.hackclub.com/my/inbox")
     end
   end
 
@@ -71,7 +82,7 @@ class TwilioController < ActionController::Base
   def set_receiptable
     @receiptable = nil
 
-    if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago
+    if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago && !reimbursement?
       @receiptable = last_sent_message_hcb_code
     end
   end
@@ -82,6 +93,10 @@ class TwilioController < ActionController::Base
                                     .where("twilio_messages.to" => params["From"])
                                     .where.not(hcb_code: nil)
                                     .last&.hcb_code
+  end
+
+  def reimbursement?
+    params["To"] == "+18023004260"
   end
 
 end

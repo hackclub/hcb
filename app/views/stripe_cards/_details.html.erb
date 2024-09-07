@@ -17,7 +17,7 @@
       </p>
     <% end %>
 
-    <% eta = stripe_card.stripe_obj.to_hash.dig(:shipping, :eta) %>
+    <% eta = stripe_card.stripe_obj.to_hash&.dig(:shipping, :eta) %>
     <% if eta && Time.now.before?(Time.at(eta) + 3.days) %>
       <p>
         <strong>Expected arrival</strong>
@@ -26,9 +26,19 @@
     <% else %>
       <p>
         <strong>Activation status</strong>
-        <span class="flex items-baseline">
+        <span class="flex items-baseline g-1">
           <%= status_badge stripe_card.status_badge_type %>
           <%= stripe_card.status_text.capitalize %>
+        </span>
+      </p>
+    <% end %>
+
+    <% if stripe_card.cash_withdrawal_enabled? %>
+      <p>
+        <strong>Cash withdrawals</strong>
+        <span class="flex items-baseline g-1">
+          <%= status_badge :success %>
+          Enabled
         </span>
       </p>
     <% end %>
@@ -44,11 +54,11 @@
           <% else %>
             <%= stripe_card.hidden_card_number_with_last_four %>
           <% end %>
-          <%= link_to stripe_card_path(stripe_card, show_details: (!@show_card_details).to_s), data: { turbo: true } do %>
+          <%= link_to stripe_card_path(stripe_card, show_details: (!@show_card_details).to_s, frame: @frame), data: { turbo: true } do %>
             <%= inline_icon @show_card_details ? "view-fill" : "view", class: "align-middle" %>
           <% end %>
         <% else %>
-          <%= stripe_card.hidden_card_number %>
+          <%= stripe_card.hidden_card_number_with_last_four %>
           <div class="right tooltipped tooltipped--w" aria-label="Hidden to protect security">
             <%= inline_icon "private", size: 32, class: "muted" %>
           </div>
@@ -75,6 +85,16 @@
         <% end %>
       </div>
     </div>
+
+    <% if stripe_card.cash_withdrawal_enabled? %>
+      <div class="fs-mask" data-controller="pin" data-pin-card-id-value="<%= stripe_card.id %>" data-pin-stripe-id-value="<%= stripe_card.stripe_id %>" data-pin-stripe-api-key-value="<%= StripeService.publishable_key %>">
+        <strong>PIN</strong>
+        <div class="flex justify-between font-mono items-center">
+          <span id="card-pin">••••</span>
+          <%= inline_icon @show_card_details ? "view-fill" : "view", class: "align-middle", "data-action": "click->pin#view" %>
+        </div>
+      </div>
+    <% end %>
 
     <div class="fs-mask">
       <strong>Expiration date</strong>
@@ -121,15 +141,11 @@
   <section class="grid grid--split items-end pt2">
     <div class="stat tooltipped tooltipped--s" aria-label="This is your account balance">
       <strong class="stat__label">Spending limit</strong>
-      <span class="stat__value inline-flex">
-        <%= render_money_amount stripe_card.balance_available %>
-      </span>
+      <span class="stat__value"><%= render_money_amount stripe_card.balance_available %></span>
     </div>
     <div class="stat stat--small">
       <strong class="stat__label">Lifetime spent</strong>
-      <span class="stat__value">
-        <%= render_money_amount stripe_card.total_spent %>
-      </span>
+      <span class="stat__value"><%= render_money_amount stripe_card.total_spent %> </span>
     </div>
   </section>
 

@@ -95,6 +95,8 @@
 #  fk_rails_...  (voided_by_id => users.id)
 #
 class Invoice < ApplicationRecord
+  MAX_CARD_AMOUNT = 10_000_00 # Maximum amount we allow to be paid via credit card, in cents
+
   has_paper_trail skip: [:payment_method_ach_credit_transfer_account_number] # ciphertext columns will still be tracked
   has_encrypted :payment_method_ach_credit_transfer_account_number
 
@@ -186,6 +188,10 @@ class Invoice < ApplicationRecord
   # Stripe syncing…
   before_destroy :close_stripe_invoice
 
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
+  end
+
   def fee_reimbursed?
     !fee_reimbursement.nil?
   end
@@ -257,7 +263,7 @@ class Invoice < ApplicationRecord
     self.auto_advance = inv.auto_advance
     self.due_date = Time.at(inv.due_date).to_datetime # convert from unixtime
     self.ending_balance = inv.ending_balance
-    self.finalized_at = inv.finalized_at
+    self.finalized_at = inv.respond_to?(:status_transitions) ? inv.status_transitions.finalized_at : inv.try(:finalized_at)
     self.hosted_invoice_url = inv.hosted_invoice_url
     self.invoice_pdf = inv.invoice_pdf
     self.livemode = inv.livemode
@@ -269,7 +275,7 @@ class Invoice < ApplicationRecord
     self.stripe_charge_id = inv&.charge&.id
     self.subtotal = inv.subtotal
     self.tax = inv.tax
-    self.tax_percent = inv.tax_percent
+    # self.tax_percent = inv.tax_percent
     self.total = inv.total
     # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
     self.payment_method_type = type = inv&.charge&.payment_method_details&.type

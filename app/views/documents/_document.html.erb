@@ -3,7 +3,11 @@
     <div class="overflow-hidden" style="max-height: 270px;">
       <%= render "documents/preview", document: %>
     </div>
-    <strong class="h3 block mt1 line-height-2"><%= document.name %></strong>
+    <strong class="font-brand h3 block mt1 line-height-2"><%= document.name %>
+      <% if document.archived? %>
+        <span class="font-brand h4 mt1 line-height-1" style="color: gray">(Archived)</span>
+      <% end %>
+    </strong>
     <% unless document.common? %>
       <span class="inline-flex w-100 mt1 items-center muted">
         <%= user_mention document.user %>

@@ -1,9 +1,14 @@
-const whenViewed = (element, callback) => new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), { threshold: 1 }).observe(element);
+/* global BK, $, loadTextExpander */
+
+const whenViewed = (element, callback) =>
+  new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
+    threshold: 1,
+  }).observe(element)
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
-    const controlOrCommandClick = e.ctrlKey || e.metaKey;
+    const controlOrCommandClick = e.ctrlKey || e.metaKey
     if ($(this).attr('href') || $(e.target).attr('href')) {
-      if (controlOrCommandClick) return;
+      if (controlOrCommandClick) return
       e.preventDefault()
       e.stopPropagation()
     }
@@ -11,15 +16,19 @@ const loadModals = element => {
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
-      closeExisting: false
+      closeExisting: false,
     })
     return this.blur()
   })
 
-  $(element).on('click', '[data-behavior~=modal_trigger] [data-behavior~=modal_ignore]', function (e) {
-    e.stopPropagation();
-    e.preventDefault()
-  });
+  $(element).on(
+    'click',
+    '[data-behavior~=modal_trigger] [data-behavior~=modal_ignore]',
+    function (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+  )
 }
 
 // restore previous theme setting
@@ -37,21 +46,21 @@ $(document).on('click', '[data-behavior~=flash]', function () {
   $(this).fadeOut('medium')
 })
 
-loadModals(document);
-(() => {
+loadModals(document)
+;(() => {
   let autoModals = $('[data-modal-auto-open~=true]')
 
-  if (autoModals.length < 1) return;
+  if (autoModals.length < 1) return
 
-  let element = autoModals.first();
+  let element = autoModals.first()
 
   BK.s('modal', '#' + $(element).data('modal')).modal({
     modalClass: $(element).parents('turbo-frame').length
       ? 'turbo-frame-modal'
       : undefined,
-    closeExisting: false
+    closeExisting: false,
   })
-})();
+})()
 
 $(document).on('keyup', 'action', function (e) {
   if (e.keyCode === 13) {
@@ -85,7 +94,7 @@ $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
     'address_state',
     'address_postal_code',
     'address_country',
-    'id'
+    'id',
   ]
 
   return fields.forEach(field =>
@@ -170,21 +179,22 @@ $(document).keydown(function (e) {
 
 $(document).on('click', '[data-behavior~=toggle_theme]', () => BK.toggleDark())
 
-function loadAsyncFrames(){
+function loadAsyncFrames() {
   $.each(BK.s('async_frame'), (i, frame) => {
     const loadFrame = () => {
       $.get($(frame).data('src'), data => {
         const parent = $(frame).parent()
         $(frame).replaceWith(data)
         loadModals(parent)
+        loadTextExpander()
       }).fail(() => {
         $(frame).children('.shimmer').first().addClass('shimmer--error')
       })
     }
-  
-    if ($(frame).data('loading') == "lazy") {
-      whenViewed(frame, loadFrame);
-    } else loadFrame();
+
+    if ($(frame).data('loading') == 'lazy') {
+      whenViewed(frame, loadFrame)
+    } else loadFrame()
   })
 }
 
@@ -209,11 +219,13 @@ $(document).on('turbo:load', function () {
         if ((email = localStorage.getItem('login_email'))) {
           BK.s('login').find('input[type=email]').val(email)
         }
-      } catch (e) { }
+      } catch (e) {
+        console.log(e)
+      }
     }
 
     // auto fill @hackclub.com email addresses on submit
-    BK.s('login').submit(e => {
+    BK.s('login').submit(() => {
       const val = $('input[name=email]').val()
       // input must end with '@h'
       if (val.endsWith('@h')) {
@@ -261,9 +273,7 @@ $(document).on('turbo:load', function () {
 
     if (value.lastIndexOf('.') != -1) {
       let cents = value.substring(value.lastIndexOf('.'), value.length)
-      cents = cents
-        .replace(/[\.\,]/g, '')
-        .substring(0, cents.length > 2 ? 2 : 1)
+      cents = cents.replace(/[.,]/g, '').substring(0, cents.length > 2 ? 2 : 1)
 
       removeExtraCents =
         value.substring(0, value.lastIndexOf('.')) + '.' + cents
@@ -280,13 +290,13 @@ $(document).on('turbo:load', function () {
     },
     change: function () {
       this.value = this.value.replace(/\s/g, '')
-    }
+    },
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
     .each(function () {
       $(this).css({
-        height: `${this.scrollHeight + 1}px`
+        height: `${this.scrollHeight + 1}px`,
       })
     })
     .on('input', function () {
@@ -331,10 +341,12 @@ $(document).on('turbo:load', function () {
       if (e.target.checked) shippingInputs.slideUp()
     })
   }
-  
+
   if (BK.s('reimbursement_report_create_form_type_selection').length) {
     const dropdownInput = $('#reimbursement_report_user_email')
+    const dropdownInputLabel = $('label[for="reimbursement_report_user_email"]')
     const emailInput = $('#reimbursement_report_email')
+    const emailInputLabel = $('label[for="reimbursement_report_email"]')
     const maxInput = $('#reimbursement_report_maximum_amount_wrapper')
     const inviteInput = $('#reimbursement_report_invite_message_wrapper')
 
@@ -342,67 +354,102 @@ $(document).on('turbo:load', function () {
     const forOrganizerInput = $('#reimbursement_report_for_organizer')
     const forExternalInput = $('#reimbursement_report_for_external')
 
-    dropdownInput.hide()
-    emailInput.hide()
-    maxInput.hide()
-    inviteInput.hide()
+    const externalInputWrapper = $('#external_contributor_wrapper')
+
+    const hideAllInputs = () =>
+      [
+        dropdownInput,
+        dropdownInputLabel,
+        emailInput,
+        emailInputLabel,
+        maxInput,
+        inviteInput,
+      ].forEach(input => input.hide())
+    hideAllInputs()
+
+    externalInputWrapper.slideUp()
 
     $(forMyselfInput).on('change', e => {
       if (e.target.checked) {
-        dropdownInput.slideUp()
-        emailInput.slideUp()
-        maxInput.slideUp()
-        inviteInput.slideUp()
-        emailInput.val(emailInput[0].attributes["value"].value)
+        externalInputWrapper.slideUp({
+          complete: hideAllInputs,
+        })
+        emailInput.val(emailInput[0].attributes['value'].value)
       }
     })
-    
+
     $(forOrganizerInput).on('change', e => {
       if (e.target.checked) {
         emailInput.val(dropdownInput.val())
-        dropdownInput.slideDown()
-        emailInput.slideUp()
-        maxInput.slideDown()
-        inviteInput.slideUp()
+        externalInputWrapper.slideUp({
+          complete: () => {
+            dropdownInputLabel.show()
+            dropdownInput.show()
+            maxInput.show()
+            inviteInput.hide()
+            emailInput.hide()
+            emailInputLabel.hide()
+            externalInputWrapper.slideDown()
+          },
+        })
       }
     })
-    
+
     $(forExternalInput).on('change', e => {
       if (e.target.checked) {
-        emailInput.val("")
-        dropdownInput.slideUp()
-        emailInput.slideDown()
-        maxInput.slideDown()
-        inviteInput.slideDown()
+        externalInputWrapper.slideUp({
+          complete: () => {
+            emailInput.val('')
+            dropdownInputLabel.hide()
+            dropdownInput.hide()
+            emailInputLabel.show()
+            emailInput.show()
+            maxInput.show()
+            inviteInput.show()
+            externalInputWrapper.slideDown()
+          },
+        })
       }
     })
-    
+
     $(dropdownInput).on('change', e => {
       emailInput.val(e.target.value)
     })
   }
 
   $('[data-behavior~=mention]').on('click', e => {
-    BK.s('comment').val(`${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? " " : "")}${e.target.dataset.mentionValue || e.target.innerText}`)
-    BK.s('comment')[0].scrollIntoView();
-  })  
-
-  if (BK.thereIs('additional_transparency_settings')) {
-    const additionalTransparencySettings = BK.s(
-      'additional_transparency_settings'
+    BK.s('comment').val(
+      `${
+        BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
+      }${e.target.dataset.mentionValue || e.target.innerText}`
     )
-    const transparencyToggle = $('#event_is_public')
-    $(transparencyToggle).on('change', e => {
-      if (e.target.checked) {
-        // When transparency mode is enabled, also enable indexing by default
-        $('#event_is_indexable').prop('checked', true)
+    BK.s('comment')[0].scrollIntoView()
+  })
 
-        additionalTransparencySettings.slideDown()
-      } else {
-        additionalTransparencySettings.slideUp()
-      }
-    })
-  }
+  $('.input-group').on('click', e => {
+    // focus on the input when clicking on the input-group
+    e.currentTarget.querySelector('input').focus()
+  })
+
+  // click events trigger weird behavior
+  $('[data-behavior~=clear').on('mouseup', e => {
+    e.currentTarget.parentElement.querySelector('input').value = ''
+  })
+
+  document.body.addEventListener('keydown', e => {
+    const el = document.querySelector('[data-behavior~=search]')
+    if (el && e.key === '/') {
+      // if a text input is focused, don't trigger the search
+      if (document.activeElement.tagName === 'INPUT') return
+      if (document.activeElement.tagName === 'TEXTAREA') return
+      // if a modal is open, don't trigger the search
+      if (document.querySelector('.jquery-modal.current.blocker')) return
+      e.preventDefault()
+      el.focus()
+      // move the cursor to the end of the input
+      el.setSelectionRange(el.value.length, el.value.length)
+    }
+  })
 
   const tiltElement = $('[data-behavior~=hover_tilt]')
   const enableTilt = () =>
@@ -412,7 +459,7 @@ $(document).on('turbo:load', function () {
       perspective: 1500,
       glare: true,
       maxGlare: 0.25,
-      scale: 1.0625
+      scale: 1.0625,
     })
   const disableTilt = () => tiltElement.tilt.destroy.call(tiltElement)
   const setTilt = function () {
@@ -429,74 +476,135 @@ $(document).on('turbo:load', function () {
 })
 
 $(document).on('turbo:frame-load', function () {
-  if (BK.thereIs('check_payout_method_inputs') && BK.thereIs('ach_transfer_payout_method_inputs')) {
+  if (
+    BK.thereIs('check_payout_method_inputs') &&
+    BK.thereIs('ach_transfer_payout_method_inputs') &&
+    BK.thereIs('paypal_transfer_payout_method_inputs')
+  ) {
     const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
-    const achTransferPayoutMethodInputs = BK.s('ach_transfer_payout_method_inputs')
-    $(document).on("change", "#user_payout_method_type_userpayoutmethodcheck", e => {
-      if (e.target.checked) checkPayoutMethodInputs.slideDown() && achTransferPayoutMethodInputs.slideUp()
-    })
-    $(document).on("change", "#user_payout_method_type_userpayoutmethodachtransfer", e => {
-      if (e.target.checked) achTransferPayoutMethodInputs.slideDown() && checkPayoutMethodInputs.slideUp()
-    })
+    const achTransferPayoutMethodInputs = BK.s(
+      'ach_transfer_payout_method_inputs'
+    )
+    const paypalTransferPayoutMethodInputs = BK.s(
+      'paypal_transfer_payout_method_inputs'
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodcheck',
+      e => {
+        if (e.target.checked)
+          checkPayoutMethodInputs.slideDown() &&
+            achTransferPayoutMethodInputs.slideUp() &&
+            paypalTransferPayoutMethodInputs.slideUp()
+      }
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodachtransfer',
+      e => {
+        if (e.target.checked)
+          achTransferPayoutMethodInputs.slideDown() &&
+            checkPayoutMethodInputs.slideUp() &&
+            paypalTransferPayoutMethodInputs.slideUp()
+      }
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodpaypaltransfer',
+      e => {
+        if (e.target.checked)
+          paypalTransferPayoutMethodInputs.slideDown() &&
+            checkPayoutMethodInputs.slideUp() &&
+            achTransferPayoutMethodInputs.slideUp()
+      }
+    )
   }
 })
 
-$('[data-behavior~=ctrl_enter_submit]').keydown(function (event) {
-  if ((event.ctrlKey || event.metaKey) && event.keyCode === 13) {
-    $(this).closest('form').get(0).requestSubmit()
+$(document).on(
+  'keydown',
+  '[data-behavior~=ctrl_enter_submit]',
+  function (event) {
+    if ((event.ctrlKey || event.metaKey) && event.key == 'Enter') {
+      $(this).closest('form').get(0).requestSubmit()
+    }
+  }
+)
+
+$(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
+  if (event.target.value === '0.00') {
+    event.target.select()
   }
 })
 
-function hidePWAPrompt() {
-  document.body.classList.add("hide__pwa__prompt")
+window.hidePWAPrompt = () => {
+  document.body.classList.add('hide__pwa__prompt')
 }
 
 $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
-  const controlOrCommandClick = e.ctrlKey || e.metaKey;
+  const controlOrCommandClick = e.ctrlKey || e.metaKey
   if ($(this).attr('href') || $(e.target).attr('href')) {
-    if (controlOrCommandClick) return;
+    if (controlOrCommandClick) return
     e.preventDefault()
     e.stopPropagation()
   }
-  $(e.target).parents(".modal--popover").addClass("modal--popover--receipt-expanded");
-  let selected_receipt = document.querySelectorAll(`.hidden_except_${e.originalEvent.target.dataset.receiptId}`)[0]
-  selected_receipt.style.display = "flex";
-  selected_receipt.style.setProperty("--receipt-size", "100%");
-  selected_receipt.classList.add("receipt--expanded")
+  $(e.target)
+    .parents('.modal--popover')
+    .addClass('modal--popover--receipt-expanded')
+  let selected_receipt = document.querySelectorAll(
+    `.hidden_except_${e.originalEvent.target.dataset.receiptId}`
+  )[0]
+  selected_receipt.style.display = 'flex'
+  selected_receipt.style.setProperty('--receipt-size', '100%')
+  selected_receipt.classList.add('receipt--expanded')
 })
 
-function unexpandReceipt() {
-  document.querySelectorAll(`.receipt--expanded`)[0]?.classList?.remove('receipt--expanded');
-  document.querySelector('.modal--popover.modal--popover--receipt-expanded')?.classList?.remove('modal--popover--receipt-expanded');
+window.unexpandReceipt = () => {
+  document
+    .querySelectorAll(`.receipt--expanded`)[0]
+    ?.classList?.remove('receipt--expanded')
+  document
+    .querySelector('.modal--popover.modal--popover--receipt-expanded')
+    ?.classList?.remove('modal--popover--receipt-expanded')
 }
 
-document.addEventListener("turbo:load", () => {
+document.addEventListener('turbo:load', () => {
   if (window.self === window.top) {
-    document.body.classList.remove('embedded');
+    document.body.classList.remove('embedded')
   }
 })
 
-document.addEventListener("turbo:before-stream-render", ((event) => {
+document.addEventListener('turbo:before-stream-render', event => {
   const fallbackToDefaultActions = event.detail.render
   event.detail.render = function (streamElement) {
-    if (streamElement.action == "refresh_link_modals") {
-      const turboStreamElements = document.querySelectorAll('turbo-frame');
+    if (streamElement.action == 'refresh_link_modals') {
+      const turboStreamElements = document.querySelectorAll('turbo-frame')
       turboStreamElements.forEach(element => {
-        if (element.id.startsWith('link_modal') && window.location.pathname == "/my/inbox") {
-          element.innerHTML = "<strong>Loading...</strong>"
-          element.reload();
+        if (
+          element.id.startsWith('link_modal') &&
+          window.location.pathname == '/my/inbox'
+        ) {
+          element.innerHTML = '<strong>Loading...</strong>'
+          element.reload()
         }
-      });
-    } else if (streamElement.action == "close_modal") {
+      })
+    } else if (streamElement.action == 'refresh_suggested_pairings') {
+      const turboStreamElements = document.querySelectorAll('turbo-frame')
+      turboStreamElements.forEach(element => {
+        if (element.id.startsWith('suggested_pairings')) {
+          element.src = '/my/receipt_bin/suggested_pairings'
+          element.reload()
+        }
+      })
+    } else if (streamElement.action == 'close_modal') {
       $.modal.close().remove()
-      
-    } else if (streamElement.action == "load_new_async_frames") {
+    } else if (streamElement.action == 'load_new_async_frames') {
       loadAsyncFrames()
     } else {
       fallbackToDefaultActions(streamElement)
     }
   }
-}))
+})
 
 let hankIndex = 0
 $(document).on('keydown', function (e) {
@@ -511,7 +619,7 @@ $(document).on('keydown', function (e) {
 })
 
 // Disable scrolling on <input type="number" /> elements
-$(document).on("wheel", "input[type=number]", e => {
+$(document).on('wheel', 'input[type=number]', e => {
   e.preventDefault()
   e.target.blur()
 })

@@ -16,7 +16,6 @@ module EventService
         postal_code:,
         point_of_contact_id: @point_of_contact.id,
         is_public:,
-        sponsorship_fee: 0.07,
         organization_identifier:,
         omit_stats: false,
         can_front_balance: true,

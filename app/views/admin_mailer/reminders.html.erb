@@ -5,3 +5,11 @@ Here are tasks that are older than 24 hours:
     <li style="margin-top: 8px;"><%= link_to task[:label], task[:url] %></li>
   <% end %>
 </ul>
+
+Here the currently negative events:
+
+<ul>
+  <% Event.negatives.each do |event| %>
+    <li style="margin-top: 8px;"><%= link_to event.name, event %></li>
+  <% end %>
+</ul>

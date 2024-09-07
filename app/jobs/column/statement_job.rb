@@ -30,6 +30,8 @@ module Column
                          "TRANSACTION"
                        }],
         [:amount_cents, ->(t) { t["available_amount"] }],
+        [:bank_account_id, ->(t) { t["bank_account_id"] }],
+        [:available_balance, ->(t) { t["available_balance"] }],
         [:check_number, ->(t) {
           transaction_id = t["transaction_id"]
           if transaction_id.start_with? "chkt"
@@ -50,7 +52,7 @@ module Column
 
       rows = []
 
-      transactions_by_report.each do |report_id, transactions|
+      transactions_by_report.each_value do |transactions|
         transactions.reverse.each_with_index do |transaction, transaction_index|
           rows << serializer.call(transaction).values
         end
@@ -65,10 +67,10 @@ module Column
         column_statement.file.attach(io: File.open(file), filename: "column_statement_report_#{end_date.iso8601}.csv")
         column_statement.start_date = start_date
         column_statement.end_date = end_date
-        first_txn = transactions_by_report.last.transactions.first
-        last_txn = transactions_by_report.first.transactions.last
-        comunn_statement.starting_balance = first_txn["available_balance"] - first_txn["available_amount"]
-        comunn_statement.closing_balance = last_txn["available_balance"]
+        first_txn = transactions_by_report[transactions_by_report.keys.last].first
+        last_txn = transactions_by_report[transactions_by_report.keys.first].last
+        column_statement.starting_balance = ::ColumnService.balance_over_time(from_date: start_date, to_date: end_date)[:starting]
+        column_statement.closing_balance = ::ColumnService.balance_over_time(from_date: start_date, to_date: end_date)[:closing]
         column_statement.save!
       end
 

@@ -18,7 +18,7 @@ module TransactionGroupingEngine
           :receipts,
           :comments,
           { canonical_transactions: [:canonical_event_mapping, :transaction_source] },
-          { canonical_pending_transactions: [:event, :canonical_pending_declined_mapping] },
+          { canonical_pending_transactions: [:event, :canonical_pending_declined_mapping, :raw_pending_stripe_transaction] },
           { reimbursement_expense_payout: { expense: [:report] } }
         ]
         included_models << :tags if Flipper.enabled?(:transaction_tags_2022_07_29, @event)

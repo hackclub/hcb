@@ -105,7 +105,7 @@
 }
 
 .hide__pwa__prompt .pwa__prompt {
-  display: none!important
+  display: none !important;
 }
 
 .pwa__prompt__hide {
@@ -121,23 +121,22 @@
     display: block;
   }
   @media (min-width: 56em) {
-    display: none!important;
+    display: none !important;
   }
   flex: 1 0 100%;
   background: #ec3750;
   padding: 8px 16px;
   text-align: center;
   color: white;
-  margin-bottom: -16px
+  margin-bottom: -16px;
 }
-
 
 .pwa__prompt > b {
   font-weight: 600;
 }
 
 .pwa__prompt__icon {
-  transform: translateY(2.5px)
+  transform: translateY(2.5px);
 }
 
 .dock__item {
@@ -246,6 +245,7 @@
     line-height: initial;
     color: white;
     font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
     min-width: 1rem;
     min-height: 1rem;
     text-align: center;

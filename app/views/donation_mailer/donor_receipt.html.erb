@@ -19,7 +19,12 @@
   </p>
 <% end %>
 
-<p><%= @donation.event.name %> is fiscally sponsored by Hack Club, a 501(c)(3) nonprofit. Our EIN is 81-2908499. Per IRS guidelines, you agree that no goods or services will be provided in return for this gift.</p>
+<p>
+  <%= @donation.event.name %> is fiscally sponsored by Hack Club, a 501(c)(3) nonprofit. Our EIN is 81-2908499.
+  <% if @donation.tax_deductible %>
+    Per IRS guidelines, you agree that no goods or services will be provided in return for this gift.
+  <% end %>
+</p>
 
 <% if @donation.recurring? %>
 <p>To cancel your donation or update your payment details, click <%= link_to "this link", recurring_donation_url(@donation.recurring_donation.url_hash) %>.</p>

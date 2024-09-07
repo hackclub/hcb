@@ -6,7 +6,8 @@ module Reimbursement
       def run
         clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
         Reimbursement::PayoutHolding.settled.find_each(batch_size: 100) do |payout_holding|
-          if payout_holding.report.user.payout_method.is_a?(User::PayoutMethod::Check)
+          case payout_holding.report.user.payout_method
+          when User::PayoutMethod::Check
             begin
               check = clearinghouse.increase_checks.build(
                 memo: "Reimbursement for #{payout_holding.report.name}."[0...40],
@@ -30,7 +31,7 @@ module Reimbursement
             rescue => e
               Airbrake.notify(e)
             end
-          elsif payout_holding.report.user.payout_method.is_a?(User::PayoutMethod::AchTransfer)
+          when User::PayoutMethod::AchTransfer
             begin
               ach_transfer = clearinghouse.ach_transfers.build(
                 amount: payout_holding.amount_cents,
@@ -42,8 +43,8 @@ module Reimbursement
                 account_number: payout_holding.report.user.payout_method.account_number,
                 bank_name: (ColumnService.get("/institutions/#{payout_holding.report.user.payout_method.routing_number}")["full_name"] rescue "Bank Account"),
                 creator: User.find_by(email: "bank@hackclub.com"),
-                company_name: payout_holding.report.event.name[0...16],
-                company_entry_description: "REIMBURSE",
+                company_name: payout_holding.report.event.short_name,
+                company_entry_description: "REIMBURSE"
               )
               ach_transfer.save!
               begin
@@ -60,6 +61,23 @@ module Reimbursement
                 payout_holding.save!
                 payout_holding.mark_sent!
               end
+            rescue => e
+              Airbrake.notify(e)
+            end
+          when User::PayoutMethod::PaypalTransfer
+            begin
+              paypal_transfer = clearinghouse.paypal_transfers.build(
+                amount_cents: payout_holding.amount_cents,
+                payment_for: "Reimbursement for #{payout_holding.report.name}.",
+                memo: "Reimbursement for #{payout_holding.report.name}.",
+                recipient_email: payout_holding.report.user.payout_method.recipient_email,
+                recipient_name: payout_holding.report.user.name,
+                user: User.find_by(email: "bank@hackclub.com")
+              )
+              paypal_transfer.save!
+              payout_holding.paypal_transfer = paypal_transfer
+              payout_holding.save!
+              payout_holding.mark_sent!
             rescue => e
               Airbrake.notify(e)
             end

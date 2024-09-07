@@ -1,3 +1,5 @@
+/* global BK, $ */
+
 const amountToCheckWords = amount => {
   let [dollarsString = '', centsString = ''] = amount.split('.')
 
@@ -6,37 +8,36 @@ const amountToCheckWords = amount => {
   if (centsString.length === 1) {
     cents *= 10
   }
-  const words = `${BK.numToWords(dollars)} ${
-    cents > 0 ? `and ${cents}/100` : 'and 00/100'
-  }`
+  const words = `${BK.numToWords(dollars)} ${cents > 0 ? `and ${cents}/100` : 'and 00/100'
+    }`
   return words
 }
 
 $(document).on('change paste keyup input', '*[id^="increase_check_"]', event => {
-    const fieldName = event.currentTarget.id.replace('increase_check_', '')
+  const fieldName = event.currentTarget.id.replace('increase_check_', '')
 
-    if (fieldName == 'memo') {
-      $('[data-behavior~="check_memo"]').text(
-        $(event.currentTarget).val() || '　'
-      )
+  if (fieldName == 'memo') {
+    $('[data-behavior~="check_memo"]').text(
+      $(event.currentTarget).val() || '　'
+    )
+  }
+
+  if (fieldName == 'amount') {
+    let amount = $(event.currentTarget).val()
+    if (amount.includes('.')) {
+      amount = amount.slice(0, amount.indexOf('.') + 3)
     }
+    const words = amountToCheckWords(amount)
 
-    if (fieldName == 'amount') {
-      let amount = $(event.currentTarget).val()
-      if (amount.includes('.')) {
-        amount = amount.slice(0, amount.indexOf('.') + 3)
-      }
-      const words = amountToCheckWords(amount)
+    $('[data-behavior~="check_amount"]').text(amount ? event.currentTarget.valueAsNumber?.toLocaleString("en-US", { minimumFractionDigits: 2 }) : '　')
+    $('[data-behavior~="check_amount_words"]').text(words || '　')
+  }
 
-      $('[data-behavior~="check_amount"]').text(amount ? event.currentTarget.valueAsNumber?.toLocaleString("en-US", { minimumFractionDigits: 2 }) : '　')
-      $('[data-behavior~="check_amount_words"]').text(words || '　')
-    }
-
-    if (fieldName == 'recipient_name') {
-      $('[data-behavior~="check_orderof"]').text(
-        $(event.currentTarget).val() || '　'
-      )
-    }
+  if (fieldName == 'recipient_name') {
+    $('[data-behavior~="check_orderof"]').text(
+      $(event.currentTarget).val() || '　'
+    )
+  }
 })
 
 $(document).on('turbo:load', function () {
@@ -56,8 +57,7 @@ $(document).on('turbo:load', function () {
       let characters = $(event.currentTarget).val().length
 
       $('[data-behavior~="check_characters_update"').text(
-        `This will appear on the physical check. You have ${
-          40 - characters
+        `This will appear on the physical check. You have ${40 - characters
         } characters remaining.`
       )
     }
@@ -66,7 +66,7 @@ $(document).on('turbo:load', function () {
   let currentPayeeVal = '%person%'
   let currentAmountVal = '%amount%'
 
-  $('[data-behavior~="send_check_modal_trigger"]').click(function (event) {
+  $('[data-behavior~="send_check_modal_trigger"]').click(function () {
     const payee = $('[data-behavior~="check_payee_name_field"]').val()
     const amount = $('[data-behavior~="check_amount_field"]').val()
 

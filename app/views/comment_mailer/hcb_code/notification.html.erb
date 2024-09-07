@@ -2,7 +2,7 @@
 
 <% if @comment.content? %>
 
-  <%= @comment.user.name %> has left a comment on <%= "and attached a file to" if @comment.has_attached_file? %> <i><%= hcb_code.memo %></i> in <i><%= hcb_code.event.name %></i>:
+  <%= @comment.user.name %> has left a comment on <%= "and attached a file to" if @comment.has_attached_file? %> <%= "#{hcb_code.author.possessive_name} transaction for" if hcb_code.author %> <i><%= hcb_code.memo %></i> in <i><%= hcb_code.event.name %></i>:
 
   <blockquote><%== MarkdownService.instance.renderer(record: @comment, location: :email).render @comment.content %></blockquote>
 

@@ -1,23 +1,40 @@
-<% title "Legal Documents for #{@event.name}" %>
+<% title "Legal documents for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :documentation %>
 
-<h1 class="heading">
-  <span class="flex items-center flex-auto">
-    Legal Documents
-  </span>
-  <% admin_tool do %>
-    <%= link_to "Upload a document",
-    new_document_path(event_id: @event.slug),
-    class: "btn bg-success my0 block" %>
+<h1>Documents</h1>
+
+<ul class="tab-container">
+  <%= settings_tab active: true do %>
+    <%= link_to "Legal documents", event_documents_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
-</h1>
+  <%= settings_tab do %>
+      <%= link_to "Financial statements", event_statements_path(@event), data: { turbo: true, turbo_action: "advance" } %>
+  <% end %>
+</ul>
+
+<% admin_tool "w-fit mx-auto" do %>
+  <%= link_to "Upload a document",
+  new_document_path(event_id: @event.slug),
+  class: "btn bg-success" %>
+<% end %>
 
 <ul class="grid">
-  <%= render @documents %>
-  <%= render Document.common.all %>
+  <%= render @active_documents %>
+  <%= render @active_common_documents %>
 
   <% if @event.approved? && !@event.demo_mode? %>
+    <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
+      <li class="card card--hover h-100">
+        <div class="overflow-hidden" style="max-height: 250px;">
+          <%= image_tag event_verification_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
+        </div>
+
+        <strong class="h3 block mt1 line-height-2">Verification Letter</strong>
+        <%= user_mention @event.point_of_contact %>
+      </li>
+    <% end if @event.account_number %>
+
     <%= link_to event_fiscal_sponsorship_letter_path(event_id: @event.slug, format: "pdf") do %>
       <li class="card card--hover h-100">
         <div class="overflow-hidden" style="max-height: 250px;">
@@ -30,3 +47,21 @@
     <% end %>
   <% end %>
 </ul>
+
+<% if @archived_documents.any? || @archived_common_documents.any? %>
+  <ul class="list-reset">
+    <li class="mb3">
+      <details>
+        <summary class="cursor-pointer relative mb2">
+          <h3 class="inline mb1">Archived Documents</h3>
+        </summary>
+        <article>
+          <ul class="grid">
+            <%= render @archived_documents %>
+            <%= render @archived_common_documents %>
+          </ul>
+        </article>
+      </details>
+    </li>
+  </ul>
+<% end %>

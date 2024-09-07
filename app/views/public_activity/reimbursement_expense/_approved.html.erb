@@ -1,11 +1,12 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
 <% user = activity.trackable.user %>
 
-<%= render layout: "/public_activity/common", locals: { activity:, url: reimbursement_report_path(activity.trackable.report) } do %>
+<%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: reimbursement_report_path(activity.trackable.report) } do %>
   approved <i><%= activity.trackable.memo %></i> on
   <% if user == current_user %>
     your
   <% else %>
-    <span class="muted"><%= user.name %></span>'<%= "s" unless user.name.ends_with?("s") %>
+    <span class="muted"><%= possessive(user.name) %></span>
   <% end %>
   reimbursement report, <%= link_to activity.trackable.report.name, activity.trackable.report %>
 <% end %>

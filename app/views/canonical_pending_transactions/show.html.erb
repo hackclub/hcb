@@ -23,7 +23,7 @@
 <article class="card mt2">
   <h1 class="heading h1 mt0 mb0">
     <span class="flex-auto">
-      Pending Transaction
+      Pending transaction
     </span>
     <span class="h2 regular">
       <%= @canonical_pending_transaction.amount %>
@@ -75,6 +75,19 @@
         <strong>For</strong>
         <%= link_to "A donation of #{render_money @canonical_pending_transaction.donation.amount}", @canonical_pending_transaction.donation %>
       </p>
+    <% end %>
+
+    <% admin_tool do %>
+      <% if @canonical_pending_transaction.amount_cents > 0 %>
+        <%= form_with model: @canonical_pending_transaction, html: { data: { controller: "form" } } do |form| %>
+          <%= hidden_field_tag :redirect_to, request.original_fullpath %>
+
+          <div class="field--checkbox">
+            <%= form.check_box :fee_waived, data: { action: "form#submit" } %>
+            <%= form.label :fee_waived, "Fee waived?" %>
+          </div>
+        <% end %>
+      <% end %>
     <% end %>
 
   </section>

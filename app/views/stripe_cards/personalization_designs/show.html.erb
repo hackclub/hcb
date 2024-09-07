@@ -1,0 +1,40 @@
+<% title @design.stripe_name %>
+<%= render "users/nav" %>
+
+<%= turbo_frame_tag @design do %>
+  <section class="center mt0 mx-auto" style="width: 400px; max-width: 100%;">
+    <% event = @design.event.present? ? @design.event.name : @design.common? ? "Common" : "Private" %>
+    <%= render "stripe_cards/stripe_card",
+      stripe_card: OpenStruct.new(
+        id: 1,
+        virtual?: false,
+        physical?: true,
+        created_at: @design.created_at,
+        state: "success",
+        state_text: @design.stripe_status,
+        status_text: @design.stripe_status,
+        stripe_name: current_user.name,
+        user: @design.versions.first&.whodunnit.present? ? User.find(@design.versions.first&.whodunnit) : nil,
+        event: OpenStruct.new(
+          name: "Created #{@design.created_at.strftime("%Y-%m-%d")}",
+          id: 1
+        ),
+        hidden_card_number: @design.name_without_id,
+        hidden_card_number_with_last_four: @design.name_without_id,
+        to_partial_path: "stripe_cards/stripe_card",
+        personalization_design: @design
+      ),
+      href: "javascript:;" %>
+  </section>
+  <div style="text-align: center;">
+    <% unless @design.event&.present? %>
+      <% if @design.common? %>
+        <%= link_to "Make Private", make_private_stripe_cards_personalization_design_path(@design), data: { turbo_confirm: "Are you sure you want to make this design (#{@design.name}) private? It will hide it from the card creation menu for all users.", turbo_method: :post, turbo_frame: :_top } %>
+      <% else %>
+        <%= link_to "Make Public", make_common_stripe_cards_personalization_design_path(@design), data: { turbo_confirm: "Are you sure you want to make this design (#{@design.name}) public? It will show it in the card creation menu for all users.", turbo_method: :post, turbo_frame: :_top } %>
+      <% end %>
+      |
+    <% end %>
+    <%= link_to "View on Stripe", @design.stripe_dashboard_url, target: "_blank" %>
+  </div>
+<% end %>

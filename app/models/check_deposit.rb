@@ -28,6 +28,8 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CheckDeposit < ApplicationRecord
+  has_paper_trail
+
   REJECTION_DESCRIPTIONS = {
     "incomplete_image"                => "This check was rejected because the photo was incomplete.",
     "duplicate"                       => "This check was rejected as a duplicate.",
@@ -43,18 +45,14 @@ class CheckDeposit < ApplicationRecord
   belongs_to :created_by, class_name: "User"
   has_one :canonical_pending_transaction
 
-  # after_create_commit :submit!
-  after_create_commit do
-    create_canonical_pending_transaction!(event:, amount_cents:, memo: "CHECK DEPOSIT", date: created_at)
-  end
+  after_create_commit :submit!
 
   after_update if: -> { increase_status_previously_changed?(to: "rejected") } do
     canonical_pending_transaction.decline!
     CheckDepositMailer.with(check_deposit: self).rejected.deliver_later
   end
 
-  after_update if: -> { increase_status_previously_changed?(to: "submitted") } do
-    canonical_pending_transaction.update(fronted: true)
+  after_update if: -> { increase_status_previously_changed?(to: "deposited") } do
     CheckDepositMailer.with(check_deposit: self).deposited.deliver_later
   end
 
@@ -64,13 +62,20 @@ class CheckDeposit < ApplicationRecord
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true
   validates :front, attached: true, processable_image: true
   validates :back, attached: true, processable_image: true
+  validates_uniqueness_of :column_id, allow_nil: true
+
+  scope :unprocessed, -> { where(increase_id: nil, column_id: nil) }
 
   enum :increase_status, {
-    pending: "pending",
-    submitted: "submitted",
-    rejected: "rejected",
+    pending: "pending", # when check deposit created
+    submitted: "submitted", # when ProcessColumnCheckDepositJob runs successfully
+    manual_submission_required: "manual_submission_required", # when ProcessColumnCheckDepositJob fails
+    rejected: "rejected", # if an admin can't manually submit it.
     returned: "returned",
+    deposited: "deposited"
   }, default: :pending
+
+  alias_attribute :status, :increase_status
 
   enum :rejection_reason, {
     incomplete_image: "incomplete_image",
@@ -86,30 +91,7 @@ class CheckDeposit < ApplicationRecord
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   def submit!
-    increase_front = Increase::Files.create(
-      purpose: :check_image_front,
-      file: StringIO.new(self.front.download.force_encoding("UTF-8")),
-    )
-    self.front_file_id = increase_front["id"]
-
-    increase_back = Increase::Files.create(
-      purpose: :check_image_back,
-      file: StringIO.new(self.back.download.force_encoding("UTF-8")),
-    )
-    self.back_file_id = increase_back["id"]
-
-    increase_check_deposit = Increase::CheckDeposits.create(
-      amount: amount_cents,
-      currency: "USD",
-      account_id: IncreaseService::AccountIds::FS_MAIN,
-      front_image_file_id: self.front_file_id,
-      back_image_file_id: self.back_file_id,
-    )
-
-    self.increase_id = increase_check_deposit["id"]
-    self.increase_status = increase_check_deposit["status"]
-
-    self.save!
+    ProcessColumnCheckDepositJob.perform_later(check_deposit: self)
 
     create_canonical_pending_transaction!(event:, amount_cents:, memo: "CHECK DEPOSIT", date: created_at)
   end
@@ -123,33 +105,54 @@ class CheckDeposit < ApplicationRecord
   end
 
   def state
+    return :muted if column_id.nil? && increase_id.nil?
     return :success if local_hcb_code.ct.present?
 
-    if pending?
+    if pending? || manual_submission_required?
       :info
     elsif rejected? || returned?
       :error
-    elsif submitted?
+    elsif deposited? || local_hcb_code.ct.present?
       :success
+    elsif submitted?
+      :info
     end
   end
 
   def state_text
-    return "Deposited" if local_hcb_code.ct.present?
-
-    if pending?
-      "Pending"
+    if pending? || manual_submission_required?
+      "Processing"
     elsif rejected?
       "Rejected"
     elsif returned?
       "Returned"
-    elsif submitted?
+    elsif deposited? || local_hcb_code.ct.present?
       "Deposited"
+    elsif submitted?
+      "Submitted"
     end
   end
 
   def rejection_description
     REJECTION_DESCRIPTIONS[rejection_reason] || "This check deposit was rejected."
+  end
+
+  def self.rejection_descriptions
+    REJECTION_DESCRIPTIONS
+  end
+
+  def submitted_to_column_at
+    return unless column_id.present?
+
+    @submitted_to_column_at ||= versions.where_object_changes_from(column_id: nil).first&.created_at
+  end
+
+  def estimated_arrival_date
+    estimated = submitted_to_column_at&.+(1.week)&.to_date
+    return nil if estimated.nil?
+    return nil if Date.today >= estimated
+
+    estimated
   end
 
 end

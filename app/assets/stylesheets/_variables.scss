@@ -9,6 +9,7 @@ $red: #ec3750;
 $orange: #ff8c37;
 $yellow: #f1c40f;
 $green: #33d6a6;
+$green-dark: #1f8164;
 $cyan: #5bc0de;
 $blue: #338eda;
 $purple: #a633d6;
@@ -22,7 +23,9 @@ $palette: (
   accent: $cyan,
   info: $blue,
   success: $green,
+  //  'success-dark': $green-dark,
   error: desaturate(darken($red, 25%), 15%),
+  ai: $purple,
   warning: $orange,
   pending: $yellow,
   purple: $purple,
@@ -33,7 +36,7 @@ $palette: (
   smoke: $smoke,
   snow: $snow,
   white: $white,
-  dark: $dark
+  dark: $dark,
 );
 
 @mixin gradient($color) {

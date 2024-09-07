@@ -42,7 +42,9 @@
   background-color: $smoke;
   color: $muted;
 
-  transition: opacity 0.125s ease-in-out, transform 0.125s ease-in-out;
+  transition:
+    opacity 0.125s ease-in-out,
+    transform 0.125s ease-in-out;
 
   border-radius: 50%;
 

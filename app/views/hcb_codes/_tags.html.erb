@@ -2,25 +2,20 @@
   <div>
     <strong>Tags</strong>
     <div class="flex items-center flex-wrap" style="gap: 0.25rem">
-      <% hcb_code.tags.filter { |tag| tag.event == @event }.each do |tag| %>
-        <span class="badge bg-muted ml0 mr1" data-tag="<%= tag.id %>">
-          <%= tag.label %>
-          <%= button_to toggle_tag_hcb_code_path(id: @hcb_code.hashid, tag_id: tag.id), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
-            <%= inline_icon "view-close", size: 16 %>
-          <% end %>
-        </span>
-      <% end %>
+      <div class="flex items-center flex-wrap" style="gap: 0.25rem" id="hcb_code_<%= hcb_code.hashid %>_tags">
+        <%= render partial: "canonical_transactions/tag", collection: hcb_code.tags, locals: { hcb_code: } %>
+      </div>
 
       <% unless defined?(@frame) && @frame %>
-        <div class="overflow-visible relative line-height-0" data-controller="menu">
-          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+        <div data-controller="menu">
+          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
           <div class="menu__content menu__content--2 menu__content--compact menu__content--left h6" data-menu-target="content">
             <% @event.tags.each do |tag| %>
               <div class="flex items-center" data-tag="<%= tag.id %>">
-                <%= button_to toggle_tag_hcb_code_path(id: @hcb_code.hashid, tag_id: tag.id), class: "menu__action", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                  <%= "✓" if @hcb_code.tags.include?(tag) %>
-
+                <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
                   <%= tag.label %>
+                  <%= "✓" if hcb_code.tags.include?(tag) %>
                 <% end %>
                 <%= button_to event_tag_path(@event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message }  do %>
                   <%= inline_icon "delete", size: 16, style: "margin: 0" %>
@@ -30,11 +25,7 @@
             <% if @event.tags.any? %>
               <div class="menu__divider tags__divider"></div>
             <% end %>
-            <%= form_with url: event_tags_path(@event), data: { turbo: true } do |form| %>
-              <%= form.hidden_field :hcb_code_id, value: @hcb_code.hashid %>
-              <%= form.hidden_field :popover, value: local_assigns[:popover] %>
-              <%= form.text_field :label, data: { "behavior" => @event.tags.none? ? "autofocus" : "" }, class: "menu__input", placeholder: "+ Create tag", autocomplete: "off", required: true %>
-            <% end %>
+            <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid } %>
           </div>
         </div>
       <% end %>

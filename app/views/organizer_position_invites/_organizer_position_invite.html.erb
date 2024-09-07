@@ -1,0 +1,66 @@
+<div class="card pt1 pb1">
+  <div class="flex g2 justify-between items-center">
+    <p class="h4 m0 overflow-auto" style="<%= "filter: blur(0.15em)" unless organizer_signed_in? %>">
+      <strong><%= organizer_signed_in? ? organizer_position_invite.user.email : Faker::Internet.email %></strong>
+    </p>
+
+    <div class="flex g1 items-center">
+      <% if admin_signed_in? %>
+        <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position_invite.signee? ? "Contract signee" : "No contract signature") + ". Click to toggle." %>">
+          <%= link_to toggle_signee_status_organizer_position_invite_path(organizer_position_invite.id), data: { turbo_method: "post", turbo_frame: "_top", turbo_confirm: "Are you sure you want to toggle #{organizer_position_invite.user.name}'s contract signee status?" } do %>
+            <div class="warning">
+              <% if organizer_position_invite.signee? %>
+                <%= inline_icon("docs-positive", size: 24) %>
+              <% else %>
+                <%= inline_icon("docs-negative", size: 24) %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if organizer_signed_in? %>
+        <%= pop_icon_to "view-close",
+                        organizer_position_invite_cancel_path(organizer_position_invite.id),
+                        size: 24,
+                        method: :post,
+                        class: "error tooltipped tooltipped--w",
+                        'aria-label': "Cancel this invitation",
+                        disabled: !policy(organizer_position_invite).cancel? %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="inline muted h6 m0">
+    Invited <%= relative_timestamp(organizer_position_invite.created_at) %>
+
+    <% if Flipper.enabled?(:user_permissions_2024_03_09, @event) && organizer_signed_in? %>
+      as a
+      <div class="inline" data-controller="menu" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
+        <% can_change_role = organizer_signed_in?(as: :manager) %>
+
+        <span class="h6 bold info <%= "pointer" if can_change_role %>"><%= organizer_position_invite.role %></span>
+
+        <% if can_change_role %>
+          <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+            <% OrganizerPositionInvite.roles.keys.each do |role| %>
+              <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: "post", turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
+                <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
+              <% end %>
+            <% end %>
+            <div class="menu__divider"></div>
+            <%= link_to "What do these mean?", roles_path %>
+          </div>
+        <% end %>
+      </div>
+      <% if organizer_position_invite.initial_control_allowance_amount_cents.present? && !organizer_position_invite.initial_control_allowance_amount_cents.zero? %>
+        with a <%= render_money organizer_position_invite.initial_control_allowance_amount_cents %> allowance
+      <% end %>
+      <%= "and contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
+    <% else %>
+      <%= "as a contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
+    <% end %>
+    by <%= organizer_position_invite.sender.full_name %>
+  </div>
+
+</div>

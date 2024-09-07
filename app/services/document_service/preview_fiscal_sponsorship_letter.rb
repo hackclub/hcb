@@ -13,7 +13,7 @@ module DocumentService
     private
 
     def pdf_string
-      @pdf_string ||= ActionController::Base.new.render_to_string pdf: "fiscal_sponsorship_letter", template: "documents/fiscal_sponsorship_letter", encoding: "UTF-8", locals: { :@event => @event }, formats: :pdf
+      @pdf_string ||= ActionController::Base.new.tap { |c| c.instance_variable_set(:@event, @event) }.render_to_string pdf: "fiscal_sponsorship_letter", template: "documents/fiscal_sponsorship_letter", encoding: "UTF-8", formats: :pdf
     end
 
     def input

@@ -4,6 +4,9 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
   def notify_approved
     @cpt = CanonicalPendingTransaction.find(params[:canonical_pending_transaction_id])
     @user = @cpt.stripe_card.user
+
+    return unless @user.email_charge_notifications_enabled?
+
     @upload_url = Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
       id: @cpt.local_hcb_code.hashid,
       s: @cpt.local_hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
@@ -20,13 +23,16 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
     @cpt = CanonicalPendingTransaction.find(params[:canonical_pending_transaction_id])
     @ct = CanonicalTransaction.find(params[:canonical_transaction_id])
     @user = @cpt.stripe_card.user
+
+    return unless @user.email_charge_notifications_enabled?
+
     @upload_url = Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
       id: @cpt.local_hcb_code.hashid,
       s: @cpt.local_hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
     )
 
     to = @cpt.stripe_card.user.email_address_with_name
-    subject = "#{@cpt.smart_memo} settled at #{ApplicationController.helpers.render_money(@cpt.amount)}."
+    subject = "#{@cpt.smart_memo} settled at #{ApplicationController.helpers.render_money(@ct.amount)}."
     reply_to = HcbCode.find_or_create_by(hcb_code: @cpt.hcb_code).receipt_upload_email
 
     mail to:, subject:, reply_to:
@@ -37,6 +43,9 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
     @card = @cpt.raw_pending_stripe_transaction.stripe_card
     @event = @cpt.event
     @user = @card.user
+
+    return unless @user.email_charge_notifications_enabled?
+
     @merchant = @cpt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]
     @reason = @cpt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]["reason"]
     @webhook_declined_reason = @cpt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason")

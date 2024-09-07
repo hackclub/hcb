@@ -3,8 +3,11 @@
 FactoryBot.define do
   factory :event do
     name { Faker::Name.unique.name }
-    sponsorship_fee { 0 }
     organization_identifier { SecureRandom.hex(30) }
+
+    after(:create) do |t|
+      t.plan.update(plan_type: Event::Plan::FeeWaived)
+    end
 
     trait :partnered do
       association :partner

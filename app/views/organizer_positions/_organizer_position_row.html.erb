@@ -1,0 +1,66 @@
+<tr>
+  <td><%= organizer_position.created_at.strftime("%b %d, %Y") %></td>
+  <td>
+    <%= user_mention organizer_position.user %>
+  </td>
+  <td><%= organizer_position.role.humanize %></td>
+  <td>
+    <%= copy_to_clipboard(organizer_signed_in? ? organizer_position.user.email : Faker::Internet.email, class: "inline-flex items-center g1 line-height-0") do %>
+      <%= inline_icon("email", size: 20) %>
+      <%= organizer_signed_in? ? organizer_position.user.email : "Hidden" %>
+    <% end %>
+    <% if admin_signed_in? %>
+      <p class="warning m0">
+        <%= copy_to_clipboard(organizer_position.user.phone_number, class: "inline-flex items-center g1 line-height-0") do %>
+          <%= inline_icon("message-simple", size: 20) %>
+          <%= organizer_position.user.phone_number %>
+        <% end %>
+      </p>
+    <% end %>
+  </td>
+  <td>
+    <div class="flex items-center gap-4 justify-end">
+    <% if admin_signed_in? %>
+      <div class="tooltipped tooltipped--w" aria-label="<%= (organizer_position.signee? ? "Contract signee" : "No contract signature") + ". Click to toggle." %>">
+        <%= link_to toggle_signee_status_organizer_path(organizer_position.id), data: { turbo_method: "post", turbo_frame: "_top", turbo_confirm: "Are you sure you want to toggle #{organizer_position.user.name}'s contract signee status?" } do %>
+          <div class="warning">
+            <% if organizer_position.signee? %>
+              <%= inline_icon("docs-positive", size: 24) %>
+            <% else %>
+              <%= inline_icon("docs-negative", size: 24) %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    <% if admin_signed_in? %>
+      <div class="tooltipped tooltipped--s" aria-label="Edit user's settings">
+        <%= pop_icon_to "controls", edit_user_path(organizer_position.user.slug), data: { turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
+      </div>
+      <% unless organizer_position.user == current_user || current_session&.impersonated? %>
+        <div class="tooltipped tooltipped--s" aria-label="Impersonate user">
+          <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
+        </div>
+      <% end %>
+    <% end %>
+    <% if policy(organizer_position).destroy? %>
+      <%= pop_icon_to "member-remove",
+                      organizer_path(organizer_position),
+                      class: "error",
+                      data: {
+                        turbo_frame: "_top",
+                        turbo_method: :DELETE,
+                        turbo_confirm: "This will revoke their access to this organization. Their cards will be permanently canceled.",
+                      } %>
+    <% else %>
+      <%= pop_icon_to "member-remove",
+                      new_event_organizer_position_remove_path(organizer_position_id: organizer_position.user.slug),
+                      class: "error",
+                      data: {
+                        turbo_frame: "_top",
+                        turbo_method: :GET
+                      } %>
+    <% end %>
+    </div>
+  </td>
+</tr>

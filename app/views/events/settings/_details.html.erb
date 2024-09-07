@@ -1,180 +1,110 @@
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>
 
-  <div class="card flex flex-col items-start gap-2">
-    <div class="field">
-      <%= form.label :logo %>
-      <p class="h5 muted mt0 mb1">
-        Displayed on your
-        <%= link_to "donation page",
-          @event.donation_page_enabled? ? start_donation_donations_path(@event) : { anchor: "donations" },
-          target: @event.donation_page_enabled? ? "_blank" : nil %>
-        and your
-        <%= link_to "public reimbursement page",
-          @event.public_reimbursement_page_enabled? ? reimbursement_start_reimbursement_report_url(@event) : { anchor: "public-reimbursements" },
-          target: @event.public_reimbursement_page_enabled? ? "_blank" : nil %>.
-      </p>
-      <% if @event.logo.attached? %>
-        <%= image_tag @event.logo, height: 72 %>
-      <% end %>
-
-      <% if policy(@event).update? %>
-        <div class="field--fileupload">
-          <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
-          <%= form.file_field :logo, accept: "image/*,image/heic", class: "field--fileupload__field" %>
-        </div>
-
-        <% if @event.logo.attached? %>
-          <%= link_to "Remove logo", event_remove_logo_path(@event), class: "btn btn-small bg-error mt1", method: :post %>
-        <% end %>
-      <% end %>
-    </div>
-
-    <div class="field">
-      <%= form.label :background_image %>
-      <p class="h5 muted mt0 mb1">
-        Displayed as the background of your organization’s card on the homepage.
-      </p>
+  <div class="card flex flex-col items-start gap-2 p0">
+    <div class="event_settings__banner">
       <% if @event.background_image.attached? %>
-        <%= image_tag @event.background_image, width: 256 %>
+        <%= image_tag @event.background_image, height: 200, class: "banner__image" %>
       <% end %>
 
       <% if policy(@event).update? %>
-        <div class="field--fileupload">
-          <%= form.label :background_image, "Choose file", class: "field--fileupload__label" %>
-          <%= form.file_field :background_image, accept: "image/*,image/heic", class: "field--fileupload__field" %>
-        </div>
-
-        <% if @event.background_image.attached? %>
-          <%= link_to "Remove background image", event_remove_background_image_path(@event), class: "btn btn-small bg-error mt1", method: :post %>
-        <% end %>
-      <% end %>
-    </div>
-
-    <div class="field">
-      <%= form.label :description, "Mission statement" %>
-      <p class="h5 muted mt0 mb1">
-        A short description of your organization’s goals and impacts.
-      </p>
-      <%= form.text_area :description, placeholder: "We focus on…", class: "max-w-md", disabled: !policy(@event).update? %>
-    </div>
-
-    <div class="field block">
-      <%= form.label :website, "Website URL" %>
-      <%= form.text_field :website, type: :url, placeholder: "https://hackclub.com", class: "w-100", disabled: !policy(@event).update? %>
-    </div>
-
-    <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
-  </div>
-
-  <% if @event.card_grant_setting.present? %>
-
-    <h3 class="mb1" id="card-grants">Card grants</h3>
-
-    <div class="card">
-      <%= form.fields_for :card_grant_setting, @event.card_grant_setting do |card_grant_setting_fields| %>
-        <%= card_grant_setting_fields.hidden_field :id, value: @event.card_grant_setting.id %>
-        <div class="field">
-          <%= card_grant_setting_fields.label :merchant_lock, "Update Approved Merchants" %>
-          <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: @event.card_grant_setting.merchant_lock.join(", "), disabled: !policy(@event).update? %>
-          <p class="h5 muted mt0 mb1">
-            Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
-          </p>
-        </div>
-
-        <div class="field">
-          <%= card_grant_setting_fields.label :category_lock, "Update Category Lock" %>
-          <%= card_grant_setting_fields.text_field :category_lock, placeholder: "fast_food_restaurants", value: @event.card_grant_setting.category_lock.join(", "), disabled: !policy(@event).update? %>
-          <p class="h5 muted mt0 mb1">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to lock all card grants issued from this event to.</p>
-        </div>
-
-        <div class="field">
-          <%= card_grant_setting_fields.label :invite_message, "Update Invite Message" %>
-          <%= card_grant_setting_fields.text_area :invite_message, placeholder: "It's pizza time!", value: @event.card_grant_setting.invite_message, disabled: !policy(@event).update? %>
-          <p class="h5 muted mt0 mb1">
-            <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank" do %>
-              <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+       <button
+          type="button"
+          data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
+          class="pop menu__toggle z1 event_settings__banner--edit">
+          <%= inline_icon "photo", size: 24 %>
+          <div class="menu__content h5" data-behavior="menu_content">
+            <div class="field--fileupload">
+              <%= form.label :background_image, "Choose file", class: "field--fileupload__label" %>
+              <%= form.file_field :background_image, accept: "image/*,image/heic", class: "field--fileupload__field" %>
+            </div>
+            <% if @event.background_image.attached? %>
+              <div class="menu__divider"></div>
+              <%= link_to "Remove background image", event_remove_background_image_path(@event), method: :post, style: "padding: 0.25rem 0.5rem" %>
             <% end %>
+          </div>
+        </button>
+      <% end %>
+
+      <div class="event_settings__banner--logo">
+        <% if @event.logo.attached? %>
+          <%= image_tag @event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
+        <% else %>
+          <%= image_tag "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
+        <% end %>
+
+        <% if policy(@event).update? %>
+          <button
+            type="button"
+            data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
+            class="pop menu__toggle z1 event_settings__logo--edit">
+            <%= inline_icon "photo", size: 24 %>
+            <div class="menu__content menu__content--left h5" data-behavior="menu_content">
+              <div class="field--fileupload">
+                <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
+                <%= form.file_field :logo, accept: "image/*,image/heic", class: "field--fileupload__field" %>
+              </div>
+              <% if @event.logo.attached? %>
+                <div class="menu__divider"></div>
+                <%= link_to "Remove logo", event_remove_logo_path(@event), method: :post, style: "padding: 0.25rem 0.5rem" %>
+              <% end %>
+            </div>
+          </button>
+        <% end %>
+      </div>
+    </div>
+    <div class="event_settings__content">
+      <h2><%= @event.name %></h2>
+      <div class="w-full">
+        <% if @event.name.length > 16 %>
+          <div class="field flex-1">
+            <%= form.label :short_name, "Nickname" %>
+            <p class="h5 muted mt0 mb1">
+              At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
+            </p>
+            <%= form.text_field :short_name, placeholder: "#{@event.name[0...16]}...", disabled: !policy(@event).update? %>
+          </div>
+        <% end %>
+        <div class="field flex-1">
+          <%= form.label :website, "Website URL" %>
+          <%= form.text_field :website, type: :url, placeholder: "https://hackclub.com", disabled: !policy(@event).update? %>
+        </div>
+        <div class="field flex-1">
+          <%= form.label :description, "Mission statement" %>
+          <%= form.text_area :description, placeholder: "A short description of your organization’s goals.", disabled: !policy(@event).update? %>
+        </div>
+      </div>
+      <div class="md:flex items-center">
+        <div class="float-left flex gap-3 items-center flex-1 max-w-2xl mr-auto">
+          <%= inline_icon "info", size: 24, class: "muted" %>
+          <p class="h5 muted m0">
+            Your logo is displayed on the
+            <%= link_to "donation page",
+              @event.donation_page_available? ? start_donation_donations_path(@event) : { anchor: "donations" },
+              target: @event.donation_page_available? ? "_blank" : nil %>
+            and your
+            <%= link_to "public reimbursement page",
+              @event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(@event) : { anchor: "public-reimbursements" },
+              target: @event.public_reimbursement_page_available? ? "_blank" : nil %>. Organization banners are visible on the homepage only.
           </p>
         </div>
-      <% end %>
-
-      <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
+        <%= form.submit "Update", class: "%{is_disabled} md:ml-3 mt-2 md:mt-0" % { is_disabled: ("disabled" unless policy(@event).update?) } %>
+      </div>
     </div>
-
-  <% end %>
-
-  <% if !@event.unapproved? %>
-    <% if @event.category.in? ["hackathon", "event", "high school hackathon"] %>
-      <h3 class="mb1" id="event_date_heading">Event date</h3>
-      <div class="card mb3">
-        <p class="mt0">
-          The date of your next event.
-        </p>
-        <div class="field">
-          <%= form.label :start %>
-          <%= form.date_select :start %>
-        </div>
-        <div class="field">
-          <%= form.label :end %>
-          <%= form.date_select :end %>
-        </div>
-        <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
-      </div>
-    <% end %>
-
-    <h3 class="mb1" id="donations">Donations</h3>
-
-    <div class="card">
-      <div class="field field--checkbox">
-        <%= form.check_box :donation_page_enabled, disabled: !policy(@event).update?, switch: true %>
-        <%= form.label :donation_page_enabled, "Enable donation page" %>
-      </div>
-      <div class="field">
-        <%= form.label :donation_page_message, "Message to show on donation page" %>
-        <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: !policy(@event).update? %>
-        <%= inline_icon "markdown", size: 32, class: "muted right" %>
-      </div>
-      <div class="field">
-        <%= form.label :donation_thank_you_message, "Thank you message to donors" %>
-        <%= form.text_area :donation_thank_you_message, class: "w-100 fit", disabled: !policy(@event).update? %>
-        <%= inline_icon "markdown", size: 32, class: "muted right" %>
-      </div>
-      <div class="field">
-        <%= form.label :donation_reply_to_email, "Reply-to email for donation receipts" %>
-        <%= form.text_field :donation_reply_to_email, type: "email", placeholder: "fiona@hackclub.com", class: "w-100 fit", disabled: !policy(@event).update? %>
-      </div>
-      <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
-    </div>
-
-    <h3 class="mb1" id="reimbursements">Reimbursements</h3>
-    <div class="card">
-      <% if @event.users.size > 1 %>
-        <div class="field field--checkbox">
-          <%= form.check_box :reimbursements_require_organizer_peer_review, disabled: !policy(@event).update?, switch: true %>
-          <% if Flipper.enabled?(:user_permissions_2024_03_09, @event) %>
-            <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers." %>
-          <% else %>
-            <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by team members." %>
-          <% end %>
-        </div>
-      <% end %>
-      <div class="field field--checkbox">
-        <%= form.check_box :public_reimbursement_page_enabled, disabled: !policy(@event).update?, switch: true %>
-        <%= form.label :public_reimbursement_page_enabled, "Enable public reimbursement page" %>
-      </div>
-      <div class="field">
-        <%= form.label :public_reimbursement_page_message, "Message to show on public reimbursement page" %>
-        <%= form.text_area :public_reimbursement_page_message, placeholder: "#{@event.name} uses HCB to reimburse its volunteers...", class: "w-100 fit", disabled: !policy(@event).update? %>
-        <%= inline_icon "markdown", size: 32, class: "muted right" %>
-      </div>
-      <%= form.submit "Update", disabled: !policy(@event).update? %>
-    </div>
-  <% end %>
+  </div>
 
   <h3 class="mb1" id="transparency_mode_heading">Transparency Mode</h3>
 
-  <div class="card mb3">
+  <div class="card mb3" data-controller="accordion">
+    <div class="field field--checkbox">
+      <span style="font-weight: 700">Make <%= possessive(@event.name) %> finances transparent</span>
+      <div class="field--checkbox--switch ml-auto">
+        <%= form.label :is_public do %>
+          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", target: "accordion.checkbox" }, disabled: !policy(@event).update?, switch: true %>
+          <span class="slider"></span>
+        <% end %>
+      </div>
+    </div>
     <ul class="mt0 pl2 mb2">
       <li>Unauthenticated users will be able to access a <strong>read-only</strong> version of your account.</li>
       <li>None of HCB’s pages will change for signed in team members.</li>
@@ -188,27 +118,47 @@
         </ul>
       </li>
     </ul>
-    <div class="field field--checkbox">
-      <%= form.check_box :is_public, disabled: !policy(@event).update?, switch: true %>
-      <%= form.label :is_public, "Enable Transparency Mode" %>
-    </div>
-    <div class="field field--checkbox" data-behavior="additional_transparency_settings <% if !event.is_public? %>autohide<% end %>">
-      <%= form.check_box :is_indexable, disabled: !policy(@event).update?, switch: true %>
-      <%= form.label :is_indexable, "List #{@event.name} in HCB’s public directory" %>
-    </div>
-    <% unless !winter?(override_preference: true) %>
-      <div class="field field--checkbox" data-behavior="additional_transparency_settings <% if !event.is_public? %>autohide<% end %>">
-        <%= form.check_box :holiday_features, disabled: !policy(@event).update?, switch: true %>
-        <%= form.label :holiday_features, "Enable Holiday Features ⛄ for Transparency Mode" %>
+    <div data-accordion-target="content">
+      <div class="menu__divider" style="margin:0px"></div>
+      <div class="field mt-2">
+        <%= inline_icon "markdown", size: 32, class: "muted right" %>
+        <%= form.label :public_message, "Message to show visitors" %>
+        <%= form.text_area :public_message, class: "w-100 fit", disabled: !policy(@event).update? %>
       </div>
-    <% end %>
-    <div class="field">
-      <%= form.label :public_message, "Message to show visitors" %>
-      <%= form.text_area :public_message, class: "w-100 fit", disabled: !policy(@event).update? %>
-      <%= inline_icon "markdown", size: 32, class: "muted right" %>
+      <div class="field field--checkbox">
+        <%= form.check_box :is_indexable, disabled: !policy(@event).update?, switch: true %>
+        <%= form.label :is_indexable, "List #{@event.name} in HCB’s public directory" %>
+      </div>
+      <% unless !winter?(override_preference: true) %>
+        <div class="field field--checkbox">
+          <%= form.check_box :holiday_features, disabled: !policy(@event).update?, switch: true %>
+          <%= form.label :holiday_features, "Enable Holiday Features ⛄ for Transparency Mode" %>
+        </div>
+      <% end %>
     </div>
     <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
   </div>
+
+  <% if Flipper.enabled?(:card_logos_2024_08_27, @event) %>
+    <h3 class="mb1" id="cards_heading">HCB card</h3>
+    <div class="card mb3">
+      <div class="field">
+        <%= form.label :stripe_card_logo, "Card logo" %>
+        <p class="h5 muted mt0 mb2">
+          Displayed in the top right of each of your organization's cards. A logo needs to be a binary image containing a black logo on a white background.
+          The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
+        </p>
+        <% if @event.stripe_card_logo.attached? %>
+          <%= image_tag @event.stripe_card_logo, width: 48 %>
+        <% end %>
+        <div class="field--fileupload mt2">
+          <%= form.label :stripe_card_logo, "Choose File", class: "field--fileupload__label" %>
+          <%= form.file_field :stripe_card_logo, accept: "image/*,image/heic", class: "field--fileupload__field" %>
+        </div>
+      </div>
+      <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
+    </div>
+  <% end %>
 
   <h3 class="mb1">Danger zone</h3>
   <div class="card border b--warning mb3"
@@ -234,11 +184,14 @@
       </li>
     </ul>
     <%= form.label :slug, "Organization URL" %>
-    <div style="display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto">
-      <span class="secondary flex items-center">hcb.hackclub.com/</span>
-      <%= form.text_field :slug, placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: !policy(@event).update? %>
-      <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
+    <div class="input flex mt1" onclick="this.querySelector('input').focus()" tabindex="0" style="gap: 0.15rem">
+      <span class="secondary flex items-center opacity-70 select-none" style="gap: 0.15rem">
+        <span>hcb.hackclub.com</span>
+        <span>/</span>
+      </span>
+      <%= form.text_field :slug, class: "!p-0 !border-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: !policy(@event).update? %>
     </div>
+    <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">
       <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
     </div>

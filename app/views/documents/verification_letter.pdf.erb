@@ -1,0 +1,130 @@
+<% fs_date = @event.activated_at || @event.created_at %>
+<head>
+  <title><%= @event.name %> Verification Letter</title>
+  <style>
+
+    .container {
+      font-size: 13pt;
+      line-height: 1.15;
+      position: relative;
+      padding-left: 40pt;
+      padding-right: 40pt;
+      display: block;
+    }
+
+    .centerImage {
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .bold {
+      font-weight: bold;
+    }
+
+    body {
+      margin: 8px;
+      font-family: 'Arial';
+    }
+
+    a {
+      color: #1155cc;
+    }
+
+    .auto-page-break { 
+      page-break-before: auto;  
+      page-break-inside: avoid;
+    }
+    td {
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <br />
+  <div class="container">
+    <br />
+    <div style="height: 80px;">
+        <p style="margin: 0; float: right; font-size: 11pt; line-height: 1.5">
+          <span class="bold">Hack Club</span><br />
+          <span style="white-space: nowrap;">8605 Santa Monica Boulevard #86294</span><br />
+          West Hollywood, CA 90069<br />
+          hcb@hackclub.com
+        </p>
+      <%= image_tag(wicked_pdf_asset_base64('hack_club_logo.png'), width: 156.6, height: 26.88, class: 'centerImage')%>
+    </div>
+    <br />
+    <br />
+    <p style="margin-top: 2rem;"><%= Time.now.strftime("%B #{Time.now.day.ordinalize}, %Y") %></p>
+    <br />
+    <p style="font-size: 12.5pt;">To Whom It May Concern,</p>
+    <div style="line-height: 1.5;">
+      <p>
+        This letter serves to confirm that <strong><%= @event.name %></strong>
+        maintains a fund through the <strong>The Hack Foundation</strong> in
+        good standing with <strong>Column N.A.</strong>,
+        a Member of the FDIC. This account is held by <strong>The Hack
+        Foundation</strong>, doing business as <strong>Hack Club</strong>,
+        which serves as the nonprofit fiscal sponsor for
+        <strong><%= @event.name %></strong>.
+      </p>
+      <table style="border: 1px solid #eee;border-radius: 15px;width:100%;padding:20px">
+        <tr>
+          <td style="min-width: 200px;">
+            <strong>Date opened</strong>
+          </td>
+          <td>
+            <%= fs_date.strftime("%B %d, %Y") %>
+          </td>
+        </tr>
+        <% if @contract_signers.any? %>
+          <tr>
+            <td>
+              <strong><%= "Member".pluralize(@contract_signers.size) %></strong>
+            </td>
+            <td><%= @contract_signers.map(&:full_name).to_sentence %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <td>
+            <strong>Account Number</strong>
+          </td>
+          <td>
+            <%= @event.account_number %>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Routing Number</strong>
+          </td>
+          <td>
+            <%= @event.routing_number %>
+          </td>
+        </tr>
+      </table>
+     
+      <p>
+        Should you require any further information or verification, please do not hesitate to contact us. Our team can be reached at <a href="mailto:hcb@hackclub.com">hcb@hackclub.com</a>.
+      </p>
+    </div>
+
+    <br />
+    <p>
+      Sincerely,
+    </p>
+    <%= image_tag(wicked_pdf_asset_base64('melanie_signature.png'), width: 200, height: 118, dpi: 96) %>
+    <p style="line-height: 1.25">
+      Melanie Smith<br />
+      HCB Director of Operations<br />
+      Hack Club
+    </p>
+    <br />
+    <br />
+    <p style="font-size: 12pt; font-weight: bold; color: #434343; position: fixed; bottom: 12px; width: 100%; white-space: nowrap;">
+      By the students, for the students.
+    </p>
+    <p style="font-size: 10pt; color: #999999; position: fixed; bottom: 0px; width: 100%; white-space: nowrap;">
+      Hack Club is a 501(c)(3) public charity. Our nonprofit EIN is 81-2908499.
+    </p>
+  </div>
+</body>

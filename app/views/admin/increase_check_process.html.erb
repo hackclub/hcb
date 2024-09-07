@@ -1,3 +1,8 @@
+<%= link_to increase_checks_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to checks
+<% end %>
+
 <h1>Process Check #<%= @check.id %></h1>
 <p><small>Current Status: <%= @check.aasm_state %></small></p>
 
@@ -33,6 +38,18 @@
     </tr>
   </tbody>
 </table>
+
+<% if @check.local_hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
+  <div class="warning bold mb2">
+    ⚠️ Please check these receipts closely, we suspect that their amounts don't match
+  </div>
+<% end %>
+
+<% if @check.local_hcb_code.receipts.any? { |r| r.duplicated? } %>
+  <div class="warning bold mb2">
+    ⚠️ We suspect that one or more of these receipts have been used before
+  </div>
+<% end %>
 
 <%= render partial: "receipts/receipt", collection: @check.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
 

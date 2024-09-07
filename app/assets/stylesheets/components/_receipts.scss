@@ -37,28 +37,32 @@
   opacity: 0;
 }
 
-.receipt--pairing, .receipt--selected {
+.receipt--pairing,
+.receipt--selected {
   margin: -10px;
   padding: 10px;
   border-radius: 8px;
   box-sizing: content-box;
   margin-bottom: -2px;
 
-  background-color: rgba($red, 0.2);
+  background-color: rgba(map-get($palette, ai), 0.2);
 
-  &, &:not(.receipt--pairing) { /* for additional specificity; jank, but better than !important */
+  &,
+  &:not(.receipt--pairing) {
+    /* for additional specificity; jank, but better than !important */
     margin-bottom: -2px;
   }
 
   > footer {
-    border-top: none!important;
+    border-top: none !important;
   }
 
   &.receipt--selected {
     background-color: rgba(#2790e7, 0.4);
   }
 
-  .receipt__icon--star, .receipt__icon--check {
+  .receipt__icon--star,
+  .receipt__icon--check {
     position: absolute;
     bottom: 10px;
     right: 10px;
@@ -93,12 +97,11 @@
   }
 
   &.receipt--pairing .receipt__icon--star {
-    background: $red;
+    background: map-get($palette, ai);
     display: block;
     transform: translateX(0px);
     transition: all 0.2s ease-in-out;
   }
-
 
   span > img {
     position: relative;
@@ -128,13 +131,15 @@
   }
 }
 
-.receipt__icon--star, .receipt__icon--check {
+.receipt__icon--star,
+.receipt__icon--check {
   display: none;
 }
 
-.modal--popover--receipt-expanded > :not(.receipt--expanded):not(header):not(#receipts_list),
+.modal--popover--receipt-expanded
+  > :not(.receipt--expanded):not(header):not(#receipts_list),
 .modal--popover--receipt-expanded > #receipts_list > :not(.receipt--expanded) {
-  display: none!important;
+  display: none !important;
 }
 
 .receipt--expanded > span > .receipt--image {
@@ -147,11 +152,11 @@
 }
 
 .receipt--expanded > iframe {
-  display: block!important;
+  display: block !important;
 }
 
 .receipt--expanded > span > .receipt__minimize {
-  display: inline-flex!important;
+  display: inline-flex !important;
 }
 
 .receipt__minimize {

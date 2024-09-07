@@ -15,7 +15,7 @@
 <strong>Pending transaction memo</strong>
 <pre class="bg-smoke mt0"><%= organizer_signed_in? ? @canonical_pending_transaction.friendly_memo : "REDACTED– SIGN IN TO REVEAL" %></pre>
 
-<%= form_with(model: @canonical_pending_transaction, url: set_custom_memo_canonical_pending_transaction_path(@canonical_pending_transaction), method: :post, local: true) do |form| %>
+<%= form_with(model: @canonical_pending_transaction) do |form| %>
   <div class="field">
     <%= form.label :custom_memo, "Custom Memo" %>
     <%= form.text_field :custom_memo, list: "custom-memos", placeholder: @canonical_pending_transaction.smart_memo, autofocus: true %>

@@ -54,7 +54,6 @@ module LoginCodeService
         email: user.email,
         status: "login code sent",
         method: :email,
-        browser_token: login_code.browser_token,
         login_code:
       }
     end

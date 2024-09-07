@@ -7,7 +7,7 @@ module Errors
   class ValidationError < StandardError
   end
 
-  class BrowserMismatch < StandardError
+  class InvalidStripeCardLogoError < StandardError
   end
 
 end

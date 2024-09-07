@@ -1,0 +1,11 @@
+<% item_user = item.is_a?(OrganizerPosition::Spending::Control::Allowance) ? item.authorized_by : item.stripe_cardholder.user %> <!-- Item is either an allowance or an HCB code. -->
+
+<tr class="<%= item.is_a?(OrganizerPosition::Spending::Control::Allowance) && item.amount_cents.positive? ? "transaction--positive" : "transaction--negative" %>">
+  <td><%= format_date(spending_item_created_date(item)) %></td>
+  <td style="max-width: 400px; overflow: hidden; text-overflow: elipsis;"><%= item.memo %></td>
+  <td class="flex items-center g1">
+    <%= avatar_for item_user, 24 %>
+    <%= item_user.name %>
+  </td>
+  <td><%= render_money item.amount_cents %></td>
+</tr>

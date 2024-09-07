@@ -17,6 +17,13 @@ module StripeService
     Rails.application.credentials.stripe[self.mode][:secret_key]
   end
 
+  def self.physical_bundle_ids
+    {
+      white: Rails.application.credentials.dig(:stripe, self.mode, :physical_bundle_ids, :us_visa_credit_white),
+      black: Rails.application.credentials.dig(:stripe, self.mode, :physical_bundle_ids, :us_visa_credit_black)
+    }
+  end
+
   def self.construct_webhook_event(payload, sig_header, signing_secret_key = :primary)
     signing_secret = Rails.application.credentials.dig(:stripe, self.mode, :webhook_signing_secrets, signing_secret_key)
 

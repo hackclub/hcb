@@ -1,6 +1,7 @@
-<% unless activity.trackable.rejected? %>
-  <%= render layout: "/public_activity/common", locals: { activity: } do %>
-    sent <%= render_money activity.trackable.amount_money %> to <%= activity.trackable.recipient_name %>
-    from <%= link_to activity.trackable.event.name, activity.trackable.event %>
-  <% end %>
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+  sent <%= render_money activity.trackable.amount_money %> to <%= activity.trackable.recipient_name %>
+  from <%= link_to activity.trackable.event.name, activity.trackable.event %>
+  <%= "(rejected)" if activity.trackable.rejected? %>
 <% end %>

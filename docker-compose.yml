@@ -17,9 +17,9 @@ services:
     command: bash -c 'rm -f /usr/src/app/tmp/pids/server.pid; ./bin/dev'
     volumes:
       - ./:/usr/src/app:cached
-      - tmp:/usr/src/app/tmp
-      - gems:/usr/local/bundle
-      - node_modules:/usr/src/app/node_modules
+      # - tmp:/usr/src/app/tmp
+      # - gems:/usr/local/bundle
+      # - node_modules:/usr/src/app/node_modules
     depends_on:
       - db
       - redis

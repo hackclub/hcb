@@ -2,6 +2,9 @@
 
 module ReceiptService
   class Suggest
+    include Turbo::Streams::ActionHelper
+    include Turbo::Streams::StreamName
+
     def initialize(receipt:)
       @receipt = receipt
     end
@@ -24,20 +27,80 @@ module ReceiptService
           }
         end
 
-        SuggestedPairing.upsert_all(pairs, unique_by: [:receipt_id, :hcb_code_id]) if pairs.any?
+        pairings = SuggestedPairing.upsert_all(pairs, unique_by: [:receipt_id, :hcb_code_id]) if pairs.any?
+
+        if @receipt.receiptable.nil?
+          content = turbo_stream_action_tag(:refresh_suggested_pairings)
+          Turbo::StreamsChannel.broadcast_action_to([@receipt.user, :receipt_bin], action: :refresh_suggested_pairings)
+        end
+
+        pairings
       end
     end
 
-    def self.weights
-      {
-        amount_cents: 1,
-        date: 1000,
-        card_last_four: 1000,
-        merchant_zip_code: 500,
-        merchant_city: 500,
-        merchant_phone: 500,
-        merchant_name: 500
+    def distance(hcb_code)
+      return if @extracted.nil?
+
+      distances = {
+        amount_cents: {
+          value: @extracted.extracted_total_amount_cents && (hcb_code.amount_cents.abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
+          weight: 200,
+        },
+        card_last_four: {
+          value: @extracted.extracted_card_last4 == hcb_code.card&.last4 ? 0 : 1,
+          weight: 200,
+        },
+        date: {
+          value: begin
+            return 1 unless @extracted.extracted_date.present?
+
+            distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
+
+            if distance <= 1
+              0
+            elsif distance <= 5
+              0.2 + 0.8 * (distance / 5)
+            else
+              1
+            end
+          end,
+          weight: 100,
+        },
+        merchant_zip_code: {
+          value: begin
+            stripe_zip = hcb_code.stripe_merchant["postal_code"]
+            if stripe_zip == "00000"
+              nil
+              # https://mapofzipcodes.com/blog/00000-zip-code
+              # many postal codes are reported as 000000, and we don't
+              # want a lack of information to hurt pairing suggestions
+            else
+              stripe_zip = stripe_zip.to_i
+              receipt_zip = @extracted.extracted_merchant_zip_code.to_i
+              distance = (stripe_zip - receipt_zip).abs
+              if distance.zero?
+                0
+              elsif distance < 75
+                0.5
+              else
+                1
+              end
+            end
+          end,
+          weight: 50,
+        },
+        merchant_name: {
+          value: @extracted.extracted_merchant_name&.downcase&.in?(hcb_code.stripe_merchant["name"]&.downcase) ? 0 : 1,
+          weight: 50,
+        }
       }
+
+      features = distances.values.reject { |data| data[:value].nil? }
+
+      value = features.map { |data| data[:value] * data[:weight] }.sum.to_f
+      weight = features.map { |data| data[:weight] }.sum.to_f
+
+      value / weight * 100
     end
 
     def sorted_transactions
@@ -51,108 +114,19 @@ module ReceiptService
     private
 
     def transaction_distances(include_details: false)
-      potential_txns.map do |txn|
+      potential_hcb_codes.map do |hcb_code|
         {
-          hcb_code: txn,
-          distance: distance(txn),
-          details: include_details ? distances_hash(txn) : nil
+          hcb_code:,
+          distance: distance(hcb_code)
         }
       end
-    end
-
-    def safe_date(month, day, year)
-      begin
-        Date.new(year, month, day)
-      rescue Date::Error => e
-        nil
-      end
-    end
-
-    def distances_hash(txn)
-      distances = {
-        card_last_four: @extracted[:card_last_four].include?(txn.stripe_card.last4) ? 0 : 1,
-        merchant_zip_code: if txn.stripe_merchant["postal_code"].nil?
-                             nil
-                           else
-                             (@extracted[:textual_content].include?(txn.stripe_merchant["postal_code"]) ? 0 : 1)
-                           end,
-        merchant_city: if txn.stripe_merchant["city"].nil?
-                         nil
-                       else
-                         (@extracted[:textual_content].downcase.include?(txn.stripe_merchant["city"].downcase) ? 0 : 1)
-                       end,
-        merchant_phone: if txn.stripe_merchant["city"].nil?
-                          nil
-                        else
-                          (txn.stripe_merchant["city"].gsub(/\D/, "").length > 6 && @extracted[:textual_content].include?(txn.stripe_merchant["city"].gsub(/\D/, "")) ? 0 : 1)
-                        end,
-        merchant_name: if txn.stripe_merchant["name"].nil?
-                         nil
-                       else
-                         @extracted[:textual_content].downcase.include?(txn.stripe_merchant["name"].downcase) ? 0 : 1
-                       end
-      }
-
-      if @extracted[:amount_cents].include?(txn.amount_cents)
-        distances[:amount_cents] = @extracted[:amount_cents].index(txn.amount_cents) * 3
-      else
-        distances[:amount_cents] = best_distance(txn.amount_cents, @extracted[:amount_cents].take(2))
-      end
-
-      distances[:date] =
-        if @extracted[:date].empty?
-          nil
-        else
-          best_distance(txn.date.to_time.to_i / 86400, @extracted[:date].map { |d| safe_date(*d) }.reject { |d| d.nil? }.map{ |d| d.to_time.to_i / 86400 })
-        end
-
-      distances
-    end
-
-    def distance(txn)
-      distances = distances_hash(txn)
-
-      total_weight = self.class.weights.values.sum
-      weight_applied = 0
-      distance = 0
-
-      self.class.weights.each do |key, weight|
-        unless distances[key].nil?
-          weight_applied += weight
-          distance += (distances[key] * weight)**2
-        end
-      end
-
-      # distance formula options
-
-      # euclidian distance
-      # Math.sqrt(amount_cents**2 + date**2 + card_last_four**2)
-
-      # manhattan distance
-      # (amount_cents**1 + date**1 + card_last_four**1)**(1/1)
-
-      # chebyshev distance
-      # [amount_cents, date, card_last_four].max
-
-      # minkowski distance
-      # (amount_cents**3 + date**3 + card_last_four**3)**(1.0/3.0)
-
-      distance *= (total_weight / weight_applied) # scale up to account for missing weights
-
-      Math.sqrt(distance)
-    end
-
-    def best_distance(one_point, multiple_values)
-      multiple_values.map do |value|
-        (one_point - value).abs
-      end.min || 100
     end
 
     def user
       @receipt.user
     end
 
-    def potential_txns
+    def potential_hcb_codes
       user.transactions_missing_receipt
     end
 

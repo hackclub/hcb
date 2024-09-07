@@ -9,6 +9,7 @@ class PreviewLink extends React.Component {
       amount: null,
       message: null,
       monthly: false,
+      goods: false,
       copy: null,
     }
 
@@ -49,6 +50,9 @@ class PreviewLink extends React.Component {
         case 'monthly':
           this.setState({ monthly: e.target.checked })
           break
+        case 'goods':
+          this.setState({ goods: e.target.checked })
+          break
       }
     }
   }
@@ -60,7 +64,8 @@ class PreviewLink extends React.Component {
     let showSubtitle =
       this.state.amount != null ||
       this.state.message != null ||
-      this.state.monthly
+      this.state.monthly ||
+      this.state.goods
 
     let humanizedMonthly = 'one-time '
     if (this.state.monthly) {
@@ -72,6 +77,11 @@ class PreviewLink extends React.Component {
     if (this.state.message) {
       humanizedMessage = ` with the message "${this.state.message}"`
       url.searchParams.set('message', this.state.message)
+    }
+
+    if (this.state.goods) {
+      url.searchParams.set('goods', this.state.goods)
+      humanizedMessage = ` for goods or services` + (humanizedMessage || '')
     }
 
     let humanizedAmount = null
@@ -129,9 +139,16 @@ class PreviewLink extends React.Component {
         <label htmlFor="prefill-monthly flex items-center">
           <span style={{ fontWeight: 600 }}>Monthly charge?</span>
           <input
-            placeholder="500.00"
             type="checkbox"
             name="prefill-monthly"
+            onChange={this.handleChange}
+          />
+        </label>
+        <label htmlFor="prefill-goods flex items-center" className="mt2">
+          <span style={{ fontWeight: 600 }}>For goods or services?</span>
+          <input
+            type="checkbox"
+            name="prefill-goods"
             onChange={this.handleChange}
           />
         </label>

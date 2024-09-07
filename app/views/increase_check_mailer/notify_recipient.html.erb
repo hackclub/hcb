@@ -8,6 +8,8 @@
   <i>"<%= @check.payment_for %>"</i>.
 </p>
 
+<p>You must deposit this check within <%= IncreaseCheck::VALID_DURATION.inspect %>. It will expire on <%= (@check.approved_at + IncreaseCheck::VALID_DURATION).strftime("%b %e, %Y") %>.
+
 <p>
   If you have any questions about this transfer, please contact <%= @check.event.name %>.
 </p>

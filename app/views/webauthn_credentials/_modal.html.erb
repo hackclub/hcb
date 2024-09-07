@@ -5,7 +5,7 @@
     action: "webauthn-register#submit",
     "webauthn-register-options-url-value" => register_options_user_webauthn_credentials_path(@user)
       } do |form| %>
-    <p class="display-none flash error mx-auto" data-webauthn-register-target="error">Something went wrong.</p>
+    <p class="display-none flash error max-w-full" data-webauthn-register-target="error">Something went wrong.</p>
 
     <div class="field field--options fit">
       <%= form.radio_button :type, "platform", required: true, disabled: true, data: { "webauthn-register-target" => "platformRadio", action: "webauthn-register#toggleNameField" } %>

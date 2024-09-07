@@ -1,7 +1,7 @@
 <% title "Grant to #{@card_grant.user.name}" %>
 <%= render "events/nav", selected: :transfers if organizer_signed_in? %>
 
-<div class="mt4 mb4 check--form flex justify-center" style="gap: 3rem">
+<div class="mt4 mb4 check--form flex justify-center <%= "flex-wrap" if @frame %>" style="gap: 3rem">
   <%# Grantee has pending invite %>
 
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>

@@ -1,4 +1,4 @@
-<div class="card border">
+<div class="card border b--info">
   <span class="flex items-center justify-between flex-wrap">
     <span class="bold flex items-center">
       <span><%= authorization.application.name %></span> <span class="badge bg-info ml1">App</span>
@@ -7,7 +7,8 @@
       <%= inline_icon "door-leave", size: home_action_size %>
     <% end %>
   </span>
-  <span class="italic muted">
+
+  <p class="regular italic muted text-sm m-0 mt-1">
     <%= authorization.authorization_count == 1 ? "Authorized" : "Last authorized" %> <%= local_time_ago authorization.created_at %>
-  </span>
+  </p>
 </div>

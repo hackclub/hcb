@@ -21,7 +21,7 @@
                       [
                         current_user.admin? ? event.admin_dropdown_description : event.disbursement_dropdown_description,
                         event.id,
-                        { "data-fee" => event.sponsorship_fee.to_s },
+                        { "data-fee" => event.revenue_fee.to_s },
                       ]
                     end,
                     { prompt: "Select one…" },
@@ -61,6 +61,14 @@
     <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, disabled: %>
     <span class="muted">This is to help HCB keep record of our transactions. It will be used as the memo on your transaction list.</span>
   </div>
+
+  <% admin_tool do %>
+    <div class="field">
+      <%= form.label :scheduled_on, "Schedule for" %>
+      <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
+      <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
+    </div>
+  <% end %>
 
   <div
       class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"

@@ -21,7 +21,12 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
     <div style={{ position: 'relative', zIndex: '1000' }}>
       <KBarProvider
         actions={[...initalActions, ...(admin ? adminActions(adminUrls) : [])]}
+        options={{
+          disableScrollbarManagement: true,
+          disableDocumentLock: true,
+        }}
       >
+        <ButtonTrigger />
         <KBarPortal>
           <KBarPositioner style={{ zIndex: 1000 }}>
             <SearchAndResults />
@@ -30,6 +35,15 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
       </KBarProvider>
     </div>
   )
+}
+
+const ButtonTrigger = () => {
+  const { query } = useKBar()
+  if (document.getElementById('command_bar_trigger')) {
+    document.getElementById('command_bar_trigger').onclick = function () {
+      query.toggle()
+    }
+  }
 }
 
 const animatorStyle = {
@@ -154,7 +168,7 @@ function SearchAndResults() {
             ])
           }
         }
-      } catch (error) {
+      } catch {
         setActions([
           ...actions.filter(a => !a.id?.startsWith('loading')),
           {

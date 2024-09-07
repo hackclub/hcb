@@ -35,7 +35,12 @@
     <% @canonical_pending_transactions.each do |cpt| %>
       <tr class="<%= "admin-bg-pending" if cpt.unsettled? %>">
         <td><%= cpt.id %></td>
-        <td><%= cpt.date %></td>
+        <td>
+          <%= cpt.date %>
+          <% if cpt.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <% if cpt.event %>
           <td><%= link_to cpt.memo, cpt.local_hcb_code %></td>
         <% else %>

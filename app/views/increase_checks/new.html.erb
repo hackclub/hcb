@@ -18,14 +18,14 @@
           editable: true,
           class: "hidden xl:block" %>
 
-    <%= render "callout", type: "warning", title: "Important info about checks", footer: :questions, class: "mb-0" do %>
-      <ul>
+    <%= render "callout", type: "info", title: "Information about check transfers", footer: :questions, class: "mb-0" do %>
+      <ul class="m0">
         <li>
           Need to reimburse someone? Checks are not intended for that purpose.
           Visit <%= link_to "reimbursements", event_reimbursements_path(@event), class: "info" %> to learn more.
         </li>
-        <li>This check will be valid for 30 days, until <span class="bold"><%= format_date DateTime.now + 1.month %></span>.</li>
         <li>Checks can only be sent within the US. The recipient must have a U.S. bank account to cash the check.</li>
+        <li>This check will be valid for <span class="bold">180 days</span>, until <%= format_date IncreaseCheck::VALID_DURATION.from_now %>. The recipient must deposit it before then.</li>
         <li>HCB team needs to approve your check before it's sent out. This usually takes 1 business day.</li>
       </ul>
     <% end %>
@@ -59,7 +59,7 @@
             <%= form.number_field :amount,
               placeholder: "500.00",
               value: (@check.amount.nil? ? nil : ("%.2f" % (@check.amount.to_f / 100))),
-              disabled: (@event.balance <= 0 || disabled),
+              disabled: @event.balance <= 0 || disabled,
               step: 0.01,
               min: 1,
               required: true,
@@ -169,6 +169,12 @@
           <div class="primary"><%= message %></div>
         <% end %>
       </div>
+
+      <div class="field">
+        <%= form.label :address_country, "Country" %>
+        <%= form.text_field :address_country, value: "United States", disabled: true %>
+      </div>
+
       <div class="field">
         <%= form.label :recipient_email, "Recipient Email" %>
         <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>

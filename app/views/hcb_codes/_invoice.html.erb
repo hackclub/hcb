@@ -143,7 +143,7 @@
       <strong>Memo</strong>
       <span><%= @invoice.memo %></span>
     </p>
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
   <section class="card__banner card__darker details details--wide border-top md-pl0 md-pr0">
     <table>

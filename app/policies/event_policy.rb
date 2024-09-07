@@ -21,6 +21,14 @@ class EventPolicy < ApplicationPolicy
     is_public || admin_or_user?
   end
 
+  def breakdown?
+    (admin_or_user? && Flipper.enabled?(:breakdown_2024_06_18, record)) || user&.admin?
+  end
+
+  def balance_by_date?
+    is_public || admin_or_user?
+  end
+
   # NOTE(@lachlanjc): this is bad, I’m sorry.
   # This is the StripeCardsController#shipping method when rendered on the event
   # card overview page. This should be moved out of here.
@@ -53,7 +61,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def card_overview?
-    is_public || admin_or_user?
+    ((is_public || user?) && record.approved? && record.plan.cards_enabled?) || admin?
   end
 
   def new_stripe_card?
@@ -65,19 +73,10 @@ class EventPolicy < ApplicationPolicy
   end
 
   def documentation?
-    is_public || admin_or_user?
+    (is_public || admin_or_user?) && record.plan.documentation_enabled?
   end
 
   def statements?
-    is_public || admin_or_user?
-  end
-
-  def demo_mode_request_meeting?
-    admin_or_manager? && record.demo_mode? && record.demo_mode_request_meeting_at.nil?
-  end
-
-  # (@eilla1) these pages are for the wip resources page and should be moved later
-  def connect_gofundme?
     is_public || admin_or_user?
   end
 
@@ -93,28 +92,24 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager? && !record.demo_mode?
   end
 
-  def sell_merch?
-    is_public || admin_or_user?
-  end
-
   def g_suite_overview?
-    admin_or_user? && is_not_demo_mode? && !record.hardware_grant?
+    admin_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
-    admin_or_manager? && is_not_demo_mode? && !record.hardware_grant?
+    admin_or_manager? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
-    admin_or_user? && is_not_demo_mode? && !record.hardware_grant?
+    admin_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def transfers?
-    is_public || admin_or_user?
+    ((is_public || user?) && record.plan.transfers_enabled?) || admin?
   end
 
   def promotions?
-    (is_public || admin_or_user?) && !record.hardware_grant? && !record.outernet_guild?
+    (is_public || admin_or_user?) && record.plan.promotions_enabled?
   end
 
   def reimbursements_pending_review_icon?
@@ -122,7 +117,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements?
-    admin_or_user?
+    (user? && record.plan.reimbursements_enabled?) || admin?
   end
 
   def expensify?
@@ -130,7 +125,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def donation_overview?
-    is_public || admin_or_user?
+    ((is_public || user?) && record.approved? && record.plan.donations_enabled?) || admin?
   end
 
   def partner_donation_overview?
@@ -158,7 +153,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    admin_or_manager?
+    (manager? && record.plan.account_number_enabled?) || admin?
   end
 
   def toggle_event_tag?
@@ -193,14 +188,34 @@ class EventPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def activation_flow?
+    user&.admin? && record.demo_mode?
+  end
+
+  def activate?
+    user&.admin? && record.demo_mode?
+  end
+
   private
 
   def admin_or_user?
-    user&.admin? || record.users.include?(user)
+    admin? || user?
+  end
+
+  def admin?
+    user&.admin?
+  end
+
+  def user?
+    record.users.include?(user)
+  end
+
+  def manager?
+    OrganizerPosition.find_by(user:, event: record)&.manager?
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record)&.manager?
+    admin? || manager?
   end
 
   def is_not_demo_mode?

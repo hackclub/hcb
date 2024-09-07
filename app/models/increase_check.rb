@@ -66,6 +66,10 @@ class IncreaseCheck < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
   end
 
+  after_update if: -> { column_status_previously_changed?(to: "stopped") } do
+    canonical_pending_transaction.decline!
+  end
+
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
@@ -73,15 +77,24 @@ class IncreaseCheck < ApplicationRecord
 
     event :mark_approved do
       after do
-        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
+        if self.send_email_notification
+          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: 30.days).perform_later(self)
+          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: (180 - 30).days).perform_later(self)
+        end
+
         canonical_pending_transaction.update(fronted: true)
       end
       transitions from: :pending, to: :approved
+
+      after_commit do
+        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
+      end
     end
 
     event :mark_rejected do
       after do
         canonical_pending_transaction.decline!
+        create_activity(key: "increase_check.rejected")
       end
       transitions from: :pending, to: :rejected
     end
@@ -100,7 +113,7 @@ class IncreaseCheck < ApplicationRecord
 
   validate on: :create do
     if amount > event.balance_available_v2_cents
-      errors.add(:amount, "You don't have enough money to send this check! Your balance is #{(event.balance_available_v2_cents / 100).to_money.format}.")
+      errors.add(:amount, "You don't have enough money to send this transfer! Your balance is #{ApplicationController.helpers.render_money(event.balance_available_v2_cents)}.")
     end
   end
 
@@ -124,6 +137,8 @@ class IncreaseCheck < ApplicationRecord
 
   enum :column_status, %w(initiated issued manual_review rejected pending_deposit pending_stop deposited stopped pending_first_return pending_second_return first_return pending_reclear recleared second_return settled returned pending_user_initiated_return user_initiated_return_submitted user_initiated_returned pending_user_initiated_return_dishonored).index_with(&:itself), prefix: :column
   enum :column_delivery_status, %w(created mailed in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
+
+  VALID_DURATION = 180.days
 
   def column?
     column_id.present?
@@ -251,7 +266,7 @@ class IncreaseCheck < ApplicationRecord
                                           postal_code: address_zip,
                                           country_code: "US",
                                         }.compact_blank,
-                                        payor_name: event.name[0...40],
+                                        payor_name: event.short_name(length: 40),
                                         payor_address: {
                                           line_1: "8605 Santa Monica Blvd #86294",
                                           city: "West Hollywood",

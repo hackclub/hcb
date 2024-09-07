@@ -8,19 +8,24 @@
 
 <% if @frame %>
   <%= turbo_frame_tag @hcb_code do %>
-    <%= form_with model: @hcb_code, data: { turbo: true, controller: "form" } do |form| %>
+    <%= form_with model: @hcb_code, data: { turbo: true, controller: "form" }, html: { style: "flex-grow: 1" } do |form| %>
       <div class="flex items-center">
-        <button class="pop border-none cursor-pointer mr2">
-          <%= inline_icon "checkmark", size: 28 %>
+        <button class="pop border-none cursor-pointer mr2 <%= "ai" if @ai_memo %> tooltipped tooltipped--e" aria-label="Save">
+          <%= inline_icon "check", size: 28 %>
         </button>
 
         <%= form.text_field :memo,
                             list: "custom-memos",
                             placeholder: @hcb_code.memo,
+                            value: @ai_memo || @hcb_code.memo,
                             autofocus: true,
                             data: { controller: "input", input_target: "input", action: "focus->input#select blur->form#submit" },
                             class: "bg-transparent fit",
                             style: "border-color: #338eda; min-height: 0; font-size: 1.5rem; padding: 0.125rem 0 0.125rem 4px; letter-spacing: -0.02em" %>
+
+        <span class="regular muted ml1 mr1"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
+        <span class="mr3"><%= number_to_currency(@hcb_code.amount.abs) %></span>
+
         <datalist id="custom-memos">
           <%= @suggested_memos.each do |s_memo| %>
             <option><%= s_memo %></option>

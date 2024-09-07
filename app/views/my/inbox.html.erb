@@ -1,0 +1,120 @@
+<% title "My receipts" %>
+<% page_md %>
+<%= render "users/nav", selected: :receipts %>
+
+<h1 class="heading">
+  My receipts
+</h1>
+
+<% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
+  <section class="grid grid--split grid--spacious">
+    <div>
+      <label for="sms_number">Send in via SMS</label>
+      <p class="h5 muted mt0 mb1">
+        Message photos from your phone.
+      </p>
+      <div class="relative block" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
+        <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit">
+        <button
+          type="button"
+          class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+          style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+          aria-label="Copy number"
+          data-action="clipboard#copy:prevent">
+          <%= inline_icon "copy", size: 28 %>
+        </button>
+      </div>
+    </div>
+
+    <%= form_for current_user do |form| %>
+      <%= form.label :receipt_identifier, "Send in via email" %>
+      <p class="h5 muted mt0 mb1">
+        Send from in-store terminals, or forward emails later.
+      </p>
+
+      <%= turbo_frame_tag "mailbox_address" do %>
+        <% if @mailbox_address %>
+          <%= render @mailbox_address %>
+        <% else %>
+          <%= link_to "Choose an email address",
+              mailbox_addresses_path,
+              class: "btn btn-small pl2 pr2",
+              data: { turbo: true, "turbo-method" => "post" } %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </section>
+
+  <%= turbo_stream_from current_user, :receipt_bin %>
+  <%= turbo_frame_tag "suggested_pairings", src: suggested_pairings_path %>
+
+  <div class="mt2 mb3">
+    <%= render partial: "receipts/form_v3", locals: {
+          upload_method: "receipt_center",
+          restricted_dropzone: true,
+          turbo: true,
+          global_paste: true
+        } %>
+  </div>
+
+  <%= render partial: "receipts/blankslate", locals: { count: @receipts.size } %>
+
+  <ul class="grid grid--medium-narrow left-align w-100 mt0" id="receipts_list">
+    <% @receipts.each do |receipt| %>
+      <li class="flex grid flex-col justify-between h-100 mx-auto" id="receipt_<%= receipt.id %>">
+        <%= render partial: "receipts/receipt", locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true, turbo_for_deletion: true } %>
+      </li>
+    <% end %>
+  </ul>
+
+<% end %>
+
+<h2 class="flex items-center mb2">
+  Transactions
+  <%= badge_for @count %>
+</h2>
+
+<% @cards.each do |card| %>
+  <section class="mb3 card p0 receipt-card">
+    <h2 class="heading line-height-4 p1 pl2 mt0 ml0 flex justify-between items-center">
+      <%= card.event.name %>
+
+      <%= link_to card, class: "regular h3 mention flex items-center" do %>
+        <%= inline_icon "card", class: "mr1", size: 25 %>
+        <%= card.last_four %>
+      <% end %>
+    </h2>
+
+    <div class="table-container">
+      <table>
+        <tbody data-behavior="transactions">
+          <% @card_hcb_codes[card.to_global_id.to_s].each do |hcb_code| %>
+            <% if hcb_code.canonical_transactions.any? %>
+              <% hcb_code.canonical_transactions.each do |ct| %>
+                <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
+              <% end %>
+            <% else %>
+              <% hcb_code.canonical_pending_transactions.each do |pt| %>
+                <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
+              <% end %>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>
+
+<% if @count == 0 %>
+  <%= blankslate "No missing receipts!" %>
+<% end %>
+
+<style>
+  @media (min-width: 72em) {
+    .receipt-card {
+      max-width: calc(100vw - 20rem);
+    }
+  }
+</style>
+
+<%= paginate @hcb_codes %>

@@ -51,4 +51,11 @@ class ReimbursementMailer < ApplicationMailer
     mail subject: "[Reimbursements] ACH transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
+  def paypal_transfer_failed
+    @payout_holding = params[:reimbursement_payout_holding]
+    @report = @payout_holding.report
+
+    mail subject: "[Reimbursements] PayPal transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
+  end
+
 end

@@ -1,7 +1,18 @@
-<%= render layout: "/public_activity/common", locals: { activity:, url: reimbursement_report_path(activity.trackable) } do %>
-  opened <i><%= link_to activity.trackable.name, activity.trackable %></i>
-  <% unless activity.trackable.user == activity.owner %>
-    for <span class="muted"><%= activity.trackable&.user&.name || "a user" %></span>
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<% if activity.trackable.present? %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: reimbursement_report_path(activity.trackable) } do %>
+    opened <i><%= link_to activity.trackable.name, activity.trackable %></i>
+    <% unless activity.trackable.user == activity.owner %>
+      for <span class="muted"><%= activity.trackable&.user&.name || "a user" %></span>
+    <% end %>
+    <% if activity.trackable.event %>
+      on <%= link_to activity.trackable.event.name, activity.trackable.event %>
+    <% end %>
+    for reimbursement
   <% end %>
-  on <%= link_to activity.trackable.event.name, activity.trackable.event %> for reimbursement
+<% else %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    opened <i>a deleted reimbursement report</i>
+  <% end %>
 <% end %>

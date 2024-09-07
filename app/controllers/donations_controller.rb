@@ -6,10 +6,10 @@ class DonationsController < ApplicationController
   include SetEvent
   include Rails::Pagination
 
-  skip_after_action :verify_authorized, except: [:start_donation, :make_donation]
+  skip_after_action :verify_authorized, only: [:export, :show, :refund, :qr_code, :finish_donation, :finished]
   skip_before_action :signed_in_user
   before_action :set_donation, only: [:show]
-  before_action :set_event, only: [:start_donation, :make_donation, :qr_code]
+  before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
   before_action :check_background_param
   before_action :hide_seasonal_decorations
@@ -40,9 +40,11 @@ class DonationsController < ApplicationController
   end
 
   def start_donation
-    if !@event.donation_page_enabled
+    unless @event.donation_page_available?
       return not_found
     end
+
+    tax_deductible = params[:goods].nil? ? true : params[:goods] == "0"
 
     @donation = Donation.new(
       name: params[:name],
@@ -51,7 +53,8 @@ class DonationsController < ApplicationController
       message: params[:message],
       event: @event,
       ip_address: request.ip,
-      user_agent: request.user_agent
+      user_agent: request.user_agent,
+      tax_deductible:
     )
 
     authorize @donation
@@ -64,6 +67,7 @@ class DonationsController < ApplicationController
         email: params[:email],
         amount: params[:amount],
         message: params[:message],
+        tax_deductible:
       )
     end
 
@@ -74,6 +78,10 @@ class DonationsController < ApplicationController
     d_params = donation_params
     d_params[:amount] = Monetize.parse(donation_params[:amount]).cents
 
+    if d_params[:fee_covered] == "1" && @event.config.cover_donation_fees
+      d_params[:amount] = (d_params[:amount] / (1 - @event.revenue_fee)).ceil
+    end
+
     if d_params[:name] == "aser ras"
       skip_authorization
       redirect_to root_url and return
@@ -82,7 +90,9 @@ class DonationsController < ApplicationController
     d_params[:ip_address] = request.ip
     d_params[:user_agent] = request.user_agent
 
-    @donation = Donation.new(d_params)
+    tax_deductible = d_params[:goods].nil? ? true : d_params[:goods] == "0"
+
+    @donation = Donation.new(d_params.except(:goods).merge({ tax_deductible: }))
     @donation.event = @event
 
     authorize @donation
@@ -144,13 +154,19 @@ class DonationsController < ApplicationController
   end
 
   def export
-    @event = Event.friendly.find(params[:event])
-
     authorize @event.donations.first
 
     respond_to do |format|
       format.csv { stream_donations_csv }
       format.json { stream_donations_json }
+    end
+  end
+
+  def export_donors
+    authorize @event.donations.first
+
+    respond_to do |format|
+      format.csv { stream_donors_csv }
     end
   end
 
@@ -174,6 +190,16 @@ class DonationsController < ApplicationController
     self.response_body = donations_json
   end
 
+  def stream_donors_csv
+    set_file_headers_csv
+    headers["Content-disposition"] = "attachment; filename=donors.csv"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = donors_csv
+  end
+
   def set_file_headers_csv
     headers["Content-Type"] = "text/csv"
     headers["Content-disposition"] = "attachment; filename=donations.csv"
@@ -190,6 +216,10 @@ class DonationsController < ApplicationController
 
   def donations_json
     ::DonationService::Export::Json.new(event_id: @event.id).run
+  end
+
+  def donors_csv
+    ::DonationService::Export::Donors::Csv.new(event_id: @event.id).run
   end
 
   def set_donation
@@ -214,7 +244,7 @@ class DonationsController < ApplicationController
   end
 
   def donation_params
-    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous)
+    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered)
   end
 
   def redirect_to_404

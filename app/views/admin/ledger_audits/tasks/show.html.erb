@@ -6,6 +6,18 @@
 
 <h2>Fraud-O-Matic: Ledger Auditor (<%= link_to @hcb_code.hcb_code, @hcb_code, target: "_blank" %>)</h2>
 
+<% if @hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
+  <div class="warning bold mb2">
+    ⚠️ Please check these receipts closely, we suspect that their amounts don't match
+  </div>
+<% end %>
+
+<% if @hcb_code.receipts.any? { |r| r.duplicated? } %>
+  <div class="warning bold mb2">
+    ⚠️ We suspect that one or more of these receipts have been used before
+  </div>
+<% end %>
+
 <div class="hcb_code mt2">
   <div class="hcb_code_wrapper <%= event.hack_club_hq? ? "hack_club_hq" : "" %>" style="margin-top: -16px;">
     <%= render partial: "hcb_codes/rich_metadata" %>
@@ -75,9 +87,9 @@
           </p>
           <p>
             <strong>Fee on revenue</strong>
-            <span><%= number_to_percentage(@event.sponsorship_fee * 100, significant: true, strip_insignificant_zeros: true) %></span>
+            <span><%= number_to_percentage(@event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true) %></span>
           </p>
-          <% if @event.high_school_hackathon? && @event.sponsorship_fee == 0 %>
+          <% if @event.high_school_hackathon? && @event.revenue_fee == 0 %>
             <p>
               <strong>
                 <a

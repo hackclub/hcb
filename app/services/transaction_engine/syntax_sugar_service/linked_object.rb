@@ -37,6 +37,8 @@ module TransactionEngine
 
           return reimbursement_payout_holding if reimbursement_payout_holding
 
+          return paypal_transfer if paypal_transfer
+
           nil
         end
       end
@@ -160,6 +162,10 @@ module TransactionEngine
         return nil unless @canonical_transaction.transaction_source_type == "Reimbursement::PayoutHolding"
 
         Reimbursement::PayoutHolding.find(@canonical_transaction.transaction_source_id)
+      end
+
+      def paypal_transfer
+        @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == PaypalTransfer.name
       end
 
       def event

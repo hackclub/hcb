@@ -40,7 +40,9 @@
   top: 100%;
   background-color: map-get($palette, white);
   border-radius: 0.5rem;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.0625), 0 6px 12px rgba(0, 0, 0, 0.125);
+  box-shadow:
+    0 -2px 4px rgba(0, 0, 0, 0.0625),
+    0 6px 12px rgba(0, 0, 0, 0.125);
   overflow: auto;
   z-index: 6;
 
@@ -98,7 +100,8 @@
       right: 0;
       margin: 0;
       border: 0;
-      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.25),
+      box-shadow:
+        0 4px 8px 0 rgba(0, 0, 0, 0.25),
         0 0 0 100vh rgba(0, 0, 0, 0.375);
       font-size: 1rem;
       z-index: 999;
@@ -146,6 +149,7 @@
 
     &:hover:not(:focus) {
       @include gradient(info);
+
       &::placeholder {
         color: $white;
       }
@@ -165,8 +169,16 @@
   text-decoration: none;
   letter-spacing: 0;
   background-color: transparent;
-  transition: 0.125s ease-in-out background-color, 0.125s ease-in-out color;
+  transition:
+    0.125s ease-in-out background-color,
+    0.125s ease-in-out color;
   cursor: pointer;
+
+  &.menu__action--active::after {
+    content: '✔';
+    position: absolute;
+    right: 0.5rem;
+  }
 
   &:before {
     content: '';
@@ -189,6 +201,7 @@
   &:hover,
   &:focus {
     color: $white;
+
     &:before {
       opacity: 1;
     }
@@ -229,7 +242,7 @@
 
   &[data-label] {
     margin-top: 0.75rem;
-    margin-bottom:0.75rem;
+    margin-bottom: 0.75rem;
 
     &::after {
       content: attr(data-label);
@@ -242,17 +255,8 @@
       translate: 0.5rem -50%;
 
       html[data-dark='true'] & {
-        background-color: $darkless
+        background-color: $darkless;
       }
     }
   }
-}
-
-[data-filter-menu-selected='false'] {
-  display: none;
-}
-
-[data-filter-menu-label-selected='true'] {
-  font-weight: 600;
-  color: map-get($palette, 'info');
 }

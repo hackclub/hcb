@@ -22,6 +22,13 @@ export default class extends Controller {
       field.readOnly = !this.enabledValue
       field.addEventListener('dblclick', () => this.edit())
       this.#addTooltip(field, 'Double-click to edit...')
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && this.enabledValue) {
+          this.formTarget.reset()
+          this.close()
+        }
+      })
     }
 
     this.buttonTarget.addEventListener('click', e => {
@@ -40,6 +47,27 @@ export default class extends Controller {
     this.#card()
     this.#move()
     this.#lightbox()
+  }
+
+  close(e) {
+    if (this.lockedValue) return
+    this.enabledValue = false
+
+    this.#buttons()
+    this.#label()
+    this.#memo()
+    this.#card()
+    this.#move()
+    this.#lightbox()
+
+    for (const field of this.fieldTargets) {
+      field.readOnly = true
+      this.#addTooltip(field, 'Double-click to edit...')
+    }
+
+    if (e) {
+      e.target?.focus()
+    }
   }
 
   edit(e) {
@@ -83,6 +111,8 @@ export default class extends Controller {
   #card() {
     if (this.enabledValue && !this.lockedValue) {
       this.cardTarget.classList.add('b--warning')
+    } else {
+      this.cardTarget.classList.remove('b--warning')
     }
   }
 
@@ -104,11 +134,14 @@ export default class extends Controller {
   #memo() {
     this.memoTarget.innerText =
       this.enabledValue && !this.lockedValue
-        ? `Unsaved Changes`
+        ? `Unsaved changes`
         : this.memoValue
     if (this.enabledValue && !this.lockedValue) {
       this.memoTarget.classList.add('warning')
       this.memoTarget.classList.remove('muted')
+    } else {
+      this.memoTarget.classList.remove('warning')
+      // this.memoTarget.classList.add('muted')
     }
   }
 
@@ -138,6 +171,11 @@ export default class extends Controller {
         e.preventDefault()
         this.formTarget.requestSubmit()
       })
+    } else {
+      this.lightboxTarget.style.display = 'none'
+      this.cardTarget.style.position = 'relative'
+      this.cardTarget.style.zIndex = 'auto'
+      document.querySelector('.app__sidebar').style.zIndex = 'auto'
     }
   }
 }

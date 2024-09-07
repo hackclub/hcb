@@ -1,1 +1,7 @@
+<% title "New note" %>
+<% page_sm %>
+<%= render "events/nav" if @event %>
+
+<h1>New note</h1>
+
 <%= render "comments/form", commentable: @commentable if current_user %>

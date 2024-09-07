@@ -9,9 +9,13 @@
       <span>
         <% unless defined?(hide_owner) && hide_owner %>
           <% if activity.owner == current_user %>
-            You
+            <% if local_assigns[:possessive] %>
+              Your
+            <% else %>
+              You
+            <% end %>
           <% else %>
-            <span class="muted"><%= activity.owner&.name || "A user" %></span>
+            <span class="muted"><%= activity.owner&.name || "A user" %></span><%= "'s" if local_assigns[:possessive] %>
           <% end %>
         <% end %>
         <%= yield %>
@@ -23,7 +27,7 @@
             <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
           <% end %>
         <% end %>
-        <span class="align-middle timestamp" style="cursor: default">
+        <span class="align-middle timestamp" style="cursor: default" data-controller="timestamp" data-timestamp-time-value="<%= activity.created_at.to_i * 1000 %>">
           <%= time_ago_in_words activity.created_at %> ago
         </span>
       </div>

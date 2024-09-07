@@ -6,6 +6,7 @@
       <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card %>
     <% end %>
 
+    <%= render "card_grants/actions/topup", card_grant: %>
     <%= render "card_grants/actions/cancel", card_grant: %>
   </div>
 <% end %>

@@ -1,8 +1,5 @@
 <% et = emburse_transaction %>
-<tr
-  class="transaction--<%= et.amount.positive? ? "positive" : "negative" %><%= " muted" if !et.completed? %>"
-  data-behavior="filterbar_row"
-  data-filter="<%= et.filter_data.to_json %>">
+<tr class="transaction <%= " muted" if !et.completed? %>">
   <% if defined? authorless %>
   <% else %>
   <% if et.card %>
@@ -29,18 +26,17 @@
     <%= et.transaction_time.nil? ? "–" : et.transaction_time.to_date %>
   </td>
   <td class="transaction__memo">
-    <span>
-    <% if et.completed? %>
-      <span><%= et.memo.humanize %></span>
-    <% else %>
-      <i><%= et.memo.humanize %> (pending)</i>
+    <% unless et.completed? %>
+      <%= badge_for "Pending", class: "ml0 mr1" %>
     <% end %>
+    <span>
+      <%= et.memo.humanize %>
     </span>
+    <%= list_badge_for admin_signed_in? ? et.comments.size : et.comments.not_admin_only.size, "comment", "post", optional: true %>
     <%= list_badge_for et.receipts.size, "receipt", "payment-docs", required: true unless et.is_transfer? %>
-    <%= list_badge_for admin_signed_in? ? et.comments.size : et.comments.not_admin_only.size, "note", "post", optional: true %>
   </td>
   <td class="nowrap">
-    <%= render_money et.amount %>
+    <%= render_transaction_amount et.amount %>
   </td>
   <% if organizer_signed_in? || !@event %>
     <td>

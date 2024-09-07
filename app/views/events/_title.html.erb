@@ -1,26 +1,19 @@
 <div data-controller="menu" class="pt2">
-  <%= link_to @event, class: "text-decoration-none event-title", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
-    <h1 class="pointer flex items-center border-none h1 mt0 mb0 black break-words">
-      <%= @event.name %>
-      <%= inline_icon "down-caret", class: "event-title-dropdown-icon" if show_org_switcher? %>
-    </h1>
+  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none gap-2 text-inherit leading-9 event-title -m-2 my-2 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-size:2em; font-weight: 600", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
+    <%= @event.name %>
+    <%= inline_icon "down-caret", class: "event-title-dropdown-icon" if show_org_switcher? %>
   <% end %>
   <% if show_org_switcher? %>
-    <div class="menu__content menu__content--2 menu__content--compact" data-menu-target="content">
-      <p class="h6 muted m0 ml1 mb1">Switch organizations:</p>
+    <div class="menu__content menu__content--switcher sm:w-[275px]" data-menu-target="content">
+      <p class="muted font-[800] text-sm mb-0 uppercase m-1">Organizations</p>
       <% current_user.events.not_hidden.excluding(@event).with_attached_logo.map do |event| %>
-        <%= link_to event, title: event.name, style: "gap: 8px" do %>
+        <%= link_to event, title: event.name, class: "gap-2" do %>
           <% if event.logo.attached? %>
             <%= image_tag event.logo, height: 24, width: 24, class: "rounded" %>
           <% else %>
-            <div style="height: 24px; width: 24px; background-color: <%= event.color %>" class="rounded shrink-none"></div>
+            <div style="height: 24px; width: 24px;" class="bg-neutral-500/30 rounded shrink-none"></div>
           <% end %>
           <span class="truncate"><%= event.name %></span>
-          <span class="muted h6 ml-auto">
-            <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), loading: :lazy do %>
-              -
-            <% end %>
-          </span>
         <% end %>
       <% end %>
     </div>

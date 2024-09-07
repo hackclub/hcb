@@ -50,6 +50,12 @@ module SearchService
         formatted[:image] = profile_picture_for(item)
       end
 
+      if item.instance_of?(Reimbursement::Report)
+        formatted[:path] = "/reimbursement/reports/#{item.hashid}/"
+        formatted[:user] = item.user.name
+        formatted[:event] = item&.event&.name
+      end
+
       formatted
 
     end

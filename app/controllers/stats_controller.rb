@@ -26,7 +26,7 @@ class StatsController < ApplicationController
   end
 
   def stats
-    json = Rails.cache.fetch("stats", expires_in: 20.minutes) do
+    json = Rails.cache.fetch("stats", expires_in: 1.minute) do
       now = params[:date].present? ? Date.parse(params[:date]) : DateTime.current
       year_ago = now - 1.year
       qtr_ago = now - 3.months
@@ -63,7 +63,7 @@ class StatsController < ApplicationController
         # entire time period. this remains to prevent breaking changes to existing systems that use this endpoint
         raised: tx_all.revenue.sum(:amount_cents) + pending_tx_all.incoming.sum(:amount_cents),
         transactions_count: tx_all.size,
-        transactions_volume: tx_all.sum("@amount_cents") + pending_tx_all.sum("@amount_cents"),
+        transactions_volume: tx_all.sum("abs(amount_cents)") + pending_tx_all.sum("abs(amount_cents)"),
 
         # entire (all), year, quarter, and month time periods
         all: CanonicalTransactionService::Stats::During.new.run,
@@ -74,6 +74,10 @@ class StatsController < ApplicationController
 
         # events
         events: events_list,
+
+        # users
+
+        currently_online: User.currently_online.count
       }
     end
     render json:

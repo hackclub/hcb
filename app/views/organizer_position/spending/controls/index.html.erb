@@ -1,0 +1,162 @@
+<% title "Spending allowances for #{@organizer_position.user.name}" %>
+<% page_md %>
+<%= render "events/nav" %>
+
+<h1 class="heading justify-between">
+  <span class="inline-flex items-center justify-center">
+    <%= @organizer_position.user.name %>'s Spending
+    <% if @active_control %>
+      <% admin_tool("w-fit h5 ml1 muted", "span") do %>
+        Control ID: <%= @active_control&.id %>
+      <% end %>
+    <% end %>
+  </span>
+
+  <% if @active_control %>
+    <% new_allowance_button = link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "new" }, disabled: !policy(@provisional_allowance).new? do %>
+      <%= inline_icon "plus" %>
+      New
+    <% end %>
+
+    <% if policy(@provisional_allowance).new? %>
+      <%= new_allowance_button %>
+    <% else %>
+      <div class="flex tooltipped tooltipped--w" aria-label="You can't create a new allowance">
+        <%= new_allowance_button %>
+      </div>
+    <% end %>
+  <% end %>
+</h1>
+
+<% if @active_control %>
+  <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new">
+    <%= modal_header "New spending allowance" %>
+    <%= render "organizer_position/spending/controls/allowances/form" %>
+  </div>
+<% end %>
+
+<% if @active_control %>
+  <div class="statset mt3 mb2">
+    <div class="stat stat--small">
+      <span class="stat__label">Balance</span>
+      <span class="stat__value"><%= render_money_amount @active_control.balance_cents %></span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">Total allowances</span>
+      <span class="stat__value"><%= render_money_amount @active_control.total_allowances_amount_cents %></span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">Spent</span>
+      <span class="stat__value"><%= render_money_amount @active_control.total_spent_cents %></span>
+    </div>
+  </div>
+<% end %>
+
+<% if @organizer_position.member? %>
+  <% spending_controls_callout_footer = capture do %>
+    <% if @active_control %>
+      <% control_disable_button = link_to new_event_organizer_position_spending_control_path(@event, @organizer_position), class: "btn btn-small bg-error tooltipped tooltipped--e", disabled: !policy(@provisional_control).destroy?, method: :delete do %>
+        Disable controls for <%= @organizer_position.user.first_name %>
+      <% end %>
+
+      <% if policy(@provisional_control).destroy? %>
+        <%= control_disable_button %>
+      <% else %>
+        <div class="w-fit tooltipped tooltipped--e" aria-label="You're not allowed to remove your spending controls as a member.">
+          <%= control_disable_button %>
+        </div>
+      <% end %>
+    <% else %>
+      <% control_enable_button = form_with url: event_organizer_position_spending_controls_path(@event, @organizer_position), method: :post, local: true do |form| %>
+        <%= form.submit "Enable controls for #{@organizer_position.user.first_name}", class: "btn btn-small bg-info tooltipped tooltipped--e #{"disabled" unless policy(@provisional_control).new?}" %>
+      <% end %>
+
+      <% if policy(@provisional_control).new? %>
+        <%= control_enable_button %>
+      <% else %>
+        <div class="w-fit tooltipped tooltipped--e" aria-label="You're not allowed to set spending controls on <%= @provisional_control.organizer_position.user == current_user ? "yourself" : "this user" %>.">
+          <%= control_enable_button %>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= render "callout", type: "info", title: "Spending controls are #{@active_control ? "enabled" : "disabled"} for #{@organizer_position.user.first_name}.", footer: spending_controls_callout_footer  do %>
+    <ul>
+      <li>Spending controls let managers control and pre-authorize an amount to be spent by a user.</li>
+      <li>Your organization's balance will not change when an allowance is created.</li>
+      <li>Allowances do not expire.
+    </ul>
+  <% end %>
+<% else %>
+  <% user_is_you = @organizer_position.user == current_user %>
+  <%= render "callout", type: "info", title: "#{user_is_you ? "You" : @organizer_position.user.name} can not have spending controls set for #{user_is_you ? "you" : "them"}, because #{user_is_you ? "you're" : "they're"} a #{@organizer_position.role}, not a member." do %>
+    <ul class="m0">
+      <li>Roles can be changed on the <%= link_to "team page", event_team_path(@event.slug) %>.</li>
+      <% if @inactive_control_count.zero? %>
+        <li>If <%= user_is_you ? "you" : "they" %> had previous spending controls, you would be able to view them on this page.</li>
+      <% else %>
+        <li>You can still view <%= user_is_you ? "your" : "their" %> past spending controls below.</li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>
+
+<% if @active_control %>
+  <div class="m-auto text-center mb-5">
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["allowances", "transactions"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Allowances", "?filter=allowances", class: "filterbar__item", "aria-selected": params[:filter] == "allowances", role: "tab" %>
+    <%= link_to "Transactions", "?filter=transactions", class: "filterbar__item", "aria-selected": params[:filter] == "transactions", role: "tab" %>
+  </div>
+
+  <% if @active_control&.allowances.blank? %>
+    <%= blankslate "No allowances yet" %>
+  <% else %>
+    <%= render "organizer_position/spending/controls/spending_items", items: sorted_spending_items(@active_control) %>
+  <% end %>
+<% end %>
+
+<div class="mixed-grid grid--spacious mt-20">
+  <%= link_to "#", data: { behavior: "modal_trigger", modal: "past-controls" }, class: "card flex justify-between #{"opacity-50 pointer-events-none" if @inactive_control_count.zero?}" do %>
+    <div class="flex flex-col">
+      <p class="bold black">Past controls</p>
+      <p class="muted">
+        <% if @inactive_control_count.zero? %>
+          There are no previous spending controls
+        <% else %>
+          View <strong><%= @inactive_control_count %></strong> previous spending controls
+        <% end %>
+      </p>
+    </div>
+    <%= inline_icon "clock" %>
+  <% end %>
+
+  <%# Changelog post TBA %>
+  <%= link_to "https://changelog.hcb.hackclub.com/", class: "card flex justify-between" do %>
+    <div class="flex flex-col">
+      <p class="bold black">More info</p>
+      <p class="muted">Learn about HCB's spending controls feature</p>
+    </div>
+    <%= inline_icon "link" %>
+  <% end %>
+</div>
+
+<% unless @inactive_control_count.zero? %>
+  <div data-behavior="modal" role="dialog" id="past-controls" class="modal modal--scroll modal--huge bg-snow">
+    <%= modal_header "Past spending controls" %>
+    <% @organizer_position.spending_controls.filter { |c| !c.active }.sort_by(&:created_at).reverse.each_with_index do |c, i| %>
+      <div class="card <%= "mt-8" unless i.zero? %>">
+        <h4 class="m0 mb1">
+          Active
+          <% if c.created_at.to_date == c.ended_at.to_date %>
+            <%= format_date c.created_at %>
+          <% else %>
+            <%= format_date c.created_at %> to <%= format_date c.ended_at %>
+          <% end %>
+        </h4>
+
+        <%= render "organizer_position/spending/controls/spending_items", items: sorted_spending_items(c) %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

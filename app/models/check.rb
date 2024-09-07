@@ -102,6 +102,10 @@ class Check < ApplicationRecord
     end
   end
 
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
+  end
+
   def can_cancel?
     scheduled? # only scheduled checks can be canceled (not yet created on lob)
   end
@@ -185,7 +189,7 @@ class Check < ApplicationRecord
   end
 
   def url
-    lob_url || ::CheckService::LobUrl::Generate.new(check: self).run
+    lob_url
   end
 
   def smart_memo

@@ -1,19 +1,31 @@
-<a class="text-decoration-none" href="<%= !show_mock_data? ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>">
+<a class="text-decoration-none" <% if @show_card_popovers && !show_mock_data? %> data-behavior="modal_trigger" data-modal="card_popover_<%= stripe_card.id %>" <% end %> data-turbo-frame="_top" href="<%= !show_mock_data? ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>">
 
-  <%= creator_bar stripe_card, prefix: "issued " unless defined? headless %>
-  <div class="stripe-card <%= stripe_card.status_text.downcase %> <%= stripe_card.virtual? ? "virtual" : "" %> <%= "platinum" if stripe_card.platinum? %>" data-behavior="hover_tilt" style="background-image: <%= GeoPattern.generate(stripe_card.id).to_data_uri unless stripe_card.platinum? %>">
+  <%= creator_bar stripe_card, prefix: "issued ", show_title: true unless defined? headless %>
+  <div
+    class="stripe-card
+          <%= stripe_card.status_text.downcase %>
+          <%= stripe_card.virtual? ? "virtual" : "" %>
+          <%= "platinum" if stripe_card.platinum? %>
+          <%= "stripe-card--white" if stripe_card.personalization_design&.white? %>
+          <%= "stripe-card--black" if stripe_card.personalization_design&.black? %>
+          mt1
+    "
+    data-behavior="hover_tilt"
+    style="background-image: <%= GeoPattern.generate(stripe_card.id).to_data_uri unless stripe_card.platinum? || stripe_card.personalization_design.present? %>">
     <% if stripe_card.platinum? %>
       <span class="bold caps h6 absolute flex items-center" style="opacity: 50%; right: 10px; top: 10px;">
         <%= inline_icon "bank-account" %>
         Platinum
       </span>
     <% end %>
-    <p class="absolute m0" style="right: 0; margin-right: 1.5rem; margin-left: 3.5rem;">
-      <%= stripe_card.name %>
-    </p>
+    <% if stripe_card.personalization_design.present? %>
+      <div class="stripe-card__personalization absolute" style="right: 16px; top: 16px;">
+        <%= image_tag Rails.application.routes.url_helpers.rails_blob_url(stripe_card.personalization_design.logo), class: "stripe-card__personalization-image" %>
+      </div>
+    <% end %>
     <p class="stripe-card__number fs-mask">
       <% if stripe_card.user != current_user %>
-        <%= stripe_card.hidden_card_number %>
+        <%= stripe_card.hidden_card_number_with_last_four %>
       <% elsif local_assigns[:show_card_number] %>
         <%= stripe_card.formatted_card_number %>
       <% elsif @show_card_details %>
@@ -30,6 +42,17 @@
         <%= stripe_card.status_text %>
       </span>
     </p>
+    <div class="stripe-card__overlay"></div>
   </div>
+  <div class="mt2 muted center"><%= stripe_card.name %></div>
 
 </a>
+
+<% if @show_card_popovers %>
+  <section class="modal modal--scroll modal--popover modal--popover--sm bg-snow" data-behavior="modal" role="dialog" id="card_popover_<%= stripe_card.id %>">
+    <%= modal_header(stripe_card.initially_activated ? "Card #{stripe_card.last_four}" : "Inactive card", external_link: stripe_card.url) %>
+    <%= async_frame_to stripe_card.popover_url, as: :span, lazy: true do %>
+      Loading...
+    <% end %>
+  </section>
+<% end %>

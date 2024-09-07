@@ -1,3 +1,5 @@
-<%= render layout: "/public_activity/common", locals: { activity: } do %>
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
   logged into HCB<%= " on #{activity.trackable.os_info}" if activity.trackable&.os_info.present? %>
 <% end %>

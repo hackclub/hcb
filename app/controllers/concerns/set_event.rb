@@ -10,7 +10,9 @@ module SetEvent
 
     def set_event
       id = params[:event_name] || params[:event_id] || params[:id]
-      @event = Event.friendly.find(id)
+      id ||= params[:event] if params[:event].is_a?(String) # sometimes params[:event] is a hash with nested attributes
+      @event = admin_signed_in? ? Event.friendly.find(id) : Event.friendly.find_by_friendly_id(id)
+
       @organizer_position = @event.organizer_positions.find_by(user: current_user) if signed_in?
       @first_time = params[:first_time] || @organizer_position&.first_time?
 

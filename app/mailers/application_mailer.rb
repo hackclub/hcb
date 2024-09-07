@@ -12,11 +12,6 @@ class ApplicationMailer < ActionMailer::Base
 
   protected
 
-  def admin_email
-    env = Rails.env.production? ? :prod : :dev
-    Rails.application.credentials.admin_email[env]
-  end
-
   def hcb_email_with_name_of(object)
     name = object.try(:name)
     if name.present?

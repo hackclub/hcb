@@ -29,19 +29,21 @@ class OrganizerPosition < ApplicationRecord
   acts_as_paranoid
   has_paper_trail
   include OrganizerPosition::HasRole
+  include OrganizerPosition::HasSpending
 
   scope :not_hidden, -> { where(event: { hidden_at: nil }) }
 
   belongs_to :user
   belongs_to :event
 
-  has_one :organizer_position_invite
+  has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
   has_many :tours, as: :tourable
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
+  has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
 
   alias_attribute :signee, :is_signee
 

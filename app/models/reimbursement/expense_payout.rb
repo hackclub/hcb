@@ -56,6 +56,7 @@ module Reimbursement
       state :pending, initial: true
       state :in_transit
       state :settled
+      state :reversed
 
       event :mark_in_transit do
         transitions from: :pending, to: :in_transit
@@ -63,6 +64,10 @@ module Reimbursement
 
       event :mark_settled do
         transitions from: :in_transit, to: :settled
+      end
+
+      event :mark_reversed do
+        transitions from: :settled, to: :reversed
       end
     end
 
@@ -78,6 +83,30 @@ module Reimbursement
       return "Paid & Settling" if in_transit?
 
       "Pending"
+    end
+
+    def reverse!
+      raise ArgumentError, "must be a settled expense payout" unless settled?
+
+      ActiveRecord::Base.transaction do
+
+        mark_reversed!
+
+        canonical_pending_transaction.decline!
+
+        # these are reversed because this is reverse!
+        sender_bank_account_id = ColumnService::Accounts.id_of(book_transfer_receiving_account)
+        receiver_bank_account_id = ColumnService::Accounts.id_of(book_transfer_originating_account)
+
+        ColumnService.post "/transfers/book",
+                           amount: amount_cents.abs,
+                           currency_code: "USD",
+                           sender_bank_account_id:,
+                           receiver_bank_account_id:,
+                           description: "HCB-#{local_hcb_code.short_code}"
+      end
+
+      true
     end
 
     private

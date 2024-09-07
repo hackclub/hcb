@@ -5,43 +5,58 @@
     <table>
       <thead>
       <tr>
-        <th>Type</th>
-        <th>Shipping</th>
-        <th>Status</th>
-        <th>Date</th>
-        <th>Name</th>
+        <th>Cardholder</th>
         <th>Number</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Issued on</th>
         <th></th>
       </tr>
       </thead>
       <tbody>
       <% stripe_cards.each do |d| %>
         <tr>
+          <%# Cardholder %>
           <td>
-            <%= d.virtual? ? "VIRTUAL" : "PHYSICAL" %>
+            <%= d.user.name || d.stripe_name || d.user.full_name %>
           </td>
+
+          <%# Card number %>
+          <td class="fs-mask">
+            <%= d.hidden_card_number_with_last_four if organizer_signed_in? %>
+            <%= d.hidden_card_number unless organizer_signed_in? %>
+          </td>
+
+          <%# Type %>
           <td>
-            <%= "-" if d.virtual? %>
-            <%= d.remote_shipping_status.upcase if d.physical? %>
+            <%= d.virtual? ? "Virtual" : "Physical" %>
           </td>
+
+          <%# Status %>
           <td>
             <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
           </td>
+
+          <%# Date issued %>
           <td>
             <%= format_date d.created_at %>
           </td>
+
           <td>
-            <%= d.user.name || d.stripe_name || d.user.full_name if organizer_signed_in? %>
-            <%= "(redacted)" unless organizer_signed_in? %>
-          </td>
-          <td class="fs-mask">
-            <%= d.hidden_card_number_with_last_four if d.user == current_user %>
-            <%= d.hidden_card_number if d.user != current_user %>
-          </td>
-          <td>
-            <%= link_to "Details", stripe_card_path(d) if organizer_signed_in? && !@event.demo_mode %>
+
+            <%= link_to "Details", stripe_card_path(d), data: @show_card_popovers && { behavior: "modal_trigger", modal: "card_popover_#{d.id}" } if organizer_signed_in? && !@event.demo_mode %>
           </td>
         </tr>
+
+        <% if @show_card_popovers %>
+          <section class="modal modal--scroll modal--popover modal--popover--sm bg-snow" data-behavior="modal" role="dialog" id="card_popover_<%= d.id %>">
+            <%= modal_header(d.initially_activated ? "Card #{d.last_four}" : "Inactive card", external_link: d.url) %>
+            <%= async_frame_to d.popover_url, as: :span, lazy: true do %>
+              Loading...
+            <% end %>
+          </section>
+        <% end %>
+
       <% end %>
       </tbody>
     </table>

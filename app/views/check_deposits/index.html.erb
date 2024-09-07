@@ -4,13 +4,9 @@
 
 <h1 class="heading">Deposit a check</h1>
 
-<div class="banner banner--archived my-3 max-w-full">
-  Check deposits are currently delayed and may take up to <span class="whitespace-nowrap font-bold">1 week</span> to process.
-</div>
-
 <div class="grid grid--spacious lg:grid-columns-[3fr_2fr]">
   <%= render "new" %>
-  <%= render "callout", type: "", title: "Check deposit basics", footer: :questions do %>
+  <%= render "callout", type: "info", title: "Check deposit basics", footer: :questions do %>
     <ul class="pl-4">
       <li>
         The check must be made out to

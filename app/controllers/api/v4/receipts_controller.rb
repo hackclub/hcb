@@ -12,7 +12,7 @@ module Api
         @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
         authorize @hcb_code, :upload?, policy_class: ReceiptablePolicy
 
-        @receipt = Receipt.create!(file: params[:file], receiptable: @hcb_code, uploader: current_user, upload_method: :api)
+        @receipt = Receipt.create!(file: params[:file], receiptable: @hcb_code, user: current_user, upload_method: :api)
 
         render "show"
       end

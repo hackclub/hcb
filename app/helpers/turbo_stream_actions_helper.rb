@@ -5,6 +5,10 @@ module TurboStreamActionsHelper
     turbo_stream_action_tag :refresh_link_modals
   end
 
+  def refresh_suggested_pairings
+    turbo_stream_action_tag :refresh_suggested_pairings
+  end
+
   def load_new_async_frames
     turbo_stream_action_tag :load_new_async_frames
   end

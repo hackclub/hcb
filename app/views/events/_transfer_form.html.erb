@@ -13,14 +13,9 @@
         <strong>Mailed check</strong>
       <% end %>
 
-      <%= link_to (paypal_transfers_airtable_form_url(embed: false, event: @event, user: @current_user) if policy(@event).create_transfer?), class: "text-decoration-none btn--form-option #{"btn--form-option--disabled" unless policy(@event).create_transfer?}", data: { turbo_frame: "_top" } do %>
+      <%= link_to new_event_paypal_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
         <%= inline_icon "paypal", size: 28 %>
         <strong>PayPal</strong>
-        <% if @event.demo_mode? %>
-          <small>Not available in Playground Mode</small>
-        <% elsif !policy(@event).create_transfer? %>
-          <small>Only available for managers.</small>
-        <% end %>
       <% end %>
 
       <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>

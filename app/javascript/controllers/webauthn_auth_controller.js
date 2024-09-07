@@ -18,6 +18,7 @@ export default class extends Controller {
   static values = {
     returnTo: String,
     requireWebauthnPreference: Boolean,
+    loginId: String,
   }
 
   initialize() {
@@ -59,14 +60,19 @@ export default class extends Controller {
 
       this.storeLoginEmail(loginEmail)
 
-      submitForm('/users/webauthn', {
-        credential: JSON.stringify(credential),
-        email: loginEmail,
-        return_to: this.returnToValue,
-        remember:
-          this.hasRememberInputTarget && this.rememberInputTarget.checked,
-        ...(await this.fingerprint()),
-      })
+      submitForm(
+        this.loginIdValue
+          ? `/logins/${this.loginIdValue}/complete`
+          : `/logins/complete`,
+        {
+          credential: JSON.stringify(credential),
+          return_to: this.returnToValue,
+          method: 'webauthn',
+          remember:
+            this.hasRememberInputTarget && this.rememberInputTarget.checked,
+          ...(await this.fingerprint()),
+        }
+      )
     } catch (e) {
       if (e.message == "User doesn't have WebAuthn enabled") {
         // Submit the form normally

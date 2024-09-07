@@ -1,4 +1,4 @@
-<%= form_with model: [commentable, @comment || Comment.new] do |form| %>
+<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new] do |form| %>
   <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
   <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
 
@@ -10,7 +10,7 @@
   </div>
 
   <text-expander keys="@">
-    <%= form.text_area :content, class: "card mb2 overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a note…", style: "min-height: 100px", id: "comment_textarea" %>
+    <%= form.text_area :content, class: "card mb2 overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea" %>
   </text-expander>
 
   <ul role="listbox" class="mention-suggestions card" hidden popover>
@@ -45,13 +45,23 @@
     <%= form.hidden_field :commentable_id, value: commentable&.id %>
 
     <% admin_tool("inline-flex", "span") do %>
-      <div class="field field--checkbox mb0">
-        <%= form.check_box :admin_only, {}, true, false %>
-        <%= form.label :admin_only, "Only show this note to admins" %>
-      </div>
+      <% if defined?(admin_only) %>
+        <%= form.hidden_field :admin_only, value: true %>
+        This comment will only be shown to admins.
+      <% else %>
+        <div class="field field--checkbox mb0">
+          <%= form.check_box :admin_only, {}, true, false %>
+          <%= form.label :admin_only, "Only show this comment to admins" %>
+        </div>
+      <% end %>
     <% end %>
 
   </div>
 
-  <%= form.submit "Add note", disabled: !organizer_signed_in? && current_user != commentable&.try(:user) %>
+  <%= form.submit "Add comment", disabled: !organizer_signed_in? && current_user != commentable&.try(:user) %>
+<% end %>
+
+<% unless @popover %>
+  <%= turbo_stream_from commentable, :comments %>
+  <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 <% end %>

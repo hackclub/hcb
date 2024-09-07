@@ -25,7 +25,7 @@
 class WebauthnCredential < ApplicationRecord
   belongs_to :user
 
-  enum :authenticator_type, [:platform, :cross_platform]
+  enum :authenticator_type, { platform: 0, cross_platform: 1 }
 
   validates :name, presence: true
   validates :webauthn_id, presence: true
@@ -33,6 +33,6 @@ class WebauthnCredential < ApplicationRecord
   validates :sign_count, presence: true
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| record.user }, recipient: proc { |controller, record| record.user }, only: [:create]
+  tracked owner: proc{ |controller, record| record.user }, recipient: proc { |controller, record| record.user }, only: [:create, :destroy]
 
 end

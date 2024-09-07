@@ -25,4 +25,12 @@ class GSuiteMailer < ApplicationMailer
          subject: "[Google Workspace Verified] Your Google Workspace for #{@g_suite.domain} has been verified"
   end
 
+  def notify_of_error_after_verified
+    @recipient = params[:recipient]
+    @g_suite = GSuite.find(params[:g_suite_id])
+
+    mail to: @recipient.email_address_with_name,
+         subject: "[Action Required] Your Google Workspace for #{@g_suite.domain} is missing critical DNS records"
+  end
+
 end

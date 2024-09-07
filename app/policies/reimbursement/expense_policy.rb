@@ -39,11 +39,11 @@ module Reimbursement
     end
 
     def manager
-      OrganizerPosition.find_by(user:, event: record.event)&.manager?
+      record.event && OrganizerPosition.find_by(user:, event: record.event)&.manager?
     end
 
     def team_member
-      record.event.users.include?(user)
+      record.event&.users&.include?(user)
     end
 
     def creator

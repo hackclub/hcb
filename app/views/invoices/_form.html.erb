@@ -1,4 +1,4 @@
-<%= form_with(model: invoice, url: :event_invoices, local: true) do |form| %>
+<%= form_with(model: invoice, url: :event_invoices, local: true, html: { "x-data" => "{ amount: null }" }) do |form| %>
   <%= form_errors invoice %>
   <%= form_errors @sponsor %>
 
@@ -74,11 +74,16 @@
       value: (invoice.item_amount.nil? ? nil : (invoice.item_amount.to_f / 100)), placeholder: "500.00",
       step: 0.01,
       min: 1.00, required: true, disabled: @event.demo_mode?,
-      data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+      data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" },
+      "x-model.fill.number" => "amount" %>
     </div>
-    <% if invoice.event.sponsorship_fee != 0 %>
-      <span class="muted" data-behavior="amount-preview" data-fee="<%= sponsor.event.sponsorship_fee %>"></span>
+    <% if invoice.event.revenue_fee != 0 %>
+      <span class="muted" data-behavior="amount-preview" data-fee="<%= sponsor.event.revenue_fee %>"></span>
     <% end %>
+
+    <div class="info flex gap-2 mt-2" x-cloak x-show="amount >= <%= Invoice::MAX_CARD_AMOUNT / 100.0 %>">
+      Invoices over <%= render_money Invoice::MAX_CARD_AMOUNT %> can only be paid by a bank transfer.
+    </div>
   </div>
 
   <div class="field">
@@ -92,6 +97,6 @@
   </div>
 
   <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
-    <%= form.submit "Send invoice now", disabled: (!organizer_signed_in? || @event.demo_mode?) %>
+    <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || @event.demo_mode? %>
   </div>
 <% end %>

@@ -1,0 +1,97 @@
+<% disabled = !policy(@event).create_transfer? %>
+
+<% title "Send a PayPal Transfer" %>
+<%= render "events/nav", selected: :transfers %>
+<% page_sm %>
+
+ <% if @event.present? && !policy(@event).create_transfer? %>
+  <%= render "events/transfers/unauthorized_callout" %>
+<% end %>
+
+<h1>Send a PayPal transfer</h1>
+
+<%= render "callout",
+    type: "info",
+    title: "Important info about PayPal transfers" do %>
+    Depending on the recipient's location, PayPal may charge a transfer fee that is not covered by HCB. This fee can range from $0 to $5.
+<% end %>
+
+<%= form_with(model: [@event, @paypal_transfer], local: true) do |form| %>
+
+  <%= form_errors(@paypal_transfer, "PayPal transfer", "We couldn't send this") %>
+
+  <div class="field mt2">
+    <%= form.label :recipient_name, "Recipient Name" %>
+    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, disabled:, maxlength: 250 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :memo %>
+    <%= form.text_field :memo,
+        placeholder: "for venue payment",
+        required: true,
+        disabled: %>
+  </div>
+
+  <div class="field">
+    <%= form.label :payment_for, "What are you paying for with this transfer?" %>
+    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
+    <span class="muted">This is to help HCB keep record of our transactions. The HCB team will see this.</span>
+  </div>
+
+  <%= form.label :amount, "Amount" %>
+
+  <div class="field">
+    <div class="flex items-center">
+      <span class="bold muted" style="width: 1rem;">$</span>
+      <div class="flex flex-col">
+        <%= form.number_field :amount,
+          placeholder: "500.00",
+          disabled: disabled || @event.balance <= 0,
+          step: 0.01,
+          min: 1,
+          required: true,
+          data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+      </div>
+    </div>
+    <% @paypal_transfer.errors.messages_for(:amount).each do |message| %>
+      <div class="primary"><%= message %></div>
+    <% end %>
+    <% if @event.balance <= 0 %>
+      <span class="error">There are no funds to transfer.<br>
+    <% end %>
+  </div>
+
+  <div class="field">
+    <%= form.label :recipient_email, "Recipient's PayPal Email" %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+  </div>
+
+  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
+  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
+          action: "
+        dragover@window->file-drop#dragover
+        drop@window->file-drop#drop
+        dragenter@window->file-drop#dragenter
+        dragleave@window->file-drop#dragleave
+      "
+        } %>
+    <%= form.file_field :file,
+        multiple: true,
+        include_hidden: false,
+        required: false,
+        accept: "image/*,image/heic,.pdf",
+        style: "margin: 8px 0px",
+        class: "field--fileupload__field",
+        data: {
+          "file-drop-target" => "fileInput"
+        },
+        disabled: %>
+  </div>
+  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+
+  <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your transfer will be sent out on the next business day.">
+    <%= form.submit "Send transfer", disabled: %>
+  </div>
+<% end %>

@@ -51,7 +51,7 @@ class EmburseTransaction < ApplicationRecord
   include Receiptable
   include Commentable
 
-  enum :state, %w{pending completed declined}
+  enum :state, { "pending" => 0, "completed" => 1, "declined" => 2 }
 
   acts_as_paranoid
   validates_as_paranoid
@@ -65,7 +65,7 @@ class EmburseTransaction < ApplicationRecord
 
   belongs_to :event, optional: true
   belongs_to :emburse_card, optional: true
-  alias_attribute :card, :emburse_card
+  alias_method :card, :emburse_card
 
   validates_uniqueness_of_without_deleted :emburse_id
 

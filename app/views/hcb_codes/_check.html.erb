@@ -56,7 +56,7 @@
     </p>
 
     <p>
-      <strong>Check Memo</strong>
+      <strong>Check memo</strong>
       <%= @hcb_code.check.memo %>
     </p>
 
@@ -75,6 +75,6 @@
       <%= render_money @hcb_code.check.amount %>
     </p>
 
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 </article>

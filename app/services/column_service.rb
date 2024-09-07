@@ -63,6 +63,46 @@ class ColumnService
     end
   end
 
+  def self.schedule_bank_account_summary_report(from_date: 1.month.ago, to_date: Date.today)
+    post(
+      "/reporting",
+      type: "bank_account_summary",
+      from_date: from_date.to_date.iso8601,
+      to_date: to_date.to_date.iso8601,
+    )
+  end
+
+  def self.bank_account_summary_report(from_date: 1.month.ago, to_date: Date.today)
+    reports = ColumnService.get(
+      "/reporting",
+      type: "bank_account_summary",
+      limit: 100,
+      from_date: from_date.to_date.iso8601,
+      to_date: to_date.to_date.iso8601,
+    )["reports"].select { |r| r["from_date"] == from_date.to_date.iso8601 && r["to_date"] == to_date.to_date.iso8601 && r["row_count"]&.>(0) }
+
+    return reports.first
+  end
+
+  def self.bank_account_summary_report_url(from_date: 1.month.ago, to_date: Date.today)
+    if report = bank_account_summary_report(from_date:, to_date:)
+      return get("/documents/#{report["csv_document_id"]}")["url"]
+    else
+      schedule_bank_account_summary_report(from_date:, to_date:)
+      return nil
+    end
+  end
+
+  def self.balance_over_time(from_date: 1.month.ago, to_date: Date.today, bank_account: Accounts::FS_MAIN)
+    if report = bank_account_summary_report(from_date:, to_date:)
+      url = get("/documents/#{report["json_document_id"]}")["url"]
+      account = JSON.parse(Faraday.get(url).body).select { |t| t["bank_account_id"] == bank_account }.first
+      return { starting: account["available_balance_open"], closing: account["available_balance_close"] }
+    else
+      return { starting: nil, closing: nil }
+    end
+  end
+
   def self.ach_transfer(id)
     get("/transfers/ach/#{id}")
   end

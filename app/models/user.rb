@@ -7,6 +7,7 @@
 #  id                       :bigint           not null, primary key
 #  access_level             :integer          default("user"), not null
 #  birthday_ciphertext      :text
+#  charge_notifications     :integer          default("email_and_sms"), not null
 #  comment_notifications    :integer          default("all_threads"), not null
 #  email                    :text
 #  full_name                :string
@@ -34,13 +35,15 @@
 #  index_users_on_slug   (slug) UNIQUE
 #
 class User < ApplicationRecord
-  self.ignored_columns = ["birthday"]
-
   include PublicIdentifiable
   set_public_id_prefix :usr
 
   include Commentable
   extend FriendlyId
+
+  include Turbo::Broadcastable
+
+  include ApplicationHelper
 
   has_paper_trail only: [:access_level, :email]
 
@@ -59,12 +62,9 @@ class User < ApplicationRecord
     monthly: 2,
   }, prefix: :receipt_report
 
-  enum :access_level, [
-    :user,
-    :admin,
-    :superadmin,
-  ], scopes: false, default: :user
+  enum :access_level, { user: 0, admin: 1, superadmin: 2 }, scopes: false, default: :user
 
+  has_many :logins
   has_many :login_codes
   has_many :login_tokens
   has_many :user_sessions, dependent: :destroy
@@ -77,6 +77,8 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+
+  has_many :messages, class_name: "Ahoy::Message", as: :user
 
   has_many :events, through: :organizer_positions
 
@@ -108,6 +110,8 @@ class User < ApplicationRecord
   has_one_attached :profile_picture
 
   has_one :partner, inverse_of: :representative
+  has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
+  has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
 
   # a user does not actually belong to its payout method,
   # but this is a convenient way to set up the association.
@@ -120,10 +124,14 @@ class User < ApplicationRecord
 
   include HasMetrics
 
+  include HasTasks
+
   before_create :format_number
   before_save :on_phone_number_update
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+
+  after_update :sync_with_loops
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
@@ -144,6 +152,8 @@ class User < ApplicationRecord
 
   enum comment_notifications: { all_threads: 0, my_threads: 1, no_threads: 2 }
 
+  enum charge_notifications: { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, _prefix: :charge_notifications
+
   comma do
     id
     name
@@ -161,6 +171,8 @@ class User < ApplicationRecord
       end
     end
   end
+
+  scope :currently_online, -> { where(id: UserSession.where("last_seen_at > ?", 15.minutes.ago).pluck(:user_id)) }
 
   # admin? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
@@ -210,7 +222,7 @@ class User < ApplicationRecord
   end
 
   def possessive_name
-    "#{name}'s"
+    possessive(name)
   end
 
   def initials
@@ -269,17 +281,18 @@ class User < ApplicationRecord
     User::ReceiptBin.new(self)
   end
 
+  def hcb_code_ids_missing_receipt
+    @hcb_code_ids_missing_receipt ||= begin
+      user_cards = stripe_cards.includes(:event).where.not(event: { category: :salary }) + emburse_cards.includes(:emburse_transactions)
+      user_cards.flat_map { |card| card.hcb_codes.missing_receipt.receipt_required.pluck(:id) }
+    end
+  end
+
   def transactions_missing_receipt
     @transactions_missing_receipt ||= begin
-      user_cards = stripe_cards.includes(:event).where.not(event: { category: :salary }) + emburse_cards.includes(:emburse_transactions)
-      return HcbCode.none unless user_cards.any?
+      return HcbCode.none unless hcb_code_ids_missing_receipt.any?
 
-      user_hcb_code_ids = user_cards.flat_map { |card| card.hcb_codes.pluck(:id) }
-      return HcbCode.none unless user_hcb_code_ids.any?
-
-      user_hcb_codes = HcbCode.where(id: user_hcb_code_ids)
-
-      user_hcb_codes.missing_receipt.receipt_required.order(created_at: :desc)
+      user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt).order(created_at: :desc)
     end
   end
 
@@ -303,8 +316,33 @@ class User < ApplicationRecord
     return events.organized_by_hack_clubbers.any?
   end
 
+  def teenager?
+    birthday&.after?(19.years.ago) || events.high_school_hackathon.any? || events.organized_by_teenagers.any?
+  end
+
   def last_seen_at
     user_sessions.maximum(:last_seen_at)
+  end
+
+  def last_login_at
+    user_sessions.maximum(:created_at)
+  end
+
+  def using_2fa?
+    Flipper.enabled?(:two_factor_authentication_2024_05_22, self) && phone_number_verified
+  end
+
+  def email_charge_notifications_enabled?
+    charge_notifications_email? || charge_notifications_email_and_sms?
+  end
+
+  def sms_charge_notifications_enabled?
+    charge_notifications_sms? || charge_notifications_email_and_sms?
+  end
+
+  def sync_with_loops
+    new_user = full_name_before_last_save.blank? && !onboarding?
+    UserService::SyncWithLoops.new(user_id: id, new_user:).run
   end
 
   private
@@ -358,7 +396,7 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer)
+    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer)
       errors.add(:payout_method, "is an invalid method, must be check or ACH transfer")
     end
   end

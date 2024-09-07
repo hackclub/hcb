@@ -34,11 +34,11 @@
       <%= form.collection_select :category, Event.categories, :first, :first, { include_blank: "Select a category" } %>
     </p>
 
-    <p>
-      <%= form.label :sponsorship_fee, "Sponsorship fee (required)" %>
+    <div class="field mb2">
+      <%= form.label :plan_type, "Assign a plan" %>
       <br>
-      <%= form.number_field :sponsorship_fee, placeholder: "0.07", value: "0.07", required: true, step: "any" %>
-    </p>
+      <%= form.select(:plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }) %>
+    </div>
 
     <div class="field">
       <%= form.label :point_of_contact_id, "Point of contact" %>

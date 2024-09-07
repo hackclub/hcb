@@ -38,8 +38,8 @@
   </section>
 <% end %>
 
-<div class="statset mt3 mb2">
-  <div class="stat tooltipped tooltipped--s pr3" aria-label="This excludes archived invoices">
+<div class="statset mt3 mb3">
+  <div class="stat tooltipped tooltipped--s" aria-label="This excludes archived invoices">
     <span class="stat__label">Total invoiced</span>
     <span class="stat__value"><%= render_money_amount @stats[:total] %></span>
   </div>
@@ -57,23 +57,26 @@
   </div>
 </div>
 
-<hr>
-
-<div style="text-align: center;">
-  <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["paid", "unpaid", "overdue", "archived", "voided"].include?(params[:filter]), role: "tab" %>
-  <%= link_to "Paid", "?filter=paid", class: "filterbar__item", "aria-selected": params[:filter] == "paid", role: "tab" %>
-  <%= link_to "Unpaid", "?filter=unpaid", class: "filterbar__item", "aria-selected": params[:filter] == "unpaid", role: "tab" %>
-  <%= link_to "Archived", "?filter=archived", class: "filterbar__item", "aria-selected": params[:filter] == "archived", role: "tab" %>
-  <%= link_to "Voided", "?filter=voided", class: "filterbar__item", "aria-selected": params[:filter] == "voided", role: "tab" %>
-</div>
-
-<%= form_with(model: nil, local: true, method: :get) do |form| %>
-  <div class="filterbar flex flex-wrap items-center width-100">
-
-    <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
-
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <div class="input input-group max-w-none" tabindex="0">
+      <%= inline_icon "search" %>
+      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
+      <% if params[:q] && params[:q] != "" %>
+        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+          <%= inline_icon "view-close", size: 24 %>
+        </button>
+      <% end %>
+    </div>
+  <% end %>
+  <div>
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["paid", "unpaid", "overdue", "archived", "voided"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Paid", "?filter=paid", class: "filterbar__item", "aria-selected": params[:filter] == "paid", role: "tab" %>
+    <%= link_to "Unpaid", "?filter=unpaid", class: "filterbar__item", "aria-selected": params[:filter] == "unpaid", role: "tab" %>
+    <%= link_to "Archived", "?filter=archived", class: "filterbar__item", "aria-selected": params[:filter] == "archived", role: "tab" %>
+    <%= link_to "Voided", "?filter=voided", class: "filterbar__item", "aria-selected": params[:filter] == "voided", role: "tab" %>
   </div>
-<% end %>
+</div>
 
 <% if @invoices.size > 0 %>
 <article class="table-container">
@@ -104,9 +107,17 @@
           <%= render_money(i.item_amount) %>
         </td>
         <td>
-          <%= link_to "Details", hcb_code_url(i.local_hcb_code.hashid) if organizer_signed_in? %>
+          <%= link_to "Details", hcb_code_url(i.local_hcb_code.hashid), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{i.local_hcb_code.hashid}" } if organizer_signed_in? %>
         </td>
       </tr>
+      <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>">
+          <%= modal_header("#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}", external_link: hcb_code_url(i.local_hcb_code.hashid)) %>
+          <%= async_frame_to hcb_code_url(i.local_hcb_code.hashid, params: { frame: true }), lazy: true, as: :div do %>
+            <strong>Loading...</strong>
+          <% end %>
+        </section>
+      <% end %>
     <% end %>
   </tbody>
 </table>

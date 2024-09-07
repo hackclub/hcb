@@ -29,7 +29,7 @@
       <%= blankslate "No receipts found.", class: "mt3 mb5", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
     <% end %>
 
-    <footer class="modal__action-row flex justify-end <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
+    <footer class="modal__action-row pt1 flex justify-end <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
       <%= link_to my_inbox_path, target: "_blank", class: "btn btn--primary mr2" do %>
         Manage receipts
       <% end %>

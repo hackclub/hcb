@@ -24,7 +24,7 @@
            ACHs: [ach_admin_index_path, AchTransfer.pending.count, %i[]],
            Checks: [increase_checks_admin_index_path, IncreaseCheck.pending.count, %i[]],
            Disbursements: [disbursements_admin_index_path, Disbursement.reviewing.count, %i[]],
-           PayPal: ["https://airtable.com/tbloGiW2jhja8ivtV/viwzhAnWYhpFNhvmC", 0, %i[]],
+           PayPal: [paypal_transfers_admin_index_path, PaypalTransfer.pending.count, %i[]],
            Reimbursements: [reimbursements_admin_index_path, Reimbursement::Report.reimbursement_requested.count, %i[]]
          },
          Ledger: {
@@ -47,8 +47,11 @@
          },
          Misc: {
            "Bank Accounts": [bank_accounts_admin_index_path, BankAccount.failing.count, %i[counter]],
-           "Bank Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],
-           "Column Statements": [column_statements_admin_index_url, 0, %i[]]
+           "HCB Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],
+           "Column Statements": [column_statements_admin_index_url, Column::Statement.count, %i[counter]],
+           "Users": [users_admin_index_path, User.count, %i[counter]],
+           "Card Designs": [stripe_card_personalization_designs_admin_index_path, StripeCard::PersonalizationDesign.count, %i[counter]],
+           "Emails": [emails_admin_index_path, Ahoy::Message.count, %i[counter]]
          }
        } %>
 
@@ -74,7 +77,7 @@
             <%= parent %>
           </span>
           <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
-          <b>
+          <b style="font-weight: 600;">
             <%= title %>
           </b>
         <% else %>
@@ -82,15 +85,33 @@
             <%= current_user.access_level.capitalize %>
           </b>
         <% end %>
+
+        <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
+          <button data-behavior="toggle_theme" aria-label="Toggle dark mode" id="admin-theme-toggle" tabindex="0" class="tooltipped tooltipped--w">
+            <%= inline_icon "moon", fill: "currentColor", size: 28 %>
+            <%= inline_icon "moon-fill", fill: "currentColor", size: home_action_size, style: "display: none;" %>
+          </button>
+          <a href="https://changelog.hcb.hackclub.com" target="_blank" aria-label="See what’s new with HCB" id="changelog-icon" class="tooltipped tooltipped--w">
+            <%= inline_icon "rep", size: home_action_size %>
+          </a>
+          <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "tooltipped tooltipped--w" do %>
+            <%= inline_icon "payment-docs", size: home_action_size %>
+          <% end %>
+          <%= button_to logout_users_path, method: :delete, style: "background: none; padding: 0px;", id: "admin-logout-button", 'aria-label': "Sign out", class: "tooltipped tooltipped--w" do %>
+            <%= inline_icon "door-leave", size: home_action_size %>
+          <% end %>
+        </div>
       </div>
+
       <div class="nav-row" style="width: 100%; display: flex; padding: 8px 0px;">
         <% nav.each do |name, items| %>
-          <% badge_number = items.map { |name, item| item.second }.sum %>
+          <% task_sum = items.reject { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
+          <% counter_sum = items.select { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
           <details open class="admin-nav-item pb0">
             <summary class="nav-item" style="<%= name == parent ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
               <%= name %>
-              <span class="badge <%= items.map { |name, item| item.last.any? ? item.last : nil }.flatten.reject { |item| item == :counter }.empty? || badge_number.zero? ? "bg-muted" : "bg-success" %> pr2 h-fit-content">
-                <%= badge_number %>
+              <span class="badge <%= task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
+                <%= task_sum > 0 ? task_sum : counter_sum %>
               </span>
             </summary>
             <div class="dropdown">
@@ -100,7 +121,7 @@
 
                   <%= link_to link, style: active == name ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
                     <%= name %>
-                    <span class="badge <%= (:counter.in? flags) || count.zero? ? "bg-muted" : "" %> pr2 h-fit-content">
+                    <span class="badge <%= (:counter.in? flags) || count.zero? ? "bg-muted" : "" %> h-fit-content">
                       <%= count %>
                     </span>
                   <% end %>
@@ -126,7 +147,7 @@
       <%= yield %>
     </div>
 
-    <%= render "application/footer" unless (@no_app_shell || @hide_footer) %>
+    <%= render "application/footer" unless @no_app_shell || @hide_footer %>
     <%= render "application/command_bar" %>
     <script>
       document.addEventListener("turbo:load", () => {

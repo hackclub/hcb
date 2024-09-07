@@ -30,8 +30,7 @@ describe LoginCodeService::Request do
                                email: user.email,
                                status: "login code sent",
                                method: :email,
-                               login_code:,
-                               browser_token: login_code.browser_token
+                               login_code:
                              })
     end
   end
@@ -59,8 +58,7 @@ describe LoginCodeService::Request do
                                email: user.email,
                                status: "login code sent",
                                method: :email,
-                               login_code:,
-                               browser_token: login_code.browser_token
+                               login_code:
                              })
     end
   end

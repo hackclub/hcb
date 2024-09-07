@@ -22,27 +22,29 @@ module SearchService
 
     def types
       {
-        "organization" => {
+        "organization"  => {
           "children"   => %w[
             user
             card
             transaction
+            reimbursement
           ],
           "subtypes"   => [],
           "properties" => [
             "date"
           ]
         },
-        "user"         => {
+        "user"          => {
           "children"   => %w[
             organization
             card
             transaction
+            reimbursement
           ],
           "subtypes"   => [],
           "properties" => []
         },
-        "card"         => {
+        "card"          => {
           "children"   => [
             "transaction"
           ],
@@ -51,7 +53,7 @@ module SearchService
             "date"
           ]
         },
-        "transaction"  => {
+        "transaction"   => {
           "children"   => [],
           "properties" => %w[
             date
@@ -68,6 +70,12 @@ module SearchService
             "refund"                 => ->(t) { t.local_hcb_code.stripe_refund? },
             "fiscal_sponsorship_fee" => ->(t) { t.local_hcb_code.fee_revenue? || t.fee_payment? }
           },
+        },
+        "reimbursement" => {
+          "children"   => [],
+          "properties" => %w[
+            date
+          ],
         }
       }
     end

@@ -28,7 +28,7 @@ module DonationService
       end
 
       def header
-        ::CSV::Row.new(headers, ["status", "date", "url", "name", "amount_cents"], true)
+        ::CSV::Row.new(headers, ["status", "date", "url", "name", "email", "amount_cents"], true)
       end
 
       def row(ct)

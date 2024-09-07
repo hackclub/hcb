@@ -1,4 +1,6 @@
-<% title "#{render_money(@hcb_code.amount_cents.abs)} #{@hcb_code.stripe_refund? ? "refund" : "charge"} for #{@hcb_code.memo}" %>
+<% renderable_amount_cents = @hcb_code.stripe_atm_fee ? @hcb_code.amount_cents.abs - @hcb_code.stripe_atm_fee : @hcb_code.amount_cents.abs %>
+
+<% title "#{render_money(renderable_amount_cents)} #{@hcb_code.stripe_refund? ? "refund" : @hcb_code.stripe_cash_withdrawal? ? "withdrawal" : "charge"} for #{@hcb_code.memo}" %>
 <% instance = @hcb_code.hashid %>
 
 <% admin_tool("mt1") do %>
@@ -22,7 +24,7 @@
       <%= turbo_frame_tag @hcb_code, class: "flex items-center" do %>
         <%= pop_icon_to "edit",
             edit_hcb_code_path(@hcb_code),
-            class: "mr2 align-middle", "aria-label": "Rename transaction",
+            class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
             data: { turbo: true } %>
 
         <span class="align-middle"
@@ -30,25 +32,46 @@
               data-action="dblclick->navigation#navigate"
               data-navigation-location-param="<%= edit_hcb_code_path(@hcb_code) %>"
               data-navigation-frame-param="<%= dom_id(@hcb_code) %>">
-          <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
-          <span class="regular muted"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
-          <%= number_to_currency(@hcb_code.amount.abs) %>
+          <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
+            <span>
+              <%= render_money(renderable_amount_cents) %>
+            </span>
+            <span class="regular muted">
+              withdrawal from
+            </span>
+            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
+          <% else %>
+            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
+            <span class="regular muted"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
+            <%= render_money(renderable_amount_cents) %>
+          <% end %>
         </span>
+
         <%= render "hcb_codes/memo_stream", hcb_code: @hcb_code %>
+
+        <span style="flex-grow: 1;"></span>
+
+        <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: @hcb_code } if Flipper.enabled?(:ai_memos_2024_06_20, current_user) %>
       <% end %>
     </span>
 
-      <% if @hcb_code.pt&.declined? %>
-        <span class="badge h4 md-right bg-accent">
-          Declined
-          <%= inline_icon :info, size: 20 %>
-        </span>
-      <% end %>
-      <% if @hcb_code.pt&.unsettled? %>
-        <span class="badge h4 md-right bg-muted">
-          Pending
-          <%= inline_icon :info, size: 20 %>
-        </span>
+      <% if @hcb_code.pt && !@hcb_code.pt.settled? %>
+        <% if @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed" %>
+          <span class="badge h4 md-right bg-accent">
+            Reversed
+            <%= inline_icon :info, size: 20 %>
+          </span>
+        <% elsif @hcb_code.pt.declined? %>
+          <span class="badge h4 md-right bg-accent">
+            Declined
+            <%= inline_icon :info, size: 20 %>
+          </span>
+        <% else %>
+          <span class="badge h4 md-right bg-muted">
+            Pending
+            <%= inline_icon :info, size: 20 %>
+          </span>
+        <% end %>
       <% end %>
 
       <% if @hcb_code.personal_transaction.present? %>
@@ -71,6 +94,12 @@
           <%= user_mention @hcb_code.stripe_card.user %>
         <% end %>
       </p>
+      <% if @hcb_code.stripe_atm_fee %>
+        <p>
+          <strong>ATM Fee</strong>
+          <span><%= render_money @hcb_code.stripe_atm_fee %></span>
+        </p>
+      <% end %>
       <p>
         <strong><%= @hcb_code.stripe_refund? ? "Refunded" : "Spent" %></strong>
         <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.ct.raw_stripe_transaction.stripe_transaction["created"]) %>
@@ -92,7 +121,7 @@
         <p>
         <strong>Declined</strong>
         <span>
-          <% if reason == "card_inactive" && !@hcb_code.stripe_card.activated? %>
+          <% if reason == "card_inactive" && !@hcb_code.stripe_card.initially_activated? %>
             <em>This transaction was declined by HCB as this card isn't activated.</em>
           <% elsif reason == "card_inactive" %>
             <em>This transaction was declined by HCB as this card is frozen.</em>
@@ -100,8 +129,12 @@
             <em>This transaction was declined by HCB due to failed suspected fraud / failed checks.</em>
           <% elsif reason == "webhook_declined" && webhook_declined_reason == "merchant_not_allowed" %>
             <em>This transaction was declined by HCB because this merchant is not allowed.</em>
+          <% elsif reason == "webhook_declined" && webhook_declined_reason == "cash_withdrawals_not_allowed" %>
+            <em>This transaction was declined by HCB because cash withdrawals were not enabled on the card.</em>
           <% elsif reason == "webhook_declined" %>
             <em>This transaction was declined by HCB due to insufficient funds.</em>
+          <% elsif @hcb_code.stripe_reversed_by_merchant? %>
+            <em>This transaction was reversed by the merchant.</em>
           <% else %>
             <em>This transaction was declined.</em>
           <% end %>
@@ -159,11 +192,11 @@
                 <% end %>
                 <p>
                   <strong>Zip</strong>
-                  <span><%= (@hcb_code.stripe_merchant["postal_code"] or "Unknown") %></span>
+                  <span><%= @hcb_code.stripe_merchant["postal_code"] or "Unknown" %></span>
                 </p>
                 <p>
                   <strong>State</strong>
-                  <span><%= (@hcb_code.stripe_merchant["state"]&.upcase or "Unknown") %></span>
+                  <span><%= @hcb_code.stripe_merchant["state"]&.upcase or "Unknown" %></span>
                 </p>
                 <p>
                   <strong>Country</strong>
@@ -262,7 +295,7 @@
           </p>
         <% end %>
       <% end %>
-      <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+      <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
     </section>
 
     <%= render "hcb_codes/stripe_card_receipts" %>
@@ -307,11 +340,11 @@
         <% end %>
         <p>
           <strong>Zip</strong>
-          <span><%= (@hcb_code.stripe_merchant["postal_code"] or "Unknown") %></span>
+          <span><%= @hcb_code.stripe_merchant["postal_code"] or "Unknown" %></span>
         </p>
         <p>
           <strong>State</strong>
-          <span><%= (@hcb_code.stripe_merchant["state"]&.upcase or "Unknown") %></span>
+          <span><%= @hcb_code.stripe_merchant["state"]&.upcase or "Unknown" %></span>
         </p>
         <p>
           <strong>Country</strong>

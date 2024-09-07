@@ -1,0 +1,15 @@
+<% title "Activity" %>
+<% page_md unless admin_signed_in? %>
+<%= render "users/nav", selected: :reimbursements unless admin_signed_in? %>
+<% @no_app_shell = true if admin_signed_in? %>
+
+<h2 class="heading">
+  <span class="flex items-center w-100">
+      <span class="flex-grow">Recently on HCB...</span>
+      <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
+        👤 <%= User.currently_online.count %>
+      <% end %>
+  </span>
+</h2>
+
+<%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>

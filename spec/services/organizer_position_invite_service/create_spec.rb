@@ -11,7 +11,6 @@ RSpec.describe OrganizerPositionInviteService::Create do
     Event.create!({
                     name: "test-event",
                     partner:,
-                    sponsorship_fee: 0,
                     organization_identifier: SecureRandom.hex(30)
                   })
   end

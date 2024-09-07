@@ -35,7 +35,11 @@ class ReceiptBinMailbox < ApplicationMailbox
   private
 
   def set_user
-    @user = MailboxAddress.activated.find_by(address: mail.to.first)&.user
+    if mail.to.first.start_with?("receipts@")
+      @user = User.find_by(email: mail.from[0])
+    else
+      @user = MailboxAddress.activated.find_by(address: mail.to.first)&.user
+    end
   end
 
   def bounce_missing_user

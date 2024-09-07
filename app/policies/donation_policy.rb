@@ -6,11 +6,11 @@ class DonationPolicy < ApplicationPolicy
   end
 
   def start_donation?
-    record.event.donation_page_enabled
+    record.event.donation_page_available?
   end
 
   def make_donation?
-    record.event.donation_page_enabled && !record.event.demo_mode?
+    record.event.donation_page_available? && !record.event.demo_mode?
   end
 
   def index?
@@ -18,6 +18,10 @@ class DonationPolicy < ApplicationPolicy
   end
 
   def export?
+    record.event.users.include?(user) || user&.admin?
+  end
+
+  def export_donors?
     record.event.users.include?(user) || user&.admin?
   end
 

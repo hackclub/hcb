@@ -1,3 +1,9 @@
+<% if organizer_signed_in? %>
+  <%= turbo_stream_from @event, :transactions %>
+  <%= turbo_stream_from @event, :tags %>
+  <% turbo_refreshes_with method: :morph, scroll: :preserve %>
+<% end %>
+
 <% title @event.name %>
 
 <% if @event&.is_public %>
@@ -23,28 +29,15 @@
 <%# Demo mode callout thing %>
 <% if organizer_signed_in? && @event.demo_mode %>
   <div class="card border b--info pb0 mt3" style="text-wrap: pretty;" id="playground-callout">
-    <% meeting_req = @event.demo_mode_request_meeting_at %>
     <p class="mt0">
-      <% if meeting_req %>
-        <strong>You requested activation on <%= format_date meeting_req %>
-        (<%= distance_of_time_in_words_to_now meeting_req %> ago).</strong>
-        <br>
-        Please expect an email from our team soon.
-      <% else %>
-        <strong>Welcome to Playground Mode</strong>
-        <br>
-        While in Playground mode, explore the dashboard with mock data, and invite your team.
-        To utilize financial features, request activation!
-      <% end %>
+      <strong>Welcome to Playground Mode</strong>
+      <br>
+      While in Playground mode, explore the dashboard with mock data, and invite your team.
     </p>
-    <%= link_to event_demo_mode_request_meeting_path(@event), method: :post, class: "btn bg-primary shrink-none mb2 nowrap #{"disabled" unless policy(@event).demo_mode_request_meeting? }", data: { tour_step: "activate_account" } do %>
-      <%= inline_icon "welcome" %>
-      Request<%= "ed" unless @event.demo_mode_request_meeting_at.nil? %> Activation
-    <% end %>
   </div>
 <% end %>
 
-<h1 class="flex items-center">
+<h1 class="items-center hidden md:flex">
   Financials
   <% if admin_signed_in? %>
     <% admin_tool("p0 badge", "span") do %>
@@ -74,20 +67,40 @@
   <% end %>
 </h1>
 
-<div class="flex md:items-center details-horiz details-horiz--lg" style="gap: 8px">
-  <div class="stat statset__wide" data-tour-step="balance">
-    <span class="stat__label">Account balance</span>
-    <% if @event.fee_balance_v2_cents < 0 # this event has a fee credit (owes negative fees) %>
-      <span class="stat__value"><%= render_money_amount @event.balance_v2_cents %></span>
-      <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %> fee credit</span>
-    <% else %>
-      <span class="stat__value">
-        <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
-      </span>
-    <% end %>
+<div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
+  <div
+    class="flex"
+    style="flex-direction: row; gap: 8px; position: relative;"
+     data-controller="balance-graph"
+     data-balance-graph-available-value="<%= @event.balance_available_v2_cents %>">
+    <div class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="stat">
+      <span class="stat__label" data-balance-graph-target="label">Account balance</span>
+      <% if @event.fee_balance_v2_cents < 0 # this event has a fee credit (owes negative fees) %>
+        <span class="stat__value" data-balance-graph-target="balance"><%= render_money_amount @event.balance_v2_cents %></span>
+        <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %> fee credit</span>
+      <% else %>
+        <span class="stat__value" data-balance-graph-target="balance">
+          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
+        </span>
+      <% end %>
+    </div>
+
+    <div data-nosnippet style="position: absolute; top: 0px; left: 0px; visibility: hidden;" aria-hidden="true" class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="size">
+      <span class="stat__label">Account balance</span>
+      <% if @event.fee_balance_v2_cents < 0 # this event has a fee credit (owes negative fees) %>
+        <span class="stat__value" data-balance-graph-target="sizing"><%= render_money_amount @event.balance_v2_cents %></span>
+        <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %> fee credit</span>
+      <% else %>
+        <span class="stat__value" data-balance-graph-target="sizing">
+          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
+        </span>
+      <% end %>
+    </div>
+
+    <svg data-balance-graph-target="graph" id="balance-chart" class="sparkline sparkline--filled" height="66" stroke-width="2"></svg>
   </div>
 
-  <div>
+  <div style="pointer-events: all; z-index: 10;">
     <div class="flex items-center">
       <% if @organizers.any? %>
         <div class="flex items-center">
@@ -172,22 +185,22 @@
           <table>
             <thead>
               <tr>
-                <th></th>
+                <th><%# icon %></th>
                 <th>Date</th>
                 <th>Description</th>
                 <th class="right-align">Amount</th>
                 <% if @show_running_balance %>
                   <th>Running Balance</th>
                 <% end %>
-                <th></th>
+                <th><%# user avatar %></th>
               </tr>
             </thead>
             <tbody data-behavior="transactions">
               <%= render "pending_fee_transaction" if @event.fronted_fee_balance_v2_cents > 0 %>
 
-              <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 } %>
+              <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0, show_author_column: true } %>
 
-              <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 } %>
+              <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0, show_author_column: true } %>
           </tbody>
           </table>
       </div>

@@ -1,0 +1,14 @@
+.support-menu__item {
+  font-weight: 400 !important;
+}
+
+.support-menu__button {
+  background-color: rgba(51, 142, 218, 0.825) !important;
+  color: white;
+}
+
+@media (max-width: 56em) {
+  .support-menu__button {
+    bottom: 64px !important;
+  }
+}

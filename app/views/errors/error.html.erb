@@ -1,0 +1,24 @@
+<% turbo_page_requires_reload %>
+
+<div class="center">
+  <h1>That didn't work!</h1>
+  <p>We're going to debug what went wrong.</p>
+  <% if @code.present? %>
+    <p>For any engineers reading this, this is a <%= @code %> error.</p>
+  <% end %>
+  <img
+    src="/dino_debugging.svg"
+    class="dino-svg mt3 mx-auto w-100 block max-width-1"
+    title="wanna help us fix this bug? <%= Rails.configuration.constants.hack_on_hcb_form_url %>">
+</div>
+
+<script>
+  const formUrl = <%= raw Rails.configuration.constants.hack_on_hcb_form_url.to_json %>;
+
+  console.log(
+    `%cOops, something went wrong!\n\n%cwanna help us fix this bug?\n%c${formUrl}`,
+    'font-size: 1.5em; font-weight: bold; color: red;',
+    'font-size: 1.2em; font-weight: bold;',
+    'font-size: 1.2em; font-weight: bold; color: blue;'
+  )
+</script>

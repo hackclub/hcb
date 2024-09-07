@@ -11,12 +11,13 @@ module Reimbursement
       authorize @expense
 
       if params[:file]
-        ::ReceiptService::Create.new(
+        receipt = ::ReceiptService::Create.new(
           receiptable: @expense,
           uploader: current_user,
           attachments: params[:file],
           upload_method: :quick_expense
         ).run!
+        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt.first.suggested_memo
       end
 
       if @expense.save
@@ -44,7 +45,7 @@ module Reimbursement
       authorize @expense # we authorize twice in case the reimbursement_report_id changes
 
       if expense_params[:event_id].presence
-        event = Event.friendly.find(expense_params[:event_id])
+        event = Event.find(expense_params[:event_id])
         report = event.reimbursement_reports.build({ user: @expense.report.user })
         authorize report
         ActiveRecord::Base.transaction do

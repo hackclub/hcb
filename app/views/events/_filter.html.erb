@@ -2,7 +2,15 @@
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
-    <%= form.text_field :q, placeholder: "Search", style: "width auto; max-width: none;", value: params[:q] %>
+    <div class="input input-group max-w-none" tabindex="0">
+      <%= inline_icon "search" %>
+      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
+      <% if params[:q] && params[:q] != "" %>
+        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+          <%= inline_icon "view-close", size: 24 %>
+        </button>
+      <% end %>
+    </div>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
     <% end %>
@@ -36,7 +44,10 @@
       <% if @tag %>
         <span class="xs-hide sm-hide md-hide flex items-center">
           <span class="nowrap">Filtered by</span>
-          <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1"><%= @tag.label %></span>
+          <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
+            <div class="tag__preview tag-<%= @tag.color || "muted" %>"></div>
+            <%= @tag.label %>
+          </span>
         </span>
       <% elsif @user %>
         <span class="xs-hide sm-hide md-hide flex items-center">
@@ -52,7 +63,7 @@
       <span class="xs-hide sm-hide md-hide flex items-center">
         <span class="nowrap">Filtered by</span>
         <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
-          <%= @type.humanize.titleize.gsub("Ach", "ACH") %>
+          <%= @type.humanize.gsub("Ach", "ACH") %>
         </span>
       </span>
       <% elsif @start_date || @end_date %>
@@ -81,54 +92,25 @@
         <span class="xs-hide sm-hide md-hide nowrap">Filter</span>
       <% end %>
     </button>
-    <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content" data-controller="filter">
-      <div style="display: flex; gap: 12px;padding: 0.25rem 0.5rem !important;">
-        <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
-          <span
-            data-filter-target="tagsLabel"
-            data-filter-menu-label-selected="<%= @tag || !filter_applied ? "true" : "false" %>"
-            data-action="click->filter#selectTags"
-            style="cursor: pointer;">
-            Tag
-          </span>
-        <% end %>
-        <span
-          data-filter-target="usersLabel"
-          data-filter-menu-label-selected="<%= (@user || !(Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0)) && !filter_applied ? "true" : "false" %>"
-          data-action="click->filter#selectUsers"
-          style="cursor: pointer;">
-          User
-        </span>
-        <span
-          data-filter-target="typesLabel"
-          data-filter-menu-label-selected="<%= @type ? "true" : "false" %>"
-          data-action="click->filter#selectTypes"
-          style="cursor: pointer;">
-          Type
-        </span>
-        <span
-          data-filter-target="datesLabel"
-          data-filter-menu-label-selected="<%= @start_date || @end_date ? "true" : "false" %>"
-          data-action="click->filter#selectDates"
-          style="cursor: pointer;">
-          Date
-        </span>
-        <span
-          data-filter-target="amountsLabel"
-          data-filter-menu-label-selected="<%= @minimum_amount || @maximum_amount ? "true" : "false" %>"
-          data-action="click->filter#selectAmounts"
-          style="cursor: pointer;">
-          Amount
-        </span>
-      </div>
-
-      <div class="menu__divider"></div>
+    <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 290px; padding: 0.5rem;" data-menu-target="content" data-controller="filter">
+    <div data-controller="tabs" data-tabs-default-tab-value="<%= @tag ? "tag" : @user ? "user" : @type ? "type" : @start_date || @end_date ? "date" : @maximum_amount || @minimum_amount ? "amount" : Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 ? "tags" : "user" %>">
+      <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
+        <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
+      <% end %>
+      <button id="user" data-tabs-target="btn" data-action="click->tabs#select">User</button>
+      <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
+      <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
+      <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
+      <div class="menu__divider--filter-tab"></div>
 
       <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
-        <div data-filter-target="tags" data-filter-menu-selected="<%= @tag || !filter_applied ? "true" : "false" %>">
+        <div data-tabs-target="tab" id="tags">
           <% @event.tags.each do |tag| %>
             <div class="flex items-center" data-tag="<%= tag.id %>">
-              <%= link_to tag.label, { tag: tag.label, q: params[:q] }.compact, class: "flex-auto menu__action" %>
+              <%= link_to "?#{{ tag: tag.label, q: params[:q] }.compact.to_query}", class: "flex-auto menu__action" do %>
+                  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+                  <%= tag.label %>
+              <% end %>
               <% if organizer_signed_in? %>
                 <%= button_to event_tag_path(@event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
                   <%= inline_icon "delete", size: 20, style: "margin: 0" %>
@@ -138,11 +120,10 @@
           <% end %>
         </div>
       <% end %>
-
-      <div data-filter-target="users" data-filter-menu-selected="<%= (@user || !(Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0)) && !filter_applied ? "true" : "false" %>">
+      <div data-tabs-target="tab" id="user">
         <% @organizers.each do |position| %>
           <div class="flex items-center">
-              <%= link_to({ user: position.user.id, q: params[:q] }.compact, class: "flex-auto flex items-center menu__action") do %>
+              <%= link_to({ user: position.user.id, q: params[:q] }.compact, class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.id == position.user.id}") do %>
                 <div class="avatar-grow line-height-0 mr1">
                   <%= avatar_for position.user, 18 %>
                 </div>
@@ -151,18 +132,16 @@
           </div>
         <% end %>
       </div>
-
-      <div data-filter-target="types" data-filter-menu-selected="<%= @type ? "true" : "false" %>">
+      <div data-tabs-target="tab" id="type">
         <% ["ach_transfer", "mailed_check", "account_transfer", "card_charge", "check_deposit", "donation", "invoice", "refund", "fiscal_sponsorship_fee", "reimbursement"].each do |type| %>
           <div class="flex items-center">
-              <%= link_to({ type:, q: params[:q] }.compact, class: "flex-auto menu__action") do %>
-                <%= type.humanize.titleize.gsub("Ach", "ACH") %>
+              <%= link_to({ type:, q: params[:q] }.compact, class: "flex-auto menu__action #{"menu__action--active" if @type == type}") do %>
+                <%= type.humanize.gsub("Ach", "ACH") %>
               <% end %>
           </div>
         <% end %>
       </div>
-
-      <div data-filter-target="dates" data-filter-menu-selected="<%= @start_date || @end_date ? "true" : "false" %>">
+      <div data-tabs-target="tab" id="date">
         <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
           <p class="bold mb0 mt0">Transactions after...</p>
           <%= form.date_field :start, class: "border mb1", value: @start_date %>
@@ -173,8 +152,7 @@
           </div>
         <% end %>
       </div>
-
-      <div data-filter-target="amounts" data-filter-menu-selected="<%= @minimum_amount || @maximum_amount ? "true" : "false" %>">
+      <div data-tabs-target="tab" id="amount">
         <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
 
           <p class="bold mb0 mt0">Transactions more than...</p>
@@ -194,6 +172,7 @@
           </div>
         <% end %>
       </div>
+    </div>
 
       <% if @tag || @user || @type || @start_date || @end_date %>
         <div class="menu__divider"></div>

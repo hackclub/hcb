@@ -16,8 +16,8 @@
   <% end %>
 </h1>
 
-<div class="statset mt3 mb2">
-  <div class="stat stat--small">
+<div class="statset mt3 mb3">
+  <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
   </div>
@@ -31,22 +31,25 @@
   </div>
 </div>
 
-<hr>
-
-<div style="text-align: center;">
-  <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
-  <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
-  <%= link_to "In Transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>
-  <%= link_to "Canceled", "?filter=canceled", class: "filterbar__item", "aria-selected": params[:filter] == "canceled", role: "tab" %>
-</div>
-
-<%= form_with(model: nil, local: true, method: :get) do |form| %>
-  <div class="filterbar flex flex-wrap items-center width-100">
-
-    <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
-
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <div class="input input-group max-w-none" tabindex="0">
+      <%= inline_icon "search" %>
+      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
+      <% if params[:q] && params[:q] != "" %>
+        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+          <%= inline_icon "view-close", size: 24 %>
+        </button>
+      <% end %>
+    </div>
+  <% end %>
+  <div>
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
+    <%= link_to "In transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>
+    <%= link_to "Canceled", "?filter=canceled", class: "filterbar__item", "aria-selected": params[:filter] == "canceled", role: "tab" %>
   </div>
-<% end %>
+</div>
 
 <% if @transfers.size > 0 %>
 <article class="table-container">
@@ -65,6 +68,14 @@
 
     <tbody>
       <% @transfers.each do |d| %>
+        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>">
+            <%= modal_header("Transfer of #{render_money(d.amount)}", external_link: hcb_code_url(d.hcb_code)) %>
+            <%= async_frame_to hcb_code_url(d.hcb_code, params: { frame: true }), lazy: true, as: :div do %>
+              <strong>Loading...</strong>
+            <% end %>
+          </section>
+        <% end %>
         <tr>
           <td class="transaction__icon">
             <% if d.is_a?(Check) || d.is_a?(IncreaseCheck) %>
@@ -78,6 +89,10 @@
             <% elsif d.is_a?(CardGrant) %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="Card Grant">
                 <%= inline_icon "bag" %>
+              </span>
+            <% elsif d.is_a?(PaypalTransfer) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="PayPal Transfer">
+                <%= inline_icon "paypal" %>
               </span>
             <% else %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
@@ -123,7 +138,7 @@
                 <%= render "card_grant_actions", card_grant: d %>
               <% else %>
                 <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-                <%= link_to "Details", hcb_code_url(d.hcb_code) %>
+                <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) ? { behavior: "modal_trigger", modal: "transfer_modal_#{d.hcb_code}" } : nil %>
               <% end %>
             <% end %>
           </td>

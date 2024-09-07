@@ -7,98 +7,107 @@ module ReceiptService
     end
 
     def run!
+      return @receipt if @receipt.data_extracted?
+
+      # this line acts as a rate limit of sort.
+      # see https://github.com/hackclub/hcb/issues/7167.
+      return if @receipt.user.receipts.where(created_at: 1.hour.ago, data_extracted: true).count > 50 ||
+                (@receipt.receiptable.present? && @receipt.receiptable.receipts.where(data_extracted: true).count > 5)
+
       @textual_content = @receipt.textual_content || @receipt.extract_textual_content!
-      return nil if @textual_content.nil?
-
-      {
-        amount_cents:,
-        card_last_four:,
-        date:,
-        textual_content: @textual_content
-      }
-    end
-
-    private
-
-    def match_regex(regex, text, &block)
-      matches = if block_given?
-                  text.scan(regex).map { |match| block.call(match) }
-                else
-                  text.scan(regex)
-                end
-
-      positions = text.enum_for(:scan, regex).map { Regexp.last_match.begin(0) }
-
-      matches.map.with_index do |match, index|
-        position = positions[index]
-        before_fragment = index == 0 ? text[0..(position - 1)] : text[(positions[index - 1] + matches[index - 1].to_s.length)..(position - 1)]
-        after_fragment = index == matches.length - 1 ? text[(position + match.to_s.length)..] : text[(position + match.to_s.length)..(positions[index + 1] - 1)]
-
-        {
-          before_fragment:,
-          match:,
-          position:,
-          after_fragment:
-        }
-      end
-    end
-
-    def amount_cents
-      amount_cents_regex = /\$( ?[\d.,]+)(\s|\n|\\n)/
-
-      amounts = match_regex(amount_cents_regex, @textual_content) { |match| match.first }
-      amounts = amounts.map do |match|
-        match[:amount] = (match[:match].to_f * 100).to_i
-
-        match
+      if @textual_content.nil?
+        @receipt.update(data_extracted: true)
+        return
       end
 
-      amounts = amounts.reverse
+      prompt = <<~PROMPT
+        You are a helpful assistant that extracts important features from receipts. You must extract the following features in JSON format:
 
-      amounts.each_with_index do |amount, index|
-        if amount[:before_fragment].downcase.include?("total")
-          # TODO - Exclude "sub"total
-          amounts = [amount] + amounts[0...index] + amounts[index + 1..]
-        end
+        subtotal_amount_cents
+        total_amount_cents // the amount likely to be charged to a credit card
+        card_last_four
+        date // in the format of YYYY-MM-DD
+        merchant_url // URL for merchant's primary website including https, if available
+        merchant_name // short recognizable concise common name without identifiers or order numbers
+        merchant_zip_code // if available
+        transaction_memo // a good memo includes quantity (if it's more than one), the item(s) purchased, and the merchant. pretend someone will use the memos in the sentence, "In this transaction, I purchased (a) <memo>" where <memo> is what you generate. some good examples are "🏷️ 5,000 Event stickers from StickerMule", "💧 Office water supply from Culligan", "🔌 USB-C cable for MacBook", "💾 10 Airtable team seats for December", and "🚕 Uber to SFO Airport". avoid generic quantifiers like "multiple", "many", or "assorted", using improper capitalization, unnecessarily verbose descriptions, addresses, and transaction/merchant/order IDs. Ensure memos are less than 60 characters.
+
+        If you can't extract a feature, or if you can't find any features, return null for the respective keys.
+      PROMPT
+
+      conn = Faraday.new url: "https://api.openai.com" do |f|
+        f.request :json
+        f.request :authorization, "Bearer", -> { Rails.application.credentials.openai.api_key }
+        f.response :raise_error
+        f.response :json
       end
 
-      amounts.map do |amount|
-        0 - amount[:amount]
-      end
-    end
+      response = conn.post("/v1/chat/completions", {
+                             model: "gpt-4o",
+                             messages: [
+                               {
+                                 role: "system",
+                                 content: prompt
+                               },
+                               {
+                                 role: "user",
+                                 content: @textual_content
+                               }
+                             ]
+                           })
 
-    def card_last_four
-      text_regex = /(?:(?:ending ?(?:in|with)?|visa|card|digits|account|credit|debit|number) ?[-–—]? ?:? ?(?:\\n)?)(?:\(?(?<last4>\d{4})\)?)(?:\s|\\n|[^\d]|$)/i
-      x_regex = /[*x•·]{1,12}? ?(?:-|—)? ?(?<last4>\d{4})(?:\s|\\n|\)|$)/i
-
-      [
-        *match_regex(text_regex, @textual_content) { |match| match.first },
-        *match_regex(x_regex, @textual_content) { |match| match.first }
-      ].pluck(:match)
-    end
-
-    def date
-      # TODO - Match written dates
-
-      slash_regex = /(?:(?<month>\d{1,2})\/(?<day>\d{1,2})\/(?<year>\d{2,4}))/i
-      dash_regex = /(?:(?<month>\d{1,2})-(?<day>\d{1,2})-(?<year>\d{2,4}))/i
-
-      dates = [*match_regex(slash_regex, @textual_content), *match_regex(dash_regex, @textual_content)].map do |match|
-        integer_values = match[:match].map(&:to_i)
-
-        month, day, year = integer_values
-
-        [
-          [month, day, year],
-          [day, month, year],
-          [year, month, day]
-        ]
-      end.flatten(1).reject do |date|
-        month, day, year = date
-
-        month > 12 || day > 31 || year < 1000 || year > Time.now.year + 1
+      ai_response = response.body.dig("choices", 0, "message", "content")
+      if ai_response.starts_with?("```json") && ai_response.ends_with?("```")
+        ai_response = ai_response[7..-4]
       end
 
+      extracted = begin
+        JSON.parse(ai_response).yield_self { |r| r.is_a?(Array) ? r.first : r }.with_indifferent_access # JSON given by ChatGPT, may fail. The `yield_self` handles ChatGPT returning an array.
+      rescue JSON::ParserError
+        nil
+      end
+
+      return if extracted.nil?
+
+      extracted[:textual_content] = @receipt.textual_content
+
+      data = OpenStruct.new(extracted) # Protection against missing keys
+
+      @receipt.update!(
+        suggested_memo: data.transaction_memo,
+        extracted_subtotal_amount_cents: data.subtotal_amount_cents&.to_i,
+        extracted_total_amount_cents: data.total_amount_cents&.to_i,
+        extracted_card_last4: data.card_last_four,
+        extracted_date: data.date&.to_date,
+        extracted_merchant_name: data.merchant_name,
+        extracted_merchant_url: data.merchant_url,
+        extracted_merchant_zip_code: data.merchant_zip_code,
+        data_extracted: true
+      )
+
+
+      if @receipt.receiptable_type == "HcbCode"
+        hcb_code = @receipt.receiptable
+        hcb_code.broadcast_action_later_to(
+          [hcb_code, "ai_memo"],
+          action: :replace,
+          target: "ai_memo",
+          partial: "hcb_codes/ai_memo",
+          locals: { hcb_code: }
+        )
+      end
+
+      unless @receipt.receiptable
+        @receipt.broadcast_replace_to(
+          [@receipt.user, :receipt_bin],
+          target: nil,
+          targets: "div[data-extracted-data-for='#{@receipt.id}']",
+          partial: "receipts/extracted",
+          locals: { receipt: @receipt, current_user: @receipt.user }
+        )
+      end
+
+      @receipt
     end
 
   end

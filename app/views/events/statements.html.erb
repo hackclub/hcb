@@ -2,20 +2,30 @@
 <% page_md %>
 <%= render "events/nav", selected: :documentation %>
 
-<h1 class="heading">Statements</h1>
+<h1>Documents</h1>
 
-<div class="grid">
-  <% months = (@start_date..@end_date).select { |date| date.day == 1 }.reverse %>
-  <% months.each do |day| %>
-    <%= link_to transactions_exports_path(event: @event, start_date: day, format: :pdf), target: "_blank", class: "card card--hover flex items-center" do %>
-        <span style="flex-grow: 1">
-          <%= day.strftime("%B %Y") %>
-        </span>
-        <%= inline_icon "download", size: 24, class: "ml1", 'aria-label': "Download" %>
+<ul class="tab-container">
+  <%= settings_tab do %>
+    <%= link_to "Legal documents", event_documents_path(@event), data: { turbo: true, turbo_action: "advance" } %>
+  <% end %>
+  <%= settings_tab active: true do %>
+      <%= link_to "Financial statements", event_statements_path(@event), data: { turbo: true, turbo_action: "advance" } %>
+  <% end %>
+</ul>
+
+<% months = (@start_date..@end_date).select { |date| date.day == 1 }.reverse %>
+
+<% if months.none? %>
+  <%= blankslate "No financial statements yet" %>
+<% else %>
+  <div class="grid">
+    <% months.each do |day| %>
+      <%= link_to transactions_exports_path(event: @event, start_date: day, format: :pdf), target: "_blank", class: "card card--hover flex items-center" do %>
+          <span style="flex-grow: 1">
+            <%= day.strftime("%B %Y") %>
+          </span>
+          <%= inline_icon "download", size: 24, class: "ml1", 'aria-label': "Download" %>
+      <% end %>
     <% end %>
-  <% end %>
-
-  <% if months.none? %>
-    <%= blankslate "No financial statements yet" %>
-  <% end %>
-</div>
+  </div>
+<% end %>

@@ -78,7 +78,7 @@
     </p>
 
     <p>
-      <strong>Check Memo</strong>
+      <strong>Check memo</strong>
       <%= @hcb_code.increase_check.memo %>
     </p>
 
@@ -106,11 +106,11 @@
       <% end %>
     <% end %>
 
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
   <% if @hcb_code.increase_check.may_mark_rejected? %>
-    <div class="card__banner card__darker border-top overflow-hidden">
+    <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
       <% cancel_button = button_to "Cancel check", reject_increase_check_path(@hcb_code.increase_check), class: "btn bg-error #{"disabled" unless policy(@hcb_code.increase_check).reject?}", data: { turbo_confirm: "Are you sure you want to cancel this check?" } %>
       <% if policy(@hcb_code.increase_check).reject? %>
         <%= cancel_button %>
@@ -118,6 +118,10 @@
         <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel checks!">
           <%= cancel_button %>
         </div>
+      <% end %>
+
+      <% admin_tool do %>
+        <%= button_to "Process", increase_check_process_admin_path(@hcb_code.increase_check), class: "btn", method: :get %>
       <% end %>
     </div>
   <% end %>

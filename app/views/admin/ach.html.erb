@@ -41,8 +41,13 @@
             <%= ach.event.name.upcase %>: <%= ach.recipient_name.upcase %>
           <% end %>
         </td>
-        <td><%= render_money(ach.amount) %></td>
-        <td><%= ach.aasm_state.upcase %></td>
+        <td><%= render_money_amount(ach.amount) %></td>
+        <td>
+          <%= ach.aasm_state.upcase %>
+          <% if ach.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td><%= ach.confirmation_number %></td>
         <td>
           <%= link_to "Process", ach_start_approval_admin_path(ach) if ach.pending? %>

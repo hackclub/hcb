@@ -19,7 +19,7 @@ module DonationService
         donation.canonical_transactions.each do |ct|
           fee = ct.fee
           fee.amount_cents_as_decimal = 0
-          fee.reason = "DONATION REFUNDED"
+          fee.reason = :donation_refunded
           fee.save!
         end
 

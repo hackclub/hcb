@@ -18,7 +18,7 @@ class AdminController < ApplicationController
         color = size == 0 ? "muted" : "accent"
 
         render html: helpers.turbo_frame_tag(params[:task_name]) {
-          helpers.badge_for size, class: "pr2 bg-#{color}"
+          helpers.badge_for size, class: "bg-#{color}"
         }
       end
     end
@@ -99,7 +99,6 @@ class AdminController < ApplicationController
       @organization = Event.create!(
         partner: @partner,
         name: @partnered_signup.organization_name,
-        sponsorship_fee: @partner.default_org_sponsorship_fee,
         organization_identifier: SecureRandom.hex(30) + @partnered_signup.organization_name,
       )
 
@@ -200,7 +199,7 @@ class AdminController < ApplicationController
       point_of_contact_id: params[:point_of_contact_id],
       approved: params[:approved].to_i == 1,
       is_public: params[:is_public].to_i == 1,
-      sponsorship_fee: params[:sponsorship_fee],
+      plan_type: params[:plan_type],
       organized_by_hack_clubbers: params[:organized_by_hack_clubbers].to_i == 1,
       organized_by_teenagers: params[:organized_by_teenagers].to_i == 1,
       omit_stats: params[:omit_stats].to_i == 1,
@@ -367,12 +366,12 @@ class AdminController < ApplicationController
     @event_id = params[:event_id].present? ? params[:event_id] : nil
     @user_id = params[:user_id].present? ? params[:user_id] : nil
 
+    relation = CanonicalTransaction.left_joins(:canonical_event_mapping)
+
     if @event_id
       @event = Event.find(@event_id)
 
-      relation = @event.canonical_transactions.includes(:canonical_event_mapping)
-    else
-      relation = CanonicalTransaction.includes(:canonical_event_mapping)
+      relation = relation.where("canonical_event_mappings.event_id = ?", @event.id)
     end
 
     if @q
@@ -518,25 +517,78 @@ class AdminController < ApplicationController
     @count = relation.count
     @reports = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'reimbursement_requested' DESC"),
-      Arel.sql("aasm_state = 'draft' ASC"),
+      # Arel.sql("aasm_state = 'draft' ASC"),
       "reimbursement_reports.created_at desc"
     )
 
+    render layout: "admin"
+  end
+
+  def reimbursements_status
     @clearinghouse_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).run
 
     @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).run
 
-    @unidentified_transactions = @clearinghouse_transactions.reject { |tx| tx.local_hcb_code.reimbursement_payout_holding? || tx.local_hcb_code.reimbursement_payout_transfer? }
+    @unidentified_transactions = @clearinghouse_transactions.reject { |tx| (tx.local_hcb_code.reimbursement_payout_holding? || tx.local_hcb_code.reimbursement_payout_transfer?) || tx.hcb_code == "HCB-500-5084" || tx.amount_cents == 0 } # https://hackclub.slack.com/archives/C047Y01MHJQ/p1720156952566249
 
     @incomplete_payout_holdings = @clearinghouse_transactions.select { |tx|
       tx.local_hcb_code.reimbursement_payout_holding? && (
         tx.local_hcb_code.reimbursement_payout_holding.payout_transfer.nil? ||
         @clearinghouse_transactions.select { |ctx| ctx.hcb_code == tx.local_hcb_code.reimbursement_payout_holding.payout_transfer.hcb_code }.none? ||
         tx.local_hcb_code.reimbursement_payout_holding.payout_transfer.local_hcb_code.amount_cents.abs != tx.local_hcb_code.amount_cents.abs
-      )
+      ) && !tx.local_hcb_code.reimbursement_payout_holding.reversed? && tx.hcb_code != "HCB-712-732" # https://hackclub.slack.com/archives/C047Y01MHJQ/p1720156952566249
     }
 
+    render layout: false
+  end
+
+  def stripe_card_personalization_designs
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+    @pending = params[:pending] == "1"
+
+    @event_id = params[:event_id].presence
+
+    if @event_id
+      @event = Event.find(@event_id)
+
+      relation = @event.stripe_card_personalization_designs.includes(:event)
+    else
+      relation = StripeCard::PersonalizationDesign.includes(:event)
+    end
+
+    relation = relation.search(@q) if @q
+
+    relation = relation.under_review if @pending
+
+    @count = relation.count
+    relation = relation.page(@page).per(@per).order(
+      Arel.sql("stripe_status = 'review' DESC"),
+      "stripe_card_personalization_designs.created_at desc"
+    )
+
+    @common_designs = relation.common
+    @designs = relation
+
     render layout: "admin"
+  end
+
+  def stripe_card_personalization_design_new
+    render layout: "admin"
+  end
+
+  def stripe_card_personalization_design_create
+    return unless params[:logo].present?
+
+    ::StripeCardService::PersonalizationDesign::Create.new(
+      file: params[:logo],
+      color: params[:color].to_sym,
+      name: params[:name],
+      common: params[:common].to_i == 1,
+    ).run
+
+    redirect_to stripe_card_personalization_designs_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
   end
 
   def ach_start_approval
@@ -574,7 +626,7 @@ class AdminController < ApplicationController
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
 
-    disbursement.mark_approved!(current_user)
+    disbursement.approve_by_admin(current_user)
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
@@ -650,6 +702,32 @@ class AdminController < ApplicationController
 
   def increase_check_process
     @check = IncreaseCheck.find(params[:id])
+
+    render layout: "admin"
+  end
+
+  def paypal_transfers
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].present? ? params[:q] : nil
+    @event_id = params[:event_id].present? ? params[:event_id] : nil
+
+    @paypal_transfers = PaypalTransfer.all
+
+    @paypal_transfers = @paypal_transfers.search_recipient(@q) if @q
+
+    @paypal_transfers.where(event_id: @event_id) if @event_id
+
+    @paypal_transfers = @paypal_transfers.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'pending' DESC"),
+      "created_at desc"
+    )
+
+    render layout: "admin"
+  end
+
+  def paypal_transfer_process
+    @paypal_transfer = PaypalTransfer.find(params[:id])
 
     render layout: "admin"
   end
@@ -1020,6 +1098,33 @@ class AdminController < ApplicationController
     redirect_back fallback_location: ledger_admin_index_path
   end
 
+  def set_paypal_transfer
+    ActiveRecord::Base.transaction do
+      paypal_transfer = PaypalTransfer.find(params[:paypal_transfer_id])
+
+      canonical_transaction = CanonicalTransactionService::SetEvent.new(
+        canonical_transaction_id: params[:id],
+        event_id: paypal_transfer.event.id,
+        user: current_user
+      ).run
+
+      CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
+
+      CanonicalPendingTransactionService::Settle.new(
+        canonical_transaction:,
+        canonical_pending_transaction: paypal_transfer.canonical_pending_transaction
+      ).run!
+
+      canonical_transaction.update!(hcb_code: paypal_transfer.hcb_code, transaction_source_type: "PaypalTransfer", transaction_source_id: paypal_transfer.id)
+
+      paypal_transfer.mark_deposited!
+
+      redirect_to transaction_admin_path(canonical_transaction)
+    end
+  rescue => e
+    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
+  end
+
   def audit
     @topups = StripeService::Topup.list[:data]
   end
@@ -1148,14 +1253,6 @@ class AdminController < ApplicationController
     render layout: "admin"
   end
 
-  def check_deposits
-    @page = params[:page] || 1
-    @per = params[:per] || 20
-    @check_deposits = CheckDeposit.page(@page).per(@per).order(created_at: :desc)
-
-    render layout: "admin"
-  end
-
   def column_statements
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -1199,6 +1296,44 @@ class AdminController < ApplicationController
     render layout: "admin"
   end
 
+  def email
+    @message_id = params[:message_id]
+
+    respond_to do |format|
+      format.html { render inline: "<%== Ahoy::Message.find(@message_id).html_content %>" }
+    end
+  end
+
+  def emails
+    @page = params[:page] || 1
+    @per = params[:per] || 100
+    @q = params[:q].presence
+    @user_id = params[:user_id]
+
+    messages = Ahoy::Message.all
+    messages = messages.where(user: User.find(@user_id)) if @user_id.present?
+
+    messages = messages.search_subject(@q) if @q
+
+    @count = messages.count
+
+    @messages = messages.page(@page).per(@per).order(sent_at: :desc)
+
+    render layout: "admin"
+  end
+
+  def merchant_memo_check
+    @data = YellowPages::Merchant.merchants.map do |network_id, merchant|
+      {
+        yp_name: merchant[:name],
+        yp_network_id: network_id,
+        memos: RawStripeTransaction
+          .where("stripe_transaction->'merchant_data'->>'network_id' = '#{network_id}'")
+          .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
+      }
+    end
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)
@@ -1223,6 +1358,7 @@ class AdminController < ApplicationController
     @omitted = params[:omitted].present? ? params[:omitted] : "both" # both by default
     @funded = params[:funded].present? ? params[:funded] : "both" # both by default
     @hidden = params[:hidden].present? ? params[:hidden] : "both" # both by default
+    @active = params[:active].present? ? params[:active] : "both" # both by default
     @organized_by = params[:organized_by].presence || "anyone"
     @tagged_with = params[:tagged_with].presence || "anything"
     if params[:category] == "none"
@@ -1231,7 +1367,7 @@ class AdminController < ApplicationController
       @category = params[:category].present? ? params[:category] : "all"
     end
     @point_of_contact_id = params[:point_of_contact_id].present? ? params[:point_of_contact_id] : "all"
-    @fee = params[:fee].present? ? params[:fee] : "all"
+    @plan = params[:plan_type].present? ? params[:plan_type] : "all"
     if params[:country] == 9999.to_s
       @country = 9999
     else
@@ -1252,6 +1388,8 @@ class AdminController < ApplicationController
     relation = relation.not_omitted if @omitted == "not_omitted"
     relation = relation.hidden if @hidden == "hidden"
     relation = relation.not_hidden if @hidden == "not_hidden"
+    relation = relation.active if @active == "active"
+    relation = relation.inactive if @hidden == "inactive"
     relation = relation.funded if @funded == "funded"
     relation = relation.not_funded if @funded == "not_funded"
     relation = relation.organized_by_hack_clubbers if @organized_by == "hack_clubbers"
@@ -1262,7 +1400,10 @@ class AdminController < ApplicationController
     relation = relation.includes(:event_tags)
     relation = relation.where(event_tags: { id: @tagged_with }) unless @tagged_with == "anything"
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
-    relation = relation.where("sponsorship_fee = ?", @fee) if @fee != "all"
+    if @plan != "all"
+      relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
+                         .where("event_plans.aasm_state = 'active' AND event_plans.plan_type = ?", @plan))
+    end
     if @category == "none"
       relation = relation.where(category: nil)
     elsif @category != "all"
@@ -1353,14 +1494,20 @@ class AdminController < ApplicationController
         airtable_task_size :first_grant
       when :pending_wire_transfers_airtable
         airtable_task_size :wire_transfers
-      when :pending_paypal_transfers_airtable
-        airtable_task_size :paypal_transfers
       when :pending_disputed_transactions_airtable
         airtable_task_size :disputed_transactions
       when :pending_feedback_airtable
         airtable_task_size :feedback
       when :pending_google_workspace_waitlist_airtable
         airtable_task_size :google_workspace_waitlist
+      when :pending_boba_airtable
+        airtable_task_size :boba
+      when :pending_you_ship_we_ship_airtable
+        airtable_task_size :you_ship_we_ship
+      when :pending_power_hour_airtable
+        airtable_task_size :power_hour
+      when :pending_arcade_airtable
+        airtable_task_size :arcade
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions

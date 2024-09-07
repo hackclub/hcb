@@ -112,7 +112,7 @@ module Api
             AchTransfer.find_by_public_id!(id)
           end
       rescue ActiveRecord::RecordNotFound
-        error!({ message: "ACH Transfer not found." }, 404)
+        error!({ message: "ACH transfer not found." }, 404)
       end
 
       def invoices

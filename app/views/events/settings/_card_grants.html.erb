@@ -1,0 +1,41 @@
+<%= form_with(model: event, local: true, class: "mb3") do |form| %>
+  <%= form_errors event, "organization" %>
+  <% if event.card_grant_setting.present? %>
+    <div class="card">
+      <%= form.fields_for :card_grant_setting, event.card_grant_setting do |card_grant_setting_fields| %>
+        <%= card_grant_setting_fields.hidden_field :id, value: event.card_grant_setting.id %>
+        <div class="field">
+          <%= card_grant_setting_fields.label :merchant_lock, "Update Approved Merchants" %>
+          <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: event.card_grant_setting.merchant_lock.join(", "), disabled: !policy(event).update? %>
+          <p class="h5 muted mt0 mb1">
+            Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
+          </p>
+        </div>
+
+        <div class="field">
+          <%= card_grant_setting_fields.label :category_lock, "Update Category Lock" %>
+          <%= card_grant_setting_fields.text_field :category_lock, placeholder: "fast_food_restaurants", value: event.card_grant_setting.category_lock.join(", "), disabled: !policy(event).update? %>
+          <p class="h5 muted mt0 mb1">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to lock all card grants issued from this event to.</p>
+        </div>
+
+        <div class="field">
+          <%= card_grant_setting_fields.label :invite_message, "Update Invite Message" %>
+          <%= card_grant_setting_fields.text_area :invite_message, placeholder: "It's pizza time!", value: event.card_grant_setting.invite_message, disabled: !policy(event).update? %>
+          <p class="h5 muted mt0 mb1">
+            <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+              <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+            <% end %>
+          </p>
+        </div>
+
+        <div class="field">
+          <%= card_grant_setting_fields.label :expiration_preference, "Expires after..." %>
+          <%= card_grant_setting_fields.select :expiration_preference, CardGrantSetting.expiration_preferences.keys, selected: event.card_grant_setting.expiration_preference %>
+        </div>
+      <% end %>
+
+      <%= form.submit "Update", class: ("disabled" unless policy(event).update?) %>
+    </div>
+
+  <% end %>
+<% end %>

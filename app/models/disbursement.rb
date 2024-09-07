@@ -13,6 +13,7 @@
 #  name                     :string
 #  pending_at               :datetime
 #  rejected_at              :datetime
+#  scheduled_on             :date
 #  should_charge_fee        :boolean          default(FALSE)
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
@@ -75,10 +76,13 @@ class Disbursement < ApplicationRecord
   validates :amount, numericality: { greater_than: 0 }
   validate :events_are_different
   validate :events_are_not_demos, on: :create
+  validate :scheduled_on_must_be_in_the_future, on: :create
 
   scope :processing, -> { in_transit }
   scope :fulfilled, -> { deposited }
   scope :reviewing_or_processing, -> { where(aasm_state: [:reviewing, :pending, :in_transit]) }
+  scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
+  scope :not_scheduled, -> { where(scheduled_on: nil) }
 
   scope :not_card_grant_related, -> { left_joins(source_subledger: :card_grant, destination_subledger: :card_grant).where("card_grants.id IS NULL AND card_grants_subledgers.id IS NULL") }
 
@@ -112,6 +116,7 @@ class Disbursement < ApplicationRecord
   aasm timestamps: true, whiny_persistence: true do
     state :reviewing, initial: true # Being reviewed by an admin
     state :pending                  # Waiting to be processed by the TX engine
+    state :scheduled                # Has been scheduled and will be sent!
     state :in_transit               # Transfer started on remote bank
     state :deposited                # Transfer completed!
     state :rejected                 # Rejected by admin
@@ -122,11 +127,11 @@ class Disbursement < ApplicationRecord
         update(fulfilled_by:)
         canonical_pending_transactions.update_all(fronted: true)
       end
-      transitions from: :reviewing, to: :pending
+      transitions from: [:reviewing, :scheduled], to: :pending
     end
 
     event :mark_in_transit do
-      transitions from: :pending, to: :in_transit
+      transitions from: [:pending, :scheduled], to: :in_transit
     end
 
     event :mark_deposited do
@@ -144,9 +149,30 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        create_activity(key: "disbursement.rejected", owner: fulfilled_by)
       end
-      transitions from: [:reviewing, :pending], to: :rejected
+      transitions from: [:scheduled, :reviewing, :pending], to: :rejected
     end
+
+    event :mark_scheduled do
+      after do |fulfilled_by|
+        update(fulfilled_by:)
+      end
+      transitions from: [:pending, :reviewing, :in_review], to: :scheduled
+    end
+
+  end
+
+  def approve_by_admin(user)
+    if scheduled_on.present?
+      mark_scheduled!(user)
+    else
+      mark_approved!(user)
+    end
+  end
+
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
   end
 
   # Eagerly create HcbCode object
@@ -206,6 +232,8 @@ class Disbursement < ApplicationRecord
       end
     elsif rejected?
       :error
+    elsif scheduled?
+      :scheduled
     elsif errored?
       :error
     elsif reviewing?
@@ -246,6 +274,8 @@ class Disbursement < ApplicationRecord
       "canceled"
     elsif rejected?
       "rejected"
+    elsif scheduled?
+      "scheduled"
     elsif errored?
       "errored"
     elsif reviewing?
@@ -302,6 +332,12 @@ class Disbursement < ApplicationRecord
   def events_are_not_demos
     self.errors.add(:event, "cannot be a demo event") if event.demo_mode?
     self.errors.add(:source_event, "cannot be a demo event") if source_event.demo_mode?
+  end
+
+  def scheduled_on_must_be_in_the_future
+    if scheduled_on.present? && scheduled_on.before?(Time.now.end_of_day)
+      self.errors.add(:scheduled_on, "must be in the future")
+    end
   end
 
 end

@@ -36,6 +36,8 @@ module SearchService
             results.concat(events)
           when "transaction"
             results.concat(SearchService::Engine::Transactions.new(query, @user, @context).run)
+          when "reimbursement"
+            results.concat(SearchService::Engine::Reimbursements.new(query, @user, @context).run)
           end
         end
       end

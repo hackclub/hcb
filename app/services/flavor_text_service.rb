@@ -20,10 +20,12 @@ class FlavorTextService
     in_frc_team = @user&.events&.exists?(category: Event.categories["robotics team"])
 
     if in_frc_team
-      (flavor_texts + frc_flavor_texts).sample(random: @random)
+      flavor_text = (flavor_texts + frc_flavor_texts).sample(random: @random)
     else
-      flavor_texts.sample(random: @random)
+      flavor_text = flavor_texts.sample(random: @random)
     end
+    flavor_text = flavor_text.call if flavor_text.respond_to? :call
+    flavor_text
   end
 
   def development_flavor_texts
@@ -109,7 +111,7 @@ class FlavorTextService
 
   def frc_flavor_texts
     [
-      "Built by someone from team ##{[1759, 8724, 461, 6763, 1519].sample(random: @random)}!",
+      "Built by someone from team ##{[1759, 8724, 461, 6763, 1519, 6238].sample(random: @random)}!",
       "Safety FIRST!",
       "Safety glasses == invincible",
       "Stop! Where are your safety glasses?",
@@ -122,7 +124,12 @@ class FlavorTextService
       "Duct tape, ductape, duck tape",
       "🦆 📼",
       "Build season? HCB season!",
-      "Build season already?"
+      "Build season already?",
+      "Graciously accepting your team's donations",
+      "Your team may graciously decline, but your cards won't",
+      "<s>Not</s> held together with zip ties".html_safe,
+      "3, 2, 1, HCB!",
+      "If you have transparency mode on, is that money-pit-scouting?"
     ]
   end
 
@@ -404,8 +411,8 @@ class FlavorTextService
       "Hey there cutie!",
       "You're looking great today :)",
       "Great! You're here!",
-      "No time to explain: #{%w[quack bark honk].sample(random: @random)} as loud as you can!",
-      "Please see attached #{%w[gif avi mp3 wav zip].sample(random: @random)}",
+      "No time to explain: #{%w[quack bark honk meow].sample(random: @random)} as loud as you can!",
+      "Please see attached #{%w[gif avi mp3 wav zip .rar docx].sample(random: @random)}",
       "Cont. on page 42",
       "See fig. 42",
       "<span class='hide-print'>Try printing this, I dare you</span><span class='hide-non-print'>Gottem!</span>".html_safe,
@@ -495,6 +502,12 @@ class FlavorTextService
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
       "Wanna&nbsp;<a href='#{Rails.configuration.constants.hack_on_hcb_form_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
       "everyone's favorite money thing!",
+      -> { "#{UserSession.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
+      "We Column like we see 'em!",
+      "Raccoon-tested, dinosaur-approved.",
+      "original recipe!",
+      "now sugar-free!",
+      "low-sodium edition",
     ]
   end
 

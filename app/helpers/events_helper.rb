@@ -10,10 +10,10 @@ module EventsHelper
     ) do
       (content_tag :div, class: "line-height-0 relative" do
         if async_badge
-          inline_icon(icon, size: 32) +
+          inline_icon(icon, size: 24) +
           turbo_frame_tag(async_badge, src: async_badge, data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" })
         else
-          inline_icon(icon, size: 32)
+          inline_icon(icon, size: 24)
         end
       end) + content_tag(:span, name.html_safe, class: "line-height-3")
     end
@@ -84,6 +84,10 @@ module EventsHelper
     return value
   end
 
+  def render_audit_log_field(field)
+    field.delete_suffix("_cents").humanize
+  end
+
   def render_audit_log_value(field, value, color:)
     return tag.span "unset", class: "muted" if value.nil? || value.try(:empty?)
 
@@ -91,6 +95,6 @@ module EventsHelper
   end
 
   def show_org_switcher?
-    signed_in? && Flipper.enabled?(:org_switcher_2024_01_31, current_user) && current_user.events.not_hidden.count > 1
+    signed_in? && current_user.events.not_hidden.count > 1
   end
 end

@@ -234,6 +234,10 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def receipt_required?
+    false
+  end
+
   def display_name # in deprecated system this is the renamed transaction name
     smart_memo
   end
@@ -298,6 +302,10 @@ class CanonicalTransaction < ApplicationRecord
     return linked_object if linked_object.is_a?(IncreaseCheck)
 
     nil
+  end
+
+  def paypal_transfer
+    return linked_object if linked_object.is_a?(PaypalTransfer)
   end
 
   def check_deposit

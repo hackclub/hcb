@@ -1,49 +1,57 @@
 .expense {
   border-width: 1.5px;
+
   &.translucent {
     opacity: 0.2;
   }
+
   .click_to_mention {
     padding: 2px 4px;
     border-radius: 4px;
     border: 1px solid map-get($palette, smoke);
     color: $black;
   }
+
   .receipts {
     display: grid;
     gap: 16px;
     max-width: 420px;
     overflow-x: auto;
+
     .add {
-      margin-top: 0px!important;
+      margin-top: 0px !important;
     }
   }
 }
 
-[data-expense-form-enabled-value=true] .edit-or-save {
+[data-expense-form-enabled-value='true'] .edit-or-save {
   color: #33d6a6;
   background-color: #33d6a620;
 }
-[data-expense-form-locked-value=true] .edit-or-save {
+
+[data-expense-form-locked-value='true'] .edit-or-save {
   color: #ff8c37;
   background-color: #ff8c3720;
-  cursor: no-drop!important;
+  cursor: no-drop !important;
 }
 
-[data-expense-form-locked-value=true] .edit-or-save:hover {
+[data-expense-form-locked-value='true'] .edit-or-save:hover {
   transform: none;
-  box-shadow: none!important;
+  box-shadow: none !important;
 }
 
 .lightbox {
-  background: rgba(0, 0, 0, 0.7);
-  position: fixed; 
-  height: 100vh; 
-  width: 100vw; 
-  top: 0; 
-  left: 0; 
-  z-index: 2000; 
+  position: fixed;
+  height: 100vh;
+  width: 100vw;
+  top: 0;
+  left: 0;
+  z-index: 2000;
   display: none;
   cursor: pointer;
-}
+  background: rgba(0, 0, 0, 0.3);
 
+  [data-dark='true'] & {
+    background: rgba(0, 0, 0, 0.7);
+  }
+}

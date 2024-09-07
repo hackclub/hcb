@@ -20,7 +20,6 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
-#  end                                          :datetime
 #  expected_budget                              :integer
 #  has_fiscal_sponsorship_document              :boolean
 #  hidden_at                                    :datetime
@@ -45,7 +44,6 @@
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  slug                                         :text
 #  sponsorship_fee                              :decimal(, )
-#  start                                        :datetime
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
 #  transaction_engine_v2_at                     :datetime
 #  webhook_url                                  :string
@@ -82,12 +80,15 @@ class Event < ApplicationRecord
   include CountryEnumable
   has_country_enum
 
+  include Commentable
+
   has_paper_trail
   acts_as_paranoid
   validates_as_paranoid
 
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   validates :donation_thank_you_message, length: { maximum: 500 }
+  validates :short_name, length: { maximum: 16 }, allow_blank: true
 
   include AASM
   include PgSearch::Model
@@ -96,6 +97,15 @@ class Event < ApplicationRecord
   monetize :total_fees_v2_cents
 
   default_scope { order(id: :asc) }
+
+  scope :active, -> {
+    includes(canonical_event_mappings: :canonical_transaction)
+      .where("canonical_transactions.created_at > ?", 1.year.ago)
+      .references(:canonical_transaction)
+  }
+
+  scope :inactive, -> { where.not(id: Event.active.pluck(:id)) }
+
   scope :pending, -> { where(aasm_state: :pending) }
   scope :transparent, -> { where(is_public: true) }
   scope :not_transparent, -> { where(is_public: false) }
@@ -166,6 +176,8 @@ class Event < ApplicationRecord
     where("(last_fee_processed_at is null or last_fee_processed_at <= ?) and id in (?)", MIN_WAITING_TIME_BETWEEN_FEES.ago, self.event_ids_with_pending_fees.to_a.map { |a| a["event_id"] })
   end
 
+  self.ignored_columns = %w[start end sponsorship_fee]
+
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
@@ -232,6 +244,13 @@ class Event < ApplicationRecord
 
   belongs_to :point_of_contact, class_name: "User", optional: true
 
+  # we keep a papertrail of historic plans
+  has_many :plans, class_name: "Event::Plan", inverse_of: :event
+  has_one :plan, -> { where(aasm_state: :active) }, class_name: "Event::Plan", inverse_of: :event, required: true
+
+  has_one :config, class_name: "Event::Configuration"
+  accepts_nested_attributes_for :config
+
   # Used for tracking slug history
   has_many :slugs, -> { order(id: :desc) }, class_name: "FriendlyId::Slug", as: :sluggable, dependent: :destroy
 
@@ -247,6 +266,7 @@ class Event < ApplicationRecord
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
+  has_many :stripe_card_personalization_designs, class_name: "StripeCard::PersonalizationDesign", inverse_of: :event
 
   has_many :emburse_cards
   has_many :emburse_card_requests
@@ -265,6 +285,8 @@ class Event < ApplicationRecord
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
   has_many :increase_checks
+
+  has_many :paypal_transfers
 
   has_many :sponsors
   has_many :invoices, through: :sponsors
@@ -319,8 +341,11 @@ class Event < ApplicationRecord
   has_one_attached :donation_header_image
   has_one_attached :background_image
   has_one_attached :logo
+  has_one_attached :stripe_card_logo
 
   include HasMetrics
+
+  include HasTasks
 
   validate :point_of_contact_is_admin
 
@@ -329,15 +354,15 @@ class Event < ApplicationRecord
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
 
-  validates :name, :sponsorship_fee, :organization_identifier, presence: true
+  validates :name, :organization_identifier, presence: true
   validates :slug, presence: true, format: { without: /\s/ }
+  validates :slug, format: { without: /\A\d+\z/ }
   validates_uniqueness_of_without_deleted :slug
 
   after_save :update_slug_history
 
   validates :website, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { website.present? }
 
-  validates :sponsorship_fee, numericality: { in: 0..0.5, message: "must be between 0 and 0.5" }
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
   before_create { self.increase_account_id ||= IncreaseService::AccountIds::FS_MAIN }
@@ -346,20 +371,19 @@ class Event < ApplicationRecord
     self.activated_at = Time.now
   end
 
-  before_validation(if: :outernet_guild?, on: :create) { self.donation_page_enabled = false }
-  validate do
-    if outernet_guild? && donation_page_enabled?
-      errors.add(:donation_page_enabled, "donation page can't be enabled for Outernet guilds")
-    end
+  before_validation do
+    build_plan(plan_type: Event::Plan::Standard) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
+  after_commit :generate_stripe_card_designs, if: -> { stripe_card_logo&.blob&.saved_changes? && stripe_card_logo.attached? && !Rails.env.test? }
+
   comma do
     id
     name
-    sponsorship_fee
+    revenue_fee
     slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
     is_public "transparent"
@@ -372,6 +396,7 @@ class Event < ApplicationRecord
     "WHEN id = 689 THEN '3'     "\
     "WHEN id = 636 THEN '4'     "\
     "WHEN id = 506 THEN '5'     "\
+    "WHEN id = 4318 THEN '6'    "\
     "ELSE 'z' || name END ASC   "
   )
 
@@ -397,6 +422,9 @@ class Event < ApplicationRecord
     priority: 2,
   }
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.id }, only: [:create]
+
   def admin_formatted_name
     "#{name} (#{id})"
   end
@@ -418,7 +446,7 @@ class Event < ApplicationRecord
 
   # displayed on /negative_events
   def self.negatives
-    select { |event| event.balance < 0 || event.emburse_balance < 0 || event.fee_balance < 0 }
+    select { |event| event.balance_v2_cents < 0 }
   end
 
   def emburse_department_path
@@ -553,6 +581,7 @@ class Event < ApplicationRecord
   alias balance_available balance_available_v2_cents
   alias available_balance balance_available
 
+
   # `fee_balance_v2_cents`, but it includes fees on fronted (unsettled) transactions to prevent overspending before fees are charged
   def fronted_fee_balance_v2_cents
     feed_fronted_pts = canonical_pending_transactions
@@ -563,7 +592,7 @@ class Event < ApplicationRecord
 
     feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    fee_balance_v2_cents + (feed_fronted_balance * sponsorship_fee).ceil
+    fee_balance_v2_cents + (feed_fronted_balance * revenue_fee).ceil
   end
 
   # This intentionally does not include fees on fronted transactions to make sure they aren't actually charged
@@ -576,13 +605,15 @@ class Event < ApplicationRecord
   def plan_name
     if demo_mode?
       "playground mode"
+    elsif plan.present?
+      plan.label
     elsif unapproved?
       "pending approval"
     elsif hack_club_hq?
-      "hack club affiliated project"
+      "Hack Club affiliated project"
     elsif salary?
       "salary account"
-    elsif sponsorship_fee == 0
+    elsif revenue_fee == 0
       "full fiscal sponsorship (fee waived)"
     else
       "full fiscal sponsorship"
@@ -674,8 +705,58 @@ class Event < ApplicationRecord
     !engaged?
   end
 
+  def sponsorship_fee
+    Airbrake.notify("Deprecated Event#sponsorship_fee used.")
+    revenue_fee
+  end
+
+  def plan
+    super&.becomes(super.plan_type&.constantize)
+  end
+
+  def revenue_fee
+    plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
+  end
+
+  def generate_stripe_card_designs
+    raise ArgumentError.new("This method requires a stripe_card_logo to be attached.") unless stripe_card_logo.attached?
+
+    ActiveRecord::Base.transaction do
+      stripe_card_personalization_designs.update(stale: true)
+      file = attachment_changes["stripe_card_logo"]&.attachable || StringIO.new(stripe_card_logo.blob.open { |f| f.read })
+      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :black, event: self).run
+      file.rewind
+      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :white, event: self).run
+    end
+  rescue Stripe::InvalidRequestError => e
+    stripe_card_logo.delete
+    raise Errors::InvalidStripeCardLogoError, e.message
+  end
+
   def airtable_record
     ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
+  end
+
+  def default_stripe_card_personalization_design
+    stripe_card_personalization_designs.where("stripe_name like ?", "#{name} Black Card%").order(created_at: :desc).first
+  end
+
+  def config
+    super || create_config
+  end
+
+  def donation_page_available?
+    donation_page_enabled && plan.donations_enabled?
+  end
+
+  def public_reimbursement_page_available?
+    public_reimbursement_page_enabled && plan.reimbursements_enabled?
+  end
+
+  def short_name(length: 16)
+    return name if length >= name.length
+
+    self[:short_name] || name[0...length]
   end
 
   private

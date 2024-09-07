@@ -13,12 +13,14 @@
   }
 
   &.b--warning {
-    box-shadow: 0 0 2px 0 rgba(map-get($palette, warning), 0.0625),
+    box-shadow:
+      0 0 2px 0 rgba(map-get($palette, warning), 0.0625),
       0 4px 8px 0 rgba(map-get($palette, warning), 0.125);
   }
 
   &.b--info {
-    box-shadow: 0 0 2px 0 rgba(map-get($palette, info), 0.0625),
+    box-shadow:
+      0 0 2px 0 rgba(map-get($palette, info), 0.0625),
       0 4px 8px 0 rgba(map-get($palette, info), 0.125);
   }
 
@@ -36,10 +38,18 @@
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.95) 90%), var(--bg-image);
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0.75) 0%,
+        rgba(255, 255, 255, 0.95) 90%
+      ),
+      var(--bg-image);
 
     html[data-dark='true'] & {
-      background-image: linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%), var(--bg-image);
+      background-image: linear-gradient(
+          rgba(37, 36, 41, 0.5) 0%,
+          rgba(37, 36, 41, 0.85) 75%
+        ),
+        var(--bg-image);
     }
   }
 }
@@ -85,7 +95,8 @@ a.card {
   max-width: 32rem;
   border: 1px solid map-get($palette, error);
   margin-bottom: 1.5rem;
-  box-shadow: 0 0 2px 0 rgba(map-get($palette, error), 0.025),
+  box-shadow:
+    0 0 2px 0 rgba(map-get($palette, error), 0.025),
     0 4px 8px 0 rgba(map-get($palette, error), 0.125);
 
   h2 {
@@ -154,4 +165,17 @@ a.card {
 
 .card--sunset {
   background-image: url('https://cloud-awvmmj0xe.vercel.app/sunset_card.png');
+}
+
+.card--breakdown {
+  @extend .card;
+  @extend .border;
+  padding: 20px;
+  padding-top: 0px;
+  padding-bottom: 24px;
+  border: 1px solid map-get($palette, smoke);
+}
+
+#card-pin {
+  width: 64px;
 }

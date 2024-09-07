@@ -36,7 +36,12 @@
     <% @checks.each do |check| %>
       <tr class="<%= "admin-bg-pending" if check.in_transit? %> <%= "admin-bg-transit" if check.in_transit_and_processed? %>">
         <td><%= check.id %></td>
-        <td><%= check.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= check.created_at.strftime("%Y-%m-%d") %>
+          <% if check.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td><%= check.event.name.upcase %></td>
         <td><%= check.recipient_name %></td>
         <td><%= check.check_number || "-----" %></td>

@@ -112,12 +112,12 @@
         </span>
       </p>
 
-      <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+      <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
     </section>
   </turbo-frame>
 
   <% if @hcb_code.ach_transfer.may_mark_rejected? %>
-    <div class="card__banner card__darker border-top overflow-hidden">
+    <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
       <% cancel_button = button_to "Cancel transfer", cancel_ach_transfer_path(@hcb_code.ach_transfer), class: "btn bg-error #{"disabled" unless policy(@hcb_code.ach_transfer).cancel?}" %>
       <% if policy(@hcb_code.ach_transfer).cancel? %>
         <%= cancel_button %>
@@ -125,6 +125,10 @@
         <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
           <%= cancel_button %>
         </div>
+      <% end %>
+
+      <% admin_tool do %>
+        <%= button_to "Process", ach_start_approval_admin_path(@hcb_code.ach_transfer), class: "btn", method: :get %>
       <% end %>
     </div>
   <% end %>

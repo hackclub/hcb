@@ -1,6 +1,5 @@
-document.addEventListener("turbo:load", () => {
-  const expander = document.querySelector('text-expander')
-  if (expander) {
+function loadTextExpander() {
+  document.querySelectorAll('text-expander').forEach((expander) => {
     expander.addEventListener('text-expander-change', function(event) {
       const {key, provide, text} = event.detail
       if (key !== '@') return
@@ -30,5 +29,7 @@ document.addEventListener("turbo:load", () => {
       const popover = expander.querySelector('.mention-suggestions[popover]')
       if (popover) popover.showPopover()
     })
-  }
-})
+  });
+}
+
+document.addEventListener("turbo:load", loadTextExpander)

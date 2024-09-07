@@ -1,4 +1,4 @@
-<% title "Account Settings" %>
+<% title "Account settings" %>
 <% page_md %>
 <%= render "users/nav", selected: :settings %>
 <h1>
@@ -7,48 +7,54 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_nav", active: "previews" %>
   <section>
-    <h2 id="feature-previews">Feature previews</h2>
 
     <%= render partial: "features/preview", locals: {
-          id: "command_bar",
-          feature_flag: :command_bar_2024_02_05,
-          name: "Command Bar (⌘+K)",
-          description: "Looking to whizz around HCB's interface? Enable the command bar and use it to switch between different organizations and pages. It also features a search tool that allows you to search transactions, cards and events."
+          id: "ai_memos",
+          classes: ["feature-ai-memos"],
+          feature_flag: :ai_memos_2024_06_20,
+          name: "AI Receipt Analysis",
+          description: "HCB can now analyze uploaded receipts to provide glancable details and transaction memo suggestions using OpenAI. After opting-in, you'll be able to see information such as the amount, date, and merchant in the receipt details pane, and HCB will suggest memos for transactions with receipts.",
+          footer: "When paired with <a href='#receipt-bin'>Receipt Bin</a>, HCB can also suggest which transaction a receipt belongs to."
         } %>
 
     <%= render partial: "features/preview", locals: {
-          id: "rename_on_homepage",
-          feature_flag: :rename_on_homepage_2023_12_06,
-          name: "Rename Transactions on the Ledger",
-          description: "This feature flag enables you to directly rename transactions on your organization's home page. Try it out by clicking a transaction, typing out a new memo, and pressing enter!"
+          id: "two-factor-authentication",
+          feature_flag: :two_factor_authentication_2024_05_22,
+          name: "Two factor authentication",
+          classes: ["feature-two-factor-authentication"],
+          description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
+          footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
         } %>
+
+    <%= render partial: "features/preview", locals: {
+          id: "totp",
+          feature_flag: :totp_2024_06_13,
+          name: "Time-based one time passwords",
+          classes: ["feature-totp"],
+          description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
+        } if @user.using_2fa? %>
 
     <%= render partial: "features/preview", locals: {
           id: "receipt-bin",
           feature_flag: :receipt_bin_2023_04_07,
           name: "Receipt Bin",
-          description: "Receipts have been a common pain point for HCB's users. Keeping track of receipts for every transaction can be tiring, and it's easy to forget to upload them. We're experimenting with a new way to manage receipts: Receipt Bin. After opting-in, you'll be able to upload receipts to the Receipt Bin, and HCB will attempt to automatically match them to transactions. You can also manually link receipts to transactions or save them for later.",
-          footer: "We also now support uploading receipts to your Receipt Bin via emailing and texting!"
+          description: "Keeping track of receipts for every transaction can be tiring, and it's easy to forget to upload them. We're introducing a new way to manage receipts: Receipt Bin. After uploading receipts to the Receipt Bin, you can link receipts to transactions or save them for later.",
+          footer: "We also support uploading receipts to your Receipt Bin via emailing and texting!"
         } %>
 
     <%= render partial: "features/preview", locals: {
           id: "transaction-popovers",
           feature_flag: :hcb_code_popovers_2023_06_16,
-          name: "Transaction Popovers",
-          description: "This feature flag enables a popover allowing quick and easy access to transaction details from the organization's ledger."
+          name: "Popovers",
+          description: "This feature flag enables a popover allowing quick and easy access to transaction details, card information, and more!"
         } %>
 
     <%= render partial: "features/preview", locals: {
-          id: "sms-receipt-notification",
-          classes: ["feature-sms-receipt-notification"],
-          feature_flag: :sms_receipt_notifications_2022_11_23,
-          name: "SMS Charge Notifications",
-          description: "We're experimenting with new ways to alert people that they need to
-        upload a receipt. After opting-in, you'll get a text whenever your
-        card is charged asking for a receipt. You can change your phone
-        number in your user settings.",
-          footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
-        } %>
+          id: "minimalistic-ledger",
+          feature_flag: :transactions_background_2024_06_05,
+          name: "Minimalistic Ledger",
+          description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions."
+        } if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
 
         <details>
           <summary class="mb2">Past feature previews</summary>
@@ -117,6 +123,39 @@
           accurate suggestions!",
                 footer: "This feature is on a per-user basis. Co-organizers will also have to
             opt-in for access."
+              } %>
+
+          <%= render partial: "features/preview", locals: {
+                id: "recently_on_hcb",
+                feature_flag: :recently_on_hcb_2024_05_23,
+                name: "Recently on HCB...",
+                description: "This feature preview adds a panel to your sidebar with things that have happened recently on your organizations, for example, when an invoice is paid or a new team member is invited."
+              } %>
+
+          <%= render partial: "features/preview", locals: {
+                id: "command_bar",
+                feature_flag: :command_bar_2024_02_05,
+                name: "Command Bar (⌘+K)",
+                description: "Looking to whizz around HCB's interface? Enable the command bar and use it to switch between different organizations and pages. It also features a search tool that allows you to search transactions, cards and events."
+              } %>
+
+          <%= render partial: "features/preview", locals: {
+                id: "rename_on_homepage",
+                feature_flag: :rename_on_homepage_2023_12_06,
+                name: "Rename Transactions on the Ledger",
+                description: "This feature flag enables you to directly rename transactions on your organization's home page. Try it out by clicking a transaction, typing out a new memo, and pressing enter!"
+              } %>
+
+          <%= render partial: "features/preview", locals: {
+                id: "sms-receipt-notification",
+                classes: ["feature-sms-receipt-notification"],
+                feature_flag: :sms_receipt_notifications_2022_11_23,
+                name: "SMS Charge Notifications",
+                description: "We're experimenting with new ways to alert people that they need to
+            upload a receipt. After opting-in, you'll get a text whenever your
+            card is charged asking for a receipt. You can change your phone
+            number in your user settings.",
+                footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
               } %>
         </details>
   </section>

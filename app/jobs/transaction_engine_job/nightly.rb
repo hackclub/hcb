@@ -6,7 +6,7 @@ module TransactionEngineJob
     include ::TransactionEngine::Shared
 
     def perform
-      ::TransactionEngine::Nightly.new(start_date: last_1_month).run
+      ::TransactionEngine::Nightly.new.run
     end
 
   end

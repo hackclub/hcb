@@ -9,6 +9,7 @@
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
   line-height: 1.125;
   margin-left: 1rem;
   padding: 0.25rem 0.625rem;
@@ -29,6 +30,10 @@
     background-color: rgba(map-get($palette, purple), 0.125);
     color: map-get($palette, purple);
   }
+  &.ai {
+    background-color: rgba(map-get($palette, ai), 0.125);
+    color: map-get($palette, ai);
+  }
   &.error {
     background-color: rgba(map-get($palette, error), 0.125);
     color: map-get($palette, error);
@@ -43,7 +48,7 @@
   }
   &.bg-muted {
     background-color: rgba(map-get($palette, muted), 0.125);
-    color: map-get($palette, muted);
+    color: map-get($palette, slate);
   }
   &.muted {
     background-color: map-get($palette, muted);
@@ -61,6 +66,14 @@
     border: 1px solid;
     border-color: rgba(0, 0, 0, 0.125);
     border-width: 0.5px;
+    max-width: 20rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .heading > & {
+    margin-left: 0;
   }
 }
 
@@ -110,7 +123,7 @@
 
   &.no_hover:hover,
   &.no_hover:focus {
-    box-shadow: none!important;
+    box-shadow: none !important;
   }
 
   &.success {
@@ -131,6 +144,9 @@
   }
   &.purple {
     background-color: rgba(map-get($palette, purple), 0.125);
+  }
+  &.ai {
+    background-color: rgba(map-get($palette, ai), 0.125);
   }
   &.muted {
     background-color: rgba(map-get($palette, muted), 0.125);
@@ -157,7 +173,8 @@ summary.pop::-webkit-details-marker {
 // User mentions, use the user_mention helper
 .mention {
   color: map-get($palette, muted);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-weight: 500;
   margin-right: 0.25rem;
   text-decoration: none;
@@ -180,7 +197,7 @@ summary.pop::-webkit-details-marker {
     margin-right: 0.5rem;
 
     + svg {
-      margin: -0.25rem -0.2rem 0 -0.625rem;
+      margin: 0 -0.2rem 0 -0.625rem;
     }
   }
 

@@ -1,15 +1,17 @@
 # frozen_string_literal: true
 
 class StripeCardholdersController < ApplicationController
+  include SetEvent
+  before_action :set_event, only: [:new]
+
   def new
-    @event = Event.friendly.find params[:event_id]
     @stripe_cardholder = StripeCardholder.new
 
     authorize @stripe_cardholder
   end
 
   def create
-    @event = Event.friendly.find params[:stripe_cardholder][:event_id]
+    @event = Event.find params[:stripe_cardholder][:event_id]
     @stripe_cardholder = StripeCardholder.new(stripe_cardholder_params)
 
     authorize @stripe_cardholder

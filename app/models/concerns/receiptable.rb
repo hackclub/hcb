@@ -4,7 +4,9 @@ module Receiptable
   extend ActiveSupport::Concern
 
   included do
-    has_many :receipts, as: :receiptable
+    include IsTaskable
+
+    has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion
 
     scope :without_receipt, -> { includes(:receipts).where(receipts: { receiptable_id: nil }) }
     scope :missing_receipt, -> { without_receipt.where(marked_no_or_lost_receipt_at: nil) }
@@ -37,6 +39,15 @@ module Receiptable
       puts "Add a datetime 'mark_no_or_lost_receipt_at' column to #{self.class.name} for this to work"
 
       raise e
+    end
+
+    after_create_commit do
+      safely do
+        assignee = try(:author) || try(:user) || try(:event)
+        if missing_receipt? && assignee
+          Task::Receiptable::Upload.create!(taskable: self, assignee:)
+        end
+      end
     end
   end
 end

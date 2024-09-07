@@ -40,7 +40,7 @@ class CanonicalTransactionsController < ApplicationController
 
     fee = ct.fee
     fee.amount_cents_as_decimal = 0
-    fee.reason = "REVENUE WAIVED"
+    fee.reason = :revenue_waived
     fee.save!
 
     redirect_to transaction_url(params[:id])
@@ -54,9 +54,9 @@ class CanonicalTransactionsController < ApplicationController
     raise ArgumentError unless ct.amount_cents > 0
 
     fee = ct.fee
-    fee.amount_cents_as_decimal = BigDecimal(ct.amount_cents.to_s) * BigDecimal(ct.event.sponsorship_fee.to_s)
+    fee.amount_cents_as_decimal = BigDecimal(ct.amount_cents.to_s) * BigDecimal(ct.event.revenue_fee.to_s)
 
-    fee.reason = "REVENUE"
+    fee.reason = :revenue
     fee.save!
 
     redirect_to transaction_url(params[:id])
@@ -68,7 +68,7 @@ class CanonicalTransactionsController < ApplicationController
     ct = CanonicalTransaction.find(params[:id])
 
     fee = ct.fee
-    fee.reason = "HACK CLUB FEE"
+    fee.reason = :hack_club_fee
     fee.save!
 
     redirect_to transaction_url(params[:id])

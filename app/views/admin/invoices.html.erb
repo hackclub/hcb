@@ -56,7 +56,12 @@
     <% @invoices.each do |invoice| %>
       <tr class="<%= "admin-bg-pending" if invoice.open? %>">
         <td><%= invoice.id %></td>
-        <td><%= invoice.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= invoice.created_at.strftime("%Y-%m-%d") %>
+          <% if invoice.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td>
           <%= link_to invoice_path(invoice) do %>
             <%= invoice.event.name.upcase %>: <%= invoice.sponsor.name %>

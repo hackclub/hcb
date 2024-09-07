@@ -62,8 +62,8 @@ class Grant < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "OUTGOING GRANT", date: created_at)
   end
 
-  enum :receipt_method, [:disbursement, :ach_transfer, :check, :manual], prefix: "receipt_method"
-  enum :recipient_org_type, ["fiscally_sponsored", "existing_hcb_account", "501c3", "international"], prefix: "recipient_org"
+  enum :receipt_method, { disbursement: 0, ach_transfer: 1, check: 2, manual: 3 }, prefix: "receipt_method"
+  enum :recipient_org_type, { "fiscally_sponsored" => 0, "existing_hcb_account" => 1, "501c3" => 2, "international" => 3 }, prefix: "recipient_org"
 
   validates_presence_of :email, on: :create, unless: :recipient
   validates_presence_of :recipient_organization, :recipient_name, :reason, :amount_cents, :ends_at

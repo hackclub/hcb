@@ -7,7 +7,7 @@
   <span class="flex items-center justify-between flex-wrap">
     <span class="bold flex items-center">
       <% if session.device_info.present? %>
-        <span><%= session.os_info %> <span class="regular italic muted"><%= local_time_ago session.created_at %></span></span>
+        <span><%= session.os_info %></span>
       <% else %>
         <span>No device is available for this session.</span>
       <% end %>
@@ -16,15 +16,22 @@
       <%= link_to unimpersonate_user_path(@user, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Exit this impersonated session" do %>
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
-    <% else %>
+    <% elsif !session.deleted? %>
       <%= link_to logout_session_users_path(user: @user, id: session.id), data: { turbo_method: "delete", turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this session" do %>
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
     <% end %>
   </span>
+  <% if session.latitude %>
+    <img class="w-full rounded mb-3 aspect-square" src="https://maps.hackclub.com/api/shipping?latitude=<%= session.latitude %>&longitude=<%= session.longitude %>">
+  <% else %>
+    <div class="w-full rounded mb-3 aspect-square bg-smoke dark:bg-black opacity-50 flex items-center justify-center text-xl">
+      No location available
+    </div>
+  <% end %>
   <span class="flex items-center">
     <% if current_session.id == session.id %>
-      <span class="badge bg-success medium ml0 mr1" style="margin-left: 0;">Current&nbsp;Session</span>
+      <span class="badge bg-success medium ml-0 mr1">Current&nbsp;Session</span>
     <% end %>
     <% if session.ip.present? %>
       <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= session.timezone %>"><%= session.ip %></code>
@@ -38,4 +45,12 @@
       <%= inline_icon "compass", size: 20 %>&nbsp;<%= session.device_info %>
     <% end %>
   </span>
+
+  <p class="regular italic muted text-sm m-0 mt-1">
+    <% if session.deleted? %>
+      Expired <%= local_time_ago session.deleted_at %>
+    <% else %>
+      Logged in <%= local_time_ago session.created_at %>
+    <% end %>
+  </p>
 </div>

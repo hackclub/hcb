@@ -1,12 +1,14 @@
-<tr class="transaction--negative muted">
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Fiscal sponsorship">
-    <%= inline_icon "minus-fill" %>
+<tr class="transaction <%= "transaction--negative" unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user) %> muted">
+  <td class="transaction__icon transaction__fee_icon tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
+    <%= inline_icon "bank-icon" %>
   </td>
-  <td><%= Date.today.strftime("%Y-%m-%d") %></td>
-  <td class="transaction__memo">PENDING: FISCAL SPONSORSHIP</td>
-  <td class="italic">-$<%= render_money_amount @event.fronted_fee_balance_v2_cents %></td>
-  <td></td>
+  <td><%= format_date Date.today %></td>
+  <td class="transaction__memo"><span class="badge bg-transparent border border-dashed border-muted m0 mr1 bg-muted">Pending</span>Fiscal sponsorship</td>
+  <td class="nowrap text-right">
+    <%= render_transaction_amount(-1 * @event.fronted_fee_balance_v2_cents) %>
+  </td>
   <% if @show_running_balance %>
     <td></td>
   <% end %>
+  <td><%# user avatar %></td>
 </tr>

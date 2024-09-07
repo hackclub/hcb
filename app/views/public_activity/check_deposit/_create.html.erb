@@ -1,5 +1,12 @@
-<% unless activity.trackable.rejected? || activity.trackable.returned? %>
-  <%= render layout: "/public_activity/common", locals: { activity: } do %>
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<% if activity.trackable.rejected? || activity.trackable.returned? %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    failed to deposit a <%= render_money activity.trackable.amount_cents %> check
+    for <%= link_to activity.trackable.event.name, activity.trackable.event %>
+  <% end %>
+<% else %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
     deposited a <%= render_money activity.trackable.amount_cents %> check
     for <%= link_to activity.trackable.event.name, activity.trackable.event %>
   <% end %>

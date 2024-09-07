@@ -1,10 +1,10 @@
-ARG VARIANT="3.1-bookworm"
+ARG VARIANT="3.3-bookworm"
 FROM mcr.microsoft.com/devcontainers/ruby:${VARIANT}
 # Install Rails
 RUN su vscode -c "gem install rails webdrivers"
 RUN su vscode -c "/usr/local/rvm/bin/rvm fix-permissions"
 
-ARG NODE_VERSION="18"
+ARG NODE_VERSION="22"
 RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Default value to allow debug server to serve content over GitHub Codespace's port forwarding service

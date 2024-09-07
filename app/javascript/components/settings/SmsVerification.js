@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
 
 function renderPhoneNumber(phoneNumber) {
-  if (phoneNumber.substring(0, 2) != '+1' && phoneNumber.length != 12)
+  if (phoneNumber.substring(0, 2) != '+1' || phoneNumber.length != 12)
     return phoneNumber
   let areaCode = phoneNumber.substring(2, 5)
   let middleThree = phoneNumber.substring(5, 8)

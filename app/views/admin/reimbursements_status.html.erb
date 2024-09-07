@@ -1,0 +1,106 @@
+<%= turbo_frame_tag :reimbursement_status do %>
+  <h3 style="display: flex;">
+    <span style="flex-grow: 1;">
+      <%= link_to "Clearinghouse", Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING) %> Status
+    </span>
+    <%= render_money Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance %>
+  </h3>
+
+  <h4 class="mb2">🚨 Incomplete Payout Holdings</h4>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="w-32">Date</th>
+        <th class="w-32">Amount</th>
+        <th>Memo</th>
+        <th>Report</th>
+        <th>Source Event</th>
+        <th>Payout Transfer</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @incomplete_payout_holdings.each do |tx| %>
+        <% payout_holding = tx.local_hcb_code.reimbursement_payout_holding %>
+        <% report = payout_holding.report %>
+        <tr>
+          <td><%= format_date tx.date %></td>
+          <td class="nowrap"><%= render_money tx.amount %></td>
+          <td><%= link_to tx.local_hcb_code.memo, hcb_code_path(tx.local_hcb_code) %></td>
+          <td><%= link_to report.name, report %></td>
+          <td><%= link_to report.event.name, report.event %></td>
+          <td>
+            <% if payout_holding.payout_transfer %>
+              <%= link_to render_money(payout_holding.payout_transfer.local_hcb_code.amount), payout_holding.payout_transfer.local_hcb_code %>
+              <% if @clearinghouse_transactions.select { |ctx| ctx.hcb_code == tx.local_hcb_code.reimbursement_payout_holding.payout_transfer.hcb_code}.none? %>
+                (Not on ledger)
+              <% elsif tx.local_hcb_code.reimbursement_payout_holding.payout_transfer.local_hcb_code.amount_cents.abs != tx.local_hcb_code.amount_cents.abs %>
+                (Incorrect amount)
+              <% end %>
+            <% else %>
+              None
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      <tr>
+        <td>Total</td>
+        <td><%= render_money @incomplete_payout_holdings.sum(&:amount_cents) %></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 class="mb2">⚠️ Unidentified Transactions</h4>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="w-32">Date</th>
+        <th class="w-32">Amount</th>
+        <th>Memo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @unidentified_transactions.each do |tx| %>
+        <tr>
+          <td><%= format_date tx.date %></td>
+          <td class="nowrap"><%= render_money tx.amount %></td>
+          <td><%= link_to tx.local_hcb_code.memo, hcb_code_path(tx.local_hcb_code) %></td>
+        </tr>
+      <% end %>
+      <tr>
+        <td>Total</td>
+        <td><%= render_money @unidentified_transactions.sum(&:amount_cents) %></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 class="mb2">⏳ Pending Transactions</h4>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="w-32">Date</th>
+        <th class="w-32">Amount</th>
+        <th>Memo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @pending_transactions.each do |tx| %>
+        <tr>
+          <td><%= format_date tx.date %></td>
+          <td class="nowrap"><%= render_money tx.amount %></td>
+          <td><%= link_to tx.local_hcb_code.memo, hcb_code_path(tx.local_hcb_code) %></td>
+        </tr>
+      <% end %>
+      <tr>
+        <td>Total</td>
+        <td><%= render_money @pending_transactions.sum(&:amount_cents) %></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <% sum = @incomplete_payout_holdings.sum(&:amount_cents) + @unidentified_transactions.sum(&:amount_cents) + @pending_transactions.sum(&:amount_cents) %>
+  <small>FYI: <%= render_money @incomplete_payout_holdings.sum(&:amount_cents) %> + <%= render_money @unidentified_transactions.sum(&:amount_cents) %> + <%= render_money @pending_transactions.sum(&:amount_cents) %> = <%= render_money sum %>. The Clearinghouse's balance is <%= render_money Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance %>. Turns out, computers are good at this thing we call maths.</small>
+  <% Airbrake.notify("Clearinghouse's balance doesn't equal incomplete payout holdings + unidentified transactions + pending transactions. The difference is #{render_money sum - Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance}") unless sum == Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance %>
+<% end %>

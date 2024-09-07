@@ -4,20 +4,21 @@
 #
 # Table name: organizer_position_invites
 #
-#  id                    :bigint           not null, primary key
-#  accepted_at           :datetime
-#  cancelled_at          :datetime
-#  initial               :boolean          default(FALSE)
-#  is_signee             :boolean          default(FALSE)
-#  rejected_at           :datetime
-#  role                  :integer          default("manager"), not null
-#  slug                  :string
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  event_id              :bigint           not null
-#  organizer_position_id :bigint
-#  sender_id             :bigint
-#  user_id               :bigint           not null
+#  id                                     :bigint           not null, primary key
+#  accepted_at                            :datetime
+#  cancelled_at                           :datetime
+#  initial                                :boolean          default(FALSE)
+#  initial_control_allowance_amount_cents :integer
+#  is_signee                              :boolean          default(FALSE)
+#  rejected_at                            :datetime
+#  role                                   :integer          default("manager"), not null
+#  slug                                   :string
+#  created_at                             :datetime         not null
+#  updated_at                             :datetime         not null
+#  event_id                               :bigint           not null
+#  organizer_position_id                  :bigint
+#  sender_id                              :bigint
+#  user_id                                :bigint           not null
 #
 # Indexes
 #
@@ -82,6 +83,8 @@ class OrganizerPositionInvite < ApplicationRecord
   validates :accepted_at, absence: true, if: -> { rejected_at.present? }
   validates :rejected_at, absence: true, if: -> { accepted_at.present? }
 
+  validate :initial_control_allowance_amount_cents_nil_for_non_members
+
   after_create_commit do
     user == sender ? accept : deliver
   end
@@ -111,7 +114,19 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.accepted_at = Time.current
 
-    self.save
+    ActiveRecord::Base.transaction do
+      self.save!
+
+      if initial_control_allowance_amount_cents.present?
+        # Create control
+        organizer_position.spending_controls.create!
+
+        # Create allowance
+        organizer_position.active_spending_control.allowances.create!(authorized_by_id: sender_id, amount_cents: initial_control_allowance_amount_cents, memo: "Initial allowance") unless initial_control_allowance_amount_cents.zero?
+      end
+
+      true
+    end
   end
 
   def accepted?
@@ -180,6 +195,12 @@ class OrganizerPositionInvite < ApplicationRecord
   def not_already_invited
     if event && event.organizer_position_invites.includes(:user).pending.pluck(:email).include?(user.email)
       self.errors.add(:user, "already has a pending invite!")
+    end
+  end
+
+  def initial_control_allowance_amount_cents_nil_for_non_members
+    if role == "manager" && initial_control_allowance_amount_cents.present?
+      self.errors.add(:user, "can not set an initial control allowance for a manager")
     end
   end
 

@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil)
         @event_id = event_id
         @search = ActiveRecord::Base.connection.quote_string(search || "")
         @tag_id = tag_id
@@ -11,10 +11,34 @@ module TransactionGroupingEngine
         @revenue = revenue
         @minimum_amount = minimum_amount
         @maximum_amount = maximum_amount
+        @start_date = start_date
+        @end_date = end_date
+        @user = user
       end
 
       def run
         all
+      end
+
+      def running_balance_by_date
+        query = <<~SQL
+          WITH rbt AS (#{running_balance_sql})
+          SELECT GREATEST(0, AVG(running_balance)) as running_balance, date FROM rbt
+          GROUP BY date
+          ORDER BY date
+        SQL
+
+        ActiveRecord::Base.connection.execute(query).map { |entry| [entry["date"].to_date, entry["running_balance"]] }.to_h
+      end
+
+      def running_balance_sql
+        query = <<~SQL
+          SELECT sum(amount_cents) over (order by date asc rows between unbounded preceding and current row) as running_balance, *
+          FROM (
+            #{canonical_transactions_grouped_sql}
+          ) canonical_transactions_grouped
+          ORDER BY date
+        SQL
       end
 
       def all
@@ -68,6 +92,22 @@ module TransactionGroupingEngine
         "and (#{type}.memo ilike '%#{@search}%' or #{type}.custom_memo ilike '%#{@search}%')"
       end
 
+      def user_modifier
+        return "" unless @user.present?
+
+        "and raw_stripe_transactions.stripe_transaction->>'cardholder' = '#{@user&.stripe_cardholder&.stripe_id}'"
+      end
+
+      def user_joins_for(type)
+        return "" unless @user.present?
+
+        type = type.to_s
+
+        return "left join raw_stripe_transactions on raw_stripe_transactions.id = transaction_source_id AND transaction_source_type = 'RawStripeTransaction'" if type == "ct"
+
+        "left join raw_stripe_transactions on raw_stripe_transactions.id = raw_pending_stripe_transaction_id"
+      end
+
       def modifiers
         joins = []
         conditions = []
@@ -84,13 +124,35 @@ module TransactionGroupingEngine
         conditions << "q1.amount_cents >= 0" if @revenue
         conditions << "ABS(q1.amount_cents) >= #{@minimum_amount.cents}" if @minimum_amount
         conditions << "ABS(q1.amount_cents) <= #{@maximum_amount.cents}" if @maximum_amount
+        conditions << "#{date_select} >= cast('#{@start_date}' as date)" if @start_date
+        conditions << "#{date_select} <= cast('#{@end_date}' as date)" if @end_date
 
         return if conditions.none?
 
         "#{joins.join(" ")} where #{conditions.join(" and ")}"
       end
 
-      def canonical_transactions_grouped
+      def date_select
+        <<~SQL
+          (
+            select date
+            from (
+              select date
+              from (
+                select date from canonical_pending_transactions where id = any(q1.pt_ids) order by date asc, id asc limit 1
+              ) pt_raw
+              union
+              select date
+              from (
+                select date from canonical_transactions where id = any(q1.ct_ids) order by date asc, id asc limit 1
+              ) ct_raw
+            ) raw
+            order by date asc limit 1
+          )
+        SQL
+      end
+
+      def canonical_transactions_grouped_sql
         pt_group_sql = <<~SQL
           select
             array_agg(pt.id) as pt_ids
@@ -100,6 +162,7 @@ module TransactionGroupingEngine
             ,sum(pt.amount_cents / 100.0)::float as amount
           from
             canonical_pending_transactions pt
+          #{user_joins_for :pt}
           where
             fronted = true -- only included fronted pending transactions
             and
@@ -131,6 +194,7 @@ module TransactionGroupingEngine
               where ct.hcb_code = pt.hcb_code and cem.event_id = #{event.id}
             )
             #{search_modifier_for :pt}
+            #{user_modifier}
           group by
             coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
         SQL
@@ -144,6 +208,7 @@ module TransactionGroupingEngine
             ,sum(ct.amount_cents / 100.0)::float as amount
           from
             canonical_transactions ct
+          #{user_joins_for :ct}
           where
             ct.id in (
               select
@@ -155,26 +220,9 @@ module TransactionGroupingEngine
                 and cem.subledger_id is null
             )
             #{search_modifier_for :ct}
+            #{user_modifier}
           group by
             coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
-        SQL
-
-        date_select = <<~SQL
-          (
-            select date
-            from (
-              select date
-              from (
-                select date from canonical_pending_transactions where id = any(q1.pt_ids) order by date asc, id asc limit 1
-              ) pt_raw
-              union
-              select date
-              from (
-                select date from canonical_transactions where id = any(q1.ct_ids) order by date asc, id asc limit 1
-              ) ct_raw
-            ) raw
-            order by date asc limit 1
-          )
         SQL
 
         canonical_pending_transactions_select = <<~SQL
@@ -232,8 +280,10 @@ module TransactionGroupingEngine
           #{modifiers}
           order by date desc, pt_ids[1] desc, ct_ids[1] desc
         SQL
+      end
 
-        ActiveRecord::Base.connection.execute(q)
+      def canonical_transactions_grouped
+        ActiveRecord::Base.connection.execute(canonical_transactions_grouped_sql)
       end
 
     end

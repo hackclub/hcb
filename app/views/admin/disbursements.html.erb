@@ -53,8 +53,13 @@
             <%= disbursement.source_event.name.upcase %>: <%= disbursement.name %>
           <% end %>
         </td>
-        <td><%= render_money(disbursement.amount) %></td>
-        <td><%= disbursement.aasm.human_state %></td>
+        <td><%= render_money_amount(disbursement.amount) %></td>
+        <td>
+          <%= disbursement.aasm.human_state %>
+          <% if disbursement.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td>
           <% if disbursement.reviewing? %>
             <%= link_to "Process", disbursement_process_admin_path(disbursement) %>

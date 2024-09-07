@@ -79,6 +79,14 @@
   }
 }
 
+.shade-yellow {
+  background-color: rgba($yellow, 0.125);
+}
+
+.transaction--positive > td > span > span > span.success-dark.medium {
+  font-weight: 400;
+}
+
 $shades: (
   red: rgba($red, 0.125),
   yellow: rgba($yellow, 0.125),
@@ -198,4 +206,21 @@ $shades: (
 
 details[open] .flip-when-open {
   transform: rotate(180deg);
+}
+
+table.strikeable {
+  border-collapse: collapse;
+}
+
+tr.strikethrough td {
+  position: relative;
+}
+
+tr.strikethrough td:before {
+  content: ' ';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  border-bottom: 1px solid #8492a6;
 }

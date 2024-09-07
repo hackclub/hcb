@@ -1,52 +1,77 @@
-<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path) do |form| %>
+<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path, html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
   <%= form_errors invite, "user" %>
 
   <div class="field" x-data="{ email: '' }">
     <%= form.label :email, class: "mb1" %>
 
     <div class="flex items-center">
-      <%= form.email_field :email, class: "mr1", "x-model": "email" %>
+      <%= form.email_field :email, class: "mr1", "x-model": "email", placeholder: "fiona@hackclub.com" %>
     </div>
-    <template x-if="/^(team|webmaster|marketing|admin|info|about|support|sales|hq|hello)@/.test(email)">
-      <div class="warning mt1">⚠️ For security, we discourage team emails on HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!</div>
+    <template x-if="/(team|webmaster|marketing|admin|info|about|support|sales|hq|hello)/.test(email)">
+      <div class="warning mt1">⚠️ For security, we discourage team emails on
+        HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!
+      </div>
     </template>
   </div>
 
-  <% if Flipper.enabled?(:user_permissions_2024_03_09, @event || invite.event) %>
-    <%= form.label :role, class: "mb1" %>
-    <div class="field field--options">
-      <% OrganizerPositionInvite.roles.keys.map do |role| %>
-        <%= form.radio_button :role, role %>
-        <%= form.label :role, value: role do %>
-          <strong><%= role.titleize %></strong>
-        <% end %>
+  <%= form.label :role, class: "mb1" %>
+  <div class="field field--options">
+    <% OrganizerPositionInvite.roles.keys.map do |role| %>
+      <%= form.radio_button :role, role, "x-model": "role" %>
+      <%= form.label :role, value: role do %>
+        <strong><%= role.titleize %></strong>
       <% end %>
-    </div>
+    <% end %>
+  </div>
 
-      <p class="muted mb1">
-        Someone invited as a <span class="bold info">manager</span> can do everything in the organization.
-      </p>
+  <p class="muted mb1"><span class="bold info">Managers</span> can do everything
+    in the organization.</p>
 
-      <div class="muted mb1">
-        <p class="m0">Someone invited as a <span class="bold info">member</span> can</p>
-        <ul class="m0">
-          <li>Create cards</li>
-          <li>Spend money</li>
-          <li>Not change the organization's settings</li>
-        </ul>
+  <div class="muted mb1">
+    <p class="m0"><span class="bold info">Members</span> can;</p>
+    <ul class="m0">
+      <li>Create & use cards (with a limit if spending controls are enabled)
+      </li>
+      <li>Not transfer money</li>
+      <li>Not change the organization's settings</li>
+    </ul>
+  </div>
+
+  <% if Flipper.enabled?(:spending_controls_2024_06_03, @event || invite.event) %>
+    <div x-show="role === 'member'" x-cloak x-transition.duration.500ms class="my-4">
+      <%= form.label :enable_controls, class: "mb1 inline-flex flex-col" do %>
+        Enable spending controls?
+        <span class="muted h6">You can always enable & configure spending controls after, too.</span>
+      <% end %>
+
+      <div class="field field--options">
+        <%= form.radio_button :enable_controls, false, "x-model": "spendingControls" %>
+        <%= form.label :enable_controls, value: false do %>
+          <strong>No</strong>
+        <% end %>
+
+        <%= form.radio_button :enable_controls, true, "x-model": "spendingControls" %>
+        <%= form.label :enable_controls, value: true do %>
+          <strong>Yes</strong>
+        <% end %>
+      </div>
+
+      <div x-show="spendingControls === 'true'" x-cloak x-transition.duration.500ms class="mb1">
+        <%= form.label :initial_control_allowance_amount, value: "Initial allowance amount" %>
+        <%= form.number_field :initial_control_allowance_amount, placeholder: "500.00", step: 0.01, min: 0.00, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
       </div>
     </div>
   <% end %>
 
-  <% admin_tool("mb2 flex g1") do %>
-    <div class="field field--select w-100">
+  <% admin_tool("mb2 flex g1 w-fit") do %>
+    <div class="field field--select w-100 m0">
       <%= form.select :is_signee,
-          [
-            ["📃 Contract Signee", "true"],
-            ["❌ Hasn't Signed The Contract", "false"],
-          ],
-          { include_blank: "Select a contract signee status" },
-          { required: true, style: "width: 100%" } %>
+                      [
+                        ["📃 Contract Signee", "true"],
+                        ["❌ Hasn't Signed The Contract", "false"],
+                      ],
+                      { include_blank: "Select a contract signee status" },
+                      { required: true, style: "width: 100%" } %>
     </div>
   <% end %>
 

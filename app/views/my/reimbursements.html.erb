@@ -1,0 +1,155 @@
+<% title "My reimbursements" %>
+<% page_md %>
+<%= render "users/nav", selected: :reimbursements %>
+
+<h1 class="heading">
+  <span>
+    My reimbursements
+  </span>
+
+  <% if @payout_method.present? %>
+    <%= link_to settings_payouts_path, class: "btn bg-info" do %>
+      <%= inline_icon @payout_method.icon %>
+      Payout settings
+    <% end %>
+  <% else %>
+    <%= link_to settings_payouts_path, class: "btn bg-warning" do %>
+      <%= inline_icon "payment-docs" %>
+      Configure payouts
+    <% end %>
+  <% end %>
+
+  <% if current_user.events.not_demo_mode.any? %>
+    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" } do %>
+      <%= inline_icon "plus" %>
+      New
+    <% end %>
+  <% end %>
+</h1>
+
+<%= render partial: "reimbursement/reports/create_form" %>
+
+<section class="grid grid--split grid--spacious mb2">
+  <div>
+    <label for="sms_number">Start a report via SMS</label>
+    <p class="h5 muted mt0 mb1">
+      Message photos from your phone.
+    </p>
+    <div class="relative block" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
+      <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit">
+      <button
+        type="button"
+        class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+        style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+        aria-label="Copy number"
+        data-action="clipboard#copy:prevent">
+        <%= inline_icon "copy", size: 28 %>
+      </button>
+    </div>
+  </div>
+
+  <div>
+    <label for="email_address">Start a report via email</label>
+    <p class="h5 muted mt0 mb1">
+      Send from in-store terminals, or forward emails later.
+    </p>
+    <div class="relative block" data-controller="clipboard" data-clipboard-text-value="reimburse@hcb.gg">
+      <input id="email_address" type="email" value="reimburse@hcb.gg" readonly style="cursor: text;" class="fit">
+      <button
+        type="button"
+        class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+        style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+        aria-label="Copy email address"
+        data-action="clipboard#copy:prevent">
+        <%= inline_icon "copy", size: 28 %>
+      </button>
+    </div>
+  </div>
+</section>
+
+<% if @reports_to_review.any? %>
+  <h3 class="mb1">Review requested on</h3>
+  <article class="table-container">
+    <table>
+      <thead>
+      <tr>
+        <th class="!pl-0">Report</th>
+        <th>Organization</th>
+        <th>Amount</th>
+        <th>Created</th>
+      </tr>
+      </thead>
+      <tbody>
+        <% @reports_to_review.order(created_at: :desc).each do |report| %>
+          <tr>
+            <td class="!pl-0" style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
+              <%= link_to report.name, report %>
+            </td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+               <%= report.event&.name || "None" %>
+            </td>
+            <td>
+               <%= render_money report.amount_cents %>
+            </td>
+            <td>
+               <%= format_date report.created_at %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% end %>
+
+<h3 class="mb0">Reports created</h3>
+
+<%= form_with(model: nil, local: true, method: :get) do |form| %>
+  <div class="filterbar flex items-center width-100">
+    <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
+  </div>
+<% end %>
+
+<% if @my_reports.blank? %>
+  <%= blankslate "No reports found!" %>
+<% else %>
+  <article class="table-container">
+    <table>
+      <thead>
+      <tr>
+        <th class="!pl-0">Status</th>
+        <th>Report</th>
+        <th>Organization</th>
+        <th>Amount</th>
+        <th>Created</th>
+      </tr>
+      </thead>
+      <tbody>
+        <% @my_reports.order(created_at: :desc).each do |report| %>
+          <tr>
+            <td class="!pl-0">
+              <% if report.status_description %>
+                <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
+                  <%= report.status_text %>
+                </span>
+              <% else %>
+                <span class="ml0 badge bg-<%= report.status_color %>"><%= report.status_text %></span>
+              <% end %>
+            </td>
+            <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
+              <%= link_to report.name, report %>
+            </td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+               <%= report.event&.name || "None" %>
+            </td>
+            <td>
+               <%= render_money report.amount_cents %>
+            </td>
+            <td>
+               <%= format_date report.created_at %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% end %>

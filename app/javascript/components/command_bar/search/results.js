@@ -3,6 +3,8 @@
 import React from 'react'
 import Icon from '@hackclub/icons'
 import { Priority } from 'kbar'
+import Intl from 'intl'
+import 'intl/locale-data/jsonp/en-US'
 
 export const USDollar = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -157,6 +159,46 @@ export function generateResultActions(results, searchedFor) {
             </>
           ),
           icon: <Icon glyph="card" size={16} />,
+          priority: Priority.HIGH,
+        }
+      case 'Reimbursement::Report':
+        return {
+          id: `result`,
+          parent: `results: ${searchedFor}`,
+          perform: () => (window.location.pathname = result.path),
+          name: `${result.event} ${result.user} ${result.label}`,
+          jsx: (
+            <>
+              <span
+                style={{
+                  borderRadius: '3px',
+                  backgroundColor: 'var(--command-bar-organization)',
+                  outline: '2px solid var(--command-bar-organization)',
+                  paddingLeft: '3px',
+                  paddingRight: '3px',
+                  marginRight: '4px',
+                }}
+              >
+                {result.event || 'Unknown'}
+              </span>{' '}
+              {result.user && (
+                <span
+                  style={{
+                    borderRadius: '3px',
+                    backgroundColor: 'var(--command-bar-user)',
+                    outline: '2px solid var(--command-bar-user)',
+                    paddingLeft: '3px',
+                    paddingRight: '3px',
+                    marginRight: '4px',
+                  }}
+                >
+                  {result.user || 'Unknown'}
+                </span>
+              )}{' '}
+              {result.label}
+            </>
+          ),
+          icon: <Icon glyph="attachment" size={16} />,
           priority: Priority.HIGH,
         }
     }

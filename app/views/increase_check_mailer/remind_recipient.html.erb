@@ -1,0 +1,26 @@
+<p>
+  Hi <%= @check.recipient_name %>,
+</p>
+
+<% days_ago = (Time.zone.now - @check.approved_at).to_i / 1.day %>
+
+<p>
+    We're writing to let you know that your <%= render_money @check.amount %> check from
+    <%= @check.event.name %> for <i>"<%= @check.payment_for %>"</i> has not been deposited.
+</p>
+
+<p>
+  Checks are valid for 180 days after being sent.
+  Since it was issued on <%= @check.approved_at.strftime("%b %e %Y") %> (<%= days_ago %> days ago), you have <%= ((IncreaseCheck::VALID_DURATION / 1.day) - days_ago) %> days left to deposit the check.
+  After this, you won't be able to deposit it.
+</p>
+
+<p>If you have any questions about this transfer, please contact <%= @check.event.name %>.</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @check.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

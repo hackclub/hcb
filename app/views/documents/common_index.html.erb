@@ -19,5 +19,22 @@
 </p>
 
 <ul class="grid">
-  <%= render @documents %>
+  <%= render @active_documents %>
 </ul>
+
+<% if @archived_documents.any? %>
+  <ul class="list-reset">
+    <li class="mb3">
+      <details>
+        <summary class="cursor-pointer relative mb2">
+          <h3 class="inline mb1">Archived Documents</h3>
+        </summary>
+        <article>
+          <ul class="grid">
+            <%= render @archived_documents %>
+          </ul>
+        </article>
+      </details>
+    </li>
+  </ul>
+<% end %>

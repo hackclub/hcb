@@ -1,5 +1,5 @@
 .conversation_item:not(:last-child)::before {
-  content: "";
+  content: '';
   width: 2px;
   height: calc(100% - 18px);
   background-color: map-get($palette, smoke);
@@ -14,15 +14,16 @@
 div.conversation_item:not(:last-child)::before {
   height: calc(100% - 26px);
 }
-.conversation_item, div.conversation_item > * {
+.conversation_item,
+div.conversation_item > * {
   position: relative;
   position: relative;
   z-index: 2;
 }
 
 .conversation_item_text {
-  display: flex; 
-  align-items: end; 
+  display: flex;
+  align-items: end;
   gap: 4px;
 }
 

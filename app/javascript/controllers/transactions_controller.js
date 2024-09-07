@@ -7,10 +7,14 @@ export default class extends Controller {
 
   select(event) {
     const target = event.currentTarget
-    if (event.metaKey || event.ctrlKey) {
-      this.toggleHcbCode(target)
+    if ((event.metaKey || event.ctrlKey) && !event?.target?.href) {
+      this.toggle(target)
       this.updateTaggerVisbility()
     }
+  }
+
+  toggle(target) {
+    this.toggleHcbCode(document.getElementById(target.dataset.transaction))
   }
 
   toggleHcbCode(target) {

@@ -1,0 +1,21 @@
+[data-tabs-target='btn'] {
+  background: transparent;
+  border: none;
+  padding: 0.2rem;
+  cursor: pointer;
+
+  &.active {
+    color: $blue;
+    font-weight: 600;
+  }
+
+  &:first-child {
+    margin-left: 0.2rem;
+  }
+}
+
+.menu__divider--filter-tab {
+  @extend .menu__divider;
+  margin-bottom: 0.2rem !important;
+  margin-top: 0.3rem !important;
+}

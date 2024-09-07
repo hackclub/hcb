@@ -80,7 +80,7 @@
           <strong>Revenue</strong>
           <%= render_money @partner_donation.payout_amount_cents %>
         </p>
-        <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+        <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
       <% end %>
     </section>
   </article>

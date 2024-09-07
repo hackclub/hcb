@@ -3,11 +3,6 @@
 class DisbursementsController < ApplicationController
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
-  def index
-    @disbursements = Disbursement.all.order(created_at: :desc).includes(:t_transactions, :event, :source_event)
-    authorize @disbursements
-  end
-
   def show
     authorize @disbursement
 
@@ -60,17 +55,24 @@ class DisbursementsController < ApplicationController
   end
 
   def create
-    @source_event = Event.friendly.find(disbursement_params[:source_event_id])
-    @destination_event = Event.friendly.find(disbursement_params[:event_id])
+    @source_event = Event.find(disbursement_params[:source_event_id])
+    @destination_event = Event.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
 
+    if current_user.admin? && disbursement_params["scheduled_on(1i)"].present?
+      scheduled_on = Date.new(disbursement_params["scheduled_on(1i)"].to_i,
+                              disbursement_params["scheduled_on(2i)"].to_i,
+                              disbursement_params["scheduled_on(3i)"].to_i)
+    end
+
     disbursement = DisbursementService::Create.new(
       name: disbursement_params[:name],
-      destination_event_id: disbursement_params[:event_id],
-      source_event_id: disbursement_params[:source_event_id],
+      destination_event_id: @destination_event.id,
+      source_event_id: @source_event.id,
       amount: disbursement_params[:amount],
+      scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
     ).run
@@ -80,7 +82,7 @@ class DisbursementsController < ApplicationController
     if current_user.admin?
       redirect_to disbursements_admin_index_path
     else
-      redirect_to event_transfers_path(event_id: @source_event.id)
+      redirect_to event_transfers_path(@source_event)
     end
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
@@ -96,6 +98,13 @@ class DisbursementsController < ApplicationController
     authorize @disbursement
   end
 
+  def cancel
+    @disbursement = Disbursement.find(params[:disbursement_id])
+    authorize @disbursement
+    @disbursement.mark_rejected!
+    redirect_to @disbursement.local_hcb_code
+  end
+
   def mark_fulfilled
     @disbursement = Disbursement.find(params[:disbursement_id])
     authorize @disbursement
@@ -105,7 +114,7 @@ class DisbursementsController < ApplicationController
       if Disbursement.pending.any?
         redirect_to pending_disbursements_path
       else
-        redirect_to disbursements_path
+        redirect_to disbursements_admin_index_path
       end
     end
   end
@@ -133,6 +142,7 @@ class DisbursementsController < ApplicationController
       :event_id,
       :amount,
       :name,
+      :scheduled_on,
     ]
     attributes << :should_charge_fee if admin_signed_in?
 

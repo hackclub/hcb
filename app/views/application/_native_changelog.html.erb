@@ -1,0 +1,17 @@
+<div class="welcome" data-controller="welcome">
+    <div class="welcome__image mb1">
+        <h1 class="welcome__shine_text mt0 border-none inline-flex flex-col items-center g2 text-center">
+            <span><%= @latest_changelog_post.title %></span>
+        </h1>
+    </div>
+
+    <div class="welcome__content">
+        <div class="mx-2 card center overflow-auto mb3" style="max-height: 70vh; max-width: 80ch">
+            <%== MarkdownService.instance.renderer.render @latest_changelog_post.markdown %>
+        </div>
+
+        <div class="mb2">
+          <button class="btn" data-action="welcome#tour">Close</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,68 @@
+<% title "Activate #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :activation_flow %>
+
+<h1 class="heading">
+  <span class="flex items-center">
+    Activate <%= @event.name %>
+  </span>
+</h1>
+
+<%= render "events/settings/admin/tags" %>
+
+<%= form_with(model: @event, url: event_activate_path, method: :post, local: true, class: "mb3 mt3") do |form| %>
+  <%= form_errors @event, "organization" %>
+  <div class="grid">
+    <div class="field pr2" id="admin_settings">
+      <%= form.label :name %>
+      <%= form.text_field :name %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :country %>
+      <%= form.collection_select :country, Event.countries_for_select, :first, :last, { include_blank: "Select a country" }, { required: true } %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :category %>
+      <%= form.collection_select :category, Event.categories, :first, :first, { include_blank: "Select a category" }, { required: true } %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :point_of_contact_id, "Point of contact" %>
+      <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @current_user.id %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :plan_type, "Assign a plan" %>
+      <%= form.select :plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.plan_type, include_blank: "Select a plan..." %>
+    </div>
+  </div>
+
+  <%= form.label :files, "Upload Activation Documents (FS Contract, MOA, etc.)", class: "mt2 mb1 h3 bold" %>
+
+  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a file.">
+    <%= form.label :files, "Choose file", class: "field--fileupload__label", data: {
+          action: "
+        dragover@window->file-drop#dragover
+        drop@window->file-drop#drop
+        dragenter@window->file-drop#dragenter
+        dragleave@window->file-drop#dragleave
+      "
+        } %>
+    <%= form.file_field :files,
+        multiple: true,
+        include_hidden: false,
+        required: false,
+        accept: "image/*,image/heic,.pdf",
+        style: "margin: 8px 0px",
+        class: "field--fileupload__field",
+        data: {
+          "file-drop-target" => "fileInput"
+        } %>
+  </div>
+
+  <div class="action">
+    <%= form.submit "Activate" %>
+  </div>
+<% end %>

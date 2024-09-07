@@ -95,7 +95,7 @@ class FeeReimbursement < ApplicationRecord
   def default_values
     if invoice
       self.transaction_memo ||= "HCB-#{invoice.local_hcb_code.short_code}"
-      self.amount ||= invoice.item_amount - invoice.payout_creation_balance_net
+      self.amount ||= invoice.payout_creation_balance_stripe_fee
     elsif donation
       self.transaction_memo ||= "HCB-#{donation.local_hcb_code.short_code}"
       self.amount ||= donation.payout_creation_balance_stripe_fee
@@ -113,15 +113,15 @@ class FeeReimbursement < ApplicationRecord
   def calculate_fee_amount
     if amount < 100
       if invoice.present?
-        return (amount * self.invoice.event.sponsorship_fee) + (100 - amount)
+        return (amount * self.invoice.event.revenue_fee) + (100 - amount)
       else
-        return (amount * self.donation.event.sponsorship_fee) + (100 - amount)
+        return (amount * self.donation.event.revenue_fee) + (100 - amount)
       end
     else
       if invoice.present?
-        return amount * self.invoice.event.sponsorship_fee
+        return amount * self.invoice.event.revenue_fee
       else
-        return amount * self.donation.event.sponsorship_fee
+        return amount * self.donation.event.revenue_fee
       end
     end
   end

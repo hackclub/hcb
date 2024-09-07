@@ -2,31 +2,40 @@
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements unless @use_user_nav %>
 <%= render "users/nav", selected: :reimbursements if @use_user_nav %>
+<%= turbo_stream_from @report %>
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
 <div class="md:mt-12">
+    <% admin_tool "w-fit" do %>
+      <%= link_to reimbursements_admin_index_path, class: "btn btn-small bg-muted" do %>
+        <%= inline_icon "view-back" %>
+        View more reimbursements
+      <% end %>
+    <% end %>
+
   <h3 class="mt2 mb1 muted flex items-start" style="font-weight: 400; gap: 4px;">
     <span style="flex-grow: 1;">
       <%= user_mention @user, { class: "tooltipped--s align-top" } %>
-      <%= "will be reimbursed " if @report.reimbursement_approved? %>
-      <%= "was reimbursed " if @report.reimbursed? %>
-      <%= "requested " if @report.rejected? %>
+      <%= "will be reimbursed " if @report.reimbursement_approved? || @report.reimbursed? && !@report.payout_holding.sent? %>
+      <%= "was reimbursed " if @report.reimbursed? && @report.payout_holding.sent? %>
+      <%= "requested " if @report.rejected? || @report.reversed? %>
       <%= "is requesting " unless @report.closed? %>
       <%= render "total", report: @report %>
       <% if @report.maximum_amount_cents %>
         (<%= render_money @report.maximum_amount_cents %> cap)
       <% end %>
-      <%= "from #{@event.name}" if @use_user_nav %> for
+      <%= "from #{@event.name}" if @event && @use_user_nav %> for
     </span>
     <% if @report.reviewer.present? && @report.submitted? %>
       <span class="mr1 badge bg-muted">Review requested from <%= @report.reviewer.initial_name %></span>
     <% end %>
     <span class="ml0 badge bg-<%= @report.status_color %>"><%= @report.status_text %></span>
   </h3>
-  <h2 class="heading mt0 mb1 flex justify-start flex-row">
+  <h2 class="heading mt0 mb1 flex justify-start flex-row" style="gap: 0px">
     <span><%= @report.name %></span>
     <% if !@report.closed? %>
       <%= link_to "#", class: "ml0 info text-decoration-none muted tooltipped tooltipped--e", data: { behavior: "modal_trigger", modal: "edit" }, style: "padding: 0px; line-height: 0px; align-self: center;", "aria-label": "Edit this report's properties." do %>
-        <%= inline_icon "settings", size: 30, style: "margin-left: 8px;" %>
+        <%= inline_icon "settings", size: 30, style: "margin-left: 4px;" %>
       <% end %>
     <% end %>
   </h2>
@@ -46,7 +55,9 @@
   <%= form_with url: reimbursement_report_request_changes_path(report_id: @report.id), model: [@report, Comment.new] do |form| %>
     <%= form.hidden_field :commentable_type, value: @commentable.class %>
     <%= form.hidden_field :commentable_id, value: @report.id %>
-    <%= form.text_area :content, class: "card mb2 overflow-visible", placeholder: "Describe your requested changes…", "data-behavior": "ctrl_enter_submit", style: "min-height: 100px" %>
+    <text-expander keys="@">
+      <%= form.text_area :content, class: "card mb2 overflow-visible", placeholder: "Describe your requested changes…", "data-behavior": "ctrl_enter_submit", style: "min-height: 100px" %>
+    </text-expander>
 
     <%= form.hidden_field :action, value: :changes_requested %>
 
@@ -64,6 +75,17 @@
     <%= form.submit "Submit" %>
   <% end %>
 </section>
+
+<% if @report.event&.public_reimbursement_page_message&.present? && policy(@event).reimbursements? %>
+  <article class="card mt2 pt0">
+    <%== MarkdownService.instance.renderer.render @report.event.public_reimbursement_page_message %>
+    <section class="card__banner card__banner--bottom card__darker pt2 pb2">
+      <p class="muted mt0 mb0">
+        Information from <%= @report.event.name %>
+      </p>
+    </section>
+  </article>
+<% end %>
 
 <% if @report.invite_message.presence %>
   <article class="card mt2 pt0">
@@ -91,7 +113,7 @@
         </ol>
       </p>
       <p>
-        Once you've added all of your expenses to the report, click <i>Submit</i> to begin the review process. This feature is US-only at the moment.
+        Each purchase needs to be a separate expense on the report. Once you've added all of your expenses to the report, click <i>Submit</i> to begin the review process.
       </p>
       <% if @report.maximum_amount_cents %>
         <p>

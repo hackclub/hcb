@@ -1,0 +1,15 @@
+<% source = activity.trackable.source_event %>
+<% destination = activity.trackable.destination_event %>
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<% if activity.trackable.card_grant.present? %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    rejected a <%= render_money activity.trackable.amount %> card grant on
+    <%= link_to source.name, source %> for
+    <span class="muted"><%= activity.trackable.card_grant.user&.name || activity.trackable.card_grant.email %></span>
+  <% end %>
+<% else %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    rejected a <%= render_money activity.trackable.amount %> transfer from <%= link_to source.name, source %> to <%= link_to destination.name, destination %>
+  <% end %>
+<% end %>

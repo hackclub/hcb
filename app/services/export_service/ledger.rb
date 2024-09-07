@@ -24,6 +24,7 @@ module ExportService
           if merchant && !@public_only
             category = merchant["category"].humanize.titleize.delete(" ")
             metadata[:merchant] = merchant
+            metadata[:comments] = ct.local_hcb_code.comments.not_admin_only.pluck(:content) unless @public_only && ct.local_hcb_code.comments.count.zero?
           elsif merchant
             category = "CardCharge"
           end

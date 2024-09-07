@@ -11,7 +11,7 @@
   <%= form_with model: [@event, @card_grant], data: { turbo_frame: "_top" } do |form| %>
     <div class="field">
       <%= form.label :email %>
-      <%= form.email_field :email, placeholder: "fiona@hackclub.com", autofocus: true, required: true %>
+      <%= form.email_field :email, value: @prefill_email, placeholder: "fiona@hackclub.com", autofocus: true, required: true %>
     </div>
 
     <div class="field">

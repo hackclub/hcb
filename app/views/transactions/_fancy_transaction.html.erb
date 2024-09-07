@@ -1,19 +1,15 @@
-<tr
-  class="transaction--<%= transaction.amount.negative? ? "negative" : "positive" %>"
-  id="retrofees__transaction"
-  data-behavior="filterbar_row"
-  data-filter="<%= transaction.filter_data.to_json %>">
+<tr class="transaction" id="retrofees__transaction">
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Free money!">
     <%= inline_icon "rep" %>
   </td>
   <td>
-    <%= transaction.date %>
+    <%= format_date transaction.date %>
   </td>
   <td>
     🎉 HCB Gift 🎉
   </td>
   <td class="right-align">
-    <%= render_money transaction.amount %>
+    <%= render_transaction_amount transaction.amount %>
   </td>
   <% if organizer_signed_in? %>
     <td>

@@ -1,0 +1,46 @@
+<% title "PayPal" %>
+
+<%= form_with local: true, url: paypal_transfers_admin_index_path, method: :get do |form| %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <%= form.submit "Search" %>
+<% end %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @paypal_transfers, entry_name: "transfers" %>
+  </div>
+  <%= paginate @paypal_transfers %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-24">ID</th>
+      <th class="w-32">Date</th>
+      <th>Event</th>
+      <th>Recipient</th>
+      <th class="w-32">Amount</th>
+      <th>Status</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @paypal_transfers.each do |paypal_transfer| %>
+      <tr class="<%= "admin-bg-pending" if paypal_transfer.pending? %>">
+        <td><%= paypal_transfer.id %></td>
+        <td><%= paypal_transfer.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= paypal_transfer.event.name %></td>
+        <td><%= paypal_transfer.recipient_name %></td>
+        <td><%= render_money(paypal_transfer.amount) %></td>
+        <td><%= paypal_transfer.aasm.human_state %></td>
+        <td>
+          <%= link_to "View", hcb_code_path(paypal_transfer.hcb_code) %>
+          <%= link_to "Process", paypal_transfer_process_admin_path(paypal_transfer) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @paypal_transfers %>

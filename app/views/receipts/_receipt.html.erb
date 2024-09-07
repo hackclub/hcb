@@ -34,7 +34,7 @@
         <div class="receipt__icon--star tooltipped tooltipped--n" aria-label="Suggested receipt">
           <%= inline_icon "rep", size: "36", style: "margin: -5px;" %>
         </div>
-        <%= image_tag receipt.preview, class: "card p0 receipt--image", data: {
+        <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id
             } if receipt.preview %>
       </span>
@@ -42,7 +42,7 @@
   <% else %>
     <% if receipt.preview && !local_assigns[:popover] %>
       <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
-        <%= image_tag receipt.preview, class: "card p0 receipt--image", data: {
+        <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id,
               "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "modal_trigger",
               "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
@@ -52,6 +52,7 @@
     <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
       <%= image_tag receipt.preview,
             class: "card p0 receipt--image #{receipt.file.blob.content_type == "application/pdf" ? "receipt__pdf-preview" : ""}",
+            alt: receipt.suggested_memo,
             data: {
               "receipt-id" => receipt.id,
               "file_type"  => receipt.file.blob.content_type,
@@ -69,28 +70,36 @@
               method: :delete,
               data: { behavior: "modal_ignore" },
               size: 12,
-              class: "warning bg-black-important tooltipped tooltipped--s receipt__delete-button",
+              class: "warning bg-black-important tooltipped tooltipped--w receipt__delete-button",
               style: "position: absolute; top: 4px; right: 4px; z-index: 1;",
               'aria-label': "Delete this receipt" %>
     <% end %>
   <% end %>
 
   <% unless defined?(hide_info) %>
-    <footer class="flex items-center flex-row" style="border-top: none;">
+    <footer class="flex items-center flex-row mt1" style="border-top: none;">
       <%= relative_timestamp receipt.created_at, prefix: "#{receipt.user == current_user ? "you" : ""} added ", suffix: receipt.user == current_user || receipt.user.nil? ? "" : " by #{receipt.user.first_name}", class: defined?(selectable) ? "h5" : "h5 muted" %>
 
       <span style="flex-grow: 1;"></span>
 
+      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user %>
+        <%= pop_icon_to "attachment",
+            "#",
+            data: {
+              "behavior": "modal_trigger",
+              "modal": "create_#{receipt.id}"
+            },
+            size: 24,
+            class: "info tooltipped tooltipped--w mr1",
+            'aria-label': "Get reimbursed for this" %>
+      <% end %>
       <% if defined?(show_delete_button) %>
         <%= pop_icon_to "view-close",
-            receipt_path(receipt, popover: local_assigns[:popover]),
-            method: !local_assigns[:turbo_for_deletion] ? :delete : nil,
+            receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion]) }.compact),
             data: {
               behavior: "modal_ignore",
-              turbo: local_assigns[:turbo_for_deletion] ? "true" : "false",
-              "turbo-method": "delete",
-              "turbo-confirm": "Are you sure you'd like to delete this receipt?",
-              "confirm": !local_assigns[:turbo_for_deletion] ? "Are you sure you'd like to delete this receipt?" : nil
+              turbo_method: :delete,
+              turbo_confirm: "Are you sure you'd like to delete this receipt?",
             },
             size: 24,
             class: "error tooltipped tooltipped--w",
@@ -101,14 +110,62 @@
 </div>
 
 <% unless defined?(selectable) || receipt.preview.nil? %>
-  <section style="overflow: initial; line-height: 0px;" class="modal modal--scroll bg-snow modal--huge <%= "modal--flexible" unless receipt.file.blob.content_type == "application/pdf" %> p0" data-behavior="modal" role="dialog" id="<%= "preview_receipt_#{instance}" %>">
-    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
+  <style>
+    .blocker {
+      z-index: 300;
+    }
+  </style>
+  <section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= "preview_receipt_#{instance}" %>" style="z-index: 300;">
+    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
       <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
     </a>
-    <% if receipt.file.blob.content_type == "application/pdf" %>
-      <iframe src="<%= file_path %>" style="width: 100%; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
-    <% else %>
-      <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.maxHeight = `${this.naturalHeight}px`; this.style.minWidth = '300px'; this.style.minHeight = '300px'; this.parentElement.style.maxHeight = `${this.naturalHeight}px`;" %>
-    <% end %>
+
+    <div class="w-100 h-100 overflow-hidden hidden md:flex flex-col md:flex-row md:min-h min-h-min">
+      <% if receipt.file.blob.content_type == "application/pdf" %>
+        <iframe src="<%= file_path %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; overflow: hidden;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
+      <% else %>
+        <div style="min-width: 0px; flex-grow: 1; border-radius: 0.75rem 0rem 0rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless">
+          <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
+        </div>
+      <% end %>
+
+      <div style="padding: 1.5rem; border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+        <%= render partial: "receipts/details", locals: { receipt: } %>
+      </div>
+    </div>
+
+    <div class="w-100 h-100 overflow-hidden flex md:hidden flex-col md:flex-row md:min-h min-h-min" data-controller="receipt-tabs">
+      <ul class="tab-container m-0 mt-2">
+        <li class="active cursor-pointer ml-3" data-controller="scroll-into-view">
+          <a data-receipt-tabs-target="previewLabel" data-action="click->receipt-tabs#selectPreview">Receipt</a>
+        </li>
+        <li class="cursor-pointer" data-controller="scroll-into-view">
+          <a data-receipt-tabs-target="detailsLabel" data-action="click->receipt-tabs#selectDetails">Details</a>
+        </li>
+        <div class="flex-grow">
+          <a href="#close_modal" tabindex="0" class="pop modal__close muted" rel="modal:close" style="background: #11111199; margin: 0px; margin-right: 6px;">
+            <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
+          </a>
+        </div>
+      </ul>
+
+        <% if receipt.file.blob.content_type == "application/pdf" %>
+          <iframe data-receipt-tabs-target="preview" src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
+        <% else %>
+          <div data-receipt-tabs-target="preview" style="min-width: 0px; flex-grow: 1; border-radius: 0rem 0rem 0.75rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless receipt-content-preview">
+            <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
+          </div>
+        <% end %>
+
+        <div data-receipt-tabs-target="details" style="padding: 1.5rem; border-radius: 0rem 0rem 0.75rem 0.75rem; display: none; height: 100vh; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+          <%= render partial: "receipts/details", locals: { receipt: } %>
+        </div>
+
+    </div>
+
   </section>
+<% end %>
+
+<% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user %>
+  <%= render partial: "reimbursement/reports/create_form", locals: { receipt: } %>
 <% end %>

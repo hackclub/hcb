@@ -1,4 +1,4 @@
-<% title "Account Settings" %>
+<% title "Account settings" %>
 <% page_md %>
 <%= render "users/nav", selected: :settings %>
 <h1>
@@ -7,28 +7,20 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_nav", active: "address" %>
   <section>
-    <h2 id="address">Billing address</h2>
-
-    <p class="h5 muted mt0 mb1">
-      Merchants may use this address to verify your identity on card
-      transactions. By default, this is HCB's address.
+    <p class="muted mt0 mb2">
+      Merchants use this address to verify your identity on card transactions.
+      <b class="bold">Changing your address applies immediately to all of your cards</b>;
+      recurring card charges like subscriptions might break.
     </p>
-
-    <%= render "callout", type: "warning", title: "Important info about changing your billing address", footer: :questions do %>
-      <ul class="m0 mt1">
-        <li>Changing your address applies immediately to all of your cards.</li>
-        <li>Recurring card charges like subscriptions might break when your billing address changes.</li>
-      </ul>
-    <% end %>
 
     <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
       <%= form.fields_for :stripe_cardholder, @user.stripe_cardholder do |form| %>
-        <div class="field">
+        <div class="field mb1">
           <%= form.label :stripe_billing_address_line1, "Street address" %>
           <%= form.text_field :stripe_billing_address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1], required: true %>
         </div>
 
-        <div class="field">
+        <div class="field mt1">
           <%= form.text_field :stripe_billing_address_line2, placeholder: "(Building / Apartment / Room)" %>
         </div>
 
@@ -48,9 +40,10 @@
             <%= form.label :postal_code %>
             <%= form.text_field :stripe_billing_address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code], required: true %>
           </div>
+
           <div class="field flex-auto">
             <%= form.label :country %>
-            <%= form.country_select :stripe_billing_address_country, nil, { only: ["US", "CA"] }, { required: true } %>
+            <%= form.country_select :stripe_billing_address_country, nil, { only: ["US"] }, { required: true } %>
           </div>
         </div>
 

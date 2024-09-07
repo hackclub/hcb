@@ -24,7 +24,7 @@
       <% end %>
     </div>
   </fieldset>
-  <p class="h5 muted mt0">Plastic cards are only available to ship to the US and Canada.</p>
+  <p class="h5 muted mt0">Plastic cards can only be shipped within the US.</p>
 
   <% if current_user.birthday.nil? %>
     <section class="grid grid--split">
@@ -35,8 +35,8 @@
           Used for card issuing.
         </p>
         <%= form.date_select :birthday,
-                              { start_year: Date.today.year - 100,
-                                end_year: Date.today.year,
+                              { start_year: Date.today.year,
+                                end_year: Date.today.year - 100,
                                 order: [:month, :day, :year],
                                 prompt: true
 },
@@ -73,15 +73,39 @@
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_country, "Country" %>
-      <%= form.country_select :stripe_shipping_address_country, only: ["US", "CA"], sort_provided: false, selected: prefill(:country) || "US", disabled: @event&.demo_mode? %>
+      <%= form.country_select :stripe_shipping_address_country, only: ["US"], sort_provided: false, selected: "US", disabled: @event&.demo_mode? %>
     </div>
+
+    <% designs = [@event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
+    <% designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.admin? %>
+    <% if designs.any? %>
+      <% if Flipper.enabled?(:stripe_card_personalization_designs_2024_08_19, current_user) %>
+        <h2 class="grid__fill">Card design</h2>
+        <div class="field field--options" style="max-width: unset;">
+          <% designs.each do |design| %>
+            <%= form.radio_button :stripe_card_personalization_design_id, design.id %>
+              <%= form.label :stripe_card_personalization_design_id, value: design.id, style: "align-items: center; justify-content: start; padding: 0px; gap: 1rem; #{"background: rgba(241, 196, 15, 0.125)!important;" if design.unlisted?}", class: ("admin-tools" if design.unlisted?).to_s do %>
+              <span style="padding-top: 1rem; text-wrap: balance" class="bold">
+                <%= design.name_without_id %>
+              </span>
+              <div style="display: flex; flex-direction: row; justify-content: start; width: 100%;">
+                <div class="stripe-card--<%= design.color %>" style="display: flex; justify-content: end; align-items: center; width: 80%; border-radius: 0px 12px; padding: 1.5rem; padding-top: 1.5rem; padding-left: 0.5rem;">
+                  <%= image_tag design.logo, alt: design.name_without_id, style: "max-width: 100%; object-fit: contain; width: 100%; height: auto; aspect-ratio: 5 / 1; object-position: right;" %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
   </section>
 
   <%= form.hidden_field :stripe_cardholder_id, value: current_user&.stripe_cardholder&.id %>
 
-  <p class="h5 muted mt2">By submitting, you agree to the
-    <a href="https://stripe.com/legal/issuing/celtic-authorized-user-terms" target="_blank">Card User Terms</a>. Your name and birthday is shared
-    with Stripe and their banking partners.
+  <p class="h5 muted mt2">
+    By submitting, you agree to Stripe's
+    <a href="https://stripe.com/legal/issuing/celtic-authorized-user-terms" target="_blank">cardholder terms</a>.
+    Your name, birthday, and contact information is shared with them and their banking partners.
   </p>
   <div class="actions">
     <%= form.submit "Issue my card", disabled: @event&.demo_mode? %>

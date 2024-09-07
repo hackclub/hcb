@@ -12,7 +12,7 @@ class ReceiptsController < ApplicationController
     @receiptable = @receipt.receiptable
     authorize @receipt
 
-    success = @receipt.delete
+    success = @receipt.destroy
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
@@ -71,7 +71,7 @@ class ReceiptsController < ApplicationController
   def link_modal
     authorize @receiptable, policy_class: ReceiptablePolicy
 
-    @receipts = Receipt.in_receipt_bin.where(user: current_user).order(created_at: :desc)
+    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user).order(created_at: :desc)
     @show_link = params[:show_link]
     @streams = defined?(params[:streams]) ? params[:streams] : true
     @suggested_receipt_ids = []
@@ -120,10 +120,10 @@ class ReceiptsController < ApplicationController
       ).run!
       next if @receiptable && !on_transaction_page?
 
-      streams.append(turbo_stream.append(
+      streams.append(turbo_stream.prepend(
                        :receipts_list,
                        partial: "receipts/receipt",
-                       locals: { receipt:, show_delete_button: true, link_to_file: true }
+                       locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true }
                      ))
     end
 
@@ -140,13 +140,14 @@ class ReceiptsController < ApplicationController
         restricted_dropzone: params[:upload_method] != :transaction_page,
         include_spacing: params[:upload_method] != :receipt_center,
         success: "#{"Receipt".pluralize(params[:file].length)} added!",
+        global_paste: !@receiptable,
         turbo: true
       }
       if @receiptable && !@frame
         receipt_upload_form_config[:enable_linking] = true
         receipt_upload_form_config[:receiptable] = @receiptable
       end
-      if @frame && @event
+      if @receiptable && @frame && @event
         receipt_upload_form_config[:restricted_dropzone] = true
         receipt_upload_form_config[:inline_linking] = true
         receipt_upload_form_config[:upload_method] = "transaction_popover"
@@ -168,7 +169,7 @@ class ReceiptsController < ApplicationController
     notify_airbrake(e)
 
     flash_type = :error
-    flash_message = e.message
+    flash_message = "There was an error uploading your receipt. Please try again."
 
     streams.append(
       turbo_stream.replace(
@@ -270,9 +271,7 @@ class ReceiptsController < ApplicationController
       )
     end
 
-    if @receiptable.is_a?(HcbCode) && on_transaction_page?
-      return unless (@receiptable.stripe_card? || @receiptable.stripe_force_capture?) && @receiptable.stripe_card.present?
-
+    if @receiptable.is_a?(HcbCode) && on_transaction_page? && !@receiptable.stripe_refund?
       @hcb_code = @receiptable
       streams.append(
         turbo_stream.replace(

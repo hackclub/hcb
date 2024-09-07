@@ -2,30 +2,33 @@
   --kbar-background: #ffffff;
   --kbar-foreground: #252429;
   --kbar-overlay: rgba(0 0 0 / 0.05);
-  --kbar-admin-overlay: rgba(241,196,15,0.125);
+  --kbar-admin-overlay: rgba(241, 196, 15, 0.125);
   --command-bar-organization: #fc9fab;
   --command-bar-transaction: #f7c6a1;
   --command-bar-user: #f797f1;
   --command-bar-card: #a2e0f2;
+  --command-bar-reimbursement: #5cd2af;
 }
 
 html[data-dark='true'] {
   --kbar-background: #252429;
   --kbar-foreground: #e0e6ed;
   --kbar-overlay: rgba(255 255 255 / 0.05);
-  --kbar-admin-overlay: rgba(255,140,55,0.0625);
+  --kbar-admin-overlay: rgba(255, 140, 55, 0.0625);
   --command-bar-organization: #ec3750;
   --command-bar-transaction: #ff8c37;
   --command-bar-user: #a633d6;
   --command-bar-card: #338eda;
+  --command-bar-reimbursement: #33d6a6;
 }
 
-[role="combobox"] {
+[role='combobox'] {
   scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
 }
 
-[role="combobox"]::-webkit-scrollbar { /* WebKit */
-    width: 0;
-    height: 0;
+[role='combobox']::-webkit-scrollbar {
+  /* WebKit */
+  width: 0;
+  height: 0;
 }

@@ -14,7 +14,8 @@ FactoryBot.define do
         "card": {
           "id": generate(:stripe_card_id)
         },
-        "authorization_method": "online"
+        "authorization_method": "online",
+        "merchant_data": { "name": "merchant 1" }
       }
     }
   end

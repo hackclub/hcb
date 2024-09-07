@@ -1,0 +1,58 @@
+<%= link_to paypal_transfers_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to PayPal transfers
+<% end %>
+
+<h1>Process PayPal Transfer #<%= @paypal_transfer.id %></h1>
+<p><small>Current Status: <%= @paypal_transfer.aasm_state %></small></p>
+
+<hr>
+
+<h3>Transfer Details</h3>
+
+<table class="table--autosize">
+  <tbody>
+    <tr>
+      <td style="text-align: right;">Requested at:</td>
+      <td><%= format_datetime @paypal_transfer.created_at %></td>
+    </tr>
+    <tr>
+      <td style="text-align: right;">Sent To:</td>
+      <td><%= @paypal_transfer.recipient_name %></td>
+    </tr>
+    <tr>
+      <td style="text-align: right;">PayPal Email:</td>
+      <td><%= @paypal_transfer.recipient_email %></td>
+    </tr>
+    <tr>
+      <td style="text-align: right;">Memo:</td>
+      <td><%= @paypal_transfer.memo %></td>
+    </tr>
+    <tr>
+      <td style="text-align: right;">Payment Purpose:</td>
+      <td><%= @paypal_transfer.payment_for %></td>
+    </tr>
+    <% if @paypal_transfer.reimbursement_payout_holding.present? %>
+      <tr>
+        <td style="text-align: right;">Reimbursement report:</td>
+        <td><%= link_to @paypal_transfer.reimbursement_payout_holding.report.name, @paypal_transfer.reimbursement_payout_holding.report %></td>
+      </tr>
+    <% end %>
+    <tr>
+      <td style="text-align: right;">Amount:</td>
+      <td><%= render_money @paypal_transfer.amount %></td>
+    </tr>
+  </tbody>
+</table>
+
+<%= render partial: "receipts/receipt", collection: @paypal_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
+
+<hr>
+
+<% if @paypal_transfer.pending? %>
+  <%= button_to "💸 Approve and send transfer", approve_paypal_transfer_path(@paypal_transfer), method: :post, data: { confirm: "Have you manually sent this transfer? HCB doesn't programmatically send PayPal transfers." } %>
+  <%= button_to "Reject", reject_paypal_transfer_path(@paypal_transfer) %>
+<% else %>
+  <p>This transfer has been <b><%= @paypal_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
+  <%= button_to "Reject as failed", reject_paypal_transfer_path(@paypal_transfer) %>
+<% end %>

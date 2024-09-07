@@ -15,6 +15,11 @@
     <%= form.select :demo_mode, [["Both", "both"], ["Full", "full"], ["Demo", "demo"]], selected: @demo_mode %>
   <% end %>
 
+  <%= form.label :active do %>
+    Active
+    <%= form.select :active, [["Both", "both"], ["Inactive", "inactive"], ["Active", "active"]], selected: @active %>
+  <% end %>
+
   <%= form.label :hidden do %>
     Hidden
     <%= form.select :hidden, [["Both", "both"], ["Not Hidden", "not_hidden"], ["Hidden", "hidden"]], selected: @hidden %>
@@ -50,14 +55,14 @@
     <%= form.date_field :activity_since, value: @activity_since_date %>
   <% end %>
 
+  <%= form.label :plan_type do %>
+    Current Plan
+    <%= form.select :plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan_type } %>
+  <% end %>
+
   <%= form.label :sort_by do %>
     Sort By
     <%= form.select :sort_by, [["Balance Ascending", "balance_asc"], ["Balance Descending", "balance_desc"], ["Date Descending", "date_desc"]], selected: @sort_by %>
-  <% end %>
-
-  <%= form.label :fee do %>
-    Current Fee
-    <%= form.select :fee, Event.unscoped.select(:sponsorship_fee).distinct.pluck(:sponsorship_fee).sort.map { |fee| [number_to_percentage(fee * 100, strip_insignificant_zeros: true), fee] }, { include_blank: "all", selected: @fee } %>
   <% end %>
 
   <%= form.label :tagged_with do %>

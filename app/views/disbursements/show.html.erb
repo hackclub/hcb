@@ -3,7 +3,7 @@
 <% render "events/nav" %>
 
 <% admin_tool("mt3 mb0") do %>
-  <%= link_to "All disbursements", disbursements_path, class: "breadcrumb" %>
+  <%= link_to "All disbursements", disbursements_admin_index_path, class: "breadcrumb" %>
 <% end %>
 
 <% admin_tool do %>
@@ -72,17 +72,31 @@
         <%= format_datetime @disbursement.created_at %>
       </p>
 
-    <% if @disbursement.fulfilled? %>
-      <p>
-        <strong>Confirmation letter</strong>
-          <span class="muted">
-            <a href="/disbursements/<%= @disbursement.id %>/confirmation.pdf" target="_blank">
-            <%= organizer_signed_in? ? "View confirmation letter" : "Sign in to view" %>
-            </a>
-          </span>
-      </p>
-    <% end %>
+      <% if @hcb_code.disbursement.scheduled_on.present? %>
+        <% admin_tool("", "p") do %>
+          <strong>Scheduled for</strong>
+          <%= @disbursement.scheduled_on.strftime("%B %e, %Y") %>
+        <% end %>
+      <% end %>
+
+      <% if @disbursement.fulfilled? %>
+        <p>
+          <strong>Confirmation letter</strong>
+            <span class="muted">
+              <a href="/disbursements/<%= @disbursement.id %>/confirmation.pdf" target="_blank">
+              <%= organizer_signed_in? ? "View confirmation letter" : "Sign in to view" %>
+              </a>
+            </span>
+        </p>
+      <% end %>
+
     </section>
+
+    <% if @disbursement.scheduled? %>
+      <% admin_tool("mt2") do %>
+        <%= button_to "Cancel transfer", disbursement_cancel_path(@disbursement), class: "btn bg-error" %>
+      <% end %>
+    <% end %>
 
     <% if @disbursement.pending? %>
       <% admin_tool("mt2") do %>

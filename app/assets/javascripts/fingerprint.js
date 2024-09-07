@@ -1,9 +1,8 @@
-//= require ua-parser-js
-
-;(async () => {
+; (async () => {
   const csrfTokenSelector = document.querySelector('[name=csrf-token]')
   let token = ''
   if (csrfTokenSelector && csrfTokenSelector.content) {
+    // eslint-disable-next-line no-unused-vars
     token = csrfTokenSelector.content
   }
 
@@ -12,6 +11,7 @@
   )
   const result = await fp.get()
 
+  // eslint-disable-next-line no-undef
   const parser = new UAParser()
   const visitorId = result.visitorId
   parser.setUA(navigator.userAgent)

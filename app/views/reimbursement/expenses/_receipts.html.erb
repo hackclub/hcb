@@ -30,7 +30,7 @@
             <% if policy(expense).update? %>
               <div class="card card--sunken bg-transparent flex flex-col items-center justify-center g1 p-0 h-100" id="link_receipt__form" style="min-width: 200px">
                   <label for="file_<%= expense.id %>" class="w-full flex-grow h-full flash info flex items-center justify-center cursor-pointer" id="upload-receipt-button" style="transform: scale(1)!important; box-shadow: none;">
-                    <%= inline_icon "share" %>
+                    <%= inline_icon "cloud-upload" %>
                     <span>Upload</span>
                   </label>
                 <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
@@ -48,7 +48,7 @@
         <div class="card card--sunken flex flex-col items-center justify-center g2 h-100" id="link_receipt__form">
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
             <label for="file_<%= expense.id %>" class="btn m1" id="upload-receipt-button">
-              <%= inline_icon "share" %>
+              <%= inline_icon "cloud-upload" %>
               <span>Upload</span>
             </label>
           </span>

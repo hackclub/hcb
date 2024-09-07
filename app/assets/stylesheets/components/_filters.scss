@@ -3,7 +3,7 @@
 
 .pagination,
 .filterbar {
-  padding: 1rem 0;
+  padding: 0.75rem 0;
   align-self: center;
 }
 
@@ -32,8 +32,11 @@
   padding: 0.25rem 0.75rem;
   position: relative;
   text-decoration: none;
-  transition: color 0.125s ease-in-out, background-image 0.125s ease-in-out,
-    box-shadow 0.125s ease-in-out, transform 0.125s ease-in-out;
+  transition:
+    color 0.125s ease-in-out,
+    background-image 0.125s ease-in-out,
+    box-shadow 0.125s ease-in-out,
+    transform 0.125s ease-in-out;
 
   &:focus {
     color: map-get($palette, info);

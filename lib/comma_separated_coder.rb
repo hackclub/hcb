@@ -2,7 +2,7 @@
 
 class CommaSeparatedCoder
   def self.load(value)
-    value&.split(/,\s*/) || []
+    value&.strip&.split(/,\s*/) || []
   end
 
   def self.dump(value)
@@ -10,7 +10,7 @@ class CommaSeparatedCoder
       value.join(",")
     elsif value.is_a?(String)
       value
-    end
+    end.strip
   end
 
 end

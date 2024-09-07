@@ -1,114 +1,118 @@
 .partner-logo-left {
-    animation-delay: 7s;
-    animation: fadeInLeft 6s;
+  animation-delay: 7s;
+  animation: fadeInLeft 6s;
 }
 
 .partner-logo-right {
-    animation-delay: 7s;
-    animation: fadeInRight 6s;
+  animation-delay: 7s;
+  animation: fadeInRight 6s;
 }
 
 @keyframes fadeInUp {
-    50% {
-        opacity: 0;
-        transform: translateY(60%);
-    }
+  50% {
+    opacity: 0;
+    transform: translateY(60%);
+  }
 
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeInDown {
-    50% {
-        opacity: 0;
-        transform: translateY(-20%);
-    }
+  50% {
+    opacity: 0;
+    transform: translateY(-20%);
+  }
 
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeInLeft {
-    50% {
-        opacity: 0;
-        transform: translateX(-20%);
-    }
+  50% {
+    opacity: 0;
+    transform: translateX(-20%);
+  }
 
-    100% {
-        opacity: 1;
-        transform: translateX(0);
-    }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes fadeInRight {
-    50% {
-        opacity: 0;
-        transform: translateX(20%);
-    }
+  50% {
+    opacity: 0;
+    transform: translateX(20%);
+  }
 
-    100% {
-        opacity: 1;
-        transform: translateX(0);
-    }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Background gradient on signup form */
 /* Styles from https://github.com/hackclub/apply/blob/main/styles/app.css */
 
 .gradient--bg {
-    background-color: #e6f4fc;
-    background-image: linear-gradient(128deg, rgba(255, 0, 0, 0.0625), rgba(0, 255, 255, 0.125));
-    background-blend-mode: overlay;
-    animation: backgroundAnimation 48s linear infinite;
+  background-color: #e6f4fc;
+  background-image: linear-gradient(
+    128deg,
+    rgba(255, 0, 0, 0.0625),
+    rgba(0, 255, 255, 0.125)
+  );
+  background-blend-mode: overlay;
+  animation: backgroundAnimation 48s linear infinite;
 }
 @keyframes backgroundAnimation {
-    0% {
-        background-color: rgb(230, 244, 252);
-    }
-    8.33333% {
-        background-color: rgb(235, 237, 252);
-    }
-    16.6667% {
-        background-color: rgb(242, 235, 252);
-    }
-    25% {
-        background-color: rgb(250, 235, 252);
-    }
-    33.3333% {
-        background-color: rgb(252, 235, 246);
-    }
-    41.6667% {
-        background-color: rgb(252, 235, 237);
-    }
-    50% {
-        background-color: rgb(252, 239, 231);
-    }
-    58.3333% {
-        background-color: rgb(251, 249, 227);
-    }
-    66.6667% {
-        background-color: rgb(234, 252, 231);
-    }
-    75% {
-        background-color: rgb(231, 252, 239);
-    }
-    83.3333% {
-        background-color: rgb(231, 252, 250);
-    }
-    91.6667% {
-        background-color: rgb(249, 249, 250);
-    }
-    100% {
-        background-color: rgb(230, 244, 252);
-    }
+  0% {
+    background-color: rgb(230, 244, 252);
+  }
+  8.33333% {
+    background-color: rgb(235, 237, 252);
+  }
+  16.6667% {
+    background-color: rgb(242, 235, 252);
+  }
+  25% {
+    background-color: rgb(250, 235, 252);
+  }
+  33.3333% {
+    background-color: rgb(252, 235, 246);
+  }
+  41.6667% {
+    background-color: rgb(252, 235, 237);
+  }
+  50% {
+    background-color: rgb(252, 239, 231);
+  }
+  58.3333% {
+    background-color: rgb(251, 249, 227);
+  }
+  66.6667% {
+    background-color: rgb(234, 252, 231);
+  }
+  75% {
+    background-color: rgb(231, 252, 239);
+  }
+  83.3333% {
+    background-color: rgb(231, 252, 250);
+  }
+  91.6667% {
+    background-color: rgb(249, 249, 250);
+  }
+  100% {
+    background-color: rgb(230, 244, 252);
+  }
 }
 
 html[data-dark='true'] {
-    .gradient--bg {
-        animation: none;
-    }
+  .gradient--bg {
+    animation: none;
+  }
 }

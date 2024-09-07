@@ -25,6 +25,10 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_user
   end
 
+  def topup?
+    admin_or_user
+  end
+
   def admin_or_user
     user&.admin? || record.event.users.include?(user)
   end

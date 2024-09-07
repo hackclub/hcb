@@ -1,8 +1,10 @@
+<%# locals: (klass: "") -%>
+
 <div id="flash-container">
   <% flash.to_h.except("confetti", "confetti_emojis", "popover").each do |key, value| %>
     <article
       role="alertdialog"
-      class="flash flex items-center mt3 mb2 mx-auto shrink-none <%= key %>"
+      class="flash flex items-center mt3 mb2 mx-auto shrink-none <%= key %> <%= klass %>"
       data-behavior="flash"
       data-turbo-temporary>
       <span style="flex-grow: 1">

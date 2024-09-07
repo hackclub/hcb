@@ -38,7 +38,7 @@
   <ul class="list">
     <% @sponsor.invoices.each do |invoice| %>
       <%= link_to invoice_path(invoice) do %>
-        <li class="transaction--<%= invoice.paid_v2? ? "positive" : "negative" %>">
+        <li>
           <strong>
             <%= render_money invoice.total %> – <span class="<%= invoice.paid_v2? ? "success" : "error" %>">
               <%= invoice.paid_v2? ? "PAID" : "UNPAID" %>

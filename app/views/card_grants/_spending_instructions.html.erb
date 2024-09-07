@@ -40,7 +40,11 @@
           <strong>Billing address</strong>
           <%= render_address stripe_card.cardholder %>
         </p>
-
+      </section>
+      <section class="card__banner card__banner--bottom card__darker pt2 pb2">
+        <p class="muted mt0 mb0">
+          The card will be available for use until <%= format_date card_grant.expires_on %>. Afterward, the remaining funds will be returned to <%= card_grant.event.name %>.
+        </p>
       </section>
     </div>
   </div>

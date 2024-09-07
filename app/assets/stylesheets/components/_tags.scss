@@ -1,0 +1,101 @@
+.tags__radio {
+  display: inline-block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.tag__preview {
+  @extend .tag-darker;
+  width: 0.7rem;
+  height: 0.7rem;
+  flex-shrink: 0;
+  border-radius: 100%;
+  margin-right: 0.5rem;
+}
+
+.radio__control {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+  border-radius: 50%;
+  position: relative;
+}
+
+.radio__control:after {
+  content: '✔';
+  display: block;
+  border-radius: 50%;
+  font-size: 24px;
+  color: #000;
+  transition: color 0.2s;
+  transform: scale(0);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding-top: 0.05rem;
+
+  [data-dark='true'] & {
+    color: #fff;
+  }
+}
+
+.tags__radio input[type='radio'] {
+  position: absolute;
+  opacity: 0;
+}
+
+.tags__radio input[type='radio']:checked + .radio__control:after {
+  transform: scale(1) translate(-50%, -50%);
+}
+
+.tags__radio input[type='radio']:focus + .radio__control {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.tags:has(> div) {
+  margin-top: 4px;
+}
+
+$colors: (
+  muted: $muted,
+  red: $red,
+  orange: $orange,
+  yellow: $yellow,
+  green: $green,
+  cyan: $cyan,
+  blue: $blue,
+  purple: $purple,
+);
+
+@each $name, $color in $colors {
+  .tag-#{'' + $name},
+  .badge.tag-#{'' + $name} {
+    background-color: lighten($color, 30%);
+    color: darken($color, 30%);
+
+    &.tag-darker {
+      background-color: lighten($color, 10%);
+    }
+
+    &.badge.tag-muted {
+      background: rgba(lighten($color, 30%), 0.45);
+    }
+
+    [data-dark='true'] & {
+      background-color: darken($color, 30%);
+      color: lighten($color, 30%);
+
+      &.tag-muted {
+        background: rgba(mix($color, $muted, 50%), 0.2);
+      }
+
+      &.tag-darker {
+        background-color: saturate(darken($color, 5%), 50%);
+
+        &.tag-muted {
+          background-color: darken($color, 25%);
+        }
+      }
+    }
+  }
+}

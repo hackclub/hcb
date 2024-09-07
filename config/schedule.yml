@@ -5,6 +5,10 @@ g_suite_mark_verifieds_job:
 g_suite_verify_all_job:
   cron: "0 */1 * * *" # run every 1 hour
   class: "GSuiteJob::VerifyAll"
+
+g_suite_scan_verified_dns_job:
+  cron: "0 12 * * *" # run every 1 day
+  class: "GSuiteJob::ScanVerifiedDns"
   
 pending_transaction_engine_nightly_job:
   cron: "0 */3 * * *" # run every 3 hour
@@ -42,6 +46,11 @@ disbursement_nightly_job:
   cron: "0 0 * * *" # run every 1 day.
   class: "DisbursementJob::Nightly"
 
+disbursement_daily_job:
+  cron: "0 13 * * *" # runs at 9am ET
+  class: "DisbursementJob::Daily"
+  queue: "default"
+
 disbursement_hourly_job:
   cron: "*/30 * * * *" # run every 30 minutes
   class: "DisbursementJob::Hourly"
@@ -67,7 +76,7 @@ payout_nightly_job:
   class: "PayoutJob::Nightly"
 
 reimbursement_nightly_job:
-  cron: "0 * * * *" # run every hour
+  cron: "*/5 * * * *" # run every 5 minutes
   class: "ReimbursementJob::Nightly"
 
 bank_fee_nightly_job:
@@ -94,8 +103,12 @@ receipt_report_monthly_job:
   cron: "0 0 3 * *" # run first day of each month
   class: "ReceiptReportJob::Monthly"
 
-column_statement_monthly_job:
+column_reporting_monthly_job:
   cron: "0 0 1 * *" # run first day of each month
+  class: "Column::ReportingJob"
+
+column_statement_monthly_job:
+  cron: "0 0 3 * *" # run third day of each month
   class: "Column::StatementJob"
 
 stripe_card_nightly_job:
@@ -130,3 +143,19 @@ ledger_audit_weekly_job:
 send_admin_reminders_job:
   cron: "0 7 * * *" # run at 7am UTC each morning
   class: "SendAdminRemindersJob"
+
+gauge_online_user_count_job:
+  cron: "*/5 * * * *" # Every 5 minutes
+  class: "StatsdJob::GaugeOnlineUserCount"
+
+transaction_report_job:
+  cron: "0 5 * * mon" # 5 AM every Monday
+  class: "TransactionReportJob"
+
+headway_job:
+  cron: "*/5 * * * *"
+  class: "HeadwayJob"
+
+user_job_sync_to_loops:
+  cron: "0 7 * * *" # run every 1 day
+  class: "UserJob::SyncToLoops"

@@ -1,14 +1,14 @@
 <% style = card_shipping_map_url(stripe_card) ?
             "background: linear-gradient(to bottom, rgba(20, 20, 20, 0.75), rgba(0, 0, 9, 0.5)), url(#{card_shipping_map_url(stripe_card)}); height: 250px"
-            : "" %>
+            : nil %>
 
-<div class="card p0 flex flex-col justify-between smoke" style="<%= style %>">
+<div class="card p0 flex flex-col justify-between <%= "smoke" if style %>" style="<%= style %>">
   <h3 class="m0 p2 inline-flex items-baseline g1" style="flex-wrap: wrap;">
     Card for
     <% if @event %>
-      <%= user_mention stripe_card.user, { class: "smoke" } %>
+      <%= user_mention stripe_card.user, { class: style ? "smoke" : "", disable_tooltip: true } %>
     <% else %>
-      <%= link_to stripe_card.event.name, stripe_card.event, class: "smoke" %>
+      <%= link_to stripe_card.event.name, stripe_card.event, class: style ? "smoke" : "" %>
     <% end %>
     is on the way!
   </h3>

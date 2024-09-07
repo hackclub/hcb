@@ -1,7 +1,0 @@
-<%= turbo_frame_tag "/my/draft_reimbursements_icon" do %>
-  <% if (@draft_reimbursements_count + @review_requested_reimbursements_count) != 0 %>
-    <div class="dock__item--badge">
-      <%= @draft_reimbursements_count + @review_requested_reimbursements_count %>
-    </div>
-  <% end %>
-<% end %>

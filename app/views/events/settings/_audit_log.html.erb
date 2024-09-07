@@ -1,0 +1,16 @@
+<ul class="list-reset comments w-100 my-0 pb-2 overflow-y-scroll" style="margin-top: -8px">
+  <%= turbo_stream_from current_user, @event, "activities" %>
+  <turbo-frame id="activities-<%= @activities.current_page %>" target="_top">
+    <%= render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
+    <% if @activities.next_page %>
+      <%= turbo_frame_tag(
+            "activities-#{@activities.next_page}",
+            loading: :lazy,
+            src: "/#{event.slug}/settings/audit_log?page=#{@activities.next_page}",
+            target: "_top"
+          ) do %>
+        <i class="muted block text-center">Loading more activities...</i>
+      <% end %>
+    <% end %>
+  </turbo-frame>
+</ul>

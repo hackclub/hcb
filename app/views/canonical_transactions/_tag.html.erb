@@ -1,6 +1,6 @@
-<div class="badge tx-tag m0 shrink-none flex items-center" id="<%= tag_dom_id(hcb_code, tag) %>" data-tag="<%= tag.id %>">
-  <%= tag.label %>
-  <% if organizer_signed_in? %>
+<div class="badge tx-tag m0 shrink-none flex items-center tag-<%= tag.color || "muted" %>" id="<%= tag_dom_id(hcb_code, tag) %>" data-tag="<%= tag.id %>">
+  <span><%= tag.label %></span>
+  <% if local_assigns[:streamed] || organizer_signed_in? %>
     <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
       <%= inline_icon "view-close", size: 16 %>
     <% end %>

@@ -35,41 +35,68 @@
       <%= form.text_area :message, placeholder: "Keep up the good work!", required: false %>
     </div>
 
-    <div class="field">
-      <% if !@event.country_US? %>
-        <%= form.label :amount, "Donation amount (USD)" %>
-      <% else %>
-        <%= form.label :amount, "Donation amount" %>
-      <% end %>
-      <div class="flex items-center">
-        <span class="bold muted shrink-none" style="width: 1rem;">$</span>
-        <%= form.number_field :amount,
-                              value: (donation.amount.nil? ? nil : ("%.2f" % (donation.amount.to_f / 100))),
-                              placeholder: @placeholder_amount,
-                              step: 0.01,
-                              min: 1, # Limitations placed by Stripe
-                              max: 999_999.99, # Limitations placed by Stripe
-                              required: true, class: "fit w-100",
-                              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
-        <% if @monthly %>
-          <span class="muted nowrap ml1">/ month</span>
+    <div x-data="{
+        amount: null,
+        get additionalAmountToCoverFee() {
+            if (this.amount && !isNaN(this.amount)) {
+                return (Math.ceil(((this.amount / (1 - <%= @event.revenue_fee %>)) - this.amount) * 100) / 100).toFixed(2);
+            }
+            return '0.00';
+        }
+    }">
+      <div class="field">
+        <% if !@event.country_US? %>
+          <%= form.label :amount, "Donation amount (USD)" %>
+        <% else %>
+          <%= form.label :amount, "Donation amount" %>
         <% end %>
+        <div class="flex items-center">
+          <span class="bold muted shrink-none" style="width: 1rem;">$</span>
+          <%= form.number_field :amount,
+                                value: (donation.amount.nil? ? nil : ("%.2f" % (donation.amount.to_f / 100))),
+                                placeholder: @placeholder_amount,
+                                step: 0.01,
+                                min: 1, # Limitations placed by Stripe
+                                max: 999_999.99, # Limitations placed by Stripe
+                                required: true, class: "fit w-100",
+                                "@input": "amount = $event.target.value",
+                                data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+          <% if @monthly %>
+            <span class="muted nowrap ml1">/ month</span>
+          <% end %>
+        </div>
       </div>
+
+      <div class="field field--checkbox mb0">
+        <%= form.check_box :goods, style: "margin-left: 0;", checked: !donation&.tax_deductible %>
+        <%= form.label :goods, "I'm receiving goods for this donation.", style: "display: inline; flex-grow: 1;", checked: !donation.tax_deductible %>
+        <a class="tooltipped tooltipped--w link--ignore flex" aria-label='Per IRS guidelines, for a contribution to be tax-deductible<%= " in the US" unless @event.country_US? %>, you agree that no goods or services will be provided in return for this gift. Please leave this box blank if making a tax-deductible donation that you will receive no goods or services for.' tabindex="0">
+          <%= inline_icon "info", width: 24 %>
+        </a>
+      </div>
+
+      <% if @event.config.cover_donation_fees && @event.revenue_fee > 0 %>
+        <div class="field field--checkbox mb0">
+          <%= form.check_box :fee_covered, style: "margin-left: 0;" %>
+          <%= form.label :fee_covered, style: "display: inline; flex-grow: 1;" do %>
+            <span x-text="'Add $' + additionalAmountToCoverFee + ' to cover all fees'"></span>
+          <% end %>
+          <a class="tooltipped tooltipped--w link--ignore flex" aria-label="By clicking this box, you are covering fiscal sponsorship and credit card processing fees." tabindex="0">
+            <%= inline_icon "info", width: 24 %>
+          </a>
+        </div>
+      <% end %>
     </div>
 
-    <% if Flipper.enabled?(:anonymous_donations_2024_01_29, @event) %>
-      <div class="field field--checkbox mb2">
+    <% if @event.config.anonymous_donations %>
+      <div class="field field--checkbox mb0">
         <%= form.check_box :anonymous, style: "margin-left: 0;" %>
-        <%= form.label :anonymous, "Keep my donation private", style: "display: inline; flex-grow: 1;" %>
+        <%= form.label :anonymous, "Keep my donation private.", style: "display: inline; flex-grow: 1;" %>
         <a class="tooltipped tooltipped--w link--ignore flex" aria-label='When you donate anonymously, you will appear as "Anonymous donor" on public pages. Team members, however, can still see your name.' tabindex="0">
           <%= inline_icon "info", width: 24 %>
         </a>
       </div>
     <% end %>
-
-    <p class="muted h5 mt2 mb1">
-      Your contribution is tax-deductible<% if !@event.country_US? %> in the US<% end %>.
-    </p>
 
     <% if @background.present? %>
       <%# @background is defined in the donations controller's check_background_param method %>
@@ -79,9 +106,9 @@
     <% end %>
 
     <% if @event.demo_mode? %>
-      <%= form.submit "Continue →", class: "w-100 bg-success", disabled: "true" %>
+      <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: "true" %>
     <% else %>
-      <%= form.submit "Continue →", class: "w-100 bg-success" %>
+      <%= form.submit "Continue →", class: "w-100 bg-success mt1" %>
     <% end %>
   <% end %>
 <% end %>

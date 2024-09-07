@@ -16,7 +16,7 @@ class User
       SuggestedPairing
         .unreviewed
         .where(receipt_id: @receipts.ids - ineligible_receipt_ids)
-        .where("distance <= ?", 1500) # With at least a certain confidence level
+        .where("distance <= ?", 50) # With at least a certain confidence level
         # Only get the closest pairing for each receipt
         .order(:receipt_id, distance: :asc)
         .select("DISTINCT ON (receipt_id) suggested_pairings.*")

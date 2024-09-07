@@ -7,7 +7,7 @@
           <ul class="list-reset">
             <% version.changeset.excluding("updated_at").select { |field, changes| changes.any?(&:present?) }.each do |field, changes| %>
               <li>
-                <%= field.humanize %>: <%= render_audit_log_value(field, changes[0], color: "primary") %> → <%= render_audit_log_value(field, changes[1], color: "success") %></li>
+                <%= render_audit_log_field(field) %>: <%= render_audit_log_value(field, changes[0], color: "primary") %> → <%= render_audit_log_value(field, changes[1], color: "success") %></li>
             <% end %>
           </ul>
         <% end %>

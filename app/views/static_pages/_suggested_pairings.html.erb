@@ -1,12 +1,12 @@
-<div id="suggested_pairings">
+<%= turbo_frame_tag "suggested_pairings" do %>
   <% if local_assigns[:pairings].any? %>
-    <div class="card carousel__wrapper" style="overflow: unset;">
-      <div style="background-color: #ec375044; margin: -16px; padding: 16px; margin-bottom: 0px; border-radius: 0.5rem 0.5rem 0rem 0rem;">
+    <div class="card carousel__wrapper" style="overflow: unset; border: 1px solid var(--ai);">
+      <div style="margin: -16px; padding: 16px; margin-bottom: 0px; border-radius: 0.5rem 0.5rem 0rem 0rem;" class="bg-snow dark:bg-dark">
         <span tabindex="0" onclick="this.parentElement.parentElement.remove();" class="pointer">
           <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
         </span>
         <div style="display: flex; padding-right: 32px;">
-          <h2 class="h2 mt0 mb0 pb0 border-none"><%= inline_icon "rep", size: 36, style: "margin: -8px; margin-right: 0px;" %> Suggested pairing</h2>
+          <h2 class="h2 mt0 mb0 pb0 border-none ai"><%= inline_icon "rep", size: 36, style: "margin: -8px; margin-right: 0px;" %> Suggested pairing</h2>
           <span style="flex-grow: 1;"></span>
           <span style="line-height: 0px; display: flex; align-items: center;">
             <span>
@@ -29,9 +29,9 @@
             <%= image_tag asset_path("link-arrow.svg"), width: 200, height: 100, style: "object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100px;" %>
           </div>
 
-          <div class="flex flex-col justify-center" style="max-width: 100%; overflow-x: scroll; flex-grow: 1;">
+          <div class="flex flex-col justify-center" style="max-width: 100%; flex-grow: 1;">
             <div class="card p0">
-              <h2 class="heading line-height-4 p1 pl2 mt0 ml0 flex justify-between items-center">
+              <h2 class="heading dark:bg-dark line-height-4 p1 pl2 mt0 ml0 flex justify-between items-center">
                 <%= pairing.hcb_code.stripe_card.event.name %>
 
                 <%= link_to pairing.hcb_code.stripe_card, class: "regular h3 mention flex items-center" do %>
@@ -56,6 +56,12 @@
                 </table>
               </div>
 
+              <% if pairing.receipt.suggested_memo %>
+                <div class="p1 pl2">
+                  <%= inline_icon "rep", size: 24, style: "margin: -6px; margin-right: 0px; color: var(--ai);" %> Suggested memo rename: <strong><%= pairing.receipt.suggested_memo %></strong>
+                </div>
+              <% end %>
+
             </div>
           </div>
         </div>
@@ -63,28 +69,43 @@
         <div class="lg-hide m2"></div>
 
         <div class="flex flex-row justify-end xs-hide sm-hide" style="margin-top: 16px;">
-          <%= link_to ignore_suggested_pairing_path(pairing), method: :post, class: "btn tooltipped tooltipped--n", "aria-label": "Ignore suggestion" do %>
+          <%= link_to ignore_suggested_pairing_path(pairing), method: :post, class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion" do %>
             <%= inline_icon "view-close", size: 32 %>
             <span>Ignore</span>
           <% end %>
-          <%= link_to accept_suggested_pairing_path(pairing), method: :post, class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction" do %>
+          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} tooltipped ml1 tooltipped--n", "aria-label": "Ignore suggestion", data: { turbo: true, turbo_method: :POST } do %>
             <%= inline_icon "link", size: 32 %>
             <span>Accept</span>
+          <% end %>
+          <% if pairing.receipt.suggested_memo %>
+            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" } do %>
+              <%= inline_icon "edit", size: 32 %>
+              <span>Accept with memo</span>
+            <% end %>
           <% end %>
         </div>
 
         <div class="flex flex-row justify-center md-hide lg-hide">
-          <%= link_to ignore_suggested_pairing_path(pairing, current_slide: i), class: "btn tooltipped tooltipped--n", "aria-label": "Ignore suggestion", data: { "turbo": "true", "turbo-method": "post" } do %>
+          <%= link_to ignore_suggested_pairing_path(pairing, current_slide: i), class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion", data: { "turbo": "true", "turbo-method": "post" } do %>
             <%= inline_icon "view-close", size: 32 %>
             <span>Ignore</span>
           <% end %>
 
-          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { "turbo": "true", "turbo-method": "post" } do %>
+          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" } do %>
             <%= inline_icon "link", size: 32 %>
             <span>Accept</span>
           <% end %>
         </div>
+
+        <% if pairing.receipt.suggested_memo %>
+          <div class="flex flex-row justify-center md-hide lg-hide mt-2">
+            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :POST } do %>
+              <%= inline_icon "edit", size: 32 %>
+              <span>Accept with memo</span>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
     </div>
   <% end %>
-</div>
+<% end %>

@@ -1,0 +1,85 @@
+<% title "Card Designs" %>
+<%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
+
+<h2 class="flex">
+  <span class="flex-grow">Common Designs</span>
+  <%= link_to "New Design", stripe_card_personalization_design_new_admin_index_path, class: "btn" %>
+</h2>
+
+<%= page_entries_info @common_designs, entry_name: "common design" %>
+
+<article class="mixed-grid grid--spacious mt2">
+  <% @common_designs.each do |design| %>
+    <%= turbo_frame_tag design, src: stripe_cards_personalization_design_path(design) do %>
+      Loading...
+    <% end %>
+  <% end %>
+</article>
+
+<h2>All Designs</h2>
+
+<%= form_with local: true, url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select an event", selected: @event_id }, { width: 384, style: "max-width: 384px" }) %>
+  <%= form.label :pending, class: "mt2 mb2", style: "display: block" do %>
+    <%= form.check_box :pending, checked: @pending %>
+    Awaiting Stripe Approval
+  <% end %>
+  <%= form.submit "Search" %>
+<% end %>
+
+<%= paginate @designs %>
+
+<%= page_entries_info @designs, entry_name: "event design" %>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Date</th>
+      <th>Organization</th>
+      <th>Name</th>
+      <th>Stripe Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @designs.each do |design| %>
+      <tr class="<%= "admin-bg-pending" if design.under_review? %>">
+        <td><%= design.id %></td>
+        <td><%= design.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <% if design.event.present? %>
+            <%= link_to event_path(design.event) do %>
+              <%= design.event.name.upcase %>
+            <% end %>
+          <% elsif design.common? %>
+            Common
+          <% else %>
+            <%= inline_icon "private", size: 20, style: "vertical-align: text-bottom;" %>
+            Private
+          <% end %>
+        </td>
+        <td>
+          <%= design.name_without_id %>
+        </td>
+        <td><%= design.stripe_status&.titleize || "Unknown" %></td>
+        <td>
+          <%= link_to "Preview", stripe_cards_personalization_design_path(design), target: :_blank %>
+          |
+          <% unless design.event&.present? %>
+            <% if design.common? %>
+              <%= link_to "Make Private", make_private_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) private? It will hide it from the card creation menu for all users.", turbo_method: :post } %>
+            <% else %>
+              <%= link_to "Make Public", make_common_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) public? It will show it in the card creation menu for all users.", turbo_method: :post } %>
+            <% end %>
+            |
+          <% end %>
+          <%= link_to "View on Stripe", design.stripe_dashboard_url, target: "_blank" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @designs %>

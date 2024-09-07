@@ -6,7 +6,7 @@
         <%= turbo_frame_tag @hcb_code do %>
           <%= pop_icon_to "edit",
               edit_hcb_code_path(@hcb_code),
-              class: "mr2 align-middle", "aria-label": "Rename transaction",
+              class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
               data: { turbo: true } %>
 
           <span class="align-middle"
@@ -38,14 +38,14 @@
 
     <% if Flipper.enabled?(:transaction_tags_2022_07_29, (@event || @hcb_code.event)) %>
       <section class='details pt2 pb2'>
-        <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+        <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
       </section>
     <% end %>
 
     <section class="card__banner secondary border-top">
       <p class="my0 italic">
         <% if @hcb_code.amount.negative? %>
-          HCB is charging <strong><%= number_to_percentage(@hcb_code.event.sponsorship_fee * 100, significant: true, strip_insignificant_zeros: true) %></strong> of revenue.
+          HCB is charging <strong><%= number_to_percentage(@hcb_code.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true) %></strong> of revenue.
         <% else %>
           This is a credit for fees previously charged by HCB.
         <% end %>

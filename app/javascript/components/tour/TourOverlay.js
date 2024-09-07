@@ -63,7 +63,6 @@ function TourOverlay(props) {
   const tour = props.tour && tours[props.tour](props.options)
 
   useEffect(() => {
-    // eslint-disable-next-line no-extra-semi
     ;(async () => {
       if (props.tour && currentStep < tour.length) {
         await fetch(`/tours/${props.id}/set_step`, {

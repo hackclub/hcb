@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+
 // BK is our global namespace for utilities
 const BK = {
   blocked: false,
@@ -21,9 +23,9 @@ BK.isDark = () => {
     return (
       localStorage.getItem('dark') === 'true' ||
       document.getElementsByTagName('html')[0].getAttribute('data-dark') ===
-        'true'
+      'true'
     )
-  } catch (e) {
+  } catch {
     return false
   }
 }
@@ -50,7 +52,6 @@ BK.styleDark = theme => {
     ?.setAttribute('content', theme ? '#17171d' : '#f9fafc')
   BK.s('toggle_theme').find('svg').toggle()
   // Calling getComputedStyle forces the browser to redraw
-  const _ = window.getComputedStyle(css).opacity
   document.head.removeChild(css)
 }
 BK.toggleDark = () => {
@@ -101,19 +102,6 @@ $(document).ready(() => {
     }
   }, 3000)
 })
-
-// https://css-tricks.com/snippets/jquery/get-query-params-object/
-BK.getQueryParams = () => {
-  const result = {}
-  const kvPairs = window.location.search.substr(1).split('&')
-  for (let i = 0; i < kvPairs.length; i++) {
-    const [k, v] = kvPairs[i].split('=')
-    if (k) {
-      result[k] = decodeURIComponent(v)
-    }
-  }
-  return result
-}
 
 BK.money = amount => {
   if (typeof amount !== 'number') return '–'

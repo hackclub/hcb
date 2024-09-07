@@ -52,7 +52,7 @@ export const generateEventActions = data => {
     })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-account-number`,
-      name: 'Account & routing number',
+      name: 'Account numbers',
       perform: () =>
         (window.location.pathname = `/${event.slug}/account-number`),
       icon: <Icon glyph="bank-account" size={16} />,
@@ -80,6 +80,13 @@ export const generateEventActions = data => {
       icon: <Icon glyph="payment-transfer" size={16} />,
       parent: event.slug,
       keywords: 'ach check',
+    })),
+    ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-reimbursements`,
+      name: 'Reimbursements',
+      perform: navigate(`/${event.slug}/reimbursements`),
+      icon: <Icon glyph="attachment" size={16} />,
+      parent: event.slug,
     })),
     ...data.map(event => ({
       id: `${event.slug}-team`,
@@ -247,7 +254,7 @@ export const adminActions = adminUrls => [
     priority: Priority.HIGH,
     name: 'PayPal',
     icon: <Icon glyph="grid" size={16} />,
-    perform: () => (window.location.href = adminUrls['PayPal']),
+    perform: () => (window.location.href = '/admin/paypal_transfers'),
   },
   {
     id: 'admin_tool_9',
@@ -414,7 +421,7 @@ export const adminActions = adminUrls => [
     id: 'admin_tool_29',
     section: 'Admin Tools',
     priority: Priority.HIGH,
-    name: 'Google Workspace Waitlist',
+    name: 'Google Workspace waitlist',
     icon: <Icon glyph="google" size={16} />,
     perform: () =>
       (window.location.href = adminUrls['Google Workspace Waitlist']),

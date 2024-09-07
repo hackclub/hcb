@@ -1,7 +1,26 @@
 <%# locals: (stripe_card:, hcb_codes:) %>
 
 <% if hcb_codes.exists? %>
-  <h2 class="heading h2 line-height-4 mt0 ml0 pt1 pb1 pl2 pr2">Transactions on this card</h2>
+
+  <% subscriptions = StripeCardService::PredictSubscriptions.new(card: @card).run %>
+
+  <% if subscriptions.any? && hcb_codes.first_page? %>
+    <h2 class="heading h2 line-height-4 mt2 ml0 pt1 pb1 pl2 pr2">Active subscriptions on this card</h2>
+    <div class="table-container">
+      <table>
+        <tbody data-behavior="transactions">
+          <% subscriptions.each do |subscription| %>
+            <% hcb_code = HcbCode.find_by_hcb_code(subscription[:last_hcb_code]) %>
+            <% if hcb_code.canonical_transactions.any? %>
+              <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, force_display_details: true, subscription: } %>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <h2 class="heading h2 line-height-4 mt2 ml0 pt1 pb1 pl2 pr2">All transactions on this card</h2>
 
   <div class="table-container">
     <table>
@@ -10,7 +29,7 @@
           <% if hcb_code.canonical_transactions.any? %>
             <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, force_display_details: true } %>
           <% else %>
-            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions, as: :pt, locals: { force_display_details: true } %>
+            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions, as: :pt %>
           <% end %>
         <% end %>
       </tbody>
@@ -19,6 +38,6 @@
     <%= paginate hcb_codes %>
   </div>
 
-<% elsif stripe_card.activated? %>
+<% elsif stripe_card.initially_activated? %>
   <%= blankslate "No transactions made on this card yet." %>
 <% end %>

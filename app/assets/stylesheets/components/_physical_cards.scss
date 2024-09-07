@@ -55,7 +55,8 @@
 
   &:focus,
   &:hover {
-    box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.25),
+    box-shadow:
+      0 6px 12px 0 rgba(0, 0, 0, 0.25),
       0 18px 36px 0 rgba(0, 0, 0, 0.25);
   }
 }
@@ -104,7 +105,8 @@
   background-image: radial-gradient(ellipse at top left, #867ae7, transparent);
   &:focus,
   &:hover {
-    box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.25),
+    box-shadow:
+      0 6px 12px 0 rgba(0, 0, 0, 0.25),
       0 18px 36px 0 rgba(0, 0, 0, 0.25);
   }
 
@@ -184,4 +186,52 @@
 
 .stripe-card__status {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.stripe-card__overlay {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+.stripe-card--white {
+  background-image: none;
+  background-color: #fff;
+  color: #000;
+  img {
+    filter: grayscale(1);
+  }
+  .stripe-card__status {
+    color: #000 !important;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  .stripe-card__overlay {
+    background-image: radial-gradient(
+      ellipse at bottom right,
+      #ddddef49,
+      transparent
+    );
+  }
+}
+
+.stripe-card--black {
+  background-image: none;
+  background-color: #000;
+  color: #fff;
+  img {
+    filter: invert(1) grayscale(1);
+  }
+  .stripe-card__overlay {
+    background-image: radial-gradient(
+      ellipse at bottom right,
+      #4a4a4f49,
+      transparent
+    );
+  }
+}
+
+.stripe-card__personalization-image {
+  height: 40px;
 }

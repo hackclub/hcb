@@ -1,3 +1,5 @@
-<%= render layout: "/public_activity/common", locals: { activity:, url: current_user == activity.owner ? settings_security_path : security_user_path(activity.owner) } do %>
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: current_user == activity.owner ? settings_security_path : security_user_path(activity.owner) } do %>
   enabled SMS authentication
 <% end %>

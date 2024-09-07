@@ -1,10 +1,34 @@
 <%# locals: (stripe_card:) %>
 
-<div class="mt3 flex justify-center g1">
-  <% if !stripe_card.activated? %>
+<div class="mt3 flex justify-center flex-wrap g2">
+  <% if !stripe_card.initially_activated? %>
     <%= render "stripe_cards/actions/activate", stripe_card: %>
   <% else %>
     <%= render "stripe_cards/actions/freeze", stripe_card: %>
     <%= render "stripe_cards/actions/rename", stripe_card: %>
+    <%= render "stripe_cards/actions/cancel", stripe_card: %>
+  <% end %>
+
+  <% if stripe_card.virtual? && Flipper.enabled?(:onepass_cc_save_2024_04_29, current_user) && params["show_details"] == "true" %>
+    <onepassword-save-button
+      data-controller="1pass"
+      data-action="click->1pass#click"
+      data-onepassword-type="credit-card"
+      lang="en"
+      class="white"
+      padding="compact"
+      data-cc-title="<%= stripe_card.name.presence || "HCB card for #{stripe_card.event.name}" %>"
+      data-cc-name="<%= stripe_card.stripe_cardholder.stripe_name %>"
+      data-cc-number="<%= stripe_card.full_card_number %>"
+      data-cc-exp="<%= stripe_card.stripe_exp_year %><%= stripe_card.stripe_exp_month.to_s.rjust(2, "0") %>"
+      data-cc-csc="<%= stripe_card.cvc %>"
+      data-cc-type="<%= stripe_card.stripe_brand %>"
+      data-cc-address-street-address="<%= stripe_card.stripe_cardholder.stripe_billing_address_line1 %>"
+      data-cc-address-city="<%= stripe_card.stripe_cardholder.stripe_billing_address_city %>"
+      data-cc-address-state="<%= stripe_card.stripe_cardholder.stripe_billing_address_state %>"
+      data-cc-address-postal-code="<%= stripe_card.stripe_cardholder.stripe_billing_address_postal_code %>"
+      data-cc-address-country="<%= stripe_card.stripe_cardholder.stripe_billing_address_country %>"
+      data-organization-name="<%= stripe_card.event.name %>">
+    </onepassword-save-button>
   <% end %>
 </div>

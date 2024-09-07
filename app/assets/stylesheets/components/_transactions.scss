@@ -17,7 +17,11 @@
   );
   background-attachment: fixed;
   color: $black;
+  > td > .author {
+    display: none;
+  }
 }
+
 .transaction--icy {
   background-image: repeating-linear-gradient(
     to bottom right,
@@ -29,11 +33,14 @@
   font-weight: 600;
   color: $white;
 }
+
 .transaction--frc {
   font-weight: 600;
   color: $black;
+
   td {
     position: relative;
+
     &:before {
       content: '';
       position: absolute;
@@ -53,6 +60,7 @@
 html[data-dark='true'] {
   .transaction--frc {
     color: $white;
+
     &::after {
       opacity: 0.15;
       filter: invert(100%);
@@ -68,7 +76,7 @@ html[data-dark='true'] {
     align-items: center;
   }
 
-  span:first-child {
+  span:not(.badge):not(.list-badge):first-of-type {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -78,17 +86,19 @@ html[data-dark='true'] {
     }
   }
 
-  + td {
-    text-align: right; // right-align amount
-  }
-
   .add-tag-badge {
+    @extend .mr1;
     visibility: hidden;
     cursor: pointer;
+    flex-shrink: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.3;
+    padding: 0.25rem 0.625rem;
   }
 }
 
-[class^='transaction--']:hover .add-tag-badge,
+.transaction:hover .add-tag-badge,
 .add-tag-badge[aria-expanded='true'] {
   visibility: visible;
 }
@@ -101,36 +111,60 @@ html[data-dark='true'] {
   padding-top: 0;
   padding-bottom: 0;
   line-height: 0;
+  color: map-get($palette, muted);
 
   img,
   svg {
     width: 24px;
     height: 24px;
     fill: map-get($palette, muted);
+
     .transaction--fancy & {
       fill: $black;
     }
+
     .transaction--icy & {
       fill: $white;
     }
+
     margin: 0;
   }
 }
 
-.transaction--positive:has(.renamed),
-.transaction--negative:has(.renamed),
-.transaction--zero:has(.renamed) {
+.transaction__fee_icon {
+  svg {
+    height: 18px;
+    width: 18px;
+    margin-left: 3px;
+  }
+}
+
+.transaction:has(.renamed) {
   animation: highlight 2s;
 }
 
-.transaction--positive:has(.renaming),
-.transaction--negative:has(.renaming),
-.transaction--zero:has(.renaming) {
-  background-image: linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%);
+.transaction:has(.renaming) {
+  background-image: linear-gradient(90deg, $orange 50%, transparent 50%),
+    linear-gradient(90deg, $orange 50%, transparent 50%),
+    linear-gradient(0deg, $orange 50%, transparent 50%),
+    linear-gradient(0deg, $orange 50%, transparent 50%);
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-size: 50px 2px, 50px 2px, 2px 50px, 2px 50px;
-  background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+  background-size:
+    50px 2px,
+    50px 2px,
+    2px 50px,
+    2px 50px;
+  background-position:
+    0 0,
+    0 100%,
+    0 100%,
+    100% 20px;
   animation: border-dance 1s infinite linear;
+}
+
+// "Pending" badge
+.transaction .renaming ~ .badge.bg-muted {
+  display: none;
 }
 
 .transaction__icon--selected {
@@ -143,12 +177,12 @@ html[data-dark='true'] {
 
 html[data-dark='true'] {
   .transaction__icon--selected svg {
-    fill: white!important;
+    fill: white !important;
   }
 }
 
 .selected__transaction > .transaction__icon--selected {
-  display: table-cell!important;
+  display: table-cell !important;
 }
 
 .selected__transaction > .transaction__icon {
@@ -157,4 +191,21 @@ html[data-dark='true'] {
 
 .transaction__icon {
   padding-left: 1rem;
+}
+
+.memo-frame[busy] {
+  cursor: progress;
+}
+
+.memo-frame[busy] .memo-frame__ai-button {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.embedded .embedded-display-none {
+  display: none;
+}
+
+.pending_transactions_tags:has(> div) {
+  margin-top: 2px;
 }

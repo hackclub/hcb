@@ -1,7 +1,17 @@
+<% @show_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
 <% if @event.pinned_hcb_codes.any? %>
   <div class="flex gap-4 mt-4 pinned__container">
     <% @event.pinned_hcb_codes.each do |pin| %>
-      <%= link_to pin.hcb_code, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
+     <% if @show_popovers %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= pin.__id__ %>">
+          <%= modal_header(pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount), external_link: pin.hcb_code.local_hcb_code.url) %>
+          <%= async_frame_to pin.hcb_code.local_hcb_code.popover_url, as: :span, lazy: true do %>
+            <strong>Loading...</strong>
+          <% end %>
+        </section>
+      <% end %>
+
+      <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
         <%= form_with url: pin_hcb_code_path(pin.hcb_code), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
           <button type="submit" class="pinned__transaction__pin pointer pop tooltipped tooltipped--w" aria-label="Unpin" style="margin-left: auto" onclick="event.stopPropagation()">
             <%= inline_icon "pin-remove", size: 28 %>

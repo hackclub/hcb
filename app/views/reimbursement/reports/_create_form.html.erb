@@ -1,17 +1,23 @@
-<section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
-  <%= form_with(model: Reimbursement::Report, method: :post) do |form| %>
-    <%= modal_header "Open a report" %>
+<section data-behavior="modal" role="dialog" id="<%= defined?(receipt) ? "create_#{receipt.id}" : "create" %>" class="modal modal--scroll bg-snow">
+  <%= form_with(model: Reimbursement::Report, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
+    <% if defined?(receipt) %>
+      <%= modal_header "Get reimbursed" %>
+    <% else %>
+      <%= modal_header "Start a report" %>
+    <% end %>
     <% unless current_user.created_reimbursement_reports.any? %>
-      <div class="card border b--info mt2 mb2 container--sm mx-auto">
-        <p class="mt0 mb0"><span class="bold">Paid for something out of pocket?</span> Compile your expenses into a reimbursement report, get approval from the organization's team, and, after you do, get paid back via ACH transfer or check.</p>
+      <div class="card mt2 mb2 container--sm mx-auto">
+        <p class="mt0 mb0"><strong>Paid for something out of pocket?</strong> Compile your expenses into a reimbursement report, get approval from the organization's team, and, after you do, get paid back via ACH transfer or check.</p>
       </div>
     <% end %>
-    <%= form.label :report_name, "Report name", class: "bold" %>
-    <%= form.text_field :report_name, placeholder: "Chicago Trip Expenses", required: true %>
+    <div class="flex flex-col field">
+      <%= form.label :report_name, "Report name", class: "bold" %>
+      <%= form.text_field :report_name, placeholder: "Chicago Trip Expenses", required: true %>
+    </div>
     <% if defined? @event %>
-      <fieldset data-behavior="reimbursement_report_create_form_type_selection" class="mt3">
-        <legend>Who is this reimbursement for?</legend>
-        <div class="field field--options flex pt1">
+      <fieldset data-behavior="reimbursement_report_create_form_type_selection" class="field">
+        <legend class="bold">Who is this reimbursement for?</legend>
+        <div class="field field--options <%= "trio" if @event.users.excluding(current_user).any? %> pt1 mb0">
           <%= form.radio_button :for, "myself", checked: true %>
           <%= form.label :for, value: "myself", class: "flex-1" do %>
             <%= inline_icon "like", size: 32 %>
@@ -21,7 +27,7 @@
             <%= form.radio_button :for, "organizer" %>
             <%= form.label :for, value: "organizer", class: "flex-1" do %>
               <%= inline_icon "friend", size: 32 %>
-              <strong>Another organizer</strong>
+              <strong>Teammate</strong>
             <% end %>
           <% end %>
           <%= form.radio_button :for, "external" %>
@@ -31,21 +37,29 @@
           <% end %>
         </div>
       </fieldset>
-      <%= form.collection_select :user_email, @event.users.excluding(current_user), :email, :name %>
-      <%= form.text_field :email, class: "display-none-not-important mt1", placeholder: "Enter this individual's email", data: { "behavior": "reimbursement_report_email_input" }, required: true, value: @current_user.email %>
-      <%= form.hidden_field :event_id, value: @event.id %>
-      <div id="reimbursement_report_maximum_amount_wrapper">
-        <%= form.label :maximum_amount, "Maximum Reimbursable Value (Optional)", class: "mt2 bold" %>
+      <div id="external_contributor_wrapper">
         <div class="field">
-          <div class="flex items-center">
-            <span class="bold muted" style="width: 1rem;">$</span>
-            <%= form.number_field :maximum_amount, placeholder: "500.00", step: 0.01, min: 0.01, required: false, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+          <%= form.label :user_email, "Teammate", class: "display-none-not-important bold" %>
+          <%= form.collection_select :user_email, @event.users.excluding(current_user), :email, :name %>
+        </div>
+        <div class="field">
+          <%= form.label :email, "Contributor’s email", class: "display-none-not-important bold" %>
+          <%= form.email_field :email, class: "display-none-not-important", placeholder: "contributor@gmail.com", data: { "behavior": "reimbursement_report_email_input" }, required: true, value: @current_user.email %>
+        </div>
+        <%= form.hidden_field :event_id, value: @event.id %>
+        <div id="reimbursement_report_maximum_amount_wrapper" class="field">
+          <%= form.label :maximum_amount, "Maximum reimbursable value (optional)", class: "bold" %>
+          <div class="field">
+            <div class="flex items-center">
+              <span class="bold muted" style="width: 1rem;">$</span>
+              <%= form.number_field :maximum_amount, placeholder: "500.00", step: 0.01, min: 0.01, required: false, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+            </div>
           </div>
         </div>
-      </div>
-      <div id="reimbursement_report_invite_message_wrapper">
-        <%= form.label :invite_message, "Invite Message", class: "mt1 bold" %>
-        <%= form.text_area :invite_message, placeholder: "We're excited to see your expenses…" %>
+        <div id="reimbursement_report_invite_message_wrapper" class="field">
+          <%= form.label :invite_message, "Invitation message", class: "bold" %>
+          <%= form.text_area :invite_message, placeholder: "We’re excited to see your expenses…" %>
+        </div>
       </div>
     <% else %>
       <%= form.hidden_field :user_id, value: current_user.id %>
@@ -53,6 +67,20 @@
 
       <%= form.label :event_id, "Organization", class: "mt1 bold" %>
       <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
+
+      <% if defined?(receipt) %>
+        <%= form.label :value, "Amount", class: "mt1 bold" %>
+        <div class="flex items-center">
+          <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
+          <div class="ml1">
+            <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+          </div>
+        </div>
+        <div class="mt2">
+          <%= render partial: "receipts/receipt", locals: { receipt:, hide_info: true, size: 128 } %>
+        </div>
+        <%= form.hidden_field :receipt_id, value: receipt.id %>
+      <% end %>
     <% end %>
     <div class="tooltipped tooltipped--e inline-block" aria-label="<%= @event&.demo_mode? ? "You don't have access to this feature at the moment." : "This will start your reimbursement report." %>">
       <%= form.submit "Start report", class: "mt2", disabled: @event && (!organizer_signed_in? || @event&.demo_mode?) %>

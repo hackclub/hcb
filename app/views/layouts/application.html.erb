@@ -15,6 +15,9 @@
     <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
 
+    <%# Web component used for TOTP / donation QR codes %>
+    <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
+
     <% if signed_in? %>
       <script>
         document.addEventListener("turbo:load", () => {
@@ -79,7 +82,6 @@
                         step: @tour&.step || 0,
                         options: @tour&.tourable&.try(:tourable_options) || {},
                         back_to_tour: @back_to_tour %>
-
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
@@ -104,7 +106,7 @@
           <% end %>
           <%= link_to({ show_mock_data: !show_mock_data? }, class: "btn btn-small w-fit shrink-none nowrap") do %>
             <%= inline_icon "view" %>
-            <%= show_mock_data? ? "Hide" : "Show" %> Mock Data
+            <%= show_mock_data? ? "Hide" : "Show" %> mock data
           <% end %>
         </div>
       </div>
@@ -145,7 +147,10 @@
             </div>
           </div>
         <% end %>
+
+        <%= render "application/native_changelog" if @latest_changelog_post %>
         <%= render "application/the_bin" if @the_bin %>
+
         <aside class="app__sidebar">
           <%= render "application/header" %>
           <%= render "application/flash" %>
@@ -154,7 +159,7 @@
         <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
           <%= yield(:container) %>
           <%= yield %>
-          <%= render "application/footer" unless (@no_app_shell || @hide_footer) %>
+          <%= render "application/footer" unless @no_app_shell || @hide_footer %>
         </article>
       </main>
     <% else %>
@@ -162,11 +167,11 @@
       <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
         <%= render "application/flash" %>
         <%= yield %>
-        <%= render "application/footer" unless (@no_app_shell || @hide_footer) %>
+        <%= render "application/footer" unless @no_app_shell || @hide_footer %>
       </main>
     <% end %>
 
-    <%= render "application/feedback_form" if !@no_app_shell && current_user&.events&.not_demo_mode&.any? %>
+    <%= render "application/support_button" unless @no_app_shell %>
 
     <% if Rails.env.production? %>
       <%= render "application/fullstory" if current_user&.sessions_reported %>
@@ -190,6 +195,13 @@
           }, 100);
         });
       </script>
+    <% end %>
+    <% if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
+      <style>
+        .success-dark {
+            color: #1f8164
+        }
+      </style>
     <% end %>
   </body>
 </html>

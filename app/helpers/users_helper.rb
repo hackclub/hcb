@@ -13,7 +13,9 @@ module UsersHelper
     "https://gravatar.com/avatar/#{hex}?s=#{size}&d=https%3A%2F%2Fui-avatars.com%2Fapi%2F/#{CGI.escape(name)}/#{size}/#{get_user_color(id)}/fff"
   end
 
-  def profile_picture_for(user, size = 24, default_image: "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png")
+  def profile_picture_for(user, size = 24, default_image: nil)
+    default_image ||= "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png"
+
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
@@ -115,20 +117,6 @@ module UsersHelper
     yield and return unless condition
 
     admin_tool(*args, **options, &block)
-  end
-
-  def admin_tools(*args, **options, &block)
-    concat content_tag(:span, "You're using the deprecated admin_tools. Replace it with the new admin_tool.", class: "error")
-    admin_tool(*args, **options, &block)
-  end
-
-  def admin_tools_if(condition, *args, **options, &block)
-    # If condition is false, it displays the content for ALL users. Otherwise,
-    # it's only visible to admins.
-    yield and return unless condition
-
-    concat content_tag("span", "You're using the deprecated admin_tools_if. Replace it with the new admin_tool_if.", class: "error")
-    admin_tool_if(condition, *args, **options, &block)
   end
 
   def creator_bar(object, options = {})

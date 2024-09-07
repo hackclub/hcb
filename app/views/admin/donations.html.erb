@@ -46,6 +46,7 @@
       <th>Date</th>
       <th>Recipient</th>
       <th>Anonymous</th>
+      <th>Tax-Deductible</th>
       <th>Amount</th>
       <th>Status</th>
       <th>PayoutId</th>
@@ -59,13 +60,19 @@
     <% @donations.each do |donation| %>
       <tr class="<%= "admin-bg-transit" if donation.in_transit? %>">
         <td><%= donation.id %></td>
-        <td><%= donation.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= donation.created_at.strftime("%Y-%m-%d") %>
+          <% if donation.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td>
           <%= link_to donation_path(donation) do %>
             <%= donation.event.name.upcase %>: <%= donation.name(show_anonymous: true) %>
           <% end %>
         </td>
         <td><%= donation.anonymous? %></td>
+        <td><%= donation.tax_deductible? %></td>
         <td><%= render_money_amount(donation.amount) %></td>
         <td><%= donation.aasm_state.upcase %></td>
         <td><%= donation.payout_id %></td>

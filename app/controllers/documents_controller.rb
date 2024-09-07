@@ -1,17 +1,22 @@
 # frozen_string_literal: true
 
 class DocumentsController < ApplicationController
-  before_action :set_event, only: [:index, :new, :fiscal_sponsorship_letter]
-  before_action :set_document, except: [:common_index, :index, :new, :create, :fiscal_sponsorship_letter]
+  include SetEvent
+
+  before_action :set_event, only: [:index, :new, :fiscal_sponsorship_letter, :verification_letter], if: -> { params[:id] || params[:event_id] }
+  before_action :set_document, except: [:common_index, :index, :new, :create, :fiscal_sponsorship_letter, :verification_letter]
+  skip_after_action :verify_authorized, only: [:index]
 
   def common_index
-    @documents = Document.common
-    authorize @documents
+    authorize @active_documents = Document.common.active
+    authorize @archived_documents = Document.common.archived
   end
 
   def index
-    @documents = @event.documents.includes(:user)
-    authorize @documents
+    @active_documents = @event.documents.includes(:user).active
+    @active_common_documents = Document.common.active
+    @archived_documents = @event.documents.includes(:user).archived
+    @archived_common_documents = Document.common.archived
   end
 
   def new
@@ -54,6 +59,20 @@ class DocumentsController < ApplicationController
     end
   end
 
+  def toggle_archive
+    authorize @document
+
+    if @document.active?
+      @document.mark_archive!(current_user)
+      flash[:success] = "Document successfully archived."
+    else
+      @document.mark_unarchive!
+      flash[:success] = "Document successfully unarchived."
+    end
+
+    redirect_to @document
+  end
+
   def destroy
     authorize @document
 
@@ -89,6 +108,22 @@ class DocumentsController < ApplicationController
     end
   end
 
+  def verification_letter
+    authorize @event, policy_class: DocumentPolicy
+
+    @contract_signers = @event.organizer_positions.where(is_signee: true).includes(:user).map(&:user)
+
+    respond_to do |format|
+      format.pdf do
+        render pdf: "Verification Letter for #{ActiveStorage::Filename.new(@event.name).sanitized}", page_height: "11in", page_width: "8.5in", template: "documents/verification_letter"
+      end
+
+      format.png do
+        send_data ::DocumentService::PreviewVerificationLetter.new(event: @event, contract_signers: @contract_signers).run, filename: "verification_letter.png"
+      end
+    end
+  end
+
   private
 
   def document_params
@@ -96,19 +131,12 @@ class DocumentsController < ApplicationController
   end
 
   def set_document
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+
     @document = Document.friendly.find(params[:id] || params[:document_id])
+    @downloads = @document.downloads.page(@page).per(@per)
     @event = @document.event
-  end
-
-  def set_event
-    event_id = params[:id] || params[:event_id]
-
-    if event_id
-      @event = Event.friendly.find(event_id)
-    else
-      # this happens for common documents, shared across all events
-      nil
-    end
   end
 
 end
