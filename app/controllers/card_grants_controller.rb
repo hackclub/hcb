@@ -105,4 +105,13 @@ class CardGrantsController < ApplicationController
     redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
   end
 
+  def topup
+    @card_grant = CardGrant.find_by_hashid(params[:id])
+    authorize @card_grant
+
+    @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
+
+    redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+  end
+
 end

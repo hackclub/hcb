@@ -19,11 +19,6 @@
     </div>
 
     <div class="field pr2">
-      <%= form.label :sponsorship_fee, "Sponsorship fee" %>
-      <%= form.number_field :sponsorship_fee, placeholder: "0.07", value: "0.07", required: true, step: "any" %>
-    </div>
-
-    <div class="field pr2">
       <%= form.label :country %>
       <%= form.collection_select :country, Event.countries_for_select, :first, :last, { include_blank: "Select a country" }, { required: true } %>
     </div>
@@ -36,6 +31,11 @@
     <div class="field pr2">
       <%= form.label :point_of_contact_id, "Point of contact" %>
       <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @current_user.id %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :plan_type, "Assign a plan" %>
+      <%= form.select :plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.plan_type, include_blank: "Select a plan..." %>
     </div>
   </div>
 
@@ -65,4 +65,21 @@
   <div class="action">
     <%= form.submit "Activate" %>
   </div>
+<% end %>
+
+<h2 class="mb2">
+  Team members & contract signees
+</h2>
+
+<%= turbo_frame_tag "team_position" do %>
+  <table>
+    <thead>
+      <tr>
+      </tr>
+    </thead>
+    <tbody>
+    <%= turbo_frame_tag "team_position" do %>
+      <%= render partial: "organizer_positions/organizer_position_row", collection: @event.organizer_positions, as: :organizer_position %>
+    <% end %>
+  </table>
 <% end %>

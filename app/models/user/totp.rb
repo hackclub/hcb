@@ -5,6 +5,7 @@
 # Table name: user_totps
 #
 #  id                :bigint           not null, primary key
+#  aasm_state        :string
 #  deleted_at        :datetime
 #  last_used_at      :datetime
 #  secret_ciphertext :text             not null
@@ -19,6 +20,27 @@
 class User
   class Totp < ApplicationRecord
     acts_as_paranoid
+
+    include AASM
+
+    aasm do
+      state :unverified, initial: true
+      state :verified
+      state :expired
+
+      event :mark_verified do
+        transitions from: :unverified, to: :verified do
+          guard do
+            created_at > 15.minutes.ago
+          end
+        end
+      end
+
+      event :mark_expired do
+        transitions from: :verified, to: :expired
+      end
+    end
+
     belongs_to :user
     has_encrypted :secret
     validates :secret, presence: true

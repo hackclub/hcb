@@ -100,5 +100,7 @@
     </tbody>
   </table>
 
-  <small>FYI: <%= render_money @incomplete_payout_holdings.sum(&:amount_cents) %> + <%= render_money @unidentified_transactions.sum(&:amount_cents) %> + <%= render_money @pending_transactions.sum(&:amount_cents) %> = <%= render_money @incomplete_payout_holdings.sum(&:amount_cents) + @unidentified_transactions.sum(&:amount_cents) + @pending_transactions.sum(&:amount_cents) %>. The Clearinghouse's balance is <%= render_money Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance %>. Turns out, computers are good at this thing we call maths.</small>
+  <% sum = @incomplete_payout_holdings.sum(&:amount_cents) + @unidentified_transactions.sum(&:amount_cents) + @pending_transactions.sum(&:amount_cents) %>
+  <small>FYI: <%= render_money @incomplete_payout_holdings.sum(&:amount_cents) %> + <%= render_money @unidentified_transactions.sum(&:amount_cents) %> + <%= render_money @pending_transactions.sum(&:amount_cents) %> = <%= render_money sum %>. The Clearinghouse's balance is <%= render_money Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance %>. Turns out, computers are good at this thing we call maths.</small>
+  <% Airbrake.notify("Clearinghouse's balance doesn't equal incomplete payout holdings + unidentified transactions + pending transactions. The difference is #{render_money sum - Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance}") unless sum == Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING).balance %>
 <% end %>

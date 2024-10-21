@@ -30,7 +30,7 @@ class StripeCard
     has_paper_trail
 
     include HasStripeDashboardUrl
-    has_stripe_dashboard_url "issuing/personalization-designs/", :stripe_id
+    has_stripe_dashboard_url "issuing/personalization-designs", :stripe_id
 
     include PgSearch::Model
     pg_search_scope :search, against: :stripe_name

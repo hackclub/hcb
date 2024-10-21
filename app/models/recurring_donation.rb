@@ -17,6 +17,7 @@
 #  stripe_client_secret                :text
 #  stripe_current_period_end           :datetime
 #  stripe_status                       :text
+#  tax_deductible                      :boolean          default(TRUE), not null
 #  url_hash                            :text
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null

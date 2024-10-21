@@ -11,8 +11,10 @@ module PendingTransactionEngine
         def run
           return if @invoice.manually_marked_as_paid? # Manually marked as paid invoices don't have pending transactions
 
+          @invoice.sync_remote!
+
           rpit = ::RawPendingInvoiceTransaction.find_or_initialize_by(invoice_transaction_id: @invoice.id.to_s).tap do |t|
-            t.amount_cents = @invoice.amount_due
+            t.amount_cents = @invoice.amount_paid
             t.date_posted = @invoice.paid_at
           end
 

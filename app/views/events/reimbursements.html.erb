@@ -6,14 +6,15 @@
   <span class="flex-grow">Reimbursements</span>
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "reimbursements"),
+      data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
       class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" %>
-  <% if @event.public_reimbursement_page_enabled? %>
+  <% if @event.public_reimbursement_page_available? %>
     <%= pop_icon_to "external",
         reimbursement_start_reimbursement_report_url(@event),
         target: "_blank",
         class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
   <% end %>
-  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" } do %>
+  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
     <%= inline_icon "plus" %>
     New
   <% end %>
@@ -21,33 +22,31 @@
 
 <%= render partial: "reimbursement/reports/create_form" %>
 
-<div class="statset mt3 mb2">
+<div class="statset mt3 mb3">
   <div class="stat">
     <span class="stat__label">Total</span>
-    <span class="stat__value" style="text-wrap: nowrap">
-      <%= render_money_amount(@reports.to_calculate_total.sum(&:amount_cents)) %>
-    </span>
+    <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@event.reimbursement_reports.to_calculate_total.sum(&:amount_cents)) %></span>
   </div>
   <div class="stat stat--small">
     <span class="stat__label">Reimbursed</span>
-    <span class="stat__value">
-      <%= render_money_amount(@reports.reimbursed.sum(&:amount_cents)) %>
-    </span>
+    <span class="stat__value"><%= render_money_amount(@event.reimbursement_reports.reimbursed.sum(&:amount_cents)) %></span>
   </div>
   <div class="stat stat--small">
     <span class="stat__label">Pending</span>
-    <span class="stat__value">
-      <%= render_money_amount(@reports.pending.reimbursed.sum(&:amount_cents)) %>
-    </span>
+    <span class="stat__value"><%= render_money_amount(@event.reimbursement_reports.pending.reimbursed.sum(&:amount_cents)) %></span>
   </div>
 </div>
 
-<hr>
-
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <div class="filterbar flex flex-wrap items-center width-100">
-      <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
+    <div class="input input-group max-w-none" tabindex="0">
+      <%= inline_icon "search" %>
+      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
+      <% if params[:q] && params[:q] != "" %>
+        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+          <%= inline_icon "view-close", size: 24 %>
+        </button>
+      <% end %>
     </div>
   <% end %>
   <div style="text-align: center;">
@@ -127,3 +126,10 @@
       } %>
   </div>
 <% end %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="reimbursement_settings">
+  <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "reimbursements")) %>
+  <%= async_frame_to edit_event_path(@event, tab: "reimbursements", params: { frame: true }), lazy: true, as: :div do %>
+    <strong>Loading...</strong>
+  <% end %>
+</section>

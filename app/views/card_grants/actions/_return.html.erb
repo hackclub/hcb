@@ -1,0 +1,12 @@
+<%# locals: (card_grant:) %>
+
+<% if card_grant.active? %>
+
+  <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: card_grant.event.slug),
+              method: :post,
+              data: { confirm: "Are you sure? This will donate the remaining balance on your grant to #{card_grant.event.name} and cancel this card." },
+              class: "btn bg-info" do %>
+    <%= inline_icon "support", size: 20 %> Return grant to <%= card_grant.event.name %>
+  <% end %>
+
+<% end %>

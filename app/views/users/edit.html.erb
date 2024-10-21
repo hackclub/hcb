@@ -2,7 +2,7 @@
   <% title "Setup your account" %>
   <% page_sm %>
 <% else %>
-  <% title "Account Settings" %>
+  <% title "Account settings" %>
   <% page_md %>
   <%= render "users/nav", selected: :settings %>
 <% end %>
@@ -13,7 +13,6 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_nav", active: "general" unless @onboarding %>
   <section>
-    <h2>Account details</h2>
     <% if @onboarding %>
       <p>Complete your profile to get started.</p>
     <% end %>
@@ -55,7 +54,7 @@
         <input type="tel" id="phone_raw" value="<%= @user.phone_number || nil %>" required="required">
         <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
           <p class="h5 mt1 m0 warning flex items-center">
-            <%= inline_icon "important-fill", class: "warning mr1" %> <span>Your phone number is unverified. <%= link_to "Click here", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } %> to verify it.</span>
+            <%= inline_icon "important-fill", class: "warning mr1", size: 20 %> <span>Your phone number is unverified. <%= link_to "Click here", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } %> to verify it.</span>
           </p>
         <% end %>
       </div>
@@ -82,142 +81,55 @@
           </p>
         <% end %>
       </div>
-      <%= form.label :profile_picture %>
-      <p class="flex items-center mt1">
-        <%= avatar_for @user, 48, { class: "mr2" } %>
-        <span>
-            <% if @user.profile_picture.attached? %>
-            You're currently using an uploaded profile picture.<br>
-            If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>.
-            <% else %>
-            If you have a <a href="https://gravatar.com" target="_blank">Gravatar</a>, we’ll pull it in here.<br>
-            Or, you can upload a profile picture below.<br>
-            <% end %>
-        </span>
-      </p>
-      <div class="field field--fileupload">
-        <%= form.label :profile_picture, "Choose File", class: "field--fileupload__label" %>
-        <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
-      </div>
-      <div>
-        <%= form.label :session_duration_seconds, "Stay signed in for" %>
-        <%= form.select :session_duration_seconds, SessionsHelper::SESSION_DURATION_OPTIONS.to_a %>
-      </div>
-      <% unless @onboarding %>
-        <fieldset>
-          <legend class="heading h2 pt2 pb1" id="receipt-reports">Receipts</legend>
-          <%= form.label :receipt_report_option, "Receipt reports" %>
-          <p class="h5 muted mt0 mb1">
-            Get a regular report via email of what receipts are awaiting upload on your account.
-          </p>
-          <%= form.select :receipt_report_option,
-                          (User.receipt_report_options.map { |k, v| [k.humanize, k] }) %>
-
-          <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-            <div class="mt2"></div>
-
-            <%= form.label :receipt_identifier, "Email us your receipts" %>
-
-            <p class="h5 muted mt0 mb1" style="max-width: 600px;">
-              Using this address, you can forward email receipts to your <%= link_to "Receipt Bin", my_inbox_path, data: { turbo_frame: "_top" } %>. Perfect for when you have email receipts to forward or if you're at an in-person point-of-sale terminal.
-            </p>
-
-            <%= turbo_frame_tag "mailbox_address" do %>
-              <% if @mailbox_address %>
-                <%= render @mailbox_address %>
+      <div class="field">
+        <%= form.label :profile_picture %>
+        <p class="flex items-center mt1">
+          <%= avatar_for @user, 48, { class: "mr2" } %>
+          <span>
+              <% if @user.profile_picture.attached? %>
+              You're currently using an uploaded profile picture.<br>
+              If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>.
               <% else %>
-                <%= link_to "Choose an email address",
-                    mailbox_addresses_path,
-                    class: "btn pl2 pr2",
-                    data: { turbo: true, "turbo-method" => "post" } %>
+              If you have a <a href="https://gravatar.com" target="_blank">Gravatar</a>, we’ll pull it in here.<br>
+              Or, you can upload a profile picture.<br>
               <% end %>
-            <% end %>
-          <% end %>
-        </fieldset>
-      <% end %>
-      <% unless @onboarding %>
-        <fieldset>
-          <legend class="heading h2 pt2">Comment notifications</legend>
-          <p class="h5 muted mt1 mb2">
-            Which comments would you like to receive notifications for?
-          </p>
-          <div class="field field--options field--green trio">
-            <%= form.radio_button :comment_notifications, :all_threads %>
-            <%= form.label :comment_notifications, value: :all_threads do %>
-              <%= inline_icon "like-fill", size: 28 %>
-              <strong>Everything</strong>
-            <% end %>
-            <%= form.radio_button :comment_notifications, :my_threads %>
-            <%= form.label :comment_notifications, value: :my_threads do %>
-              <%= inline_icon "thread", size: 28 %>
-              <strong>My Threads</strong>
-            <% end %>
-            <%= form.radio_button :comment_notifications, :no_threads %>
-            <%= form.label :comment_notifications, value: :no_threads do %>
-              <%= inline_icon "support", size: 28 %>
-              <strong>Nothing</strong>
-            <% end %>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend class="heading h2 pt2">Charge notifications</legend>
-          <p class="h5 muted mt1 mb2">
-            How would you like to receive charge notifications?
-          </p>
-          <div class="field field--options field--green">
-            <%= form.radio_button :charge_notifications, :email_and_sms %>
-            <%= form.label :charge_notifications, value: :email_and_sms do %>
-              <%= inline_icon "announcement", size: 28 %>
-              <strong>Email & SMS</strong>
-            <% end %>
-            <%= form.radio_button :charge_notifications, :email %>
-            <%= form.label :charge_notifications, value: :email do %>
-              <%= inline_icon "email", size: 28 %>
-              <strong>Email</strong>
-            <% end %>
-            <%= form.radio_button :charge_notifications, :sms %>
-            <%= form.label :charge_notifications, value: :sms do %>
-              <%= inline_icon "message", size: 28 %>
-              <strong>SMS</strong>
-            <% end %>
-            <%= form.radio_button :charge_notifications, :nothing %>
-            <%= form.label :charge_notifications, value: :nothing do %>
-              <%= inline_icon "view-close", size: 28 %>
-              <strong>Nothing</strong>
-            <% end %>
-          </div>
-        </fieldset>
-      <% end %>
-      <fieldset>
-        <legend class="heading h2 pt2">Share usage data with us</legend>
-        <p class="h5 muted mt1 mb2">
-          Help us improve HCB by sending usage data.
-          <% if @onboarding %>
-            <br>
-            You can turn this off in your settings anytime.
-          <% else %>
-            Off by default.
-          <% end %>
+          </span>
         </p>
-        <div class="field field--options">
-          <%= form.radio_button :sessions_reported, false %>
-          <%= form.label :sessions_reported, value: false do %>
-            <%= inline_icon "thumbsdown", size: 28 %>
-            <strong>No thanks</strong>
-          <% end %>
-          <%= form.radio_button :sessions_reported, true %>
-          <%= form.label :sessions_reported, value: true do %>
-            <%= inline_icon "support", size: 28 %>
-            <strong>Sure thing!</strong>
-          <% end %>
+        <div class="field field--fileupload">
+          <%= form.label :profile_picture, "Upload picture", class: "field--fileupload__label" %>
+          <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
         </div>
-      </fieldset>
-      <div class="actions flex">
-        <%= form.submit @onboarding ? "Start using HCB" : "Save profile" %>
       </div>
-    <% end %>
-    <% unless @onboarding %>
 
+      <% unless @onboarding %>
+        <div class="field">
+          <%= form.label :session_duration_seconds, "Stay signed in for" %>
+          <%= form.select :session_duration_seconds, SessionsHelper::SESSION_DURATION_OPTIONS.to_a %>
+        </div>
+        <fieldset>
+          <legend class="medium">Share usage data with HCB</legend>
+          <p class="h5 muted mt-0 mb-3">
+            Help us improve HCB by sending usage data.
+            Off by default.
+          </p>
+          <div class="field field--options">
+            <%= form.radio_button :sessions_reported, true %>
+            <%= form.label :sessions_reported, value: true do %>
+              <%= inline_icon "support", size: 28 %>
+              <strong>Sure thing!</strong>
+            <% end %>
+            <%= form.radio_button :sessions_reported, false %>
+            <%= form.label :sessions_reported, value: false do %>
+              <%= inline_icon "thumbsdown", size: 28 %>
+              <strong>No thanks</strong>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+
+      <div class="actions flex">
+        <%= form.submit @onboarding ? "Start using HCB" : "Save settings" %>
+      </div>
     <% end %>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">

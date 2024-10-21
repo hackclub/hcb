@@ -6,6 +6,7 @@
 #
 #  id                                    :bigint           not null, primary key
 #  card_type                             :integer          default("virtual"), not null
+#  cash_withdrawal_enabled               :boolean          default(FALSE)
 #  initially_activated                   :boolean          default(FALSE), not null
 #  is_platinum_april_fools_2023          :boolean
 #  last4                                 :text
@@ -200,6 +201,7 @@ class StripeCard < ApplicationRecord
     StripeService::Issuing::Card.update(self.stripe_id, status: :canceled)
     sync_from_stripe!
     save!
+    card_grant.cancel! if card_grant&.active?
   end
 
   def frozen?
@@ -387,6 +389,10 @@ class StripeCard < ApplicationRecord
 
   def expired?
     Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
+  end
+
+  def ephemeral_key(nonce:)
+    Stripe::EphemeralKey.create({ nonce:, issuing_card: stripe_id }, { stripe_version: "2020-03-02" })
   end
 
   private

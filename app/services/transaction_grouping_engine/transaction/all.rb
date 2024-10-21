@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false)
         @event_id = event_id
         @search = ActiveRecord::Base.connection.quote_string(search || "")
         @tag_id = tag_id
@@ -14,6 +14,7 @@ module TransactionGroupingEngine
         @start_date = start_date
         @end_date = end_date
         @user = user
+        @missing_receipts = missing_receipts
       end
 
       def run
@@ -118,6 +119,19 @@ module TransactionGroupingEngine
             left join hcb_codes_tags on hcb_codes_tags.hcb_code_id = hcb_codes.id
           SQL
           conditions << "hcb_codes_tags.tag_id = #{@tag_id}"
+        end
+
+        if !@tag_id && @missing_receipts
+          joins << <<~SQL
+            left join hcb_codes on hcb_codes.hcb_code = q1.hcb_code
+          SQL
+        end
+
+        if @missing_receipts
+          joins << <<~SQL
+            left join receipts on receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'
+          SQL
+          conditions << "receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
         end
 
         conditions << "q1.amount_cents < 0" if @expenses

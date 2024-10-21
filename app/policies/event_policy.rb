@@ -5,6 +5,19 @@ class EventPolicy < ApplicationPolicy
     user.present?
   end
 
+  # Event homepage
+  def show?
+    is_public || admin_or_user?
+  end
+
+  # Turbo frames for the event homepage (show)
+  alias_method :top_merchants?, :show?
+  alias_method :top_categories?, :show?
+  alias_method :tags_users?, :show?
+  alias_method :transaction_heatmap?, :show?
+
+  alias_method :transactions?, :show?
+
   def toggle_hidden?
     user&.admin?
   end
@@ -15,14 +28,6 @@ class EventPolicy < ApplicationPolicy
 
   def create?
     user&.admin?
-  end
-
-  def show?
-    is_public || admin_or_user?
-  end
-
-  def breakdown?
-    (admin_or_user? && Flipper.enabled?(:breakdown_2024_06_18, record)) || user&.admin?
   end
 
   def balance_by_date?
@@ -48,6 +53,20 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  alias remove_header_image? update?
+
+  alias remove_background_image? update?
+
+  alias remove_logo? update?
+
+  alias enable_feature? update?
+
+  alias disable_feature? update?
+
+  def validate_slug?
+    admin_or_user?
+  end
+
   def destroy?
     user&.admin? && record.demo_mode?
   end
@@ -61,7 +80,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def card_overview?
-    is_public || admin_or_user?
+    (is_public || admin_or_user?) && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -73,19 +92,10 @@ class EventPolicy < ApplicationPolicy
   end
 
   def documentation?
-    is_public || admin_or_user?
+    (is_public || admin_or_user?) && record.plan.documentation_enabled?
   end
 
   def statements?
-    is_public || admin_or_user?
-  end
-
-  def demo_mode_request_meeting?
-    admin_or_manager? && record.demo_mode? && record.demo_mode_request_meeting_at.nil?
-  end
-
-  # (@eilla1) these pages are for the wip resources page and should be moved later
-  def connect_gofundme?
     is_public || admin_or_user?
   end
 
@@ -101,28 +111,24 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager? && !record.demo_mode?
   end
 
-  def sell_merch?
-    is_public || admin_or_user?
-  end
-
   def g_suite_overview?
-    admin_or_user? && is_not_demo_mode? && !record.hardware_grant?
+    admin_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
-    admin_or_manager? && is_not_demo_mode? && !record.hardware_grant?
+    admin_or_manager? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
-    admin_or_user? && is_not_demo_mode? && !record.hardware_grant?
+    admin_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def transfers?
-    is_public || admin_or_user?
+    (is_public || admin_or_user?) && record.plan.transfers_enabled?
   end
 
   def promotions?
-    (is_public || admin_or_user?) && !record.hardware_grant? && !record.outernet_guild?
+    (is_public || admin_or_user?) && record.plan.promotions_enabled?
   end
 
   def reimbursements_pending_review_icon?
@@ -130,7 +136,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements?
-    admin_or_user?
+    admin_or_user? && record.plan.reimbursements_enabled?
   end
 
   def expensify?
@@ -138,35 +144,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def donation_overview?
-    is_public || admin_or_user?
-  end
-
-  def partner_donation_overview?
-    is_public || admin_or_user?
-  end
-
-  def remove_header_image?
-    admin_or_manager?
-  end
-
-  def remove_background_image?
-    admin_or_manager?
-  end
-
-  def remove_logo?
-    admin_or_manager?
-  end
-
-  def enable_feature?
-    admin_or_manager?
-  end
-
-  def disable_feature?
-    admin_or_manager?
+    (is_public || admin_or_user?) && record.approved? && record.plan.donations_enabled?
   end
 
   def account_number?
-    admin_or_manager?
+    admin_or_manager? && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -179,10 +161,6 @@ class EventPolicy < ApplicationPolicy
 
   def audit_log?
     user.admin?
-  end
-
-  def validate_slug?
-    admin_or_user?
   end
 
   def termination?
@@ -212,11 +190,23 @@ class EventPolicy < ApplicationPolicy
   private
 
   def admin_or_user?
-    user&.admin? || record.users.include?(user)
+    admin? || user?
+  end
+
+  def admin?
+    user&.admin?
+  end
+
+  def user?
+    record.users.include?(user)
+  end
+
+  def manager?
+    OrganizerPosition.find_by(user:, event: record)&.manager?
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record)&.manager?
+    admin? || manager?
   end
 
   def is_not_demo_mode?

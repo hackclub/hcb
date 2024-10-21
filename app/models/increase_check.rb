@@ -60,7 +60,7 @@ class IncreaseCheck < ApplicationRecord
 
   has_one :canonical_pending_transaction
   has_one :grant, required: false
-  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false, foreign_key: "increase_checks_id"
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -266,7 +266,7 @@ class IncreaseCheck < ApplicationRecord
                                           postal_code: address_zip,
                                           country_code: "US",
                                         }.compact_blank,
-                                        payor_name: event.name[0...40],
+                                        payor_name: event.short_name(length: 40),
                                         payor_address: {
                                           line_1: "8605 Santa Monica Blvd #86294",
                                           city: "West Hollywood",

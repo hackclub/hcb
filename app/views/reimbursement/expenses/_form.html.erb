@@ -4,7 +4,7 @@
   <div class="flex flex-row items-center">
     <div style="flex-grow: 1;">
       <%= form.label :memo, "Memo", class: "bold" %>
-      <%= form.text_field :memo, placeholder: "Lunch during layover at SFO", required: true, data: { "expense-form-target": "field memoField", "action": "dblclick->expense-form#edit" }, onkeydown: "event.key == 'Enter' && event.target.form.requestSubmit()" %>
+      <%= form.text_field :memo, placeholder: "Lunch during layover at SFO", required: true, data: { "expense-form-target": "field memoField", "action": "dblclick->expense-form#edit", "behavior": "ctrl_enter_submit" } %>
     </div>
 
     <% if expense.is_standard? %>
@@ -22,7 +22,7 @@
         <%= inline_icon "markdown", size: 32 %> Additional context for this expense
       </span>
     </div>
-    <%= form.text_area :description, placeholder: "This was for...", class: "w-100 fit flex-grow", data: { "expense-form-target": "field" } %>
+    <%= form.text_area :description, placeholder: "This was for...", class: "w-100 fit flex-grow", data: { "expense-form-target": "field", behavior: "ctrl_enter_submit" } %>
   </div>
   <% if policy(expense).approve? %>
     <% if !expense.approved? && expense.report.submitted? %>

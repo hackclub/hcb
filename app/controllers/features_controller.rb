@@ -10,14 +10,19 @@ class FeaturesController < ApplicationController
     command_bar_2024_02_05: %w[🔍 🔎 ✨ 💸],
     transaction_tags_2022_07_29: %w[🏷️],
     user_permissions_2024_03_09: %w[📛 🧑‍💼 🪪 🎉],
-    anonymous_donations_2024_01_29: %w[🫂 💳 🤑],
     recently_on_hcb_2024_05_23: %w[👀 🤑 🙈],
-    cover_my_fee_2024_06_25: %w[🙏 ❤️ 💳],
     spending_controls_2024_06_03: %w[✅ ❌ 💷],
+    two_factor_authentication_2024_05_22: %w[🔒],
+    totp_2024_06_13: %w[🔒 ⏰],
+    event_home_page_redesign_2024_09_21: %w[🏠 📊 📉 💸]
   }.freeze
 
   def enable_feature
-    actor = params[:event_id] ? Event.find(params[:event_id]) : current_user
+    actor = if params[:event_id]
+              Event.find(params[:event_id])
+            else
+              current_user
+            end
     feature = params[:feature]
     authorize actor
     if FEATURES.key?(feature.to_sym) || current_user.admin?
@@ -34,7 +39,11 @@ class FeaturesController < ApplicationController
   end
 
   def disable_feature
-    actor = params[:event_id] ? Event.find(params[:event_id]) : current_user
+    actor = if params[:event_id]
+              Event.find(params[:event_id])
+            else
+              current_user
+            end
     feature = params[:feature]
     authorize actor
     if FEATURES.key?(feature.to_sym) || current_user.admin?

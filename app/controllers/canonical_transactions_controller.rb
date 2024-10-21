@@ -54,7 +54,7 @@ class CanonicalTransactionsController < ApplicationController
     raise ArgumentError unless ct.amount_cents > 0
 
     fee = ct.fee
-    fee.amount_cents_as_decimal = BigDecimal(ct.amount_cents.to_s) * BigDecimal(ct.event.sponsorship_fee.to_s)
+    fee.amount_cents_as_decimal = BigDecimal(ct.amount_cents.to_s) * BigDecimal(ct.event.revenue_fee.to_s)
 
     fee.reason = :revenue
     fee.save!

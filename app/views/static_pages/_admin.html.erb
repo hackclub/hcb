@@ -45,9 +45,10 @@
       <%= card_to "Check deposits", admin_check_deposits_path, { badge: CheckDeposit.unprocessed.count } %>
       <%= card_to "Grants", grants_admin_index_path, { badge: Grant.admin_action_needed.count } %>
       <%= card_to "PayPal", paypal_transfers_admin_index_path, { badge: PaypalTransfer.pending.count } %>
+      <%= card_to "Wires", wires_admin_index_path, { badge: Wire.pending.count } %>
       <%= card_to "Disbursements", disbursements_admin_index_path, { badge: Disbursement.reviewing.count } %>
       <%= card_to "Reimbursements", reimbursements_admin_index_path, { badge: Reimbursement::Report.reimbursement_requested.count } %>
-      <%= card_to "Deletion Requests", organizer_position_deletion_requests_path, { badge: OrganizerPositionDeletionRequest.under_review.count } %>
+      <%= card_to "Deletion requests", organizer_position_deletion_requests_path, { badge: OrganizerPositionDeletionRequest.under_review.count } %>
       <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), { async_badge: :pending_disputed_transactions_airtable } %>
       <%= card_to "Feedback", link_to_airtable_task(:feedback), { async_badge: :pending_feedback_airtable } %>
       <%= card_to "Hackathon Grants", link_to_airtable_task(:first_grant), { async_badge: :pending_first_grant_airtable } %>

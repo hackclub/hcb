@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class OrganizerPositionDeletionRequestsController < ApplicationController
+  include SetEvent
   before_action :set_opdr, only: [:show, :close, :open]
 
   def index
@@ -24,9 +25,10 @@ class OrganizerPositionDeletionRequestsController < ApplicationController
       @op = OrganizerPosition.find(params[:organizer_position_id])
       authorize @op.organizer_position_deletion_requests.build
       return redirect_to new_event_organizer_position_remove_path(event_id: @op.event.slug, organizer_position_id: @op.user.slug)
+    else
+      set_event
     end
 
-    @event = Event.friendly.find(params[:event_id])
     begin
       @user = User.friendly.find(params[:organizer_position_id])
       @op = OrganizerPosition.find_by!(event: @event, user: @user)

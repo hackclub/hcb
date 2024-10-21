@@ -40,7 +40,7 @@
       my_reimbursements_path,
       tooltip: "See expense reimbursements",
       icon: "attachment",
-      async_badge: my_draft_reimbursements_icon_path,
+      async_badge: my_reimbursements_icon_path,
       selected: local_assigns[:selected] == :reimbursements %>
     <%= dock_item "Settings",
       my_settings_path,
@@ -64,15 +64,19 @@
   <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
     <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
       <span class="flex items-center w-100">
-          <span class="flex-grow">Recent Activity</span>
-          <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
-            👤 <%= User.currently_online.count %>
+          <span class="flex-grow">Recent activity</span>
+          <% if admin_signed_in? %>
+            <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :POST } do %>
+              <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
+                👤 <%= User.currently_online.count %>
+              <% end %>
+            <% end %>
           <% end %>
       </span>
     </h4>
-  <% end %>
 
-  <%= render partial: "static_pages/my_activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
+    <%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
+  <% end %>
 
   <% if current_user.events.not_demo_mode.funded.exists? && Flipper.enabled?(:bank_wrapped, current_user) %>
     <div id="bank-wrapped-dialog" style="display: none;">

@@ -168,7 +168,7 @@ function SearchAndResults() {
             ])
           }
         }
-      } catch (error) {
+      } catch {
         setActions([
           ...actions.filter(a => !a.id?.startsWith('loading')),
           {

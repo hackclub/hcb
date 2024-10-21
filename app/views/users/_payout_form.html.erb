@@ -1,6 +1,6 @@
 <%= form_with model: user do |form| %>
   <fieldset>
-    <legend class="heading h3 pb2">How would you like to be reimbursed?</legend>
+    <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
     <div class="field field--options trio" style="max-width: none;">
       <%= form.radio_button :payout_method_type, "User::PayoutMethod::AchTransfer" %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::AchTransfer" do %>

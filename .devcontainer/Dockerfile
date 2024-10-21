@@ -1,4 +1,4 @@
-ARG VARIANT="3.2-bookworm"
+ARG VARIANT="3.3-bookworm"
 FROM mcr.microsoft.com/devcontainers/ruby:${VARIANT}
 # Install Rails
 RUN su vscode -c "gem install rails webdrivers"

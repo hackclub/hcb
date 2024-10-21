@@ -7,7 +7,8 @@
     &:after {
       background-color: rgba(map-get($palette, black), 0.875);
       border-radius: 0.5rem;
-      box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.0625),
+      box-shadow:
+        0 0 2px 0 rgba(0, 0, 0, 0.0625),
         0 4px 8px 0 rgba(0, 0, 0, 0.125);
       color: map-get($palette, white);
       content: attr(aria-label);
@@ -72,7 +73,7 @@
     margin-top: 0.5rem;
     transform: translateX(50%);
   }
-  
+
   .tooltipped--xl {
     &:after {
       max-width: none;

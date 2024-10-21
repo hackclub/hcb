@@ -112,8 +112,7 @@ class GrantsController < ApplicationController
           category: "grant recipient",
           is_public: false,
           is_indexable: false,
-          approved: true,
-          sponsorship_fee: 0,
+          approved: true
         ).run
 
         @grant.disbursement = DisbursementService::Create.new(

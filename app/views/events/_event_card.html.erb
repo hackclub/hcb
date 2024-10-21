@@ -18,19 +18,24 @@
       <div class="badge bg-info ml0 mb2 w-fit">Playground Mode</div>
     <% end %>
     <div class="h4 line-height-2 mb2 flex justify-between item-center">
-      <span class="flex items-center gap-1 whitespace-nowrap">
+      <span class="flex items-center gap-1 whitespace-nowrap tabular-nums">
         <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
         <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true }, loading: :lazy do %>
           —
         <% end %>
       </span>
-      <span class="flex items-center gap-1">
+      <span class="flex items-center gap-1 tabular-nums">
         <%= inline_icon "card", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
         <%= event.stripe_cards.active.count %>
       </span>
     </div>
     <div class="avatar-row">
-      <% event.organizer_positions.each do |position| %>
+      <% if event.organizer_positions.size > 9 %>
+        <div class="rounded-full text-white justify-center items-center flex tabular-nums" style="width: 24px; height: 24px; font-weight: 300; font-size: 10px; background: #273444;">
+          +<%= event.organizer_positions.size - 8 %>
+        </div>
+      <% end %>
+      <% event.organizer_positions.first(event.organizer_positions.size > 9 ? 8 : 9).each do |position| %>
         <%= avatar_for position.user, 24 %>
       <% end %>
     </div>

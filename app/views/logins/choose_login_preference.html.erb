@@ -27,12 +27,12 @@
 
   <p>How would you like to sign in?</p>
 
-  <%= form_with url: set_login_preference_login_path(@login), method: :post, data: { "controller" => "webauthn-auth form-disable", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_return_to_value: @return_to, webauthn_auth_login_id_value: @login.hashid } do |form| %>
+  <%= form_with url: set_login_preference_login_path(@login), method: :post, data: @webauthn_available ? { "controller" => "webauthn-auth form-disable", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_return_to_value: @return_to, webauthn_auth_login_id_value: @login.hashid } : {} do |form| %>
     <div data-webauthn-auth-target="error" class="mb2 display-none">
       <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
     </div>
 
-    <div class="field field--options mx-auto <%= "trio" if @webauthn_available && @totp_available %>">
+    <div class="field field--options mx-auto <%= "trio max-w-md" if @webauthn_available && @totp_available %>">
       <% if @webauthn_available %>
         <%= form.radio_button :login_preference, "webauthn", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
         <%= form.label :login_preference, value: "webauthn", class: "cursor-pointer" do %>

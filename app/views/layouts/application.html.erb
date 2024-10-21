@@ -106,7 +106,7 @@
           <% end %>
           <%= link_to({ show_mock_data: !show_mock_data? }, class: "btn btn-small w-fit shrink-none nowrap") do %>
             <%= inline_icon "view" %>
-            <%= show_mock_data? ? "Hide" : "Show" %> Mock Data
+            <%= show_mock_data? ? "Hide" : "Show" %> mock data
           <% end %>
         </div>
       </div>
@@ -171,7 +171,7 @@
       </main>
     <% end %>
 
-    <%= render "application/feedback_form" if !@no_app_shell && current_user&.events&.not_demo_mode&.any? %>
+    <%= render "application/support_button" unless @no_app_shell %>
 
     <% if Rails.env.production? %>
       <%= render "application/fullstory" if current_user&.sessions_reported %>

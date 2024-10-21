@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 class ExportsController < ApplicationController
+  include SetEvent
+  before_action :set_event, only: [:transactions]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
   def transactions
-    @event = Event.friendly.find(params[:event])
-
     authorize @event, :show?
 
     should_queue = @event.canonical_transactions.size > 300
@@ -60,7 +60,8 @@ class ExportsController < ApplicationController
             @withdrawn -= ct.amount
           end
         end
-        render pdf: "statement", page_height: "11in", page_width: "8.5in"
+
+        render pdf: "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement", page_height: "11in", page_width: "8.5in"
       end
     end
   end
@@ -131,17 +132,17 @@ class ExportsController < ApplicationController
 
   def set_file_headers_csv
     headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=transactions.csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
   end
 
   def set_file_headers_json
     headers["Content-Type"] = "application/json"
-    headers["Content-disposition"] = "attachment; filename=transactions.json"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.json"
   end
 
   def set_file_headers_ledger
     headers["Content-Type"] = "text/ledger"
-    headers["Content-disposition"] = "attachment; filename=transactions.ledger"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
   end
 
   def transactions_csv

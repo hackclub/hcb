@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class GSuiteAccountsController < ApplicationController
-  before_action :set_g_suite_account, only: [:edit, :update, :reject, :reset_password, :toggle_suspension]
+  before_action :set_g_suite_account, only: [:edit, :update, :reset_password, :toggle_suspension]
 
   def index
     authorize GSuiteAccount
@@ -69,34 +69,6 @@ class GSuiteAccountsController < ApplicationController
     end
 
     redirect_to event_g_suite_overview_path(event_id: @event.slug)
-  end
-
-  def verify
-    email = params[:email]
-    @g_suite_account = GSuiteAccount.select { |account| account.full_email_address == email }
-    @g_suite_account.verified_at = Time.now
-    if @g_suite_account.save
-      GSuiteAccountMailer.verify(recipient: @g_suite_account.address).deliver_later
-      flash[:success] = "Email verified!"
-      redirect_to @g_suite_account.g_suite.event
-    else
-      flash[:error] = "Email not found."
-    end
-  end
-
-  # Deprecated: we automatically handle Google Workspace requests so no applications
-  # are rejected.
-  def reject
-    authorize @g_suite_account
-
-    @g_suite_account.rejected_at = Time.now
-
-    if @g_suite_account.save
-      flash[:success] = "Google Workspace account rejected."
-    else
-      flash[:error] = "Something went wrong."
-    end
-    redirect_to g_suite_accounts_path
   end
 
   def reset_password

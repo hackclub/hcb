@@ -1,0 +1,18 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  Congrats! We're emailing to let you know that you've received <%= @donation.anonymous ? "an anonymous" : "a" %> donation of <%= link_to "#{render_money @donation.amount} from #{@donation.name(show_anonymous: true)}", @donation %>.
+</p>
+
+Reply to this email to get in touch with <%= @donation.anonymous? ? "your generous donor" : @donation.name %>.
+
+<% if @donation.anonymous? %>
+  <p>
+    Please be considerate of the fact that this donor has requested to remain anonymous.
+  </p>
+<% end %>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

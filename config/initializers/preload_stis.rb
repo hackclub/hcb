@@ -4,5 +4,6 @@
 unless Rails.application.config.eager_load
   Rails.application.config.to_prepare do
     Rails.autoloaders.main.eager_load_dir(Rails.root.join("app/models/metric").to_s)
+    Rails.autoloaders.main.eager_load_dir(Rails.root.join("app/models/event/plan").to_s)
   end
 end

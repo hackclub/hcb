@@ -1,4 +1,13 @@
 <%= render partial: "features/preview", locals: {
+      id: "home-page-redesign",
+      classes: ["feature-home-page-redesign"],
+      feature_flag: :event_home_page_redesign_2024_09_21,
+      name: "Home Page Redesign",
+      description: "A fresh new look for your event's home page!",
+      event: @event
+    } if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
+
+<%= render partial: "features/preview", locals: {
       id: "transaction-tags",
       classes: ["feature-transaction-tags"],
       feature_flag: :transaction_tags_2022_07_29,
@@ -20,12 +29,3 @@
       disable_warning: active_spending_control_count > 0 ? "⚠️ #{active_spending_control_count} users have spending controls in place ⚠️\n\nAre you sure you want to disable this feature?" : nil
 
     } %>
-
-<%= render partial: "features/preview", locals: {
-      id: "cover-fees",
-      classes: ["feature-cover-fees"],
-      feature_flag: :cover_my_fee_2024_06_25,
-      name: "Cover fees on donations",
-      description: "Allow donors to cover HCB's fee on their donation directly",
-      event: @event
-    } if @event.sponsorship_fee > 0 %>

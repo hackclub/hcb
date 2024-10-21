@@ -106,7 +106,7 @@
       <% end %>
     <% end %>
 
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
   <% if @hcb_code.increase_check.may_mark_rejected? %>

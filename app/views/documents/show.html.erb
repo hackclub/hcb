@@ -36,22 +36,25 @@
 
 <section class="details mb3 pt2">
 
-<p>
-  <strong>Added by</strong> <%= user_mention @document.user %>
-</p>
+  <p>
+    <strong>Added by</strong> <%= user_mention @document.user %>
+  </p>
 
 </section>
 
 <% admin_tool do %>
-<% if @document.downloads.any? %>
-<h2 class="my0">Download history</h2>
-<ul class="list list--unlinked">
-  <% @document.downloads.each do |download| %>
-    <li>
-      <%= user_mention download.user %>
-      <%= content_tag :span, download.created_at %>
-    </li>
+  <%= turbo_frame_tag :downloads do %>
+    <% if @downloads.any? %>
+      <h2 class="my0">Download history</h2>
+      <ul class="list list--unlinked">
+        <% @downloads.each do |download| %>
+          <li>
+            <%= user_mention download.user %>
+            <%= content_tag :span, download.created_at %>
+          </li>
+        <% end %>
+        <%= paginate @downloads %>
+      </ul>
+    <% end %>
   <% end %>
-</ul>
-<% end %>
 <% end %>

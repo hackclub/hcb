@@ -57,7 +57,7 @@ class Login < ApplicationRecord
     event :mark_complete do
       transitions from: :incomplete, to: :complete do
         guard do
-          authentication_factors_count == (user.using_2fa? ? 2 : 1)
+          authentication_factors_count == (user.use_two_factor_authentication? ? 2 : 1)
         end
       end
     end

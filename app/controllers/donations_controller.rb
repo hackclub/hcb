@@ -6,10 +6,10 @@ class DonationsController < ApplicationController
   include SetEvent
   include Rails::Pagination
 
-  skip_after_action :verify_authorized, only: [:export, :show, :refund, :qr_code, :finish_donation, :finished]
+  skip_after_action :verify_authorized, only: [:export, :show, :qr_code, :finish_donation, :finished]
   skip_before_action :signed_in_user
   before_action :set_donation, only: [:show]
-  before_action :set_event, only: [:start_donation, :make_donation, :qr_code]
+  before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
   before_action :check_background_param
   before_action :hide_seasonal_decorations
@@ -40,9 +40,11 @@ class DonationsController < ApplicationController
   end
 
   def start_donation
-    if !@event.donation_page_enabled
+    unless @event.donation_page_available?
       return not_found
     end
+
+    tax_deductible = params[:goods].nil? ? true : params[:goods] == "0"
 
     @donation = Donation.new(
       name: params[:name],
@@ -51,7 +53,8 @@ class DonationsController < ApplicationController
       message: params[:message],
       event: @event,
       ip_address: request.ip,
-      user_agent: request.user_agent
+      user_agent: request.user_agent,
+      tax_deductible:
     )
 
     authorize @donation
@@ -64,6 +67,7 @@ class DonationsController < ApplicationController
         email: params[:email],
         amount: params[:amount],
         message: params[:message],
+        tax_deductible:
       )
     end
 
@@ -74,8 +78,8 @@ class DonationsController < ApplicationController
     d_params = donation_params
     d_params[:amount] = Monetize.parse(donation_params[:amount]).cents
 
-    if d_params[:fee_covered] == "1" && Flipper.enabled?(:cover_my_fee_2024_06_25, @event)
-      d_params[:amount] = (d_params[:amount] / (1 - @event.sponsorship_fee)).ceil
+    if d_params[:fee_covered] == "1" && @event.config.cover_donation_fees
+      d_params[:amount] = (d_params[:amount] / (1 - @event.revenue_fee)).ceil
     end
 
     if d_params[:name] == "aser ras"
@@ -86,7 +90,9 @@ class DonationsController < ApplicationController
     d_params[:ip_address] = request.ip
     d_params[:user_agent] = request.user_agent
 
-    @donation = Donation.new(d_params)
+    tax_deductible = d_params[:goods].nil? ? true : d_params[:goods] == "0"
+
+    @donation = Donation.new(d_params.except(:goods).merge({ tax_deductible: }))
     @donation.event = @event
 
     authorize @donation
@@ -142,14 +148,17 @@ class DonationsController < ApplicationController
     @donation = Donation.find(params[:id])
     @hcb_code = @donation.local_hcb_code
 
-    ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
+    authorize @donation
 
-    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
+    if @donation.canonical_transactions.any?
+      ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
+    else
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "This donation hasn't settled, only settled invoices can be refunded." }
+    end
   end
 
   def export
-    @event = Event.friendly.find(params[:event])
-
     authorize @event.donations.first
 
     respond_to do |format|
@@ -159,8 +168,6 @@ class DonationsController < ApplicationController
   end
 
   def export_donors
-    @event = Event.friendly.find(params[:event])
-
     authorize @event.donations.first
 
     respond_to do |format|
@@ -242,7 +249,7 @@ class DonationsController < ApplicationController
   end
 
   def donation_params
-    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :fee_covered)
+    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered)
   end
 
   def redirect_to_404

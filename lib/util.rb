@@ -29,7 +29,7 @@ module Util
     @commit_hash ||= begin
       result = ENV["HEROKU_SLUG_COMMIT"]
       result ||= source_version
-      result ||= `git show --pretty=%H -q 2> /dev/null`&.chomp
+      result ||= `git show --pretty=%H -q 2> /dev/null`.chomp
     end
 
     @commit_hash
@@ -37,7 +37,7 @@ module Util
 
   def self.commit_dirty?
     @commit_dirty ||= begin
-      `git diff --shortstat 2> /dev/null | tail -n1`&.chomp.present?
+      `git diff --shortstat 2> /dev/null | tail -n1`.chomp.present?
     end
     @commit_dirty
   end

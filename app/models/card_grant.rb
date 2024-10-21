@@ -39,6 +39,9 @@
 class CardGrant < ApplicationRecord
   include Hashid::Rails
 
+  include PublicIdentifiable
+  set_public_id_prefix :cdg
+
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :stripe_card, optional: true
@@ -48,7 +51,7 @@ class CardGrant < ApplicationRecord
   has_one :card_grant_setting, through: :event, required: true
   alias_method :setting, :card_grant_setting
 
-  enum :status, [:active, :canceled], default: :active
+  enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
@@ -77,7 +80,7 @@ class CardGrant < ApplicationRecord
   end
 
   def state
-    if canceled?
+    if canceled? || expired?
       "muted"
     elsif pending_invite?
       "info"
@@ -91,6 +94,8 @@ class CardGrant < ApplicationRecord
   def state_text
     if canceled?
       "Canceled"
+    elsif expired?
+      "Expired"
     elsif pending_invite?
       "Invitation sent"
     elsif stripe_card.frozen?
@@ -104,9 +109,31 @@ class CardGrant < ApplicationRecord
     stripe_card.nil?
   end
 
-  def cancel!(canceled_by)
+  def topup!(amount_cents:, topped_up_by: User.find(sent_by_id))
+    raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
+
+    ActiveRecord::Base.transaction do
+      DisbursementService::Create.new(
+        source_event_id: event_id,
+        destination_event_id: event_id,
+        name: "Topup of funds for grant to #{user.name}",
+        amount: amount_cents / 100,
+        destination_subledger_id: subledger_id,
+        requested_by_id: topped_up_by.id,
+      ).run
+
+      update!(amount_cents: self.amount_cents + amount_cents)
+    end
+  end
+
+  def expire!
+    hcb_user = User.find_by!(email: "bank@hackclub.com")
+    cancel!(hcb_user, expired: true)
+  end
+
+  def cancel!(canceled_by = User.find_by!(email: "bank@hackclub.com"), expired: false)
     if balance > 0
-      custom_memo = "Return of funds from cancellation of grant to #{user.name}"
+      custom_memo = "Return of funds from #{expired ? "expiration" : "cancellation"} of grant to #{user.name}"
 
       disbursement = DisbursementService::Create.new(
         source_event_id: event_id,
@@ -122,7 +149,8 @@ class CardGrant < ApplicationRecord
 
     end
 
-    update!(status: :canceled)
+    update!(status: :canceled) unless expired
+    update!(status: :expired) if expired
 
     stripe_card&.freeze!
   end
@@ -145,8 +173,24 @@ class CardGrant < ApplicationRecord
     (merchant_lock + (setting&.merchant_lock || [])).uniq
   end
 
+  def allowed_merchant_names
+    allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name || "Unnamed Merchant (#{merchant_id})" }.uniq
+  end
+
   def allowed_categories
     (category_lock + (setting&.category_lock || [])).uniq
+  end
+
+  def allowed_category_names
+    allowed_categories.map { |category| YellowPages::Category.lookup(key: category).name || "#{category}*" }.uniq
+  end
+
+  def expires_after
+    card_grant_setting.read_attribute_before_type_cast(:expiration_preference)
+  end
+
+  def expires_on
+    created_at + expires_after.days
   end
 
   private

@@ -17,7 +17,7 @@ module PendingEventMappingEngine
           end
 
           # 2. identify authed (0 amount and a considerable amount of time has passed)
-          if rpst.amount_cents == 0 && Time.at(rpst.stripe_transaction["created"]) < 3.days.ago
+          if rpst.amount_cents == 0 && Time.at(rpst.stripe_transaction["created"]).before?(30.days.ago)
             cpt.decline!
           end
 

@@ -36,7 +36,7 @@ class OrganizerPosition < ApplicationRecord
   belongs_to :user
   belongs_to :event
 
-  has_one :organizer_position_invite
+  has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
   has_many :tours, as: :tourable
 

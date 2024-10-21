@@ -51,11 +51,11 @@ class OrganizerPosition
         canonical_pending_transactions_hcb_codes = CanonicalPendingTransaction
                                                    .not_declined
                                                    .joins(:raw_pending_stripe_transaction)
-                                                   .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN EXTRACT(EPOCH FROM TIMESTAMP ?) AND EXTRACT(EPOCH FROM TIMESTAMP ?))", card_ids, created_at, (ended_at || Float::INFINITY))
+                                                   .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, (ended_at&.to_i || Time.now.to_i))
                                                    .pluck(:hcb_code)
         canonical_transactions_hcb_codes = CanonicalTransaction
                                            .stripe_transaction
-                                           .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN EXTRACT(EPOCH FROM TIMESTAMP ?) AND EXTRACT(EPOCH FROM TIMESTAMP ?))", card_ids, created_at, (ended_at || Float::INFINITY))
+                                           .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, (ended_at&.to_i || Time.now.to_i))
                                            .pluck(:hcb_code)
         all_hcb_codes = canonical_pending_transactions_hcb_codes + canonical_transactions_hcb_codes
         HcbCode.where(hcb_code: all_hcb_codes)

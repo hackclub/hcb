@@ -4,30 +4,31 @@
 #
 # Table name: users
 #
-#  id                       :bigint           not null, primary key
-#  access_level             :integer          default("user"), not null
-#  birthday_ciphertext      :text
-#  charge_notifications     :integer          default("email_and_sms"), not null
-#  comment_notifications    :integer          default("all_threads"), not null
-#  email                    :text
-#  full_name                :string
-#  locked_at                :datetime
-#  payout_method_type       :string
-#  phone_number             :text
-#  phone_number_verified    :boolean          default(FALSE)
-#  preferred_name           :string
-#  pretend_is_not_admin     :boolean          default(FALSE), not null
-#  receipt_report_option    :integer          default("none"), not null
-#  running_balance_enabled  :boolean          default(FALSE), not null
-#  seasonal_themes_enabled  :boolean          default(TRUE), not null
-#  session_duration_seconds :integer          default(2592000), not null
-#  sessions_reported        :boolean          default(FALSE), not null
-#  slug                     :string
-#  use_sms_auth             :boolean          default(FALSE)
-#  created_at               :datetime         not null
-#  updated_at               :datetime         not null
-#  payout_method_id         :bigint
-#  webauthn_id              :string
+#  id                            :bigint           not null, primary key
+#  access_level                  :integer          default("user"), not null
+#  birthday_ciphertext           :text
+#  charge_notifications          :integer          default("email_and_sms"), not null
+#  comment_notifications         :integer          default("all_threads"), not null
+#  email                         :text
+#  full_name                     :string
+#  locked_at                     :datetime
+#  payout_method_type            :string
+#  phone_number                  :text
+#  phone_number_verified         :boolean          default(FALSE)
+#  preferred_name                :string
+#  pretend_is_not_admin          :boolean          default(FALSE), not null
+#  receipt_report_option         :integer          default("none"), not null
+#  running_balance_enabled       :boolean          default(FALSE), not null
+#  seasonal_themes_enabled       :boolean          default(TRUE), not null
+#  session_duration_seconds      :integer          default(2592000), not null
+#  sessions_reported             :boolean          default(FALSE), not null
+#  slug                          :string
+#  use_sms_auth                  :boolean          default(FALSE)
+#  use_two_factor_authentication :boolean          default(FALSE)
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  payout_method_id              :bigint
+#  webauthn_id                   :string
 #
 # Indexes
 #
@@ -35,7 +36,7 @@
 #  index_users_on_slug   (slug) UNIQUE
 #
 class User < ApplicationRecord
-  self.ignored_columns = ["birthday"]
+  has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
   set_public_id_prefix :usr
@@ -44,6 +45,8 @@ class User < ApplicationRecord
   extend FriendlyId
 
   include Turbo::Broadcastable
+
+  include ApplicationHelper
 
   has_paper_trail only: [:access_level, :email]
 
@@ -60,17 +63,12 @@ class User < ApplicationRecord
     none: 0,
     weekly: 1,
     monthly: 2,
-  }, prefix: :receipt_report
+  }, prefix: :receipt_report, default: :weekly
 
-  enum :access_level, [
-    :user,
-    :admin,
-    :superadmin,
-  ], scopes: false, default: :user
+  enum :access_level, { user: 0, admin: 1, superadmin: 2 }, scopes: false, default: :user
 
   has_many :logins
   has_many :login_codes
-  has_many :login_tokens
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions
@@ -113,8 +111,8 @@ class User < ApplicationRecord
 
   has_one_attached :profile_picture
 
-  has_one :partner, inverse_of: :representative
-  has_one :totp, class_name: "User::Totp"
+  has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
+  has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
 
   # a user does not actually belong to its payout method,
   # but this is a convenient way to set up the association.
@@ -126,6 +124,8 @@ class User < ApplicationRecord
   has_encrypted :birthday, type: :date
 
   include HasMetrics
+
+  include HasTasks
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -213,6 +213,7 @@ class User < ApplicationRecord
 
   def safe_name
     # stripe requires names to be 24 chars or less, and must include a last name
+    return name unless name.length > 24
     return full_name unless full_name.length > 24
 
     initial_name
@@ -223,7 +224,7 @@ class User < ApplicationRecord
   end
 
   def possessive_name
-    "#{name}'s"
+    possessive(name)
   end
 
   def initials
@@ -233,14 +234,6 @@ class User < ApplicationRecord
 
   def pretty_phone_number
     Phonelib.parse(self.phone_number).national
-  end
-
-  def representative?
-    self.partner.present?
-  end
-
-  def represented_partner
-    self.partner
   end
 
   def admin_dropdown_description
@@ -282,17 +275,18 @@ class User < ApplicationRecord
     User::ReceiptBin.new(self)
   end
 
+  def hcb_code_ids_missing_receipt
+    @hcb_code_ids_missing_receipt ||= begin
+      user_cards = stripe_cards.includes(:event).where.not(event: { category: :salary }) + emburse_cards.includes(:emburse_transactions)
+      user_cards.flat_map { |card| card.hcb_codes.missing_receipt.receipt_required.pluck(:id) }
+    end
+  end
+
   def transactions_missing_receipt
     @transactions_missing_receipt ||= begin
-      user_cards = stripe_cards.includes(:event).where.not(event: { category: :salary }) + emburse_cards.includes(:emburse_transactions)
-      return HcbCode.none unless user_cards.any?
+      return HcbCode.none unless hcb_code_ids_missing_receipt.any?
 
-      user_hcb_code_ids = user_cards.flat_map { |card| card.hcb_codes.pluck(:id) }
-      return HcbCode.none unless user_hcb_code_ids.any?
-
-      user_hcb_codes = HcbCode.where(id: user_hcb_code_ids)
-
-      user_hcb_codes.missing_receipt.receipt_required.order(created_at: :desc)
+      user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt).order(created_at: :desc)
     end
   end
 
@@ -328,16 +322,17 @@ class User < ApplicationRecord
     user_sessions.maximum(:created_at)
   end
 
-  def using_2fa?
-    Flipper.enabled?(:two_factor_authentication_2024_05_22, self) && phone_number_verified
-  end
-
   def email_charge_notifications_enabled?
     charge_notifications_email? || charge_notifications_email_and_sms?
   end
 
   def sms_charge_notifications_enabled?
     charge_notifications_sms? || charge_notifications_email_and_sms?
+  end
+
+  def sync_with_loops
+    new_user = full_name_before_last_save.blank? && !onboarding?
+    UserService::SyncWithLoops.new(user_id: id, new_user:).run
   end
 
   private
@@ -394,11 +389,6 @@ class User < ApplicationRecord
     unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer)
       errors.add(:payout_method, "is an invalid method, must be check or ACH transfer")
     end
-  end
-
-  def sync_with_loops
-    new_user = full_name_before_last_save.blank? && !onboarding?
-    UserService::SyncWithLoops.new(user_id: id, new_user:).run if teenager?
   end
 
 end

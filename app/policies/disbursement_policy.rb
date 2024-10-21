@@ -31,6 +31,10 @@ class DisbursementPolicy < ApplicationPolicy
     user.admin?
   end
 
+  def cancel?
+    user.admin?
+  end
+
   def mark_fulfilled?
     user.admin?
   end

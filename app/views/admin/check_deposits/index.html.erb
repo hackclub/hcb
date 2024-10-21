@@ -20,7 +20,7 @@
   </thead>
   <tbody>
     <% @check_deposits.each do |check_deposit| %>
-      <tr class="<%= "admin-bg-pending" if check_deposit.column_id.nil? && check_deposit.increase_id.nil? %>">
+      <tr class="<%= "admin-bg-pending" if (check_deposit.column_id.nil? && check_deposit.increase_id.nil?) || check_deposit.manual_submission_required? %>">
         <td><%= check_deposit.id %></td>
         <td><%= check_deposit.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to check_deposit.event.name, check_deposit.event %></td>

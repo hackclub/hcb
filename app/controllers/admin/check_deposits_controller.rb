@@ -20,7 +20,7 @@ module Admin
     def submit
       @check_deposit = CheckDeposit.find(params[:id])
       ColumnService.get "/transfers/checks/#{params[:column_id]}"
-      @check_deposit.update!(column_id: params[:column_id])
+      @check_deposit.update!(column_id: params[:column_id], status: :submitted)
       redirect_to admin_check_deposits_path, flash: { success: "Check deposit processed!" }
     rescue ActiveRecord::RecordInvalid
       flash.now[:error] = "Another check deposit has already been processed with this ID."
@@ -33,6 +33,12 @@ module Admin
       notify_airbrake(e)
       flash.now[:error] = "Something went wrong :("
       render :show, status: :unprocessable_entity
+    end
+
+    def reject
+      @check_deposit = CheckDeposit.find(params[:id])
+      @check_deposit.update!(status: :rejected, rejection_reason: params[:reason])
+      redirect_to admin_check_deposits_path, flash: { success: "Check rejected :(" }
     end
 
   end

@@ -65,14 +65,19 @@ class GSuite < ApplicationRecord
 
     event :mark_verification_error do
       after do
-        GSuiteMailer.with(recipient: self.created_by, g_suite_id: self.id).notify_of_verification_error.deliver_later
+        if aasm.from_state == :verified
+          GSuiteMailer.with(recipient: self.created_by, g_suite_id: self.id).notify_of_error_after_verified.deliver_later
+        else
+          GSuiteMailer.with(recipient: self.created_by, g_suite_id: self.id).notify_of_verification_error.deliver_later
+        end
       end
-      transitions from: :verifying, to: :verification_error
+      transitions from: [:verifying, :verified], to: :verification_error
     end
 
     event :mark_verified do
-      transitions from: :verifying, to: :verified
+      transitions from: [:verifying], to: :verified
     end
+
   end
 
   scope :needs_ops_review, -> { where(aasm_state: ["creating", "verifying"]) }
@@ -104,6 +109,10 @@ class GSuite < ApplicationRecord
 
   def subdomain
     domain.split(".")[0..-3].join(".").presence
+  end
+
+  def previously_verified?
+    versions.where_object_changes_to(aasm_state: "verified").any?
   end
 
   private

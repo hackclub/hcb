@@ -1,0 +1,24 @@
+<p>
+  👋 Hey there,
+</p>
+
+<p>
+  We just wanted to let you know that our card issuer (Stripe) rejected your
+  logo for the following reason:
+</p>
+
+<blockquote><%= @reason %></blockquote>
+
+<p>
+  Any cards previously requested with this rejected logo will have the standard
+  HCB card design. Feel free to upload a new logo
+  on <%= link_to "your organization's settings page", edit_event_url(@event) %>.
+</p>
+
+<p>
+  Best,
+</p>
+
+<p>
+  The HCB Team
+</p>

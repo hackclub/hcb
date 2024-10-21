@@ -22,6 +22,8 @@ If you meant to make this purchase, make sure you have the correct numbers by vi
 <strong>If you didn't authorize this purchase,</strong> <%= link_to "click here", stripe_card_url(@card) %> to freeze your card immediately.
 <% elsif @reason == "webhook_declined" && @webhook_declined_reason == "merchant_not_allowed" %>
 A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your <%= @card.event.name %> card ending in <%= @card.last4 %> was declined because this card isn't allowed to make purchases at '<%= @merchant %>'.
+<% elsif @reason == "webhook_declined" && @webhook_declined_reason == "cash_withdrawals_not_allowed" %>
+A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your <%= @card.event.name %> card ending in <%= @card.last4 %> was declined because this card isn't allowed to make cash withdrawals.
 <% elsif @reason == "webhook_declined" %>
 A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your <%= @card.event.name %> card ending in <%= @card.last4 %> at '<%= @merchant %>' was declined due to insufficient funds on the card.
 

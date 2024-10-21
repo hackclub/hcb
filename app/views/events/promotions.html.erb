@@ -36,7 +36,7 @@
       </h3>
       <%= link_to "Join",
         @perks_available ? "https://hackclub.com/bin/" : root_path,
-        class: "btn bg-success mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
+        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
         target: :_blank %>
     </div>
     <p>
@@ -55,7 +55,7 @@
       </h3>
       <%= link_to "Jump Onboard",
         @perks_available ? "https://hackclub.com/onboard/" : root_path,
-        class: "btn bg-success mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
+        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
         target: :_blank %>
     </div>
     <p>
@@ -67,30 +67,12 @@
   </div>
 <% end %>
 
-<div class="card mb3" id="1password">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
-    <%= image_tag "1password.svg", width: 210, class: "p2" %>
-    <%= link_to "Apply",
-      @perks_available ? fillout_form("1EVMTc9d1Zus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn bg-success mr1 #{'disabled' unless @perks_available}",
-      target: :_blank %>
-  </div>
-
-  <p class="mb0">
-    <%= link_to "1Password", "https://1password.com" %> is providing $100 USD
-    credit to all organizations on HCB that can be claimed once per
-    organization. 1Password is a password manager that allows you to securely
-    keep and share account logins and credentials with your teammates; we use it
-    ourselves at Hack Club HQ!
-  </p>
-</div>
-
-<div class="card pb0 mb3 <%= "muted" unless (@event.country_US? && @perks_available) %>" id="event-helper">
+<div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="event-helper">
   <div class="card__banner card__banner--top flex justify-between items-center promo-event-helper">
     <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
     <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
       @perks_available ? fillout_form("hDJYyLd7qNus", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Name" => current_user.name, "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{'disabled' unless (@perks_available && @event.country_US?)}",
+      class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
       target: :_blank %>
   </div>
 
@@ -129,12 +111,125 @@
   </section>
 </div>
 
-<div class="card pb0 mb3 <%= "muted" unless (@event.country_US? && @perks_available) %>" id="pvsa">
+<div class="card mb3" id="domains">
+  <div
+    class="card__banner card__banner--top flex justify-between items-center promo-domains">
+    <h3 class="h1 p2 my0 color-black">Domains</h3>
+      <% if !@event.g_suites.none? || !@perks_available %>
+        <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
+          <span class="btn disabled">Apply</span>
+        </div>
+      <% else %>
+        <%= link_to "Apply",
+          @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
+          class: "btn mr1 #{"disabled" unless @perks_available}",
+          target: :_blank %>
+      <% end %>
+  </div>
+
+  <p class="mb0">
+    Running a high school student-led hackathon, nonprofit, or club? HCB
+    will purchase your domain for under $20 and cover the cost for the
+    first year. After the first year, you'll be responsible for paying to
+    renew. This can only be claimed once per organization.
+    <% if Flipper.enabled?(:google_workspace, @event) %>
+      You'll also have the option of setting
+      up <%= link_to "Google Workspace", event_g_suite_overview_path %> once
+      we've purchased your domain.
+    <% end %>
+  </p>
+</div>
+
+<div class="card mb3" id="stickerninja">
+  <div
+    class="card__banner card__banner--top flex justify-between items-center promo-stickerninja">
+    <%= link_to image_tag("stickerninja.png", width: 120), "https://stickerninja.com/", target: :_blank %>
+      <% if !@perks_available %>
+        <div class="actions tooltipped tooltipped--w inline-block mt0" aria-label="You are not eligible to access this perk.">
+          <span class="btn disabled">Ineligible</span>
+        </div>
+      <% else %>
+        <div class="actions inline-block mt0 items-center">
+          <%= copy_to_clipboard("hackclub15", class: "badge p2 h5", style: "border: 2px dashed #888; background-color: #17171d;") do %>
+            hackclub15
+          <% end %>
+        </div>
+      <% end %>
+  </div>
+
+  <p class="mb0">
+    Want to give away stickers at your next event or rep your organization year round? We've got you covered. HCB has partnered with StickerNinja to offer fiscally sponsored organizations 15% off on all orders. Visit their website <%= link_to "here", "https://stickerninja.com/", target: :_blank %> to place an order.
+    <% if @perks_available %>
+      <br><br><strong>This discount code is reusable and exclusively for HCB users. Sharing it outside of your organization may result in everyone using HCB losing the perk.</strong>
+    <% end %>
+  </p>
+</div>
+
+<div class="card mb3 pb0" id="stickers">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-stickers">
+      <span class="flex flex-row items-center">
+        <h3 class="h1 white p2 my0 card-title z1">
+          <%= content_tag(:span, "HCB") %>
+          Stickers
+        </h3>
+      </span>
+    <%= link_to "Request",
+      @perks_available ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => @event.name }, prefix: "prefill_") : root_path,
+      class: "btn mr1 #{'disabled' unless @perks_available}",
+      target: :_blank %>
+  </div>
+
+  <div class="mb0">
+    <p><strong>Want some HCB stickers?</strong> You can request an envelope full of them for yourself or your teammates! Every shipment request is manually sent out by the HCB team, and every envelope is personally prepared, packed, and mailed, with the address handwritten.</p>
+    <p><em><strong>With great power comes great responsibility...</strong></em></p>
+    <p>Please enjoy responsibly. HCB operates at a loss that donors pay for, and stickers are not cheap—every package costs real donor money.</p>
+  </div>
+
+  <section class="card__banner card__darker secondary border-top">
+  <p class="my0">
+    📦 If you need a full box of stickers for an event, please email the HCB team at <%= help_email %> with your attendance count and address. We’d be happy to check out your request.
+  </p>
+  </section>
+</div>
+
+<div class="card mb3" id="sendy">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-sendy">
+    <h3 class="h1 white p2 my0">Sendy</h3>
+    <%= link_to "Temporarily closed",
+      @perks_available ? fillout_form("4cJ69MSzKhus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your name" => current_user.name, "Login email" => current_user.email, "Domain URL" => @event.g_suites.first&.domain }, prefix: "prefill_") : root_path,
+      class: "btn mr1 disabled",
+      target: :_blank %>
+  </div>
+
+  <p class="mb0">
+    <%= link_to "Sendy", "https://sendy.co" %> is straightforward, reliable mass-emailing software for sending newsletters. We use it at Hack Club HQ & provide it to all HCB organizations.
+  </p>
+</div>
+
+<div class="card mb3" id="1password">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
+    <%= image_tag "1password.svg", width: 210, class: "p2" %>
+    <%= link_to "Temporarily closed",
+      @perks_available ? fillout_form("1EVMTc9d1Zus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
+      class: "btn mr1 disabled",
+      target: :_blank %>
+  </div>
+
+  <p class="mb0">
+    <%= link_to "1Password", "https://1password.com" %> is providing $100 USD
+    credit to all organizations on HCB that can be claimed once per
+    organization. 1Password is a password manager that allows you to securely
+    keep and share account logins and credentials with your teammates; we use it
+    ourselves at Hack Club HQ!
+  </p>
+</div>
+
+<div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="pvsa">
   <div class="card__banner card__banner--top flex justify-between items-center promo-pvsa">
     <%= image_tag "https://cloud-q7i8htyv7-hack-club-bot.vercel.app/0pvsa-logo-2x.png", width: 60 %>
-    <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
+    <%= link_to "Temporarily closed",
       @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{'disabled' unless (@perks_available && @event.country_US?)}",
+      class: "btn mr1 disabled",
       target: :_blank %>
   </div>
 
@@ -180,101 +275,6 @@
   </section>
 </div>
 
-<div class="card mb3" id="domains">
-  <div
-    class="card__banner card__banner--top flex justify-between items-center promo-domains">
-    <h3 class="h1 p2 my0 color-black">Domains</h3>
-      <% if !@event.g_suites.none? || !@perks_available %>
-        <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
-          <span class="btn bg-success disabled">Apply</span>
-        </div>
-      <% else %>
-        <%= link_to "Apply",
-          @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
-          class: "btn bg-success mr1 #{"disabled" unless @perks_available}",
-          target: :_blank %>
-      <% end %>
-  </div>
-
-  <p class="mb0">
-    Running a high school student-led hackathon, nonprofit, or club? HCB
-    will purchase your domain for under $20 and cover the cost for the
-    first year. After the first year, you'll be responsible for paying to
-    renew. This can only be claimed once per organization.
-    <% if Flipper.enabled?(:google_workspace, @event) %>
-      You'll also have the option of setting
-      up <%= link_to "Google Workspace", event_g_suite_overview_path %> once
-      we've purchased your domain.
-    <% end %>
-  </p>
-</div>
-
-<div class="card mb3" id="stickerninja">
-  <div
-    class="card__banner card__banner--top flex justify-between items-center promo-stickerninja">
-    <%= link_to image_tag("stickerninja.png", width: 120), "https://stickerninja.com/", target: :_blank %>
-      <% if !@perks_available %>
-        <div class="actions tooltipped tooltipped--w inline-block mt0" aria-label="You are not eligible to access this perk.">
-          <span class="btn bg-success disabled">Ineligible</span>
-        </div>
-      <% else %>
-        <div class="actions inline-block mt0 items-center">
-          <%= copy_to_clipboard("hackclub15", class: "badge p2 h5", style: "border: 2px dashed #888; background-color: #17171d;") do %>
-            hackclub15
-          <% end %>
-        </div>
-      <% end %>
-  </div>
-
-  <p class="mb0">
-    Want to give away stickers at your next event or rep your organization year round? We've got you covered. HCB has partnered with StickerNinja to offer fiscally sponsored organizations 15% off on all orders. Visit their website <%= link_to "here", "https://stickerninja.com/", target: :_blank %> to place an order.
-    <% if @perks_available %>
-      <br><br><strong>This discount code is reusable and exclusively for HCB users. Sharing it outside of your organization may result in everyone using HCB losing the perk.</strong>
-    <% end %>
-  </p>
-</div>
-
-<div class="card mb3 pb0" id="stickers">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-stickers">
-      <span class="flex flex-row items-center">
-        <h3 class="h1 white p2 my0 card-title z1">
-          <%= content_tag(:span, "HCB") %>
-          Stickers
-        </h3>
-      </span>
-    <%= link_to "Request",
-      @perks_available ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => @event.name }, prefix: "prefill_") : root_path,
-      class: "btn bg-success mr1 #{'disabled' unless @perks_available}",
-      target: :_blank %>
-  </div>
-
-  <div class="mb0">
-    <p><strong>Want some HCB stickers?</strong> You can request an envelope full of them for yourself or your teammates! Every shipment request is manually sent out by the HCB team, and every envelope is personally prepared, packed, and mailed, with the address handwritten.</p>
-    <p><em><strong>With great power comes great responsibility...</strong></em></p>
-    <p>Please enjoy responsibly. HCB operates at a loss that donors pay for, and stickers are not cheap—every package costs real donor money.</p>
-  </div>
-
-  <section class="card__banner card__darker secondary border-top">
-  <p class="my0">
-    📦 If you need a full box of stickers for an event, please email the HCB team at <%= help_email %> with your attendance count and address. We’d be happy to check out your request.
-  </p>
-  </section>
-</div>
-
-<div class="card mb3" id="sendy">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-sendy">
-    <h3 class="h1 white p2 my0">Sendy</h3>
-    <%= link_to "Temporarily closed",
-      @perks_available ? fillout_form("4cJ69MSzKhus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your name" => current_user.name, "Login email" => current_user.email, "Domain URL" => @event.g_suites.first&.domain }, prefix: "prefill_") : root_path,
-      class: "btn bg-success mr1 disabled",
-      target: :_blank %>
-  </div>
-
-  <p class="mb0">
-    <%= link_to "Sendy", "https://sendy.co" %> is straightforward, reliable mass-emailing software for sending newsletters. We use it at Hack Club HQ & provide it to all HCB organizations.
-  </p>
-</div>
-
 <details class="w-100 left-align">
   <summary><h3 class="inline-block pb0 border-none">Expired promotions</h3></summary>
   <div class="card mb3" id="wallets">
@@ -282,7 +282,7 @@
       <h3 class="h1 p2 my0 color-black">Wallets</h3>
       <%= link_to @wallets_available ? "Request" : "Expired",
                   @perks_available && @wallets_available ? "https://hack.af/hcb-wallets?prefill_Organization%20Name=#{@event.name}&prefill_Recipient%20Name=#{current_user.name}&prefill_Login%20Email=#{current_user.email}" : root_path,
-                  class: "btn bg-success mr1 #{'disabled' unless @perks_available && @wallets_available}",
+                  class: "btn mr1 #{'disabled' unless @perks_available && @wallets_available}",
                   target: :_blank, disabled: !(@perks_available && @wallets_available) %>
     </div>
 
@@ -299,7 +299,7 @@
       <%= image_tag "stickermule.svg", width: 240 %>
       <%= link_to "Expired",
                   @perks_available ? "https://hack.af/stickermule?prefill_Event%20Name=#{@event.name}&prefill_First%20Name=#{current_user.first_name}&prefill_Email=#{current_user.email}" : root_path,
-                  class: "btn bg-success mr1 #{'disabled' unless @perks_available}",
+                  class: "btn mr1 #{'disabled' unless @perks_available}",
                   target: :_blank,
                   disabled: true %>
     </div>
@@ -366,7 +366,7 @@
       <%= image_tag "github.png", width: 170 %>
       <%= link_to "Expired",
         @perks_available ? "https://hack.af/grant?prefill_Event%20Name=#{@event.name}" : root_path,
-        class: "btn bg-accent mr1 #{'disabled' unless @perks_available}",
+        class: "btn mr1 #{'disabled' unless @perks_available}",
         disabled: true %>
     </div>
 
@@ -401,7 +401,7 @@
       class="card__banner card__banner--top flex justify-between items-center"
       style="background-color: #0d101e; border: 1px solid #0068ad;">
       <%= image_tag "replit.png", width: 170 %>
-      <%= link_to "Expired", "#", class: "btn bg-success mr1 disabled" %>
+      <%= link_to "Expired", "#", class: "btn mr1 disabled" %>
     </div>
 
     <p class="mb0">

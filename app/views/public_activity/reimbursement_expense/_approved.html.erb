@@ -6,7 +6,7 @@
   <% if user == current_user %>
     your
   <% else %>
-    <span class="muted"><%= user.name %></span>'<%= "s" unless user.name.ends_with?("s") %>
+    <span class="muted"><%= possessive(user.name) %></span>
   <% end %>
   reimbursement report, <%= link_to activity.trackable.report.name, activity.trackable.report %>
 <% end %>

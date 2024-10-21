@@ -1,6 +1,6 @@
-<%= form_with(model: invoice, url: :event_invoices, local: true, html: { "x-data" => "{ amount: null }" }) do |form| %>
+<%= form_with(model: invoice, url: event_invoices_path(@event), local: true, html: { "x-data" => "{ amount: null }" }) do |form| %>
   <%= form_errors invoice %>
-  <%= form_errors @sponsor %>
+  <%= form_errors sponsor %>
 
   <% if @event.sponsors.count > 0 %>
     <div class="field">
@@ -77,12 +77,12 @@
       data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" },
       "x-model.fill.number" => "amount" %>
     </div>
-    <% if invoice.event.sponsorship_fee != 0 %>
-      <span class="muted" data-behavior="amount-preview" data-fee="<%= sponsor.event.sponsorship_fee %>"></span>
+    <% if invoice.event.revenue_fee != 0 %>
+      <span class="muted" data-behavior="amount-preview" data-fee="<%= sponsor.event.revenue_fee %>"></span>
     <% end %>
 
     <div class="info flex gap-2 mt-2" x-cloak x-show="amount >= <%= Invoice::MAX_CARD_AMOUNT / 100.0 %>">
-      Invoices over <%= render_money Invoice::MAX_CARD_AMOUNT %> can only be paid by a bank transfer.
+      Invoices <%= render_money Invoice::MAX_CARD_AMOUNT %> or more can only be paid by a bank transfer.
     </div>
   </div>
 

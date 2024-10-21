@@ -15,6 +15,16 @@
     </details>
   <% end %>
 
+  <% admin_tool do %>
+    <details>
+      <summary>Available plans</summary>
+
+      <% Event::Plan.available_plans.each do | plan | %>
+        <p><strong><%= plan.new.label %></strong>: <%= plan.new.description %></p>
+      <% end %>
+    </details>
+  <% end %>
+
   <%= form_with(model: event, local: true, class: "mb3") do |form| %>
     <%= form_errors event, "organization" %>
     <% admin_tool do %>
@@ -30,8 +40,19 @@
       </div>
 
       <div class="field">
-        <%= form.label :sponsorship_fee, "Sponsorship fee (as fraction of revenue)" %>
-        <%= form.text_field :sponsorship_fee, value: event.sponsorship_fee || 0.07, placeholder: "0.07", required: true %>
+        <%= form.label :plan_type, capture { %>
+          <% if @event.plan.present? %>
+            Current plan
+            <% if !@event.plan.was_backfilled? %>
+              (started on <%= format_date @event.plan.created_at %>)
+            <% else %>
+              (backfilled)
+            <% end %>
+          <% else %>
+            Assign a plan
+          <% end %>
+        <% } %>
+        <%= form.select :plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.plan_type, include_blank: "Select a plan..." %>
       </div>
 
       <div class="field">

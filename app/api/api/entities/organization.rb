@@ -27,7 +27,7 @@ module Api
           organization.public_message.presence
         end
         expose :donation_link do |organization|
-          if organization.donation_page_enabled?
+          if organization.donation_page_available?
             Rails.application.routes.url_helpers.start_donation_donations_url(organization)
           else
             nil

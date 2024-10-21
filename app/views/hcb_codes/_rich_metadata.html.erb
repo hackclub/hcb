@@ -3,11 +3,6 @@
   <%= render partial: "hcb_codes/donation", locals: {} %>
 <% end %>
 
-<%# partner donation %>
-<% if @hcb_code.partner_donation? && @hcb_code.partner_donation.present? %>
-  <%= render partial: "hcb_codes/partner_donation", locals: {} %>
-<% end %>
-
 <%# invoice %>
 <% if @hcb_code.invoice? && @hcb_code.invoice.present? %>
   <%= render partial: "hcb_codes/invoice", locals: {} %>
@@ -71,6 +66,11 @@
 <%# paypal transfer %>
 <% if @hcb_code.paypal_transfer? && @hcb_code.paypal_transfer.present? %>
   <%= render "paypal_transfer" %>
+<% end %>
+
+<%# wire %>
+<% if @hcb_code.wire? && @hcb_code.wire.present? %>
+  <%= render "wire" %>
 <% end %>
 
 <%# unknown (most likely a direct to bank account transaction) %>

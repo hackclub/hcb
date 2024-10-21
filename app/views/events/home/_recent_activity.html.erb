@@ -1,0 +1,30 @@
+<% if @activities.length > 0 %>
+  <div class="card card--breakdown relative shadow-none flex-1 flex flex-col p-0" style="height: <%= (67.7 * 5) %>px">
+    <div style="position: absolute; bottom: 0; left: 0; height: 100px; width: 100%; background: linear-gradient(transparent, var(--card-bg)); pointer-events: none; z-index: 1"></div>
+    <div class="flex items-center p-2 pl-0 sm:p-4 mt-auto justify-between">
+      <h3 class="m-0">Recent activity</h3>
+      <%= link_to edit_event_path(@event, tab: "audit_log"), class: "flex items-center shrink-0" do %>
+        See all
+        <%= inline_icon "enter" %>
+      <% end %>
+    </div>
+
+    <% if @activities.none? %>
+      <p class="m-0 p-4 pt-2 pb-0 mb-1">
+        <i class="muted">Nothing has happened recently.</i>
+      </p>
+    <% end %>
+    <ul class="list-reset comments w-100 my-0 pb-2 p-4 pt-1 flex-1">
+      <%= render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
+    </ul>
+  </div>
+<% else %>
+  <div class="card card--breakdown shadow-none p-0 text-center flex-1 flex flex-col items-center justify-center" style="height: <%= [(@cards.length + 1.5) * 45, 320].max %>px">
+    <h3 class="m-0 p-4 pb-0 max-w-xs">
+      It's quiet here...
+    </h3>
+    <p class="m-0 p-4 pt-2 pb-0 mb-1 muted max-w-xs">
+      Here's where you'll see recent activity from your team.
+    </p>
+  </div>
+<% end %>

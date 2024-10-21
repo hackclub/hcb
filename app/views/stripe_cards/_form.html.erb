@@ -79,9 +79,9 @@
     <% designs = [@event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
     <% designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.admin? %>
     <% if designs.any? %>
-      <% admin_tool("w-100 grid__fill mt2") do %>
+      <% if Flipper.enabled?(:stripe_card_personalization_designs_2024_08_19, current_user) %>
         <h2 class="grid__fill">Card design</h2>
-        <div class="field field--options mt2" style="max-width: unset;">
+        <div class="field field--options" style="max-width: unset;">
           <% designs.each do |design| %>
             <%= form.radio_button :stripe_card_personalization_design_id, design.id %>
               <%= form.label :stripe_card_personalization_design_id, value: design.id, style: "align-items: center; justify-content: start; padding: 0px; gap: 1rem; #{"background: rgba(241, 196, 15, 0.125)!important;" if design.unlisted?}", class: ("admin-tools" if design.unlisted?).to_s do %>

@@ -19,8 +19,8 @@
     <% end %>
     <%= @use_sms_auth ? "your phone number ending in: " + @phone_last_four : @email %>
   </p>
-  <% if Rails.env.development? %>
-    <p class="h5"><%= link_to "Seems like you're in development. Check your dev email outbox here!", letter_opener_web_path, target: :_blank %></p>
+  <% if Rails.env.development? && !@use_sms_auth %>
+    <p class="h5 text-balance"><%= link_to "Seems like you're in development. Check your email outbox here!", letter_opener_web_path, target: :_blank %></p>
   <% end %>
    <%= form_tag complete_login_path(@login) do %>
     <%= label_tag :login_code, "Enter your login code", class: "left-align" %>
@@ -42,7 +42,7 @@
     <% end %>
     <%= submit_tag "Submit" %>
   <% end %>
-  <% if @use_sms_auth %>
+  <% if @use_sms_auth && !@login&.authenticated_with_email %>
     <div data-controller="form">
       <p>Don't have access to your phone?
         Click

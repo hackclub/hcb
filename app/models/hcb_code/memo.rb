@@ -12,7 +12,6 @@ class HcbCode
         return disbursement_memo(event:) if disbursement?
         return invoice_memo if invoice?
         return donation_memo if donation?
-        return partner_donation_memo if partner_donation?
         return bank_fee_memo if bank_fee?
         return reimbursement_payout_holding_memo if reimbursement_payout_holding?
         return reimbursement_expense_payout_memo if reimbursement_expense_payout?
@@ -59,10 +58,6 @@ class HcbCode
 
       def donation_memo
         "Donation from #{donation.smart_memo}#{donation.refunded? ? " (REFUNDED)" : ""}"
-      end
-
-      def partner_donation_memo
-        "Donation from #{partner_donation.smart_memo}#{partner_donation.refunded? ? " (REFUNDED)" : ""}"
       end
 
       def bank_fee_memo
@@ -120,7 +115,7 @@ class HcbCode
       end
 
       def yellowpages_memo
-        YellowPages::Merchant.lookup_name(network_id: stripe_merchant["network_id"])
+        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name
       end
 
     end

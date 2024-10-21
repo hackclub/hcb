@@ -1,86 +1,92 @@
 .carousel {
-    position: relative;
-    z-index: 200;
+  position: relative;
+  z-index: 200;
 
-    .carousel__item {
-        display: none;
+  .carousel__item {
+    display: none;
 
-        &.carousel__item--active {
-            display: block;
-        }
+    &.carousel__item--active {
+      display: block;
     }
+  }
 }
 
 .carousel__button {
-    position: absolute;
-    top: 50%;
-    z-index: 201;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.1s ease-in-out;
-    background-color: rgba(map-get($palette, info), 0.375);
+  position: absolute;
+  top: 50%;
+  z-index: 201;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.1s ease-in-out;
+  background-color: rgba(map-get($palette, info), 0.375);
 
-    &.carousel__button--left {
-        left: 0px;
-        transform: translate(-100%, -50%);
+  &.carousel__button--left {
+    left: 0px;
+    transform: translate(-100%, -50%);
 
-        &:hover, &:focus {
-            transform: translate(-100%, -50%) scale(1.2);
-        }
+    &:hover,
+    &:focus {
+      transform: translate(-100%, -50%) scale(1.2);
     }
+  }
 
-    &.carousel__button--right {
-        right: 0px;
-        transform: translate(100%, -50%);
+  &.carousel__button--right {
+    right: 0px;
+    transform: translate(100%, -50%);
 
-        &:hover, &:focus {
-            transform: translate(100%, -50%) scale(1.2);
-        }
-
-        svg {
-            transform: rotate(180deg);
-        }
+    &:hover,
+    &:focus {
+      transform: translate(100%, -50%) scale(1.2);
     }
 
     svg {
-        fill: $white;
+      transform: rotate(180deg);
     }
+  }
 
-    html[data-dark='true'] & svg {
-        fill: $white;
-    }
+  svg {
+    fill: $white;
+  }
+
+  html[data-dark='true'] & svg {
+    fill: $white;
+  }
 }
 
-.carousel__wrapper:has(.carousel__items > *:last-child.carousel__item--active) .carousel__button--right {
-    cursor: default;
-    display: none;
+.carousel__wrapper:has(.carousel__items > *:last-child.carousel__item--active)
+  .carousel__button--right {
+  cursor: default;
+  display: none;
 
-    &:hover, &:focus {
-        transform: translate(100%, -50%);
-    }
-    
-    svg {
-        fill: $muted;
-    }
+  &:hover,
+  &:focus {
+    transform: translate(100%, -50%);
+  }
+
+  svg {
+    fill: $muted;
+  }
 }
 
-.carousel__wrapper:has(.carousel__items > *:first-child.carousel__item--active) .carousel__button--left {
-    cursor: default;
-    display: none;
+.carousel__wrapper:has(.carousel__items > *:first-child.carousel__item--active)
+  .carousel__button--left {
+  cursor: default;
+  display: none;
 
-    &:hover, &:focus {
-        transform: translate(-100%, -50%);
-    }
+  &:hover,
+  &:focus {
+    transform: translate(-100%, -50%);
+  }
 
-    svg {
-        fill: $muted;
-    }
+  svg {
+    fill: $muted;
+  }
 }
 
 .carousel__items {
-    padding: 0px 20px;
+  padding: 0px 20px;
 }

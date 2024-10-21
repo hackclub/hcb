@@ -1,0 +1,186 @@
+<% disabled = !policy(@event).create_transfer? %>
+
+<% title "Send a wire" %>
+<%= render "events/nav", selected: :transfers %>
+<% page_sm %>
+
+ <% if @event.present? && !policy(@event).create_transfer? %>
+  <%= render "events/transfers/unauthorized_callout" %>
+<% end %>
+
+<h1>Send a wire</h1>
+
+<% callout_footer = "This requirement is waived for organizations that have raised over $50,000 in the past year" %>
+<% callout_footer += " including #{@event.name}!" unless @event.minimumn_wire_amount_cents > 1 %>
+<% callout_footer += " (admins can bypass this)" if current_user.admin? %>
+
+<%= render "callout",
+    type: "info",
+    title: "Important information about wire transfers",
+    footer: callout_footer do %>
+    Unfortunately, wires are expensive to send. Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you,
+    <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). Consider a <%= link_to "PayPal transfer", new_event_paypal_transfer_path(@event) %> for smaller amounts or reach out to <%= mail_to "hcb@hackclub.com" %>.
+<% end %>
+
+<%= form_with(model: [@event, @wire], local: true, html: {
+                "x-data": "{ country: null }"
+              }) do |form| %>
+
+  <%= form_errors(@wire, "wire", "We couldn't send this") %>
+
+  <div class="field">
+    <%= form.label :memo %>
+    <%= form.text_field :memo,
+        placeholder: "For venue payment...",
+        required: true,
+        disabled: %>
+  </div>
+
+  <h2 class="mb2 mt3">Recipient details</h2>
+
+  <div class="field mt2">
+    <%= form.label :recipient_name, "Name (use company name if applicable)" %>
+    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :recipient_email, "Email" %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+  </div>
+
+  <div class="field mb1">
+    <%= form.label :address_line1, "Street address" %>
+    <%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar", required: true %>
+  </div>
+
+  <div class="field mt0">
+    <%= form.text_field :address_line2, placeholder: "Sector 20", disabled: %>
+  </div>
+
+  <div class="flex">
+    <div class="field flex-auto mr1">
+      <%= form.label :address_city, "City" %>
+      <%= form.text_field :address_city, placeholder: "Gurgaon", required: true %>
+    </div>
+    <div class="field flex-auto mr1">
+      <%= form.label :address_state, "State / province" %>
+      <%= form.text_field :address_state, placeholder: "Haryana", required: true %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :address_postal_code, "Postal code / ZIP code" %>
+    <%= form.text_field :address_postal_code, placeholder: "122022", required: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :recipient_country, "Country" %>
+    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" } %>
+  </div>
+
+  <h2 class="mb2 mt3">Payment information</h2>
+
+  <%= form.label :amount, "Currency & amount" %>
+
+  <div class="field">
+    <div class="flex items-center g1">
+      <div style="width: 72px">
+        <%= form.select :currency, ::EuCentralBank::CURRENCIES + ["EUR"], required: true, disabled:, default: "USD" %>
+      </div>
+      <div class="flex flex-col flex-grow">
+        <%= form.number_field :amount,
+          placeholder: "500.00",
+          disabled: disabled || @event.balance <= 0,
+          step: 0.01,
+          required: true,
+          data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+      </div>
+    </div>
+    <% @wire.errors.messages_for(:amount).each do |message| %>
+      <div class="primary"><%= message %></div>
+    <% end %>
+    <% if @event.balance <= 0 %>
+      <span class="error">There are no funds to transfer.<br>
+    <% end %>
+  </div>
+
+  <div class="field">
+    <%= form.label :payment_for, "What are you paying for with this wire?" %>
+    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
+    <span class="muted">This is to help HCB keep record of our transactions.</span>
+  </div>
+
+  <div class="field">
+    <%= form.label :bic_code, "SWIFT / BIC code" %>
+    <%= form.text_field :bic_code,
+        required: true,
+        disabled:,
+        placeholder: "CLNOUS66" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :account_number %>
+    <%= form.text_field :account_number,
+        required: true,
+        disabled:,
+        placeholder: "123456789" %>
+  </div>
+
+  <div x-show="country == null">
+    <% Wire.information_required_for(nil).each do |field| %>
+      <div class="field">
+        <%= form.label field[:key], field[:label], class: "mb1" %>
+        <%= form.send(field[:type], field[:key]) %>
+        <div class="muted mt1">
+          <%= field[:description] %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% Event.countries_for_select.each do |country| %>
+    <div x-show="country == '<%= country[0] %>'">
+      <% Wire.information_required_for(country[0]).each do |field| %>
+        <div class="field">
+          <%= form.label field[:key], field[:label], class: "mb1" %>
+          <%= form.send(field[:type], field[:key]) %>
+          <div class="muted mt1">
+            <%= field[:description] %>
+            <% if field[:refer_to] %>
+              <%= link_to "Refer to this document", field[:refer_to], target: "_blank" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
+  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
+          action: "
+        dragover@window->file-drop#dragover
+        drop@window->file-drop#drop
+        dragenter@window->file-drop#dragenter
+        dragleave@window->file-drop#dragleave
+      "
+        } %>
+    <%= form.file_field :file,
+        multiple: true,
+        include_hidden: false,
+        required: false,
+        accept: "image/*,image/heic,.pdf",
+        style: "margin: 8px 0px",
+        class: "field--fileupload__field",
+        data: {
+          "file-drop-target" => "fileInput"
+        },
+        disabled: %>
+  </div>
+
+  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+
+  <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your wire will be sent out on the next business day.">
+    <%= form.submit "Send wire", disabled: %>
+  </div>
+<% end %>

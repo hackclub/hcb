@@ -1,6 +1,6 @@
 <%= turbo_frame_tag "suggested_pairings" do %>
   <% if local_assigns[:pairings].any? %>
-    <div class="card carousel__wrapper" style="overflow: unset; border: 1px solid var(--ai);">
+    <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);">
       <div style="margin: -16px; padding: 16px; margin-bottom: 0px; border-radius: 0.5rem 0.5rem 0rem 0rem;" class="bg-snow dark:bg-dark">
         <span tabindex="0" onclick="this.parentElement.parentElement.remove();" class="pointer">
           <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>

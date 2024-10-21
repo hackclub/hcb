@@ -164,6 +164,10 @@ $shades: (
   border-color: map-get($palette, primary);
 }
 
+.b--ai {
+  border-color: map-get($palette, ai);
+}
+
 .w-50 {
   width: 50%;
 }
@@ -209,18 +213,22 @@ details[open] .flip-when-open {
 }
 
 table.strikeable {
-  border-collapse: collapse
+  border-collapse: collapse;
 }
 
 tr.strikethrough td {
-  position: relative
+  position: relative;
 }
 
 tr.strikethrough td:before {
-  content: " ";
+  content: ' ';
   position: absolute;
   left: 0;
   top: 50%;
   width: 100%;
   border-bottom: 1px solid #8492a6;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
 }

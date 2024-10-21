@@ -37,7 +37,7 @@
 .promo-stickerninja {
   background-color: #f5f5f5;
   background-image: linear-gradient(
-    to right,
+      to right,
       rgba(245, 246, 252, 0.25),
       rgba(248, 248, 248, 0.05)
     ),
@@ -48,11 +48,11 @@
 
 .promo-stickers {
   background-image: linear-gradient(
-    to right,
-    rgba(20, 20, 20, 0.3),
-    rgba(248, 248, 248, 0.05)
-  ),
-  url('https://cloud-gjqy3yr8t-hack-club-bot.vercel.app/0hero.jpg');
+      to right,
+      rgba(20, 20, 20, 0.3),
+      rgba(248, 248, 248, 0.05)
+    ),
+    url('https://cloud-gjqy3yr8t-hack-club-bot.vercel.app/0hero.jpg');
   background-size: cover;
   background-position: 0% 30%;
 
@@ -112,7 +112,7 @@
 .promo-bin {
   .card__banner--top {
     h3 {
-      color: #363a44!important;
+      color: #363a44 !important;
     }
     background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/2screenshot_2024-05-15_at_17.37.21.png');
     background-size: cover;
@@ -132,7 +132,7 @@ html[data-dark='true'] {
   .promo-bin {
     .card__banner--top {
       h3 {
-        color: #fff!important;
+        color: #fff !important;
       }
       background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/3screenshot_2024-05-15_at_17.37.30.png');
     }

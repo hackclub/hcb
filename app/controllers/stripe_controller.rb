@@ -81,13 +81,6 @@ class StripeController < ActionController::Base
     head :ok
   end
 
-  def handle_charge_succeeded(event)
-    charge = event[:data][:object]
-    ::PartnerDonationService::HandleWebhookChargeSucceeded.new(charge).run
-
-    head :ok
-  end
-
   def handle_invoice_paid(event)
     stripe_invoice = event[:data][:object]
 
@@ -218,11 +211,15 @@ class StripeController < ActionController::Base
     return unless event.data.object.metadata[:donation].present?
 
     # get donation to process
-    donation = Donation.find_by_stripe_payment_intent_id(event.data.object.id)
+    donation = event.data.object.metadata[:donation_id].present? ? Donation.find_by_public_id(event.data.object.metadata[:donation_id]) : Donation.find_by_stripe_payment_intent_id(event.data.object.id)
+
+    unless donation.stripe_payment_intent_id.present?
+      donation.update(stripe_payment_intent_id: event.data.object.id)
+    end
 
     pi = StripeService::PaymentIntent.retrieve(
       id: donation.stripe_payment_intent_id,
-      expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"]
+      expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction", "latest_charge.payment_method_details"]
     )
     donation.set_fields_from_stripe_payment_intent(pi)
     donation.save!
@@ -294,8 +291,43 @@ class StripeController < ActionController::Base
     design.sync_from_stripe!
   end
 
+  def handle_issuing_personalization_design_rejected(event)
+    design = StripeCard::PersonalizationDesign.find_by(stripe_id: event.data.object.id)
+    return unless design
+
+    design.sync_from_stripe!
+
+    if design.event&.stripe_card_logo&.attached? # if the logo is no longer attached it's already been rejected.
+      StripeCard::PersonalizationDesignMailer.with(event: design.event, reason: event.data.object["rejection_reasons"]["card_logo"].first).design_rejected.deliver_later
+      design.event.stripe_card_personalization_designs.update(stale: true)
+      design.event.stripe_card_logo.delete
+    end
+  end
+
   alias_method :handle_issuing_personalization_design_activated, :handle_issuing_personalization_design_updated
-  alias_method :handle_issuing_personalization_design_rejected, :handle_issuing_personalization_design_updated
   alias_method :handle_issuing_personalization_design_deactivated, :handle_issuing_personalization_design_updated
+
+  def handle_issuing_dispute_funds_reinstated
+    dispute = event.data.object
+    transaction = Stripe::Issuing::Transaction.retrieve(dispute["transaction"])
+    hcb_code = RawPendingStripeTransaction.find_by!(stripe_transaction_id: transaction["authorization"]).canonical_pending_transaction.local_hcb_code
+    if dispute["status"] == "won" && dispute["currency"] == "USD"
+      StripeService::Payout.create(
+        amount: dispute["amount"],
+        currency: dispute["currency"],
+        statement_descriptor: "HCB-#{hcb_code.short_code}",
+        source_balance: "issuing",
+        metadata: {
+          dispute_id: dispute["id"],
+          authorization_id: transaction["authorization"],
+          hcb_code: hcb_code.hcb_code
+        }
+      )
+    elsif dispute["status"] != "won"
+      Airbrake.notify("Dispute with funds reinstated but without a win: #{dispute["id"]}")
+    elsif dispute["status"] != "USD"
+      Airbrake.notify("Dispute with funds reinstated but non-USD currency. Must be manually handled.")
+    end
+  end
 
 end

@@ -10,8 +10,8 @@
   </h1>
 
   <p>Enter your time-based one time password from your authenticator app.</p>
-   <%= form_tag complete_login_path(@login) do %>
-    <%= telephone_field_tag :code, "", placeholder: "OTP code", autofocus: true, autocomplete: "off", class: "center-align mb2", required: true %>
+  <%= form_tag complete_login_path(@login) do %>
+    <%= telephone_field_tag :code, "", placeholder: "OTP code", autofocus: true, class: "center-align mb2", autocomplete: "one-time-code", required: true %>
     <%= hidden_field_tag :email, @email %>
     <%= hidden_field_tag :method, :totp %>
     <%= hidden_field_tag :fingerprint %>

@@ -5,6 +5,8 @@
 <% end %>
 
 <% title @event.name %>
+<% page_md %>
+<%= render "nav", selected: :home %>
 
 <% if @event&.is_public %>
   <% content_for :head do %>
@@ -24,205 +26,109 @@
   <% end %>
 <% end %>
 
-<%= render "nav", selected: :transactions %>
+<h1 class="flex items-center">
+  <span class="flex-grow">Home</span>
+  <% admin_tool("p0 badge", "span") do %>
+    <span class="m0 badge bg-muted">
+      #<%= @event.id %>
+    </span>
+    <span class="m0 badge bg-muted ml1">
+      SL<%= @event.service_level %>
+    </span>
+  <% end %>
 
-<%# Demo mode callout thing %>
-<% if organizer_signed_in? && @event.demo_mode %>
-  <div class="card border b--info pb0 mt3" style="text-wrap: pretty;" id="playground-callout">
-    <% meeting_req = @event.demo_mode_request_meeting_at %>
-    <p class="mt0">
-      <% if meeting_req %>
-        <strong>You requested activation on <%= format_date meeting_req %>
-        (<%= distance_of_time_in_words_to_now meeting_req %> ago).</strong>
-        <br>
-        Please expect an email from our team soon.
-        <% if 5.days.ago > meeting_req %>
-          (It's been a while - haven't seen us reach out yet? Check your spam folder!)
-        <% end %>
-      <% else %>
-        <strong>Welcome to Playground Mode</strong>
-        <br>
-        While in Playground mode, explore the dashboard with mock data, and invite your team.
-        To utilize financial features, request activation!
-      <% end %>
-    </p>
-    <%= link_to event_demo_mode_request_meeting_path(@event), method: :post, class: "btn bg-primary shrink-none mb2 nowrap #{"disabled" unless policy(@event).demo_mode_request_meeting? }", data: { tour_step: "activate_account" } do %>
-      <%= inline_icon "welcome" %>
-      Request<%= "ed" unless @event.demo_mode_request_meeting_at.nil? %> Activation
-    <% end %>
-  </div>
-<% end %>
-
-<h1 class="items-center hidden md:flex">
-  Financials
-  <% if admin_signed_in? %>
+  <% if @event.increase_account_id != IncreaseService::AccountIds::FS_MAIN %>
     <% admin_tool("p0 badge", "span") do %>
-      <span class="m0 badge bg-muted">
-        #<%= @event.id %>
-      </span>
-      <span class="m0 badge bg-muted ml1">
-        SL<%= @event.service_level %>
-      </span>
-    <% end %>
-
-    <% if @event.increase_account_id != IncreaseService::AccountIds::FS_MAIN %>
-      <% admin_tool("p0 badge", "span") do %>
-        <%= link_to "https://dashboard.increase.com/accounts/#{@event.increase_account_id}" do %>
-          <span class="m0 badge bg-muted">
-            <%= @event.increase_account_id %>
-          </span>
-        <% end %>
+      <%= link_to "https://dashboard.increase.com/accounts/#{@event.increase_account_id}" do %>
+        <span class="m0 badge bg-muted">
+          <%= @event.increase_account_id %>
+        </span>
       <% end %>
-    <% end %>
-
-    <% admin_tool("p0 badge", "span") do %>
-      <span class="m0 badge bg-muted">
-        <%= @event&.partner&.slug&.capitalize || "Not partnered" %>
-      </span>
     <% end %>
   <% end %>
 </h1>
 
-<div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
-  <div
-    class="flex"
-    style="flex-direction: row; gap: 8px; position: relative;"
-     data-controller="balance-graph"
-     data-balance-graph-available-value="<%= @event.balance_available_v2_cents %>">
-    <div class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="stat">
-      <span class="stat__label" data-balance-graph-target="label">Account balance</span>
-      <% if @event.fee_balance_v2_cents < 0 # this event has a fee credit (owes negative fees) %>
-        <span class="stat__value" data-balance-graph-target="balance"><%= render_money_amount @event.balance_v2_cents %></span>
-        <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %> fee credit</span>
-      <% else %>
-        <span class="stat__value" data-balance-graph-target="balance">
-          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
-        </span>
-      <% end %>
-    </div>
-
-    <div data-nosnippet style="position: absolute; top: 0px; left: 0px; visibility: hidden;" aria-hidden="true" class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="size">
-      <span class="stat__label">Account balance</span>
-      <% if @event.fee_balance_v2_cents < 0 # this event has a fee credit (owes negative fees) %>
-        <span class="stat__value" data-balance-graph-target="sizing"><%= render_money_amount @event.balance_v2_cents %></span>
-        <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %> fee credit</span>
-      <% else %>
-        <span class="stat__value" data-balance-graph-target="sizing">
-          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
-        </span>
-      <% end %>
-    </div>
-
-    <svg data-balance-graph-target="graph" id="balance-chart" class="sparkline sparkline--filled" height="66" stroke-width="2"></svg>
+<% if organizer_signed_in? && @event.demo_mode %>
+  <div class="card border b--info pb0 mt3" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
+    <p class="mt0">
+      <strong>Welcome to Playground Mode</strong>
+      <br>
+      While in Playground mode, explore the dashboard with mock data, and invite your team.
+    </p>
   </div>
+<% end %>
 
-  <div style="pointer-events: all; z-index: 10;">
-    <div class="flex items-center">
-      <% if @organizers.any? %>
-        <div class="flex items-center">
-          <% @organizers.limit(5).each do |position| %>
-            <div class="avatar-grow line-height-0 tooltipped tooltipped--s mr1" aria-label="<%= position.user == current_user ? current_user_flavor_text.sample : position.user.name %>">
-              <%= avatar_for position.user, 36 %>
-            </div>
-          <% end %>
-        </div>
-        <% if @event.organizer_positions.count > 5 %>
-          <%= link_to event_team_path(@event), class: "pop" do %>
-            +<%= @event.organizer_positions.count - 5 %>
-          <% end %>
-        <% end %>
-        <%= pop_icon_to "member-add", event_team_path(@event), class: "ml1", data: { "tour-step" => "invite" } %>
-      <% else %>
-        <p class="slate bold h3 mr2">No organizers invited yet</p>
-        <%= pop_icon_to "member-add", event_team_path(@event) %>
-      <% end %>
-    </div>
+<% if organizer_signed_in? %>
+  <div class="flex mb2 max-w-full overflow-auto whitespace-nowrap scrollbar-hidden">
+    <%= link_to "#", class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+      <%= inline_icon "briefcase", size: 16 %>
+      Send an invoice
+    <% end %>
+    <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+      <%= inline_icon "payment-transfer", size: 16 %>
+      Transfer money
+    <% end %>
+    <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
+      <%= inline_icon "attachment", size: 16 %>
+      Get reimbursed
+    <% end %>
+    <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action" do %>
+      <%= inline_icon "cheque", size: 16 %>
+      Deposit a check
+    <% end %>
   </div>
-</div>
+  <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
+  <%= render "transfer_modal" %>
+  <%= render "invoices/modal" %>
+<% end %>
 
 <%= render "events/public_message" %>
 
-<main data-controller="transactions">
-  <h2 class="heading pb-0 border-b-0">
-    <span style="flex-grow: 1">Transactions</span>
-    <% if organizer_signed_in? && Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
-      <div
-        data-controller="menu"
-        data-menu-append-to-value="turbo-frame#ledger"
-        data-menu-placement-value="bottom-end"
-        data-transactions-target="tagger"
-        class="display-none">
-        <button
-          type="button"
-          class="btn btn-small bg-info menu__toggle menu__toggle--arrowless overflow-visible z1"
-          data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-          <%= inline_icon "sticker", size: 16 %>
-          <span class="nowrap">Toggle Tags</span>
-        </button>
-        <div class="menu__content menu__content--2 menu__content--compact menu__content--left h6" data-menu-target="content">
-          <% @event.tags.each do |tag| %>
-            <div class="flex items-center" data-tag="<%= tag.id %>">
-              <button class="menu__action" title="Apply this tag" data-action="click->transactions#addTag menu#close" data-tag-id="<%= tag.id %>">
-                <%= tag.label %>
-              </button>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-    <% if @event.canonical_transactions.any? %>
-      <div data-controller="menu" data-menu-placement-value="bottom-end">
-        <button
-          type="button"
-          class="btn bg-info menu__toggle menu__toggle--arrowless overflow-visible z1"
-          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-          data-menu-target="toggle">
-            <%= inline_icon "download", size: 16 %>
-            Export
-        </button>
-        <div class="menu__content menu__content--2 h5" data-menu-target="content">
-          <%= link_to "All transactions (CSV)", transactions_exports_path(event: @event, format: :csv), target: :_blank %>
-          <%= link_to "All transactions (JSON)", transactions_exports_path(event: @event, format: :json), target: :_blank %>
-          <%= link_to "All transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger), target: :_blank %>
-          <%= link_to "Monthly statements", event_statements_path(@event) %>
-        </div>
-      </div>
-    <% end %>
-  </h2>
+<div class="flex gap-4 flex-col sm:flex-row">
+  <%= render partial: "events/home/balance", event: @event %>
+  <%= render partial: "events/home/transactions", event: @event %>
+</div>
 
-  <%= render "pinned_transactions" %>
+<div class="flex gap-4 flex-col sm:flex-row my-4">
+  <%= render partial: "events/home/money_movement", event: @event %>
+</div>
 
-  <%= turbo_frame_tag :ledger, data: { turbo_action: "advance" } do %>
+<div class="flex gap-4 flex-col sm:flex-row my-4" style="max-width:100%">
+  <%= render partial: "events/home/recent_activity", event: @event %>
+  <div class="flex gap-4 flex-col sm:max-w-[50%]" style="flex: 1">
+    <%= render partial: "events/home/team", event: @event %>
+    <%= render partial: "events/home/number_stats", event: @event %>
+  </div>
+</div>
 
-    <%= render partial: "filter" %>
-
-    <% if @pending_transactions.any? || @transactions.any? || show_mock_data? %>
-      <div class="table-container" data-tour-step="transactions">
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Date</th>
-                <th>Description</th>
-                <th class="right-align">Amount</th>
-                <% if @show_running_balance %>
-                  <th>Running Balance</th>
-                <% end %>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody data-behavior="transactions">
-              <%= render "pending_fee_transaction" if @event.fronted_fee_balance_v2_cents > 0 %>
-
-              <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 } %>
-
-              <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 } %>
-          </tbody>
-          </table>
-      </div>
-      <%= paginate @transactions %>
-    <% else %>
-      <%= blankslate "No transactions yet" %>
-    <% end %>
+<div class="homepage-row mt-4">
+  <%= turbo_frame_tag "top_merchants", class: "flex-1", src: event_top_merchants_path(@event), loading: "lazy" do %>
+    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+      Loading top merchants...
+    </div>
   <% end %>
-</main>
+  <%= turbo_frame_tag "top_categories", class: "flex-1", src: event_top_categories_path(@event), loading: "lazy" do %>
+    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+      Loading top categories...
+    </div>
+  <% end %>
+</div>
+
+<%= turbo_frame_tag "tags_users", src: event_tags_users_path(@event), loading: "lazy" do %>
+  <div class="homepage-row mt-4">
+    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+        Loading...
+    </div>
+    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+        Loading...
+    </div>
+  </div>
+<% end %>
+
+<%= turbo_frame_tag "transaction_heatmap", src: event_transaction_heatmap_path(@event), loading: "lazy" do %>
+  <div class="homepage-row mt-4">
+    <div class="card card--breakdown shadow-none p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;height:223px">
+        Hang tight - this could take a while if you have a lot of transactions.
+    </div>
+  </div>
+<% end %>

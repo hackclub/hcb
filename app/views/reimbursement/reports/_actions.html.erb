@@ -127,6 +127,8 @@
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
+              <% elsif report.event.nil? %>
+               <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { behavior: "modal_trigger", modal: "edit" } %> to request reimbursement from.
               <% end %>
             <% end %>
           </div>
@@ -182,6 +184,11 @@
               <%= inline_icon "thumbsup" %>
               Approve <%= report.user.payout_method.title_kind %> Reimbursement
             <% end %>
+            <% unless ::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) %>
+              <% button_hint = capture do %>
+                <span class="bold warning">⚠️ Warning</span>: this organization does not have the balance to fulfil this report.
+              <% end %>
+            <% end %>
           <% end %>
         <% end %>
       </div>
@@ -192,24 +199,30 @@
 
     </div>
   <% end %>
+  <% if report.rejected? && !member_viewing %>
+    <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted mt2", method: :post do %>
+      <%= inline_icon "view-reload" %>
+      Re-open report for review
+    <% end %>
+  <% end %>
   <% if report.expenses.any? %>
     <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>" id="summary">
       <div class="stat stat--small" style="flex-shrink: 0;">
-        <span class="stat__label">Amount Requested</span>
+        <span class="stat__label">Amount requested</span>
         <span class="stat__value"><%= render_money report.amount_cents, unit: "" %></span>
       </div>
       <% if report.locked? %>
         <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label">Expenses Approved</span>
+          <span class="stat__label">Expenses approved</span>
           <span class="stat__value"><%= report.expenses.approved.count %>/<%= report.expenses.count %></span>
         </div>
         <div class="stat stat--small" style="flex-shrink: 0;">
-          <span class="stat__label">Amount Approved</span>
+          <span class="stat__label">Amount approved</span>
           <span class="stat__value"><%= render_money report.amount_to_reimburse_cents, unit: "" %></span>
         </div>
       <% else %>
         <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label"># of Expenses</span>
+          <span class="stat__label">Total expenses</span>
           <span class="stat__value"><%= report.expenses.count %></span>
         </div>
         <div class="stat stat--small stat--plain" style="flex-shrink: 0;">

@@ -7,7 +7,7 @@ class OrganizerPosition
         return unless enabled?
 
         user.admin? || (
-          (current_user_manager? || own_control?)
+          current_user_manager? || own_control?
         )
       end
 

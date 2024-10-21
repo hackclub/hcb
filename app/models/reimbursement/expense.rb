@@ -140,7 +140,7 @@ module Reimbursement
     def status_color
       return "muted" if pending? && report.draft?
       return "primary" if rejected?
-      return "warning" if pending?
+      return "warning" if pending? || report.reversed?
 
       "success"
     end

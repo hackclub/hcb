@@ -252,6 +252,9 @@
   .xs-hide {
     display: none !important;
   }
+  .xs-capitalize {
+    text-transform: capitalize;
+  }
 }
 @media (min-width: 32em) and (max-width: 48em) {
   .sm-hide {

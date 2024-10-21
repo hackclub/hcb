@@ -1,4 +1,4 @@
-<% title "Account Settings" %>
+<% title "Account settings" %>
 <% page_md %>
 <%= render "users/nav", selected: :settings %>
 
@@ -7,27 +7,42 @@
 </h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
 <%= render "settings_nav", active: "security" %>
-<h2>Security</h2>
 <fieldset>
   <% unless @user.phone_number.blank? %>
     <%= turbo_frame_tag :sms_auth_card do %>
-      <legend class="flex flex-row justify-start items-center mt3 pb2">
-        <span class="h2">Login codes</span>
-        <%= badge_for @user.use_sms_auth ? "SMS" : "Email", class: "bg-muted" %>
+      <legend class="flex flex-row justify-start items-center mt0 pb2">
+        <span class="h2 bold">Login preferences</span>
       </legend>
-      <div class="card border b--info mt1 mb3">
+      <div class="card border b--info mt0 mb3">
         <% if @user.phone_number_verified %>
-          <% if @user.use_sms_auth %>
-            You are currently receiving login codes via SMS. Email codes can still be sent as a backup.<br>
-            <%= link_to "Turn off SMS login codes.", toggle_sms_auth_users_path, data: { turbo: true, turbo_method: "post" } %>
-          <% else %>
-            You are currently receiving login codes via email.<br>
-            <%= link_to "Turn on SMS login codes.", toggle_sms_auth_users_path, data: { turbo: true, turbo_method: "post" } %>
+          <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+            <div class="field field--checkbox mt1">
+              <span style="font-weight: 700">Prefer login codes via SMS</span>
+              <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+                <%= form.label :use_sms_auth do %>
+                  <%= form.check_box :use_sms_auth,
+                    data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+                    switch: true %>
+                  <span class="slider"></span>
+                <% end %>
+              </div>
+            </div>
+            <div class="field field--checkbox">
+              <span style="font-weight: 700">Enable two factor authentication</span>
+              <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+                <%= form.label :use_two_factor_authentication do %>
+                  <%= form.check_box :use_two_factor_authentication,
+                    data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+                    switch: true %>
+                  <span class="slider"></span>
+                <% end %>
+              </div>
+            </div>
+            <%= form.submit "Update preferences" %>
           <% end %>
         <% else %>
-          <p>Your login codes are sent to <span class="bold"><%= @user.email %></span>.</p>
           <p>
-            To send login codes to your phone, first
+            To send login codes to your phone or enable two factor authentication, first
             <action data-behavior="modal_trigger" data-modal="verify_phone">
               <a>
                 verify your phone number.
@@ -35,33 +50,30 @@
             </action>
           </p>
         <% end %>
-      </div>
-    <% end %>
-  <% end %>
-  <% if Flipper.enabled?(:totp_2024_06_13, current_user) %>
-    <div>
-      <legend class="flex flex-row justify-start items-center mt3 pb2">
-        <span class="h2">Time-based one time passwords</span>
-        <%= badge_for "What's this?", class: "bg-muted" %>
-      </legend>
-      <%= turbo_frame_tag :totp_auth_card do %>
-        <div class="card border b--info mt1 mb3">
-          <% if @user.totp.present? %>
-            <p>
-              You set up time-based one time passwords on <%= @user.totp.created_at.strftime("%B %e, %Y") %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :POST } %>
-            </p>
-          <% else %>
-            <p>
-              You currently don't have time-based one time passwords set up, <%= link_to "click here", user_enable_totp_path(@user), data: { turbo_method: :POST } %> to setup your TOTP.
-            </p>
-          <% end %>
-        </div>
       <% end %>
     </div>
   <% end %>
+  <div>
+    <legend class="flex flex-row justify-start items-center mt3 pb2">
+      <span class="h2 bold">Time-based one time passwords</span>
+    </legend>
+    <%= turbo_frame_tag :totp_auth_card do %>
+      <div class="card border b--info mt0 mb3">
+        <% if @user.totp.present? %>
+          <p>
+            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :POST } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :POST } %>
+          </p>
+        <% else %>
+          <p>
+            You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :POST } %> to setup your TOTP.
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
   <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="security-keys">
     <legend class="flex flex-row justify-start items-center">
-      <span class="h2">Security keys</span>
+      <span class="h2 bold">Security keys</span>
       <%= badge_for @user.webauthn_credentials.count, class: "bg-muted" %>
     </legend>
     <button class="btn px2 h4" data-behavior="modal_trigger" data-modal="webauthn_register">
@@ -82,7 +94,7 @@
   <% end %>
   <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2">
     <legend class="flex flex-row justify-start items-center">
-      <span class="h2">Sessions</span>
+      <span class="h2 bold">Sessions</span>
       <%= badge_for @all_sessions.count, class: "bg-muted" %>
     </legend>
     <%= link_to logout_all_users_path, method: :delete,

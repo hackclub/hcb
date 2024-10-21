@@ -28,7 +28,11 @@
         <td><%= statement.end_date.strftime("%Y-%m-%d") %></td>
         <td><%= render_money statement.starting_balance %></td>
         <td><%= render_money statement.closing_balance %></td>
-        <td><%= link_to "Download Statement", statement.file %></td>
+        <td class="flex flex-col">
+          <%= link_to "Download Statement", statement.file %>
+          <% bank_account_summary_report_url = ColumnService.bank_account_summary_report_url(from_date: statement.start_date, to_date: statement.end_date) %>
+          <%= link_to "Bank Account Summary", bank_account_summary_report_url if bank_account_summary_report_url %>
+        </td>
       </tr>
     <% end %>
   </tbody>

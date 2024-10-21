@@ -18,6 +18,13 @@
         <strong>PayPal</strong>
       <% end %>
 
+      <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
+        <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+          <%= inline_icon "globe", size: 28 %>
+          <strong>International Wire</strong>
+        <% end %>
+      <% end %>
+
       <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
         <%= inline_icon "bank-account", size: 28 %>
         <strong>HCB transfer</strong>

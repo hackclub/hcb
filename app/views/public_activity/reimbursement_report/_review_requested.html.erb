@@ -7,7 +7,10 @@
     <% end %>
   <% else %>
     <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: reimbursement_report_path(activity.trackable) } do %>
-      submitted <i><%= link_to activity.trackable.name, activity.trackable %></i> for review from <%= link_to activity.trackable.event.name, activity.trackable.event %>
+      submitted <i><%= link_to activity.trackable.name, activity.trackable %></i> for review
+      <% if activity.trackable.event %>
+        from <%= link_to activity.trackable.event.name, activity.trackable.event %>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>

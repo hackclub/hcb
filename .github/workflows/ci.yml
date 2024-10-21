@@ -114,6 +114,7 @@ jobs:
         run: yarn build && yarn build:css
       - name: Run RSpec
         env:
+          ${{ insert }}: ${{ secrets }}
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report

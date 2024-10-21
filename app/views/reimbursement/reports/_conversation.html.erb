@@ -7,16 +7,19 @@
     <% comments = policy_scope(@report.comments) %>
     <% (versions + comments).sort_by(&:created_at).each do |item| %>
       <% if item.instance_of?(Comment) %>
-        <%= render "comments/item", comment: item, class: "conversation_item" %>
+        <div class="conversation_item">
+          <%= render "comments/item", comment: item %>
+        </div>
       <% else %>
         <% changes = {
              "submitted"               => ["send", "info", "submitted this report"],
              "rejected"                => ["thumbsdown", "error", "rejected this report"],
-             "reimbursement_requested" => ["thumbsup", "success", "approved on behalf of #{Event.find(item.object&.[]("event_id") || @report.event_id).name}"],
+             "reimbursement_requested" => ["thumbsup", "success", "approved on behalf of #{Event.find_by_id(item.object&.[]("event_id") || @report.event_id)&.name}"],
              "reimbursement_approved"  => ["admin", "warning", "approved this report on behalf of the HCB team"],
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
              "draft_created"           => ["plus", "success", "created this draft report"],
-             "reimbursed"              => ["docs", "purple", "initiated a reimbursement"],
+             "reimbursed"              => ["payment-transfer", "purple", "#{@report.initiated_transfer_text} a #{render_money @report.amount_cents} #{@report.transfer_text} to #{@report.user.name}"],
+             "reversed"                => ["sad", "warning", "cancelled this reimbursement"],
            } %>
         <% state_change = item.changeset["aasm_state"]&.second %>
         <% if state_change %>
@@ -73,7 +76,7 @@
               <ul class="list-reset" style="margin-left: 52px;">
                 <% item.changeset.excluding("updated_at").select { |field, changes| changes.any?(&:present?) }.each do |field, changes| %>
                   <li>
-                    <strong class="muted"><%= field.humanize %>:</strong>
+                    <strong class="muted"><%= render_audit_log_field(field) %>:</strong>
                     <%= render_audit_log_value(field, changes[0], color: "primary") %> →
                     <%= render_audit_log_value(field, changes[1], color: "success") %>
                   </li>

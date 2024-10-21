@@ -46,7 +46,6 @@ class UserSession < ApplicationRecord
   belongs_to :user
   belongs_to :impersonated_by, class_name: "User", optional: true
   belongs_to :webauthn_credential, optional: true
-  has_one :login_token, required: false
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record.user }, recipient: proc { |controller, record| record.user }, only: [:create]

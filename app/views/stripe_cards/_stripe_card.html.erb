@@ -25,7 +25,7 @@
     <% end %>
     <p class="stripe-card__number fs-mask">
       <% if stripe_card.user != current_user %>
-        <%= stripe_card.hidden_card_number %>
+        <%= stripe_card.hidden_card_number_with_last_four %>
       <% elsif local_assigns[:show_card_number] %>
         <%= stripe_card.formatted_card_number %>
       <% elsif @show_card_details %>

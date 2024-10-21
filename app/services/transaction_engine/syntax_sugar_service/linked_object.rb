@@ -39,6 +39,8 @@ module TransactionEngine
 
           return paypal_transfer if paypal_transfer
 
+          return wire if wire
+
           nil
         end
       end
@@ -166,6 +168,10 @@ module TransactionEngine
 
       def paypal_transfer
         @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == PaypalTransfer.name
+      end
+
+      def wire
+        @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == Wire.name
       end
 
       def event

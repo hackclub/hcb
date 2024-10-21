@@ -3,7 +3,7 @@
 // light when the page loads in.
 
 try {
-  ;(function () {
+  ; (function () {
     if (
       document.querySelector('html').getAttribute('data-ignore-theme') != null
     ) {
@@ -26,7 +26,7 @@ try {
       }
 
       // Asyncrhonously store the dark mode preference
-      ;(async () => {
+      ; (async () => {
         localStorage.setItem('dark', darkMode)
       })()
     }

@@ -61,25 +61,20 @@
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
             <%= form.label :file, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-receipt-button" do %>
-              <%= inline_icon "share" %>
-              <% if defined?(photo_upload_button) %>
-                <span class="md-hide lg-hide">Take photo</span>
-                <span class="xs-hide sm-hide">Upload photo</span>
+              <%= inline_icon "cloud-upload" %>
+              <% if local_assigns[:success] || local_assigns[:error] %>
+                <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
+                <script>
+                  // JavaScript to revert changes after 2 seconds
+                  setTimeout(function() {
+                    if (document.getElementById("upload-receipt-button") && document.getElementById("upload-receipt-button-text")) {
+                      document.getElementById("upload-receipt-button-text").innerHTML = 'Upload receipt';
+                      document.getElementById("upload-receipt-button").classList.remove("bg-success", "bg-error");
+                    }
+                  }, 2000);
+                </script>
               <% else %>
-                <% if local_assigns[:success] || local_assigns[:error] %>
-                  <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
-                  <script>
-                    // JavaScript to revert changes after 2 seconds
-                    setTimeout(function() {
-                      if (document.getElementById("upload-receipt-button") && document.getElementById("upload-receipt-button-text")) {
-                        document.getElementById("upload-receipt-button-text").innerHTML = 'Upload receipt';
-                        document.getElementById("upload-receipt-button").classList.remove("bg-success", "bg-error");
-                      }
-                    }, 2000);
-                  </script>
-                <% else %>
-                  <span>Upload receipt</span>
-                <% end %>
+                <span>Upload receipt</span>
               <% end %>
             <% end %>
             <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
@@ -123,8 +118,6 @@
       </div>
     <% end %>
   </div>
-
-  <hr>
 
   <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
     <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>

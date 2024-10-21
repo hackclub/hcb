@@ -8,6 +8,8 @@ module InvoiceService
     end
 
     def run
+      raise ArgumentError, "the invoice must have settled" unless invoice.canonical_transactions.any?
+
       ActiveRecord::Base.transaction do
 
         # 1. Un-front all pending transaction associated with this invoice

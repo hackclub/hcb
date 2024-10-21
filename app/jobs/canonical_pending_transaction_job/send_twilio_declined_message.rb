@@ -35,6 +35,8 @@ module CanonicalPendingTransactionJob
                            case @webhook_declined_reason
                            when "merchant_not_allowed"
                              "because this card isn't allowed to make purchases at #{@merchant}"
+                           when "cash_withdrawals_not_allowed"
+                             "because cash withdrawals are not enabled on it"
                            else
                              "at #{@merchant} due to insufficient funds"
                            end

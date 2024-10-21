@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AchTransfersController < ApplicationController
+  include SetEvent
+
   before_action :set_ach_transfer, except: [:new, :create, :index, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
   skip_before_action :signed_in_user, except: [:validate_routing_number]
@@ -114,16 +116,11 @@ class AchTransfersController < ApplicationController
     @event = @ach_transfer.event
   end
 
-  def set_event
-    @event = Event.friendly.find(params[:event_id])
-  end
-
   def ach_transfer_params
     permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id]
 
     if admin_signed_in?
       permitted_params << :scheduled_on
-      permitted_params << :same_day
     end
 
     params.require(:ach_transfer).permit(*permitted_params)

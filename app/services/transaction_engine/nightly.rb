@@ -91,6 +91,28 @@ module TransactionEngine
 
       transactions_by_report.each do |report_id, transactions|
         transactions.each_with_index do |transaction, transaction_index|
+          if transaction["effective_at"] == transaction["effective_at_utc"] && transaction["effective_at_utc"] < "2024-10-07T04:00:00Z"
+            notice = "Skipping the import of the following transaction in #{report_id}"
+            puts notice
+            puts transaction
+            Airbrake.notify(notice, transaction)
+            next
+          end
+
+          # transactions that meet this condition would have been imported in a report using EST
+          # they should be skipped when importing from a UTC report.
+          # this is related to the transition from reporting in EST to UTC.
+          #
+          # explanation of each condition
+          #
+          # transaction["effective_at"] == transaction["effective_at_utc"]
+          #
+          # if this condition is true, this report was generated in UTC
+          #
+          # transaction["effective_at_utc"] < "2024-10-07T04:00:00Z"
+          #
+          # if this condition is true, it is from a time when we generated reports using EST
+
           raw_column_transaction = RawColumnTransaction.find_or_create_by(column_report_id: report_id, transaction_index:) do |rct|
             rct.amount_cents = transaction["available_amount"]
             rct.date_posted = transaction["effective_at"]

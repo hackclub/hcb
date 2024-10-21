@@ -46,22 +46,27 @@
       <span><%= render_money card_grant.balance %></span>
     </p>
     <p>
+      <strong>Expires on</strong>
+      <span><%= format_date card_grant.expires_on %></span>
+    </p>
+    <p>
       <strong>Grant sent to</strong>
       <span><%= mail_to card_grant.user.email %></span>
     </p>
 
     <p>
       <strong>Allowed merchants</strong>
-      <% if (allowed_merchants = card_grant.allowed_merchants.join(" ").presence) %>
-        <span class="font-mono h5"><%= allowed_merchants %></span>
-      <% else %>
+      <% if card_grant.allowed_merchants.any? %>
+        <span class="font-mono h5"><%= card_grant.allowed_merchant_names.join(", ") %><br>
+          (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
+    <% else %>
         <span>All merchants allowed</span>
       <% end %>
     </p>
 
     <p>
       <strong>Allowed categories</strong>
-      <% if (allowed_categories = card_grant.allowed_categories.join(" ").presence) %>
+      <% if (allowed_categories = card_grant.allowed_category_names.join(", ").presence) %>
         <span class="font-mono h5"><%= allowed_categories %></span>
       <% else %>
         <span>All categories allowed</span>

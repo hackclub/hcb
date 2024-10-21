@@ -25,6 +25,7 @@
            Checks: [increase_checks_admin_index_path, IncreaseCheck.pending.count, %i[]],
            Disbursements: [disbursements_admin_index_path, Disbursement.reviewing.count, %i[]],
            PayPal: [paypal_transfers_admin_index_path, PaypalTransfer.pending.count, %i[]],
+           Wire: [wires_admin_index_path, Wire.pending.count, %i[]],
            Reimbursements: [reimbursements_admin_index_path, Reimbursement::Report.reimbursement_requested.count, %i[]]
          },
          Ledger: {
@@ -48,9 +49,9 @@
          Misc: {
            "Bank Accounts": [bank_accounts_admin_index_path, BankAccount.failing.count, %i[counter]],
            "HCB Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],
-           "Column Statements": [column_statements_admin_index_url, 0, %i[]],
+           "Column Statements": [column_statements_admin_index_url, Column::Statement.count, %i[counter]],
            "Users": [users_admin_index_path, User.count, %i[counter]],
-           "Card Designs": [stripe_card_personalization_designs_admin_index_path, StripeCard::PersonalizationDesign.count, %i[]],
+           "Card Designs": [stripe_card_personalization_designs_admin_index_path, StripeCard::PersonalizationDesign.count, %i[counter]],
            "Emails": [emails_admin_index_path, Ahoy::Message.count, %i[counter]]
          }
        } %>

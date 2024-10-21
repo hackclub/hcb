@@ -1,0 +1,17 @@
+<% unless stripe_card.canceled? %>
+  <% cancel_tooltip = if policy(stripe_card).cancel?
+                        "Permanently cancel this card."
+                      else
+                        "You don't have permission to permanently cancel this card"
+                      end %>
+
+  <div class="tooltipped tooltipped--n" aria-label="<%= cancel_tooltip %>">
+    <%= link_to cancel_stripe_card_path(stripe_card),
+                method: :post,
+                class: "btn bg-error",
+                disabled: !policy(stripe_card).cancel?,
+                data: { confirm: "Are you sure you want to do this? Unlike freezing a card, this can't be reversed." } do %>
+      <%= inline_icon "flame" %>Burn card
+    <% end %>
+  </div>
+<% end %>

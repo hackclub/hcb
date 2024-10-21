@@ -77,6 +77,11 @@
     <template x-if="!payment_recipient || editing">
       <div>
         <div class="field">
+          <%= form.label :recipient_email %>
+          <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+        </div>
+
+        <div class="field">
           <%= form.label :bank_name %>
           <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true, disabled: %>
         </div>
@@ -103,7 +108,8 @@
           <%= inline_icon "pen", size: 18 %>
         </button>
 
-        <div class="field"><label>Bank name</label>     <input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bank_name"></div>
+        <div class="field"><label>Recipient email</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.email"></div>
+        <div class="field"><label>Bank name</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bank_name"></div>
         <div class="field"><label>Routing number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.routing_number"></div>
         <div class="field"><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
       </div>                                                                                             
@@ -116,11 +122,6 @@
       <span class="bold muted" style="width: 1rem;">$</span>
       <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
     </div>
-  </div>
-
-  <div class="field">
-    <%= form.label :recipient_email, "Recipient Email" %>
-    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
   </div>
 
   <div class="field field--checkbox">
@@ -159,10 +160,6 @@
       <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
     </div>
 
-    <div class="field field--checkbox">
-      <%= form.check_box :same_day %>
-      <%= form.label :same_day, "Process same-day? May incur a fee on HCB's end." %>
-    </div>
     <p class="h5 muted mt0 mb1">See <%= link_to "this page", "https://column.com/docs/ach/timing", target: "_blank" %> for ACH timing details.</p>
   <% end %>
 

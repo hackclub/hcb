@@ -1,0 +1,33 @@
+<div data-controller="menu" data-menu-placement-value="top-end">
+  <button data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle" type="button" class="support-menu__button fixed bottom-0 right-0 m-5 pop tooltipped tooltipped--w embedded-display-none cursor-pointer" style="z-index: 2" aria-label="Need help?" data-action="class#toggle focus#focus">
+    <%= inline_icon "question-mark", size: 18 %>
+  </button>
+  <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact" style="padding: 0.5rem;">
+    <a class="support-menu__item" href="mailto:hcb@hackclub.com" target="_blank">
+      <%= inline_icon "email", size: 24 %> Contact us
+    </a>
+    <% if current_user&.events&.not_demo_mode&.any? %>
+      <% routing = Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"]) %>
+
+      <% url_params = {
+           name: current_user&.name,
+           email: current_user&.email,
+           url: "#{request.base_url}#{request.original_fullpath}",
+           location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
+         } %>
+
+      <%= link_to "https://forms.hackclub.com/hcb-feedback?#{url_params.to_query}", class: "support-menu__item", target: "_blank" do %>
+        <%= inline_icon "message-simple", size: 24 %> Share feedback
+      <% end %>
+    <% end %>
+    <a class="support-menu__item" href="https://help.hcb.hackclub.com/" target="_blank">
+      <%= inline_icon "docs", size: 24 %> Help Center
+    </a>
+    <a class="support-menu__item" href="<%= branding_path %>" target="_blank">
+      <%= inline_icon "bank-account", size: 24 %> Brand guidelines
+    </a>
+    <a class="support-menu__item" href="<%= docs_api_index_path %>" target="_blank">
+      <%= inline_icon "code", size: 24 %> API docs
+    </a>
+  </div>
+</div>

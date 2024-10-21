@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "email_reply_parser"
+
 class CommentMailbox < ApplicationMailbox
   # mail --> Mail object, this actual email
   # inbound_email => ActionMailbox::InboundEmail record --> the active storage record
@@ -20,7 +22,7 @@ class CommentMailbox < ApplicationMailbox
     return unless ensure_permissions?
 
     comment = @commentable.comments.build({
-                                            content: text || body,
+                                            content: EmailReplyParser.parse_reply(text || body),
                                             file: @attachments&.first,
                                             admin_only: @comment.admin_only,
                                             user: @user

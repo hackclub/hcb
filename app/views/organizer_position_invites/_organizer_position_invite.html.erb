@@ -53,14 +53,14 @@
           </div>
         <% end %>
       </div>
-      <% if organizer_position_invite.initial_control_allowance_amount_cents.present? %>
-        (<%= render_money organizer_position_invite.initial_control_allowance_amount_cents %>)
+      <% if organizer_position_invite.initial_control_allowance_amount_cents.present? && !organizer_position_invite.initial_control_allowance_amount_cents.zero? %>
+        with a <%= render_money organizer_position_invite.initial_control_allowance_amount_cents %> allowance
       <% end %>
       <%= "and contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
     <% else %>
       <%= "as a contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
     <% end %>
-    by <%= organizer_position_invite.sender.full_name %>
+    by <%= organizer_position_invite.sender.name %>
   </div>
 
 </div>

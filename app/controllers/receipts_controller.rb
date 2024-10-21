@@ -12,7 +12,7 @@ class ReceiptsController < ApplicationController
     @receiptable = @receipt.receiptable
     authorize @receipt
 
-    success = @receipt.delete
+    success = @receipt.destroy
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }

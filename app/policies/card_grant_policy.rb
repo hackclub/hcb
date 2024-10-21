@@ -6,7 +6,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_user
+    admin_or_user && Flipper.enabled?(:card_grants_2023_05_25, record.event)
   end
 
   def show?
@@ -22,6 +22,10 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def cancel?
+    admin_or_user || record.user == user
+  end
+
+  def topup?
     admin_or_user
   end
 

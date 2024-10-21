@@ -76,6 +76,8 @@ module StripeCardService
       attrs = {
         cardholder: stripe_cardholder.stripe_id,
         type: @card_type,
+        # https://heroku-app97991095.airbrake.io/projects/288439/groups/3892032265003954513 for context behind regex.
+        second_line: event.short_name(length: 24).gsub(/[^a-zA-Z0-9\/\-&:().'\s]/, "").strip,
         currency: "usd",
         status: "active",
         spending_controls: {
@@ -124,7 +126,7 @@ module StripeCardService
     end
 
     def event
-      @event ||= Event.friendly.find(@event_id)
+      @event ||= Event.find(@event_id)
     end
 
     def virtual?

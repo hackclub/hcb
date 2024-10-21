@@ -22,7 +22,8 @@
 
 .modal {
   background-color: $white;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.125),
+  box-shadow:
+    0 2px 4px 0 rgba(0, 0, 0, 0.125),
     0 12px 24px 0 rgba(0, 0, 0, 0.25);
   padding: 2rem 1rem;
   border-radius: 0.75rem;
@@ -47,7 +48,7 @@
     width: 66vw;
     transition: transform 0.1s ease-in-out;
 
-    .jquery-modal:not(:not([style*="opacity: 1"])) & {
+    .jquery-modal:not(:not([style*='opacity: 1'])) & {
       transform: translateX(0%);
     }
 
@@ -78,7 +79,9 @@
     }
   }
 
-  &.modal--flexible, &.modal--huge.modal--flexible, &.modal--wide.modal--flexible {
+  &.modal--flexible,
+  &.modal--huge.modal--flexible,
+  &.modal--wide.modal--flexible {
     width: auto;
   }
 
@@ -111,7 +114,8 @@
       padding-bottom: calc(3rem + env(safe-area-inset-bottom));
     }
 
-    &.modal--wide, &.modal--huge {
+    &.modal--wide,
+    &.modal--huge {
       max-width: 100vw;
     }
   }
@@ -140,7 +144,8 @@
     border-bottom: 1px solid rgba(48, 48, 48, 0.125);
   }
 
-  &:not(.modal--popover) > footer, &:not(.modal--popover) > * > footer {
+  &:not(.modal--popover) > footer,
+  &:not(.modal--popover) > * > footer {
     background-color: $white;
     position: -webkit-sticky;
     position: sticky;

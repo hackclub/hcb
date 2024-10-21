@@ -1,88 +1,79 @@
 <%# This partial combines `CanonicalPendingTransaction`, `CanonicalTransaction`, and `CanonicalTransactionGrouped` icons. `tx` can be either of these! %>
 
-<% if tx.local_hcb_code.bank_fee? || tx.try(:fee_payment?) %>
-  <td class="transaction__icon transaction__fee_icon tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
-    <%= inline_icon "bank-icon" %>
-  </td>
-<% elsif tx.local_hcb_code.fee_revenue? %>
-  <td class="transaction__icon transaction__fee_icon tooltipped tooltipped--e" aria-label="Fee revenue">
-    <%= inline_icon "bank-icon" %>
-  </td>
-<% elsif tx.local_hcb_code.check? || tx.local_hcb_code.increase_check? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Mailed check">
-    <%= inline_icon "email" %>
-  </td>
-<% elsif tx.local_hcb_code.paypal_transfer? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="PayPal transfer">
-    <%= inline_icon "paypal" %>
-  </td>
-<% elsif tx.local_hcb_code.check_deposit? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Check deposit">
-    <%= inline_icon "cheque" %>
-  </td>
-<% elsif tx.local_hcb_code.ach_transfer? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Outgoing ACH">
-    <%= inline_icon "payment-transfer" %>
-  </td>
-<% elsif tx.local_hcb_code.reimbursement_expense_payout? %>
-  <% user = tx.local_hcb_code.reimbursement_expense_payout.expense.report.user %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Reimbursed to <%= user.initial_name %>">
-    <%= avatar_for user, 24 %>
-  </td>
-<% elsif tx.try(:stripe_refund?) || tx.local_hcb_code.stripe_refund? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Card transaction refund">
-    <%= inline_icon "view-reload" %>
-  </td>
-<% elsif tx.try(:raw_stripe_transaction) || tx.try(:raw_pending_stripe_transaction_id) %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Card transaction<%= !local_assigns[:authorless] && tx.stripe_cardholder ? " by " + tx.stripe_cardholder.user.initial_name : "" %>">
-    <% unless local_assigns[:authorless] || !tx.stripe_cardholder %>
-      <%= avatar_for tx.stripe_cardholder.user, 24 %>
+  <% if tx.local_hcb_code.bank_fee? || tx.try(:fee_payment?) %>
+    <% label = "Fiscal sponsorship fee" %>
+    <% icon = inline_icon "bank-icon" %>
+    <% fee = true %>
+  <% elsif tx.local_hcb_code.fee_revenue? %>
+    <% label = "Fee revenue" %>
+    <% icon = inline_icon "bank-icon" %>
+    <% fee = true %>
+  <% elsif tx.local_hcb_code.check? || tx.local_hcb_code.increase_check? %>
+    <% label = "Mailed check" %>
+    <% icon = inline_icon "email" %>
+  <% elsif tx.local_hcb_code.paypal_transfer? %>
+    <% label = "Paypal transfer" %>
+    <% icon = inline_icon "paypal" %>
+  <% elsif tx.local_hcb_code.wire? %>
+    <% label = "Wire" %>
+    <% icon = inline_icon "bolt" %>
+  <% elsif tx.local_hcb_code.check_deposit? %>
+    <% label = "Check deposit" %>
+    <% icon = inline_icon "cheque" %>
+  <% elsif tx.local_hcb_code.ach_transfer? %>
+    <% label = "Outgoing ACH" %>
+    <% icon = inline_icon "payment-transfer" %>
+  <% elsif user = tx.local_hcb_code.reimbursement_expense_payout? %>
+    <% label = "Reimbursement" %>
+    <% icon = inline_icon "attachment" %>
+  <% elsif tx.try(:stripe_refund?) || tx.local_hcb_code.stripe_refund? %>
+    <% label = "Card transaction refund" %>
+    <% icon = inline_icon "view-reload" %>
+  <% elsif tx.try(:raw_stripe_transaction) || tx.try(:raw_pending_stripe_transaction_id) %>
+    <% label = "Card transaction#{!local_assigns[:authorless] && tx.stripe_cardholder ? " by " + tx.stripe_cardholder.user.initial_name : "" }" %>
+    <% icon = render "hcb_codes/merchant_icon", tx: %>
+  <% elsif tx.local_hcb_code.invoice? %>
+    <% label = "Invoice" %>
+    <% icon = inline_icon "briefcase" %>
+  <% elsif tx.local_hcb_code.donation&.recurring? %>
+    <% label = "Recurring donation" %>
+    <% icon = inline_icon "support-recurring" %>
+  <% elsif tx.local_hcb_code.donation? %>
+    <% label = "Donation" %>
+    <% icon = inline_icon "support" %>
+  <% elsif tx.local_hcb_code.disbursement&.special_appearance? %>
+    <% if tx.amount.negative? %>
+      <% label = "Outgoing #{tx.local_hcb_code.disbursement.special_appearance&.dig(:title) || "transfer"}" %>
+      <% icon = inline_icon "door-leave" %>
     <% else %>
-      <%= inline_icon "card" %>
+      <% label = tx.local_hcb_code.disbursement.special_appearance[:title] %>
+      <% icon = inline_icon(tx.local_hcb_code.disbursement.special_appearance&.dig(:icon) || "door-enter") %>
     <% end %>
-  </td>
-<% elsif tx.local_hcb_code.invoice? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Invoice">
-    <%= inline_icon "briefcase" %>
-  </td>
-<% elsif tx.local_hcb_code.donation&.recurring? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Recurring donation">
-    <%= inline_icon "support-recurring" %>
-  </td>
-<% elsif tx.local_hcb_code.donation? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Donation">
-    <%= inline_icon "support" %>
-  </td>
-<% elsif tx.local_hcb_code.disbursement&.special_appearance? %>
-  <% if tx.amount.negative? %>
-    <td class="transaction__icon tooltipped tooltipped--e" aria-label="Outgoing <%= tx.local_hcb_code.disbursement.special_appearance&.dig(:title) || "transfer" %>">
-      <%= inline_icon "door-leave" %>
-    </td>
+  <% elsif tx.local_hcb_code.card_grant? %>
+    <% label = "Outgoing grant" %>
+    <% icon = inline_icon "bag" %>
+  <% elsif tx.try(:grant_id) %>
+    <% label = "Outgoing grant" %>
+    <% icon = inline_icon "idea" %>
+  <% elsif tx.local_hcb_code.disbursement? %>
+    <% if tx.amount.negative? %>
+      <% label = "Outgoing transfer" %>
+      <% icon = inline_icon "door-leave" %>
+    <% else %>
+      <% label = "Incoming transfer" %>
+      <% icon = inline_icon "door-enter" %>
+    <% end %>
   <% else %>
-    <td class="transaction__icon tooltipped tooltipped--e" aria-label="<%= tx.local_hcb_code.disbursement.special_appearance[:title] %>">
-      <%= inline_icon(tx.local_hcb_code.disbursement.special_appearance&.dig(:icon) || "door-enter") %>
-    </td>
+    <% label = "Bank account transaction" %>
+    <% icon = inline_icon "cash" %>
   <% end %>
-<% elsif tx.local_hcb_code.card_grant? %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Outgoing grant">
-    <%= inline_icon "bag" %>
-  </td>
-<% elsif tx.try(:grant_id) %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Outgoing grant">
-    <%= inline_icon "idea" %>
-  </td>
-<% elsif tx.local_hcb_code.disbursement? %>
-  <% if tx.amount.negative? %>
-    <td class="transaction__icon tooltipped tooltipped--e" aria-label="Outgoing transfer">
-      <%= inline_icon "door-leave" %>
-    </td>
-  <% else %>
-    <td class="transaction__icon tooltipped tooltipped--e" aria-label="Incoming transfer">
-      <%= inline_icon "door-enter" %>
-    </td>
-  <% end %>
-<% else %>
-  <td class="transaction__icon tooltipped tooltipped--e" aria-label="Bank account transaction">
-    <%= inline_icon "cash" %>
-  </td>
-<% end %>
+
+<td class="transaction__icon <%= "transaction__fee_icon" if fee %>"
+    <% if defined?(selects) %>
+      data-action="click->transactions#select"
+      data-transaction="<%= selects %>"
+    <% end %>>
+  <div class="tooltipped tooltipped--e" aria-label="<%= label %>">
+    <%= icon %>
+  </div>
+</td>

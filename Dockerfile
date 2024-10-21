@@ -1,4 +1,4 @@
-FROM ruby:3.2.4
+FROM ruby:3.3.4
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -18,7 +18,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
 
 RUN corepack enable
 
-RUN gem install bundler -v 2.5.9
+RUN gem install bundler -v 2.5.17
 
 ADD yarn.lock /usr/src/app/yarn.lock
 ADD package.json /usr/src/app/package.json

@@ -39,13 +39,15 @@ class Receipt < ApplicationRecord
   blind_index :textual_content
   has_encrypted :extracted_card_last4
 
+  include StripeAuthorizationsHelper
+
   include PublicIdentifiable
   set_public_id_prefix :rct
 
-  belongs_to :receiptable, polymorphic: true, optional: true
+  belongs_to :receiptable, polymorphic: true, optional: true, touch: true
 
   belongs_to :user, class_name: "User", optional: true
-  alias_attribute :uploader, :user
+  alias_method :uploader, :user
   alias_method :transaction, :receiptable
 
   has_many :suggested_pairings, dependent: :destroy
@@ -61,14 +63,15 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin email_hcb_code].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin email_hcb_code email_reimbursement sms_reimbursement].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt
     # and to suggest pairings
     unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
       # certain interfaces run suggestions synchronously
-      ReceiptJob::ExtractTextualContent.perform_later(self)
+      # ReceiptJob::ExtractTextualContent.perform_later(self)
+      # see https://github.com/hackclub/hcb/issues/7123
       ReceiptJob::SuggestPairings.perform_later(self)
     end
   end
@@ -93,6 +96,8 @@ class Receipt < ApplicationRecord
     quick_expense: 15,
     transaction_popover: 16,
     transaction_popover_drag_and_drop: 17,
+    email_reimbursement: 18,
+    sms_reimbursement: 19
   }
 
   enum textual_content_source: {
@@ -158,6 +163,14 @@ class Receipt < ApplicationRecord
     false
   end
 
+  def extracted_incorrect_merchant?
+    if receiptable.try(:stripe_merchant) && extracted_merchant_name
+      return WhiteSimilarity.similarity(humanized_merchant_name(receiptable.stripe_merchant), extracted_merchant_name) < 0.5
+    end
+
+    false
+  end
+
   def duplicated?
     if receiptable
       return Receipt.where.not(receiptable_type:, receiptable_id:)
@@ -194,7 +207,7 @@ class Receipt < ApplicationRecord
 
   def tesseract_ocr_text
     file.blob.open do |tempfile|
-      words = ::RTesseract.new(tempfile.path).to_box
+      words = ::RTesseract.new(ImageProcessing::MiniMagick.source(tempfile.path).convert!("png").path).to_box
       words = words.select { |w| w[:confidence] > 85 }
       words = words.map { |w| w[:word] }
       text = words.join(" ")

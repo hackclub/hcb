@@ -26,6 +26,8 @@
   <% end %>
 <% end %>
 
+<%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
+
 <%= render "comments/list", comments: @hcb_code.comments %>
 <%= render "comments/form", commentable: @hcb_code %>
 

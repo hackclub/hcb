@@ -18,13 +18,13 @@
       <%= user_mention @user, { class: "tooltipped--s align-top" } %>
       <%= "will be reimbursed " if @report.reimbursement_approved? || @report.reimbursed? && !@report.payout_holding.sent? %>
       <%= "was reimbursed " if @report.reimbursed? && @report.payout_holding.sent? %>
-      <%= "requested " if @report.rejected? %>
+      <%= "requested " if @report.rejected? || @report.reversed? %>
       <%= "is requesting " unless @report.closed? %>
       <%= render "total", report: @report %>
       <% if @report.maximum_amount_cents %>
         (<%= render_money @report.maximum_amount_cents %> cap)
       <% end %>
-      <%= "from #{@event.name}" if @use_user_nav %> for
+      <%= "from #{@event.name}" if @event && @use_user_nav %> for
     </span>
     <% if @report.reviewer.present? && @report.submitted? %>
       <span class="mr1 badge bg-muted">Review requested from <%= @report.reviewer.initial_name %></span>
@@ -76,7 +76,7 @@
   <% end %>
 </section>
 
-<% if @report.event.public_reimbursement_page_message.present? && policy(@event).reimbursements? %>
+<% if @report.event&.public_reimbursement_page_message&.present? && policy(@event).reimbursements? %>
   <article class="card mt2 pt0">
     <%== MarkdownService.instance.renderer.render @report.event.public_reimbursement_page_message %>
     <section class="card__banner card__banner--bottom card__darker pt2 pb2">

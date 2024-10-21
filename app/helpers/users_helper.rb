@@ -119,20 +119,6 @@ module UsersHelper
     admin_tool(*args, **options, &block)
   end
 
-  def admin_tools(*args, **options, &block)
-    concat content_tag(:span, "You're using the deprecated admin_tools. Replace it with the new admin_tool.", class: "error")
-    admin_tool(*args, **options, &block)
-  end
-
-  def admin_tools_if(condition, *args, **options, &block)
-    # If condition is false, it displays the content for ALL users. Otherwise,
-    # it's only visible to admins.
-    yield and return unless condition
-
-    concat content_tag("span", "You're using the deprecated admin_tools_if. Replace it with the new admin_tool_if.", class: "error")
-    admin_tool_if(condition, *args, **options, &block)
-  end
-
   def creator_bar(object, options = {})
     creator = if defined?(object.creator)
                 object.creator

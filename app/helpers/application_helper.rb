@@ -66,7 +66,7 @@ module ApplicationHelper
 
   def blankslate(text, options = {})
     other_options = options.except(:class)
-    content_tag(:p, text, class: "center mt0 mb0 pt2 pb2 slate bold h3 mx-auto max-width-2 #{options[:class]}", **other_options)
+    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
   end
 
   def list_badge_for(count, item, glyph, options = { optional: false, required: false })
@@ -189,6 +189,29 @@ module ApplicationHelper
     doc.to_html.html_safe
   end
 
+  def merchant_icon(yellow_pages_merchant, **options)
+    @icon_svg_cache ||= {}
+
+    unless @icon_svg_cache.key?(yellow_pages_merchant)
+      icon = yellow_pages_merchant.icon
+      @icon_svg_cache[yellow_pages_merchant] = icon.present? ? Nokogiri::HTML::DocumentFragment.parse(icon) : nil
+    end
+
+    icon = @icon_svg_cache[yellow_pages_merchant]
+    return nil if icon.nil?
+
+    doc = icon.dup
+    svg = doc.at_css "svg"
+    options[:style] ||= ""
+    if options[:size]
+      options[:width] ||= options[:size]
+      options[:height] ||= options[:size]
+      options.delete(:size)
+    end
+    options.each { |key, value| svg[key.to_s] = value }
+    doc.to_html.html_safe
+  end
+
   def anchor_link(id)
     link_to "##{id}", class: "absolute top-0 -left-8 transition-opacity opacity-0 group-hover/summary:opacity-100 group-target/item:opacity-100 anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: id), action: "clipboard#copy" } do
       inline_icon "link", size: 28
@@ -200,11 +223,11 @@ module ApplicationHelper
   end
 
   def help_email
-    mail_to "hcb@hackclub.com"
+    mail_to "hcb@hackclub.com", class: "nowrap"
   end
 
   def help_phone
-    phone_to "+18442372290", "+1 (844) 237 2290"
+    phone_to "+18442372290", "+1 (844) 237 2290", class: "nowrap"
   end
 
   def format_date(date)
@@ -270,7 +293,7 @@ module ApplicationHelper
   def commit_time
     @commit_time ||= begin
       heroku_time = ENV["HEROKU_RELEASE_CREATED_AT"]
-      git_time = `git log -1 --format=%at 2> /dev/null`&.chomp
+      git_time = `git log -1 --format=%at 2> /dev/null`.chomp
 
       return nil if heroku_time.blank? && git_time.blank?
 
@@ -371,4 +394,9 @@ module ApplicationHelper
       tag.li(&block)
     end
   end
+
+  def possessive(name)
+    name + (name.ends_with?("s") ? "'" : "'s")
+  end
+
 end

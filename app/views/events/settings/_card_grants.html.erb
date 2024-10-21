@@ -22,10 +22,15 @@
           <%= card_grant_setting_fields.label :invite_message, "Update Invite Message" %>
           <%= card_grant_setting_fields.text_area :invite_message, placeholder: "It's pizza time!", value: event.card_grant_setting.invite_message, disabled: !policy(event).update? %>
           <p class="h5 muted mt0 mb1">
-            <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank" do %>
+            <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
               <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
             <% end %>
           </p>
+        </div>
+
+        <div class="field">
+          <%= card_grant_setting_fields.label :expiration_preference, "Expires after..." %>
+          <%= card_grant_setting_fields.select :expiration_preference, CardGrantSetting.expiration_preferences.keys, selected: event.card_grant_setting.expiration_preference %>
         </div>
       <% end %>
 

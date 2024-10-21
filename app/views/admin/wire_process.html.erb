@@ -1,0 +1,100 @@
+<%= link_to wires_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to wires
+<% end %>
+
+<h1>Process Wire #<%= @wire.id %></h1>
+<p><small>Current Status: <%= @wire.aasm_state %></small></p>
+
+<hr>
+
+<h3>Transfer Details</h3>
+
+<table class="table--autosize">
+  <tbody>
+    <tr>
+      <td>Requested at:</td>
+      <td><%= format_datetime @wire.created_at %></td>
+    </tr>
+    <tr>
+      <td>Sent To:</td>
+      <td><%= @wire.recipient_name %></td>
+    </tr>
+    <tr>
+      <td>Email:</td>
+      <td><%= @wire.recipient_email %></td>
+    </tr>
+    <tr>
+      <td>BIC / Swift Code:</td>
+      <td><%= @wire.bic_code %></td>
+    </tr>
+    <tr>
+      <td>Account number:</td>
+      <td><%= @wire.account_number %></td>
+    </tr>
+    <tr>
+      <td>Memo:</td>
+      <td><%= @wire.memo %></td>
+    </tr>
+    <tr>
+      <td>Payment Purpose:</td>
+      <td><%= @wire.payment_for %></td>
+    </tr>
+    <tr>
+      <td>Currency:</td>
+      <td><%= @wire.currency %></td>
+    </tr>
+    <tr>
+      <td>Address (Line 1):</td>
+      <td><%= @wire.address_line1 %></td>
+    </tr>
+    <tr>
+      <td>Address (Line 2):</td>
+      <td><%= @wire.address_line2 %></td>
+    </tr>
+    <tr>
+      <td>City:</td>
+      <td><%= @wire.address_city %></td>
+    </tr>
+    <tr>
+      <td>State:</td>
+      <td><%= @wire.address_state %></td>
+    </tr>
+    <tr>
+      <td>Postal code:</td>
+      <td><%= @wire.address_postal_code %></td>
+    </tr>
+    <tr>
+      <td>Recipient country:</td>
+      <td><%= @wire.recipient_country %></td>
+    </tr>
+    <tr>
+      <td>Amount (local currency):</td>
+      <td><%= Money.from_cents(@wire.amount_cents, @wire.currency).format %></td>
+    </tr>
+    <tr>
+      <td>Balance available:</td>
+      <td><%= render_money(@wire.event.balance_available_v2_cents + @wire.canonical_pending_transaction.amount_cents) %></td>
+    </tr>
+    <% @wire.recipient_information.keys.each do |key| %>
+      <% if @wire.recipient_information[key].presence != nil %>
+        <tr>
+          <td><%= key.humanize %></td>
+          <td><%= @wire.recipient_information[key] %></td>
+        </tr>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<%= render partial: "receipts/receipt", collection: @wire.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
+
+<hr>
+
+<% if @wire.pending? %>
+  <%= button_to "💸 Approve and send transfer", approve_wire_path(@wire), method: :post, data: { confirm: "Have you manually sent this wire? HCB doesn't programmatically send wires." } %>
+  <%= button_to "Reject", reject_wire_path(@wire) %>
+<% else %>
+  <p>This transfer has been <b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
+  <%= button_to "Reject as failed", reject_wire_path(@wire) %>
+<% end %>

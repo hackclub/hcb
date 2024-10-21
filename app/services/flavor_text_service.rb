@@ -111,7 +111,7 @@ class FlavorTextService
 
   def frc_flavor_texts
     [
-      "Built by someone from team ##{[1759, 8724, 461, 6763, 1519].sample(random: @random)}!",
+      "Built by someone from team ##{[1759, 8724, 461, 6763, 1519, 6238].sample(random: @random)}!",
       "Safety FIRST!",
       "Safety glasses == invincible",
       "Stop! Where are your safety glasses?",
@@ -124,7 +124,12 @@ class FlavorTextService
       "Duct tape, ductape, duck tape",
       "🦆 📼",
       "Build season? HCB season!",
-      "Build season already?"
+      "Build season already?",
+      "Graciously accepting your team's donations",
+      "Your team may graciously decline, but your cards won't",
+      "<s>Not</s> held together with zip ties".html_safe,
+      "3, 2, 1, HCB!",
+      "If you have transparency mode on, is that money-pit-scouting?"
     ]
   end
 

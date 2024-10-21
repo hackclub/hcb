@@ -24,6 +24,8 @@
     <span class="h3 caps secondary block">Hack Club</span>
     <span class="primary">Sign in to HCB</span>
   </h1>
+  <%= render partial: "users/sms_auth_notice" %>
+
   <%= form_tag logins_path, 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
     <div data-webauthn-auth-target="error" class="mb2 display-none">
       <p class="flash error mb1 mx-auto">Security key authentication failed.</p>

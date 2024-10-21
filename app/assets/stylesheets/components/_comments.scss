@@ -37,17 +37,21 @@
 
 .comments .card.comment--admin {
   border: 1px dashed map-get($palette, warning);
-  background-color: mix(map-get($palette, white), map-get($palette, warning), 90%);
+  background-color: mix(
+    map-get($palette, white),
+    map-get($palette, warning),
+    90%
+  );
 }
 
 .mention-suggestions {
-  min-width: 180px!important; 
-  padding: 0px; 
-  padding-top: 0px; 
-  margin: 0; 
-  margin-top: 24px; 
-  list-style: none; 
-  position: absolute; 
+  min-width: 180px !important;
+  padding: 0px;
+  padding-top: 0px;
+  margin: 0;
+  margin-top: 24px;
+  list-style: none;
+  position: absolute;
   border-radius: 4px;
   border: 1px solid map-get($palette, smoke);
 }
@@ -62,7 +66,6 @@
     color: map-get($palette, smoke);
   }
 }
-
 
 .mention-suggestion[aria-selected='true'] {
   background: map-get($palette, info);

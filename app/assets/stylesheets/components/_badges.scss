@@ -9,13 +9,19 @@
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
   line-height: 1.125;
   margin-left: 1rem;
   padding: 0.25rem 0.625rem;
 
   &.success {
-    background-color: rgba(map-get($palette, success), 0.125);
-    color: map-get($palette, success);
+    background-color: rgba(map-get($palette, success), 0.2);
+    color: darken(map-get($palette, success), 10%);
+
+    [data-dark='true'] & {
+      background-color: rgba(map-get($palette, success), 0.125);
+      color: map-get($palette, success);
+    }
   }
   &.pending {
     background-color: rgba(map-get($palette, pending), 0.125);
@@ -36,6 +42,11 @@
   &.error {
     background-color: rgba(map-get($palette, error), 0.125);
     color: map-get($palette, error);
+
+    [data-dark='true'] & {
+      background-color: rgba(map-get($palette, error), 0.3);
+      color: lighten(saturate(map-get($palette, error), 20%), 40%);
+    }
   }
   &.info {
     background-color: rgba(map-get($palette, info), 0.125);
@@ -47,7 +58,7 @@
   }
   &.bg-muted {
     background-color: rgba(map-get($palette, muted), 0.125);
-    color: map-get($palette, muted);
+    color: map-get($palette, slate);
   }
   &.muted {
     background-color: map-get($palette, muted);
@@ -70,6 +81,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  .heading > & {
+    margin-left: 0;
+  }
 }
 
 .list-badge {
@@ -87,6 +102,17 @@
   line-height: 1.125;
   padding: 0.125rem 0.375rem;
   margin-left: 0.5rem;
+}
+
+.list-badge.quick-action {
+  font-size: 16px;
+  padding: 0.25rem 0.675rem;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.list-badge.quick-action:hover {
+  color: map-get($palette, info);
 }
 
 // Circular button
@@ -118,7 +144,7 @@
 
   &.no_hover:hover,
   &.no_hover:focus {
-    box-shadow: none!important;
+    box-shadow: none !important;
   }
 
   &.success {

@@ -1,0 +1,46 @@
+<%= turbo_frame_tag :totp_auth_card do %>
+  <div class="card border b--info mt1 mb3">
+    <p>
+      Scan the QR code below with your authenticator app or enter the secret.
+    </p>
+    <div style="height: 130px;">
+      <qr-code
+        contents="<%= @totp.provisioning_uri %>"
+        class="bg-white rounded-lg w-fit h-fit border border-muted my-1"
+        style="height: 130px; width: 130px; padding-left: 2px; padding-top: 2px">
+        <img
+          src="https://icons.hackclub.com/api/icons/black/private-outline"
+          class="h-8 -translate-x-[5px]"
+          slot="icon">
+      </qr-code>
+    </div>
+    <div class="relative block mt2" data-controller="clipboard" data-clipboard-text-value="<%= @totp.secret %>">
+      <input type="text" value="<%= @totp.secret %>" readonly style="cursor: text;" class="fit">
+      <button
+        type="button"
+        class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+        style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+        aria-label="Copy secret"
+        data-action="clipboard#copy:prevent">
+        <%= inline_icon "copy", size: 28 %>
+      </button>
+    </div>
+    <p>
+      Then, enter an OTP to verify that it's been successfully configured.
+    </p>
+    <div>
+      <%= form_tag user_enable_totp_path(@user) do %>
+        <%= telephone_field_tag :code, "", placeholder: "OTP code", autofocus: true, class: "center-align mb2", autocomplete: "one-time-code", required: true %>
+        <% if @invalid %>
+          <p class="error">
+            Sorry, that OTP code wasn't valid. Please try again.
+          </p>
+        <% end %>
+        <%= submit_tag "Submit" %>
+      <% end %>
+    </div>
+    <p>
+      FYI: you can only see this secret once! It'll only be saved after you verify your configuration.
+    </p>
+  </div>
+<% end %>

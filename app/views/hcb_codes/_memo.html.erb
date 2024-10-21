@@ -1,4 +1,4 @@
-<%# locals: (hcb_code:, form: false, prepended_to_memo: "", location: "hcb_code_show_page", renamed: false) -%>
+<%# locals: (hcb_code:, form: false, prepended_to_memo: "", location: "hcb_code_show_page", renamed: false, ledger_instance: nil, force_display_details: false) -%>
 
 <% form ||= false %>
 <% prepended_to_memo ||= "" %>
@@ -6,7 +6,7 @@
 <% renamed ||= false %>
 <% disabled ||= false %>
 
-<% if organizer_signed_in?(@event || hcb_code.event) && (@event || hcb_code.event) && !(@event || hcb_code.event)&.demo_mode? %>
+<% if (organizer_signed_in?(@event || hcb_code.event) && (@event || hcb_code.event) || force_display_details) && !(@event || hcb_code.event)&.demo_mode? %>
   <%= turbo_frame_tag "#{location}:#{dom_id(hcb_code)}:memo", style: "flex-grow: 1"  do %>
     <% if form %>
         <%= form_with model: hcb_code, class: "renaming", data: { turbo: true, controller: "form" } do |form| %>
@@ -14,6 +14,7 @@
             <%= form.hidden_field :inline, value: "true" %>
             <%= form.hidden_field :prepended_to_memo, value: prepended_to_memo %>
             <%= form.hidden_field :location, value: location %>
+            <%= form.hidden_field :ledger_instance, value: ledger_instance %>
             <%= form.text_field :memo,
                                 list: "custom-memos",
                                 placeholder: hcb_code.memo,
@@ -25,22 +26,26 @@
         <% end %>
 
     <% else %>
-      <span class="align-middle <%= "renamed" if renamed %>"
-            data-controller="navigation"
-            data-action="dblclick->navigation#navigate"
-            data-navigation-location-param="<%= edit_hcb_code_path(hcb_code, inline: true, prepended_to_memo:, location:) %>"
-            data-navigation-frame-param="<%= "#{location}:#{ActionView::RecordIdentifier.dom_id(hcb_code)}:memo" %>"
-            style="cursor: text">
-          <span
-            class="mr2 align-middle tooltipped tooltipped--s"
-            style="color: inherit; text-decoration: none;"
-            aria-label="Double click to rename this transaction">
-            <%= prepended_to_memo %>
-            <span data-memo-for="<%= dom_id(hcb_code) %>">
-              <%= hcb_code.memo %>
+      <% details_link = hcb_code.card_grant? ? spending_card_grant_path(hcb_code.disbursement.card_grant) : hcb_code.url %>
+      <% modal = hcb_code.card_grant? ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
+      <% contents = capture do %>
+        <span class="<%= "renamed" if renamed %>"
+              data-controller="navigation"
+              data-action="click->navigation#navigateOnShiftClick"
+              data-navigation-location-param="<%= edit_hcb_code_path(hcb_code, inline: true, prepended_to_memo:, location:, ledger_instance:) %>"
+              data-navigation-frame-param="<%= "#{location}:#{ActionView::RecordIdentifier.dom_id(hcb_code)}:memo" %>">
+            <span
+              class="mr2 tooltipped tooltipped--s"
+              style="color: inherit; text-decoration: none;"
+              aria-label="Shift+click to rename this transaction">
+              <%= prepended_to_memo %>
+              <span data-memo-for="<%= dom_id(hcb_code) %>">
+                <%= hcb_code.memo %>
+              </span>
             </span>
-          </span>
-      </span>
+        </span>
+      <% end %>
+      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit", class: "no-underline hover:underline", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
       <% if renamed %>
         <%= render "hcb_codes/memo_stream", hcb_code: %>
       <% end %>

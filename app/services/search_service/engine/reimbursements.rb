@@ -17,7 +17,7 @@ module SearchService
         elsif @admin
           reimbursement_reports = Reimbursement::Report
         else
-          reimbursement_reports = Reimbursement::Report.where(event: @user.events)
+          reimbursement_reports = Reimbursement::Report.where(event: @user.events).and(@user.reimbursement_reports)
         end
         if @context[:user_id] && @query["types"].length == 1
           user = User.find(@context[:user_id])

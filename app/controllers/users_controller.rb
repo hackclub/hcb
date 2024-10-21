@@ -16,6 +16,7 @@ class UsersController < ApplicationController
                                                :receipt_report,
                                                :edit_featurepreviews,
                                                :edit_security,
+                                               :edit_notifications,
                                                :edit_admin,
                                                :toggle_sms_auth,
                                                :complete_sms_auth_verification,
@@ -156,17 +157,37 @@ class UsersController < ApplicationController
     authorize @user
   end
 
+  def edit_notifications
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+  end
+
+  def generate_totp
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.totp&.mark_expired!
+    @user.unverified_totp&.destroy!
+    @totp = @user.create_unverified_totp
+  end
+
   def enable_totp
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
-    @user.totp&.destroy!
-    @user.create_totp!
+    @totp = @user.unverified_totp
+    if @totp.may_mark_verified? && @totp.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
+      @user.totp&.mark_expired!
+      @totp.mark_verified!
+      redirect_back_or_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
+    else
+      @invalid = true
+      render :generate_totp
+    end
   end
 
   def disable_totp
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
-    @user.totp&.destroy!
+    @user.totp&.mark_expired!
     redirect_back_or_to security_user_path(@user)
   end
 
@@ -331,7 +352,9 @@ class UsersController < ApplicationController
       :seasonal_themes_enabled,
       :payout_method_type,
       :comment_notifications,
-      :charge_notifications
+      :charge_notifications,
+      :use_sms_auth,
+      :use_two_factor_authentication
     ]
 
     if @user.stripe_cardholder

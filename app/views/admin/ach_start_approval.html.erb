@@ -74,9 +74,6 @@
         <tr>
           <td colspan="3" class="center">
             Estimated to arrive <%= format_datetime(@ach_transfer.estimated_arrival) %>
-            <% if @ach_transfer.same_day? %>
-              <small class="block muted">Same-day ACHs incur a fee</small>
-            <% end %>
           </td>
         </tr>
       <% end %>

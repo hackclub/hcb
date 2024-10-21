@@ -1,10 +1,14 @@
-<% title @card.initially_activated ? "Card #{@card.last_four}" : "Inactive card" %>
+<% title @card.initially_activated ? "Card #{@card.last_four} (#{@card.user.name}, #{@event.name})" : "Inactive card" %>
 <%= render "events/nav", selected: :cards unless @frame %>
 
 <% admin_tool("mt3") do %>
   <%= link_to "View card on Stripe", @card.stripe_dashboard_url, class: "btn bg-accent" %>
   <%= link_to "View cardholder on Stripe", @card.cardholder.stripe_dashboard_url, class: "btn bg-accent" %>
-  <%= link_to "Cancel card", cancel_stripe_card_path(@card), method: :post, class: "btn bg-accent", data: { confirm: "Are you sure you want to do this? This can't be reversed." } %>
+  <% if @card.cash_withdrawal_enabled? %>
+    <%= link_to "Disable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-error" %>
+  <% elsif @card.physical? %>
+    <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-success" %>
+  <% end %>
 <% end %>
 
 <%= render partial: "canceled_warning", locals: { stripe_card: @card } %>

@@ -5,10 +5,10 @@ module StaticPagesHelper
 
   def card_to(name, path, options = {})
     badge = if options[:badge].present?
-              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted pr2 h-fit-content" : "bg-accent pr2 h-fit-content")
+              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit-content" : "bg-accent h-fit-content")
             elsif options[:async_badge].present?
               turbo_frame_tag options[:async_badge], src: admin_task_size_path(task_name: options[:async_badge]) do
-                badge_for "⏳", class: "bg-muted pr2"
+                badge_for "⏳", class: "bg-muted"
               end
             else
               content_tag(:div, "") # Empty div if no badge is present
@@ -20,9 +20,10 @@ module StaticPagesHelper
                             content_tag(:strong, name, class: "card-name"),
                             pin,
                             content_tag(:span, "", style: "flex-grow: 1"),
-                            badge
+                            badge,
+                            inline_icon("view-forward", size: 24, class: "ml-1 -mr-2 muted fill-current")
                           ].join.html_safe,
-                          class: "card card--item card--hover flex justify-between items-center"),
+                          class: "card card--hover flex justify-between items-center"),
               path, class: "link-reset", method: options[:method]
     end
   end
@@ -200,7 +201,7 @@ module StaticPagesHelper
 
             needed_role_num = OrganizerPosition.roles[v]
 
-            OrganizerPosition.roles.each do |_role, role_num|
+            OrganizerPosition.roles.each_value do |role_num|
               if role_num >= needed_role_num
                 concat content_tag(:td, "✅")
               else

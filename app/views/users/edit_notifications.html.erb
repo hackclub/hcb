@@ -1,0 +1,73 @@
+<% title "Account settings" %>
+<% page_md %>
+<%= render "users/nav", selected: :settings %>
+<h1>
+  Settings
+</h1>
+<turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
+  <%= render "settings_nav", active: "notifications" %>
+  <section>
+    <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
+      <fieldset class="field">
+        <%= form.label :receipt_report_option, "Receipt reminders" %>
+        <p class="h5 muted mt0 mb1">
+          Get a regular email roundup of your transactions awaiting receipts.
+        </p>
+        <%= form.select :receipt_report_option,
+                        (User.receipt_report_options.map { |k, v| [k.humanize, k] }) %>
+      </fieldset>
+      <fieldset class="field">
+        <legend class="font-medium">Transaction comments</legend>
+        <p class="h5 muted mt-0 mb-3">
+          Get an email when someone comments on a transaction or reimbursement report.
+        </p>
+        <div class="field field--options field--green trio">
+          <%= form.radio_button :comment_notifications, :all_threads %>
+          <%= form.label :comment_notifications, value: :all_threads do %>
+            <%= inline_icon "notification", size: 28 %>
+            <strong>All transactions</strong>
+          <% end %>
+          <%= form.radio_button :comment_notifications, :my_threads %>
+          <%= form.label :comment_notifications, value: :my_threads do %>
+            <%= inline_icon "person", size: 32 %>
+            <strong>My transactions</strong>
+          <% end %>
+          <%= form.radio_button :comment_notifications, :no_threads %>
+          <%= form.label :comment_notifications, value: :no_threads do %>
+            <%= inline_icon "forbidden", size: 28 %>
+            <strong>None</strong>
+          <% end %>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="font-medium">Card charges</legend>
+        <p class="h5 muted mt-0 mb-3">
+          Get a notification when there’s a charge on any of your cards.
+        </p>
+        <div class="field field--options max-width-3 grid grid--narrow">
+          <%= form.radio_button :charge_notifications, :email_and_sms %>
+          <%= form.label :charge_notifications, value: :email_and_sms do %>
+            <%= inline_icon "announcement", size: 28 %>
+            <strong>Email & SMS</strong>
+          <% end %>
+          <%= form.radio_button :charge_notifications, :email %>
+          <%= form.label :charge_notifications, value: :email do %>
+            <%= inline_icon "email", size: 28 %>
+            <strong>Email</strong>
+          <% end %>
+          <%= form.radio_button :charge_notifications, :sms %>
+          <%= form.label :charge_notifications, value: :sms do %>
+            <%= inline_icon "message", size: 28 %>
+            <strong>SMS</strong>
+          <% end %>
+          <%= form.radio_button :charge_notifications, :nothing %>
+          <%= form.label :charge_notifications, value: :nothing do %>
+            <%= inline_icon "forbidden", size: 28 %>
+            <strong>None</strong>
+          <% end %>
+        </div>
+      </fieldset>
+      <%= form.submit "Save settings", class: "mt2" %>
+    <% end %>
+  </section>
+</turbo-frame>

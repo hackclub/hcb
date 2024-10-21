@@ -63,7 +63,7 @@ class StatsController < ApplicationController
         # entire time period. this remains to prevent breaking changes to existing systems that use this endpoint
         raised: tx_all.revenue.sum(:amount_cents) + pending_tx_all.incoming.sum(:amount_cents),
         transactions_count: tx_all.size,
-        transactions_volume: tx_all.sum("@amount_cents") + pending_tx_all.sum("@amount_cents"),
+        transactions_volume: tx_all.sum("abs(amount_cents)") + pending_tx_all.sum("abs(amount_cents)"),
 
         # entire (all), year, quarter, and month time periods
         all: CanonicalTransactionService::Stats::During.new.run,
@@ -85,6 +85,7 @@ class StatsController < ApplicationController
 
   def admin_receipt_stats # secret api endpoint for the tv in the bank office
     users = [
+      # These users are on the list because they're in HQ
       2189, # Caleb
       2046, # Mel
       2455, # Liv
@@ -100,8 +101,6 @@ class StatsController < ApplicationController
       1328, # Sarthak
       7104, # Hunter
       8507, # Paul
-
-      # These users are on the list because they're in HQ
       5855, # Zoya Hussain
       4282, # Sahiti Dasari
       5991, # Dieter Schoening
@@ -130,7 +129,15 @@ class StatsController < ApplicationController
       5670, # Thomas Stubblefield
       7873, # Cody Flaherty
       595,  # Chris Walker
-      8823  # Lucy Tran
+      8823, # Lucy Tran
+      8903, # Rhys Panopio
+      3878, # Cheru
+      12246, # Nora
+      15136, # Zenab Hassan
+      18300, # Alex Ren
+      18746, # Jared Senesac
+      16849, # Acon Lin
+      21013, # Paolo Carino
     ]
 
     q = <<~SQL

@@ -12,16 +12,18 @@
     <% end %>
   </div>
   <nav class="dock dock--desktop mt2 font-medium">
+    <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
+      <%= dock_item "Home",
+                    event_path(id: @event.slug),
+                    tooltip: "See everything at-a-glance",
+                    icon: "home",
+                    selected: local_assigns[:selected] == :home %>
+    <% end %>
     <%= dock_item "Transactions",
-      event_path(id: @event.slug),
+      event_transactions_path(event_id: @event.slug),
       tooltip: "View your transactions",
       icon: "transactions",
       selected: local_assigns[:selected] == :transactions %>
-    <%= dock_item "Breakdown",
-      event_breakdown_path(event_id: @event.slug),
-      tooltip: "Breakdown",
-      icon: "grid",
-      selected: local_assigns[:selected] == :breakdown if policy(@event).breakdown? %>
     <% if policy(@event).activation_flow? %>
       <% admin_tool("m0 p0 overflow-visible w-fit") do %>
         <%= dock_item "Activate",
@@ -31,43 +33,46 @@
           selected: local_assigns[:selected] == :activation_flow %>
         <% end %>
     <% end %>
-    <h4 class="mb0 h5 muted">Receive</h4>
-    <hr>
+    <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
+      <h4 class="mb0 h5 font-medium muted">Receive</h4>
+      <hr>
+    <% end %>
     <%= dock_item "Donations",
-      @event&.partner&.external? ? event_partner_donation_overview_path(event_id: @event.slug) :
-        event_donation_overview_path(event_id: @event.slug),
+      event_donation_overview_path(event_id: @event.slug),
       tooltip: "Receive donations online",
       icon: "support",
       data: { tour_step: "donations" },
-      selected: local_assigns[:selected] == :donations if @event.approved? %>
+      selected: local_assigns[:selected] == :donations if policy(@event).donation_overview? %>
     <%= dock_item "Invoices",
       event_invoices_path(event_id: @event.slug),
       tooltip: "Collect sponsor payments",
       icon: "briefcase",
-      selected: local_assigns[:selected] == :invoices if @event.approved? %>
+      selected: local_assigns[:selected] == :invoices if @event.approved? && @event.plan.invoices_enabled? %>
     <%= dock_item "Account numbers",
       account_number_event_path(@event),
       tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
       icon: "bank-account",
-      selected: local_assigns[:selected] == :account_number if Flipper.enabled?(:incoming_ach_payments_2023_02_17, @event) && policy(@event).account_number? && organizer_signed_in? %>
+      selected: local_assigns[:selected] == :account_number if policy(@event).account_number? %>
     <%= dock_item "Check deposits",
       event_check_deposits_path(@event),
       tooltip: "Deposit checks",
       icon: "cheque",
-      selected: local_assigns[:selected] == :deposit_check if Flipper.enabled?(:check_deposits_2023_04_17, @event) && organizer_signed_in? %>
-    <h4 class="mb0 h4 font-medium muted">Spend</h4>
-    <hr>
+      selected: local_assigns[:selected] == :deposit_check if policy(@event.check_deposits.build).index? %>
+    <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? || Flipper.enabled?(:grants_2023_06_21, @event) %>
+      <h4 class="mb0 h5 font-medium muted">Spend</h4>
+      <hr>
+    <% end %>
     <%= dock_item "Cards",
       event_cards_overview_path(event_id: @event.slug),
       tooltip: "Manage team debit cards",
       icon: "card",
       data: { tour_step: "cards" },
-      selected: local_assigns[:selected] == :cards if @event.approved? %>
+      selected: local_assigns[:selected] == :cards if policy(@event).card_overview? %>
     <%= dock_item "Transfers",
       event_transfers_path(event_id: @event.slug),
       tooltip: "Send & transfer money",
       icon: "payment-transfer",
-      selected: local_assigns[:selected] == :transfers %>
+      selected: local_assigns[:selected] == :transfers if policy(@event).transfers? %>
     <%= dock_item "Reimbursements",
       event_reimbursements_path(event_id: @event.slug),
       async_badge: event_reimbursements_pending_review_icon_path(@event),
@@ -99,10 +104,10 @@
       disabled: !policy(@event).g_suite_overview?,
       selected: local_assigns[:selected] == :google_workspace if organizer_signed_in? %>
     <%= dock_item "Documents",
-      event_documentation_path(event_id: @event.slug),
+      event_documents_path(event_id: @event.slug),
       tooltip: "View legal documents, financial statements, and FAQ",
       icon: "docs",
-      selected: local_assigns[:selected] == :documentation %>
+      selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
     <%= dock_item "Settings",
       edit_event_path(@event),
       tooltip: "Edit organization settings",
@@ -115,43 +120,49 @@
       event_path(id: @event.slug),
       icon: "transactions",
       selected: local_assigns[:selected] == :transactions %>
-    <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="receive">
-      <div class="line-height-0 relative"><%= inline_icon "support", size: 32, class: "primary" %></div>
-      <span class="line-height-3">Receive</span>
+    <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
+      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="receive">
+        <div class="line-height-0 relative"><%= inline_icon "support", size: 32, class: "primary" %></div>
+        <span class="line-height-3">Receive</span>
 
-      <div class="menu__content" data-behavior="menu_content">
-        <h4 class="mb0 h5 muted left-align pl1 mt1">Receive</h4>
-        <div class="menu__divider"></div>
-        <%= link_to "Donations", event_donation_overview_path(@event) %>
-        <%= link_to "Invoices", event_invoices_path(@event) %>
-        <%= link_to "Account numbers", account_number_event_path(@event) if Flipper.enabled?(:incoming_ach_payments_2023_02_17, @event) %>
-        <%= link_to "Check deposits", event_check_deposits_path(@event) if Flipper.enabled?(:check_deposits_2023_04_17, @event) %>
-      </div>
-    </button>
-    <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:cards, :transfers] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="spend">
-      <div class="line-height-0 relative"><%= inline_icon "card", size: 32, class: "primary" %></div>
-      <span class="line-height-3">Spend</span>
-
-      <div class="menu__content" data-behavior="menu_content">
-        <h4 class="mb0 h5 muted left-align pl1 mt1">Spend</h4>
-        <div class="menu__divider"></div>
-        <%= link_to "Cards", event_cards_overview_path(@event) %>
-        <%= link_to "Transfers", event_transfers_path(@event) %>
-        <%= link_to "Reimbursements", event_reimbursements_path(@event) if policy(@event).reimbursements? %>
-      </div>
-    </button>
-    <div class="dock__overflow">
-      <action type="button" class="pop primary menu__toggle" data-behavior="menu_toggle" aria-expanded="false" tabindex="0">
-        <%= inline_icon "more" %>
         <div class="menu__content" data-behavior="menu_content">
-          <%= link_to "Team", event_team_path(event_id: @event.slug) %>
-          <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
-          <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
-          <%= link_to "Documents", event_documentation_path(event_id: @event.slug) %>
-          <%= link_to "Settings", edit_event_path(@event) %>
+          <h4 class="mb0 h5 muted left-align pl1 mt1">Receive</h4>
+          <div class="menu__divider"></div>
+          <%= link_to "Donations", event_donation_overview_path(@event) if policy(@event).donation_overview? %>
+          <%= link_to "Invoices", event_invoices_path(@event) if @event.approved? && @event.plan.invoices_enabled? %>
+          <%= link_to "Account numbers", account_number_event_path(@event) if policy(@event).account_number? %>
+          <%= link_to "Check deposits", event_check_deposits_path(@event) if policy(@event.check_deposits.build).index? %>
         </div>
-      </action>
-    </div>
+      </button>
+    <% end %>
+    <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? %>
+      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:cards, :transfers] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="spend">
+        <div class="line-height-0 relative"><%= inline_icon "card", size: 32, class: "primary" %></div>
+        <span class="line-height-3">Spend</span>
+
+        <div class="menu__content" data-behavior="menu_content">
+          <h4 class="mb0 h5 muted left-align pl1 mt1">Spend</h4>
+          <div class="menu__divider"></div>
+          <%= link_to "Cards", event_cards_overview_path(@event) if policy(@event).card_overview? %>
+          <%= link_to "Transfers", event_transfers_path(@event) if policy(@event).transfers? %>
+          <%= link_to "Reimbursements", event_reimbursements_path(@event) if policy(@event).reimbursements? %>
+        </div>
+      </button>
+    <% end %>
+    <button class="dock__item bg-transparent border-none menu__toggle" data-behavior="menu_toggle">
+      <div class="line-height-0 relative"><%= inline_icon "more", size: 32, class: "primary" %></div>
+      <span class="line-height-3">More</span>
+
+      <div class="menu__content" data-behavior="menu_content">
+        <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
+        <div class="menu__divider"></div>
+        <%= link_to "Team", event_team_path(event_id: @event.slug) %>
+        <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
+        <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
+        <%= link_to "Documents", event_documents_path(event_id: @event.slug) if policy(@event).documentation? %>
+        <%= link_to "Settings", edit_event_path(@event) %>
+      </div>
+    </button>
   </nav>
 <% end %>
 <% content_for(:container) do %>

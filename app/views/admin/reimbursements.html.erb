@@ -38,8 +38,12 @@
         <td class="w-16"><%= report.id %></td>
         <td class="w-32"><%= report.created_at.strftime("%Y-%m-%d") %></td>
         <td>
-          <%= link_to event_path(report.event) do %>
-            <%= report.event.name.upcase %>
+          <% if report.event %>
+            <%= link_to event_path(report.event) do %>
+              <%= report.event.name.upcase %>
+            <% end %>
+          <% else %>
+            None
           <% end %>
         </td>
         <td>

@@ -4,8 +4,9 @@ module BreakdownEngine
   class Merchants
     include StripeAuthorizationsHelper
 
-    def initialize(event)
+    def initialize(event, past_month: false)
       @event = event
+      @past_month = past_month
     end
 
     def run
@@ -16,14 +17,15 @@ module BreakdownEngine
       )
                           .joins("LEFT JOIN canonical_transactions ct ON raw_stripe_transactions.id = ct.transaction_source_id AND ct.transaction_source_type = 'RawStripeTransaction'")
                           .joins("LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id")
-                          .where("event_mapping.event_id = ?", @event.id)
+                          .where("event_mapping.event_id = ? #{"AND raw_stripe_transactions.created_at > NOW() - INTERVAL '1 month'" if @past_month}", @event.id)
                           .group("merchant")
                           .order(Arel.sql("SUM(raw_stripe_transactions.amount_cents) * -1 DESC"))
                           .limit(15)
                           .each_with_object([]) do |merchant, array|
+                            name = YellowPages::Merchant.lookup(network_id: merchant[:merchant]).name || merchant[:names].split(",").first.strip
                             array << {
-                              truncated: (lookup_merchant(merchant[:merchant]) || merchant[:names].split(",").first.strip).truncate(15)&.titleize,
-                              name: (lookup_merchant(merchant[:merchant]) || merchant[:names].split(",").first.strip).titleize,
+                              truncated: name.truncate(15)&.titleize,
+                              name: name.titleize,
                               value: merchant[:amount_cents].to_f / 100
                             }
                           end

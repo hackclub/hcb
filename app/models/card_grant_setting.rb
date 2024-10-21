@@ -4,11 +4,12 @@
 #
 # Table name: card_grant_settings
 #
-#  id             :bigint           not null, primary key
-#  category_lock  :string
-#  invite_message :string
-#  merchant_lock  :string
-#  event_id       :bigint           not null
+#  id                    :bigint           not null, primary key
+#  category_lock         :string
+#  expiration_preference :integer          default("2 years"), not null
+#  invite_message        :string
+#  merchant_lock         :string
+#  event_id              :bigint           not null
 #
 # Indexes
 #
@@ -25,5 +26,12 @@ class CardGrantSetting < ApplicationRecord
   alias_attribute :allowed_merchants, :merchant_lock
   alias_attribute :allowed_categories, :category_lock
   has_many :card_grants, through: :event
+
+  enum :expiration_preference, {
+    "90 days": 90,
+    "6 months": 183,
+    "1 year": 365,
+    "2 years": 365 * 2
+  }, prefix: :expires_after
 
 end

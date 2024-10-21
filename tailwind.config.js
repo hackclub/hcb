@@ -60,7 +60,8 @@ module.exports = {
         muted: '#8492a6',
         snow: '#f9fafc',
         darkless: '#252429',
-        dark: '#17171d'
+        dark: '#17171d',
+        primary: '#ec3750'
       },
     },
   },

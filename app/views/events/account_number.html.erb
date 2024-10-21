@@ -43,15 +43,6 @@
         <% end %>
       </span>
     </span>
-    <span class="flex-grow"></span>
-    <% admin_tool "flex-col justify-center" do %>
-      <%= button_to @event.column_account_number.deposit_only? ? "Enable debits" : "Make deposit-only",
-                    event_column_account_number_path(@event),
-                    method: :patch,
-                    params: { column_account_number: { deposit_only: !@event.column_account_number.deposit_only } },
-                    class: "btn bg-muted text-sm py-1 px-3",
-                    data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
-    <% end %>
   </div>
 <% else %>
   <h1 class="heading block center border-none">Account <span class="xs-hide">& routing</span> number</h1>
@@ -128,7 +119,6 @@
                 <th>Date</th>
                 <th>Description</th>
                 <th class="right-align">Amount</th>
-                <th></th>
               </tr>
             </thead>
             <tbody data-behavior="transactions">
@@ -147,17 +137,49 @@
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="ach_form">
       <%= modal_header "Account details" %>
 
-      <section class="details">
+      <div class="flex gap-3 items-center mb-4">
+        <div class="bg-info rounded-full pl-2 pr-3 py-1 text-white h5 w-fit inline-flex gap-1 items-center">
+          <%= inline_icon "info", size: 18 %>
+          Receive<%= @event.column_account_number&.deposit_only? ? "-only" : " + send" %>
+        </div>
+
+        <% admin_tool "flex-col justify-center w-fit" do %>
+          <%= button_to @event.column_account_number&.deposit_only? ? "Enable debits" : "Make deposit-only",
+                        event_column_account_number_path(@event),
+                        method: :patch,
+                        params: { column_account_number: { deposit_only: !@event.column_account_number&.deposit_only } },
+                        class: "btn bg-muted text-sm py-1 px-3",
+                        data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+        <% end %>
+      </div>
+
+      <div class="flex flex-col md:flex-row items-start justify-start gap-2 md:gap-12 h2 mb-2 md:mb-4">
+        <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.account_number if organizer_signed_in? %>">
+          <span class="h4 muted font-medium">Account </span>
+          <span class="font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy">
+            <% if organizer_signed_in? %>
+              <%= @event.account_number %>
+            <% else %>
+              <%= "•" * @event.account_number.length %>
+            <% end %>
+          </span>
+        </span>
+        <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.routing_number if organizer_signed_in? %>">
+          <span class="h4 muted font-medium">Routing</span>
+          <span class="font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy">
+            <% if organizer_signed_in? %>
+              <%= @event.routing_number %>
+            <% else %>
+              <%= "•" * @event.routing_number.length %>
+            <% end %>
+          </span>
+        </span>
+        <span class="flex-grow"></span>
+      </div>
+
+      <div class="details">
         <p>
-          <strong>Account Number</strong>
-          <span><%= copy_to_clipboard @event.column_account_number&.account_number, tooltip_direction: :e %></span>
-        </p>
-        <p>
-          <strong>Routing Number<sup class="muted tooltipped tooltipped--n help" aria-label="Used to receive ACH transfers and domestic wires within the US"> ?</sup></strong>
-          <span><%= copy_to_clipboard @event.column_account_number&.routing_number, tooltip_direction: :e %></span>
-        </p>
-        <p>
-          <strong>SWIFT BIC Code<sup class="muted tooltipped tooltipped--n help" aria-label="Used to receive international wire transfers from outside the US"> ?</sup></strong>
+          <strong>SWIFT/BIC Code<sup class="muted tooltipped tooltipped--n help" aria-label="Used to receive international wire transfers from outside the US"> ?</sup></strong>
           <span><%= copy_to_clipboard @event.column_account_number&.bic_code, tooltip_direction: :e %></span>
         </p>
         <p>
@@ -176,7 +198,7 @@
           <strong>Bank Address</strong>
           <span>1110 Gorgas Avenue, Suite A4-700<br>San Francisco, CA 94129</span>
         </p>
-      </section>
+      </div>
     </section>
   <% end %>
 <% end %>

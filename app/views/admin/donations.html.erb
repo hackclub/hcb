@@ -46,6 +46,7 @@
       <th>Date</th>
       <th>Recipient</th>
       <th>Anonymous</th>
+      <th>Tax-Deductible</th>
       <th>Amount</th>
       <th>Status</th>
       <th>PayoutId</th>
@@ -71,6 +72,7 @@
           <% end %>
         </td>
         <td><%= donation.anonymous? %></td>
+        <td><%= donation.tax_deductible? %></td>
         <td><%= render_money_amount(donation.amount) %></td>
         <td><%= donation.aasm_state.upcase %></td>
         <td><%= donation.payout_id %></td>

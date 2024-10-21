@@ -11,7 +11,7 @@ Welcome to the [HCB](https://hackclub.com/fiscal-sponsorship/) codebase. We are 
 
 ## What is HCB?
 
-HCB is a  powerful, safe, and easy-to-use fiscal sponsorship platform for hackathons, Hack Clubs, robotic teams and more. We use it to run our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/), we provide high schoolers with a 501(c)(3) status-backed restricted fund for their organization. Behind the scenes, HCB is a Ruby on Rails application (learn more on the [wiki](https://github.com/hackclub/hcb/wiki)).
+HCB is a powerful, safe, and easy-to-use fiscal sponsorship platform for hackathons, Hack Clubs, robotic teams and more. We use it to run our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/), we provide high schoolers with a 501(c)(3) status-backed restricted fund for their organization. Behind the scenes, HCB is a Ruby on Rails application (learn more on the [wiki](https://github.com/hackclub/hcb/wiki)).
 
 <img width="1377" alt="Screenshot 2024-06-03 at 1 34 42 PM" src="https://github.com/hackclub/hcb/assets/39828164/b19a83b2-ba81-46b0-9f6f-2772f4249071">
 
@@ -33,6 +33,10 @@ We are so excited for you to join the codebase! We have a [guide to getting star
 All contributors are expected to follow the Hack Club [Code of Conduct](https://hackclub.com/conduct) and Hack Club's [contributing guidelines](https://github.com/hackclub/hackclub/blob/main/CONTRIBUTING.md).
 
 Join the `#hcb-engr-help` channel on the [Hack Club Slack](https://hackclub.com/slack) for support.
+
+### I found a security vulnerability! What should I do?
+
+Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to report the vulnerability. We currently don't have a bug bounty program but, as a token of appreciation, we'd love to mail you a t-shirt and give you a shoutout on our GitHub.
 
 ## Quick Start
 

@@ -13,6 +13,10 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
+  def generate_totp?
+    user.admin? || record == user
+  end
+
   def enable_totp?
     user.admin? || record == user
   end
@@ -34,6 +38,10 @@ class UserPolicy < ApplicationPolicy
   end
 
   def edit_security?
+    user.admin? || record == user
+  end
+
+  def edit_notifications?
     user.admin? || record == user
   end
 

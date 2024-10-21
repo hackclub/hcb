@@ -64,7 +64,3 @@ h1 + .details {
 h3 + .list {
   border-top: 1px solid map-get($palette, smoke);
 }
-
-.card--item {
-  background: $white #{$chevron};
-}

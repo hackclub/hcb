@@ -3,7 +3,7 @@
 class InvoicesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :new]
+  before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
   def index
@@ -100,8 +100,6 @@ class InvoicesController < ApplicationController
   end
 
   def create
-    @event = Event.friendly.find(params[:event_id])
-
     authorize @event, policy_class: InvoicePolicy
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
@@ -111,7 +109,7 @@ class InvoicesController < ApplicationController
                           filtered_params["due_date(3i)"].to_i)
 
     @invoice = ::InvoiceService::Create.new(
-      event_id: params[:event_id],
+      event_id: @event.id,
       due_date:,
       item_description: filtered_params[:item_description],
       item_amount: filtered_params[:item_amount],
@@ -138,7 +136,6 @@ class InvoicesController < ApplicationController
   rescue => e
     notify_airbrake(e)
 
-    @event = Event.friendly.find(params[:event_id])
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor)
 
@@ -221,9 +218,14 @@ class InvoicesController < ApplicationController
     @invoice = Invoice.find(params[:id])
     @hcb_code = @invoice.local_hcb_code
 
-    ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
+    authorize @invoice
 
-    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
+    if @invoice.canonical_transactions.any?
+      ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
+    else
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "This invoice hasn't settled, only settled invoices can be refunded." }
+    end
   end
 
   private

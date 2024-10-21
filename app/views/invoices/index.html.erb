@@ -19,27 +19,11 @@
 </h1>
 
 <% if organizer_signed_in? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new_invoice">
-    <%= modal_header "Send an invoice" %>
-
-    <% if @event.invoices.none? %>
-      <%= render "callout",
-            type: "info",
-            title: "We recommend sending yourself an invoice for $1 to understand what your sponsors will see." %>
-    <%= render "form", invoice: @invoice, sponsor: @sponsor %>
-    <% else %>
-      <p class="h5 line-height-3 muted mt0 mb2">
-        If the sponsor wants to pay via a mailed check or direct deposit instead of
-        the online invoice, let the HCB team know.
-        <%= help_message %>
-      </p>
-    <%= render "form", invoice: @invoice, sponsor: @sponsor %>
-    <% end %>
-  </section>
+  <%= render "modal" %>
 <% end %>
 
-<div class="statset mt3 mb2">
-  <div class="stat tooltipped tooltipped--s pr3" aria-label="This excludes archived invoices">
+<div class="statset mt3 mb3">
+  <div class="stat tooltipped tooltipped--s" aria-label="This excludes archived invoices">
     <span class="stat__label">Total invoiced</span>
     <span class="stat__value"><%= render_money_amount @stats[:total] %></span>
   </div>
@@ -57,12 +41,16 @@
   </div>
 </div>
 
-<hr>
-
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <div class="filterbar flex flex-wrap items-center width-100">
-      <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
+    <div class="input input-group max-w-none" tabindex="0">
+      <%= inline_icon "search" %>
+      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
+      <% if params[:q] && params[:q] != "" %>
+        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+          <%= inline_icon "view-close", size: 24 %>
+        </button>
+      <% end %>
     </div>
   <% end %>
   <div>

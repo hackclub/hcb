@@ -53,7 +53,6 @@ Rails/HelperInstanceVariable:
     - 'app/helpers/g_suites_helper.rb'
     - 'app/helpers/hcb_code_helper.rb'
     - 'app/helpers/invoices_helper.rb'
-    - 'app/helpers/partner_donations_helper.rb'
     - 'app/helpers/sessions_helper.rb'
     - 'app/helpers/stripe_cards_helper.rb'
     - 'app/helpers/tours_helper.rb'
@@ -161,5 +160,4 @@ Style/OptionalBooleanParameter:
     - 'app/helpers/donations_helper.rb'
     - 'app/helpers/events_helper.rb'
     - 'app/helpers/invoices_helper.rb'
-    - 'app/helpers/partner_donations_helper.rb'
     - 'app/models/g_suite_account.rb'

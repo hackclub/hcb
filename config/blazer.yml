@@ -27,7 +27,6 @@ data_sources:
       # status: {0: "Active", 1: "Archived"}
       user_id: "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users ORDER BY full_name ASC"
       event_id: "SELECT id, name FROM events ORDER BY name ASC"
-      partner_id: "SELECT id, name FROM partners ORDER BY name ASC"
       month: { 1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December" }
       bank_account_id: |
         SELECT CONCAT('plaid_', plaid_account_id) AS id, CONCAT('Plaid: ', name) FROM bank_accounts WHERE should_sync_v2
@@ -56,7 +55,6 @@ data_sources:
       user_id: "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users WHERE id IN {value}"
       creator_id: "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users WHERE id IN {value}"
       event_id: "SELECT id, name FROM events WHERE id IN {value}"
-      partner_id: "SELECT id, name FROM partners WHERE id IN {value}"
       canonical_transaction_id: "SELECT id, CONCAT('Amount Cents: ', amount_cents, '. Memo: ', memo) FROM canonical_transactions WHERE id IN {value}"
       canonical_pending_transaction_id: "SELECT id, CONCAT('Amount Cents: ', amount_cents, '. Memo: ', memo) FROM canonical_pending_transactions WHERE id IN {value}"
 

@@ -25,6 +25,7 @@ class HcbCode < ApplicationRecord
 
   include Commentable
   include Receiptable
+  include UsersHelper
 
   include Turbo::Broadcastable
 
@@ -33,7 +34,9 @@ class HcbCode < ApplicationRecord
   monetize :amount_cents
 
   has_many :hcb_code_tags
-  has_many :tags, through: :hcb_code_tags
+  has_many :tags, through: :hcb_code_tags, class_name: "::Tag"
+  has_many :hcb_code_tag_suggestions, class_name: "HcbCode::Tag::Suggestion"
+  has_many :suggested_hcb_code_tag_suggestions, -> { where(aasm_state: "suggested") }, class_name: "HcbCode::Tag::Suggestion", inverse_of: :hcb_code
 
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
@@ -96,7 +99,6 @@ class HcbCode < ApplicationRecord
     return :unknown if unknown?
     return :invoice if invoice?
     return :donation if donation?
-    return :partner_donation if partner_donation?
     return :ach if ach_transfer?
     return :check if check? || increase_check?
     return :disbursement if disbursement?
@@ -104,6 +106,7 @@ class HcbCode < ApplicationRecord
     return :bank_fee if bank_fee?
     return :reimbursement_expense_payout if reimbursement_expense_payout?
     return :paypal_transfer if paypal_transfer?
+    return :wire if wire?
 
     nil
   end
@@ -174,7 +177,6 @@ class HcbCode < ApplicationRecord
         ids.concat([
           invoice.try(:event).try(:id),
           donation.try(:event).try(:id),
-          partner_donation.try(:event).try(:id),
           ach_transfer.try(:event).try(:id),
           check.try(:event).try(:id),
           increase_check.try(:event).try(:id),
@@ -193,7 +195,7 @@ class HcbCode < ApplicationRecord
 
   def pretty_title(show_event_name: true, show_amount: false, event_name: event.name, amount_cents: self.amount_cents)
     event_preposition = [:unknown, :invoice, :ach, :check, :card_charge, :bank_fee].include?(type || :unknown) ? "in" : "to"
-    amount_preposition = [:transaction, :donation, :partner_donation, :disbursement, :card_charge, :bank_fee].include?(type || :unknown) ? "of" : "for"
+    amount_preposition = [:transaction, :donation, :disbursement, :card_charge, :bank_fee].include?(type || :unknown) ? "of" : "for"
 
     amount_preposition = "refunded" if stripe_refund?
 
@@ -226,6 +228,18 @@ class HcbCode < ApplicationRecord
 
   def stripe_refund?
     ct&.stripe_refund? && (stripe_force_capture? || (stripe_card? && amount_cents > 0))
+  end
+
+  def stripe_cash_withdrawal?
+    stripe_merchant&.[]("category_code") == "6011"
+  end
+
+  def stripe_atm_fee
+    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("amount_details")&.dig("atm_fee") || ct&.raw_stripe_transaction&.stripe_transaction&.dig("amount_details")&.dig("atm_fee")
+  end
+
+  def stripe_reversed_by_merchant?
+    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed"
   end
 
   def stripe_auth_dashboard_url
@@ -264,16 +278,16 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE
   end
 
-  def partner_donation?
-    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::PARTNER_DONATION_CODE
-  end
-
   def ach_transfer?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE
   end
 
   def paypal_transfer?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::PAYPAL_TRANSFER_CODE
+  end
+
+  def wire?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE
   end
 
   def check?
@@ -312,16 +326,16 @@ class HcbCode < ApplicationRecord
     @donation ||= Donation.find_by(id: hcb_i2) if donation?
   end
 
-  def partner_donation
-    @partner_donation ||= PartnerDonation.find_by(id: hcb_i2) if partner_donation?
-  end
-
   def ach_transfer
     @ach_transfer ||= AchTransfer.find_by(id: hcb_i2) if ach_transfer?
   end
 
   def paypal_transfer
     @paypal_transfer ||= PaypalTransfer.find_by(id: hcb_i2) if paypal_transfer?
+  end
+
+  def wire
+    @wire ||= Wire.find_by(id: hcb_i2) if wire?
   end
 
   def check
@@ -435,6 +449,7 @@ class HcbCode < ApplicationRecord
   # The `:receipt_required` scope determines the type of
   # transaction based on its HCB Code, for reference:
   # HCB-300: ACH Transfers (receipts required starting from Feb. 2024)
+  # HCB-310: Wires
   # HCB-350: PayPal Transfers
   # HCB-400 & HCB-402: Checks & Increase Checks (receipts required starting from Feb. 2024)
   # HCB-600: Stripe card charges (always required)
@@ -448,6 +463,7 @@ class HcbCode < ApplicationRecord
               OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-402%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-350%' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-310%' AND canonical_pending_declined_mappings.id IS NULL)
               ")
   }
 
@@ -456,7 +472,7 @@ class HcbCode < ApplicationRecord
 
     (type == :card_charge) ||
       # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check, :paypal_transfer].include?(type) && created_at > Time.utc(2024, 2, 1))
+      ([:ach, :check, :paypal_transfer, :wire].include?(type) && created_at > Time.utc(2024, 2, 1))
   end
 
   def receipt_optional?
@@ -482,6 +498,7 @@ class HcbCode < ApplicationRecord
     users += self.comments.map(&:user)
     users += self.comments.flat_map(&:mentioned_users)
     users += self.events.flat_map(&:users).reject(&:my_threads?)
+    users += [author] if author
 
     if comment.admin_only?
       users += self.events.map(&:point_of_contact)
@@ -526,6 +543,32 @@ class HcbCode < ApplicationRecord
 
   def suggested_memos
     receipts.pluck(:suggested_memo).compact
+  end
+
+  def author
+    return ach_transfer&.creator if ach_transfer?
+    return check&.creator if check?
+    return increase_check&.user if increase_check?
+    return disbursement&.requested_by if disbursement?
+    return stripe_cardholder&.user if stripe_card?
+    return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
+    return paypal_transfer&.user if paypal_transfer?
+    return donation&.collected_by if donation? && donation&.in_person?
+  end
+
+  def fallback_avatar
+    return gravatar_url(donation.email, donation.name, donation.email.to_i, 48) if donation? && !donation.anonymous?
+    return gravatar_url(invoice.sponsor.contact_email, invoice.sponsor.name, invoice.sponsor.contact_email.to_i, 48) if invoice?
+
+    nil
+  end
+
+  def author_name
+    return author&.name if author&.name.present?
+    return donation.name if donation? && !donation.anonymous?
+    return invoice.sponsor.name if invoice?
+
+    nil
   end
 
 end

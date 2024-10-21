@@ -1,9 +1,8 @@
 import $ from 'jquery'
+import ReactRailsUJS from 'react_ujs'
 
 // Support component names relative to this directory:
 var componentRequireContext = require.context('./components', true)
-import ReactRailsUJS from 'react_ujs'
-// eslint-disable-next-line react-hooks/rules-of-hooks
 ReactRailsUJS.useContext(componentRequireContext)
 
 ReactRailsUJS.handleEvent('turbo:load', ReactRailsUJS.handleMount)
@@ -35,8 +34,8 @@ import './controllers'
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo
 
-import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
+import Alpine from 'alpinejs'
 import ach_form from './datas/ach_form'
 
 window.Alpine = Alpine
@@ -48,6 +47,6 @@ Alpine.start()
 import LocalTime from 'local-time'
 LocalTime.start()
 
-import 'chartkick/chart.js'
 import '@github/text-expander-element'
 import '@oddbird/popover-polyfill'
+import 'chartkick/chart.js'

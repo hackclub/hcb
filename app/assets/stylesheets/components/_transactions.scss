@@ -9,19 +9,26 @@
 }
 
 .transaction--fancy {
-  background-image: repeating-linear-gradient(to bottom right,
-      rgb(226, 177, 66) 0px,
-      rgb(251, 232, 122) 50px,
-      rgb(226, 177, 66) 100px);
+  background-image: repeating-linear-gradient(
+    to bottom right,
+    rgb(226, 177, 66) 0px,
+    rgb(251, 232, 122) 50px,
+    rgb(226, 177, 66) 100px
+  );
   background-attachment: fixed;
   color: $black;
+  > td > .author {
+    display: none;
+  }
 }
 
 .transaction--icy {
-  background-image: repeating-linear-gradient(to bottom right,
-      #33d6a6 0px,
-      #338eda 50px,
-      #33d6a6 100px);
+  background-image: repeating-linear-gradient(
+    to bottom right,
+    #33d6a6 0px,
+    #338eda 50px,
+    #33d6a6 100px
+  );
   background-attachment: fixed;
   font-weight: 600;
   color: $white;
@@ -64,7 +71,7 @@ html[data-dark='true'] {
 .transaction__memo {
   max-width: 400px;
 
-  >div {
+  > div {
     display: flex;
     align-items: center;
   }
@@ -77,10 +84,6 @@ html[data-dark='true'] {
     @media screen and (max-width: 32em) {
       max-width: 32ch; // reduce character count on mobile
     }
-  }
-
-  +td {
-    text-align: right; // right-align amount
   }
 
   .add-tag-badge {
@@ -108,6 +111,7 @@ html[data-dark='true'] {
   padding-top: 0;
   padding-bottom: 0;
   line-height: 0;
+  color: map-get($palette, muted);
 
   img,
   svg {
@@ -140,15 +144,26 @@ html[data-dark='true'] {
 }
 
 .transaction:has(.renaming) {
-  background-image: linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%);
+  background-image: linear-gradient(90deg, $orange 50%, transparent 50%),
+    linear-gradient(90deg, $orange 50%, transparent 50%),
+    linear-gradient(0deg, $orange 50%, transparent 50%),
+    linear-gradient(0deg, $orange 50%, transparent 50%);
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-size: 50px 2px, 50px 2px, 2px 50px, 2px 50px;
-  background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+  background-size:
+    50px 2px,
+    50px 2px,
+    2px 50px,
+    2px 50px;
+  background-position:
+    0 0,
+    0 100%,
+    0 100%,
+    100% 20px;
   animation: border-dance 1s infinite linear;
 }
 
 // "Pending" badge
-.transaction .renaming~.badge.bg-muted {
+.transaction .renaming ~ .badge.bg-muted {
   display: none;
 }
 
@@ -166,11 +181,11 @@ html[data-dark='true'] {
   }
 }
 
-.selected__transaction>.transaction__icon--selected {
+.selected__transaction > .transaction__icon--selected {
   display: table-cell !important;
 }
 
-.selected__transaction>.transaction__icon {
+.selected__transaction > .transaction__icon {
   display: none;
 }
 

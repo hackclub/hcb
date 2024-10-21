@@ -40,6 +40,9 @@
       <% if @donation.anonymous? %>
         <div class="line-height-0 mx-1 tooltipped tooltipped--s inline align-bottom" style="margin: 0 2px;" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
       <% end %>
+      <% if @donation.in_person? %>
+        <div class="line-height-0 mx-1 tooltipped tooltipped--s inline align-bottom" style="margin: 0 2px;" aria-label="In-person donor"><%= inline_icon "card", size: 24, class: "muted" %></div>
+      <% end %>
       <span class="regular muted"> donated </span>
       <span class="regular"><%= render_money @donation.amount_received %></span>
       <% if @donation.refunded? %>
@@ -81,19 +84,27 @@
       <strong>Donated at</strong>
       <%= format_datetime @donation.donated_at %>
     </p>
+    <% if @donation.collected_by.present? %>
+      <p>
+        <strong>Collected by</strong>
+        <%= user_mention @donation.collected_by %>
+      </p>
+    <% end %>
     <% admin_tool do %>
       <%= donation_payout_datetime %>
     <% end %>
   </section>
   <section class="pt2 pb2 details">
-    <p>
-      <strong>Donor email</strong>
-      <% if organizer_signed_in? %>
-        <%= mail_to @donation.email, @donation.email.downcase %>
-      <% else %>
-        <strong>Sign in to view</strong>
-      <% end %>
-    </p>
+    <% if @donation.email.present? %>
+      <p>
+        <strong>Donor email</strong>
+        <% if organizer_signed_in? %>
+          <%= mail_to @donation.email, @donation.email.downcase %>
+        <% else %>
+          <strong>Sign in to view</strong>
+        <% end %>
+      </p>
+    <% end %>
     <p>
       <strong>Transaction memo</strong>
       <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
@@ -122,7 +133,7 @@
         </span>
       </span>
     </p>
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: (@event || @hcb_code.event) %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
   <% unless @donation.deposited? %>

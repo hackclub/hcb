@@ -1,45 +1,49 @@
-<%= form_with(model: event, local: true, class: "mb3") do |form| %>
+<%= form_with(model: event, local: true, class: @frame ? "" : "card") do |form| %>
   <%= form_errors event, "organization" %>
   <% unless event.unapproved? %>
-    <div class="card">
-      <div data-controller="accordion">
-        <div class="field field--checkbox">
-          <span style="font-weight: 700">Enable donations to <%= event.name %></span>
-          <div class="field--checkbox--switch ml-auto">
-            <%= form.label :donation_page_enabled do %>
-              <%= form.check_box :donation_page_enabled,
-                data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
-                disabled: !policy(event).update?,
-                switch: true %>
-              <span class="slider"></span>
-            <% end %>
-          </div>
-        </div>
-        <div data-accordion-target="content">
-          <div class="menu__divider m-0 mb-4"></div>
-          <div class="field">
-            <%= form.label :donation_page_message, "Message to show on donation page" %>
-            <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: !policy(event).update? %>
-            <%= inline_icon "markdown", size: 32, class: "muted right" %>
-          </div>
-          <div class="field">
-            <%= form.label :donation_thank_you_message, "Thank you message to donors" %>
-            <%= form.text_area :donation_thank_you_message, class: "w-100 fit", disabled: !policy(event).update? %>
-            <%= inline_icon "markdown", size: 32, class: "muted right" %>
-          </div>
-          <div class="field">
-            <%= form.label :donation_reply_to_email, "Reply-to email for donation receipts" %>
-            <%= form.text_field :donation_reply_to_email, type: "email", placeholder: "fiona@hackclub.com", class: "w-100 fit", disabled: !policy(event).update? %>
-          </div>
-          <%= form.fields_for :config do |config| %>
-            <div class="field field--checkbox">
-              <%= config.check_box :anonymous_donations, disabled: !policy(event).update?, switch: true %>
-              <%= config.label :anonymous_donations, "Allow donors to donate anonymously" %>
-            </div>
+    <div data-controller="accordion">
+      <div class="field field--checkbox">
+        <span style="font-weight: 700">Enable donations to <%= event.name %></span>
+        <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+          <%= form.label :donation_page_enabled do %>
+            <%= form.check_box :donation_page_enabled,
+              data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+              disabled: !policy(event).update?,
+              switch: true %>
+            <span class="slider"></span>
           <% end %>
         </div>
       </div>
-      <%= form.submit "Update", class: ("disabled" unless policy(event).update?) %>
+      <div data-accordion-target="content">
+        <div class="menu__divider m-0 mb-4"></div>
+        <div class="field">
+          <%= form.label :donation_page_message, "Message to show on donation page" %>
+          <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: !policy(event).update? %>
+          <%= inline_icon "markdown", size: 32, class: "muted right" %>
+        </div>
+        <div class="field">
+          <%= form.label :donation_thank_you_message, "Thank you message to donors" %>
+          <%= form.text_area :donation_thank_you_message, class: "w-100 fit", disabled: !policy(event).update? %>
+          <%= inline_icon "markdown", size: 32, class: "muted right" %>
+        </div>
+        <div class="field">
+          <%= form.label :donation_reply_to_email, "Reply-to email for donation receipts" %>
+          <%= form.text_field :donation_reply_to_email, type: "email", placeholder: "fiona@hackclub.com", class: "w-100 fit", disabled: !policy(event).update? %>
+        </div>
+        <%= form.fields_for :config do |config| %>
+          <div class="field field--checkbox">
+            <%= config.check_box :anonymous_donations, disabled: !policy(event).update?, switch: true %>
+            <%= config.label :anonymous_donations, "Allow donors to donate anonymously" %>
+          </div>
+          <% if event.revenue_fee > 0 %>
+            <div class="field field--checkbox">
+              <%= config.check_box :cover_donation_fees, disabled: !policy(event).update?, switch: true %>
+              <%= config.label :cover_donation_fees, "Allow donors to cover your donation fees" %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
     </div>
+    <%= form.submit "Update", class: ("disabled" unless policy(event).update?) %>
   <% end %>
 <% end %>

@@ -6,6 +6,7 @@
 #
 #  id                  :bigint           not null, primary key
 #  anonymous_donations :boolean          default(FALSE)
+#  cover_donation_fees :boolean          default(FALSE)
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  event_id            :bigint           not null

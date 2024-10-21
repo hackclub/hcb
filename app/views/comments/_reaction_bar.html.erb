@@ -1,0 +1,33 @@
+<div class="flex gap-1" id="reactions_<%= comment.id %>">
+  <div data-controller="menu" data-menu-placement-value="top-start">
+    <button class="reactions-btn" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
+      <%= inline_icon "emoji-add", size: 16 %>
+    </button>
+    <div class="menu__content menu__content--2 rounded-full" data-menu-target="content" style="width: auto;z-index: 999">
+      <%
+        Comment::Reaction::EMOJIS.each do |emoji|
+        has_reacted = comment.reactions.any? { |r| r.emoji == emoji && r.reactor == current_user }
+      %>
+        <%= form_with(url: reaction_path(id: comment.id), method: :patch, class: "inline-flex", data: { turbo: true }) do |form| %>
+          <%= form.hidden_field :emoji, value: emoji %>
+          <button class="reactions-btn--button <%= "reactions-btn--reacted" if has_reacted %>" data-action="menu#close" onclick="this.form.requestSubmit()">
+            <%= emoji %>
+          </button>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%
+    comment.reactions_by_emoji.each do |emoji, reactions|
+    has_reacted = reactions.any? { |u| u.reactor == current_user }
+  %>
+    <%= form_with(url: reaction_path(id: comment.id), method: :patch, class: "inline-flex", data: { turbo: true }) do |form| %>
+      <%= form.hidden_field :comment_id, value: comment.id %>
+      <%= form.hidden_field :emoji, value: emoji %>
+      <button class="reactions-btn tooltipped tooltipped--n <%= "reactions-btn--reacted" if has_reacted %>" aria-label="<%= comment.reacted_by(emoji) %>">
+        <%= emoji %><span class="ml1"><%= reactions.length %></span>
+      </button>
+    <% end %>
+  <% end %>
+</div>

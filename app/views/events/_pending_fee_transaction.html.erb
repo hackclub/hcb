@@ -4,9 +4,11 @@
   </td>
   <td><%= format_date Date.today %></td>
   <td class="transaction__memo"><span class="badge bg-transparent border border-dashed border-muted m0 mr1 bg-muted">Pending</span>Fiscal sponsorship</td>
-  <td><%= render_transaction_amount(-1 * @event.fronted_fee_balance_v2_cents) %></td>
-  <td></td>
+  <td class="nowrap text-right">
+    <%= render_transaction_amount(-1 * @event.fronted_fee_balance_v2_cents) %>
+  </td>
   <% if @show_running_balance %>
     <td></td>
   <% end %>
+  <td><%# user avatar %></td>
 </tr>

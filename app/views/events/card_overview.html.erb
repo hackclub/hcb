@@ -19,8 +19,8 @@
       <%= badge_for @event.stripe_cards.count, class: "bg-muted" %>
     </span>
 
-    <%= pop_icon_to params[:view] == "list" ? "grid" : "list",
-        "?view=#{params[:view] == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+    <%= pop_icon_to @view == "list" ? "grid" : "list",
+        "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
     <%= render partial: "filter_cards" %>
     <% if organizer_signed_in? %>
       <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
@@ -48,7 +48,7 @@
     </section>
   <% end %>
 
-  <% if params[:view] == "list" %>
+  <% if @view == "list" %>
     <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
   <% else %>
     <article class="mixed-grid grid--spacious">

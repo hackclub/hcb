@@ -5,7 +5,7 @@ module HcbCodeService
     def initialize(hcb_code:, conn: nil)
       @hcb_code = hcb_code
 
-      @conn = conn || Faraday.new(headers: { "Authorization" => "Bearer #{Rails.application.credentials.openai.api_key}" }) do |f|
+      @conn = conn || Faraday.new(headers: { "Authorization" => "Bearer #{Credentials.fetch(:OPENAI_API_KEY)}" }) do |f|
         f.request :json
         f.request :retry
         f.response :json

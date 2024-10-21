@@ -24,7 +24,7 @@ export function RenderResults() {
                 ? {
                     padding: '8px 16px',
                     color: 'rgba(0, 0, 0, 0.5)',
-                    borderTop: '0.7px solid rgba(0, 0, 0, 0.2)',
+                    borderTop: '0.7px solid #8492a6',
                   }
                 : {
                     padding: '8px 16px',

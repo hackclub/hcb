@@ -6,7 +6,7 @@
   <span class="inline-flex items-center justify-center">
     <%= @organizer_position.user.name %>'s Spending
     <% if @active_control %>
-      <% admin_tool("w-fit badge", "span") do %>
+      <% admin_tool("w-fit h5 ml1 muted", "span") do %>
         Control ID: <%= @active_control&.id %>
       <% end %>
     <% end %>
@@ -39,21 +39,15 @@
   <div class="statset mt3 mb2">
     <div class="stat stat--small">
       <span class="stat__label">Balance</span>
-      <span class="stat__value">
-        <%= render_money_amount @active_control.balance_cents %>
-      </span>
+      <span class="stat__value"><%= render_money_amount @active_control.balance_cents %></span>
     </div>
     <div class="stat stat--small">
-      <span class="stat__label">Total Allowances</span>
-      <span class="stat__value">
-        <%= render_money_amount @active_control.total_allowances_amount_cents %>
-      </span>
+      <span class="stat__label">Total allowances</span>
+      <span class="stat__value"><%= render_money_amount @active_control.total_allowances_amount_cents %></span>
     </div>
     <div class="stat stat--small">
       <span class="stat__label">Spent</span>
-      <span class="stat__value">
-        <%= render_money_amount @active_control.total_spent_cents %>
-      </span>
+      <span class="stat__value"><%= render_money_amount @active_control.total_spent_cents %></span>
     </div>
   </div>
 <% end %>

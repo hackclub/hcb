@@ -28,6 +28,10 @@ class CommentPolicy < ApplicationPolicy
     user.admin? || (users.include?(user) && record.user == user)
   end
 
+  def react?
+    show?
+  end
+
   def show?
     user.admin? || (users.include?(user) && !record.admin_only)
   end

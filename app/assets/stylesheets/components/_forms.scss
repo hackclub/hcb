@@ -25,7 +25,7 @@ textarea {
   width: 100%;
   max-width: 24rem;
 
-  &:focus {
+  &:focus-within {
     border-color: map-get($palette, info);
   }
 
@@ -33,6 +33,24 @@ textarea {
   &[disabled] {
     cursor: no-drop;
     color: map-get($palette, slate);
+  }
+}
+
+.input-group {
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+
+  & input {
+    border: 0;
+    padding-left: 0.25rem;
+    max-width: none;
+  }
+
+  & svg {
+    @extend .muted;
   }
 }
 
@@ -149,7 +167,7 @@ input[type='search']::-webkit-search-decoration {
 }
 
 .field {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .field--money {
@@ -198,8 +216,8 @@ input[type='checkbox'] {
     left: 0;
     right: 0;
     bottom: 0;
-    -webkit-transition: .4s;
-    transition: .4s;
+    -webkit-transition: 0.4s;
+    transition: 0.4s;
     border-radius: 34px;
     background-color: #e8e8e9;
 
@@ -210,27 +228,25 @@ input[type='checkbox'] {
 
   & .slider:before {
     position: absolute;
-    content: "";
+    content: '';
     height: 28px;
     width: 28px;
     left: 3px;
     bottom: 3px;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.125);
-    transition: .2s;
+    transition: 0.2s;
     border-radius: 999px;
     background-color: #fff;
   }
 
-  & input:checked+.slider {
+  & input:checked + .slider {
     background-color: $red;
   }
 
-  & input:checked+.slider:before {
+  & input:checked + .slider:before {
     -webkit-transform: translateX(26px);
     -ms-transform: translateX(26px);
     transform: translateX(26px);
-
-
 
     [data-dark='true'] & {
       background-color: #fff;
@@ -241,7 +257,7 @@ input[type='checkbox'] {
     width: 34px;
   }
 
-  &:active input:checked+.slider:before {
+  &:active input:checked + .slider:before {
     transform: translateX(20px);
   }
 }
@@ -302,6 +318,7 @@ legend {
 
   &.trio {
     grid-template-columns: repeat(3, 1fr);
+    max-width: 36rem;
   }
 
   strong {
@@ -326,12 +343,12 @@ legend {
     background-color: rgba(map-get($palette, accent), 0.25);
   }
 
-  input:disabled+label {
+  input:disabled + label {
     opacity: 0.5;
     cursor: default;
   }
 
-  input:checked+label {
+  input:checked + label {
     box-shadow:
       0 0 0 1px white,
       0 0 0 3px map-get($palette, info);

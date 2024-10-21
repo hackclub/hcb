@@ -16,14 +16,14 @@
       <%= form.select(:event_id,
           current_user.admin? ?
             Event.not_demo_mode.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
-            ([@report.event] + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
+            ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
           { prompt: "Select an event…", required: true }) %>
       <% unless admin_signed_in? %>
         <span class="muted">You can transfer a report to any organization you're a part of.</span>
       <% end %>
     </div>
   <% end %>
-  <% if organizer_signed_in? && (@report.submitted? || @report.draft?) %>
+  <% if organizer_signed_in? && (@report.submitted? || @report.draft?) && @report.event %>
    <div class="field">
       <%= form.label :reviewer_id, "Assigned Reviewer", class: "mt2 bold" %>
       <%= form.collection_select :reviewer_id, @report.event.users, :id, :name, include_blank: "Anyone" %>

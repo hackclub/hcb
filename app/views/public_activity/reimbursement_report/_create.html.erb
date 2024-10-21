@@ -6,7 +6,10 @@
     <% unless activity.trackable.user == activity.owner %>
       for <span class="muted"><%= activity.trackable&.user&.name || "a user" %></span>
     <% end %>
-    on <%= link_to activity.trackable.event.name, activity.trackable.event %> for reimbursement
+    <% if activity.trackable.event %>
+      on <%= link_to activity.trackable.event.name, activity.trackable.event %>
+    <% end %>
+    for reimbursement
   <% end %>
 <% else %>
   <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>

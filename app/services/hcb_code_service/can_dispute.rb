@@ -25,7 +25,7 @@ module HcbCodeService
           [false, "Card transactions older than 90 days can not be disputed."]
         end
 
-      elsif @hcb_code.donation? || @hcb_code.partner_donation?
+      elsif @hcb_code.donation?
         # Disputes made on donations are for refunding the donation to the donor.
         # As far as I (@garyhtou) can tell, Stripe does not have a date limitation
         # for this (we can refund donations from 3 years ago).

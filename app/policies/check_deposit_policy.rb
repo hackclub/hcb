@@ -2,7 +2,7 @@
 
 class CheckDepositPolicy < ApplicationPolicy
   def index?
-    admin_or_user?
+    admin_or_user? && check_deposits_enabled?
   end
 
   def create?
@@ -13,10 +13,26 @@ class CheckDepositPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def toggle_fronted?
+    admin?
+  end
+
   private
 
+  def admin?
+    user&.admin?
+  end
+
+  def user?
+    record.event.users.include?(user)
+  end
+
+  def check_deposits_enabled?
+    record.event.plan.check_deposits_enabled?
+  end
+
   def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+    admin? || user?
   end
 
   def admin_or_manager?

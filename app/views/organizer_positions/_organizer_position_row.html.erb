@@ -43,6 +43,9 @@
         </div>
       <% end %>
     <% end %>
+    <% if policy(organizer_position).view_allowances? && Flipper.enabled?(:spending_controls_2024_06_03, @event) %>
+      <%= pop_icon_to "payment", event_organizer_position_spending_controls_path(organizer_position_id: organizer_position) %>
+    <% end %>
     <% if policy(organizer_position).destroy? %>
       <%= pop_icon_to "member-remove",
                       organizer_path(organizer_position),

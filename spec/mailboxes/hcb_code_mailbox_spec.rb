@@ -7,14 +7,11 @@ RSpec.describe HcbCodeMailbox, type: :mailbox do
 
   let!(:user) { create(:user, access_level: :admin) }
   let!(:event) { create(:event) }
+  let!(:organizer_position) { create(:organizer_position, event:, user:) }
   let!(:canonical_transaction) { create(:canonical_transaction, hcb_code: "HCB-600-iauth_1234567890abcdefghijklmn") }
   let!(:canonical_event_mapping) { create(:canonical_event_mapping, event:, canonical_transaction:) }
   let!(:receipt_filepath) { file_fixture("receipt.png") }
   let!(:hcb) { canonical_transaction.local_hcb_code }
-
-  before :each do
-    event.users << user
-  end
 
   it "routes email to mailbox" do
     expect(HcbCodeMailbox)

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class EmburseCardsController < ApplicationController
+  include SetEvent
+  before_action :set_event, only: [:status]
+
   before_action :set_emburse_card, only: :show
   skip_before_action :signed_in_user
 
@@ -18,7 +21,6 @@ class EmburseCardsController < ApplicationController
   end
 
   def status
-    @event = Event.friendly.find(params[:event_id])
     @emburse_card_requests = @event.emburse_card_requests.under_review
     @emburse_transfers = @event.emburse_transfers
   end

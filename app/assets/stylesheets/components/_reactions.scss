@@ -1,0 +1,71 @@
+.reactions-btn {
+  border: 1px solid lighten($muted, 20%);
+  border-radius: 5rem;
+  width: 2.7rem;
+  height: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: transparent;
+  color: $muted;
+
+  &:hover,
+  &.reactions-btn--reacted {
+    background-color: mix(
+      map-get($palette, white),
+      map-get($palette, info),
+      90%
+    );
+    border-color: rgba(map-get($palette, info), 0.5);
+    color: map-get($palette, info);
+  }
+
+  [data-dark='true'] & {
+    border-color: darken($muted, 20%);
+
+    &:hover,
+    &.reactions-btn--reacted {
+      border-color: rgba(map-get($palette, info), 0.5);
+      background-color: mix($darkless, map-get($palette, info), 90%);
+    }
+  }
+}
+
+.reactions-btn--button {
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.3rem;
+  border-radius: 9rem;
+  border: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    background-color 0.2s;
+  transform-origin: bottom center;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 32px;
+  width: 32px;
+
+  // prevent weird overflow hidden + background color when it's reacted
+  &:not(.reactions-btn--reacted):hover {
+    transform: scale(1.5);
+  }
+
+  &.reactions-btn--reacted {
+    background-color: mix(
+      map-get($palette, white),
+      map-get($palette, info),
+      90%
+    );
+
+    [data-dark='true'] & {
+      background-color: mix($darkless, map-get($palette, info), 90%);
+    }
+  }
+}

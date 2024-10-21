@@ -6,24 +6,24 @@ ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.1.3"
+gem "rails", "~> 7.2"
 
 gem "puma", "~> 6.4" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
-gem "redis", "~> 5.2" # for caching, jobs, etc.
-gem "sidekiq", "~> 7.1.3" # background jobs
+gem "redis", "~> 5.3" # for caching, jobs, etc.
+gem "sidekiq", "~> 7.3.2" # background jobs
 gem "sidekiq-cron", "~> 1.12" # run Sidekiq jobs at scheduled intervals
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
 
 
-gem "jsbundling-rails", "~> 1.1"
-gem "terser", "~> 1.1" # JS compressor
+gem "jsbundling-rails", "~> 1.3"
+gem "terser", "~> 1.2" # JS compressor
 gem "jquery-rails"
 gem "react-rails"
-gem "turbo-rails", "~> 2.0.5"
+gem "turbo-rails", "~> 2.0.10"
 
 gem "invisible_captcha"
 gem "local_time" # client-side timestamp converter for cache-safe rendering
@@ -35,7 +35,7 @@ gem "faraday" # web requests
 gem "increase", "~> 0.3.3"
 gem "stripe", "11.7.0"
 gem "plaid", "~> 29.0"
-gem "yellow_pages", github: "hackclub/yellow_pages", ref: "117d13e"
+gem "yellow_pages", github: "hackclub/yellow_pages", ref: "4711379"
 
 gem "aws-sdk-s3", require: false
 
@@ -45,7 +45,7 @@ gem "twilio-ruby" # SMS notifications
 
 gem "lob"
 
-gem "google-apis-admin_directory_v1", "~> 0.45.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.58.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -54,8 +54,8 @@ gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fi
 
 gem "aasm" # state machine
 
-gem "paper_trail", "~> 15.1.0" # track changes to models
-gem "acts_as_paranoid", "~> 0.9.0" # enables soft deletions
+gem "paper_trail", "~> 15.2.0" # track changes to models
+gem "acts_as_paranoid", "~> 0.10.2" # enables soft deletions
 
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
@@ -77,7 +77,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
-gem "browser", "~> 5.3" # browser detection
+gem "browser", "~> 6.0" # browser detection
 
 # Pagination
 gem "kaminari"
@@ -111,7 +111,6 @@ gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
 gem "safely_block"
 gem "strong_migrations" # protects against risky migrations
-gem "swagger-blocks"
 gem "xxhash" # fast hashing
 
 gem "diffy" # rendering diffs (comments)
@@ -163,10 +162,10 @@ end
 group :development, :test do
   gem "erb_lint", require: false
   gem "rubocop"
-  gem "rubocop-rails", "~> 2.25"
+  gem "rubocop-rails", "~> 2.26"
   gem "relaxed-rubocop"
 
-  gem "rspec-rails", "~> 6.1.2"
+  gem "rspec-rails", "~> 6.1.4"
 
   # Lets you set a breakpoint with a REPL using binding.pry
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"
@@ -189,7 +188,7 @@ group :development do
 
   gem "letter_opener_web" # preview emails
 
-  gem "wkhtmltopdf-binary", "0.12.6.6" # version must match the wkhtmltopdf Heroku buildpack version (0.12.3 by default)
+  gem "wkhtmltopdf-binary", "0.12.6.8" # version must match the wkhtmltopdf Heroku buildpack version (0.12.3 by default)
 
   # Ruby language server
   gem "solargraph", require: false
@@ -202,17 +201,17 @@ group :development do
   gem "bullet"
 end
 
-gem "jbuilder", "~> 2.12"
+gem "jbuilder", "~> 2.13"
 
 gem "ledgerjournal"
-gem "doorkeeper", "~> 5.6"
+gem "doorkeeper", "~> 5.7"
 
 gem "chartkick"
 gem "cssbundling-rails", "~> 1.4"
 
 gem "rtesseract"
 
-gem "sprockets-rails", "~> 3.4"
+gem "sprockets-rails", "~> 3.5"
 
 gem "public_activity"
 
@@ -224,3 +223,9 @@ gem "rotp"
 gem "ruby-limiter"
 
 gem "ahoy_email", "~> 2.3"
+
+gem "email_reply_parser"
+
+gem "eu_central_bank"
+
+gem "whitesimilarity"

@@ -12,6 +12,12 @@ class ApplicationMailbox < ActionMailbox::Base
   # ie. "animal.1234" for Users
   routing /#{MailboxAddress::VALIDATION_REGEX}/i => :receipt_bin
 
+  # receipts@hcb.hackclub.com or receipts@hcb.gg
+  routing /^receipts/i => :receipt_bin
+
+  # reimburse@hcb.hackclub.com or reimbursements@hcb.hackclub.com
+  routing /^reimburse/i => :reimbursement
+
   # fallback
   routing all: :fallback
 

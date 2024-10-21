@@ -1,5 +1,6 @@
 .stat {
   display: block;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat__value {
@@ -7,6 +8,7 @@
   line-height: 1;
   margin-bottom: 0.25rem;
 }
+
 .stat:not(.stat--plain) .stat__value:before {
   content: '$';
   color: map-get($palette, muted);
@@ -52,7 +54,8 @@
   // On larger screens, 4 columns
   @media (min-width: 48em) {
     grid-gap: 1rem;
-    grid-template-columns: repeat(4, 1fr);
+    // First stat is larger than the rest
+    grid-template-columns: 3fr 2fr 2fr 2fr;
   }
 }
 

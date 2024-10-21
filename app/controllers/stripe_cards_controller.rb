@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class StripeCardsController < ApplicationController
+  include SetEvent
+  before_action :set_event, only: [:new]
+
   def index
     @cards = StripeCard.all
     authorize @cards
@@ -34,12 +37,12 @@ class StripeCardsController < ApplicationController
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    if @card.cancel!
-      flash[:success] = "Card cancelled"
-      redirect_back_or_to @card
-    else
-      render :show, status: :unprocessable_entity
-    end
+    @card.cancel!
+    flash[:success] = "Card cancelled"
+    redirect_back_or_to @card
+  rescue => e
+    flash[:error] = e.message
+    render :show, status: :unprocessable_entity
   end
 
   def defrost
@@ -77,6 +80,7 @@ class StripeCardsController < ApplicationController
 
     if params[:frame] == "true"
       @frame = true
+      @force_no_popover = true
       render :show, layout: false
     else
       @frame = false
@@ -85,13 +89,11 @@ class StripeCardsController < ApplicationController
   end
 
   def new
-    @event = Event.friendly.find(params[:event_id])
-
     authorize @event, :new_stripe_card?, policy_class: EventPolicy
   end
 
   def create
-    event = Event.friendly.find(params[:stripe_card][:event_id])
+    event = Event.find(params[:stripe_card][:event_id])
     authorize event, :create_stripe_card?, policy_class: EventPolicy
 
     sc = stripe_card_params
@@ -143,6 +145,31 @@ class StripeCardsController < ApplicationController
     end
 
     redirect_to stripe_card_url(card)
+  end
+
+  def enable_cash_withdrawal
+    card = StripeCard.find(params[:id])
+    authorize card
+    card.toggle!(:cash_withdrawal_enabled)
+    if card.cash_withdrawal_enabled?
+      confetti!(emojis: %w[💵 💴 💶 💷])
+      flash[:success] = "You've enabled cash withdrawals for this card."
+    else
+      flash[:success] = "You've disabled cash withdrawals for this card."
+    end
+    redirect_to stripe_card_url(card)
+  end
+
+  def ephemeral_keys
+    card = StripeCard.find(params[:id])
+
+    authorize card
+
+    ephemeral_key = card.ephemeral_key(nonce: params[:nonce])
+
+    ahoy.track "Card details shown", stripe_card_id: card.id
+
+    render json: { ephemeralKeySecret: ephemeral_key.secret, stripe_id: card.stripe_id }
   end
 
   private

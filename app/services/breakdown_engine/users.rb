@@ -2,8 +2,9 @@
 
 module BreakdownEngine
   class Users
-    def initialize(event)
+    def initialize(event, show_all: false)
       @event = event
+      @show_all = show_all
     end
 
     def run
@@ -17,7 +18,9 @@ module BreakdownEngine
                               })
                        .sum(:amount_cents).to_f / 100 * -1
 
-        array << { name: position.user.initial_name, value: amount } if amount > 0
+        if !@show_all && amount > (0)
+          array << { name: position.user.initial_name, value: amount, position: }
+        end
       end
     end
 

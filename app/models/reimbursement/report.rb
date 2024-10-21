@@ -18,7 +18,7 @@
 #  submitted_at               :datetime
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
-#  event_id                   :bigint           not null
+#  event_id                   :bigint
 #  invited_by_id              :bigint
 #  reviewer_id                :bigint
 #  user_id                    :bigint           not null
@@ -40,7 +40,15 @@ module Reimbursement
   class Report < ApplicationRecord
     include ::Shared::AmpleBalance
     belongs_to :user
-    belongs_to :event
+
+    belongs_to :event, optional: true
+
+    validate do
+      unless draft? || event.present?
+        errors.add(:base, "non-draft reports must belong to an event")
+      end
+    end
+
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
 
@@ -64,7 +72,7 @@ module Reimbursement
     include Hashid::Rails
 
     include PublicActivity::Model
-    tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+    tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event&.id }, only: [:create]
 
     broadcasts_refreshes_to ->(report) { report }
 
@@ -81,17 +89,18 @@ module Reimbursement
       state :reimbursement_approved
       state :reimbursed
       state :rejected
+      state :reversed
 
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && !exceeds_maximum_amount? && expenses.any? && !missing_receipts?
+            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts?
           end
         end
         after do
           if team_review_required?
             ReimbursementMailer.with(report: self).review_requested.deliver_later
-            create_activity(key: "reimbursement_report.review_requested", owner: user, recipient: (reviewer.presence || event), event_id: event.id)
+            create_activity(key: "reimbursement_report.review_requested", owner: user, recipient: reviewer.presence || event, event_id: event.id)
           else
             expenses.pending.each do |expense|
               expense.mark_approved!
@@ -104,7 +113,7 @@ module Reimbursement
       event :mark_reimbursement_requested do
         transitions from: :submitted, to: :reimbursement_requested do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
+            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
           end
         end
         after do
@@ -119,9 +128,9 @@ module Reimbursement
           end
         end
         after do
-          # ReimbursementJob::Nightly.perform_later
           ReimbursementMailer.with(report: self).reimbursement_approved.deliver_later
           create_activity(key: "reimbursement_report.approved", owner: user)
+          reimburse!
         end
       end
 
@@ -133,11 +142,15 @@ module Reimbursement
       end
 
       event :mark_draft do
-        transitions from: [:submitted, :reimbursement_requested], to: :draft
+        transitions from: [:submitted, :reimbursement_requested, :rejected], to: :draft
       end
 
       event :mark_reimbursed do
         transitions from: :reimbursement_approved, to: :reimbursed
+      end
+
+      event :mark_reversed do
+        transitions from: :reimbursed, to: :reversed
       end
     end
 
@@ -147,6 +160,7 @@ module Reimbursement
       return "⚠️ Processing" if reimbursed? && payout_holding&.failed?
       return "In Transit" if reimbursement_approved?
       return "In Transit" if reimbursed? && !payout_holding.sent?
+      return "Cancelled" if reversed?
 
       aasm_state.humanize.titleize
     end
@@ -163,7 +177,7 @@ module Reimbursement
       return "info" if submitted?
       return "error" if rejected?
       return "purple" if reimbursement_requested?
-      return "warning" if reimbursed? && payout_holding&.failed?
+      return "warning" if reimbursed? && payout_holding&.failed? || reversed?
       return "success" if reimbursement_approved? || reimbursed?
 
       return "primary"
@@ -176,6 +190,27 @@ module Reimbursement
       nil
     end
 
+    def initiated_transfer_text
+      if payout_holding&.payout_transfer.is_a?(IncreaseCheck)
+        return "mailed"
+      end
+
+      return "initiated"
+    end
+
+    def transfer_text
+      case payout_holding&.payout_transfer
+      when AchTransfer
+        return "ACH transfer"
+      when PaypalTransfer
+        return "PayPal transfer"
+      when IncreaseCheck
+        return "check"
+      end
+
+      return "transfer"
+    end
+
     def locked?
       !draft?
     end
@@ -185,7 +220,7 @@ module Reimbursement
     end
 
     def closed?
-      reimbursement_approved? || reimbursed? || rejected?
+      reimbursement_approved? || reimbursed? || rejected? || reversed?
     end
 
     def amount_cents
@@ -217,9 +252,10 @@ module Reimbursement
       users += self.comments.map(&:user)
       users += self.comments.flat_map(&:mentioned_users)
       users << self.user
+      users += User.where(id: self.versions.pluck(:whodunnit))
 
       if comment.admin_only?
-        users << self.event.point_of_contact
+        users << self.event.point_of_contact if self.event
         return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
       end
 
@@ -230,7 +266,7 @@ module Reimbursement
       users = []
       users += self.comments.includes(:user).map(&:user)
       users += self.comments.flat_map(&:mentioned_users)
-      users += self.event.users
+      users += self.event.users if self.event
       users << self.user
 
       users.uniq
@@ -268,6 +304,24 @@ module Reimbursement
       user_id = versions.where_object_changes_to(...).last&.whodunnit
 
       user_id && User.find(user_id)
+    end
+
+    def reimburse!
+      expense_payouts = []
+
+      expenses.approved.each do |expense|
+        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event: expense.report.event, expense:)
+      end
+
+      return if expense_payouts.empty?
+
+      Reimbursement::PayoutHolding.create!(
+        expense_payouts:,
+        amount_cents: expense_payouts.sum { |payout| -payout.amount_cents },
+        report: self
+      )
+
+      mark_reimbursed!
     end
 
   end

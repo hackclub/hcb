@@ -23,6 +23,7 @@ module EventMappingEngine
       map_stripe_top_ups!
       map_outgoing_fee_reimbursements!
       map_interest_payments!
+      map_svb_sweep_transactions!
 
       map_bank_fees! # TODO: move to using hcb short codes
 
@@ -87,6 +88,7 @@ module EventMappingEngine
         next unless check_deposit
 
         CanonicalEventMapping.create!(event: check_deposit.event, canonical_transaction: ct)
+        check_deposit.update!(status: :deposited)
       end
     end
 
@@ -112,6 +114,10 @@ module EventMappingEngine
 
     def map_stripe_top_ups!
       ::EventMappingEngine::Map::StripeTopUps.new.run
+    end
+
+    def map_svb_sweep_transactions!
+      ::EventMappingEngine::Map::SvbSweepTransactions.new.run
     end
 
     def map_outgoing_fee_reimbursements!

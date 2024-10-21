@@ -1,32 +1,65 @@
 .dropzone {
-  &[class^="transaction"] {
+  &[class^='transaction'] {
     outline: 5px dashed $orange;
     outline-offset: -5px;
   }
 
   &.my-inbox-dropzone > div {
     animation: border-dance 1s infinite linear;
-    background-image: linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%);
+    background-image: linear-gradient(90deg, $orange 50%, transparent 50%),
+      linear-gradient(90deg, $orange 50%, transparent 50%),
+      linear-gradient(0deg, $orange 50%, transparent 50%),
+      linear-gradient(0deg, $orange 50%, transparent 50%);
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-    background-size: 50px 5px, 50px 5px, 5px 50px, 5px 50px;
-    background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+    background-size:
+      50px 5px,
+      50px 5px,
+      5px 50px,
+      5px 50px;
+    background-position:
+      0 0,
+      0 100%,
+      0 100%,
+      100% 20px;
   }
   &.reimbursement-dropzone > div {
     animation: border-dance 1s infinite linear;
     background-color: rgba(map-get($palette, success), 0.325);
-    background-image: linear-gradient(90deg, $green 50%, transparent 50%), linear-gradient(90deg, $green 50%, transparent 50%), linear-gradient(0deg, $green 50%, transparent 50%), linear-gradient(0deg, $green 50%, transparent 50%);
+    background-image: linear-gradient(90deg, $green 50%, transparent 50%),
+      linear-gradient(90deg, $green 50%, transparent 50%),
+      linear-gradient(0deg, $green 50%, transparent 50%),
+      linear-gradient(0deg, $green 50%, transparent 50%);
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-    background-size: 50px 5px, 50px 5px, 5px 50px, 5px 50px;
-    background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+    background-size:
+      50px 5px,
+      50px 5px,
+      5px 50px,
+      5px 50px;
+    background-position:
+      0 0,
+      0 100%,
+      0 100%,
+      100% 20px;
     border-radius: 4px;
   }
   &.add-expense-dropzone {
     animation: border-dance 1s infinite linear;
     background-color: rgba(map-get($palette, success), 0.325);
-    background-image: linear-gradient(90deg, $green 50%, transparent 50%), linear-gradient(90deg, $green 50%, transparent 50%), linear-gradient(0deg, $green 50%, transparent 50%), linear-gradient(0deg, $green 50%, transparent 50%);
+    background-image: linear-gradient(90deg, $green 50%, transparent 50%),
+      linear-gradient(90deg, $green 50%, transparent 50%),
+      linear-gradient(0deg, $green 50%, transparent 50%),
+      linear-gradient(0deg, $green 50%, transparent 50%);
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-    background-size: 50px 5px, 50px 5px, 5px 50px, 5px 50px;
-    background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+    background-size:
+      50px 5px,
+      50px 5px,
+      5px 50px,
+      5px 50px;
+    background-position:
+      0 0,
+      0 100%,
+      0 100%,
+      100% 20px;
     border-radius: 4px;
   }
 }
@@ -45,10 +78,21 @@
   align-items: center;
   justify-content: center;
 
-  background-image: linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(90deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%), linear-gradient(0deg, $orange 50%, transparent 50%);
+  background-image: linear-gradient(90deg, $orange 50%, transparent 50%),
+    linear-gradient(90deg, $orange 50%, transparent 50%),
+    linear-gradient(0deg, $orange 50%, transparent 50%),
+    linear-gradient(0deg, $orange 50%, transparent 50%);
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-size: 50px 8px, 50px 8px, 8px 50px, 8px 50px;
-  background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+  background-size:
+    50px 8px,
+    50px 8px,
+    8px 50px,
+    8px 50px;
+  background-position:
+    0 0,
+    0 100%,
+    0 100%,
+    100% 20px;
   animation: border-dance 1s infinite linear;
 
   opacity: 0;
@@ -82,9 +126,17 @@
 
 @keyframes border-dance {
   0% {
-    background-position: 0 0, 0 100%, 0 100%, 100% 20px;
+    background-position:
+      0 0,
+      0 100%,
+      0 100%,
+      100% 20px;
   }
   100% {
-    background-position: -50px 0, 50px 100%, 0 calc(100% + 50px), 100% -30px;
+    background-position:
+      -50px 0,
+      50px 100%,
+      0 calc(100% + 50px),
+      100% -30px;
   }
 }

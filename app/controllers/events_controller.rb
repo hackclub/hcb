@@ -56,6 +56,67 @@ class EventsController < ApplicationController
 
   # GET /events/1
   def show
+    authorize @event
+
+    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && admin_signed_in?)
+      redirect_to event_transactions_path(@event.slug)
+      return
+    end
+
+    pending_transactions = _show_pending_transactions
+    canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
+    all_transactions = [*pending_transactions, *canonical_transactions]
+
+    @recent_transactions = all_transactions.first(5)
+    @money_in = all_transactions.reject { |t| t.amount_cents <= 0 }.first(3)
+    @money_out = all_transactions.reject { |t| t.amount_cents >= 0 }.first(3)
+
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(5)
+    @organizers = @event.organizer_positions.includes(:user).order(created_at: :desc)
+    @cards = all_stripe_cards = @event.stripe_cards.order(created_at: :desc).where(stripe_cardholder: current_user&.stripe_cardholder).first(10)
+  end
+
+  def transaction_heatmap
+    authorize @event
+    heatmap_engine_response = BreakdownEngine::Heatmap.new(@event).run
+
+    @heatmap = heatmap_engine_response[:heatmap]
+    @maximum_positive_change = heatmap_engine_response[:maximum_positive_change]
+    @maximum_negative_change = heatmap_engine_response[:maximum_negative_change]
+    @past_year_transactions_count = heatmap_engine_response[:transactions_count]
+
+    respond_to do |format|
+      format.html { render partial: "events/home/heatmap", locals: { heatmap: @heatmap, event: @event } }
+    end
+  end
+
+  def top_merchants
+    authorize @event
+    @merchants = BreakdownEngine::Merchants.new(@event).run
+    respond_to do |format|
+      format.html { render partial: "events/home/top_merchants", locals: { merchants: @merchants, event: @event } }
+    end
+  end
+
+  def top_categories
+    authorize @event
+    @categories = BreakdownEngine::Categories.new(@event).run
+    respond_to do |format|
+      format.html { render partial: "events/home/top_categories", locals: { categories: @categories, event: @event } }
+    end
+  end
+
+  def tags_users
+    authorize @event
+    @users = BreakdownEngine::Users.new(@event).run
+    @tags = BreakdownEngine::Tags.new(@event).run
+    @empty_tags = @users.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+    @empty_users = @users.empty?
+
+    render partial: "events/home/tags_users", locals: { users: @users, tags: @tags, event: @event }
+  end
+
+  def transactions
     render_tour @organizer_position, :welcome
 
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
@@ -79,13 +140,14 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = User.find(params[:user]) if params[:user]
+    @user = @event.users.find_by(id: params[:user]) if params[:user]
 
     @type = params[:type]
     @start_date = params[:start].presence
     @end_date = params[:end].presence
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
+    @missing_receipts = params[:missing_receipts].present?
 
     @organizers = @event.organizer_positions.includes(:user).order(created_at: :desc)
     @pending_transactions = _show_pending_transactions
@@ -102,59 +164,54 @@ class EventsController < ApplicationController
       maximum_amount: @maximum_amount,
       user: @user,
       start_date: @start_date,
-      end_date: @end_date
+      end_date: @end_date,
+      missing_receipts: @missing_receipts
     ).run
+
+    if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
+      @all_transactions.reject!(&:likely_account_verification_related?)
+    end
 
     @type_filters = {
       "ach_transfer"           => {
         "settled" => ->(t) { t.local_hcb_code.ach_transfer? },
-        "pending" => ->(t) { t.raw_pending_outgoing_ach_transaction_id },
-        "icon"    => "plus-fill"
+        "pending" => ->(t) { t.raw_pending_outgoing_ach_transaction_id }
       },
       "mailed_check"           => {
         "settled" => ->(t) { t.local_hcb_code.check? || t.local_hcb_code.increase_check? },
-        "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id },
-        "icon"    => "payment-transfer"
+        "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
       },
       "account_transfer"       => {
         "settled" => ->(t) { t.local_hcb_code.disbursement? },
-        "pending" => ->(t) { t.local_hcb_code.disbursement? },
-        "icon"    => "door-enter"
+        "pending" => ->(t) { t.local_hcb_code.disbursement? }
       },
       "card_charge"            => {
         "settled" => ->(t) { t.raw_stripe_transaction },
-        "pending" => ->(t) { t.raw_pending_stripe_transaction_id },
-        "icon"    => "card"
+        "pending" => ->(t) { t.raw_pending_stripe_transaction_id }
       },
       "check_deposit"          => {
         "settled" => ->(t) { t.local_hcb_code.check_deposit? },
-        "pending" => ->(t) { t.check_deposit_id },
-        "icon"    => "payment-docs"
+        "pending" => ->(t) { t.check_deposit_id }
       },
       "donation"               => {
         "settled" => ->(t) { t.local_hcb_code.donation? },
-        "pending" => ->(t) { t.raw_pending_donation_transaction_id },
-        "icon"    => "support"
+        "pending" => ->(t) { t.raw_pending_donation_transaction_id }
       },
       "invoice"                => {
         "settled" => ->(t) { t.local_hcb_code.invoice? },
-        "pending" => ->(t) { t.raw_pending_invoice_transaction_id },
-        "icon"    => "briefcase"
+        "pending" => ->(t) { t.raw_pending_invoice_transaction_id }
       },
       "refund"                 => {
         "settled" => ->(t) { t.local_hcb_code.stripe_refund? },
-        "pending" => ->(t) { false },
-        "icon"    => "view-reload"
+        "pending" => ->(t) { false }
       },
       "fiscal_sponsorship_fee" => {
         "settled" => ->(t) { t.local_hcb_code.fee_revenue? || t.fee_payment? },
-        "pending" => ->(t) { t.raw_pending_bank_fee_transaction_id },
-        "icon"    => "minus-fill"
+        "pending" => ->(t) { t.raw_pending_bank_fee_transaction_id }
       },
       "reimbursement"          => {
         "settled" => ->(t) { t.local_hcb_code.reimbursement_expense_payout? },
-        "pending" => ->(t) { false },
-        "icon"    => "minus-fill"
+        "pending" => ->(t) { false }
       }
     }
 
@@ -196,11 +253,6 @@ class EventsController < ApplicationController
       @mock_total = @transactions.sum(&:amount_cents)
     end
 
-    if current_user && !Flipper.enabled?(:native_changelog_2024_07_03, current_user)
-      # @latest_changelog_post = ChangelogPost.latest
-      Flipper.enable(:native_changelog_2024_07_03, current_user)
-    end
-
     if current_user && !Flipper.enabled?(:the_bin_popup_2024_05_17, current_user) && @event.robotics_team? && !@first_time
       Flipper.enable_actor(:the_bin_popup_2024_05_17, current_user)
       @the_bin = true
@@ -210,24 +262,6 @@ class EventsController < ApplicationController
       @popover = flash[:popover]
       flash.delete(:popover)
     end
-  end
-
-  def breakdown
-    authorize @event
-
-    heatmap_engine_response = BreakdownEngine::Heatmap.new(@event).run
-    @heatmap = heatmap_engine_response[:heatmap]
-    @maximum_positive_change = heatmap_engine_response[:maximum_positive_change]
-    @maximum_negative_change = heatmap_engine_response[:maximum_negative_change]
-    @past_year_transactions_count = heatmap_engine_response[:transactions_count]
-
-    @merchants = BreakdownEngine::Merchants.new(@event).run
-
-    @categories = BreakdownEngine::Categories.new(@event).run
-
-    @users = BreakdownEngine::Users.new(@event).run
-
-    @tags = BreakdownEngine::Tags.new(@event).run
   end
 
   def balance_by_date
@@ -282,13 +316,16 @@ class EventsController < ApplicationController
 
     @q = params[:q] || ""
 
+    cookies[:team_view] = params[:view] if params[:view]
+    @view = cookies[:team_view] || "grid"
+
     @all_positions = @event.organizer_positions
                            .joins(:user)
                            .where(role: @filter || %w[member manager])
                            .where("users.full_name ILIKE :query OR users.email ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                            .order(created_at: :desc)
 
-    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || params[:view] == "list" ? 20 : 10)
+    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
 
     @pending = @event.organizer_position_invites.pending.includes(:sender)
   end
@@ -296,8 +333,11 @@ class EventsController < ApplicationController
   # GET /events/1/edit
   def edit
     @settings_tab = params[:tab]
+    @frame = params[:frame]
     authorize @event
     @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+
+    render :edit, layout: !@frame
   end
 
   # PATCH/PUT /events/1
@@ -326,11 +366,21 @@ class EventsController < ApplicationController
     end
     fixed_user_event_params.delete(:hidden)
 
-    if @event.update(current_user.admin? ? fixed_event_params : fixed_user_event_params)
-      flash[:success] = "Organization successfully updated."
+    if fixed_event_params[:plan_type] && fixed_event_params[:plan_type] != @event.plan&.plan_type
+      @event.plan.mark_inactive!(fixed_event_params[:plan_type]) # deactivate old plan and replace it
+    end
+
+    fixed_event_params.delete(:plan_type)
+    begin
+      if @event.update(current_user.admin? ? fixed_event_params : fixed_user_event_params)
+        flash[:success] = "Organization successfully updated."
+        redirect_back fallback_location: edit_event_path(@event.slug)
+      else
+        render :edit, status: :unprocessable_entity
+      end
+    rescue Errors::InvalidStripeCardLogoError => e
+      flash[:error] = e.message
       redirect_back fallback_location: edit_event_path(@event.slug)
-    else
-      render :edit, status: :unprocessable_entity
     end
   end
 
@@ -365,6 +415,9 @@ class EventsController < ApplicationController
 
   def card_overview
     @status = %w[virtual physical active inactive].include?(params[:status]) ? params[:status] : nil
+
+    cookies[:card_overview_view] = params[:view] if params[:view]
+    @view = cookies[:card_overview_view] || "grid"
 
     @user_id = params[:user].presence
     @user = User.find(params[:user]) if params[:user]
@@ -465,24 +518,6 @@ class EventsController < ApplicationController
     render :async_balance, layout: false
   end
 
-  # (@msw) these pages are for the WIP resources page.
-  def connect_gofundme
-    @event_name = @event.name
-    @document_title = "Connect a GoFundMe Campaign"
-    @document_subtitle = "Receive payouts from GoFundMe directly into HCB"
-    @document_image = "https://cloud-jl944nr65-hack-club-bot.vercel.app/004e072bbe1.png"
-    authorize @event
-  end
-
-  # (@msw) these pages are for the WIP resources page.
-  def sell_merch
-    event_name = @event.name
-    @document_title = "Sell Merch with Redbubble"
-    @document_subtitle = "Connect your online merch shop to HCB"
-    @document_image = "https://cloud-fodxc88eu-hack-club-bot.vercel.app/0placeholder.png"
-    authorize @event
-  end
-
   def account_number
     @transactions = if @event.column_account_number.present?
                       CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id)).order(created_at: :desc)
@@ -500,48 +535,16 @@ class EventsController < ApplicationController
     @g_suite = @event.g_suites.first
     @waitlist_form_submitted = GWaitlistTable.all(filter: "{OrgID} = '#{@event.id}'").any? unless Flipper.enabled?(:google_workspace, @event)
 
-    # this is janky and should be fixed at some point!
-    # for more context on what this is:
-    # result[0] = verification key
-    # result[1] = spf
-    # result[2] = mx1
-    # result[3] = mx2
-    # result[4] = mx3
-    # result[5] = mx4
-    # result[6] = mx5
-    @result = [false, false, false, false, false, false, false]
+    if @g_suite.present?
+      @results = GSuiteService::Verify.new(g_suite_id: @g_suite.id).results(skip_g_verify: true)
 
-    if @g_suite&.verification_error?
-      Resolv::DNS.open do |dns|
-        records = dns.getresources(@g_suite.domain, Resolv::DNS::Resource::IN::TXT)
-        records.each do |record|
-          if record.data.include?("google-site-verification=#{@g_suite.verification_key}")
-            @result[0] = true
-          end
-          if record.data.include?("v=spf1") && record.data.include?("include:_spf.google.com")
-            @result[1] = true
-          end
-        end
-      end
-
-      mx_records = [
-        "ASPMX.L.GOOGLE.COM",
-        "ALT1.ASPMX.L.GOOGLE.COM",
-        "ALT2.ASPMX.L.GOOGLE.COM",
-        "ALT3.ASPMX.L.GOOGLE.COM",
-        "ALT4.ASPMX.L.GOOGLE.COM"
-      ]
-
-      Resolv::DNS.open do |dns|
-        mx_response = dns.getresources(@g_suite.domain, Resolv::DNS::Resource::IN::MX)
-        mx_response.each do |record|
-          mx_host = record.exchange.to_s.upcase
-          index = mx_records.index(mx_host)
-          @result[index + 2] = true if index
-        end
+      unless @g_suite.verification_error?
+        # If we're not in an error state, then we don't want to show the
+        # "checklist-style" with the strike-through. Setting the results to false
+        # will not strike-through the rows.
+        @results = @results.transform_values { false }
       end
     end
-
   end
 
   def g_suite_create
@@ -634,38 +637,6 @@ class EventsController < ApplicationController
 
   end
 
-  def partner_donation_overview
-    authorize @event
-
-    relation = @event.partner_donations.not_unpaid
-
-    @stats = {
-      deposited: relation.deposited.sum(:payout_amount_cents),
-      in_transit: relation.in_transit.sum(:payout_amount_cents),
-    }
-
-    relation = relation.pending if params[:filter] == "pending"
-    relation = relation.in_transit if params[:filter] == "in_transit"
-    relation = relation.deposited if params[:filter] == "deposited"
-
-    @partner_donations = relation.order(created_at: :desc)
-  end
-
-  def demo_mode_request_meeting
-    authorize @event
-
-    @event.demo_mode_request_meeting_at = Time.current
-
-    if @event.save!
-      OperationsMailer.with(event_id: @event.id).demo_mode_request_meeting.deliver_later
-      flash[:success] = "We've received your request. We'll be in touch soon!"
-    else
-      flash[:error] = "Something went wrong. Please try again."
-    end
-
-    redirect_to @event
-  end
-
   def transfers
     authorize @event
 
@@ -675,6 +646,7 @@ class EventsController < ApplicationController
 
     @ach_transfers = @event.ach_transfers
     @paypal_transfers = @event.paypal_transfers
+    @wires = @event.wires
     @checks = @event.checks.includes(:lob_address)
     @increase_checks = @event.increase_checks
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
@@ -683,9 +655,9 @@ class EventsController < ApplicationController
     @disbursements = @disbursements.not_card_grant_related if Flipper.enabled?(:card_grants_2023_05_25, @event)
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents),
-      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents),
-      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents)
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(:amount_cents),
+      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).sum(:amount_cents),
+      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.sum(:amount_cents)
     }
 
     @ach_transfers = @ach_transfers.in_transit if params[:filter] == "in_transit"
@@ -715,7 +687,12 @@ class EventsController < ApplicationController
     @paypal_transfers = @paypal_transfers.rejected if params[:filter] == "canceled"
     @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    @wires = @wires.approved.or(@wires.pending) if params[:filter] == "in_transit"
+    @wires = @wires.deposited if params[:filter] == "deposited"
+    @wires = @wires.rejected if params[:filter] == "canceled"
+    @wires = @wires.search_recipient(params[:q]) if params[:q].present?
+
+    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers + @wires).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
 
     # Generate mock data
     if helpers.show_mock_data?
@@ -890,7 +867,11 @@ class EventsController < ApplicationController
       Document.create(user: current_user, event_id: @event.id, name: file.original_filename, file:)
     end
 
-    if @event.update(event_params.except(:files).merge({ demo_mode: false }))
+    if event_params[:plan_type] && event_params[:plan_type] != @event.plan.plan_type
+      @event.plan.mark_inactive!(event_params[:plan_type]) # deactivate old plan and replace it
+    end
+
+    if @event.update(event_params.except(:files, :plan_type).merge({ demo_mode: false }))
       flash[:success] = "Organization successfully activated."
       redirect_to event_path(@event)
     else
@@ -916,6 +897,7 @@ class EventsController < ApplicationController
   def event_params
     result_params = params.require(:event).permit(
       :name,
+      :short_name,
       :description,
       :start,
       :end,
@@ -949,15 +931,19 @@ class EventsController < ApplicationController
       :logo,
       :website,
       :background_image,
+      :stripe_card_logo,
       :stripe_card_shipping_type,
+      :plan_type,
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,
-        :invite_message
+        :invite_message,
+        :expiration_preference
       ],
       config_attributes: [
         :id,
-        :anonymous_donations
+        :anonymous_donations,
+        :cover_donation_fees
       ]
     )
 
@@ -971,6 +957,7 @@ class EventsController < ApplicationController
 
   def user_event_params
     result_params = params.require(:event).permit(
+      :short_name,
       :description,
       :address,
       :slug,
@@ -993,14 +980,17 @@ class EventsController < ApplicationController
       :logo,
       :website,
       :background_image,
+      :stripe_card_logo,
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,
-        :invite_message
+        :invite_message,
+        :expiration_preference
       ],
       config_attributes: [
         :id,
-        :anonymous_donations
+        :anonymous_donations,
+        :cover_donation_fees
       ]
     )
 
@@ -1022,7 +1012,8 @@ class EventsController < ApplicationController
       maximum_amount: @maximum_amount,
       user: @user,
       start_date: @start_date,
-      end_date: @end_date
+      end_date: @end_date,
+      missing_receipts: @missing_receipts
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions

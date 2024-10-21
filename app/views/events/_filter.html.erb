@@ -2,7 +2,15 @@
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
-    <%= form.text_field :q, placeholder: "Search", style: "width auto; max-width: none;", value: params[:q] %>
+    <div class="input input-group max-w-none" tabindex="0">
+      <%= inline_icon "search" %>
+      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
+      <% if params[:q] && params[:q] != "" %>
+        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+          <%= inline_icon "view-close", size: 24 %>
+        </button>
+      <% end %>
+    </div>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
     <% end %>
@@ -30,7 +38,7 @@
   <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end">
     <button
       type="button"
-      class="btn btn-small bg-info menu__toggle menu__toggle--arrowless overflow-visible z-10"
+      class="btn btn-small bg-info menu__toggle menu__toggle--arrowless overflow-visible z-10 h-9"
       data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
       <%= inline_icon "filter", size: 16 %>
       <% if @tag %>
@@ -55,7 +63,7 @@
       <span class="xs-hide sm-hide md-hide flex items-center">
         <span class="nowrap">Filtered by</span>
         <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
-          <%= @type.humanize.titleize.gsub("Ach", "ACH") %>
+          <%= @type.humanize.gsub("Ach", "ACH") %>
         </span>
       </span>
       <% elsif @start_date || @end_date %>
@@ -84,7 +92,7 @@
         <span class="xs-hide sm-hide md-hide nowrap">Filter</span>
       <% end %>
     </button>
-    <div class="menu__content menu__content--2 menu__content--compact h5" style="width:290px" data-menu-target="content" data-controller="filter">
+    <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 320px; padding: 0.5rem;" data-menu-target="content" data-controller="filter">
     <div data-controller="tabs" data-tabs-default-tab-value="<%= @tag ? "tag" : @user ? "user" : @type ? "type" : @start_date || @end_date ? "date" : @maximum_amount || @minimum_amount ? "amount" : Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 ? "tags" : "user" %>">
       <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
         <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
@@ -93,13 +101,14 @@
       <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
       <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
       <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
+      <button id="receipts" data-tabs-target="btn" data-action="click->tabs#select">Receipts</button>
       <div class="menu__divider--filter-tab"></div>
 
       <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
         <div data-tabs-target="tab" id="tags">
           <% @event.tags.each do |tag| %>
             <div class="flex items-center" data-tag="<%= tag.id %>">
-              <%= link_to "?#{{ tag: tag.label, q: params[:q] }.compact.to_query}", class: "flex-auto menu__action" do %>
+              <%= link_to "?#{{ tag: tag.label, q: params[:q], missing_receipts: @missing_receipts ? true : nil }.compact.to_query}", class: "flex-auto menu__action" do %>
                   <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
                   <%= tag.label %>
               <% end %>
@@ -115,7 +124,7 @@
       <div data-tabs-target="tab" id="user">
         <% @organizers.each do |position| %>
           <div class="flex items-center">
-              <%= link_to({ user: position.user.id, q: params[:q] }.compact, class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.id == position.user.id}") do %>
+              <%= link_to({ user: position.user.id, q: params[:q], missing_receipts: @missing_receipts ? true : nil }.compact, class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.id == position.user.id}") do %>
                 <div class="avatar-grow line-height-0 mr1">
                   <%= avatar_for position.user, 18 %>
                 </div>
@@ -127,8 +136,8 @@
       <div data-tabs-target="tab" id="type">
         <% ["ach_transfer", "mailed_check", "account_transfer", "card_charge", "check_deposit", "donation", "invoice", "refund", "fiscal_sponsorship_fee", "reimbursement"].each do |type| %>
           <div class="flex items-center">
-              <%= link_to({ type:, q: params[:q] }.compact, class: "flex-auto menu__action #{"menu__action--active" if @type == type}") do %>
-                <%= type.humanize.titleize.gsub("Ach", "ACH") %>
+              <%= link_to({ type:, q: params[:q], missing_receipts: @missing_receipts ? true : nil }.compact, class: "flex-auto menu__action #{"menu__action--active" if @type == type}") do %>
+                <%= type.humanize.gsub("Ach", "ACH") %>
               <% end %>
           </div>
         <% end %>
@@ -164,9 +173,17 @@
           </div>
         <% end %>
       </div>
+      <div data-tabs-target="tab" id="receipts">
+        <div class="flex items-center">
+          <%= link_to("Missing receipts", { user: params[:user], q: params[:q], missing_receipts: true }.compact, class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}" ) %>
+        </div>
+        <div>
+          <%= link_to("All transactions", { user: params[:user], q: params[:q] }.compact, class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}" ) %>
+        </div>
+      </div>
     </div>
 
-      <% if @tag || @user || @type || @start_date || @end_date %>
+      <% if @tag || @user || @type || @start_date || @end_date || @missing_receipts %>
         <div class="menu__divider"></div>
         <%= link_to do %>
           <%= inline_icon "view-close", size: 24 %>

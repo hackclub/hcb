@@ -13,7 +13,7 @@ module FeeEngine
 
       reason = determine_reason
 
-      event_sponsorship_fee = @canonical_event_mapping.event.sponsorship_fee
+      event_sponsorship_fee = @canonical_event_mapping.event.revenue_fee
 
       amount_cents_as_decimal = BigDecimal(@canonical_event_mapping.canonical_transaction.amount_cents.to_s) * BigDecimal(event_sponsorship_fee.to_s)
       amount_cents_as_decimal = 0 if reason != :revenue

@@ -52,8 +52,7 @@ class CheckDeposit < ApplicationRecord
     CheckDepositMailer.with(check_deposit: self).rejected.deliver_later
   end
 
-  after_update if: -> { increase_status_previously_changed?(to: "submitted") } do
-    canonical_pending_transaction.update(fronted: true)
+  after_update if: -> { increase_status_previously_changed?(to: "deposited") } do
     CheckDepositMailer.with(check_deposit: self).deposited.deliver_later
   end
 
@@ -68,11 +67,15 @@ class CheckDeposit < ApplicationRecord
   scope :unprocessed, -> { where(increase_id: nil, column_id: nil) }
 
   enum :increase_status, {
-    pending: "pending",
-    submitted: "submitted",
-    rejected: "rejected",
+    pending: "pending", # when check deposit created
+    submitted: "submitted", # when ProcessColumnCheckDepositJob runs successfully
+    manual_submission_required: "manual_submission_required", # when ProcessColumnCheckDepositJob fails
+    rejected: "rejected", # if an admin can't manually submit it.
     returned: "returned",
+    deposited: "deposited"
   }, default: :pending
+
+  alias_attribute :status, :increase_status
 
   enum :rejection_reason, {
     incomplete_image: "incomplete_image",
@@ -105,32 +108,37 @@ class CheckDeposit < ApplicationRecord
     return :muted if column_id.nil? && increase_id.nil?
     return :success if local_hcb_code.ct.present?
 
-    if pending?
+    if pending? || manual_submission_required?
       :info
     elsif rejected? || returned?
       :error
-    elsif submitted?
+    elsif deposited? || local_hcb_code.ct.present?
       :success
+    elsif submitted?
+      :info
     end
   end
 
   def state_text
-    return "Pending submission" if column_id.nil? && increase_id.nil?
-    return "Deposited" if local_hcb_code.ct.present?
-
-    if pending?
+    if pending? || manual_submission_required?
       "Processing"
     elsif rejected?
       "Rejected"
     elsif returned?
       "Returned"
-    elsif submitted?
+    elsif deposited? || local_hcb_code.ct.present?
       "Deposited"
+    elsif submitted?
+      "Submitted"
     end
   end
 
   def rejection_description
     REJECTION_DESCRIPTIONS[rejection_reason] || "This check deposit was rejected."
+  end
+
+  def self.rejection_descriptions
+    REJECTION_DESCRIPTIONS
   end
 
   def submitted_to_column_at

@@ -8,13 +8,13 @@
     <p>
       <%= form.label :name, "Name (required)" %>
       <br>
-      <%= form.text_field :name, placeholder: "Organization Name", required: true %>
+      <%= form.text_field :name, placeholder: "Organization Name", value: params[:name], required: true %>
     </p>
 
     <p>
       <%= form.label :organizer_email, "Organizer's Email Address" %>
       <br>
-      <%= form.email_field :organizer_email, placeholder: "Email Address", required: false %>
+      <%= form.email_field :organizer_email, placeholder: "Email Address", value: params[:organizer_email], required: false %>
     </p>
 
     <p>
@@ -25,20 +25,20 @@
     <p>
       <%= form.label :country %>
       <br>
-      <%= form.collection_select :country, Event.countries_for_select, :first, :last %>
+      <%= form.collection_select :country, Event.countries_for_select, :first, :last, selected: params[:country] %>
     </p>
 
     <p>
       <%= form.label :category %>
       <br>
-      <%= form.collection_select :category, Event.categories, :first, :first, { include_blank: "Select a category" } %>
+      <%= form.collection_select :category, Event.categories, :first, :first, { include_blank: "Select a category", selected: params[:category] } %>
     </p>
 
-    <p>
-      <%= form.label :sponsorship_fee, "Sponsorship fee (required)" %>
+    <div class="field mb2">
+      <%= form.label :plan_type, "Assign a plan" %>
       <br>
-      <%= form.number_field :sponsorship_fee, placeholder: "0.07", value: "0.07", required: true, step: "any" %>
-    </p>
+      <%= form.select(:plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: params[:plan_type]) %>
+    </div>
 
     <div class="field">
       <%= form.label :point_of_contact_id, "Point of contact" %>

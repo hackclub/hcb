@@ -15,8 +15,9 @@ module TransactionGroupingEngine
       # transactions together during an incident.
       INVOICE_CODE = "100"
       DONATION_CODE = "200"
-      PARTNER_DONATION_CODE = "201"
+      PARTNER_DONATION_CODE = "201" # deprecated
       ACH_TRANSFER_CODE = "300"
+      WIRE_CODE = "310"
       PAYPAL_TRANSFER_CODE = "350"
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
@@ -39,12 +40,12 @@ module TransactionGroupingEngine
       def run
         return increase_check_hcb_code if increase_check
         return paypal_transfer_hcb_code if paypal_transfer
+        return wire_hcb_code if wire
         return unknown_hcb_code if @ct_or_cp.is_a?(CanonicalTransaction) && @ct_or_cp.raw_increase_transaction&.increase_account_number.present? # Don't attempt to group transactions posted to an org's account/routing number
         return short_code_hcb_code if has_short_code?
         return invoice_hcb_code if invoice
         return bank_fee_hcb_code if bank_fee
         return donation_hcb_code if donation
-        return partner_donation_hcb_code if partner_donation
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
         return check_deposit_hcb_code if check_deposit
@@ -105,18 +106,6 @@ module TransactionGroupingEngine
         @donation ||= @ct_or_cp.donation
       end
 
-      def partner_donation_hcb_code
-        [
-          HCB_CODE,
-          PARTNER_DONATION_CODE,
-          partner_donation.id
-        ].join(SEPARATOR)
-      end
-
-      def partner_donation
-        @partner_donation ||= @ct_or_cp.partner_donation
-      end
-
       def ach_transfer_hcb_code
         [
           HCB_CODE,
@@ -163,6 +152,18 @@ module TransactionGroupingEngine
 
       def paypal_transfer
         @paypal_transfer ||= @ct_or_cp.paypal_transfer
+      end
+
+      def wire_hcb_code
+        [
+          HCB_CODE,
+          WIRE_CODE,
+          wire.id
+        ].join(SEPARATOR)
+      end
+
+      def wire
+        @wire ||= @ct_or_cp.wire
       end
 
       def check_deposit_hcb_code

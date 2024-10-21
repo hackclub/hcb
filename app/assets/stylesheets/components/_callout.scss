@@ -1,104 +1,113 @@
 .callout {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  position: relative;
+  margin: 1rem 3ch;
+
+  .callout--external {
+    display: block;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    content: '';
+    width: 28px;
+    height: 28px;
+    transform: translate(0px, 0px) scale(1);
+    transition: all 0.3s;
+  }
+
+  &:hover .callout--external {
+    transform: translate(-4px, 4px) scale(1.4);
+  }
+
+  a:has(&),
+  & {
+    text-decoration: none;
+  }
+
+  .callout__emoji {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'NotoColorEmoji',
+      'Segoe UI Symbol', 'Android Emoji', 'EmojiSymbols', serif;
+  }
+
+  .callout__title {
+    font-weight: 600;
+  }
+
+  .callout__tab-contents {
     display: flex;
-    align-items: center;
-    padding: 1rem;
-    position: relative;
-    margin: 1rem 3ch;
+    justify-content: space-around;
 
-    .callout--external {
-        display: block;
-        position: absolute;
-        top: 0px;
-        right: 0px;
-        content: "";
-        width: 28px;
-        height: 28px;
-        transform: translate(0px, 0px) scale(1);
-        transition: all 0.3s;
+    .callout__tab-content {
+      width: 45%;
+      padding: 1rem;
     }
-
-    &:hover .callout--external {
-        transform: translate(-4px, 4px) scale(1.4);
-    }
-
-    a:has(&), & {
-        text-decoration: none;
-    }
-
-    .callout__emoji {
-        font-size: 1.5rem;
-        margin-right: 1rem;
-        font-family: "Apple Color Emoji", "Segoe UI Emoji", "NotoColorEmoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols", serif;
-    }
-
-    .callout__title {
-        font-weight: 600;
-    }
-
-    .callout__tab-contents {
-        display: flex;
-        justify-content: space-around;
-
-        .callout__tab-content {
-            width: 45%;
-            padding: 1rem;
-        }
-    }
+  }
 }
 
-.callout--info, .callout--warning, .callout--error, .callout--success {
-    border-radius: 8px;
-    border: 1px solid;
+.callout--info,
+.callout--warning,
+.callout--error,
+.callout--success {
+  border-radius: 8px;
+  border: 1px solid;
 
-    &:not(.callout) {
-        color: inherit;
-    }
+  &:not(.callout) {
+    color: inherit;
+  }
 }
 
 .callout--info {
-    background-color: #eef4ffff;
-    html[data-dark="true"] & {
-        background-color: #051225;
-    }
-    text-decoration-color: #377fe9;
-    color: #377fe9;
-    &, & * {
-        border-color: #377fe9;
-    }
+  background-color: #eef4ffff;
+  html[data-dark='true'] & {
+    background-color: #051225;
+  }
+  text-decoration-color: #377fe9;
+  color: #377fe9;
+  &,
+  & * {
+    border-color: #377fe9;
+  }
 }
 
 .callout--warning {
-    background-color: #f8f3e6;
-    html[data-dark="true"] & {
-        background-color: #31260c;
-    }
-    text-decoration-color: #c9971d;
-    color: #c9971d;
-    &, & * {
-        border-color: #ecbb40;
-    }
+  background-color: #f8f3e6;
+  html[data-dark='true'] & {
+    background-color: #31260c;
+  }
+  text-decoration-color: #c9971d;
+  color: #c9971d;
+  &,
+  & * {
+    border-color: #ecbb40;
+  }
 }
 
 .callout--error {
-    background-color: #ffece9;
-    html[data-dark="true"] & {
-        background-color: #170708;
-    }
-    text-decoration-color: #d73a49;
-    color: #d73a49;
-    &, & * {
-        border-color: #d73a49;
-    }
+  background-color: #ffece9;
+  html[data-dark='true'] & {
+    background-color: #170708;
+  }
+  text-decoration-color: #d73a49;
+  color: #d73a49;
+  &,
+  & * {
+    border-color: #d73a49;
+  }
 }
 
 .callout--success {
-    background-color: #e9ffec;
-    html[data-dark="true"] & {
-        background-color: #07170c;
-    }
-    text-decoration-color: #08904a;
-    color: #08904a;
-    &, & * {
-        border-color: #11bd64;
-    }
+  background-color: #e9ffec;
+  html[data-dark='true'] & {
+    background-color: #07170c;
+  }
+  text-decoration-color: #08904a;
+  color: #08904a;
+  &,
+  & * {
+    border-color: #11bd64;
+  }
 }

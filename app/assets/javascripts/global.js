@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+
 // BK is our global namespace for utilities
 const BK = {
   blocked: false,
@@ -21,9 +23,9 @@ BK.isDark = () => {
     return (
       localStorage.getItem('dark') === 'true' ||
       document.getElementsByTagName('html')[0].getAttribute('data-dark') ===
-        'true'
+      'true'
     )
-  } catch (e) {
+  } catch {
     return false
   }
 }
@@ -50,7 +52,6 @@ BK.styleDark = theme => {
     ?.setAttribute('content', theme ? '#17171d' : '#f9fafc')
   BK.s('toggle_theme').find('svg').toggle()
   // Calling getComputedStyle forces the browser to redraw
-  const _ = window.getComputedStyle(css).opacity
   document.head.removeChild(css)
 }
 BK.toggleDark = () => {

@@ -29,7 +29,7 @@ module ReceiptService
     def attrs(attachment)
       {
         file: attachment,
-        uploader: @uploader,
+        user: @uploader,
         upload_method: @upload_method,
         receiptable: @receiptable # Receiptable may be nil
       }

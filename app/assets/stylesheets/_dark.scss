@@ -20,12 +20,13 @@ html[data-dark='true'] {
   input[type='text'],
   input[type='url'],
   select,
+  .input,
   textarea {
     background-color: $darkless;
     color: map-get($palette, white);
     border-color: $darkless;
 
-    &:focus {
+    &:focus-within {
       border-color: map-get($palette, info);
     }
   }
@@ -110,6 +111,7 @@ html[data-dark='true'] {
   .card,
   .menu__content,
   .modal {
+    --card-bg: #252429;
     background-color: $darkless;
   }
   .modal--scroll.bg-snow {
@@ -133,7 +135,8 @@ html[data-dark='true'] {
   .modal,
   .card,
   .menu__content {
-    box-shadow: -2px -4px 8px rgba(0, 0, 0, 0.125),
+    box-shadow:
+      -2px -4px 8px rgba(0, 0, 0, 0.125),
       4px 8px 16px rgba(0, 0, 0, 0.25);
   }
 
@@ -160,7 +163,7 @@ html[data-dark='true'] {
     textarea {
       background: $dark;
       border-color: $dark;
-      &:focus {
+      &:focus-within {
         border-color: map-get($palette, info);
       }
     }
@@ -304,6 +307,10 @@ html[data-dark='true'] {
     background-color: rgba(0, 0, 0, 0.125);
   }
 
+  .list-badge.quick-action {
+    border: 1px solid darken(map-get($palette, muted), 20%);
+  }
+
   .filterbar__item:active,
   .filterbar__item[aria-selected='true'] {
     background-color: rgba(map-get($palette, info), 0.125);
@@ -364,7 +371,7 @@ html[data-dark='true'] {
   }
 
   .bg-smoke-important {
-    background: $darkless!important;
+    background: $darkless !important;
     color: map-get($palette, white);
   }
 
@@ -444,8 +451,13 @@ html[data-dark='true'] {
   .transaction--positive > td > span > span > span.success-dark.medium {
     font-weight: 400;
   }
-}
 
-.recharts-rectangle.recharts-tooltip-cursor {
-  opacity: 0.2;
+  .recharts-rectangle.recharts-tooltip-cursor {
+    opacity: 0.2;
+  }
+
+  #card-pin {
+    color: #1f2d3d !important;
+    filter: invert(1);
+  }
 }

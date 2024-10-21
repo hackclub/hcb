@@ -1,3 +1,5 @@
+/* global AIRBRAKE_PROJECT_ID, AIRBRAKE_API_KEY */
+
 import { Notifier } from '@airbrake/browser'
 
 const environment = process.env.NODE_ENV || 'development'

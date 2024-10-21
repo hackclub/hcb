@@ -47,8 +47,8 @@ const tours = {
       }
     } else {
       steps.push({
-        attachTo: 'activate_account',
-        text: "You're in Playground Mode— click here to activate your account when you're ready.",
+        attachTo: 'playground_mode',
+        text: "You're in Playground Mode— a HCB staff member will reach out shortly to get you set up.",
         placement: 'bottom',
       })
     }
@@ -63,7 +63,6 @@ function TourOverlay(props) {
   const tour = props.tour && tours[props.tour](props.options)
 
   useEffect(() => {
-    // eslint-disable-next-line no-extra-semi
     ;(async () => {
       if (props.tour && currentStep < tour.length) {
         await fetch(`/tours/${props.id}/set_step`, {

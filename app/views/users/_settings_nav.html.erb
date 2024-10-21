@@ -1,6 +1,9 @@
 <ul class="tab-container">
   <%= settings_tab active: active == "general" do %>
-    <%= link_to "General", @user == current_user ? my_settings_path : edit_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
+    <%= link_to "Account", @user == current_user ? my_settings_path : edit_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
+  <% end %>
+  <%= settings_tab active: active == "notifications" do %>
+    <%= link_to "Notifications", @user == current_user ? settings_notifications_path : notifications_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
   <% if @user.stripe_cardholder.present? %>
     <%= settings_tab active: active == "address" do %>
@@ -9,16 +12,18 @@
   <% end %>
   <%= settings_tab active: active == "payouts" do %>
     <%= link_to @user == current_user ? settings_payouts_path : payouts_user_path(@user), data: { turbo: true, turbo_action: "advance" } do %>
-      Reimbursement payouts
-    <% end %>
-  <% end %>
-  <%= settings_tab active: active == "previews" do %>
-    <%= link_to @user == current_user ? settings_previews_path : previews_user_path(@user), data: { turbo: true, turbo_action: "advance" } do %>
-      <span class="xs-hide">Feature&nbsp;</span>Previews
+      <span class="xs-hide">Reimbursement</span>
+      <span class="xs-capitalize">payouts</span>
     <% end %>
   <% end %>
   <%= settings_tab active: active == "security" do %>
     <%= link_to "Security", @user == current_user ? settings_security_path : security_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
+  <% end %>
+  <%= settings_tab active: active == "previews" do %>
+    <%= link_to @user == current_user ? settings_previews_path : previews_user_path(@user), data: { turbo: true, turbo_action: "advance" } do %>
+      <span class="xs-hide">Feature</span>
+      <span class="xs-capitalize">previews</span>
+    <% end %>
   <% end %>
   <% admin_tool("p0 overflow-hidden", override_pretend: true) do %>
     <%= settings_tab active: active == "admin" do %>
