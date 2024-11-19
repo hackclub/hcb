@@ -1,36 +1,70 @@
 <% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null}" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null}", "data-turbo" => "false" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <div class="field event-select-target">
+  <div class="field" data-controller="organization-select">
     <%= form.label :source_event_id, "From" %>
-    <%= form.collection_select(:source_event_id,
-                                @allowed_source_events,
-                                :id,
-                                current_user.admin? ? :admin_dropdown_description : :disbursement_dropdown_description,
-                                { prompt: "Select one…", disabled: ->(e) { e != @source_event && !policy(e).create_transfer? || (!current_user.admin? && e.balance_available <= 0) } },
-                                required: true,
-                                disabled: ) %>
+    <select name="disbursement[source_event_id]" id="disbursement_source_event_id" <%= "disabled" if disabled %> class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer disabled:cursor-default" data-organization-select-target="dropdown">
+      <option value>Select one...</option>
+      <option <%= "default" if @source_event.present? %> value="<%= @source_event.id if @source_event.present? %>"><%= @source_event.name if @source_event.present? %></option>
+    </select>
+
+    <div data-organization-select-target="wrapper" style="max-width: 384px;">
+      <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
+
+      <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
+        <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px;">
+            <% @allowed_source_events.map do |event, i| %>
+              <% disabled_message = nil %>
+              <% disabled_message = "Insufficient balance" if !current_user.admin? && event.balance_available <= 0 %>
+              <% disabled_message = "HCB transfers disabled" if event != @source_event && !policy(event).create_transfer? %>
+              <div data-id="<%= event.id %>" data-name="<%= event.name %>" data-organization-select-target="organization">
+                <button <%= "disabled" if disabled_message %> aria-label="<%= disabled_message %>" class="<%= "tooltipped tooltipped--i" if disabled_message %> text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer disabled:cursor-default hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
+                  <div class="text-left"><%= event.name %></div>
+                  <div class="text-muted"><%= current_user.admin? ? event.id : render_money(event.balance_available) %></div>
+                </button>
+                <hr class="my-0">
+              </div>
+            <% end %>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="field event-select-target">
+  <div class="field" data-controller="organization-select">
     <%= form.label :event_id, "To" %>
-    <%= form.select(:event_id,
-                    @allowed_destination_events.map do |event|
-                      [
-                        current_user.admin? ? event.admin_dropdown_description : event.disbursement_dropdown_description,
-                        event.id,
-                        { "data-fee" => event.revenue_fee.to_s },
-                      ]
-                    end,
-                    { prompt: "Select one…" },
-                    required: true,
-                    disabled:,
-                    "x-on:input" => "fee = $event.target.options[$event.target.selectedIndex].dataset.fee") %>
+    <select name="disbursement[event_id]" id="disbursement_event_id" <%= "disabled" if disabled %> class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer" data-organization-select-target="dropdown" x-on:feechange="fee = $event.target.options[$event.target.selectedIndex].dataset.fee;">
+      <option value>Select one...</option>
+      <option value="">Organization</option>
+    </select>
+
+    <div data-organization-select-target="wrapper" style="max-width: 384px;">
+      <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
+
+      <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
+        <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px;">
+
+            <% @allowed_destination_events.map do |event, i| %>
+              <div data-id="<%= event.id %>" data-name="<%= event.name %>" data-fee="<%= event.revenue_fee.to_s %>" data-organization-select-target="organization">
+                <button class="text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
+                  <div class="text-left"><%= event.name %></div>
+                  <div class="text-muted"><%= current_user.admin? ? event.id : render_money(event.balance_available) %></div>
+                </button>
+                <hr class="my-0">
+              </div>
+            <% end %>
+
+        </div>
+      </div>
+    </div>
+
     <% unless admin_signed_in? %>
       <span class="muted">You can transfer to any organization you're a part of.</span>
     <% end %>
+
   </div>
 
   <% if admin_signed_in? %>
