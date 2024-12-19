@@ -6,7 +6,7 @@
 <h1 class="heading">
   <span class="flex items-center">
     Cards
-    <%= badge_for @stripe_cards.count + @emburse_cards.count, class: "bg-muted" %>
+    <%= badge_for @stripe_cards.active.count + @emburse_cards.count, class: "bg-muted" %>
   </span>
 
   <button class="btn bg-success" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.none? %>>
