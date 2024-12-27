@@ -2,7 +2,7 @@
 
 class CanonicalTransactionPolicy < ApplicationPolicy
   def show?
-    admin_or_teammember
+    admin_or_teammember || record.user == user
   end
 
   def edit?
