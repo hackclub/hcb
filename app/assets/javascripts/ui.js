@@ -70,8 +70,10 @@ $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
   }
 
   if (sponsor.id) {
+    $('#sponsor-preview').show()
     $('[data-behavior~=sponsor_update_warning]').slideDown('fast')
   } else {
+    $('#sponsor-preview').hide()
     $('[data-behavior~=sponsor_update_warning]').slideUp('fast')
   }
 
@@ -88,7 +90,7 @@ $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
   ]
 
   return fields.forEach(field =>
-    $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
+   $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
   )
 })
 
