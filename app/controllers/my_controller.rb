@@ -27,6 +27,10 @@ class MyController < ApplicationController
 
   def tasks
     @tasks = current_user.tasks
+    respond_to do |format|
+      format.html
+      format.json { render json: { count: @tasks.count } }
+    end
   end
 
   def missing_receipts_list

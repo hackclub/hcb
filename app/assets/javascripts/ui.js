@@ -639,3 +639,12 @@ window.addEventListener("popstate", (e) => {
   }
 });
 
+if (navigator.setAppBadge) {
+  window.addEventListener("load", async () => {
+    const response = await fetch("/my/tasks.json")
+    if(!response.redirected) { // redirected == the user isn't signed in.
+      const { count } = await response.json()
+      navigator.setAppBadge(count)
+    }
+  })
+}

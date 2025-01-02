@@ -1,4 +1,4 @@
-<% disabled = !policy(@event).create_transfer? %>
+<% disabled = !policy(@event).create_transfer? || true %>
 
 <% title "Send a PayPal Transfer" %>
 <%= render "events/nav", selected: :transfers %>
@@ -18,6 +18,8 @@
     <p>Domestic recipients are charged a <%= link_to "3% merchant fee", "https://www.paypal.com/us/business/paypal-business-fees" %>.</p>
     <p>International recipients will be charged a ~10% fee after currency conversion and may have to pay an additional withdrawal fee.</p>
 <% end %>
+
+<%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable." %>
 
 <%= form_with(model: [@event, @paypal_transfer], local: true) do |form| %>
 
