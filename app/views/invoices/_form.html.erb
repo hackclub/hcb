@@ -1,4 +1,14 @@
 <%= form_with(model: invoice, url: event_invoices_path(@event), local: true, html: { "x-data" => "{ amount: null }" }) do |form| %>
+  <div class="flex mb-4">
+    <div class="cursor-pointer hover:bg-gray-200 active:bg-gray-300 flex-1 flex items-center justify-center border-b-2 border-red-600 text-red-600 p-2 gap-2" style="border-bottom-style:solid">
+      <div style="border: 2px solid" class="w-5 h-5 text-xs !border-red-300 rounded-full flex items-center justify-center font-bold">1</div>
+      Sponsor details
+    </div>
+    <div class="cursor-pointer hover:bg-gray-200 active:bg-gray-300 flex-1 flex items-center justify-center border-b-2 border-gray-200 p-2 gap-2" style="border-bottom-style:solid">
+      <div style="border: 2px solid" class="!border-gray-200 w-5 h-5 text-xs rounded-full flex items-center justify-center">2</div>
+      Invoice details
+    </div>
+  </div>
   <%= form_errors invoice %>
   <%= form_errors sponsor %>
 
@@ -14,7 +24,7 @@
   <% end %>
 
   <details id="sponsor-collapsible" open>
-    <summary class="list-none flex !hidden items-center bg-gray-100 px-7 p-4" id="sponsor-preview">
+    <summary class="list-none flex rounded-lg !hidden items-center bg-gray-100 px-7 p-4" id="sponsor-preview">
       <div class="flex flex-col">
         <span class="font-bold text-lg" id="sponsor-name"></span>
         <span class="opacity-60 text-xs" id="sponsor-email"></span>
