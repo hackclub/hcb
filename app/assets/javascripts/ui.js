@@ -73,7 +73,7 @@ $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
     document.getElementById('sponsor-preview').classList.remove("!hidden")
     document.getElementById("sponsor-warning").hidden = false
     document.getElementById('sponsor-collapsible').open = false
-    document.getElementById("sponsor-collapsible").setAttribute('class', 'border rounded-lg')
+    document.getElementById("sponsor-collapsible").setAttribute('class', 'border rounded-lg overflow-hidden')
     document.getElementById("sponsor-form").setAttribute('class', 'px-7 p-4 pt-0')
   } else {
     document.getElementById("sponsor-warning").hidden = true
