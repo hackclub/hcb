@@ -52,7 +52,7 @@ gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fi
 
 gem "aasm" # state machine
 
-gem "paper_trail", "~> 15.2.0" # track changes to models
+gem "paper_trail", "~> 16.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.10.2" # enables soft deletions
 
 gem "friendly_id", "~> 5.5.1" # slugs
@@ -159,7 +159,7 @@ group :development, :test do
   gem "rubocop-rails", "~> 2.27"
   gem "relaxed-rubocop"
 
-  gem "rspec-rails", "~> 7.0.1"
+  gem "rspec-rails", "~> 7.1.0"
 
   # Lets you set a breakpoint with a REPL using binding.pry
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"

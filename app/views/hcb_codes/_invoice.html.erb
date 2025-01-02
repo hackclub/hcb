@@ -102,7 +102,7 @@
     <% if @invoice.personal_transaction.present? %>
       <p>
         <strong>Repayment for</strong>
-        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code.url %>
+        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code %>
       </p>
     <% end %>
     <p>

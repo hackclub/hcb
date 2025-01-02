@@ -26,7 +26,7 @@ class PaypalTransfersController < ApplicationController
           receiptable: @paypal_transfer.local_hcb_code
         ).run!
       end
-      redirect_to @paypal_transfer.local_hcb_code.url, flash: { success: "Your PayPal transfer has been sent!" }
+      redirect_to url_for(@paypal_transfer.local_hcb_code), flash: { success: "Your PayPal transfer has been sent!" }
     else
       render "new", status: :unprocessable_entity
     end

@@ -57,17 +57,18 @@ class HcbCode < ApplicationRecord
     hcb_code "HCB Code"
     created_at "Created at"
     date "Transaction date"
-    url "URL" do |url| "https://hcb.hackclub.com#{url}" end
+    hashid "URL" do |hashid| "https://hcb.hackclub.com/hcb/#{hashid}" end
     memo
     receipts size: "Receipt count"
     receipts "Has receipt?" do |receipts| receipts.exists? end
   end
 
   def url
+    Airbrake.notify("HcbCode#url used")
     "/hcb/#{hashid}"
   end
 
-  def popover_url
+  def popover_path
     "/hcb/#{hashid}?frame=true"
   end
 

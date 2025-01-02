@@ -30,7 +30,7 @@
           <% if check_deposit.manual_submission_required? %>
             <%= link_to "Process", [:admin, check_deposit] %>
           <% else %>
-            <%= link_to "View", check_deposit.local_hcb_code.url %>
+            <%= link_to "View", url_for(check_deposit.local_hcb_code) %>
           <% end %>
         </td>
       </tr>

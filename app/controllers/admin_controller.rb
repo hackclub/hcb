@@ -1325,10 +1325,6 @@ class AdminController < ApplicationController
         airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
-      when :pending_power_hour_airtable
-        airtable_task_size :power_hour
-      when :pending_arcade_airtable
-        airtable_task_size :arcade
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions

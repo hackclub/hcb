@@ -114,7 +114,23 @@
     content: '❄️';
   }
 
-  &.frozen,
+  &.frozen > .stripe-card__overlay:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('card-frost.png');
+    opacity: 0.32;
+    background-size: cover;
+    z-index: 1;
+  }
+
+  &.frozen {
+    filter: grayscale(0.23);
+  }
+
   &.canceled {
     filter: grayscale(1);
   }

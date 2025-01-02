@@ -3,9 +3,9 @@
   <div class="flex gap-4 mt-4 pinned__container">
     <% @event.pinned_hcb_codes.each do |pin| %>
      <% if @show_popovers %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= pin.__id__ %>" data-state-url="<%= pin.hcb_code.local_hcb_code.url %>" data-state-title="<%= pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount) %>">
-          <%= modal_header(pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount), external_link: pin.hcb_code.local_hcb_code.url) %>
-          <%= turbo_frame_tag pin.hcb_code.local_hcb_code.public_id, src: pin.hcb_code.local_hcb_code.popover_url, loading: :lazy do %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= pin.__id__ %>" data-state-url="<%= hcb_code_path(pin.hcb_code.local_hcb_code) %>" data-state-title="<%= pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount) %>">
+          <%= modal_header(pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount), external_link: url_for(pin.hcb_code.local_hcb_code)) %>
+          <%= turbo_frame_tag pin.hcb_code.local_hcb_code.public_id, src: pin.hcb_code.local_hcb_code.popover_path, loading: :lazy do %>
             <%= render partial: "application/loading_container" %>
           <% end %>
         </section>

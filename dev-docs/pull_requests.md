@@ -12,6 +12,6 @@
 - [ ] Tested by submitter before requesting review _(Does the test plan pass in development or staging?)_
 - [ ] Tested by reviewer before merging <!-- leave this unchecked until right before merging -->
 - [ ] After merging: Close related issues
-- [ ] After merging: Notify the requestor of the issue. Post in `#bank-team` if the feature impacts HCB Ops
+- [ ] After merging: Notify the requestor of the issue. Post in `#hcb-team` if the feature impacts HCB Ops
 - [ ] After merging: Write and approve `#ship` message
 

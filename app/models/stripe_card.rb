@@ -131,10 +131,11 @@ class StripeCard < ApplicationRecord
   end
 
   def url
+    Airbrake.notify("StripeCard#url used")
     "/stripe_cards/#{hashid}"
   end
 
-  def popover_url
+  def popover_path
     "/stripe_cards/#{hashid}?frame=true"
   end
 

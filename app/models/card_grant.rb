@@ -116,16 +116,21 @@ class CardGrant < ApplicationRecord
   def topup!(amount_cents:, topped_up_by: User.find(sent_by_id))
     raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
 
+    custom_memo = "Topup of grant to #{user.name}"
+
     ActiveRecord::Base.transaction do
       update!(amount_cents: self.amount_cents + amount_cents)
-      DisbursementService::Create.new(
+      disbursement = DisbursementService::Create.new(
         source_event_id: event_id,
         destination_event_id: event_id,
-        name: "Topup of funds for grant to #{user.name}",
+        name: custom_memo,
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
       ).run
+
+      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
     end
   end
 
@@ -134,25 +139,26 @@ class CardGrant < ApplicationRecord
     cancel!(hcb_user, expired: true)
   end
 
+  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"))
+    raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
+    raise ArgumentError, "card grant should have a positive balance" if balance.negative?
+
+    disbursement = DisbursementService::Create.new(
+      source_event_id: event_id,
+      destination_event_id: event_id,
+      name: custom_memo,
+      amount: balance.amount,
+      source_subledger_id: subledger_id,
+      requested_by_id: requested_by.id,
+    ).run
+    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+  end
+
   def cancel!(canceled_by = User.find_by!(email: "bank@hackclub.com"), expired: false)
     raise ArgumentError, "Grant is already #{status}" unless active?
 
-    if balance > 0
-      custom_memo = "Return of funds from #{expired ? "expiration" : "cancellation"} of grant to #{user.name}"
-
-      disbursement = DisbursementService::Create.new(
-        source_event_id: event_id,
-        destination_event_id: event_id,
-        name: custom_memo,
-        amount: balance.amount,
-        source_subledger_id: subledger_id,
-        requested_by_id: canceled_by.id,
-      ).run
-
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
-
-    end
+    zero!(custom_memo: "Return of funds from #{expired ? "expiration" : "cancellation"} of grant to #{user.name}", requested_by: canceled_by) if balance > 0
 
     update!(status: :canceled) unless expired
     update!(status: :expired) if expired

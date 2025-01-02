@@ -4,15 +4,25 @@ HCB is a tool for hackers to hack on the real world, like GitHub, but for buildi
 
 ## Table of Contents
 - [Home](#)
-- [Admin tasks](./Admin%20Tasks.md)
-- [Development](./Development.md)
-- [Faking transactions in development](./Faking-transactions-in-development.md)
-- [Post mortems](./Post-mortems.md)
-- [Pull requests](./Pull-Requests-Practices.md)
+- [Development](./development.md)
+- Guides
+  - [Authentication](./guides/authentication.md)
+  - [Card transactions](./guides/card_transactions.md)
+  - [Fiscal sponsorship fees](./guides/fees.md)
+  - [Fronted transactions](./guides/fronted_transactions.md)
+  - [Fronted transactions](./guides/fronted_transactions.md)
+  - [Reimbursements in the transaction engine](./guides/reimbursements_transaction_engine.md)
+  - [Stripe payouts & fee reimbursements](./guides/stripe_payouts.md)
+  - [Stripe service fees](./guides/stripe_service_fees.md)
+  - [Transaction imports](./guides/transaction_imports.md)
+  - [Wires](./guides/wires.md)
+- [Admin tasks](./admin_tasks.md)
+- [Post-mortems](./postmortems.md)
+- [Pull requests](./pull_requests.md)
 
 ## Getting Started
 
-Lets get the HCB codebase set up on your computer! We have setup a easy and simple [guide](./Development.md) for you to get it running on your computer!
+Let's get the HCB codebase set up on your computer! We have setup a easy and simple [guide](./development.md) for you to get it running on your computer!
 
 ## HCB's Structure
 
@@ -75,6 +85,8 @@ HCB codes group together canonical transactions and canonical pending transactio
 #### Raw Transactions
 
 Raw transactions, for example [`RawStripeTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/raw_stripe_transaction.rb) or [`RawColumnTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/raw_column_transaction.rb), represent the information we receive from external services such as Stripe or Column about transactions made through them.
+
+For more extensive documentation on HCB's transaction engine, I recommend reading the guides linked above.
 
 ### Operations
 

@@ -13,7 +13,7 @@
   const visitorId = result.visitorId
 
   document.querySelector('#fingerprint').value = visitorId
-  document.querySelector('#device_info').value = $.ua.browser.name + ' ' + $.ua.version
+  document.querySelector('#device_info').value = $.ua.browser.name + ' ' + $.ua.browser.version
   document.querySelector('#os_info').value = $.ua.os.name + ' ' + $.ua.os.version
   document.querySelector('#timezone').value = result.components.timezone.value
 })()
