@@ -13,17 +13,17 @@
     </div>
   <% end %>
 
-  <details class="border rounded-lg">
-    <summary class="list-none flex items-center bg-gray-100 px-7 p-4" id="sponsor-preview">
+  <details id="sponsor-collapsible" open>
+    <summary class="list-none flex !hidden items-center bg-gray-100 px-7 p-4" id="sponsor-preview">
       <div class="flex flex-col">
-        <span class="font-bold text-lg">John Doe</span>
-        <span class="opacity-60 text-xs">John Doe</span>
+        <span class="font-bold text-lg" id="sponsor-name"></span>
+        <span class="opacity-60 text-xs" id="sponsor-email"></span>
       </div>
       <span class="muted ml-auto">Edit</span>
     </summary>
     <%= form.fields_for :sponsor_attributes do |form| %>
-      <div class="px-7 p-4 pt-0">
-        <p data-behavior="sponsor_update_warning" style="display: none;" class="flex items-center info line-height-3">
+      <div id="sponsor-form">
+        <p id="sponsor-warning" class="flex items-center info line-height-3" hidden>
           <%= inline_icon "important", size: 32, class: "mr1" %>
           You're currently updating a previous sponsor. This will also update all past invoices to them.
         </p>

@@ -70,11 +70,17 @@ $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
   }
 
   if (sponsor.id) {
-    $('#sponsor-preview').show()
-    $('[data-behavior~=sponsor_update_warning]').slideDown('fast')
+    document.getElementById('sponsor-preview').classList.remove("!hidden")
+    document.getElementById("sponsor-warning").hidden = false
+    document.getElementById('sponsor-collapsible').open = false
+    document.getElementById("sponsor-collapsible").setAttribute('class', 'border rounded-lg')
+    document.getElementById("sponsor-form").setAttribute('class', 'px-7 p-4 pt-0')
   } else {
-    $('#sponsor-preview').hide()
-    $('[data-behavior~=sponsor_update_warning]').slideUp('fast')
+    document.getElementById("sponsor-warning").hidden = true
+    document.getElementById('sponsor-preview').classList.add('!hidden')
+    document.getElementById('sponsor-collapsible').open = true
+    document.getElementById("sponsor-collapsible").setAttribute('class', '')
+    document.getElementById("sponsor-form").setAttribute('class', '')
   }
 
   const fields = [
@@ -88,6 +94,9 @@ $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
     'address_country',
     'id',
   ]
+
+  document.getElementById('sponsor-name').innerText = sponsor.name || ''
+  document.getElementById('sponsor-email').innerText = sponsor.contact_email || ''
 
   return fields.forEach(field =>
    $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
