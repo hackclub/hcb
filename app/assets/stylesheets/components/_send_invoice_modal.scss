@@ -1,0 +1,17 @@
+.invoice-tab {
+  @apply flex gap-2 items-center justify-center py-2 ml-0;
+
+  &:first-child {
+    margin-left: 0 !important;
+  }
+
+  .invoice-tab__number {
+    @apply w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold;
+    border: 2px solid;
+    border-color: $smoke;
+  }
+
+  &.active .invoice-tab__number {
+    border-color: $blue;
+  }
+}

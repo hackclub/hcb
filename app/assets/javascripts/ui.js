@@ -63,45 +63,45 @@ $(document).on('submit', '[data-behavior~=login]', function () {
   return localStorage.setItem('login_email', val)
 })
 
-$(document).on('change', '[name="invoice[sponsor]"]', function (e) {
-  let sponsor = $(e.target).children('option:selected').data('json')
-  if (!sponsor) {
-    sponsor = {}
-  }
+// $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
+//   let sponsor = $(e.target).children('option:selected').data('json')
+//   if (!sponsor) {
+//     sponsor = {}
+//   }
 
-  if (sponsor.id) {
-    document.getElementById('sponsor-preview').classList.remove("!hidden")
-    document.getElementById("sponsor-warning").hidden = false
-    document.getElementById('sponsor-collapsible').open = false
-    document.getElementById("sponsor-collapsible").setAttribute('class', 'border rounded-lg overflow-hidden')
-    document.getElementById("sponsor-form").setAttribute('class', 'px-7 p-4 pt-0')
-  } else {
-    document.getElementById("sponsor-warning").hidden = true
-    document.getElementById('sponsor-preview').classList.add('!hidden')
-    document.getElementById('sponsor-collapsible').open = true
-    document.getElementById("sponsor-collapsible").setAttribute('class', '')
-    document.getElementById("sponsor-form").setAttribute('class', '')
-  }
+//   if (sponsor.id) {
+//     document.getElementById('sponsor-preview').classList.remove("!hidden")
+//     document.getElementById("sponsor-warning").hidden = false
+//     document.getElementById('sponsor-collapsible').open = false
+//     document.getElementById("sponsor-collapsible").setAttribute('class', 'border rounded-lg overflow-hidden')
+//     document.getElementById("sponsor-form").setAttribute('class', 'px-7 p-4 pt-0')
+//   } else {
+//     document.getElementById("sponsor-warning").hidden = true
+//     document.getElementById('sponsor-preview').classList.add('!hidden')
+//     document.getElementById('sponsor-collapsible').open = true
+//     document.getElementById("sponsor-collapsible").setAttribute('class', '')
+//     document.getElementById("sponsor-form").setAttribute('class', '')
+//   }
 
-  const fields = [
-    'name',
-    'contact_email',
-    'address_line1',
-    'address_line2',
-    'address_city',
-    'address_state',
-    'address_postal_code',
-    'address_country',
-    'id',
-  ]
+//   const fields = [
+//     'name',
+//     'contact_email',
+//     'address_line1',
+//     'address_line2',
+//     'address_city',
+//     'address_state',
+//     'address_postal_code',
+//     'address_country',
+//     'id',
+//   ]
 
-  document.getElementById('sponsor-name').innerText = sponsor.name || ''
-  document.getElementById('sponsor-email').innerText = sponsor.contact_email || ''
+//   document.getElementById('sponsor-name').innerText = sponsor.name || ''
+//   document.getElementById('sponsor-email').innerText = sponsor.contact_email || ''
 
-  return fields.forEach(field =>
-   $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
-  )
-})
+//   return fields.forEach(field =>
+//    $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
+//   )
+// })
 
 const updateAmountPreview = function () {
   const amount = $('[name="invoice[item_amount]"]').val().replace(/,/g, '')
