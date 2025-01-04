@@ -3,18 +3,16 @@
     <div class="flex mb-4 gap-5">
       <div
         id="sponsor"
-        data-tabs-target="btn" 
+        data-tabs-target="btn"
         data-action="click->tabs#select"
-        class="invoice-tab"
-        >
+        class="invoice-tab">
         <div class="invoice-tab__number">1</div>
         <span>Sponsor details</span>
       </div>
-      <div 
+      <div
         id="invoice"
         data-tabs-target="btn" data-action="click->tabs#select"
-        class="invoice-tab"
-        >
+        class="invoice-tab">
         <div class="invoice-tab__number">2</div>
         <span>Invoice details</span>
       </div>
@@ -24,7 +22,13 @@
     <div data-tabs-target="tab" id="sponsor">
       <% if @event.sponsors.count > 0 %>
         <div class="field">
-          <select name="invoice[sponsor_id]" id="invoice_sponsor_id" class="max-w-full">
+          <select
+            data-invoice-form-target="selectSponsor"
+            data-action="change->invoice-form#selectSponsor"
+            name="invoice[sponsor_id]" 
+            id="invoice_sponsor_id" 
+            class="max-w-full"
+          >
             <option value="default" selected disabled>Select…</option>
             <option value="">+⠀New sponsor…</option>
             <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
@@ -34,7 +38,7 @@
         </div>
       <% end %>
       <details
-        id="sponsor-collapsible" 
+        id="sponsor-collapsible"
         data-invoice-form-target="sponsorCollapsible"
       >
         <summary class="list-none select-none flex !hidden items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors px-7 p-4" data-invoice-form-target="sponsorPreview">
@@ -45,7 +49,7 @@
           <span class="muted ml-auto">Edit</span>
         </summary>
         <%= form.fields_for :sponsor_attributes do |form| %>
-          <div id="sponsor-form">
+          <div data-invoice-form-target="sponsorForm">
             <p id="sponsor-warning" class="flex items-center info line-height-3" hidden>
               <%= inline_icon "important", size: 32, class: "mr1" %>
               You're currently updating a previous sponsor. This will also update all past invoices to them.
@@ -89,7 +93,20 @@
           </div>
         <% end %>
       </details>
+
+      <button 
+        type="button" 
+        id="invoice"
+        data-invoice-form-target="continueButton"
+        onclick="document.getElementById('invoice').click()"
+        class="btn bg-accent mt-4 w-full"
+        disabled
+      >
+        Continue
+        <%= inline_icon "view-forward" %>
+      </button>
     </div>
+
     <div data-tabs-target="tab" id="invoice">
       <%= form.label :item_amount, "Amount" %>
       <div class="field">

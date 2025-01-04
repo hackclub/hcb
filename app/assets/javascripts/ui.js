@@ -82,25 +82,6 @@ $(document).on('submit', '[data-behavior~=login]', function () {
 //     document.getElementById("sponsor-collapsible").setAttribute('class', '')
 //     document.getElementById("sponsor-form").setAttribute('class', '')
 //   }
-
-//   const fields = [
-//     'name',
-//     'contact_email',
-//     'address_line1',
-//     'address_line2',
-//     'address_city',
-//     'address_state',
-//     'address_postal_code',
-//     'address_country',
-//     'id',
-//   ]
-
-//   document.getElementById('sponsor-name').innerText = sponsor.name || ''
-//   document.getElementById('sponsor-email').innerText = sponsor.contact_email || ''
-
-//   return fields.forEach(field =>
-//    $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
-//   )
 // })
 
 const updateAmountPreview = function () {
