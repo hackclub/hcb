@@ -8,9 +8,8 @@ export default class extends Controller {
     'sponsorPreview',
     'sponsorPreviewName',
     'sponsorPreviewEmail',
-    'continueButton'
+    'continueButton',
   ]
-
 
   static fields = [
     'name',
@@ -24,7 +23,7 @@ export default class extends Controller {
     'id',
   ]
 
-  connect() { }
+  connect() {}
 
   selectSponsor() {
     this.continueButtonTarget.disabled = false
@@ -35,38 +34,47 @@ export default class extends Controller {
   }
 
   setValues() {
-    let sponsor = this.selectSponsorTarget.options[this.selectSponsorTarget.selectedIndex].dataset.json
+    let sponsor =
+      this.selectSponsorTarget.options[this.selectSponsorTarget.selectedIndex]
+        .dataset.json
     sponsor = JSON.parse(sponsor)
 
     this.sponsorPreviewNameTarget.innerText = sponsor.name || ''
     this.sponsorPreviewEmailTarget.innerText = sponsor.contact_email || ''
-  
+
     this.constructor.fields.forEach(field => {
-      const element = document.getElementById(`invoice_sponsor_attributes_${field}`)
+      const element = document.getElementById(
+        `invoice_sponsor_attributes_${field}`
+      )
       if (element) element.value = sponsor[field] || ''
     })
   }
 
   clearValues() {
     this.constructor.fields.forEach(field => {
-      const element = document.getElementById(`invoice_sponsor_attributes_${field}`)
+      const element = document.getElementById(
+        `invoice_sponsor_attributes_${field}`
+      )
       if (element) element.value = ''
     })
   }
 
   showNewSponsorCard() {
     this.sponsorCollapsibleTarget.open = true
-    this.sponsorCollapsibleTarget.setAttribute("class", "")
+    this.sponsorCollapsibleTarget.setAttribute('class', '')
     this.sponsorPreviewTarget.classList.add('!hidden')
-    this.sponsorFormTarget.setAttribute("class", "")
+    this.sponsorFormTarget.setAttribute('class', '')
     this.clearValues()
   }
 
   showSponsorCard() {
     this.sponsorCollapsibleTarget.open = false
-    this.sponsorCollapsibleTarget.setAttribute("class", "border rounded-lg overflow-hidden")
+    this.sponsorCollapsibleTarget.setAttribute(
+      'class',
+      'border rounded-lg overflow-hidden'
+    )
     this.sponsorPreviewTarget.classList.remove('!hidden')
-    this.sponsorFormTarget.setAttribute("class", "px-7 p-4 pt-0")
+    this.sponsorFormTarget.setAttribute('class', 'px-7 p-4 pt-0')
     this.setValues()
   }
 }
