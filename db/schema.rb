@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_01_144328) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_05_140328) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -875,6 +875,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_01_144328) do
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.string "short_name"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
+  end
+
+  create_table "exports", force: :cascade do |t|
+    t.text "type"
+    t.jsonb "parameters"
+    t.bigint "requested_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["requested_by_id"], name: "index_exports_on_requested_by_id"
   end
 
   create_table "fee_reimbursements", force: :cascade do |t|
@@ -2194,6 +2203,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_01_144328) do
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
+  add_foreign_key "exports", "users", column: "requested_by_id"
   add_foreign_key "fee_relationships", "events"
   add_foreign_key "fees", "canonical_event_mappings"
   add_foreign_key "g_suite_accounts", "g_suites"

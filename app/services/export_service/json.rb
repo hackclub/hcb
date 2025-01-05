@@ -9,7 +9,7 @@ module ExportService
       @public_only = public_only
     end
 
-    # NOTE: technicall not streaming at this time
+    # NOTE: technically not streaming at this time
     def run
       event.canonical_transactions.order("date desc").map do |ct|
         row(ct)

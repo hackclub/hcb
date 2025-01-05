@@ -42,8 +42,6 @@ class UserSession < ApplicationRecord
   has_encrypted :session_token
   blind_index :session_token
 
-  acts_as_paranoid
-
   belongs_to :user
   belongs_to :impersonated_by, class_name: "User", optional: true
   belongs_to :webauthn_credential, optional: true
@@ -53,8 +51,8 @@ class UserSession < ApplicationRecord
 
   scope :impersonated, -> { where.not(impersonated_by_id: nil) }
   scope :not_impersonated, -> { where(impersonated_by_id: nil) }
-  scope :expired, -> { with_deleted.where.not(deleted_at: nil).or(with_deleted.where("expiration_at <= ?", Time.now)) }
-  scope :not_expired, -> { where(deleted_at: nil).where("expiration_at > ?", Time.now) }
+  scope :expired, -> { where("expiration_at <= ?", Time.now) }
+  scope :not_expired, -> { where("expiration_at > ?", Time.now) }
   scope :recently_expired_within, ->(date) { expired.where("coalesce(deleted_at, expiration_at) >= ?", date) }
 
   after_create_commit do
