@@ -47,7 +47,7 @@ class ExportsController < ApplicationController
           if @export.requested_by.nil?
             redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event]) and return
           end
-          
+
           @export.save!
 
           ExportJob.perform_later(export_id: @export.id)
