@@ -1,0 +1,16 @@
+<% title "You’re currently signed in as #{current_user.name}" %>
+
+<main class="center max-width-3 card mt4 md-p3 mx-auto flex flex-col items-center gap-2">
+
+<%= avatar_for current_user, 64 %>
+
+<h1 class="mt-1">👋 Hey <%= current_user.first_name %>!</h1>
+
+<h2 class="medium max-width-2 mt-0">You’re currently signed into HCB, would you like to head to your dashboard?</h2>
+
+<div class="flex justify-center items-center flex-wrap">
+  <%= link_to "Sign out", logout_users_path, method: :delete, class: "btn bg-error m-1" %>
+  <%= link_to "Return to HCB", root_path, class: "btn bg-info h2 m-1" %>
+</div>
+
+</main>

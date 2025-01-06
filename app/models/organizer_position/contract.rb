@@ -9,7 +9,7 @@
 #  cosigner_email               :string
 #  deleted_at                   :datetime
 #  external_service             :integer
-#  purpose                      :integer          default(0)
+#  purpose                      :integer          default("fiscal_sponsorship_agreement")
 #  signed_at                    :datetime
 #  void_at                      :datetime
 #  created_at                   :datetime         not null
@@ -35,7 +35,7 @@ class OrganizerPosition
 
     validate :one_non_void_contract
 
-    after_create_commit :send_using_docuseal!
+    after_create_commit :send_using_docuseal!, unless: :sent_with_manual?
 
     after_create_commit do
       organizer_position_invite.update(is_signee: true)
@@ -57,7 +57,7 @@ class OrganizerPosition
       end
 
       event :mark_signed do
-        transitions from: :sent, to: :signed
+        transitions from: [:pending, :sent], to: :signed
       end
 
       event :mark_voided do
@@ -71,7 +71,8 @@ class OrganizerPosition
     end
 
     enum :external_service, {
-      docuseal: 0
+      docuseal: 0,
+      manual: 999 # used to backfill contracts
     }, prefix: :sent_with
 
     enum :purpose, {

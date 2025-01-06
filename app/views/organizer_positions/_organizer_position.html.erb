@@ -101,7 +101,7 @@
         <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.organizer_position_invite.organizer_position_contract.present? ? organizer_position.organizer_position_invite.organizer_position_contract.signed? ? "Contract signee" : "Pending signature" : "No contract signature") %>">
           <div class="warning">
             <% if organizer_position.organizer_position_invite.organizer_position_contract&.signed? %>
-              <%= link_to organizer_position.organizer_position_invite.organizer_position_contract.document, class: "success", data: { turbo_frame: "_top" } do %>
+              <%= link_to organizer_position.organizer_position_invite.organizer_position_contract.document || event_documents_path(event: organizer_position.event), class: "success", data: { turbo_frame: "_top" } do %>
                 <%= inline_icon("docs-positive", size: 24) %>
               <% end %>
             <% elsif organizer_position.organizer_position_invite.organizer_position_contract&.present? %>

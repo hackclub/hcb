@@ -5,7 +5,6 @@
 # Table name: user_sessions
 #
 #  id                       :bigint           not null, primary key
-#  deleted_at               :datetime
 #  device_info              :string
 #  expiration_at            :datetime         not null
 #  fingerprint              :string
@@ -14,7 +13,6 @@
 #  latitude                 :decimal(, )
 #  longitude                :decimal(, )
 #  os_info                  :string
-#  peacefully_expired       :boolean
 #  session_token_bidx       :string
 #  session_token_ciphertext :text
 #  signed_out_at            :datetime
@@ -42,8 +40,6 @@ class UserSession < ApplicationRecord
   has_encrypted :session_token
   blind_index :session_token
 
-  acts_as_paranoid
-
   belongs_to :user
   belongs_to :impersonated_by, class_name: "User", optional: true
   belongs_to :webauthn_credential, optional: true
@@ -53,9 +49,9 @@ class UserSession < ApplicationRecord
 
   scope :impersonated, -> { where.not(impersonated_by_id: nil) }
   scope :not_impersonated, -> { where(impersonated_by_id: nil) }
-  scope :expired, -> { with_deleted.where.not(deleted_at: nil).or(with_deleted.where("expiration_at <= ?", Time.now)) }
-  scope :not_expired, -> { where(deleted_at: nil).where("expiration_at > ?", Time.now) }
-  scope :recently_expired_within, ->(date) { expired.where("coalesce(deleted_at, expiration_at) >= ?", date) }
+  scope :expired, -> { where("expiration_at <= ?", Time.now) }
+  scope :not_expired, -> { where("expiration_at > ?", Time.now) }
+  scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
 
   after_create_commit do
     if fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
@@ -79,6 +75,10 @@ class UserSession < ApplicationRecord
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
     update_columns(last_seen_at: Time.now)
+  end
+
+  def expired?
+    expiration_at <= Time.now
   end
 
   private
