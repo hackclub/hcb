@@ -155,7 +155,7 @@ class Grant < ApplicationRecord
   private
 
   def create_user
-    self.recipient ||= User.find_or_create_by!(email: self.email)
+    self.recipient ||= User.create_with(creation_method: :grant).find_or_create_by!(email: self.email)
   end
 
 end

@@ -54,7 +54,7 @@ class Fee < ApplicationRecord
   end
 
   def waived?
-    reason != :revenue
+    reason != "revenue"
   end
 
 end

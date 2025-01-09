@@ -6,28 +6,26 @@ module DonationService
   module Export
     class Json
       def initialize(event_id:)
-        @event_id = event_id
+        @event = Event.find(event_id)
       end
 
       def run
-        event.donations.not_pending.order("created_at desc").map do |donation|
+        @event.donations.not_pending.order("created_at desc").map do |donation|
           row(donation)
         end.to_json
       end
 
       private
 
-      def event
-        @event ||= Event.find(@event_id)
-      end
-
-      def row(ct)
+      def row(d)
         {
-          status: ct.aasm_state,
-          created_at: ct.created_at,
-          url: "https://hcb.hackclub.com/donations/#{ct.id}/",
-          name: ct.name,
-          amount: ct.amount
+          status: d.aasm_state,
+          created_at: d.created_at,
+          url: Rails.application.routes.url_helpers.url_for(d.local_hcb_code),
+          name: d.name,
+          email: d.email,
+          amount_cents: d.amount,
+          recurring: d.recurring?
         }
       end
 

@@ -67,7 +67,8 @@ class Event < ApplicationRecord
 
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   validates :donation_thank_you_message, length: { maximum: 500 }
-  validates :short_name, length: { maximum: 16 }, allow_blank: true
+  MAX_SHORT_NAME_LENGTH = 16
+  validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
   include AASM
   include PgSearch::Model
@@ -224,6 +225,7 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :g_suites
@@ -318,6 +320,7 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
+  validate :contract_signed, unless: :demo_mode?
 
   validates :name, presence: true
   validates :slug, presence: true, format: { without: /\s/ }
@@ -629,11 +632,13 @@ class Event < ApplicationRecord
     raise ArgumentError.new("This method requires a stripe_card_logo to be attached.") unless stripe_card_logo.attached?
 
     ActiveRecord::Base.transaction do
+      (attachment_changes["stripe_card_logo"]&.attachable || stripe_card_logo.blob).open do |tempfile|
+        converted = ImageProcessing::MiniMagick.source(tempfile.path).convert!("png")
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :black, event: self).run
+        converted.rewind
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :white, event: self).run
+      end
       stripe_card_personalization_designs.update(stale: true)
-      file = attachment_changes["stripe_card_logo"]&.attachable || StringIO.new(stripe_card_logo.blob.open { |f| f.read })
-      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :black, event: self).run
-      file.rewind
-      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :white, event: self).run
     end
   rescue Stripe::InvalidRequestError => e
     stripe_card_logo.delete
@@ -660,7 +665,7 @@ class Event < ApplicationRecord
     public_reimbursement_page_enabled && plan.reimbursements_enabled?
   end
 
-  def short_name(length: 16)
+  def short_name(length: MAX_SHORT_NAME_LENGTH)
     return name if length >= name.length
 
     self[:short_name] || name[0...length]
@@ -699,6 +704,12 @@ class Event < ApplicationRecord
     return if can_open_demo_mode? demo_mode_limit_email
 
     errors.add(:demo_mode, "limit reached for user")
+  end
+
+  def contract_signed
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none?
+
+    errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
 
   def sum_fronted_amount(pts)

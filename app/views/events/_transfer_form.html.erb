@@ -13,11 +13,6 @@
         <strong>Mailed check</strong>
       <% end %>
 
-      <%= link_to new_event_paypal_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-        <%= inline_icon "paypal", size: 28 %>
-        <strong>PayPal</strong>
-      <% end %>
-
       <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
         <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
           <%= inline_icon "web", size: 28 %>
@@ -32,11 +27,18 @@
       <% end %>
 
       <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
-        <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", style: "border: 1px dashed #ff8c37", data: { turbo: true } do %>
+        <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
           <%= inline_icon "card", size: 28 %>
-          <strong>Grant <span class="warning regular">(beta)</span></strong>
+          <strong>Grant</strong>
           <small>A grant sent through an HCB card.</small>
         <% end %>
+      <% end %>
+
+      <%= tag.div class: "text-decoration-none btn--form-option opacity-75" do %>
+        <%= inline_icon "paypal", size: 28 %>
+        <strong>PayPal</strong>
+        <div class="badge bg-warning m1 mt0" style="width: fit-content;">Unavailable</div>
+        <small>Due to integration issues, transfers via PayPal are currently unavailable.</small>
       <% end %>
     </div>
   </fieldset>

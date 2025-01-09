@@ -248,6 +248,18 @@ class Wire < ApplicationRecord
     end
   end
 
+  # View https://github.com/hackclub/hcb/issues/9037 for context. Limited in India only, at the moment.
+
+  RESTRICTED_PURPOSE_CODES = {
+    "IN": ["P1302", "P1303", "P1304", "P1499", "P0099", "P0001", "P1011", "P1099"]
+  }.freeze
+
+  validate on: :create do
+    if recipient_information[:purpose_code].present? && RESTRICTED_PURPOSE_CODES[recipient_country.to_sym]&.include?(recipient_information[:purpose_code])
+      errors.add(:purpose_code, "can not be used on HCB, please use a more specific purpose code or contact us.")
+    end
+  end
+
   validate on: :create do
     if !user.admin? && usd_amount_cents < (Event.find(event.id).minimumn_wire_amount_cents)
       errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimumn_wire_amount_cents} (USD).")

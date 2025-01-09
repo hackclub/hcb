@@ -14,6 +14,10 @@ class PublicActivity::Activity
       .or(where(recipient_type: "Event", recipient_id: event.id))
   }
 
+  scope :before, ->(time) {
+    where(created_at: ..time)
+  }
+
   include Turbo::Broadcastable
 
   include PublicIdentifiable

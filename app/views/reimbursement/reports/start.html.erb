@@ -42,7 +42,7 @@
     <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true %>
   </div>
 
-  <%= invisible_captcha :subtitle, :topic %>
+  <%= invisible_captcha :subtitle %>
 
   <%= form.hidden_field :event_id, value: @event.id %>
 

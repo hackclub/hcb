@@ -12,12 +12,14 @@ class LoginsController < ApplicationController
 
   # view to log in
   def new
+    render "users/logout" if current_user
+
     @prefill_email = params[:email] if params[:email].present?
   end
 
   # when you submit your email
   def create
-    user = User.find_or_create_by!(email: params[:email])
+    user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
     login = user.logins.create
     cookies.signed["browser_token_#{login.hashid}"] = { value: login.browser_token, expires: Login::EXPIRATION.from_now }
 

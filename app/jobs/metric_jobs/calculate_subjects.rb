@@ -10,13 +10,17 @@ module MetricJobs
 
     def perform
       metric_classes.each do |metric_class|
-        metric_class.subject_model.all.find_each do |record|
-          MetricJobs::CalculateSingle.perform_later(metric_class, record)
-        end
+        queue_calculations_for(metric_class)
       end
     end
 
     private
+
+    def queue_calculations_for(metric_class)
+      metric_class.subject_model.all.find_each do |record|
+        MetricJobs::CalculateSingle.perform_later(metric_class, record)
+      end
+    end
 
     def metric_classes
       Metric.descendants.select do |c|

@@ -70,13 +70,18 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex justify-end">
-        <% if !user.payout_method.present? || report.payout_holding&.failed? %>
+        <% if !user.payout_method.present? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer) %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
-              <%= report.payout_holding&.failed? ? "Edit" : "Add" %> Payout Information
+              <%= report.payout_holding&.failed? || user.payout_method.present? ? "Edit" : "Add" %> Payout Information
               <% button_hint = capture do %>
-                <span class="bold">Your next step:</span> before you can be reimbursed, you need to provide HCB your payout information.
+                <span class="bold">Your next step:</span> before you can be reimbursed, you need to
+                <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
+                  update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                <% else %>
+                  provide HCB your payout information.
+                <% end %>
               <% end %>
             <% end %>
           <% elsif admin_signed_in? %>
@@ -84,7 +89,12 @@
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s Payout Information
               <% button_hint = capture do %>
-                <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
+                <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
+                <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
+                  update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                <% else %>
+                  add their payout information.
+                <% end %>
               <% end %>
             <% end %>
           <% elsif !user.payout_method.present? %>

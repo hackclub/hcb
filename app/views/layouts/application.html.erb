@@ -122,7 +122,6 @@
 
     <%# LET THERE BE SNOW %>
     <% if winter? %>
-      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
       <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
     <% end %>
 

@@ -135,10 +135,6 @@ class EventPolicy < ApplicationPolicy
     admin_or_user? && record.plan.reimbursements_enabled?
   end
 
-  def expensify?
-    admin_or_user?
-  end
-
   def donation_overview?
     (is_public || admin_or_user?) && record.approved? && record.plan.donations_enabled?
   end

@@ -8,45 +8,7 @@
   Promotions &amp; perks
 </h1>
 
-<% if @event.hackathon? && (@event.country_US? || @event.country_CA?) || Flipper.enabled?(:hackathon_grant, @event) %>
-  <div class="card pb0 mb3 promo-hackathon-grant" id="hackathon-grant" style="border: 2px solid #ec3750">
-    <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 p2 my0 flex flex-col items-start smoke">
-        <span class="badge bg-success m0 mb1">New!</span>
-        💵 Hackathon Grant
-      </h3>
-      <%= link_to "Apply",
-        @perks_available ? "https://hackclub.com/hackathons/grant/" : root_path,
-        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
-        "aria-label" => "Get notified when grant applications are open.",
-        target: :_blank %>
-    </div>
-
-    <p>
-      Hack Club is offering <strong>$500</strong> grants to in-person high school hackathons until December 31st, 2024. <strong>Applications are now open.</strong>
-    </p>
-  </div>
-<% end %>
-
 <% if @event.robotics_team? %>
-  <div class="card pb0 mb3 promo-bin" id="bin">
-    <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 p2 my0 flex flex-col items-start smoke">
-        🗑️ The Bin: Electronics Starter Kits
-      </h3>
-      <%= link_to "Join",
-        @perks_available ? "https://hackclub.com/bin/" : root_path,
-        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
-        target: :_blank %>
-    </div>
-    <p>
-      Now that build season is over, get your club members learning electronics early for next year. The Bin is a free beginner hardware kit program ideal for FIRST teams!
-    </p>
-    <p>
-      Rummage for parts, design your project in the online editor, and get the parts shipped to you for free paid for by donation. All FIRST club members in high school are eligible.
-    </p>
-  </div>
-
   <div class="card pb0 mb3 promo-onboard" id="bin">
     <div class="card__banner card__banner--top flex justify-between items-center">
       <h3 class="h1 p2 my0 flex items-start smoke justify-center">

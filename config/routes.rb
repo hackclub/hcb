@@ -114,7 +114,6 @@ Rails.application.routes.draw do
 
       # Logout
       delete "logout", to: "users#logout"
-      delete "logout_all", to: "users#logout_all"
       delete "logout_session", to: "users#logout_session"
       delete "revoke/:id", to: "users#revoke_oauth_application", as: "revoke_oauth_application"
 
@@ -132,6 +131,8 @@ Rails.application.routes.draw do
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"
       get "admin", to: "users#edit_admin"
+
+      delete "logout_all", to: "users#logout_all"
 
       post "impersonate"
       post "unimpersonate"
@@ -286,6 +287,12 @@ Rails.application.routes.draw do
     member do
       post "toggle_signee_status"
       post "change_position_role"
+    end
+  end
+
+  resources :organizer_position_contracts, only: [:create], path: "contracts" do
+    member do
+      post "void"
     end
   end
 
@@ -483,7 +490,7 @@ Rails.application.routes.draw do
 
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
-  get "faq", to: "static_pages#faq"
+  get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "audit", to: "admin#audit"
 
@@ -595,6 +602,7 @@ Rails.application.routes.draw do
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
   post "increase/webhook", to: "increase#webhook"
+  post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
 
   get "negative_events", to: "admin#negative_events"
@@ -674,7 +682,6 @@ Rails.application.routes.draw do
     get "transfers"
     get "statements"
     get "promotions"
-    get "expensify"
     get "reimbursements"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow

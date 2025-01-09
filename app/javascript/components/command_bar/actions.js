@@ -161,15 +161,15 @@ export const initalActions = [
     icon: <Icon glyph="settings" size={16} />,
     priority: Priority.HIGH,
   },
-  {
-    id: 'change_theme',
-    name: 'Change Theme',
-    keywords: 'dark light', // eslint-disable-next-line no-undef
-    perform: () => BK.toggleDark(),
+  ...['light', 'dark', 'system'].map(theme => ({
+    id: `${theme}-theme`,
+    name: `Set theme to ${theme}`,
+    keywords: theme, // eslint-disable-next-line no-undef
+    perform: () => BK.setDark(theme),
     section: 'Actions',
     icon: <Icon glyph="idea" size={16} />,
     priority: Priority.HIGH,
-  },
+  })),
   {
     id: 'signout',
     name: 'Sign Out',

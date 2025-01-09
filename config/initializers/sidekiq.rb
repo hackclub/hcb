@@ -4,6 +4,11 @@ schedule_file = "config/schedule.yml"
 
 Sidekiq.configure_server do |config|
   config.redis = { ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+
+  config.capsule("throttled") do |capsule|
+    capsule.queues = %w[wrapped]
+    capsule.concurrency = 3
+  end
 end
 
 Sidekiq.configure_client do |config|

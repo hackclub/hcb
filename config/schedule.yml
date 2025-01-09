@@ -107,10 +107,6 @@ stripe_card_nightly_job:
   cron: "0 7 * * *" # run every 1 day, after import
   class: "StripeCardJob::Nightly"
 
-128_collective_fund_distribute_monthly_job:
-  cron: "0 0 1 * *" # run first day of each month
-  class: "DisbursementJob::Distribute128CollectiveFund"
-
 blazer_checks_nightly_job:
   cron: "0 8 * * *"
   class: "BlazerChecksJob"
@@ -152,10 +148,22 @@ user_sync_to_loops_job:
   cron: "0 7 * * *" # run every 1 day
   class: "User::SyncToLoopsJob"
 
+update_teenager_column_job:
+  cron: "0 7 * * *" # run every 1 day
+  class: "User::UpdateTeenagerColumnJob"
+
 card_grant_expiration_job:
   cron: "0 7 * * *" # run every 1 day
   class: "CardGrant::ExpirationJob"
 
+card_grant_zero_job:
+  cron: "0 7 * * *" # run every 1 day
+  class: "CardGrant::ZeroJob"
+
 stripe_service_fee_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "StripeServiceFeeJob"
+
+user_seen_at_history_snapshot_job:
+  cron: "0,30 * * * *" # twice every hour
+  class: "User::SeenAtHistory::SnapshotJob"

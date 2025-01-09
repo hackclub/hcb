@@ -1141,10 +1141,11 @@ class AdminController < ApplicationController
     @per = params[:per] || 100
     @q = params[:q].presence
     @user_id = params[:user_id]
+    @to = params[:to].presence
 
     messages = Ahoy::Message.all
     messages = messages.where(user: User.find(@user_id)) if @user_id.present?
-
+    messages = messages.where(to: @to) if @to
     messages = messages.search_subject(@q) if @q
 
     @count = messages.count
@@ -1325,10 +1326,6 @@ class AdminController < ApplicationController
         airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
-      when :pending_power_hour_airtable
-        airtable_task_size :power_hour
-      when :pending_arcade_airtable
-        airtable_task_size :arcade
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions

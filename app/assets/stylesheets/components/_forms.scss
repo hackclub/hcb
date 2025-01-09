@@ -66,6 +66,10 @@ input[type='file'] {
   max-width: 100%;
 }
 
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
 .field--fileupload {
   display: flex;
   gap: 0.5rem;

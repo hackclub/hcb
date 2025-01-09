@@ -49,6 +49,8 @@ module Reimbursement
       end
     end
 
+    validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
+
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
 
@@ -98,7 +100,8 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts?
+            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts? &&
+              user.payout_method.class != User::PayoutMethod::PaypalTransfer
           end
         end
         after do

@@ -9,7 +9,7 @@
     <% end %>
 
     <% @money_in.each do |transaction| %>
-      <a href="<%= transaction.local_hcb_code.url %>" class="homepage-transaction <%= Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>" data-behavior="modal_trigger" data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
+      <a href="<%= url_for(transaction.local_hcb_code) %>" class="homepage-transaction <%= Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>" data-behavior="modal_trigger" data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
         <div style="min-width:0;flex:1">
           <span class="truncate block"><%= transaction_memo(transaction) %></span>
           <div class="text-sm text-gray-500">
@@ -27,9 +27,9 @@
       </a>
 
       <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= transaction.local_hcb_code.url %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount) %>">
-          <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount), external_link: transaction.local_hcb_code.url) %>
-          <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_url, loading: :lazy do %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount) %>">
+          <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount), external_link: url_for(transaction.local_hcb_code)) %>
+          <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_path, loading: :lazy do %>
             <%= render partial: "application/loading_container" %>
           <% end %>
         </section>
@@ -47,7 +47,7 @@
     <% end %>
 
     <% @money_out.each do |transaction| %>
-      <a href="<%= transaction.local_hcb_code.url %>" class="homepage-transaction <%= Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>" data-behavior="modal_trigger" data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
+      <a href="<%= url_for(transaction.local_hcb_code) %>" class="homepage-transaction <%= Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>" data-behavior="modal_trigger" data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
         <div style="min-width:0;flex:1">
           <span class="truncate block"><%= transaction_memo(transaction) %></span>
           <div class="text-sm text-gray-500">
@@ -65,9 +65,9 @@
       </a>
 
       <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= transaction.local_hcb_code.url %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount) %>">
-          <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount), external_link: transaction.local_hcb_code.url) %>
-          <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_url, loading: :lazy do %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount) %>">
+          <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount), external_link: url_for(transaction.local_hcb_code)) %>
+          <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_path, loading: :lazy do %>
             <%= render partial: "application/loading_container" %>
           <% end %>
         </section>

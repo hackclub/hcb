@@ -9,6 +9,8 @@
     <%= csp_meta_tag %>
     <meta name="theme-color" content="#f9fafc">
 
+    <%= yield :head if content_for?(:head) %>
+
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
 
     <meta name="format-detection" content="telephone=no">

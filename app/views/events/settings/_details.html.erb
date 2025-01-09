@@ -56,13 +56,13 @@
     <div class="event_settings__content">
       <h2><%= @event.name %></h2>
       <div class="w-full">
-        <% if @event.name.length > 16 %>
+        <% if @event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
           <div class="field flex-1">
             <%= form.label :short_name, "Nickname" %>
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
             </p>
-            <%= form.text_field :short_name, placeholder: "#{@event.name[0...16]}...", disabled: !policy(@event).update? %>
+            <%= form.text_field :short_name, placeholder: "#{@event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: !policy(@event).update? %>
           </div>
         <% end %>
         <div class="field flex-1">

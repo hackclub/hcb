@@ -34,7 +34,7 @@ gem "faraday" # web requests
 
 gem "increase", "~> 0.3.3"
 gem "stripe", "11.7.0"
-gem "plaid", "~> 33.0"
+gem "plaid", "~> 34.0"
 gem "yellow_pages", github: "hackclub/yellow_pages", ref: "4711379"
 
 gem "aws-sdk-s3", require: false
@@ -43,7 +43,7 @@ gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
 gem "twilio-ruby" # SMS notifications
 
-gem "google-apis-admin_directory_v1", "~> 0.58.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.60.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -52,13 +52,13 @@ gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fi
 
 gem "aasm" # state machine
 
-gem "paper_trail", "~> 15.2.0" # track changes to models
+gem "paper_trail", "~> 16.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.10.2" # enables soft deletions
 
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
-gem "active_storage_validations", "1.3.0" # file validations
+gem "active_storage_validations", "1.3.5" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
@@ -159,7 +159,7 @@ group :development, :test do
   gem "rubocop-rails", "~> 2.27"
   gem "relaxed-rubocop"
 
-  gem "rspec-rails", "~> 7.0.1"
+  gem "rspec-rails", "~> 7.1.0"
 
   # Lets you set a breakpoint with a REPL using binding.pry
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"

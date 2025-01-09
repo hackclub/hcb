@@ -3,9 +3,7 @@
 class UsersController < ApplicationController
   skip_before_action :signed_in_user, only: [:webauthn_options]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
-  skip_after_action :verify_authorized, only: [:logout_all,
-                                               :logout_session,
-                                               :revoke_oauth_application,
+  skip_after_action :verify_authorized, only: [:revoke_oauth_application,
                                                :edit_address,
                                                :edit_payout,
                                                :impersonate,
@@ -72,19 +70,19 @@ class UsersController < ApplicationController
   end
 
   def logout_all
-    sign_out_of_all_sessions
-    redirect_back_or_to security_user_path(current_user), flash: { success: "Success" }
+    user = User.friendly.find(params[:id])
+    authorize user
+    sign_out_of_all_sessions(user)
+    redirect_back_or_to security_user_path(user), flash: { success: "Success" }
   end
 
   def logout_session
     begin
       session = UserSession.find(params[:id])
-      if session.user.id != current_user.id
-        return redirect_back_or_to settings_security_path, flash: { error: "Error deleting the session" }
-      end
+      authorize session.user
 
-      session.destroy!
-      flash[:success] = "Deleted session!"
+      session.update(signed_out_at: Time.now, expiration_at: Time.now)
+      flash[:success] = "Logged out of session!"
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "Session is not found"
     end
@@ -139,6 +137,7 @@ class UsersController < ApplicationController
     set_onboarding
     show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+    @sessions = @sessions.not_expired
     @oauth_authorizations = @user.api_tokens
                                  .where.not(application_id: nil)
                                  .select("application_id, MAX(api_tokens.created_at) AS created_at, MIN(api_tokens.created_at) AS first_authorized_at, COUNT(*) AS authorization_count")
@@ -149,9 +148,8 @@ class UsersController < ApplicationController
 
     @expired_sessions = @user
                         .user_sessions
-                        .with_deleted
+                        .recently_expired_within(1.week.ago)
                         .not_impersonated
-                        .where("deleted_at >= ? OR (expiration_at >= ? AND expiration_at < ?)", 1.week.ago, 1.week.ago, Time.now.utc)
                         .order(created_at: :desc)
 
     authorize @user

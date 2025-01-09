@@ -33,7 +33,7 @@
       <div data-tabs-target="tab" id="users">
         <div class="menu__divider"></div>
         <% @all_unique_cardholders.each do |cardholder| %>
-          <%= link_to upsert_query_params(user: cardholder), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @user_id.to_i == cardholder.user.id}", data: { turbo_prefetch: "false" } do %>
+          <%= link_to upsert_query_params(user: cardholder.user), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @user_id.to_i == cardholder.user.id}", data: { turbo_prefetch: "false" } do %>
             <div class="avatar-grow line-height-0 mr1">
               <%= avatar_for cardholder.user, 18 %>
             </div>

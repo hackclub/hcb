@@ -107,7 +107,7 @@
       selected: local_assigns[:selected] == :google_workspace if organizer_signed_in? %>
     <%= dock_item "Documents",
       event_documents_path(event_id: @event.slug),
-      tooltip: "View legal documents, financial statements, and FAQ",
+      tooltip: "View legal documents and financial statements",
       icon: "docs",
       selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
     <%= dock_item "Settings",
