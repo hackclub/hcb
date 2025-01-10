@@ -63,11 +63,6 @@ class HcbCode < ApplicationRecord
     receipts "Has receipt?" do |receipts| receipts.exists? end
   end
 
-  def url
-    Airbrake.notify("HcbCode#url used")
-    "/hcb/#{hashid}"
-  end
-
   def popover_path
     "/hcb/#{hashid}?frame=true"
   end

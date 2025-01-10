@@ -155,7 +155,7 @@
           <div class="<%= "btn-group btn-group--no-wrap" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
             <%= form.label "file_#{ct.local_hcb_code.hashid}", class: "btn", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>
-              Upload receipt
+              <%= ct.local_hcb_code.receipts.any? ? "Upload another receipt" : "Upload receipt" %>
             <% end %>
 
             <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_12_18_101200) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -1286,6 +1286,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_18_101200) do
     t.datetime "updated_at", null: false
     t.string "subject_type"
     t.bigint "subject_id"
+    t.index ["subject_type", "subject_id", "type"], name: "index_metrics_on_subject_type_and_subject_id_and_type", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
   end
 
@@ -1316,6 +1317,23 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_18_101200) do
     t.datetime "updated_at", null: false
     t.boolean "trusted", default: false, null: false
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
+  end
+
+  create_table "organizer_position_contracts", force: :cascade do |t|
+    t.bigint "document_id"
+    t.bigint "organizer_position_invite_id", null: false
+    t.string "aasm_state"
+    t.datetime "signed_at"
+    t.datetime "void_at"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "external_service"
+    t.string "external_id"
+    t.string "cosigner_email"
+    t.integer "purpose", default: 0
+    t.index ["document_id"], name: "index_organizer_position_contracts_on_document_id"
+    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_ab1516f568"
   end
 
   create_table "organizer_position_deletion_requests", force: :cascade do |t|
@@ -1995,6 +2013,15 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_18_101200) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_seen_at_histories", force: :cascade do |t|
+    t.bigint "user_id"
+    t.datetime "period_start_at", null: false
+    t.datetime "period_end_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_seen_at_histories_on_user_id"
+  end
+
   create_table "user_sessions", force: :cascade do |t|
     t.bigint "user_id"
     t.datetime "created_at", null: false
@@ -2004,9 +2031,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_18_101200) do
     t.string "os_info"
     t.string "timezone"
     t.string "ip"
-    t.datetime "deleted_at", precision: nil
     t.bigint "impersonated_by_id"
-    t.boolean "peacefully_expired"
     t.decimal "latitude"
     t.decimal "longitude"
     t.bigint "webauthn_credential_id"
@@ -2014,6 +2039,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_18_101200) do
     t.text "session_token_ciphertext"
     t.string "session_token_bidx"
     t.datetime "last_seen_at"
+    t.datetime "signed_out_at"
     t.index ["impersonated_by_id"], name: "index_user_sessions_on_impersonated_by_id"
     t.index ["session_token_bidx"], name: "index_user_sessions_on_session_token_bidx"
     t.index ["user_id"], name: "index_user_sessions_on_user_id"
@@ -2249,6 +2275,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_12_18_101200) do
   add_foreign_key "transactions", "invoice_payouts"
   add_foreign_key "user_email_updates", "users"
   add_foreign_key "user_email_updates", "users", column: "updated_by_id"
+  add_foreign_key "user_seen_at_histories", "users"
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
   add_foreign_key "webauthn_credentials", "users"

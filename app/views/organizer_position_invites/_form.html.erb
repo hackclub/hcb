@@ -63,15 +63,20 @@
     </div>
   <% end %>
 
-  <% admin_tool("mb2 flex g1 w-fit") do %>
-    <div class="field field--select w-100 m0">
+  <% admin_tool("mt2 mb2 flex g1") do %>
+    <div class="field field--select w-100">
+      <h3 class="mb2 mt1">Contracts</h3>
       <%= form.select :is_signee,
-                      [
-                        ["📃 Contract Signee", "true"],
-                        ["❌ Hasn't Signed The Contract", "false"],
-                      ],
-                      { include_blank: "Select a contract signee status" },
-                      { required: true, style: "width: 100%" } %>
+          [
+            ["📃 Contract Signee", "true"],
+            ["❌ Won't sign the contract", "false"],
+          ],
+          { include_blank: "Select a contract signee status" },
+          { required: true, style: "width: 100%" } %>
+
+      <% if Flipper.enabled?(:organizer_position_contracts_2025_01_03, @event || invite.event) %>
+        <%= form.email_field :cosigner_email, placeholder: "Cosignee email (required if under 18)", class: "w-100 mt1" %>
+      <% end %>
     </div>
   <% end %>
 

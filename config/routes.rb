@@ -290,6 +290,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :organizer_position_contracts, only: [:create], path: "contracts" do
+    member do
+      post "void"
+    end
+  end
+
   resources :organizer_positions, only: [:destroy], as: "organizers" do
     member do
       post "set_index"
@@ -596,6 +602,7 @@ Rails.application.routes.draw do
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
   post "increase/webhook", to: "increase#webhook"
+  post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
 
   get "negative_events", to: "admin#negative_events"

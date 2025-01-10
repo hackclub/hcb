@@ -77,6 +77,7 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :sender, class_name: "User"
 
   belongs_to :organizer_position, optional: true
+  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract"
 
   validate :not_already_organizer
   validate :not_already_invited, on: :create
@@ -87,6 +88,10 @@ class OrganizerPositionInvite < ApplicationRecord
 
   after_create_commit do
     user == sender ? accept : deliver
+  end
+
+  def organizer_position_contract
+    organizer_position_contracts.last
   end
 
   def deliver

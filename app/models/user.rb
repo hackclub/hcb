@@ -79,6 +79,7 @@ class User < ApplicationRecord
   has_many :login_codes
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_positions
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
   has_many :organizer_position_deletion_requests, inverse_of: :closed_by

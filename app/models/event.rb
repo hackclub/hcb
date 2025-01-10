@@ -225,6 +225,7 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :g_suites
@@ -319,6 +320,7 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
+  validate :contract_signed, unless: :demo_mode?
 
   validates :name, presence: true
   validates :slug, presence: true, format: { without: /\s/ }
@@ -702,6 +704,12 @@ class Event < ApplicationRecord
     return if can_open_demo_mode? demo_mode_limit_email
 
     errors.add(:demo_mode, "limit reached for user")
+  end
+
+  def contract_signed
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none?
+
+    errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
 
   def sum_fronted_amount(pts)

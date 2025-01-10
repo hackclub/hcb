@@ -18,6 +18,10 @@ class User
       validates_presence_of :recipient_email
       after_save_commit -> { Reimbursement::PayoutHolding.where(report: user.reimbursement_reports).failed.each(&:mark_settled!) }
 
+      validate do
+        errors.add(:base, "Due to integration issues, transfers via PayPal are currently unavailable. Please choose another payout method.")
+      end
+
       def kind
         "paypal_transfer"
       end

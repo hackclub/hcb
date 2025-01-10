@@ -163,3 +163,7 @@ card_grant_zero_job:
 stripe_service_fee_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "StripeServiceFeeJob"
+
+user_seen_at_history_snapshot_job:
+  cron: "0,30 * * * *" # twice every hour
+  class: "User::SeenAtHistory::SnapshotJob"

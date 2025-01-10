@@ -16,7 +16,7 @@
       <%= link_to unimpersonate_user_path(@user, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Exit this impersonated session" do %>
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
-    <% elsif !session.deleted? %>
+    <% elsif !session.expired? %>
       <%= link_to logout_session_users_path(user: @user, id: session.id), data: { turbo_method: "delete", turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this session" do %>
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
@@ -47,8 +47,10 @@
   </span>
 
   <p class="regular italic muted text-sm m-0 mt-1">
-    <% if session.deleted? %>
-      Expired <%= local_time_ago session.deleted_at %>
+    <% if session.signed_out_at.present? %>
+      Signed out at <%= local_time_ago session.signed_out_at %>
+    <% elsif session.expired? %>
+      Expired <%= local_time_ago session.expiration_at %>
     <% else %>
       Logged in <%= local_time_ago session.created_at %>
     <% end %>

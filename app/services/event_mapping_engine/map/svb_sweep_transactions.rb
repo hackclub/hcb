@@ -16,7 +16,7 @@ module EventMappingEngine
       private
 
       def svb_sweep_transactions
-        ::CanonicalTransaction.unmapped.to_svb_sweep_account.or(::CanonicalTransaction.unmapped.from_svb_sweep_account).order("date asc")
+        ::CanonicalTransaction.unmapped.to_svb_sweep_account.or(::CanonicalTransaction.unmapped.from_svb_sweep_account).or(::CanonicalTransaction.unmapped.hcb_sweep).order("date asc")
       end
 
     end

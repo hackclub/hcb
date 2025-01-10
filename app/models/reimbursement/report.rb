@@ -100,7 +100,8 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts?
+            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts? &&
+              user.payout_method.class != User::PayoutMethod::PaypalTransfer
           end
         end
         after do

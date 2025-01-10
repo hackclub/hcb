@@ -81,8 +81,8 @@ class UsersController < ApplicationController
       session = UserSession.find(params[:id])
       authorize session.user
 
-      session.destroy!
-      flash[:success] = "Deleted session!"
+      session.update(signed_out_at: Time.now, expiration_at: Time.now)
+      flash[:success] = "Logged out of session!"
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "Session is not found"
     end

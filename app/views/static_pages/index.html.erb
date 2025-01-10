@@ -82,12 +82,29 @@
     <% end %>
     <% if @invites.any? %>
       <h2 class="w-full text-left mt-8 pb-0 border-none">Your pending invitations</h2>
-      <ul class="grid grid--narrow text-left w-full mt-0">
+      <ul class="grid grid--narrow text-left w-full mt-2">
         <% @invites.each do |invite| %>
           <%= link_to invite do %>
             <li class="card">
               <%= status_badge "info" %>
               <strong><%= invite.event.name %></strong>
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if current_user.organizer_position_contracts.sent.any? %>
+      <h2 class="w-full text-left mt-4 pb-0 border-none">Your pending contracts</h2>
+      <p class="text-left my0 w-100 muted">Contracts are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
+      <ul class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
+        <% current_user.organizer_position_contracts.sent.each do |contract| %>
+          <%= link_to contract.user_signature_url, target: "_blank" do %>
+            <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
+              <%= status_badge "info" %>
+              <strong>Fiscal sponsorship contract for <%= contract.organizer_position_invite.event.name %></strong>
+              <small class="muted flex-grow" style="margin-left: 3.5px">
+                sent <%= time_ago_in_words contract.created_at %> ago
+              </small>
             </li>
           <% end %>
         <% end %>

@@ -1141,10 +1141,11 @@ class AdminController < ApplicationController
     @per = params[:per] || 100
     @q = params[:q].presence
     @user_id = params[:user_id]
+    @to = params[:to].presence
 
     messages = Ahoy::Message.all
     messages = messages.where(user: User.find(@user_id)) if @user_id.present?
-
+    messages = messages.where(to: @to) if @to
     messages = messages.search_subject(@q) if @q
 
     @count = messages.count

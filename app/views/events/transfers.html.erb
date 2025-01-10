@@ -69,8 +69,8 @@
     <tbody>
       <% @transfers.each do |d| %>
         <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) && !show_mock_data? %>
-          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>" data-state-url="<%= hcb_code_url(d.hcb_code) %>" data-state-title="<%= render_money(d.local_hcb_code.amount) %>">
-            <%= modal_header("Transfer of #{render_money(d.local_hcb_code.amount)}", external_link: hcb_code_url(d.hcb_code)) %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>" data-state-url="<%= hcb_code_url(d.hcb_code) %>" data-state-title="Transfer of <%= render_money(d.local_hcb_code.amount_cents_by_event(@event).abs) %>">
+            <%= modal_header("Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}", external_link: hcb_code_url(d.hcb_code)) %>
             <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
               <%= render partial: "application/loading_container" %>
             <% end %>

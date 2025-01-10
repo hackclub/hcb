@@ -19,7 +19,7 @@
     <p>International recipients will be charged a ~10% fee after currency conversion and may have to pay an additional withdrawal fee.</p>
 <% end %>
 
-<%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable." %>
+<%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions %>
 
 <%= form_with(model: [@event, @paypal_transfer], local: true) do |form| %>
 

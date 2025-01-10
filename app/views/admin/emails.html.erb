@@ -2,6 +2,7 @@
 
 <%= form_with local: true, url: emails_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+  <%= form.text_field :to, value: params[:to], placeholder: "Email address (to)" %>
 
   <%= form.collection_select(:user_id, User.all.order(Arel.sql("COALESCE(preferred_name, full_name, email) ASC")), :id, :admin_dropdown_description, { include_blank: "Select a user", selected: @user_id }, { width: 250, style: "max-width: 250px" }) %>
 
