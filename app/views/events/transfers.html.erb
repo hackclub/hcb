@@ -129,7 +129,13 @@
             <% end %>
           </td>
           <td>
-            <%= d.memo %>
+            <% if d.is_a?(Disbursement) %>
+              <%= d.name %>
+            <% elsif d.is_a?(CardGrant) %>
+              Card Grant
+            <% else %>
+              <%= d.payment_for %>
+            <% end %>
           </td>
           <td style="text-align: right;">
             <% if d.is_a? CardGrant %>
