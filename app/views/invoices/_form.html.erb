@@ -91,7 +91,6 @@
           </div>
         <% end %>
       </details>
-
       <button
         type="button"
         id="invoice"
@@ -103,7 +102,6 @@
         <%= inline_icon "view-forward" %>
       </button>
     </div>
-
     <div data-tabs-target="tab" id="invoice">
       <%= form.label :item_amount, "Amount" %>
       <div class="field">
@@ -131,7 +129,7 @@
       </div>
       <div class="field">
         <%= form.label :due_date %>
-        <%= form.date_field :due_date, selected: (Date.today + 30.days), class: "!max-w-full", disabled: @event.demo_mode? %>
+        <%= form.date_field :due_date, min: Date.today, max: (Date.today + 30.days), class: "!max-w-full", disabled: @event.demo_mode? %>
       </div>
       <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
         <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || @event.demo_mode? %>
