@@ -120,16 +120,17 @@
         <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
         <p>
         <strong>Declined</strong>
-        <span>
+        <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
+              <span class="inline-flex">
 
             <% if @hcb_code.pt.hcb_decline_reason.present? || @hcb_code.pt.stripe_decline_reason == "webhook_declined" %>
-              <em>This transaction was declined by HCB because
+              <span>This transaction was declined by HCB because
                 <%= ({
                   merchant_not_allowed: "this merchant is not allowed",
                   cash_withdrawals_not_allowed: "cash withdrawals were not enabled on this card",
-                })[@hcb_code.pt.hcb_decline_reason] || "of insufficient funds" %>.</em>
+                })[@hcb_code.pt.hcb_decline_reason] || "of insufficient funds" %>.</span>
             <% else %>
-              <em>This transaction was declined by our card issuer because
+              <span>This transaction was declined by our card issuer because
                 <%= ({
                   card_inactive: !@hcb_code.stripe_card.initially_activated? ? "this card hasn't been activated yet" : "this card is frozen",
                   card_canceled: "this card is canceled",
@@ -140,7 +141,7 @@
                   insufficient_funds: "of an integration issue",
                   insecure_authorization_method: "the authorization method is insecure",
                   webhook_timeout: "of a network issue. Please try this purchase again",
-                })[@hcb_code.pt.stripe_decline_reason] || "the transaction could not go through" %>.</em>
+                })[@hcb_code.pt.stripe_decline_reason] || "the transaction could not go through" %>.</span>
 
               <% if @hcb_code.pt.stripe_decline_reason.in? %i[cardholder_verification_required insufficient_funds] %>
                 This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <a href="mailto:hcb@hackclub.com" target="_blank">hcb@hackclub.com</a>.
@@ -200,7 +201,13 @@
             <% end %>
 
 
-        </span>
+
+
+
+                <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
+              </span>
+            </action>
+        
         </p>
       <% end %>
       <% if @hcb_code.pt&.unsettled? %>
@@ -379,6 +386,63 @@
   <% if organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="merchant_details_<%= instance %>">
       <%= modal_header "Merchant details" %>
+
+      <div class="details mb2">
+        <p>
+          <strong>Name</strong>
+          <span>
+            <%= humanized_merchant_name @hcb_code.stripe_merchant %>
+          </span>
+        </p>
+        <p>
+          <strong>Category</strong>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
+            <%= humanized_category @hcb_code.stripe_merchant %>
+          <% end %>
+        </p>
+        <p>
+          <strong>Currency</strong>
+          <span>
+          <%= @hcb_code.stripe_merchant_currency.upcase %>
+          </span>
+        </p>
+        <% if is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :phone %>
+          <p>
+            <strong>Phone</strong>
+            <span><%= @hcb_code.stripe_merchant["city"] %></span>
+          </p>
+        <% elsif is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :city %>
+          <p>
+            <strong>City</strong>
+            <span><%= @hcb_code.stripe_merchant["city"].humanize %></span>
+          </p>
+        <% end %>
+        <p>
+          <strong>Zip</strong>
+          <span><%= @hcb_code.stripe_merchant["postal_code"] or "Unknown" %></span>
+        </p>
+        <p>
+          <strong>State</strong>
+          <span><%= @hcb_code.stripe_merchant["state"]&.upcase or "Unknown" %></span>
+        </p>
+        <p>
+          <strong>Country</strong>
+          <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+        </p>
+        <p>
+          <strong>Merchant ID</strong>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
+        </p>
+      </div>
+      <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
+        <p class="my0 muted">
+          Details are provided by the merchant and not guaranteed to be correct.
+        </p>
+      </article>
+    </section>
+
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
+      <%= modal_header "Transaction declined by #{@hcb_code.pt.declined_by}" %>``
 
       <div class="details mb2">
         <p>
