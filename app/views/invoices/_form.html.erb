@@ -59,19 +59,23 @@
               </p>
               <%= form.hidden_field :id %>
               <div class="field mt2">
-                <%= form.label :name, "Name (use company name if applicable)" %>
+                <%= form.label :name, "Name" %>
+                <span class="muted mb-2 block text-sm">Use company name if applicable</span>
                 <%= form.text_field :name, placeholder: "Raviga Capital", required: true, disabled: @event.demo_mode? %>
               </div>
               <div class="field">
-                <%= form.label :contact_email, "Contact email (email to send invoice to)" %>
+                <%= form.label :contact_email, "Contact email" %>
+                <span class="muted mb-2 block text-sm">Email you'll send this invoice to</span>
                 <%= form.email_field :contact_email, placeholder: "peter.gregory@ravigacapital.com", required: true, disabled: @event.demo_mode? %>
               </div>
-              <div class="field">
-                <%= form.label :address_line1, "Street address" %>
-                <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled: @event.demo_mode? %>
-              </div>
-              <div class="field">
-                <%= form.text_field :address_line2, placeholder: "Suite 500", disabled: @event.demo_mode? %>
+              <%= form.label :address_line1, "Street address" %>
+              <div class="flex gap-2">
+                <div class="field">
+                  <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled: @event.demo_mode? %>
+                </div>
+                <div class="field">
+                  <%= form.text_field :address_line2, placeholder: "Suite 500", disabled: @event.demo_mode? %>
+                </div>
               </div>
               <div class="flex">
                 <div class="field flex-auto mr1">
@@ -83,12 +87,12 @@
                   <%= form.text_field :address_state, placeholder: "CA", required: true, disabled: @event.demo_mode? %>
                 </div>
               </div>
-              <div class="flex">
-                <div class="field flex-auto mr1">
-                  <%= form.label :address_postal_code, "ZIP" %>
+              <div class="flex gap-2">
+                <div class="field flex-auto">
+                  <%= form.label :address_postal_code, "Zip code" %>
                   <%= form.text_field :address_postal_code, placeholder: "94129", required: true, disabled: @event.demo_mode? %>
                 </div>
-                <div class="field flex-auto ml1">
+                <div class="field flex-auto">
                   <%= form.label :address_country, "Country" %>
                   <%= form.country_select :address_country, ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true, disabled: @event.demo_mode? %>
                 </div>
@@ -134,6 +138,7 @@
         </div>
         <div class="field">
           <%= form.label :due_date %>
+          <span class="muted mb-2 block text-sm">Pick a date within 30 days from now</span>
           <%= form.date_field :due_date, min: Date.today, max: (Date.today + 30.days), class: "!max-w-full", disabled: @event.demo_mode? %>
         </div>
         <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
