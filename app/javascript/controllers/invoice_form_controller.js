@@ -23,7 +23,12 @@ export default class extends Controller {
     'id',
   ]
 
-  connect() {}
+  connect() {
+    if(this.selectSponsorTarget.disabled) {
+      this.continueButtonTarget.disabled = false
+      this.showNewSponsorCard()
+    }
+  }
 
   selectSponsor() {
     this.continueButtonTarget.disabled = false

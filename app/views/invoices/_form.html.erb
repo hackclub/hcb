@@ -25,22 +25,22 @@
       <%= form_errors invoice %>
       <%= form_errors sponsor %>
       <div data-tabs-target="tab" id="sponsor">
-        <% if @event.sponsors.count > 0 %>
-          <div class="field">
-            <select
+        <div class="field">
+          <select
             data-invoice-form-target="selectSponsor"
             data-action="change->invoice-form#selectSponsor"
-              name="invoice[sponsor_id]"
-              id="invoice_sponsor_id"
-              class="max-w-full">
-              <option value="default" selected disabled>Select…</option>
-              <option value="">+⠀New sponsor…</option>
-              <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
-                <option value="<%= sponsor.id %>" data-json="<%= sponsor.to_json %>"><%= sponsor.name %></option>
-              <% end %>
-            </select>
-          </div>
-        <% end %>
+            name="invoice[sponsor_id]"
+            id="invoice_sponsor_id"
+            class="max-w-full"
+            <%= "disabled hidden" if @event.sponsors.empty? %>
+          >
+            <option value="default" selected disabled>Select…</option>
+            <option value="">+⠀New sponsor…</option>
+            <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
+              <option value="<%= sponsor.id %>" data-json="<%= sponsor.to_json %>"><%= sponsor.name %></option>
+            <% end %>
+          </select>
+        </div>
         <details
         id="sponsor-collapsible"
         data-invoice-form-target="sponsorCollapsible">
