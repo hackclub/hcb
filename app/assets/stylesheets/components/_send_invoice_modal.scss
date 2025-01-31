@@ -9,9 +9,13 @@
     @apply w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold;
     border: 2px solid;
     border-color: $smoke;
+
+    html[data-dark="true"] & {
+      border-color: darken(map-get($palette, muted), 30%);
+    }
   }
 
   &.active .invoice-tab__number {
-    border-color: $blue;
+    border-color: $blue !important;
   }
 }
