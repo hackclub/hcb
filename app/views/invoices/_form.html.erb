@@ -33,7 +33,7 @@
             id="invoice_sponsor_id"
             class="max-w-full"
             <%= "disabled hidden" if @event.sponsors.empty? %>
-          >
+            >
             <option value="default" selected disabled>Select…</option>
             <option value="">+⠀New sponsor…</option>
             <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
@@ -114,7 +114,7 @@
       <div data-tabs-target="tab" id="invoice">
         <%= form.label :item_amount, "Amount" %>
         <div class="field">
-          <div class="flex items-center border border-gray-200 rounded-lg px-3">
+          <div class="flex items-center border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3">
             <span class="bold muted" style="width: 1rem;">$</span>
             <%= form.number_field :item_amount,
         value: (invoice.item_amount.nil? ? nil : (invoice.item_amount.to_f / 100)), placeholder: "500.00",
@@ -138,8 +138,7 @@
         </div>
         <div class="field">
           <%= form.label :due_date %>
-          <span class="muted mb-2 block text-sm">Pick a date within 30 days from now</span>
-          <%= form.date_field :due_date, min: Date.today, max: (Date.today + 30.days), class: "!max-w-full", disabled: @event.demo_mode? %>
+          <%= form.date_field :due_date, min: Date.today, value: 30.days.from_now, class: "!max-w-full", disabled: @event.demo_mode? %>
         </div>
         <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
           <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || @event.demo_mode? %>

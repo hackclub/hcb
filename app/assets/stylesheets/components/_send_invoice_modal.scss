@@ -1,5 +1,5 @@
 .invoice-tab {
-  @apply flex gap-2 items-center justify-center py-2 ml-0;
+  @apply flex gap-2 items-center justify-center py-2 ml-0 dark:text-neutral-400 dark:border-gray-400;
 
   &:first-child {
     margin-left: 0 !important;
