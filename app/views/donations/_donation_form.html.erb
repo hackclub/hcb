@@ -106,6 +106,13 @@
       <%= form.hidden_field :background, value: @background, name: :background %>
     <% end %>
 
+    <%= form.hidden_field :utm_source %>
+    <%= form.hidden_field :utm_medium %>
+    <%= form.hidden_field :utm_campaign %>
+    <%= form.hidden_field :utm_term %>
+    <%= form.hidden_field :utm_content %>
+    <%= form.hidden_field :referrer %>
+
     <% if @event.demo_mode? %>
       <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: "true" %>
     <% else %>

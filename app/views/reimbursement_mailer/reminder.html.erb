@@ -3,7 +3,7 @@
 </p>
 
 <p>
-  It looks like you haven’t updated your reimbursement report for <%= time_ago_in_words @report.updated_at %>.
+  It looks like you haven’t updated your reimbursement report (<%= link_to @report.name, @report %>) for <%= time_ago_in_words @report.updated_at %>.
   Would you like to <%= link_to "add additional expenses", @report %> to this report or <%= link_to "submit it for review", @report %>?
 </p>
 

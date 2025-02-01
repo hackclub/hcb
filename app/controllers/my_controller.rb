@@ -50,12 +50,12 @@ class MyController < ApplicationController
     count = current_user.transactions_missing_receipt.count
 
     emojis = {
-      "🤡": 300,
-      "💀": 200,
-      "😱": 100,
+      "🤡 ": 300,
+      "💀 ": 200,
+      "😱 ": 100,
     }
 
-    @missing_receipt_count = emojis.find { |emoji, value| count >= value }&.first || count
+    @missing_receipt_count = "#{emojis.find { |emoji, value| count >= value }&.first}#{count}"
 
     render :missing_receipts_icon, layout: false
   end

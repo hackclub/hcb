@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_20_231755) do
+ActiveRecord::Schema[7.2].define(version: 2025_01_24_002631) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -696,6 +696,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_20_231755) do
     t.boolean "tax_deductible", default: true, null: false
     t.boolean "in_person", default: false
     t.bigint "collected_by_id"
+    t.text "referrer"
+    t.text "utm_source"
+    t.text "utm_medium"
+    t.text "utm_campaign"
+    t.text "utm_term"
+    t.text "utm_content"
     t.index ["event_id"], name: "index_donations_on_event_id"
     t.index ["fee_reimbursement_id"], name: "index_donations_on_fee_reimbursement_id"
     t.index ["payout_id"], name: "index_donations_on_payout_id"

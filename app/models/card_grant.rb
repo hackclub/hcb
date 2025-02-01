@@ -153,7 +153,7 @@ class CardGrant < ApplicationRecord
     raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
     raise ArgumentError, "card grant should have a positive balance" unless balance.positive? || allow_topups
 
-    return topup!(amount_cents: balance.cents.abs, topped_up_by: requested_by) if balance.negative?
+    return topup!(amount_cents: balance.cents * -1, topped_up_by: requested_by) if balance.negative?
 
     disbursement = DisbursementService::Create.new(
       source_event_id: event_id,
