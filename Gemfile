@@ -12,7 +12,7 @@ gem "puma", "~> 6.5" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "redis", "~> 5.3" # for caching, jobs, etc.
-gem "sidekiq", "~> 7.3.7" # background jobs
+gem "sidekiq", "~> 7.3.8" # background jobs
 gem "sidekiq-cron", "~> 2.0" # run Sidekiq jobs at scheduled intervals
 
 gem "image_processing", "~> 1.2"

@@ -85,7 +85,6 @@ class Wire < ApplicationRecord
     end
   end
 
-
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
