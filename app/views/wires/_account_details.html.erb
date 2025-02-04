@@ -9,7 +9,7 @@
 </div>
 
 <div class="field">
-<%= form.label local_assigns[:account_number_field_name] || :account_number %>
+<%= form.label local_assigns[:account_number_field_name] || :account_number, "International account number (IBAN)" %>
 <%= form.text_field local_assigns[:account_number_field_name] || :account_number,
     required: true,
     disabled:,
