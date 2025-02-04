@@ -10,7 +10,7 @@
     border: 2px solid;
     border-color: $smoke;
 
-    html[data-dark="true"] & {
+    html[data-dark='true'] & {
       border-color: darken(map-get($palette, muted), 30%);
     }
   }
