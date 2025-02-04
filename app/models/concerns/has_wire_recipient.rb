@@ -13,131 +13,11 @@ module HasWireRecipient
 
     # IBAN & postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
 
-    IBAN_FORMATS = {
-      "AD": /AD\d{2}\d{4}\d{4}[\dA-Za-z]{12}/,
-      "AE": /AE\d{2}\d{3}\d{16}/,
-      "AL": /AL\d{2}\d{8}[\dA-Za-z]{16}/,
-      "AT": /AT\d{2}\d{5}\d{11}/,
-      "AZ": /AZ\d{2}[A-Z]{4}[\dA-Za-z]{20}/,
-      "BA": /BA\d{2}\d{3}\d{3}\d{8}\d{2}/,
-      "BE": /BE\d{2}\d{3}\d{7}\d{2}/,
-      "BG": /BG\d{2}[A-Z]{4}\d{4}\d{2}[\dA-Za-z]{8}/,
-      "BH": /BH\d{2}[A-Z]{4}[\dA-Za-z]{14}/,
-      "BY": /BY\d{2}[\dA-Za-z]{4}\d{4}[\dA-Za-z]{16}/,
-      "CH": /CH\d{2}\d{5}[\dA-Za-z]{12}/,
-      "CY": /CY\d{2}\d{3}\d{5}[\dA-Za-z]{16}/,
-      "CZ": /CZ\d{2}\d{4}\d{6}\d{10}/,
-      "DE": /DE\d{2}\d{8}\d{10}/,
-      "DK": /DK\d{2}\d{4}\d{9}\d/,
-      "EE": /EE\d{2}\d{2}\d{2}\d{11}\d/,
-      "EG": /EG\d{2}\d{4}\d{4}\d{17}/,
-      "ES": /ES\d{2}\d{4}\d{4}\d\d\d{10}/,
-      "FI": /FI\d{2}\d{3}\d{11}/,
-      "FO": /FO\d{2}\d{4}\d{9}\d/,
-      "FR": /FR\d{2}\d{5}\d{5}[\dA-Za-z]{11}\d{2}/,
-      "GB": /GB\d{2}[A-Z]{4}\d{6}\d{8}/,
-      "GE": /GE\d{2}[A-Z]{2}\d{16}/,
-      "GI": /GI\d{2}[A-Z]{4}[\dA-Za-z]{15}/,
-      "GL": /GL\d{2}\d{4}\d{9}\d/,
-      "GR": /GR\d{2}\d{3}\d{4}[\dA-Za-z]{16}/,
-      "GT": /GT\d{2}[\dA-Za-z]{4}[\dA-Za-z]{20}/,
-      "HR": /HR\d{2}\d{7}\d{10}/,
-      "HU": /HU\d{2}\d{3}\d{4}\d\d{15}\d/,
-      "IE": /IE\d{2}[A-Z]{4}\d{6}\d{8}/,
-      "IQ": /IQ\d{2}[A-Z]{4}\d{3}\d{12}/,
-      "IS": /IS\d{2}\d{4}\d{2}\d{6}\d{10}/,
-      "IT": /IT\d{2}[A-Z]\d{5}\d{5}[\dA-Za-z]{12}/,
-      "JM": /^\d{14}/,
-      "JO": /JO\d{2}[A-Z]{4}\d{4}[\dA-Za-z]{18}/,
-      "KW": /KW\d{2}[A-Z]{4}[\dA-Za-z]{22}/,
-      "KZ": /KZ\d{2}\d{3}[\dA-Za-z]{13}/,
-      "LB": /LB\d{2}\d{4}[\dA-Za-z]{20}/,
-      "LI": /LI\d{2}\d{5}[\dA-Za-z]{12}/,
-      "LT": /LT\d{2}\d{5}\d{11}/,
-      "LU": /LU\d{2}\d{3}[\dA-Za-z]{13}/,
-      "LV": /LV\d{2}[A-Z]{4}[\dA-Za-z]{13}/,
-      "MC": /MC\d{2}\d{5}\d{5}[\dA-Za-z]{11}\d{2}/,
-      "MD": /MD\d{2}[\dA-Za-z]{2}[\dA-Za-z]{18}/,
-      "MT": /MT\d{2}[A-Z]{4}\d{5}[\dA-Za-z]{18}/,
-      "MX": /^\d{18}/,
-      "MZ": /MZ59\d{21}/,
-      "NL": /NL\d{2}[A-Z]{4}\d{10}/,
-      "NO": /NO\d{2}\d{4}\d{6}\d/,
-      "PK": /PK\d{2}[A-Z]{4}[\dA-Za-z]{16}/,
-      "PL": /PL\d{2}\d{8}\d{16}/,
-      "PS": /PS\d{2}[A-Z]{4}[\dA-Za-z]{21}/,
-      "PT": /PT\d{2}\d{4}\d{4}\d{11}\d{2}/,
-      "QA": /QA\d{2}[A-Z]{4}[\dA-Za-z]{21}/,
-      "RO": /RO\d{2}[A-Z]{4}[\dA-Za-z]{16}/,
-      "RS": /RS\d{2}\d{3}\d{13}\d{2}/,
-      "SA": /SA\d{2}\d{2}[\dA-Za-z]{18}/,
-      "SD": /SD\d{2}\d{2}\d{12}/,
-      "SE": /SE\d{2}\d{3}\d{16}\d/,
-      "SI": /SI\d{2}\d{5}\d{8}\d{2}/,
-      "SK": /SK\d{2}\d{4}\d{6}\d{10}/,
-      "SM": /SM\d{2}[A-Z]\d{5}\d{5}[\dA-Za-z]{12}/,
-      "TL": /TL\d{2}\d{3}\d{14}\d{2}/,
-      "TR": /TR\d{2}\d{5}\d[\dA-Za-z]{16}/,
-      "UA": /UA\d{2}\d{6}[\dA-Za-z]{19}/,
-      "VA": /VA\d{2}\d{3}\d{15}/,
-      "AO": /AO[\dA-Za-z]{2}\d{21}/,
-      "AR": /\d{22}/,
-      "BF": /BF[\dA-Za-z]{8}\d{14}/,
-      "BI": /BI\d{2}\d{5}\d{5}\d{11}\d{2}/,
-      "BJ": /BJ[\dA-Za-z]{8}\d{14}$/,
-      "BR": /BR\d{2}\d{8}\d{5}\d{10}[A-Z][\dA-Za-z]/,
-      "CF": /\d{23}/,
-      "CG": /\d{23}/,
-      "CI": /CI[\dA-Za-z]{8}\d{14}/,
-      "CM": /(CM\d{2})?\d{23}/,
-      "CR": /CR\d{2}0\d{3}\d{14}/,
-      "DJ": /DJ\d{2}\d{5}\d{5}\d{11}\d{2}/,
-      "DO": /DO\d{2}[A-Z]{4}\d{20}/,
-      "DZ": /DZ[\dA-Za-z]{20}/,
-      "GA": /\d{23}/,
-      "GN": /[\dA-Za-z]{18}/,
-      "GQ": /\d{23}/,
-      "GW": /GW[\dA-Za-z]{8}\d{14}/,
-      "IL": /IL\d{2}\d{3}\d{3}\d{13}/,
-      "KG": /^\d{16}/,
-      "LC": /LC\d{2}[A-Z]{4}[\dA-Za-z]{24}/,
-      "LY": /LY\d{2}\d{3}\d{3}\d{15}/,
-      "MA": /^\d{24}/,
-      "ME": /ME\d{2}\d{3}\d{13}\d{2}/,
-      "MG": /MG46\d{23}/,
-      "ML": /ML[\dA-Za-z]{8}\d{14}/,
-      "MK": /MK\d{2}\d{3}[\dA-Za-z]{10}\d{2}/,
-      "MR": /MR\d{2}\d{5}\d{5}\d{11}\d{2}/,
-      "MU": /MU\d{2}[A-Z]{4}\d{2}\d{2}\d{12}\d{3}[A-Z]{3}/,
-      "NA": /\d{8,13}/,
-      "NE": /NE[\dA-Za-z]{8}\d{14}$/,
-      "NG": /^\d{10}/,
-      "PF": /FR\d{2}\d{5}\d{5}[\dA-Za-z]{11}\d{2}/,
-      "RU": /RU\d{2}\d{9}\d{5}[\dA-Za-z]{15}/,
-      "SC": /SC\d{2}[A-Z]{4}\d{2}\d{2}\d{16}[A-Z]{3}/,
-      "SN": /SN[\dA-Za-z]{8}\d{14}$/,
-      "ST": /ST\d{2}\d{8}\d{11}\d{2}/,
-      "SV": /SV\d{2}[A-Z]{4}\d{20}/,
-      "TD": /\d{23}/,
-      "TG": /TG[\dA-Za-z]{8}\d{14}$/,
-      "TN": /TN\d{2}\d{2}\d{3}\d{13}\d{2}/,
-      "VG": /VG\d{2}[A-Z]{4}\d{16}/,
-      "XK": /XK\d{2}\d{4}\d{10}\d{2}/
-    }.freeze
-
     validate do
       if IBAN_FORMATS[recipient_country.to_sym] && !account_number.match(IBAN_FORMATS[recipient_country.to_sym])
         errors.add(:account_number, "does not meet the required format for this country")
       end
     end
-
-    POSTAL_CODE_FORMATS = {
-      "US": /\A\d{5}(?:-\d{4})?\z/,
-      "CN": /\A\d{6}\z/,
-      "JP": /\A\d{3}-\d{4}\z/,
-      "FR": /\A\d{5}\z/,
-      "DE": /\A\d{5}\z/
-    }.freeze
 
     validate do
       if POSTAL_CODE_FORMATS[recipient_country.to_sym] && !address_postal_code.match(POSTAL_CODE_FORMATS[recipient_country.to_sym])
@@ -184,27 +64,11 @@ module HasWireRecipient
 
     # View https://github.com/hackclub/hcb/issues/9037 for context. Limited in India only, at the moment.
 
-    RESTRICTED_PURPOSE_CODES = {
-      "IN": ["P1302", "P1303", "P1304", "P1499", "P0099", "P0001", "P1011", "P1099"]
-    }.freeze
-
     validate on: :create do
       if recipient_information[:purpose_code].present? && RESTRICTED_PURPOSE_CODES[recipient_country.to_sym]&.include?(recipient_information[:purpose_code])
         errors.add(:purpose_code, "can not be used on HCB, please use a more specific purpose code or contact us.")
       end
     end
-
-    LEGAL_TYPE_FIELD = {
-      type: :select,
-      key: "legal_type",
-      label: "Legal status of receiving entity",
-      options: {
-        "Business": "business",
-        "Nonprofit": "non_profit",
-        "Individual": "individual",
-        "Sole proprietor": "sole_proprietor"
-      }
-    }.freeze
 
     def self.information_required_for(country) # country can be null, in which case, only the general fields will be returned.
       fields = []
@@ -362,4 +226,140 @@ module HasWireRecipient
 
     store :recipient_information, accessors: self.recipient_information_accessors
   end
+
+  IBAN_FORMATS = {
+    "AD": /AD\d{2}\d{4}\d{4}[\dA-Za-z]{12}/,
+    "AE": /AE\d{2}\d{3}\d{16}/,
+    "AL": /AL\d{2}\d{8}[\dA-Za-z]{16}/,
+    "AT": /AT\d{2}\d{5}\d{11}/,
+    "AZ": /AZ\d{2}[A-Z]{4}[\dA-Za-z]{20}/,
+    "BA": /BA\d{2}\d{3}\d{3}\d{8}\d{2}/,
+    "BE": /BE\d{2}\d{3}\d{7}\d{2}/,
+    "BG": /BG\d{2}[A-Z]{4}\d{4}\d{2}[\dA-Za-z]{8}/,
+    "BH": /BH\d{2}[A-Z]{4}[\dA-Za-z]{14}/,
+    "BY": /BY\d{2}[\dA-Za-z]{4}\d{4}[\dA-Za-z]{16}/,
+    "CH": /CH\d{2}\d{5}[\dA-Za-z]{12}/,
+    "CY": /CY\d{2}\d{3}\d{5}[\dA-Za-z]{16}/,
+    "CZ": /CZ\d{2}\d{4}\d{6}\d{10}/,
+    "DE": /DE\d{2}\d{8}\d{10}/,
+    "DK": /DK\d{2}\d{4}\d{9}\d/,
+    "EE": /EE\d{2}\d{2}\d{2}\d{11}\d/,
+    "EG": /EG\d{2}\d{4}\d{4}\d{17}/,
+    "ES": /ES\d{2}\d{4}\d{4}\d\d\d{10}/,
+    "FI": /FI\d{2}\d{3}\d{11}/,
+    "FO": /FO\d{2}\d{4}\d{9}\d/,
+    "FR": /FR\d{2}\d{5}\d{5}[\dA-Za-z]{11}\d{2}/,
+    "GB": /GB\d{2}[A-Z]{4}\d{6}\d{8}/,
+    "GE": /GE\d{2}[A-Z]{2}\d{16}/,
+    "GI": /GI\d{2}[A-Z]{4}[\dA-Za-z]{15}/,
+    "GL": /GL\d{2}\d{4}\d{9}\d/,
+    "GR": /GR\d{2}\d{3}\d{4}[\dA-Za-z]{16}/,
+    "GT": /GT\d{2}[\dA-Za-z]{4}[\dA-Za-z]{20}/,
+    "HR": /HR\d{2}\d{7}\d{10}/,
+    "HU": /HU\d{2}\d{3}\d{4}\d\d{15}\d/,
+    "IE": /IE\d{2}[A-Z]{4}\d{6}\d{8}/,
+    "IQ": /IQ\d{2}[A-Z]{4}\d{3}\d{12}/,
+    "IS": /IS\d{2}\d{4}\d{2}\d{6}\d{10}/,
+    "IT": /IT\d{2}[A-Z]\d{5}\d{5}[\dA-Za-z]{12}/,
+    "JM": /^\d{14}/,
+    "JO": /JO\d{2}[A-Z]{4}\d{4}[\dA-Za-z]{18}/,
+    "KW": /KW\d{2}[A-Z]{4}[\dA-Za-z]{22}/,
+    "KZ": /KZ\d{2}\d{3}[\dA-Za-z]{13}/,
+    "LB": /LB\d{2}\d{4}[\dA-Za-z]{20}/,
+    "LI": /LI\d{2}\d{5}[\dA-Za-z]{12}/,
+    "LT": /LT\d{2}\d{5}\d{11}/,
+    "LU": /LU\d{2}\d{3}[\dA-Za-z]{13}/,
+    "LV": /LV\d{2}[A-Z]{4}[\dA-Za-z]{13}/,
+    "MC": /MC\d{2}\d{5}\d{5}[\dA-Za-z]{11}\d{2}/,
+    "MD": /MD\d{2}[\dA-Za-z]{2}[\dA-Za-z]{18}/,
+    "MT": /MT\d{2}[A-Z]{4}\d{5}[\dA-Za-z]{18}/,
+    "MX": /^\d{18}/,
+    "MZ": /MZ59\d{21}/,
+    "NL": /NL\d{2}[A-Z]{4}\d{10}/,
+    "NO": /NO\d{2}\d{4}\d{6}\d/,
+    "PK": /PK\d{2}[A-Z]{4}[\dA-Za-z]{16}/,
+    "PL": /PL\d{2}\d{8}\d{16}/,
+    "PS": /PS\d{2}[A-Z]{4}[\dA-Za-z]{21}/,
+    "PT": /PT\d{2}\d{4}\d{4}\d{11}\d{2}/,
+    "QA": /QA\d{2}[A-Z]{4}[\dA-Za-z]{21}/,
+    "RO": /RO\d{2}[A-Z]{4}[\dA-Za-z]{16}/,
+    "RS": /RS\d{2}\d{3}\d{13}\d{2}/,
+    "SA": /SA\d{2}\d{2}[\dA-Za-z]{18}/,
+    "SD": /SD\d{2}\d{2}\d{12}/,
+    "SE": /SE\d{2}\d{3}\d{16}\d/,
+    "SI": /SI\d{2}\d{5}\d{8}\d{2}/,
+    "SK": /SK\d{2}\d{4}\d{6}\d{10}/,
+    "SM": /SM\d{2}[A-Z]\d{5}\d{5}[\dA-Za-z]{12}/,
+    "TL": /TL\d{2}\d{3}\d{14}\d{2}/,
+    "TR": /TR\d{2}\d{5}\d[\dA-Za-z]{16}/,
+    "UA": /UA\d{2}\d{6}[\dA-Za-z]{19}/,
+    "VA": /VA\d{2}\d{3}\d{15}/,
+    "AO": /AO[\dA-Za-z]{2}\d{21}/,
+    "AR": /\d{22}/,
+    "BF": /BF[\dA-Za-z]{8}\d{14}/,
+    "BI": /BI\d{2}\d{5}\d{5}\d{11}\d{2}/,
+    "BJ": /BJ[\dA-Za-z]{8}\d{14}$/,
+    "BR": /BR\d{2}\d{8}\d{5}\d{10}[A-Z][\dA-Za-z]/,
+    "CF": /\d{23}/,
+    "CG": /\d{23}/,
+    "CI": /CI[\dA-Za-z]{8}\d{14}/,
+    "CM": /(CM\d{2})?\d{23}/,
+    "CR": /CR\d{2}0\d{3}\d{14}/,
+    "DJ": /DJ\d{2}\d{5}\d{5}\d{11}\d{2}/,
+    "DO": /DO\d{2}[A-Z]{4}\d{20}/,
+    "DZ": /DZ[\dA-Za-z]{20}/,
+    "GA": /\d{23}/,
+    "GN": /[\dA-Za-z]{18}/,
+    "GQ": /\d{23}/,
+    "GW": /GW[\dA-Za-z]{8}\d{14}/,
+    "IL": /IL\d{2}\d{3}\d{3}\d{13}/,
+    "KG": /^\d{16}/,
+    "LC": /LC\d{2}[A-Z]{4}[\dA-Za-z]{24}/,
+    "LY": /LY\d{2}\d{3}\d{3}\d{15}/,
+    "MA": /^\d{24}/,
+    "ME": /ME\d{2}\d{3}\d{13}\d{2}/,
+    "MG": /MG46\d{23}/,
+    "ML": /ML[\dA-Za-z]{8}\d{14}/,
+    "MK": /MK\d{2}\d{3}[\dA-Za-z]{10}\d{2}/,
+    "MR": /MR\d{2}\d{5}\d{5}\d{11}\d{2}/,
+    "MU": /MU\d{2}[A-Z]{4}\d{2}\d{2}\d{12}\d{3}[A-Z]{3}/,
+    "NA": /\d{8,13}/,
+    "NE": /NE[\dA-Za-z]{8}\d{14}$/,
+    "NG": /^\d{10}/,
+    "PF": /FR\d{2}\d{5}\d{5}[\dA-Za-z]{11}\d{2}/,
+    "RU": /RU\d{2}\d{9}\d{5}[\dA-Za-z]{15}/,
+    "SC": /SC\d{2}[A-Z]{4}\d{2}\d{2}\d{16}[A-Z]{3}/,
+    "SN": /SN[\dA-Za-z]{8}\d{14}$/,
+    "ST": /ST\d{2}\d{8}\d{11}\d{2}/,
+    "SV": /SV\d{2}[A-Z]{4}\d{20}/,
+    "TD": /\d{23}/,
+    "TG": /TG[\dA-Za-z]{8}\d{14}$/,
+    "TN": /TN\d{2}\d{2}\d{3}\d{13}\d{2}/,
+    "VG": /VG\d{2}[A-Z]{4}\d{16}/,
+    "XK": /XK\d{2}\d{4}\d{10}\d{2}/
+  }.freeze
+
+  POSTAL_CODE_FORMATS = {
+    "US": /\A\d{5}(?:-\d{4})?\z/,
+    "CN": /\A\d{6}\z/,
+    "JP": /\A\d{3}-\d{4}\z/,
+    "FR": /\A\d{5}\z/,
+    "DE": /\A\d{5}\z/
+  }.freeze
+
+  RESTRICTED_PURPOSE_CODES = {
+    "IN": ["P1302", "P1303", "P1304", "P1499", "P0099", "P0001", "P1011", "P1099"]
+  }.freeze
+
+  LEGAL_TYPE_FIELD = {
+    type: :select,
+    key: "legal_type",
+    label: "Legal status of receiving entity",
+    options: {
+      "Business": "business",
+      "Nonprofit": "non_profit",
+      "Individual": "individual",
+      "Sole proprietor": "sole_proprietor"
+    }
+  }.freeze
 end
