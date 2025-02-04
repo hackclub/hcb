@@ -1,7 +1,6 @@
 GIT
   remote: https://github.com/hackclub/yellow_pages.git
-  revision: 5827da49190ad92f5440fabce43b6a054ca1cd61
-  ref: 5827da4
+  revision: 712be85f7bc7be7403fddc23168cb81053908892
   specs:
     yellow_pages (0.4.0)
 
