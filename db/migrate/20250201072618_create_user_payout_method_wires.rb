@@ -1,8 +1,10 @@
 class CreateUserPayoutMethodWires < ActiveRecord::Migration[7.2]
+  disable_ddl_transaction!
+
   def change
     create_table :user_payout_method_wires do |t|
-      t.string :recipient_account_number_ciphertext, null: false
-      t.string :recipient_account_number_bidx, null: false
+      t.string :account_number_ciphertext, null: false
+      t.string :account_number_bidx, null: false
       t.string :bic_code_ciphertext, null: false
       t.string :bic_code_bidx, null: false
       t.integer :recipient_country
@@ -15,5 +17,7 @@ class CreateUserPayoutMethodWires < ActiveRecord::Migration[7.2]
 
       t.timestamps
     end
+
+    add_reference :reimbursement_payout_holdings, :wire, null: true, index: { algorithm: :concurrently }
   end
 end

@@ -75,14 +75,14 @@
   </section>
 
   <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
-    <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
-      <h2 class="mb2 mt3">Recipient details</h2>
+    <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
+      <h2 class="mb2 mt3">Location details</h2>
 
       <%= render partial: "wires/recipient_details", locals: { form:, disabled: false } %>
 
       <h2 class="mb2 mt3">Payment information</h2>
 
-      <%= render partial: "wires/account_details", locals: { form:, disabled: false, account_number_field_name: :recipient_account_number } %>
+      <%= render partial: "wires/account_details", locals: { form:, disabled: false, account_number_field_name: :account_number } %>
 
       <div class="actions inline-block mt1">
         <%= form.submit "Save" %>

@@ -50,6 +50,7 @@ class Wire < ApplicationRecord
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
 
   validates_length_of :payment_for, maximum: 140
   include AASM
@@ -72,6 +73,16 @@ class Wire < ApplicationRecord
       memo: "Wire to #{recipient_name}".strip.upcase,
       date: created_at
     )
+  end
+
+  validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
+  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
+
+  validate on: :create do
+    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimumn_wire_amount_cents)
+      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimumn_wire_amount_cents} (USD).")
+    end
   end
 
 

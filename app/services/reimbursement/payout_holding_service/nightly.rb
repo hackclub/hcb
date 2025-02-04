@@ -7,6 +7,34 @@ module Reimbursement
         clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
         Reimbursement::PayoutHolding.settled.find_each(batch_size: 100) do |payout_holding|
           case payout_holding.report.user.payout_method
+          when User::PayoutMethod::Wire
+            begin
+              wire = clearinghouse.wires.build(
+                memo: "Reimbursement for #{payout_holding.report.name}.",
+                payment_for: "Reimbursement for #{payout_holding.report.name}."[0...140],
+                amount_cents: payout_holding.amount_cents,
+                address_line1: payout_holding.report.user.payout_method.address_line1,
+                address_line2: payout_holding.report.user.payout_method.address_line2,
+                address_city: payout_holding.report.user.payout_method.address_city,
+                address_state: payout_holding.report.user.payout_method.address_state,
+                address_postal_code: payout_holding.report.user.payout_method.address_postal_code,
+                recipient_country: payout_holding.report.user.payout_method.recipient_country,
+                recipient_email: payout_holding.report.user.email,
+                recipient_name: payout_holding.report.user.full_name,
+                account_number: payout_holding.report.user.payout_method.account_number,
+                bic_code: payout_holding.report.user.payout_method.bic_code,
+                currency: "USD",
+                user: User.find_by(email: "bank@hackclub.com")
+              )
+              wire.save!
+              wire.mark_approved!
+              wire.send_wire!
+              payout_holding.wire = wire
+              payout_holding.save!
+              payout_holding.mark_sent!
+            rescue => e
+              Airbrake.notify(e)
+            end
           when User::PayoutMethod::Check
             begin
               check = clearinghouse.increase_checks.build(

@@ -194,18 +194,6 @@ module HasWireRecipient
       end
     end
 
-    validate on: :create do
-      byebug
-      if !user.admin? && usd_amount_cents < (Event.find(event.id).minimumn_wire_amount_cents)
-        errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimumn_wire_amount_cents} (USD).")
-      end
-    end
-
-    validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
-    normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
-
-    validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
-
     LEGAL_TYPE_FIELD = {
       type: :select,
       key: "legal_type",

@@ -388,7 +388,7 @@ class UsersController < ApplicationController
 
     if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
       attributes << {
-        payout_method_attributes: [
+        payout_method_wire: [
           :address_line1,
           :address_line2,
           :address_city,
@@ -396,7 +396,7 @@ class UsersController < ApplicationController
           :address_postal_code,
           :recipient_country,
           :bic_code,
-          :recipient_account_number
+          :account_number
         ]
       }
     end
@@ -422,7 +422,11 @@ class UsersController < ApplicationController
       attributes << :access_level
     end
 
-    params.require(:user).permit(attributes)
+    p = params.require(:user).permit(attributes)
+
+    p[:payout_method_attributes] = p.delete(:payout_method_wire) if p[:payout_method_wire]
+
+    p
   end
 
 end

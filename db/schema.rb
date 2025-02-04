@@ -1705,10 +1705,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_01_072618) do
     t.bigint "paypal_transfer_id"
     t.bigint "increase_check_id"
     t.bigint "ach_transfer_id"
+    t.bigint "wire_id"
     t.index ["ach_transfer_id"], name: "index_reimbursement_payout_holdings_on_ach_transfer_id"
     t.index ["increase_check_id"], name: "index_reimbursement_payout_holdings_on_increase_check_id"
     t.index ["paypal_transfer_id"], name: "index_reimbursement_payout_holdings_on_paypal_transfer_id"
     t.index ["reimbursement_reports_id"], name: "index_reimbursement_payout_holdings_on_reimbursement_reports_id"
+    t.index ["wire_id"], name: "index_reimbursement_payout_holdings_on_wire_id"
   end
 
   create_table "reimbursement_reports", force: :cascade do |t|
@@ -2027,8 +2029,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_01_072618) do
   end
 
   create_table "user_payout_method_wires", force: :cascade do |t|
-    t.string "recipient_account_number_ciphertext", null: false
-    t.string "recipient_account_number_bidx", null: false
+    t.string "account_number_ciphertext", null: false
+    t.string "account_number_bidx", null: false
     t.string "bic_code_ciphertext", null: false
     t.string "bic_code_bidx", null: false
     t.integer "recipient_country"
