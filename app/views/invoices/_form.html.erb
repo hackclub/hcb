@@ -32,8 +32,7 @@
             name="invoice[sponsor_id]"
             id="invoice_sponsor_id"
             class="max-w-full"
-            <%= "disabled hidden" if @event.sponsors.empty? %>
-            >
+            <%= "disabled hidden" if @event.sponsors.empty? %>>
             <option value="default" selected disabled>Select…</option>
             <option value="">+⠀New sponsor…</option>
             <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
