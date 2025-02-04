@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_24_002631) do
+ActiveRecord::Schema[7.2].define(version: 2025_02_01_072618) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -2022,6 +2022,22 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_24_002631) do
 
   create_table "user_payout_method_paypal_transfers", force: :cascade do |t|
     t.text "recipient_email", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "user_payout_method_wires", force: :cascade do |t|
+    t.string "recipient_account_number_ciphertext", null: false
+    t.string "recipient_account_number_bidx", null: false
+    t.string "bic_code_ciphertext", null: false
+    t.string "bic_code_bidx", null: false
+    t.integer "recipient_country"
+    t.jsonb "recipient_information"
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_state"
+    t.string "address_postal_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

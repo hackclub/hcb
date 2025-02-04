@@ -1,7 +1,7 @@
 <%= form_with model: user do |form| %>
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
-    <div class="field field--options trio" style="max-width: none;">
+    <div class="field field--options" style="max-width: none;">
       <%= form.radio_button :payout_method_type, "User::PayoutMethod::AchTransfer" %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::AchTransfer" do %>
         <%= inline_icon "payment-transfer", size: 28 %>
@@ -13,6 +13,12 @@
         <%= inline_icon "email", size: 28 %>
         <strong>Mailed check</strong>
         <small>(10-12 biz. days)</small>
+      <% end %>
+      <%= form.radio_button :payout_method_type, "User::PayoutMethod::Wire" %>
+      <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
+        <%= inline_icon "web", size: 28 %>
+        <strong>International wire</strong>
+        <small>(1-5 biz. days, $500 minimum)</small>
       <% end %>
       <%= form.radio_button :payout_method_type, "User::PayoutMethod::PaypalTransfer", disabled: true %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::PaypalTransfer" do %>
@@ -61,6 +67,22 @@
           <%= form.text_field :address_country, value: "United States", disabled: true %>
         </div>
       </div>
+
+      <div class="actions inline-block mt1">
+        <%= form.submit "Save" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
+    <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
+      <h2 class="mb2 mt3">Recipient details</h2>
+
+      <%= render partial: "wires/recipient_details", locals: { form:, disabled: false } %>
+
+      <h2 class="mb2 mt3">Payment information</h2>
+
+      <%= render partial: "wires/account_details", locals: { form:, disabled: false, account_number_field_name: :recipient_account_number } %>
 
       <div class="actions inline-block mt1">
         <%= form.submit "Save" %>

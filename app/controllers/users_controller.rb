@@ -386,6 +386,21 @@ class UsersController < ApplicationController
       }
     end
 
+    if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
+      attributes << {
+        payout_method_attributes: [
+          :address_line1,
+          :address_line2,
+          :address_city,
+          :address_state,
+          :address_postal_code,
+          :recipient_country,
+          :bic_code,
+          :recipient_account_number
+        ]
+      }
+    end
+
     if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
       attributes << {
         payout_method_attributes: [

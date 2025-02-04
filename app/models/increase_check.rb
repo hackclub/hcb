@@ -18,12 +18,11 @@
 #  column_object           :jsonb
 #  column_status           :string
 #  increase_object         :jsonb
-#  increase_state          :string
 #  increase_status         :string
 #  memo                    :string
 #  payment_for             :string
-#  recipient_name          :string
 #  recipient_email         :string
+#  recipient_name          :string
 #  send_email_notification :boolean          default(FALSE)
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null

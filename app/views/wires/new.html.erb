@@ -40,44 +40,16 @@
   <h2 class="mb2 mt3">Recipient details</h2>
 
   <div class="field mt2">
-    <%= form.label :recipient_name, "Name (use company name if applicable)" %>
-    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250 %>
+  <%= form.label :recipient_name, "Name (use company name if applicable)" %>
+  <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250 %>
   </div>
 
   <div class="field">
-    <%= form.label :recipient_email, "Email" %>
-    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+  <%= form.label :recipient_email, "Email" %>
+  <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
   </div>
 
-  <div class="field mb1">
-    <%= form.label :address_line1, "Street address" %>
-    <%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar", required: true %>
-  </div>
-
-  <div class="field mt0">
-    <%= form.text_field :address_line2, placeholder: "Sector 20", disabled: %>
-  </div>
-
-  <div class="flex">
-    <div class="field flex-auto mr1">
-      <%= form.label :address_city, "City" %>
-      <%= form.text_field :address_city, placeholder: "Gurgaon", required: true %>
-    </div>
-    <div class="field flex-auto mr1">
-      <%= form.label :address_state, "State / province" %>
-      <%= form.text_field :address_state, placeholder: "Haryana", required: true %>
-    </div>
-  </div>
-
-  <div class="field">
-    <%= form.label :address_postal_code, "Postal code / ZIP code" %>
-    <%= form.text_field :address_postal_code, placeholder: "122022", required: true %>
-  </div>
-
-  <div class="field">
-    <%= form.label :recipient_country, "Country" %>
-    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" } %>
-  </div>
+  <%= render partial: "recipient_details", locals: { form:, disabled: } %>
 
   <h2 class="mb2 mt3">Payment information</h2>
 
@@ -111,21 +83,7 @@
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
-  <div class="field">
-    <%= form.label :bic_code, "Beneficiary bank SWIFT / BIC code" %>
-    <%= form.text_field :bic_code,
-        required: true,
-        disabled:,
-        placeholder: "CLNOUS66" %>
-  </div>
-
-  <div class="field">
-    <%= form.label :account_number %>
-    <%= form.text_field :account_number,
-        required: true,
-        disabled:,
-        placeholder: "123456789" %>
-  </div>
+  <%= render partial: "account_details", locals: { form:, disabled: } %>
 
   <% (Event.countries_for_select + [nil]).each do |country| %>
     <template x-if="country == '<%= country.nil? ? "null" : country[0] %>'">
