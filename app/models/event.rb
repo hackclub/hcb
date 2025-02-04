@@ -680,9 +680,9 @@ class Event < ApplicationRecord
     self[:short_name] || name[0...length]
   end
 
-  monetize :minimumn_wire_amount_cents
+  monetize :minimum_wire_amount_cents
 
-  def minimumn_wire_amount_cents
+  def minimum_wire_amount_cents
     return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
     return 100 if plan.exempt_from_wire_minimum?
 
