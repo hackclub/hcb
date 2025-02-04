@@ -1,0 +1,18 @@
+<p>
+  Hey <%= @report.user.name %>,
+</p>
+
+<p>
+  It looks like you haven’t updated your reimbursement report (<%= link_to @report.name, @report %>) for <%= time_ago_in_words @report.updated_at %>.
+  Would you like to <%= link_to "add additional expenses", @report %> to this report or <%= link_to "submit it for review", @report %>?
+</p>
+
+<p>
+  Best,
+  <br><br>
+  The HCB Team
+</p>
+
+<% if @report.event.present? %>
+  <p><i class="muted"><%= @report.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>
+<% end %>

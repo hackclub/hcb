@@ -131,6 +131,10 @@ module EventMappingEngine
       CanonicalTransaction.unmapped.likely_column_interest.find_each(batch_size: 100) do |ct|
         CanonicalEventMapping.create!(canonical_transaction: ct, event_id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
       end
+
+      CanonicalTransaction.unmapped.svb_sweep_interest.find_each(batch_size: 100) do |ct|
+        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+      end
     end
 
     def map_hcb_codes_invoice!

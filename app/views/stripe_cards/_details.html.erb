@@ -138,7 +138,7 @@
     </div>
   <% end %>
 
-  <section class="grid grid--split items-end pt2">
+  <section class="flex flex-wrap gap-4 items-end pt2">
     <div class="stat tooltipped tooltipped--s" aria-label="This is your account balance">
       <strong class="stat__label">Spending limit</strong>
       <span class="stat__value"><%= render_money_amount stripe_card.balance_available %></span>

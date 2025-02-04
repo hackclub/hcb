@@ -73,6 +73,34 @@
   </section>
 </div>
 
+<div class="card mb3" id="1password">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
+    <%= image_tag "1password.svg", width: 210, class: "p2" %>
+    <%= link_to "Apply",
+      @perks_available ? fillout_form("7jzG7ADmuLus", { "Project_Name" => @event.name, "Bank_URL" => event_url(@event), "Your_Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
+      class: "btn mr1",
+      target: :_blank %>
+  </div>
+
+  <% if @event.hackathon? %>
+    <p class="mb0">
+      <%= link_to "1Password", "https://1password.com" %> is offering hackathons running on HCB
+      a year-long 1Password plan for up to 5 people. This can handed out as a prize, however, it
+      can only be claimed once per hackathon.
+    </p>
+  <% else %>
+    <h3 class="mb0 mt0">Do you make open source software?</h3>
+    <p class="mb0">
+      <%= link_to "1Password", "https://1password.com" %> is offering a lifetime 1Password Teams
+      license (up to 10 seats) to any open source project running on HCB.
+    </p>
+    <h3 class="mb0 mt2">Does your nonprofit do something else?</h3>
+    <p class="mb0">
+      All other nonprofits can receive a 25% discount on 1Password's business plan.
+    </p>
+  <% end %>
+</div>
+
 <div class="card mb3" id="domains">
   <div
     class="card__banner card__banner--top flex justify-between items-center promo-domains">
@@ -205,38 +233,6 @@
   </section>
 </div>
 
-<div class="card mb3" id="sendy">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-sendy">
-    <h3 class="h1 white p2 my0">Sendy</h3>
-    <%= link_to "Temporarily closed",
-      @perks_available ? fillout_form("4cJ69MSzKhus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your name" => current_user.name, "Login email" => current_user.email, "Domain URL" => @event.g_suites.first&.domain }, prefix: "prefill_") : root_path,
-      class: "btn mr1 disabled",
-      target: :_blank %>
-  </div>
-
-  <p class="mb0">
-    <%= link_to "Sendy", "https://sendy.co" %> is straightforward, reliable mass-emailing software for sending newsletters. We use it at Hack Club HQ & provide it to all HCB organizations.
-  </p>
-</div>
-
-<div class="card mb3" id="1password">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
-    <%= image_tag "1password.svg", width: 210, class: "p2" %>
-    <%= link_to "Temporarily closed",
-      @perks_available ? fillout_form("1EVMTc9d1Zus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 disabled",
-      target: :_blank %>
-  </div>
-
-  <p class="mb0">
-    <%= link_to "1Password", "https://1password.com" %> is providing $100 USD
-    credit to all organizations on HCB that can be claimed once per
-    organization. 1Password is a password manager that allows you to securely
-    keep and share account logins and credentials with your teammates; we use it
-    ourselves at Hack Club HQ!
-  </p>
-</div>
-
 <details class="w-100 left-align">
   <summary><h3 class="inline-block pb0 border-none">Expired promotions</h3></summary>
   <div class="card mb3" id="wallets">
@@ -256,6 +252,21 @@
       out by the HCB team.
     </p>
   </div>
+
+  <div class="card mb3" id="sendy">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-sendy">
+      <h3 class="h1 white p2 my0">Sendy</h3>
+      <%= link_to "Expired",
+        root_path,
+        class: "btn mr1 disabled",
+        target: :_blank %>
+    </div>
+
+    <p class="mb0">
+      <%= link_to "Sendy", "https://sendy.co" %> is straightforward, reliable mass-emailing software for sending newsletters. We use it at Hack Club HQ & provide it to all HCB organizations.
+    </p>
+  </div>
+
   <div class="card mb3" id="stickermule">
     <div class="card__banner card__banner--top flex justify-between items-center" style="background-color:#4E2817">
       <%= image_tag "stickermule.svg", width: 240 %>

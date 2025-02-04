@@ -69,6 +69,7 @@
 
       <%= form.file_field :file,
                           id: "file_#{expense.id}",
+                          direct_upload: true,
                           multiple: true,
                           include_hidden: false,
                           required: true,

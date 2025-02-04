@@ -222,7 +222,8 @@ class InvoicesController < ApplicationController
       ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
     else
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "This invoice hasn't settled, only settled invoices can be refunded." }
+      InvoiceJob::Refund.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents)
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
     end
   end
 

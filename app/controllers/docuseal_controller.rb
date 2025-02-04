@@ -5,9 +5,10 @@ class DocusealController < ActionController::Base
 
   def webhook
     ActiveRecord::Base.transaction do
-      if params[:event_type] == "form.completed" && params[:data][:role] == "HCB"
-        @contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
+      @contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
+      return render json: { success: true } unless @contract # sometimes contracts are sent using Docuseal that aren't in HCB
 
+      if params[:event_type] == "form.completed" && params[:data][:submission][:status] == "completed"
         return render json: { success: true } if @contract.signed?
 
         document = Document.new(
@@ -24,6 +25,8 @@ class DocusealController < ActionController::Base
         document.save!
         @contract.update(document:)
         @contract.mark_signed!
+      elsif params[:event_type] == "form.declined"
+        @contract.mark_voided!
       end
     end
   rescue => e

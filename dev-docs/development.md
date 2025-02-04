@@ -65,18 +65,6 @@ env $(cat .env.docker) docker-compose -f docker-compose.yml -f docker-compose.so
 
 ### Local setup
 
-Install [dotenv/cli](https://github.com/dotenv-org/cli)
-
-```bash
-npm install @dotenv/cli -g
-```
-
-And load the latest .env file to your local machine.
-
-```bash
-dotenv-cli pull
-```
-
 Install [rbenv](https://github.com/rbenv/rbenv)
 
 ```bash

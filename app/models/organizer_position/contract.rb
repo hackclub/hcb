@@ -58,6 +58,9 @@ class OrganizerPosition
 
       event :mark_signed do
         transitions from: [:pending, :sent], to: :signed
+        after do
+          organizer_position_invite.deliver
+        end
       end
 
       event :mark_voided do
@@ -151,6 +154,11 @@ class OrganizerPosition
                 name: "HCB ID",
                 default_value: organizer_position_invite.event.id,
                 readonly: true
+              },
+              {
+                name: "Signature",
+                default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
+                readonly: false
               },
               {
                 name: "The Project",

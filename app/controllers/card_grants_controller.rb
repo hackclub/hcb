@@ -57,7 +57,7 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.hcb_codes
+    @hcb_codes = @card_grant.visible_hcb_codes
 
     @frame = params[:frame].present?
     @force_no_popover = @frame
@@ -92,6 +92,8 @@ class CardGrantsController < ApplicationController
     @card_grant.create_stripe_card(current_session)
 
     redirect_to @card_grant
+  rescue Stripe::InvalidRequestError => e
+    redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
   end
 
   def cancel

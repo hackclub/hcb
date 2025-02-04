@@ -15,7 +15,7 @@ module Api
       end
 
       def activities
-        @activities ||= paginate(PublicActivity::Activity.joins("LEFT JOIN \"events\" ON activities.event_id = events.id OR (activities.recipient_id = events.id AND recipient_type = 'Event')").where({ events: { is_public: true, is_indexable: true } }).order(created_at: :asc))
+        @activities ||= paginate(PublicActivity::Activity.joins("LEFT JOIN \"events\" ON activities.event_id = events.id OR (activities.recipient_id = events.id AND recipient_type = 'Event')").where({ events: { is_public: true, is_indexable: true } }).order(created_at: :desc))
       end
 
       def org

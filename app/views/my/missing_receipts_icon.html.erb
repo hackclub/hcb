@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "/my/missing_receipts_icon" do %>
-  <% if @missing_receipt_count != 0 %>
+  <% if @missing_receipt_count != "0" %>
     <div class="dock__item--badge">
       <%= @missing_receipt_count %>
     </div>

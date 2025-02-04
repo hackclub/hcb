@@ -2,7 +2,6 @@
 
 require "sidekiq/web"
 require "sidekiq/cron/web"
-require "admin_constraint"
 
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
@@ -604,6 +603,8 @@ Rails.application.routes.draw do
   post "increase/webhook", to: "increase#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+
+  post "extract/invoice", to: "extraction#invoice"
 
   get "negative_events", to: "admin#negative_events"
 

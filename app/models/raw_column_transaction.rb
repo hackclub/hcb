@@ -45,6 +45,8 @@ class RawColumnTransaction < ApplicationRecord
       wire = ColumnService.get "/transfers/international-wire/#{transaction_id}"
 
       return wire["originator_name"]
+    elsif transaction_id.start_with? "ipay_"
+      return "INTEREST"
     end
     raise
   rescue

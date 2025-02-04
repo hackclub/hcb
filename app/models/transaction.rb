@@ -155,7 +155,7 @@ class Transaction < ApplicationRecord
   # Utility method for getting the fee on the transaction if there is one. Used
   # in CSV export.
   def fee
-    is_event_related && fee_relationship&.fee_applies && fee_relationship&.fee_amount
+    is_event_related && fee_relationship&.fee_applies && fee_relationship.fee_amount
   end
 
   def fee_payment?

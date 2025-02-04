@@ -30,6 +30,7 @@ class SuggestedPairing < ApplicationRecord
     state :unreviewed, initial: true # Suggestion is ready and waiting to be reviewed
     state :ignored                   # User has ignored the suggestion
     state :accepted                  # User has accepted the suggestion
+    state :reversed                  # User has reversed the suggestion (auto-applied via email)
 
     event :mark_ignored do
       transitions from: :unreviewed, to: :ignored
@@ -41,6 +42,14 @@ class SuggestedPairing < ApplicationRecord
       end
 
       transitions from: :unreviewed, to: :accepted
+    end
+
+    event :mark_reversed do
+      before do
+        receipt.update!(receiptable: nil)
+      end
+
+      transitions from: :accepted, to: :reversed
     end
   end
 

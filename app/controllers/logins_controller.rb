@@ -5,10 +5,10 @@ class LoginsController < ApplicationController
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create]
   before_action :set_user, except: [:new, :create]
-  before_action :set_webauthn_available, except: [:new, :create]
-  before_action :set_totp_available, except: [:new, :create]
+  before_action :set_available_methods, except: [:new, :create]
   before_action :set_return_to
-  before_action :set_force_use_email
+
+  layout "login"
 
   # view to log in
   def new
@@ -28,7 +28,7 @@ class LoginsController < ApplicationController
 
     if login_preference == "totp"
       redirect_to totp_login_path(login, return_to: params[:return_to]), status: :temporary_redirect
-    elsif !has_webauthn_enabled || login_preference == "email"
+    elsif !has_webauthn_enabled || login_preference == "email" || login_preference == "sms"
       redirect_to login_code_login_path(login, return_to: params[:return_to]), status: :temporary_redirect
     else
       session[:auth_email] = login.user.email
@@ -51,6 +51,9 @@ class LoginsController < ApplicationController
     when "email"
       session[:login_preference] = "email" if remember
       redirect_to login_code_login_path(@login), status: :temporary_redirect
+    when "sms"
+      session[:login_preference] = "sms" if remember
+      redirect_to login_code_login_path(@login), status: :temporary_redirect
     when "totp"
       session[:login_preference] = "totp" if remember
       redirect_to totp_login_path(@login), status: :temporary_redirect
@@ -62,7 +65,6 @@ class LoginsController < ApplicationController
 
   # post to request login code
   def login_code
-
     initialize_sms_params
 
     resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.ip, user_agent: request.user_agent).run
@@ -142,8 +144,15 @@ class LoginsController < ApplicationController
         redirect_to(params[:return_to] || root_path)
       end
     else
-      # user failed webauthn & has a phone number
-      redirect_to login_code_login_path(@login), status: :temporary_redirect
+      set_available_methods
+
+      if @sms_available || @email_available
+        redirect_to login_code_login_path(@login), status: :temporary_redirect
+      elsif @totp_available
+        redirect_to totp_login_path(@login), status: :temporary_redirect
+      else
+        redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
+      end
     end
   rescue Errors::InvalidLoginCode => e
     flash.now[:error] = "Invalid login code!"
@@ -182,20 +191,15 @@ class LoginsController < ApplicationController
     @email = @login.user.email
   end
 
-  def set_webauthn_available
+  def set_available_methods
+    @email_available = !@login.authenticated_with_email
+    @sms_available = @user&.phone_number_verified && !@login.authenticated_with_sms
     @webauthn_available = @user&.webauthn_credentials&.any? && !@login.authenticated_with_webauthn
-  end
-
-  def set_totp_available
     @totp_available = @user&.totp.present? && !@login.authenticated_with_totp
   end
 
   def set_return_to
     @return_to = params[:return_to]
-  end
-
-  def set_force_use_email
-    @force_use_email = params[:force_use_email]
   end
 
   def fingerprint_info
@@ -209,10 +213,10 @@ class LoginsController < ApplicationController
   end
 
   def initialize_sms_params
-    return if @force_use_email && !@login.authenticated_with_email
     return if @login.authenticated_with_sms
+    return if session[:login_preference] == "email" && !@login.authenticated_with_email
 
-    if @login.user&.use_sms_auth || (@login.authenticated_with_email && @login.user&.phone_number_verified)
+    if @login.user&.use_sms_auth || (@login.user&.phone_number_verified && (@login.authenticated_with_email || session[:login_preference] == "sms"))
       @use_sms_auth = true
       @phone_last_four = @login.user.phone_number.last(4)
     end

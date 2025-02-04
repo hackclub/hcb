@@ -23,6 +23,9 @@ class MyController < ApplicationController
       Arel.sql("stripe_status = 'inactive' DESC")
     )
     @emburse_cards = current_user.emburse_cards.includes(:event)
+
+    @active_stripe_cards = @stripe_cards.where.not(stripe_status: "canceled")
+    @canceled_stripe_cards = @stripe_cards.where(stripe_status: "canceled")
   end
 
   def tasks
@@ -47,12 +50,12 @@ class MyController < ApplicationController
     count = current_user.transactions_missing_receipt.count
 
     emojis = {
-      "🤡": 300,
-      "💀": 200,
-      "😱": 100,
+      "🤡 ": 300,
+      "💀 ": 200,
+      "😱 ": 100,
     }
 
-    @missing_receipt_count = emojis.find { |emoji, value| count >= value }&.first || count
+    @missing_receipt_count = "#{emojis.find { |emoji, value| count >= value }&.first}#{count}"
 
     render :missing_receipts_icon, layout: false
   end

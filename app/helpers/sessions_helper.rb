@@ -26,6 +26,7 @@ module SessionsHelper
     session_token = SecureRandom.urlsafe_base64
     expiration_at = Time.now + user.session_duration_seconds
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
+    cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
       session_token:,
       fingerprint: fingerprint_info[:fingerprint],

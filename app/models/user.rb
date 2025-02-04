@@ -160,6 +160,12 @@ class User < ApplicationRecord
 
   validate :profile_picture_format
 
+  validate on: :update do
+    if admin_override_pretend? && !use_two_factor_authentication?
+      errors.add(:access_level, "two factor authentication is required for this access level")
+    end
+  end
+
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
   enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications
@@ -187,13 +193,13 @@ class User < ApplicationRecord
   # admin? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def admin?
-    (self.access_level == "admin" || self.access_level == "superadmin") && !self.pretend_is_not_admin
+    ["admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
   end
 
   # admin_override_pretend? ignores an admin user's
   # preference to pretend not to be an admin.
   def admin_override_pretend?
-    self.access_level == "admin" || self.access_level == "superadmin"
+    ["admin", "superadmin"].include?(self.access_level)
   end
 
   def make_admin!
@@ -202,10 +208,6 @@ class User < ApplicationRecord
 
   def remove_admin!
     user!
-  end
-
-  def preferred_first_name
-    preferred_name&.split&.first
   end
 
   def first_name(legal: false)

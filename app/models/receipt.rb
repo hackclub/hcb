@@ -65,7 +65,7 @@ class Receipt < ApplicationRecord
     end
   end
 
-  validates :file, attached: true
+  validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -73,7 +73,7 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin email_hcb_code email_reimbursement sms_reimbursement].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt

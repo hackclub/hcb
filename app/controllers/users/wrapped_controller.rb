@@ -33,7 +33,7 @@ module Users
       @data = {
         individual: {
           name: @user.full_name,
-          firstName: @user.preferred_first_name.presence || @user.first_name,
+          firstName: @user.first_name,
           id: @user.id,
           profilePicture: profile_picture_for(@user, 256),
           totalMoneySpent: Metric::User::TotalSpent.from(@user).metric,

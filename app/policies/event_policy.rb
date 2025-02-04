@@ -45,6 +45,11 @@ class EventPolicy < ApplicationPolicy
     admin_or_user?
   end
 
+  # pinning a transaction to an event
+  def pin?
+    admin_or_user?
+  end
+
   def update?
     admin_or_manager?
   end

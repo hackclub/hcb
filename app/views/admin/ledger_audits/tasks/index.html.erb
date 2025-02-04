@@ -1,6 +1,6 @@
 <%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
 
-<h3>Transactions Flagged During Ledger Audits (<%= @tasks.count %> unresolved)</h3>
+<h3>Transactions Flagged During Ledger Audits (<%= Admin::LedgerAudit::Task.flagged.count %> unresolved)</h3>
 
 <div>
   <table>
@@ -112,6 +112,8 @@
       <% end %>
     </section>
   <% end %>
+
+  <%= paginate @tasks %>
 
   <style>
     form, input {

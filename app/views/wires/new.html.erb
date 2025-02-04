@@ -12,7 +12,7 @@
 
 <% callout_footer = "This requirement is waived for organizations that have raised over $50,000 in the past year" %>
 <% callout_footer += " and events on plans with exemptions" if @event.plan.exempt_from_wire_minimum? %>
-<% callout_footer += "— including #{@event.name}!" unless @event.minimumn_wire_amount_cents > 100 %>
+<% callout_footer += "— including #{@event.name}!" unless @event.minimum_wire_amount_cents > 100 %>
 <% callout_footer += " (admins can bypass this)" if current_user.admin? %>
 
 <%= render "callout",
@@ -120,7 +120,7 @@
   </div>
 
   <div class="field">
-    <%= form.label :account_number %>
+    <%= form.label :account_number, "International account number (IBAN)" %>
     <%= form.text_field :account_number,
         required: true,
         disabled:,

@@ -22,12 +22,23 @@
 
 <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
 
-<% if @stripe_cards.any? %>
+<% if @active_stripe_cards.any? %>
   <article class="grid grid--wide">
-    <%= render @stripe_cards, headless: true %>
+    <%= render @active_stripe_cards, headless: true %>
   </article>
 <% else %>
-  <%= blankslate "No cards found!" %>
+  <%= blankslate "No active cards found!" %>
+<% end %>
+
+<% if @canceled_stripe_cards.any? %>
+  <details class="mt-6">
+    <summary>
+      <h2 class="inline-block mt0">Canceled cards</h2>
+    </summary>
+    <article class="grid grid--wide mt-4">
+      <%= render @canceled_stripe_cards, headless: true %>
+    </article>
+  </details>
 <% end %>
 
 <%= turbo_frame_tag :my_missing_receipts_list, src: my_missing_receipts_list_path, target: "_top" %>

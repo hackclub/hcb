@@ -2,14 +2,20 @@
 
 module Column
   class SweepJob < ApplicationJob
-    FLOATING_BALANCE = 6_000_000_00
+    MINIMUM_AVG_BALANCE = 5_000_000_00 # 5 mil
+    FLOATING_BALANCE = MINIMUM_AVG_BALANCE + 500_000_00 # 5.5 mil
     queue_as :low
+
     def perform
       account = ::ColumnService.get("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}")
       balance = account["balances"]["available_amount"]
       difference = balance - FLOATING_BALANCE
 
-      if difference.abs > 200_000_00
+      if balance < MINIMUM_AVG_BALANCE
+        Airbrake.notify("Column available balance under #{MINIMUM_AVG_BALANCE}")
+      end
+
+      if difference.abs > 200_000_00 && difference.negative? # if negative, it is a transfer from SVB (FS Main) to Column
         Airbrake.notify("Column::SweepJob > $200,000. Requires human review / processing.")
         return
       end
