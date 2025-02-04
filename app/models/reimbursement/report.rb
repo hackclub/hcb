@@ -102,7 +102,7 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts? &&
+            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? && expenses.any? && !missing_receipts? &&
               user.payout_method.class != User::PayoutMethod::PaypalTransfer
           end
         end
@@ -305,6 +305,12 @@ module Reimbursement
 
     def exceeds_maximum_amount?
       maximum_amount_cents && amount_cents > maximum_amount_cents
+    end
+
+    def below_minimum_amount?
+      user.payout_method.is_a?(User::PayoutMethod::Wire) && amount_cents < event.minimum_wire_amount_cents
+
+      true
     end
 
     def from_public_reimbursement_form?

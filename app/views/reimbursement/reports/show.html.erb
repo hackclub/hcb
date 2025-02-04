@@ -168,6 +168,11 @@
   <%= render "/users/payout_form", user: @report.user, report: @report %>
 </section>
 
+<section data-behavior="modal" role="dialog" id="wire_requirements" class="modal modal--scroll bg-snow">
+  <%= modal_header "Wire Transfer Requirements" %>
+  <%= render partial: "/wires/requirements", locals: { event: @report.event, class: "mb-0" } %>
+</section>
+
 <style>
   html { scroll-behavior: smooth; }
 </style>
