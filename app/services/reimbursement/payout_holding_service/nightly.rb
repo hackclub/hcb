@@ -26,12 +26,23 @@ module Reimbursement
                 currency: "USD",
                 user: User.find_by(email: "bank@hackclub.com")
               )
-              wire.save!
-              wire.mark_approved!
-              wire.send_wire!
-              payout_holding.wire = wire
-              payout_holding.save!
-              payout_holding.mark_sent!
+              begin
+                wire.save!
+                wire.mark_approved!
+                wire.send_wire!
+              rescue
+                payout_holding.mark_failed!
+                reason = "There was an error creating the wire transfer."
+                reason = wire.errors.full_messages.join(", ") if wire.errors.any?
+                ReimbursementMailer.with(
+                  reimbursement_payout_holding: payout_holding,
+                  reason:
+                ).wire_failed.deliver_later
+              else
+                payout_holding.wire = wire
+                payout_holding.save!
+                payout_holding.mark_sent!
+              end
             rescue => e
               Airbrake.notify(e)
             end

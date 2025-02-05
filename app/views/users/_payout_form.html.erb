@@ -18,13 +18,14 @@
       <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
         <%= inline_icon "web", size: 28 %>
         <strong>International wire</strong>
-        <small>(1-5 biz. days, $500 minimum)</small>
+        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
+        <small>(1-5 biz. days)</small>
       <% end %>
       <%= form.radio_button :payout_method_type, "User::PayoutMethod::PaypalTransfer", disabled: true %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::PaypalTransfer" do %>
         <%= inline_icon "paypal", size: 28 %>
         <strong>PayPal</strong>
-        <div class="badge bg-warning m1 mt0" style="width: fit-content;">Unavailable</div>
+        <div class="badge badge--corner bg-warning m1 mt0" style="width: fit-content;">Unavailable</div>
         <small class="xs-hide">Due to integration issues, transfers via PayPal are currently unavailable.</small>
       <% end %>
     </div>
@@ -76,11 +77,7 @@
 
   <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
     <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
-      <h2 class="mb2 mt3">Location details</h2>
-
       <%= render partial: "wires/recipient_details", locals: { form:, disabled: false } %>
-
-      <h2 class="mb2 mt3">Payment information</h2>
 
       <%= render partial: "wires/account_details", locals: { form:, disabled: false, account_number_field_name: :account_number } %>
 

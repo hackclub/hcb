@@ -111,7 +111,12 @@ class Wire < ApplicationRecord
     event :mark_failed do
       transitions from: [:deposited, :approved], to: :failed
       after do |reason = nil|
-        WireMailer.with(wire: self, reason:).notify_failed.deliver_later
+        if reimbursement_payout_holding.present?
+          ReimbursementMailer.with(reimbursement_payout_holding:, reason:).wire_failed.deliver_later
+          reimbursement_payout_holding.mark_failed!
+        else
+          WireMailer.with(wire: self, reason:).notify_failed.deliver_later
+        end
         create_activity(key: "wire.failed", owner: nil)
         update(return_reason: reason)
       end
