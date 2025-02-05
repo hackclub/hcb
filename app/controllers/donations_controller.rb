@@ -260,7 +260,7 @@ class DonationsController < ApplicationController
   end
 
   def donation_params
-    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered, :utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content)
+    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered, :referrer, :utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content)
   end
 
   def redirect_to_404

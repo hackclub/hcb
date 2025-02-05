@@ -912,7 +912,7 @@ class AdminController < ApplicationController
             user: current_user
           ).run
         rescue => e
-          return redirect_to transaction_admin_path(id), flash: { error: e.message }
+          return redirect_to ledger_admin_index_path, flash: { error: e.message }
         end
       end
     end

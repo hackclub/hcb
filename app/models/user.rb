@@ -161,7 +161,7 @@ class User < ApplicationRecord
   validate :profile_picture_format
 
   validate on: :update do
-    if admin_override_pretend? && !use_two_factor_authentication?
+    if Rails.env.production? && admin_override_pretend? && !use_two_factor_authentication?
       errors.add(:access_level, "two factor authentication is required for this access level")
     end
   end
