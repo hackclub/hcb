@@ -8,45 +8,7 @@
   Promotions &amp; perks
 </h1>
 
-<% if @event.hackathon? && (@event.country_US? || @event.country_CA?) || Flipper.enabled?(:hackathon_grant, @event) %>
-  <div class="card pb0 mb3 promo-hackathon-grant" id="hackathon-grant" style="border: 2px solid #ec3750">
-    <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 p2 my0 flex flex-col items-start smoke">
-        <span class="badge bg-success m0 mb1">New!</span>
-        💵 Hackathon Grant
-      </h3>
-      <%= link_to "Apply",
-        @perks_available ? "https://hackclub.com/hackathons/grant/" : root_path,
-        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
-        "aria-label" => "Get notified when grant applications are open.",
-        target: :_blank %>
-    </div>
-
-    <p>
-      Hack Club is offering <strong>$500</strong> grants to in-person high school hackathons until December 31st, 2024. <strong>Applications are now open.</strong>
-    </p>
-  </div>
-<% end %>
-
 <% if @event.robotics_team? %>
-  <div class="card pb0 mb3 promo-bin" id="bin">
-    <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 p2 my0 flex flex-col items-start smoke">
-        🗑️ The Bin: Electronics Starter Kits
-      </h3>
-      <%= link_to "Join",
-        @perks_available ? "https://hackclub.com/bin/" : root_path,
-        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
-        target: :_blank %>
-    </div>
-    <p>
-      Now that build season is over, get your club members learning electronics early for next year. The Bin is a free beginner hardware kit program ideal for FIRST teams!
-    </p>
-    <p>
-      Rummage for parts, design your project in the online editor, and get the parts shipped to you for free paid for by donation. All FIRST club members in high school are eligible.
-    </p>
-  </div>
-
   <div class="card pb0 mb3 promo-onboard" id="bin">
     <div class="card__banner card__banner--top flex justify-between items-center">
       <h3 class="h1 p2 my0 flex items-start smoke justify-center">
@@ -111,11 +73,39 @@
   </section>
 </div>
 
+<div class="card mb3" id="1password">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
+    <%= image_tag "1password.svg", width: 210, class: "p2" %>
+    <%= link_to "Apply",
+      @perks_available ? fillout_form("7jzG7ADmuLus", { "Project_Name" => @event.name, "Bank_URL" => event_url(@event), "Your_Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
+      class: "btn mr1",
+      target: :_blank %>
+  </div>
+
+  <% if @event.hackathon? %>
+    <p class="mb0">
+      <%= link_to "1Password", "https://1password.com" %> is offering hackathons running on HCB
+      a year-long 1Password plan for up to 5 people. This can handed out as a prize, however, it
+      can only be claimed once per hackathon.
+    </p>
+  <% else %>
+    <h3 class="mb0 mt0">Do you make open source software?</h3>
+    <p class="mb0">
+      <%= link_to "1Password", "https://1password.com" %> is offering a lifetime 1Password Teams
+      license (up to 10 seats) to any open source project running on HCB.
+    </p>
+    <h3 class="mb0 mt2">Does your nonprofit do something else?</h3>
+    <p class="mb0">
+      All other nonprofits can receive a 25% discount on 1Password's business plan.
+    </p>
+  <% end %>
+</div>
+
 <div class="card mb3" id="domains">
   <div
     class="card__banner card__banner--top flex justify-between items-center promo-domains">
     <h3 class="h1 p2 my0 color-black">Domains</h3>
-      <% if !@event.g_suites.none? || !@perks_available %>
+      <% if !@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) %>
         <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
           <span class="btn disabled">Apply</span>
         </div>
@@ -192,44 +182,12 @@
   </section>
 </div>
 
-<div class="card mb3" id="sendy">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-sendy">
-    <h3 class="h1 white p2 my0">Sendy</h3>
-    <%= link_to "Temporarily closed",
-      @perks_available ? fillout_form("4cJ69MSzKhus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your name" => current_user.name, "Login email" => current_user.email, "Domain URL" => @event.g_suites.first&.domain }, prefix: "prefill_") : root_path,
-      class: "btn mr1 disabled",
-      target: :_blank %>
-  </div>
-
-  <p class="mb0">
-    <%= link_to "Sendy", "https://sendy.co" %> is straightforward, reliable mass-emailing software for sending newsletters. We use it at Hack Club HQ & provide it to all HCB organizations.
-  </p>
-</div>
-
-<div class="card mb3" id="1password">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
-    <%= image_tag "1password.svg", width: 210, class: "p2" %>
-    <%= link_to "Temporarily closed",
-      @perks_available ? fillout_form("1EVMTc9d1Zus", { "Project Name" => @event.name, "Bank URL" => event_url(@event), "Your Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 disabled",
-      target: :_blank %>
-  </div>
-
-  <p class="mb0">
-    <%= link_to "1Password", "https://1password.com" %> is providing $100 USD
-    credit to all organizations on HCB that can be claimed once per
-    organization. 1Password is a password manager that allows you to securely
-    keep and share account logins and credentials with your teammates; we use it
-    ourselves at Hack Club HQ!
-  </p>
-</div>
-
 <div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="pvsa">
   <div class="card__banner card__banner--top flex justify-between items-center promo-pvsa">
     <%= image_tag "https://cloud-q7i8htyv7-hack-club-bot.vercel.app/0pvsa-logo-2x.png", width: 60 %>
-    <%= link_to "Temporarily closed",
+    <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
       @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 disabled",
+      class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
       target: :_blank %>
   </div>
 
@@ -270,7 +228,7 @@
 
   <section class="card__banner card__darker secondary border-top">
   <p class="my0">
-    Only 🇺🇸 US citizens and LPRs who currently reside within the US are eligible to recieve the award. You can see all the <a href="https://presidentialserviceawards.gov/eligibility#volunteers" target="_blank">volunteer eligibility details</a> if you have any questions.
+    Only 🇺🇸 US citizens and LPRs who currently reside within the US are eligible to receive the award. You can see all the <a href="https://presidentialserviceawards.gov/eligibility#volunteers" target="_blank">volunteer eligibility details</a> if you have any questions.
   </p>
   </section>
 </div>
@@ -294,6 +252,21 @@
       out by the HCB team.
     </p>
   </div>
+
+  <div class="card mb3" id="sendy">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-sendy">
+      <h3 class="h1 white p2 my0">Sendy</h3>
+      <%= link_to "Expired",
+        root_path,
+        class: "btn mr1 disabled",
+        target: :_blank %>
+    </div>
+
+    <p class="mb0">
+      <%= link_to "Sendy", "https://sendy.co" %> is straightforward, reliable mass-emailing software for sending newsletters. We use it at Hack Club HQ & provide it to all HCB organizations.
+    </p>
+  </div>
+
   <div class="card mb3" id="stickermule">
     <div class="card__banner card__banner--top flex justify-between items-center" style="background-color:#4E2817">
       <%= image_tag "stickermule.svg", width: 240 %>

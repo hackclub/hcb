@@ -155,7 +155,7 @@
           <div class="<%= "btn-group btn-group--no-wrap" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
             <%= form.label "file_#{ct.local_hcb_code.hashid}", class: "btn", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>
-              Upload receipt
+              <%= ct.local_hcb_code.receipts.any? ? "Upload another receipt" : "Upload receipt" %>
             <% end %>
 
             <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
@@ -187,9 +187,10 @@
 
 <% event = @event || ct.local_hcb_code.event %>
 <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present? && !show_mock_data?(event) %>
-  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>">
-    <%= modal_header(ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event&.name, amount_cents: ct.amount), external_link: ct.local_hcb_code.url) %>
-    <%= turbo_frame_tag ct.local_hcb_code.public_id, src: ct.local_hcb_code.popover_url, loading: :lazy do %>
+  <% pretty_title = ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event&.name, amount_cents: ct.amount) %>
+  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>" data-state-url="<%= hcb_code_path(ct.local_hcb_code) %>" data-state-title="<%= pretty_title %>">
+    <%= modal_header(pretty_title, external_link: url_for(ct.local_hcb_code)) %>
+    <%= turbo_frame_tag ct.local_hcb_code.public_id, src: ct.local_hcb_code.popover_path, loading: :lazy do %>
       <div class="shimmer mb1 mt3">
         <div class="shimmer__border"></div>
         <div class="shimmer__main">
@@ -254,7 +255,7 @@
 <% end %>
 
 <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && ct.local_hcb_code.card_grant? %>
-  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="card_grant_details_<%= instance %>">
+  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="card_grant_details_<%= instance %>" data-state-url="<%= spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant) %>" data-state-title="<%= transaction_memo(ct) %>">
     <%= modal_header(transaction_memo(ct), external_link: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant)) %>
     <%= turbo_frame_tag "spending_#{ct.local_hcb_code.disbursement.card_grant.public_id}", src: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant, params: { frame: true }), loading: :lazy do %>
       <strong>Loading...</strong>

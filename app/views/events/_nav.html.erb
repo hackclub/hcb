@@ -52,7 +52,7 @@
       account_number_event_path(@event),
       tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
       icon: "bank-account",
-      selected: local_assigns[:selected] == :account_number if policy(@event).account_number? %>
+      selected: local_assigns[:selected] == :account_number if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
     <%= dock_item "Check deposits",
       event_check_deposits_path(@event),
       tooltip: "Deposit checks",
@@ -64,7 +64,7 @@
     <% end %>
     <%= dock_item "Cards",
       event_cards_overview_path(event_id: @event.slug),
-      tooltip: "Manage team debit cards",
+      tooltip: "Manage team HCB cards",
       icon: "card",
       data: { tour_step: "cards" },
       selected: local_assigns[:selected] == :cards if policy(@event).card_overview? %>
@@ -90,13 +90,15 @@
       tooltip: "Manage your team",
       icon: "leader",
       selected: local_assigns[:selected] == :team %>
-    <%= dock_item "Perks",
-      event_promotions_path(event_id: @event.slug),
-      tooltip: (!policy(@event).promotions? ? "Your organization isn't eligible for promos and discounts." : "Receive promos & discounts"),
-      icon: "shirt",
-      data: { tour_step: "perks" },
-      disabled: !policy(@event).promotions?,
-      selected: local_assigns[:selected] == :promotions if @event.approved? %>
+    <%= if organizer_signed_in? && @event.approved?
+          dock_item "Perks",
+                event_promotions_path(event_id: @event.slug),
+                tooltip: (!policy(@event).promotions? ? "Your organization isn't eligible for promos and discounts." : "Receive promos & discounts"),
+                icon: "shirt",
+                data: { tour_step: "perks" },
+                disabled: !policy(@event).promotions?,
+                selected: local_assigns[:selected] == :promotions
+        end %>
     <%= dock_item "Google #{content_tag(:span, 'Workspace', class: 'sm-hide md-hide')}",
       event_g_suite_overview_path(event_id: @event.slug),
       tooltip: (!policy(@event).g_suite_overview? ? "Your organization isn't eligible for Google Workspace." : @event.g_suites.any? ? "Manage domain Google Workspace" : Flipper.enabled?(:google_workspace, @event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"),
@@ -105,7 +107,7 @@
       selected: local_assigns[:selected] == :google_workspace if organizer_signed_in? %>
     <%= dock_item "Documents",
       event_documents_path(event_id: @event.slug),
-      tooltip: "View legal documents, financial statements, and FAQ",
+      tooltip: "View legal documents and financial statements",
       icon: "docs",
       selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
     <%= dock_item "Settings",
@@ -130,7 +132,7 @@
           <div class="menu__divider"></div>
           <%= link_to "Donations", event_donation_overview_path(@event) if policy(@event).donation_overview? %>
           <%= link_to "Invoices", event_invoices_path(@event) if @event.approved? && @event.plan.invoices_enabled? %>
-          <%= link_to "Account numbers", account_number_event_path(@event) if policy(@event).account_number? %>
+          <%= link_to "Account numbers", account_number_event_path(@event) if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
           <%= link_to "Check deposits", event_check_deposits_path(@event) if policy(@event.check_deposits.build).index? %>
         </div>
       </button>

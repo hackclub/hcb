@@ -47,6 +47,10 @@ class Event
         false
       end
 
+      def omit_stats
+        false
+      end
+
     end
 
   end

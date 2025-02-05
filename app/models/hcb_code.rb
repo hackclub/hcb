@@ -51,21 +51,19 @@ class HcbCode < ApplicationRecord
 
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
+  validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }
+
   comma do
     hcb_code "HCB Code"
     created_at "Created at"
     date "Transaction date"
-    url "URL" do |url| "https://hcb.hackclub.com#{url}" end
+    hashid "URL" do |hashid| "https://hcb.hackclub.com/hcb/#{hashid}" end
     memo
     receipts size: "Receipt count"
     receipts "Has receipt?" do |receipts| receipts.exists? end
   end
 
-  def url
-    "/hcb/#{hashid}"
-  end
-
-  def popover_url
+  def popover_path
     "/hcb/#{hashid}?frame=true"
   end
 
@@ -114,6 +112,7 @@ class HcbCode < ApplicationRecord
   def humanized_type
     return "ACH" if ach_transfer?
     return "Bank Fee" if bank_fee?
+    return "Transfer" if disbursement?
 
     t = type || :transaction
     t = :transaction if unknown?

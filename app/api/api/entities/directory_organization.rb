@@ -34,7 +34,14 @@ module Api
       end
 
       expose :category do |organization|
-        organization.category&.parameterize&.underscore
+        category = "nonprofit"
+        category = "climate" if organization.event_tags.where(name: EventTag::Tags::CLIMATE).exists?
+        category = "hack_club" if organization.event_tags.where(name: EventTag::Tags::HACK_CLUB).exists?
+        category = "hackathon" if organization.hackathon?
+        category = "robotics_team" if organization.robotics_team?
+        category = "hack_club_hq" if organization.plan.is_a?(Event::Plan::HackClubAffiliate)
+
+        category
       end
       expose :missions do |organization|
         # This is written with filtering in Ruby rather than SQL to use

@@ -8,6 +8,7 @@
 #  category_lock         :string
 #  expiration_preference :integer          default("1 year"), not null
 #  invite_message        :string
+#  keyword_lock          :string
 #  merchant_lock         :string
 #  event_id              :bigint           not null
 #

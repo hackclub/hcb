@@ -8,7 +8,7 @@
     <button
       class="btn h-10 bg-none bg-smoke shadow-none w-100 justify-start mt1 px-3 hover:shadow-none display-none-not-important md:flex"
       style="border-radius: 8px"
-      id="command_bar_trigger">
+      data-behavior="command_bar_trigger">
       <span class="flex-grow text-left font-medium">Jump to...</span>
       <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md mr-2 text-sm">
         ⌘
@@ -61,6 +61,23 @@
     <% end %>
   </nav>
 
+  <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
+    <div id="bank-wrapped-dialog" style="display: none;">
+      <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background: url('https://cloud-7sn7fc3g0-hack-club-bot.vercel.app/0frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
+        <span class="flex-auto flex justify-between items-center">
+          <span>Check out your <a href="/wrapped" target="_blank" class="primary nowrap" style="color: white;" id="bank-wrapped-link"><strong>HCB Wrapped</strong></a> for 2024!</span>
+        </span>
+        <svg onclick="(localStorage.setItem('hide_hcb_wrapped_2024', 'true'), document.getElementById('bank-wrapped-dialog').remove())" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="view-close" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="pointer" style=""><g><path d="M11.121,9.707c-0.39,-0.391 -1.024,-0.391 -1.414,0c-0.391,0.39 -0.391,1.024 0,1.414l4.95,4.95l-4.95,4.95c-0.391,0.39 -0.391,1.023 0,1.414c0.39,0.39 1.024,0.39 1.414,0l4.95,-4.95l4.95,4.95c0.39,0.39 1.023,0.39 1.414,0c0.39,-0.391 0.39,-1.024 0,-1.414l-4.95,-4.95l4.95,-4.95c0.39,-0.39 0.39,-1.024 0,-1.414c-0.391,-0.391 -1.024,-0.391 -1.414,0l-4.95,4.95l-4.95,-4.95Z"></path></g></svg>
+      </article>
+    </div>
+
+    <script>
+      if (localStorage.getItem('hide_hcb_wrapped_2024') !== 'true') {
+        document.getElementById('bank-wrapped-dialog').style.display = 'block';
+      }
+    </script>
+  <% end %>
+
   <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
     <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
       <span class="flex items-center w-100">
@@ -75,6 +92,9 @@
       </span>
     </h4>
 
-    <%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
+    <%= error_boundary fallback_text: "No recent activities available." do %>
+      <%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
+    <% end %>
   <% end %>
+
 <% end %>

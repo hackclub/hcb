@@ -46,6 +46,7 @@ class EventTag < ApplicationRecord
     VERMONT_BASED = "Vermont-based"
     ROBOTICS_TEAM = "Robotics Team"
     HACKATHON = "Hackathon"
+    HACK_CLUB = "Hack Club"
   end
 
 end

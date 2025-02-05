@@ -5,10 +5,7 @@ import Icon from '@hackclub/icons'
 import csrf from '../../common/csrf'
 import React from 'react'
 
-const restrictedCategories = ['outernet guild', 'hardware grant']
-
-const restrictedFilter = e =>
-  !restrictedCategories.includes(e.category) && !e.demo_mode
+const restrictedFilter = e => !e.demo_mode
 
 export const generateEventActions = data => {
   return [
@@ -164,15 +161,15 @@ export const initalActions = [
     icon: <Icon glyph="settings" size={16} />,
     priority: Priority.HIGH,
   },
-  {
-    id: 'change_theme',
-    name: 'Change Theme',
-    keywords: 'dark light', // eslint-disable-next-line no-undef
-    perform: () => BK.toggleDark(),
+  ...['light', 'dark', 'system'].map(theme => ({
+    id: `${theme}-theme`,
+    name: `Set theme to ${theme}`,
+    keywords: theme, // eslint-disable-next-line no-undef
+    perform: () => BK.setDark(theme),
     section: 'Actions',
     icon: <Icon glyph="idea" size={16} />,
     priority: Priority.HIGH,
-  },
+  })),
   {
     id: 'signout',
     name: 'Sign Out',
@@ -290,14 +287,6 @@ export const adminActions = adminUrls => [
     perform: () => (window.location.href = adminUrls['Feedback']),
   },
   {
-    id: 'admin_tool_13',
-    section: 'Admin Tools',
-    priority: Priority.HIGH,
-    name: 'FIRST Grants',
-    icon: <Icon glyph="sam" size={16} />,
-    perform: () => (window.location.href = adminUrls['FIRST Grants']),
-  },
-  {
     id: 'admin_tool_14',
     section: 'Admin Tools',
     priority: Priority.HIGH,
@@ -376,14 +365,6 @@ export const adminActions = adminUrls => [
     name: 'Hackathons',
     icon: <Icon glyph="event-code" size={16} />,
     perform: () => (window.location.href = adminUrls['Hackathons']),
-  },
-  {
-    id: 'admin_tool_24',
-    section: 'Admin Tools',
-    priority: Priority.HIGH,
-    name: 'Sendy',
-    icon: <Icon glyph="email-fill" size={16} />,
-    perform: () => (window.location.href = adminUrls['Sendy']),
   },
   {
     id: 'admin_tool_25',

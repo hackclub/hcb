@@ -1,11 +1,11 @@
 .conversation_item:not(:last-child)::before {
   content: '';
   width: 2px;
-  height: calc(100% - 18px);
+  height: calc(100% + 24px);
   background-color: map-get($palette, smoke);
   display: block;
   position: absolute;
-  top: 39px;
+  top: 36px;
   left: 17.5px;
   z-index: 1;
   border-radius: 1px;

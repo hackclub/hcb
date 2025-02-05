@@ -28,6 +28,19 @@ module Api
         return tx.amount.cents
       end
 
+      def expand?(key)
+        @expand.include?(key)
+      end
+
+      def expand(*keys)
+        before = @expand
+        @expand = @expand.dup + keys
+
+        yield
+      ensure
+        @expand = before
+      end
+
     end
   end
 end

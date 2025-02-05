@@ -54,20 +54,19 @@
       <% else %>
         <strong>Requested at</strong>
         <%= format_datetime @hcb_code.disbursement.created_at %>
+        <% admin_tool("", "p") do %>
+          <% if @hcb_code.disbursement.scheduled_on.present? && !@hcb_code.disbursement.processed? %>
+            <strong>Scheduled at</strong>
+            <%= @hcb_code.disbursement.scheduled_on.strftime("%B %e, %Y") %>
+          <% end %>
+        <% end %>
+      <% end %>
+      <% admin_tool("", "p") do %>
+        <strong>Disbursement ID</strong>
+        <%= link_to @hcb_code.disbursement.id, @hcb_code.disbursement %>
       <% end %>
     </p>
 
-    <% admin_tool("", "p") do %>
-      <% if @hcb_code.disbursement.scheduled_on.present? && !@hcb_code.disbursement.processed? %>
-        <strong>Scheduled at</strong>
-        <%= @hcb_code.disbursement.scheduled_on.strftime("%B %e, %Y") %>
-      <% end %>
-    <% end %>
-
-    <% admin_tool("", "p") do %>
-      <strong>Disbursement ID</strong>
-      <%= link_to @hcb_code.disbursement.id, @hcb_code.disbursement %>
-    <% end %>
   </section>
 
   <section class="details pt2 pb2">

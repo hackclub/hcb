@@ -6,7 +6,7 @@
       <li>This is because you're not a manager.</li>
       <li>If you need to send money, ask your manager to change your role.</li>
       <li>To learn more, visit
-        the <%= link_to "user roles explainer page", roles_path %>.
+        the <%= link_to "user roles explainer page", roles_path, data: { turbo_frame: "_top" } %>.
       </li>
     </ul>
   <% end %>

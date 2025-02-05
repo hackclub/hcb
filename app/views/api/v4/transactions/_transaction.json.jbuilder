@@ -40,4 +40,4 @@ json.transfer      { json.partial! "api/v4/transactions/disbursement",  disburse
 json.ach_transfer  { json.partial! "api/v4/transactions/ach_transfer",  ach_transfer: hcb_code.ach_transfer     } if hcb_code.ach_transfer?
 json.check_deposit { json.partial! "api/v4/transactions/check_deposit", check_deposit: hcb_code.check_deposit   } if hcb_code.check_deposit?
 
-json.organization hcb_code.event, partial: "api/v4/events/event", as: :event if local_assigns[:expand]&.include?(:organization)
+json.organization hcb_code.event, partial: "api/v4/events/event", as: :event if expand?(:organization)

@@ -8,12 +8,12 @@ gem "dotenv-rails", groups: [:development, :test]
 
 gem "rails", "~> 7.2"
 
-gem "puma", "~> 6.4" # app server
+gem "puma", "~> 6.5" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "redis", "~> 5.3" # for caching, jobs, etc.
-gem "sidekiq", "~> 7.3.2" # background jobs
-gem "sidekiq-cron", "~> 1.12" # run Sidekiq jobs at scheduled intervals
+gem "sidekiq", "~> 7.3.8" # background jobs
+gem "sidekiq-cron", "~> 2.0" # run Sidekiq jobs at scheduled intervals
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -34,8 +34,8 @@ gem "faraday" # web requests
 
 gem "increase", "~> 0.3.3"
 gem "stripe", "11.7.0"
-gem "plaid", "~> 33.0"
-gem "yellow_pages", github: "hackclub/yellow_pages", ref: "4711379"
+gem "plaid", "~> 34.0"
+gem "yellow_pages", github: "hackclub/yellow_pages"
 
 gem "aws-sdk-s3", require: false
 
@@ -43,7 +43,7 @@ gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
 gem "twilio-ruby" # SMS notifications
 
-gem "google-apis-admin_directory_v1", "~> 0.58.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.60.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -52,13 +52,13 @@ gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fi
 
 gem "aasm" # state machine
 
-gem "paper_trail", "~> 15.2.0" # track changes to models
-gem "acts_as_paranoid", "~> 0.10.2" # enables soft deletions
+gem "paper_trail", "~> 16.0.0" # track changes to models
+gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
-gem "active_storage_validations", "1.3.0" # file validations
+gem "active_storage_validations", "1.3.5" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
@@ -75,7 +75,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
-gem "browser", "~> 6.0" # browser detection
+gem "browser", "~> 6.1" # browser detection
 
 # Pagination
 gem "kaminari"
@@ -159,7 +159,7 @@ group :development, :test do
   gem "rubocop-rails", "~> 2.27"
   gem "relaxed-rubocop"
 
-  gem "rspec-rails", "~> 7.0.1"
+  gem "rspec-rails", "~> 7.1.0"
 
   # Lets you set a breakpoint with a REPL using binding.pry
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"
@@ -198,9 +198,8 @@ end
 gem "jbuilder", "~> 2.13"
 
 gem "ledgerjournal"
-gem "doorkeeper", "~> 5.7"
+gem "doorkeeper", "~> 5.8"
 
-gem "chartkick"
 gem "cssbundling-rails", "~> 1.4"
 
 gem "rtesseract"
@@ -216,10 +215,16 @@ gem "rotp"
 
 gem "ruby-limiter"
 
-gem "ahoy_email", "~> 2.3"
+gem "ahoy_email", "~> 2.4"
 
 gem "email_reply_parser"
 
 gem "eu_central_bank"
 
 gem "whitesimilarity"
+
+gem "rack-timeout", require: "rack/timeout/base"
+
+# IRB is pinned to 1.14.3 because Console1984 is incompatible with >=1.15.0.
+# https://github.com/basecamp/console1984/issues/127
+gem "irb", "~> 1.14.3"

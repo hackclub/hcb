@@ -62,7 +62,14 @@ module.exports = {
         darkless: '#252429',
         dark: '#17171d',
         black: '#1f2d3d',
-        primary: '#ec3750'
+        primary: '#ec3750',
+        red: "#ec3750",
+        orange: "#ff8c37",
+        yellow: "#f1c40f",
+        green: "#33d6a6",
+        cyan: "#5bc0de",
+        blue: "#338eda",
+        purple: "#a633d6"
       },
     },
   },

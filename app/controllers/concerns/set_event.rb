@@ -20,8 +20,12 @@ module SetEvent
       # Attempt to find this slug in the history
       @event = FriendlyId::Slug.order(id: :desc).find_by(slug: id, sluggable_type: "Event")&.sluggable
 
-      if !@event
+      unless @event || admin_signed_in?
         return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
+      end
+
+      unless @event
+        return redirect_to events_admin_index_path(q: id), flash: { error: "We couldn’t find that organization!" }
       end
 
       # Redirect to the new slug

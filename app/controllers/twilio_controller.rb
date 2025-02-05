@@ -69,7 +69,7 @@ class TwilioController < ActionController::Base
 
     @attachments = (0..num_media - 1).map do |i|
       uri = URI.parse(params["MediaUrl#{i}"])
-      break unless uri.scheme == "http" || uri.scheme == "https"
+      break unless ["http", "https"].include?(uri.scheme)
 
       {
         filename: "SMS_#{Time.now.strftime("%Y-%m-%d-%H:%M")}",

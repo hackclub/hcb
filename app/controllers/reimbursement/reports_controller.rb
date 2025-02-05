@@ -8,12 +8,12 @@ module Reimbursement
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
-    invisible_captcha only: [:create], on_spam: :on_spam
+    invisible_captcha only: [:create], honeypot: :subtitle
 
     # POST /reimbursement_reports
     def create
       @event = Event.find(report_params[:event_id])
-      user = User.find_or_create_by!(email: report_params[:email])
+      user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
       @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil))
 
       authorize @report
@@ -32,7 +32,7 @@ module Reimbursement
           redirect_to finished_reimbursement_reports_path(@event)
         end
       else
-        redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
+        redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
       end
     end
 
@@ -273,10 +273,6 @@ module Reimbursement
       reimbursement_report_params.delete(:maximum_amount) unless current_user.admin? || @event&.users&.include?(current_user)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
       reimbursement_report_params
-    end
-
-    def on_spam
-      raise ActionController::RoutingError.new("Not Found") unless current_user.present?
     end
 
   end

@@ -9,7 +9,6 @@
 #  activated_at                                 :datetime
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
-#  category                                     :integer
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
@@ -25,8 +24,6 @@
 #  is_public                                    :boolean          default(TRUE)
 #  last_fee_processed_at                        :datetime
 #  name                                         :text
-#  omit_stats                                   :boolean          default(FALSE)
-#  organization_identifier                      :string
 #  postal_code                                  :string
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
@@ -38,7 +35,6 @@
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
-#  club_airtable_id                             :text
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
 #  point_of_contact_id                          :bigint
@@ -52,7 +48,6 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
-  self.ignored_columns = %w[sponsorship_fee expected_budget has_fiscal_sponsorship_document club_airtable_id organization_identifier transaction_engine_v2_at pending_transaction_engine_at]
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
@@ -72,7 +67,8 @@ class Event < ApplicationRecord
 
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   validates :donation_thank_you_message, length: { maximum: 500 }
-  validates :short_name, length: { maximum: 16 }, allow_blank: true
+  MAX_SHORT_NAME_LENGTH = 16
+  validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
   include AASM
   include PgSearch::Model
@@ -94,8 +90,8 @@ class Event < ApplicationRecord
   scope :transparent, -> { where(is_public: true) }
   scope :not_transparent, -> { where(is_public: false) }
   scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
-  scope :omitted, -> { where(omit_stats: true) }
-  scope :not_omitted, -> { where(omit_stats: false) }
+  scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
+  scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :hidden, -> { where("hidden_at is not null") }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
@@ -229,6 +225,7 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :g_suites
@@ -309,9 +306,16 @@ class Event < ApplicationRecord
   has_many :grants
 
   has_one_attached :donation_header_image
+  validates :donation_header_image, content_type: [:png, :jpg, :jpeg]
+
   has_one_attached :background_image
+  validates :background_image, content_type: [:png, :jpg, :jpeg]
+
   has_one_attached :logo
+  validates :logo, content_type: [:png, :jpg, :jpeg]
+
   has_one_attached :stripe_card_logo
+  validates :stripe_card_logo, content_type: [:png, :jpg, :jpeg]
 
   include HasMetrics
 
@@ -323,8 +327,11 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
+  validate :contract_signed, unless: :demo_mode?
 
   validates :name, presence: true
+  before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
+
   validates :slug, presence: true, format: { without: /\s/ }
   validates :slug, format: { without: /\A\d+\z/ }
   validates_uniqueness_of_without_deleted :slug
@@ -348,7 +355,7 @@ class Event < ApplicationRecord
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
-  after_commit :generate_stripe_card_designs, if: -> { stripe_card_logo&.blob&.saved_changes? && stripe_card_logo.attached? && !Rails.env.test? }
+  after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
   comma do
     id
@@ -357,7 +364,6 @@ class Event < ApplicationRecord
     slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
     is_public "transparent"
-    category
   end
 
   CUSTOM_SORT = Arel.sql(
@@ -369,22 +375,6 @@ class Event < ApplicationRecord
     "WHEN id = 4318 THEN '6'    "\
     "ELSE 'z' || name END ASC   "
   )
-
-  enum :category, {
-    hackathon: 0, # done, converted to EventTag
-    'hack club': 1, # done, converted to EventTag
-    nonprofit: 2, # deprecated
-    event: 3, # deprecated
-    'high school hackathon': 4, # converted to EventTag (Hackathon)
-    'robotics team': 5, # converted to EventTag
-    'hardware grant': 6, # winter event 2022, converted to EventTag
-    'hack club hq': 7, # converted to EventTag
-    'outernet guild': 8, # summer event 2023, converted to EventTag
-    'grant recipient': 9, # converted to EventTag
-    salary: 10, # converted to Event::Plan
-    ai: 11, # converted to EventTag
-    'hcb internals': 12 # eg. https://hcb.hackclub.com/clearing. to be converted to Event::Plan
-  }
 
   enum :stripe_card_shipping_type, {
     standard: 0,
@@ -652,10 +642,12 @@ class Event < ApplicationRecord
 
     ActiveRecord::Base.transaction do
       stripe_card_personalization_designs.update(stale: true)
-      file = attachment_changes["stripe_card_logo"]&.attachable || StringIO.new(stripe_card_logo.blob.open { |f| f.read })
-      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :black, event: self).run
-      file.rewind
-      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :white, event: self).run
+      stripe_card_logo.blob.open do |tempfile|
+        converted = ImageProcessing::MiniMagick.source(tempfile.path).convert!("png")
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :black, event: self).run
+        converted.rewind
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :white, event: self).run
+      end
     end
   rescue Stripe::InvalidRequestError => e
     stripe_card_logo.delete
@@ -682,19 +674,23 @@ class Event < ApplicationRecord
     public_reimbursement_page_enabled && plan.reimbursements_enabled?
   end
 
-  def short_name(length: 16)
+  def short_name(length: MAX_SHORT_NAME_LENGTH)
     return name if length >= name.length
 
     self[:short_name] || name[0...length]
   end
 
-  monetize :minimumn_wire_amount_cents
+  monetize :minimum_wire_amount_cents
 
-  def minimumn_wire_amount_cents
+  def minimum_wire_amount_cents
     return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
     return 100 if plan.exempt_from_wire_minimum?
 
     return 500_00
+  end
+
+  def omit_stats?
+    plan.omit_stats
   end
 
   private
@@ -717,6 +713,12 @@ class Event < ApplicationRecord
     return if can_open_demo_mode? demo_mode_limit_email
 
     errors.add(:demo_mode, "limit reached for user")
+  end
+
+  def contract_signed
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none?
+
+    errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
 
   def sum_fronted_amount(pts)

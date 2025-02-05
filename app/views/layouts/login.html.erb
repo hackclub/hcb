@@ -1,0 +1,133 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
+<% @home_size = 50 %>
+<% page_full %>
+<!DOCTYPE html>
+<html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <head>
+    <title>
+      <%= yield(:title).concat(" –") if content_for?(:title) %>
+      HCB
+    </title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
+    <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
+    <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
+    <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
+    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+    <% unless Rails.env.production? %>
+      <meta name="turbo-prefetch" content="false">
+    <% end %>
+    <% if Rails.env.production? %>
+      <script>
+        console.log(`%c                -*%@@%*-
+              .=#@@@@@@@@@@#=.
+          .=%@@@@@*-..-*@@@@@%=.
+        -#@@@@@+:        :+@@@@@#-
+            :*@@@@@*:              :*@@@@@*:
+            =%@@@@#-                    -#@@@@%=.
+          *@@@@@+.                        .+@@@@@*
+          *@@*-   *@@*      *@@*      *@@*   :*@@*
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          *@@*      *@@*      *@@*
+            *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+            *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+
+          Come hack on HCB with us!
+          <%= Rails.configuration.constants.hack_on_hcb_form_url.to_json %>
+          `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+      </script>
+    <% end %>
+    <meta name="format-detection" content="telephone=no">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <% if content_for?(:favicon) %>
+      <%= yield :favicon %>
+    <% elsif user_birthday? %>
+      <link rel="icon" type="image/png" href="/favicon-party.gif">
+    <% else %>
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
+    <% end %>
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ec3750">
+    <meta name="msapplication-TileColor" content="#ec3750">
+    <style>
+      html,
+      body {
+          overflow-x: hidden
+      }
+
+      @media (min-width: 640px) {
+
+          html,
+          body {
+              height: 100vh;
+              margin: 0;
+              padding: 0;
+          }
+      }
+    </style>
+    <%= yield(:head) if content_for?(:head) %>
+    <% img = "/brand/hcb-icon-icon-original.png" %>
+    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="<%= img %>">
+    <meta name="twitter:image" content="<%= img %>">
+    <meta property="og:site_name" content="HCB">
+    <meta property="og:url" content="https://hcb.hackclub.com">
+    <meta property="og:title" content="Sign in">
+    <meta name="twitter:title" content="Sign in">
+    <meta property="og:description" content="Sign in to HCB.">
+    <meta name="twitter:description" content="Sign in to HCB.">
+    <meta name="description" content="Sign in to HCB.">
+  </head>
+  <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <%# LET THERE BE SNOW %>
+    <% if winter? %>
+      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
+      <%= react_component "holiday/Snow", {}, { style: "height:0px" } %>
+    <% end %>
+    <%# ghosts and ghouls %>
+    <% if fall? %>
+      <img src="https://cloud-iuqyduosh-hack-club-bot.vercel.app/0image.png" alt="oOoOoOoOo" class="flying-spook ghost">
+      <img src="https://cloud-fy14iajlp-hack-club-bot.vercel.app/0image__50_-removebg-preview.png" alt="witch orpheus" class="flying-spook">
+    <% end %>
+    <%= yield(:header) %>
+    <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+      <div class="flex flex-col-reverse lg:flex-row lg:w-screen lg:h-screen lg:dark:bg-neutral-900 w-full max-w-[500px] sm:max-w-[600px] mx-auto lg:max-w-full">
+        <div class="relative sm:flex-1 md:min-w-[50vw] lg:min-w-[540px] max-w-[1000px] p-6 pt-10 sm:p-16 sm:overflow-y-auto sm:h-screen max-w-screen flex flex-col">
+          <%= yield %>
+          <div class="absolute top-7 left-1/2 transform -translate-x-1/2 z-10">
+            <%= render "application/flash" unless @hide_flash %>
+          </div>
+        </div>
+        <% hackathon = sample_hackathon %>
+        <div class="overflow-hidden max-h-none p-3 grid h-screen relative hidden lg:block flex-grow">
+          <div class="relative bg-cover bg-center text-white w-full h-full rounded-xl" style="background: <%= hackathon[:background] %>; background-size: cover; background-position: center;">
+            <div class="max-w-xl px-16 mx-auto flex flex-col items-center justify-center h-full select-none">
+              <h5 class="text-4xl lg:text-5xl mb-0 text-center mt-0 sm:mt-3 md:mt-5 font-medium">The&nbsp;<span class="font-bold">foundation</span><br>
+                for&nbsp;your&nbsp;nonprofit</h5>
+              <p class="my-5 text-sm lg:text-md text-center font-medium hidden sm:block text-balance">Start your nonprofit with our fiscal sponsorship program,
+                HCB: a 501(c)(3) legal entity, bank account, automatic
+                taxes & accounting, and best-in-class software.</p>
+              <%= link_to "Learn more", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=learnmore", class: "border-2 border-solid border-white px-4 py-2 rounded-xl !text-white no-underline hover:bg-[rgba(255,255,255,.1)] active:bg-[rgba(255,255,255,.2)] flex", target: "_blank" %>
+            </div>
+            <div class="absolute bottom-0 left-0 m-0 p-5 w-full opacity-75 text-center">
+              <p class="text-xs mb-0 mt-1"><%= link_to "#{hackathon[:name]} • #{hackathon[:time]}", hackathon[:url] || "#", class: "!text-white no-underline", target: "_blank" %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <% if Rails.env.production? %>
+      <%= render "application/fullstory" if current_user&.sessions_reported %>
+    <% end %>
+  </body>
+</html>

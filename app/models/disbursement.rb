@@ -240,13 +240,13 @@ class Disbursement < ApplicationRecord
     elsif rejected?
       :error
     elsif scheduled?
-      :scheduled
+      :info
     elsif errored?
       :error
     elsif reviewing?
-      :reviewing
+      :info
     else
-      :pending
+      :info
     end
   end
 
@@ -286,7 +286,7 @@ class Disbursement < ApplicationRecord
     elsif errored?
       "errored"
     elsif reviewing?
-      "under review"
+      "pending"
     else
       "pending"
     end

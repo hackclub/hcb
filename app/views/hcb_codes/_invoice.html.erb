@@ -31,7 +31,7 @@
   </section>
 <% end %>
 
-<% if @invoice.void_v2? %>
+<% if @invoice.void_v2? && !@invoice.manually_marked_as_paid? %>
   <div class="banner banner--archived mt3">
     <span class="bold block mb1">This invoice was voided by <%= user_mention @invoice.voided_by %> on <%= format_date @invoice.void_v2_at %>.</span>
     <span class="block">It will only display in the Voided tab<span class="xs-hide"> on the Invoices page</span>.</span>
@@ -102,7 +102,7 @@
     <% if @invoice.personal_transaction.present? %>
       <p>
         <strong>Repayment for</strong>
-        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code.url %>
+        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code %>
       </p>
     <% end %>
     <p>
@@ -147,24 +147,33 @@
     </p>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
+  <% width_css_class = @invoice.deposited? ? @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 : @invoice.event.revenue_fee != 0 ? "w-64" : "w-8" %>
   <section class="card__banner card__darker details details--wide border-top md-pl0 md-pr0">
     <table>
     <thead>
       <tr>
         <td>Description</td>
-        <td class="w-64">Amount</td>
+        <td class="<%= width_css_class %>">Amount</td>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td style="white-space: normal"><%= @invoice.item_description %></td>
-        <td class="w-64"><%= render_money @invoice.item_amount %></td>
+        <td class="<%= width_css_class %>"><%= render_money @invoice.item_amount %></td>
       </tr>
       <tr class="border-none">
         <td class="right-align pr1"><strong>Total</strong></td>
-        <td class="w-64">
+        <td class="<%= width_css_class %>">
           <strong><%= render_money @invoice.item_amount %></strong>
-          <small class="muted ml1">(<%= render_money @invoice.deposited? ? Money.from_cents(@invoice.item_amount - @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal }) : (@invoice.item_amount * (1 - @invoice.event.revenue_fee)) %> after fees)</small>
+          <% if @invoice.deposited? && @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 %>
+            <small class="muted ml1">
+              (<%= render_money Money.from_cents(@invoice.item_amount - @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal }) %> after fees)
+            </small>
+          <% elsif @invoice.deposited? == false && @invoice.event.revenue_fee != 0 %>
+            <small class="muted ml1">
+              (<%= render_money @invoice.item_amount * (1 - @invoice.event.revenue_fee) %> after fees)
+            </small>
+          <% end %>
         </td>
       </tr>
     </tbody>
@@ -207,7 +216,9 @@
     <h2 class="h2 mt0 border-none">
       <%= @sponsor.name %>
       <span class="regular muted"> paid </span>
-      <span class="regular"><%= render_money @invoice.amount_paid %></span>
+      <% unless @invoice.manually_marked_as_paid? %>
+        <span class="regular"><%= render_money @invoice.amount_paid %></span>
+      <% end %>
     </h2>
     <section class="card__banner card__darker details-horiz border-top border-bottom">
       <% if @invoice.payment_method_type == 'card' %>

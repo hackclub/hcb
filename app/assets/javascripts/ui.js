@@ -1,5 +1,6 @@
-/* global BK, $, loadTextExpander */
+/* global BK, $ */
 
+// eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
@@ -31,36 +32,25 @@ const loadModals = element => {
   )
 }
 
-// restore previous theme setting
-$(document).ready(function () {
-  if (
-    document.querySelector('html').getAttribute('data-ignore-theme') == null &&
-    BK.isDark()
-  ) {
-    BK.s('toggle_theme').find('svg').toggle()
-    return BK.styleDark(true)
-  }
-})
-
 $(document).on('click', '[data-behavior~=flash]', function () {
   $(this).fadeOut('medium')
 })
 
 loadModals(document)
-;(() => {
-  let autoModals = $('[data-modal-auto-open~=true]')
+  ; (() => {
+    let autoModals = $('[data-modal-auto-open~=true]')
 
-  if (autoModals.length < 1) return
+    if (autoModals.length < 1) return
 
-  let element = autoModals.first()
+    let element = autoModals.first()
 
-  BK.s('modal', '#' + $(element).data('modal')).modal({
-    modalClass: $(element).parents('turbo-frame').length
-      ? 'turbo-frame-modal'
-      : undefined,
-    closeExisting: false,
-  })
-})()
+    BK.s('modal', '#' + $(element).data('modal')).modal({
+      modalClass: $(element).parents('turbo-frame').length
+        ? 'turbo-frame-modal'
+        : undefined,
+      closeExisting: false,
+    })
+  })()
 
 $(document).on('keyup', 'action', function (e) {
   if (e.keyCode === 13) {
@@ -155,8 +145,6 @@ $(document).keydown(function (e) {
     return BK.toggleMenu($(BK.openMenuSelector))
   }
 })
-
-$(document).on('click', '[data-behavior~=toggle_theme]', () => BK.toggleDark())
 
 $(document).on('turbo:load', function () {
   if (window.location !== window.parent.location) {
@@ -301,34 +289,34 @@ $(document).on('turbo:load', function () {
   }
 
   if (BK.thereIs('accounts_list')) {
-    $('.account-header').on('click', function() {
+    $('.account-header').on('click', function () {
       var accountContainer = $(this).closest('.account-container');
       var aliasesContainer = accountContainer.find('.account-aliases');
       aliasesContainer.slideToggle();
       $(this).toggleClass('rotated');
     });
-    $('.alias-new').on('click', function() {
+    $('.alias-new').on('click', function () {
       var accountContainer = $(this).closest('.account-container');
       var newAliasForm = accountContainer.find('.alias-form');
       var creationAlias = accountContainer.find('.alias-creation');
       newAliasForm.slideDown();
       creationAlias.slideUp();
     });
-    $('.alias-cancel').on('click', function() {
+    $('.alias-cancel').on('click', function () {
       var accountContainer = $(this).closest('.account-container');
       var newAliasForm = accountContainer.find('.alias-form');
       newAliasForm.slideUp();
       var creationAlias = accountContainer.find('.alias-creation');
       creationAlias.slideDown();
     })
-    $('.alias-save').on('click', function() {
+    $('.alias-save').on('click', function () {
       var accountContainer = $(this).closest('.account-container');
       var creationAlias = accountContainer.find('.alias-creation');
       var newAliasForm = accountContainer.find('.alias-form');
       creationAlias.slideDown();
       newAliasForm.slideUp();
     });
-    $('.alias-delete').on('click', function() {
+    $('.alias-delete').on('click', function () {
       var thisAlias = $(this).closest('.alias-container');
       thisAlias.toggleClass('error');
       thisAlias.slideUp();
@@ -412,8 +400,7 @@ $(document).on('turbo:load', function () {
 
   $('[data-behavior~=mention]').on('click', e => {
     BK.s('comment').val(
-      `${
-        BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
+      `${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
       }${e.target.dataset.mentionValue || e.target.innerText}`
     )
     BK.s('comment')[0].scrollIntoView()
@@ -459,6 +446,7 @@ $(document).on('turbo:load', function () {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return disableTilt()
     } else {
+      disableTilt() // disable it, then enable it. 
       return enableTilt()
     }
   }
@@ -525,8 +513,8 @@ $(document).on(
 )
 
 $(document).on('click', '[data-behavior~=clear_input]', function (event) {
-    $(event.target).parent().find('input').get(0).value = ""
-  }
+  $(event.target).parent().find('input').get(0).value = ""
+}
 )
 
 $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
@@ -619,3 +607,42 @@ $(document).on('wheel', 'input[type=number]', e => {
   e.preventDefault()
   e.target.blur()
 })
+
+// this allows for popovers to change the URL in the browser when opened.
+// it also handles using the back button, to reopen or close a popover.
+
+$(document).on($.modal.BEFORE_OPEN, function(event, modal) {
+  if(modal?.elm[0]?.dataset?.stateUrl) {
+    if(!document.documentElement.dataset.returnToStateUrl) {
+      document.documentElement.dataset.returnToStateUrl = window.location.href;
+      document.documentElement.dataset.returnToStateTitle = document.title;
+    }
+    document.title = modal.elm[0].dataset.stateTitle;
+    window.history.pushState({ modal: modal.elm[0].id }, '', modal.elm[0].dataset.stateUrl);
+  }
+});
+
+$(document).on($.modal.BEFORE_CLOSE, function(event, modal) {
+  if(document.documentElement.dataset.returnToStateUrl) {
+    window.history.pushState(null, '', document.documentElement.dataset.returnToStateUrl);
+    document.title = document.documentElement.dataset.returnToStateTitle;
+  }
+});
+
+window.addEventListener("popstate", (e) => {
+  if(e.state?.modal) {
+    $(`#${e.state.modal}`).modal();
+  } else {
+    $.modal.close();
+  }
+});
+
+if (navigator.setAppBadge) {
+  window.addEventListener("load", async () => {
+    const response = await fetch("/my/tasks.json")
+    if(!response.redirected) { // redirected == the user isn't signed in.
+      const { count } = await response.json()
+      navigator.setAppBadge(count)
+    }
+  })
+}

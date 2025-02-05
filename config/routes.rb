@@ -2,7 +2,6 @@
 
 require "sidekiq/web"
 require "sidekiq/cron/web"
-require "admin_constraint"
 
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
@@ -114,7 +113,6 @@ Rails.application.routes.draw do
 
       # Logout
       delete "logout", to: "users#logout"
-      delete "logout_all", to: "users#logout_all"
       delete "logout_session", to: "users#logout_session"
       delete "revoke/:id", to: "users#revoke_oauth_application", as: "revoke_oauth_application"
 
@@ -133,6 +131,8 @@ Rails.application.routes.draw do
       get "notifications", to: "users#edit_notifications"
       get "admin", to: "users#edit_admin"
 
+      delete "logout_all", to: "users#logout_all"
+
       post "impersonate"
       post "unimpersonate"
     end
@@ -149,6 +149,11 @@ Rails.application.routes.draw do
     end
   end
   scope module: :users do
+    resources "wrapped", only: :index do
+      collection do
+        get "data"
+      end
+    end
     resources :email_updates, only: [] do
       collection do
         get "verify"
@@ -284,6 +289,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :organizer_position_contracts, only: [:create], path: "contracts" do
+    member do
+      post "void"
+    end
+  end
+
   resources :organizer_positions, only: [:destroy], as: "organizers" do
     member do
       post "set_index"
@@ -361,6 +372,7 @@ Rails.application.routes.draw do
     member do
       post "approve"
       post "reject"
+      post "mark_failed"
     end
   end
 
@@ -477,7 +489,7 @@ Rails.application.routes.draw do
 
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
-  get "faq", to: "static_pages#faq"
+  get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "audit", to: "admin#audit"
 
@@ -568,7 +580,12 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :card_grants, only: [:show]
+        resources :card_grants, only: [:show, :update] do
+          member do
+            post "topup"
+            post "cancel"
+          end
+        end
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
@@ -584,7 +601,10 @@ Rails.application.routes.draw do
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
   post "increase/webhook", to: "increase#webhook"
+  post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+
+  post "extract/invoice", to: "extraction#invoice"
 
   get "negative_events", to: "admin#negative_events"
 
@@ -631,7 +651,7 @@ Rails.application.routes.draw do
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
     # Loaded as Turbo frames on the home page
-    get :top_merchants
+    get :merchants_categories
     get :top_categories
     get :tags_users
     get :transaction_heatmap
@@ -663,7 +683,6 @@ Rails.application.routes.draw do
     get "transfers"
     get "statements"
     get "promotions"
-    get "expensify"
     get "reimbursements"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow

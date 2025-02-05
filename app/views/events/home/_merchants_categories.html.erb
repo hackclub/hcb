@@ -1,0 +1,53 @@
+<%= turbo_frame_tag "merchants_categories" do %>
+
+  <%# Merchants chart %>
+  <% if !@merchants.empty? %>
+    <div class="card card--breakdown shadow-none w-100" style="flex: 1">
+      <div class="flex flex-row justify-between mb2 mt2 items-center">
+        <h3 class="mt0 mb0">Top merchants</h3>
+        <% if @past_month %>
+          <h5 class="homepage-eyebrow mt0 mb0">Past thirty days</h5>
+        <% else %>
+          <h5 class="homepage-eyebrow mt0 mb0">All&nbsp;time</h5>
+        <% end %>
+      </div>
+      <div style="width: calc(100% + 50px)">
+        <%= react_component "home/Merchants", { data: @merchants }, { camelize_props: false } %>
+      </div>
+    </div>
+   <% elsif !@categories.empty? %>
+    <div class="card card--breakdown shadow-none w-100 flex flex-1 items-center justify-center flex-col text-center">
+      <h3 class="text-2xl font-bold mb-0">
+        It's quiet here...
+      </h3>
+      <p class="text-gray-500 my-1">
+        Merchants will appear here as you spend more money
+      </p>
+    </div>
+  <% end %>
+
+  <%# Category chart %>
+  <% if !@categories.empty? %>
+    <div class="card card--breakdown shadow-none w-100" style="flex: 1">
+      <div class="flex flex-row justify-between mb2 mt2 items-center">
+        <h3 class="mt0 mb0">Top categories</h3>
+        <% if @past_month %>
+          <h5 class="homepage-eyebrow mt0 mb0">Past thirty days</h5>
+        <% else %>
+          <h5 class="homepage-eyebrow mt0 mb0">All&nbsp;time</h5>
+        <% end %>
+      </div>
+      <%= react_component "home/Categories", { data: @categories }, { camelize_props: false } %>
+    </div>
+    <%# Only shown if merchants chart is visible to prevent awkward gap %>
+  <% elsif !@merchants.empty? %>
+    <div class="card card--breakdown shadow-none w-100 flex flex-1 items-center justify-center flex-col text-center">
+      <h3 class="text-2xl font-bold mb-0">
+        It's quiet here...
+      </h3>
+      <p class="text-gray-500 my-1">
+        Categories will appear here as you spend more money
+      </p>
+    </div>
+  <% end %>
+<% end %>

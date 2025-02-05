@@ -5,6 +5,7 @@ export default class extends Controller {
   static targets = ['graph', 'stat', 'balance', 'label', 'sizing', 'size']
   static values = {
     available: Number,
+    slug: String,
   }
   renderBalance(amount) {
     return (
@@ -18,7 +19,7 @@ export default class extends Controller {
     )
   }
   connect() {
-    fetch(window.location.pathname + '/balance_by_date')
+    fetch(`/${this.slugValue}/balance_by_date`)
       .then(r => r.json())
       .then(jsonData => {
         const { balanceTrend, balanceByDate: rawBalanceByDate } = jsonData

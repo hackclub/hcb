@@ -108,7 +108,6 @@ class Invoice < ApplicationRecord
 
   extend FriendlyId
   include AASM
-  include Commentable
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
@@ -116,8 +115,8 @@ class Invoice < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_description, associated_against: { sponsor: :name }, against: [:item_description, :item_amount], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "invoices.created_at"
 
-  scope :unarchived, -> { where(archived_at: nil).where.not(aasm_state: "void_v2") }
-  scope :archived, -> { where.not(archived_at: nil).where.not(aasm_state: "void_v2") }
+  scope :unarchived, -> { where(archived_at: nil).where.not(aasm_state: "void_v2", manually_marked_as_paid_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil).where.not(aasm_state: "void_v2", manually_marked_as_paid_at: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :missing_payout, -> { where("payout_id is null and payout_creation_balance_net is not null") } # some invoices are missing a payout but it is ok because they were paid by check. that is why we additionally check on payout_creation_balance_net
   scope :unpaid, -> { where("aasm_state != 'paid_v2'").where("aasm_state != 'void_v2'") }
@@ -201,11 +200,11 @@ class Invoice < ApplicationRecord
   end
 
   def payout_transaction
-    self&.payout&.t_transaction
+    self.payout&.t_transaction
   end
 
   def completed_deprecated?
-    (payout_transaction && !self&.fee_reimbursement) || (payout_transaction && self&.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
+    (payout_transaction && !self.fee_reimbursement) || (payout_transaction && self.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
   end
 
   def archived?
@@ -219,6 +218,7 @@ class Invoice < ApplicationRecord
   def state
     return :success if paid_v2? && deposited?
     return :success if paid_v2? && event.can_front_balance?
+    return :success if manually_marked_as_paid?
     return :info if paid_v2?
     return :error if void_v2?
     return :info if refunded_v2?
@@ -232,6 +232,7 @@ class Invoice < ApplicationRecord
   def state_text
     return "Deposited" if paid_v2? && (event.can_front_balance? || deposited?)
     return "In Transit" if paid_v2?
+    return "Paid" if manually_marked_as_paid?
     return "Voided" if void_v2?
     return "Refunded" if refunded_v2?
     return "Archived" if archived?
@@ -306,7 +307,7 @@ class Invoice < ApplicationRecord
   end
 
   def arrival_date
-    arrival = self&.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and Bank processing time
     arrival + 1.day

@@ -49,6 +49,8 @@ module Reimbursement
       end
     end
 
+    validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
+
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
 
@@ -63,7 +65,7 @@ module Reimbursement
     alias_attribute :report_name, :name
     attribute :name, :string, default: -> { "Expenses from #{Time.now.strftime("%B %e, %Y")}" }
 
-    scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+    scope :search, ->(q) { joins("LEFT JOIN users AS u2 on u2.id = reimbursement_reports.user_id").where("u2.full_name ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
     scope :pending, -> { where(aasm_state: ["draft", "submitted", "reimbursement_requested"]) }
     scope :to_calculate_total, -> { where.not(aasm_state: ["rejected"]) }
     scope :visible, -> { joins(:user).where.not(user: { full_name: nil }, invited_by_id: nil) }
@@ -84,6 +86,8 @@ module Reimbursement
 
     after_create_commit do
       ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
+      ReimbursementJob::OneDayReminder.set(wait: 1.day).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
+      ReimbursementJob::SevenDaysReminder.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
     end
 
     aasm timestamps: true do
@@ -98,7 +102,8 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts?
+            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts? &&
+              user.payout_method.class != User::PayoutMethod::PaypalTransfer
           end
         end
         after do

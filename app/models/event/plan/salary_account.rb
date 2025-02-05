@@ -27,6 +27,10 @@ class Event
         "salary account"
       end
 
+      def omit_stats
+        true
+      end
+
     end
 
   end

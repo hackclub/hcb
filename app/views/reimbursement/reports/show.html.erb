@@ -23,12 +23,12 @@
       <span class="mr1 badge bg-muted">Review requested from <%= @report.reviewer.initial_name %></span>
     <% end %>
     <span class="ml0 badge bg-<%= @report.status_color %>"><%= @report.status_text %></span>
-    <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 32px; width: 32px;" do %>
+    <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;" do %>
       <%= link_to reimbursements_admin_index_path, class: "flex items-center justify-center", style: "transform: translateY(1px);" do %>
         <%= inline_icon "list", size: 28, color: "#ff8c37" %>
       <% end %>
     <% end %>
-    <% if @report.initial_draft? %>
+    <% if @report.draft? %>
       <%= pop_icon_to "delete",
                       reimbursement_report_path(@report),
                       method: :delete,

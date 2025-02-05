@@ -90,25 +90,4 @@ module EventsHelper
   def show_org_switcher?
     signed_in? && current_user.events.not_hidden.count > 1
   end
-
-  def pie_chart_config
-    {
-      elements: {
-        arc: {
-          borderWidth: 0
-        }
-      },
-      plugins: {
-        legend: {
-          position: "right",
-          align: "start",
-          labels: {
-            boxWidth: 10,
-            boxHeight: 10,
-            usePointStyle: "circle"
-          }
-        }
-      }
-    }
-  end
 end

@@ -1,0 +1,17 @@
+<%= form_with(model: organizer_position_contract, local: true, data: { turbo: false }) do |form| %>
+  <%= form.hidden_field :organizer_position_invite_id %>
+
+  <p class="muted">
+    This will send <%= organizer_position_contract.organizer_position_invite.user.name %> a fiscal sponsorship agreement
+    for <%= organizer_position_contract.organizer_position_invite.event.name %>. <strong>If they are under 18, <%= organizer_position_contract.organizer_position_invite.user.name %> will need to have a parent sign on their behalf.</strong>
+  <p>
+
+  <div class="field">
+    <%= form.label :cosigner_email, "Cosigned by (email address)" %>
+    <%= form.text_field :cosigner_email %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit "Send contract" %>
+  </div>
+<% end %>

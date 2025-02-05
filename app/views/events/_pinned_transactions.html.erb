@@ -3,16 +3,16 @@
   <div class="flex gap-4 mt-4 pinned__container">
     <% @event.pinned_hcb_codes.each do |pin| %>
      <% if @show_popovers %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= pin.__id__ %>">
-          <%= modal_header(pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount), external_link: pin.hcb_code.local_hcb_code.url) %>
-          <%= turbo_frame_tag pin.hcb_code.local_hcb_code.public_id, src: pin.hcb_code.local_hcb_code.popover_url, loading: :lazy do %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= pin.__id__ %>" data-state-url="<%= hcb_code_path(pin.hcb_code.local_hcb_code) %>" data-state-title="<%= pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount) %>">
+          <%= modal_header(pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false, amount_cents: pin.hcb_code.amount), external_link: url_for(pin.hcb_code.local_hcb_code)) %>
+          <%= turbo_frame_tag pin.hcb_code.local_hcb_code.public_id, src: pin.hcb_code.local_hcb_code.popover_path, loading: :lazy do %>
             <%= render partial: "application/loading_container" %>
           <% end %>
         </section>
       <% end %>
 
       <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
-        <%= form_with url: pin_hcb_code_path(pin.hcb_code), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
+        <%= form_with url: pin_hcb_code_path(pin.hcb_code, event: @event), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
           <button type="submit" class="pinned__transaction__pin pointer pop tooltipped tooltipped--w" aria-label="Unpin" style="margin-left: auto" onclick="event.stopPropagation()">
             <%= inline_icon "pin-remove", size: 28 %>
           </button>
@@ -35,7 +35,7 @@
           <span class="m0 muted">
             <%= render_money pin.hcb_code.amount_cents_by_event(@event) %>
           </span>
-          <%= render "hcb_codes/icon", tx: pin.hcb_code.ct || pin.hcb_code.pt %>
+          <%= render "hcb_codes/icon", tx: pin.hcb_code.ct || pin.hcb_code.pt, tooltip_direction: "w" %>
         </footer>
       <% end %>
     <% end %>

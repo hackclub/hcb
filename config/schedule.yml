@@ -107,10 +107,6 @@ stripe_card_nightly_job:
   cron: "0 7 * * *" # run every 1 day, after import
   class: "StripeCardJob::Nightly"
 
-128_collective_fund_distribute_monthly_job:
-  cron: "0 0 1 * *" # run first day of each month
-  class: "DisbursementJob::Distribute128CollectiveFund"
-
 blazer_checks_nightly_job:
   cron: "0 8 * * *"
   class: "BlazerChecksJob"
@@ -123,6 +119,10 @@ refresh_hcb_acronym_expansions_job:
 calculate_app_wide_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "MetricJobs::CalculateAppWide"
+
+calculate_stats_metric:
+  cron: "0 * * * *" # run every hour
+  class: "MetricJobs::CalculateStats"
 
 calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
@@ -140,9 +140,9 @@ gauge_online_user_count_job:
   cron: "*/5 * * * *" # Every 5 minutes
   class: "StatsdJob::GaugeOnlineUserCount"
 
-transaction_report_job:
-  cron: "0 5 * * mon" # 5 AM every Monday
-  class: "TransactionReportJob"
+user_subordinate_summary_job:
+  cron: "0 12 * * mon" # noon UTC every Monday (7am eastern)
+  class: "User::SubordinateSummaryJob"
 
 headway_job:
   cron: "*/5 * * * *"
@@ -152,6 +152,26 @@ user_sync_to_loops_job:
   cron: "0 7 * * *" # run every 1 day
   class: "User::SyncToLoopsJob"
 
+update_teenager_column_job:
+  cron: "0 7 * * *" # run every 1 day
+  class: "User::UpdateTeenagerColumnJob"
+
 card_grant_expiration_job:
   cron: "0 7 * * *" # run every 1 day
   class: "CardGrant::ExpirationJob"
+
+card_grant_zero_job:
+  cron: "0 12 * * *" # run every 1 day
+  class: "CardGrant::ZeroJob"
+
+stripe_service_fee_job:
+  cron: "0 0 * * MON" # run first day of each week
+  class: "StripeServiceFeeJob"
+
+user_seen_at_history_snapshot_job:
+  cron: "0,30 * * * *" # twice every hour
+  class: "User::SeenAtHistory::SnapshotJob"
+
+column_sweep_job:
+  cron: "0 0 * * MON" # run first day of each week
+  class: "Column::SweepJob"

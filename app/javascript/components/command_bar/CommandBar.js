@@ -39,11 +39,13 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
 
 const ButtonTrigger = () => {
   const { query } = useKBar()
-  if (document.getElementById('command_bar_trigger')) {
-    document.getElementById('command_bar_trigger').onclick = function () {
-      query.toggle()
-    }
-  }
+  document
+    .querySelectorAll(`[data-behavior="command_bar_trigger"]`)
+    .forEach(trigger => {
+      trigger.onclick = function () {
+        query.toggle()
+      }
+    })
 }
 
 const animatorStyle = {

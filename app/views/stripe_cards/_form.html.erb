@@ -79,7 +79,7 @@
     <% designs = [@event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
     <% designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.admin? %>
     <% if designs.any? %>
-      <% if Flipper.enabled?(:stripe_card_personalization_designs_2024_08_19, current_user) %>
+      <% if Flipper.enabled?(:stripe_card_personalization_designs_2024_08_19, current_user) || (@event && Flipper.enabled?(:card_logos_2024_08_27, @event)) %>
         <h2 class="grid__fill">Card design</h2>
         <div class="field field--options" style="max-width: unset;">
           <% designs.each do |design| %>

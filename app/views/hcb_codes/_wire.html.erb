@@ -1,3 +1,9 @@
+<% if @hcb_code.wire.column_id.present? %>
+  <% admin_tool("mt3") do %>
+    <%= link_to "View wire on Column", "https://dashboard.column.com/app/transfers/edit/intl-wire/#{@hcb_code.wire.column_id}", class: "btn bg-accent", target: "_blank" %>
+  <% end %>
+<% end %>
+
 <article class="card pb0 mt3 mb1">
   <h2 class="h2 mt0 border-none flex items-center justify-between" style="gap: 1ch">
     <span style="flex-grow: 1">
@@ -49,13 +55,24 @@
         <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
       </p>
 
+      <% if @hcb_code.wire.return_reason.present? %>
+        <p>
+          <strong>Return reason</strong>
+          <%= @hcb_code.wire.return_reason %>
+        </p>
+      <% end %>
+
       <p>
         <strong>Amount (<%= @hcb_code.wire.currency %>)</strong>
         <%= Money.from_cents(@hcb_code.wire.amount_cents, @hcb_code.wire.currency).format %>
       </p>
 
       <p>
-        <strong>Amount (USD)</strong>
+        <% if @hcb_code.ct.present? %>
+          <strong>Settled amount (USD)</strong>
+        <% else %>
+          <strong>Pending amount (USD)</strong>
+        <% end %>
         <%= render_money @hcb_code.amount_cents.abs %>
       </p>
 

@@ -4,6 +4,34 @@
 const BK = {
   blocked: false,
 }
+
+window.getCookie = (name) => {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
+
+window.setCookie = (name, value, days) => {
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+
+// A FOUC is unavoidable, so we set another cookie called `system_preference`. It'll still glitch on first load, but it'll be fixed on the next page load.
+window.addEventListener("load", () => {
+  setCookie('system_preference', window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light', 365)
+})
+
 // BK.s('some_behavior') is a shortcut for selecting elements by data-behavior
 BK.s = (selector, filter = '') =>
   $(`[data-behavior~=${selector}]`).filter(
@@ -17,21 +45,21 @@ BK.deselect = (selector, filter = '[aria-selected=true]') =>
 BK.select = (selector, filter) =>
   BK.s(selector, filter).attr('aria-selected', true)
 
-// document.getElementsByTagName('html')[0].getAttribute('data-dark') === 'true'
 BK.isDark = () => {
   try {
+    const cookieSetting = getCookie('theme')
+    const isDark = cookieSetting === 'dark' || (cookieSetting === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches);
     return (
-      localStorage.getItem('dark') === 'true' ||
-      document.getElementsByTagName('html')[0].getAttribute('data-dark') ===
-      'true'
+      isDark || document.getElementsByTagName('html')[0].getAttribute('data-dark') === 'true'
     )
   } catch {
     return false
   }
 }
-BK.styleDark = theme => {
-  // Temporarily disable transitions on elements for smooth theme transition
-  // See https://paco.me/writing/disable-theme-transitions
+
+BK.styleDark = _theme => {
+  const theme = _theme === "system" ? window.matchMedia?.('(prefers-color-scheme: dark)')?.matches : _theme === "dark";
+
   const css = document.createElement('style')
   css.type = 'text/css'
   css.appendChild(
@@ -50,19 +78,19 @@ BK.styleDark = theme => {
   document
     .querySelector('meta[name=theme-color]')
     ?.setAttribute('content', theme ? '#17171d' : '#f9fafc')
-  BK.s('toggle_theme').find('svg').toggle()
   // Calling getComputedStyle forces the browser to redraw
   document.head.removeChild(css)
 }
+
 BK.toggleDark = () => {
   theme = !BK.isDark()
   window.dispatchEvent(new CustomEvent('theme-toggle', { detail: theme }))
   return BK.setDark(theme)
 }
-BK.setDark = dark => {
-  theme = !!dark
+
+BK.setDark = theme => {
   BK.styleDark(theme)
-  localStorage.setItem('dark', theme)
+  setCookie('theme', theme, 365)
   return theme
 }
 
@@ -77,10 +105,9 @@ document.addEventListener('turbo:load', () => {
 if (window.matchMedia) {
   window
     .matchMedia('(prefers-color-scheme: dark)')
-    .addEventListener('change', e => {
+    .addEventListener('change', () => {
       // This will only be called on changes (not during initial page load)
-      const prefersDarkMode = e.matches
-      BK.setDark(prefersDarkMode)
+      BK.setDark(getCookie("theme"))
     })
 }
 

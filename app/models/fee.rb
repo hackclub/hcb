@@ -42,6 +42,7 @@ class Fee < ApplicationRecord
     donation_refunded: "DONATION REFUNDED", # (Doesn't charge fee) Donation refunds
     hack_club_fee: "HACK CLUB FEE",         # (Doesn't charge fee) HCB fee transactions
     revenue_waived: "REVENUE WAIVED",       # (Doesn't charge fee) Revenue transactions with fee waived (either manually or automatically in certain cases)
+    transfer_returned: "TRANSFER RETURNED", # (Doesn't charge fee) Revenue transactions with fee waived (either manually or automatically in certain cases)
     tbd: "TBD",                             # (Doesn't charge fee) Everything else (including non-revenue transactions)
   }
 
@@ -54,7 +55,7 @@ class Fee < ApplicationRecord
   end
 
   def waived?
-    reason != :revenue
+    reason != "revenue"
   end
 
 end

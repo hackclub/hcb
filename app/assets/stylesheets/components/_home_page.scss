@@ -1,6 +1,5 @@
 .homepage-transaction {
   display: flex;
-  align-items: center;
   color: inherit !important;
   text-decoration: none;
   padding: 0.35rem 1rem;
@@ -17,7 +16,10 @@
 .homepage-row {
   display: flex;
   gap: 20px;
-  margin-bottom: 20px;
+
+  &:empty {
+    display: none;
+  }
 }
 
 @media only screen and (max-width: 600px) {
@@ -34,19 +36,20 @@
   gap: 2px;
   max-width: 100%;
 }
-
-@media only screen and (max-width: 600px) {
+@media (max-width: 768px) {
   .grid-container {
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(53, 1fr);
+    gap: 0px;
   }
 }
 
 .grid-item {
   border: 0.5px solid;
   border-radius: 3px;
-  padding-left: 0px !important;
-  padding-right: 0px !important;
-  padding-bottom: 0px !important;
-  padding-top: calc(100% - 1px) !important;
+  aspect-ratio: 1 / 1;
+}
+
+@media screen and (max-width: 768px) {
+  .grid-item {
+    border-radius: 1px;
+  }
 }

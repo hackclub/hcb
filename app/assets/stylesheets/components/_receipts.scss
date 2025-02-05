@@ -137,6 +137,7 @@
 }
 
 .modal--popover--receipt-expanded
+  > turbo-frame
   > :not(.receipt--expanded):not(header):not(#receipts_list),
 .modal--popover--receipt-expanded > #receipts_list > :not(.receipt--expanded) {
   display: none !important;

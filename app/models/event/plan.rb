@@ -24,8 +24,6 @@ class Event
   class Plan < ApplicationRecord
     has_paper_trail
 
-    self.ignored_columns += ["plan_type"]
-
     belongs_to :event
 
     include AASM
@@ -67,6 +65,10 @@ class Event
 
     def self.available_plans
       Event::Plan.descendants
+    end
+
+    def self.that(method)
+      self.available_plans.select{ |plan| plan.new.try(method) }
     end
 
     validate do

@@ -38,7 +38,12 @@ class DisbursementsController < ApplicationController
     @destination_event = Event.friendly.find(params[:event_id]) if params[:event_id]
     @source_event = Event.friendly.find(params[:source_event_id]) if params[:source_event_id]
     @event = @source_event
-    @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
+    @disbursement = Disbursement.new(
+      destination_event: @destination_event,
+      source_event: @source_event,
+      amount: params[:amount],
+      name: params[:message]
+    )
 
     @allowed_source_events = if current_user.admin?
                                Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)

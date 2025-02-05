@@ -49,9 +49,9 @@
         </tr>
 
         <% if @show_card_popovers %>
-          <section class="modal modal--scroll modal--popover modal--popover--sm bg-snow" data-behavior="modal" role="dialog" id="card_popover_<%= d.id %>">
-            <%= modal_header(d.initially_activated ? "Card #{d.last_four}" : "Inactive card", external_link: d.url) %>
-            <%= turbo_frame_tag "stripe_card_#{d.public_id}", src: d.popover_url, loading: :lazy do %>
+          <section class="modal modal--scroll modal--popover modal--popover--sm bg-snow" data-behavior="modal" role="dialog" id="card_popover_<%= d.id %>" data-state-url="<%= url_for(d) %>" data-state-title="<%= d.initially_activated ? "Card #{d.last_four}" : "Inactive card" %>">
+            <%= modal_header(d.initially_activated ? "Card #{d.last_four}" : "Inactive card", external_link: url_for(d)) %>
+            <%= turbo_frame_tag "stripe_card_#{d.public_id}", src: d.popover_path, loading: :lazy do %>
               <%= render partial: "application/loading_container" %>
             <% end %>
           </section>

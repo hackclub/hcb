@@ -1,4 +1,4 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
@@ -22,7 +22,7 @@
     <div data-controller="menu" data-menu-placement-value="bottom-end">
       <button
         type="button"
-        class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible z-10"
+        class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
         aria-label="Export transactions"
         data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
         data-menu-target="toggle">
@@ -116,7 +116,7 @@
       <% end %>
       <% if @type %>
         <div class="badge badge-large bg-muted">
-          <%= @type.humanize.gsub("Ach", "ACH") %>
+          <%= @type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
           <%= link_to upsert_query_params("type" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>

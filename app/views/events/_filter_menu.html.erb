@@ -2,7 +2,7 @@
   <button
     type="button"
     aria-label="Add filter..."
-    class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible z-10"
+    class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
     data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
   </button>
@@ -20,7 +20,7 @@
 
       <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
         <div data-tabs-target="tab" id="tags">
-          <% @event.tags.each do |tag| %>
+          <% @event.tags.order(label: :asc).each do |tag| %>
             <div class="flex items-center" data-tag="<%= tag.id %>">
               <%= link_to upsert_query_params(tag: tag.label), class: "flex-auto menu__action", data: { turbo_prefetch: "false" } do %>
 
@@ -50,10 +50,10 @@
         <% end %>
       </div>
       <div data-tabs-target="tab" id="type">
-        <% ["ach_transfer", "mailed_check", "account_transfer", "card_charge", "check_deposit", "donation", "invoice", "refund", "fiscal_sponsorship_fee", "reimbursement"].each do |type| %>
+        <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire"].each do |type| %>
           <div class="flex items-center">
             <%= link_to(upsert_query_params(type:), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
-              <%= type.humanize.gsub("Ach", "ACH") %>
+              <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
             <% end %>
           </div>
         <% end %>
@@ -64,8 +64,13 @@
           <%= form.date_field :start, class: "border mb1", value: @start_date %>
           <p class="bold mb0 mt0">Transactions before...</p>
           <%= form.date_field :end, class: "border mb1", value: @end_date %>
+
+          <% request.query_parameters.except(:start, :end).each do |key, value| %>
+            <%= hidden_field_tag key, value %>
+          <% end %>
+
           <div class="flex justify-start">
-            <%= form.submit "Filter Transactions" %>
+            <%= form.submit "Filter transactions" %>
           </div>
         <% end %>
       </div>
@@ -84,8 +89,12 @@
             <%= form.number_field :maximum_amount, placeholder: "500.00", value: @maximum_amount, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field" } %>
           </div>
 
+          <% request.query_parameters.except(:minimum_amount, :maximum_amount).each do |key, value| %>
+            <%= hidden_field_tag key, value %>
+          <% end %>
+
           <div class="flex justify-start">
-            <%= form.submit "Filter Transactions" %>
+            <%= form.submit "Filter transactions" %>
           </div>
         <% end %>
       </div>

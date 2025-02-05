@@ -102,7 +102,7 @@ module Reimbursement
     private
 
     def expense_params
-      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type).compact_blank
+      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type, :category).compact_blank
     end
 
     def set_expense

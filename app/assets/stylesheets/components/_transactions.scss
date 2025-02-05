@@ -96,11 +96,20 @@ html[data-dark='true'] {
     line-height: 1.3;
     padding: 0.25rem 0.625rem;
   }
+
+  .suggested_tag {
+    max-width: 0px;
+  }
 }
 
 .transaction:hover .add-tag-badge,
 .add-tag-badge[aria-expanded='true'] {
   visibility: visible;
+}
+
+.transaction:hover .suggested_tag,
+.suggested_tag[aria-expanded='true'] {
+  max-width: 125px;
 }
 
 [class^='transaction--']:target {

@@ -58,7 +58,10 @@ export default class extends Controller {
     this.cleanup = autoUpdate(
       this.toggleTarget,
       this.content,
-      this.computePosition.bind(this, false)
+      this.computePosition.bind(this, false),
+      {
+        elementResize: false, // See https://github.com/hackclub/hcb/issues/8588
+      }
     )
   }
 

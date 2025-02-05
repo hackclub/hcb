@@ -175,6 +175,10 @@ a.card {
   padding-top: 0px;
   padding-bottom: 24px;
   border: 1px solid map-get($palette, smoke);
+
+  & .error {
+    color: saturate(lighten(map-get($palette, error), 40%), 60%);
+  }
 }
 
 #card-pin {

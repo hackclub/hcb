@@ -3,9 +3,9 @@
     <div style="position: absolute; bottom: 0; left: 0; height: 100px; width: 100%; background: linear-gradient(transparent, var(--card-bg)); pointer-events: none; z-index: 1"></div>
     <div class="flex items-center p-2 pl-0 sm:p-4 mt-auto justify-between">
       <h3 class="m-0">Recent activity</h3>
-      <%= link_to edit_event_path(@event, tab: "audit_log"), class: "flex items-center shrink-0" do %>
+      <%= link_to edit_event_path(@event, tab: "audit_log"), class: "flex items-center shrink-0 no-underline" do %>
         See all
-        <%= inline_icon "enter" %>
+        <%= inline_icon "view-forward" %>
       <% end %>
     </div>
 

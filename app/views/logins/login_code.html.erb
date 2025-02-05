@@ -1,64 +1,63 @@
 <% title "Enter login code" %>
-<% page_xs %>
-<% @home_size = 128 %>
-<% content_for(:page_class) { "bg-snow pt4" } %>
-
-<article class="center mt3">
-  <h1 class="mt2">
-    <span class="h3 caps secondary block">Sign in to HCB</span>
-    <span class="black">Login Code</span>
-  </h1>
-
+<% content_for(:page_class) { "bg-snow" } %>
+<div class="flex items-center justify-between">
+  <%= render partial: "application/logo" %>
+</div>
+<div class="flex flex-col flex-1 justify-center max-w-md w-full">
+  <%= render "header", label: "Sign in to HCB" do %>
+    <%= @use_sms_auth ? "SMS" : "Email" %> code
+  <% end %>
+  <%= render "badge", user: @login.user %>
   <%= render partial: "users/sms_auth_notice" %>
-
   <p>
     <% if @login.authentication_factors_count > 0 %>
-      For additional security (two factor authentication), we've just sent a login code to
+      For additional security, we've just sent a login code to
     <% else %>
       We just sent a login code to
     <% end %>
-    <%= @use_sms_auth ? "your phone number ending in: " + @phone_last_four : @email %>
+    <%= @use_sms_auth ? "your phone number ending in " + @phone_last_four : mail_to(@email, { target: "_blank" }) %>
   </p>
-  <% if Rails.env.development? && !@use_sms_auth %>
-    <p class="h5 text-balance"><%= link_to "Seems like you're in development. Check your email outbox here!", letter_opener_web_path, target: :_blank %></p>
-  <% end %>
-   <%= form_tag complete_login_path(@login) do %>
-    <%= label_tag :login_code, "Enter your login code", class: "left-align" %>
-    <%= telephone_field_tag :login_code, "", placeholder: "Login code", autofocus: true, autocomplete: "off", class: "left-align mb2", required: true %>
+  <%= form_tag complete_login_path(@login) do %>
+    <div class="card px-6 sm:px-4 py-6 mb-4 shadow-sm border" style="max-width: 450px;" data-controller="login-code">
+      <div class="block sm:hidden md:block">
+        <%= label_tag :login_code_1, "Enter your login code", class: "left-align mb-2" %>
+        <div class="flex font-mono transition-none items-center" data-login-code-target="wrapper">
+          <% 6.times do |i| %>
+            <%= number_field_tag "login_code_#{i + 1}".to_sym, "",
+               placeholder: "",
+               autocomplete: "off",
+               data: { "login-code-target": "input" },
+               class: "text-center mb-0 text-lg font-bold dark:!border-gray-600 !rounded-none focus:z-10 -mr-[1px] first:!rounded-l-lg #{ [2, 5].include?(i) && "!rounded-r-lg"}  #{ (i == 3) && "!rounded-l-lg"}",
+               required: true %>
+            <% if i == 2 %>
+              <span class="px-4">&mdash;</span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+      <%= hidden_field_tag :login_code, "", class: "left-align mb2 !max-w-full w-max", required: true, data: { "login-code-target": "composite", "1p-ignore": "true" } %>
+    </div>
     <%= hidden_field_tag :method, :login_code %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>
     <%= hidden_field_tag :os_info %>
     <%= hidden_field_tag :timezone %>
-
     <%= hidden_field_tag :return_to, @return_to if @return_to %>
-    <% if @force_use_email %>
-      <%= hidden_field_tag :force_use_email, true %>
-    <% end %>
     <% if @use_sms_auth %>
       <%= hidden_field_tag :sms %>
     <% else %>
       <p class="h5 muted"><em>Make sure to check your spam folder</em></p>
     <% end %>
-    <%= submit_tag "Submit" %>
-  <% end %>
-  <% if @use_sms_auth && !@login&.authenticated_with_email %>
-    <div data-controller="form">
-      <p>Don't have access to your phone?
-        Click
-        <%= link_to "here", login_code_login_path(@login), data: { action: "form#submit:prevent" } %>
-        to send a login code to your
-        email instead</p>
-
-      <%= form_with id: "use_email_form", url: login_code_login_path(@login), class: "display-none", data: { form_target: "form" } do |form| %>
-        <%= form.hidden_field :force_use_email, value: true %>
-        <%= form.hidden_field :email, value: @email %>
+    <div class="flex flex-row justify-between items-center mt-4 gap-2">
+      <% if @webauthn_available || @totp_available %>
+        <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt-0 no-underline" %>
       <% end %>
+      <button data-webauthn-auth-target="continueButton" type="submit" class="gap-2 btn">
+        Continue
+      </button>
     </div>
   <% end %>
-
-  <% if @webauthn_available || @totp_available %>
-    <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt2" %>
-  <% end %>
-</article>
-<%= javascript_include_tag "fingerprint.js" %>
+  <%= javascript_include_tag "fingerprint.js" %>
+</div>
+<%= render partial: "environment_banner" %>
+<%= render partial: "footer" %>

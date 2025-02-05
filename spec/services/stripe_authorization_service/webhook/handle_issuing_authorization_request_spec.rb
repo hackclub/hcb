@@ -10,6 +10,7 @@ FactoryBot.define do
       {
         category: "grocery_stores_supermarkets",
         network_id: "1234567890",
+        name: "HCB-TEST"
       }
     end
     pending_request do
@@ -87,6 +88,21 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
 
       it "approves when correct merchant" do
         card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["203948", "293847", "1234567890"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+    end
+
+    context "when keyword locked" do
+      it "declines w/ an invalid merchant name" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, keyword_lock: "\\ASVB-[a-zA-Z]*\\z")
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+
+      it "approves w/ a valid merchant name" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, keyword_lock: "\\AHCB-[a-zA-Z]*\\z")
         service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
         expect(service.run).to be(true)
       end

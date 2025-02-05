@@ -43,15 +43,18 @@ class MarkdownService
 
     def link(link, title, alt_text)
       link_to alt_text, link, title:,
-                              target: link.start_with?("#") ? "" : "_blank"
+                              target: link.start_with?("#") ? "" : "_blank",
+                              rel: link.start_with?("#") ? "" : "noopener noreferrer"
     end
+
+    alias_method :format_link, :link
 
     def autolink(link, link_type)
       try_card_autolink(link) or
         try_hcb_autolink(link) or
         try_event_autolink(link) or
         try_user_autolink(link, link_type) or
-        link_to link, link, title: link_type
+        format_link(link, link_type, link)
     end
 
     def image(link, title, alt_text)

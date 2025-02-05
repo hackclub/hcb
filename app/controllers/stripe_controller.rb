@@ -280,7 +280,7 @@ class StripeController < ActionController::Base
   alias_method :handle_issuing_personalization_design_activated, :handle_issuing_personalization_design_updated
   alias_method :handle_issuing_personalization_design_deactivated, :handle_issuing_personalization_design_updated
 
-  def handle_issuing_dispute_funds_reinstated
+  def handle_issuing_dispute_funds_reinstated(event)
     dispute = event.data.object
     transaction = Stripe::Issuing::Transaction.retrieve(dispute["transaction"])
     hcb_code = RawPendingStripeTransaction.find_by!(stripe_transaction_id: transaction["authorization"]).canonical_pending_transaction.local_hcb_code
@@ -301,6 +301,10 @@ class StripeController < ActionController::Base
     elsif dispute["currency"] != "usd"
       Airbrake.notify("Dispute with funds reinstated but non-USD currency. Must be manually handled.")
     end
+  end
+
+  def handle_refund_failed(event)
+    Airbrake.notify("Refund failed on Stripe: #{event}.")
   end
 
 end

@@ -5,7 +5,7 @@
   </td>
   <td><%= organizer_position.role.humanize %></td>
   <td>
-    <%= copy_to_clipboard(organizer_signed_in? ? organizer_position.user.email : Faker::Internet.email, class: "inline-flex items-center g1 line-height-0") do %>
+    <%= copy_to_clipboard(organizer_signed_in? ? organizer_position.user.email : "user@example.com", class: "inline-flex items-center g1 line-height-0") do %>
       <%= inline_icon("email", size: 20) %>
       <%= organizer_signed_in? ? organizer_position.user.email : "Hidden" %>
     <% end %>
@@ -55,7 +55,7 @@
                         turbo_method: :DELETE,
                         turbo_confirm: "This will revoke their access to this organization. Their cards will be permanently canceled.",
                       } %>
-    <% else %>
+    <% elsif policy(organizer_position.organizer_position_deletion_requests.build).new? %>
       <%= pop_icon_to "member-remove",
                       new_event_organizer_position_remove_path(organizer_position_id: organizer_position.user.slug),
                       class: "error",

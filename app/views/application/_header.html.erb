@@ -1,13 +1,8 @@
 <header class="header <%= "mt3" unless content_for?(:nav) %>">
   <div class="header-left line-height-0 flex items-center justify-end">
-    <button
-      data-behavior="toggle_theme"
-      class="muted pointer no-select tooltipped tooltipped--s"
-      aria-label="Toggle dark mode"
-      tabindex="0">
-      <%= inline_icon "moon", size: home_action_size %>
-      <%= inline_icon "moon-fill", size: home_action_size, style: "display: none;" %>
-    </button>
+    <% unless @event || request.path.include?("auth") || request.path.include?("logins") %>
+      <%= render partial: "application/theme_toggle" %>
+    <% end %>
     <% if signed_in? %>
       <a
         href="https://changelog.hcb.hackclub.com"
@@ -22,25 +17,30 @@
 
   <%= render partial: "logo" %>
 
-  <div class="header-right line-height-0 flex items-center">
+  <div class="header-right line-height-0 flex items-center gap-3.5">
     <% if signed_in? %>
       <%= link_to my_inbox_path,
-          class: "muted tooltipped tooltipped--s mr2",
-          'aria-label': "View transactions awaiting receipts" do %>
-            <%= inline_icon "payment-docs", size: home_action_size %>
+                  class: "muted tooltipped tooltipped--s",
+                  'aria-label': "View transactions awaiting receipts" do %>
+        <%= inline_icon "payment-docs", size: home_action_size %>
+      <% end if @event %>
+      <%= link_to "javascript:void(0)",
+          data: { controller: "command-bar-trigger", "command-bar-trigger-target": "trigger", "behavior": "command_bar_trigger" },
+          class: "muted tooltipped tooltipped--s -mr-0.5 #{"md:hidden" unless @event}" do %>
+        <%= inline_icon "search" %>
       <% end %>
       <%= button_to logout_users_path,
-          method: :delete,
-          class: "muted tooltipped tooltipped--s",
-          'aria-label': "Sign out" do %>
-            <%= inline_icon "door-leave", size: home_action_size %>
+                    method: :delete,
+                    class: "muted tooltipped tooltipped--s",
+                    'aria-label': "Sign out" do %>
+        <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
     <% else %>
       <%= link_to auth_users_path,
-          class: "muted tooltipped tooltipped--s",
-          'aria-label': "Sign in" do %>
-            <%= inline_icon "door-enter", size: home_action_size %>
-      <% end %>
+                  class: "muted tooltipped tooltipped--s",
+                  'aria-label': "Sign in" do %>
+        <%= inline_icon "door-enter", size: home_action_size %>
+      <% end unless request.path.include?("auth") || request.path.include?("logins") %>
     <% end %>
   </div>
 

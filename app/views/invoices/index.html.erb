@@ -95,9 +95,9 @@
         </td>
       </tr>
       <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>">
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(i.local_hcb_code.hashid) %>" data-state-title="<%= "#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}" %>">
           <%= modal_header("#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}", external_link: hcb_code_url(i.local_hcb_code.hashid)) %>
-          <%= turbo_frame_tag i.local_hcb_code.public_id, src: i.local_hcb_code.popover_url, loading: :lazy do %>
+          <%= turbo_frame_tag i.local_hcb_code.public_id, src: i.local_hcb_code.popover_path, loading: :lazy do %>
             <%= render partial: "application/loading_container" %>
           <% end %>
         </section>

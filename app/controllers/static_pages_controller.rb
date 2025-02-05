@@ -4,8 +4,8 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :faq, :roles]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :faq, :roles]
+  skip_before_action :signed_in_user, only: [:branding, :roles]
+  skip_before_action :redirect_to_onboarding, only: [:branding, :roles]
 
   def index
     if signed_in?
@@ -109,9 +109,6 @@ class StaticPagesController < ApplicationController
         "Edit settings": :manager,
       }
     }
-  end
-
-  def faq
   end
 
   def suggested_pairings

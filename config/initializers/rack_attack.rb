@@ -12,6 +12,16 @@ class Rack::Attack
 
   # Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
+  # Safelist Hack Club Office
+  safelist_ip(Rails.application.credentials.office_ip)
+
+  # Get the IP addresses of stripe as an array
+  stripe_ips_webhooks = Net::HTTP.get(URI("https://stripe.com/files/ips/ips_webhooks.txt")).split("\n")
+  # Allow those IP addresses to send us as many webhooks as they like
+  Rack::Attack.safelist("allow from Stripe (To Webhooks)") do |req|
+    req.post? && stripe_ips_webhooks.include?(req.ip)
+  end
+
   ### Throttle Spammy Clients ###
 
   # If any single client IP is making tons of requests, then they're

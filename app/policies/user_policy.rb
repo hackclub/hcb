@@ -81,4 +81,12 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
+  def logout_session?
+    user.admin? || record == user
+  end
+
+  def logout_all?
+    user.admin? || record == user
+  end
+
 end

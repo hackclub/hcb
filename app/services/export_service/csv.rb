@@ -6,22 +6,31 @@ module ExportService
   class Csv
     BATCH_SIZE = 1000
 
-    def initialize(event_id:, public_only: false)
+    def initialize(event_id:, public_only: false, start_date: nil, end_date: nil)
       @event_id = event_id
       @public_only = public_only
+      @start_date = start_date
+      @end_date = end_date
     end
 
     def run
       Enumerator.new do |y|
         y << header.to_s
 
-        event.canonical_transactions.order("date desc").each do |ct|
+        transactions.each do |ct|
           y << row(ct).to_s
         end
       end
     end
 
     private
+
+    def transactions
+      tx = event.canonical_transactions.includes(local_hcb_code: [:tags, :comments])
+      tx = tx.where("date >= ?", @start_date) if @start_date
+      tx = tx.where("date <= ?", @end_date) if @end_date
+      tx.order("date desc")
+    end
 
     def event
       @event ||= Event.find(@event_id)

@@ -1,21 +1,15 @@
 <% @has_header_image = @event.donation_header_image.attached? %>
 <% page_sm %>
 
+<div class="absolute top-0 right-0 m2">
+  <%= render partial: "application/theme_toggle", locals: { top: true, tooltip_location: "w" } %>
+</div>
+
 <%= content_for(:header) do %>
-
-  <action
-    role="button"
-    data-behavior="toggle_theme"
-    class="muted absolute top-0 right-0 m2 pointer z-10 no-select tooltipped tooltipped--w"
-    aria-label="Toggle dark mode" tabindex="0">
-    <%= inline_icon "moon", size: home_action_size %>
-    <%= inline_icon "moon-fill", size: home_action_size, style: "display: none;" %>
-  </action>
-
   <% if organizer_signed_in? %>
     <div class="flex items-center m2 absolute z-10 top-0 left-0">
       <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
-        <%= form.file_field :donation_header_image, required: true, class: "display-none", data: { action: "change->form#submit" } %>
+        <%= form.file_field :donation_header_image, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :donation_header_image do %>
           <div
             role="button"
@@ -45,7 +39,7 @@
       <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
       <div class="flex justify-center items-center mt1">
         <%= render "donations/logo" %>
-        <span><%= @event.name %></span>
+        <span class="ml2"><%= @event.name %></span>
       </div>
     </h1>
   </div>
@@ -59,6 +53,10 @@
         }
     </style>
   <% end %>
+<% end %>
+
+<% if Rails.env.production? %>
+  <%= render "application/fullstory" unless current_user && current_user.sessions_reported == false %>
 <% end %>
 
 <%= render "application/flash" %>

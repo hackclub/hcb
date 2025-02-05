@@ -73,7 +73,7 @@
       data-action="click->transactions#select"
       data-transaction="<%= selects %>"
     <% end %>>
-  <div class="tooltipped tooltipped--e" aria-label="<%= label %>">
+  <div class="tooltipped tooltipped--<%= defined?(tooltip_direction) ? tooltip_direction : "e" %>" aria-label="<%= label %>">
     <%= icon %>
   </div>
 </td>

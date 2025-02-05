@@ -309,8 +309,6 @@ module ApplicationHelper
     end
   end
 
-  module_function :commit_hash, :commit_time
-
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
@@ -395,6 +393,16 @@ module ApplicationHelper
 
   def possessive(name)
     name + (name.ends_with?("s") ? "'" : "'s")
+  end
+
+  def error_boundary(fallback: nil, fallback_text: nil, &block)
+    block.call
+  rescue => e
+    Rails.error.report(e)
+
+    return content_tag(:p, fallback_text || "That didn't work, sorry.") unless fallback
+
+    fallback
   end
 
 end

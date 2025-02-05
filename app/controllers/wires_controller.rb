@@ -26,7 +26,7 @@ class WiresController < ApplicationController
           receiptable: @wire.local_hcb_code
         ).run!
       end
-      redirect_to @wire.local_hcb_code.url, flash: { success: "Your wire has been sent!" }
+      redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }
     else
       render "new", status: :unprocessable_entity
     end
@@ -58,6 +58,8 @@ class WiresController < ApplicationController
     authorize @wire
 
     @wire.mark_rejected!
+
+    @wire.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     redirect_back_or_to wire_process_admin_path(@wire), flash: { success: "Wire has been canceled." }
   end

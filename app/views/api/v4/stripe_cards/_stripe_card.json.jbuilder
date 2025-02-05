@@ -14,7 +14,7 @@ else
   json.last4 nil
 end
 
-json.total_spent_cents stripe_card.total_spent if local_assigns[:expand]&.include?(:total_spent_cents)
+json.total_spent_cents stripe_card.total_spent if expand?(:total_spent_cents)
 
-json.organization stripe_card.event, partial: "api/v4/events/event", as: :event if local_assigns[:expand]&.include?(:organization)
-json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  if local_assigns[:expand]&.include?(:user)
+json.organization stripe_card.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
+json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  if expand?(:user)

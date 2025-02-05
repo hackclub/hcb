@@ -19,7 +19,9 @@ module Api
 
       def transactions
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
         @hcb_codes = @stripe_card.hcb_codes.order(created_at: :desc)
+        @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
         @total_count = @hcb_codes.size
         @has_more = false # TODO: implement pagination

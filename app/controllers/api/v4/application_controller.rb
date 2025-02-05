@@ -5,10 +5,14 @@ module Api
     class ApplicationController < ActionController::API
       include ActionController::HttpAuthentication::Token::ControllerMethods
       include Pundit::Authorization
+      include PublicActivity::StoreController
+
+      attr_reader :current_user
 
       after_action :verify_authorized
 
       before_action :authenticate!
+      before_action :set_expand
 
       rescue_from Pundit::NotAuthorizedError do |e|
         render json: { error: "not_authorized" }, status: :forbidden
@@ -38,7 +42,11 @@ module Api
         @current_user = current_token&.user
       end
 
-      attr_reader :current_token, :current_user
+      def set_expand
+        @expand = params[:expand].to_s.split(",").map { |e| e.strip.to_sym }
+      end
+
+      attr_reader :current_token
 
     end
   end

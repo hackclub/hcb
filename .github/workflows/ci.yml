@@ -17,7 +17,10 @@ jobs:
         with:
           bundler-cache: true
       - name: Run Rubocop
-        run: bundle exec rubocop
+        run: bundle exec rubocop -a
+      - name: Comment suggested changes
+        uses: parkerbxyz/suggest-changes@v2.0.0
+        if: ${{ github.event.pull_request }}
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest

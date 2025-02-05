@@ -33,7 +33,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin? || (users.include?(user) && !record.admin_only)
+    user&.admin? || (users.include?(user) && !record.admin_only)
   end
 
   def destroy?

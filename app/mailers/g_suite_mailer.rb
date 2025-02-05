@@ -3,7 +3,11 @@
 class GSuiteMailer < ApplicationMailer
   before_action :set_g_suite
 
-  default to: -> { organization_managers }
+  default to: -> {
+    emails = organization_managers
+    emails << @g_suite.event.config.contact_email if @g_suite.event.config.contact_email.present?
+    emails
+  }
 
   def notify_of_configuring
     mail subject: "[Action Requested] Your Google Workspace for #{@g_suite.domain} needs configuration"

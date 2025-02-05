@@ -131,10 +131,11 @@ class StripeCard < ApplicationRecord
   end
 
   def url
+    Airbrake.notify("StripeCard#url used")
     "/stripe_cards/#{hashid}"
   end
 
-  def popover_url
+  def popover_path
     "/stripe_cards/#{hashid}?frame=true"
   end
 
@@ -167,8 +168,7 @@ class StripeCard < ApplicationRecord
   end
 
   def status_text
-    return "Inactive" if !initially_activated?
-    return "Frozen" if stripe_status == "inactive"
+    return "Frozen" if stripe_status == "inactive" && initially_activated?
 
     stripe_status.humanize
   end
@@ -284,7 +284,7 @@ class StripeCard < ApplicationRecord
     end
 
     if stripe_obj[:shipping]
-      if (stripe_obj[:shipping][:status] == "returned" || stripe_obj[:shipping][:status] == "failure") && !lost_in_shipping?
+      if ["returned", "failure"].include?(stripe_obj[:shipping][:status]) && !lost_in_shipping?
         self.lost_in_shipping = true
         StripeCardMailer.with(card_id: self.id).lost_in_shipping.deliver_later
 

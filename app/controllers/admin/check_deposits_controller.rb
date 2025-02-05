@@ -15,6 +15,10 @@ module Admin
 
     def show
       @check_deposit = CheckDeposit.find(params[:id])
+
+      unless @check_deposit.manual_submission_required?
+        redirect_to @check_deposit.local_hcb_code.url
+      end
     end
 
     def submit

@@ -6,7 +6,7 @@
       <%= turbo_frame_tag(
             "activities-#{@activities.next_page}",
             loading: :lazy,
-            src: "/#{event.slug}/settings/audit_log?page=#{@activities.next_page}",
+            src: "/#{event.slug}/settings/audit_log?page=#{@activities.next_page}&activities_before=#{@activities_before}",
             target: "_top"
           ) do %>
         <i class="muted block text-center">Loading more activities...</i>

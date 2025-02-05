@@ -56,7 +56,7 @@
               <tr>
                 <td><%= link_to fee.event.name, fee.event %></td>
                 <td><%= render_money fee.amount_cents %></td>
-                <td><%= link_to "Details", fee.local_hcb_code.url %></td>
+                <td><%= link_to "Details", url_for(fee.local_hcb_code) %></td>
               </tr>
             <% end %>
           </tbody>

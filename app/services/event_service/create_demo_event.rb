@@ -13,7 +13,6 @@ module EventService
         postal_code:,
         point_of_contact_id: @point_of_contact.id,
         is_public:,
-        omit_stats: false,
         can_front_balance: true,
         demo_mode: true
       )

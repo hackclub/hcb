@@ -154,7 +154,7 @@ class RecurringDonation < ApplicationRecord
       currency: "usd",
       unit_amount: amount,
       recurring: { interval: "month" },
-      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.name) }
+      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.short_name) }
     )
 
     subscription = StripeService::Subscription.create(

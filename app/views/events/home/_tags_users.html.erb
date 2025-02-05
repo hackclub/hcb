@@ -1,8 +1,8 @@
 <%= turbo_frame_tag "tags_users" do %>
-  <div class="homepage-row mt-4">
-    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex items-center justify-center" style="height: <%= "384px" if @empty_tags %>">
+  <% if !@empty_tags || !@empty_users %>
+    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex flex-col">
       <% if @empty_tags %>
-        <div class="flex flex-col items-center justify-center">
+        <div class="flex flex-1 flex-col items-center justify-center">
           <div class="text-center">
             <h3 class="text-2xl font-bold mb-0">
               <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "It's quiet here..." : "Tags aren't enabled for this event" %>
@@ -17,33 +17,34 @@
           </div>
         </div>
       <% else %>
-        <%= pie_chart tags,
-                      library: pie_chart_config,
-                      download: true,
-                      colors: (20..70).step(5).to_a.reverse.map { |percent| "hsl(352, 83%, #{percent}%)" } %>
+        <div class="flex flex-row justify-between items-center w-full">
+          <h3 class="mt0 mb0">Top tags</h3>
+          <h5 class="homepage-eyebrow shrink-0 my-0">All&nbsp;time</h5>
+        </div>
+        <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
       <% end %>
     </div>
-    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex items-center justify-center" style="height: <%= "384px" if @empty_tags %>">
+    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex flex-col">
       <% if @empty_users %>
-        <div class="flex flex-col items-center justify-center">
+        <div class="flex flex-1 flex-col items-center justify-center">
           <div class="text-center">
             <h3 class="text-2xl font-bold mb-0">
               Not enough data
             </h3>
             <p class="text-gray-500 my-1">
-              For users to show up here, they need to have at least one transaction. If you haven't already, invite some
-              team members to help you out!
+              To see users here, make sure they have at least one transaction. If not, invite team members to get
+              started!
             </p>
-
-            <%= link_to "Invite", event_team_path(event), class: "btn mt-4", data: { "tour-step" => "invite", behavior: "modal_trigger", "modal": "invite_member" } %>
+            <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
           </div>
         </div>
       <% else %>
-        <%= pie_chart users.map { |u| [u[:name], u[:value]] }.to_h,
-                      library: pie_chart_config,
-                      download: true,
-                      colors: (20..70).step(5).to_a.reverse.map { |percent| "hsl(352, 83%, #{percent}%)" } %>
+        <div class="flex flex-row justify-between items-center w-full">
+          <h3 class="mt0 mb0">Top users</h3>
+          <h5 class="homepage-eyebrow shrink-0 my-0">All&nbsp;time</h5>
+        </div>
+        <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
       <% end %>
     </div>
-  </div>
+  <% end %>
 <% end %>

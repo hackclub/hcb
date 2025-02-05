@@ -55,7 +55,13 @@ class DonationsController < ApplicationController
       event: @event,
       ip_address: request.ip,
       user_agent: request.user_agent,
-      tax_deductible:
+      tax_deductible:,
+      referrer: request.referrer,
+      utm_source: params[:utm_source],
+      utm_medium: params[:utm_medium],
+      utm_campaign: params[:utm_campaign],
+      utm_term: params[:utm_term],
+      utm_content: params[:utm_content]
     )
 
     authorize @donation
@@ -158,7 +164,8 @@ class DonationsController < ApplicationController
       ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
     else
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "This donation hasn't settled, only settled invoices can be refunded." }
+      DonationJob::Refund.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents)
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
     end
   end
 
@@ -253,7 +260,7 @@ class DonationsController < ApplicationController
   end
 
   def donation_params
-    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered)
+    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered, :referrer, :utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content)
   end
 
   def redirect_to_404

@@ -51,7 +51,8 @@ class Comment < ApplicationRecord
 
   enum :action, {
     commented: 0,
-    changes_requested: 1 # used by reimbursements
+    changes_requested: 1, # used by reimbursements
+    rejected_transfer: 2
   }
 
   include PublicActivity::Model
@@ -86,6 +87,8 @@ class Comment < ApplicationRecord
 
   def action_text
     return "requested changes" if changes_requested?
+
+    return "rejected this transfer and commented" if rejected_transfer?
 
     return "commented"
   end

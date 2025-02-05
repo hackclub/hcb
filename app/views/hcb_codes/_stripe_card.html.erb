@@ -169,9 +169,9 @@
                 </p>
                 <p>
                   <strong>Category</strong>
-                  <span>
+                  <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
                     <%= humanized_category @hcb_code.stripe_merchant %>
-                  </span>
+                  <% end %>
                 </p>
                 <p>
                   <strong>Currency</strong>
@@ -205,6 +205,10 @@
                 <p>
                   <strong>Country</strong>
                   <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+                </p>
+                <p>
+                  <strong>Merchant ID</strong>
+                  <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
                 </p>
               </div>
               <p class="my0 muted">
@@ -323,9 +327,9 @@
         </p>
         <p>
           <strong>Category</strong>
-          <span>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
             <%= humanized_category @hcb_code.stripe_merchant %>
-          </span>
+          <% end %>
         </p>
         <p>
           <strong>Currency</strong>
@@ -355,6 +359,10 @@
         <p>
           <strong>Country</strong>
           <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+        </p>
+        <p>
+          <strong>Merchant ID</strong>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">

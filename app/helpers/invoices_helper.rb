@@ -114,7 +114,9 @@ def invoice_payment_method_mention(invoice = @invoice, options = {})
     size = 20
 
     if invoice&.payment_method_type == "ach_credit_transfer"
-      description_text = "ACH Transfer"
+      description_text = "ACH transfer"
+    elsif invoice&.payment_method_type == "us_bank_account"
+      description_text = "US bank account"
     else
       description_text = invoice.payment_method_type.humanize
     end

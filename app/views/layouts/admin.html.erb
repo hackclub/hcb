@@ -88,16 +88,13 @@
         <% end %>
 
         <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
-          <button data-behavior="toggle_theme" aria-label="Toggle dark mode" id="admin-theme-toggle" tabindex="0" class="tooltipped tooltipped--w">
-            <%= inline_icon "moon", fill: "currentColor", size: 28 %>
-            <%= inline_icon "moon-fill", fill: "currentColor", size: home_action_size, style: "display: none;" %>
-          </button>
           <a href="https://changelog.hcb.hackclub.com" target="_blank" aria-label="See what’s new with HCB" id="changelog-icon" class="tooltipped tooltipped--w">
             <%= inline_icon "rep", size: home_action_size %>
           </a>
           <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "tooltipped tooltipped--w" do %>
             <%= inline_icon "payment-docs", size: home_action_size %>
           <% end %>
+          <%= render partial: "application/theme_toggle", locals: { top: true } %>
           <%= button_to logout_users_path, method: :delete, style: "background: none; padding: 0px;", id: "admin-logout-button", 'aria-label': "Sign out", class: "tooltipped tooltipped--w" do %>
             <%= inline_icon "door-leave", size: home_action_size %>
           <% end %>

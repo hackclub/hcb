@@ -6,11 +6,11 @@ module PendingTransactionEngine
       def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false)
         @event_id = event_id
         @search = search
-        @tag_id = tag_id
+        @tag_id = tag_id&.to_i
         @minimum_amount = minimum_amount
         @maximum_amount = maximum_amount
-        @start_date = start_date
-        @end_date = end_date
+        @start_date = start_date&.to_datetime
+        @end_date = end_date&.to_datetime
         @user = user
         @missing_receipts = missing_receipts
       end

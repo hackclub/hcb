@@ -17,6 +17,10 @@ class PaypalTransferPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
+  def mark_failed?
+    user&.admin?
+  end
+
   private
 
   def admin_or_user?

@@ -41,7 +41,6 @@
     right: 0px;
     transform: translateX(100%);
     bottom: 0px;
-    height: 100vh;
     max-width: 800px;
     max-height: 100vh;
     border-radius: 0rem;
@@ -54,6 +53,12 @@
 
     &.modal--popover--sm {
       max-width: 500px;
+    }
+
+    @media (min-width: 48em) {
+      height: calc(100vh - 24px);
+      border-radius: 8px;
+      margin: 12px;
     }
 
     @media (max-width: 48em) {

@@ -8,6 +8,15 @@
     } if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
 
 <%= render partial: "features/preview", locals: {
+      id: "card-logo",
+      classes: ["feature-generic"],
+      feature_flag: :card_logos_2024_08_27,
+      name: "HCB card logo",
+      description: "Add a custom logo to every HCB card printed for your organization",
+      event: @event
+    } %>
+
+<%= render partial: "features/preview", locals: {
       id: "transaction-tags",
       classes: ["feature-transaction-tags"],
       feature_flag: :transaction_tags_2022_07_29,
@@ -19,7 +28,7 @@
 <% active_spending_control_count = @event.organizer_positions.map(&:active_spending_control).compact.count %>
 <%= render partial: "features/preview", locals: {
       id: "spending-controls",
-      classes: ["feature-spending-controls"],
+      classes: ["feature-spending-controls", "feature-generic"],
       feature_flag: :spending_controls_2024_06_03,
       name: "Spending Controls",
       description: content_tag(:span) do

@@ -1,5 +1,7 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
+
 <!DOCTYPE html>
-<html lang="en" data-dark="<%= !!@dark %>" <%= "data-ignore-theme" unless @dark.nil? %>>
+<html lang="en" data-dark="<%= @is_dark %>">
   <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
   <head>
     <title>
@@ -8,7 +10,7 @@
     </title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <meta name="theme-color" content="#f9fafc">
+    <meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
 
     <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
     <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
@@ -67,7 +69,9 @@
 
     <meta name="format-detection" content="telephone=no">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <% if user_birthday? %>
+    <% if content_for?(:favicon) %>
+      <%= yield :favicon %>
+    <% elsif user_birthday? %>
       <link rel="icon" type="image/png" href="/favicon-party.gif">
     <% else %>
       <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
@@ -86,6 +90,7 @@
                         step: @tour&.step || 0,
                         options: @tour&.tourable&.try(:tourable_options) || {},
                         back_to_tour: @back_to_tour %>
+
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
@@ -118,7 +123,6 @@
 
     <%# LET THERE BE SNOW %>
     <% if winter? %>
-      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:99" } %>
       <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
     <% end %>
 

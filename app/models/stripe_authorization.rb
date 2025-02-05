@@ -27,7 +27,6 @@
 #
 class StripeAuthorization < ApplicationRecord
   include Receiptable
-  include Commentable
 
   before_validation :sync_from_stripe! # pull details from stripe if we're creating it for the first time. expensive in the webhook. TODO: adjust - ideally async after authorization approved or not
 
@@ -52,7 +51,7 @@ class StripeAuthorization < ApplicationRecord
   belongs_to :stripe_card, class_name: "StripeCard"
   alias_method :card, :stripe_card
   has_one :stripe_cardholder, through: :stripe_card, as: :cardholder
-  alias_attribute :cardholder, :stripe_cardholder
+  alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_one :event, through: :stripe_card
 

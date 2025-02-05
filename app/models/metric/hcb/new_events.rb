@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module Hcb
@@ -26,7 +27,7 @@ class Metric
                .not_hidden
                .not_demo_mode
                .approved
-               .where("EXTRACT(YEAR FROM created_at) = ?", 2023)
+               .where("EXTRACT(YEAR FROM events.created_at) = ?", 2024)
                .count
       end
 

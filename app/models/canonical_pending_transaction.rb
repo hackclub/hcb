@@ -56,8 +56,6 @@
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
-  self.ignored_columns = %w[ach_payment_id]
-
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
   pg_search_scope :pg_text_search, lambda { |query, options_hash| { query: }.merge(options_hash) }
@@ -126,7 +124,15 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :not_fronted, -> { where(fronted: false) }
   scope :not_declined, -> { includes(:canonical_pending_declined_mapping).where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil }) }
   scope :not_waived, -> { where(fee_waived: false) }
-  scope :included_in_stats, -> { includes(canonical_pending_event_mapping: :event).where(events: { omit_stats: false }) }
+  scope :included_in_stats, -> {
+    includes(
+      canonical_pending_event_mapping: { event: :plan }
+    ).where.not(
+      event_plans: {
+        type: Event::Plan.that(:omit_stats).collect(&:name)
+      }
+    )
+  }
   scope :with_custom_memo, -> { where("custom_memo is not null") }
 
   scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }

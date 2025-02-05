@@ -77,6 +77,7 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :sender, class_name: "User"
 
   belongs_to :organizer_position, optional: true
+  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract"
 
   validate :not_already_organizer
   validate :not_already_invited, on: :create
@@ -86,7 +87,17 @@ class OrganizerPositionInvite < ApplicationRecord
   validate :initial_control_allowance_amount_cents_nil_for_non_members
 
   after_create_commit do
-    user == sender ? accept : deliver
+    unless pending_signature?
+      user == sender ? accept : deliver
+    end
+  end
+
+  def organizer_position_contract
+    organizer_position_contracts.where.not(aasm_state: :voided).last
+  end
+
+  def pending_signature?
+    is_signee && Flipper.enabled?(:organizer_position_contracts_2025_01_03, event) && organizer_position_contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -101,6 +112,11 @@ class OrganizerPositionInvite < ApplicationRecord
 
     if accepted?
       self.errors.add(:base, "already accepted!")
+      return false
+    end
+
+    if pending_signature?
+      self.errors.add(:base, "requires a signed contract!")
       return false
     end
 

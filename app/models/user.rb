@@ -9,6 +9,7 @@
 #  birthday_ciphertext           :text
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
+#  creation_method               :integer
 #  email                         :text
 #  full_name                     :string
 #  locked_at                     :datetime
@@ -23,6 +24,7 @@
 #  session_duration_seconds      :integer          default(2592000), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
+#  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
 #  created_at                    :datetime         not null
@@ -48,8 +50,6 @@ class User < ApplicationRecord
 
   include ApplicationHelper
 
-  has_paper_trail only: [:access_level, :email]
-
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
@@ -67,10 +67,19 @@ class User < ApplicationRecord
 
   enum :access_level, { user: 0, admin: 1, superadmin: 2 }, scopes: false, default: :user
 
+  enum :creation_method, {
+    login: 0,
+    reimbursement_report: 1,
+    organizer_position_invite: 2,
+    card_grant: 3,
+    grant: 4
+  }
+
   has_many :logins
   has_many :login_codes
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_positions
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
   has_many :organizer_position_deletion_requests, inverse_of: :closed_by
@@ -151,6 +160,12 @@ class User < ApplicationRecord
 
   validate :profile_picture_format
 
+  validate on: :update do
+    if Rails.env.production? && admin_override_pretend? && !use_two_factor_authentication?
+      errors.add(:access_level, "two factor authentication is required for this access level")
+    end
+  end
+
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
   enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications
@@ -178,13 +193,13 @@ class User < ApplicationRecord
   # admin? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def admin?
-    (self.access_level == "admin" || self.access_level == "superadmin") && !self.pretend_is_not_admin
+    ["admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
   end
 
   # admin_override_pretend? ignores an admin user's
   # preference to pretend not to be an admin.
   def admin_override_pretend?
-    self.access_level == "admin" || self.access_level == "superadmin"
+    ["admin", "superadmin"].include?(self.access_level)
   end
 
   def make_admin!
@@ -312,7 +327,7 @@ class User < ApplicationRecord
   end
 
   def teenager?
-    birthday&.after?(19.years.ago) || events.high_school_hackathon.any? || events.organized_by_teenagers.any?
+    birthday&.after?(19.years.ago) || events.organized_by_teenagers.any?
   end
 
   def last_seen_at

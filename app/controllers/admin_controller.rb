@@ -85,7 +85,6 @@ class AdminController < ApplicationController
       plan: params[:plan],
       organized_by_hack_clubbers: params[:organized_by_hack_clubbers].to_i == 1,
       organized_by_teenagers: params[:organized_by_teenagers].to_i == 1,
-      omit_stats: params[:omit_stats].to_i == 1,
       demo_mode: params[:demo_mode].to_i == 1
     ).run
 
@@ -459,6 +458,7 @@ class AdminController < ApplicationController
   def ach_reject
     ach_transfer = AchTransfer.find(params[:id])
     ach_transfer.mark_rejected!(current_user)
+    ach_transfer.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
   rescue => e
@@ -485,6 +485,8 @@ class AdminController < ApplicationController
     disbursement = Disbursement.find(params[:id])
 
     disbursement.mark_rejected!(current_user)
+
+    disbursement.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
@@ -910,7 +912,7 @@ class AdminController < ApplicationController
             user: current_user
           ).run
         rescue => e
-          return redirect_to transaction_admin_path(id), flash: { error: e.message }
+          return redirect_to ledger_admin_index_path, flash: { error: e.message }
         end
       end
     end
@@ -1002,7 +1004,7 @@ class AdminController < ApplicationController
     template = [
       ["ID", ->(e) { e.id }],
       [:organization, ->(e) { e.name }],
-      [:current_balance, ->(e) { render_balance.call(e, :settled_balance_cents) }],
+      [:current_balance, ->(e) { render_balance.call(e, :balance_v2_cents) }],
       [:total_expenses, ->(e) { render_balance.call(e, :settled_outgoing_balance_cents) }],
       [:total_income, ->(e) { render_balance.call(e, :settled_incoming_balance_cents) }]
     ]
@@ -1015,7 +1017,6 @@ class AdminController < ApplicationController
     if @monthly_breakdown
       template.concat(
         [
-          [:category, ->(e) { e.category }],
           [:tags, ->(e) { e.event_tags.pluck(:name).join(",") }],
           [:joined, ->(e) { (e.activated_at || e.created_at).strftime("%Y-%m-%d") }],
         ]
@@ -1140,10 +1141,11 @@ class AdminController < ApplicationController
     @per = params[:per] || 100
     @q = params[:q].presence
     @user_id = params[:user_id]
+    @to = params[:to].presence
 
     messages = Ahoy::Message.all
     messages = messages.where(user: User.find(@user_id)) if @user_id.present?
-
+    messages = messages.where(to: @to) if @to
     messages = messages.search_subject(@q) if @q
 
     @count = messages.count
@@ -1191,11 +1193,6 @@ class AdminController < ApplicationController
     @active = params[:active].present? ? params[:active] : "both" # both by default
     @organized_by = params[:organized_by].presence || "anyone"
     @tagged_with = params[:tagged_with].presence || "anything"
-    if params[:category] == "none"
-      @category = "none"
-    else
-      @category = params[:category].present? ? params[:category] : "all"
-    end
     @point_of_contact_id = params[:point_of_contact_id].present? ? params[:point_of_contact_id] : "all"
     @plan = params[:plan].present? ? params[:plan] : "all"
     if params[:country] == 9999.to_s
@@ -1234,11 +1231,6 @@ class AdminController < ApplicationController
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
                          .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
     end
-    if @category == "none"
-      relation = relation.where(category: nil)
-    elsif @category != "all"
-      relation = relation.where(category: @category)
-    end
     relation = relation.where(point_of_contact_id: @point_of_contact_id) if @point_of_contact_id != "all"
     if @country == 9999
       relation = relation.where.not(country: "US")
@@ -1251,7 +1243,7 @@ class AdminController < ApplicationController
     states << "unapproved" if @unapproved
     states << "approved" if @approved
     states << "rejected" if @rejected
-    relation = relation.where("aasm_state in (?)", states)
+    relation = relation.where("events.aasm_state in (?)", states)
 
     # Sorting
     case @sort_by
@@ -1310,8 +1302,6 @@ class AdminController < ApplicationController
         airtable_task_size :wallets
       when :pending_replit_airtable
         airtable_task_size :replit
-      when :pending_sendy_airtable
-        airtable_task_size :sendy
       when :pending_onepassword_airtable
         airtable_task_size :onepassword
       when :pending_domains_airtable
@@ -1320,8 +1310,6 @@ class AdminController < ApplicationController
         airtable_task_size :pvsa
       when :pending_theeventhelper_airtable
         airtable_task_size :theeventhelper
-      when :pending_first_grant_airtable
-        airtable_task_size :first_grant
       when :pending_wire_transfers_airtable
         airtable_task_size :wire_transfers
       when :pending_disputed_transactions_airtable
@@ -1334,10 +1322,6 @@ class AdminController < ApplicationController
         airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
-      when :pending_power_hour_airtable
-        airtable_task_size :power_hour
-      when :pending_arcade_airtable
-        airtable_task_size :arcade
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions
@@ -1379,12 +1363,10 @@ class AdminController < ApplicationController
     pending_task :pending_stickers_airtable
     pending_task :pending_wallets_airtable
     pending_task :pending_replit_airtable
-    pending_task :pending_sendy_airtable
     pending_task :pending_onepassword_airtable
     pending_task :pending_domains_airtable
     pending_task :pending_pvsa_airtable
     pending_task :pending_theeventhelper_airtable
-    pending_task :pending_first_grant_airtable
     pending_task :pending_feedback_airtable
     pending_task :wire_transfers
     pending_task :paypal_transfers

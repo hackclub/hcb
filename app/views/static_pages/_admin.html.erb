@@ -51,11 +51,8 @@
       <%= card_to "Deletion requests", organizer_position_deletion_requests_path, { badge: OrganizerPositionDeletionRequest.under_review.count } %>
       <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), { async_badge: :pending_disputed_transactions_airtable } %>
       <%= card_to "Feedback", link_to_airtable_task(:feedback), { async_badge: :pending_feedback_airtable } %>
-      <%= card_to "Hackathon Grants", link_to_airtable_task(:first_grant), { async_badge: :pending_first_grant_airtable } %>
       <%= card_to "Boba", link_to_airtable_task(:boba), { async_badge: :pending_boba_airtable } %>
       <%= card_to "YSWS Verification", link_to_airtable_task(:you_ship_we_ship), { async_badge: :pending_you_ship_we_ship_airtable } %>
-      <%= card_to "Arcade", link_to_airtable_task(:arcade), { async_badge: :pending_arcade_airtable } %>
-      <%= card_to "Power Hour", link_to_airtable_task(:power_hour), { async_badge: :pending_power_hour_airtable } %>
       <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
     </ul>
     <h2>Info</h2>
@@ -74,7 +71,6 @@
       <%= card_to "Google Workspaces", google_workspaces_admin_index_path, { badge: GSuite.needs_ops_review.count } %>
       <%= card_to "Stickers", link_to_airtable_task(:stickers), { async_badge: :pending_stickers_airtable } %>
       <%= card_to "Hackathons", "https://dash.hackathons.hackclub.com/sign_in", { async_badge: :pending_hackathons_airtable } %>
-      <%= card_to "Sendy", link_to_airtable_task(:sendy), { async_badge: :pending_sendy_airtable } %>
       <%= card_to "1Password", link_to_airtable_task(:onepassword), { async_badge: :pending_onepassword_airtable } %>
       <%= card_to "Domains", link_to_airtable_task(:domains), { async_badge: :pending_domains_airtable } %>
       <%= card_to "PVSA", link_to_airtable_task(:pvsa), { async_badge: :pending_pvsa_airtable } %>

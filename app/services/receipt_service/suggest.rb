@@ -52,14 +52,16 @@ module ReceiptService
         },
         date: {
           value: begin
-            return 1 unless @extracted.extracted_date.present?
+            if @extracted.extracted_date.present?
+              distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
 
-            distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
-
-            if distance <= 1
-              0
-            elsif distance <= 5
-              0.2 + 0.8 * (distance / 5)
+              if distance <= 1
+                0
+              elsif distance <= 5
+                0.2 + 0.8 * (distance / 5)
+              else
+                1
+              end
             else
               1
             end

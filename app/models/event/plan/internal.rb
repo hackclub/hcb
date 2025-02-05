@@ -31,6 +31,10 @@ class Event
         true
       end
 
+      def omit_stats
+        true
+      end
+
     end
 
   end

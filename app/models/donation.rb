@@ -22,11 +22,17 @@
 #  payout_creation_balance_stripe_fee   :integer
 #  payout_creation_queued_at            :datetime
 #  payout_creation_queued_for           :datetime
+#  referrer                             :text
 #  status                               :string
 #  stripe_client_secret                 :string
 #  tax_deductible                       :boolean          default(TRUE), not null
 #  url_hash                             :string
 #  user_agent                           :text
+#  utm_campaign                         :text
+#  utm_content                          :text
+#  utm_medium                           :text
+#  utm_source                           :text
+#  utm_term                             :text
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  collected_by_id                      :bigint
@@ -72,6 +78,8 @@ class Donation < ApplicationRecord
   belongs_to :payout, class_name: "DonationPayout", optional: true
   belongs_to :recurring_donation, optional: true
   belongs_to :collected_by, class_name: "User", optional: true
+
+  before_save :trim_utm_referrer_fields
 
   before_create :create_stripe_payment_intent, unless: -> { recurring? || in_person? }
   before_create :assign_unique_hash, unless: -> { recurring? }
@@ -196,7 +204,7 @@ class Donation < ApplicationRecord
   end
 
   def arrival_date
-    arrival = self&.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and HCB processing time
     arrival + 1.day
@@ -317,6 +325,16 @@ class Donation < ApplicationRecord
     recurring_donation&.email || super
   end
 
+  def referrer_domain
+    Addressable::URI.parse(referrer.presence)&.host
+  end
+
+  def referrer_favicon_url
+    return unless referrer_domain
+
+    "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
+  end
+
   private
 
   def raw_pending_donation_transaction
@@ -349,7 +367,7 @@ class Donation < ApplicationRecord
       amount:,
       currency: "usd",
       statement_descriptor: "HCB",
-      statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.name, as: :suffix),
+      statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
       metadata: { 'donation': true, 'event_id': event.id }
     }
   end
@@ -364,6 +382,15 @@ class Donation < ApplicationRecord
 
   def assign_unique_hash
     self.url_hash = SecureRandom.hex(8)
+  end
+
+  def trim_utm_referrer_fields
+    self.referrer = referrer&.strip&.truncate(500)
+    self.utm_source = utm_source&.strip&.truncate(500)
+    self.utm_medium = utm_medium&.strip&.truncate(500)
+    self.utm_campaign = utm_campaign&.strip&.truncate(500)
+    self.utm_term = utm_term&.strip&.truncate(500)
+    self.utm_content = utm_content&.strip&.truncate(500)
   end
 
 end
