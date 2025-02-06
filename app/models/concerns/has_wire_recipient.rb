@@ -8,8 +8,6 @@ module HasWireRecipient
     has_country_enum(field: :recipient_country)
     validates_length_of :remittance_info, maximum: 140
 
-    # IBAN & postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
-
     validate do
       if IBAN_FORMATS[recipient_country.to_sym] && !account_number.match(IBAN_FORMATS[recipient_country.to_sym])
         errors.add(:account_number, "does not meet the required format for this country")
@@ -223,6 +221,8 @@ module HasWireRecipient
 
     store :recipient_information, accessors: self.recipient_information_accessors
   end
+
+  # IBAN & postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
 
   IBAN_FORMATS = {
     "AD": /AD\d{2}\d{4}\d{4}[\dA-Za-z]{12}/,
