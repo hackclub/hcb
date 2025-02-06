@@ -310,7 +310,7 @@ module Reimbursement
     def below_minimum_amount?
       user.payout_method.is_a?(User::PayoutMethod::Wire) && amount_cents < event.minimum_wire_amount_cents
 
-      true
+      false
     end
 
     def from_public_reimbursement_form?
