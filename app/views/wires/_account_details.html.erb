@@ -1,17 +1,17 @@
 <%# locals: (form:, disabled:, account_number_field_name: :account_number) %>
 
 <div class="field">
-<%= form.label :bic_code, "SWIFT / BIC code" %>
-<%= form.text_field :bic_code,
-    required: true,
-    disabled:,
-    placeholder: "CLNOUS66" %>
+    <%= form.label :bic_code, "SWIFT / BIC code" %>
+    <%= form.text_field :bic_code,
+        required: true,
+        disabled:,
+        placeholder: "CLNOUS66" %>
 </div>
 
 <div class="field">
-<%= form.label local_assigns[:account_number_field_name] || :account_number, "International account number (IBAN)" %>
-<%= form.text_field local_assigns[:account_number_field_name] || :account_number,
-    required: true,
-    disabled:,
-    placeholder: "123456789" %>
+    <%= form.label local_assigns[:account_number_field_name] || :account_number, "International account number (IBAN)" %>
+    <%= form.text_field local_assigns[:account_number_field_name] || :account_number,
+        required: true,
+        disabled:,
+        placeholder: "123456789" %>
 </div>

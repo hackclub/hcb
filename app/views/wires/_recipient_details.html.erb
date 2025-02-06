@@ -1,12 +1,12 @@
 <%# locals: (form:, disabled:) %>
 
 <div class="field mb1">
-<%= form.label :address_line1, "Street address" %>
-<%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar", required: true %>
+    <%= form.label :address_line1, "Street address" %>
+    <%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar", required: true %>
 </div>
 
 <div class="field mt0">
-<%= form.text_field :address_line2, placeholder: "Sector 20", disabled: %>
+    <%= form.text_field :address_line2, placeholder: "Sector 20", disabled: %>
 </div>
 
 <div class="flex">
@@ -21,11 +21,11 @@
 </div>
 
 <div class="field">
-<%= form.label :address_postal_code, "Postal code / ZIP code" %>
-<%= form.text_field :address_postal_code, placeholder: "122022", required: true %>
+    <%= form.label :address_postal_code, "Postal code / ZIP code" %>
+    <%= form.text_field :address_postal_code, placeholder: "122022", required: true %>
 </div>
 
 <div class="field">
-<%= form.label :recipient_country, "Country" %>
-<%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" } %>
+    <%= form.label :recipient_country, "Country" %>
+    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" } %>
 </div>
