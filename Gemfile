@@ -13,7 +13,7 @@ gem "puma", "~> 6.5" # app server
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "redis", "~> 5.3" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
-gem "sidekiq-cron", "~> 2.0" # run Sidekiq jobs at scheduled intervals
+gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -109,7 +109,7 @@ gem "xxhash" # fast hashing
 
 gem "diffy" # rendering diffs (comments)
 
-gem "webauthn", "~> 3.1"
+gem "webauthn", "~> 3.2"
 
 gem "ahoy_matey" # analytics
 gem "airbrake" # exception tracking
