@@ -6,9 +6,6 @@ module HasWireRecipient
   included do
     include CountryEnumable
     has_country_enum(field: :recipient_country)
-
-
-
     validates_length_of :remittance_info, maximum: 140
 
     # IBAN & postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
