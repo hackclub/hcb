@@ -42,35 +42,51 @@ export default class extends Controller {
     }
 
     const filter = async () => {
+      const orgValues = Object.values(organizations)
       const text = this.searchTarget.value
 
+      const start = performance.now()
       const result = fuzzysort.go(
         this.searchTarget.value,
-        Object.values(organizations),
+        orgValues,
         {
           keys: ['name', 'id'],
           all: true,
           threshold: -500000,
         }
       )
+      const end = performance.now()
+ 
+
 
       firstOrganization = result[0]?.obj
 
-      const shown = result.map(r => r.obj.organization)
-      const hidden = this.organizationTargets.filter(el => !shown.includes(el))
+
+      const shown = this.searchTarget.value.length < 5 ? [] : result.map(r => r.obj.organization)
+      const hidden = this.searchTarget.value.length < 5 ? this.organizationTargets : this.organizationTargets.filter(el => !shown.includes(el))
+      console.log('Search took', end - start, 'ms')
+      const renderStart = performance.now()
 
       if (!ensure(() => text == this.searchTarget.value)) return
 
       for (const element of shown) {
+        (async () => {
         element.parentElement.appendChild(element)
         element.style.display = 'block'
+        })();
         if (!ensure(() => text == this.searchTarget.value)) return
       }
 
       for (const element of hidden) {
+        (async () => {
         element.style.display = 'none'
+        })();
         if (!ensure(() => text == this.searchTarget.value)) return
       }
+
+      const renderEnd = performance.now()
+
+      console.log('Render took', renderEnd - renderStart, 'ms')
     }
 
     for (const organization of this.organizationTargets) {

@@ -45,13 +45,15 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
+    # @event = current_user.events.select("id").not_hidden.filter_demo_mode(false)
+
     @allowed_source_events = if current_user.admin?
-                               Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                               Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end
     @allowed_destination_events = if current_user.admin?
-                                    Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                                    Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   else
                                     current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
                                   end

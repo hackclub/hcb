@@ -10,12 +10,22 @@
       <option <%= "default" if @source_event.present? %> value="<%= @source_event.id if @source_event.present? %>"><%= @source_event.name if @source_event.present? %></option>
     </select>
 
+    <script type="application/ld+json" id="source_events">
+      <%= @allowed_source_events.map { |event, i|
+            {
+              id: event.id,
+              name: event.name,
+              fee: event.revenue_fee,
+            }
+          }.to_json.html_safe %>
+    </script>
+
     <div data-organization-select-target="wrapper" style="max-width: 384px;">
       <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
 
       <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
-        <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px;">
-            <% @allowed_source_events.map do |event, i| %>
+        <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px; content-visibility: auto;">
+            <% [@allowed_source_events.first].map do |event, i| %>
               <% disabled_message = nil %>
               <% disabled_message = "Insufficient balance" if !current_user.admin? && event.balance_available <= 0 %>
               <% disabled_message = "HCB transfers disabled" if event != @source_event && !policy(event).create_transfer? %>
@@ -41,13 +51,23 @@
       <option value="">Organization</option>
     </select>
 
+    <script type="application/ld+json" id="destination_events">
+      <%= @allowed_destination_events.map { |event, i|
+            {
+              id: event.id,
+              name: event.name,
+              fee: event.revenue_fee,
+            }
+          }.to_json.html_safe %>
+    </script>
+
     <div data-organization-select-target="wrapper" style="max-width: 384px;">
       <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
 
       <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
         <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px;">
 
-            <% @allowed_destination_events.map do |event, i| %>
+            <% [@allowed_destination_events.first].map do |event, i| %>
               <div data-id="<%= event.id %>" data-name="<%= event.name %>" data-fee="<%= event.revenue_fee.to_s %>" data-organization-select-target="organization">
                 <button class="text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
                   <div class="text-left"><%= event.name %></div>
