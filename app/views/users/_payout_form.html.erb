@@ -6,7 +6,7 @@
       <%= form.label :payout_method_type, value: "User::PayoutMethod::AchTransfer" do %>
         <%= inline_icon "payment-transfer", size: 28 %>
         <strong>ACH Transfer</strong>
-        <small>(2-3 biz. days)</small>
+        <small>(1-3 biz. days)</small>
       <% end %>
       <%= form.radio_button :payout_method_type, "User::PayoutMethod::Check" %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::Check" do %>
