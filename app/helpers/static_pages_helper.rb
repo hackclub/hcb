@@ -148,8 +148,8 @@ module StaticPagesHelper
     }
   end
 
-  def apply_form_url(user = current_user)
-    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form({ userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year }.compact)}"
+  def apply_form_url(user = current_user, campaign: nil, content: nil)
+    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form({ userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year, utm_source: "hcb", utm_medium: "web", utm_campaign: campaign, utm_content: content }.compact)}"
   end
 
   def render_permissions(permissions, depth = 0)

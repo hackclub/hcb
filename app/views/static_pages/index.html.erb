@@ -58,7 +58,7 @@
 
         <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
 
-        <%= link_to apply_form_url do %>
+        <%= link_to apply_form_url(campaign: "hcb-new-event", content: "returning-organizer") do %>
           <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
             <div class="center">
               <div class="pop success mx-auto flex mb-1">
@@ -117,7 +117,7 @@
 <div class="text-center">
   <% if @events.empty? && @invites.empty? && !current_user.admin? %>
     <%= blankslate "No organizations associated with your account yet." %>
-    <%= link_to apply_form_url, class: "btn bg-success mt2" do %>
+    <%= link_to apply_form_url(campaign: "hcb-new-event", content: "first-time"), class: "btn bg-success mt2" do %>
       <%= inline_icon "plus" %>
       New organization
     <% end %>
