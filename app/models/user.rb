@@ -351,6 +351,10 @@ class User < ApplicationRecord
     UserService::SyncWithLoops.new(user_id: id, new_user:).run
   end
 
+  def only_card_grant_user?
+    creation_method == "card_grant" && card_grants.count == 1
+  end
+
   private
 
   def update_stripe_cardholder
