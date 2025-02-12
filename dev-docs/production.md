@@ -1,8 +1,13 @@
 # Production Hosting
 
-Hetzner running Coolify
+TLDR:
+- Multiple Hetzner servers behind a TLS Terminating Load Balancer
+- Coolify manages those servers
+- Rails app is deployed on all app servers by Coolify (via Docker) and Docker
+  containers are mapped to host's port 80
+- Coolify does not run a proxy (e.g. no Traefik)
 
-Docker swarm behind a Hetzner Load Balance
+## Set up process
 
 1. Create Hetzner Load Balancer
    `Name`: hcb-network
@@ -139,6 +144,10 @@ Docker swarm behind a Hetzner Load Balance
             - Port: 80
             - Path: `/up`
         - Save it!
+12. Load balancer's IP is an A (and AAAA) record at `ingress.hcb.hackclub.com`
+    - The intention is that the IP address of our underlying servers are never
+      exposed publicly.
+13. `hcb.hackclub.com` is a CNAME for `ingress.hcb.hackclub.com`
 
 oh yeah, i also added a build server. shared cpu, 4vCPU, 8gb. Make sure that's
 added to Coolify AND configured to be a build server.
