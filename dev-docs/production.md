@@ -1,6 +1,7 @@
 # Production Hosting
 
 TLDR:
+
 - Multiple Hetzner servers behind a TLS Terminating Load Balancer
 - Coolify manages those servers
 - Rails app is deployed on all app servers by Coolify (via Docker) and Docker
@@ -39,8 +40,8 @@ TLDR:
    For each server, `Validate & configure` on Coolify.
    It's Install Docker, etc.
 5. For each server, display the default Traefik proxy.
-   - Click on each server, then click "Stop proxy" on the top right.
-   - Go to the Proxy tab, click "switch proxy", select None.
+    - Click on each server, then click "Stop proxy" on the top right.
+    - Go to the Proxy tab, click "switch proxy", select None.
 6. Create `gary@hcb` app
 7. Create GitHub app (`hcb-github-app`); named `HCB Coolify` on GitHub
 8. In `gary@hcb` app:
@@ -178,3 +179,25 @@ added to Coolify AND configured to be a build server.
 
    Alternatively, if you've already done this one on a server, you can copy the
    `~/.docker/config.json` file from the older server to the new server.
+
+---
+
+## Coolify internals
+
+- Read the code: https://github.com/coollabsio/coolify
+- If you need to figure out the exact docker compose file that Coolify generated
+  and deployed with, it's located on each server at:
+  ```
+  /data/coolify/applications/<application id>
+  ```
+  Application ID can be retrieved from the URL of the app in Coolify's
+  dashboard.
+
+  The docker compose file is located at
+  ```
+  /data/coolify/applications/<application id>/docker-compose.yaml
+  ```
+  In that same directory, there's also a `README.md` that contains the
+  human-readable name of the application — useful so you don't need to go
+  digging in the Coolify dashboard for the app ID. Just trial, error, and
+  confirm with the README.
