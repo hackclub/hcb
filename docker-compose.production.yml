@@ -1,0 +1,32 @@
+version: '3'
+services:
+  web:
+    image: ghcr.io/hackclub/hcb
+    build:
+      context: .
+      dockerfile: production.Dockerfile
+    expose:
+      - "3000"
+    ports:
+      - "80:3000"
+    healthcheck:
+      test: "curl -s -X GET -f http://localhost:3000/up > /dev/null || wget -q -O- http://localhost:3000/up > /dev/null || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: 3
+          memory: 5g
+  jobs:
+    image: ghcr.io/hackclub/hcb
+    depends_on: [ web ] # Wait for web to build docker image
+    environment:
+      RAILS_MAX_THREADS: 4 # 4 threads x 3 workers = 12 threads
+    command: bundle exec sidekiq
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: 2g

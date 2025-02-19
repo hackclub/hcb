@@ -477,7 +477,7 @@ class AdminController < ApplicationController
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
-    notify_airbrake e
+    Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
   end
 
@@ -490,7 +490,7 @@ class AdminController < ApplicationController
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
-    notify_airbrake e
+    Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
   end
 
@@ -1166,6 +1166,21 @@ class AdminController < ApplicationController
     end
   end
 
+  def employees
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @employees = Employee.all.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'onboarding' DESC"),
+      "employees.created_at desc"
+    )
+  end
+
+  def employee_payments
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @payments = Employee::Payment.all.page(@page).per(@per)
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)
@@ -1267,7 +1282,7 @@ class AdminController < ApplicationController
 
     task.size
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
     9999 # return something invalidly high to get the ops team to report it
   end
 

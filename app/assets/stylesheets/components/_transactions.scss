@@ -153,7 +153,8 @@ html[data-dark='true'] {
 }
 
 .transaction:has(.renaming) {
-  background-image: linear-gradient(90deg, $orange 50%, transparent 50%),
+  background-image:
+    linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(0deg, $orange 50%, transparent 50%),
     linear-gradient(0deg, $orange 50%, transparent 50%);

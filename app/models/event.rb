@@ -266,6 +266,9 @@ class Event < ApplicationRecord
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
 
+  has_many :employees
+  has_many :employee_payments, through: :employees, source: :payments, class_name: "Employee::Payment"
+
   has_many :documents
 
   has_many :canonical_pending_event_mappings, -> { on_main_ledger }

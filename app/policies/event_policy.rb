@@ -21,6 +21,7 @@ class EventPolicy < ApplicationPolicy
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
+  alias_method :ledger?, :transactions?
 
   def toggle_hidden?
     user&.admin?
@@ -142,6 +143,10 @@ class EventPolicy < ApplicationPolicy
 
   def reimbursements?
     admin_or_user? && record.plan.reimbursements_enabled?
+  end
+
+  def employees?
+    admin_or_user?
   end
 
   def donation_overview?

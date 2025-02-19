@@ -63,7 +63,7 @@ module EventMappingEngine
       begin
         ::EventMappingEngine::Map::Checks.new.run
       rescue => e
-        Airbrake.notify(e)
+        Rails.error.report(e)
       end
     end
 
@@ -71,7 +71,7 @@ module EventMappingEngine
       begin
         ::EventMappingEngine::Map::ClearingChecks.new.run
       rescue => e
-        Airbrake.notify(e)
+        Rails.error.report(e)
       end
     end
 

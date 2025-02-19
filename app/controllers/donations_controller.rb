@@ -53,7 +53,7 @@ class DonationsController < ApplicationController
       message: params[:message],
       fee_covered: params[:fee_covered],
       event: @event,
-      ip_address: request.ip,
+      ip_address: request.remote_ip,
       user_agent: request.user_agent,
       tax_deductible:,
       referrer: request.referrer,
@@ -97,7 +97,7 @@ class DonationsController < ApplicationController
       redirect_to root_url and return
     end
 
-    d_params[:ip_address] = request.ip
+    d_params[:ip_address] = request.remote_ip
     d_params[:user_agent] = request.user_agent
 
     tax_deductible = d_params[:goods].nil? ? true : d_params[:goods] == "0"

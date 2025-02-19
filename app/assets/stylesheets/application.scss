@@ -12,7 +12,8 @@ $font-family:
   Ubuntu,
   'Helvetica Neue',
   sans-serif;
-$mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+$mono:
+  ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
 
 :root {
   @each $name, $value in $palette {

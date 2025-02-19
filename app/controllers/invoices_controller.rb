@@ -134,7 +134,7 @@ class InvoicesController < ApplicationController
 
     redirect_to @invoice
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor)

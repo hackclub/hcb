@@ -810,6 +810,36 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.index ["fulfilled_by_id"], name: "index_emburse_transfers_on_fulfilled_by_id"
   end
 
+  create_table "employee_payments", force: :cascade do |t|
+    t.bigint "employee_id", null: false
+    t.text "title", null: false
+    t.text "description"
+    t.integer "amount_cents", default: 0, null: false
+    t.string "aasm_state"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "review_message"
+    t.bigint "reviewed_by_id"
+    t.bigint "payout_id"
+    t.string "payout_type"
+    t.index ["employee_id"], name: "index_employee_payments_on_employee_id"
+    t.index ["reviewed_by_id"], name: "index_employee_payments_on_reviewed_by_id"
+  end
+
+  create_table "employees", force: :cascade do |t|
+    t.bigint "entity_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "event_id", null: false
+    t.string "aasm_state"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.string "gusto_id"
+    t.index ["event_id"], name: "index_employees_on_event_id"
+  end
+
   create_table "event_configurations", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.boolean "anonymous_donations", default: false
@@ -2124,6 +2154,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 
+  create_table "w9s", force: :cascade do |t|
+    t.bigint "entity_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "uploaded_by_id"
+    t.string "url", null: false
+    t.datetime "signed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["uploaded_by_id"], name: "index_w9s_on_uploaded_by_id"
+  end
+
   create_table "webauthn_credentials", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name"
@@ -2224,6 +2265,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
   add_foreign_key "emburse_transfers", "events"
   add_foreign_key "emburse_transfers", "users", column: "creator_id"
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
+  add_foreign_key "employee_payments", "employees"
+  add_foreign_key "employees", "events"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
@@ -2305,6 +2348,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
   add_foreign_key "user_seen_at_histories", "users"
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
+  add_foreign_key "w9s", "users", column: "uploaded_by_id"
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
   add_foreign_key "wires", "users"

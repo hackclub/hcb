@@ -105,7 +105,7 @@ class AchTransfersController < ApplicationController
   rescue Faraday::BadRequestError
     return render json: { valid: false, hint: "Bank not found for this routing number." }
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
     render json: { valid: true }
   end
 

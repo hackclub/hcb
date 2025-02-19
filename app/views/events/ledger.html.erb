@@ -1,0 +1,41 @@
+<%= turbo_frame_tag [dom_id(@event), :ledger] do %>
+  <%= render partial: "filter" %>
+
+  <% if @pending_transactions.any? || @transactions.any? || show_mock_data? %>
+    <div class="table-container" data-tour-step="transactions">
+      <table>
+        <thead>
+        <tr>
+          <th><%# icon %></th>
+          <th>Date</th>
+          <th>Description</th>
+          <th class="right-align">Amount</th>
+          <% if @show_running_balance %>
+            <th>Running Balance</th>
+          <% end %>
+          <th><%# user avatar %></th>
+        </tr>
+        </thead>
+        <tbody data-behavior="transactions">
+        <%= render "pending_fee_transaction" if @event.fronted_fee_balance_v2_cents > 0 %>
+
+        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0, show_author_column: true } %>
+
+        <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0, show_author_column: true } %>
+        </tbody>
+      </table>
+    </div>
+    <%= paginate @transactions %>
+  <% else %>
+    <%= blankslate "No transactions yet" %>
+  <% end %>
+
+  <%#
+    We are unable to use turbo frame's action='advance' to update the url and
+    browser history since it's attempt to set the URL to this frame's. So, i'm
+    manually doing it here.
+  %>
+  <script>
+    window.history.pushState(null, '', <%= event_transactions_url(@event, **params.to_unsafe_h).to_json.html_safe %>);
+  </script>
+<% end %>

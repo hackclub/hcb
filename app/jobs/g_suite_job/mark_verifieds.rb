@@ -9,7 +9,7 @@ module GSuiteJob
           begin
             ::GSuiteService::MarkVerified.new(g_suite_id:).run
           rescue => e
-            Airbrake.notify(e)
+            Rails.error.report(e)
           end
         end
       end

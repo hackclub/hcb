@@ -1,0 +1,80 @@
+<% title "Your payroll" %>
+<% page_md %>
+<%= render "users/nav", selected: :payroll %>
+
+<h1 class="heading">
+  <span>
+    Payroll
+  </span>
+
+  <% if @payout_method.present? %>
+    <%= link_to settings_payouts_path, class: "btn bg-muted" do %>
+      <%= inline_icon @payout_method.icon %>
+      Payout settings
+    <% end %>
+  <% else %>
+    <%= link_to settings_payouts_path, class: "btn bg-warning" do %>
+      <%= inline_icon "payment-docs" %>
+      Configure payouts
+    <% end %>
+  <% end %>
+
+  <% if @jobs.onboarded.any? %>
+    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" } do %>
+      <%= inline_icon "plus" %>
+      Submit invoice
+    <% end %>
+  <% end %>
+</h1>
+
+<% if @jobs.onboarding.any? %>
+  <%= render "callout", type: "info", title: "Congrats on the new #{@jobs.onboarding.size > 1 ? "jobs" : "job with #{@jobs.onboarding.first.event.name}"}!" do %>
+    <div>
+      To complete your onboarding process, you'll need to fill out a W-9 or W-8 BEN form, depending on your residency status. Please reach out to <%= mail_to "hr@hackclub.com" %>
+      to begin this process.
+    </div>
+  <% end %>
+<% end %>
+
+<%= render "employees/payments", payments: current_user.job_payments, show_stats: true %>
+
+<section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
+  <%= form_with(model: Employee::Payment, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }, data: { turbo: false }) do |form| %>
+    <%= modal_header "Get paid through HCB" %>
+    <%= form.label :employee_id, "Organization", class: "mt1 bold" %>
+    <%= form.select(:employee_id, @jobs.onboarded.map{ |c| [c.event.name, c.id] }) %>
+    <%= form.label :title, "Title", class: "mt1 bold" %>
+    <%= form.text_field :title, placeholder: "Hours for May 2024", required: true %>
+    <%= form.label :value, "Amount", class: "mt1 bold" %>
+    <div class="flex items-center">
+      <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
+      <div class="ml1">
+        <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+      </div>
+    </div>
+    <%= form.label :file, "Attach an invoice", class: "mt1 semibold" %>
+    <div class="field field--fileupload mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add an invoice.">
+      <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
+            action: "
+          dragover@window->file-drop#dragover
+          drop@window->file-drop#drop
+          dragenter@window->file-drop#dragenter
+          dragleave@window->file-drop#dragleave
+        "
+          } %>
+      <%= form.file_field :file,
+          multiple: true,
+          include_hidden: false,
+          required: true,
+          accept: "image/*,image/heic,.pdf",
+          style: "margin: 8px 0px",
+          class: "field--fileupload__field",
+          data: {
+            "file-drop-target" => "fileInput"
+          } %>
+    </div>
+    <div class="inline-block">
+      <%= form.submit "Request payment", class: "mt2" %>
+    </div>
+  <% end %>
+</section>

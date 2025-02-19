@@ -51,6 +51,7 @@ class IncreaseCheck < ApplicationRecord
   has_paper_trail
 
   include AASM
+  include Payoutable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -63,6 +64,7 @@ class IncreaseCheck < ApplicationRecord
 
   has_one :canonical_pending_transaction
   has_one :grant, required: false
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
 
   after_create do
@@ -91,6 +93,7 @@ class IncreaseCheck < ApplicationRecord
 
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
+        employee_payment.mark_admin_approved! if employee_payment.present?
       end
     end
 
@@ -98,6 +101,7 @@ class IncreaseCheck < ApplicationRecord
       after do
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
       transitions from: :pending, to: :rejected
     end

@@ -21,7 +21,7 @@ module Column
         handle_outgoing_check_update
       end
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
     ensure
       head :ok
     end

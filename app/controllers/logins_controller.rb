@@ -67,7 +67,7 @@ class LoginsController < ApplicationController
   def login_code
     initialize_sms_params
 
-    resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.ip, user_agent: request.user_agent).run
+    resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     @use_sms_auth = resp[:method] == :sms
 

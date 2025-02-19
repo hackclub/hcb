@@ -1,0 +1,30 @@
+<p>
+  Hey <%= @employee.user.name %>,
+</p>
+
+<p>
+  This email is to inform you that the <%= @employee.event.name %> team has
+  decided to reject your payment "<em><%= @payment.title %></em>".
+</p>
+
+<% if @payment.review_message.present? %>
+  <p>
+    They included this message:
+  </p>
+
+  <blockquote>
+    <%== MarkdownService.instance.renderer.render @payment.review_message %>
+  </blockquote>
+<% end %>
+
+<p>
+  If you have any questions, please contact <%= @employee.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @employee.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

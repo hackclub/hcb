@@ -15,7 +15,7 @@ module DonationService
         begin
           donation.mark_deposited!
         rescue => e
-          Airbrake.notify(e)
+          Rails.error.report(e)
         end
       end
     end

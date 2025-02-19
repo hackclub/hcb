@@ -19,7 +19,7 @@
   </p>
   <%= form_tag complete_login_path(@login) do %>
     <div class="card px-6 sm:px-4 py-6 mb-4 shadow-sm border" style="max-width: 450px;" data-controller="login-code">
-      <div class="block sm:hidden md:block">
+      <div class="block">
         <%= label_tag :login_code_1, "Enter your login code", class: "left-align mb-2" %>
         <div class="flex font-mono transition-none items-center" data-login-code-target="wrapper">
           <% 6.times do |i| %>

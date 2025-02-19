@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll] # do not force pundit
 
   def activities
     @before = params[:before] || Time.now
@@ -97,6 +97,11 @@ class MyController < ApplicationController
     @review_requested_reimbursements_count = current_user.assigned_reimbursement_reports.submitted.count
 
     render :reimbursements_icon, layout: false
+  end
+
+  def payroll
+    @jobs = current_user.jobs
+    @payout_method = current_user.payout_method
   end
 
 end

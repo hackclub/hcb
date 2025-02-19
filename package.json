@@ -36,13 +36,13 @@
     "cssnano": "^7.0.6",
     "fuzzysort": "^3.1.0",
     "gsap": "^3.12.7",
-    "html-to-image": "^1.11.11",
+    "html-to-image": "^1.11.12",
     "intl": "^1.2.5",
     "js-confetti": "^0.12.0",
     "kbar": "^0.1.0-beta.45",
     "local-time": "^3.0.2",
     "lodash": "^4.17.21",
-    "postcss": "^8.5.1",
+    "postcss": "^8.5.2",
     "postcss-cli": "^11.0.0",
     "postcss-scss": "^4.0.9",
     "prop-types": "^15.8.1",
@@ -65,7 +65,7 @@
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
-    "prettier": "^3.4.2"
+    "prettier": "^3.5.0"
   },
   "scripts": {
     "build": "webpack --config webpack.config.js",

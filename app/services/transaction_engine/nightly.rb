@@ -36,12 +36,10 @@ module TransactionEngine
 
     def import_raw_plaid_transactions!
       BankAccount.syncing_v2.pluck(:id).each do |bank_account_id|
-        begin
+        Rails.error.handle do
           puts "raw_plaid_transactions: #{bank_account_id}"
 
           ::TransactionEngine::RawPlaidTransactionService::Plaid::Import.new(bank_account_id:, start_date: @start_date).run
-        rescue => e
-          Airbrake.notify(e)
         end
       end
     end
@@ -116,10 +114,8 @@ module TransactionEngine
 
     def fix_plaid_mistakes!
       BankAccount.syncing_v2.pluck(:id).each do |bank_account_id|
-        begin
+        Rails.error.handle do
           ::TransactionEngine::FixMistakes::Plaid.new(bank_account_id:, start_date: @start_date.to_date.iso8601, end_date: nil).run
-        rescue => e
-          Airbrake.notify(e)
         end
       end
     end

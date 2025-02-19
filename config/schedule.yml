@@ -175,3 +175,7 @@ user_seen_at_history_snapshot_job:
 column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "Column::SweepJob"
+
+stripe_webhook_job:
+  cron: "0,5 * * * *" # run every 5 minutes
+  class: "StripeWebhookJob"

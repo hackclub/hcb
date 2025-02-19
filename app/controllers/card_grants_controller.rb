@@ -41,7 +41,7 @@ class CardGrantsController < ApplicationController
 
   rescue => e
     flash[:error] = "Something went wrong. #{e.message}"
-    notify_airbrake(e)
+    Rails.error.report(e)
   ensure
     redirect_to event_transfers_path(@event)
   end

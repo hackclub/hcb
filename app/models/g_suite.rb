@@ -96,7 +96,7 @@ class GSuite < ApplicationRecord
   def verified_on_google?
     @verified_on_google ||= ::Partners::Google::GSuite::Domain.new(domain:).run.verified
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
 
     false
   end

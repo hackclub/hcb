@@ -64,7 +64,8 @@
 .emburse-card {
   background-color: #54d;
   background-image: radial-gradient(ellipse at top right, #867ae7, transparent);
-  background-image: url('emburse-swoosh-plastic.svg'),
+  background-image:
+    url('emburse-swoosh-plastic.svg'),
     radial-gradient(ellipse at top right, #867ae7, transparent);
   &:before {
     content: '';
@@ -78,7 +79,8 @@
   }
 
   &.virtual {
-    background-image: url('emburse-swoosh-digital.svg'),
+    background-image:
+      url('emburse-swoosh-digital.svg'),
       radial-gradient(ellipse at top right, #867ae7, transparent);
     &:before {
       background: url('emburse-logo-digital.svg');
