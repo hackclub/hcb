@@ -352,7 +352,7 @@ class User < ApplicationRecord
   end
 
   def only_card_grant_user?
-    creation_method == "card_grant" && card_grants.count == 1
+    creation_method == "card_grant" && card_grants.count >= 1 && events.count == 0
   end
 
   private
