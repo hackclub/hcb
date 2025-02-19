@@ -25,6 +25,11 @@ class GSuiteMailer < ApplicationMailer
     mail subject: "[Action Required] Your Google Workspace for #{@g_suite.domain} is missing critical DNS records"
   end
 
+  def notify_of_pending_revocation
+    set_g_suite_revocation
+    mail subject: "[Action Required] Your Google Workspace access for #{@g_suite.domain} will be revoked on #{(@g_suite_revocation.created_at + 2.weeks).strftime("%B %d, %Y")}"
+  end
+
   def notify_operations_of_entering_created_state
     @g_suite = GSuite.find(params[:g_suite_id])
     attrs = {
@@ -38,6 +43,10 @@ class GSuiteMailer < ApplicationMailer
 
   def set_g_suite
     @g_suite = GSuite.find(params[:g_suite_id])
+  end
+
+  def set_g_suite_revocation
+    @g_suite_revocation = GSuiteRevocation.find(params[:g_suite_revocation_id])
   end
 
   def organization_managers

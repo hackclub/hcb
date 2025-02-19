@@ -10,6 +10,7 @@
 #  dkim_key             :text
 #  domain               :citext
 #  remote_org_unit_path :text
+#  revocation_immunity  :boolean
 #  verification_key     :text
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
@@ -42,7 +43,8 @@ class GSuite < ApplicationRecord
 
   belongs_to :event
   belongs_to :created_by, class_name: "User", optional: true
-  has_many :accounts, class_name: "GSuiteAccount"
+  has_many :accounts, class_name: "GSuiteAccount", dependent: :destroy
+  has_one :revocation, class_name: "GSuiteRevocation", dependent: :destroy
 
   aasm do
     state :creating, initial: true

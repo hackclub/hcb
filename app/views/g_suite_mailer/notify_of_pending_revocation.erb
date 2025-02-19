@@ -1,0 +1,19 @@
+<p>Hi there,</p>
+
+<p>
+  Your Google Workspace access for <strong><%= @g_suite.domain %></strong> will be revoked on <%= (@g_suite_revocation.created_at + 2.weeks).strftime("%B %d, %Y") %> because <%= @g_suite_revocation.invalid_dns ? "you are missing required DNS records" : @g_suite_revocation.no_account_activity ? "all accounts on your domain have been inactive for the past six months" : @g_suite_revocation.other && @g_suite_revocation.other_reason.present? ? @g_suite_revocation.other_reason : "of an unknown reason" %>.
+</p>
+
+<p>
+  <% if @g_suite_revocation.invalid_dns %>
+    Follow the steps <%= link_to "here on your Google Workspace page", event_g_suite_overview_url(event_id: @g_suite.event.slug) %> to configure your DNS for Google Workspace. Once your domain is verified, you'll get an email that confirms the revocation has been cancelled.
+  <% elsif @g_suite_revocation.no_account_activity %>
+    If you would like to keep your Google Workspace access, please have at least one account on your domain log in to Google Workspace before <%= (@g_suite_revocation.created_at + 2.weeks).strftime("%B %d, %Y") %>. You'll get an email that confirms the revocation has been cancelled a day or two after we detect a login.
+  <% end %>
+  Please don't hesitate to message us with any questions.
+</p>
+
+<p>
+  Best,<br>
+  The HCB Team
+</p>
