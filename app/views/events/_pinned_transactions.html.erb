@@ -12,7 +12,7 @@
       <% end %>
 
       <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
-        <%= form_with url: pin_hcb_code_path(pin.hcb_code), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
+        <%= form_with url: pin_hcb_code_path(pin.hcb_code, event: @event), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
           <button type="submit" class="pinned__transaction__pin pointer pop tooltipped tooltipped--w" aria-label="Unpin" style="margin-left: auto" onclick="event.stopPropagation()">
             <%= inline_icon "pin-remove", size: 28 %>
           </button>
@@ -35,7 +35,7 @@
           <span class="m0 muted">
             <%= render_money pin.hcb_code.amount_cents_by_event(@event) %>
           </span>
-          <%= render "hcb_codes/icon", tx: pin.hcb_code.ct || pin.hcb_code.pt %>
+          <%= render "hcb_codes/icon", tx: pin.hcb_code.ct || pin.hcb_code.pt, tooltip_direction: "w" %>
         </footer>
       <% end %>
     <% end %>

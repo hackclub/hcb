@@ -241,7 +241,7 @@ class StripeCard < ApplicationRecord
   def stripe_obj
     @stripe_obj ||= ::Stripe::Issuing::Card.retrieve(id: stripe_id)
   rescue => e
-    OpenStruct.new({ number: "XXXX", cvc: "XXX", created: Time.now.utc.to_i, shipping: { status: "delivered", carrier: "USPS", eta: 2.weeks.ago, tracking_number: "12345678s9" } })
+    RecursiveOpenStruct.new({ number: "XXXX", cvc: "XXX", created: Time.now.utc.to_i, shipping: { status: "delivered", carrier: "USPS", eta: 2.weeks.ago, tracking_number: "12345678s9" } })
   end
 
   def secret_details
@@ -252,6 +252,14 @@ class StripeCard < ApplicationRecord
 
   def shipping_has_tracking?
     stripe_obj&.shipping&.tracking_number&.present?
+  end
+
+  def shipping_eta
+    return unless (stripe_eta = stripe_obj&.shipping&.eta)
+
+    # We've found Stripe's ETA for USPS standard is fairly inaccurate. So, I'm
+    # padding their estimate to set more realistic expectations for our users.
+    Time.at(stripe_eta) + 2.days
   end
 
   def self.new_from_stripe_id(params)
@@ -284,7 +292,7 @@ class StripeCard < ApplicationRecord
     end
 
     if stripe_obj[:shipping]
-      if (stripe_obj[:shipping][:status] == "returned" || stripe_obj[:shipping][:status] == "failure") && !lost_in_shipping?
+      if ["returned", "failure"].include?(stripe_obj[:shipping][:status]) && !lost_in_shipping?
         self.lost_in_shipping = true
         StripeCardMailer.with(card_id: self.id).lost_in_shipping.deliver_later
 

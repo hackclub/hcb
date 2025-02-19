@@ -98,14 +98,16 @@
     <% user_mention organizer_position.organizer_position_invite.sender %>
     <% if admin_signed_in? %>
       <% if Flipper.enabled?(:organizer_position_contracts_2025_01_03, organizer_position.event) %>
-        <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.organizer_position_invite.organizer_position_contract.present? ? organizer_position.organizer_position_invite.organizer_position_contract.signed? ? "Contract signee" : "Pending signature" : "No contract signature") %>">
+        <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.organizer_position_invite.organizer_position_contract.present? ? organizer_position.organizer_position_invite.organizer_position_contract.signed? ? "Contract signee" : "Pending signature, click to void this contract" : "No contract signature") %>">
           <div class="warning">
             <% if organizer_position.organizer_position_invite.organizer_position_contract&.signed? %>
               <%= link_to organizer_position.organizer_position_invite.organizer_position_contract.document || event_documents_path(event: organizer_position.event), class: "success", data: { turbo_frame: "_top" } do %>
                 <%= inline_icon("docs-positive", size: 24) %>
               <% end %>
             <% elsif organizer_position.organizer_position_invite.organizer_position_contract&.present? %>
-              <%= inline_icon("clock", size: 24) %>
+              <%= link_to void_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), class: "primary", method: :POST do %>
+                <%= inline_icon("clock", size: 24) %>
+              <% end %>
             <% else %>
               <%= link_to "#", class: "warning", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position.organizer_position_invite.id}" } do %>
                 <%= inline_icon("docs-negative", size: 24) %>

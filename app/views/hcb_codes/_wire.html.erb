@@ -55,6 +55,13 @@
         <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
       </p>
 
+      <% if @hcb_code.wire.return_reason.present? %>
+        <p>
+          <strong>Return reason</strong>
+          <%= @hcb_code.wire.return_reason %>
+        </p>
+      <% end %>
+
       <p>
         <strong>Amount (<%= @hcb_code.wire.currency %>)</strong>
         <%= Money.from_cents(@hcb_code.wire.amount_cents, @hcb_code.wire.currency).format %>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
+ActiveRecord::Schema[7.2].define(version: 2025_02_03_075719) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -696,6 +696,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
     t.boolean "tax_deductible", default: true, null: false
     t.boolean "in_person", default: false
     t.bigint "collected_by_id"
+    t.text "referrer"
+    t.text "utm_source"
+    t.text "utm_medium"
+    t.text "utm_campaign"
+    t.text "utm_term"
+    t.text "utm_content"
     t.index ["event_id"], name: "index_donations_on_event_id"
     t.index ["fee_reimbursement_id"], name: "index_donations_on_fee_reimbursement_id"
     t.index ["payout_id"], name: "index_donations_on_payout_id"
@@ -802,6 +808,36 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
     t.index ["emburse_card_id"], name: "index_emburse_transfers_on_emburse_card_id"
     t.index ["event_id"], name: "index_emburse_transfers_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_emburse_transfers_on_fulfilled_by_id"
+  end
+
+  create_table "employee_payments", force: :cascade do |t|
+    t.bigint "employee_id", null: false
+    t.text "title", null: false
+    t.text "description"
+    t.integer "amount_cents", default: 0, null: false
+    t.string "aasm_state"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "review_message"
+    t.bigint "reviewed_by_id"
+    t.bigint "payout_id"
+    t.string "payout_type"
+    t.index ["employee_id"], name: "index_employee_payments_on_employee_id"
+    t.index ["reviewed_by_id"], name: "index_employee_payments_on_reviewed_by_id"
+  end
+
+  create_table "employees", force: :cascade do |t|
+    t.bigint "entity_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "event_id", null: false
+    t.string "aasm_state"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.string "gusto_id"
+    t.index ["event_id"], name: "index_employees_on_event_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -1104,7 +1140,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
     t.string "recipient_name"
     t.string "increase_id"
     t.string "aasm_state"
-    t.string "increase_state"
     t.bigint "event_id", null: false
     t.bigint "user_id"
     t.datetime "created_at", null: false
@@ -1422,12 +1457,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
   create_table "payment_recipients", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "name"
-    t.text "account_number_ciphertext"
-    t.string "routing_number_ciphertext"
-    t.string "bank_name_ciphertext"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "email"
+    t.text "information_ciphertext"
+    t.string "payment_model"
     t.index ["event_id"], name: "index_payment_recipients_on_event_id"
     t.index ["name"], name: "index_payment_recipients_on_name"
   end
@@ -1494,6 +1528,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
     t.datetime "updated_at", null: false
     t.jsonb "increase_transaction"
     t.index ["increase_transaction_id"], name: "index_raw_increase_transactions_on_increase_transaction_id", unique: true
+  end
+
+  create_table "raw_intrafi_transactions", force: :cascade do |t|
+    t.string "memo", null: false
+    t.integer "amount_cents", null: false
+    t.date "date_posted", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "raw_pending_bank_fee_transactions", force: :cascade do |t|
@@ -2099,6 +2141,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 
+  create_table "w9s", force: :cascade do |t|
+    t.bigint "entity_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "uploaded_by_id"
+    t.string "url", null: false
+    t.datetime "signed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["uploaded_by_id"], name: "index_w9s_on_uploaded_by_id"
+  end
+
   create_table "webauthn_credentials", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name"
@@ -2136,6 +2189,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
     t.string "address_state"
     t.string "address_postal_code"
     t.text "column_id"
+    t.text "return_reason"
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
     t.index ["event_id"], name: "index_wires_on_event_id"
     t.index ["user_id"], name: "index_wires_on_user_id"
@@ -2198,6 +2252,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
   add_foreign_key "emburse_transfers", "events"
   add_foreign_key "emburse_transfers", "users", column: "creator_id"
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
+  add_foreign_key "employee_payments", "employees"
+  add_foreign_key "employees", "events"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
@@ -2278,6 +2334,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_01_09_070752) do
   add_foreign_key "user_seen_at_histories", "users"
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
+  add_foreign_key "w9s", "users", column: "uploaded_by_id"
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
   add_foreign_key "wires", "users"

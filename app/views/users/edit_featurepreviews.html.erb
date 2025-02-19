@@ -70,7 +70,7 @@
                 fully_shipped: true,
                 name: "Receipt Report",
                 description: "Opting into this preview will send you a weekly reminder with a list of all your missing receipts.",
-                footer: "Try #{link_to "triggering an email for yourself", trigger_receipt_report_path, method: :post}!"
+                footer: "Try #{link_to "triggering an email for yourself", trigger_receipt_report_path, method: :post, data: { turbo: false } }!"
               } %>
 
           <%= render partial: "features/preview", locals: {

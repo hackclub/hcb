@@ -42,6 +42,11 @@
       icon: "attachment",
       async_badge: my_reimbursements_icon_path,
       selected: local_assigns[:selected] == :reimbursements %>
+    <%= dock_item "Payroll",
+      my_payroll_path,
+      tooltip: "Get paid through HCB",
+      icon: "bag",
+      selected: local_assigns[:selected] == :payroll if current_user.jobs.any? %>
     <%= dock_item "Settings",
       my_settings_path,
       tooltip: "Edit account settings",

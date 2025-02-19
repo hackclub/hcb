@@ -103,6 +103,8 @@
     <small>(This requires you to communicate to the organizer about the reason why.)</small>
   <% end %>
 <% else %>
-  <p>This transfer has been <b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
-  <%= button_to "Reject as failed", reject_wire_path(@wire) %>
+  <p>This wire <%= @wire.failed? ? "" : "is " %><b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wire.failed? ? @wire.return_reason.present? ? " with the following failure reason: #{@wire.return_reason}" : " for an unknown reason" : "" %>.</p>
+  <% unless @wire.failed? %>
+    <%= button_to "Reject as failed", reject_wire_path(@wire) %>
+  <% end %>
 <% end %>

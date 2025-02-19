@@ -2,31 +2,31 @@
 
 class GrantPolicy < ApplicationPolicy
   def index?
-    record.is_public? || user&.admin? || record.users.include?(user)
+    false
   end
 
   def new?
-    admin_or_user
+    false
   end
 
   def create?
-    admin_or_user
+    false
   end
 
   def approve?
-    user&.admin?
+    false
   end
 
   def reject?
-    user&.admin?
+    false
   end
 
   def additional_info_needed?
-    user&.admin?
+    false
   end
 
   def mark_fulfilled?
-    user&.admin?
+    false
   end
 
   def show?
@@ -34,7 +34,7 @@ class GrantPolicy < ApplicationPolicy
   end
 
   def activate?
-    user&.admin? || user == record.recipient
+    false
   end
 
   private

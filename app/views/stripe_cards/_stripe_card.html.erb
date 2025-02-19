@@ -1,4 +1,4 @@
-<a class="text-decoration-none" <% if @show_card_popovers && !show_mock_data? %> data-behavior="modal_trigger" data-modal="card_popover_<%= stripe_card.id %>" <% end %> data-turbo-frame="_top" href="<%= !show_mock_data? ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>">
+<a class="text-decoration-none" <% if @show_card_popovers && !show_mock_data? %> data-behavior="modal_trigger" data-modal="card_popover_<%= stripe_card.id %>" <% end %> data-turbo-frame="_top" href="<%= !show_mock_data? && ((stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?)) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>">
 
   <%= creator_bar stripe_card, prefix: "issued ", show_title: true unless defined? headless %>
   <div

@@ -6,7 +6,7 @@ class EmburseTransactionPolicy < ApplicationPolicy
   end
 
   def show?
-    is_public || user&.admin? || record.event.users.include?(user)
+    user&.admin? || record.event.users.include?(user)
   end
 
   def edit?

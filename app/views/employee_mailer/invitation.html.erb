@@ -1,0 +1,16 @@
+<p>
+  Hi <%= @employee.user.name %>,
+</p>
+
+<p>
+  <%= @employee.event.name %> has invited you to get paid as a 1099 contractor through HCB.
+  To be paid, please visit your <%= link_to "payroll page", my_payroll_url %> on HCB.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @employee.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

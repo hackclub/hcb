@@ -63,7 +63,7 @@ module EventMappingEngine
       begin
         ::EventMappingEngine::Map::Checks.new.run
       rescue => e
-        Airbrake.notify(e)
+        Rails.error.report(e)
       end
     end
 
@@ -71,7 +71,7 @@ module EventMappingEngine
       begin
         ::EventMappingEngine::Map::ClearingChecks.new.run
       rescue => e
-        Airbrake.notify(e)
+        Rails.error.report(e)
       end
     end
 
@@ -81,7 +81,6 @@ module EventMappingEngine
         next unless check_deposit
 
         CanonicalEventMapping.create!(event: check_deposit.event, canonical_transaction: ct)
-        check_deposit.update!(status: :deposited)
       end
     end
 
@@ -129,6 +128,10 @@ module EventMappingEngine
       end
 
       CanonicalTransaction.unmapped.likely_column_interest.find_each(batch_size: 100) do |ct|
+        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+      end
+
+      CanonicalTransaction.unmapped.svb_sweep_interest.find_each(batch_size: 100) do |ct|
         CanonicalEventMapping.create!(canonical_transaction: ct, event_id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
       end
     end

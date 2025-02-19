@@ -39,17 +39,16 @@
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
-    background-image: linear-gradient(
+    background-image:
+      linear-gradient(
         rgba(255, 255, 255, 0.75) 0%,
         rgba(255, 255, 255, 0.95) 90%
       ),
       var(--bg-image);
 
     html[data-dark='true'] & {
-      background-image: linear-gradient(
-          rgba(37, 36, 41, 0.5) 0%,
-          rgba(37, 36, 41, 0.85) 75%
-        ),
+      background-image:
+        linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%),
         var(--bg-image);
     }
   }

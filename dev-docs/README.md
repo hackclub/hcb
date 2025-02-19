@@ -60,6 +60,8 @@ We collect fees on all revenue collected by organizations, typically 7%. This pr
 
 The transaction engine is the core of HCB's codebase. It's role is to map transactions that happen in on our underlying bank accounts to their associated organization. Almost every action a user takes on HCB will go through the transaction engine at some point.
 
+Our transaction engine is summarised in [@sampoder](https://github.com/sampoder)'s talk at the SF Bay Area Ruby Meetup: [How we built a bank w/ Ruby on Rails](https://www.youtube.com/watch?v=CBxilReUkJ0&t=3553s).
+
 #### [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)
 
 Canonical pending transactions are transactions we expect to take place but they haven't occurred yet in our underlying bank account. For example, we create a canonical pending transaction the moment you send an ACH transfer even though the transfer only gets sent via Column once a operations staff member has approved.

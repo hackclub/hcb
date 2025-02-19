@@ -44,7 +44,7 @@ class OrganizerPositionInvitesController < ApplicationController
     # If the user's not signed in, redirect them to login page
     unless signed_in?
       skip_authorization
-      return redirect_to auth_users_path(email: @invite.user.email, return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }
+      return redirect_to auth_users_path(return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }
     end
 
     authorize @invite
@@ -65,7 +65,7 @@ class OrganizerPositionInvitesController < ApplicationController
     if @invite.accept
       redirect_to @invite.event
     else
-      flash[:error] = "Failed to accept"
+      flash[:error] = @invite.pending_signature? ? "Invite requires contract to be signed" : "Failed to accept"
       redirect_to @invite
     end
   end

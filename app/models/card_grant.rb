@@ -39,6 +39,7 @@
 #
 class CardGrant < ApplicationRecord
   include Hashid::Rails
+  has_paper_trail
 
   include PublicIdentifiable
   set_public_id_prefix :cdg
@@ -61,7 +62,8 @@ class CardGrant < ApplicationRecord
   after_create :transfer_money
   after_create_commit :send_email
 
-  before_validation { self.email = email.presence&.downcase&.strip }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
   delegate :balance, to: :subledger
 
@@ -134,14 +136,24 @@ class CardGrant < ApplicationRecord
     end
   end
 
+  def topup_disbursements
+    Disbursement.where(destination_subledger_id: subledger.id).where.not(id: disbursement_id)
+  end
+
+  def visible_hcb_codes
+    ((stripe_card&.hcb_codes || []) + topup_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+  end
+
   def expire!
     hcb_user = User.find_by!(email: "bank@hackclub.com")
     cancel!(hcb_user, expired: true)
   end
 
-  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"))
+  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"), allow_topups: false)
     raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
-    raise ArgumentError, "card grant should have a positive balance" if balance.negative?
+    raise ArgumentError, "card grant should have a positive balance" unless balance.positive? || allow_topups
+
+    return topup!(amount_cents: balance.cents * -1, topped_up_by: requested_by) if balance.negative?
 
     disbursement = DisbursementService::Create.new(
       source_event_id: event_id,
@@ -206,6 +218,16 @@ class CardGrant < ApplicationRecord
 
   def expires_on
     created_at + expires_after.days
+  end
+
+  def last_user_change_to(...)
+    user_id = versions.where_object_changes_to(...).last&.whodunnit
+
+    user_id && User.find(user_id)
+  end
+
+  def last_time_change_to(...)
+    versions.where_object_changes_to(...).last&.created_at
   end
 
   private

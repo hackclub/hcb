@@ -11,7 +11,7 @@ Bundler.require(*Rails.groups)
 module Bank
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.0
+    config.load_defaults 7.1
 
     if ENV["USE_PROD_CREDENTIALS"]&.downcase == "true"
       config.credentials.content_path = Rails.root.join("config/credentials/production.yml.enc")
@@ -20,16 +20,16 @@ module Bank
     end
 
     config.action_mailer.default_url_options = {
-      host: Rails.application.credentials.default_url_host[:live]
+      host: Rails.application.credentials.dig(:default_url_host, :live)
     }
 
     # SMTP config
     config.action_mailer.smtp_settings = {
-      user_name: Rails.application.credentials.smtp[:username],
-      password: Rails.application.credentials.smtp[:password],
-      address: Rails.application.credentials.smtp[:address],
-      domain: Rails.application.credentials.smtp[:domain],
-      port: Rails.application.credentials.smtp[:port],
+      user_name: Rails.application.credentials.dig(:smtp, :username),
+      password: Rails.application.credentials.dig(:smtp, :password),
+      address: Rails.application.credentials.dig(:smtp, :address),
+      domain: Rails.application.credentials.dig(:smtp, :domain),
+      port: Rails.application.credentials.dig(:smtp, :port),
       authentication: :plain
     }
 
@@ -45,7 +45,7 @@ module Bank
 
     config.react.camelize_props = true
 
-    config.add_autoload_paths_to_load_path
+    config.active_support.cache_format_version = 7.1
 
     config.autoload_lib(ignore: %w(assets tasks))
     config.eager_load_paths << "#{config.root}/spec/mailers/previews"

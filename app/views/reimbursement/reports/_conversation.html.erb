@@ -1,5 +1,5 @@
 <h2 class="flex items-center">
-  <span style="flex-grow: 1">Conversation</span>
+  <span style="flex-grow: 1">Timeline</span>
 </h2>
 <article>
   <ul class="list-reset comments mb5">
@@ -11,6 +11,20 @@
           <%= render "comments/item", comment: item %>
         </div>
       <% else %>
+        <% reimbursed_change_text = capture do %>
+          <%= error_boundary fallback_text: "initiated a transfer" do %>
+            <% raw_text = render_money(@report.amount_cents) + " " + @report.transfer_text %>
+            <% payout_transfer_url = hcb_code_path(@report.payout_holding&.payout_transfer&.local_hcb_code) if @report.payout_holding&.payout_transfer&.local_hcb_code %>
+
+            <%= @report.initiated_transfer_text %> a
+            <% if payout_transfer_url && policy(@report.payout_holding&.payout_transfer&.local_hcb_code).show? %>
+              <%= link_to raw_text, payout_transfer_url, target: :_blank %>
+            <% else %>
+              <%= raw_text %>
+            <% end %>
+            to <%= @report.user.name %>
+          <% end %>
+        <% end %>
         <% changes = {
              "submitted"               => ["send", "info", "submitted this report"],
              "rejected"                => ["thumbsdown", "error", "rejected this report"],
@@ -18,7 +32,7 @@
              "reimbursement_approved"  => ["admin", "warning", "approved this report on behalf of the HCB team"],
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
              "draft_created"           => ["plus", "success", "created this draft report"],
-             "reimbursed"              => ["payment-transfer", "purple", "#{@report.initiated_transfer_text} a #{render_money @report.amount_cents} #{@report.transfer_text} to #{@report.user.name}"],
+             "reimbursed"              => ["payment-transfer", "purple", reimbursed_change_text],
              "reversed"                => ["sad", "warning", "cancelled this reimbursement"],
            } %>
         <% state_change = item.changeset["aasm_state"]&.second %>

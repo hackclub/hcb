@@ -171,10 +171,10 @@
               Reimburse <%= render_money report.amount_to_reimburse %>
             </div>
           </div>
-        <% elsif report.submitted? && policy(report).approve_all_expenses? %>
+        <% elsif report.submitted? && policy(report).approve_all_expenses? && report.expenses.approved.none? %>
           <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", method: :post do %>
             <%= inline_icon "thumbsup" %>
-            Approve All Expenses
+            Approve all expenses
           <% end %>
         <% elsif report.reimbursement_requested? && !admin_signed_in? %>
           <div class="btn bg-info disabled" style="opacity: 0.75" disabled>

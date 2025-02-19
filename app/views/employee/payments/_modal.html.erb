@@ -1,0 +1,116 @@
+<% file_path = Rails.application.routes.url_helpers.rails_blob_path(payment.invoice.file, only_path: true) %>
+
+<% actions = capture do %>
+  <h3 class="mb1 mt1">
+    <%= payment.title %>
+  </h3>
+  <section class="details break-words">
+    <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
+      <strong style="font-weight: 600;">Creator</strong>
+      <%= user_mention payment.employee.user %>
+    </div>
+
+    <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
+      <strong style="font-weight: 600;">Status</strong>
+      <%= payment.aasm_state.humanize %>
+    </div>
+
+    <% if payment.reviewed_by %>
+      <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
+        <strong style="font-weight: 600;">Reviewed by</strong>
+        <%= user_mention payment.reviewed_by %>
+      </div>
+    <% end %>
+
+    <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
+      <strong style="font-weight: 600;">Payout</strong>
+      <span>
+        <%= link_to payment.payout_method_name, payment.payout.local_hcb_code, target: "blank" if payment.payout && policy(payment.payout.local_hcb_code).show? %>
+        <%= payment.payout_method_name if payment.payout && !policy(payment.payout.local_hcb_code).show? %>
+        <span class="muted">
+          <%= unless payment.payout
+                payment.admin_approved? || payment.organizer_approved? ? "Pending" : "None"
+              end %>
+        </span>
+      </span>
+    </div>
+
+    <div style="grid-template-columns: 7rem auto;">
+      <strong style="font-weight: 600;">Submitted</strong>
+      <%= relative_timestamp payment.created_at %>
+    </div>
+
+    <div style="grid-template-columns: 7rem auto;">
+      <strong style="font-weight: 600;">Amount</strong>
+      <%= render_money payment.amount %>
+    </div>
+  </section>
+  <% if payment.review_message.present? %>
+    <div class="mt2">
+      <strong style="font-weight: 600;">
+        Message from <%= payment.reviewed_by.name %>
+      </strong>
+      <%== MarkdownService.instance.renderer.render payment.review_message %>
+    </div>
+  <% end %>
+  <div class="flex-grow"></div>
+  <% if payment.submitted? && policy(payment).review? %>
+    <%= form_with(url: employee_payment_review_path(payment), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
+      <h4 class="mb1">Review payment</h4>
+      <span class="muted block h5 mb1">And optionally include a note.</span>
+      <%= form.text_area :review_message, placeholder: "Keep up the good work!", required: false, class: "mb1 mt1 h-36" %>
+      <button class="btn bg-success w-100" name="approved" value="true">
+        Approve payment
+      </button>
+      <button class="btn bg-error w-100 mt1" name="rejected" value="true">
+        Reject payment
+      </button>
+    <% end %>
+  <% end %>
+<% end %>
+
+<section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= "employee_payment_#{payment.id}" %>" style="z-index: 300;">
+  <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%);">
+    <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
+  </a>
+
+  <div class="w-100 h-100 overflow-hidden hidden md:flex flex-col md:flex-row md:min-h min-h-min">
+    <% if payment.invoice.file.blob.content_type == "application/pdf" %>
+      <iframe src="<%= file_path %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; overflow: hidden; max-height: 85vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
+    <% else %>
+      <div style="min-width: 0px; flex-grow: 1; border-radius: 0.75rem 0rem 0rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless">
+        <%= image_tag payment.invoice.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
+      </div>
+    <% end %>
+
+    <div style="padding: 1.5rem; border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+      <%= actions %>
+    </div>
+  </div>
+  <div class="w-100 h-100 overflow-hidden flex md:hidden flex-col md:flex-row md:min-h min-h-min" data-controller="receipt-tabs">
+    <ul class="tab-container m-0 mt-2">
+      <li class="active cursor-pointer ml-3" data-controller="scroll-into-view">
+        <a data-receipt-tabs-target="previewLabel" data-action="click->receipt-tabs#selectPreview">Invoice</a>
+      </li>
+      <li class="cursor-pointer" data-controller="scroll-into-view">
+        <a data-receipt-tabs-target="detailsLabel" data-action="click->receipt-tabs#selectDetails">Actions</a>
+      </li>
+      <div class="flex-grow">
+        <a href="#close_modal" tabindex="0" class="pop modal__close muted" rel="modal:close" style="background: #11111199; margin: 0px; margin-right: 6px;">
+          <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
+        </a>
+      </div>
+    </ul>
+    <% if payment.invoice.file.blob.content_type == "application/pdf" %>
+      <iframe data-receipt-tabs-target="preview" src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
+    <% else %>
+      <div data-receipt-tabs-target="preview" style="min-width: 0px; flex-grow: 1; border-radius: 0rem 0rem 0.75rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless receipt-content-preview">
+        <%= image_tag payment.invoice.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
+      </div>
+    <% end %>
+
+    <div data-receipt-tabs-target="details" style="padding: 1.5rem; border-radius: 0rem 0rem 0.75rem 0.75rem; display: none; height: 100vh; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+      <%= actions %>
+    </div>
+  </div>
+</section>

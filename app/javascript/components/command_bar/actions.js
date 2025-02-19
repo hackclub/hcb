@@ -287,14 +287,6 @@ export const adminActions = adminUrls => [
     perform: () => (window.location.href = adminUrls['Feedback']),
   },
   {
-    id: 'admin_tool_13',
-    section: 'Admin Tools',
-    priority: Priority.HIGH,
-    name: 'FIRST Grants',
-    icon: <Icon glyph="sam" size={16} />,
-    perform: () => (window.location.href = adminUrls['FIRST Grants']),
-  },
-  {
     id: 'admin_tool_14',
     section: 'Admin Tools',
     priority: Priority.HIGH,
@@ -373,14 +365,6 @@ export const adminActions = adminUrls => [
     name: 'Hackathons',
     icon: <Icon glyph="event-code" size={16} />,
     perform: () => (window.location.href = adminUrls['Hackathons']),
-  },
-  {
-    id: 'admin_tool_24',
-    section: 'Admin Tools',
-    priority: Priority.HIGH,
-    name: 'Sendy',
-    icon: <Icon glyph="email-fill" size={16} />,
-    perform: () => (window.location.href = adminUrls['Sendy']),
   },
   {
     id: 'admin_tool_25',

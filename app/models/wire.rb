@@ -24,6 +24,7 @@
 #  recipient_email           :string           not null
 #  recipient_information     :jsonb
 #  recipient_name            :string           not null
+#  return_reason             :text
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -261,8 +262,8 @@ class Wire < ApplicationRecord
   end
 
   validate on: :create do
-    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimumn_wire_amount_cents)
-      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimumn_wire_amount_cents} (USD).")
+    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimum_wire_amount_cents)
+      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
     end
   end
 
@@ -291,9 +292,10 @@ class Wire < ApplicationRecord
 
     event :mark_failed do
       transitions from: [:deposited, :approved], to: :failed
-      after do |reason: nil|
+      after do |reason = nil|
         WireMailer.with(wire: self, reason:).notify_failed.deliver_later
         create_activity(key: "wire.failed", owner: nil)
+        update(return_reason: reason)
       end
     end
   end
@@ -301,6 +303,7 @@ class Wire < ApplicationRecord
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
 
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
 

@@ -11,12 +11,17 @@ class EventPolicy < ApplicationPolicy
   end
 
   # Turbo frames for the event homepage (show)
+  alias_method :team_stats?, :show?
+  alias_method :recent_activity?, :show?
+  alias_method :money_movement?, :show?
+  alias_method :balance_transactions?, :show?
   alias_method :merchants_categories?, :show?
   alias_method :top_categories?, :show?
   alias_method :tags_users?, :show?
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
+  alias_method :ledger?, :transactions?
 
   def toggle_hidden?
     user&.admin?
@@ -42,6 +47,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def edit?
+    admin_or_user?
+  end
+
+  # pinning a transaction to an event
+  def pin?
     admin_or_user?
   end
 
@@ -133,6 +143,10 @@ class EventPolicy < ApplicationPolicy
 
   def reimbursements?
     admin_or_user? && record.plan.reimbursements_enabled?
+  end
+
+  def employees?
+    admin_or_user?
   end
 
   def donation_overview?

@@ -9,7 +9,7 @@
   <% if organizer_signed_in? %>
     <div class="flex items-center m2 absolute z-10 top-0 left-0">
       <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
-        <%= form.file_field :donation_header_image, required: true, class: "display-none", data: { action: "change->form#submit" } %>
+        <%= form.file_field :donation_header_image, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :donation_header_image do %>
           <div
             role="button"
@@ -53,6 +53,10 @@
         }
     </style>
   <% end %>
+<% end %>
+
+<% if Rails.env.production? %>
+  <%= render "application/fullstory" unless current_user && current_user.sessions_reported == false %>
 <% end %>
 
 <%= render "application/flash" %>

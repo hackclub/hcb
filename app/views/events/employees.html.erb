@@ -1,0 +1,103 @@
+<% title "Payroll for #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :payroll %>
+
+<h1 class="heading flex">
+  <span class="flex-grow">Payroll</span>
+  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+    <%= inline_icon "plus" %>
+    Invite an employee
+  <% end %>
+</h1>
+
+<% unless @event.employee_payments.submitted.blank? %>
+  <h2 class="w-full text-left mt-8 pb-0 border-none">Pending Review</h2>
+  <article class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>From</th>
+          <th>Title</th>
+          <th>Amount</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @event.employee_payments.submitted.order(created_at: :desc).each do |payment| %>
+          <tr>
+            <td>
+              <%= user_mention payment.employee.user %>
+            </td>
+            <td>
+              <%= payment.title %>
+            </td>
+            <td>
+              <%= render_money payment.amount_cents %>
+            </td>
+            <td>
+              <%= format_date payment.created_at %>
+            </td>
+            <td>
+              <%= link_to "Process", "#", data: { behavior: "modal_trigger", modal: "employee_payment_#{payment.id}" } %>
+              <%= render "employee/payments/modal", payment: %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% end %>
+
+<h2 class="w-full text-left mt-8 pb-0 border-none">Employees</h2>
+
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
+  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <div class="filterbar flex flex-wrap items-center width-100">
+      <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
+    </div>
+  <% end %>
+  <div style="text-align: center;">
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["terminated", "pending"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Onboarding", "?filter=onboarding", class: "filterbar__item", "aria-selected": params[:filter] == "onboarding", role: "tab" %>
+    <%= link_to "Terminated", "?filter=terminated", class: "filterbar__item", "aria-selected": params[:filter] == "terminated", role: "tab" %>
+  </div>
+</div>
+
+<% if @employees.blank? %>
+  <%= blankslate "No employees created." %>
+<% else %>
+  <div class="grid grid-cols-1 lg:grid-cols-2">
+    <% @employees.each do |employee| %>
+      <%= link_to employee_path(employee), class: "card card--hover" do %>
+        <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
+          <strong class="h4 flex-grow"><%= employee.user.name %></strong>
+          <span class="block"><%= employee.aasm_state.humanize %></span>
+        </div>
+        <span class="block flex">
+          <span class="flex-grow"><%= employee.user.email %></span>
+          <% unless employee.onboarding? %>
+            <strong><%= render_money employee.payments.admin_approved.or(employee.payments.organizer_approved).or(employee.payments.paid).sum(:amount_cents) %> earned</strong>
+          <% end %>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<section data-behavior="modal" role="dialog" id="invite" class="modal modal--scroll bg-snow">
+  <%= form_with(model: Employee, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
+    <%= modal_header "Invite an employee" %>
+    <div class="card border b--info mt2 mb2 container--sm mx-auto">
+      <p class="mt0 mb0">
+        After being onboarded, this employee will be able to submit invoices to
+        you for approval and payment. HCB will handle yearly tax filings.
+      </p>
+    </div>
+    <%= form.text_field :email, class: "mt1", placeholder: "Enter this employee's email", required: true %>
+    <%= form.hidden_field :event_id, value: @event.id %>
+    <div class="inline-block">
+      <%= form.submit "Send invitation", class: "mt2", disabled: @event&.demo_mode? %>
+    </div>
+  <% end %>
+</section>

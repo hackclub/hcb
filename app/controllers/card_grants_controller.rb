@@ -41,7 +41,7 @@ class CardGrantsController < ApplicationController
 
   rescue => e
     flash[:error] = "Something went wrong. #{e.message}"
-    notify_airbrake(e)
+    Rails.error.report(e)
   ensure
     redirect_to event_transfers_path(@event)
   end
@@ -57,7 +57,7 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.hcb_codes
+    @hcb_codes = @card_grant.visible_hcb_codes
 
     @frame = params[:frame].present?
     @force_no_popover = @frame
@@ -65,7 +65,7 @@ class CardGrantsController < ApplicationController
     render :show, layout: !@frame
 
   rescue Pundit::NotAuthorizedError
-    redirect_to auth_users_path(email: @card_grant.user.email, return_to: card_grant_path(@card_grant)), flash: { info: "Please sign in with the same email you received the invitation at." }
+    redirect_to auth_users_path(return_to: card_grant_path(@card_grant)), flash: { info: "Please sign in with the same email you received the invitation at." }
   end
 
   def spending
@@ -92,6 +92,8 @@ class CardGrantsController < ApplicationController
     @card_grant.create_stripe_card(current_session)
 
     redirect_to @card_grant
+  rescue Stripe::InvalidRequestError => e
+    redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
   end
 
   def cancel

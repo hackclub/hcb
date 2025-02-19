@@ -134,7 +134,7 @@ class ReceiptsController < ApplicationController
 
     streams += generate_streams
 
-    unless @receiptable && (params[:upload_method] == :receipts_page || params[:upload_method] == "receipts_page_drag_and_drop")
+    unless @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
       receipt_upload_form_config = {
         upload_method: params[:upload_method].sub("_drag_and_drop", ""),
         restricted_dropzone: params[:upload_method] != :transaction_page,
@@ -166,7 +166,7 @@ class ReceiptsController < ApplicationController
     end
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."

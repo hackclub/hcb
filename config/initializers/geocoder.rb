@@ -5,7 +5,7 @@ Geocoder.configure(
 
   ip_lookup: :ipinfo_io,
   ipinfo_io: {
-    api_key: Rails.application.credentials.ipinfo_io[:api_key],
+    api_key: Rails.application.credentials.dig(:ipinfo_io, :api_key),
   },
 
   cache: Redis.new(url: Rails.env.production? ? ENV["REDIS_CACHE_URL"] : ENV["REDIS_URL"], ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE }),

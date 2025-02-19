@@ -61,6 +61,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   pg_search_scope :pg_text_search, lambda { |query, options_hash| { query: }.merge(options_hash) }
 
   belongs_to :raw_pending_stripe_transaction, optional: true
+  validates_uniqueness_of :raw_pending_stripe_transaction_id, allow_nil: true
+
   belongs_to :raw_pending_outgoing_check_transaction, optional: true
   belongs_to :raw_pending_outgoing_ach_transaction, optional: true
   belongs_to :raw_pending_donation_transaction, optional: true

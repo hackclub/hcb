@@ -28,7 +28,7 @@
         <%= inline_icon "list", size: 28, color: "#ff8c37" %>
       <% end %>
     <% end %>
-    <% if @report.initial_draft? %>
+    <% if @report.draft? %>
       <%= pop_icon_to "delete",
                       reimbursement_report_path(@report),
                       method: :delete,

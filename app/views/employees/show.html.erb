@@ -1,0 +1,20 @@
+<% title "#{@employee.user.name}'s payroll at #{@employee.event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :payroll %>
+
+<h1 class="heading flex">
+  <span class="flex-grow"><%= @employee.user.name %>'s payroll</span>
+  <% if policy(@employee).destroy? %>
+    <%= link_to @employee, class: "btn bg-error", method: :DELETE do %>
+      <%= inline_icon "delete" %>
+      Delete
+    <% end %>
+  <% elsif policy(@employee).terminate? %>
+    <%= link_to @employee, class: "btn bg-error", method: :DELETE do %>
+      <%= inline_icon "member-remove" %>
+      Terminate
+    <% end %>
+  <% end %>
+</h1>
+
+<%= render "employees/payments", payments: @employee.payments, show_stats: true %>

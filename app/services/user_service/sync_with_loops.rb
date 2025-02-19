@@ -14,8 +14,8 @@ module UserService
 
       body = {
         email: @user.email,
-        firstName: @user.first_name(legal: true),
-        lastName: @user.last_name(legal: true),
+        firstName: @user.first_name,
+        lastName: @user.last_name,
         hcbSignedUpAt: format_unix(@user.created_at),
         birthday: format_unix(@user.birthday),
         hcbLastSeenAt: format_unix(@user.last_seen_at),

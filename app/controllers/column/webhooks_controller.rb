@@ -13,11 +13,15 @@ module Column
         handle_ach_incoming_transfer_scheduled
       elsif type == "ach.outgoing_transfer.returned"
         handle_ach_outgoing_transfer_returned
+      elsif type == "check.outgoing_debit.deposited"
+        handle_check_deposit_deposited
+      elsif type == "check.outgoing_debit.returned"
+        handle_check_deposit_returned
       elsif type.start_with?("check.incoming_debit")
         handle_outgoing_check_update
       end
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
     ensure
       head :ok
     end
@@ -45,7 +49,7 @@ module Column
     end
 
     def handle_swift_outgoing_transfer_returned
-      Wire.find_by(column_id: @object[:id])&.mark_failed!(reason: @object[:return_details].pick(:description)&.gsub(/\(trace #: \d+\)\Z/, "")&.strip)
+      Wire.find_by(column_id: @object[:id])&.mark_failed!(@object[:return_details].pick(:description)&.gsub(/\(trace #: \d+\)\Z/, "")&.strip)
     end
 
     def handle_outgoing_check_update
@@ -57,6 +61,18 @@ module Column
         column_status: @object[:status],
         column_delivery_status: @object[:delivery_status],
       )
+    end
+
+    def handle_check_deposit_deposited
+      check_deposit = CheckDeposit.find_by(column_id: @object[:id])
+
+      check_deposit&.update!(status: :deposited)
+    end
+
+    def handle_check_deposit_returned
+      check_deposit = CheckDeposit.find_by(column_id: @object[:id])
+
+      check_deposit&.update!(status: :returned)
     end
 
     def verify_signature

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll] # do not force pundit
 
   def activities
     @before = params[:before] || Time.now
@@ -23,6 +23,9 @@ class MyController < ApplicationController
       Arel.sql("stripe_status = 'inactive' DESC")
     )
     @emburse_cards = current_user.emburse_cards.includes(:event)
+
+    @active_stripe_cards = @stripe_cards.where.not(stripe_status: "canceled")
+    @canceled_stripe_cards = @stripe_cards.where(stripe_status: "canceled")
   end
 
   def tasks
@@ -47,12 +50,12 @@ class MyController < ApplicationController
     count = current_user.transactions_missing_receipt.count
 
     emojis = {
-      "🤡": 300,
-      "💀": 200,
-      "😱": 100,
+      "🤡 ": 300,
+      "💀 ": 200,
+      "😱 ": 100,
     }
 
-    @missing_receipt_count = emojis.find { |emoji, value| count >= value }&.first || count
+    @missing_receipt_count = "#{emojis.find { |emoji, value| count >= value }&.first}#{count}"
 
     render :missing_receipts_icon, layout: false
   end
@@ -94,6 +97,11 @@ class MyController < ApplicationController
     @review_requested_reimbursements_count = current_user.assigned_reimbursement_reports.submitted.count
 
     render :reimbursements_icon, layout: false
+  end
+
+  def payroll
+    @jobs = current_user.jobs
+    @payout_method = current_user.payout_method
   end
 
 end

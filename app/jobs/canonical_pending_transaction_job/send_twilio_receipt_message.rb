@@ -28,6 +28,10 @@ module CanonicalPendingTransactionJob
       TwilioMessageService::Send.new(@user, message, hcb_code:).run!
     end
 
+    discard_on(Twilio::REST::RestError) do |job, error|
+      Airbrake.notify(error)
+    end
+
     private
 
     def auth_method

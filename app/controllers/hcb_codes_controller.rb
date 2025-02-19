@@ -17,12 +17,12 @@ class HcbCodesController < ApplicationController
         model = route[:controller].classify.constantize
         object = model.find(route[:id])
         event = model == Event ? object : object.event
-        raise StandardError unless @hcb_code.events.include? event
+        raise StandardError unless @hcb_code.events.include?(event) && current_user.events.include?(event)
 
         event
       rescue
         @hcb_code.events.min_by do |e|
-          [e.users.include?(current_user), e.is_public?].map { |b| b ? 0 : 1 }
+          e.users.include?(current_user) ? 0 : 1
         end
       rescue
         @hcb_code.event
@@ -87,9 +87,11 @@ class HcbCodesController < ApplicationController
 
   def pin
     @hcb_code = HcbCode.find(params[:id])
-    @event = @hcb_code.event
+    param_event = Event.friendly.find_by_friendly_id(params[:event])
+    @event = param_event ? @hcb_code.events.find_by(id: param_event.id) : @hcb_code.event
 
     authorize @hcb_code
+    authorize @event
 
     # Handle unpinning
     if (@pin = HcbCode::Pin.find_by(event: @event, hcb_code: @hcb_code))

@@ -58,7 +58,7 @@ class ApplicationController < ActionController::Base
     if Rails.env.development?
       raise
     else
-      notify_airbrake(exception)
+      Rails.error.report(exception)
       redirect_to root_url
     end
   end

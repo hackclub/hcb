@@ -9,7 +9,8 @@ $font-family:
   Ubuntu,
   'Helvetica Neue',
   sans-serif;
-$mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+$mono:
+  ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
 
 @import 'variables';
 @import 'basscss';
@@ -114,9 +115,9 @@ html {
 /* ---------------------------------------------------------------------------------------------- */
 
 :root {
-  --hcb-font-sans: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue',
-    sans-serif;
+  --hcb-font-sans:
+    ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
   --hcb-font-mono: 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 }
 
