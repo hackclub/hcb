@@ -124,11 +124,11 @@
               <span class="inline-flex">
 
             <% if @hcb_code.pt.hcb_decline_reason.present? || @hcb_code.pt.stripe_decline_reason == "webhook_declined" %>
-              <span>This transaction was declined by HCB because
+              <span>This transaction was declined
                 <%= {
-                      merchant_not_allowed: "this merchant is not allowed",
-                      cash_withdrawals_not_allowed: "cash withdrawals were not enabled on this card",
-                    }[@hcb_code.pt.hcb_decline_reason] || "of insufficient funds" %>.</span>
+                      merchant_not_allowed: "by #{@hcb_code.event.name} because this merchant is not allowed",
+                      cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
+                    }[@hcb_code.pt.hcb_decline_reason] || "due to insufficient funds" %>.</span>
             <% else %>
               <span>This transaction was declined by our card issuer because
                 <%= {
