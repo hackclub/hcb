@@ -442,54 +442,21 @@
 
       <div class="details mb2">
         <p>
-          <strong>Name</strong>
+          <strong>Key</strong>
           <span>
-            <%= humanized_merchant_name @hcb_code.stripe_merchant %>
+            Value
           </span>
         </p>
         <p>
-          <strong>Category</strong>
-          <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
-            <%= humanized_category @hcb_code.stripe_merchant %>
+          <strong>Key</strong>
+          <%= copy_to_clipboard("Value", class: "w-fit", tooltip_direction: "s") do %>
+            Value
           <% end %>
-        </p>
-        <p>
-          <strong>Currency</strong>
-          <span>
-          <%= @hcb_code.stripe_merchant_currency.upcase %>
-          </span>
-        </p>
-        <% if is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :phone %>
-          <p>
-            <strong>Phone</strong>
-            <span><%= @hcb_code.stripe_merchant["city"] %></span>
-          </p>
-        <% elsif is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :city %>
-          <p>
-            <strong>City</strong>
-            <span><%= @hcb_code.stripe_merchant["city"].humanize %></span>
-          </p>
-        <% end %>
-        <p>
-          <strong>Zip</strong>
-          <span><%= @hcb_code.stripe_merchant["postal_code"] or "Unknown" %></span>
-        </p>
-        <p>
-          <strong>State</strong>
-          <span><%= @hcb_code.stripe_merchant["state"]&.upcase or "Unknown" %></span>
-        </p>
-        <p>
-          <strong>Country</strong>
-          <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
-        </p>
-        <p>
-          <strong>Merchant ID</strong>
-          <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
         <p class="my0 muted">
-          Details are provided by the merchant and not guaranteed to be correct.
+          Card declined
         </p>
       </article>
     </section>
