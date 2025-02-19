@@ -79,20 +79,7 @@
   <% end %>
 
   <% if (current_user.only_card_grant_user? && current_user.teenager?) %>
-    <div id="card-grant-conversion-dialog" style="display: none;">
-      <article role="alertdialog" class="info flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('card-grant-conversion-link').click()" style="">
-        <span class="flex-auto flex justify-between items-center">
-          <span><strong>Did you know?</strong> Teens can use HCB to run clubs, nonprofits, and robotics teams! <a href="https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=hcb-grant-conversion" target="_blank" class="primary nowrap text-inherit" id="card-grant-conversion-link"><strong>Learn more</strong></a></span>
-        </span>
-        <svg onclick="(localStorage.setItem('hide_card_grant_conversion', 'true'), document.getElementById('card-grant-conversion-dialog').remove())" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="view-close" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="pointer" style=""><g><path d="M11.121,9.707c-0.39,-0.391 -1.024,-0.391 -1.414,0c-0.391,0.39 -0.391,1.024 0,1.414l4.95,4.95l-4.95,4.95c-0.391,0.39 -0.391,1.023 0,1.414c0.39,0.39 1.024,0.39 1.414,0l4.95,-4.95l4.95,4.95c0.39,0.39 1.023,0.39 1.414,0c0.39,-0.391 0.39,-1.024 0,-1.414l-4.95,-4.95l4.95,-4.95c0.39,-0.39 0.39,-1.024 0,-1.414c-0.391,-0.391 -1.024,-0.391 -1.414,0l-4.95,4.95l-4.95,-4.95Z"></path></g></svg>
-      </article>
-    </div>
-
-    <script>
-      if (localStorage.getItem('hide_card_grant_conversion') !== 'true') {
-        document.getElementById('card-grant-conversion-dialog').style.display = 'block';
-      }
-    </script>
+    <%= render partial: "users/card_grant_conversion_callout" %>
   <% end %>
 
   <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
