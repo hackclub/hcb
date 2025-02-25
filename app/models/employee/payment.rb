@@ -97,7 +97,11 @@ class Employee
     end
 
     def payout_method_name
-      payout&.title_kind
+      return "ACH transfer" if payout.is_a?(AchTransfer)
+      return "PayPal transfer" if payout.is_a?(PaypalTransfer)
+      return "Mailed check" if payout.is_a?(IncreaseCheck)
+
+      "Unknown"
     end
 
   end
