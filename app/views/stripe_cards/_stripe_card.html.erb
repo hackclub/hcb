@@ -20,7 +20,11 @@
     <% end %>
     <% if stripe_card.personalization_design.present? %>
       <div class="stripe-card__personalization absolute" style="right: 16px; top: 16px;">
-        <%= image_tag Rails.application.routes.url_helpers.rails_blob_url(stripe_card.personalization_design.logo), class: "stripe-card__personalization-image" %>
+        <div class="stripe-card__personalization_image_wrapper">
+          <div class="stripe-card__personalization_inner_image_wrapper">
+            <%= image_tag Rails.application.routes.url_helpers.rails_blob_url(stripe_card.personalization_design.logo), class: "stripe-card__personalization-image" %>
+          </div>
+        </div>
       </div>
     <% end %>
     <p class="stripe-card__number fs-mask">
