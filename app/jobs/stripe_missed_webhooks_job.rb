@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class StripeWebhookJob < ApplicationJob
+class StripeMissedWebhooksJob < ApplicationJob
   queue_as :default
   def perform
     events = StripeService::Event.list({ limit: 100, created: { gte: Time.now.to_i - 5 * 60 }, delivery_success: false }).data

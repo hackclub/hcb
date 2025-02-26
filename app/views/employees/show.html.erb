@@ -10,7 +10,7 @@
       Delete
     <% end %>
   <% elsif policy(@employee).terminate? %>
-    <%= link_to @employee, class: "btn bg-error", method: :DELETE do %>
+    <%= link_to employee_terminate_path(@employee), class: "btn bg-error", method: :POST do %>
       <%= inline_icon "member-remove" %>
       Terminate
     <% end %>

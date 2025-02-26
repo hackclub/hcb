@@ -39,7 +39,7 @@ class EmployeesController < ApplicationController
   end
 
   def destroy
-    @employee = Employee.find(params[:employee_id])
+    @employee = Employee.find(params[:id])
     authorize @employee
     @employee.destroy
     redirect_to current_user.admin? ? employees_admin_index_path : event_employees_path(@employee.event)

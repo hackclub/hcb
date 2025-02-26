@@ -37,8 +37,10 @@ module Column
 
       if account_number.deposit_only?
         ColumnService.return_ach(@object[:id], with: ColumnService::AchCodes::STOP_PAYMENT)
+        AccountNumberMailer.with(event: account_number.event, memo: "#{@object["company_name"]} #{@object["company_entry_description"]}", amount_cents: @object[:amount]).debits_disabled.deliver_later
       elsif account_number.event.balance_available_v2_cents < @object[:amount]
         ColumnService.return_ach(@object[:id], with: ColumnService::AchCodes::INSUFFICIENT_BALANCE)
+        AccountNumberMailer.with(event: account_number.event, memo: "#{@object["company_name"]} #{@object["company_entry_description"]}", amount_cents: @object[:amount]).insufficent_balance.deliver_later
       end
 
       # at this point, the ACH is approved!

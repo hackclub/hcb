@@ -13,6 +13,7 @@ default: &defaults
     - ActionController::ParameterMissing
     - ActionController::InvalidCrossOriginRequest
     - ActionController::InvalidAuthenticityToken
+    - ActiveRecord::RecordNotFound
 
 production:
   <<: *defaults

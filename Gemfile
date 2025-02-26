@@ -157,7 +157,7 @@ end
 group :development, :test do
   gem "erb_lint", require: false
   gem "rubocop"
-  gem "rubocop-rails", "~> 2.29"
+  gem "rubocop-rails", "~> 2.30"
   gem "relaxed-rubocop"
 
   gem "rspec-rails", "~> 7.1.0"

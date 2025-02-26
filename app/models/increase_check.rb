@@ -93,7 +93,7 @@ class IncreaseCheck < ApplicationRecord
 
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
-        employee_payment.mark_admin_approved! if employee_payment.present?
+        employee_payment.mark_paid! if employee_payment.present?
       end
     end
 

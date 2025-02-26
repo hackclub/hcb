@@ -86,5 +86,8 @@ module Bank
     # https://guides.rubyonrails.org/configuring.html#custom-configuration
     config.constants = config_for(:constants)
 
+    # See https://jordanhollinger.com/2023/11/11/rails-strict-loading/ for context
+    config.active_record.action_on_strict_loading_violation = :log
+
   end
 end

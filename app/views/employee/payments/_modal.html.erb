@@ -6,7 +6,7 @@
   </h3>
   <section class="details break-words">
     <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
-      <strong style="font-weight: 600;">Creator</strong>
+      <strong style="font-weight: 600;">Contractor</strong>
       <%= user_mention payment.employee.user %>
     </div>
 
@@ -22,18 +22,15 @@
       </div>
     <% end %>
 
-    <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
-      <strong style="font-weight: 600;">Payout</strong>
-      <span>
-        <%= link_to payment.payout_method_name, payment.payout.local_hcb_code, target: "blank" if payment.payout && policy(payment.payout.local_hcb_code).show? %>
-        <%= payment.payout_method_name if payment.payout && !policy(payment.payout.local_hcb_code).show? %>
-        <span class="muted">
-          <%= unless payment.payout
-                payment.admin_approved? || payment.organizer_approved? ? "Pending" : "None"
-              end %>
+    <% if payment.payout.present? %>
+      <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
+        <strong style="font-weight: 600;">Payout</strong>
+        <span>
+          <%= link_to payment.payout_method_name, payment.payout.local_hcb_code, target: "blank" if policy(payment.payout.local_hcb_code).show? %>
+          <%= payment.payout_method_name unless policy(payment.payout.local_hcb_code).show? %>
         </span>
-      </span>
-    </div>
+      </div>
+    <% end %>
 
     <div style="grid-template-columns: 7rem auto;">
       <strong style="font-weight: 600;">Submitted</strong>

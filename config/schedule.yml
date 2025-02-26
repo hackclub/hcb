@@ -79,6 +79,10 @@ reimbursement_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "ReimbursementJob::Nightly"
 
+payroll_nightly_job:
+  cron: "*/5 * * * *" # run every 5 minutes
+  class: "PayrollJob::Nightly"
+
 bank_fee_nightly_job:
   cron: "*/30 2-23 * * *" # run every 30 minutes
   class: "BankFeeJob::Nightly"
@@ -176,6 +180,6 @@ column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "Column::SweepJob"
 
-stripe_webhook_job:
-  cron: "0,5 * * * *" # run every 5 minutes
-  class: "StripeWebhookJob"
+stripe_missed_webhooks_job:
+  cron: "0/5 * * * *" # run every 5 minutes
+  class: "StripeMissedWebhooksJob"

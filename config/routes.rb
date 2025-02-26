@@ -463,6 +463,7 @@ Rails.application.routes.draw do
     collection do
       get "collect_email", to: "exports#collect_email", as: "collect_email"
       get ":event", to: "exports#transactions", as: "transactions"
+      get "reimbursements/:event", to: "exports#reimbursements", as: "reimbursements"
     end
   end
 
@@ -642,10 +643,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :card_grants, only: [:show], path: "grants" do
+  resources :card_grants, only: [:show, :edit, :update], path: "grants" do
     member do
       post "activate"
       get "spending"
+      post "clear_purpose"
     end
   end
 

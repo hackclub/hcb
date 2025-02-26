@@ -10,6 +10,12 @@
   </p>
 <% end %>
 
+<% if @reversed_pairing %>
+  <p>
+    We've reversed this match, sorry we got it wrong. You can now find the receipt in your <%= link_to "Receipt Bin", my_inbox_url %>.
+  </p>
+<% end %>
+
 <% if @tagged_with.any? %>
   <p>
     <%= @receipts_count > 0 && @renamed_to ? "Lastly, we've" : @receipts_count > 0 ? "We've also" : "We've" %>

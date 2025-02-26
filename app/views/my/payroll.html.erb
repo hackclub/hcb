@@ -30,8 +30,7 @@
 <% if @jobs.onboarding.any? %>
   <%= render "callout", type: "info", title: "Congrats on the new #{@jobs.onboarding.size > 1 ? "jobs" : "job with #{@jobs.onboarding.first.event.name}"}!" do %>
     <div>
-      To complete your onboarding process, you'll need to fill out a W-9 or W-8 BEN form, depending on your residency status. Please reach out to <%= mail_to "hr@hackclub.com" %>
-      to begin this process.
+      <span class="bold">You will only be able to submit invoices after being onboarded.</span> To complete your onboarding, please email a W-9 or W-8 BEN to <%= mail_to "hr@hackclub.com" %>. After receiving your W-9 or W-8 BEN, please give us approximately 2 business days to review and finalize your onboarding. We will email you once this process is complete.
     </div>
   <% end %>
 <% end %>

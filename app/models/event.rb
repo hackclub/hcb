@@ -66,6 +66,7 @@ class Event < ApplicationRecord
   validates_as_paranoid
 
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
+  normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
@@ -286,6 +287,7 @@ class Event < ApplicationRecord
   scope :dormant, -> { where.not(id: Event.engaged) }
 
   has_many :fees, through: :canonical_event_mappings
+  # must transition to has_many :fees
   has_many :bank_fees
 
   has_many :tags, -> { includes(:hcb_codes) }

@@ -126,8 +126,6 @@
         </div>
       </div>
     </main>
-    <% if Rails.env.production? %>
-      <%= render "application/fullstory" if current_user&.sessions_reported %>
-    <% end %>
+    <%= render "application/fullstory" %>
   </body>
 </html>

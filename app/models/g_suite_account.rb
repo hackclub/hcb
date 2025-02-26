@@ -43,6 +43,7 @@ class GSuiteAccount < ApplicationRecord
   belongs_to :creator, class_name: "User"
 
   validates_presence_of :address, :backup_email, :first_name, :last_name
+  normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
 
   validate :status_accepted_or_rejected
   validates :address, uniqueness: { scope: :g_suite }

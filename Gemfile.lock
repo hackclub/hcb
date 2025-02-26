@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/hackclub/yellow_pages.git
-  revision: f37dcd4af3197d0dfc6093e999937da8b83b4e23
+  revision: 542e272c298ef0519a04e00febec9ac9b22b5aa3
   specs:
     yellow_pages (0.4.0)
 
@@ -468,7 +468,7 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     local_time (3.0.2)
-    lockbox (2.0.0)
+    lockbox (2.0.1)
     logger (1.6.6)
     lograge (0.14.0)
       actionpack (>= 4)
@@ -512,7 +512,7 @@ GEM
     native-package-installer (1.1.9)
     net-http-persistent (4.0.2)
       connection_pool (~> 2.2)
-    net-imap (0.5.5)
+    net-imap (0.5.6)
       date
       net-protocol
     net-pop (0.1.2)
@@ -522,7 +522,7 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.4)
-    nokogiri (1.18.2)
+    nokogiri (1.18.3)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     observer (0.1.2)
@@ -710,11 +710,12 @@ GEM
       unicode-display_width (>= 2.4.0, < 4.0)
     rubocop-ast (1.38.0)
       parser (>= 3.3.1.0)
-    rubocop-rails (2.29.1)
+    rubocop-rails (2.30.1)
       activesupport (>= 4.2.0)
+      lint_roller (~> 1.1)
       rack (>= 1.1)
-      rubocop (>= 1.52.0, < 2.0)
-      rubocop-ast (>= 1.31.1, < 2.0)
+      rubocop (>= 1.72.1, < 2.0)
+      rubocop-ast (>= 1.38.0, < 2.0)
     ruby-limiter (2.3.0)
     ruby-progressbar (1.13.0)
     ruby-vips (2.1.4)
@@ -953,7 +954,7 @@ DEPENDENCIES
   rspec-rails (~> 7.1.0)
   rtesseract
   rubocop
-  rubocop-rails (~> 2.29)
+  rubocop-rails (~> 2.30)
   ruby-limiter
   safely_block
   sidekiq (~> 7.3.8)

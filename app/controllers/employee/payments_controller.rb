@@ -28,7 +28,7 @@ class Employee
       @payment.update(review_message: params[:review_message]) if params[:review_message]
       @payment.update(reviewed_by: current_user)
       if params[:approved]
-        @payment.mark_organizer_approved!
+        @payment.mark_approved!
         redirect_to event_employees_path(@payment.employee.event), flash: { success: "Payment approved." }
       elsif params[:rejected]
         @payment.mark_rejected!

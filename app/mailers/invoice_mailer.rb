@@ -23,4 +23,9 @@ class InvoiceMailer < ApplicationMailer
 
   end
 
+  def refunded
+    @invoice = params[:invoice]
+    mail to: params[:requested_by].email, subject: "Your request to refund an invoice to #{@invoice.sponsor.name} from #{@invoice.event.name} was processed."
+  end
+
 end

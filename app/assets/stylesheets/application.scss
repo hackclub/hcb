@@ -261,6 +261,10 @@ summary {
   background-color: map-get($palette, primary);
 }
 
+html[data-ai-loading='true'] > .turbo-progress-bar {
+  background-color: map-get($palette, ai);
+}
+
 #HW_badge_cont {
   position: absolute;
   top: -10px;
@@ -355,6 +359,44 @@ summary {
   to {
     border: 1px solid rgba(map-get($palette, warning), 0.25);
     background-color: none;
+  }
+}
+
+// sourced from yours truly, W3Schools: https://www.w3schools.com/howto/howto_css_shake_image.asp
+
+@keyframes shake {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    transform: translate(3px, 1px) rotate(-1deg);
+  }
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    transform: translate(1px, 2px) rotate(0deg);
+  }
+  100% {
+    transform: translate(1px, -2px) rotate(-1deg);
   }
 }
 

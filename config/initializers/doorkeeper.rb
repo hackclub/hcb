@@ -13,7 +13,7 @@ Doorkeeper.configure do
   access_token_class "::ApiToken"
   access_token_generator "::ApiToken"
 
-  access_token_expires_in nil
+  access_token_expires_in 2.hours
 
   # If you didn't skip applications controller from Doorkeeper routes in your application routes.rb
   # file then you need to declare this block in order to restrict access to the web interface for

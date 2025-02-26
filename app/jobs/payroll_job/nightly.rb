@@ -4,7 +4,7 @@ module PayrollJob
   class Nightly < ApplicationJob
     queue_as :low
     def perform
-      PayrollService::Nightly.new.run
+      return # PayrollService::Nightly.new.run
     end
 
   end

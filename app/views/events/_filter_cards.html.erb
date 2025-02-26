@@ -20,7 +20,7 @@
 
     <% if @status %>
       <div class="badge badge-large bg-muted">
-        <%= @status.humanize %>
+        <%= @status.gsub("inactive", "frozen").humanize %>
         <%= link_to upsert_query_params("status" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
           <%= inline_icon "view-close", size: 20 %>
         <% end %>

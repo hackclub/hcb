@@ -15,6 +15,8 @@ class DonationsController < ApplicationController
   before_action :hide_seasonal_decorations
   skip_before_action :redirect_to_onboarding
 
+  before_action { @force_fullstory = true }
+
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
 
@@ -164,7 +166,7 @@ class DonationsController < ApplicationController
       ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
     else
-      DonationJob::Refund.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents)
+      DonationJob::Refund.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents, current_user)
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
     end
   end
