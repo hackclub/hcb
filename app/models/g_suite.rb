@@ -117,6 +117,36 @@ class GSuite < ApplicationRecord
     versions.where_object_changes_to(aasm_state: "verified").any?
   end
 
+  def accounts_inactive?
+    begin
+      res = Partners::Google::GSuite::Shared::DirectoryClient.directory_client.list_users(customer: Partners::Google::GSuite::Shared::DirectoryClient.gsuite_customer_id, domain:, max_results: 500)
+      res_count = res.users.count
+      inactive_accounts = []
+      res.users.each do |user|
+        if user.is_admin
+          res_count -= 1
+          next
+        end
+        user_last_login = Partners::Google::GSuite::Shared::DirectoryClient.directory_client.get_user(user.id).last_login_time
+        if user_last_login.nil? || user_last_login < 6.months.ago
+          inactive_accounts << user
+        end
+      end
+      if inactive_accounts.count == res_count
+        return true
+      end
+
+      false
+    rescue => e
+      Rails.error.report(e)
+      throw :abort
+    end
+  end
+
+  def immune_to_revocation?
+    self.revocation_immunity
+  end
+
   private
 
   def clean_up_verification_key

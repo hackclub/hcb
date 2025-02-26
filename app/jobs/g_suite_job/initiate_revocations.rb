@@ -5,17 +5,15 @@ module GSuiteJob
     queue_as :low
 
     def perform
-      GSuite.where(revocation_immunity: false).missing(:revocation).find_each(batch_size: 100) do |g_suite|
+      GSuite.where(revocation: nil).find_each(batch_size: 100) do |g_suite|
+        next if g_suite.immune_to_revocation?
+
         if (g_suite.aasm_state == "verification_error")
-          GSuiteService::CreateRevocation.new(g_suite_id: g_suite.id, reason: :dns).run
-        elsif inactive?(domain: g_suite.domain)
-          GSuiteService::CreateRevocation.new(g_suite_id: g_suite.id, reason: :inactivity).run
+          @g_suite.revocation = GSuite::Revocation.create!(g_suite: @g_suite, reason: :invalid_dns)
+        elsif g_suite.accounts_inactive?
+          @g_suite.revocation = GSuite::Revocation.create!(g_suite: @g_suite, reason: :accounts_inactive)
         end
       end
-    end
-
-    def inactive?(domain:)
-      Partners::Google::GSuite::CheckDomainForInactivity.new(domain:).run
     end
 
   end

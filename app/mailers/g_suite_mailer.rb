@@ -27,7 +27,7 @@ class GSuiteMailer < ApplicationMailer
 
   def notify_of_pending_revocation
     set_g_suite_revocation
-    mail subject: "[Action Required] Your Google Workspace access for #{@g_suite.domain} will be revoked on #{(@g_suite_revocation.created_at + 2.weeks).strftime("%B %d, %Y")}"
+    mail subject: "[Action Required] Your Google Workspace access for #{@g_suite.domain} will be revoked on #{@g_suite_revocation.scheduled_at.strftime("%B %d, %Y")}"
   end
 
   def notify_operations_of_entering_created_state
@@ -46,7 +46,17 @@ class GSuiteMailer < ApplicationMailer
   end
 
   def set_g_suite_revocation
-    @g_suite_revocation = GSuiteRevocation.find(params[:g_suite_revocation_id])
+    @g_suite_revocation = GSuite::Revocation.find(params[:g_suite_revocation_id])
+    if @g_suite_revocation.because_of_invalid_dns?
+      @reason = "you are missing required DNS records"
+    elsif @g_suite_revocation.because_of_accounts_inactive?
+      @reason = "all accounts on your domain have been inactive for the past six months"
+    elsif @g_suite_revocation.because_of_other?
+      @reason = @g_suite_revocation.other_reason
+    else
+      Rails.error.unexpected("GSuite::Revocation: Unknown reason for revocation")
+      @reason = "of an unknown reason"
+    end
   end
 
   def organization_managers
