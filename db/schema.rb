@@ -1006,12 +1006,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
   end
 
   create_table "g_suite_revocations", force: :cascade do |t|
-    t.boolean "invalid_dns", default: false, null: false
-    t.boolean "no_account_activity", default: false, null: false
-    t.boolean "other", default: false, null: false
+    t.integer "reason", default: 0, null: false
     t.text "other_reason"
     t.bigint "g_suite_id", null: false
     t.string "aasm_state"
+    t.datetime "scheduled_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["g_suite_id"], name: "index_g_suite_revocations_on_g_suite_id"
@@ -1075,7 +1074,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.text "unique_bank_identifier"
     t.date "date"
     t.bigint "raw_increase_transaction_id"
-    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"
     t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"
@@ -1161,12 +1160,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.string "increase_status"
     t.string "check_number"
     t.jsonb "increase_object"
-    t.string "recipient_email"
-    t.boolean "send_email_notification", default: false
     t.string "column_id"
     t.string "column_status"
     t.jsonb "column_object"
     t.string "column_delivery_status"
+    t.string "recipient_email"
+    t.boolean "send_email_notification", default: false
     t.index "(((increase_object -> 'deposit'::text) ->> 'transaction_id'::text))", name: "index_increase_checks_on_transaction_id"
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
@@ -1662,7 +1661,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.bigint "receiptable_id"
     t.integer "upload_method"
     t.text "textual_content_ciphertext"
-    t.integer "textual_content_source", default: 0
     t.string "suggested_memo"
     t.text "extracted_card_last4_ciphertext"
     t.integer "extracted_subtotal_amount_cents"
@@ -1672,6 +1670,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.string "extracted_merchant_url"
     t.string "extracted_merchant_zip_code"
     t.boolean "data_extracted", default: false, null: false
+    t.integer "textual_content_source", default: 0
     t.string "textual_content_bidx"
     t.index ["receiptable_type", "receiptable_id"], name: "index_receipts_on_receiptable_type_and_receiptable_id"
     t.index ["textual_content_bidx"], name: "index_receipts_on_textual_content_bidx"
@@ -1731,8 +1730,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.integer "expense_number", null: false
     t.datetime "deleted_at", precision: nil
     t.string "type"
-    t.decimal "value", default: "0.0", null: false
     t.integer "category"
+    t.decimal "value", default: "0.0", null: false
     t.index ["approved_by_id"], name: "index_reimbursement_expenses_on_approved_by_id"
     t.index ["reimbursement_report_id"], name: "index_reimbursement_expenses_on_reimbursement_report_id"
   end
@@ -1871,8 +1870,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_12_225113) do
     t.boolean "is_platinum_april_fools_2023"
     t.bigint "subledger_id"
     t.boolean "lost_in_shipping", default: false
-    t.boolean "initially_activated", default: false, null: false
     t.integer "stripe_card_personalization_design_id"
+    t.boolean "initially_activated", default: false, null: false
     t.boolean "cash_withdrawal_enabled", default: false
     t.datetime "canceled_at"
     t.index ["event_id"], name: "index_stripe_cards_on_event_id"
