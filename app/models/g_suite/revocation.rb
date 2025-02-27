@@ -33,7 +33,7 @@ class GSuite
 
     belongs_to :g_suite
 
-    validate :other_reason, presence: false, unless: :because_of_other?
+    validates :other_reason, presence: false, unless: :because_of_other?
 
     aasm do
       state :warning, initial: true # 2 weeks from warning to pending revocation
