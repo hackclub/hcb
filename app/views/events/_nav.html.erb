@@ -84,10 +84,10 @@
       tooltip: "Send & manage grants",
       icon: "idea",
       selected: local_assigns[:selected] == :grants if Flipper.enabled?(:grants_2023_06_21, @event) %>
-    <%= dock_item "Payroll",
+    <%= dock_item "Contractors",
       event_employees_path(event_id: @event.slug),
-      tooltip: "Manage contractors",
-      icon: "bag",
+      tooltip: "Manage payroll",
+      icon: "person-badge",
       selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) %>
     <hr>
     <%= dock_item "Team",

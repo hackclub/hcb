@@ -16,7 +16,7 @@ class Employee
           upload_method: :employee_payment,
           receiptable: @payment
         ).run!
-        redirect_to my_payroll_path, flash: { success: "Payment successfully requested." }
+        redirect_to current_user == @employee.user ? my_payroll_path : event_employees_path(@employee.event), flash: { success: "Payment successfully requested." }
       else
         redirect_to my_payroll_path, flash: { error: @payment.errors.full_messages.to_sentence }
       end

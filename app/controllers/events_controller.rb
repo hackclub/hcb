@@ -386,16 +386,6 @@ class EventsController < ApplicationController
     end
   end
 
-  def finish_signee_backfill
-    authorize @event
-    if @event.organizer_positions.where(is_signee: nil).update(is_signee: false)
-      flash[:success] = "Wow-e! It's done... the signee backfill that is."
-    else
-      flash[:error] = "WHAT?! An error. Go pester @sampoder."
-    end
-    redirect_back fallback_location: event_team_path(@event.slug)
-  end
-
   # DELETE /events/1
   def destroy
     authorize @event

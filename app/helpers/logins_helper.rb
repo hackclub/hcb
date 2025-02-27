@@ -7,12 +7,6 @@ module LoginsHelper
       time: "Summer 2022",
       slug: "assemble",
       background: "linear-gradient(180deg, rgb(0 0 0 / 20%) 0%, rgba(0 0 0 / 40%) 100%), url('https://cloud-cuely0z02-hack-club-bot.vercel.app/0assemble__2_.jpg')"
-    },
-    {
-      name: "Counterspell Ottawa",
-      time: "Fall 2024",
-      slug: "counterspell-ottawa",
-      background: "linear-gradient(180deg, rgb(0 0 0 / 30%) 0%, rgba(0 0 0 / 50%) 100%), url('https://cloud-cuely0z02-hack-club-bot.vercel.app/10batch1photos-3112__1_.jpg')"
     }
   ].map do |hackathon|
     hackathon[:url] = "/#{hackathon[:slug]}"

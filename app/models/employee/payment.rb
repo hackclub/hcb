@@ -32,6 +32,9 @@ class Employee
   class Payment < ApplicationRecord
     include AASM
 
+    include PublicActivity::Model
+    tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.employee.event.id }, only: [:create]
+
     belongs_to :payout, polymorphic: true, optional: true
 
     belongs_to :employee
@@ -64,6 +67,7 @@ class Employee
         transitions from: :approved, to: :paid
         after do
           Employee::PaymentMailer.with(payment: self).approved.deliver_later
+          create_activity(key: "employee_payment.paid", owner: employee.user)
         end
       end
 

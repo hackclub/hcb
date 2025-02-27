@@ -20,7 +20,7 @@
   <%= form_tag complete_login_path(@login) do %>
     <%= text_field :login_code, "", placeholder: "Enter your login code", name: "login_code", class: "!max-w-full w-max", required: true, autofocus: true unless Flipper.enabled?(:otp_single_input, @login.user) %>
 
-    <%= text_field :login_code, "", name: "code", class: "otp_code", autocomplete: "one-time-code", required: true, inputmode: "numeric", maxlength: "6", autofocus: true, data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
+    <%= text_field :login_code, "", class: "otp_code", autocomplete: "one-time-code", required: true, inputmode: "numeric", maxlength: "6", autofocus: true, data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
     <%= hidden_field_tag :method, :login_code %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>

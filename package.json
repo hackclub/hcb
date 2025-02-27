@@ -42,7 +42,7 @@
     "kbar": "^0.1.0-beta.45",
     "local-time": "^3.0.2",
     "lodash": "^4.17.21",
-    "postcss": "^8.5.2",
+    "postcss": "^8.5.3",
     "postcss-cli": "^11.0.0",
     "postcss-scss": "^4.0.9",
     "prop-types": "^15.8.1",
@@ -59,13 +59,13 @@
     "webpack-cli": "^6.0.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
+    "@eslint/js": "^9.21.0",
     "concurrently": "^9.1.2",
     "eslint": "9.x",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.15.0",
-    "prettier": "^3.5.1"
+    "prettier": "^3.5.2"
   },
   "scripts": {
     "build": "webpack --config webpack.config.js",

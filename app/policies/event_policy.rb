@@ -173,10 +173,6 @@ class EventPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def finish_signee_backfill?
-    user&.admin?
-  end
-
   def can_invite_user?
     admin_or_manager?
   end

@@ -3,11 +3,11 @@
 class Employee
   class PaymentPolicy < ApplicationPolicy
     def new?
-      employee
+      employee || admin || manager
     end
 
     def create?
-      employee
+      employee || admin || manager
     end
 
     def review?
