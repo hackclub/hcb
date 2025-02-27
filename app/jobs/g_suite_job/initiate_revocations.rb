@@ -5,7 +5,7 @@ module GSuiteJob
     queue_as :low
 
     def perform
-      GSuite.where(revocation: nil).find_each(batch_size: 100) do |g_suite|
+      GSuite.where(revocation_immunity: false).missing(:revocation).find_each(batch_size: 100) do |g_suite|
         next if g_suite.immune_to_revocation?
 
         if (g_suite.aasm_state == "verification_error")
