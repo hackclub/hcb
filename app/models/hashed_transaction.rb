@@ -21,11 +21,11 @@
 #
 # Indexes
 #
-#  idx_on_duplicate_of_hashed_transaction_id_6a29e8a078      (duplicate_of_hashed_transaction_id)
-#  index_hashed_transactions_on_raw_csv_transaction_id       (raw_csv_transaction_id)
-#  index_hashed_transactions_on_raw_increase_transaction_id  (raw_increase_transaction_id)
-#  index_hashed_transactions_on_raw_plaid_transaction_id     (raw_plaid_transaction_id)
-#  index_hashed_transactions_on_raw_stripe_transaction_id    (raw_stripe_transaction_id)
+#  index_hashed_transactions_on_duplicate_of_hashed_transaction_id  (duplicate_of_hashed_transaction_id)
+#  index_hashed_transactions_on_raw_csv_transaction_id              (raw_csv_transaction_id)
+#  index_hashed_transactions_on_raw_increase_transaction_id         (raw_increase_transaction_id)
+#  index_hashed_transactions_on_raw_plaid_transaction_id            (raw_plaid_transaction_id)
+#  index_hashed_transactions_on_raw_stripe_transaction_id           (raw_stripe_transaction_id)
 #
 # Foreign Keys
 #
