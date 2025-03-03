@@ -32,6 +32,10 @@ class HcbCode
 
     before_validation :send_invoice, on: :create, if: -> { invoice.nil? }
 
+    after_create do
+      hcb_code.no_or_lost_receipt! if hcb_code.missing_receipt?
+    end
+
     private
 
     def send_invoice

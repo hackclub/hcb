@@ -19,7 +19,6 @@
       </span>
       <span class="badge h4 ml2 nowrap bg-<%= @hcb_code.check.state %>">
         <%= @hcb_code.check.status_text %>
-        <%#= inline_icon @hcb_code.check.state_icon, size: 20 if @hcb_code.check.state_icon %>
       </span>
     </div>
     <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>

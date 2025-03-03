@@ -52,14 +52,38 @@
                                      min: 0.01,
                                      required: true,
                                      disabled:,
-                                     data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+                                     data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
     </div>
   </div>
 
   <div class="field">
     <%= form.label :name, "What is the transfer for?" %>
     <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, disabled: %>
-    <span class="muted">This is to help HCB keep record of our transactions. It will be used as the memo on your transaction list.</span>
+    <span class="muted">This is to help HCB keep record of our transactions.</span>
+  </div>
+
+  <%= form.label :file, "Attach a receipt / invoice (optional)", class: "mt2" %>
+  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
+          action: "
+        dragover@window->file-drop#dragover
+        drop@window->file-drop#drop
+        dragenter@window->file-drop#dragenter
+        dragleave@window->file-drop#dragleave
+      "
+        } %>
+    <%= form.file_field :file,
+        multiple: true,
+        include_hidden: false,
+        required: false,
+        accept: "image/*,image/heic,.pdf",
+        style: "margin: 8px 0px",
+        class: "field--fileupload__field",
+        data: {
+          "file-drop-target" => "fileInput"
+        },
+        disabled: %>
+    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
   </div>
 
   <% admin_tool do %>

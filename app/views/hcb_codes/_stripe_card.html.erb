@@ -51,7 +51,7 @@
 
         <span style="flex-grow: 1;"></span>
 
-        <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: @hcb_code } if Flipper.enabled?(:ai_memos_2024_06_20, current_user) %>
+        <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: @hcb_code } %>
       <% end %>
     </span>
 
@@ -102,12 +102,12 @@
       <% end %>
       <p>
         <strong><%= @hcb_code.stripe_refund? ? "Refunded" : "Spent" %></strong>
-        <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.ct.raw_stripe_transaction.stripe_transaction["created"]) %>
+        <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]) %>
       </p>
       <% unless @hcb_code.ct.nil? || @hcb_code.pt.nil? %>
         <p>
           <strong>Settled after</strong>
-          <span title="<%= Time.at(@hcb_code.ct.raw_stripe_transaction.stripe_transaction["created"]).strftime("%B %e, %Y %l:%M%P") %>">
+          <span title="<%= Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]).strftime("%B %e, %Y %l:%M%P") %>">
           <%= distance_of_time_in_words @hcb_code.pt.raw_pending_stripe_transaction.created_at, @hcb_code.ct.created_at %>
           </span>
         </p>
@@ -116,7 +116,7 @@
 
     <section class="details details--wide pt2 pb2 details--tall">
       <% if @hcb_code.pt&.declined? %>
-        <% reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]["reason"] %>
+        <% reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]&.[]("reason") %>
         <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
         <p>
         <strong>Declined</strong>
@@ -169,9 +169,9 @@
                 </p>
                 <p>
                   <strong>Category</strong>
-                  <span>
-                    <%= @hcb_code.stripe_merchant["category"].humanize.capitalize %>
-                  </span>
+                  <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
+                    <%= humanized_category @hcb_code.stripe_merchant %>
+                  <% end %>
                 </p>
                 <p>
                   <strong>Currency</strong>
@@ -190,17 +190,25 @@
                     <span><%= @hcb_code.stripe_merchant["city"].humanize %></span>
                   </p>
                 <% end %>
-                <p>
-                  <strong>Zip</strong>
-                  <span><%= @hcb_code.stripe_merchant["postal_code"] or "Unknown" %></span>
-                </p>
-                <p>
-                  <strong>State</strong>
-                  <span><%= @hcb_code.stripe_merchant["state"]&.upcase or "Unknown" %></span>
-                </p>
+                <% if @hcb_code.stripe_merchant["postal_code"] %>
+                  <p>
+                    <strong>Zip</strong>
+                    <span><%= @hcb_code.stripe_merchant["postal_code"] %></span>
+                  </p>
+                <% end %>
+                <% if @hcb_code.stripe_merchant["state"] %>
+                  <p>
+                    <strong>State</strong>
+                    <span><%= @hcb_code.stripe_merchant["state"]&.upcase %></span>
+                  </p>
+                <% end %>
                 <p>
                   <strong>Country</strong>
                   <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+                </p>
+                <p>
+                  <strong>Merchant ID</strong>
+                  <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
                 </p>
               </div>
               <p class="my0 muted">
@@ -287,11 +295,13 @@
         <% if @hcb_code.card.card_grant.present? %>
           <p>
             <strong>Merchant ID</strong>
-            <%= @hcb_code.stripe_merchant["network_id"] %>
+            <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
           </p>
           <p>
             <strong>Category</strong>
-            <%= @hcb_code.stripe_merchant["category"]&.humanize %>
+            <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
+              <%= humanized_category @hcb_code.stripe_merchant %> (<%= @hcb_code.stripe_merchant["category"] %>)
+            <% end %>
           </p>
         <% end %>
       <% end %>
@@ -317,9 +327,9 @@
         </p>
         <p>
           <strong>Category</strong>
-          <span>
-            <%= @hcb_code.stripe_merchant["category"].humanize.capitalize %>
-          </span>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
+            <%= humanized_category @hcb_code.stripe_merchant %>
+          <% end %>
         </p>
         <p>
           <strong>Currency</strong>
@@ -349,6 +359,10 @@
         <p>
           <strong>Country</strong>
           <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+        </p>
+        <p>
+          <strong>Merchant ID</strong>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">

@@ -56,6 +56,17 @@ class CheckDeposit < ApplicationRecord
     CheckDepositMailer.with(check_deposit: self).deposited.deliver_later
   end
 
+  after_update if: -> { increase_status_previously_changed?(to: "returned") } do
+    canonical_pending_transaction.decline!
+    local_hcb_code.canonical_transactions.each do |ct|
+      fee = ct.fee
+      fee.amount_cents_as_decimal = 0
+      fee.reason = :transfer_returned
+      fee.save!
+    end
+    CheckDepositMailer.with(check_deposit: self).returned.deliver_later
+  end
+
   has_one_attached :front
   has_one_attached :back
 
@@ -148,9 +159,15 @@ class CheckDeposit < ApplicationRecord
   end
 
   def estimated_arrival_date
+    # [@garyhtou] As of 2024-10-22, it takes a median of 7.07 days for a check
+    # to deposit from the time it's submitted to Column to when the canonical
+    # transaction is created.
+    # Average 6.8 days. Min 4.5 days. Max 10.4 days.
+
     estimated = submitted_to_column_at&.+(1.week)&.to_date
     return nil if estimated.nil?
-    return nil if Date.today >= estimated
+    # Continue to show the estimate up until we're 2 days past due
+    return nil if estimated.before?(2.days.ago)
 
     estimated
   end

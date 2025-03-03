@@ -1,60 +1,139 @@
 <h2 class="mt0 mb0">Your accounts</h2>
 
 <% if @g_suite.accounts.any? %>
-<% if organizer_signed_in? %>
-  <ul class="list list--row list--unlinked mt0 mb2">
-    <% @g_suite.accounts.order(:address).each do |account| %>
-      <li class="flex items-center justify-between">
-        <div>
-          <p class="m0">
-            <strong><%= account.first_name %> <%= account.last_name %></strong>
-            &middot;
-            <span><%= account.username %></span><span class="muted"><%= account.at_domain %></span>
-          </p>
-          <p class="secondary m0">
-          <% if account.suspended? %>
-            <%= status_badge :error %>
-            <span>Suspended.</span>
-          <% elsif account.initial_password.present? %>
-            <%= status_badge :success %>
-            <span>Active.</span>
-          <% else %>
-            <%= status_badge :pending %>
-            <span><%= account.status %>.</span>
-          <% end %>
-          <% if admin_signed_in? || account.backup_email == current_user&.email %>
-            <span>Backup email: <%= content_tag :code, account.backup_email %></span>
-          <% end %>
-          </p>
-        </div>
-        <action type="button" class="pop menu__toggle" data-behavior="menu_toggle" aria-expanded="false" tabindex="0">
-          <%= inline_icon "more" %>
-          <div class="menu__content" data-behavior="menu_content">
-            <% if account.accepted? && organizer_signed_in? %>
-            <%= link_to "Reset password",
-                g_suite_account_reset_password_path(account.id),
-                method: :put,
-                class: ("disabled" unless policy(account).reset_password?),
-                'data-confirm': "Reset the account password for #{account.address}? We’ll email a new password to the backup email." %>
-            <%= link_to (account.suspended? ? "Re-activate" : "Suspend"),
-                g_suite_account_toggle_suspension_path(account.id),
-                method: :put,
-                class: ("disabled" unless policy(account).toggle_suspension?),
-                'data-confirm': "Do you really want to #{account.suspended? ? 're-activate' : 'suspend'} #{account.address}?" %>
-            <% end %>
-            <%= link_to "Delete",
-              account,
-              method: :delete,
-              'data-confirm': "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Think carefully before you click ok.",
-              class: "admin-tools" if admin_signed_in? %>
+  <% if organizer_signed_in? %>
+    <ul class="list list--row list--unlinked mt0 mb2" data-behavior="accounts_list">
+      <% @g_suite.accounts.order(:address).each do |account| %>
+        <div class="flex flex-col justify-between my-3 account-container">
+          <div class="flex flex-row justify-between">
+            <div class="flex flex-row">
+              <%= inline_icon "down-caret", size: home_action_size, class: "transition duration-200 ease-in-out pointer pop mr-2 muted m-auto account-header" %>
+              <div>
+                <p class="m0">
+                  <strong><%= account.first_name %> <%= account.last_name %></strong>
+                  &middot;
+                  <span><%= account.username %></span><span class="muted"><%= account.at_domain %></span>
+                </p>
+                <p class="secondary m0 text-sm">
+                  <% if account.suspended? %>
+                    <%= status_badge :error %>
+                    <span>Suspended.</span>
+                  <% elsif account.initial_password.present? %>
+                    <%= status_badge :success %>
+                    <span>Active.</span>
+                  <% else %>
+                    <%= status_badge :pending %>
+                    <span><%= account.status %>.</span>
+                  <% end %>
+                  <% if admin_signed_in? || account.backup_email == current_user&.email %>
+                    <span>Backup email: <%= content_tag :code, account.backup_email %></span>
+                  <% end %>
+                </p>
+              </div>
+            </div>
+            <action type="button" class="pop menu__toggle" data-behavior="menu_toggle" aria-expanded="false" tabindex="0">
+              <%= inline_icon "more" %>
+              <div class="menu__content" data-behavior="menu_content">
+                <% if account.accepted? && organizer_signed_in? %>
+                <%= link_to "Reset password",
+                    g_suite_account_reset_password_path(account.id),
+                    method: :put,
+                    class: ("disabled" unless policy(account).reset_password?),
+                    'data-confirm': "Reset the account password for #{account.address}? We’ll email a new password to the backup email." %>
+                <%= link_to (account.suspended? ? "Re-activate" : "Suspend"),
+                    g_suite_account_toggle_suspension_path(account.id),
+                    method: :put,
+                    class: ("disabled" unless policy(account).toggle_suspension?),
+                    'data-confirm': "Do you really want to #{account.suspended? ? 're-activate' : 'suspend'} #{account.address}?" %>
+                <% end %>
+                <%= link_to "Delete",
+                  account,
+                  method: :delete,
+                  'data-confirm': "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Think carefully before you click ok.",
+                  class: "admin-tools" if admin_signed_in? %>
+              </div>
+            </action>
           </div>
-        </action>
-      </li>
-    <% end %>
-  </ul>
-<% else %>
-  <p class="secondary">You can’t see or edit Google Workspace accounts in Transparency Mode.</p>
-<% end %>
+          <section data-behavior="autohide" class="account-aliases mx-8">
+            <% if account.g_suite_aliases.present? %>
+              <ul class="list list--row list--unlinked my-0">
+                <% account.g_suite_aliases.each do |al| %>
+                  <li class="flex items-center alias-container mx-3 my-1" style="padding: 0px">
+                    <div class="mr-2">
+                      <p class="m0">
+                        <span><%= al.username %></span><span class="muted"><%= al.at_domain %></span>
+                      </p>
+                    </div>
+                    <%= form_with(url: g_suite_alias_path(id: al.id), method: :delete, data: { turbo: false }, disabled: !policy(account).destroy?) do |form| %>
+                      <div class="flex flex-row justify-between m-auto">
+                        <%= form.hidden_field :g_suite_alias_id, value: al.id %>
+                        <div class="actions m-2 ml-0">
+                          <%= form.button nil, class: "pop error pointer alias-delete" do %>
+                            <%= inline_icon "view-close", size: home_action_size %>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <div class="my-1">
+                <%= blankslate "No aliases yet. Add one below!" %>
+              </div>
+            <% end %>
+            <div class="flex flex-col justify-between">
+              <div class="flex alias-creation">
+                <% if account.g_suite_aliases.count < 30 && policy(account).create? %>
+                  <div
+                    class="pop success pointer tooltipped tooltipped--e line-height-0 m-2 alias-new"
+                    aria-label="Create Alias">
+                    <%= inline_icon "plus", size: home_action_size %>
+                  </div>
+                <% else %>
+                  <div
+                    class="tooltipped tooltipped--e"
+                    aria-label="<%= account.g_suite_aliases.count >= 30 ? "You can’t create more than 30 aliases." : "You don't have permission to create aliases." %>">
+                    <div class="pop success line-height-0 m-2 disabled" disabled>
+                      <%= inline_icon "plus", size: home_action_size %>
+                    </div>
+                  </div>
+                <% end %>
+                <p class="m-auto muted"><%= 30 - account.g_suite_aliases.count %> / 30 aliases remaining</p>
+              </div>
+              <div class="alias-form" data-behavior="autohide">
+                <%= form_with(url: g_suite_account_g_suite_aliases_path(g_suite_account_id: account.id), method: :post, data: { turbo: false }) do |form| %>
+                  <div class="flex flex-row m-auto">
+                    <div class="field m-2">
+                      <div class="flex items-center">
+                        <%= form.text_field :address, class: "input--narrow right-align", required: true, disabled: !policy(account).create? %>
+                        <span class="mx-2 muted">@<%= account.g_suite.domain %></span>
+                      </div>
+                    </div>
+                    <%= form.hidden_field :g_suite_account_id, value: account.id %>
+                    <div class="flex">
+                      <div class="actions m-auto mr-2 tooltipped tooltipped--e line-height-0" aria-label="Create Alias">
+                        <%= form.button nil, class: "pop success pointer alias-save" do %>
+                          <%= inline_icon "checkmark", size: home_action_size %>
+                        <% end %>
+                      </div>
+                      <div
+                        class="pop error pointer tooltipped tooltipped--e line-height-0 m-auto alias-cancel"
+                        aria-label="Cancel">
+                        <%= inline_icon "view-close", size: home_action_size %>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </section>
+        </div>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="secondary">You can’t see or edit Google Workspace accounts in Transparency Mode.</p>
+  <% end %>
 <% end %>
 
 <%= render "g_suite_accounts/new", g_suite_account: GSuiteAccount.new(g_suite: @g_suite) %>

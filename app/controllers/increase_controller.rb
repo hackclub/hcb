@@ -24,16 +24,12 @@ class IncreaseController < ApplicationController
     end
 
   rescue Increase::WebhookSignatureVerificationError => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     render json: { error: "Webhook signature verification failed" }, status: :bad_request
   end
 
   private
-
-  def handle_transaction_created(event)
-    # TODO: handle transaction created
-  end
 
   def handle_check_transfer_updated(event)
     increase_check = Increase::CheckTransfers.retrieve event["associated_object_id"]
@@ -41,14 +37,6 @@ class IncreaseController < ApplicationController
       increase_status: increase_check["status"],
       check_number: increase_check["check_number"],
       increase_object: increase_check,
-    )
-  end
-
-  def handle_check_deposit_updated(event)
-    check_deposit = Increase::CheckDeposits.retrieve event["associated_object_id"]
-    CheckDeposit.find_by(increase_id: check_deposit["id"])&.update(
-      increase_status: check_deposit["status"],
-      rejection_reason: check_deposit.dig("deposit_rejection", "reason")
     )
   end
 

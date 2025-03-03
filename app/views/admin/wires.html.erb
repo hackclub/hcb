@@ -1,0 +1,46 @@
+<% title "Wires" %>
+
+<%= form_with local: true, url: wires_admin_index_path, method: :get do |form| %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <%= form.submit "Search" %>
+<% end %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @wires, entry_name: "transfers" %>
+  </div>
+  <%= paginate @wires %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-24">ID</th>
+      <th class="w-32">Date</th>
+      <th>Event</th>
+      <th>Recipient</th>
+      <th class="w-32">Amount</th>
+      <th>Status</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @wires.each do |wire| %>
+      <tr class="<%= "admin-bg-pending" if wire.pending? %>">
+        <td><%= wire.id %></td>
+        <td><%= wire.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= wire.event.name %></td>
+        <td><%= wire.recipient_name %></td>
+        <td><%= Money.from_cents(wire.amount_cents, wire.currency).format %></td>
+        <td><%= wire.aasm.human_state %></td>
+        <td>
+          <%= link_to "View", hcb_code_path(wire.hcb_code) %>
+          <%= link_to "Process", wire_process_admin_path(wire) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @wires %>

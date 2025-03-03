@@ -29,6 +29,10 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
     admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
   end
 
+  def resend?
+    admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
+  end
+
   def toggle_signee_status?
     user&.admin?
   end

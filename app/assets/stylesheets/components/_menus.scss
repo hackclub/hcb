@@ -225,6 +225,11 @@
   padding: 0.25rem 0.5rem !important;
 }
 
+.menu__content--switcher > a,
+.menu__content--switcher .menu__action {
+  padding: 0.5rem !important;
+}
+
 .menu__divider {
   display: block;
   position: relative;

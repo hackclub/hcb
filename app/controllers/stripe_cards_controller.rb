@@ -9,12 +9,10 @@ class StripeCardsController < ApplicationController
     authorize @cards
   end
 
-  # async frame for shipment tracking
   def shipping
     # Only show shipping for phyiscal cards if the eta is in the future (or 1 week after)
-    @stripe_cards = current_user.stripe_cards.physical_shipping.reject do |sc|
-      eta = sc.stripe_obj[:shipping][:eta]
-      !eta || Time.at(eta) < 1.week.ago
+    @stripe_cards = current_user.stripe_cards.where.not(stripe_status: "canceled").physical_shipping.filter do |sc|
+      sc.shipping_eta&.after?(1.week.ago)
     end
     skip_authorization # do not force pundit
 
@@ -104,8 +102,7 @@ class StripeCardsController < ApplicationController
     end
 
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Birthday is required" } if current_user.birthday.nil?
-    return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Organization is in Playground Mode" } if event.demo_mode?
-    return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Invalid country" } unless %w(US CA).include? sc[:stripe_shipping_address_country]
+    return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Invalid country" } unless sc[:stripe_shipping_address_country] == "US"
 
     new_card = ::StripeCardService::Create.new(
       current_user:,
@@ -124,7 +121,7 @@ class StripeCardsController < ApplicationController
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     redirect_to event_cards_new_path(event), flash: { error: e.message }
   end
@@ -144,6 +141,19 @@ class StripeCardsController < ApplicationController
       flash[:error] = card.errors.full_messages.to_sentence || "Card's name could not be updated"
     end
 
+    redirect_to stripe_card_url(card)
+  end
+
+  def enable_cash_withdrawal
+    card = StripeCard.find(params[:id])
+    authorize card
+    card.toggle!(:cash_withdrawal_enabled)
+    if card.cash_withdrawal_enabled?
+      confetti!(emojis: %w[💵 💴 💶 💷])
+      flash[:success] = "You've enabled cash withdrawals for this card."
+    else
+      flash[:success] = "You've disabled cash withdrawals for this card."
+    end
     redirect_to stripe_card_url(card)
   end
 

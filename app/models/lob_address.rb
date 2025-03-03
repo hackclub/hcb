@@ -27,32 +27,16 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class LobAddress < ApplicationRecord
+  # [@garyhtou] This model is deprecated and now read-only.
+  after_initialize :readonly!
+  # LobAddress was last used March 2023 when we used Lob (lob.com) to print and
+  # mail checks.
+
   has_many :checks
   belongs_to :event
 
-  before_create :default_values
-
-  def set_fields_from_lob_address(lob_address)
-    self.description = lob_address["description"]
-    self.name = lob_address["name"]
-    self.address1 = lob_address["address_line1"]
-    self.address2 = lob_address["address_line2"]
-    self.city = lob_address["address_city"]
-    self.state = lob_address["address_state"]
-    self.zip = lob_address["address_zip"]
-    self.country = lob_address["address_country"]
-    self.lob_id = lob_address["id"]
-  end
-
   def address_text
     "#{address1} #{address2} - #{city}, #{state} #{zip}"
-  end
-
-  private
-
-  def default_values
-    self.country = "US"
-    self.description = "#{name} - #{address1}"
   end
 
 end

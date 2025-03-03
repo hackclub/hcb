@@ -34,42 +34,65 @@ class PaypalTransfer < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
 
   include AASM
+  include Payoutable
 
   belongs_to :event
   belongs_to :user
 
   has_one :canonical_pending_transaction
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :paypal_transfer, required: false
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
 
   monetize :amount_cents, as: "amount"
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  validate on: :create do
+    errors.add(:base, "Due to integration issues, transfers via PayPal are currently unavailable.")
+  end
+
   after_create do
-    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "OUTGOING PAYPAL TRANSFER", date: created_at)
+    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "PayPal transfer to #{recipient_name}".strip.upcase, date: created_at)
   end
 
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
     state :rejected
+    state :failed
     state :deposited
 
     event :mark_approved do
       transitions from: :pending, to: :approved
+      after do
+        employee_payment.mark_paid! if employee_payment.present?
+      end
     end
 
     event :mark_rejected do
+      transitions from: :pending, to: :rejected do
+        guard do
+          reimbursement_payout_holding.nil? # these should be marked as failed.
+        end
+      end
       after do
         canonical_pending_transaction.decline!
         create_activity(key: "paypal_transfer.rejected")
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
-      transitions from: [:pending, :approved], to: :rejected
+    end
+
+    event :mark_failed do
+      transitions from: [:pending, :approved], to: :failed
       after do
+        canonical_pending_transaction.decline!
+        create_activity(key: "paypal_transfer.failed")
         if reimbursement_payout_holding.present?
           ReimbursementMailer.with(reimbursement_payout_holding:).paypal_transfer_failed.deliver_later
           reimbursement_payout_holding.mark_failed!
+        elsif employee_payment.present?
+          employee_payment.mark_failed!(reason: "The PayPal account information was invalid.")
         end
       end
     end
@@ -82,6 +105,7 @@ class PaypalTransfer < ApplicationRecord
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
 
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
 

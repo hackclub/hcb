@@ -5,8 +5,9 @@
 <% location ||= "hcb_code_show_page" %>
 <% renamed ||= false %>
 <% disabled ||= false %>
+<% organizer_signed_in = current_user && (organizer_signed_in?(@event || hcb_code.event) || (hcb_code.events && organizer_signed_in?(hcb_code.events.last))) %>
 
-<% if (organizer_signed_in?(@event || hcb_code.event) && (@event || hcb_code.event) || force_display_details) && !(@event || hcb_code.event)&.demo_mode? %>
+<% if (organizer_signed_in && (@event || hcb_code.event) || force_display_details) && !(@event || hcb_code.event)&.demo_mode? %>
   <%= turbo_frame_tag "#{location}:#{dom_id(hcb_code)}:memo", style: "flex-grow: 1"  do %>
     <% if form %>
         <%= form_with model: hcb_code, class: "renaming", data: { turbo: true, controller: "form" } do |form| %>
@@ -19,14 +20,15 @@
                                 list: "custom-memos",
                                 placeholder: hcb_code.memo,
                                 autofocus: true,
-                                data: { controller: "input", input_target: "input", action: "focus->input#select blur->form#submit" },
+                                defaultValue: hcb_code.memo,
+                                data: { controller: "input", input_target: "input", action: "focus->input#select blur->form#submit keydown->form#keydown" },
                                 class: "bg-transparent fit",
                                 style: "border: none; outline: none; padding: 0; border-radius: 0; min-height: 0; margin-top: 5px; margin-bottom: 3px; width: 100%" %>
           </div>
         <% end %>
 
     <% else %>
-      <% details_link = hcb_code.card_grant? ? spending_card_grant_path(hcb_code.disbursement.card_grant) : hcb_code.url %>
+      <% details_link = hcb_code.card_grant? ? spending_card_grant_path(hcb_code.disbursement.card_grant) : url_for(hcb_code) %>
       <% modal = hcb_code.card_grant? ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
       <% contents = capture do %>
         <span class="<%= "renamed" if renamed %>"
@@ -45,7 +47,7 @@
             </span>
         </span>
       <% end %>
-      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
+      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit", class: "no-underline hover:underline", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
       <% if renamed %>
         <%= render "hcb_codes/memo_stream", hcb_code: %>
       <% end %>

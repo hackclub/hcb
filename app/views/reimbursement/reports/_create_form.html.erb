@@ -1,4 +1,4 @@
-<section data-behavior="modal" role="dialog" id="<%= defined?(receipt) ? "create_#{receipt.id}" : "create" %>" class="modal modal--scroll bg-snow">
+<section data-behavior="modal" role="dialog" id="<%= defined?(receipt) ? "create_#{receipt.id}" : defined?(modal_id) ? modal_id : "create_reimbursement_report" %>" class="modal modal--scroll bg-snow">
   <%= form_with(model: Reimbursement::Report, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
     <% if defined?(receipt) %>
       <%= modal_header "Get reimbursed" %>
@@ -14,7 +14,7 @@
       <%= form.label :report_name, "Report name", class: "bold" %>
       <%= form.text_field :report_name, placeholder: "Chicago Trip Expenses", required: true %>
     </div>
-    <% if defined? @event %>
+    <% if @event %>
       <fieldset data-behavior="reimbursement_report_create_form_type_selection" class="field">
         <legend class="bold">Who is this reimbursement for?</legend>
         <div class="field field--options <%= "trio" if @event.users.excluding(current_user).any? %> pt1 mb0">
@@ -52,7 +52,7 @@
           <div class="field">
             <div class="flex items-center">
               <span class="bold muted" style="width: 1rem;">$</span>
-              <%= form.number_field :maximum_amount, placeholder: "500.00", step: 0.01, min: 0.01, required: false, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+              <%= form.number_field :maximum_amount, placeholder: "500.00", step: 0.01, min: 0.01, required: false, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
             </div>
           </div>
         </div>
@@ -73,7 +73,7 @@
         <div class="flex items-center">
           <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
           <div class="ml1">
-            <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+            <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
           </div>
         </div>
         <div class="mt2">

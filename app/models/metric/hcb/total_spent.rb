@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module Hcb
@@ -23,7 +24,7 @@ class Metric
 
       def calculate
         CanonicalTransaction.included_in_stats
-                            .where(date: Date.new(2023, 1, 1)..Date.new(2023, 12, 31))
+                            .where(date: Date.new(2024, 1, 1)..Date.new(2024, 12, 31))
                             .expense
                             .sum(:amount_cents)
       end

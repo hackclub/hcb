@@ -14,8 +14,8 @@ module UserService
 
       body = {
         email: @user.email,
-        firstName: @user.first_name(legal: true),
-        lastName: @user.last_name(legal: true),
+        firstName: @user.first_name,
+        lastName: @user.last_name,
         hcbSignedUpAt: format_unix(@user.created_at),
         birthday: format_unix(@user.birthday),
         hcbLastSeenAt: format_unix(@user.last_seen_at),
@@ -27,7 +27,7 @@ module UserService
       }.compact_blank
 
       body[:userGroup] = @user.teenager? ? "Hack Clubber" : "HCB Adult"
-      body[:subscribed] = true if @new_user || @contact_details.nil?
+      body[:subscribed] = true if @contact_details.nil?
       body[:source] = "HCB" if @contact_details.nil?
 
       body.merge!(billing_address)

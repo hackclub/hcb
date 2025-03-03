@@ -5,6 +5,10 @@ class DonationPolicy < ApplicationPolicy
     record.event.users.include?(user) || user&.admin?
   end
 
+  def create?
+    record.event.users.include?(user) || user&.admin?
+  end
+
   def start_donation?
     record.event.donation_page_available?
   end

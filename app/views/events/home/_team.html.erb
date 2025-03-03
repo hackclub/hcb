@@ -1,0 +1,46 @@
+<% if @organizers.any? %>
+  <div class="card card--breakdown shadow-none flex flex-col p-0 pb-4 sm:h-[150px]" style="height:auto">
+    <div class="p-2 pl-0 sm:p-4 flex items-center justify-between">
+      <h3 class="m-0">Team members</h3>
+      <%= link_to event_team_path(@event), class: "flex items-center shrink-0 no-underline" do %>
+        See all
+        <%= inline_icon "view-forward" %>
+      <% end %>
+    </div>
+    <div class="flex gap-3 w-full w-100 py-2 sm:pt-0 px-4 avatar-row avatar-row--no-transform" style="padding-left: 25px">
+      <% @organizers.first(@organizers.length == 12 ? 12 : 11).each do |position| %>
+        <div style="transform:none" class="avatar-grow line-height-0 tooltipped tooltipped--e" aria-label="<%= position.user == current_user ? current_user_flavor_text.sample : position.user.name %>">
+          <%= avatar_for position.user, 40, { style: "margin-left: -10px" } %>
+        </div>
+      <% end %>
+      <% if @organizers.length > 12 %>
+        <div style="transform:none;width:40px;height:40px;margin-left:-10px;z-index:1" class="bg-muted flex items-center justify-center rounded-full avatar-grow">
+          +<%= @organizers.length - 11 %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+<% else %>
+  <div class="card card--breakdown shadow-none p-0 flex-1 flex items-center justify-center text-center sm:text-left ">
+    <div class="p-4 flex gap-2 flex-col sm:flex-row gap-8 flex-1 items-center justify-center">
+      <div>
+        <h3 class="mb-1 mt-2">No team members yet</h3>
+        <p class="m-0 mb-1 muted">
+          <%= policy(@event).can_invite_user? ? "Invite some organizers to help you out!" : "As members join this team, they'll appear here" %>
+        </p>
+      </div>
+      <% if policy(@event).can_invite_user? %>
+        <%= link_to "Invite", event_team_path(@event), class: "btn", data: { "tour-step" => "invite", behavior: "modal_trigger", "modal": "invite_member" } %>
+      <% end %>
+    </div>
+  </div>
+  <% if policy(@event).can_invite_user? %>
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
+      <%= modal_header "Invite a team member" %>
+      <div>
+        <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
+      </div>
+    </section>
+  <% end %>
+<% end %>

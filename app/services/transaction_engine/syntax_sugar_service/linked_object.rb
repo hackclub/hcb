@@ -23,6 +23,8 @@ module TransactionEngine
           return likely_increase_ach if increase_ach?
           return likely_column_ach if column_ach?
 
+          return likely_column_wire if column_wire?
+
           return likely_invoice if incoming_invoice?
 
           return likely_invoice_or_donation_for_fee_refund if fee_refund?
@@ -38,6 +40,8 @@ module TransactionEngine
           return reimbursement_payout_holding if reimbursement_payout_holding
 
           return paypal_transfer if paypal_transfer
+
+          return wire if wire
 
           nil
         end
@@ -116,6 +120,11 @@ module TransactionEngine
         return AchTransfer.find_by(column_id: column_ach_transfer_id)
       end
 
+      def likely_column_wire
+        column_wire_id = @canonical_transaction.raw_column_transaction&.column_transaction&.dig("transaction_id")
+        return Wire.find_by(column_id: column_wire_id)
+      end
+
       def likely_invoice
         return nil unless event
 
@@ -166,6 +175,10 @@ module TransactionEngine
 
       def paypal_transfer
         @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == PaypalTransfer.name
+      end
+
+      def wire
+        @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == Wire.name
       end
 
       def event

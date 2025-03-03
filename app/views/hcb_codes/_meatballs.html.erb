@@ -1,9 +1,10 @@
 <% is_pinned = hcb_code.pin.present? %>
 <% pinnable = hcb_code.pinnable? %>
 <% flagable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && !hcb_code.personal_transaction.present? %>
+<% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
 
-<% if disputable || flagable || pinnable %>
+<% if disputable || flagable || pinnable || open_invoice %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
@@ -11,7 +12,7 @@
         data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
     <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
       <% if pinnable %>
-        <%= link_to pin_hcb_code_path(hcb_code), method: :post, class: "flex items-center", data: { confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
+        <%= link_to pin_hcb_code_path(hcb_code, event: @event), method: :post, class: "flex items-center", data: { confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
           <%= inline_icon "pin-fill", size: 24 %>
           <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
         <% end %>
@@ -22,6 +23,12 @@
           Flag as personal transaction
         <% end %>
       <% end %>
+      <% if open_invoice %>
+        <%= link_to "#", data: { behavior: "modal_trigger", modal: "manually_mark_as_paid" }, class: "flex items-center" do %>
+          <%= inline_icon "checkmark", size: 24 %>
+          Manually mark as paid
+        <% end %>
+      <% end %>
       <% if disputable %>
         <%= link_to dispute_hcb_code_path(hcb_code), target: "_blank" do %>
           <%= inline_icon "flag-fill", size: 24 %>
@@ -30,4 +37,18 @@
       <% end %>
     </div>
   </div>
+<% end %>
+
+<% if open_invoice %>
+  <section data-behavior="modal" role="dialog" id="manually_mark_as_paid" class="modal modal--scroll bg-snow">
+    <%= modal_header "Mark as paid" %>
+    <p>
+      This will void the invoice; only use this tool if the sponsor has paid this invoice through alternative means.
+      <span class="bold">Please provide context about how this invoice was paid below:</span>
+    </p>
+    <%= form_with url: invoice_manually_mark_as_paid_path(hcb_code.invoice), method: :POST do |form| %>
+      <%= form.text_area :manually_marked_as_paid_reason, class: "card mb2 overflow-visible", placeholder: "This was paid by…", "data-behavior": "ctrl_enter_submit", style: "min-height: 100px", required: true %>
+      <%= form.submit "Mark as paid" %>
+    <% end %>
+  </section>
 <% end %>

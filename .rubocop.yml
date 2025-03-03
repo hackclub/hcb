@@ -177,9 +177,10 @@ Rails/RequestReferer:
 
 Rails/ApplicationController:
   Exclude:
-    - 'app/controllers/docs_controller.rb'
+    - 'app/controllers/docs/api_controller.rb'
     - 'app/controllers/stripe_controller.rb'
     - 'app/controllers/twilio_controller.rb'
+    - 'app/controllers/docuseal_controller.rb'
     - 'app/controllers/column/webhooks_controller.rb'
 
 Rails/HasAndBelongsToMany:

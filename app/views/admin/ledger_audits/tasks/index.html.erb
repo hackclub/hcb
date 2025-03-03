@@ -1,6 +1,6 @@
 <%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
 
-<h3>Transactions Flagged During Ledger Audits (<%= @tasks.count %> unresolved)</h3>
+<h3>Transactions Flagged During Ledger Audits (<%= Admin::LedgerAudit::Task.flagged.count %> unresolved)</h3>
 
 <div>
   <table>
@@ -18,7 +18,7 @@
     <tbody>
       <% @tasks.each do |task| %>
         <% hcb_code = task.hcb_code %>
-        <tr class="<%= hcb_code.event.hack_club_hq? ? "admin-bg-red" : "" %>">
+        <tr class="<%= hcb_code.event.plan.is_a?(Event::Plan::HackClubAffiliate) ? "admin-bg-red" : "" %>">
           <td><%= hcb_code.created_at.strftime("%Y-%m-%d") %></td>
           <td>
             <span style="display: flex; align-items: center; gap: 8px;">
@@ -51,9 +51,9 @@
 
   <% @tasks.each do |task| %>
     <% hcb_code = task.hcb_code %>
-    <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="hcb_code_details_<%= hcb_code.id %>">
-      <%= modal_header(hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount)), external_link: hcb_code.url) %>
-      <%= async_frame_to hcb_code.popover_url, as: :span, lazy: true do %>
+    <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="hcb_code_details_<%= hcb_code.id %>" data-state-url="<%= hcb_code_path(hcb_code) %>" data-state-title="<%= hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount)) %>">
+      <%= modal_header(hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount)), external_link: url_for(hcb_code)) %>
+      <%= turbo_frame_tag hcb_code.public_id, src: hcb_code.popover_path, loading: :lazy do %>
         <div class="shimmer mb1 mt3">
           <div class="shimmer__border"></div>
           <div class="shimmer__main">
@@ -112,6 +112,8 @@
       <% end %>
     </section>
   <% end %>
+
+  <%= paginate @tasks %>
 
   <style>
     form, input {

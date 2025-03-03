@@ -37,6 +37,12 @@
 #  fk_rails_...  (lob_address_id => lob_addresses.id)
 #
 class Check < ApplicationRecord
+  # [@garyhtou] This model is deprecated and now read-only.
+  after_initialize :readonly!
+  # This `Check` model was used to print and mail checks via Lob (lob.com).
+  # Since March 2023, we have since switched to Increase, and then Column.
+  # The new model is `IncreaseCheck`.
+
   has_paper_trail skip: [:description] # ciphertext columns will still be tracked
   has_encrypted :description
 
@@ -44,7 +50,6 @@ class Check < ApplicationRecord
   set_public_id_prefix :chk
 
   include AASM
-  include Commentable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, associated_against: { lob_address: :name, event: :name }, against: [:memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "checks.created_at"
@@ -56,10 +61,6 @@ class Check < ApplicationRecord
   accepts_nested_attributes_for :lob_address
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :check
-
-  validates :amount, numericality: { greater_than: 0, message: "must be greater than 0" }
-  validates :send_date, presence: true
-  validate :send_date_must_be_in_future, on: :create
 
   scope :in_transit_or_in_transit_and_processed, -> { where("aasm_state in (?)", ["in_transit", "in_transit_and_processed"]) }
 
@@ -106,10 +107,6 @@ class Check < ApplicationRecord
     local_hcb_code.has_pending_expired?
   end
 
-  def can_cancel?
-    scheduled? # only scheduled checks can be canceled (not yet created on lob)
-  end
-
   def state_text
     status.to_s.humanize
   end
@@ -152,10 +149,6 @@ class Check < ApplicationRecord
   end
 
 
-  def self.refunded_but_needs_match
-    select { |check| check.refunded_at.present? && check.t_transactions.size != 4 }
-  end
-
   # Can be ready to refund
   def pending_void?
     approved? && voided_at.present? && !deposited? && !voided?
@@ -166,18 +159,9 @@ class Check < ApplicationRecord
     !refunded_at.present? && voided_at && voided_at + 1.day < DateTime.now && !deposited?
   end
 
-  # Refunded & needs refund transactions attached
-  def refunded_but_needs_match?
-    refunded_at.present? && t_transactions != 4
-  end
-
   # Void requested & check deposited before it could go through
   def failed_void?
     approved? && voided_at.present? && t_transactions.size == 3 && t_transactions.sum(&:amount) < 0
-  end
-
-  def state_icon
-    "checkmark" if deposited?
   end
 
   def admin_dropdown_description

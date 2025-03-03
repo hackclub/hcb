@@ -14,11 +14,11 @@ class StripeController < ActionController::Base
       StatsD.measure("StripeController.#{method}") { self.send method, event }
     rescue JSON::ParserError => e
       head :bad_request
-      notify_airbrake(e)
+      Rails.error.report(e)
       return
     rescue NoMethodError => e
       puts e
-      notify_airbrake(e)
+      Rails.error.report(e)
       head :ok # success so that stripe doesn't retry (method is unsupported by HCB)
       return
     rescue Stripe::SignatureVerificationError
@@ -58,7 +58,9 @@ class StripeController < ActionController::Base
     StatsD.increment("stripe_webhook_timeout", 1) if is_closed && has_timeout
 
     rpst = PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction: event[:data][:object]).run
-    PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
+
+    # this has been commented out due to a suspected race condition
+    # PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
 
     head :ok
   end
@@ -68,8 +70,6 @@ class StripeController < ActionController::Base
     amount = tx[:amount]
     return unless amount < 0
 
-    TopupStripeJob.perform_later
-
     head :ok
   end
 
@@ -77,13 +77,6 @@ class StripeController < ActionController::Base
     card = StripeCard.find_by(stripe_id: event[:data][:object][:id])
     card.sync_from_stripe!
     card.save
-
-    head :ok
-  end
-
-  def handle_charge_succeeded(event)
-    charge = event[:data][:object]
-    ::PartnerDonationService::HandleWebhookChargeSucceeded.new(charge).run
 
     head :ok
   end
@@ -218,11 +211,15 @@ class StripeController < ActionController::Base
     return unless event.data.object.metadata[:donation].present?
 
     # get donation to process
-    donation = Donation.find_by_stripe_payment_intent_id(event.data.object.id)
+    donation = event.data.object.metadata[:donation_id].present? ? Donation.find_by_public_id(event.data.object.metadata[:donation_id]) : Donation.find_by_stripe_payment_intent_id(event.data.object.id)
+
+    unless donation.stripe_payment_intent_id.present?
+      donation.update(stripe_payment_intent_id: event.data.object.id)
+    end
 
     pi = StripeService::PaymentIntent.retrieve(
       id: donation.stripe_payment_intent_id,
-      expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"]
+      expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction", "latest_charge.payment_method_details"]
     )
     donation.set_fields_from_stripe_payment_intent(pi)
     donation.save!
@@ -248,31 +245,6 @@ class StripeController < ActionController::Base
     )
     donation.set_fields_from_stripe_payment_intent(pi)
     donation.save!
-  end
-
-  def handle_source_transaction_created(event)
-    stripe_source_transaction = event.data.object
-    source = StripeAchPaymentSource.find_by(stripe_source_id: stripe_source_transaction.source)
-
-    return unless source
-
-    charge = source.charge!(stripe_source_transaction.amount)
-
-    ach_payment = source.ach_payments.create(
-      stripe_source_transaction_id: stripe_source_transaction.id,
-      stripe_charge_id: charge.id,
-    )
-
-    ach_payment.create_stripe_payout!
-    ach_payment.create_fee_reimbursement!
-
-    CanonicalPendingTransaction.create(
-      date: Time.at(stripe_source_transaction.created).to_date,
-      event: source.event,
-      amount_cents: stripe_source_transaction.amount,
-      memo: "Bank transfer",
-      ach_payment:
-    )
   end
 
   def handle_payout_updated(event)
@@ -301,7 +273,7 @@ class StripeController < ActionController::Base
     design.sync_from_stripe!
 
     if design.event&.stripe_card_logo&.attached? # if the logo is no longer attached it's already been rejected.
-      StripeCardMailer.with(event: design.event, reason: event.data.object["rejection_reasons"]["card_logo"].first).design_rejected.deliver_later
+      StripeCard::PersonalizationDesignMailer.with(event: design.event, reason: event.data.object["rejection_reasons"]["card_logo"].first).design_rejected.deliver_later
       design.event.stripe_card_personalization_designs.update(stale: true)
       design.event.stripe_card_logo.delete
     end
@@ -310,11 +282,11 @@ class StripeController < ActionController::Base
   alias_method :handle_issuing_personalization_design_activated, :handle_issuing_personalization_design_updated
   alias_method :handle_issuing_personalization_design_deactivated, :handle_issuing_personalization_design_updated
 
-  def handle_issuing_dispute_funds_reinstated
+  def handle_issuing_dispute_funds_reinstated(event)
     dispute = event.data.object
     transaction = Stripe::Issuing::Transaction.retrieve(dispute["transaction"])
     hcb_code = RawPendingStripeTransaction.find_by!(stripe_transaction_id: transaction["authorization"]).canonical_pending_transaction.local_hcb_code
-    if dispute["status"] == "won" && dispute["currency"] == "USD"
+    if dispute["status"] == "won" && dispute["currency"] == "usd"
       StripeService::Payout.create(
         amount: dispute["amount"],
         currency: dispute["currency"],
@@ -328,9 +300,13 @@ class StripeController < ActionController::Base
       )
     elsif dispute["status"] != "won"
       Airbrake.notify("Dispute with funds reinstated but without a win: #{dispute["id"]}")
-    elsif dispute["status"] != "USD"
+    elsif dispute["currency"] != "usd"
       Airbrake.notify("Dispute with funds reinstated but non-USD currency. Must be manually handled.")
     end
+  end
+
+  def handle_refund_failed(event)
+    Airbrake.notify("Refund failed on Stripe: #{event}.")
   end
 
 end

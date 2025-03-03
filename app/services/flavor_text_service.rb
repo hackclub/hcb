@@ -17,7 +17,7 @@ class FlavorTextService
     return @random.rand > 0.5 ? spooky_flavor_texts.sample(random: @random) : flavor_texts.sample(random: @random) if fall? # ~50% chance of spookiness
     return birthday_flavor_texts.sample(random: @random) if @user&.birthday?
 
-    in_frc_team = @user&.events&.exists?(category: Event.categories["robotics team"])
+    in_frc_team = @user&.events&.robotics_team&.any?
 
     if in_frc_team
       flavor_text = (flavor_texts + frc_flavor_texts).sample(random: @random)
@@ -508,6 +508,7 @@ class FlavorTextService
       "original recipe!",
       "now sugar-free!",
       "low-sodium edition",
+      'we put the ":3" in "501(c)3"!',
     ]
   end
 

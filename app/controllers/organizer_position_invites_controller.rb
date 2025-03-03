@@ -2,8 +2,9 @@
 
 class OrganizerPositionInvitesController < ApplicationController
   include SetEvent
+  include ChangePositionRole
 
-  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :toggle_signee_status]
+  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :toggle_signee_status, :resend]
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
@@ -31,6 +32,7 @@ class OrganizerPositionInvitesController < ApplicationController
     authorize @invite
 
     if service.run
+      OrganizerPosition::Contract.create(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence) if @invite.is_signee && Flipper.enabled?(:organizer_position_contracts_2025_01_03, @invite.event)
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
     else
@@ -42,7 +44,7 @@ class OrganizerPositionInvitesController < ApplicationController
     # If the user's not signed in, redirect them to login page
     unless signed_in?
       skip_authorization
-      return redirect_to auth_users_path(email: @invite.user.email, return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }
+      return redirect_to auth_users_path(return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }
     end
 
     authorize @invite
@@ -63,7 +65,7 @@ class OrganizerPositionInvitesController < ApplicationController
     if @invite.accept
       redirect_to @invite.event
     else
-      flash[:error] = "Failed to accept"
+      flash[:error] = @invite.pending_signature? ? "Invite requires contract to be signed" : "Failed to accept"
       redirect_to @invite
     end
   end
@@ -92,32 +94,21 @@ class OrganizerPositionInvitesController < ApplicationController
     end
   end
 
+  def resend
+    authorize @invite
+
+    @invite.deliver
+
+    flash[:success] = "Invite successfully resent to #{@invite.user.email}"
+    redirect_to event_team_path @invite.event
+  end
+
   def toggle_signee_status
     authorize @invite
     unless @invite.update(is_signee: !@invite.is_signee?)
       flash[:error] = @invite.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
     end
     redirect_back(fallback_location: event_team_path(@invite.event))
-  end
-
-  def change_position_role
-    organizer_position_invite = OrganizerPositionInvite.find(params[:id])
-    authorize organizer_position_invite
-
-    was = organizer_position_invite.role
-    to = params[:to]
-
-    if was != to
-      organizer_position_invite.update!(role: to)
-
-      flash[:success] = "Changed #{organizer_position_invite.user.name}'s role from #{was} to #{to}."
-    end
-
-  rescue => e
-    Airbrake.notify(e)
-    flash[:error] = organizer_position_invite&.errors&.full_messages&.to_sentence.presence || "Failed to change the role."
-  ensure
-    redirect_back(fallback_location: event_team_path(organizer_position_invite.event))
   end
 
   private
@@ -127,7 +118,10 @@ class OrganizerPositionInvitesController < ApplicationController
   end
 
   def invite_params
-    params.require(:organizer_position_invite).permit(:email, :is_signee, :role, :enable_controls, :initial_control_allowance_amount)
+    permitted_params = [:email, :role, :enable_controls, :initial_control_allowance_amount]
+    permitted_params << :cosigner_email if admin_signed_in?
+    permitted_params << :is_signee if admin_signed_in?
+    params.require(:organizer_position_invite).permit(permitted_params)
   end
 
 end

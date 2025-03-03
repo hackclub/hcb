@@ -38,6 +38,16 @@
         <td><%= link_to @paypal_transfer.reimbursement_payout_holding.report.name, @paypal_transfer.reimbursement_payout_holding.report %></td>
       </tr>
     <% end %>
+    <% if @paypal_transfer.employee_payment.present? %>
+      <tr>
+        <td style="text-align: right;">Employee:</td>
+        <td><%= @paypal_transfer.employee_payment.employee.user.name %></td>
+      </tr>
+      <tr>
+        <td style="text-align: right;">Event:</td>
+        <td><%= @paypal_transfer.employee_payment.employee.event.name %></td>
+      </tr>
+    <% end %>
     <tr>
       <td style="text-align: right;">Amount:</td>
       <td><%= render_money @paypal_transfer.amount %></td>
@@ -49,10 +59,23 @@
 
 <hr>
 
-<% if @paypal_transfer.pending? %>
+<p>This transfer's status is <b><%= @paypal_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
+
+<% if @paypal_transfer.may_mark_approved? %>
   <%= button_to "💸 Approve and send transfer", approve_paypal_transfer_path(@paypal_transfer), method: :post, data: { confirm: "Have you manually sent this transfer? HCB doesn't programmatically send PayPal transfers." } %>
-  <%= button_to "Reject", reject_paypal_transfer_path(@paypal_transfer) %>
-<% else %>
-  <p>This transfer has been <b><%= @paypal_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
-  <%= button_to "Reject as failed", reject_paypal_transfer_path(@paypal_transfer) %>
+<% end %>
+
+<% if @paypal_transfer.may_mark_rejected? %>
+  <%= form_with(model: nil, local: true, url: reject_paypal_transfer_path(@paypal_transfer), method: :post) do |form| %>
+    <div class="field">
+      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+    </div>
+    <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+    <small>(This requires you to communicate to the organizer about the reason why.)</small>
+  <% end %>
+<% end %>
+
+<% if @paypal_transfer.may_mark_failed? %>
+  <%= button_to "Mark failed", mark_failed_paypal_transfer_path(@paypal_transfer) %>
 <% end %>

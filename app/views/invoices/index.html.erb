@@ -19,23 +19,7 @@
 </h1>
 
 <% if organizer_signed_in? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new_invoice">
-    <%= modal_header "Send an invoice" %>
-
-    <% if @event.invoices.none? %>
-      <%= render "callout",
-            type: "info",
-            title: "We recommend sending yourself an invoice for $1 to understand what your sponsors will see." %>
-    <%= render "form", invoice: @invoice, sponsor: @sponsor %>
-    <% else %>
-      <p class="h5 line-height-3 muted mt0 mb2">
-        If the sponsor wants to pay via a mailed check or direct deposit instead of
-        the online invoice, let the HCB team know.
-        <%= help_message %>
-      </p>
-    <%= render "form", invoice: @invoice, sponsor: @sponsor %>
-    <% end %>
-  </section>
+  <%= render "modal" %>
 <% end %>
 
 <div class="statset mt3 mb3">
@@ -111,10 +95,10 @@
         </td>
       </tr>
       <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>">
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(i.local_hcb_code.hashid) %>" data-state-title="<%= "#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}" %>">
           <%= modal_header("#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}", external_link: hcb_code_url(i.local_hcb_code.hashid)) %>
-          <%= async_frame_to hcb_code_url(i.local_hcb_code.hashid, params: { frame: true }), lazy: true, as: :div do %>
-            <strong>Loading...</strong>
+          <%= turbo_frame_tag i.local_hcb_code.public_id, src: i.local_hcb_code.popover_path, loading: :lazy do %>
+            <%= render partial: "application/loading_container" %>
           <% end %>
         </section>
       <% end %>

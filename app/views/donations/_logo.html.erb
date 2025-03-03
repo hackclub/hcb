@@ -1,8 +1,8 @@
 <% if @event.logo.attached? %>
-    <div class="relative mr2 donations-logo">
-        <% if organizer_signed_in? %>
+    <div class="relative donations-logo">
+        <% if policy(@event).update? %>
             <%= form_with model: @event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
-                <%= form.file_field :logo, required: true, class: "display-none", data: { action: "change->form#submit" } %>
+                <%= form.file_field :logo, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
                 <%= form.label :logo do %>
                     <div
                         role="button"
@@ -25,11 +25,25 @@
         <% end %>
         <%= image_tag @event.logo, height: 72, class: "rounded" %>
     </div>
-<% elsif organizer_signed_in? %>
+    <% if @event.logo.variable? %>
+        <% content_for :favicon do %>
+            <link
+                rel="icon"
+                type="image/png"
+                sizes="32x32"
+                href="<%= Rails.application.routes.url_helpers.rails_representation_url(@event.logo.variant(resize: "32x32")) %>">
+            <link
+                rel="icon"
+                type="image/png"
+                sizes="16x16"
+                href="<%= Rails.application.routes.url_helpers.rails_representation_url(@event.logo.variant(resize: "16x16")) %>">
+        <% end %>
+    <% end %>
+<% elsif policy(@event).update? %>
     <%= form_with model: @event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
-        <%= form.file_field :logo, required: true, class: "display-none", data: { action: "change->form#submit" } %>
+        <%= form.file_field :logo, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :logo do %>
-            <div class="mr2 donations-logo-placeholder">
+            <div class="donations-logo-placeholder">
                 Add a logo
             </div>
         <% end %>

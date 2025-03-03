@@ -42,6 +42,10 @@
       </p>
     <% end %>
     <p>
+      <strong>Grant amount</strong>
+      <span><%= render_money card_grant.amount %></span>
+    </p>
+    <p>
       <strong>Balance remaining</strong>
       <span><%= render_money card_grant.balance %></span>
     </p>
@@ -56,21 +60,34 @@
 
     <p>
       <strong>Allowed merchants</strong>
-      <% if (allowed_merchants = card_grant.allowed_merchants.join(" ").presence) %>
-        <span class="font-mono h5"><%= allowed_merchants %></span>
-      <% else %>
+      <% if card_grant.allowed_merchants.any? %>
+        <span class="font-mono h5"><%= card_grant.allowed_merchant_names.join(", ") %><br>
+          (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
+    <% else %>
         <span>All merchants allowed</span>
       <% end %>
     </p>
 
     <p>
       <strong>Allowed categories</strong>
-      <% if (allowed_categories = card_grant.allowed_categories.join(" ").presence) %>
+      <% if (allowed_categories = card_grant.allowed_category_names.join(", ").presence) %>
         <span class="font-mono h5"><%= allowed_categories %></span>
       <% else %>
         <span>All categories allowed</span>
       <% end %>
     </p>
+    <% if @card_grant.purpose.present? %>
+      <p>
+        <strong>Purpose</strong>
+        <span><%= @card_grant.purpose %></span>
+      </p>
+    <% end %>
+    <% if card_grant.keyword_lock.present? %>
+      <p>
+        <strong>Merchant keyword lock</strong>
+        <span class="font-mono h5"><%= card_grant.keyword_lock %></span>
+      </p>
+    <% end %>
   </section>
   <% if card_grant.pending_invite? %>
     <%# Once the user has accepted the invite, these action buttons are shown elsewhere %>

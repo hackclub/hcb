@@ -9,7 +9,7 @@
     <%= link_to "Legal documents", event_documents_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
   <%= settings_tab active: true do %>
-      <%= link_to "Financial statements", event_statements_path(@event), data: { turbo: true, turbo_action: "advance" } %>
+    <%= link_to "Financial statements", event_statements_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
 </ul>
 
@@ -19,12 +19,30 @@
   <%= blankslate "No financial statements yet" %>
 <% else %>
   <div class="grid">
-    <% months.each do |day| %>
-      <%= link_to transactions_exports_path(event: @event, start_date: day, format: :pdf), target: "_blank", class: "card card--hover flex items-center" do %>
-          <span style="flex-grow: 1">
-            <%= day.strftime("%B %Y") %>
-          </span>
-          <%= inline_icon "download", size: 24, class: "ml1", 'aria-label': "Download" %>
+    <% months.group_by(&:year).each do |year, months| %>
+      <div style="grid-column: 1 / span 3">
+        <h3 class="mb0" id="<%= year %>">
+          Statements from <%= year %>
+        </h3>
+        <hr class="mb1 mt1">
+      </div>
+      <% months.each do |day| %>
+        <div data-controller="menu" class="card flex items-center">
+          <span class="grow"><%= day.strftime("%B %Y") %></span>
+          <%= pop_icon_to "download",
+                          "#",
+                          class: "align-middle", "aria-label": "Download",
+                          data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+
+          <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+            <%= link_to transactions_exports_path(event: @event, start_date: day, format: :pdf), target: "_blank" do %>
+              Download as PDF
+            <% end %>
+            <%= link_to transactions_exports_path(event: @event, start_date: day, format: :csv), target: "_blank" do %>
+              Download as CSV
+            <% end %>
+          </div>
+        </div>
       <% end %>
     <% end %>
   </div>

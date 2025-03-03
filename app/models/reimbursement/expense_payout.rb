@@ -71,6 +71,12 @@ module Reimbursement
       end
     end
 
+    validate do
+      if Reimbursement::ExpensePayout.where(reimbursement_expenses_id:).excluding(self).any?
+        errors.add(:base, "A reimbursement expense can only have one expense payout.")
+      end
+    end
+
     def state
       return :success if settled?
       return :info if in_transit?

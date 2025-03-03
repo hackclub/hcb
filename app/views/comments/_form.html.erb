@@ -15,7 +15,7 @@
 
   <ul role="listbox" class="mention-suggestions card" hidden popover>
     <% commentable.comment_mentionable(current_user:).each do |u| %>
-      <li role="option" class="cursor-pointer mention-suggestion" data-value="@<%= u.email %>" data-search="<%= u.email %>">
+      <li role="option" class="cursor-pointer mention-suggestion" data-value="@<%= u.email %>" data-search="<%= u.name %>">
         <%= user_mention u, { disable_tooltip: true } %>
       </li>
     <% end %>

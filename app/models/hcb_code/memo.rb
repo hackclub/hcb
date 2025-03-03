@@ -12,7 +12,6 @@ class HcbCode
         return disbursement_memo(event:) if disbursement?
         return invoice_memo if invoice?
         return donation_memo if donation?
-        return partner_donation_memo if partner_donation?
         return bank_fee_memo if bank_fee?
         return reimbursement_payout_holding_memo if reimbursement_payout_holding?
         return reimbursement_expense_payout_memo if reimbursement_expense_payout?
@@ -24,10 +23,9 @@ class HcbCode
         return increase_check_memo if increase_check?
         return check_deposit_memo if check_deposit?
         return fee_revenue_memo if fee_revenue?
-        return ach_payment_memo if ach_payment?
         return grant_memo if grant?
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
-        return yellowpages_memo if stripe_card? && yellowpages_memo
+        return stripe_card_memo if stripe_card? && stripe_card_memo
 
         ct.try(:smart_memo) || pt.try(:smart_memo) || ""
       end
@@ -61,10 +59,6 @@ class HcbCode
         "Donation from #{donation.smart_memo}#{donation.refunded? ? " (REFUNDED)" : ""}"
       end
 
-      def partner_donation_memo
-        "Donation from #{partner_donation.smart_memo}#{partner_donation.refunded? ? " (REFUNDED)" : ""}"
-      end
-
       def bank_fee_memo
         if bank_fee.amount_cents.negative? && bank_fee.fee_revenue.present?
           return "FISCAL SPONSORSHIP FOR #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} TO #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
@@ -76,7 +70,7 @@ class HcbCode
       end
 
       def ach_transfer_memo
-        "ACH to #{ach_transfer.smart_memo}"
+        "ACH to #{ach_transfer.smart_memo}".strip.upcase
       end
 
       def check_memo
@@ -93,10 +87,6 @@ class HcbCode
 
       def fee_revenue_memo
         "Fee revenue from #{fee_revenue.start.strftime("%b %e")} to #{fee_revenue.end.strftime("%b %e")}"
-      end
-
-      def ach_payment_memo
-        "Bank transfer"
       end
 
       def grant_memo
@@ -119,8 +109,8 @@ class HcbCode
         "Payout transfer for reimbursement report #{reimbursement_payout_transfer.reimbursement_payout_holding.report.hashid}"
       end
 
-      def yellowpages_memo
-        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name
+      def stripe_card_memo
+        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
       end
 
     end

@@ -98,9 +98,9 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr class="shade-neutral <%= "muted strikethrough" if @result[0] %>">
+                <tr class="shade-neutral <%= "muted strikethrough" if @results[:verification_key] %>">
                   <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @result[0] %>></td>
+                    <td><input type="checkbox" disabled <%= "checked" if @results[:verification_key] %>></td>
                   <% end %>
                   <td>
                     <% if @g_suite.subdomain %>
@@ -114,9 +114,9 @@
                   <td>1</td>
                   <td><%= organizer_signed_in? ? copy_to_clipboard("google-site-verification=#{@g_suite.verification_key}", tooltip_direction: "w") : "REDACTED – SIGN IN TO VIEW" %></td>
                 </tr>
-                <tr class="<%= "muted strikethrough" if @result[1] %>">
+                <tr class="<%= "muted strikethrough" if @results[:spf] %>">
                   <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @result[1] %>></td>
+                    <td><input type="checkbox" disabled <%= "checked" if @results[:spf] %>></td>
                   <% end %>
                   <td>
                     <% if @g_suite.subdomain %>
@@ -131,9 +131,9 @@
                   <td><%= copy_to_clipboard("v=spf1 include:_spf.google.com ~all", tooltip_direction: "w") %></td>
                 </tr>
                 <% if @g_suite.dkim_key.present? %>
-                  <tr class="shade-neutral <%= "muted strikethrough" if @result[7] %>">
+                  <tr class="shade-neutral <%= "muted strikethrough" if @results[:dkim] %>">
                     <% if @g_suite.verification_error? %>
-                      <td><input type="checkbox" disabled <%= "checked" if @result[7] %>></td>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:dkim] %>></td>
                     <% end %>
                     <td>google._domainkey.<%= @g_suite.domain %></td>
                     <td>3600</td>
@@ -141,9 +141,9 @@
                     <td>1</td>
                     <td><%= copy_to_clipboard(@g_suite.dkim_key, tooltip_direction: "w") %></td>
                   </tr>
-                  <tr class="<%= "muted strikethrough" if @result[8] %>">
+                  <tr class="<%= "muted strikethrough" if @results[:dmarc] %>">
                     <% if @g_suite.verification_error? %>
-                      <td><input type="checkbox" disabled <%= "checked" if @result[8] %>></td>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:dmarc] %>></td>
                     <% end %>
                     <td>_DMARC.<%= @g_suite.domain %></td>
                     <td>3600</td>
@@ -152,9 +152,9 @@
                     <td><%= copy_to_clipboard("v=DMARC1; p=none; rua=mailto:dmarc_report@hackclub.com; ruf=mailto:dmarc_report@hackclub.com;fo=1", tooltip_direction: "w") %></td>
                   </tr>
                 <% end %>
-                <tr class="shade-neutral <%= "muted strikethrough" if @result[2] %>">
+                <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_primary] %>">
                   <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @result[2] %>></td>
+                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_primary] %>></td>
                   <% end %>
                   <td>
                     <% if @g_suite.subdomain %>
@@ -168,9 +168,9 @@
                   <td>1</td>
                   <td><%= copy_to_clipboard("ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
                 </tr>
-                <tr class="<%= "muted strikethrough" if @result[3] %>">
+                <tr class="<%= "muted strikethrough" if @results[:mx_alt1] %>">
                   <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @result[3] %>></td>
+                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt1] %>></td>
                   <% end %>
                   <td>
                     <% if @g_suite.subdomain %>
@@ -184,9 +184,9 @@
                   <td>5</td>
                   <td><%= copy_to_clipboard("ALT1.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
                 </tr>
-                <tr class="shade-neutral <%= "muted strikethrough" if @result[4] %>">
+                <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt2] %>">
                   <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @result[4] %>></td>
+                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt2] %>></td>
                   <% end %>
                   <td>
                     <% if @g_suite.subdomain %>
@@ -200,9 +200,9 @@
                   <td>5</td>
                   <td><%= copy_to_clipboard("ALT2.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
                 </tr>
-                <tr class="<%= "muted strikethrough" if @result[5] %>">
+                <tr class="<%= "muted strikethrough" if @results[:mx_alt3] %>">
                   <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @result[5] %>></td>
+                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt3] %>></td>
                   <% end %>
                   <td>
                     <% if @g_suite.subdomain %>
@@ -216,9 +216,9 @@
                   <td>10</td>
                   <td><%= copy_to_clipboard("ALT3.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
                 </tr>
-                <tr class="shade-neutral <%= "muted strikethrough" if @result[6] %>">
+                <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt4] %>">
                   <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @result[6] %>></td>
+                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt4] %>></td>
                   <% end %>
                   <td>
                     <% if @g_suite.subdomain %>
@@ -244,7 +244,7 @@
                 <% end %>
               <% end %>
               <% if @g_suite.configuring? || @g_suite.verification_error? %>
-                <%= link_to @g_suite.verification_error? ? "Retry Verification" : "Verify", event_g_suite_verify_path(@event), method: :put, class: "btn" %>
+                <%= link_to @g_suite.verification_error? ? "Retry Verification" : "Verify", event_g_suite_verify_path(event_id: @event.slug), method: :put, class: "btn" %>
               <% end %>
               <% if @g_suite.verifying? %>
                 <span class="h4 ml0 pending badge">Verifying…</span>
@@ -274,7 +274,7 @@
           </ol>
         </article>
       </details>
-      <% if !@g_suite.verified? && @g_suite.previously_verified? %>
+      <% if !@g_suite.verified? && (@g_suite.previously_verified? || @g_suite.accounts.any?) %>
         <article class="card mb3">
           <%= render "g_suite_accounts/panel" %>
         </article>

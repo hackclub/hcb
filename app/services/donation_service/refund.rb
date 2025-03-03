@@ -8,6 +8,9 @@ module DonationService
     end
 
     def run
+      raise ArgumentError, "the donation must have settled" unless donation.canonical_transactions.any?
+      raise ArgumentError, "the donation has already been refunded" if donation.refunded?
+
       ActiveRecord::Base.transaction do
         # 1. Mark refunded
         donation.mark_refunded!

@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module User
@@ -25,35 +26,30 @@ class Metric
 
         stripe_transactions_subquery = RawStripeTransaction.select("date(date_posted) AS transaction_date, SUM(amount_cents) * -1 AS amount")
                                                            .where("raw_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", StripeCardholder.select(:stripe_id).where(user_id: user.id))
-                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", 2023)
+                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
                                                            .group("date(date_posted)")
 
         ach_transfers_subquery = AchTransfer.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                            .where("EXTRACT(YEAR FROM created_at) = ?", 2023)
+                                            .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
                                             .where(creator_id: user.id)
                                             .group("date(created_at)")
 
-        disbursements_subquery = Disbursement.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                             .where("EXTRACT(YEAR FROM created_at) = ?", 2023)
-                                             .where(requested_by_id: user.id)
-                                             .group("date(created_at)")
-
         increase_checks_subquery = IncreaseCheck.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                                .where("EXTRACT(YEAR FROM created_at) = ?", 2023)
+                                                .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
                                                 .where(user_id: user.id)
                                                 .group("date(created_at)")
 
         checks_subquery = Check.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                               .where("EXTRACT(YEAR FROM created_at) = ?", 2023)
+                               .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
                                .where(creator_id: user.id)
                                .group("date(created_at)")
 
-        combined_result_subquery = Arel.sql("(#{stripe_transactions_subquery.to_sql} UNION ALL #{ach_transfers_subquery.to_sql} UNION ALL #{disbursements_subquery.to_sql} UNION ALL #{increase_checks_subquery.to_sql} UNION ALL #{checks_subquery.to_sql}) AS combined_table")
+        combined_result_subquery = Arel.sql("(#{stripe_transactions_subquery.to_sql} UNION ALL #{ach_transfers_subquery.to_sql} UNION ALL #{increase_checks_subquery.to_sql} UNION ALL #{checks_subquery.to_sql}) AS combined_table")
 
         final_result = Arel.sql("SELECT date(transaction_date) AS transaction_date, SUM(amount) AS amount FROM #{combined_result_subquery} GROUP BY date(transaction_date) ORDER BY date(transaction_date) ASC")
 
         hash = {}
-        (Date.new(2023, 1, 1)..Date.new(2023, 12, 31)).each do |date|
+        (Date.new(2024, 1, 1)..Date.new(2024, 12, 31)).each do |date|
           hash[date.to_s] = 0
         end
 

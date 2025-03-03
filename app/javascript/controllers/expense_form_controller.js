@@ -19,9 +19,13 @@ export default class extends Controller {
 
   connect() {
     for (const field of this.fieldTargets) {
-      field.readOnly = !this.enabledValue
-      field.addEventListener('dblclick', () => this.edit())
-      this.#addTooltip(field, 'Double-click to edit...')
+      if (field.nodeName == 'SELECT') {
+        field.disabled = !this.enabledValue
+      } else {
+        field.readOnly = !this.enabledValue
+        field.addEventListener('dblclick', () => this.edit())
+        this.#addTooltip(field, 'Double-click to edit...')
+      }
 
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && this.enabledValue) {
@@ -31,14 +35,17 @@ export default class extends Controller {
       })
     }
 
-    this.buttonTarget.addEventListener('click', e => {
-      e.preventDefault()
-      if (this.enabledValue) {
-        this.formTarget.requestSubmit()
-      } else {
-        this.edit(e)
-      }
-    })
+    // we don't render the button if the report is reimbursed
+    if (this.hasButtonTarget) {
+      this.buttonTarget.addEventListener('click', e => {
+        e.preventDefault()
+        if (this.enabledValue) {
+          this.formTarget.requestSubmit()
+        } else {
+          this.edit(e)
+        }
+      })
+    }
 
     this.#buttons()
     this.#label()
@@ -61,8 +68,12 @@ export default class extends Controller {
     this.#lightbox()
 
     for (const field of this.fieldTargets) {
-      field.readOnly = true
-      this.#addTooltip(field, 'Double-click to edit...')
+      if (field.nodeName == 'SELECT') {
+        field.disabled = true
+      } else {
+        field.readOnly = true
+        this.#addTooltip(field, 'Double-click to edit...')
+      }
     }
 
     if (e) {
@@ -82,8 +93,12 @@ export default class extends Controller {
     this.#lightbox()
 
     for (const field of this.fieldTargets) {
-      field.readOnly = false
-      this.#removeTooltip(field)
+      if (field.nodeName == 'SELECT') {
+        field.disabled = false
+      } else {
+        field.readOnly = false
+        this.#removeTooltip(field)
+      }
     }
 
     if (e) {
@@ -98,6 +113,9 @@ export default class extends Controller {
   }
 
   #buttons() {
+    if (!this.hasButtonTarget) {
+      return
+    }
     if (!this.lockedValue) {
       this.buttonTarget.querySelector('[aria-label=checkmark]').style.display =
         this.enabledValue ? 'block' : 'none'
@@ -117,7 +135,7 @@ export default class extends Controller {
   }
 
   #label() {
-    if (!this.lockedValue) {
+    if (!this.lockedValue && this.hasButtonTarget) {
       this.buttonTarget.ariaLabel =
         this.enabledValue && !this.lockedValue
           ? 'Save edits'

@@ -4,30 +4,33 @@
 #
 # Table name: users
 #
-#  id                       :bigint           not null, primary key
-#  access_level             :integer          default("user"), not null
-#  birthday_ciphertext      :text
-#  charge_notifications     :integer          default("email_and_sms"), not null
-#  comment_notifications    :integer          default("all_threads"), not null
-#  email                    :text
-#  full_name                :string
-#  locked_at                :datetime
-#  payout_method_type       :string
-#  phone_number             :text
-#  phone_number_verified    :boolean          default(FALSE)
-#  preferred_name           :string
-#  pretend_is_not_admin     :boolean          default(FALSE), not null
-#  receipt_report_option    :integer          default("none"), not null
-#  running_balance_enabled  :boolean          default(FALSE), not null
-#  seasonal_themes_enabled  :boolean          default(TRUE), not null
-#  session_duration_seconds :integer          default(2592000), not null
-#  sessions_reported        :boolean          default(FALSE), not null
-#  slug                     :string
-#  use_sms_auth             :boolean          default(FALSE)
-#  created_at               :datetime         not null
-#  updated_at               :datetime         not null
-#  payout_method_id         :bigint
-#  webauthn_id              :string
+#  id                            :bigint           not null, primary key
+#  access_level                  :integer          default("user"), not null
+#  birthday_ciphertext           :text
+#  charge_notifications          :integer          default("email_and_sms"), not null
+#  comment_notifications         :integer          default("all_threads"), not null
+#  creation_method               :integer
+#  email                         :text
+#  full_name                     :string
+#  locked_at                     :datetime
+#  payout_method_type            :string
+#  phone_number                  :text
+#  phone_number_verified         :boolean          default(FALSE)
+#  preferred_name                :string
+#  pretend_is_not_admin          :boolean          default(FALSE), not null
+#  receipt_report_option         :integer          default("weekly"), not null
+#  running_balance_enabled       :boolean          default(FALSE), not null
+#  seasonal_themes_enabled       :boolean          default(TRUE), not null
+#  session_duration_seconds      :integer          default(2592000), not null
+#  sessions_reported             :boolean          default(FALSE), not null
+#  slug                          :string
+#  teenager                      :boolean
+#  use_sms_auth                  :boolean          default(FALSE)
+#  use_two_factor_authentication :boolean          default(FALSE)
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  payout_method_id              :bigint
+#  webauthn_id                   :string
 #
 # Indexes
 #
@@ -35,6 +38,8 @@
 #  index_users_on_slug   (slug) UNIQUE
 #
 class User < ApplicationRecord
+  has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
+
   include PublicIdentifiable
   set_public_id_prefix :usr
 
@@ -44,8 +49,6 @@ class User < ApplicationRecord
   include Turbo::Broadcastable
 
   include ApplicationHelper
-
-  has_paper_trail only: [:access_level, :email]
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
@@ -60,15 +63,23 @@ class User < ApplicationRecord
     none: 0,
     weekly: 1,
     monthly: 2,
-  }, prefix: :receipt_report
+  }, prefix: :receipt_report, default: :weekly
 
   enum :access_level, { user: 0, admin: 1, superadmin: 2 }, scopes: false, default: :user
 
+  enum :creation_method, {
+    login: 0,
+    reimbursement_report: 1,
+    organizer_position_invite: 2,
+    card_grant: 3,
+    grant: 4
+  }
+
   has_many :logins
   has_many :login_codes
-  has_many :login_tokens
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_positions
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
   has_many :organizer_position_deletion_requests, inverse_of: :closed_by
@@ -105,11 +116,15 @@ class User < ApplicationRecord
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
 
+  has_many :jobs, as: :entity, class_name: "Employee"
+  has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
+
   has_many :card_grants
 
   has_one_attached :profile_picture
 
-  has_one :partner, inverse_of: :representative
+  has_many :w9s, class_name: "W9", as: :entity
+
   has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
   has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
 
@@ -150,9 +165,15 @@ class User < ApplicationRecord
 
   validate :profile_picture_format
 
-  enum comment_notifications: { all_threads: 0, my_threads: 1, no_threads: 2 }
+  validate on: :update do
+    if Rails.env.production? && admin_override_pretend? && !use_two_factor_authentication?
+      errors.add(:access_level, "two factor authentication is required for this access level")
+    end
+  end
 
-  enum charge_notifications: { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, _prefix: :charge_notifications
+  enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
+
+  enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications
 
   comma do
     id
@@ -177,13 +198,13 @@ class User < ApplicationRecord
   # admin? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def admin?
-    (self.access_level == "admin" || self.access_level == "superadmin") && !self.pretend_is_not_admin
+    ["admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
   end
 
   # admin_override_pretend? ignores an admin user's
   # preference to pretend not to be an admin.
   def admin_override_pretend?
-    self.access_level == "admin" || self.access_level == "superadmin"
+    ["admin", "superadmin"].include?(self.access_level)
   end
 
   def make_admin!
@@ -212,6 +233,7 @@ class User < ApplicationRecord
 
   def safe_name
     # stripe requires names to be 24 chars or less, and must include a last name
+    return name unless name.length > 24
     return full_name unless full_name.length > 24
 
     initial_name
@@ -232,14 +254,6 @@ class User < ApplicationRecord
 
   def pretty_phone_number
     Phonelib.parse(self.phone_number).national
-  end
-
-  def representative?
-    self.partner.present?
-  end
-
-  def represented_partner
-    self.partner
   end
 
   def admin_dropdown_description
@@ -270,7 +284,8 @@ class User < ApplicationRecord
   end
 
   def onboarding?
-    full_name.blank?
+    # in_database to prevent a blank name update attempt from triggering onboarding.
+    full_name_in_database.blank?
   end
 
   def active_mailbox_address
@@ -283,7 +298,7 @@ class User < ApplicationRecord
 
   def hcb_code_ids_missing_receipt
     @hcb_code_ids_missing_receipt ||= begin
-      user_cards = stripe_cards.includes(:event).where.not(event: { category: :salary }) + emburse_cards.includes(:emburse_transactions)
+      user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
       user_cards.flat_map { |card| card.hcb_codes.missing_receipt.receipt_required.pluck(:id) }
     end
   end
@@ -317,7 +332,7 @@ class User < ApplicationRecord
   end
 
   def teenager?
-    birthday&.after?(19.years.ago) || events.high_school_hackathon.any? || events.organized_by_teenagers.any?
+    birthday&.after?(19.years.ago) || events.organized_by_teenagers.any?
   end
 
   def last_seen_at
@@ -326,10 +341,6 @@ class User < ApplicationRecord
 
   def last_login_at
     user_sessions.maximum(:created_at)
-  end
-
-  def using_2fa?
-    Flipper.enabled?(:two_factor_authentication_2024_05_22, self) && phone_number_verified
   end
 
   def email_charge_notifications_enabled?
@@ -376,7 +387,7 @@ class User < ApplicationRecord
 
   def profile_picture_format
     return unless profile_picture.attached?
-    return if profile_picture.blob.content_type.start_with? "image/"
+    return if profile_picture.blob.content_type.start_with?("image/") && profile_picture.blob.variable?
 
     profile_picture.purge_later
     errors.add(:profile_picture, "needs to be an image")

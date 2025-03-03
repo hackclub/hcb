@@ -18,7 +18,6 @@
 #  column_object           :jsonb
 #  column_status           :string
 #  increase_object         :jsonb
-#  increase_state          :string
 #  increase_status         :string
 #  memo                    :string
 #  payment_for             :string
@@ -45,9 +44,14 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
+  # [@garyhtou] `IncreaseCheck` superseded `Check` starting March 2023.
+  # On January 2024, we switched check printing & mailing services from
+  # Increase to Column. This model, although still named `IncreaseCheck`, now
+  # handles Column check transfers.
   has_paper_trail
 
   include AASM
+  include Payoutable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -60,7 +64,8 @@ class IncreaseCheck < ApplicationRecord
 
   has_one :canonical_pending_transaction
   has_one :grant, required: false
-  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false, foreign_key: "increase_checks_id"
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -88,6 +93,7 @@ class IncreaseCheck < ApplicationRecord
 
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
+        employee_payment.mark_paid! if employee_payment.present?
       end
     end
 
@@ -95,6 +101,7 @@ class IncreaseCheck < ApplicationRecord
       after do
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
       transitions from: :pending, to: :rejected
     end
@@ -110,10 +117,17 @@ class IncreaseCheck < ApplicationRecord
 
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
   validates_presence_of :recipient_email, on: :create
+  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
     if amount > event.balance_available_v2_cents
       errors.add(:amount, "You don't have enough money to send this transfer! Your balance is #{ApplicationController.helpers.render_money(event.balance_available_v2_cents)}.")
+    end
+  end
+
+  validate do
+    if (address_line1.length + address_line2.length) > 50
+      errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
     end
   end
 
@@ -136,7 +150,7 @@ class IncreaseCheck < ApplicationRecord
   }, prefix: :increase
 
   enum :column_status, %w(initiated issued manual_review rejected pending_deposit pending_stop deposited stopped pending_first_return pending_second_return first_return pending_reclear recleared second_return settled returned pending_user_initiated_return user_initiated_return_submitted user_initiated_returned pending_user_initiated_return_dishonored).index_with(&:itself), prefix: :column
-  enum :column_delivery_status, %w(created mailed in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
+  enum :column_delivery_status, %w(created mailed rendered_pdf in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
 
   VALID_DURATION = 180.days
 

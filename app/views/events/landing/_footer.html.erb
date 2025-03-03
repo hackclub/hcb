@@ -1,6 +1,6 @@
 <footer data-behavior="hide_iframe">
   <p class="muted max-width-1 mx-auto h5 mb1 text-balance center">
-    <% if @event.hack_club_hq? %>
+    <% if @event.plan.is_a?(Event::Plan::HackClubAffiliate) %>
       Hack Club is <span class="nowrap">a 501(c)(3)</span>&nbsp;nonprofit.<br>Our registered EIN is <span class="nowrap">81-2908499</span>.
     <% else %>
       <%= link_to_if @event.is_public?, @event.name, @event, target: "_blank" %>

@@ -1,94 +1,96 @@
-<% admin_tool("mt3") do %>
-  <table class="mb2">
-    <tr>
-      <th>HCB CODE</th>
-      <th>OBJECT</th>
-    </tr>
-    <tr>
-      <td><%= @hcb_code.hcb_code %></td>
-
-      <td>
-        <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? %>
-          <%= link_to "ACH TRANSFER #{@hcb_code.ach_transfer.id}", @hcb_code.ach_transfer %>
-        <% else %>
-          N/A
-        <% end %>
-      </td>
-
-    </tr>
-  </table>
-  <table>
-    <tr>
-      <th>ID</th>
-      <th>TYPE</th>
-      <th>DATE</th>
-      <th>MEMO</th>
-      <th>AMOUNT</th>
-      <th></th>
-    </tr>
-    <% @hcb_code.canonical_pending_transactions.each do |ct| %>
+<%= turbo_frame_tag "#{@hcb_code.public_id}:admin_tools", target: "_top" do %>
+  <% admin_tool("mt3") do %>
+    <table class="mb2">
       <tr>
-        <td>
-          <%= ct.id %>
-        </td>
-        <td>
-          PENDING
-        </td>
-        <td>
-          <%= ct.date %>
-        </td>
-        <td>
-          <%= ct.memo %>
-        </td>
-        <td>
-          <%= ct.amount %>
-        </td>
-        <td>
-          <%= link_to "view", "/canonical_pending_transactions/#{ct.id}" %>
-        </td>
+        <th>HCB CODE</th>
+        <th>OBJECT</th>
       </tr>
-    <% end %>
-
-    <% @hcb_code.canonical_transactions.each do |ct| %>
       <tr>
+        <td><%= @hcb_code.hcb_code %></td>
+
         <td>
-          <%= ct.id %>
+          <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? %>
+            <%= link_to "ACH TRANSFER #{@hcb_code.ach_transfer.id}", @hcb_code.ach_transfer %>
+          <% else %>
+            N/A
+          <% end %>
         </td>
-        <td>
-          SETTLED
-        </td>
-        <td>
-          <%= ct.date %>
-        </td>
-        <td>
-          <%= ct.memo %>
-        </td>
-        <td>
-          <%= ct.amount %>
-        </td>
-        <td>
-          <%= link_to "view", "/transactions/#{ct.id}" %>
-        </td>
+
       </tr>
-    <% end %>
+    </table>
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>TYPE</th>
+        <th>DATE</th>
+        <th>MEMO</th>
+        <th>AMOUNT</th>
+        <th></th>
+      </tr>
+      <% @hcb_code.canonical_pending_transactions.each do |ct| %>
+        <tr>
+          <td>
+            <%= ct.id %>
+          </td>
+          <td>
+            PENDING
+          </td>
+          <td>
+            <%= ct.date %>
+          </td>
+          <td>
+            <%= ct.memo %>
+          </td>
+          <td>
+            <%= ct.amount %>
+          </td>
+          <td>
+            <%= link_to "view", "/canonical_pending_transactions/#{ct.id}" %>
+          </td>
+        </tr>
+      <% end %>
 
-    <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? && @hcb_code.ach_transfer.t_transaction.present? %>
-      <td>
-        OLD
-      </td>
-      <td>
-        <%= @hcb_code.ach_transfer.t_transaction.date %>
-      </td>
-      <td>
-        <%= @hcb_code.ach_transfer.t_transaction.memo %>
-      </td>
-      <td>
-        <%= render_money_amount @hcb_code.ach_transfer.t_transaction.amount %>
-      </td>
-      <td>
-        <%= link_to "view", @hcb_code.ach_transfer.t_transaction %>
-      </td>
-    <% end %>
+      <% @hcb_code.canonical_transactions.each do |ct| %>
+        <tr>
+          <td>
+            <%= ct.id %>
+          </td>
+          <td>
+            SETTLED
+          </td>
+          <td>
+            <%= ct.date %>
+          </td>
+          <td>
+            <%= ct.memo %>
+          </td>
+          <td>
+            <%= ct.amount %>
+          </td>
+          <td>
+            <%= link_to "view", "/transactions/#{ct.id}" %>
+          </td>
+        </tr>
+      <% end %>
 
-  </table>
+      <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? && @hcb_code.ach_transfer.t_transaction.present? %>
+        <td>
+          OLD
+        </td>
+        <td>
+          <%= @hcb_code.ach_transfer.t_transaction.date %>
+        </td>
+        <td>
+          <%= @hcb_code.ach_transfer.t_transaction.memo %>
+        </td>
+        <td>
+          <%= render_money_amount @hcb_code.ach_transfer.t_transaction.amount %>
+        </td>
+        <td>
+          <%= link_to "view", @hcb_code.ach_transfer.t_transaction %>
+        </td>
+      <% end %>
+
+    </table>
+  <% end %>
 <% end %>

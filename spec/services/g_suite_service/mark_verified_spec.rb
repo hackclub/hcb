@@ -41,7 +41,7 @@ RSpec.describe GSuiteService::MarkVerified, type: :model do
 
         mail = ActionMailer::Base.deliveries.last
 
-        expect(mail.to).to eql([user.email])
+        expect(mail.to).to eql(g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email))
         expect(mail.subject).to include(g_suite.domain)
       end
     end

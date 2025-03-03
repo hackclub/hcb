@@ -1,41 +1,43 @@
-<% title @card.initially_activated ? "Card #{@card.last_four} (#{@card.user.name}, #{@event.name})" : "Inactive card" %>
+<% title @card.initially_activated ? "Card #{@card.last_four} (#{@card.user.name}, #{(@event || @card.event).name})" : "Inactive card" %>
 <%= render "events/nav", selected: :cards unless @frame %>
 
-<% admin_tool("mt3") do %>
-  <%= link_to "View card on Stripe", @card.stripe_dashboard_url, class: "btn bg-accent" %>
-  <%= link_to "View cardholder on Stripe", @card.cardholder.stripe_dashboard_url, class: "btn bg-accent" %>
-  <% if @card.cash_withdrawal_enabled? %>
-    <%= link_to "Disable cash withdrawals", disable_feature_path(feature: :cash_withdrawals_2024_08_07, stripe_card_id: @card.id), method: :post, class: "btn bg-error" %>
-  <% elsif @card.physical? %>
-    <%= link_to "Enable cash withdrawals", enable_feature_path(feature: :cash_withdrawals_2024_08_07, stripe_card_id: @card.id), method: :post, class: "btn bg-success" %>
-  <% end %>
-<% end %>
-
-<%= render partial: "canceled_warning", locals: { stripe_card: @card } %>
-
-<turbo-frame id="details">
-  <article class="check--form flex <%= "flex-col" if @frame %> items-start justify-center mt3 mb3 gap-4">
-    <section class="center mt0 mx-auto" style="width: 400px; max-width: 100%;">
-      <% if @card.card_grant.present? %>
-        <% admin_tool do %>
-          This card is linked to a <%= link_to "#{@card.card_grant.amount.format} grant", @card.card_grant, data: { turbo_frame: "_top" } %> to <%= mail_to @card.card_grant.user.email %>.
-        <% end %>
-      <% end %>
-
-      <%= render @card, headless: true %>
-
-      <%= render partial: "actions", locals: { stripe_card: @card } %>
-    </section>
-
-    <%= render partial: "details", locals: { stripe_card: @card } if @card.initially_activated? %>
-    <% if @card.physical? && !@card.initially_activated? %>
-      <div class="mt2 max-width-2 w-100 mx-auto">
-        <div class="grid mb3" style="max-width: 36rem; margin: 0px auto; width: 100%;">
-          <%= render partial: "stripe_cards/shipping", locals: { stripe_card: @card } %>
-        </div>
-      </div>
+<%= turbo_frame_tag "stripe_card_#{@card.public_id}" do %>
+  <% admin_tool("mt3") do %>
+    <%= link_to "View card on Stripe", @card.stripe_dashboard_url, class: "btn bg-accent" %>
+    <%= link_to "View cardholder on Stripe", @card.cardholder.stripe_dashboard_url, class: "btn bg-accent" %>
+    <% if @card.cash_withdrawal_enabled? %>
+      <%= link_to "Disable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-error" %>
+    <% elsif @card.physical? %>
+      <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-success" %>
     <% end %>
-  </article>
-</turbo-frame>
+  <% end %>
 
-<%= render partial: "transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes } %>
+  <%= render partial: "canceled_warning", locals: { stripe_card: @card } %>
+
+  <turbo-frame id="details">
+    <article class="check--form flex <%= "flex-col" if @frame %> items-start justify-center mt3 mb3 gap-4">
+      <section class="center mt0 mx-auto" style="width: 400px; max-width: 100%;">
+        <% if @card.card_grant.present? %>
+          <% admin_tool do %>
+            This card is linked to a <%= link_to "#{@card.card_grant.amount.format} grant", @card.card_grant, data: { turbo_frame: "_top" } %> to <%= mail_to @card.card_grant.user.email %>.
+          <% end %>
+        <% end %>
+
+        <%= render @card, headless: true %>
+
+        <%= render partial: "actions", locals: { stripe_card: @card } %>
+      </section>
+
+      <%= render partial: "details", locals: { stripe_card: @card } if @card.initially_activated? %>
+      <% if @card.physical? && !@card.initially_activated? && !@card.canceled? %>
+        <div class="mt2 max-width-2 w-100 mx-auto">
+          <div class="grid mb3" style="max-width: 36rem; margin: 0px auto; width: 100%;">
+            <%= render partial: "stripe_cards/shipping", locals: { stripe_card: @card } %>
+          </div>
+        </div>
+      <% end %>
+    </article>
+  </turbo-frame>
+
+  <%= render partial: "transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes } %>
+<% end %>

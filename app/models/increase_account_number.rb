@@ -39,12 +39,6 @@ class IncreaseAccountNumber < ApplicationRecord
     end
   end
 
-  validate do
-    if event.outernet_guild?
-      errors.add(:base, "Can't create an account number for an Outernet guild")
-    end
-  end
-
   def used?
     raw_increase_transactions.any?
   end

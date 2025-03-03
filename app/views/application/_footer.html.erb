@@ -1,13 +1,13 @@
 <footer class="[&_*]:transition-colors [&_*]:text-muted/50 [&:hover_*]:text-muted/80 [&_a:hover]:text-muted">
   <p class="center mt-12">
-    <%= help_message if current_user %>
+    <%= help_message if current_user && local_assigns[:help_message] != false %>
   </p>
 
   <p class="text-center text-xs">
-    <% if commit_hash.present? %>
-      Build <em><%= commit_name %></em>
-      <% if commit_duration.present? %>
-        from <%= commit_duration %> ago.
+    <% if Build.commit_hash.present? %>
+      Build <em><%= Build.commit_name %></em>
+      <% if Build.age.present? %>
+        from <%= Build.age %> ago.
       <% end %>
     <% end %>
     <% unless Rails.env.production? %>

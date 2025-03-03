@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+# Prior to Monday 9th December. We processed fee reimbursements
+# by making a book transfer to cover the difference between the payout
+# from Stripe and the amount paid.
+
+# Now, we payout the full amount from Stripe (incl. the fee) and then
+# top up our Stripe balance to cover that fee.
+
+# This service performs that top-up.
+
+# We made this change to handle $1 payouts.
+
 module FeeReimbursementService
   class Nightly
     def run
@@ -7,25 +18,21 @@ module FeeReimbursementService
         raise ArgumentError, "must be an unprocessed fee reimbursement only" unless fee_reimbursement.unprocessed?
 
         amount_cents = fee_reimbursement.amount
-        memo = fee_reimbursement.transaction_memo
 
-        # FS Main -> FS Operating
-        ColumnService.post "/transfers/book",
-                           amount: amount_cents,
-                           currency_code: "USD",
-                           sender_bank_account_id: ColumnService::Accounts::FS_MAIN,
-                           receiver_bank_account_id: ColumnService::Accounts::FS_OPERATING,
-                           description: "Stripe fee reimbursement"
+        if amount_cents.zero?
+          fee_reimbursement.update!(processed_at: Time.now)
+        else
+          topup = StripeTopup.create(
+            amount_cents:,
+            statement_descriptor: "FEE REIMBURSE",
+            description: "Fee reimbursement ##{fee_reimbursement.id}",
+            metadata: {
+              fee_reimbursement_id: fee_reimbursement.id,
+            }
+          )
 
-        # FS Operating -> FS Main
-        ColumnService.post "/transfers/book",
-                           amount: amount_cents,
-                           currency_code: "USD",
-                           sender_bank_account_id: ColumnService::Accounts::FS_OPERATING,
-                           receiver_bank_account_id: ColumnService::Accounts::FS_MAIN,
-                           description: memo
-
-        fee_reimbursement.update_column(:processed_at, Time.now)
+          fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
+        end
       end
     end
 

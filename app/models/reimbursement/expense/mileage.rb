@@ -8,6 +8,7 @@
 #  aasm_state              :string
 #  amount_cents            :integer          default(0), not null
 #  approved_at             :datetime
+#  category                :integer
 #  deleted_at              :datetime
 #  description             :text
 #  expense_number          :integer          not null
@@ -33,11 +34,13 @@ module Reimbursement
   class Expense
     class Mileage < ::Reimbursement::Expense
       def rate
-        67
+        return 67 if created_at < Date.new(2025, 1, 1)
+
+        70
       end
 
       def value_label
-        "Miles (67¢/mile)"
+        "Miles (#{rate}¢/mile)"
       end
 
     end

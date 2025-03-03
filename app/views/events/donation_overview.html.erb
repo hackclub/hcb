@@ -37,7 +37,7 @@
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "donations"),
       data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "donation_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" %>
+      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" if organizer_signed_in? %>
   <% if @event.donation_page_available? %>
     <%= link_to start_donation_donations_path(@event), target: "_blank", class: "btn" do %>
       <%= inline_icon "external" %>
@@ -72,7 +72,7 @@
             <qr-code
               contents='<%= start_donation_donations_url @event %>'
               id="qrCode--logo">
-              <%= image_tag @event.logo, slot: "icon", class: "rounded", style: "height: 36px;" %>
+              <%= image_tag "data:#{@event.logo.blob.content_type};base64," + @event.logo.open { |file| Base64.encode64(file.read) }, slot: "icon", class: "rounded", style: "height: 36px;" %>
             </qr-code>
           <% end %>
           <qr-code
@@ -134,7 +134,7 @@
   </div>
 </div>
 
-<% if @recurring_donations.size > 0 %>
+<% if @recurring_donations.size > 0 && @donations.current_page == 1 %>
   <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
     Recurring donations
   </h2>
@@ -218,7 +218,6 @@
 
 <% if @donations.size > 0 %>
 <article class="table-container">
-
   <table>
     <thead>
       <tr>
@@ -248,6 +247,9 @@
             <% if d.recurring? %>
               <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Monthly donor"><%= inline_icon "support-recurring", size: 24, class: "muted" %></div>
             <% end %>
+            <% if d.in_person? %>
+              <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="In-person donor"><%= inline_icon "card", size: 24, class: "muted" %></div>
+            <% end %>
             <% if d.anonymous? %>
               <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
             <% end %>
@@ -263,7 +265,7 @@
       <% end %>
     </tbody>
   </table>
-
+  <%= paginate @donations %>
 </article>
 
 <% else %>
@@ -273,9 +275,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <%= javascript_include_tag "donation_qr_codes.js" %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
-  <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
-  <%= async_frame_to edit_event_path(@event, tab: "donations", params: { frame: true }), lazy: true, as: :div do %>
-    <strong>Loading...</strong>
-  <% end %>
-</section>
+<% if organizer_signed_in? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
+    <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
+    <%= turbo_frame_tag :donations_settings, src: edit_event_path(@event, tab: "donations", params: { frame: true }), loading: "lazy" do %>
+      <strong>Loading...</strong>
+    <% end %>
+  </section>
+<% end %>

@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module Hcb
@@ -42,7 +43,7 @@ class Metric
           END AS location",
           "(SUM(amount_cents)) * -1 AS amount_spent"
         )
-                            .where("EXTRACT(YEAR FROM date_posted) = ?", 2023)
+                            .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
                             .group(
                               "CASE
             WHEN COALESCE(stripe_transaction->'merchant_data'->>'state', '') <> '' THEN

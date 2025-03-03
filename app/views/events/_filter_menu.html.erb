@@ -1,0 +1,111 @@
+<div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-start">
+  <button
+    type="button"
+    aria-label="Add filter..."
+    class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
+    data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+    <%= inline_icon "filter", size: 28 %>
+  </button>
+  <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 320px; padding: 0.5rem;" data-menu-target="content" data-controller="filter">
+    <div data-controller="tabs" data-tabs-default-tab-value="<%= @tag ? "tags" : @user ? "user" : @type ? "type" : @start_date || @end_date ? "date" : @maximum_amount || @minimum_amount ? "amount" : Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 ? "tags" : "user" %>">
+      <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
+        <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
+      <% end %>
+      <button id="user" data-tabs-target="btn" data-action="click->tabs#select">User</button>
+      <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
+      <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
+      <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
+      <button id="receipts" data-tabs-target="btn" data-action="click->tabs#select">Receipts</button>
+      <div class="menu__divider--filter-tab"></div>
+
+      <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
+        <div data-tabs-target="tab" id="tags">
+          <% @event.tags.order(label: :asc).each do |tag| %>
+            <div class="flex items-center" data-tag="<%= tag.id %>">
+              <%= link_to upsert_query_params(tag: tag.label), class: "flex-auto menu__action", data: { turbo_prefetch: "false" } do %>
+
+                <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+                <%= tag.label %>
+              <% end %>
+              <% if organizer_signed_in? %>
+                <%= button_to event_tag_path(@event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
+                  <%= inline_icon "delete", size: 20, style: "margin: 0" %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+      <div data-tabs-target="tab" id="user">
+        <% @organizers.each do |position| %>
+          <div class="flex items-center">
+            <%= link_to(upsert_query_params(user: position.user.id), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.id == position.user.id}", data: { turbo_prefetch: "false" }) do %>
+
+              <div class="avatar-grow line-height-0 mr1">
+                <%= avatar_for position.user, 18 %>
+              </div>
+              <%= position.user.name %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      <div data-tabs-target="tab" id="type">
+        <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire"].each do |type| %>
+          <div class="flex items-center">
+            <%= link_to(upsert_query_params(type:), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
+              <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      <div data-tabs-target="tab" id="date">
+        <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
+          <p class="bold mb0 mt0">Transactions after...</p>
+          <%= form.date_field :start, class: "border mb1", value: @start_date %>
+          <p class="bold mb0 mt0">Transactions before...</p>
+          <%= form.date_field :end, class: "border mb1", value: @end_date %>
+
+          <% request.query_parameters.except(:start, :end).each do |key, value| %>
+            <%= hidden_field_tag key, value %>
+          <% end %>
+
+          <div class="flex justify-start">
+            <%= form.submit "Filter transactions" %>
+          </div>
+        <% end %>
+      </div>
+      <div data-tabs-target="tab" id="amount">
+        <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
+
+          <p class="bold mb0 mt0">Transactions more than...</p>
+          <div class="flex mb1">
+            <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
+            <%= form.text_field :minimum_amount, placeholder: "50.00", value: @minimum_amount, step: 0.01, data: { "behavior": "money" } %>
+          </div>
+
+          <p class="bold mb0 mt0">Transactions less than...</p>
+          <div class="flex mb1">
+            <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
+            <%= form.text_field :maximum_amount, placeholder: "50.00", value: @maximum_amount, step: 0.01, data: { "behavior": "money" } %>
+          </div>
+
+          <% request.query_parameters.except(:minimum_amount, :maximum_amount).each do |key, value| %>
+            <%= hidden_field_tag key, value %>
+          <% end %>
+
+          <div class="flex justify-start">
+            <%= form.submit "Filter transactions" %>
+          </div>
+        <% end %>
+      </div>
+      <div data-tabs-target="tab" id="receipts">
+        <div class="flex items-center">
+          <%= link_to("Missing receipts", upsert_query_params(missing_receipts: true), class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+        </div>
+        <div>
+          <%= link_to("All transactions", upsert_query_params("missing_receipts" => nil), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

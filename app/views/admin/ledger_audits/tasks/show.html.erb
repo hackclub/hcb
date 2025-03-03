@@ -12,6 +12,12 @@
   </div>
 <% end %>
 
+<% if @hcb_code.receipts.any? { |r| r.extracted_incorrect_merchant? } %>
+  <div class="warning bold mb2">
+    ⚠️ Please check these receipts closely, we suspect that the merchant doesn't match.
+  </div>
+<% end %>
+
 <% if @hcb_code.receipts.any? { |r| r.duplicated? } %>
   <div class="warning bold mb2">
     ⚠️ We suspect that one or more of these receipts have been used before
@@ -19,7 +25,7 @@
 <% end %>
 
 <div class="hcb_code mt2">
-  <div class="hcb_code_wrapper <%= event.hack_club_hq? ? "hack_club_hq" : "" %>" style="margin-top: -16px;">
+  <div class="hcb_code_wrapper <%= event.plan.is_a?(Event::Plan::HackClubAffiliate) ? "hack_club_hq" : "" %>" style="margin-top: -16px;">
     <%= render partial: "hcb_codes/rich_metadata" %>
   </div>
   <div class="receipts_wrapper_mobile">
@@ -51,7 +57,7 @@
         <div class="h4 line-height-2 mb2 flex justify-between item-center">
           <span style="white-space: nowrap; gap: 4px;" class="flex items-center">
             <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
-            <%= async_frame_to event_async_balance_path(event), as: :span do %>
+            <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
               <strong>-</strong>
             <% end %>
           </span>
@@ -69,7 +75,6 @@
           <p>
             <strong>Category</strong>
             <span>
-              <%= @event.category %>
               <% Event::BADGES.each do |_key, badge| %>
                 <% if event.send(badge[:qualifier]) %>
                   <span title="<%= badge[:emoji] %> <%= badge[:description] %>"><%= badge[:emoji] %></span>
@@ -79,7 +84,7 @@
           </p>
           <p>
             <strong>Current plan</strong>
-            <span><%= @event.plan_name.titleize %></span>
+            <span><%= @event.plan.label.titleize %></span>
           </p>
           <p>
             <strong>Joined HCB</strong>
@@ -89,7 +94,7 @@
             <strong>Fee on revenue</strong>
             <span><%= number_to_percentage(@event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true) %></span>
           </p>
-          <% if @event.high_school_hackathon? && @event.revenue_fee == 0 %>
+          <% if @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
             <p>
               <strong>
                 <a

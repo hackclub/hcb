@@ -2,7 +2,7 @@
 
 class ExportsController < ApplicationController
   include SetEvent
-  before_action :set_event, only: [:transactions]
+  before_action :set_event, only: [:transactions, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
@@ -15,6 +15,11 @@ class ExportsController < ApplicationController
       format.any(*export_options.keys) do
         file_extension = params[:format]
 
+        if file_extension == "csv" && params[:start_date].present?
+          # CSV exports **can** support date ranges
+          set_date_range
+        end
+
         if should_queue
           handle_large_export(file_extension)
         else
@@ -23,16 +28,8 @@ class ExportsController < ApplicationController
       end
 
       format.pdf do
-        @start = (params[:start_date] || Date.today.prev_month).to_datetime.beginning_of_month
-        if @start >= Date.today.beginning_of_month
-          flash[:error] = "Can not create a financial statement for #{@start.strftime("%B %Y")}"
-          redirect_back fallback_location: event_statements_path(@event) and return
-        end
-        @end = (params[:end_date] || @start).to_datetime.end_of_month
-        if @end < @start
-          flash[:error] = "End date cannot be before the start date."
-          redirect_back fallback_location: event_statements_path(@event) and return
-        end
+        set_date_range # PDF monthly statements require a date range
+
         all = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: all, event: @event).run!
 
@@ -66,6 +63,16 @@ class ExportsController < ApplicationController
     end
   end
 
+  def reimbursements
+    authorize @event, :reimbursements?
+
+    respond_to do |format|
+      format.csv do
+        stream_reimbursements_csv
+      end
+    end
+  end
+
   def collect_email
     if !params[:event_slug] || !params[:file_extension]
       redirect_to root_path
@@ -76,6 +83,19 @@ class ExportsController < ApplicationController
 
   private
 
+  def set_date_range
+    @start = (params[:start_date] || Date.today.prev_month).to_datetime.beginning_of_month
+    if @start >= Date.today.beginning_of_month
+      flash[:error] = "Can not create a financial statement for #{@start.strftime("%B %Y")}"
+      redirect_back fallback_location: event_statements_path(@event) and return
+    end
+    @end = (params[:end_date] || @start).to_datetime.end_of_month
+    if @end < @start
+      flash[:error] = "End date cannot be before the start date."
+      redirect_back fallback_location: event_statements_path(@event) and return
+    end
+  end
+
   def export_options
     {
       "csv"    => ExportJob::Csv,
@@ -85,15 +105,20 @@ class ExportsController < ApplicationController
   end
 
   def handle_large_export(file_extension)
+    additional_args = {}
+    if file_extension == "csv" && @start
+      additional_args.merge!(start_date: @start, end_date: @end)
+    end
+
     if current_user
       export_job = export_options[file_extension]
-      export_job.perform_later(event_id: @event.id, email: current_user.email, public_only: !organizer_signed_in?)
+      export_job.perform_later(event_id: @event.id, email: current_user.email, public_only: !organizer_signed_in?, **additional_args)
       flash[:success] = "This export is too big, so we'll send you an email when it's ready."
       redirect_back fallback_location: @event and return
     elsif params[:email]
       # this handles the second stage of large transparent exports
       export_job = export_options[file_extension]
-      export_job.perform_later(event_id: @event.id, email: params[:email], public_only: true)
+      export_job.perform_later(event_id: @event.id, email: params[:email], public_only: true, **additional_args)
       flash[:success] = "We'll send you an email when your export is ready."
       redirect_to @event and return
     else
@@ -130,23 +155,32 @@ class ExportsController < ApplicationController
     self.response_body = transactions_ledger
   end
 
+  def stream_reimbursements_csv
+    set_file_headers_csv
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = reimbursements_csv
+  end
+
   def set_file_headers_csv
     headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
   end
 
   def set_file_headers_json
     headers["Content-Type"] = "application/json"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.json"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.json"
   end
 
   def set_file_headers_ledger
     headers["Content-Type"] = "text/ledger"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
   end
 
   def transactions_csv
-    ::ExportService::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
+    ::ExportService::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?, start_date: @start, end_date: @end).run
   end
 
   def transactions_json
@@ -155,6 +189,10 @@ class ExportsController < ApplicationController
 
   def transactions_ledger
     ::ExportService::Ledger.new(event_id: @event.id, public_only: !organizer_signed_in?).run
+  end
+
+  def reimbursements_csv
+    ::ExportService::Reimbursement::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
   end
 
 end

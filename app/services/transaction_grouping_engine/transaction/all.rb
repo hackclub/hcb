@@ -3,17 +3,18 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false)
         @event_id = event_id
-        @search = ActiveRecord::Base.connection.quote_string(search || "")
-        @tag_id = tag_id
+        @search = ActiveRecord::Base.sanitize_sql_like(search || "")
+        @tag_id = tag_id&.to_i
         @expenses = expenses
         @revenue = revenue
         @minimum_amount = minimum_amount
         @maximum_amount = maximum_amount
-        @start_date = start_date
-        @end_date = end_date
+        @start_date = start_date&.to_datetime
+        @end_date = end_date&.to_datetime
         @user = user
+        @missing_receipts = missing_receipts
       end
 
       def run
@@ -87,15 +88,17 @@ module TransactionGroupingEngine
 
         type = type.to_s
 
-        return "and (#{type}.memo ilike '%#{@search}%' or #{type}.friendly_memo ilike '%#{@search}%' or #{type}.custom_memo ilike '%#{@search}%')" if type == "ct"
+        if type == "ct"
+          return ActiveRecord::Base.sanitize_sql_array(["and (ct.memo ilike :query or ct.friendly_memo ilike :query or ct.custom_memo ilike :query)", { query: "%#{@search}%" }])
+        end
 
-        "and (#{type}.memo ilike '%#{@search}%' or #{type}.custom_memo ilike '%#{@search}%')"
+        ActiveRecord::Base.sanitize_sql_array(["and (#{type}.memo ilike :query or #{type}.custom_memo ilike :query)", { query: "%#{@search}%" }])
       end
 
       def user_modifier
-        return "" unless @user.present?
+        return "" unless @user&.stripe_cardholder&.stripe_id.present?
 
-        "and raw_stripe_transactions.stripe_transaction->>'cardholder' = '#{@user&.stripe_cardholder&.stripe_id}'"
+        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user.stripe_cardholder.stripe_id])
       end
 
       def user_joins_for(type)
@@ -111,25 +114,57 @@ module TransactionGroupingEngine
       def modifiers
         joins = []
         conditions = []
+        query_params = {}
 
         if @tag_id
           joins << <<~SQL
             left join hcb_codes on hcb_codes.hcb_code = q1.hcb_code
             left join hcb_codes_tags on hcb_codes_tags.hcb_code_id = hcb_codes.id
           SQL
-          conditions << "hcb_codes_tags.tag_id = #{@tag_id}"
+          conditions << "hcb_codes_tags.tag_id = :tag_id"
+          query_params.merge!({ tag_id: @tag_id })
+        end
+
+        if !@tag_id && @missing_receipts
+          joins << <<~SQL
+            left join hcb_codes on hcb_codes.hcb_code = q1.hcb_code
+          SQL
+        end
+
+        if @missing_receipts
+          joins << <<~SQL
+            left join receipts on receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'
+          SQL
+          conditions << "receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
         end
 
         conditions << "q1.amount_cents < 0" if @expenses
         conditions << "q1.amount_cents >= 0" if @revenue
-        conditions << "ABS(q1.amount_cents) >= #{@minimum_amount.cents}" if @minimum_amount
-        conditions << "ABS(q1.amount_cents) <= #{@maximum_amount.cents}" if @maximum_amount
-        conditions << "#{date_select} >= cast('#{@start_date}' as date)" if @start_date
-        conditions << "#{date_select} <= cast('#{@end_date}' as date)" if @end_date
+
+        if @minimum_amount
+          conditions << "ABS(q1.amount_cents) >= :min_cents"
+          query_params.merge!({ min_cents: @minimum_amount.cents })
+        end
+
+        if @maximum_amount
+          conditions << "ABS(q1.amount_cents) <= :max_cents"
+          query_params.merge!({ max_cents: @maximum_amount.cents })
+        end
+
+        if @start_date
+          conditions << "#{date_select} >= cast(:start_date as date)"
+          query_params.merge!({ start_date: @start_date })
+        end
+
+        if @end_date
+          conditions << "#{date_select} <= cast(:end_date as date)"
+          query_params.merge!({ end_date: @end_date })
+        end
 
         return if conditions.none?
 
-        "#{joins.join(" ")} where #{conditions.join(" and ")}"
+        sanitized_conditions = ActiveRecord::Base.sanitize_sql_array([conditions.join(" and "), query_params])
+        "#{joins.join(" ")} where #{sanitized_conditions}"
       end
 
       def date_select
@@ -172,7 +207,7 @@ module TransactionGroupingEngine
               from
                 canonical_pending_event_mappings cpem
               where
-                cpem.event_id = #{event.id}
+                cpem.event_id = :event_id
                 and cpem.subledger_id is null
               except ( -- hide pending transactions that have either settled or been declined.
                 select
@@ -191,7 +226,7 @@ module TransactionGroupingEngine
               select *
               from canonical_transactions ct
               inner join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id
-              where ct.hcb_code = pt.hcb_code and cem.event_id = #{event.id}
+              where ct.hcb_code = pt.hcb_code and cem.event_id = :event_id
             )
             #{search_modifier_for :pt}
             #{user_modifier}
@@ -216,7 +251,7 @@ module TransactionGroupingEngine
               from
                 canonical_event_mappings cem
               where
-                cem.event_id = #{event.id}
+                cem.event_id = :event_id
                 and cem.subledger_id is null
             )
             #{search_modifier_for :ct}
@@ -280,6 +315,8 @@ module TransactionGroupingEngine
           #{modifiers}
           order by date desc, pt_ids[1] desc, ct_ids[1] desc
         SQL
+
+        ActiveRecord::Base.sanitize_sql_array([q, { event_id: @event_id }])
       end
 
       def canonical_transactions_grouped

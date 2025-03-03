@@ -25,7 +25,6 @@
 class CanonicalTransaction < ApplicationRecord
   has_paper_trail
 
-  include Commentable
   include Receiptable
 
   include PgSearch::Model
@@ -57,7 +56,7 @@ class CanonicalTransaction < ApplicationRecord
   scope :emburse_transaction,  -> { joins("INNER JOIN raw_emburse_transactions  ON transaction_source_type = 'RawEmburseTransaction'  AND raw_emburse_transactions.id  = transaction_source_id") }
   scope :column_transaction,   -> { joins("INNER JOIN raw_column_transactions   ON transaction_source_type = 'RawColumnTransaction'   AND raw_column_transactions.id  =  transaction_source_id") }
 
-  scope :likely_hack_club_bank_issued_cards, -> { where("memo ilike 'Hack Club Bank Issued car%' or memo ilike 'HCKCLB Issued car%'") }
+  scope :likely_hack_club_bank_issued_cards, -> { where("memo ilike 'Hack Club Bank Issued car%' or memo ilike 'HCKCLB Issued car%' or memo ilike 'STRIPE Issued car%'") }
   scope :likely_clearing_checks, -> { where("memo ilike '%Withdrawal - Inclearing Check #%' or memo ilike '%Withdrawal - On-Us Deposited Ite #%'") }
   scope :likely_checks, -> { where("memo ilike '%Check TO ACCOUNT REDACTED'") }
   scope :likely_increase_checks, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'check_transfer_intention'") }
@@ -67,14 +66,30 @@ class CanonicalTransaction < ApplicationRecord
   scope :likely_increase_account_number, -> { increase_transaction.joins("INNER JOIN increase_account_numbers ON increase_account_number_id = increase_route_id") }
   scope :likely_increase_check_deposit, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'check_deposit_acceptance'") }
   scope :increase_interest, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'interest_payment'") }
-  scope :likely_column_interest, -> { with_column_transaction_type("ach").where(memo: "COLUMN*COLUMN NA INTEREST") }
+  scope :likely_column_interest, -> {
+    column_transaction.where("raw_column_transactions.column_transaction->>'transaction_type' = 'interest.payout.completed'")
+                      .or(where(memo: "COLUMN*COLUMN NA INTEREST"))
+  }
   scope :likely_column_account_number, -> { column_transaction.joins("INNER JOIN column_account_numbers ON column_transaction->>'account_number_id' = column_account_numbers.column_id") }
   scope :likely_hack_club_fee, -> { where("memo ilike '%Hack Club Bank Fee TO ACCOUNT%'") }
   scope :old_likely_hack_club_fee, -> { where("memo ilike '% Fee TO ACCOUNT REDACTED%'") }
-  scope :stripe_top_up, -> { where("memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or memo ilike '%HCKCLB Stripe Top%'") }
-  scope :not_stripe_top_up, -> { where("(memo not ilike '%Hack Club Bank Stripe Top%' and memo not ilike '%HACKC Stripe Top%' and memo not ilike '%HCKCLB Stripe Top%') or memo is null") }
+  scope :stripe_top_up, -> { where("memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or memo ilike '%HCKCLB Stripe Top%' or memo ilike '%STRIPE Stripe Top%'") }
+  scope :not_stripe_top_up, -> { where("(memo not ilike '%Hack Club Bank Stripe Top%' and memo not ilike '%HACKC Stripe Top%' and memo not ilike '%HCKCLB Stripe Top%' and memo not ilike '%STRIPE Stripe Top%') or memo is null") }
+  scope :hcb_sweep, -> { where("memo ilike '%COLUMN*THE HACK HCB-SWEEP%'") }
+  scope :to_svb_sweep_account, -> { where(memo: "TF TO ICS SWP") }
+  scope :from_svb_sweep_account, -> { where(memo: "TF FRM ICS SWP") }
+  scope :svb_sweep_account, -> { where(transaction_source_type: RawIntrafiTransaction.name) }
+  scope :svb_sweep_interest, -> { where(transaction_source_type: RawIntrafiTransaction.name, memo: "Interest Capitalization") }
   scope :mapped_by_human, -> { includes(:canonical_event_mapping).where("canonical_event_mappings.user_id is not null").references(:canonical_event_mapping) }
-  scope :included_in_stats, -> { includes(canonical_event_mapping: :event).where(events: { omit_stats: false }) }
+  scope :included_in_stats, -> {
+    includes(
+      canonical_event_mapping: { event: :plan }
+    ).where.not(
+      event_plans: {
+        type: Event::Plan.that(:omit_stats).collect(&:name)
+      }
+    )
+  }
 
   scope :with_column_transaction_type, ->(type) { column_transaction.where("raw_column_transactions.column_transaction->>'transaction_type' LIKE ?", "#{sanitize_sql_like(type)}%") }
 
@@ -308,6 +323,10 @@ class CanonicalTransaction < ApplicationRecord
     return linked_object if linked_object.is_a?(PaypalTransfer)
   end
 
+  def wire
+    return linked_object if linked_object.is_a?(Wire)
+  end
+
   def check_deposit
     return linked_object if linked_object.is_a?(CheckDeposit)
 
@@ -330,10 +349,6 @@ class CanonicalTransaction < ApplicationRecord
 
   def short_code
     memo[/HCB-(\w{5})/, 1]
-  end
-
-  def partner_donation
-    nil # TODO: implement
   end
 
   def donation

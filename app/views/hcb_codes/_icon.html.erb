@@ -14,6 +14,9 @@
   <% elsif tx.local_hcb_code.paypal_transfer? %>
     <% label = "Paypal transfer" %>
     <% icon = inline_icon "paypal" %>
+  <% elsif tx.local_hcb_code.wire? %>
+    <% label = "Wire" %>
+    <% icon = inline_icon "web" %>
   <% elsif tx.local_hcb_code.check_deposit? %>
     <% label = "Check deposit" %>
     <% icon = inline_icon "cheque" %>
@@ -65,10 +68,12 @@
     <% icon = inline_icon "cash" %>
   <% end %>
 
-<td class="transaction__icon tooltipped tooltipped--e <%= "transaction__fee_icon" if fee %>" aria-label="<%= label %>"
+<td class="transaction__icon <%= "transaction__fee_icon" if fee %>"
     <% if defined?(selects) %>
       data-action="click->transactions#select"
       data-transaction="<%= selects %>"
     <% end %>>
-  <%= icon %>
+  <div class="tooltipped tooltipped--<%= defined?(tooltip_direction) ? tooltip_direction : "e" %>" aria-label="<%= label %>">
+    <%= icon %>
+  </div>
 </td>

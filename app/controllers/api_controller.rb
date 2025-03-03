@@ -22,7 +22,6 @@ class ApiController < ApplicationController
       name: params[:name],
       email: params[:email],
       country: params[:country],
-      category: params[:category],
       postal_code: ValidatesZipcode.valid?(params[:postal_code], params[:country]) ? params[:postal_code] : nil,
       is_public: params[:transparent].nil? ? true : params[:transparent],
     ).run

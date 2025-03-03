@@ -82,8 +82,8 @@ class User
     end
 
     def send_emails
-      UserMailer.email_update_verification(self).deliver_now
-      UserMailer.email_update_authorization(self).deliver_now
+      User::EmailUpdateMailer.verification(self).deliver_now
+      User::EmailUpdateMailer.authorization(self).deliver_now
     end
 
     private

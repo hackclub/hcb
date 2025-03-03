@@ -101,6 +101,13 @@ class Disbursement < ApplicationRecord
       icon: "freeze",
       qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND }
     },
+    argosy_grant_2024: {
+      title: "Grant from the Argosy Foundation",
+      memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
+      css_class: "transaction--fancy",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::ARGOSY_GRANT_FUND && d.created_at > Date.new(2024, 9, 1) }
+    },
     first_transparency_grant: {
       title: "FIRST® Transparency grant",
       memo: "🤖 FIRST® Transparency Grant",
@@ -233,13 +240,13 @@ class Disbursement < ApplicationRecord
     elsif rejected?
       :error
     elsif scheduled?
-      :scheduled
+      :info
     elsif errored?
       :error
     elsif reviewing?
-      :reviewing
+      :info
     else
-      :pending
+      :info
     end
   end
 
@@ -279,7 +286,7 @@ class Disbursement < ApplicationRecord
     elsif errored?
       "errored"
     elsif reviewing?
-      "under review"
+      "pending"
     else
       "pending"
     end

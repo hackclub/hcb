@@ -44,6 +44,9 @@ class EventTag < ApplicationRecord
     PARTNER_128_COLLECTIVE_FUNDED = "128 Collective Funded"
     PARTNER_128_COLLECTIVE_RECOMMENDED = "128 Collective Recommended"
     VERMONT_BASED = "Vermont-based"
+    ROBOTICS_TEAM = "Robotics Team"
+    HACKATHON = "Hackathon"
+    HACK_CLUB = "Hack Club"
   end
 
 end

@@ -4,7 +4,7 @@
 class AdminConstraint
   include Rails.application.routes.url_helpers
 
-  def matches?(request)
+  def self.matches?(request)
     cookies = ActionDispatch::Cookies::CookieJar.build(request, request.cookies)
     session_token = cookies.encrypted[:session_token]
 

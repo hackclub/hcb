@@ -36,6 +36,16 @@
       <td style="text-align: right;">Amount:</td>
       <td><%= render_money @check.amount %></td>
     </tr>
+    <% if @check.employee_payment.present? %>
+      <tr>
+        <td style="text-align: right;">Employee:</td>
+        <td><%= @check.employee_payment.employee.user.name %></td>
+      </tr>
+      <tr>
+        <td style="text-align: right;">Event:</td>
+        <td><%= @check.employee_payment.employee.event.name %></td>
+      </tr>
+    <% end %>
   </tbody>
 </table>
 
@@ -57,7 +67,14 @@
 
 <% if @check.pending? %>
   <%= button_to "💸 Approve and send check", approve_increase_check_path(@check), method: :post, data: { confirm: "Are you sure you want to send this check?" } %>
-  <%= button_to "Reject", reject_increase_check_path(@check) %>
+  <%= form_with(model: nil, local: true, url: reject_increase_check_path(@check), method: :post) do |form| %>
+    <div class="field">
+      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+    </div>
+    <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+    <small>(This requires you to communicate to the organizer about the reason why.)</small>
+  <% end %>
 <% else %>
   <p>This check has been <b><%= @check.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
 <% end %>

@@ -17,11 +17,10 @@
       </p>
     <% end %>
 
-    <% eta = stripe_card.stripe_obj.to_hash&.dig(:shipping, :eta) %>
-    <% if eta && Time.now.before?(Time.at(eta) + 3.days) %>
+    <% if !stripe_card.initially_activated? && stripe_card.shipping_eta&.after?(1.week.ago) %>
       <p>
         <strong>Expected arrival</strong>
-        <%= format_date Time.at(eta).to_date %>
+        <%= format_date stripe_card.shipping_eta %>
       </p>
     <% else %>
       <p>
@@ -98,12 +97,12 @@
 
     <div class="fs-mask">
       <strong>Expiration date</strong>
-      <%= render_exp_date stripe_card %>
+      <%= copy_to_clipboard(render_short_exp_date(stripe_card), class: "w-fit", tooltip_direction: "e") { render_exp_date stripe_card } %>
     </div>
 
     <div class="fs-mask">
       <strong>ZIP/Postal code</strong>
-      <%= stripe_card.stripe_cardholder.address_postal_code %>
+      <%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, class: "w-fit", tooltip_direction: "e") %>
     </div>
 
     <div>
@@ -138,7 +137,7 @@
     </div>
   <% end %>
 
-  <section class="grid grid--split items-end pt2">
+  <section class="flex flex-wrap gap-4 items-end pt2">
     <div class="stat tooltipped tooltipped--s" aria-label="This is your account balance">
       <strong class="stat__label">Spending limit</strong>
       <span class="stat__value"><%= render_money_amount stripe_card.balance_available %></span>

@@ -1,0 +1,28 @@
+<div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-start" class="ml-auto">
+  <button
+    type="button"
+    aria-label="Add filter..."
+    class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
+    data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+    <%= inline_icon "filter", size: 28 %>
+  </button>
+  <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 320px; padding: 0.5rem;" data-menu-target="content" data-controller="filter">
+    <div data-controller="tabs" data-tabs-default-tab-value="status">
+      <button id="status" data-tabs-target="btn" data-action="click->tabs#select">Status</button>
+      <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
+      <div class="menu__divider--filter-tab"></div>
+
+      <div data-tabs-target="tab" id="status">
+        <% %w[active inactive canceled].each do |status| %>
+          <%= link_to status.gsub("inactive", "frozen").humanize, upsert_query_params(status:), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @status == status}", data: { turbo_prefetch: "false" } %>
+        <% end %>
+      </div>
+
+      <div data-tabs-target="tab" id="type">
+        <% %w[virtual physical].each do |type| %>
+          <%= link_to type.humanize, upsert_query_params(type:), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" } %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

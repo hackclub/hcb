@@ -1,0 +1,113 @@
+<p>Salutations <%= @manager.name %>,</p>
+
+<p>
+  Your direct reports spent <%= render_money(-@subordinate_stats.sum(&:total_cents)) %> in total this week.
+</p>
+
+<img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExejQ0OXB2ajNnanVjaXlvZW9uaHRta2Yycm42NzNpbXR5MjFuYXRuNSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vRF0wsDE6U2LyK747C/giphy-downsized-large.gif" width="50%" alt="raccoon" title="raccoon">
+
+<% @subordinate_stats.reject { |s| s.total_cents.zero? }.each do |subordinate| %>
+  <h2><%= subordinate.user.full_name %></h2>
+  <p>
+    <%= subordinate.user.name %> spent <%= render_money(-subordinate.total_cents) %>
+    this week.
+  </p>
+  <table class="formatted">
+    <tr>
+      <th>Memo</th>
+      <th>Amount</th>
+      <th>Event</th>
+      <th>Receipts</th>
+    </tr>
+    <% subordinate.hcb_codes.sort_by(&:amount_cents).each do |hcb_code| %>
+      <tr>
+        <td>
+          <a href="<%= url_for(hcb_code) %>">
+            <%= hcb_code.memo %>
+          </a>
+        </td>
+        <td>
+          <%= render_money hcb_code.amount_cents * -1 %>
+        </td>
+        <td>
+          <a href="<%= url_for hcb_code.event %>">
+            <%= hcb_code.event.name %>
+          </a>
+        </td>
+        <td>
+          <% if hcb_code.local_hcb_code.stripe_refund? %>
+            <span style="color: #8492a6">Refund</span>
+          <% elsif hcb_code.local_hcb_code.receipts.any? %>
+            <span style="color: #33d6a6"><%= hcb_code.local_hcb_code.receipts.count %></span>
+          <% else %>
+            <span style="color: #ec3750">None</span>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </table>
+<% end %>
+
+<% no_spend_names = @subordinate_stats.select { |s| s.total_cents.zero? }.map { |s| s.user.name } %>
+<% if no_spend_names.any? %>
+  <p>People who spent no money this week:
+  <ul>
+    <% no_spend_names.each do |name| %>
+      <li><%= name %>
+    <% end %>
+  </ul>
+<% end %>
+
+<h1>Missing Receipts</h1>
+<p>Your reports have a total
+  of <%= @subordinates.sum(&:transactions_missing_receipt_count) %> missing
+  receipts.</p>
+
+<% (@subordinates + [@manager]).each do |user| %>
+  <% if (missing_count = user.transactions_missing_receipt_count) > 0 %>
+    <h2><%= user.name %> (<%= missing_count %>)</h2>
+    <table class="formatted">
+      <tr>
+        <th>Memo</th>
+        <th>Amount</th>
+        <th>Event</th>
+      </tr>
+      <% user.transactions_missing_receipt.each do |hcb_code| %>
+        <tr>
+          <td>
+            <a href="<%= url_for(hcb_code) %>">
+              <%= hcb_code.memo %>
+            </a>
+          </td>
+          <td>
+            <%= render_money hcb_code.amount_cents * -1 %>
+          </td>
+          <td>
+            <a href="<%= url_for hcb_code.event %>">
+              <%= hcb_code.event.name %>
+            </a>
+          </td>
+        </tr>
+      <% end %>
+    </table>
+  <% end %>
+<% end %>
+
+<style>
+    table.formatted {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 2.5rem;
+
+        & td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        & tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    }
+</style>

@@ -4,8 +4,8 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :faq, :roles]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :faq, :roles]
+  skip_before_action :signed_in_user, only: [:branding, :roles]
+  skip_before_action :redirect_to_onboarding, only: [:branding, :roles]
 
   def index
     if signed_in?
@@ -15,9 +15,9 @@ class StaticPagesController < ApplicationController
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
 
-      if admin_signed_in? && Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user)
+      if admin_signed_in? && cookies[:admin_activities] == "everyone"
         @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
-      elsif Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user)
+      else
         @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
       end
 
@@ -111,9 +111,6 @@ class StaticPagesController < ApplicationController
     }
   end
 
-  def faq
-  end
-
   def suggested_pairings
     render partial: "static_pages/suggested_pairings", locals: {
       pairings: current_user.receipt_bin.suggested_receipt_pairings,
@@ -141,7 +138,7 @@ class StaticPagesController < ApplicationController
     redirect_back
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash[:error] = e.message
     return redirect_to params[:redirect_url] if params[:redirect_url]

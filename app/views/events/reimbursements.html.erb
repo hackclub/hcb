@@ -2,8 +2,11 @@
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements %>
 
-<h1 class="heading flex">
+<h1 class="heading flex gap-2 md:gap-4 text-3xl md:text-5xl border-0 md:border">
   <span class="flex-grow">Reimbursements</span>
+  <%= pop_icon_to "download",
+                  reimbursements_exports_path(@event, format: :csv),
+                  class: "tooltipped tooltipped--s", "aria-label": "Download CSV export" %>
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "reimbursements"),
       data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
@@ -14,15 +17,19 @@
         target: "_blank",
         class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
   <% end %>
-  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" } do %>
-    <%= inline_icon "plus" %>
-    New
+  <%= pop_icon_to "plus",
+        "#",
+        class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
+        "aria-label": "New report",
+        data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
+  <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
+      <%= inline_icon "plus" %> New
   <% end %>
 </h1>
 
 <%= render partial: "reimbursement/reports/create_form" %>
 
-<div class="statset mt3 mb3">
+<div class="statset mt3 mb3 xs-hide">
   <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@event.reimbursement_reports.to_calculate_total.sum(&:amount_cents)) %></span>
@@ -37,7 +44,7 @@
   </div>
 </div>
 
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+<div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb2">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <div class="input input-group max-w-none" tabindex="0">
       <%= inline_icon "search" %>
@@ -129,7 +136,7 @@
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="reimbursement_settings">
   <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "reimbursements")) %>
-  <%= async_frame_to edit_event_path(@event, tab: "reimbursements", params: { frame: true }), lazy: true, as: :div do %>
+  <%= turbo_frame_tag :reimbursements_settings, src: edit_event_path(@event, tab: "reimbursements", params: { frame: true }), loading: "lazy" do %>
     <strong>Loading...</strong>
   <% end %>
 </section>

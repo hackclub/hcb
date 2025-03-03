@@ -5,6 +5,24 @@ class EventPolicy < ApplicationPolicy
     user.present?
   end
 
+  # Event homepage
+  def show?
+    is_public || admin_or_user?
+  end
+
+  # Turbo frames for the event homepage (show)
+  alias_method :team_stats?, :show?
+  alias_method :recent_activity?, :show?
+  alias_method :money_movement?, :show?
+  alias_method :balance_transactions?, :show?
+  alias_method :merchants_categories?, :show?
+  alias_method :top_categories?, :show?
+  alias_method :tags_users?, :show?
+  alias_method :transaction_heatmap?, :show?
+
+  alias_method :transactions?, :show?
+  alias_method :ledger?, :transactions?
+
   def toggle_hidden?
     user&.admin?
   end
@@ -15,14 +33,6 @@ class EventPolicy < ApplicationPolicy
 
   def create?
     user&.admin?
-  end
-
-  def show?
-    is_public || admin_or_user?
-  end
-
-  def breakdown?
-    (admin_or_user? && Flipper.enabled?(:breakdown_2024_06_18, record)) || user&.admin?
   end
 
   def balance_by_date?
@@ -36,16 +46,31 @@ class EventPolicy < ApplicationPolicy
     admin_or_user?
   end
 
-  def by_airtable_id?
-    user&.admin?
+  def edit?
+    admin_or_user?
   end
 
-  def edit?
+  # pinning a transaction to an event
+  def pin?
     admin_or_user?
   end
 
   def update?
     admin_or_manager?
+  end
+
+  alias remove_header_image? update?
+
+  alias remove_background_image? update?
+
+  alias remove_logo? update?
+
+  alias enable_feature? update?
+
+  alias disable_feature? update?
+
+  def validate_slug?
+    admin_or_user?
   end
 
   def destroy?
@@ -61,7 +86,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def card_overview?
-    ((is_public || user?) && record.approved? && record.plan.cards_enabled?) || admin?
+    (is_public || admin_or_user?) && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -73,7 +98,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def documentation?
-    (is_public || admin_or_user?) && record.plan.documentation_enabled?
+    admin_or_user? && record.plan.documentation_enabled?
   end
 
   def statements?
@@ -105,11 +130,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def transfers?
-    ((is_public || user?) && record.plan.transfers_enabled?) || admin?
+    (is_public || admin_or_user?) && record.plan.transfers_enabled?
   end
 
   def promotions?
-    (is_public || admin_or_user?) && record.plan.promotions_enabled?
+    admin_or_user? && record.plan.promotions_enabled?
   end
 
   def reimbursements_pending_review_icon?
@@ -117,43 +142,19 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements?
-    (user? && record.plan.reimbursements_enabled?) || admin?
+    admin_or_user? && record.plan.reimbursements_enabled?
   end
 
-  def expensify?
+  def employees?
     admin_or_user?
   end
 
   def donation_overview?
-    ((is_public || user?) && record.approved? && record.plan.donations_enabled?) || admin?
-  end
-
-  def partner_donation_overview?
-    is_public || admin_or_user?
-  end
-
-  def remove_header_image?
-    admin_or_manager?
-  end
-
-  def remove_background_image?
-    admin_or_manager?
-  end
-
-  def remove_logo?
-    admin_or_manager?
-  end
-
-  def enable_feature?
-    admin_or_manager?
-  end
-
-  def disable_feature?
-    admin_or_manager?
+    (is_public || admin_or_user?) && record.approved? && record.plan.donations_enabled?
   end
 
   def account_number?
-    (manager? && record.plan.account_number_enabled?) || admin?
+    admin_or_manager? && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -168,15 +169,7 @@ class EventPolicy < ApplicationPolicy
     user.admin?
   end
 
-  def validate_slug?
-    admin_or_user?
-  end
-
   def termination?
-    user&.admin?
-  end
-
-  def finish_signee_backfill?
     user&.admin?
   end
 

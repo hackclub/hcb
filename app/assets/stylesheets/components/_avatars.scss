@@ -18,7 +18,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .avatar-row {
+  .avatar-row:not(.avatar-row--no-transform) {
     img,
     div {
       transition:
@@ -41,7 +41,7 @@
     transition: 0.125s transform ease-in-out;
   }
 
-  .avatar-grow:hover img {
+  .avatar-row:not(.avatar-row--no-transform) .avatar-grow:hover img {
     transform: scale(1.125);
   }
 }

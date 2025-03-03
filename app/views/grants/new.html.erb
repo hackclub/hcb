@@ -24,7 +24,7 @@
     <%= form.label :amount, "Amount" %>
     <div class="flex items-center">
       <span class="bold muted shrink-none" style="width: 1rem;">$</span>
-      <%= form.number_field :amount, value: (@grant.amount_cents.nil? ? nil : ("%.2f" % (@grant.amount_cents.to_f / 100))), placeholder: "10,000.00", required: true, min: 0.01, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+      <%= form.number_field :amount, value: (@grant.amount_cents.nil? ? nil : ("%.2f" % (@grant.amount_cents.to_f / 100))), placeholder: "10,000.00", required: true, min: 0.01, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
     </div>
   </div>
 

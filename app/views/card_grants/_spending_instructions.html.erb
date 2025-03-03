@@ -12,7 +12,7 @@
             Card number
           </strong>
           <% if card_grant.user == current_user %>
-            <%= stripe_card.formatted_card_number %>
+            <%= copy_to_clipboard(stripe_card.full_card_number, class: "w-fit", tooltip_direction: "e") { stripe_card.formatted_card_number } %>
           <% else %>
             <%= stripe_card.hidden_card_number %>
           <% end %>
@@ -21,7 +21,7 @@
         <p class="fs-mask">
           <strong>CVC</strong>
           <% if card_grant.user == current_user %>
-            <%= stripe_card.cvc %>
+            <%= copy_to_clipboard(stripe_card.cvc, class: "w-fit", tooltip_direction: "e") %>
           <% else %>
             <%= stripe_card.hidden_cvc %>
           <% end %>
@@ -29,20 +29,35 @@
 
         <p class="fs-mask">
           <strong>Expiration date</strong>
-          <%= render_exp_date stripe_card %>
+          <%= copy_to_clipboard(render_short_exp_date(stripe_card), class: "w-fit", tooltip_direction: "e") { render_exp_date stripe_card } %>
         </p>
 
         <p>
           <strong>ZIP/Postal code</strong>
-          <%= stripe_card.stripe_cardholder.address_postal_code %>
+          <%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, class: "w-fit", tooltip_direction: "e") %>
         </p>
         <p>
           <strong>Billing address</strong>
           <%= render_address stripe_card.cardholder %>
         </p>
+        <% if card_grant.allowed_merchants.any? %>
+          <p>
+            <strong>Allowed merchants</strong>
+              <span class="font-mono h5"><%= card_grant.allowed_merchant_names.join(", ") %></span>
+          </p>
+        <% end %>
+        <% if card_grant.allowed_categories.any? %>
+          <p>
+            <strong>Allowed categories</strong>
+            <span class="font-mono h5"><%= card_grant.allowed_category_names.join(", ") %></span>
+          </p>
+        <% end %>
       </section>
       <section class="card__banner card__banner--bottom card__darker pt2 pb2">
         <p class="muted mt0 mb0">
+          <% if card_grant.keyword_lock.present? %>
+            <%= card_grant.event.name %> has restricted the merchants this card grant can be used at.
+          <% end %>
           The card will be available for use until <%= format_date card_grant.expires_on %>. Afterward, the remaining funds will be returned to <%= card_grant.event.name %>.
         </p>
       </section>

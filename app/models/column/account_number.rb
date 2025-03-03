@@ -50,7 +50,7 @@ module Column
     end
 
     def event_is_not_demo_mode
-      errors.add(:base, "Can't create an account number for a Playground Mode org") if event.demo_mode? || event.outernet_guild?
+      errors.add(:base, "Can't create an account number for a Playground Mode org") if event.demo_mode?
     end
 
   end

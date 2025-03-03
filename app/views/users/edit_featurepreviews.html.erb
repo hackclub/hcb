@@ -9,15 +9,6 @@
   <section>
 
     <%= render partial: "features/preview", locals: {
-          id: "ai_memos",
-          classes: ["feature-ai-memos"],
-          feature_flag: :ai_memos_2024_06_20,
-          name: "AI Receipt Analysis",
-          description: "HCB can now analyze uploaded receipts to provide glancable details and transaction memo suggestions using OpenAI. After opting-in, you'll be able to see information such as the amount, date, and merchant in the receipt details pane, and HCB will suggest memos for transactions with receipts.",
-          footer: "When paired with <a href='#receipt-bin'>Receipt Bin</a>, HCB can also suggest which transaction a receipt belongs to."
-        } %>
-
-    <%= render partial: "features/preview", locals: {
           id: "two-factor-authentication",
           feature_flag: :two_factor_authentication_2024_05_22,
           name: "Two factor authentication",
@@ -32,7 +23,7 @@
           name: "Time-based one time passwords",
           classes: ["feature-totp"],
           description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
-        } if @user.using_2fa? %>
+        } %>
 
     <%= render partial: "features/preview", locals: {
           id: "receipt-bin",
@@ -79,7 +70,7 @@
                 fully_shipped: true,
                 name: "Receipt Report",
                 description: "Opting into this preview will send you a weekly reminder with a list of all your missing receipts.",
-                footer: "Try #{link_to "triggering an email for yourself", trigger_receipt_report_path, method: :post}!"
+                footer: "Try #{link_to "triggering an email for yourself", trigger_receipt_report_path, method: :post, data: { turbo: false } }!"
               } %>
 
           <%= render partial: "features/preview", locals: {
@@ -101,7 +92,7 @@
                 name: "Internal Transfers",
                 description: "Users with multiple organizations on HCB can now create
           transfers between their accounts. After opting-in, new options will
-          show up on an organziation's \"Transfers\" page, including a \"New
+          show up on an organization's \"Transfers\" page, including a \"New
           Transfer\" button and tools for searching and sorting the existing
           transfers list.",
                 footer: "This feature is on a per-user basis. Co-organizers will also have to

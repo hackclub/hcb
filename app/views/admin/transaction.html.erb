@@ -36,6 +36,7 @@
     <tr>
       <th>Map to an Event</th>
       <th>Map to a PayPal Transfer</th>
+      <th>Map to a Wire</th>
     </tr>
   </thead>
   <tbody>
@@ -57,15 +58,54 @@
           <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>
       </td>
+      <td>
+        <%= form_with model: nil, local: true, url: set_wire_path(@canonical_transaction), method: :post do |form| %>
+          <%= form.collection_select(:wire_id, Wire.approved + [@canonical_transaction.wire].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wire&.id }, { style: "width: 300px;" }) %>
+          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+        <% end %>
+      </td>
     </tr>
   </tbody>
 </table>
 
 <br><hr>
 
-<h4>Comments</h4>
+<% if @canonical_transaction.canonical_event_mapping %>
+  <h4>Receipts</h4>
 
-<%= render "comments/list", comments: @hcb_code.comments, show_blankslate: true %>
+  <% @hcb_code = @canonical_transaction.local_hcb_code %>
+  <div style="margin-left: -2rem;" class="mt2">
+    <%= render "receipts/list_v2" %>
+  </div>
+
+  <div style="width: 250px;">
+    <%= render partial: "receipts/form_v3", locals: {
+          receiptable: @canonical_transaction.local_hcb_code,
+          upload_method: "attach_receipt_page",
+          turbo: false
+        } %>
+  </div>
+<% end %>
+
+<h4 class="mb2">Comments</h4>
+
+<% @hcb_code.comments.each do | comment | %>
+  <p class="mb1">
+    <b>
+      <%= comment.user.name %> <%= comment.action_text %> <%= time_ago_in_words comment.created_at %> ago
+    </b>
+  </p>
+  <% if comment.content.blank? %>
+    <div class="muted mb1"><em>Comment left blank.</em></div>
+  <% else %>
+    <%== MarkdownService.instance.renderer(current_user:, record: comment).render comment.content %>
+  <% end %>
+  <% if comment.has_attached_file? %>
+    <p>
+      <%= link_to "📎 attachment", url_for(comment.file), target: "_blank" %>
+    </p>
+  <% end %>
+<% end %>
 
 <% if @potential_donation_payouts.present? %>
   <h4>Potential DonationPayouts to Map to</h4>

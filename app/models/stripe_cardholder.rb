@@ -33,7 +33,7 @@ class StripeCardholder < ApplicationRecord
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "issuing/cardholders", :stripe_id
 
-  enum cardholder_type: { individual: 0, company: 1 }
+  enum :cardholder_type, { individual: 0, company: 1 }
 
   belongs_to :user
   has_many :stripe_cards
@@ -173,7 +173,7 @@ class StripeCardholder < ApplicationRecord
   def stripe_obj
     @stripe_obj ||= StripeService::Issuing::Cardholder.retrieve(stripe_id)
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
 
     { status: "active", requirements: {} } # https://stripe.com/docs/api/issuing/cardholders/object
   end

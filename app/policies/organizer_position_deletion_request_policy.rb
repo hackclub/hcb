@@ -10,6 +10,8 @@ class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   end
 
   def create?
+    return false unless user.present?
+
     target_is_in_event = record.event.organizer_positions.include?(record.organizer_position)
     target_has_no_pending_request = record.organizer_position.organizer_position_deletion_requests.under_review.none?
 

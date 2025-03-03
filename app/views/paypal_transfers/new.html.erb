@@ -1,4 +1,4 @@
-<% disabled = !policy(@event).create_transfer? %>
+<% disabled = !policy(@event).create_transfer? || true %>
 
 <% title "Send a PayPal Transfer" %>
 <%= render "events/nav", selected: :transfers %>
@@ -13,8 +13,20 @@
 <%= render "callout",
     type: "info",
     title: "Important info about PayPal transfers" do %>
-    Depending on the recipient's location, PayPal may charge a transfer fee that is not covered by HCB. This fee can range from $0 to $5.
+    <p>HCB never charges fees to send transfers, however PayPal may charge processing fees to your organization or the recipient.</p>
+    <strong>Domestic fees:</strong>
+    <ul>
+      <li>No fee charged to your organization</li>
+      <li><%= link_to "3% merchant fee", "https://www.paypal.com/us/business/paypal-business-fees" %> charged to recipients</li>
+    </ul>
+    <strong>International fees:</strong>
+    <ul>
+      <li>PayPal charges a fee of up to $5 to your organization</li>
+      <li>Recipients will be charged a ~10% fee after currency conversion and may have to pay an additional withdrawal fee</li>
+    </ul>
 <% end %>
+
+<%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions %>
 
 <%= form_with(model: [@event, @paypal_transfer], local: true) do |form| %>
 
@@ -36,7 +48,7 @@
   <div class="field">
     <%= form.label :payment_for, "What are you paying for with this transfer?" %>
     <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
-    <span class="muted">This is to help HCB keep record of our transactions. The HCB team will see this.</span>
+    <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
   <%= form.label :amount, "Amount" %>
@@ -51,7 +63,7 @@
           step: 0.01,
           min: 1,
           required: true,
-          data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+          data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
       </div>
     </div>
     <% @paypal_transfer.errors.messages_for(:amount).each do |message| %>
@@ -88,6 +100,7 @@
           "file-drop-target" => "fileInput"
         },
         disabled: %>
+    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
   </div>
   <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
 

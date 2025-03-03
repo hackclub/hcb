@@ -15,8 +15,9 @@ module TransactionGroupingEngine
       # transactions together during an incident.
       INVOICE_CODE = "100"
       DONATION_CODE = "200"
-      PARTNER_DONATION_CODE = "201"
+      PARTNER_DONATION_CODE = "201" # deprecated
       ACH_TRANSFER_CODE = "300"
+      WIRE_CODE = "310"
       PAYPAL_TRANSFER_CODE = "350"
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
@@ -24,12 +25,12 @@ module TransactionGroupingEngine
       DISBURSEMENT_CODE = "500"
       STRIPE_CARD_CODE = "600"
       STRIPE_FORCE_CAPTURE_CODE = "601"
+      STRIPE_SERVICE_FEE_CODE = "610"
       BANK_FEE_CODE = "700"
       INCOMING_BANK_FEE_CODE = "701" # short-lived and deprecated
       FEE_REVENUE_CODE = "702"
       EXPENSE_PAYOUT_CODE = "710"
       PAYOUT_HOLDING_CODE = "712"
-      ACH_PAYMENT_CODE = "800" # ALSO short-lived and deprecated
       OUTGOING_FEE_REIMBURSEMENT_CODE = "900" # Note: many old fee reimbursements are still grouped under HCB-000
 
       def initialize(canonical_transaction_or_canonical_pending_transaction:)
@@ -39,19 +40,18 @@ module TransactionGroupingEngine
       def run
         return increase_check_hcb_code if increase_check
         return paypal_transfer_hcb_code if paypal_transfer
+        return wire_hcb_code if wire
         return unknown_hcb_code if @ct_or_cp.is_a?(CanonicalTransaction) && @ct_or_cp.raw_increase_transaction&.increase_account_number.present? # Don't attempt to group transactions posted to an org's account/routing number
         return short_code_hcb_code if has_short_code?
         return invoice_hcb_code if invoice
         return bank_fee_hcb_code if bank_fee
         return donation_hcb_code if donation
-        return partner_donation_hcb_code if partner_donation
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
         return check_deposit_hcb_code if check_deposit
         return disbursement_hcb_code if disbursement
         return stripe_card_hcb_code if raw_stripe_transaction
         return stripe_card_hcb_code_pending if raw_pending_stripe_transaction
-        return ach_payment_hcb_code if ach_payment
         return reimbursement_expense_payout_hcb_code if reimbursement_expense_payout
         return reimbursement_payout_holding_hcb_code if reimbursement_payout_holding
         return outgoing_fee_reimbursement_hcb_code if outgoing_fee_reimbursement?
@@ -105,18 +105,6 @@ module TransactionGroupingEngine
         @donation ||= @ct_or_cp.donation
       end
 
-      def partner_donation_hcb_code
-        [
-          HCB_CODE,
-          PARTNER_DONATION_CODE,
-          partner_donation.id
-        ].join(SEPARATOR)
-      end
-
-      def partner_donation
-        @partner_donation ||= @ct_or_cp.partner_donation
-      end
-
       def ach_transfer_hcb_code
         [
           HCB_CODE,
@@ -163,6 +151,18 @@ module TransactionGroupingEngine
 
       def paypal_transfer
         @paypal_transfer ||= @ct_or_cp.paypal_transfer
+      end
+
+      def wire_hcb_code
+        [
+          HCB_CODE,
+          WIRE_CODE,
+          wire.id
+        ].join(SEPARATOR)
+      end
+
+      def wire
+        @wire ||= @ct_or_cp.wire
       end
 
       def check_deposit_hcb_code
@@ -249,18 +249,6 @@ module TransactionGroupingEngine
         @raw_pending_stripe_transaction ||= @ct_or_cp.raw_pending_stripe_transaction
       end
 
-      def ach_payment_hcb_code
-        [
-          HCB_CODE,
-          ACH_PAYMENT_CODE,
-          ach_payment.id
-        ].join(SEPARATOR)
-      end
-
-      def ach_payment
-        @ct_or_cp.try :ach_payment
-      end
-
       def outgoing_fee_reimbursement_hcb_code
         [
           HCB_CODE,
@@ -270,7 +258,7 @@ module TransactionGroupingEngine
       end
 
       def outgoing_fee_reimbursement?
-        @ct_or_cp.memo.downcase.include?("stripe fee reimbursement")
+        @ct_or_cp.memo.downcase.include?("stripe fee reimbursement") || @ct_or_cp.memo.downcase.include?("fee reimburse") || @ct_or_cp.memo.downcase.include?("stripe fee reimbu") || @ct_or_cp.memo.downcase.include?("hckclb fee reimbu")
       end
 
       def unknown_hcb_code

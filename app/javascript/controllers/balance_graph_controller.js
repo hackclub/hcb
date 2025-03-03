@@ -5,10 +5,11 @@ export default class extends Controller {
   static targets = ['graph', 'stat', 'balance', 'label', 'sizing', 'size']
   static values = {
     available: Number,
+    slug: String,
   }
   renderBalance(amount) {
     return (
-      ' ' +
+      '$' +
       (amount / 100)
         .toLocaleString('en-US', {
           style: 'currency',
@@ -18,7 +19,7 @@ export default class extends Controller {
     )
   }
   connect() {
-    fetch(window.location.pathname + '/balance_by_date')
+    fetch(`/${this.slugValue}/balance_by_date`)
       .then(r => r.json())
       .then(jsonData => {
         const { balanceTrend, balanceByDate: rawBalanceByDate } = jsonData
@@ -53,9 +54,10 @@ export default class extends Controller {
         this.sizingTarget.textContent = this.renderBalance(maxBalance)
         this.graphTarget.setAttribute(
           'width',
-          `${this.sizeTarget.clientWidth + 18}px`
+          this.graphTarget.getBoundingClientRect().width + 'px'
         )
-        this.statTarget.style.minWidth = `${this.sizeTarget.clientWidth + 24}px`
+        this.statTarget.style.minWidth =
+          this.graphTarget.getBoundingClientRect().width + 'px'
         this.graphTarget.classList.add(`sparkline--${balanceTrend}`)
         sparkline(this.graphTarget, balances.reverse(), {
           interactive: true,
@@ -76,6 +78,6 @@ export default class extends Controller {
   }
   clear() {
     this.labelTarget.textContent = 'Account balance'
-    this.balanceTarget.textContent = this.renderBalance(this.availableValue)
+    this.balanceTarget.textContent = this.initial.balance
   }
 }

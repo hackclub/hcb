@@ -51,7 +51,7 @@ module Reimbursement
     end
 
     def destroy?
-      ((manager || creator) && record.initial_draft?) || (admin && !record.reimbursed?)
+      ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
     end
 
     private

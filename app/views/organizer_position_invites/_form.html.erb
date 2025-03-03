@@ -1,4 +1,4 @@
-<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path, html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
+<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
   <%= form_errors invite, "user" %>
 
   <div class="field" x-data="{ email: '' }">
@@ -28,7 +28,7 @@
     in the organization.</p>
 
   <div class="muted mb1">
-    <p class="m0"><span class="bold info">Members</span> can;</p>
+    <p class="m0"><span class="bold info">Members</span> can:</p>
     <ul class="m0">
       <li>Create & use cards (with a limit if spending controls are enabled)
       </li>
@@ -58,20 +58,25 @@
 
       <div x-show="spendingControls === 'true'" x-cloak x-transition.duration.500ms class="mb1">
         <%= form.label :initial_control_allowance_amount, value: "Initial allowance amount" %>
-        <%= form.number_field :initial_control_allowance_amount, placeholder: "500.00", step: 0.01, min: 0.00, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+        <%= form.number_field :initial_control_allowance_amount, placeholder: "500.00", step: 0.01, min: 0.00, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
       </div>
     </div>
   <% end %>
 
-  <% admin_tool("mb2 flex g1 w-fit") do %>
-    <div class="field field--select w-100 m0">
+  <% admin_tool("mt2 mb2 flex g1") do %>
+    <div class="field field--select w-100">
+      <h3 class="mb2 mt1">Contracts</h3>
       <%= form.select :is_signee,
-                      [
-                        ["📃 Contract Signee", "true"],
-                        ["❌ Hasn't Signed The Contract", "false"],
-                      ],
-                      { include_blank: "Select a contract signee status" },
-                      { required: true, style: "width: 100%" } %>
+          [
+            ["📃 Contract Signee", "true"],
+            ["❌ Won't sign the contract", "false"],
+          ],
+          { include_blank: "Select a contract signee status" },
+          { required: true, style: "width: 100%" } %>
+
+      <% if Flipper.enabled?(:organizer_position_contracts_2025_01_03, @event || invite.event) %>
+        <%= form.email_field :cosigner_email, placeholder: "Cosignee email (required if under 18)", class: "w-100 mt1" %>
+      <% end %>
     </div>
   <% end %>
 

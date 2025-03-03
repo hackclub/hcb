@@ -26,6 +26,7 @@ module SessionsHelper
     session_token = SecureRandom.urlsafe_base64
     expiration_at = Time.now + user.session_duration_seconds
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
+    cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
       session_token:,
       fingerprint: fingerprint_info[:fingerprint],
@@ -106,21 +107,8 @@ module SessionsHelper
 
     return nil if session_token.nil?
 
-    # Find a valid session token within all the ones currently in the table for this particular user
-    @current_session = UserSession.find_by(session_token:)
-
-    return nil unless @current_session
-
-    # check if the potential session is still valid
-    # If the session is greater than the expiration duration then the current
-    # user is no longer valid.
-    if Time.now > @current_session.expiration_at
-      @current_session.set_as_peacefully_expired
-      @current_session.destroy
-      return nil
-    end
-
-    @current_session
+    # Find a valid session (not expired) using the session token
+    @current_session = UserSession.not_expired.find_by(session_token:)
   end
 
   def signed_in_user
@@ -143,18 +131,17 @@ module SessionsHelper
     current_user
       &.user_sessions
       &.find_by(session_token: cookies.encrypted[:session_token])
-      &.set_as_peacefully_expired
-      &.destroy
+      &.update(signed_out_at: Time.now, expiration_at: Time.now)
 
     cookies.delete(:session_token)
     self.current_user = nil
   end
 
-  def sign_out_of_all_sessions
+  def sign_out_of_all_sessions(user = current_user)
     # Destroy all the sessions except the current session
-    current_user
+    user
       &.user_sessions
       &.where&.not(id: current_session.id)
-      &.destroy_all
+      &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
   end
 end

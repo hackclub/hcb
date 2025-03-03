@@ -12,17 +12,15 @@ class FeaturesController < ApplicationController
     user_permissions_2024_03_09: %w[📛 🧑‍💼 🪪 🎉],
     recently_on_hcb_2024_05_23: %w[👀 🤑 🙈],
     spending_controls_2024_06_03: %w[✅ ❌ 💷],
-    ai_memos_2024_06_20: %w[✨ 🔮 🪄],
-    cash_withdrawals_2024_08_07: %w[💵 💴 💶 💷],
     two_factor_authentication_2024_05_22: %w[🔒],
     totp_2024_06_13: %w[🔒 ⏰],
+    event_home_page_redesign_2024_09_21: %w[🏠 📊 📉 💸],
+    card_logos_2024_08_27: %w[🌈 💳 📸],
   }.freeze
 
   def enable_feature
     actor = if params[:event_id]
               Event.find(params[:event_id])
-            elsif params[:stripe_card_id]
-              StripeCard.find(params[:stripe_card_id])
             else
               current_user
             end
@@ -44,8 +42,6 @@ class FeaturesController < ApplicationController
   def disable_feature
     actor = if params[:event_id]
               Event.find(params[:event_id])
-            elsif params[:stripe_card_id]
-              StripeCard.find(params[:stripe_card_id])
             else
               current_user
             end

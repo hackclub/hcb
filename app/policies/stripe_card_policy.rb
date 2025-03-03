@@ -45,12 +45,8 @@ class StripeCardPolicy < ApplicationPolicy
     cardholder? || user&.admin?
   end
 
-  def enable_feature?
-    user&.admin? # this is in FeaturesController and used to manage cash withdrawals
-  end
-
-  def disable_feature?
-    user&.admin? # this is in FeaturesController and used to manage cash withdrawals
+  def enable_cash_withdrawal?
+    user&.admin?
   end
 
   private

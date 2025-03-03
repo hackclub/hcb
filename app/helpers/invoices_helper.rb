@@ -31,7 +31,7 @@ module InvoicesHelper
   def invoice_payment_processor_fee(humanized = true, invoice = @invoice)
     fee = if invoice.manually_marked_as_paid?
             0
-          elsif invoice.created_at < Date.new(2024, 8, 21)
+          elsif invoice.paid_at < Date.new(2024, 8, 21)
             invoice.item_amount - invoice.payout.amount
           else
             invoice.payout_creation_balance_stripe_fee
@@ -114,7 +114,9 @@ def invoice_payment_method_mention(invoice = @invoice, options = {})
     size = 20
 
     if invoice&.payment_method_type == "ach_credit_transfer"
-      description_text = "ACH Transfer"
+      description_text = "ACH transfer"
+    elsif invoice&.payment_method_type == "us_bank_account"
+      description_text = "US bank account"
     else
       description_text = invoice.payment_method_type.humanize
     end

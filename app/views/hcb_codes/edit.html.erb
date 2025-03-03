@@ -18,8 +18,9 @@
                             list: "custom-memos",
                             placeholder: @hcb_code.memo,
                             value: @ai_memo || @hcb_code.memo,
+                            defaultValue: @hcb_code.memo,
                             autofocus: true,
-                            data: { controller: "input", input_target: "input", action: "focus->input#select blur->form#submit" },
+                            data: { controller: "input", input_target: "input", action: "focus->input#select blur->form#submit keydown->form#keydown" },
                             class: "bg-transparent fit",
                             style: "border-color: #338eda; min-height: 0; font-size: 1.5rem; padding: 0.125rem 0 0.125rem 4px; letter-spacing: -0.02em" %>
 

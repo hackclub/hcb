@@ -8,6 +8,7 @@
   line-height: 1;
   margin-bottom: 0.25rem;
 }
+
 .stat:not(.stat--plain) .stat__value:before {
   content: '$';
   color: map-get($palette, muted);

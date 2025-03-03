@@ -6,8 +6,6 @@
   <%= link_to "New Design", stripe_card_personalization_design_new_admin_index_path, class: "btn" %>
 </h2>
 
-<%= page_entries_info @common_designs, entry_name: "common design" %>
-
 <article class="mixed-grid grid--spacious mt2">
   <% @common_designs.each do |design| %>
     <%= turbo_frame_tag design, src: stripe_cards_personalization_design_path(design) do %>
@@ -21,10 +19,16 @@
 <%= form_with local: true, url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
   <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select an event", selected: @event_id }, { width: 384, style: "max-width: 384px" }) %>
-  <%= form.label :pending, class: "mt2 mb2", style: "display: block" do %>
-    <%= form.check_box :pending, checked: @pending %>
-    Awaiting Stripe Approval
-  <% end %>
+  <div class="flex gap-4">
+    <%= form.label :pending, class: "mt2 mb2" do %>
+      <%= form.check_box :pending, checked: @pending %>
+      Awaiting Stripe Approval
+    <% end %>
+    <%= form.label :unlisted, class: "mt2 mb2" do %>
+      <%= form.check_box :unlisted, checked: @unlisted %>
+      Unlisted designs
+    <% end %>
+  </div>
   <%= form.submit "Search" %>
 <% end %>
 
@@ -57,7 +61,7 @@
             Common
           <% else %>
             <%= inline_icon "private", size: 20, style: "vertical-align: text-bottom;" %>
-            Private
+            Unlisted
           <% end %>
         </td>
         <td>
@@ -69,7 +73,7 @@
           |
           <% unless design.event&.present? %>
             <% if design.common? %>
-              <%= link_to "Make Private", make_private_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) private? It will hide it from the card creation menu for all users.", turbo_method: :post } %>
+              <%= link_to "Make Unlisted", make_unlisted_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) unlisted? It will hide it from the card creation menu for all users.", turbo_method: :post } %>
             <% else %>
               <%= link_to "Make Public", make_common_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) public? It will show it in the card creation menu for all users.", turbo_method: :post } %>
             <% end %>

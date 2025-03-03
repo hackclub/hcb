@@ -8,11 +8,13 @@ module Reimbursement
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
+    invisible_captcha only: [:create], honeypot: :subtitle
+
     # POST /reimbursement_reports
     def create
       @event = Event.find(report_params[:event_id])
-      user = User.find_or_create_by!(email: report_params[:email])
-      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: current_user))
+      user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
+      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil))
 
       authorize @report
 
@@ -30,7 +32,7 @@ module Reimbursement
           redirect_to finished_reimbursement_reports_path(@event)
         end
       else
-        redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
+        redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
       end
     end
 
@@ -162,7 +164,9 @@ module Reimbursement
       authorize @report
 
       begin
-        @report.mark_reimbursement_approved!
+        @report.with_lock do
+          @report.mark_reimbursement_approved!
+        end
         flash[:success] = "Reimbursement has been approved; the team & report creator will be notified."
       rescue => e
         flash[:error] = e.message
@@ -266,7 +270,7 @@ module Reimbursement
 
     def update_reimbursement_report_params
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
-      reimbursement_report_params.delete(:maximum_amount) unless current_user.admin? || @event.users.include?(current_user)
+      reimbursement_report_params.delete(:maximum_amount) unless current_user.admin? || @event&.users&.include?(current_user)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
       reimbursement_report_params
     end

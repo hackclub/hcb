@@ -1,0 +1,28 @@
+<% title "You’re currently signed in as #{current_user.name}" %>
+<% @home_size = 50 %>
+<div class="flex items-center justify-between">
+  <%= render partial: "application/logo" %>
+</div>
+
+<div class="flex flex-col flex-1 justify-center max-w-md w-full">
+  <%= render "header", label: "Hack Club" do %>
+    Sign in to HCB
+  <% end %>
+  <%= render "logins/badge", user: current_user %>
+
+  <h3 class="medium max-width-2 mt-5">
+    <% if params[:error] == "unauthorised_card_grant" %>
+      This account does not have access to this grant. Please sign in with the same email you received the invitation at.
+    <% else %>
+      You’re currently signed into HCB, would you like to <%= params[:return_to].present? ? "continue" : "head to your dashboard" %>?</h3>
+    <% end %>
+
+  <div class="flex justify-between items-center flex-wrap w-full">
+    <%= link_to "Sign out", logout_users_path, method: :delete, class: "block mt-0 no-underline" %>
+
+    <%= link_to "Continue to HCB", params[:return_to] || root_path, class: "btn bg-info" %>
+  </div>
+
+</div>
+
+<%= render partial: "logins/footer", locals: { whats_hcb: true, help_message: false } %>

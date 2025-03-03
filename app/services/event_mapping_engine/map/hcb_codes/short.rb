@@ -18,12 +18,15 @@ module EventMappingEngine
             guessed_event_id = hcb_code.event.try(:id)
             next unless guessed_event_id
 
+            guessed_subledger_id = hcb_code.ct&.canonical_event_mapping&.subledger_id
+
             ActiveRecord::Base.transaction do
               ct.update_column(:hcb_code, hcb_code.hcb_code)
 
               attrs = {
                 canonical_transaction_id: ct.id,
-                event_id: guessed_event_id
+                event_id: guessed_event_id,
+                subledger_id: guessed_subledger_id
               }
               ::CanonicalEventMapping.create!(attrs)
             end

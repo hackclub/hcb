@@ -7,16 +7,12 @@ module Admin
       @per = params[:per] || 20
 
       @ledger_audits = Admin::LedgerAudit.all.order(created_at: :desc).includes(:admin_ledger_audit_tasks).where.not(admin_ledger_audit_tasks: { id: nil }).page(@page).per(@per)
-
-      render layout: "admin"
     end
 
     def show
       @ledger_audit = Admin::LedgerAudit.find(params[:id])
       next_task = @ledger_audit.tasks.pending.first
       redirect_to admin_ledger_audits_task_path(next_task) and return if next_task.present?
-
-      render layout: "admin"
     end
 
   end

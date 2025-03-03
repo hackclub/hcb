@@ -37,6 +37,9 @@ module StripeAuthorizationService
           if user.sms_charge_notifications_enabled?
             CanonicalPendingTransactionJob::SendTwilioReceiptMessage.perform_later(cpt_id: cpt.id, user_id: user.id)
           end
+
+          SuggestTagsJob.perform_later(event_id: cpt.event.id, hcb_code_id: cpt.local_hcb_code.id)
+
           if cpt.local_hcb_code&.stripe_cash_withdrawal?
             AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
           end
@@ -47,6 +50,8 @@ module StripeAuthorizationService
           end
         end
       end
+
+      TopupStripeJob.perform_later
     end
 
   end

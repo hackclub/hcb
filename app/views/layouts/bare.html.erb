@@ -9,11 +9,15 @@
     <%= csp_meta_tag %>
     <meta name="theme-color" content="#f9fafc">
 
+    <%= yield :head if content_for?(:head) %>
+
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
 
     <meta name="format-detection" content="telephone=no">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <% if user_birthday? %>
+    <% if content_for?(:favicon) %>
+      <%= yield :favicon %>
+    <% elsif user_birthday? %>
       <link rel="icon" type="image/png" href="/favicon-party.gif">
     <% else %>
       <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
@@ -28,8 +32,6 @@
 
     <%= yield %>
 
-    <% if Rails.env.production? %>
-      <%= render "application/fullstory" if current_user&.sessions_reported %>
-    <% end %>
+    <%= render "application/fullstory" %>
   </body>
 </html>

@@ -19,13 +19,21 @@ class ReimbursementMailer < ApplicationMailer
     mail to: @report.user.email_address_with_name, subject: "[Reimbursements] Rejected: #{@report.name}", from: hcb_email_with_name_of(@report.event)
   end
 
+  def reminder
+    @report = params[:report]
+
+    mail to: @report.user.email_address_with_name, subject: "[Reimbursements] Reminder: submit #{@report.name} for review", from: hcb_email_with_name_of(@report.event)
+  end
+
   def review_requested
     @report = params[:report]
 
     if @report.reviewer.present?
       mail to: @report.reviewer.email_address_with_name, subject: "[Reimbursements / #{@report.event.name}] Your Review Was Requested: #{@report.name}"
     else
-      mail to: @report.event.users.excluding(@report.user).map(&:email_address_with_name), subject: "[Reimbursements / #{@report.event.name}] Review Requested: #{@report.name}"
+      to = User.find(@report.event.organizer_positions.manager.pluck(:user_id)).excluding(@report.user).map(&:email_address_with_name)
+      to << @report.event.config.contact_email if @report.event.config.contact_email.present?
+      mail to:, subject: "[Reimbursements / #{@report.event.name}] Review Requested: #{@report.name}"
     end
   end
 

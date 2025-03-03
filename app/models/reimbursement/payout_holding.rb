@@ -10,15 +10,15 @@
 #  hcb_code                 :string
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
-#  ach_transfers_id         :bigint
-#  increase_checks_id       :bigint
+#  ach_transfer_id          :bigint
+#  increase_check_id        :bigint
 #  paypal_transfer_id       :bigint
 #  reimbursement_reports_id :bigint           not null
 #
 # Indexes
 #
-#  index_reimbursement_payout_holdings_on_ach_transfers_id          (ach_transfers_id)
-#  index_reimbursement_payout_holdings_on_increase_checks_id        (increase_checks_id)
+#  index_reimbursement_payout_holdings_on_ach_transfer_id           (ach_transfer_id)
+#  index_reimbursement_payout_holdings_on_increase_check_id         (increase_check_id)
 #  index_reimbursement_payout_holdings_on_paypal_transfer_id        (paypal_transfer_id)
 #  index_reimbursement_payout_holdings_on_reimbursement_reports_id  (reimbursement_reports_id)
 #
@@ -29,8 +29,8 @@ module Reimbursement
 
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
-    belongs_to :ach_transfer, optional: true, foreign_key: "ach_transfers_id", inverse_of: :reimbursement_payout_holding
-    belongs_to :increase_check, optional: true, foreign_key: "increase_checks_id", inverse_of: :reimbursement_payout_holding
+    belongs_to :ach_transfer, optional: true, inverse_of: :reimbursement_payout_holding
+    belongs_to :increase_check, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :paypal_transfer, optional: true, inverse_of: :reimbursement_payout_holding
 
     after_create :set_and_create_hcb_code
@@ -75,6 +75,12 @@ module Reimbursement
 
       event :mark_reversed do
         transitions from: :failed, to: :reversed
+      end
+    end
+
+    validate do
+      if Reimbursement::PayoutHolding.where(reimbursement_reports_id:).excluding(self).any?
+        errors.add(:base, "A reimbursement report can only have one payout holding.")
       end
     end
 

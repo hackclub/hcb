@@ -12,6 +12,13 @@ export default class extends Controller {
     this.form.reset()
   }
 
+  keydown(e) {
+    if (e.key == 'Escape') {
+      this.reset()
+      this.submit()
+    }
+  }
+
   fill({ params: { values } }) {
     const elementsToAnimate = []
 

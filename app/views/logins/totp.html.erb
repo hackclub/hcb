@@ -1,17 +1,24 @@
 <% title "Enter TOTP code" %>
-<% page_xs %>
-<% @home_size = 128 %>
-<% content_for(:page_class) { "bg-snow pt4" } %>
-
-<article class="center mt3">
-  <h1 class="mt2">
-    <span class="h3 caps secondary block">Sign in to HCB</span>
-    <span class="black">One Time Password</span>
-  </h1>
-
-  <p>Enter your time-based one time password from your authenticator app.</p>
+<% content_for(:page_class) { "bg-snow" } %>
+<div class="flex items-center justify-between">
+  <%= render partial: "application/logo" %>
+</div>
+<div class="flex flex-col flex-1 justify-center">
+  <div class="flex flex-col justify-between items-start">
+    <%= render "header", label: "Sign in to HCB" do %>
+      One-time code
+    <% end %>
+    <%= render "badge", user: @login.user %>
+  </div>
+  <p>
+    <% if @login.authentication_factors_count > 0 %>
+      For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
+  </p>
   <%= form_tag complete_login_path(@login) do %>
-    <%= telephone_field_tag :code, "", placeholder: "OTP code", autofocus: true, class: "center-align mb2", autocomplete: "one-time-code", required: true %>
+    <%= text_field :code, "", name: "code", placeholder: "Enter your one time password code", class: "left-align mb2 !max-w-full w-max", required: true, autofocus: true unless Flipper.enabled?(:otp_single_input, @login.user) %>
+
+    <%= text_field :code, "", name: "code", class: "otp_code", autocomplete: "one-time-code", required: true, autofocus: true, inputmode: "numeric", maxlength: "6", data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
+
     <%= hidden_field_tag :email, @email %>
     <%= hidden_field_tag :method, :totp %>
     <%= hidden_field_tag :fingerprint %>
@@ -19,9 +26,15 @@
     <%= hidden_field_tag :os_info %>
     <%= hidden_field_tag :timezone %>
     <%= hidden_field_tag :return_to, @return_to if @return_to %>
-    <%= submit_tag "Submit" %>
+    <div class="flex flex-row justify-between items-center mt-4">
+      <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt0 no-underline" %>
+      <button type="submit" class="gap-2 btn" data-1p-ignore>
+        Continue
+      </button>
+    </div>
   <% end %>
-
-  <%= link_to "Sign in another way", choose_login_preference_logins_path(return_to: @return_to), class: "block mt2" %>
-</article>
-<%= javascript_include_tag "fingerprint.js" %>
+  <%= javascript_include_tag "otp.js", defer: true %>
+  <%= javascript_include_tag "fingerprint.js" %>
+</div>
+<%= render partial: "environment_banner" %>
+<%= render partial: "footer" %>

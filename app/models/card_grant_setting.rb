@@ -6,8 +6,9 @@
 #
 #  id                    :bigint           not null, primary key
 #  category_lock         :string
-#  expiration_preference :integer          default("2 years"), not null
+#  expiration_preference :integer          default("1 year"), not null
 #  invite_message        :string
+#  keyword_lock          :string
 #  merchant_lock         :string
 #  event_id              :bigint           not null
 #

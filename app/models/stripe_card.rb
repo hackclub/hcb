@@ -5,7 +5,9 @@
 # Table name: stripe_cards
 #
 #  id                                    :bigint           not null, primary key
+#  canceled_at                           :datetime
 #  card_type                             :integer          default("virtual"), not null
+#  cash_withdrawal_enabled               :boolean          default(FALSE)
 #  initially_activated                   :boolean          default(FALSE), not null
 #  is_platinum_april_fools_2023          :boolean
 #  last4                                 :text
@@ -48,7 +50,6 @@
 #  fk_rails_...  (stripe_cardholder_id => stripe_cardholders.id)
 #
 class StripeCard < ApplicationRecord
-  self.ignored_columns = ["activated"]
   include Hashid::Rails
   include PublicIdentifiable
   set_public_id_prefix :crd
@@ -59,9 +60,8 @@ class StripeCard < ApplicationRecord
   has_paper_trail
 
   after_create_commit :notify_user, unless: :skip_notify_user
-  after_create_commit :pay_for_issuing, unless: :skip_pay_for_issuing
 
-  attr_accessor :skip_pay_for_issuing, :skip_notify_user
+  attr_accessor :skip_notify_user
 
   scope :deactivated, -> { where.not(stripe_status: "active") }
   scope :canceled, -> { where(stripe_status: "canceled") }
@@ -89,8 +89,8 @@ class StripeCard < ApplicationRecord
 
   alias_attribute :last_four, :last4
 
-  enum card_type: { virtual: 0, physical: 1 }
-  enum spending_limit_interval: { daily: 0, weekly: 1, monthly: 2, yearly: 3, per_authorization: 4, all_time: 5 }
+  enum :card_type, { virtual: 0, physical: 1 }
+  enum :spending_limit_interval, { daily: 0, weekly: 1, monthly: 2, yearly: 3, per_authorization: 4, all_time: 5 }
 
   delegate :stripe_name, to: :stripe_cardholder
 
@@ -118,6 +118,10 @@ class StripeCard < ApplicationRecord
   validate :personalization_design_must_be_of_the_same_event
   validates_length_of :name, maximum: 40
 
+  before_save do
+    self.canceled_at = Time.now if stripe_status_changed?(to: "canceled")
+  end
+
   def full_card_number
     secret_details[:number]
   end
@@ -127,10 +131,11 @@ class StripeCard < ApplicationRecord
   end
 
   def url
+    Airbrake.notify("StripeCard#url used")
     "/stripe_cards/#{hashid}"
   end
 
-  def popover_url
+  def popover_path
     "/stripe_cards/#{hashid}?frame=true"
   end
 
@@ -163,8 +168,7 @@ class StripeCard < ApplicationRecord
   end
 
   def status_text
-    return "Inactive" if !initially_activated?
-    return "Frozen" if stripe_status == "inactive"
+    return "Frozen" if stripe_status == "inactive" && initially_activated?
 
     stripe_status.humanize
   end
@@ -237,7 +241,7 @@ class StripeCard < ApplicationRecord
   def stripe_obj
     @stripe_obj ||= ::Stripe::Issuing::Card.retrieve(id: stripe_id)
   rescue => e
-    OpenStruct.new({ number: "XXXX", cvc: "XXX", created: Time.now.utc.to_i, shipping: { status: "delivered", carrier: "USPS", eta: 2.weeks.ago, tracking_number: "12345678s9" } })
+    RecursiveOpenStruct.new({ number: "XXXX", cvc: "XXX", created: Time.now.utc.to_i, shipping: { status: "delivered", carrier: "USPS", eta: 2.weeks.ago, tracking_number: "12345678s9" } })
   end
 
   def secret_details
@@ -248,6 +252,14 @@ class StripeCard < ApplicationRecord
 
   def shipping_has_tracking?
     stripe_obj&.shipping&.tracking_number&.present?
+  end
+
+  def shipping_eta
+    return unless (stripe_eta = stripe_obj&.shipping&.eta)
+
+    # We've found Stripe's ETA for USPS standard is fairly inaccurate. So, I'm
+    # padding their estimate to set more realistic expectations for our users.
+    Time.at(stripe_eta) + 2.days
   end
 
   def self.new_from_stripe_id(params)
@@ -280,7 +292,7 @@ class StripeCard < ApplicationRecord
     end
 
     if stripe_obj[:shipping]
-      if (stripe_obj[:shipping][:status] == "returned" || stripe_obj[:shipping][:status] == "failure") && !lost_in_shipping?
+      if ["returned", "failure"].include?(stripe_obj[:shipping][:status]) && !lost_in_shipping?
         self.lost_in_shipping = true
         StripeCardMailer.with(card_id: self.id).lost_in_shipping.deliver_later
 
@@ -312,37 +324,6 @@ class StripeCard < ApplicationRecord
     end
 
     self
-  end
-
-  def issuing_cost
-    # (@msw) Stripe's API doesn't provide issuing + shipping costs, so this
-    # method computes the cost of issuing a card based on Stripe's
-    # docs:
-    # https://stripe.com/docs/issuing/cards/physical#costs
-    # https://stripe.com/docs/issuing/cards/virtual#costs
-
-    # *all amounts in cents*
-
-    return 10 if virtual?
-
-    cost = 300
-    cost_type = [stripe_obj["shipping"]["type"], stripe_obj["shipping"]["service"]]
-    case cost_type
-    when ["individual", "standard"]
-      cost += 50
-    when ["individual", "express"]
-      cost += 1600
-    when ["individual", "priority"]
-      cost += 2200
-    when ["bulk", "standard"]
-      cost += 2500
-    when ["bulk", "express"]
-      cost += 3000
-    when ["bulk", "priority"]
-      cost += 4800
-    end
-
-    cost
   end
 
   def canonical_transactions
@@ -380,7 +361,7 @@ class StripeCard < ApplicationRecord
     if subledger.present?
       subledger.balance_cents
     elsif active_spending_control
-      active_spending_control.balance_cents
+      [active_spending_control.balance_cents, event.balance_available_v2_cents].min
     else
       event.balance_available_v2_cents
     end
@@ -388,10 +369,6 @@ class StripeCard < ApplicationRecord
 
   def expired?
     Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
-  end
-
-  def cash_withdrawal_enabled?
-    Flipper.enabled?(:cash_withdrawals_2024_08_07, self)
   end
 
   def ephemeral_key(nonce:)
@@ -406,10 +383,6 @@ class StripeCard < ApplicationRecord
 
   def issued?
     stripe_id.present?
-  end
-
-  def pay_for_issuing
-    PayForIssuedCardJob.perform_later(self)
   end
 
   def notify_user

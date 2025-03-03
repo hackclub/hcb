@@ -1,7 +1,7 @@
 <p>
-  <%= @event.name %> is on the <strong><%= @event.plan_name %></strong> plan.
+  <%= @event.name %> is on the <strong><%= @event.plan.label %></strong> plan.
 
-  <% if @event.high_school_hackathon? && @event.revenue_fee == 0 %>
+  <% if @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
     The <strong><a
           href="https://changelog.hcb.hackclub.com/bank-now-provides-free-durian-241524">fee waiver</a> expires
       </strong>

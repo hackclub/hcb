@@ -5,6 +5,7 @@
 <% if @hcb_code.check_deposit.column_id.present? %>
   <% admin_tool("mt3") do %>
     <%= link_to "View check on Column", "https://dashboard.column.com/app/transfers/edit/check/#{@hcb_code.check_deposit.column_id}", class: "btn bg-accent", target: "_blank" %>
+    <%= link_to @hcb_code.check_deposit.canonical_pending_transaction.fronted ? "De-front check" : "Front check", toggle_fronted_event_check_deposit_path(@event, @hcb_code.check_deposit), class: "btn bg-accent", data: { turbo_method: :POST } %>
   <% end %>
 <% end %>
 
@@ -92,9 +93,14 @@
     <div class="muted">Back image</div>
   </div>
 
-  <% if @hcb_code.check_deposit.pending? %>
+  <% if @hcb_code.check_deposit.pending? || @hcb_code.fee_waived? %>
     <section class="card__banner card__darker secondary border-top italic">
-      Checks may take up to 2 weeks to deposit.
+      <% if @hcb_code.check_deposit.pending? %>
+        Checks may take up to 2 weeks to deposit.
+      <% end %>
+      <% if @hcb_code.fee_waived? %>
+        Fees were waived on this transaction — enjoy!
+      <% end %>
     </section>
   <% end %>
 

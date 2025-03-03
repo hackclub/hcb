@@ -102,7 +102,7 @@ module Reimbursement
     private
 
     def expense_params
-      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type).compact_blank
+      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type, :category).compact_blank
     end
 
     def set_expense
@@ -114,7 +114,7 @@ module Reimbursement
     end
 
     def blankslate_turbo_stream
-      turbo_stream.replace(:blankslate, partial: "reimbursement/reports/blankslate", locals: { report: @expense.report })
+      turbo_stream.replace(:blankslate, partial: "reimbursement/reports/blankslate", locals: { report: Reimbursement::Report.find(@expense.reimbursement_report_id) })
     end
 
     def actions_turbo_stream

@@ -1,12 +1,12 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
     <div class="input input-group max-w-none" tabindex="0">
       <%= inline_icon "search" %>
       <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
       <% if params[:q] && params[:q] != "" %>
-        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
+        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7 tooltipped tooltipped--s" aria-label="Clear filters">
           <%= inline_icon "view-close", size: 24 %>
         </button>
       <% end %>
@@ -15,6 +15,54 @@
       <%= form.hidden_field :tag, value: @tag.label %>
     <% end %>
   <% end %>
+
+  <%= render partial: "filter_menu" unless filter_applied %>
+
+  <% if @event.canonical_transactions.any? %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end">
+      <button
+        type="button"
+        class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
+        aria-label="Export transactions"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle">
+        <%= inline_icon "download", size: 28 %>
+      </button>
+      <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+        <%= link_to "All transactions (CSV)", transactions_exports_path(event: @event, format: :csv), target: :_blank %>
+        <%= link_to "All transactions (JSON)", transactions_exports_path(event: @event, format: :json), target: :_blank %>
+        <%= link_to "All transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger), target: :_blank %>
+        <%= link_to "Monthly statements", event_statements_path(@event) %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if organizer_signed_in? && Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
+    <div
+      data-controller="menu"
+      data-menu-append-to-value="turbo-frame#ledger"
+      data-menu-placement-value="bottom-end"
+      data-transactions-target="tagger"
+      class="display-none">
+      <button
+        type="button"
+        class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible z-10"
+        aria-label="Toggle tags"
+        data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+        <%= inline_icon "sticker", size: 28 %>
+      </button>
+      <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+        <% @event.tags.each do |tag| %>
+          <div class="flex items-center" data-tag="<%= tag.id %>">
+            <button class="menu__action" title="Apply this tag" data-action="click->transactions#addTag menu#close" data-tag-id="<%= tag.id %>">
+              <%= tag.label %>
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <% admin_tool(@show_running_balance ? "" : "display-none") do %>
     <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end">
       <button
@@ -27,7 +75,7 @@
       <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
         <% [10, 25, 50, 100, 200].each do |amount| %>
           <div class="flex items-center">
-            <%= link_to({ per: amount, q: params[:q] }.compact, class: "flex-auto menu__action") do %>
+            <%= link_to(upsert_query_params(per: amount), class: "flex-auto menu__action", data: { turbo_prefetch: "false" }) do %>
               <%= amount %> Transactions Per Page
             <% end %>
           </div>
@@ -35,152 +83,77 @@
       </div>
     </div>
   <% end %>
-  <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end">
-    <button
-      type="button"
-      class="btn btn-small bg-info menu__toggle menu__toggle--arrowless overflow-visible z-10"
-      data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-      <%= inline_icon "filter", size: 16 %>
-      <% if @tag %>
-        <span class="xs-hide sm-hide md-hide flex items-center">
-          <span class="nowrap">Filtered by</span>
-          <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
-            <div class="tag__preview tag-<%= @tag.color || "muted" %>"></div>
-            <%= @tag.label %>
-          </span>
-        </span>
-      <% elsif @user %>
-        <span class="xs-hide sm-hide md-hide flex items-center">
-          <span class="nowrap">Filtered by</span>
-          <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
-            <div class="avatar-grow line-height-0 mr1">
-              <%= avatar_for @user, 18 %>
-            </div>
-            <%= @user.name %>
-          </span>
-        </span>
-      <% elsif @type %>
-      <span class="xs-hide sm-hide md-hide flex items-center">
-        <span class="nowrap">Filtered by</span>
-        <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
-          <%= @type.humanize.gsub("Ach", "ACH") %>
-        </span>
-      </span>
-      <% elsif @start_date || @end_date %>
-        <span class="xs-hide sm-hide md-hide flex items-center">
-          <span class="nowrap">
-            <%= @start_date && @end_date ? "Between" : @end_date ? "Before" : "After" %>
-          </span>
-          <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
-            <%= @start_date&.to_datetime&.strftime("%m/%d/%Y") || "" %>
-            <%= @end_date && @start_date ? " and " : "" %>
-            <%= @end_date&.to_datetime&.strftime("%m/%d/%Y") || "" %>
-          </span>
-        </span>
-      <% elsif @minimum_amount || @maximum_amount %>
-        <span class="xs-hide sm-hide md-hide flex items-center">
-          <span class="nowrap">
-            <%= @minimum_amount && @maximum_amount ? "Between" : @maximum_amount ? "Less than" : "More than" %>
-          </span>
-          <span style="background-color: rgba(0, 0, 0, 0.3); color: #f9fafc" class="nowrap badge regular ml1">
-            <%= render_money @minimum_amount if @minimum_amount %>
-            <%= @minimum_amount && @maximum_amount ? " and " : "" %>
-            <%= render_money @maximum_amount if @maximum_amount %>
-          </span>
-        </span>
-      <% else %>
-        <span class="xs-hide sm-hide md-hide nowrap">Filter</span>
-      <% end %>
-    </button>
-    <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 290px; padding: 0.5rem;" data-menu-target="content" data-controller="filter">
-    <div data-controller="tabs" data-tabs-default-tab-value="<%= @tag ? "tag" : @user ? "user" : @type ? "type" : @start_date || @end_date ? "date" : @maximum_amount || @minimum_amount ? "amount" : Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 ? "tags" : "user" %>">
-      <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
-        <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
-      <% end %>
-      <button id="user" data-tabs-target="btn" data-action="click->tabs#select">User</button>
-      <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
-      <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
-      <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
-      <div class="menu__divider--filter-tab"></div>
+</div>
 
-      <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
-        <div data-tabs-target="tab" id="tags">
-          <% @event.tags.each do |tag| %>
-            <div class="flex items-center" data-tag="<%= tag.id %>">
-              <%= link_to "?#{{ tag: tag.label, q: params[:q] }.compact.to_query}", class: "flex-auto menu__action" do %>
-                  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
-                  <%= tag.label %>
-              <% end %>
-              <% if organizer_signed_in? %>
-                <%= button_to event_tag_path(@event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
-                  <%= inline_icon "delete", size: 20, style: "margin: 0" %>
-                <% end %>
-              <% end %>
-            </div>
+<% if filter_applied %>
+  <div class="flex items-center filter-menu">
+    <%= render partial: "filter_menu" %>
+
+    <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
+      <%= inline_icon "view-close", size: 28 %>
+    <% end %>
+
+    <div class="filter-menu__chips">
+      <% if @tag %>
+        <div class="badge badge-large bg-muted">
+          <div class="tag__preview tag-<%= @tag.color || "muted" %>"></div>
+          <%= @tag.label %>
+
+          <%= link_to upsert_query_params("tag" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
       <% end %>
-      <div data-tabs-target="tab" id="user">
-        <% @organizers.each do |position| %>
-          <div class="flex items-center">
-              <%= link_to({ user: position.user.id, q: params[:q] }.compact, class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.id == position.user.id}") do %>
-                <div class="avatar-grow line-height-0 mr1">
-                  <%= avatar_for position.user, 18 %>
-                </div>
-                <%= position.user.name %>
-              <% end %>
-          </div>
-        <% end %>
-      </div>
-      <div data-tabs-target="tab" id="type">
-        <% ["ach_transfer", "mailed_check", "account_transfer", "card_charge", "check_deposit", "donation", "invoice", "refund", "fiscal_sponsorship_fee", "reimbursement"].each do |type| %>
-          <div class="flex items-center">
-              <%= link_to({ type:, q: params[:q] }.compact, class: "flex-auto menu__action #{"menu__action--active" if @type == type}") do %>
-                <%= type.humanize.gsub("Ach", "ACH") %>
-              <% end %>
-          </div>
-        <% end %>
-      </div>
-      <div data-tabs-target="tab" id="date">
-        <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
-          <p class="bold mb0 mt0">Transactions after...</p>
-          <%= form.date_field :start, class: "border mb1", value: @start_date %>
-          <p class="bold mb0 mt0">Transactions before...</p>
-          <%= form.date_field :end, class: "border mb1", value: @end_date %>
-          <div class="flex justify-start">
-            <%= form.submit "Filter Transactions" %>
-          </div>
-        <% end %>
-      </div>
-      <div data-tabs-target="tab" id="amount">
-        <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
+      <% if @user %>
+        <div class="badge badge-large bg-muted">
+          <%= avatar_for @user, 18 %>
+          <%= @user.name %>
 
-          <p class="bold mb0 mt0">Transactions more than...</p>
-          <div class="flex mb1">
-            <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
-            <%= form.number_field :minimum_amount, placeholder: "50.00", value: @minimum_amount, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate", "expense-form-target": "field" } %>
-          </div>
+          <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @type %>
+        <div class="badge badge-large bg-muted">
+          <%= @type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
+          <%= link_to upsert_query_params("type" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @start_date || @end_date %>
+        <div class="badge badge-large bg-muted">
+          <%= @start_date && @end_date ? "Between" : @end_date ? "Before" : "After" %>
+          <%= @start_date&.to_datetime&.strftime("%m/%d/%Y") || "" %>
+          <%= @end_date && @start_date ? " and " : "" %>
+          <%= @end_date&.to_datetime&.strftime("%m/%d/%Y") || "" %>
 
-          <p class="bold mb0 mt0">Transactions less than...</p>
-          <div class="flex mb1">
-            <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
-            <%= form.number_field :maximum_amount, placeholder: "500.00", value: @maximum_amount, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate", "expense-form-target": "field" } %>
-          </div>
+          <%= link_to upsert_query_params("start" => nil, "end" => nil, "commit" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @minimum_amount || @maximum_amount %>
+        <div class="badge badge-large bg-muted">
+          <%= @minimum_amount && @maximum_amount ? "Between" : @maximum_amount ? "Less than" : "More than" %>
+          <%= render_money @minimum_amount if @minimum_amount %>
+          <%= @minimum_amount && @maximum_amount ? " and " : "" %>
+          <%= render_money @maximum_amount if @maximum_amount %>
 
-          <div class="flex justify-start">
-            <%= form.submit "Filter Transactions" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-
-      <% if @tag || @user || @type || @start_date || @end_date %>
-        <div class="menu__divider"></div>
-        <%= link_to do %>
-          <%= inline_icon "view-close", size: 24 %>
-          Clear filters
-        <% end %>
+          <%= link_to upsert_query_params("minimum_amount" => nil, "maximum_amount" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @missing_receipts %>
+        <div class="badge badge-large bg-muted">
+          Missing Receipts
+          <%= link_to upsert_query_params("missing_receipts" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
       <% end %>
     </div>
   </div>
-</div>
+<% end %>

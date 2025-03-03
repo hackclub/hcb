@@ -45,16 +45,14 @@
       <%= card_to "Check deposits", admin_check_deposits_path, { badge: CheckDeposit.unprocessed.count } %>
       <%= card_to "Grants", grants_admin_index_path, { badge: Grant.admin_action_needed.count } %>
       <%= card_to "PayPal", paypal_transfers_admin_index_path, { badge: PaypalTransfer.pending.count } %>
+      <%= card_to "Wires", wires_admin_index_path, { badge: Wire.pending.count } %>
       <%= card_to "Disbursements", disbursements_admin_index_path, { badge: Disbursement.reviewing.count } %>
       <%= card_to "Reimbursements", reimbursements_admin_index_path, { badge: Reimbursement::Report.reimbursement_requested.count } %>
       <%= card_to "Deletion requests", organizer_position_deletion_requests_path, { badge: OrganizerPositionDeletionRequest.under_review.count } %>
       <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), { async_badge: :pending_disputed_transactions_airtable } %>
       <%= card_to "Feedback", link_to_airtable_task(:feedback), { async_badge: :pending_feedback_airtable } %>
-      <%= card_to "Hackathon Grants", link_to_airtable_task(:first_grant), { async_badge: :pending_first_grant_airtable } %>
       <%= card_to "Boba", link_to_airtable_task(:boba), { async_badge: :pending_boba_airtable } %>
       <%= card_to "YSWS Verification", link_to_airtable_task(:you_ship_we_ship), { async_badge: :pending_you_ship_we_ship_airtable } %>
-      <%= card_to "Arcade", link_to_airtable_task(:arcade), { async_badge: :pending_arcade_airtable } %>
-      <%= card_to "Power Hour", link_to_airtable_task(:power_hour), { async_badge: :pending_power_hour_airtable } %>
       <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
     </ul>
     <h2>Info</h2>
@@ -73,7 +71,6 @@
       <%= card_to "Google Workspaces", google_workspaces_admin_index_path, { badge: GSuite.needs_ops_review.count } %>
       <%= card_to "Stickers", link_to_airtable_task(:stickers), { async_badge: :pending_stickers_airtable } %>
       <%= card_to "Hackathons", "https://dash.hackathons.hackclub.com/sign_in", { async_badge: :pending_hackathons_airtable } %>
-      <%= card_to "Sendy", link_to_airtable_task(:sendy), { async_badge: :pending_sendy_airtable } %>
       <%= card_to "1Password", link_to_airtable_task(:onepassword), { async_badge: :pending_onepassword_airtable } %>
       <%= card_to "Domains", link_to_airtable_task(:domains), { async_badge: :pending_domains_airtable } %>
       <%= card_to "PVSA", link_to_airtable_task(:pvsa), { async_badge: :pending_pvsa_airtable } %>
@@ -86,7 +83,7 @@
       <%= card_to "Ledger audits", admin_ledger_audits_path, { badge: Admin::LedgerAudit.pending.count } %>
       <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization Balances" } %>
       <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "BI tool" } %>
-      <%= card_to "Column Statements", column_statements_admin_index_path %>
+      <%= card_to "Column Statements", admin_column_statements_path %>
     </ul>
     <h2>Other</h2>
     <ul class="grid left-align w-100 mt0" id="other-grid">

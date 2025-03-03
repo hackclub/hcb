@@ -54,12 +54,12 @@
           <% end %>
         </td>
         <td>
-          <%= async_frame_to event_balance_admin_path(event) do %>
+          <%= turbo_frame_tag :balance, src: event_balance_admin_path(event), loading: "lazy" do %>
             <em>$ –</em>
           <% end %>
         </td>
         <td>
-          <%= async_frame_to event_raised_admin_path(event) do %>
+          <%= turbo_frame_tag :raised, src: event_raised_admin_path(event), loading: "lazy" do %>
             <em>$ –</em>
           <% end %>
         </td>

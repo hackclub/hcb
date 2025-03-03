@@ -2,38 +2,52 @@
 
 <%= render "events/nav" if @event %>
 
-<%= render partial: "hcb_codes/admin_tools" %>
-<div id="rich_metadata">
-  <%= render partial: "hcb_codes/rich_metadata" %>
-</div>
+<%= turbo_frame_tag @hcb_code.public_id, target: "_top" do %>
+  <%= render partial: "hcb_codes/admin_tools" %>
+  <div id="rich_metadata">
+    <%= render partial: "hcb_codes/rich_metadata" %>
+  </div>
 
-<% if @hcb_code.accepts_receipts? %>
-  <%= render "receipts/list_v2" %>
-  <% admin_tool_if @hcb_code.receipt_optional? do %>
-    <%= begin receipt_upload_form_config = {
-          receiptable: @hcb_code,
-          enable_linking: true,
-          upload_method: "transaction_page",
-          include_spacing: true,
-          turbo: true
-        }
+  <% if @hcb_code.accepts_receipts? %>
+    <% admin_tool do %>
+      💌 Bonjour!
+      <%= mail_to @hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
+    <% end %>
+    <% admin_tool do %>
+      🌸 Aloha!
+      <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@hcb_code) %>
+    <% end %>
+    <% admin_tool do %>
+      ☎️ moshi moshi?
+      <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), method: :post %>
+    <% end %>
+    <%= render "receipts/list_v2" %>
+    <% admin_tool_if @hcb_code.receipt_optional? do %>
+      <%= begin receipt_upload_form_config = {
+            receiptable: @hcb_code,
+            enable_linking: true,
+            upload_method: "transaction_page",
+            include_spacing: true,
+            turbo: true
+          }
 
-              receipt_upload_form_config[:restricted_dropzone] = true if @frame
-              receipt_upload_form_config[:inline_linking] = true if @frame
-              receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
-              receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
-              render partial: "receipts/form_v3", locals: receipt_upload_form_config end %>
+                receipt_upload_form_config[:restricted_dropzone] = true if @frame
+                receipt_upload_form_config[:inline_linking] = true if @frame
+                receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
+                receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
+                render partial: "receipts/form_v3", locals: receipt_upload_form_config end %>
+    <% end %>
   <% end %>
-<% end %>
 
-<%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
+  <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
 
-<%= render "comments/list", comments: @hcb_code.comments %>
-<%= render "comments/form", commentable: @hcb_code %>
+  <%= render "comments/list", comments: @hcb_code.comments %>
+  <%= render "comments/form", commentable: @hcb_code %>
 
-<% admin_tool do %>
-  <%= render partial: "hcb_codes/transaction_history" %>
-  <%= render partial: "hcb_codes/pending_transaction_history" %>
+  <% admin_tool do %>
+    <%= render partial: "hcb_codes/transaction_history" %>
+    <%= render partial: "hcb_codes/pending_transaction_history" %>
+  <% end %>
 <% end %>
 
 <% title "Transaction for #{number_to_currency(@hcb_code.amount)}" unless content_for :title %>

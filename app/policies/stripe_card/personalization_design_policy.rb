@@ -10,7 +10,7 @@ class StripeCard
       user&.admin?
     end
 
-    def make_private?
+    def make_unlisted?
       user&.admin?
     end
 

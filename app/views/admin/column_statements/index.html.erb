@@ -1,0 +1,38 @@
+<% title "Column Statements" %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @statements %>
+  </div>
+  <%= paginate @statements %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-48">Month</th>
+      <th class="w-32">Start Date</th>
+      <th class="w-32">End Date</th>
+      <th class="w-32">Starting Balance</th>
+      <th class="w-32">Closing Balance</th>
+      <th>Statement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @statements.each do |statement| %>
+      <tr>
+        <td><%= statement.start_date.strftime("%B, %Y") %></td>
+        <td><%= statement.start_date.strftime("%Y-%m-%d") %></td>
+        <td><%= statement.end_date.strftime("%Y-%m-%d") %></td>
+        <td><%= render_money statement.starting_balance %></td>
+        <td><%= render_money statement.closing_balance %></td>
+        <td class="flex flex-col">
+          <%= link_to "Download Statement", statement.file %>
+          <%= link_to "Bank Account Summary", admin_column_statement_bank_account_summary_report_url(statement) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @statements %>

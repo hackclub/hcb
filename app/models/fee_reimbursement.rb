@@ -10,20 +10,21 @@
 #  transaction_memo :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  stripe_topup_id  :bigint
 #
 # Indexes
 #
+#  index_fee_reimbursements_on_stripe_topup_id   (stripe_topup_id)
 #  index_fee_reimbursements_on_transaction_memo  (transaction_memo) UNIQUE
 #
 class FeeReimbursement < ApplicationRecord
   has_paper_trail
 
-  include Commentable
-
   has_one :invoice, required: false
   has_one :donation, required: false
-  has_one :ach_payment, required: false
   has_one :t_transaction, class_name: "Transaction", inverse_of: :fee_reimbursement
+
+  belongs_to :stripe_topup, optional: true
 
   before_create :default_values
 
@@ -99,9 +100,6 @@ class FeeReimbursement < ApplicationRecord
     elsif donation
       self.transaction_memo ||= "HCB-#{donation.local_hcb_code.short_code}"
       self.amount ||= donation.payout_creation_balance_stripe_fee
-    elsif ach_payment
-      self.transaction_memo ||= "HCB-#{ach_payment.local_hcb_code.short_code}"
-      self.amount ||= ach_payment.stripe_fee
     end
   end
 

@@ -54,16 +54,9 @@ module EventsHelper
   end
 
   def humanize_audit_log_value(field, value)
-    if field == "sponsorship_fee"
-      return number_to_percentage(value.to_f * 100, significant: true, strip_insignificant_zeros: true)
-    end
 
     if field == "point_of_contact_id"
       return User.find(value).email
-    end
-
-    if field == "category" && value.is_a?(Integer) || value.try(:match?, /\A\d+\z/)
-      return Event.categories.key(value.to_i)
     end
 
     if field == "maximum_amount_cents"

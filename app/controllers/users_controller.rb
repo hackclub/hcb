@@ -3,9 +3,7 @@
 class UsersController < ApplicationController
   skip_before_action :signed_in_user, only: [:webauthn_options]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
-  skip_after_action :verify_authorized, only: [:logout_all,
-                                               :logout_session,
-                                               :revoke_oauth_application,
+  skip_after_action :verify_authorized, only: [:revoke_oauth_application,
                                                :edit_address,
                                                :edit_payout,
                                                :impersonate,
@@ -50,7 +48,7 @@ class UsersController < ApplicationController
 
     session[:auth_email] = params[:email]
 
-    return head :not_found if params[:require_webauthn_preference] && session[:login_preference] != "webauthn"
+    return head :not_found if params[:require_webauthn_preference] == "true" && session[:login_preference] != "webauthn"
 
     user = User.find_by(email: params[:email])
 
@@ -72,19 +70,19 @@ class UsersController < ApplicationController
   end
 
   def logout_all
-    sign_out_of_all_sessions
-    redirect_back_or_to security_user_path(current_user), flash: { success: "Success" }
+    user = User.friendly.find(params[:id])
+    authorize user
+    sign_out_of_all_sessions(user)
+    redirect_back_or_to security_user_path(user), flash: { success: "Success" }
   end
 
   def logout_session
     begin
       session = UserSession.find(params[:id])
-      if session.user.id != current_user.id
-        return redirect_back_or_to settings_security_path, flash: { error: "Error deleting the session" }
-      end
+      authorize session.user
 
-      session.destroy!
-      flash[:success] = "Deleted session!"
+      session.update(signed_out_at: Time.now, expiration_at: Time.now)
+      flash[:success] = "Logged out of session!"
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "Session is not found"
     end
@@ -104,7 +102,7 @@ class UsersController < ApplicationController
 
   def edit
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.onboarding?
+    set_onboarding
     @mailbox_address = @user.active_mailbox_address
     show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
@@ -128,7 +126,7 @@ class UsersController < ApplicationController
 
   def edit_featurepreviews
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
+    set_onboarding
     show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
@@ -136,9 +134,10 @@ class UsersController < ApplicationController
 
   def edit_security
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
+    set_onboarding
     show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+    @sessions = @sessions.not_expired
     @oauth_authorizations = @user.api_tokens
                                  .where.not(application_id: nil)
                                  .select("application_id, MAX(api_tokens.created_at) AS created_at, MIN(api_tokens.created_at) AS first_authorized_at, COUNT(*) AS authorization_count")
@@ -149,9 +148,8 @@ class UsersController < ApplicationController
 
     @expired_sessions = @user
                         .user_sessions
-                        .with_deleted
+                        .recently_expired_within(1.week.ago)
                         .not_impersonated
-                        .where("deleted_at >= ? OR (expiration_at >= ? AND expiration_at < ?)", 1.week.ago, 1.week.ago, Time.now.utc)
                         .order(created_at: :desc)
 
     authorize @user
@@ -193,7 +191,7 @@ class UsersController < ApplicationController
 
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
+    set_onboarding
     show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
 
@@ -213,25 +211,30 @@ class UsersController < ApplicationController
     @user = User.friendly.find(params[:id])
     authorize @user
 
-    if @user.admin? && params[:user][:running_balance_enabled].present?
-      enable_running_balance = params[:user][:running_balance_enabled] == "1"
-      if @user.running_balance_enabled? != enable_running_balance
-        @user.update_attribute(:running_balance_enabled, enable_running_balance)
+    if admin_signed_in?
+      if @user.admin? && params[:user][:running_balance_enabled].present?
+        enable_running_balance = params[:user][:running_balance_enabled] == "1"
+        if @user.running_balance_enabled? != enable_running_balance
+          @user.update_attribute(:running_balance_enabled, enable_running_balance)
+        end
       end
-    end
 
-    if params[:user][:locked].present?
-      locked = params[:user][:locked] == "1"
-      if locked && @user == current_user
-        flash[:error] = "As much as you might desire to, you cannot lock yourself out."
-        return redirect_to admin_user_path(@user)
-      elsif locked && @user.admin?
-        flash[:error] = "Contact a engineer to lock out another admin."
-        return redirect_to admin_user_path(@user)
-      elsif locked
-        @user.lock!
-      else
-        @user.unlock!
+      if params[:user][:locked].present?
+        locked = params[:user][:locked] == "1"
+        if @user == current_user
+          flash[:error] = "As much as you might desire to, you cannot lock yourself out."
+          return redirect_to admin_user_path(@user)
+        elsif @user.admin? && !current_user.superadmin?
+          flash[:error] = "Only superadmins can lock or unlock admins."
+          return redirect_to admin_user_path(@user)
+        elsif locked && @user.superadmin?
+          flash[:error] = "To lock this user, demote them to a regular admin first."
+          return redirect_to admin_user_path(@user)
+        elsif locked
+          @user.lock!
+        else
+          @user.unlock!
+        end
       end
     end
 
@@ -272,7 +275,7 @@ class UsersController < ApplicationController
         redirect_back_or_to edit_user_path(@user)
       end
     else
-      @onboarding = User.friendly.find(params[:id]).full_name.blank?
+      set_onboarding
       show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
       @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
       if @user.stripe_cardholder&.errors&.any?
@@ -338,6 +341,11 @@ class UsersController < ApplicationController
     @shown_private_feature_previews = params[:classified_top_secret]&.split(",") || []
   end
 
+  def set_onboarding
+    @onboarding = @user.onboarding?
+    @hide_seasonal_decorations = true if @onboarding
+  end
+
   def user_params
     attributes = [
       :full_name,
@@ -352,7 +360,9 @@ class UsersController < ApplicationController
       :seasonal_themes_enabled,
       :payout_method_type,
       :comment_notifications,
-      :charge_notifications
+      :charge_notifications,
+      :use_sms_auth,
+      :use_two_factor_authentication
     ]
 
     if @user.stripe_cardholder

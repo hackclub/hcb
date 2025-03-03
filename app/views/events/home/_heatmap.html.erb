@@ -1,0 +1,47 @@
+<%= turbo_frame_tag "transaction_heatmap" do %>
+  <% if @past_year_transactions_count > 0 %>
+    <div class="card card--breakdown shadow-none p-4 flex-1 flex flex-col overflow-visible">
+      <h4 class="homepage-eyebrow mt-2 mb-3" style="font-size: 16px">
+        <%= @past_year_transactions_count %> <%= "transaction".pluralize(@past_year_transactions_count) %> in the past
+        year
+      </h4>
+
+      <div class="grid-container mb2">
+        <% 7.times do |x| %>
+          <% 53.times do |y| %>
+            <% entry = @heatmap.to_a[y * 7 + x][1] %>
+            <% label = DateTime.parse(@heatmap.to_a[y * 7 + x][0]).strftime("%B %d, %Y") %>
+            <% pos_bg = "rgba(57, 211, 83, #{Math.log(entry[:positive]) / Math.log(@maximum_positive_change)})" %>
+            <% neg_bg = "rgba(248, 81, 73, #{Math.log(entry[:negative].abs) / Math.log(@maximum_negative_change.abs)})" %>
+            <% if entry[:positive] > entry[:negative].abs %>
+              <div class="grid-item tooltipped tooltipped--s border-transparent"
+                   aria-label="<%= "#{label}: #{render_money(entry[:positive])}" %>"
+                   style="background-color: <%= pos_bg %>">
+              </div>
+            <% elsif entry[:negative].abs > entry[:positive] %>
+              <div class="grid-item tooltipped tooltipped--s border-transparent"
+                   aria-label="<%= "#{label}: #{render_money(entry[:negative])}" %>"
+                   style="background-color: <%= neg_bg %>">
+              </div>
+            <% else %>
+              <div class="grid-item tooltipped tooltipped--s bg-snow border dark:border-dark dark:bg-darkless"
+                   aria-label="<%= label %>"></div>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-6">
+        <div class="flex items-center gap-2">
+          <div class="w-3.5 h-3.5 rounded" style="background-color: rgb(57, 211, 83)"></div>
+          <span class="text-sm">More income</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="w-3.5 h-3.5 rounded" style="background-color: rgb(248, 81, 73)"></div>
+          <span class="text-sm">More spending</span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>

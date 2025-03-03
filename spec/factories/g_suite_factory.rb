@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :g_suite do
-    association :event
+    association :event, factory: :event_with_organizer_positions
     domain { Faker::Internet.domain_name }
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/integer/time"
+require_relative "../../app/lib/credentials"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -106,4 +107,6 @@ Rails.application.configure do
     Bullet.console       = true
     Bullet.rails_logger  = true
   end
+
+  Credentials::Doppler.load if ENV["DOPPLER_TOKEN"]
 end

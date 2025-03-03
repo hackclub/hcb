@@ -37,8 +37,25 @@
     </section>
 
     <section class='details pt2 pb2'>
+      <% if @hcb_code.ct.transaction_source.is_a?(RawColumnTransaction) && @hcb_code.ct.transaction_source.remote_object.present? %>
+        <% ["company_name", "company_id", "company_entry_description", "beneficiary_name", "beneficiary_reference", "originator_name", "originator_to_beneficiary_information_line_1",
+            "originator_to_beneficiary_information_line_2", "originator_to_beneficiary_information_line_3", "originator_to_beneficiary_information_line_4", "raw_originator_address", "description"].each do |key| %>
+          <% if @hcb_code.ct.transaction_source.remote_object[key].present? %>
+            <p>
+              <strong><%= key.sub("raw", "").humanize %></strong>
+              <%= @hcb_code.ct.transaction_source.remote_object[key] %>
+            </p>
+          <% end %>
+        <% end %>
+      <% end %>
       <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
     </section>
+
+    <% if @hcb_code.fee_waived? %>
+      <section class="card__banner card__darker secondary border-top italic">
+        Fees were waived on this transaction — enjoy!
+      </section>
+    <% end %>
 
   </article>
 </div>

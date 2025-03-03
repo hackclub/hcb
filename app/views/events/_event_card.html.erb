@@ -20,7 +20,7 @@
     <div class="h4 line-height-2 mb2 flex justify-between item-center">
       <span class="flex items-center gap-1 whitespace-nowrap tabular-nums">
         <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
-        <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true }, loading: :lazy do %>
+        <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
           —
         <% end %>
       </span>

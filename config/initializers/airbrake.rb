@@ -10,12 +10,10 @@
 # Configuration details:
 # https://github.com/airbrake/airbrake-ruby#configuration
 Airbrake.configure do |c|
-  # You must set both project_id & project_key. To find your project_id and
-  # project_key navigate to your project's General Settings and copy the values
-  # from the right sidebar.
-  # https://github.com/airbrake/airbrake-ruby#project_id--project_key
-  c.project_id = 288439
-  c.project_key = Rails.application.credentials.dig(:airbrake, :project_key)
+  # These are configured in Doppler but referenced directly
+  # because Credentials isn't available in an initializer
+  c.project_id = ENV["AIRBRAKE_PROJECT_ID"]
+  c.project_key = ENV["AIRBRAKE_API_KEY"]
 
   # https://docs.airbrake.io/docs/overview/apm/#monitoring-rails-apps
   c.performance_stats = true
@@ -75,7 +73,7 @@ end
 # Rails.logger = Airbrake::AirbrakeLogger.new(Rails.logger)
 #
 
-noisy_errors = [ActionController::RoutingError, ActiveRecord::RecordNotFound, Lob::InvalidRequestError]
+noisy_errors = [ActionController::RoutingError, ActiveRecord::RecordNotFound]
 
 Airbrake.add_filter do |notice|
   next unless noisy_errors.include?(notice.stash[:exception].class)

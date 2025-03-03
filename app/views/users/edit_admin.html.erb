@@ -181,7 +181,7 @@
                       <%= link_to report.name, report, data: { turbo_frame: "_top" } %>
                     </td>
                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-                       <%= report.event.name %>
+                       <%= report.event&.name || "No event" %>
                     </td>
                     <td>
                        <%= render_money report.amount_cents %>

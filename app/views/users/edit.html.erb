@@ -1,147 +1,263 @@
 <% if @onboarding %>
   <% title "Setup your account" %>
-  <% page_sm %>
+  <% page_full %>
+  <% no_app_shell %>
+  <style>
+      html, body {
+          overflow-x: hidden
+      }
+
+      @media (min-width: 640px) {
+          html, body {
+              height: 100vh;
+              margin: 0;
+              padding: 0;
+          }
+      }
+  </style>
+  <div class="sm:flex sm:w-screen sm:h-screen dark:bg-neutral-900">
+    <div class="sm:flex-1 max-w-[1000px] p-6 pt-10 sm:p-16 sm:overflow-y-auto sm:h-screen max-w-screen">
+      <div class="flex items-center justify-between">
+        <img src="/logo-512.png" width="50px">
+        <%= button_to logout_users_path,
+                      method: :delete,
+                      style: "box-shadow: none",
+                      class: "pop mt-1 bg-transparent muted tooltipped tooltipped--s",
+                      'aria-label': "Sign out" do %>
+          <%= inline_icon "door-leave", size: home_action_size %>
+        <% end %>
+      </div>
+      <h1 class="border-0 mt-10 mb-2">Create your account</h1>
+      <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
+        <p class="muted">Let's get your profile set up in less than two minutes.</p>
+        <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+          <%= form_errors @user, "profile", "We couldn't update your" %>
+          <div class="md:flex gap-2">
+            <div class="field flex-1">
+              <%= form.label :full_name %>
+              <%= form.text_field :full_name, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
+              <% @user.errors.full_messages_for(:full_name).each do |message| %>
+                <div class="primary"><%= message %></div>
+              <% end %>
+            </div>
+            <div class="field flex-1">
+              <%= form.label :preferred_name, "Preferred name (optional)" %>
+              <%= form.text_field :preferred_name, style: "max-width:100%", placeholder: @user.full_name.presence || "FiFi Hacks", maxlength: 30 %>
+            </div>
+          </div>
+
+          <div class="md:flex items-center gap-2">
+            <div class="field flex-1">
+              <%= form.label :phone_number, "Mobile phone number" %>
+              <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
+              <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @user.phone_number || nil %>" required="required">
+              <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
+                <p class="h5 mt1 m0 warning flex items-center">
+                  <%= inline_icon "important-fill", class: "warning mr1" %>
+                  <span>Your phone number is unverified. <%= link_to "Click here", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } %>
+                    to verify it.</span>
+                </p>
+              <% end %>
+            </div>
+            <div class="field flex-1">
+              <%= form.label :birthday %>
+              <div class="flex gap-2 onboarding">
+                <%= form.date_select :birthday,
+                                     start_year: Date.today.year,
+                                     end_year: Date.today.year - 100,
+                                     order: [:month, :day, :year],
+                                     prompt: @user.birthday.nil? %>
+              </div>
+            </div>
+          </div>
+          <%= form.label :profile_picture %>
+          <div class="flex items-center mt1">
+            <%= avatar_for @user, 48, { class: "mr2" } %>
+            <div class="field--fileupload">
+              <%= form.label :profile_picture, "Choose File", class: "field--fileupload__label" %>
+              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
+            </div>
+          </div>
+          <div class="actions flex">
+            <button type="submit" class="btn w-full gap-2">
+              Start using HCB
+              <%= inline_icon "enter", size: 40 %>
+            </button>
+          </div>
+        <% end %>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <%= javascript_include_tag "phone_input.js" %>
+        </section>
+
+        <% if @user.phone_number_in_database.present? %>
+          <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
+            <%= modal_header "Verify phone number" %>
+            <%= react_component "settings/SmsVerification",
+                                phone_number: @user.phone_number_in_database %>
+          </section>
+        <% end %>
+      </turbo-frame>
+    </div>
+    <div class="hidden flex-1 bg-smoke dark:bg-neutral-800 sm:grid h-screen"
+         style="grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr);">
+      <% onboarding_gallery.each do |image| %>
+        <a href="<%= image[:url] %>" target="_blank" class="group relative flex w-full h-full min-w-0 min-h-0" style="background: <%= image[:overlay_color] %>">
+          <img src="<%= image[:image] %>" class="w-full h-full object-cover opacity-45" style="object-position: <%= image[:object_position] || "top" %>">
+          <%= inline_icon "external", class: "absolute top-0 right-0 m-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" %>
+        </a>
+      <% end %>
+    </div>
+  </div>
 <% else %>
-  <% title "Account settings" %>
+
+  <% title "Account Settings" %>
   <% page_md %>
   <%= render "users/nav", selected: :settings %>
-<% end %>
-
-<h1>
-  <%= @onboarding ? "Welcome to HCB!" : "Settings" %>
-</h1>
-<turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "general" unless @onboarding %>
-  <section>
-    <% if @onboarding %>
-      <p>Complete your profile to get started.</p>
-    <% end %>
-    <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
-      <%= form_errors @user, "profile", "We couldn't update your" %>
-      <% if current_season(override_preference: true) %>
-        <div class="field field--checkbox">
-          <%= form.check_box :seasonal_themes_enabled %>
-          <%= form.label :seasonal_themes_enabled, "#{by_season "✨", override_preference: true, fall: "🎃", winter: "🎄"} Enable #{current_season(override_preference: true)} theme", class: "h3 bold" %>
-        </div>
+  <h1>Settings</h1>
+  <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
+    <%= render "settings_nav", active: "general" unless @onboarding %>
+    <section>
+      <% if @onboarding %>
+        <p>Complete your profile to get started.</p>
       <% end %>
+      <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+        <%= form_errors @user, "profile", "We couldn't update your" %>
+        <% if current_season(override_preference: true) %>
+          <div class="field field--checkbox">
+            <%= form.check_box :seasonal_themes_enabled %>
+            <%= form.label :seasonal_themes_enabled, "#{by_season "✨", override_preference: true, fall: "🎃", winter: "🎄"} Enable #{current_season(override_preference: true)} theme", class: "h3 bold" %>
+          </div>
+        <% end %>
 
-      <div class="field">
-        <%= form.label :full_name %>
-        <%= form.text_field :full_name, required: true, placeholder: "Fiona Hackworth III", pattern: '^\S+.+' %>
-        <% @user.errors.full_messages_for(:full_name).each do |message| %>
-          <div class="primary"><%= message %></div>
-        <% end %>
-      </div>
-      <div class="field">
-        <%= form.label :preferred_name %>
-        <p class="h5 muted mt0 mb1">If you go by a different name.</p>
-        <%= form.text_field :preferred_name, placeholder: @user.full_name.presence || "FiFi Hacks", maxlength: 30 %>
-      </div>
+        <div class="field">
+          <%= form.label :full_name %>
+          <%= form.text_field :full_name, required: true, placeholder: "Fiona Hackworth III", pattern: '^\S+.+' %>
+          <% @user.errors.full_messages_for(:full_name).each do |message| %>
+            <div class="primary"><%= message %></div>
+          <% end %>
+        </div>
+        <div class="field">
+          <%= form.label :preferred_name %>
+          <p class="h5 muted mt0 mb1">If you go by a different name.</p>
+          <%= form.text_field :preferred_name, placeholder: @user.full_name.presence || "FiFi Hacks", maxlength: 30 %>
+        </div>
 
-      <div class="field">
-        <%= form.label :phone_number, "Mobile phone number" %>
-        <% if @onboarding %>
+        <div class="field">
+          <%= form.label :phone_number, "Mobile phone number" %>
+          <% if @onboarding %>
+            <p class="h5 muted mt0 mb1">
+              To contact you on short notice.
+            </p>
+          <% end %>
+          <% if @user.use_sms_auth %>
+            <p class="h5 muted mt0 mb1">
+              Changing your number will turn off SMS login codes.
+            </p>
+          <% end %>
+          <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
+          <input type="tel" id="phone_raw" value="<%= @user.phone_number || nil %>" required="required">
+          <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
+            <p class="h5 mt1 m0 warning flex items-center">
+              <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>
+              <span>Your phone number is unverified. <%= link_to "Click here to verify it.", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } if current_user == @user %></span>
+            </p>
+          <% end %>
+        </div>
+        <div class="field">
+          <%= form.label :birthday %>
           <p class="h5 muted mt0 mb1">
-            To contact you on short notice.
+            Used for card issuing.
           </p>
-        <% end %>
-        <% if @user.use_sms_auth %>
-          <p class="h5 muted mt0 mb1">
-            Changing your number will turn off SMS login codes.
-          </p>
-        <% end %>
-        <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-        <input type="tel" id="phone_raw" value="<%= @user.phone_number || nil %>" required="required">
-        <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
-          <p class="h5 mt1 m0 warning flex items-center">
-            <%= inline_icon "important-fill", class: "warning mr1", size: 20 %> <span>Your phone number is unverified. <%= link_to "Click here", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } %> to verify it.</span>
-          </p>
-        <% end %>
-      </div>
-      <div class="field">
-        <%= form.label :birthday %>
-        <p class="h5 muted mt0 mb1">
-          Used for card issuing.
-        </p>
-        <%= form.date_select :birthday,
-                             start_year: Date.today.year - 100,
-                             end_year: Date.today.year,
-                             order: [:month, :day, :year],
-                             prompt: @user.birthday.nil? %>
-      </div>
-      <div class="field">
-        <%= form.label :email %>
-        <%= form.email_field :email, disabled: !Flipper.enabled?(:email_updates_2024_05_24, current_user) %>
-        <% if @user.email_updates.active.any? %>
-          <p style="max-width: 420px;">
-            <small>
-              You've requested to update your email to <%= mail_to @user.email_updates.active.first.replacement %>.
-              To continue, click on the verification and authorization links in both your new and old email inboxes respectively.
-            </small>
-          </p>
-        <% end %>
-      </div>
-      <div class="field">
-        <%= form.label :profile_picture %>
-        <p class="flex items-center mt1">
-          <%= avatar_for @user, 48, { class: "mr2" } %>
-          <span>
+          <div class="flex items-center space-x-1">
+            <%= form.date_select :birthday,
+                                 start_year: Date.today.year,
+                                 end_year: Date.today.year - 100,
+                                 order: [:month, :day, :year],
+                                 prompt: @user.birthday.nil? %>
+            <% unless @user.birthday.nil? %>
+              <% admin_tool do %>
+                <%= @user.birthday > 19.years.ago ? "✅ Teenager" : "Not a teenager" %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+        <div class="field">
+          <%= form.label :email %>
+          <%= form.email_field :email, disabled: !Flipper.enabled?(:email_updates_2024_05_24, current_user) %>
+          <% if @user.email_updates.active.any? %>
+            <p style="max-width: 420px;">
+              <small>
+                You've requested to update your email to <%= mail_to @user.email_updates.active.first.replacement %>.
+                To continue, click on the verification and authorization links in both your new and old email inboxes
+                respectively.
+              </small>
+            </p>
+          <% end %>
+        </div>
+        <div class="field">
+          <%= form.label :profile_picture %>
+          <p class="flex items-center mt1">
+            <%= avatar_for @user, 48, { class: "mr2" } %>
+            <span>
               <% if @user.profile_picture.attached? %>
               You're currently using an uploaded profile picture.<br>
-              If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>.
+              If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>
+                .
               <% else %>
               If you have a <a href="https://gravatar.com" target="_blank">Gravatar</a>, we’ll pull it in here.<br>
               Or, you can upload a profile picture.<br>
               <% end %>
           </span>
-        </p>
-        <div class="field field--fileupload">
-          <%= form.label :profile_picture, "Upload picture", class: "field--fileupload__label" %>
-          <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
-        </div>
-      </div>
-
-      <% unless @onboarding %>
-        <div class="field">
-          <%= form.label :session_duration_seconds, "Stay signed in for" %>
-          <%= form.select :session_duration_seconds, SessionsHelper::SESSION_DURATION_OPTIONS.to_a %>
-        </div>
-        <fieldset>
-          <legend class="medium">Share usage data with HCB</legend>
-          <p class="h5 muted mt-0 mb-3">
-            Help us improve HCB by sending usage data.
-            Off by default.
           </p>
-          <div class="field field--options">
-            <%= form.radio_button :sessions_reported, true %>
-            <%= form.label :sessions_reported, value: true do %>
-              <%= inline_icon "support", size: 28 %>
-              <strong>Sure thing!</strong>
-            <% end %>
-            <%= form.radio_button :sessions_reported, false %>
-            <%= form.label :sessions_reported, value: false do %>
-              <%= inline_icon "thumbsdown", size: 28 %>
-              <strong>No thanks</strong>
-            <% end %>
+          <div class="field field--fileupload">
+            <%= form.label :profile_picture, "Upload picture", class: "field--fileupload__label" %>
+            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
           </div>
-        </fieldset>
+        </div>
+
+        <% unless @onboarding %>
+          <div class="field">
+            <%= form.label :session_duration_seconds, "Stay signed in for" %>
+            <%= form.select :session_duration_seconds, SessionsHelper::SESSION_DURATION_OPTIONS.to_a %>
+          </div>
+          <fieldset>
+            <legend class="medium">Share usage data with HCB</legend>
+            <p class="h5 muted mt-0 mb-3">
+              Help us improve HCB by sending usage data.
+              Off by default.
+            </p>
+            <div class="field field--options">
+              <%= form.radio_button :sessions_reported, true %>
+              <%= form.label :sessions_reported, value: true do %>
+                <%= inline_icon "support", size: 28 %>
+                <strong>Sure thing!</strong>
+              <% end %>
+              <%= form.radio_button :sessions_reported, false %>
+              <%= form.label :sessions_reported, value: false do %>
+                <%= inline_icon "thumbsdown", size: 28 %>
+                <strong>No thanks</strong>
+              <% end %>
+            </div>
+          </fieldset>
+        <% end %>
+
+        <div class="actions flex">
+          <%= form.submit @onboarding ? "Start using HCB" : "Save settings" %>
+        </div>
       <% end %>
-
-      <div class="actions flex">
-        <%= form.submit @onboarding ? "Start using HCB" : "Save settings" %>
-      </div>
-    <% end %>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <%= javascript_include_tag "phone_input.js" %>
-  </section>
-
-  <% if @user.phone_number_in_database.present? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
-      <%= modal_header "Verify phone number" %>
-      <%= react_component "settings/SmsVerification",
-              phone_number: @user.phone_number_in_database %>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+      <%= javascript_include_tag "phone_input.js" %>
     </section>
-  <% end %>
 
-</turbo-frame>
+    <% if @user.phone_number_in_database.present? %>
+      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
+        <%= modal_header "Verify phone number" %>
+        <%= react_component "settings/SmsVerification",
+                            phone_number: @user.phone_number_in_database %>
+      </section>
+    <% end %>
+
+  </turbo-frame>
+<% end %>

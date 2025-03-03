@@ -1,25 +1,37 @@
 <p>Hi there! 👋</p>
 
-<p>
-  You've been invited by <strong><%= @invite.sender.name %></strong> to <%= @invite.manager? ? "manage" : "be a member of" %> <strong><%= @invite.event.name %></strong>,
-  <% if @invite.event.demo_mode? %>
-    a Demo Account
-  <% else %>
-    which is running
-  <% end %>
-  on HCB. HCB is an online dashboard used to store finances, raise money, receive grants, manage team
-  emails, and so much more.
-</p>
-
-<p>
-  <%= link_to "Click here", @invite %> to accept the invite, log in, and see what's up!
-</p>
-
-<% if @invite.event.demo_mode? %>
+<% if @invite.event.demo_mode? == false || @invite.initial? == false %>
   <p>
-    <strong><%= @invite.event.name %></strong> is currently in Playground Mode—you can sign in and poke around,
-    but many features are disabled. You can request to fully activate your account any time from your new HCB
-    dashboard. Don't hesitate to reply to this email if you have any questions!
+    <% if @invite.organizer_position_contracts.where(aasm_state: :signed).any? %>
+      Thank you for signing the HCB contract!
+    <% end %>
+    You've been invited by <strong><%= @invite.sender.name %></strong> to <%= @invite.manager? ? "manage" : "be a member of" %> <strong><%= @invite.event.name %></strong>,
+    <% if @invite.event.demo_mode? %>
+      a Demo Account
+    <% else %>
+      which is running
+    <% end %>
+    on HCB. HCB is an online dashboard used to store finances, raise money, receive grants, manage team
+    emails, and so much more.
+  </p>
+
+  <p>
+    <%= link_to "Click here", @invite %> to accept the invite, log in, and see what's up!
+  </p>
+
+  <% if @invite.event.demo_mode? %>
+    <p>
+      <strong><%= @invite.event.name %></strong> is currently in Playground Mode—you can sign in and poke around,
+      but many features are disabled. Don't hesitate to reply to this email if you have any questions! We'll be
+      in touch with more information soon.
+    </p>
+  <% end %>
+<% else %>
+  <p>
+    Thank you for applying to HCB, Hack Club’s fiscal sponsorship program. We're really excited to learn more about your project.
+  </p>
+  <p>
+    We will review your application for <%= @invite.event.name %> and get back to you within two business days.
   </p>
 <% end %>
 

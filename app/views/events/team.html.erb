@@ -8,10 +8,16 @@
     <%= badge_for @all_positions.size, class: "bg-muted" %>
   </span>
 
-  <%= pop_icon_to params[:view] == "list" ? "grid" : "list",
-   "?view=#{params[:view] == 'list' ? 'grid' : 'list'}#{"&q=#{params[:q]}" if params[:q]}#{"&filter=#{params[:filter]}" if params[:filter]}" %>
+  <%= pop_icon_to @view == "list" ? "grid" : "list",
+   "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{params[:q]}" if params[:q]}#{"&filter=#{params[:filter]}" if params[:filter]}" %>
 
-  <% if organizer_signed_in? %>
+  <% if admin_signed_in? && @event.config.contact_email.present? %>
+    <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 36px; width: 36px;" do %>
+      <%= link_to "mailto:#{@event.config.contact_email}", class: "flex items-center justify-center", style: "transform: translateY(1px) scale(0.8)" do %>
+        <%= inline_icon "email", color: "#ff8c37" %>
+      <% end %>
+    <% end %>
+  <% elsif organizer_signed_in? %>
     <%= pop_icon_to "email", "mailto:#{@all_positions.map { |op| op.user.email_address_with_name }.join(",")}" %>
   <% end %>
 
@@ -22,13 +28,6 @@
     <% end %>
   <% end %>
 </h1>
-
-<% if policy(@event).can_invite_user? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
-    <%= modal_header "Invite a team member" %>
-    <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
-  </section>
-<% end %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
@@ -42,15 +41,15 @@
     <% end %>
   </div>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
-    <%= form.hidden_field :view, value: params[:view] if params[:view] %>
+    <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
   <div style="text-align: center;">
     <% ["all", "members", "managers"].each do |filter| %>
-      <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if params[:view] == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
+      <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
     <% end %>
   </div>
 </div>
-<% if params[:view] == "list" %>
+<% if @view == "list" %>
   <% if @all_positions.any? %>
   <table>
     <thead>
@@ -71,7 +70,7 @@
   </table>
   <%= paginate @positions %>
   <% else %>
-    <%= blankslate "No #{params[:filter] == "all" ? "others" : params[:filter] || "others"} on your team yet" %>
+    <%= blankslate @event.organizer_positions.none? ? "No team members" : "No team members found" %>
   <% end %>
 <% else %>
 
@@ -83,7 +82,7 @@
       <%= paginate @positions %>
     <% end %>
   <% else %>
-    <%= blankslate "No others on your team yet" %>
+    <%= blankslate @event.organizer_positions.none? ? "No team members" : "No team members found" %>
   <% end %>
 <% end %>
 
@@ -98,11 +97,28 @@
   </div>
 <% end %>
 
-<% admin_tool("flex justify-center mt2") do %>
-  <%= link_to @event.organizer_positions.where(is_signee: nil).any? ? "Finish signee backfill" : "✅ Signee backfill complete, thanks.",
-              event_finish_signee_backfill_path(@event),
-              method: :post,
-              disabled: @event.organizer_positions.where(is_signee: nil).none?,
-              "data-confirm": "Are you sure you have backfilled all organizers of #{@event.name} with their correct contract signee status? Continuing will convert #{@event.organizer_positions.where(is_signee: nil).count} null(s) to false.",
-              class: "btn" %>
+<% admin_tool("mt2") do %>
+  <h2 class="flex items-center mt3 mb2">
+    Previous members
+    <%= badge_for @event.organizer_positions.with_deleted.where.not(deleted_at: nil).count, class: "bg-muted" %>
+  </h2>
+  <ul>
+    <% @event.organizer_positions.with_deleted.where.not(deleted_at: nil).order(deleted_at: :desc).each do |op| %>
+      <li>
+        <%= link_to op.user.name, admin_user_path(op.user) %> was removed <%= time_ago_in_words op.deleted_at %> ago
+        <%= error_boundary fallback_text: "; the context failed to load." do %>
+          <% if opdr = op.organizer_position_deletion_requests.last %>
+            by <%= opdr.closed_by.name %> at the request of <%= opdr.submitted_by.name %> <%= link_to "(context)", opdr %>
+          <% end %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if policy(@event).can_invite_user? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
+    <%= modal_header "Invite a team member" %>
+    <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
+  </section>
 <% end %>

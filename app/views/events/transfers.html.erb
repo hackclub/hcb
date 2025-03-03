@@ -68,11 +68,11 @@
 
     <tbody>
       <% @transfers.each do |d| %>
-        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) %>
-          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>">
-            <%= modal_header("Transfer of #{render_money(d.amount)}", external_link: hcb_code_url(d.hcb_code)) %>
-            <%= async_frame_to hcb_code_url(d.hcb_code, params: { frame: true }), lazy: true, as: :div do %>
-              <strong>Loading...</strong>
+        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) && !show_mock_data? %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>" data-state-url="<%= hcb_code_url(d.hcb_code) %>" data-state-title="Transfer of <%= render_money(d.local_hcb_code.amount_cents_by_event(@event).abs) %>">
+            <%= modal_header("Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}", external_link: hcb_code_url(d.hcb_code)) %>
+            <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
+              <%= render partial: "application/loading_container" %>
             <% end %>
           </section>
         <% end %>
@@ -93,6 +93,10 @@
             <% elsif d.is_a?(PaypalTransfer) %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="PayPal Transfer">
                 <%= inline_icon "paypal" %>
+              </span>
+            <% elsif d.is_a?(Wire) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="Wire">
+                <%= inline_icon "web" %>
               </span>
             <% else %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
@@ -128,6 +132,8 @@
           <td style="text-align: right;">
             <% if d.is_a? CardGrant %>
               <span class="<%= "muted line-through" if d.balance.zero? %>"><%= d.balance.format %></span>
+            <% elsif d.is_a? Wire %>
+              <%= render_money(d.local_hcb_code.amount_cents.abs) %>
             <% else %>
               <%= render_money(d.amount) %>
             <% end %>
@@ -155,13 +161,5 @@
 <% end %>
 
 <% if organizer_signed_in? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_transfer">
-    <%= turbo_frame_tag :transfer_form do %>
-      <%= modal_header "Transfer money" %>
-
-      <%= render "events/transfers/unauthorized_callout" unless policy(@event).create_transfer? %>
-
-      <%= render "transfer_form" %>
-    <% end %>
-  </section>
+  <%= render "transfer_modal" %>
 <% end %>

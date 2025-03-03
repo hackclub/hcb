@@ -51,7 +51,10 @@ module UsersHelper
       "Yahoo!",
       "dats me!",
       "dats u!",
-      "byte me!"
+      "byte me!",
+      "despite everything, it's still you!",
+      "the person reading this :-)",
+      "our favorite user currently reading this text!"
     ]
   end
 
@@ -85,13 +88,15 @@ module UsersHelper
     klasses << options[:class] if options[:class]
     klass = klasses.uniq.join(" ")
 
-    aria = if user.nil?
-             "No user found"
-           elsif user.id == current_user&.id
-             current_user_flavor_text.sample
-           elsif user.admin?
-             "#{user.name} is an admin"
-           end
+    aria_label = if options[:aria_label]
+                   options[:aria_label]
+                 elsif user.nil?
+                   "No user found"
+                 elsif user.id == current_user&.id
+                   current_user_flavor_text.sample
+                 elsif user.admin?
+                   "#{user.name} is an admin"
+                 end
 
     content = if user&.admin? && !options[:hide_avatar]
                 bolt = inline_icon "admin-badge", size: 20
@@ -102,7 +107,7 @@ module UsersHelper
                 avi + name
               end
 
-    content_tag :span, content, class: klass, 'aria-label': aria
+    content_tag :span, content, class: klass, 'aria-label': aria_label
   end
 
   def admin_tool(class_name = "", element = "div", override_pretend: false, **options, &block)
@@ -135,6 +140,53 @@ module UsersHelper
 
   def user_birthday?(user = current_user)
     user&.birthday?
+  end
+
+  def onboarding_gallery
+    [
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/0image.png",
+        url: "https://hcb.hackclub.com/zephyr",
+        overlay_color: "#802434",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/1image.png",
+        url: "https://hcb.hackclub.com/the-charlotte-bridge",
+        overlay_color: "#805b24",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/2image.png",
+        url: "https://hcb.hackclub.com/windyhacks",
+        overlay_color: "#807f0a",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/3image.png",
+        url: "https://hcb.hackclub.com/the-innovation-circuit",
+        overlay_color: "#22806c",
+        object_position: "center"
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/4image.png",
+        url: "https://hcb.hackclub.com/zephyr",
+        overlay_color: "#3c7d80",
+        object_position: "center"
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/5image.png",
+        url: "https://hcb.hackclub.com/hackpenn",
+        overlay_color: "#225c80",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/6image.png",
+        url: "https://hcb.hackclub.com/wild-wild-west",
+        overlay_color: "#6c2280",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/7image.png",
+        url: "https://hcb.hackclub.com/hq",
+        overlay_color: "#802434",
+      }
+    ]
   end
 
   private

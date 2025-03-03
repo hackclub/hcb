@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# (@msw) Stripe-like public IDs that don't require adding a column to the
-# database. They're given out to partners (givebutter at time of writing), and
-# will impact partners if changed.
+# (@msw) Stripe-like public IDs that don't require adding a column to the database.
 module PublicIdentifiable
   extend ActiveSupport::Concern
 

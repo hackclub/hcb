@@ -8,6 +8,7 @@
 #  aasm_state              :string
 #  amount_cents            :integer          default(0), not null
 #  approved_at             :datetime
+#  category                :integer
 #  deleted_at              :datetime
 #  description             :text
 #  expense_number          :integer          not null
@@ -54,13 +55,35 @@ module Reimbursement
     validates :expense_number, uniqueness: { scope: :reimbursement_report_id }
     validate :valid_expense_type
 
-    broadcasts_refreshes_to ->(expense) { expense.report }
+    enum :category, {
+      "Advertising / Marketing": 7000,
+      "Customs Fees": 7031,
+      "Dues & Subscriptions": 7042,
+      "Equipment & Furniture": 7053,
+      "Food & Entertainment": 8130,
+      "Gifts": 8805,
+      "Janitorial & Maintenance": 7050,
+      "Mileage": 8120,
+      "Office Supplies": 7044,
+      "Postage & Shipping": 7047,
+      "Prizes": 7030,
+      "Project Supplies": 7034,
+      "Software": 7045,
+      "Taxes & Licenses": 7041,
+      "Technical Infrastructure": 7035,
+      "Training": 8150,
+      "Travel": 8110
+    }, instance_methods: false
 
     before_validation do
       unless self.expense_number
         self.expense_number = (self.report.expenses.with_deleted.pluck(:expense_number).max || 0) + 1
       end
     end
+
+    include TouchHistory
+
+    broadcasts_refreshes_to ->(expense) { expense.was_touched? ? :_noop : expense.report }
 
     scope :complete, -> { where.not(memo: nil, amount_cents: 0).merge(self.with_receipt) }
 

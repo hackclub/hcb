@@ -52,7 +52,7 @@
       <% end %>
       <tr>
         <td style="text-align: right;">Grant receipt method:</td>
-        <td><%= @grant.receipt_method.humanize %> (<%= link_to("link", @grant.linked_object.local_hcb_code.url) if @grant.linked_object.present? %>)</td>
+        <td><%= @grant.receipt_method.humanize %> (<%= link_to("link", @grant.linked_object.local_hcb_code) if @grant.linked_object.present? %>)</td>
       </tr>
     <% end %>
   </tbody>

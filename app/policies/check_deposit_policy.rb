@@ -2,15 +2,19 @@
 
 class CheckDepositPolicy < ApplicationPolicy
   def index?
-    admin? || (user? && check_deposits_enabled?)
+    admin_or_user? && check_deposits_enabled?
   end
 
   def create?
-    admin_or_user? && !record.event.demo_mode? && !record.event.outernet_guild?
+    admin_or_user? && !record.event.demo_mode?
   end
 
   def view_image?
     admin_or_manager?
+  end
+
+  def toggle_fronted?
+    admin?
   end
 
   private

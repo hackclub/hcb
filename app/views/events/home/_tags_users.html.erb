@@ -1,0 +1,50 @@
+<%= turbo_frame_tag "tags_users" do %>
+  <% if !@empty_tags || !@empty_users %>
+    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex flex-col">
+      <% if @empty_tags %>
+        <div class="flex flex-1 flex-col items-center justify-center">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold mb-0">
+              <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "It's quiet here..." : "Tags aren't enabled for this event" %>
+            </h3>
+            <p class="text-gray-500 my-1 max-w-sm">
+              <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "Either you don't have any tags, or you haven't categorized any transactions yet." : "With tags, you can neatly categorize your transactions." %>
+            </p>
+
+            <% unless Flipper.enabled?(:transaction_tags_2022_07_29, event) %>
+              <%= link_to "Take me to the settings!", edit_event_path(event, tab: "features"), data: { turbo_frame: :_top }, class: "btn btn-primary mt-4" %>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="flex flex-row justify-between items-center w-full">
+          <h3 class="mt0 mb0">Top tags</h3>
+          <h5 class="homepage-eyebrow shrink-0 my-0">All&nbsp;time</h5>
+        </div>
+        <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
+      <% end %>
+    </div>
+    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex flex-col">
+      <% if @empty_users %>
+        <div class="flex flex-1 flex-col items-center justify-center">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold mb-0">
+              Not enough data
+            </h3>
+            <p class="text-gray-500 my-1">
+              To see users here, make sure they have at least one transaction. If not, invite team members to get
+              started!
+            </p>
+            <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
+          </div>
+        </div>
+      <% else %>
+        <div class="flex flex-row justify-between items-center w-full mb-2">
+          <h3 class="mt0 mb0">Top users</h3>
+          <h5 class="homepage-eyebrow shrink-0 my-0">All&nbsp;time</h5>
+        </div>
+        <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

@@ -1,0 +1,79 @@
+<%= turbo_frame_tag "money_movement" do %>
+  <% unless @money_in.empty? && @money_out.empty? %>
+    <div class="card card--breakdown shadow-none p-0 pb-4 px-0 flex-1 flex flex-col">
+      <h3 class="mt-4 mb-2 pl-8 sm:pl-4">Money in</h3>
+
+      <% if @money_in.empty? %>
+        <div class="text-gray-500 text-center bg-zinc-100 dark:bg-zinc-700 rounded-xl mx-4 flex-1 flex items-center text-center justify-center">
+          You haven't received any money yet.
+        </div>
+      <% end %>
+
+      <% @money_in.each do |transaction| %>
+        <a href="<%= url_for(transaction.local_hcb_code) %>" class="homepage-transaction <%= Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>" data-behavior="modal_trigger" data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
+          <div style="min-width:0;flex:1">
+            <span class="truncate block"><%= transaction_memo(transaction) %></span>
+            <div class="text-sm text-gray-500">
+              <% if transaction.is_a?(CanonicalPendingTransaction) %>
+                Pending &bull;
+              <% end %>
+              <% subtitle = "#{time_ago_in_words(transaction.date)} ago" %>
+              <% if transaction.try(:raw_stripe_transaction) || transaction.try(:raw_pending_stripe_transaction_id) %>
+                <% subtitle += ", #{transaction.stripe_cardholder.user.name}" %>
+              <% end %>
+              <%= subtitle %>
+            </div>
+          </div>
+          <span class="text-xs font-bold p-1 <%= transaction.amount_cents > 0 ? "success" : "error" %>"><%= render_transaction_amount transaction.amount_cents %></span>
+        </a>
+
+        <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount) %>">
+            <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount), external_link: url_for(transaction.local_hcb_code)) %>
+            <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_path, loading: :lazy do %>
+              <%= render partial: "application/loading_container" %>
+            <% end %>
+          </section>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="card card--breakdown shadow-none p-0 pb-4 px-0 flex-1 flex flex-col">
+      <h3 class="mt-4 mb-2 pl-8 sm:pl-4">Money out</h3>
+
+      <% if @money_out.empty? %>
+        <div class="text-gray-500 text-center bg-zinc-100 dark:bg-zinc-700 rounded-xl mx-4 flex-1 flex items-center text-center justify-center">
+          You haven't spent any money yet.
+        </div>
+      <% end %>
+
+      <% @money_out.each do |transaction| %>
+        <a href="<%= url_for(transaction.local_hcb_code) %>" class="homepage-transaction <%= Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>" data-behavior="modal_trigger" data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
+          <div style="min-width:0;flex:1">
+            <span class="truncate block"><%= transaction_memo(transaction) %></span>
+            <div class="text-sm text-gray-500">
+              <% if transaction.is_a?(CanonicalPendingTransaction) %>
+                Pending &bull;
+              <% end %>
+              <% subtitle = "#{time_ago_in_words(transaction.date)} ago" %>
+              <% if transaction.try(:raw_stripe_transaction) || transaction.try(:raw_pending_stripe_transaction_id) %>
+                <% subtitle += ", #{transaction.stripe_cardholder.user.name}" %>
+              <% end %>
+              <%= subtitle %>
+            </div>
+          </div>
+          <span class="text-xs font-bold p-1 <%= transaction.amount_cents > 0 ? "success" : "error" %>"><%= render_transaction_amount transaction.amount_cents %></span>
+        </a>
+
+        <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount) %>">
+            <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount), external_link: url_for(transaction.local_hcb_code)) %>
+            <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_path, loading: :lazy do %>
+              <%= render partial: "application/loading_container" %>
+            <% end %>
+          </section>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

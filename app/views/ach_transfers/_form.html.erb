@@ -4,7 +4,7 @@
   model: @ach_transfer,
   local: true,
   url: event_ach_transfers_path(@event),
-  data: { controller: "input" },
+  data: { controller: "input extraction", extraction_target: "form" },
   html: {
     "x-data" => "ach(#{{
       payment_recipient: (@ach_transfer.payment_recipient.to_safe_hash if @ach_transfer.payment_recipient&.event&.== @event),
@@ -29,6 +29,7 @@
                         role: "combobox",
                         "aria-controls": "payment-recipient-search",
                         data: {
+                          extraction_field: "seller_name",
                           action: "
                             keydown.enter->text-filter#selectFirst
 
@@ -69,7 +70,7 @@
   <div class="field">
     <%= form.label :payment_for, "What are you paying for with this deposit?" %>
     <%= form.text_field :payment_for, placeholder: "Shipment of potions", required: true, disabled:, data: { input_target: "input" } %>
-    <span class="muted">This is to help HCB keep record of our transactions. HCB team will see this.</span>
+    <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
   <h3 class="mb-2">Payment details</h3>
@@ -78,12 +79,12 @@
       <div>
         <div class="field">
           <%= form.label :recipient_email %>
-          <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+          <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, data: { extraction_field: "seller_email" } %>
         </div>
 
         <div class="field">
           <%= form.label :bank_name %>
-          <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true, disabled: %>
+          <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
         </div>
 
         <div
@@ -92,13 +93,13 @@
           data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>"
         >
           <%= form.label :routing_number %>
-          <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask", data: { action: "input->external-validation#validate" } %>
+          <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
           <span class="muted" data-external-validation-target="hint"></span>
         </div>
 
         <div class="field">
           <%= form.label :account_number %>
-          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask" %>
+          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask", data: { extraction_field: "account_number" } %>
         </div>
       </div>
     </template>
@@ -120,7 +121,7 @@
   <div class="field">
     <div class="flex items-center">
       <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+      <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
     </div>
   </div>
 
@@ -147,9 +148,11 @@
         style: "margin: 8px 0px",
         class: "field--fileupload__field",
         data: {
-          "file-drop-target" => "fileInput"
+          "file-drop-target" => "fileInput",
+          "action" => "change->extraction#upload"
         },
         disabled: %>
+    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
   </div>
   <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
 

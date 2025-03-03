@@ -37,7 +37,9 @@
 
   <div class="container--xs">
     <h1 class="mt0">Send a check</h1>
-    <%= form_with(model: [@event, @check], local: true) do |form| %>
+    <%= form_with(model: [@event, @check], local: true, data: { controller: "extraction", extraction_target: "form" }) do |form| %>
+      <%= form_errors(@check, "check", "We couldn't send this") %>
+
       <div class="field">
         <%= form.label :memo %>
         <%= form.text_field :memo,
@@ -63,7 +65,7 @@
               step: 0.01,
               min: 1,
               required: true,
-              data: { behavior: "check_amount_field", controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+              data: { behavior: "check_amount_field", controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
           </div>
         </div>
         <% @check.errors.messages_for(:amount).each do |message| %>
@@ -77,29 +79,29 @@
       <div class="field">
         <%= form.label :payment_for, "What are you paying for with this check?" %>
         <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
-        <span class="muted">This is to help HCB keep record of our transactions. The HCB team will see this.</span>
+        <span class="muted">This is to help HCB keep record of our transactions.</span>
       </div>
 
       <h2>Recipient details</h2>
 
       <div class="field mt2">
         <%= form.label :recipient_name, "Name (use company name if applicable)" %>
-        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, disabled:, data: { 'behavior': "check_payee_name_field" }, maxlength: 250 %>
+        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, disabled:, data: { 'behavior': "check_payee_name_field", extraction_field: "seller_name" }, maxlength: 250 %>
       </div>
 
       <div class="field">
         <%= form.label :address_line1, "Street address (where we’re mailing it to)" %>
-        <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled: %>
+        <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled:, data: { extraction_field: "seller_address_line_1" } %>
       </div>
 
       <div class="field">
-        <%= form.text_field :address_line2, placeholder: "Suite 500", disabled: %>
+        <%= form.text_field :address_line2, placeholder: "Suite 500", disabled:, data: { extraction_field: "seller_address_line_2" } %>
       </div>
 
       <div class="flex">
         <div class="field flex-auto mr1">
           <%= form.label :address_city, "City" %>
-          <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled: %>
+          <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled:, data: { extraction_field: "seller_address_city" } %>
         </div>
         <div class="field flex-auto ml1">
           <%= form.label :address_state, "State" %>
@@ -155,7 +157,7 @@
                 ["West Virginia", "WV"],
                 ["Wisconsin", "WI"],
                 ["Wyoming", "WY"],
-              ], { prompt: "Select a state" }, disabled: %>
+              ], { prompt: "Select a state" }, disabled:, data: { extraction_field: "seller_address_state_code" } %>
           <% @check.errors.messages_for(:address_state).each do |message| %>
             <div class="primary"><%= message %></div>
           <% end %>
@@ -164,7 +166,7 @@
 
       <div class="field">
         <%= form.label :address_zip, "ZIP" %>
-        <%= form.text_field :address_zip, placeholder: "94129", required: true, disabled: %>
+        <%= form.text_field :address_zip, placeholder: "94129", required: true, disabled:, data: { extraction_field: "seller_address_zip" } %>
         <% @check.errors.messages_for(:address_zip).each do |message| %>
           <div class="primary"><%= message %></div>
         <% end %>
@@ -177,7 +179,7 @@
 
       <div class="field">
         <%= form.label :recipient_email, "Recipient Email" %>
-        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, data: { extraction_field: "seller_email" } %>
       </div>
 
       <div class="field field--checkbox">
@@ -203,9 +205,11 @@
             style: "margin: 8px 0px",
             class: "field--fileupload__field",
             data: {
-              "file-drop-target" => "fileInput"
+              "file-drop-target" => "fileInput",
+              "action"           => "change->extraction#upload"
             },
             disabled: %>
+        <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
       </div>
       <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
 

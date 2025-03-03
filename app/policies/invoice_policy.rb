@@ -38,7 +38,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def manually_mark_as_paid?
-    user&.admin?
+    admin_or_user
   end
 
   def hosted?

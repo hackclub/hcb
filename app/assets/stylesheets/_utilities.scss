@@ -164,6 +164,10 @@ $shades: (
   border-color: map-get($palette, primary);
 }
 
+.b--ai {
+  border-color: map-get($palette, ai);
+}
+
 .w-50 {
   width: 50%;
 }
@@ -223,4 +227,8 @@ tr.strikethrough td:before {
   top: 50%;
   width: 100%;
   border-bottom: 1px solid #8492a6;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
 }

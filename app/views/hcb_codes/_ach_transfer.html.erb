@@ -128,7 +128,7 @@
       <% end %>
 
       <% admin_tool do %>
-        <%= button_to "Process", ach_start_approval_admin_path(@hcb_code.ach_transfer), class: "btn", method: :get %>
+        <%= button_to "Process", ach_start_approval_admin_path(@hcb_code.ach_transfer), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
       <% end %>
     </div>
   <% end %>

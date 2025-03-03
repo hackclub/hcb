@@ -39,8 +39,21 @@ const StripeChargeLookup = () => {
 
   return (
     <>
-      <input type="text" onChange={handleChange} value={search} />
-      <code>
+      <input
+        type="text"
+        onChange={handleChange}
+        value={search}
+        style={{ display: 'block' }}
+      />
+
+      <code
+        style={{
+          display: 'block',
+          width: 'fit-content',
+          minWidth: '25vw',
+          minHeight: '3rem',
+        }}
+      >
         <pre>{JSON.stringify(results[search], null, 2)}</pre>
       </code>
     </>

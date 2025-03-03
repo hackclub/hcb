@@ -142,15 +142,6 @@
 
   </section>
 
-  <% unless using_transaction_engine_v2? || @transaction.is_a?(CanonicalTransaction) %>
-  <% admin_tool("py0") do %>
-      <p>
-        Bank Account:
-        <%= link_to "##{@transaction.bank_account.id} (#{@transaction.bank_account.name})", @transaction.bank_account %>
-      </p>
-  <% end %>
-  <% end %>
-
   <% if @transaction&.disbursement %>
     <% admin_tool("py0 mt2") do %>
       <%# admin tools because disbursements are not designed

@@ -17,4 +17,8 @@ export default class extends Controller {
       e.target.dispatchEvent(new Event('input'))
     }
   }
+
+  pad(e) {
+    e.target.value = parseFloat(e.target.value).toFixed(this.placesValue)
+  }
 }

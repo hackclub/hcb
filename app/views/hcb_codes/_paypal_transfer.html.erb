@@ -56,7 +56,7 @@
   <% if admin_signed_in? && @hcb_code.paypal_transfer.may_mark_rejected? %>
     <div class="card__banner card__darker border-top overflow-hidden">
       <% admin_tool "w-fit" do %>
-        <%= button_to "Process", paypal_transfer_process_admin_path(@hcb_code.paypal_transfer), class: "btn", method: :get %>
+        <%= button_to "Process", paypal_transfer_process_admin_path(@hcb_code.paypal_transfer), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
       <% end %>
     </div>
   <% end %>

@@ -7,7 +7,11 @@
       <%= inline_icon "email", size: 24 %> Contact us
     </a>
     <% if current_user&.events&.not_demo_mode&.any? %>
-      <% routing = Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"]) %>
+      <% routing = begin
+           Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
+         rescue
+           {}
+         end %>
 
       <% url_params = {
            name: current_user&.name,
@@ -26,7 +30,7 @@
     <a class="support-menu__item" href="<%= branding_path %>" target="_blank">
       <%= inline_icon "bank-account", size: 24 %> Brand guidelines
     </a>
-    <a class="support-menu__item" href="<%= v3_path %>" target="_blank">
+    <a class="support-menu__item" href="<%= docs_api_index_path %>" target="_blank">
       <%= inline_icon "code", size: 24 %> API docs
     </a>
   </div>

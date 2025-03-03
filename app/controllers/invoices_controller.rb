@@ -134,7 +134,7 @@ class InvoicesController < ApplicationController
 
     redirect_to @invoice
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor)
@@ -220,9 +220,26 @@ class InvoicesController < ApplicationController
 
     authorize @invoice
 
-    ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
+    if @invoice.canonical_transactions.any?
+      ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
+    else
+      InvoiceJob::Refund.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents, current_user)
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
+    end
+  end
 
-    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
+  def manually_mark_as_paid
+    @invoice = Invoice.friendly.find(params[:invoice_id])
+    @hcb_code = @invoice.local_hcb_code
+
+    authorize @invoice
+
+    ::InvoiceService::MarkVoid.new(invoice_id: @invoice.id, user: current_user).run
+
+    @invoice.update(manually_marked_as_paid_at: Time.now, manually_marked_as_paid_user: current_user, manually_marked_as_paid_reason: params[:manually_marked_as_paid_reason])
+
+    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Manually marked this invoice as paid." }
   end
 
   private

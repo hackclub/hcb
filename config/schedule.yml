@@ -9,7 +9,7 @@ g_suite_verify_all_job:
 g_suite_scan_verified_dns_job:
   cron: "0 12 * * *" # run every 1 day
   class: "GSuiteJob::ScanVerifiedDns"
-  
+
 pending_transaction_engine_nightly_job:
   cron: "0 */3 * * *" # run every 3 hour
   class: "PendingTransactionEngineJob::Nightly"
@@ -17,7 +17,7 @@ pending_transaction_engine_nightly_job:
 pending_event_mapping_engine_nightly_job:
   cron: "10,40 * * * *" # run every 30 minutes, but after pending_transaction_engine_nightly_job
   class: "PendingEventMappingEngineJob::Nightly"
- 
+
 transaction_engine_nightly_job:
   cron: "0 6 * * *" # run at 6am UTC each morning
   class: "TransactionEngineJob::Nightly"
@@ -79,6 +79,10 @@ reimbursement_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "ReimbursementJob::Nightly"
 
+payroll_nightly_job:
+  cron: "*/5 * * * *" # run every 5 minutes
+  class: "PayrollJob::Nightly"
+
 bank_fee_nightly_job:
   cron: "*/30 2-23 * * *" # run every 30 minutes
   class: "BankFeeJob::Nightly"
@@ -86,14 +90,6 @@ bank_fee_nightly_job:
 fee_engine_hourly_job:
   cron: "0 */1 * * *" # run every 1 hours
   class: "FeeEngineJob::Hourly"
-
-partner_donation_nightly_job:
-  cron: "0 */6 * * *" # run 4 times a day
-  class: "PartnerDonationJob::Nightly"
-
-partnered_signup_nightly_job:
-  cron: "0 * * * *" # run every hour
-  class: "PartneredSignupJob::Nightly"
 
 receipt_report_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
@@ -115,10 +111,6 @@ stripe_card_nightly_job:
   cron: "0 7 * * *" # run every 1 day, after import
   class: "StripeCardJob::Nightly"
 
-128_collective_fund_distribute_monthly_job:
-  cron: "0 0 1 * *" # run first day of each month
-  class: "DisbursementJob::Distribute128CollectiveFund"
-
 blazer_checks_nightly_job:
   cron: "0 8 * * *"
   class: "BlazerChecksJob"
@@ -131,14 +123,18 @@ refresh_hcb_acronym_expansions_job:
 calculate_app_wide_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "MetricJobs::CalculateAppWide"
-  
+
+calculate_stats_metric:
+  cron: "0 * * * *" # run every hour
+  class: "MetricJobs::CalculateStats"
+
 calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "MetricJobs::CalculateSubjects"
 
 ledger_audit_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
-  class: "GenerateLedgerAuditJob"
+  class: "Admin::LedgerAudit::GenerateJob"
 
 send_admin_reminders_job:
   cron: "0 7 * * *" # run at 7am UTC each morning
@@ -148,14 +144,42 @@ gauge_online_user_count_job:
   cron: "*/5 * * * *" # Every 5 minutes
   class: "StatsdJob::GaugeOnlineUserCount"
 
-transaction_report_job:
-  cron: "0 5 * * mon" # 5 AM every Monday
-  class: "TransactionReportJob"
+user_subordinate_summary_job:
+  cron: "0 12 * * mon" # noon UTC every Monday (7am eastern)
+  class: "User::SubordinateSummaryJob"
 
 headway_job:
   cron: "*/5 * * * *"
   class: "HeadwayJob"
 
-user_job_sync_to_loops:
+user_sync_to_loops_job:
   cron: "0 7 * * *" # run every 1 day
-  class: "UserJob::SyncToLoops"
+  class: "User::SyncToLoopsJob"
+
+update_teenager_column_job:
+  cron: "0 7 * * *" # run every 1 day
+  class: "User::UpdateTeenagerColumnJob"
+
+card_grant_expiration_job:
+  cron: "0 7 * * *" # run every 1 day
+  class: "CardGrant::ExpirationJob"
+
+card_grant_zero_job:
+  cron: "0 12 * * *" # run every 1 day
+  class: "CardGrant::ZeroJob"
+
+stripe_service_fee_job:
+  cron: "0 0 * * MON" # run first day of each week
+  class: "StripeServiceFeeJob"
+
+user_seen_at_history_snapshot_job:
+  cron: "0,30 * * * *" # twice every hour
+  class: "User::SeenAtHistory::SnapshotJob"
+
+column_sweep_job:
+  cron: "0 0 * * MON" # run first day of each week
+  class: "Column::SweepJob"
+
+stripe_missed_webhooks_job:
+  cron: "0/5 * * * *" # run every 5 minutes
+  class: "StripeMissedWebhooksJob"

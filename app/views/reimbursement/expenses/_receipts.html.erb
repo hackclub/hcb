@@ -69,6 +69,7 @@
 
       <%= form.file_field :file,
                           id: "file_#{expense.id}",
+                          direct_upload: true,
                           multiple: true,
                           include_hidden: false,
                           required: true,
@@ -86,8 +87,7 @@
 <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
     <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
       <%= modal_header "Select receipt" %>
-      <%= async_frame_to link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false), as: :span do %>
-        <img style="display: none;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" onload="let e = this.parentElement; $.get($(e).data('src'), data => $(e).replaceWith(data));">  <!-- This inline JS is needed to load an async frame that enters the DOM after the initial page load. -->
+      <%= turbo_frame_tag "link_modal_#{expense.id}", src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
         <strong>Loading...</strong>
       <% end %>
     </section>

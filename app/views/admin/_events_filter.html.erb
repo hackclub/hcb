@@ -40,11 +40,6 @@
     <%= form.select :country, { 'Outside US': 9999 }.merge(Event.countries), { include_blank: "all", selected: @country } %>
   <% end %>
 
-  <%= form.label :category do %>
-     Category
-    <%= form.select :category, { 'uncategorized': "none" }.merge(Event.categories), { include_blank: "all", selected: @category } %>
-  <% end %>
-
   <%= form.label :point_of_contact_id do %>
     <span style="text-wrap: nowrap;">POC</span>
     <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @point_of_contact_id, include_blank: "all" %>
@@ -55,9 +50,9 @@
     <%= form.date_field :activity_since, value: @activity_since_date %>
   <% end %>
 
-  <%= form.label :plan_type do %>
+  <%= form.label :plan do %>
     Current Plan
-    <%= form.select :plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan_type } %>
+    <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan } %>
   <% end %>
 
   <%= form.label :sort_by do %>

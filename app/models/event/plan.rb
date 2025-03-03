@@ -4,12 +4,13 @@
 #
 # Table name: event_plans
 #
-#  id         :bigint           not null, primary key
-#  aasm_state :string
-#  plan_type  :string
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  event_id   :bigint           not null
+#  id          :bigint           not null, primary key
+#  aasm_state  :string
+#  inactive_at :datetime
+#  type        :string
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  event_id    :bigint           not null
 #
 # Indexes
 #
@@ -21,24 +22,26 @@
 #
 class Event
   class Plan < ApplicationRecord
+    has_paper_trail
+
     belongs_to :event
 
     include AASM
-
-    aasm do
+    aasm timestamps: true do
       state :active, initial: true
       state :inactive
 
       event :mark_inactive do
         transitions from: :active, to: :inactive
-        after do |new_plan_type|
-          event.create_plan!(plan_type: new_plan_type)
+        after do |new_type|
+          event.reload
+          event.create_plan!(type: new_type)
         end
       end
     end
 
     def standard?
-      plan_type == Event::Plan::Standard.name
+      type == Event::Plan::Standard.name
     end
 
     def was_backfilled?
@@ -64,9 +67,19 @@ class Event
       Event::Plan.descendants
     end
 
+    def self.that(method)
+      self.available_plans.select{ |plan| plan.new.try(method) }
+    end
+
     validate do
       if Event::Plan.where(event_id:, aasm_state: :active).excluding(self).any?
         errors.add(:base, "An event can only have one active plan at a time.")
+      end
+    end
+
+    validate do
+      unless type.in?(Event::Plan.descendants.map(&:name))
+        errors.add(:type, "is invalid")
       end
     end
 

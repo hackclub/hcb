@@ -25,7 +25,7 @@ module SearchService
       end
 
       if item.instance_of?(CanonicalTransaction) && item.transaction_source_type == "RawStripeTransaction"
-        formatted[:user] = item.stripe_cardholder.user.full_name
+        formatted[:user] = item.stripe_cardholder&.user&.name
       end
 
       if item.instance_of?(CanonicalTransaction)
@@ -36,7 +36,7 @@ module SearchService
 
       if item.instance_of?(StripeCard)
         formatted[:event] = item&.event&.name
-        formatted[:user] = item.stripe_cardholder.user.full_name
+        formatted[:user] = item.stripe_cardholder.user.name
         formatted[:path] = "/stripe_cards/#{item.hashid}"
       end
 
@@ -46,6 +46,7 @@ module SearchService
       end
 
       if item.instance_of?(User)
+        formatted[:label] = item.name
         formatted[:path] = "/users/#{item.slug}/edit"
         formatted[:image] = profile_picture_for(item)
       end

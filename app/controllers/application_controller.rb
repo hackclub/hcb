@@ -55,8 +55,12 @@ class ApplicationController < ActionController::Base
   # Fallback for bad redirects that do not have allow_other_host set to true
   # https://blog.saeloun.com/2022/02/08/rails-7-raise-unsafe-redirect-error.html#after
   rescue_from ActionController::Redirecting::UnsafeRedirectError do |exception|
-    notify_airbrake(exception)
-    redirect_to root_url
+    if Rails.env.development?
+      raise
+    else
+      Rails.error.report(exception)
+      redirect_to root_url
+    end
   end
 
   def find_current_auditor
@@ -84,16 +88,6 @@ class ApplicationController < ActionController::Base
   def not_found
     raise ActionController::RoutingError.new("Not Found")
   end
-
-  def using_transaction_engine_v2?
-    @event.try(:transaction_engine_v2_at)
-  end
-  helper_method :using_transaction_engine_v2?
-
-  def using_pending_transaction_engine?
-    params[:pendingV2] || @event.try(:pending_transaction_engine_at)
-  end
-  helper_method :using_pending_transaction_engine?
 
   def set_streaming_headers
     headers["X-Accel-Buffering"] = "no"

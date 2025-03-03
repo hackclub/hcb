@@ -1,5 +1,5 @@
 <% if button %>
-  <%= link_to "#", class: "menu__input", data: { behavior: "modal_trigger", modal: "create_tag" }, onclick: "document.getElementById('create_tag_hcb_code_id').value = #{button.to_json}" do %>
+  <%= link_to "#", class: "menu__input #{ "btn mt-3" if defined?(large)}", data: { behavior: "modal_trigger", modal: "create_tag" }, onclick: "document.getElementById('create_tag_hcb_code_id').value = #{button.to_json}" do %>
     <%= inline_icon "plus", size: 15 %>
       Create tag
   <% end %>

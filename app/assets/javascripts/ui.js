@@ -1,5 +1,6 @@
-/* global BK, $, loadTextExpander */
+/* global BK, $ */
 
+// eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
@@ -31,36 +32,25 @@ const loadModals = element => {
   )
 }
 
-// restore previous theme setting
-$(document).ready(function () {
-  if (
-    document.querySelector('html').getAttribute('data-ignore-theme') == null &&
-    BK.isDark()
-  ) {
-    BK.s('toggle_theme').find('svg').toggle()
-    return BK.styleDark(true)
-  }
-})
-
 $(document).on('click', '[data-behavior~=flash]', function () {
   $(this).fadeOut('medium')
 })
 
 loadModals(document)
-;(() => {
-  let autoModals = $('[data-modal-auto-open~=true]')
+  ; (() => {
+    let autoModals = $('[data-modal-auto-open~=true]')
 
-  if (autoModals.length < 1) return
+    if (autoModals.length < 1) return
 
-  let element = autoModals.first()
+    let element = autoModals.first()
 
-  BK.s('modal', '#' + $(element).data('modal')).modal({
-    modalClass: $(element).parents('turbo-frame').length
-      ? 'turbo-frame-modal'
-      : undefined,
-    closeExisting: false,
-  })
-})()
+    BK.s('modal', '#' + $(element).data('modal')).modal({
+      modalClass: $(element).parents('turbo-frame').length
+        ? 'turbo-frame-modal'
+        : undefined,
+      closeExisting: false,
+    })
+  })()
 
 $(document).on('keyup', 'action', function (e) {
   if (e.keyCode === 13) {
@@ -99,27 +89,6 @@ $(document).on('change', '[name="invoice[sponsor]"]', function (e) {
 
   return fields.forEach(field =>
     $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
-  )
-})
-
-$(document).on('change', '[name="check[lob_address]"]', function (e) {
-  let lob_address = $(e.target).children('option:selected').data('json')
-  if (!lob_address) {
-    lob_address = {}
-  }
-
-  if (lob_address.id) {
-    $('[data-behavior~=lob_address_update_warning]').slideDown('fast')
-  } else {
-    $('[data-behavior~=lob_address_update_warning]').slideUp('fast')
-  }
-
-  const fields = ['name', 'address1', 'address2', 'city', 'state', 'zip', 'id']
-
-  return fields.forEach(field =>
-    $(`input#check_lob_address_attributes_${field}`)
-      .val(lob_address[field])
-      .change()
   )
 })
 
@@ -177,27 +146,6 @@ $(document).keydown(function (e) {
   }
 })
 
-$(document).on('click', '[data-behavior~=toggle_theme]', () => BK.toggleDark())
-
-function loadAsyncFrames() {
-  $.each(BK.s('async_frame'), (i, frame) => {
-    const loadFrame = () => {
-      $.get($(frame).data('src'), data => {
-        const parent = $(frame).parent()
-        $(frame).replaceWith(data)
-        loadModals(parent)
-        loadTextExpander()
-      }).fail(() => {
-        $(frame).children('.shimmer').first().addClass('shimmer--error')
-      })
-    }
-
-    if ($(frame).data('loading') == 'lazy') {
-      whenViewed(frame, loadFrame)
-    } else loadFrame()
-  })
-}
-
 $(document).on('turbo:load', function () {
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
@@ -206,8 +154,6 @@ $(document).on('turbo:load', function () {
   $('[data-behavior~=select_content]').on('click', e => e.target.select())
 
   BK.s('autohide').hide()
-
-  loadAsyncFrames()
 
   if (BK.thereIs('login')) {
     let email
@@ -262,27 +208,30 @@ $(document).on('turbo:load', function () {
 
   // if you add the money behavior to an input, it'll add commas, only allow two numbers for cents,
   // and only permit numbers to be entered
-  $('input[data-behavior~=money]').on('input', function () {
-    let value = $(this)
-      .val()
-      .replace(/,/g, '') // replace all commas with nothing
-      .replace(/[^0-9.]+/g, '') // replace anything that isn't a number or a dot with nothing
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // put commas into the number (pulled off of stack overflow)
 
-    let removeExtraCents
+  function attachMoneyInputListener() {
+    $('input[data-behavior~="money"]').off('input').on('input', function () {
+      let value = $(this)
+        .val()
+        .replace(/,/g, '') // remove all commas
+        .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ','); // add commas for thousands
+  
+      if (value.includes('.')) {
+        let parts = value.split('.');
+        value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '');
+      }
+  
+      $(this).val(value);
+    });
+  }
 
-    if (value.lastIndexOf('.') != -1) {
-      let cents = value.substring(value.lastIndexOf('.'), value.length)
-      cents = cents.replace(/[.,]/g, '').substring(0, cents.length > 2 ? 2 : 1)
+  attachMoneyInputListener();
 
-      removeExtraCents =
-        value.substring(0, value.lastIndexOf('.')) + '.' + cents
-    } else {
-      removeExtraCents = value
-    }
+  // Used to attach the money input listener to inputs inside of menus / popups.
 
-    $(this).val(removeExtraCents)
-  })
+  const observer = new MutationObserver(() => attachMoneyInputListener());
+  observer.observe(document.body, { childList: true, subtree: true });
 
   $('input[data-behavior~=prevent_whitespace]').on({
     keydown: function (e) {
@@ -339,6 +288,41 @@ $(document).on('turbo:load', function () {
     })
     $(virtualInput).on('change', e => {
       if (e.target.checked) shippingInputs.slideUp()
+    })
+  }
+
+  if (BK.thereIs('accounts_list')) {
+    $('.account-header').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var aliasesContainer = accountContainer.find('.account-aliases');
+      aliasesContainer.slideToggle();
+      $(this).toggleClass('rotated');
+    });
+    $('.alias-new').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var newAliasForm = accountContainer.find('.alias-form');
+      var creationAlias = accountContainer.find('.alias-creation');
+      newAliasForm.slideDown();
+      creationAlias.slideUp();
+    });
+    $('.alias-cancel').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var newAliasForm = accountContainer.find('.alias-form');
+      newAliasForm.slideUp();
+      var creationAlias = accountContainer.find('.alias-creation');
+      creationAlias.slideDown();
+    })
+    $('.alias-save').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var creationAlias = accountContainer.find('.alias-creation');
+      var newAliasForm = accountContainer.find('.alias-form');
+      creationAlias.slideDown();
+      newAliasForm.slideUp();
+    });
+    $('.alias-delete').on('click', function () {
+      var thisAlias = $(this).closest('.alias-container');
+      thisAlias.toggleClass('error');
+      thisAlias.slideUp();
     })
   }
 
@@ -419,8 +403,7 @@ $(document).on('turbo:load', function () {
 
   $('[data-behavior~=mention]').on('click', e => {
     BK.s('comment').val(
-      `${
-        BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
+      `${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
       }${e.target.dataset.mentionValue || e.target.innerText}`
     )
     BK.s('comment')[0].scrollIntoView()
@@ -466,6 +449,7 @@ $(document).on('turbo:load', function () {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return disableTilt()
     } else {
+      disableTilt() // disable it, then enable it. 
       return enableTilt()
     }
   }
@@ -529,6 +513,11 @@ $(document).on(
       $(this).closest('form').get(0).requestSubmit()
     }
   }
+)
+
+$(document).on('click', '[data-behavior~=clear_input]', function (event) {
+  $(event.target).parent().find('input').get(0).value = ""
+}
 )
 
 $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
@@ -598,8 +587,6 @@ document.addEventListener('turbo:before-stream-render', event => {
       })
     } else if (streamElement.action == 'close_modal') {
       $.modal.close().remove()
-    } else if (streamElement.action == 'load_new_async_frames') {
-      loadAsyncFrames()
     } else {
       fallbackToDefaultActions(streamElement)
     }
@@ -623,3 +610,42 @@ $(document).on('wheel', 'input[type=number]', e => {
   e.preventDefault()
   e.target.blur()
 })
+
+// this allows for popovers to change the URL in the browser when opened.
+// it also handles using the back button, to reopen or close a popover.
+
+$(document).on($.modal.BEFORE_OPEN, function(event, modal) {
+  if(modal?.elm[0]?.dataset?.stateUrl) {
+    if(!document.documentElement.dataset.returnToStateUrl) {
+      document.documentElement.dataset.returnToStateUrl = window.location.href;
+      document.documentElement.dataset.returnToStateTitle = document.title;
+    }
+    document.title = modal.elm[0].dataset.stateTitle;
+    window.history.pushState({ modal: modal.elm[0].id }, '', modal.elm[0].dataset.stateUrl);
+  }
+});
+
+$(document).on($.modal.BEFORE_CLOSE, function(event, modal) {
+  if(document.documentElement.dataset.returnToStateUrl) {
+    window.history.pushState(null, '', document.documentElement.dataset.returnToStateUrl);
+    document.title = document.documentElement.dataset.returnToStateTitle;
+  }
+});
+
+window.addEventListener("popstate", (e) => {
+  if(e.state?.modal) {
+    $(`#${e.state.modal}`).modal();
+  } else {
+    $.modal.close();
+  }
+});
+
+if (navigator.setAppBadge) {
+  window.addEventListener("load", async () => {
+    const response = await fetch("/my/tasks.json")
+    if(!response.redirected) { // redirected == the user isn't signed in.
+      const { count } = await response.json()
+      navigator.setAppBadge(count)
+    }
+  })
+}

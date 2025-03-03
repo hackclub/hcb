@@ -81,6 +81,10 @@ module TransactionEngine
         @canonical_transaction.column_transaction_type&.start_with?("ach.outgoing_transfer")
       end
 
+      def column_wire?
+        @canonical_transaction.column_transaction_type&.start_with?("swift.outgoing_transfer")
+      end
+
       def likely_outgoing_ach_name
         memo_upcase.split(OUTGOING_ACH_MEMO_PART)[0].strip
       end

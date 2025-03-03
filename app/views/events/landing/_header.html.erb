@@ -1,61 +1,60 @@
 <% @has_header_image = @event.donation_header_image.attached? %>
-<% content_for(:container_style) { @has_header_image ? "padding-top: 68px" : "padding-top: 16px" } %>
+<% page_sm %>
 
-<action
-  role="button"
-  data-behavior="toggle_theme"
-  class="muted absolute top-0 right-0 m2 pointer no-select tooltipped tooltipped--w"
-  aria-label="Toggle dark mode" tabindex="0">
-  <%= inline_icon "moon", size: home_action_size %>
-  <%= inline_icon "moon-fill", size: home_action_size, style: "display: none;" %>
-</action>
+<div class="absolute top-0 right-0 m2">
+  <%= render partial: "application/theme_toggle", locals: { top: true, tooltip_location: "w" } %>
+</div>
 
-<% if organizer_signed_in? %>
-  <div class="flex items-center m2 absolute top-0 left-0">
-    <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
-      <%= form.file_field :donation_header_image, required: true, class: "display-none", data: { action: "change->form#submit" } %>
-      <%= form.label :donation_header_image do %>
-        <div
-          role="button"
-          class="muted pointer no-select tooltipped tooltipped--e line-height-0"
-          aria-label="<%= @has_header_image ? "Edit" : "Upload" %> header image">
-          <%= inline_icon "photo", size: home_action_size %>
-        </div>
+<%= content_for(:header) do %>
+  <% if organizer_signed_in? %>
+    <div class="flex items-center m2 absolute z-10 top-0 left-0">
+      <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
+        <%= form.file_field :donation_header_image, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
+        <%= form.label :donation_header_image do %>
+          <div
+            role="button"
+            class="muted pointer no-select tooltipped tooltipped--e line-height-0"
+            aria-label="<%= @has_header_image ? "Edit" : "Upload" %> header image">
+            <%= inline_icon "photo", size: home_action_size %>
+          </div>
+        <% end %>
       <% end %>
-    <% end %>
-    <% if @has_header_image %>
-      <%= link_to event_remove_header_image_path(@event), method: :post, data: { turbo_confirm: "Are you sure you want to remove this image?" } do %>
-        <div
-          role="button"
-          class="muted pointer ml1 no-select tooltipped tooltipped--e line-height-0"
-          aria-label="Remove header image">
-          <%= inline_icon "view-close", size: home_action_size %>
-        </div>
+      <% if @has_header_image %>
+        <%= link_to event_remove_header_image_path(@event), method: :post, data: { turbo_confirm: "Are you sure you want to remove this image?" } do %>
+          <div
+            role="button"
+            class="muted pointer ml1 no-select tooltipped tooltipped--e line-height-0"
+            aria-label="Remove header image">
+            <%= inline_icon "view-close", size: home_action_size %>
+          </div>
+        <% end %>
       <% end %>
-    <% end %>
+    </div>
+  <% end %>
+
+  <div class="donations-header-image py-20"
+       <% if @has_header_image %> style="background: linear-gradient(rgba(23, 23, 29, 0.3), rgba(23, 23, 29, 0.9)),  url('<%= url_for @event.donation_header_image %>'); background-position: center; background-size: cover; background-repeat: no-repeat;"
+       <% end %>>
+    <h1 class="mt-0 mb0 border-none center <%= "smoke drop-shadow-lg" if @has_header_image %>">
+      <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
+      <div class="flex justify-center items-center mt1">
+        <%= render "donations/logo" %>
+        <span class="ml2"><%= @event.name %></span>
+      </div>
+    </h1>
   </div>
+
+  <% if @background.present? %>
+    <%# @background is defined in the donations controller's check_background_param method %>
+    <%# it's used for organisations to set a custom background colour when embedding the form %>
+    <style>
+        body {
+            background-color: # <%= @background %> !important;
+        }
+    </style>
+  <% end %>
 <% end %>
 
-<% if @has_header_image %>
-  <div class="donations-header-image" style="background-image: url('<%= url_for @event.donation_header_image %>'); ">
-    <div class="donations-header-image__overlay"></div>
-  </div>
-<% end %>
+<%= render "application/fullstory" %>
 
-<h1 class="mt3 mb0 border-none center <%= "smoke drop-shadow-lg" if @has_header_image %>">
-  <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
-  <div class="flex justify-center items-center mt1">
-    <%= render "donations/logo" %>
-    <span><%= @event.name %></span>
-  </div>
-</h1>
-
-<% if @background.present? %>
-  <%# @background is defined in the donations controller's check_background_param method %>
-  <%# it's used for organisations to set a custom background colour when embedding the form %>
-  <style>
-    body {
-      background-color: #<%= @background %>!important;
-    }
-  </style>
-<% end %>
+<%= render "application/flash" %>

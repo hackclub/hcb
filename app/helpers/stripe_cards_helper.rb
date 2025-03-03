@@ -5,6 +5,10 @@ module StripeCardsHelper
     "#{stripe_card.stripe_exp_month.to_s.rjust(2, '0')}/#{stripe_card.stripe_exp_year}"
   end
 
+  def render_short_exp_date(stripe_card)
+    "#{stripe_card.stripe_exp_month.to_s.rjust(2, '0')}/#{stripe_card.stripe_exp_year.to_s[-2..]}"
+  end
+
   def stripe_card_mention(stripe_card, options = { size: 24 })
     icon = inline_icon "card",
                        size: options[:size],

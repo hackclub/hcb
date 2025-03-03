@@ -40,7 +40,7 @@
       </div>
 
       <div class="field">
-        <%= form.label :plan_type, capture { %>
+        <%= form.label :plan, capture { %>
           <% if @event.plan.present? %>
             Current plan
             <% if !@event.plan.was_backfilled? %>
@@ -52,7 +52,7 @@
             Assign a plan
           <% end %>
         <% } %>
-        <%= form.select :plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.plan_type, include_blank: "Select a plan..." %>
+        <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.type %>
       </div>
 
       <div class="field">
@@ -71,25 +71,15 @@
       </div>
 
       <div class="field">
-        <%= form.label :category %>
-        <%= form.collection_select :category, Event.categories, :first, :first, { include_blank: "Select a category" } %>
-      </div>
-
-      <div class="field">
         <%= form.label :point_of_contact_id, capture { %>
           Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(@event), method: :post %>
         <% } %>
-        <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email %>
+        <%= form.collection_select :point_of_contact_id, User.admin.or(User.where(id: @event.point_of_contact_id)).order(:email), :id, :email %>
       </div>
 
       <div class="field field--checkbox">
         <%= form.check_box :demo_mode, switch: true %>
         <%= form.label :demo_mode, "Is in Playground Mode?" %>
-      </div>
-
-      <div class="field field--checkbox">
-        <%= form.check_box :omit_stats, switch: true %>
-        <%= form.label :omit_stats, "Omit from public stats?" %>
       </div>
 
       <div class="field field--checkbox">

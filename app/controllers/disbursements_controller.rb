@@ -28,7 +28,7 @@ class DisbursementsController < ApplicationController
 
       # not being used at the moment
       format.png do
-        send_data ::DisbursementService::PreviewTransferConfirmationLetter.new(disbursement: @disbursement, event: @event).run, filename: "transfer_confirmation_letter.png"
+        send_data ::DocumentPreviewService.new(type: :disbursement_confirmation, disbursement: @disbursement, event: @event).run, filename: "transfer_confirmation_letter.png"
       end
 
     end
@@ -38,15 +38,20 @@ class DisbursementsController < ApplicationController
     @destination_event = Event.friendly.find(params[:event_id]) if params[:event_id]
     @source_event = Event.friendly.find(params[:source_event_id]) if params[:source_event_id]
     @event = @source_event
-    @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
+    @disbursement = Disbursement.new(
+      destination_event: @destination_event,
+      source_event: @source_event,
+      amount: params[:amount],
+      name: params[:message]
+    )
 
     @allowed_source_events = if current_user.admin?
-                               Event.all.reorder(Event::CUSTOM_SORT)
+                               Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end
     @allowed_destination_events = if current_user.admin?
-                                    Event.all.reorder(Event::CUSTOM_SORT)
+                                    Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   else
                                     current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
                                   end
@@ -76,6 +81,15 @@ class DisbursementsController < ApplicationController
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
     ).run
+
+    if disbursement_params[:file]
+      ::ReceiptService::Create.new(
+        uploader: current_user,
+        attachments: disbursement_params[:file],
+        upload_method: :transfer_create_page,
+        receiptable: disbursement.local_hcb_code
+      ).run!
+    end
 
     flash[:success] = "Transfer successfully requested."
 
@@ -143,6 +157,7 @@ class DisbursementsController < ApplicationController
       :amount,
       :name,
       :scheduled_on,
+      { file: [] }
     ]
     attributes << :should_charge_fee if admin_signed_in?
 
