@@ -704,7 +704,7 @@ class Event < ApplicationRecord
   end
   
   validate do
-    if id == parent_id
+    if id && id == parent_id
       errors.add(:parent, "can't be self-referential.")
     end
   end
