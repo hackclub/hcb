@@ -685,6 +685,7 @@ Rails.application.routes.draw do
     get "ledger"
     put "toggle_hidden"
     post "claim_point_of_contact"
+    post "create_project"
 
     post "remove_header_image"
     post "remove_background_image"
@@ -710,6 +711,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "projects"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate

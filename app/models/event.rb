@@ -37,10 +37,12 @@
 #  updated_at                                   :datetime         not null
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
+#  parent_id                                    :bigint
 #  point_of_contact_id                          :bigint
 #
 # Indexes
 #
+#  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
 # Foreign Keys
@@ -111,6 +113,9 @@ class Event < ApplicationRecord
     joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
+
+  belongs_to :parent, class_name: "Event", optional: true
+  has_many :subevents, class_name: "Event", foreign_key: 'parent_id'
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
@@ -354,7 +359,7 @@ class Event < ApplicationRecord
   end
 
   before_validation do
-    build_plan(type: Event::Plan::Standard) if plan.nil?
+    build_plan(type: parent&.plan&.class || Event::Plan::Standard) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -696,6 +701,22 @@ class Event < ApplicationRecord
 
   def omit_stats?
     plan.omit_stats
+  end
+  
+  validate do
+    if id == parent_id
+      errors.add(:parent, "can't be self-referential.")
+    end
+  end
+  
+  def ancestors
+    return [] if parent.nil?
+    
+    parent.ancestors + [parent]
+  end
+  
+  def plan
+    parent&.plan || super
   end
 
   private

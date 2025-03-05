@@ -149,6 +149,14 @@ class EventPolicy < ApplicationPolicy
     admin_or_user?
   end
 
+  def projects?
+    admin_or_user?
+  end
+  
+  def create_project?
+    admin_or_manager?
+  end
+
   def donation_overview?
     (is_public || admin_or_user?) && record.approved? && record.plan.donations_enabled?
   end

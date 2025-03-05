@@ -770,6 +770,20 @@ class EventsController < ApplicationController
     @employees = @employees.search(params[:q]) if params[:q].present?
   end
 
+  def projects
+    authorize @event
+  end
+
+  def create_project
+    authorize @event
+  
+    if subevent = @event.subevents.create(name: params[:name])
+      redirect_to subevent
+    else
+      redirect_back fallback_location: projects_event_path(@event.slug)
+    end
+  end
+
   def toggle_hidden
     authorize @event
 

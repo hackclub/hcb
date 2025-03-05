@@ -115,6 +115,11 @@
       tooltip: "View legal documents and financial statements",
       icon: "docs",
       selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
+    <%= dock_item "Projects",
+      event_projects_path(event_id: @event.slug),
+      tooltip: "Create & manage subsidiary organisations",
+      icon: "channels",
+      selected: local_assigns[:selected] == :projects if policy(@event).projects? %>
     <%= dock_item "Settings",
       edit_event_path(@event),
       tooltip: "Edit organization settings",
