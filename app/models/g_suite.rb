@@ -132,11 +132,8 @@ class GSuite < ApplicationRecord
           inactive_accounts << user
         end
       end
-      if inactive_accounts.count == res_count
-        return true
-      end
 
-      false
+      inactive_accounts.count == res_count
     rescue => e
       Rails.error.report(e)
       throw :abort

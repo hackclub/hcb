@@ -46,10 +46,12 @@ class GSuite
     end
 
     after_create_commit do
-      GSuiteMailer.with(g_suite_id: g_suite.id, g_suite_revocation_id: self.id).notify_of_pending_revocation.deliver_later
+      return unless warning?
+
+      GSuiteMailer.with(g_suite_id: g_suite.id, g_suite_revocation_id: self.id).revocation_warning.deliver_later
     end
 
-    after_initialize do
+    before_validation on: :create do
       self.scheduled_at = 2.weeks.from_now
     end
 
