@@ -55,6 +55,14 @@ class GSuite
       self.scheduled_at = 2.weeks.from_now
     end
 
+    after_destroy_commit do
+      if destroyed_by_association?
+        GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_revocation.deliver_later
+      else
+        GSuiteMailer.with(g_suite_id: g_suite.id).revocation_canceled.deliver_later
+      end
+    end
+
   end
 
 end

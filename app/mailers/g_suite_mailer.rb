@@ -3,7 +3,7 @@
 class GSuiteMailer < ApplicationMailer
   before_action :set_g_suite
 
-  before_action :set_g_suite_revocation, :set_reason, only: :revocation_warning
+  before_action :set_g_suite_revocation, :set_reason, only: %i[revocation_warning revocation_one_week_warning]
 
   default to: -> {
     emails = organization_managers
@@ -29,6 +29,18 @@ class GSuiteMailer < ApplicationMailer
 
   def revocation_warning
     mail subject: "[Action Required] Your Google Workspace access for #{@g_suite.domain} may be revoked on #{@g_suite_revocation.scheduled_at.strftime("%B %d, %Y")}"
+  end
+
+  def revocation_one_week_warning
+    mail subject: "[Immediate Action Required] Your Google Workspace access for #{@g_suite.domain} will be revoked on #{@g_suite_revocation.scheduled_at.strftime("%B %d, %Y")}"
+  end
+
+  def notify_of_revocation
+    mail subject: "Your Google Workspace access for #{@g_suite.domain} has been revoked"
+  end
+
+  def revocation_canceled
+    mail subject: "We've canceled the revocation of your Google Workspace for #{@g_suite.domain}"
   end
 
   def notify_operations_of_entering_created_state
