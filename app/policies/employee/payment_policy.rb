@@ -14,6 +14,10 @@ class Employee
       admin || manager
     end
 
+    def stub?
+      employee || admin || manager
+    end
+
     private
 
     def admin

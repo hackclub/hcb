@@ -92,6 +92,7 @@ class Employee
 
     def state_color
       return "error" if rejected?
+      return "warning" if failed?
       return "info" if submitted?
 
       "success"

@@ -2,7 +2,7 @@
 
 class TwilioController < ActionController::Base
   protect_from_forgery except: :webhook
-  before_action :set_attachments, :set_user, :set_receiptable
+  before_action :set_attachments, :set_user, :set_receiptable, :set_reimbursement_report
 
   def webhook
     return reply_with(<<~MSG.squish) if @user.nil?
@@ -12,7 +12,7 @@ class TwilioController < ActionController::Base
     MSG
 
     if reimbursement?
-      @report = @user.reimbursement_reports.create(inviter: @user)
+      @report ||= @user.reimbursement_reports.create(inviter: @user)
       @receiptable = @report.expenses.create!(amount_cents: 0)
     end
 
@@ -37,8 +37,10 @@ class TwilioController < ActionController::Base
       @receiptable.update(memo: receipts.first.suggested_memo, value: receipts.first.extracted_total_amount_cents.to_f / 100)
     end
 
-    if reimbursement?
+    if reimbursement? && @report.previously_new_record?
       reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to a new reimbursement report! #{reimbursement_report_url(@report)}")
+    elsif reimbursement?
+      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to your report named: #{@report.name}! #{reimbursement_report_url(@report)}")
     elsif @receiptable
       reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@receiptable.memo}! #{hcb_code_url(@receiptable)}")
     else
@@ -93,6 +95,11 @@ class TwilioController < ActionController::Base
                                     .where("twilio_messages.to" => params["From"])
                                     .where.not(hcb_code: nil)
                                     .last&.hcb_code
+  end
+
+  # if we are inheriting a recently created report
+  def set_reimbursement_report
+    @report = @user.reimbursement_reports.where(event_id: nil, updated_at: 24.hours.ago..).order(created_at: :desc)&.first
   end
 
   def reimbursement?

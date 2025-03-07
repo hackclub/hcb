@@ -11,7 +11,7 @@ Bundler.require(*Rails.groups)
 module Bank
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.1
+    config.load_defaults 7.2
 
     if ENV["USE_PROD_CREDENTIALS"]&.downcase == "true"
       config.credentials.content_path = Rails.root.join("config/credentials/production.yml.enc")

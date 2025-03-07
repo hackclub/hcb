@@ -15,7 +15,7 @@
       <%= inline_icon "delete" %>
       Delete
     <% end %>
-  <% elsif policy(@employee).terminate? %>
+  <% elsif policy(@employee).terminate? && @employee.may_mark_terminated? %>
     <%= link_to employee_terminate_path(@employee), class: "btn bg-error", method: :POST do %>
       <%= inline_icon "member-remove" %>
       Terminate
@@ -26,7 +26,11 @@
 <% if @employee.onboarding? %>
   <%= render "callout", type: "warning", title: "#{@employee.user.name} is currently being onboarded" do %>
     <div>
-      <span class="bold">They will only be able to submit invoices after being onboarded.</span> To complete their onboarding, they must email a W-9 or W-8 BEN to <%= mail_to "hr@hackclub.com" %>. After receiving your W-9 or W-8 BEN, please give us approximately 2 business days to review and finalize their onboarding. We will email them once this process is complete.
+        <span class="bold">They will only be able to submit invoices after being onboarded.</span>
+        To complete their onboarding, they must email a W-9 or W-8 BEN
+        to <%= mail_to "hr@hackclub.com" %>. After we receive their W-9 or W-8
+        BEN, please give us approximately 2 business days to review and finalize
+        their onboarding. We will email them once this process is complete.
     </div>
   <% end %>
 <% end %>

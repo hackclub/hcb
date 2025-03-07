@@ -105,7 +105,7 @@
                 <%= inline_icon("docs-positive", size: 24) %>
               <% end %>
             <% elsif organizer_position.organizer_position_invite.organizer_position_contract&.present? %>
-              <%= link_to void_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), class: "primary", method: :POST do %>
+              <%= link_to void_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), class: "primary", data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :POST } do %>
                 <%= inline_icon("clock", size: 24) %>
               <% end %>
             <% else %>

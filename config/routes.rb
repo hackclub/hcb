@@ -502,6 +502,7 @@ Rails.application.routes.draw do
   namespace :employee do
     resources :payments do
       post "review"
+      get "stub"
     end
   end
 

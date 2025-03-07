@@ -22,6 +22,15 @@
       </div>
     <% end %>
 
+    <% if payment.paid? %>
+      <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
+        <strong style="font-weight: 600;">Invoice</strong>
+        <span>
+          <%= link_to payment.invoice.file.filename, file_path, target: "blank" %>
+        </span>
+      </div>
+    <% end %>
+
     <% if payment.payout.present? %>
       <div style="grid-template-columns: 7rem calc(100% - 7rem); word-wrap: break-word">
         <strong style="font-weight: 600;">Payout</strong>
@@ -72,7 +81,9 @@
   </a>
 
   <div class="w-100 h-100 overflow-hidden hidden md:flex flex-col md:flex-row md:min-h min-h-min">
-    <% if payment.invoice.file.blob.content_type == "application/pdf" %>
+    <% if payment.paid? %>
+      <iframe src="<%= employee_payment_stub_path(payment, format: :pdf) %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; overflow: hidden; max-height: 85vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
+    <% elsif payment.invoice.file.blob.content_type == "application/pdf" %>
       <iframe src="<%= file_path %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; overflow: hidden; max-height: 85vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
     <% else %>
       <div style="min-width: 0px; flex-grow: 1; border-radius: 0.75rem 0rem 0rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless">
@@ -98,7 +109,9 @@
         </a>
       </div>
     </ul>
-    <% if payment.invoice.file.blob.content_type == "application/pdf" %>
+    <% if payment.paid? %>
+      <iframe data-receipt-tabs-target="preview" src="<%= employee_payment_stub_path(payment, format: :pdf) %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
+    <% elsif payment.invoice.file.blob.content_type == "application/pdf" %>
       <iframe data-receipt-tabs-target="preview" src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
     <% else %>
       <div data-receipt-tabs-target="preview" style="min-width: 0px; flex-grow: 1; border-radius: 0rem 0rem 0.75rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless receipt-content-preview">
