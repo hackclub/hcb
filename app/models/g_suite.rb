@@ -9,8 +9,8 @@
 #  deleted_at           :datetime
 #  dkim_key             :text
 #  domain               :citext
+#  immune_to_revocation :boolean          default(FALSE), not null
 #  remote_org_unit_path :text
-#  revocation_immunity  :boolean
 #  verification_key     :text
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
@@ -138,10 +138,6 @@ class GSuite < ApplicationRecord
       Rails.error.report(e)
       throw :abort
     end
-  end
-
-  def immune_to_revocation?
-    self.revocation_immunity
   end
 
   private

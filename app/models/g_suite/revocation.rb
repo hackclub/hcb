@@ -7,8 +7,8 @@
 #  id           :bigint           not null, primary key
 #  aasm_state   :string
 #  other_reason :text
-#  reason       :integer          default(0), not null
-#  scheduled_at :datetime
+#  reason       :integer          default(NULL), not null
+#  scheduled_at :datetime         not null
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #  g_suite_id   :bigint           not null

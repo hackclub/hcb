@@ -1014,7 +1014,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_17_050700) do
     t.text "other_reason"
     t.bigint "g_suite_id", null: false
     t.string "aasm_state"
-    t.datetime "scheduled_at"
+    t.datetime "scheduled_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["g_suite_id"], name: "index_g_suite_revocations_on_g_suite_id"
@@ -1032,7 +1032,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_17_050700) do
     t.bigint "created_by_id"
     t.text "remote_org_unit_id"
     t.text "remote_org_unit_path"
-    t.boolean "revocation_immunity"
+    t.boolean "immune_to_revocation", default: false, null: false
     t.index ["created_by_id"], name: "index_g_suites_on_created_by_id"
     t.index ["event_id"], name: "index_g_suites_on_event_id"
   end

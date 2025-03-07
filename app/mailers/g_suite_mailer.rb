@@ -3,6 +3,8 @@
 class GSuiteMailer < ApplicationMailer
   before_action :set_g_suite
 
+  before_action :set_g_suite_revocation, :set_reason, only: :revocation_warning
+
   default to: -> {
     emails = organization_managers
     emails << @g_suite.event.config.contact_email if @g_suite.event.config.contact_email.present?
@@ -26,7 +28,6 @@ class GSuiteMailer < ApplicationMailer
   end
 
   def revocation_warning
-    set_g_suite_revocation
     mail subject: "[Action Required] Your Google Workspace access for #{@g_suite.domain} may be revoked on #{@g_suite_revocation.scheduled_at.strftime("%B %d, %Y")}"
   end
 
@@ -47,6 +48,9 @@ class GSuiteMailer < ApplicationMailer
 
   def set_g_suite_revocation
     @g_suite_revocation = GSuite::Revocation.find(params[:g_suite_revocation_id])
+  end
+
+  def set_reason
     if @g_suite_revocation.because_of_invalid_dns?
       @reason = "you are missing required DNS records"
     elsif @g_suite_revocation.because_of_accounts_inactive?
