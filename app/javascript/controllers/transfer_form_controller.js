@@ -13,7 +13,7 @@ export default class extends Controller {
     // Wizard slide answer targets
     'answerText',
     'answerCTA',
-    'learnMore'
+    'learnMore',
   ]
 
   static values = {
@@ -34,14 +34,26 @@ export default class extends Controller {
     {
       id: 2,
       question: 'Do you have their account & routing number?',
-      yes: ["ach", "https://help.hcb.hackclub.com/article/59-what-is-an-ach-transfer"],
-      no: ["check", "https://help.hcb.hackclub.com/article/25-what-are-money-transfers"],
+      yes: [
+        'ach',
+        'https://help.hcb.hackclub.com/article/59-what-is-an-ach-transfer',
+      ],
+      no: [
+        'check',
+        'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
+      ],
     },
     {
       id: 3,
       question: 'Does your recipient have a PayPal account?',
-      yes: ["paypal", "https://help.hcb.hackclub.com/article/25-what-are-money-transfers"],
-      no: ["wire", "https://help.hcb.hackclub.com/article/61-what-are-international-wires"],
+      yes: [
+        'paypal',
+        'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
+      ],
+      no: [
+        'wire',
+        'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
+      ],
     },
   ]
 
