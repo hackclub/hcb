@@ -13,7 +13,7 @@ export default class extends Controller {
     // Wizard slide answer targets
     'answerText',
     'answerCTA',
-    'helperText',
+    'learnMore'
   ]
 
   static values = {
@@ -34,14 +34,14 @@ export default class extends Controller {
     {
       id: 2,
       question: 'Do you have their account & routing number?',
-      yes: 'ach',
-      no: 'check',
+      yes: ["ach", "https://help.hcb.hackclub.com/article/59-what-is-an-ach-transfer"],
+      no: ["check", "https://help.hcb.hackclub.com/article/25-what-are-money-transfers"],
     },
     {
       id: 3,
       question: 'Does your recipient have a PayPal account?',
-      yes: 'paypal',
-      no: 'wire',
+      yes: ["paypal", "https://help.hcb.hackclub.com/article/25-what-are-money-transfers"],
+      no: ["wire", "https://help.hcb.hackclub.com/article/61-what-are-international-wires"],
     },
   ]
 
@@ -71,10 +71,9 @@ export default class extends Controller {
       this.yesClickHandler = () => this.renderQuestion(question.yes)
       this.noClickHandler = () => this.renderQuestion(question.no)
     } else {
-      this.answerTextTarget.innerHTML = `${payload === 'ach' ? 'ACH' : payload} transfer`
-      this.answerCTATarget.dataset.answer = payload
-
-      this.helperTextTarget.innerHTML = `We'd recommend sending ${payload === 'ach' || payload === 'international' ? 'an' : 'a'}`
+      this.answerTextTarget.innerHTML = `${payload[0] === 'ach' ? 'ACH' : payload[0]} transfer`
+      this.answerCTATarget.dataset.answer = payload[0]
+      this.learnMoreValue = payload[1]
 
       this.answerTarget.hidden = false
       this.wizardTarget.hidden = true

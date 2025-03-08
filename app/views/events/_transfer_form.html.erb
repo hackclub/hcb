@@ -42,31 +42,32 @@
           <% end %>
         </div>
       </fieldset>
-      <a class="w-full text-center block no-underline -mb-2" href="javascript:void(0)" data-action="click->transfer-form#showWizard">Which method should I use? Help me decide.</a>
+      <a class="w-full text-center block no-underline -mb-2" href="javascript:void(0)" data-action="click->transfer-form#showWizard">Which method should I use? <strong>Help me decide &rarr;</a>
     </div>
     <div data-transfer-form-target="wizard" hidden>
       <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
         <%= inline_icon "view-back" %>
-        Exit
+        Help me decide
       </a>
-      <p class="homepage-eyebrow pt-2 mb-0">Help me decide</p>
-      <h3 class="mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
-      <button type="button" class="btn bg-muted btn-small shadow-none" data-transfer-form-target="yes" data-action="click->transfer-form#yesClickHandler">
-        Yes
-        <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
-      </button>
-      <button type="button" class="btn bg-muted btn-small shadow-none" data-transfer-form-target="no" data-action="click->transfer-form#noClickHandler">
-        No
-        <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
-      </button>
+      <h3 class="-mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
+      <div class="flex gap-2">
+        <button type="button" class="btn shadow-none" data-transfer-form-target="yes" data-action="click->transfer-form#yesClickHandler">
+          Yes
+          <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+        <button type="button" class="btn shadow-none" data-transfer-form-target="no" data-action="click->transfer-form#noClickHandler">
+          No
+          <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+      </div>
     </div>
     <div data-transfer-form-target="answer" hidden>
       <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
         <%= inline_icon "view-back" %>
-        Exit
+        Our recommendation
       </a>
-      <p class="homepage-eyebrow pt-2 mb-0" data-transfer-form-target="helperText"></p>
-      <h3 class="mt-2 font-bold mb-4 capitalize" data-transfer-form-target="answerText"></h3>
+      <h3 class="-mt-2 font-bold mb-1 capitalize" data-transfer-form-target="answerText"></h3>
+      <a href="#" data-transfer-form-target="learnMore" class="mb-4 inline-block no-underline" target="_blank">Learn more &rarr;</a>
       <div class="flex gap-2">
         <button type="button" class="btn bg-secondary shadow-none" data-transfer-form-target="answerCTA" data-action="click->transfer-form#showAnswer">
           Let's do it!
