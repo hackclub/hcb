@@ -18,6 +18,10 @@ g_suite_close_remedied_revocations_job:
   cron: "0 */12 * * *" # run every 12 hour
   class: "GSuiteJob::CloseRemediedRevocations"
 
+g_suite_transition_expired_revocations_job:
+  cron: "0 1 * * *" # run every 1 day
+  class: "GSuiteJob::TransitionExpiredRevocations"
+
 pending_transaction_engine_nightly_job:
   cron: "0 */3 * * *" # run every 3 hour
   class: "PendingTransactionEngineJob::Nightly"
