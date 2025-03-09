@@ -6,6 +6,7 @@ class CreateGSuiteRevocations < ActiveRecord::Migration[7.2]
       t.references :g_suite, null: false, foreign_key: true
       t.string :aasm_state
       t.datetime :scheduled_at, null: false
+      t.boolean :one_week_notice_sent, default: false, null: false
 
       t.timestamps
     end

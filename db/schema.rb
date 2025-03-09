@@ -1015,6 +1015,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_17_050700) do
     t.bigint "g_suite_id", null: false
     t.string "aasm_state"
     t.datetime "scheduled_at", null: false
+    t.boolean "one_week_notice_sent", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["g_suite_id"], name: "index_g_suite_revocations_on_g_suite_id"
