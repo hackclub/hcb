@@ -27,6 +27,19 @@
   </h1>
   <%= render partial: "admin_viewer", locals: { record: @g_suite } %>
   <% if @g_suite.present? %>
+    <% if @g_suite.revocation.present? %>
+      <%= render "callout", type: "error", title: "Your Google Workspace access may be revoked on #{@g_suite.revocation.scheduled_at.strftime("%B %d, %Y")}." do %>
+        <% if @g_suite.revocation.because_of_accounts_inactive? %>
+          This revocation was initiated because your organization's Google Workspace accounts appear to be inactive, or you do not have any accounts created. Accounts are considered inactive if they haven't been used in 180 days. If you'd like to keep your Google Workspace access, please log in to at least one account before the scheduled revocation date. If you no longer need Google Workspace access, We ask that you do not log into your accounts and allow the revocation to proceed.
+        <% elsif @g_suite.revocation.because_of_invalid_dns? %>
+          This revocation was initiated because your organization's domain, <%= @g_suite.domain %>, has invalid or missing DNS records required by Google Workspace. If you'd like to keep your Google Workspace access, please verify your domain's DNS records. Once your domain is verified, you'll get an email that confirms the revocation has been cancelled. If you no longer need Google Workspace access, we ask that you do not verify your domain and allow the revocation to proceed.
+        <% else %>
+          This revocation was initiated by the HCB Operations Team because <%= @g_suite.revocation.other_reason.present? ? @g_suite.revocation.other_reason : "of an unknown reason" %>.
+        <% end %>
+        Once revoked, your data and accounts will be permanently deleted.
+        Please <%= link_to "contact us", "mailto:hcb@hackclub.com?subject=Question Re: Google Workspace Access Revocation for #{@g_suite.domain}" %> if you have any questions.
+      <% end %>
+    <% end %>
     <% if @g_suite.verification_error? && @g_suite.previously_verified? %>
       <%= render "callout", type: "error", title: "We've detected that you're missing some DNS records required by Google Workspace." do %>
         You can still access, configure, and manage accounts, but you may be unable to send or receive emails until after you've fixed <%= @g_suite.domain %>'s DNS records.
