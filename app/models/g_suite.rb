@@ -89,6 +89,17 @@ class GSuite < ApplicationRecord
 
   before_validation :clean_up_verification_key
 
+  before_destroy do
+    begin
+      Partners::Google::GSuite::DeleteDomain.new(domain: domain).run
+      Partners::Google::GSuite::Shared::DirectoryClient.directory_client.delete_org_unit(org_unit_path: remote_org_unit_path) if remote_org_unit_path.present?
+    rescue => e
+      Rails.error.report(e)
+      throw :abort
+    end
+    true
+  end
+
   def needs_ops_review?
     @needs_ops_review ||= creating? || verifying?
   end
