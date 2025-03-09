@@ -127,6 +127,10 @@ class GSuite < ApplicationRecord
           res_count -= 1
           next
         end
+        if user.suspended?
+          res_count -= 1
+          next
+        end
         user_last_login = Partners::Google::GSuite::Shared::DirectoryClient.directory_client.get_user(user.id).last_login_time
         if user_last_login.nil? || user_last_login < 6.months.ago
           inactive_accounts << user
