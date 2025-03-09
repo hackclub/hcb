@@ -16,7 +16,7 @@ g_suite_initiate_revocations_job:
 
 g_suite_close_remedied_revocations_job:
   cron: "0 */12 * * *" # run every 12 hour
-  class: "GSuiteJob::CloseRemediedRevocationsJob"
+  class: "GSuiteJob::CloseRemediedRevocations"
 
 pending_transaction_engine_nightly_job:
   cron: "0 */3 * * *" # run every 3 hour

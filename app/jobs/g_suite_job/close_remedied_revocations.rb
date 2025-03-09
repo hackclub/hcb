@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module GSuiteJob
-  class CloseRemediedRevocationsJob < ApplicationJob
+  class CloseRemediedRevocations < ApplicationJob
     queue_as :low
 
     def perform
