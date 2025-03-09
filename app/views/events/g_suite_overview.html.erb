@@ -28,269 +28,278 @@
   <%= render partial: "admin_viewer", locals: { record: @g_suite } %>
   <% if @g_suite.present? %>
     <% if @g_suite.revocation.present? %>
-      <%= render "callout", type: "error", title: "Your Google Workspace access may be revoked on #{@g_suite.revocation.scheduled_at.strftime("%B %d, %Y")}." do %>
-        <% if @g_suite.revocation.because_of_accounts_inactive? %>
-          This revocation was initiated because your organization's Google Workspace accounts appear to be inactive, or you do not have any accounts created. Accounts are considered inactive if they haven't been used in 180 days. If you'd like to keep your Google Workspace access, please log in to at least one account before the scheduled revocation date. If you no longer need Google Workspace access, We ask that you do not log into your accounts and allow the revocation to proceed.
-        <% elsif @g_suite.revocation.because_of_invalid_dns? %>
-          This revocation was initiated because your organization's domain, <%= @g_suite.domain %>, has invalid or missing DNS records required by Google Workspace. If you'd like to keep your Google Workspace access, please verify your domain's DNS records. Once your domain is verified, you'll get an email that confirms the revocation has been cancelled. If you no longer need Google Workspace access, we ask that you do not verify your domain and allow the revocation to proceed.
-        <% else %>
-          This revocation was initiated by the HCB Operations Team because <%= @g_suite.revocation.other_reason.present? ? @g_suite.revocation.other_reason : "of an unknown reason" %>.
+      <% if @g_suite.revocation.pending? %>
+        <%= render "callout", type: "error", title: "Your Google Workspace access may be revoked on #{@g_suite.revocation.scheduled_at.strftime("%B %d, %Y")}." do %>
+          <% if @g_suite.revocation.because_of_accounts_inactive? %>
+            This revocation was initiated because your organization's Google Workspace accounts appear to be inactive, or you do not have any accounts created. Accounts are considered inactive if they haven't been used in 180 days. If you'd like to keep your Google Workspace access, please log in to at least one account before the scheduled revocation date. If you no longer need Google Workspace access, We ask that you do not log into your accounts and allow the revocation to proceed.
+          <% elsif @g_suite.revocation.because_of_invalid_dns? %>
+            This revocation was initiated because your organization's domain, <%= @g_suite.domain %>, has invalid or missing DNS records required by Google Workspace. If you'd like to keep your Google Workspace access, please verify your domain's DNS records. Once your domain is verified, you'll get an email that confirms the revocation has been cancelled. If you no longer need Google Workspace access, we ask that you do not verify your domain and allow the revocation to proceed.
+          <% else %>
+            This revocation was initiated by the HCB Operations Team because <%= @g_suite.revocation.other_reason.present? ? @g_suite.revocation.other_reason : "of an unknown reason" %>.
+          <% end %>
+          Once revoked, your data and accounts will be permanently deleted.
+          Please <%= link_to "contact us", "mailto:hcb@hackclub.com?subject=Question Re: Google Workspace Access Revocation for #{@g_suite.domain}" %> if you have any questions.
         <% end %>
-        Once revoked, your data and accounts will be permanently deleted.
-        Please <%= link_to "contact us", "mailto:hcb@hackclub.com?subject=Question Re: Google Workspace Access Revocation for #{@g_suite.domain}" %> if you have any questions.
+      <% else %>
+        <%= render "callout", type: "error", title: "Your Google Workspace access has been revoked on #{@g_suite.revocation.scheduled_at.strftime("%B %d, %Y")}." do %>
+          Your accounts and data will be deleted shortly, after which you will be able to access the waitlist form and reapply for access if you would like to do so.
+          Please <%= link_to "contact us", "mailto:hcb@hackclub.com?subject=Question Re: Google Workspace Access Revocation for #{@g_suite.domain}" %> if you have any questions.
+        <% end %>
       <% end %>
     <% end %>
-    <% if @g_suite.verification_error? && @g_suite.previously_verified? %>
+    <% if @g_suite.verification_error? && @g_suite.previously_verified? && !(@g_suite.revocation.present? && @g_suite.revocation.revoked?) %>
       <%= render "callout", type: "error", title: "We've detected that you're missing some DNS records required by Google Workspace." do %>
         You can still access, configure, and manage accounts, but you may be unable to send or receive emails until after you've fixed <%= @g_suite.domain %>'s DNS records.
       <% end %>
     <% end %>
-    <% if @g_suite.verified? %>
-      <article class="card mb3">
-        <%= render "g_suite_accounts/panel" %>
-      </article>
-    <% end %>
-    <% if @g_suite.creating? %>
-      <section class="card center mt3 mb3 bg-pending pt3">
-        <%= inline_icon "email", size: 32 %>
-        <h3 class="mt0 mb0">We’re compiling next steps for <%= @g_suite.domain %>.</h3>
-        <p class="mt0">We’ll email you as soon as it’s ready.</p>
-      </section>
-    <% end %>
-    <% unless @g_suite.creating? %>
-      <% unless @g_suite.verified? || @g_suite.previously_verified? %>
-        <section class="card center mt3 mb3 bg-success white pt3">
-          <%= inline_icon "rep", size: 32 %>
-          <h3 class="mt0 mb0">Your registration was approved!</h3>
-          <p class="mt0">It’s time to set up your servers.</p>
-        </section>
-      <% end %>
-      <details <%= @g_suite.verified? ? nil : "open" %> class="my-4">
-        <summary>
-          <h2 class="inline-block pb0 border-none mt0">Setup instructions</h2>
-        </summary>
-        <article class="card overflow-visible md-pl3 mt-2">
-          <style>
-              table {
-                  max-width: 100%;
-                  display: block;
-                  overflow-x: auto;
-                  white-space: nowrap;
-              }
-          </style>
-          <ol class="steps">
-            <li>Sign in to your account at your domain host (ex. GoDaddy, Namecheap, Google Domains).</li>
-            <li>
-              Go to the settings section where you can update your domain’s DNS and MX records.
-              <p class="secondary mt1 mb0">It might be called something like "Manage DNS," "Email Settings," or "Advanced Settings."</p>
-            </li>
-            <% unless @g_suite.verification_error? || @g_suite.previously_verified? %>
-              <li>
-                Delete any existing MX records.<br>
-                <p class="secondary mt1 mb0">If you can’t delete the existing records, change their priority number to 20 or higher.</p>
-              </li>
-            <% end %>
-            <li>
-              <% if @g_suite.verification_error? %>
-                Make sure your domain has the following records.
-              <% else %>
-                <strong>Add new DNS records</strong> for Google Workspace.
-              <% end %>
-              <p>If your domain host limits the number of MX records, just add the first 2 MX records in this table.</p>
-              <table class="strikeable" summary="Server addresses for use in DNS records configured for Google Workspace">
-                <thead>
-                <tr class="bold">
-                  <% if @g_suite.verification_error? %>
-                    <th></th>
-                  <% end %>
-                  <th>Name/Host/Alias</th>
-                  <th>TTL</th>
-                  <th>Record Type</th>
-                  <th>Priority</th>
-                  <th>Value/Answer/Destination</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class="shade-neutral <%= "muted strikethrough" if @results[:verification_key] %>">
-                  <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @results[:verification_key] %>></td>
-                  <% end %>
-                  <td>
-                    <% if @g_suite.subdomain %>
-                      <%= @g_suite.subdomain %>
-                    <% else %>
-                      @ <span class="muted">or leave blank</span>
-                    <% end %>
-                  </td>
-                  <td>3600</td>
-                  <td>TXT</td>
-                  <td>1</td>
-                  <td><%= organizer_signed_in? ? copy_to_clipboard("google-site-verification=#{@g_suite.verification_key}", tooltip_direction: "w") : "REDACTED – SIGN IN TO VIEW" %></td>
-                </tr>
-                <tr class="<%= "muted strikethrough" if @results[:spf] %>">
-                  <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @results[:spf] %>></td>
-                  <% end %>
-                  <td>
-                    <% if @g_suite.subdomain %>
-                      <%= @g_suite.subdomain %>
-                    <% else %>
-                      @ <span class="muted">or leave blank</span>
-                    <% end %>
-                  </td>
-                  <td>3600</td>
-                  <td>TXT</td>
-                  <td>1</td>
-                  <td><%= copy_to_clipboard("v=spf1 include:_spf.google.com ~all", tooltip_direction: "w") %></td>
-                </tr>
-                <% if @g_suite.dkim_key.present? %>
-                  <tr class="shade-neutral <%= "muted strikethrough" if @results[:dkim] %>">
-                    <% if @g_suite.verification_error? %>
-                      <td><input type="checkbox" disabled <%= "checked" if @results[:dkim] %>></td>
-                    <% end %>
-                    <td>google._domainkey.<%= @g_suite.domain %></td>
-                    <td>3600</td>
-                    <td>TXT</td>
-                    <td>1</td>
-                    <td><%= copy_to_clipboard(@g_suite.dkim_key, tooltip_direction: "w") %></td>
-                  </tr>
-                  <tr class="<%= "muted strikethrough" if @results[:dmarc] %>">
-                    <% if @g_suite.verification_error? %>
-                      <td><input type="checkbox" disabled <%= "checked" if @results[:dmarc] %>></td>
-                    <% end %>
-                    <td>_DMARC.<%= @g_suite.domain %></td>
-                    <td>3600</td>
-                    <td>TXT</td>
-                    <td>1</td>
-                    <td><%= copy_to_clipboard("v=DMARC1; p=none; rua=mailto:dmarc_report@hackclub.com; ruf=mailto:dmarc_report@hackclub.com;fo=1", tooltip_direction: "w") %></td>
-                  </tr>
-                <% end %>
-                <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_primary] %>">
-                  <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_primary] %>></td>
-                  <% end %>
-                  <td>
-                    <% if @g_suite.subdomain %>
-                      <%= @g_suite.subdomain %>
-                    <% else %>
-                      @ <span class="muted">or leave blank</span>
-                    <% end %>
-                  </td>
-                  <td>3600</td>
-                  <td>MX</td>
-                  <td>1</td>
-                  <td><%= copy_to_clipboard("ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
-                </tr>
-                <tr class="<%= "muted strikethrough" if @results[:mx_alt1] %>">
-                  <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt1] %>></td>
-                  <% end %>
-                  <td>
-                    <% if @g_suite.subdomain %>
-                      <%= @g_suite.subdomain %>
-                    <% else %>
-                      @ <span class="muted">or leave blank</span>
-                    <% end %>
-                  </td>
-                  <td>3600</td>
-                  <td>MX</td>
-                  <td>5</td>
-                  <td><%= copy_to_clipboard("ALT1.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
-                </tr>
-                <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt2] %>">
-                  <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt2] %>></td>
-                  <% end %>
-                  <td>
-                    <% if @g_suite.subdomain %>
-                      <%= @g_suite.subdomain %>
-                    <% else %>
-                      @ <span class="muted">or leave blank</span>
-                    <% end %>
-                  </td>
-                  <td>3600</td>
-                  <td>MX</td>
-                  <td>5</td>
-                  <td><%= copy_to_clipboard("ALT2.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
-                </tr>
-                <tr class="<%= "muted strikethrough" if @results[:mx_alt3] %>">
-                  <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt3] %>></td>
-                  <% end %>
-                  <td>
-                    <% if @g_suite.subdomain %>
-                      <%= @g_suite.subdomain %>
-                    <% else %>
-                      @ <span class="muted">or leave blank</span>
-                    <% end %>
-                  </td>
-                  <td>3600</td>
-                  <td>MX</td>
-                  <td>10</td>
-                  <td><%= copy_to_clipboard("ALT3.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
-                </tr>
-                <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt4] %>">
-                  <% if @g_suite.verification_error? %>
-                    <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt4] %>></td>
-                  <% end %>
-                  <td>
-                    <% if @g_suite.subdomain %>
-                      <%= @g_suite.subdomain %>
-                    <% else %>
-                      @ <span class="muted">or leave blank</span>
-                    <% end %>
-                  </td>
-                  <td>3600</td>
-                  <td>MX</td>
-                  <td>10</td>
-                  <td><%= copy_to_clipboard("ALT4.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
-                </tr>
-                </tbody>
-              </table>
-              <p><strong>Note:</strong> Some domain hosts use different labels for the name and value fields, and some
-                hosts also require a trailing period at the end of the server name.</p>
-            </li>
-            <li>
-              <% if @g_suite.verification_error? %>
-                <%= render "callout", type: "error", title: "There was an error verifying your domain." do %>
-                  Please check above to see which records may be missing or incorrectly entered. <br>Click "Retry Verification" below once you've confirmed all DNS records are entered correctly.
-                <% end %>
-              <% end %>
-              <% if @g_suite.configuring? || @g_suite.verification_error? %>
-                <%= link_to @g_suite.verification_error? ? "Retry Verification" : "Verify", event_g_suite_verify_path(event_id: @event.slug), method: :put, class: "btn" %>
-              <% end %>
-              <% if @g_suite.verifying? %>
-                <span class="h4 ml0 pending badge">Verifying…</span>
-              <% end %>
-              <% if @g_suite.verified? %>
-              <span class="h4 ml0 badge success">
-                <%= inline_icon "checkmark", size: 20, class: "mr1" %>
-                Verified
-              </span>
-              <% end %>
-              <% if @g_suite.verification_error? && @g_suite.previously_verified? %>
-                <p class="secondary mt1 mb0">
-                  Once your DNS records are reverified, you can typically resume
-                  sending and receiving emails within 6 hours. However,
-                  depending on your DNS provider, it may take up to 72 hours.
-                  Unfortunately, we are unable to expedite this process.
-                </p>
-              <% else %>
-                <p class="secondary mt1 mb0">
-                  After your domain and DNS records are verified by Google, you
-                  can begin to create your Google Workspace accounts.
-                  Verification typically takes 6 hours, but it may take up to
-                  72 hours depending on your DNS provider.
-                </p>
-              <% end %>
-            </li>
-          </ol>
-        </article>
-      </details>
-      <% if !@g_suite.verified? && (@g_suite.previously_verified? || @g_suite.accounts.any?) %>
+    <% if !(@g_suite.revocation.present? && @g_suite.revocation.revoked?) %>
+      <% if @g_suite.verified? %>
         <article class="card mb3">
           <%= render "g_suite_accounts/panel" %>
         </article>
+      <% end %>
+      <% if @g_suite.creating? %>
+        <section class="card center mt3 mb3 bg-pending pt3">
+          <%= inline_icon "email", size: 32 %>
+          <h3 class="mt0 mb0">We’re compiling next steps for <%= @g_suite.domain %>.</h3>
+          <p class="mt0">We’ll email you as soon as it’s ready.</p>
+        </section>
+      <% end %>
+      <% unless @g_suite.creating? %>
+        <% unless @g_suite.verified? || @g_suite.previously_verified? %>
+          <section class="card center mt3 mb3 bg-success white pt3">
+            <%= inline_icon "rep", size: 32 %>
+            <h3 class="mt0 mb0">Your registration was approved!</h3>
+            <p class="mt0">It’s time to set up your servers.</p>
+          </section>
+        <% end %>
+        <details <%= @g_suite.verified? ? nil : "open" %> class="my-4">
+          <summary>
+            <h2 class="inline-block pb0 border-none mt0">Setup instructions</h2>
+          </summary>
+          <article class="card overflow-visible md-pl3 mt-2">
+            <style>
+                table {
+                    max-width: 100%;
+                    display: block;
+                    overflow-x: auto;
+                    white-space: nowrap;
+                }
+            </style>
+            <ol class="steps">
+              <li>Sign in to your account at your domain host (ex. GoDaddy, Namecheap, Google Domains).</li>
+              <li>
+                Go to the settings section where you can update your domain’s DNS and MX records.
+                <p class="secondary mt1 mb0">It might be called something like "Manage DNS," "Email Settings," or "Advanced Settings."</p>
+              </li>
+              <% unless @g_suite.verification_error? || @g_suite.previously_verified? %>
+                <li>
+                  Delete any existing MX records.<br>
+                  <p class="secondary mt1 mb0">If you can’t delete the existing records, change their priority number to 20 or higher.</p>
+                </li>
+              <% end %>
+              <li>
+                <% if @g_suite.verification_error? %>
+                  Make sure your domain has the following records.
+                <% else %>
+                  <strong>Add new DNS records</strong> for Google Workspace.
+                <% end %>
+                <p>If your domain host limits the number of MX records, just add the first 2 MX records in this table.</p>
+                <table class="strikeable" summary="Server addresses for use in DNS records configured for Google Workspace">
+                  <thead>
+                  <tr class="bold">
+                    <% if @g_suite.verification_error? %>
+                      <th></th>
+                    <% end %>
+                    <th>Name/Host/Alias</th>
+                    <th>TTL</th>
+                    <th>Record Type</th>
+                    <th>Priority</th>
+                    <th>Value/Answer/Destination</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr class="shade-neutral <%= "muted strikethrough" if @results[:verification_key] %>">
+                    <% if @g_suite.verification_error? %>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:verification_key] %>></td>
+                    <% end %>
+                    <td>
+                      <% if @g_suite.subdomain %>
+                        <%= @g_suite.subdomain %>
+                      <% else %>
+                        @ <span class="muted">or leave blank</span>
+                      <% end %>
+                    </td>
+                    <td>3600</td>
+                    <td>TXT</td>
+                    <td>1</td>
+                    <td><%= organizer_signed_in? ? copy_to_clipboard("google-site-verification=#{@g_suite.verification_key}", tooltip_direction: "w") : "REDACTED – SIGN IN TO VIEW" %></td>
+                  </tr>
+                  <tr class="<%= "muted strikethrough" if @results[:spf] %>">
+                    <% if @g_suite.verification_error? %>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:spf] %>></td>
+                    <% end %>
+                    <td>
+                      <% if @g_suite.subdomain %>
+                        <%= @g_suite.subdomain %>
+                      <% else %>
+                        @ <span class="muted">or leave blank</span>
+                      <% end %>
+                    </td>
+                    <td>3600</td>
+                    <td>TXT</td>
+                    <td>1</td>
+                    <td><%= copy_to_clipboard("v=spf1 include:_spf.google.com ~all", tooltip_direction: "w") %></td>
+                  </tr>
+                  <% if @g_suite.dkim_key.present? %>
+                    <tr class="shade-neutral <%= "muted strikethrough" if @results[:dkim] %>">
+                      <% if @g_suite.verification_error? %>
+                        <td><input type="checkbox" disabled <%= "checked" if @results[:dkim] %>></td>
+                      <% end %>
+                      <td>google._domainkey.<%= @g_suite.domain %></td>
+                      <td>3600</td>
+                      <td>TXT</td>
+                      <td>1</td>
+                      <td><%= copy_to_clipboard(@g_suite.dkim_key, tooltip_direction: "w") %></td>
+                    </tr>
+                    <tr class="<%= "muted strikethrough" if @results[:dmarc] %>">
+                      <% if @g_suite.verification_error? %>
+                        <td><input type="checkbox" disabled <%= "checked" if @results[:dmarc] %>></td>
+                      <% end %>
+                      <td>_DMARC.<%= @g_suite.domain %></td>
+                      <td>3600</td>
+                      <td>TXT</td>
+                      <td>1</td>
+                      <td><%= copy_to_clipboard("v=DMARC1; p=none; rua=mailto:dmarc_report@hackclub.com; ruf=mailto:dmarc_report@hackclub.com;fo=1", tooltip_direction: "w") %></td>
+                    </tr>
+                  <% end %>
+                  <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_primary] %>">
+                    <% if @g_suite.verification_error? %>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:mx_primary] %>></td>
+                    <% end %>
+                    <td>
+                      <% if @g_suite.subdomain %>
+                        <%= @g_suite.subdomain %>
+                      <% else %>
+                        @ <span class="muted">or leave blank</span>
+                      <% end %>
+                    </td>
+                    <td>3600</td>
+                    <td>MX</td>
+                    <td>1</td>
+                    <td><%= copy_to_clipboard("ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
+                  </tr>
+                  <tr class="<%= "muted strikethrough" if @results[:mx_alt1] %>">
+                    <% if @g_suite.verification_error? %>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt1] %>></td>
+                    <% end %>
+                    <td>
+                      <% if @g_suite.subdomain %>
+                        <%= @g_suite.subdomain %>
+                      <% else %>
+                        @ <span class="muted">or leave blank</span>
+                      <% end %>
+                    </td>
+                    <td>3600</td>
+                    <td>MX</td>
+                    <td>5</td>
+                    <td><%= copy_to_clipboard("ALT1.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
+                  </tr>
+                  <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt2] %>">
+                    <% if @g_suite.verification_error? %>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt2] %>></td>
+                    <% end %>
+                    <td>
+                      <% if @g_suite.subdomain %>
+                        <%= @g_suite.subdomain %>
+                      <% else %>
+                        @ <span class="muted">or leave blank</span>
+                      <% end %>
+                    </td>
+                    <td>3600</td>
+                    <td>MX</td>
+                    <td>5</td>
+                    <td><%= copy_to_clipboard("ALT2.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
+                  </tr>
+                  <tr class="<%= "muted strikethrough" if @results[:mx_alt3] %>">
+                    <% if @g_suite.verification_error? %>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt3] %>></td>
+                    <% end %>
+                    <td>
+                      <% if @g_suite.subdomain %>
+                        <%= @g_suite.subdomain %>
+                      <% else %>
+                        @ <span class="muted">or leave blank</span>
+                      <% end %>
+                    </td>
+                    <td>3600</td>
+                    <td>MX</td>
+                    <td>10</td>
+                    <td><%= copy_to_clipboard("ALT3.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
+                  </tr>
+                  <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt4] %>">
+                    <% if @g_suite.verification_error? %>
+                      <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt4] %>></td>
+                    <% end %>
+                    <td>
+                      <% if @g_suite.subdomain %>
+                        <%= @g_suite.subdomain %>
+                      <% else %>
+                        @ <span class="muted">or leave blank</span>
+                      <% end %>
+                    </td>
+                    <td>3600</td>
+                    <td>MX</td>
+                    <td>10</td>
+                    <td><%= copy_to_clipboard("ALT4.ASPMX.L.GOOGLE.COM.", tooltip_direction: "w") %></td>
+                  </tr>
+                  </tbody>
+                </table>
+                <p><strong>Note:</strong> Some domain hosts use different labels for the name and value fields, and some
+                  hosts also require a trailing period at the end of the server name.</p>
+              </li>
+              <li>
+                <% if @g_suite.verification_error? %>
+                  <%= render "callout", type: "error", title: "There was an error verifying your domain." do %>
+                    Please check above to see which records may be missing or incorrectly entered. <br>Click "Retry Verification" below once you've confirmed all DNS records are entered correctly.
+                  <% end %>
+                <% end %>
+                <% if @g_suite.configuring? || @g_suite.verification_error? %>
+                  <%= link_to @g_suite.verification_error? ? "Retry Verification" : "Verify", event_g_suite_verify_path(event_id: @event.slug), method: :put, class: "btn" %>
+                <% end %>
+                <% if @g_suite.verifying? %>
+                  <span class="h4 ml0 pending badge">Verifying…</span>
+                <% end %>
+                <% if @g_suite.verified? %>
+                <span class="h4 ml0 badge success">
+                  <%= inline_icon "checkmark", size: 20, class: "mr1" %>
+                  Verified
+                </span>
+                <% end %>
+                <% if @g_suite.verification_error? && @g_suite.previously_verified? %>
+                  <p class="secondary mt1 mb0">
+                    Once your DNS records are reverified, you can typically resume
+                    sending and receiving emails within 6 hours. However,
+                    depending on your DNS provider, it may take up to 72 hours.
+                    Unfortunately, we are unable to expedite this process.
+                  </p>
+                <% else %>
+                  <p class="secondary mt1 mb0">
+                    After your domain and DNS records are verified by Google, you
+                    can begin to create your Google Workspace accounts.
+                    Verification typically takes 6 hours, but it may take up to
+                    72 hours depending on your DNS provider.
+                  </p>
+                <% end %>
+              </li>
+            </ol>
+          </article>
+        </details>
+        <% if !@g_suite.verified? && (@g_suite.previously_verified? || @g_suite.accounts.any?) %>
+          <article class="card mb3">
+            <%= render "g_suite_accounts/panel" %>
+          </article>
+        <% end %>
       <% end %>
     <% end %>
   <% else %>

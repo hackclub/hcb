@@ -4,14 +4,15 @@
 #
 # Table name: g_suite_revocations
 #
-#  id           :bigint           not null, primary key
-#  aasm_state   :string
-#  other_reason :text
-#  reason       :integer          default(NULL), not null
-#  scheduled_at :datetime         not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  g_suite_id   :bigint           not null
+#  id                   :bigint           not null, primary key
+#  aasm_state           :string
+#  one_week_notice_sent :boolean          default(FALSE), not null
+#  other_reason         :text
+#  reason               :integer          default(NULL), not null
+#  scheduled_at         :datetime         not null
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  g_suite_id           :bigint           not null
 #
 # Indexes
 #
@@ -37,17 +38,21 @@ class GSuite
     validates :other_reason, presence: true, if: :because_of_other?
 
     aasm do
-      state :warning, initial: true # 2 weeks from warning to pending revocation
-      state :pending_revocation # adds to a list where HCB ops can review and
+      state :pending, initial: true # 2 weeks from warning to pending revocation
+      state :revoked # adds to a list where HCB ops can review and
       # click "revoke" to delete the g_suite and all associated data/accounts
 
-      event :mark_pending_revocation do
-        transitions from: :warning, to: :pending_revocation
+      event :mark_revoked do
+        transitions from: :pending, to: :revoked
+
+        after do
+          GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_revocation.deliver_later
+        end
       end
     end
 
     after_create_commit do
-      return unless warning?
+      return unless pending?
 
       GSuiteMailer.with(g_suite_id: g_suite.id, g_suite_revocation_id: self.id).revocation_warning.deliver_later
     end
@@ -57,9 +62,7 @@ class GSuite
     end
 
     after_destroy_commit do
-      if destroyed_by_association?
-        GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_revocation.deliver_later
-      else
+      unless destroyed_by_association?
         GSuiteMailer.with(g_suite_id: g_suite.id).revocation_canceled.deliver_later
       end
     end
