@@ -29,5 +29,6 @@ module BreakdownEngine
       # Limit to top 11 users
       users.first(11)
     end
+
   end
 end

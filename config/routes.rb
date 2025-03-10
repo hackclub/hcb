@@ -715,6 +715,7 @@ Rails.application.routes.draw do
     post "activate", to: "events#activate", as: :activate
     resources :disbursements, only: [:new, :create]
     resources :increase_checks, only: [:new, :create], path: "checks"
+    resources :fees, only: [:create]
     resources :paypal_transfers, only: [:new, :create]
     resources :wires, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]

@@ -286,8 +286,7 @@ class Event < ApplicationRecord
 
   scope :dormant, -> { where.not(id: Event.engaged) }
 
-  has_many :fees, through: :canonical_event_mappings
-  # must transition to has_many :fees
+  has_many :fees
   has_many :bank_fees
 
   has_many :tags, -> { includes(:hcb_codes) }
