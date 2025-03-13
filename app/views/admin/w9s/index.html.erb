@@ -1,0 +1,36 @@
+<% title "W9s" %>
+
+<%= form_with method: :get do |form| %>
+  <%= form.text_field :q, value: @q, placeholder: "Search", class: "w-100" %>
+<% end %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @w9s, entry_name: "W9s" %>.
+    <%= link_to "Upload a new W9", new_admin_w9_path %>.
+  </div>
+  <%= paginate @w9s %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>URL</th>
+      <th>Uploaded by</th>
+      <th>Signed at</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @w9s.each do |w9| %>
+      <tr>
+        <td><%= link_to w9.user.name, edit_user_path(w9.user) %> (<%= w9.user.email %>)</td>
+        <td><%= link_to w9.url, w9.url %></td>
+        <td><%= w9.uploaded_by.name %></td>
+        <td><%= format_date w9.signed_at %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @w9s %>

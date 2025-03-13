@@ -477,7 +477,7 @@ class AdminController < ApplicationController
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
-    notify_airbrake e
+    Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
   end
 
@@ -490,7 +490,7 @@ class AdminController < ApplicationController
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
-    notify_airbrake e
+    Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
   end
 
@@ -1166,6 +1166,21 @@ class AdminController < ApplicationController
     end
   end
 
+  def employees
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @employees = Employee.all.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'onboarding' DESC"),
+      "employees.created_at desc"
+    )
+  end
+
+  def employee_payments
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @payments = Employee::Payment.all.page(@page).per(@per)
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)
@@ -1193,6 +1208,7 @@ class AdminController < ApplicationController
     @active = params[:active].present? ? params[:active] : "both" # both by default
     @organized_by = params[:organized_by].presence || "anyone"
     @tagged_with = params[:tagged_with].presence || "anything"
+    @risk_level = params[:risk_level].presence || "any"
     @point_of_contact_id = params[:point_of_contact_id].present? ? params[:point_of_contact_id] : "all"
     @plan = params[:plan].present? ? params[:plan] : "all"
     if params[:country] == 9999.to_s
@@ -1226,6 +1242,14 @@ class AdminController < ApplicationController
     relation = relation.not_demo_mode if @demo_mode == "full"
     relation = relation.includes(:event_tags)
     relation = relation.where(event_tags: { id: @tagged_with }) unless @tagged_with == "anything"
+    case @risk_level
+    when "any"
+      # don't filter
+    when "unset"
+      relation = relation.where(risk_level: nil)
+    else
+      relation = relation.where(risk_level: @risk_level)
+    end
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
     if @plan != "all"
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
@@ -1262,12 +1286,12 @@ class AdminController < ApplicationController
     info = airtable_info[task_name]
     task = Faraday.new { |c|
       c.response :json
-      c.authorization :Bearer, Rails.application.credentials.airtable[:pat]
+      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
     }.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
 
     task.size
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
     9999 # return something invalidly high to get the ops team to report it
   end
 

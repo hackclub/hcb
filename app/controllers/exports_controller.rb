@@ -2,7 +2,7 @@
 
 class ExportsController < ApplicationController
   include SetEvent
-  before_action :set_event, only: [:transactions]
+  before_action :set_event, only: [:transactions, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
@@ -59,6 +59,16 @@ class ExportsController < ApplicationController
         end
 
         render pdf: "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement", page_height: "11in", page_width: "8.5in"
+      end
+    end
+  end
+
+  def reimbursements
+    authorize @event, :reimbursements?
+
+    respond_to do |format|
+      format.csv do
+        stream_reimbursements_csv
       end
     end
   end
@@ -145,19 +155,28 @@ class ExportsController < ApplicationController
     self.response_body = transactions_ledger
   end
 
+  def stream_reimbursements_csv
+    set_file_headers_csv
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = reimbursements_csv
+  end
+
   def set_file_headers_csv
     headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
   end
 
   def set_file_headers_json
     headers["Content-Type"] = "application/json"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.json"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.json"
   end
 
   def set_file_headers_ledger
     headers["Content-Type"] = "text/ledger"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
   end
 
   def transactions_csv
@@ -170,6 +189,10 @@ class ExportsController < ApplicationController
 
   def transactions_ledger
     ::ExportService::Ledger.new(event_id: @event.id, public_only: !organizer_signed_in?).run
+  end
+
+  def reimbursements_csv
+    ::ExportService::Reimbursement::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
   end
 
 end

@@ -24,6 +24,7 @@ class Event
   class Configuration < ApplicationRecord
     belongs_to :event
     validates_email_format_of :contact_email, allow_nil: true, allow_blank: true
+    normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
 
   end
 

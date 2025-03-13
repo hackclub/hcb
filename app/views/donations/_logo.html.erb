@@ -1,6 +1,6 @@
 <% if @event.logo.attached? %>
     <div class="relative donations-logo">
-        <% if organizer_signed_in? %>
+        <% if policy(@event).update? %>
             <%= form_with model: @event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
                 <%= form.file_field :logo, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
                 <%= form.label :logo do %>
@@ -39,7 +39,7 @@
                 href="<%= Rails.application.routes.url_helpers.rails_representation_url(@event.logo.variant(resize: "16x16")) %>">
         <% end %>
     <% end %>
-<% elsif organizer_signed_in? %>
+<% elsif policy(@event).update? %>
     <%= form_with model: @event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
         <%= form.file_field :logo, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :logo do %>

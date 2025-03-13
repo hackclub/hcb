@@ -20,7 +20,7 @@
     title: "Important information about wire transfers",
     footer: callout_footer do %>
     Unfortunately, wires are expensive to send. Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you,
-    <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). Consider a <%= link_to "PayPal transfer", new_event_paypal_transfer_path(@event) %> for smaller amounts or reach out to <%= mail_to "hcb@hackclub.com" %>.
+    <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). For smaller wires, please reach out to us at <%= mail_to "hcb@hackclub.com" %>.
 <% end %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {

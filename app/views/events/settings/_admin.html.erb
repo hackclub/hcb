@@ -71,6 +71,11 @@
       </div>
 
       <div class="field">
+        <%= form.label :risk_level %>
+        <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" } %>
+      </div>
+
+      <div class="field">
         <%= form.label :point_of_contact_id, capture { %>
           Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(@event), method: :post %>
         <% } %>
@@ -91,6 +96,31 @@
         <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
       </div>
     <% end %>
+  <% end %>
+
+  <% admin_tool do %>
+    <h3 id="admin_fees" class="mb2 mt1">Custom fees</h3>
+    <%= form_with(model: [@event, Fee], local: true, class: "mb3", data: { turbo_frame: "_top" }) do |form| %>
+      <div class="field">
+        <%= form.label :memo %>
+        <%= form.text_field :memo, placeholder: "Fee for inbound wire.", required: true %>
+      </div>
+      <div class="field">
+        <%= form.label :amount, "Amount" %>
+        <%= form.number_field :amount, placeholder: 100, min: 1, step: 0.01, required: true %>
+      </div>
+      <div class="action">
+        <%= form.submit "Charge fee", class: ("disabled" unless policy(@event.fees.build).create?) %>
+      </div>
+    <% end %>
+    <details>
+      <summary>Fee history</summary>
+      <ul>
+          <% @event.fees.where(reason: :manual).find_each do | fee | %>
+            <li><p><strong><%= render_money fee.amount_cents_as_decimal %> on <%= format_date fee.created_at %></strong>: <%= fee.memo %></p></li>
+          <% end %>
+      </ul>
+    </details>
   <% end %>
 
   <% admin_tool do %>

@@ -24,7 +24,7 @@
       <div data-tabs-target="tab" id="status">
         <% unless show_mock_data? %>
           <div class="menu__divider"></div>
-          <% %w[active inactive].each do |status| %>
+          <% %w[active frozen canceled].each do |status| %>
             <%= link_to status.humanize, upsert_query_params(status:), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @status == status}", data: { turbo_prefetch: "false" } %>
           <% end %>
         <% end %>

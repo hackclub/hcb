@@ -1,0 +1,24 @@
+<div class="flex gap-3">
+  <div>
+    <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
+      <div class="field">
+        <%= form.label :purpose %>
+
+        <div class="flex gap-3 items-stretch">
+          <%= form.text_field :purpose, placeholder: "OpenAI Credits" %>
+        </div>
+      </div>
+
+      <div class="actions">
+        <%= form.submit "Save" %>
+      </div>
+    <% end %>
+  </div>
+  <div>
+    <% if @card_grant.purpose.present? %>
+      <%= form_with url: clear_purpose_card_grant_path(@card_grant), method: :post, class: "inline-block" do |form| %>
+        <button class="btn bg-error tooltipped tooltipped--s overflow-visible top-6 py-1.5 pl-2.5 pr-3" aria-label="Clear purpose" type="submit">⌫</button>
+      <% end %>
+    <% end %>
+  </div>
+</div>

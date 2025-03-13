@@ -63,6 +63,7 @@ class AchTransfer < ApplicationRecord
 
   include AASM
   include Commentable
+  include Payoutable
   include Payment
 
   def payment_recipient_attributes
@@ -105,6 +106,7 @@ class AchTransfer < ApplicationRecord
   has_one :grant, required: false
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
@@ -127,6 +129,7 @@ class AchTransfer < ApplicationRecord
     event :mark_in_transit do
       after do
         AchTransferMailer.with(ach_transfer: self).notify_recipient.deliver_later if self.send_email_notification
+        employee_payment.mark_paid! if employee_payment.present?
       end
       transitions from: [:pending, :deposited, :scheduled], to: :in_transit
     end
@@ -136,6 +139,7 @@ class AchTransfer < ApplicationRecord
         canonical_pending_transaction&.decline!
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
       transitions from: [:pending, :scheduled], to: :rejected
     end
@@ -153,6 +157,8 @@ class AchTransfer < ApplicationRecord
         if reimbursement_payout_holding.present?
           ReimbursementMailer.with(reimbursement_payout_holding:, reason:).ach_failed.deliver_later
           reimbursement_payout_holding.mark_failed!
+        elsif employee_payment.present?
+          employee_payment.mark_failed!(reason:)
         else
           AchTransferMailer.with(ach_transfer: self, reason:).notify_failed.deliver_later
         end
@@ -185,7 +191,7 @@ class AchTransfer < ApplicationRecord
     return unless may_mark_in_transit?
 
     account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,

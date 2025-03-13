@@ -51,6 +51,7 @@ class IncreaseCheck < ApplicationRecord
   has_paper_trail
 
   include AASM
+  include Payoutable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -63,6 +64,7 @@ class IncreaseCheck < ApplicationRecord
 
   has_one :canonical_pending_transaction
   has_one :grant, required: false
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
 
   after_create do
@@ -91,6 +93,7 @@ class IncreaseCheck < ApplicationRecord
 
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
+        employee_payment.mark_paid! if employee_payment.present?
       end
     end
 
@@ -98,6 +101,7 @@ class IncreaseCheck < ApplicationRecord
       after do
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
       transitions from: :pending, to: :rejected
     end
@@ -146,7 +150,7 @@ class IncreaseCheck < ApplicationRecord
   }, prefix: :increase
 
   enum :column_status, %w(initiated issued manual_review rejected pending_deposit pending_stop deposited stopped pending_first_return pending_second_return first_return pending_reclear recleared second_return settled returned pending_user_initiated_return user_initiated_return_submitted user_initiated_returned pending_user_initiated_return_dishonored).index_with(&:itself), prefix: :column
-  enum :column_delivery_status, %w(created mailed in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
+  enum :column_delivery_status, %w(created mailed rendered_pdf in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
 
   VALID_DURATION = 180.days
 
@@ -215,11 +219,7 @@ class IncreaseCheck < ApplicationRecord
   def send_check!
     return unless may_mark_approved?
 
-    if Flipper.enabled?(:column_check_transfers, event)
-      send_column!
-    else
-      send_increase!
-    end
+    send_column!
 
     mark_approved!
 
@@ -230,34 +230,9 @@ class IncreaseCheck < ApplicationRecord
 
   private
 
-  def send_increase!
-    increase_check = Increase::CheckTransfers.create(
-      account_id: IncreaseService::AccountIds::FS_MAIN,
-      source_account_number_id: event.increase_account_number_id,
-      # Increase will print and mail the physical check for us
-      fulfillment_method: "physical_check",
-      physical_check: {
-        memo:,
-        note: "Check from #{event.name}",
-        recipient_name:,
-        mailing_address: {
-          line1: address_line1,
-          line2: address_line2.presence,
-          city: address_city,
-          state: address_state,
-          postal_code: address_zip,
-        }
-      },
-      unique_identifier: self.id.to_s,
-      amount:,
-    )
-
-    update!(increase_id: increase_check["id"], increase_status: increase_check["status"])
-  end
-
   def send_column!
     account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
     column_check = ColumnService.post "/transfers/checks/issue",
                                       idempotency_key: self.id.to_s,

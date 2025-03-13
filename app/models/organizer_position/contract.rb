@@ -37,6 +37,9 @@ class OrganizerPosition
 
     after_create_commit :send_using_docuseal!, unless: :sent_with_manual?
 
+    validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
+    normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
+
     after_create_commit do
       organizer_position_invite.update(is_signee: true)
       organizer_position_invite.organizer_position&.update(is_signee: true)
@@ -201,7 +204,7 @@ class OrganizerPosition
         Faraday.new(url: "https://api.docuseal.co/") do |faraday|
           faraday.response :json
           faraday.adapter Faraday.default_adapter
-          faraday.headers["X-Auth-Token"] = Rails.application.credentials.docuseal_key
+          faraday.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
           faraday.headers["Content-Type"] = "application/json"
         end
       end

@@ -26,7 +26,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def topup?
-    admin_or_manager?
+    admin_or_manager? && record.active?
   end
 
   def update?

@@ -23,7 +23,12 @@
           <%= card_grant_setting_fields.text_field :keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z", value: event.card_grant_setting.keyword_lock, disabled: !policy(event).update? %>
           <p class="h5 muted mt0 mb1">Provide a <a href="https://rubular.com">Ruby regular expression</a> string for us to match the merchant name to.</p>
         </div>
-
+        <p class="h4 mb-0 muted">These locks work in tandem:</p>
+        <ul class="mt-0 h5 muted">
+          <li>If you have no locks set, all transactions will be allowed.</li>
+          <li>If you have one lock set, only transactions matching that lock will be allowed.</li>
+          <li>If you have multiple locks set, transactions that match any of those locks will be allowed.</li>
+        </ul>
         <div class="field">
           <%= card_grant_setting_fields.label :invite_message, "Update Invite Message" %>
           <%= card_grant_setting_fields.text_area :invite_message, placeholder: "It's pizza time!", value: event.card_grant_setting.invite_message, disabled: !policy(event).update? %>

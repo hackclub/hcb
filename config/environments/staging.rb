@@ -106,9 +106,9 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   config.action_mailer.default_url_options = {
-    host: Rails.application.credentials.default_url_host[:live]
+    host: Credentials.fetch(:LIVE_URL_HOST)
   }
-  Rails.application.routes.default_url_options[:host] = Rails.application.credentials.default_url_host[:live]
+  Rails.application.routes.default_url_options[:host] = Credentials.fetch(:LIVE_URL_HOST)
 
   # Inserts middleware to perform automatic connection switching.
   # The `database_selector` hash is used to pass options to the DatabaseSelector
@@ -131,5 +131,4 @@ Rails.application.configure do
   # config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
   # config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
 
-  Credentials::Doppler.load if ENV["DOPPLER_TOKEN"]
 end

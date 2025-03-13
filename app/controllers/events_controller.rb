@@ -8,6 +8,7 @@ class EventsController < ApplicationController
 
   include Rails::Pagination
   before_action :set_event, except: [:index, :new, :create]
+  before_action :set_transaction_filters, only: [:transactions, :ledger]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
@@ -55,7 +56,11 @@ class EventsController < ApplicationController
 
   # GET /events/1
   def show
-    authorize @event
+    begin
+      authorize @event
+    rescue Pundit::NotAuthorizedError
+      return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
+    end
 
     if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && admin_signed_in?) || @event.demo_mode?
       redirect_to event_transactions_path(@event.slug)
@@ -127,7 +132,8 @@ class EventsController < ApplicationController
     authorize @event
     @users = BreakdownEngine::Users.new(@event).run
     @tags = BreakdownEngine::Tags.new(@event).run
-    @empty_tags = @users.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+
+    @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
     render partial: "events/home/tags_users", locals: { users: @users, tags: @tags, event: @event }
@@ -149,30 +155,24 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
-    # The search query name was historically `search`. It has since been renamed
-    # to `q`. This following line retains backwards compatibility.
-    params[:q] ||= params[:search]
-
-    if params[:tag] && Flipper.enabled?(:transaction_tags_2022_07_29, @event)
-      @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
-    end
-
-    @user = @event.users.find_by(id: params[:user]) if params[:user]
-
-    @type = params[:type]
-    @start_date = params[:start].presence
-    @end_date = params[:end].presence
-    @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
-    @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
-    @missing_receipts = params[:missing_receipts].present?
-
-    @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
-    @pending_transactions = _show_pending_transactions
-
     if !signed_in? && !@event.holiday_features
       @hide_seasonal_decorations = true
     end
 
+    if flash[:popover]
+      @popover = flash[:popover]
+      flash.delete(:popover)
+    end
+  end
+
+  def ledger
+    begin
+      authorize @event
+    rescue Pundit::NotAuthorizedError
+      return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
+    end
+
+    @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
       event_id: @event.id,
       search: params[:q],
@@ -278,10 +278,7 @@ class EventsController < ApplicationController
       @mock_total = @transactions.sum(&:amount_cents)
     end
 
-    if flash[:popover]
-      @popover = flash[:popover]
-      flash.delete(:popover)
-    end
+    render layout: false
   end
 
   def balance_by_date
@@ -390,16 +387,6 @@ class EventsController < ApplicationController
     end
   end
 
-  def finish_signee_backfill
-    authorize @event
-    if @event.organizer_positions.where(is_signee: nil).update(is_signee: false)
-      flash[:success] = "Wow-e! It's done... the signee backfill that is."
-    else
-      flash[:error] = "WHAT?! An error. Go pester @sampoder."
-    end
-    redirect_back fallback_location: event_team_path(@event.slug)
-  end
-
   # DELETE /events/1
   def destroy
     authorize @event
@@ -420,7 +407,7 @@ class EventsController < ApplicationController
   end
 
   def card_overview
-    @status = %w[active inactive].include?(params[:status]) ? params[:status] : nil
+    @status = %w[active frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
 
     cookies[:card_overview_view] = params[:view] if params[:view]
@@ -439,8 +426,10 @@ class EventsController < ApplicationController
     all_stripe_cards = case @status
                        when "active"
                          all_stripe_cards.active
-                       when "inactive"
+                       when "frozen"
                          all_stripe_cards.deactivated
+                       when "canceled"
+                         all_stripe_cards.canceled
                        else
                          all_stripe_cards
                        end
@@ -769,6 +758,18 @@ class EventsController < ApplicationController
     render :reimbursements_pending_review_icon, layout: false
   end
 
+  def employees
+    authorize @event
+    @employees = @event.employees.order(
+      Arel.sql("aasm_state = 'onboarded' DESC"),
+      Arel.sql("aasm_state = 'onboarding' DESC"),
+      "employees.created_at desc"
+    )
+    @employees = @employees.onboarding if params[:filter] == "onboarding"
+    @employees = @employees.terminated if params[:filter] == "terminated"
+    @employees = @employees.search(params[:q]) if params[:q].present?
+  end
+
   def toggle_hidden
     authorize @event
 
@@ -922,6 +923,7 @@ class EventsController < ApplicationController
       :emburse_department_id,
       :country,
       :postal_code,
+      :risk_level,
       :point_of_contact_id,
       :slug,
       :hidden,
@@ -1008,6 +1010,28 @@ class EventsController < ApplicationController
     result_params[:slug] = ActiveSupport::Inflector.parameterize(result_params[:slug]) if result_params[:slug]
 
     result_params
+  end
+
+  def set_transaction_filters
+    # The search query name was historically `search`. It has since been renamed
+    # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
+    if params[:tag] && Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+      @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
+    end
+
+    @user = @event.users.find_by(id: params[:user]) if params[:user]
+
+    @type = params[:type]
+    @start_date = params[:start].presence
+    @end_date = params[:end].presence
+    @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
+    @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
+    @missing_receipts = params[:missing_receipts].present?
+
+    # Also used in Transactions page UI (outside of Ledger)
+    @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
   end
 
   def _show_pending_transactions
