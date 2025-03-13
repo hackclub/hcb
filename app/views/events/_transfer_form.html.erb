@@ -3,7 +3,6 @@
     data-controller="transfer-form"
     data-transfer-form-ach-value="<%= new_event_ach_transfer_path(@event) %>"
     data-transfer-form-check-value="<%= new_event_increase_check_path(@event) %>"
-    data-transfer-form-paypal-value="<%= new_event_paypal_transfer_path(@event) %>"
     data-transfer-form-wire-value="<%= new_event_wire_path(@event) %>"
     data-transfer-form-disbursement-value="<%= new_disbursement_path(source_event_id: @event) %>">
     <div data-transfer-form-target="home">
@@ -17,10 +16,6 @@
           <%= link_to new_event_increase_check_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "email", size: 28 %>
             <strong>Mailed check</strong>
-          <% end %>
-          <%= link_to new_event_paypal_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-            <%= inline_icon "paypal", size: 28 %>
-            <strong>PayPal</strong>
           <% end %>
           <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
             <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>

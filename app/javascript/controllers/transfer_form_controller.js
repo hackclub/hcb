@@ -19,7 +19,6 @@ export default class extends Controller {
   static values = {
     ach: String,
     check: String,
-    paypal: String,
     wire: String,
     disbursement: String,
   }
@@ -29,7 +28,10 @@ export default class extends Controller {
       id: 1,
       question: 'Does your recipient live within the US?',
       yes: 2,
-      no: 3,
+      no: {
+        type: 'wire',
+        link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
+      }
     },
     {
       id: 2,
@@ -41,18 +43,6 @@ export default class extends Controller {
       no: {
         type: 'check',
         link: 'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
-      },
-    },
-    {
-      id: 3,
-      question: 'Does your recipient have a PayPal account?',
-      yes: {
-        type: 'paypal',
-        link: 'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
-      },
-      no: {
-        type: 'wire',
-        link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
       },
     },
   ]
