@@ -10,6 +10,11 @@ class LoginsController < ApplicationController
 
   layout "login"
 
+  after_action only: [:new] do
+    # Allow indexing login page
+    response.delete_header("X-Robots-Tag")
+  end
+
   # view to log in
   def new
     render "users/logout" if current_user

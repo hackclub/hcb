@@ -4,8 +4,8 @@ require "twilio-ruby"
 
 class TwilioVerificationService
   CLIENT = Twilio::REST::Client.new(
-    Rails.application.credentials.twilio[:account_sid_sms_verify],
-    Rails.application.credentials.twilio[:auth_token_sms_verify]
+    Credentials.fetch(:TWILIO, :SMS_VERIFY, :ACCOUNT_SID),
+    Credentials.fetch(:TWILIO, :SMS_VERIFY, :AUTH_TOKEN)
   )
 
   # This isn't private/sensitive so it's okay to keep here

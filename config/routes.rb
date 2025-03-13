@@ -619,7 +619,6 @@ Rails.application.routes.draw do
 
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
-  post "increase/webhook", to: "increase#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
 
@@ -715,6 +714,7 @@ Rails.application.routes.draw do
     post "activate", to: "events#activate", as: :activate
     resources :disbursements, only: [:new, :create]
     resources :increase_checks, only: [:new, :create], path: "checks"
+    resources :fees, only: [:create]
     resources :paypal_transfers, only: [:new, :create]
     resources :wires, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
@@ -728,6 +728,10 @@ Rails.application.routes.draw do
     resources :invoices, only: [:new, :create, :index]
     resources :tags, only: [:create, :destroy]
     resources :event_tags, only: [:create, :destroy]
+
+    namespace :donation do
+      resource :goals, only: [:create, :update]
+    end
 
     resources :recurring_donations, only: [:create], path: "recurring" do
       member do

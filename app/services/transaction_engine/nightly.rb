@@ -13,14 +13,12 @@ module TransactionEngine
       safely { import_raw_plaid_transactions! }
       safely { import_raw_stripe_transactions! }
       safely { import_raw_csv_transactions! }
-      safely { import_raw_increase_transactions! }
       safely { import_raw_column_transactions! }
 
       # (2) Hash transactions
       safely { hash_raw_plaid_transactions! }
       safely { hash_raw_stripe_transactions! }
       safely { hash_raw_csv_transactions! }
-      safely { hash_raw_increase_transactions! }
 
       # (3) Canonize transactions
       safely { canonize_hashed_transactions! }
@@ -50,10 +48,6 @@ module TransactionEngine
 
     def import_raw_csv_transactions!
       ::TransactionEngine::RawCsvTransactionService::Import.new.run
-    end
-
-    def import_raw_increase_transactions!
-      ::TransactionEngine::RawIncreaseTransactionService::Increase::Import.new(start_date: @start_date).run
     end
 
     def import_raw_column_transactions!
@@ -102,10 +96,6 @@ module TransactionEngine
 
     def hash_raw_csv_transactions!
       ::TransactionEngine::HashedTransactionService::RawCsvTransaction::Import.new.run
-    end
-
-    def hash_raw_increase_transactions!
-      ::TransactionEngine::HashedTransactionService::RawIncreaseTransaction::Import.new(start_date: @start_date).run
     end
 
     def canonize_hashed_transactions!

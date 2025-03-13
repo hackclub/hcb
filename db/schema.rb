@@ -640,6 +640,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_17_050700) do
     t.index ["user_id"], name: "index_documents_on_user_id"
   end
 
+  create_table "donation_goals", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.integer "amount_cents", null: false
+    t.datetime "tracking_since", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_donation_goals_on_event_id"
+  end
+
   create_table "donation_payouts", force: :cascade do |t|
     t.text "stripe_payout_id"
     t.bigint "amount"
@@ -2254,6 +2264,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_17_050700) do
   add_foreign_key "documents", "events"
   add_foreign_key "documents", "users"
   add_foreign_key "documents", "users", column: "archived_by_id"
+  add_foreign_key "donation_goals", "events"
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"
