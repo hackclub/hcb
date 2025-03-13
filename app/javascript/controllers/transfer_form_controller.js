@@ -31,7 +31,7 @@ export default class extends Controller {
       no: {
         type: 'wire',
         link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
-      }
+      },
     },
     {
       id: 2,
@@ -73,7 +73,7 @@ export default class extends Controller {
       this.yesClickHandler = () => this.renderQuestion(question.yes)
       this.noClickHandler = () => this.renderQuestion(question.no)
     } else {
-      this.answerTextTarget.innerHTML = `${payload.type.replace("ach", "ACH")} transfer`
+      this.answerTextTarget.innerHTML = `${payload.type.replace('ach', 'ACH')} transfer`
       this.answerCTATarget.dataset.answer = payload.type
       this.learnMoreValue = payload.link
 
