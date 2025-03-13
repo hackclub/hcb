@@ -34,26 +34,26 @@ export default class extends Controller {
     {
       id: 2,
       question: 'Do you have their account & routing number?',
-      yes: [
-        'ach',
-        'https://help.hcb.hackclub.com/article/59-what-is-an-ach-transfer',
-      ],
-      no: [
-        'check',
-        'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
-      ],
+      yes: {
+        type: 'ach',
+        link: 'https://help.hcb.hackclub.com/article/59-what-is-an-ach-transfer',
+      },
+      no: {
+        type: 'check',
+        link: 'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
+      },
     },
     {
       id: 3,
       question: 'Does your recipient have a PayPal account?',
-      yes: [
-        'paypal',
-        'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
-      ],
-      no: [
-        'wire',
-        'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
-      ],
+      yes: {
+        type: 'paypal',
+        link: 'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
+      },
+      no: {
+        type: 'wire',
+        link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
+      },
     },
   ]
 
@@ -83,9 +83,9 @@ export default class extends Controller {
       this.yesClickHandler = () => this.renderQuestion(question.yes)
       this.noClickHandler = () => this.renderQuestion(question.no)
     } else {
-      this.answerTextTarget.innerHTML = `${payload[0] === 'ach' ? 'ACH' : payload[0]} transfer`
-      this.answerCTATarget.dataset.answer = payload[0]
-      this.learnMoreValue = payload[1]
+      this.answerTextTarget.innerHTML = `${payload.type.toUpperCase()} transfer`
+      this.answerCTATarget.dataset.answer = payload.type
+      this.learnMoreValue = payload.link
 
       this.answerTarget.hidden = false
       this.wizardTarget.hidden = true
