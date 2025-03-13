@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-if [ "$DISABLE_RAILS_DB_MIGRATIONS" = "true" ]; then
-  echo "SKIPPING DATABASE MIGRATIONS"
-else
-  bundle exec rake db:migrate
-fi
-
-bundle exec rake airbrake:deploy REVISION=$HEROKU_SLUG_COMMIT REPOSITORY=https://github.com/hackclub/hcb

@@ -200,27 +200,30 @@ $(document).on('turbo:load', function () {
 
   // if you add the money behavior to an input, it'll add commas, only allow two numbers for cents,
   // and only permit numbers to be entered
-  $('input[data-behavior~=money]').on('input', function () {
-    let value = $(this)
-      .val()
-      .replace(/,/g, '') // replace all commas with nothing
-      .replace(/[^0-9.]+/g, '') // replace anything that isn't a number or a dot with nothing
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // put commas into the number (pulled off of stack overflow)
 
-    let removeExtraCents
+  function attachMoneyInputListener() {
+    $('input[data-behavior~="money"]').off('input').on('input', function () {
+      let value = $(this)
+        .val()
+        .replace(/,/g, '') // remove all commas
+        .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ','); // add commas for thousands
+  
+      if (value.includes('.')) {
+        let parts = value.split('.');
+        value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '');
+      }
+  
+      $(this).val(value);
+    });
+  }
 
-    if (value.lastIndexOf('.') != -1) {
-      let cents = value.substring(value.lastIndexOf('.'), value.length)
-      cents = cents.replace(/[.,]/g, '').substring(0, cents.length > 2 ? 2 : 1)
+  attachMoneyInputListener();
 
-      removeExtraCents =
-        value.substring(0, value.lastIndexOf('.')) + '.' + cents
-    } else {
-      removeExtraCents = value
-    }
+  // Used to attach the money input listener to inputs inside of menus / popups.
 
-    $(this).val(removeExtraCents)
-  })
+  const observer = new MutationObserver(() => attachMoneyInputListener());
+  observer.observe(document.body, { childList: true, subtree: true });
 
   $('input[data-behavior~=prevent_whitespace]').on({
     keydown: function (e) {

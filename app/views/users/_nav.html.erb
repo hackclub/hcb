@@ -42,6 +42,11 @@
       icon: "attachment",
       async_badge: my_reimbursements_icon_path,
       selected: local_assigns[:selected] == :reimbursements %>
+    <%= dock_item "Pay",
+      my_payroll_path,
+      tooltip: "Submit invoices & get paid",
+      icon: "person-badge",
+      selected: local_assigns[:selected] == :payroll if current_user.jobs.any? %>
     <%= dock_item "Settings",
       my_settings_path,
       tooltip: "Edit account settings",
@@ -92,9 +97,7 @@
       </span>
     </h4>
 
-    <%= error_boundary fallback_text: "No recent activities available." do %>
-      <%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
-    <% end %>
+    <%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
   <% end %>
 
 <% end %>

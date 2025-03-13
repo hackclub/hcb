@@ -13,11 +13,17 @@ module Column
         handle_ach_incoming_transfer_scheduled
       elsif type == "ach.outgoing_transfer.returned"
         handle_ach_outgoing_transfer_returned
+      elsif type == "check.outgoing_debit.deposited"
+        handle_check_deposit_deposited
+      elsif type == "check.outgoing_debit.returned"
+        handle_check_deposit_returned
+      elsif type == "swift.outgoing_transfer.returned"
+        handle_swift_outgoing_transfer_returned
       elsif type.start_with?("check.incoming_debit")
         handle_outgoing_check_update
       end
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
     ensure
       head :ok
     end
@@ -33,8 +39,10 @@ module Column
 
       if account_number.deposit_only?
         ColumnService.return_ach(@object[:id], with: ColumnService::AchCodes::STOP_PAYMENT)
+        AccountNumberMailer.with(event: account_number.event, memo: "#{@object["company_name"]} #{@object["company_entry_description"]}", amount_cents: @object[:amount]).debits_disabled.deliver_later
       elsif account_number.event.balance_available_v2_cents < @object[:amount]
         ColumnService.return_ach(@object[:id], with: ColumnService::AchCodes::INSUFFICIENT_BALANCE)
+        AccountNumberMailer.with(event: account_number.event, memo: "#{@object["company_name"]} #{@object["company_entry_description"]}", amount_cents: @object[:amount]).insufficent_balance.deliver_later
       end
 
       # at this point, the ACH is approved!
@@ -59,11 +67,23 @@ module Column
       )
     end
 
+    def handle_check_deposit_deposited
+      check_deposit = CheckDeposit.find_by(column_id: @object[:id])
+
+      check_deposit&.update!(status: :deposited)
+    end
+
+    def handle_check_deposit_returned
+      check_deposit = CheckDeposit.find_by(column_id: @object[:id])
+
+      check_deposit&.update!(status: :returned)
+    end
+
     def verify_signature
       signature_valid = ActiveSupport::SecurityUtils.secure_compare(
         OpenSSL::HMAC.hexdigest(
           "SHA256",
-          Rails.application.credentials.column.dig(ColumnService::ENVIRONMENT, :webhook_secret),
+          Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :WEBHOOK_SECRET),
           request.body.read
         ),
         request.headers["Column-Signature"]

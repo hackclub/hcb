@@ -269,46 +269,6 @@ module ApplicationHelper
     content_for :title, text
   end
 
-  def commit_name
-    @short_hash ||= commit_hash[0...7]
-    @commit_name ||= begin
-      if commit_dirty?
-        "#{@short_hash}-dirty"
-      else
-        @short_hash
-      end
-    end
-  end
-
-  def commit_dirty?
-    ::Util.commit_dirty?
-  end
-
-  def commit_hash
-    ::Util.commit_hash
-  end
-
-  def commit_time
-    @commit_time ||= begin
-      heroku_time = ENV["HEROKU_RELEASE_CREATED_AT"]
-      git_time = `git log -1 --format=%at 2> /dev/null`.chomp
-
-      return nil if heroku_time.blank? && git_time.blank?
-
-      heroku_time.blank? ? git_time.to_i : Time.parse(heroku_time)
-    end
-
-    @commit_time
-  end
-
-  def commit_duration
-    @commit_duration ||= begin
-      return nil if commit_time.nil?
-
-      distance_of_time_in_words Time.at(commit_time), Time.now
-    end
-  end
-
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj

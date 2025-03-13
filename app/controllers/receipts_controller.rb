@@ -166,7 +166,7 @@ class ReceiptsController < ApplicationController
     end
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."

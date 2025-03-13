@@ -30,7 +30,7 @@ class DocusealController < ActionController::Base
       end
     end
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
     return render json: { success: false }
   end
 

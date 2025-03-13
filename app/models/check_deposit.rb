@@ -56,6 +56,17 @@ class CheckDeposit < ApplicationRecord
     CheckDepositMailer.with(check_deposit: self).deposited.deliver_later
   end
 
+  after_update if: -> { increase_status_previously_changed?(to: "returned") } do
+    canonical_pending_transaction.decline!
+    local_hcb_code.canonical_transactions.each do |ct|
+      fee = ct.fee
+      fee.amount_cents_as_decimal = 0
+      fee.reason = :transfer_returned
+      fee.save!
+    end
+    CheckDepositMailer.with(check_deposit: self).returned.deliver_later
+  end
+
   has_one_attached :front
   has_one_attached :back
 

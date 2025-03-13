@@ -7,6 +7,11 @@ class StaticPagesController < ApplicationController
   skip_before_action :signed_in_user, only: [:branding, :roles]
   skip_before_action :redirect_to_onboarding, only: [:branding, :roles]
 
+  after_action only: [:index, :branding] do
+    # Allow indexing home and branding pages
+    response.delete_header("X-Robots-Tag")
+  end
+
   def index
     if signed_in?
       @service = StaticPageService::Index.new(current_user:)
@@ -138,7 +143,7 @@ class StaticPagesController < ApplicationController
     redirect_back
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash[:error] = e.message
     return redirect_to params[:redirect_url] if params[:redirect_url]

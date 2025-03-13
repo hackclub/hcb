@@ -136,6 +136,16 @@
           </span>
         </td>
       </tr>
+      <% if @ach_transfer.employee_payment.present? %>
+        <tr>
+          <td style="text-align: right;">Employee:</td>
+          <td><%= @ach_transfer.employee_payment.employee.user.full_name %></td>
+        </tr>
+        <tr>
+          <td style="text-align: right;">Event:</td>
+          <td><%= @ach_transfer.employee_payment.employee.event.name %></td>
+        </tr>
+      <% end %>
     </tbody>
   </table>
 <% end %>

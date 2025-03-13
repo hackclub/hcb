@@ -5,6 +5,7 @@ require "sidekiq/cron/web"
 
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+  get "up" => "rails/health#show", as: :rails_health_check
 
   constraints AdminConstraint do
     mount Audits1984::Engine => "/console"
@@ -62,6 +63,7 @@ Rails.application.routes.draw do
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
     get "settings/admin", to: "users#edit_admin"
+    get "payroll", to: "my#payroll", as: :my_payroll
 
     get "inbox", to: "my#inbox", as: :my_inbox
     get "activities", to: "my#activities", as: :my_activities
@@ -196,6 +198,7 @@ Rails.application.routes.draw do
       get "pending_ledger", to: "admin#pending_ledger"
       get "ach", to: "admin#ach"
       get "reimbursements", to: "admin#reimbursements"
+      get "payroll", to: "admin#payroll"
       get "stripe_card_personalization_designs", to: "admin#stripe_card_personalization_designs"
       get "stripe_card_personalization_design_new", to: "admin#stripe_card_personalization_design_new"
       post "stripe_card_personalization_design_create", to: "admin#stripe_card_personalization_design_create"
@@ -218,6 +221,8 @@ Rails.application.routes.draw do
       get "grants", to: "admin#grants"
       get "hq_receipts", to: "admin#hq_receipts"
       get "account_numbers", to: "admin#account_numbers"
+      get "employees", to: "admin#employees"
+      get "employee_payments", to: "admin#employee_payments"
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
@@ -264,6 +269,7 @@ Rails.application.routes.draw do
       end
     end
     resources :ledger_audits, only: [:index, :show]
+    resources :w9s, only: [:index, :new, :create]
     resources :check_deposits, only: [:index, :show] do
       post "submit", on: :member
       post "reject", on: :member
@@ -457,6 +463,7 @@ Rails.application.routes.draw do
     collection do
       get "collect_email", to: "exports#collect_email", as: "collect_email"
       get ":event", to: "exports#transactions", as: "transactions"
+      get "reimbursements/:event", to: "exports#reimbursements", as: "reimbursements"
     end
   end
 
@@ -486,6 +493,18 @@ Rails.application.routes.draw do
   end
 
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
+
+  resources :employees do
+    post "terminate"
+    post "onboard"
+  end
+
+  namespace :employee do
+    resources :payments do
+      post "review"
+      get "stub"
+    end
+  end
 
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
@@ -600,7 +619,6 @@ Rails.application.routes.draw do
 
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
-  post "increase/webhook", to: "increase#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
 
@@ -625,10 +643,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :card_grants, only: [:show], path: "grants" do
+  resources :card_grants, only: [:show, :edit, :update], path: "grants" do
     member do
       post "activate"
       get "spending"
+      post "clear_purpose"
     end
   end
 
@@ -651,6 +670,10 @@ Rails.application.routes.draw do
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
     # Loaded as Turbo frames on the home page
+    get :team_stats
+    get :recent_activity
+    get :balance_transactions
+    get :money_movement
     get :merchants_categories
     get :top_categories
     get :tags_users
@@ -658,6 +681,7 @@ Rails.application.routes.draw do
 
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
+    get "ledger"
     put "toggle_hidden"
     post "claim_point_of_contact"
 
@@ -684,12 +708,13 @@ Rails.application.routes.draw do
     get "statements"
     get "promotions"
     get "reimbursements"
+    get "employees"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
-    post "finish_signee_backfill"
     resources :disbursements, only: [:new, :create]
     resources :increase_checks, only: [:new, :create], path: "checks"
+    resources :fees, only: [:create]
     resources :paypal_transfers, only: [:new, :create]
     resources :wires, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
@@ -703,6 +728,10 @@ Rails.application.routes.draw do
     resources :invoices, only: [:new, :create, :index]
     resources :tags, only: [:create, :destroy]
     resources :event_tags, only: [:create, :destroy]
+
+    namespace :donation do
+      resource :goals, only: [:create, :update]
+    end
 
     resources :recurring_donations, only: [:create], path: "recurring" do
       member do

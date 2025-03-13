@@ -1,12 +1,22 @@
 <%# locals: (card_grant:) %>
-
 <% if card_grant.active? %>
-
-  <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: card_grant.event.slug),
-              method: :post,
-              data: { confirm: "Are you sure? This will donate the remaining balance on your grant to #{card_grant.event.name} and cancel this card." },
-              class: "btn bg-info" do %>
+  <%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "btn" do %>
     <%= inline_icon "support", size: 20 %> Return grant to <%= card_grant.event.name %>
   <% end %>
 
+  <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="return-grant">
+    <%= modal_header "Return #{card_grant.balance.format} to #{card_grant.event.name}?" %>
+
+    <%= form_with(url: cancel_event_card_grant_path(id: card_grant.hashid, event_id: card_grant.event.slug), class: "w-full") do |form| %>
+      <p><b>Caution, returning this grant will render it unusable.</b></p>
+      <ul>
+        <li><strong>You will not be able to use this card.</strong></li>
+        <li>The remaining money on this card will be transferred to <%= card_grant.event.name %>.</li>
+        <li>This card will be canceled.</li>
+      </ul>
+
+      <p>Are you sure you want to return this grant to <strong><%= card_grant.event.name %></strong>?</p>
+      <%= form.submit "I understand. Return #{card_grant.balance.format} grant", class: "btn bg-error" %>
+    <% end %>
+  </div>
 <% end %>

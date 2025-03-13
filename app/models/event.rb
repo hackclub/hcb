@@ -66,6 +66,7 @@ class Event < ApplicationRecord
   validates_as_paranoid
 
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
+  normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
@@ -251,6 +252,7 @@ class Event < ApplicationRecord
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
+  has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
@@ -265,6 +267,9 @@ class Event < ApplicationRecord
   has_many :payouts, through: :invoices
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+
+  has_many :employees
+  has_many :employee_payments, through: :employees, source: :payments, class_name: "Employee::Payment"
 
   has_many :documents
 
@@ -282,7 +287,7 @@ class Event < ApplicationRecord
 
   scope :dormant, -> { where.not(id: Event.engaged) }
 
-  has_many :fees, through: :canonical_event_mappings
+  has_many :fees
   has_many :bank_fees
 
   has_many :tags, -> { includes(:hcb_codes) }
@@ -342,7 +347,7 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
-  before_create { self.increase_account_id ||= IncreaseService::AccountIds::FS_MAIN }
+  before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now

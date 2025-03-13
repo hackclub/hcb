@@ -24,6 +24,7 @@
   </div>
 <% end %>
 
+<%= render "donations/donation_goal", donation: @donation %>
 <%= render "donations/donation_form", donation: @donation %>
 
 <% if @event.demo_mode? %>

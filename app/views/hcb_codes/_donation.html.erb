@@ -224,34 +224,36 @@
 
   <%= modal_header header %>
 
-  <% unknown = capture do %>
+  <% none = capture do %>
     <span class="muted">Unknown</span>
   <% end %>
 
   <div class="details mb2">
     <p>
       <strong>Referrer</strong>
-      <%= @donation.referrer || unknown %>
+      <%= @donation.referrer.presence || capture do %>
+        <span class="muted">Unknown</span>
+      <% end %>
     </p>
     <p>
       <strong>UTM source</strong>
-      <%= @donation.utm_source || unknown %>
+      <%= @donation.utm_source.presence || none %>
     </p>
     <p>
       <strong>UTM medium</strong>
-      <%= @donation.utm_medium || unknown %>
+      <%= @donation.utm_medium.presence || none %>
     </p>
     <p>
       <strong>UTM campaign</strong>
-      <%= @donation.utm_campaign || unknown %>
+      <%= @donation.utm_campaign.presence || none %>
     </p>
     <p>
       <strong>UTM term</strong>
-      <%= @donation.utm_term || unknown %>
+      <%= @donation.utm_term.presence || none %>
     </p>
     <p>
       <strong>UTM content</strong>
-      <%= @donation.utm_content || unknown %>
+      <%= @donation.utm_content.presence || none %>
     </p>
   </div>
   <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">

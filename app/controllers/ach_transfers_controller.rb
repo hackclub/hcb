@@ -33,7 +33,7 @@ class AchTransfersController < ApplicationController
 
       # works, but not being used at the moment
       format.png do
-        send_data ::AchTransferService::PreviewTransferConfirmationLetter.new(ach_transfer: @ach_transfer, event: @event).run, filename: "transfer_confirmation_letter.png"
+        send_data ::DocumentPreviewService.new(type: :ach_transfer_confirmation, ach_transfer: @ach_transfer, event: @event).run, filename: "transfer_confirmation_letter.png"
       end
 
     end
@@ -105,7 +105,7 @@ class AchTransfersController < ApplicationController
   rescue Faraday::BadRequestError
     return render json: { valid: false, hint: "Bank not found for this routing number." }
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
     render json: { valid: true }
   end
 
