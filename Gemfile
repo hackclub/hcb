@@ -32,7 +32,7 @@ gem "country_select", "~> 8.0"
 
 gem "faraday" # web requests
 
-gem "stripe", "11.7.0"
+gem "stripe", "13.5.0"
 gem "plaid", "~> 34.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
 gem "recursive-open-struct" # for stubbing stripe api objects
