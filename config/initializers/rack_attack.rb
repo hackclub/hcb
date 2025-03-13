@@ -13,7 +13,9 @@ class Rack::Attack
   # Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
   # Safelist Hack Club Office
-  safelist_ip(Rails.application.credentials.office_ip)
+  if office_ip = Credentials.fetch(:OFFICE_IP)
+    safelist_ip(office_ip)
+  end
 
   # Get the IP addresses of stripe as an array
   stripe_ips_webhooks = Net::HTTP.get(URI("https://stripe.com/files/ips/ips_webhooks.txt")).split("\n")

@@ -7,6 +7,11 @@ class StaticPagesController < ApplicationController
   skip_before_action :signed_in_user, only: [:branding, :roles]
   skip_before_action :redirect_to_onboarding, only: [:branding, :roles]
 
+  after_action only: [:index, :branding] do
+    # Allow indexing home and branding pages
+    response.delete_header("X-Robots-Tag")
+  end
+
   def index
     if signed_in?
       @service = StaticPageService::Index.new(current_user:)

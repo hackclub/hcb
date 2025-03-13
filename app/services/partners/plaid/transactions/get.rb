@@ -55,7 +55,7 @@ module Partners
 
             results
           rescue ::Plaid::ApiError => e
-            Rails.error.report(e, context: { message: "plaid_client.transactions.get failed for bank_account #{bank_account.id} with access token #{access_token}. #{error.message}" })
+            Rails.error.report(e, context: { message: "plaid_client.transactions.get failed for bank_account #{bank_account.id} with access token #{access_token}." })
 
             mark_plaid_item_failed!
 

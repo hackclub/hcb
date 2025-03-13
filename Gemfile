@@ -32,7 +32,6 @@ gem "country_select", "~> 8.0"
 
 gem "faraday" # web requests
 
-gem "increase", "~> 0.3.3"
 gem "stripe", "11.7.0"
 gem "plaid", "~> 34.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"

@@ -252,6 +252,7 @@ class Event < ApplicationRecord
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
+  has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
@@ -346,7 +347,7 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
-  before_create { self.increase_account_id ||= IncreaseService::AccountIds::FS_MAIN }
+  before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now

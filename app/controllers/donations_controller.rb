@@ -172,7 +172,7 @@ class DonationsController < ApplicationController
   end
 
   def export
-    authorize @event.donations.first
+    authorize @event.donations.build
 
     respond_to do |format|
       format.csv { stream_donations_csv }
@@ -181,7 +181,7 @@ class DonationsController < ApplicationController
   end
 
   def export_donors
-    authorize @event.donations.first
+    authorize @event.donations.build
 
     respond_to do |format|
       format.csv { stream_donors_csv }

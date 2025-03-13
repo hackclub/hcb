@@ -619,7 +619,6 @@ Rails.application.routes.draw do
 
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
-  post "increase/webhook", to: "increase#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
 
@@ -729,6 +728,10 @@ Rails.application.routes.draw do
     resources :invoices, only: [:new, :create, :index]
     resources :tags, only: [:create, :destroy]
     resources :event_tags, only: [:create, :destroy]
+
+    namespace :donation do
+      resource :goals, only: [:create, :update]
+    end
 
     resources :recurring_donations, only: [:create], path: "recurring" do
       member do

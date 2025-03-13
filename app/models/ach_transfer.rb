@@ -191,7 +191,7 @@ class AchTransfer < ApplicationRecord
     return unless may_mark_in_transit?
 
     account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,

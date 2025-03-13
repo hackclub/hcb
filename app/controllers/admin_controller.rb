@@ -1277,7 +1277,7 @@ class AdminController < ApplicationController
     info = airtable_info[task_name]
     task = Faraday.new { |c|
       c.response :json
-      c.authorization :Bearer, Rails.application.credentials.airtable[:pat]
+      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
     }.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
 
     task.size

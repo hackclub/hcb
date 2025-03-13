@@ -3,6 +3,7 @@
 require_relative "boot"
 
 require "rails/all"
+require_relative "../app/lib/credentials"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -13,23 +14,19 @@ module Bank
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.2
 
-    if ENV["USE_PROD_CREDENTIALS"]&.downcase == "true"
-      config.credentials.content_path = Rails.root.join("config/credentials/production.yml.enc")
-      config.credentials.key_path = Rails.root.join("config/credentials/production.key")
-      raise StandardError, "USE_PROD_CREDENTIALS is set to true but config/credentials/production.key is missing" unless File.file?(config.credentials.key_path)
-    end
+    Credentials.load if ENV["DOPPLER_TOKEN"]
 
     config.action_mailer.default_url_options = {
-      host: Rails.application.credentials.dig(:default_url_host, :live)
+      host: Credentials.fetch(:LIVE_URL_HOST)
     }
 
     # SMTP config
     config.action_mailer.smtp_settings = {
-      user_name: Rails.application.credentials.dig(:smtp, :username),
-      password: Rails.application.credentials.dig(:smtp, :password),
-      address: Rails.application.credentials.dig(:smtp, :address),
-      domain: Rails.application.credentials.dig(:smtp, :domain),
-      port: Rails.application.credentials.dig(:smtp, :port),
+      user_name: Credentials.fetch(:SMTP, :USERNAME),
+      password: Credentials.fetch(:SMTP, :PASSWORD),
+      address: Credentials.fetch(:SMTP, :ADDRESS),
+      domain: Credentials.fetch(:SMTP, :DOMAIN),
+      port: Credentials.fetch(:SMTP, :PORT),
       authentication: :plain
     }
 
@@ -88,6 +85,11 @@ module Bank
 
     # See https://jordanhollinger.com/2023/11/11/rails-strict-loading/ for context
     config.active_record.action_on_strict_loading_violation = :log
+
+    # setting up ActiveRecord's encryption: https://guides.rubyonrails.org/active_record_encryption.html#setup
+    config.active_record.encryption.primary_key = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :PRIMARY_KEY)
+    config.active_record.encryption.deterministic_key = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :DETERMINISTIC_KEY)
+    config.active_record.encryption.key_derivation_salt = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :KEY_DERIVATION_SALT)
 
   end
 end
