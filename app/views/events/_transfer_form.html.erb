@@ -47,9 +47,10 @@
     <div data-transfer-form-target="wizard" hidden>
       <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
         <%= inline_icon "view-back" %>
-        Help me decide
+        Exit
       </a>
-      <h3 class="-mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
+      <p class="homepage-eyebrow pt-2 mb-0">Help me decide</p>
+      <h3 class="mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
       <div class="flex gap-2">
         <button type="button" class="btn shadow-none" data-transfer-form-target="yes" data-action="click->transfer-form#yesClickHandler">
           Yes
@@ -64,9 +65,10 @@
     <div data-transfer-form-target="answer" hidden>
       <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
         <%= inline_icon "view-back" %>
-        Our recommendation
+        Exit
       </a>
-      <h3 class="-mt-2 font-bold mb-1 capitalize" data-transfer-form-target="answerText"></h3>
+      <p class="homepage-eyebrow pt-2 mb-0">Our recommendation</p>
+      <h3 class="mt-2 font-bold mb-4 capitalize" data-transfer-form-target="answerText"></h3>
       <a href="#" data-transfer-form-target="learnMore" class="mb-4 inline-block no-underline" target="_blank">Learn more &rarr;</a>
       <div class="flex gap-2">
         <button type="button" class="btn bg-secondary shadow-none" data-transfer-form-target="answerCTA" data-action="click->transfer-form#showAnswer">
