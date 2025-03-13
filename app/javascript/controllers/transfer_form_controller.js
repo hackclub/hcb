@@ -73,7 +73,7 @@ export default class extends Controller {
       this.yesClickHandler = () => this.renderQuestion(question.yes)
       this.noClickHandler = () => this.renderQuestion(question.no)
     } else {
-      this.answerTextTarget.innerHTML = `${payload.type.toUpperCase()} transfer`
+      this.answerTextTarget.innerHTML = `${payload.type.replace("ach", "ACH")} transfer`
       this.answerCTATarget.dataset.answer = payload.type
       this.learnMoreValue = payload.link
 
