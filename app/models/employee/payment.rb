@@ -57,9 +57,10 @@ class Employee
       state :failed
 
       event :mark_approved do
-        transitions from: :submitted, to: :approved
-        guard do
-          !event.frozen?
+        transitions from: :submitted, to: :approved do
+          guard do
+            !event.frozen?
+          end
         end
         after do
           update!(payout: nil)
