@@ -46,6 +46,7 @@ class Disbursement < ApplicationRecord
 
   include AASM
   include Commentable
+  include Freezeable
 
   has_paper_trail
 

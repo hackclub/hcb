@@ -646,6 +646,10 @@ class Event < ApplicationRecord
     !engaged?
   end
 
+  def frozen?
+    Flipper.enabled?(:frozen, self)
+  end
+
   def revenue_fee
     plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
   end

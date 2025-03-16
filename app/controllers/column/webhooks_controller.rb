@@ -37,7 +37,7 @@ module Column
 
       return if account_number.nil? # Allow debits to non-HCB-managed account numbers
 
-      if account_number.deposit_only?
+      if account_number.deposit_only? || account_number.event.frozen?
         ColumnService.return_ach(@object[:id], with: ColumnService::AchCodes::STOP_PAYMENT)
         AccountNumberMailer.with(event: account_number.event, memo: "#{@object["company_name"]} #{@object["company_entry_description"]}", amount_cents: @object[:amount]).debits_disabled.deliver_later
       elsif account_number.event.balance_available_v2_cents < @object[:amount]

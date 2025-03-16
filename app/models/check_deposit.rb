@@ -28,6 +28,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CheckDeposit < ApplicationRecord
+  include Freezeable
   has_paper_trail
 
   REJECTION_DESCRIPTIONS = {

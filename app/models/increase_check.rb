@@ -52,6 +52,7 @@ class IncreaseCheck < ApplicationRecord
 
   include AASM
   include Payoutable
+  include Freezeable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
