@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Freezeable
+module Freezable
   extend ActiveSupport::Concern
 
   included do

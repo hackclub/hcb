@@ -65,7 +65,7 @@ class AchTransfer < ApplicationRecord
   include Commentable
   include Payoutable
   include Payment
-  include Freezeable
+  include Freezable
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]

@@ -53,7 +53,7 @@ class Wire < ApplicationRecord
 
   include AASM
 
-  include Freezeable
+  include Freezable
 
   include CountryEnumable
   has_country_enum(field: :recipient_country)
