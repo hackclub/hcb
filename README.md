@@ -8,7 +8,7 @@
 <br>
 
 > [!CAUTION]
-> If you previous cloned this repository, please:
+> If you previously cloned this repository, please:
 > 1. Delete your existing clone of this repository
 > 2. Reclone it
 >
