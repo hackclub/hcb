@@ -102,7 +102,7 @@
         <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
         <%= form.select(:reimbursement_report_id,
             current_user.admin? ?
-              Reimbursement::Report.all.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
+              (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
             current_user == expense.report.user ?
               current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
               expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
@@ -115,7 +115,7 @@
         <%= form.label :event_id, "Create a new report", class: "mt2 bold" %>
         <%= form.select(:event_id,
             current_user.admin? ?
-              Event.all.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
+              (current_user.events + Event.all.reorder(Event::CUSTOM_SORT)).map { |event| [event.name, event.id] } :
               current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
             { prompt: "Select an event…", required: false }, "x-model": "eventId") %>
         <% unless admin_signed_in? %>

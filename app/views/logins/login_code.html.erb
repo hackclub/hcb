@@ -1,8 +1,6 @@
 <% title "Enter login code" %>
 <% content_for(:page_class) { "bg-snow" } %>
-<div class="flex items-center justify-between">
-  <%= render partial: "application/logo" %>
-</div>
+
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <%= render "header", label: "Sign in to HCB" do %>
     <%= @use_sms_auth ? "SMS" : "Email" %> code
@@ -18,25 +16,9 @@
     <%= @use_sms_auth ? "your phone number ending in " + @phone_last_four : mail_to(@email, { target: "_blank" }) %>
   </p>
   <%= form_tag complete_login_path(@login) do %>
-    <div class="card px-6 sm:px-4 py-6 mb-4 shadow-sm border" style="max-width: 450px;" data-controller="login-code">
-      <div class="block">
-        <%= label_tag :login_code_1, "Enter your login code", class: "left-align mb-2" %>
-        <div class="flex font-mono transition-none items-center" data-login-code-target="wrapper">
-          <% 6.times do |i| %>
-            <%= number_field_tag "login_code_#{i + 1}".to_sym, "",
-               placeholder: "",
-               autocomplete: "off",
-               data: { "login-code-target": "input" },
-               class: "text-center mb-0 text-lg font-bold dark:!border-gray-600 !rounded-none focus:z-10 -mr-[1px] first:!rounded-l-lg #{ [2, 5].include?(i) && "!rounded-r-lg"}  #{ (i == 3) && "!rounded-l-lg"}",
-               required: true %>
-            <% if i == 2 %>
-              <span class="px-4">&mdash;</span>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-      <%= hidden_field_tag :login_code, "", class: "left-align mb2 !max-w-full w-max", required: true, data: { "login-code-target": "composite", "1p-ignore": "true" } %>
-    </div>
+    <%= text_field :login_code, "", placeholder: "Enter your login code", name: "login_code", class: "!max-w-full w-max", required: true, autofocus: true unless Flipper.enabled?(:otp_single_input, @login.user) %>
+
+    <%= text_field :login_code, "", class: "otp_code", autocomplete: "one-time-code", required: true, inputmode: "numeric", maxlength: "6", autofocus: true, data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
     <%= hidden_field_tag :method, :login_code %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>

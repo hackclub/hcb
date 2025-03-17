@@ -129,7 +129,7 @@ class AchTransfer < ApplicationRecord
     event :mark_in_transit do
       after do
         AchTransferMailer.with(ach_transfer: self).notify_recipient.deliver_later if self.send_email_notification
-        employee_payment.mark_admin_approved! if employee_payment.present?
+        employee_payment.mark_paid! if employee_payment.present?
       end
       transitions from: [:pending, :deposited, :scheduled], to: :in_transit
     end
@@ -191,7 +191,7 @@ class AchTransfer < ApplicationRecord
     return unless may_mark_in_transit?
 
     account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,

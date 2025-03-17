@@ -132,7 +132,8 @@ class EventsController < ApplicationController
     authorize @event
     @users = BreakdownEngine::Users.new(@event).run
     @tags = BreakdownEngine::Tags.new(@event).run
-    @empty_tags = @users.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+
+    @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
     render partial: "events/home/tags_users", locals: { users: @users, tags: @tags, event: @event }
@@ -386,16 +387,6 @@ class EventsController < ApplicationController
     end
   end
 
-  def finish_signee_backfill
-    authorize @event
-    if @event.organizer_positions.where(is_signee: nil).update(is_signee: false)
-      flash[:success] = "Wow-e! It's done... the signee backfill that is."
-    else
-      flash[:error] = "WHAT?! An error. Go pester @sampoder."
-    end
-    redirect_back fallback_location: event_team_path(@event.slug)
-  end
-
   # DELETE /events/1
   def destroy
     authorize @event
@@ -416,7 +407,7 @@ class EventsController < ApplicationController
   end
 
   def card_overview
-    @status = %w[active inactive].include?(params[:status]) ? params[:status] : nil
+    @status = %w[active frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
 
     cookies[:card_overview_view] = params[:view] if params[:view]
@@ -435,8 +426,10 @@ class EventsController < ApplicationController
     all_stripe_cards = case @status
                        when "active"
                          all_stripe_cards.active
-                       when "inactive"
+                       when "frozen"
                          all_stripe_cards.deactivated
+                       when "canceled"
+                         all_stripe_cards.canceled
                        else
                          all_stripe_cards
                        end
@@ -930,6 +923,7 @@ class EventsController < ApplicationController
       :emburse_department_id,
       :country,
       :postal_code,
+      :risk_level,
       :point_of_contact_id,
       :slug,
       :hidden,

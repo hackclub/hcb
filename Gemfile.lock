@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/hackclub/yellow_pages.git
-  revision: f37dcd4af3197d0dfc6093e999937da8b83b4e23
+  revision: 2422773b5728afb5461682f887a91b76c7669745
   specs:
     yellow_pages (0.4.0)
 
@@ -96,8 +96,8 @@ GEM
       addressable (>= 2.3.2)
       nokogiri
       safely_block (>= 0.4)
-    ahoy_matey (5.2.1)
-      activesupport (>= 6.1)
+    ahoy_matey (5.3.0)
+      activesupport (>= 7)
       device_detector (>= 1)
       safely_block (>= 0.4)
     airbrake (13.0.5)
@@ -113,10 +113,11 @@ GEM
       activerecord (>= 3.2, < 8.0)
       rake (>= 10.4, < 14.0)
     api-pagination (6.0.0)
-    appsignal (4.3.3)
+    appsignal (4.5.4)
       logger
-      rack
-    argon2-kdf (0.2.0)
+      rack (>= 2.0.0)
+    argon2-kdf (0.3.0)
+      fiddle
     ast (2.4.2)
     audits1984 (0.1.7)
       console1984
@@ -160,13 +161,13 @@ GEM
     bigdecimal (3.1.9)
     bindata (2.5.0)
     bindex (0.8.1)
-    blazer (3.1.0)
+    blazer (3.2.0)
       activerecord (>= 6.1)
       chartkick (>= 5)
       csv
       railties (>= 7)
       safely_block (>= 0.4)
-    blind_index (2.6.1)
+    blind_index (2.6.2)
       activesupport (>= 7)
       argon2-kdf (>= 0.2)
     bootsnap (1.18.4)
@@ -190,7 +191,7 @@ GEM
       cairo (>= 1.16.2)
       glib2 (= 4.2.4)
     cbor (0.5.9.8)
-    chartkick (5.1.2)
+    chartkick (5.1.4)
     childprocess (5.1.0)
       logger (~> 1.5)
     chronic (0.10.2)
@@ -221,7 +222,7 @@ GEM
       addressable
     cssbundling-rails (1.4.1)
       railties (>= 6.0.0)
-    csv (3.3.0)
+    csv (3.3.2)
     date (3.4.1)
     declarative (0.0.20)
     device_detector (1.1.3)
@@ -306,8 +307,6 @@ GEM
     faraday-em_http (1.0.0)
     faraday-em_synchrony (1.0.0)
     faraday-excon (1.1.0)
-    faraday-follow_redirects (0.3.0)
-      faraday (>= 1, < 3)
     faraday-httpclient (1.0.1)
     faraday-multipart (1.1.0)
       multipart-post (~> 2.0)
@@ -402,14 +401,9 @@ GEM
     httpclient (2.8.3)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
-    image_processing (1.12.2)
-      mini_magick (>= 4.9.5, < 5)
+    image_processing (1.14.0)
+      mini_magick (>= 4.9.5, < 6)
       ruby-vips (>= 2.0.17, < 3)
-    increase (0.3.3)
-      faraday (>= 1.0.1, < 2.0)
-      faraday-follow_redirects (~> 0.3)
-      faraday-multipart (~> 1.0)
-      marcel (~> 1.0)
     invisible_captcha (2.3.0)
       rails (>= 5.2)
     io-console (0.8.0)
@@ -427,7 +421,7 @@ GEM
       thor (>= 0.14, < 2.0)
     jsbundling-rails (1.3.1)
       railties (>= 6.0.0)
-    json (2.10.1)
+    json (2.10.2)
     jwt (2.10.1)
       base64
     kaminari (1.2.2)
@@ -468,7 +462,7 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     local_time (3.0.2)
-    lockbox (2.0.0)
+    lockbox (2.0.1)
     logger (1.6.6)
     lograge (0.14.0)
       actionpack (>= 4)
@@ -486,7 +480,9 @@ GEM
     marcel (1.0.4)
     matrix (0.4.2)
     method_source (1.1.0)
-    mini_magick (4.13.2)
+    mini_magick (5.2.0)
+      benchmark
+      logger
     mini_mime (1.1.5)
     mini_portile2 (2.8.8)
     minitest (5.25.4)
@@ -512,7 +508,7 @@ GEM
     native-package-installer (1.1.9)
     net-http-persistent (4.0.2)
       connection_pool (~> 2.2)
-    net-imap (0.5.5)
+    net-imap (0.5.6)
       date
       net-protocol
     net-pop (0.1.2)
@@ -522,7 +518,7 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.4)
-    nokogiri (1.18.2)
+    nokogiri (1.18.3)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     observer (0.1.2)
@@ -531,7 +527,7 @@ GEM
     openssl-signature_algorithm (1.3.0)
       openssl (> 2.0)
     os (1.1.4)
-    ostruct (0.6.0)
+    ostruct (0.6.1)
     paper_trail (16.0.0)
       activerecord (>= 6.1)
       request_store (~> 1.4)
@@ -585,7 +581,7 @@ GEM
       railties (>= 4.2)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (2.2.11)
+    rack (2.2.13)
     rack-attack (6.7.0)
       rack (>= 1.0, < 4)
     rack-cors (2.0.2)
@@ -639,7 +635,7 @@ GEM
     rbs (3.8.1)
       logger
     rbtree3 (0.7.1)
-    rdoc (6.11.0)
+    rdoc (6.12.0)
       psych (>= 4.0.0)
     react-rails (3.2.1)
       babel-transpiler (>= 0.7.0)
@@ -653,9 +649,9 @@ GEM
       json
       matrix
     redcarpet (3.6.0)
-    redis (5.3.0)
+    redis (5.4.0)
       redis-client (>= 0.22.0)
-    redis-client (0.23.2)
+    redis-client (0.24.0)
       connection_pool
     regexp_parser (2.10.0)
     relaxed-rubocop (2.5)
@@ -710,11 +706,12 @@ GEM
       unicode-display_width (>= 2.4.0, < 4.0)
     rubocop-ast (1.38.0)
       parser (>= 3.3.1.0)
-    rubocop-rails (2.29.1)
+    rubocop-rails (2.30.1)
       activesupport (>= 4.2.0)
+      lint_roller (~> 1.1)
       rack (>= 1.1)
-      rubocop (>= 1.52.0, < 2.0)
-      rubocop-ast (>= 1.31.1, < 2.0)
+      rubocop (>= 1.72.1, < 2.0)
+      rubocop-ast (>= 1.38.0, < 2.0)
     ruby-limiter (2.3.0)
     ruby-progressbar (1.13.0)
     ruby-vips (2.1.4)
@@ -781,7 +778,7 @@ GEM
     stackprof (0.2.26)
     statsd-instrument (3.9.9)
     statsd-ruby (1.5.0)
-    stringio (3.1.2)
+    stringio (3.1.5)
     stripe (11.7.0)
     strong_migrations (1.8.0)
       activerecord (>= 5.2)
@@ -798,7 +795,7 @@ GEM
     turbo-rails (2.0.11)
       actionpack (>= 6.0.0)
       railties (>= 6.0.0)
-    twilio-ruby (7.4.2)
+    twilio-ruby (7.5.0)
       benchmark
       faraday (>= 0.9, < 3.0)
       jwt (>= 1.5, < 3.0)
@@ -844,7 +841,7 @@ GEM
     wkhtmltopdf-binary (0.12.6.8)
     xxhash (0.6.0)
     yard (0.9.37)
-    zeitwerk (2.7.1)
+    zeitwerk (2.7.2)
 
 PLATFORMS
   ruby
@@ -905,7 +902,6 @@ DEPENDENCIES
   hashid-rails (~> 1.0)
   htmlbeautifier
   image_processing (~> 1.2)
-  increase (~> 0.3.3)
   invisible_captcha
   irb (~> 1.14.3)
   jbuilder (~> 2.13)
@@ -944,7 +940,7 @@ DEPENDENCIES
   react-rails
   recursive-open-struct
   redcarpet
-  redis (~> 5.3)
+  redis (~> 5.4)
   relaxed-rubocop
   rinku
   rotp
@@ -953,7 +949,7 @@ DEPENDENCIES
   rspec-rails (~> 7.1.0)
   rtesseract
   rubocop
-  rubocop-rails (~> 2.29)
+  rubocop-rails (~> 2.30)
   ruby-limiter
   safely_block
   sidekiq (~> 7.3.8)

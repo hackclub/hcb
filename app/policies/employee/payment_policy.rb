@@ -3,15 +3,19 @@
 class Employee
   class PaymentPolicy < ApplicationPolicy
     def new?
-      employee
+      employee || admin || manager
     end
 
     def create?
-      employee
+      employee || admin || manager
     end
 
     def review?
       admin || manager
+    end
+
+    def stub?
+      employee || admin || manager
     end
 
     private

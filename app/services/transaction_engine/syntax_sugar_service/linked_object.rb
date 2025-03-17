@@ -128,7 +128,7 @@ module TransactionEngine
       def likely_invoice
         return nil unless event
 
-        potential_payouts = event.payouts.where("invoice_payouts.statement_descriptor ilike 'PAYOUT #{likely_incoming_invoice_short_name}%' and invoice_payouts.amount = #{amount_cents}")
+        potential_payouts = event.payouts.where("invoice_payouts.statement_descriptor ilike ? and invoice_payouts.amount = ?", "PAYOUT #{ActiveRecord::Base.sanitize_sql_like(likely_incoming_invoice_short_name)}%", amount_cents)
 
         return nil unless potential_payouts.present?
 
@@ -138,7 +138,7 @@ module TransactionEngine
       def likely_invoice_or_donation_for_fee_refund
         return nil unless event
 
-        fee_reimbursement = FeeReimbursement.where("transaction_memo ilike '%#{likely_donation_for_fee_refund_hex_random_id}%'").first
+        fee_reimbursement = FeeReimbursement.where("transaction_memo ilike ?", "%#{ActiveRecord::Base.sanitize_sql_like(likely_donation_for_fee_refund_hex_random_id)}%").first
 
         return nil unless fee_reimbursement
 
@@ -148,7 +148,7 @@ module TransactionEngine
       def likely_donation
         return nil unless event
 
-        potential_donation_payouts = event.donation_payouts.where("donation_payouts.statement_descriptor ilike 'DONATE #{likely_donation_short_name}%' and donation_payouts.amount = #{amount_cents}")
+        potential_donation_payouts = event.donation_payouts.where("donation_payouts.statement_descriptor ilike ? and donation_payouts.amount = ?", "DONATE #{ActiveRecord::Base.sanitize_sql_like(likely_donation_short_name)}%", amount_cents)
 
         return nil unless potential_donation_payouts.present?
 

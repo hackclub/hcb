@@ -3,6 +3,8 @@
 module SearchService
   class Engine
     class Users
+      include DynamicFilters
+
       def initialize(query, user, context)
         @query = query
         @user = user
@@ -22,7 +24,7 @@ module SearchService
           case condition[:property]
           when "date"
             value = Chronic.parse(condition[:value], context: :past)
-            users = users.where("created_at #{condition[:operator]} ?", value)
+            filter_by_column(users, :created_at, condition[:operator], value)
           end
         end
         users = users.search_name(@query["query"])

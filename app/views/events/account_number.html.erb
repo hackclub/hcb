@@ -20,7 +20,7 @@
       <span class="h4 muted">
         Account
         <% if @event.column_account_number&.deposit_only? %>
-          (receive-only)
+          (deposit-only)
         <% else %>
           (receive + send)
         <% end %>
@@ -61,7 +61,7 @@
         <div class="card container--sm mx-auto center overflow-visible pb0 mb3">
           <% if @event.column_account_number&.deposit_only? %>
             <div class="badge bg-info mb1 ml0 tooltipped tooltipped--n pointer" aria-label="This account number can only receive funds. You can't use it to send money.">
-              <%= inline_icon "info", size: 20, style: "margin-left: 0; margin-right: 0.25rem" %> Receive-only
+              <%= inline_icon "info", size: 20, style: "margin-left: 0; margin-right: 0.25rem" %> Deposit-only
             </div>
           <% else %>
             <div class="badge bg-success mb1 ml0 tooltipped tooltipped--n pointer" aria-label="This account number can be used to deposit and withdraw from your account.">
@@ -140,7 +140,7 @@
       <div class="flex gap-3 items-center mb-4">
         <div class="bg-info rounded-full pl-2 pr-3 py-1 text-white h5 w-fit inline-flex gap-1 items-center">
           <%= inline_icon "info", size: 18 %>
-          Receive<%= @event.column_account_number&.deposit_only? ? "-only" : " + send" %>
+          Deposit<%= @event.column_account_number&.deposit_only? ? "-only" : " + send" %>
         </div>
 
         <% admin_tool "flex-col justify-center w-fit" do %>
@@ -199,6 +199,11 @@
           <span>1110 Gorgas Avenue, Suite A4-700<br>San Francisco, CA 94129</span>
         </p>
       </div>
+      <% if @event.column_account_number&.deposit_only? %>
+        <footer class="muted center">
+          This account can receive direct deposits, but not direct debits.
+        </footer>
+      <% end %>
     </section>
   <% end %>
 <% end %>

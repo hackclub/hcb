@@ -70,11 +70,13 @@ Then, to start the development server:
 
 If you have more questions about development check out our [docs](https://github.com/hackclub/hcb/blob/main/dev-docs/development.md)
 
+### Credentials
+
+We used [Doppler](https://www.doppler.com/) to manage our credentials; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file. Otherwise, you can provide credentials via a `.env.development` file [(view example)](.env.development.example).
+
 ### Development Account
 
-Login using the email admin@bank.engineering. Use Letter Opener
-(`/letter_opener`) to access the development email outbox and retrieve the login
-code.
+Login using the email admin@bank.engineering. Use Letter Opener (`/letter_opener`) to access the development email outbox and retrieve the login code.
 
 ### Staging Access
 
@@ -82,7 +84,7 @@ Login using the email staging@bank.engineering. Visit `#hcb-staging` on the [Hac
 
 ### Production Access
 
-Please see this part of the [docs](https://github.com/hackclub/hcb/blob/main/dev-docs/development.md#production-access) for more information on Production Access
+Please see this part of the [docs](https://github.com/hackclub/hcb/blob/main/dev-docs/development.md#production-access) for more information on production access.
 
 ## Deployment
 

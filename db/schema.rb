@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_02_03_075719) do
+ActiveRecord::Schema[7.2].define(version: 2025_03_13_150555) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -430,6 +430,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_03_075719) do
     t.string "category_lock"
     t.integer "status", default: 0, null: false
     t.string "keyword_lock"
+    t.string "purpose"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
@@ -637,6 +638,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_03_075719) do
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["slug"], name: "index_documents_on_slug", unique: true
     t.index ["user_id"], name: "index_documents_on_user_id"
+  end
+
+  create_table "donation_goals", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.integer "amount_cents", null: false
+    t.datetime "tracking_since", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_donation_goals_on_event_id"
   end
 
   create_table "donation_payouts", force: :cascade do |t|
@@ -910,6 +921,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_03_075719) do
     t.string "postal_code"
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.string "short_name"
+    t.integer "risk_level"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
@@ -944,13 +956,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_03_075719) do
   end
 
   create_table "fees", force: :cascade do |t|
-    t.bigint "canonical_event_mapping_id", null: false
+    t.bigint "canonical_event_mapping_id"
     t.decimal "amount_cents_as_decimal"
     t.decimal "event_sponsorship_fee"
     t.text "reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "event_id"
+    t.string "memo"
     t.index ["canonical_event_mapping_id"], name: "index_fees_on_canonical_event_mapping_id"
+    t.index ["event_id"], name: "index_fees_on_event_id"
   end
 
   create_table "flipper_features", force: :cascade do |t|
@@ -2237,6 +2252,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_02_03_075719) do
   add_foreign_key "documents", "events"
   add_foreign_key "documents", "users"
   add_foreign_key "documents", "users", column: "archived_by_id"
+  add_foreign_key "donation_goals", "events"
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"

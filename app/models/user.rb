@@ -387,7 +387,7 @@ class User < ApplicationRecord
 
   def profile_picture_format
     return unless profile_picture.attached?
-    return if profile_picture.blob.content_type.start_with? "image/"
+    return if profile_picture.blob.content_type.start_with?("image/") && profile_picture.blob.variable?
 
     profile_picture.purge_later
     errors.add(:profile_picture, "needs to be an image")

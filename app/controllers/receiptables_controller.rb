@@ -16,9 +16,14 @@ class ReceiptablesController < ApplicationController
 
   private
 
+  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+                          EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
+                          Api::Models::CardCharge].index_by(&:to_s).freeze
+
   def set_receiptable
-    @klass = params[:receiptable_type].camelize.constantize
-    # raise ArgumentError, "Class is not receiptable" unless @klass.included_modules.include?(Receiptable)?
+    return unless RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+
+    @klass = RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
     @receiptable = @klass.find(params[:receiptable_id])
   end
 

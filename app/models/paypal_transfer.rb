@@ -66,7 +66,7 @@ class PaypalTransfer < ApplicationRecord
     event :mark_approved do
       transitions from: :pending, to: :approved
       after do
-        employee_payment.mark_admin_approved! if employee_payment.present?
+        employee_payment.mark_paid! if employee_payment.present?
       end
     end
 

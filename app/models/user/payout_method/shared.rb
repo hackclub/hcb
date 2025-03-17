@@ -17,7 +17,7 @@ class User
         has_one :user, inverse_of: :payout_method, as: :payout_method
         after_save_commit -> {
           Reimbursement::PayoutHolding.where(report: user.reimbursement_reports).failed.each(&:mark_settled!)
-          Employee::Payment.where(employee: user.jobs).failed.each(&:mark_admin_approved!)
+          Employee::Payment.where(employee: user.jobs).failed.each(&:mark_approved!)
         }
       end
     end

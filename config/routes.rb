@@ -463,6 +463,7 @@ Rails.application.routes.draw do
     collection do
       get "collect_email", to: "exports#collect_email", as: "collect_email"
       get ":event", to: "exports#transactions", as: "transactions"
+      get "reimbursements/:event", to: "exports#reimbursements", as: "reimbursements"
     end
   end
 
@@ -501,6 +502,7 @@ Rails.application.routes.draw do
   namespace :employee do
     resources :payments do
       post "review"
+      get "stub"
     end
   end
 
@@ -617,7 +619,6 @@ Rails.application.routes.draw do
 
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
-  post "increase/webhook", to: "increase#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
 
@@ -642,10 +643,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :card_grants, only: [:show], path: "grants" do
+  resources :card_grants, only: [:show, :edit, :update], path: "grants" do
     member do
       post "activate"
       get "spending"
+      post "clear_purpose"
     end
   end
 
@@ -710,9 +712,9 @@ Rails.application.routes.draw do
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
-    post "finish_signee_backfill"
     resources :disbursements, only: [:new, :create]
     resources :increase_checks, only: [:new, :create], path: "checks"
+    resources :fees, only: [:create]
     resources :paypal_transfers, only: [:new, :create]
     resources :wires, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
@@ -726,6 +728,10 @@ Rails.application.routes.draw do
     resources :invoices, only: [:new, :create, :index]
     resources :tags, only: [:create, :destroy]
     resources :event_tags, only: [:create, :destroy]
+
+    namespace :donation do
+      resource :goals, only: [:create, :update]
+    end
 
     resources :recurring_donations, only: [:create], path: "recurring" do
       member do

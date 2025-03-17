@@ -3,7 +3,9 @@
 module PayrollService
   class Nightly
     def run
-      Employee::Payment.organizer_approved.or(Employee::Payment.admin_approved).find_each(batch_size: 100) do |payment|
+      Employee::Payment.approved.find_each(batch_size: 100) do |payment|
+        next if payment.payout.present?
+
         case payment.employee.user.payout_method
         when User::PayoutMethod::Check
           safely do
@@ -34,7 +36,7 @@ module PayrollService
               receiptable: check.local_hcb_code
             ).run!
 
-            check.send_check! if payment.admin_approved?
+            check.send_check! if payment.previously_paid?
           end
         when User::PayoutMethod::AchTransfer
           safely do
@@ -64,7 +66,7 @@ module PayrollService
               receiptable: ach_transfer.local_hcb_code
             ).run!
 
-            if payment.admin_approved?
+            if payment.previously_paid?
               begin
                 ach_transfer.approve!(User.find_by(email: "bank@hackclub.com"))
               rescue

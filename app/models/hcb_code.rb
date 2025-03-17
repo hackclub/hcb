@@ -537,7 +537,7 @@ class HcbCode < ApplicationRecord
   end
 
   def fee_waived?
-    pt&.fee_waived? || ct&.fee&.waived? || false
+    (pt&.fee_waived? || ct&.fee&.waived? || false) && canonical_transactions.all? { |ct| ct.fee&.waived? }
   end
 
   def accepts_receipts?
