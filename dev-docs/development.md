@@ -24,12 +24,6 @@ After creating your codespace, run `bundle install` and `bin/rails db:migrate`. 
 
 If you are running macOS or Ubuntu, you can clone the repository and run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to automatically setup a development environment with Docker. Append `--with-solargraph` to the command to also setup [Solargraph](https://solargraph.org), a language server for Ruby. You may also need to install the [Solargraph extension](https://github.com/castwide/solargraph#using-solargraph) for your editor.
 
-Create a `.env.development` file based on `.env.development.example`.
-
-```bash
-cp .env.development.example .env.development
-```
-
 ```bash
 ./docker_dev_setup.sh
 # or with Solargraph
