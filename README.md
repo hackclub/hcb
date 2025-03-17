@@ -7,6 +7,15 @@
 </div>
 <br>
 
+> [!CAUTION]
+> If you previous cloned this repository, please:
+> 1. Delete your existing clone of this repository
+> 2. Reclone it
+>
+> We recently performed a re-write of the git history in preparation for open
+> sourcing HCB. Your old clone will cause conflicts unless it is deleted and
+> recloned. Thank you!
+
 Welcome to the [HCB](https://hackclub.com/fiscal-sponsorship/) codebase. We are so excited to have you. With your help, we can make HCB the best platform to run a nonprofit.
 
 ## What is HCB?
