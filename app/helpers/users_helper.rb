@@ -102,9 +102,10 @@ module UsersHelper
     klasses << options[:class] if options[:class]
     klass = klasses.join(" ")
 
-    alt = current_user_flavor_text.sample if user == current_user
+    alt = options[:alt]
+    alt ||= current_user_flavor_text.sample if user == current_user
     alt ||= user&.initials
-    alt ||= "Brown dog grinning and gazing off into the distance"
+    alt ||= ""
 
     options[:data] = (options[:data] || {}).merge(behavior: "mention", mention_value: "@#{user.email}") if click_to_mention && user
 
@@ -114,7 +115,7 @@ module UsersHelper
   def user_mention(user, options = {}, default_name = "No User", click_to_mention: false, comment_mention: false, default_image: nil)
     name = content_tag :span, (user&.initial_name || default_name)
     current_user = defined?(current_user) ? current_user : nil
-    avi = avatar_for(user, 24, options[:avatar] || {}, click_to_mention:, default_image:)
+    avi = avatar_for(user, 24, options[:avatar] || { alt: "" }, click_to_mention:, default_image:)
 
     klasses = ["mention"]
     klasses << %w[mention--admin tooltipped tooltipped--n] if user&.admin? && !options[:disable_tooltip]

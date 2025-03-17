@@ -1,8 +1,10 @@
 <details class="dock" <%= "open" if local_assigns[:selected].to_s.starts_with?("settings") %>>
-  <summary class="dock__item bg-none tooltipped tooltipped--e" aria-label="Edit account settings">
+  <summary class="dock__item tooltipped tooltipped--e" aria-label="Edit account settings">
     <%= inline_icon "settings", class: "settings-icon" %>
-    Settings
-    <%= inline_icon "up-caret", class: "drawer-chevron" %>
+    <span class="flex-grow">
+      Settings
+    </span>
+    <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
   </summary>
   <%= dock_item "Account",
                 @user == current_user ? my_settings_path : edit_user_path(@user || current_user),

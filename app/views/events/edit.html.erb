@@ -3,8 +3,8 @@
 <%= render "nav", selected: :settings %>
 
 <% unless params[:frame] %>
-  <span class="homepage-eyebrow mt-12 mb-2 block">Settings</span>
-  <h1 class="mt-0"><%= @settings_tab == "details" ? "Organization details" : @settings_tab.humanize %></h1>
+  <span class="text-sm text-muted uppercase font-bold mt-6 block">Settings</span>
+  <h1 class="mt-0"><%= @settings_tab == "details" ? "Organization" : @settings_tab.humanize %></h1>
 <% end %>
 
 <% if @settings_tab == "features" %>

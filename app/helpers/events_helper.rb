@@ -8,10 +8,10 @@ module EventsHelper
 
     if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event)
       items << {
-        name: "Home",
+        name: "Overview",
         path: event_path(id: event.slug),
         tooltip: "See everything at-a-glance",
-        icon: "home",
+        icon: "grid",
         selected: selected == :home,
         flipperEnabled: Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event),
       }
@@ -20,7 +20,7 @@ module EventsHelper
     items << {
       name: "Transactions",
       path: event_transactions_path(event_id: event.slug),
-      tooltip: "View your transactions",
+      tooltip: "View detailed ledger",
       icon: "bank-account",
       selected: selected == :transactions,
     }
@@ -30,7 +30,7 @@ module EventsHelper
         {
           name: "Activate",
           path: event_activation_flow_path(event_id: event.slug),
-          tooltip: "Activate This Organization",
+          tooltip: "Activate this organization",
           icon: "checkmark",
           selected: selected == :activation_flow,
           adminTool: true,
@@ -56,16 +56,16 @@ module EventsHelper
         selected: selected == :invoices,
       }
     end
-    if policy(event).account_number?
+    if policy(event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event)
       items << {
         name: "Account numbers",
         path: account_number_event_path(event),
         tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
-        icon: "bank-account",
+        icon: "account-numbers",
         selected: selected == :account_number
       }
     end
-    if policy(event.check_deposits.build).index?
+    if policy(event.check_deposits.build).index? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event)
       items << {
         name: "Check deposits",
         path: event_check_deposits_path(event),
@@ -113,14 +113,6 @@ module EventsHelper
         selected: selected == :grants,
       }
     end
-    items <<
-      {
-        name: "Team",
-        path: event_team_path(event_id: event.slug),
-        tooltip: "Manage your team",
-        icon: "people-2",
-        selected: selected == :team,
-      }
     if event.approved?
       items << {
         name: "Perks",
@@ -130,24 +122,6 @@ module EventsHelper
         data: { tour_step: "perks" },
         disabled: !policy(@event).promotions?,
         selected: selected == :promotions,
-      }
-    end
-    if organizer_signed_in?
-      items << {
-        name: "Google Workspace",
-        path: event_g_suite_overview_path(event_id: event.slug),
-        tooltip: if !policy(event).g_suite_overview?
-                   "Your organization isn't eligible for Google Workspace."
-                 else
-                   if @event.g_suites.any?
-                     "Manage domain Google Workspace"
-                   else
-                     Flipper.enabled?(:google_workspace, @event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"
-                   end
-                 end,
-        icon: "google",
-        disabled: !policy(event).g_suite_overview?,
-        selected: selected == :google_workspace,
       }
     end
     if policy(event).documentation?
@@ -164,19 +138,16 @@ module EventsHelper
   end
 
   def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, **options)
-    link_to (disabled ? "javascript:" : url), options.merge(
-      class: "dock__item #{"dock__item--selected" if selected} #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled}",
-      'aria-label': tooltip
-    ) do
-      (content_tag :div, class: "line-height-0 relative" do
-        if async_badge
-          inline_icon(icon, size: 32) +
-            turbo_frame_tag(async_badge, src: async_badge, data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" })
-        elsif icon.present?
-          inline_icon(icon, size: 32)
-        end
-      end) + content_tag(:span, name.html_safe, class: "line-height-3")
-    end
+    icon_tag = icon.present? ? inline_icon(icon, size: 32) : nil
+    badge_tag = async_badge.present? ? turbo_frame_tag(async_badge, src: async_badge, data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }) : nil
+    prefix = icon_tag || badge_tag ? content_tag(:div, icon_tag || badge_tag, class: "line-height-0 relative") : ""
+    children = prefix + name.html_safe
+    link_to children, (disabled ? "javascript:" : url), options.merge(
+      class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled}",
+      'aria-label': tooltip,
+      'aria-current': selected ? "page" : "false",
+      'aria-disabled': disabled ? "true" : "false",
+    )
   end
 
   def show_mock_data?(event = @event)

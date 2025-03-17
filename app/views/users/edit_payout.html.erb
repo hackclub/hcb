@@ -5,8 +5,8 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_header", active: "payouts" %>
   <section>
-    <p class="muted mt0 mb2">
-      When a <%= link_to "reimbursement report of yours", my_reimbursements_path %> is approved, HCB will use the information below to reimburse you. Without this information, you won't be able to submit reimbursement reports. You can update these settings at any time; <strong>we currently only support US bank accounts or PayPal</strong>.
+    <p class="mt0 mb2 text-balance">
+      Choose a method by which you’d like to be reimbursed when one of your <%= link_to "reimbursement reports", my_reimbursements_path %> is approved. This is required for submitting reimbursements. <strong>We currently only support US bank accounts or PayPal</strong>.
       <% if @user.reimbursement_reports.pending.any? %>
         <p>
           Changes made here will apply to all non-reimbursed reports of yours, including your <%= @user.reimbursement_reports.pending.count %> pending reports.

@@ -6,6 +6,7 @@
 .stat__value {
   font-size: 3rem;
   line-height: 1;
+  margin: 0; // reset browser default on <dd>
   margin-bottom: 0.25rem;
 }
 

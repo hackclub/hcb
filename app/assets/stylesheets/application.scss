@@ -1,5 +1,4 @@
 @import 'variables';
-@import 'guidelines';
 
 $font-family:
   system-ui,
@@ -19,6 +18,7 @@ $mono:
   @each $name, $value in $palette {
     --#{"" + $name}: #{$value};
   }
+  --bg-color: var(--snow);
 }
 
 * {
@@ -47,34 +47,6 @@ body {
   color: $black;
   margin: 0;
   min-height: 100vh;
-}
-
-.activity {
-  display: none;
-}
-
-@media screen and (min-width: 56em) and (min-height: 640px) {
-  body:has(.activity) {
-    padding-bottom: 0rem;
-  }
-
-  .activity {
-    display: block;
-  }
-
-  .container:has(.activity) > .app__sidebar {
-    position: sticky;
-    position: -webkit-sticky;
-    top: 0;
-  }
-
-  .container:has(.activity) > .app__content {
-    padding-bottom: 2rem;
-  }
-}
-
-a {
-  color: currentColor;
 }
 
 strong {
@@ -117,25 +89,26 @@ fieldset legend.h2 {
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: 2rem;
+  font-weight: 700;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid map-get($palette, smoke);
+  border-bottom: 1px solid map-get($palette, divider);
   border-bottom-width: 0.5px;
+  margin-top: 1.25rem;
   margin-bottom: 1rem;
 }
 
 h2 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   margin-bottom: 0.5rem;
 }
 
 h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
 }
 
 h4 {
-  letter-spacing: 0;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
 }
 
 p + p {
@@ -173,24 +146,23 @@ td {
 }
 
 th {
-  font-weight: 600;
+  color: map-get($palette, muted);
+  font-size: 0.875rem;
+  font-weight: 500;
   text-align: left;
-  padding-bottom: 0.125rem;
+  padding-block: 0.25rem;
 }
 
 hr {
   margin: 2rem 0;
   border: 0;
-  border-bottom: 1px solid map-get($palette, smoke);
+  border-bottom: 1px solid map-get($palette, divider);
+  border-bottom-width: 0.5px;
 }
 
 svg {
   fill: currentColor;
   flex-shrink: 0;
-}
-
-.cursor-pointer {
-  cursor: pointer;
 }
 
 action {
@@ -201,6 +173,28 @@ action {
   }
 }
 
+details {
+  inline-size: 100%;
+
+  @media (prefers-reduced-motion: no-preference) {
+    interpolate-size: allow-keywords;
+  }
+
+  &::details-content {
+    opacity: 0;
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      content-visibility 0.5s allow-discrete,
+      opacity 0.5s,
+      block-size 0.5s;
+  }
+
+  &[open]::details-content {
+    opacity: 1;
+    block-size: auto;
+  }
+}
 summary {
   cursor: pointer;
 }
@@ -236,7 +230,6 @@ summary {
 @import 'components/features';
 @import 'components/loading';
 @import 'components/file_dropzone';
-@import 'components/support_button';
 @import 'components/welcome';
 @import 'components/tabs';
 @import 'components/team';

@@ -25,6 +25,9 @@ html[data-dark='true'] {
 [role='combobox'] {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
+  border-radius: 0;
+  box-shadow: none !important;
+  min-height: 0;
 }
 
 [role='combobox']::-webkit-scrollbar {

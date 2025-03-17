@@ -97,11 +97,7 @@ class PreviewLink extends React.Component {
 
     return (
       <>
-        <label
-          htmlFor="prefill-amount"
-          className="mb1"
-          style={{ fontWeight: 600 }}
-        >
+        <label htmlFor="prefill-amount" style={{ fontWeight: 600 }}>
           Prefilled amount (USD)
         </label>
         <div className="field">
@@ -119,11 +115,7 @@ class PreviewLink extends React.Component {
             />
           </div>
         </div>
-        <label
-          htmlFor="prefill-message"
-          className="mb1"
-          style={{ fontWeight: 600 }}
-        >
+        <label htmlFor="prefill-message" style={{ fontWeight: 600 }}>
           Prefilled message
         </label>
         <div className="field">
@@ -136,28 +128,28 @@ class PreviewLink extends React.Component {
             />
           </div>
         </div>
-        <label htmlFor="prefill-monthly flex items-center">
-          <span style={{ fontWeight: 600 }}>Monthly charge?</span>
+        <label className="flex items-center gap-2">
           <input
             type="checkbox"
             name="prefill-monthly"
             onChange={this.handleChange}
+            // eslint-disable-next-line react/no-unknown-property
+            switch
           />
+          <span style={{ fontWeight: 600 }}>Monthly charge</span>
         </label>
-        <label htmlFor="prefill-goods flex items-center" className="mt2">
-          <span style={{ fontWeight: 600 }}>For goods or services?</span>
+        <label className="flex items-center gap-2 mt2">
           <input
             type="checkbox"
             name="prefill-goods"
             onChange={this.handleChange}
+            // eslint-disable-next-line react/no-unknown-property
+            switch
           />
+          <span style={{ fontWeight: 600 }}>For goods or services</span>
         </label>
         <hr style={{ margin: '1rem 0' }} />
-        <label
-          htmlFor="prefill-url"
-          className="mb1"
-          style={{ fontWeight: 600 }}
-        >
+        <label htmlFor="prefill-url" style={{ fontWeight: 600 }}>
           {this.state.amount == null
             ? 'Donation link'
             : 'Prefilled donation link'}

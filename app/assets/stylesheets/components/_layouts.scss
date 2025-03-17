@@ -17,7 +17,7 @@
 .container {
   width: 100%;
   margin: 0 auto;
-  padding: 0 2.5rem;
+  padding: 0 1rem;
   max-width: 64rem;
 }
 
@@ -44,9 +44,7 @@
 
 .app__content {
   h1:first-child {
-    margin-top: 2rem;
-    text-box-trim: start;
-    text-box-edge: cap alphabetic;
+    margin-top: 1.75rem;
   }
 }
 

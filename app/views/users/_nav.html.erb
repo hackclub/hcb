@@ -1,35 +1,16 @@
 <%= render "users/mobile_nav", selected: local_assigns[:selected] %>
 <% content_for(:header) do %>
-  <div class="mt-1">
-    <%= render partial: "logo" %>
-  </div>
+  <%= render partial: "logo" %>
 <% end %>
 
 <% content_for(:nav) do %>
-  <div class="mt-5">
-    <button
-      class="btn h-10 bg-none bg-smoke shadow-none w-100 justify-start mt1 px-3 hover:shadow-none display-none-not-important md:flex"
-      style="border-radius: 8px"
-      data-behavior="command_bar_trigger">
-      <span class="flex-grow text-left font-medium">Jump to...</span>
-      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md mr-2 text-sm">
-        ⌘
-      </span>
-      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md text-sm">
-        K
-      </span>
-    </button>
-  </div>
-
-  <nav class="dock font-medium mt1">
+  <nav class="dock font-medium mt-4">
     <% users_mobile_nav(selected: local_assigns[:selected]).each do |item| %>
-      <div>
-        <%= dock_item item[:name],
-          item[:path],
-          tooltip: item[:tooltip],
-          icon: item[:icon],
-          selected: item[:selected] %>
-      </div>
+      <%= dock_item item[:name],
+        item[:path],
+        tooltip: item[:tooltip],
+        icon: item[:icon],
+        selected: item[:selected] %>
     <% end %>
     <div>
       <%= render "users/settings_dropdown", local_assigns: %>
@@ -42,8 +23,8 @@
         <b>Looking for a mobile app?</b>
         <br>
         Click <%= inline_icon "share", size: 18, class: "pwa__prompt__icon" %>
-        and then <%= inline_icon "plus", size: 18, class: "pwa__prompt__icon" %>
-        <i>Add To Home Screen</i>.
+        and then <%= inline_icon "plus-box", size: 18, class: "pwa__prompt__icon" %>
+        <i>Add to Home Screen</i>.
       </div>
     <% end %>
   </nav>

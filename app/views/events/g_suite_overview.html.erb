@@ -23,7 +23,7 @@
         <%= link_to "Process", google_workspace_process_admin_path(@g_suite) %>
       <% end %>
     <% end %>
-    <%= content_tag :span, @g_suite.domain, class: "badge info h3 ml0" if @g_suite %>
+    <%= content_tag :span, @g_suite.domain, class: "badge bg-info h3 ml0" if @g_suite %>
   </h1>
   <%= render partial: "admin_viewer", locals: { record: @g_suite } %>
   <% if @g_suite.present? %>
@@ -250,7 +250,7 @@
                 <span class="h4 ml0 pending badge">Verifying…</span>
               <% end %>
               <% if @g_suite.verified? %>
-              <span class="h4 ml0 badge success">
+              <span class="h4 ml0 badge bg-success">
                 <%= inline_icon "checkmark", size: 20, class: "mr1" %>
                 Verified
               </span>

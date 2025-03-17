@@ -1,6 +1,6 @@
 <%= turbo_frame_tag "tags_users" do %>
   <% if !@empty_tags || !@empty_users %>
-    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex flex-col">
+    <div class="card card w-100 p-4 min-h-96 flex-1 flex flex-col">
       <% if @empty_tags %>
         <div class="flex flex-1 flex-col items-center justify-center">
           <div class="text-center">
@@ -19,12 +19,12 @@
       <% else %>
         <div class="flex flex-row justify-between items-center w-full">
           <h3 class="mt0 mb0">Top tags</h3>
-          <h5 class="homepage-eyebrow shrink-0 my-0">All&nbsp;time</h5>
+          <h5 class="text-muted uppercase text-sm font-bold shrink-0 my-0">All&nbsp;time</h5>
         </div>
         <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
       <% end %>
     </div>
-    <div class="card card--breakdown shadow-none p-4 min-h-96 flex-1 flex flex-col">
+    <div class="card card w-100 p-4 min-h-96 flex-1 flex flex-col">
       <% if @empty_users %>
         <div class="flex flex-1 flex-col items-center justify-center">
           <div class="text-center">
@@ -41,7 +41,7 @@
       <% else %>
         <div class="flex flex-row justify-between items-center w-full">
           <h3 class="mt0 mb0">Top users</h3>
-          <h5 class="homepage-eyebrow shrink-0 my-0">All&nbsp;time</h5>
+          <h5 class="text-muted uppercase text-sm font-bold shrink-0 my-0">All&nbsp;time</h5>
         </div>
         <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
       <% end %>
