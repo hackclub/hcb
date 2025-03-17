@@ -6,8 +6,7 @@ We recommend using Docker to get an instance running locally. It should work out
   - [Quickstart with GitHub Codespaces](#quickstart-with-github-codespaces)
   - [Automated setup with Docker](#automated-setup-with-docker)
   - [Manual setup with Docker](#manual-setup-with-docker)
-  - [Local setup](#local-setup)
-- [Heroku tasks](#heroku-tasks)
+  - [Native setup](#native-setup)
 - [Production Access](#production-access)
 
 ### Quickstart with GitHub Codespaces
@@ -69,83 +68,98 @@ env $(cat .env.docker) docker-compose -f docker-compose.yml -f docker-compose.so
 env $(cat .env.docker) docker-compose -f docker-compose.yml -f docker-compose.solargraph.yml up -d solargraph
 ```
 
-### Local setup
+### Native setup
 
-Install [rbenv](https://github.com/rbenv/rbenv)
+Before beginning this process, please **ensure you have both Ruby and Node
+installed**, as well as a PostgreSQL database running.
 
-```bash
-brew install rbenv
-```
+#### [Step 1] Prereq: Install Ruby and Node
 
-Install [bundler](https://bundler.io/)
+See [`.ruby-version`](.ruby-version)
+and [`.node-version](.node-version) for which versions you need installed. I
+personally recommend using a version manager
+like [rbenv](https://rbenv.org/), [nvm](https://github.com/nvm-sh/nvm),
+or [asdf](https://asdf-vm.com/).
 
-```bash
-gem install bundler -v 1.17.3
-```
+#### [Step 2] Prereq: Install and run PostgreSQL
 
-Run bundler
+We recommend you use version `15.12` as that's what running in production. If
+you're on MacOS, I recommend using Homebrew to get Postgres up and running. If
+you are on another OS or dislike Homebrew, please refer to one of the many
+guides out there on how to get a simple Postgres database running for local
+development.
 
-```bash
-bundle install
-```
-
-Install yarn dependencies
-
-```bash
-yarn install
-```
-
-Create and migrate database
+**How to install Postgres using Homebrew**
 
 ```bash
-bundle exec rake db:drop db:create db:migrate
+brew install postgresql@15 # You only need to run this once
+brew services start postgresql@15
 ```
 
-Populate the database
+#### [Step 3] HCB-specific instructions
 
-```bash
-heroku git:remote -a bank-hackclub # if your repo isn't attached to the heroku app
-heroku pg:backups:capture
-heroku pg:backups:download # will save as latest.dump, double check to make sure that file is created
-pg_restore --verbose --clean --no-acl --no-owner -d bank_development latest.dump
-```
+Now that you have Ruby, Node, and Postgres installed, we can begin with the
+HCB-specific setup instructions.
 
-Run the application
+1. Clone the repository
+   ```bash
+   git clone https://github.com/hackclub/hcb.git
+   ```
 
-```bash
-bin/rails s
-```
+2. Set up your environment variables
+   ```bash
+   cp .env.development.example .env.development
+   ```
 
-Browse to [localhost:3000](http://localhost:3000)
+   Since you're running HCB outside of Docker, you will need to update the
+   `DATABASE_URL` environment variable located in `.env.development`. The
+   default caters towards Docker and GitHub Codespaces users. Please update it to
+   ```
+   postgres://postgres@127.0.0.1:5432
+   ```
+
+3. Install ruby gems
+   ```bash
+   bundle install
+   ```
+
+4. Install node packages
+   ```bash
+   yarn install
+   ```
+
+5. Prepare the database
+   This creates the necessary tables and seeds it with example data.
+   ```
+   bin/rails db:prepare
+   ```
+
+6. Run Rails server
+   ```bash
+   bin/dev
+   ```
+   Yay!! HCB will be running on port 3000. Browse to [localhost:3000](http://localhost:3000).
+
+   Optionally, if you want to run HCB on a different port, try adding `-p 4000`
+   to the command.
 
 **Additional installs for local development:**
 
 Install [wkhtmltopdf](https://wkhtmltopdf.org/)
 
 ```bash
+# Mac specific instruction:
 brew install wkhtmltopdf
 ```
 
 Install [ImageMagick](https://imagemagick.org/)
 
 ```bash
+# Mac specific instruction:
 brew install imagemagick
 ```
 
-## Heroku tasks
-
-Please check app.json for the buildpacks required to run HCB on Heroku.
-
-The `heroku/metrics` buildpacks allow us to record in depth Ruby specific
-metrics about the application.
-See [PR #2236](https://github.com/hackclub/hcb/pull/2236)
-for more information.
-
-The apt buildpack works in conjunction with the local Aptfile in order to
-install poppler-utils. Poppler-utils helps generate preview thumbnails of
-documents.
-
-## Production Access
+## Production Data
 
 We've transitioned to using development keys and seed data in development, but historically have used production keys and data on dev machines. It is recommended to not roll back to using production data & keys in development, but if absolutely necessary the following steps can be taken:
 
