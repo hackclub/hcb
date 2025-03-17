@@ -127,6 +127,27 @@
 <% end %>
 
 <hr>
-<h3>Delete</h3>
-<p>The following button will destroy the Google Workspace record.<br>Before proceeding, make sure that there are no active Google Workspace accounts.</p>
-<%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+<% if @g_suite.revocation.present? && @g_suite.revocation.revoked? %>
+  <h3>Delete</h3>
+  <p>This Google Workspace has been revoked and is ready for deletion. The users have already been notified of the revocation. The following button will destroy the Google Workspace record along with all associated accounts and groups.</p>
+  <%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+  <h3>Cancel Revocation</h3>
+  <p>This Google Workspace has <b>already been revoked</b>. If, for some reason, you need to cancel the revocation, the below button will do so and send an email notifying the users on the organization of the same. Note: If the revocation was initiated for inactivity or invalid DNS records, a new revocation will be automatically opened in the next day if the issues are not fixed.</p>
+  <%= link_to "Cancel Revocation", g_suite_revocation_path(@g_suite), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+<% elsif @g_suite.revocation.present? && @g_suite.revocation.pending? %>
+  <h3>Cancel Revocation</h3>
+  <p>This Google Workspace has a <b>pending revocation</b>. If you need to cancel the revocation, the below button will do so and send an email notifying the users on the organization of the same. Note: If the revocation was initiated for inactivity or invalid DNS records, a new revocation will be automatically opened in the next day if the issues are not fixed.</p>
+  <%= link_to "Cancel Revocation", g_suite_revocation_path(@g_suite), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+  <h3>Delete</h3>
+  <p>This Google Workspace has a <b>pending revocation</b> and <b>should NOT be deleted yet</b>. If, for some reason, you still need to delete this record, the following button will destroy the Google Workspace record along with all associated accounts and groups.</p>
+  <%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "THIS MOST LIKELY ISN'T THE RIGHT BUTTON. Are you sure you want to delete this Google Workspace with a pending revocation?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+<% else %>
+  <h3>Revoke</h3>
+  <p>This will revoke the Google Workspace and send an email to the users on the organization notifying them of the revocation. The users will have 30 days to export their data before it is deleted. If the revocation was initiated for inactivity or invalid DNS records, a new revocation will be automatically opened in the next day if the issues are not fixed.</p>
+  <%= form_with(model: [@g_suite, GSuite::Revocation.new], url: g_suite_revocations_path(@g_suite), method: :post, local: true) do |form| %>
+    <%= form.hidden_field :reason, value: "other" %>
+    <%= form.label :other_reason, "This Google Workspace is being revoked because..." %>
+    <%= form.text_field :other_reason placeholder: "you have broken the Google Workspace terms of service" %>
+    <%= form.submit "Revoke", data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+  <% end %>
+<% end %>

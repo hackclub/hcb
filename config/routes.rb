@@ -325,6 +325,7 @@ Rails.application.routes.draw do
 
   resources :g_suites, except: [:new, :create, :edit, :update] do
     resources :g_suite_accounts, only: [:create]
+    resources :revocations, only: [:create, :destroy], controller: "g_suite_revocations"
   end
 
   resources :sponsors

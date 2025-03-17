@@ -12,6 +12,18 @@
       <%= form.check_box :configuring, checked: @configuring, class: "ml1" %>
       Configuring
     <% end %>
+    <%= form.label :verification_error do %>
+      <%= form.check_box :verification_error, checked: @verification_error, class: "ml1" %>
+      Verification Error
+    <% end %>
+    <%= form.label :revocation_present do %>
+      <%= form.check_box :revocation_present, checked: @revocation_present, class: "ml1" %>
+      Revocation Pending
+    <% end %>
+    <%= form.label :pending_deletion do %>
+      <%= form.check_box :pending_deletion, checked: @pending_deletion, class: "ml1" %>
+      Revoked, Ready for Deletion
+    <% end %>
   </fieldset>
   <%= form.submit "Search" %>
 <% end %>
@@ -49,12 +61,16 @@
         <td><%= g_suite.remote_org_unit_id %></td>
         <td><%= g_suite.remote_org_unit_path %></td>
         <td><%= g_suite.verification_key %></td>
-        <td><%= g_suite.aasm_state.upcase %></td>
+        <td><%= g_suite.revocation.present? ? g_suite.revocation.pending? ? "Pending Revocation".upcase : "Ready for Deletion".upcase : g_suite.aasm_state.upcase %></td>
         <td>
           <% if g_suite.needs_ops_review? %>
             <%= link_to("Process", google_workspace_process_admin_path(g_suite)) %>
+          <% elsif g_suite.revocation.present? && g_suite.revocation.revoked? %>
+            <%= link_to("Process", google_workspace_process_admin_path(g_suite)) %>
           <% elsif g_suite.dkim_key.nil? %>
             <%= link_to("DKIM", google_workspace_process_admin_path(g_suite)) %>
+          <% else %>
+            <%= link_to("View", google_workspace_process_admin_path(g_suite)) %>
           <% end %>
         </td>
       </tr>

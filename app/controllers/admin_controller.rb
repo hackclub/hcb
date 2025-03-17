@@ -830,6 +830,9 @@ class AdminController < ApplicationController
     @q = params[:q].present? ? params[:q] : nil
     @needs_ops_review = params[:needs_ops_review] == "1" ? true : nil
     @configuring = params[:configuring] == "1" ? true : nil
+    @verification_error = params[:verification_error] == "1" ? true : nil
+    @revocation_present = params[:revocation_present] == "1" ? true : nil
+    @pending_deletion = params[:pending_deletion] == "1" ? true : nil
 
     @event_id = params[:event_id].present? ? params[:event_id] : nil
 
@@ -844,6 +847,9 @@ class AdminController < ApplicationController
     relation = relation.search_domain(@q) if @q
     relation = relation.needs_ops_review if @needs_ops_review
     relation = relation.configuring if @configuring
+    relation = relation.verification_error if @verification_error
+    relation = relation.joins(:revocation) if @revocation_present
+    relation = relation.pending_deletion if @pending_deletion
 
     @count = relation.count
     @g_suites = relation.page(@page).per(@per).order("created_at desc")
@@ -852,7 +858,6 @@ class AdminController < ApplicationController
 
   def google_workspace_process
     @g_suite = GSuite.find(params[:id])
-
   end
 
   def google_workspace_approve
