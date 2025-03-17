@@ -49,35 +49,7 @@ Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to re
 
 ## Quick Start
 
-### GitHub Codespaces
-
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=135250235&skip_quickstart=true&machine=premiumLinux&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=UsWest)
-
-[GitHub Codespaces](https://docs.github.com/en/codespaces) allows you to run a development environment without installing anything on your computer, allows for multiple instances, creates an overall streamlined and reproducible environment, and enables anyone with browser or VS Code access to contribute.
-
-To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces. Run `bin/dev`. If you can't open the link that is printed in the terminal, ensure the `3000` port is public under the `PORTS` tab in your terminal.
-
-After creating your codespace, run `bundle install` and `bin/rails db:migrate`. This will finish preparing HCB for development.
-
-### Docker
-
-If you are running macOS or Ubuntu, you can clone the repository and run the [docker_dev_setup.sh](./docker_dev_setup.sh) script to automatically set up a development environment with Docker. Append `--with-solargraph` to the command to also setup [Solargraph](https://solargraph.org), a language server for Ruby. You may also need to install the [Solargraph extension](https://github.com/castwide/solargraph#using-solargraph) for your editor. This script should also work for Windows; although it's recommended that Window users run it (docker) within [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
-
-```bash
-./docker_dev_setup.sh
-# or with Solargraph
-./docker_dev_setup.sh --with-solargraph
-```
-
-Then, to start the development server:
-
-```bash
-./docker_start.sh
-# or with Solargraph
-./docker_start.sh --with-solargraph
-```
-
-If you have more questions about development check out our [docs](https://github.com/hackclub/hcb/blob/main/dev-docs/development.md)
+To run HCB in a development enviroment, follow the setup instructions in our [documentation](https://github.com/hackclub/hcb/blob/main/dev-docs/development.md). We support development through Codespaces, Docker, and a native setup.
 
 ### Credentials
 
