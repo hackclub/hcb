@@ -458,7 +458,7 @@ class AdminController < ApplicationController
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
     ach_transfer.approve!(current_user, send_realtime: true)
-  
+
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
   rescue Faraday::Error => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
