@@ -1,13 +1,19 @@
-## Development
+# Development
 
 We recommend using Docker to get an instance running locally. It should work out-of-the-box and is how most contributors work on HCB.
 
-- [Development](#development)
+- [Running HCB locally](#running-hcb-locally)
   - [Quickstart with GitHub Codespaces](#quickstart-with-github-codespaces)
   - [Automated setup with Docker](#automated-setup-with-docker)
   - [Manual setup with Docker](#manual-setup-with-docker)
   - [Native setup](#native-setup)
-- [Production Access](#production-access)
+- [Credentials](#credentials)
+- [Deployment](#deployment)
+- [Production Data](#production-data)
+
+Once HCB is running locally, login using the email `admin@bank.engineering`. Use Letter Opener (`/letter_opener`) to access the development email outbox and retrieve the login code.
+
+## Running HCB locally
 
 ### Quickstart with GitHub Codespaces
 
@@ -152,6 +158,18 @@ Install [ImageMagick](https://imagemagick.org/)
 # Mac specific instruction:
 brew install imagemagick
 ```
+
+## Credentials
+
+We used [Doppler](https://www.doppler.com/) to manage our credentials; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file. Otherwise, you can provide credentials via a `.env.development` file [(view example)](.env.development.example).
+
+## Deployment
+
+All pushes to the `main` branch are automatically deployed by Heroku. We also have staging deploys per PR/branch using Heroku pipelines.
+
+### Staging Access
+
+Login using the email `staging@bank.engineering`. Visit `#hcb-staging` on the [Hack Club Slack](https://hackclub.com/slack) for the code.
 
 ## Production Data
 
