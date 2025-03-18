@@ -17,7 +17,7 @@ class DonationsController < ApplicationController
 
   before_action do
     @force_fullstory = true
-    if (request&.env&.[]("HTTP_ACCEPT_LANGUAGE") && !request&.env&.[]("HTTP_ACCEPT_LANGUAGE")&.include?("-US")) || !@event.country_US?
+    if (request&.env&.[]("HTTP_ACCEPT_LANGUAGE") && !request&.env&.[]("HTTP_ACCEPT_LANGUAGE")&.include?("-US")) || !@event&.country_US?
       @international = true
     end
   end
