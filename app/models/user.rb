@@ -65,7 +65,7 @@ class User < ApplicationRecord
     monthly: 2,
   }, prefix: :receipt_report, default: :weekly
 
-  enum :access_level, { user: 0, admin: 1, superadmin: 2, reader: 3 }, scopes: false, default: :user
+  enum :access_level, { user: 0, admin: 1, superadmin: 2, auditor: 3 }, scopes: false, default: :user
 
   enum :creation_method, {
     login: 0,
@@ -195,11 +195,11 @@ class User < ApplicationRecord
 
   scope :currently_online, -> { where(id: UserSession.where("last_seen_at > ?", 15.minutes.ago).pluck(:user_id)) }
 
-  # a reader is an admin who can only view things.
-  # reader? takes into account an admin user's preference
+  # a auditor is an admin who can only view things.
+  # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
-  def reader?
-    ["reader", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  def auditor?
+    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
   end
 
   # admin? takes into account an admin user's preference
