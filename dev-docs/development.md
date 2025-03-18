@@ -11,9 +11,9 @@ We recommend using Docker to get an instance running locally. It should work out
 - [Deployment](#deployment)
 - [Production Data](#production-data)
 
-Once HCB is running locally, login using the email `admin@bank.engineering`. Use Letter Opener (`/letter_opener`) to access the development email outbox and retrieve the login code.
-
 ## Running HCB locally
+
+Once HCB is running locally, log in into your local instance using the email `admin@bank.engineering`. Use Letter Opener (`/letter_opener`) to access the development email outbox and retrieve the login code.
 
 ### Quickstart with GitHub Codespaces
 
