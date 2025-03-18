@@ -31,6 +31,12 @@
     <% end %>
   <% end %>
 
+  <% unless @ach_transfer.scheduled_on.present? %>
+    <%= form_with(model: nil, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
+      <%= form.submit "⚡ Send in realtime", data: { confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incurr a fee from Column, that will be covered by HCB." } %>
+    <% end %>
+  <% end %>
+
   <p>or</p>
 
   <%= form_with(model: nil, local: true, url: ach_reject_admin_path(@ach_transfer), method: :post) do |form| %>

@@ -243,7 +243,7 @@ class AchTransfer < ApplicationRecord
   end
 
   def realtime?
-    column_id.starts_with?("rttr")
+    column_id&.starts_with?("rttr")
   end
 
   # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
@@ -257,9 +257,11 @@ class AchTransfer < ApplicationRecord
     local_hcb_code.has_pending_expired?
   end
 
-  def approve!(processed_by = nil)
+  def approve!(processed_by = nil, send_realtime: false)
     if scheduled_on.present?
       mark_scheduled!
+    elsif send_realtime
+      send_realtime_transfer!
     else
       send_ach_transfer!
     end
