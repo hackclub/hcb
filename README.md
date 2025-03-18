@@ -51,6 +51,7 @@ HCB is a powerful, safe, and easy-to-use fiscal sponsorship platform for hackath
 
 - [What is HCB?](#what-is-hcb)
 - [Table of Contents](#table-of-contents)
+- [Security](#i-found-a-security-vulnerability-what-should-i-do)
 - [Quick start](#quick-start)
 - [Contributing](#contributing)
 - [Documentation](https://github.com/hackclub/hcb/blob/main/dev-docs/)
