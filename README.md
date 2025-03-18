@@ -30,8 +30,10 @@ HCB is a powerful, safe, and easy-to-use fiscal sponsorship platform for hackath
 - [Table of Contents](#table-of-contents)
 - [Contributing](#contributing)
 - [Quick Start](#quick-start)
-  - [Github Codespaces](#github-codespaces)
-  - [Docker](#docker)
+  - [Credentials](#credentials)
+  - [Development Account](#development-account)
+  - [Staging Access](#staging-access)
+  - [Production Access](#production-access)
 - [Deployment](#deployment)
 - [Docs](https://github.com/hackclub/hcb/blob/main/dev-docs/)
 
