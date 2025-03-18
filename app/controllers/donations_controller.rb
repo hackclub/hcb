@@ -15,7 +15,12 @@ class DonationsController < ApplicationController
   before_action :hide_seasonal_decorations
   skip_before_action :redirect_to_onboarding
 
-  before_action { @force_fullstory = true }
+  before_action do
+    @force_fullstory = true
+    if (request&.env&.[]("HTTP_ACCEPT_LANGUAGE") && !request&.env&.[]("HTTP_ACCEPT_LANGUAGE")&.include?("-US")) || !@event.country_US?
+      @international = true
+    end
+  end
 
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
