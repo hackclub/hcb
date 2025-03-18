@@ -235,7 +235,7 @@ class AchTransfer < ApplicationRecord
       account_number_id:,
       same_day:,
     }.compact_blank)
-  
+
     mark_in_transit
     self.column_id = column_realtime_transfer["id"]
 
