@@ -7,6 +7,29 @@
 </div>
 <br>
 
+> [!TIP]
+> 👋 Welcome Hack Clubbers! We're planning on open sourcing HCB in the near
+> future, however, you cool lad have got 🎟️ early access to the HCB codebase!
+>
+> As you explore the codebase, I ask three things of you:
+> - 📖 **Help us improve our docs.**
+>
+>   Ran into an issue setting up HCB locally or found a typo? Submit a PR!
+>
+> - 🔒 **Find and report security vulnerabilities.**
+>
+>   Discover a notable issue and we’ll ship you a cool HCB t-shirt as a thank
+>   you!
+>
+> - 👥 **Keep it within the Hack Club community.**
+>
+>   Remember, you’ve got early access!
+>
+> If you have any questions, check out
+> [#hcb-engr-help](https://hackclub.slack.com/archives/C068U0JMV19)
+>
+> ~ [@garyhtou](https://garytou.com)
+
 > [!CAUTION]
 > If you previously cloned this repository, please:
 > 1. Delete your existing clone of this repository
