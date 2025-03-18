@@ -242,6 +242,10 @@ class AchTransfer < ApplicationRecord
     save!
   end
 
+  def realtime?
+    column_id.starts_with?("rttr")
+  end
+
   # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
@@ -331,6 +335,8 @@ class AchTransfer < ApplicationRecord
     # https://column.com/docs/ach/timing
 
     now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
+
+    return now if realtime?
 
     if same_day? && now.workday?
       return now.change(hour: 10, minute: 0, second: 0) if now < now.change(hour: 7, min: 15, sec: 0)
