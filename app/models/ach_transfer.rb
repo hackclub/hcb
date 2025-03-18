@@ -114,6 +114,8 @@ class AchTransfer < ApplicationRecord
 
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
 
+  scope :realtime, -> { where("column_id ILIKE 'rttr%'") }
+
   after_initialize do
     self.same_day = true
   end
@@ -219,8 +221,7 @@ class AchTransfer < ApplicationRecord
   def send_realtime_transfer!
     return unless may_mark_in_transit?
 
-    account_number_id = event.column_account_number&.column_id ||
-                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
     column_realtime_transfer = ColumnService.post("/transfers/realtime", {
       idempotency_key: self.id.to_s,
