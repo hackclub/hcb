@@ -52,6 +52,10 @@ module SessionsHelper
     !current_user.nil?
   end
 
+  def reader_signed_in?
+    signed_in? && current_user&.reader?
+  end
+
   def admin_signed_in?
     signed_in? && current_user&.admin?
   end
