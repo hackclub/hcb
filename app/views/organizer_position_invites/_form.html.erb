@@ -15,7 +15,7 @@
   </div>
 
   <%= form.label :role, class: "mb1" %>
-  <div class="field field--options">
+  <div class="field field--options flex">
     <% OrganizerPositionInvite.roles.keys.map do |role| %>
       <%= form.radio_button :role, role, "x-model": "role" %>
       <%= form.label :role, value: role do %>
