@@ -508,6 +508,7 @@ Rails.application.routes.draw do
 
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
+  get "security", to: "static_pages#security"
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "audit", to: "admin#audit"
