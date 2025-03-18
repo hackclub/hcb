@@ -223,14 +223,17 @@ class AchTransfer < ApplicationRecord
 
     account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
+    column_counterparty = ColumnService.post("/counterparties", {
+      idempotency_key: self.id.to_s,
+      account_number:,
+      routing_number:
+    }.compact_blank)
+
     column_realtime_transfer = ColumnService.post("/transfers/realtime", {
       idempotency_key: self.id.to_s,
       amount:,
       currency_code: "USD",
-      counterparty: {
-        account_number:,
-        routing_number:,
-      },
+      counterparty_id: column_counterparty["id"],
       description: payment_for,
       account_number_id:,
     }.compact_blank)
