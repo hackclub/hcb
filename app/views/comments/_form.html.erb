@@ -1,67 +1,69 @@
-<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new] do |form| %>
-  <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
-  <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
+<% if organizer_signed_in?(as: :member) %>
+  <%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new] do |form| %>
+    <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
+    <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
 
-  <div class="comment__name mt2">
-    <%= user_mention current_user if organizer_signed_in?(as: :member) %>
-    <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", class: "muted flex items-center justify-end h6", target: "_blank" do %>
-      <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
-    <% end %>
-  </div>
-
-  <text-expander keys="@">
-    <%= form.text_area :content, class: "card mb2 overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea" %>
-  </text-expander>
-
-  <ul role="listbox" class="mention-suggestions card" hidden popover>
-    <% commentable.comment_mentionable(current_user:).each do |u| %>
-      <li role="option" class="cursor-pointer mention-suggestion" data-value="@<%= u.email %>" data-search="<%= u.name %>">
-        <%= user_mention u, { disable_tooltip: true } %>
-      </li>
-    <% end %>
-  </ul>
-
-  <div class="flex flex-row mb2 justify-between items-center">
-
-    <% if @comment&.persisted? %>
-      <% if comment.file.attached? %>
-        <div class="field mb0">
-          <%= link_to "📎 1 attachment", url_for(comment.file), target: "_blank" %>
-        </div>
+    <div class="comment__name mt2">
+      <%= user_mention current_user if organizer_signed_in?(as: :member) %>
+      <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", class: "muted flex items-center justify-end h6", target: "_blank" do %>
+        <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
       <% end %>
-    <% else %>
-      <div class="field field--fileupload mb1 mt1">
-        <%= form.label :file, "Choose file", class: "field--fileupload__label", for: "comment_file_upload" %>
-        <%= form.file_field :file,
-            multiple: false,
-            required: false,
-            style: "margin: 8px 0px; max-width: 120px;",
-            class: "field--fileupload__field",
-            id: "comment_file_upload" %>
-      </div>
-    <% end %>
+    </div>
 
-    <%= form.hidden_field :commentable_type, value: commentable&.class %>
-    <%= form.hidden_field :commentable_id, value: commentable&.id %>
+    <text-expander keys="@">
+      <%= form.text_area :content, class: "card mb2 overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea" %>
+    </text-expander>
 
-    <% admin_tool("inline-flex", "span") do %>
-      <% if defined?(admin_only) %>
-        <%= form.hidden_field :admin_only, value: true %>
-        This comment will only be shown to admins.
+    <ul role="listbox" class="mention-suggestions card" hidden popover>
+      <% commentable.comment_mentionable(current_user:).each do |u| %>
+        <li role="option" class="cursor-pointer mention-suggestion" data-value="@<%= u.email %>" data-search="<%= u.name %>">
+          <%= user_mention u, { disable_tooltip: true } %>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="flex flex-row mb2 justify-between items-center">
+
+      <% if @comment&.persisted? %>
+        <% if comment.file.attached? %>
+          <div class="field mb0">
+            <%= link_to "📎 1 attachment", url_for(comment.file), target: "_blank" %>
+          </div>
+        <% end %>
       <% else %>
-        <div class="field field--checkbox mb0">
-          <%= form.check_box :admin_only, {}, true, false %>
-          <%= form.label :admin_only, "Only show this comment to admins" %>
+        <div class="field field--fileupload mb1 mt1">
+          <%= form.label :file, "Choose file", class: "field--fileupload__label", for: "comment_file_upload" %>
+          <%= form.file_field :file,
+              multiple: false,
+              required: false,
+              style: "margin: 8px 0px; max-width: 120px;",
+              class: "field--fileupload__field",
+              id: "comment_file_upload" %>
         </div>
       <% end %>
-    <% end %>
 
-  </div>
+      <%= form.hidden_field :commentable_type, value: commentable&.class %>
+      <%= form.hidden_field :commentable_id, value: commentable&.id %>
 
-  <%= form.submit "Add comment", disabled: !organizer_signed_in?(as: :member) && current_user != commentable&.try(:user) %>
-<% end %>
+      <% admin_tool("inline-flex", "span") do %>
+        <% if defined?(admin_only) %>
+          <%= form.hidden_field :admin_only, value: true %>
+          This comment will only be shown to admins.
+        <% else %>
+          <div class="field field--checkbox mb0">
+            <%= form.check_box :admin_only, {}, true, false %>
+            <%= form.label :admin_only, "Only show this comment to admins" %>
+          </div>
+        <% end %>
+      <% end %>
 
-<% unless @popover %>
-  <%= turbo_stream_from commentable, :comments %>
-  <% turbo_refreshes_with method: :morph, scroll: :preserve %>
+    </div>
+
+    <%= form.submit "Add comment", disabled: !organizer_signed_in?(as: :member) && current_user != commentable&.try(:user) %>
+  <% end %>
+
+  <% unless @popover %>
+    <%= turbo_stream_from commentable, :comments %>
+    <% turbo_refreshes_with method: :morph, scroll: :preserve %>
+  <% end %>
 <% end %>

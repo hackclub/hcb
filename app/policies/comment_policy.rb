@@ -13,19 +13,19 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def new?
-    user.admin? || users.include?(user)
+    !reader? && (user.admin? || users.include?(user))
   end
 
   def create?
-    user.admin? || users.include?(user)
+    !reader? && (user.admin? || users.include?(user))
   end
 
   def edit?
-    user.admin? || (users.include?(user) && record.user == user)
+    !reader? && (user.admin? || (users.include?(user) && record.user == user))
   end
 
   def update?
-    user.admin? || (users.include?(user) && record.user == user)
+    !reader? && (user.admin? || (users.include?(user) && record.user == user))
   end
 
   def react?
@@ -33,11 +33,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.admin? || (users.include?(user) && !record.admin_only)
+    !reader? && (user&.admin? || (users.include?(user) && !record.admin_only))
   end
 
   def destroy?
-    user.admin? || (users.include?(user) && record.user == user)
+    !reader? && (user.admin? || (users.include?(user) && record.user == user))
   end
 
   private
