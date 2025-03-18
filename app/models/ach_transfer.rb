@@ -216,6 +216,31 @@ class AchTransfer < ApplicationRecord
     save!
   end
 
+  def send_realtime_transfer!
+    return unless may_mark_in_transit?
+
+    account_number_id = event.column_account_number&.column_id ||
+                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
+
+    column_realtime_transfer = ColumnService.post("/transfers/realtime", {
+      idempotency_key: self.id.to_s,
+      amount:,
+      currency_code: "USD",
+      counterparty: {
+        account_number:,
+        routing_number:,
+      },
+      description: payment_for,
+      account_number_id:,
+      same_day:,
+    }.compact_blank)
+  
+    mark_in_transit
+    self.column_id = column_realtime_transfer["id"]
+
+    save!
+  end
+
   # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
