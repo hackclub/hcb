@@ -126,7 +126,7 @@ module SessionsHelper
   end
 
   def signed_in_admin
-    unless admin_signed_in?
+    unless auditor_signed_in
       redirect_to auth_users_path, flash: { error: "You’ll need to sign in as an admin." }
     end
   end

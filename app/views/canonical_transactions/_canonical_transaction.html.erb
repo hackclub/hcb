@@ -106,7 +106,7 @@
         </div>
       <% end %>
       <% if ct.local_hcb_code %>
-        <%= list_badge_for admin_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
+        <%= list_badge_for auditor_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
         <%= list_badge_for ct.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: ct.local_hcb_code.receipt_optional?, required: ct.local_hcb_code.missing_receipt? %>
       <% end %>
     </div>
