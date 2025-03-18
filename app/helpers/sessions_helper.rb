@@ -66,7 +66,7 @@ module SessionsHelper
     @current_user = user
   end
 
-  def organizer_signed_in?(event = @event, as: :member)
+  def organizer_signed_in?(event = @event, as: :reader)
     run = ->(inner_event:, inner_as:) do
       next true if admin_signed_in?
       next false unless signed_in? && inner_event.present?

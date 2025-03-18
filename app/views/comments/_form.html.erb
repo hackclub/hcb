@@ -3,7 +3,7 @@
   <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
 
   <div class="comment__name mt2">
-    <%= user_mention current_user if organizer_signed_in? %>
+    <%= user_mention current_user if organizer_signed_in?(as: :member) %>
     <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", class: "muted flex items-center justify-end h6", target: "_blank" do %>
       <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
     <% end %>
@@ -58,7 +58,7 @@
 
   </div>
 
-  <%= form.submit "Add comment", disabled: !organizer_signed_in? && current_user != commentable&.try(:user) %>
+  <%= form.submit "Add comment", disabled: !organizer_signed_in?(as: :member) && current_user != commentable&.try(:user) %>
 <% end %>
 
 <% unless @popover %>
