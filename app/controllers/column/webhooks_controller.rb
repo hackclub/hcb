@@ -53,7 +53,7 @@ module Column
     end
 
     def handle_swift_outgoing_transfer_returned
-      Wire.find_by(column_id: @object[:id])&.mark_failed!(@object[:return_details].pick(:description)&.gsub(/\(trace #: \d+\)\Z/, "")&.strip)
+      Wire.find_by(column_id: @object[:id])&.mark_failed!(@object[:return_reason]&.gsub(/\(trace #: \d+\)\Z/, "")&.strip)
     end
 
     def handle_outgoing_check_update
