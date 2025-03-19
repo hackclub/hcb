@@ -79,6 +79,7 @@ su - postgres
 psql
 CREATE ROLE rails WITH INHERIT LOGIN CONNECTION LIMIT 500 PASSWORD 'password here';
 ```
+- Heroku had a 500 connection limit, so we're mirroring that here.
 
 ### Verify connection from localhost
 ```bash
