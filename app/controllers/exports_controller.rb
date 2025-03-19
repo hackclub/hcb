@@ -2,7 +2,7 @@
 
 class ExportsController < ApplicationController
   include SetEvent
-  before_action :set_event, only: [:transactions]
+  before_action :set_event, only: [:transactions, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
@@ -23,7 +23,7 @@ class ExportsController < ApplicationController
         if should_queue
           handle_large_export(file_extension)
         else
-          send("stream_transactions_#{file_extension}")
+          send(export_options[file_extension][:stream_method])
         end
       end
 
@@ -63,6 +63,16 @@ class ExportsController < ApplicationController
     end
   end
 
+  def reimbursements
+    authorize @event, :reimbursements?
+
+    respond_to do |format|
+      format.csv do
+        stream_reimbursements_csv
+      end
+    end
+  end
+
   def collect_email
     if !params[:event_slug] || !params[:file_extension]
       redirect_to root_path
@@ -88,9 +98,9 @@ class ExportsController < ApplicationController
 
   def export_options
     {
-      "csv"    => ExportJob::Csv,
-      "json"   => ExportJob::Json,
-      "ledger" => ExportJob::Ledger
+      "csv"    => { export_job: ExportJob::Csv, stream_method: "stream_transactions_csv" },
+      "json"   => { export_job: ExportJob::Json, stream_method: "stream_transactions_json" },
+      "ledger" => { export_job: ExportJob::Ledger, stream_method: "stream_transactions_ledger" },
     }
   end
 
@@ -101,13 +111,13 @@ class ExportsController < ApplicationController
     end
 
     if current_user
-      export_job = export_options[file_extension]
+      export_job = export_options[file_extension][:export_job]
       export_job.perform_later(event_id: @event.id, email: current_user.email, public_only: !organizer_signed_in?, **additional_args)
       flash[:success] = "This export is too big, so we'll send you an email when it's ready."
       redirect_back fallback_location: @event and return
     elsif params[:email]
       # this handles the second stage of large transparent exports
-      export_job = export_options[file_extension]
+      export_job = export_options[file_extension][:export_job]
       export_job.perform_later(event_id: @event.id, email: params[:email], public_only: true, **additional_args)
       flash[:success] = "We'll send you an email when your export is ready."
       redirect_to @event and return
@@ -145,19 +155,28 @@ class ExportsController < ApplicationController
     self.response_body = transactions_ledger
   end
 
+  def stream_reimbursements_csv
+    set_file_headers_csv
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = reimbursements_csv
+  end
+
   def set_file_headers_csv
     headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
   end
 
   def set_file_headers_json
     headers["Content-Type"] = "application/json"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.json"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.json"
   end
 
   def set_file_headers_ledger
     headers["Content-Type"] = "text/ledger"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
   end
 
   def transactions_csv
@@ -170,6 +189,10 @@ class ExportsController < ApplicationController
 
   def transactions_ledger
     ::ExportService::Ledger.new(event_id: @event.id, public_only: !organizer_signed_in?).run
+  end
+
+  def reimbursements_csv
+    ::ExportService::Reimbursement::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
   end
 
 end

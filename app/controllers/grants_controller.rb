@@ -31,7 +31,7 @@ class GrantsController < ApplicationController
 
   rescue => e
     flash.now[:error] = e.message
-    notify_airbrake(e)
+    Rails.error.report(e)
     render "new", status: :unprocessable_entity
   end
 
@@ -188,7 +188,7 @@ class GrantsController < ApplicationController
 
   rescue => e
     flash[:error] = e.message
-    notify_airbrake(e)
+    Rails.error.report(e)
     redirect_back_or_to grant_path(@grant)
 
   end

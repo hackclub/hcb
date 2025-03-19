@@ -145,7 +145,7 @@
       <div class="field">
         <%= form.label :stripe_card_logo, "Card logo" %>
         <p class="h5 muted mt0 mb2">
-          Displayed in the top right of each of your organization's cards. A logo needs to be a binary image containing a black logo on a white background.
+          Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
           The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
         </p>
         <% if @event.stripe_card_logo.attached? %>

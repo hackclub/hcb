@@ -4,8 +4,13 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :roles]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :roles]
+  skip_before_action :signed_in_user, only: [:branding, :roles, :security]
+  skip_before_action :redirect_to_onboarding, only: [:branding, :roles, :security]
+
+  after_action only: [:index, :branding, :security] do
+    # Allow indexing home and branding pages
+    response.delete_header("X-Robots-Tag")
+  end
 
   def index
     if signed_in?
@@ -111,6 +116,8 @@ class StaticPagesController < ApplicationController
     }
   end
 
+  def security; end
+
   def suggested_pairings
     render partial: "static_pages/suggested_pairings", locals: {
       pairings: current_user.receipt_bin.suggested_receipt_pairings,
@@ -138,7 +145,7 @@ class StaticPagesController < ApplicationController
     redirect_back
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash[:error] = e.message
     return redirect_to params[:redirect_url] if params[:redirect_url]

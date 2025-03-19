@@ -295,7 +295,7 @@ class Transaction < ApplicationRecord
     end
     # NOTE: we cannot curently auto-pair Expensify txs
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
   end
 
   # Tries to recover transaction data from a previously paired / modified

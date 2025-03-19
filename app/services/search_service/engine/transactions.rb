@@ -4,6 +4,8 @@ module SearchService
   class Engine
     class Transactions
       include SearchService::Shared
+      include DynamicFilters
+
       def initialize(query, user, context)
         @query = query
         @user = user
@@ -33,10 +35,14 @@ module SearchService
           case condition[:property]
           when "date"
             value = Chronic.parse(condition[:value], context: :past)
-            transactions = transactions.where("canonical_transactions.date #{condition[:operator]} ?", value)
+            filter_by_column(transactions, :date, condition[:operator], value)
           when "amount"
             value = (convert_to_float(condition[:value]) * 100).to_i
-            transactions = transactions.where("ABS(canonical_transactions.amount_cents) #{condition[:operator]} ?", value)
+
+            amount_cents = transactions.arel_table[:amount_cents]
+            abs_amount = Arel::Nodes::NamedFunction.new("ABS", [amount_cents])
+
+            filter_by_arel_node(transactions, abs_amount, condition[:operator], value)
           end
         end
         if @query["subtype"]

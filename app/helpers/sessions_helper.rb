@@ -52,6 +52,10 @@ module SessionsHelper
     !current_user.nil?
   end
 
+  def auditor_signed_in?
+    signed_in? && current_user&.auditor?
+  end
+
   def admin_signed_in?
     signed_in? && current_user&.admin?
   end

@@ -36,16 +36,6 @@
       SL<%= @event.service_level %>
     </span>
   <% end %>
-
-  <% if @event.increase_account_id != IncreaseService::AccountIds::FS_MAIN %>
-    <% admin_tool("p0 badge", "span") do %>
-      <%= link_to "https://dashboard.increase.com/accounts/#{@event.increase_account_id}" do %>
-        <span class="m0 badge bg-muted">
-          <%= @event.increase_account_id %>
-        </span>
-      <% end %>
-    <% end %>
-  <% end %>
 </h1>
 
 <% if organizer_signed_in? && @event.demo_mode %>
@@ -89,7 +79,7 @@
 
   <%= render "events/public_message" %>
 
-  <%= turbo_frame_tag "balance_transactions", src: event_balance_transactions_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4", loading: "lazy" do %>
+  <%= turbo_frame_tag "balance_transactions", src: event_balance_transactions_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown shadow-none p-0 flex-1 text-center flex-1 flex flex-col items-center justify-center min-h-[421px]" style="flex: 1">
       <%= render partial: "application/loading_container" %>
     </div>
@@ -98,19 +88,19 @@
     </div>
   <% end %>
 
-  <%= turbo_frame_tag "money_movement", src: event_money_movement_path(@event), class: "flex gap-4 flex-col sm:flex-row", loading: "lazy" do %>
+  <%= turbo_frame_tag "money_movement", src: event_money_movement_path(@event), class: "flex gap-4 flex-col sm:flex-row", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown shadow-none p-0 flex-1 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height: 234.6px">
       <%= render partial: "application/loading_container" %>
     </div>
   <% end %>
 
   <div class="flex gap-4 flex-col sm:flex-row" style="max-width:100%">
-    <%= turbo_frame_tag "recent_activity", src: event_recent_activity_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", loading: "lazy" do %>
+    <%= turbo_frame_tag "recent_activity", src: event_recent_activity_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", loading: "lazy", target: "_top" do %>
       <div class="card card--breakdown shadow-none p-0 flex-1 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height: 305px">
         <%= render partial: "application/loading_container" %>
       </div>
     <% end %>
-    <%= turbo_frame_tag "team_stats", src: event_team_stats_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", style: "min-height: 305px", loading: "lazy" do %>
+    <%= turbo_frame_tag "team_stats", src: event_team_stats_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", style: "min-height: 305px", loading: "lazy", target: "_top" do %>
       <div class="card card--breakdown shadow-none p-0 flex-1 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>
@@ -120,7 +110,7 @@
     <% end %>
   </div>
 
-  <%= turbo_frame_tag "merchants_categories", src: event_merchants_categories_path(@event), class: "homepage-row empty:hidden", loading: "lazy" do %>
+  <%= turbo_frame_tag "merchants_categories", src: event_merchants_categories_path(@event), class: "homepage-row empty:hidden", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
       <%= render partial: "application/loading_container" %>
     </div>
@@ -129,7 +119,7 @@
     </div>
   <% end %>
 
-  <%= turbo_frame_tag "tags_users", src: event_tags_users_path(@event), class: "homepage-row empty:hidden", loading: "lazy" do %>
+  <%= turbo_frame_tag "tags_users", src: event_tags_users_path(@event), class: "homepage-row empty:hidden", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
       <%= render partial: "application/loading_container" %>
     </div>
@@ -138,7 +128,7 @@
     </div>
   <% end %>
 
-  <%= turbo_frame_tag "transaction_heatmap", src: event_transaction_heatmap_path(@event), class: "homepage-row", loading: "lazy" do %>
+  <%= turbo_frame_tag "transaction_heatmap", src: event_transaction_heatmap_path(@event), class: "homepage-row", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown shadow-none p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height:223px">
       <%= render partial: "application/loading_container" %>
     </div>

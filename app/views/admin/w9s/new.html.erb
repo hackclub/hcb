@@ -1,0 +1,31 @@
+<% title "Upload a W9" %>
+
+<h1>Upload a W9</h1>
+
+<%= form_with(url: admin_w9s_path) do |form| %>
+  <fieldset>
+    <legend>Organization</legend>
+    <p>
+      <%= form.label :url, "URL (required)" %>
+      <br>
+      <%= form.text_field :url, placeholder: "drive.google.com", required: true %>
+    </p>
+
+    <p>
+      <%= form.label :signed_at, "Signed at..." %>
+      <br>
+      <%= form.date_field :signed_at, value: Time.now, required: true %>
+    </p>
+
+    <p>
+      <%= form.label :email, "User's Email Address" %>
+      <br>
+      <%= form.email_field :email, placeholder: "Email Address", required: false %>
+    </p>
+
+  </fieldset>
+
+  <p>
+    <%= form.submit "Upload W9" %>
+  </p>
+<% end %>

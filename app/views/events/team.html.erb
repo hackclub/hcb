@@ -77,7 +77,7 @@
   <% if @all_positions.any? %>
     <%= turbo_frame_tag "team_position" do %>
       <div class="grid grid-cols-1 lg:grid-cols-2">
-        <%= render @positions %>
+        <%= render partial: "organizer_positions/organizer_position", collection: @positions %>
       </div>
       <%= paginate @positions %>
     <% end %>
@@ -93,17 +93,27 @@
   </h2>
 
   <div class="flex flex-col" style="gap: 0.5rem">
-    <%= render @pending %>
+    <%= render partial: "organizer_position_invites/organizer_position_invite", collection: @pending %>
   </div>
 <% end %>
 
-<% admin_tool("flex justify-center mt2") do %>
-  <%= link_to @event.organizer_positions.where(is_signee: nil).any? ? "Finish signee backfill" : "✅ Signee backfill complete, thanks.",
-              event_finish_signee_backfill_path(@event),
-              method: :post,
-              disabled: @event.organizer_positions.where(is_signee: nil).none?,
-              "data-confirm": "Are you sure you have backfilled all organizers of #{@event.name} with their correct contract signee status? Continuing will convert #{@event.organizer_positions.where(is_signee: nil).count} null(s) to false.",
-              class: "btn" %>
+<% admin_tool("mt2") do %>
+  <h2 class="flex items-center mt3 mb2">
+    Previous members
+    <%= badge_for @event.organizer_positions.with_deleted.where.not(deleted_at: nil).count, class: "bg-muted" %>
+  </h2>
+  <ul>
+    <% @event.organizer_positions.with_deleted.where.not(deleted_at: nil).order(deleted_at: :desc).each do |op| %>
+      <li>
+        <%= link_to op.user.name, admin_user_path(op.user) %> was removed <%= time_ago_in_words op.deleted_at %> ago
+        <%= error_boundary fallback_text: "; the context failed to load." do %>
+          <% if opdr = op.organizer_position_deletion_requests.last %>
+            by <%= opdr.closed_by.name %> at the request of <%= opdr.submitted_by.name %> <%= link_to "(context)", opdr %>
+          <% end %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
 <% end %>
 
 <% if policy(@event).can_invite_user? %>
