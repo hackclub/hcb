@@ -7,9 +7,8 @@ We recommend using Docker to get an instance running locally. It should work out
   - [Automated setup with Docker](#automated-setup-with-docker)
   - [Manual setup with Docker](#manual-setup-with-docker)
   - [Native setup](#native-setup)
-- [Credentials](#credentials)
 - [Testing](#testing)
-- [Production data](#production-data)
+- [Credentials](#credentials)
 
 ## Running HCB locally
 
@@ -159,14 +158,6 @@ Install [ImageMagick](https://imagemagick.org/)
 brew install imagemagick
 ```
 
-## Credentials
-
-We used [Doppler](https://www.doppler.com/) to manage our credentials internally; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file. Otherwise, you can provide credentials via a `.env.development` file [(view example)](.env.development.example).
-
-HCB relies on two services for the majority of it's financial features: Stripe and Column. We recommend creating a Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
-
-We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
-
 ## Testing
 
 ### Automated testing w/ RSpec
@@ -181,10 +172,22 @@ bundle exec rspec
 
 All PRs are deployed in a staging enviroment using Heroku. Login using the email `staging@bank.engineering`. Visit `#hcb-staging` on the [Hack Club Slack](https://hackclub.com/slack) for the code.
 
-## Production data
+## Credentials
 
-We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary the following steps can be taken:
+External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example).
 
-- Use a `DOPPLER_TOKEN` with development access, this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access). 
+HCB relies on two services for the majority of it's financial features: Stripe and Column. We recommend creating a Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+
+We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
+
+Internally, we use [Doppler](https://www.doppler.com/) to manage our credentials; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file to load in credentials from Doppler.
+
+### Production data
+
+We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary a HCB engineer can take the following steps:
+
+- Use a `DOPPLER_TOKEN` with development access, this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access).
+
 - Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` enviroment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
+
 - Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
