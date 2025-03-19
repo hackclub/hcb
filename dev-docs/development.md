@@ -8,7 +8,6 @@ We recommend using Docker to get an instance running locally. It should work out
   - [Manual setup with Docker](#manual-setup-with-docker)
   - [Native setup](#native-setup)
 - [Credentials](#credentials)
-- [Deployment](#deployment)
 - [Testing](#testing)
 - [Production data](#production-data)
 
@@ -163,10 +162,6 @@ brew install imagemagick
 ## Credentials
 
 We used [Doppler](https://www.doppler.com/) to manage our credentials internally; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file. Otherwise, you can provide credentials via a `.env.development` file [(view example)](.env.development.example).
-
-## Deployment
-
-All pushes to the `main` branch are automatically deployed by Heroku. We also have staging deploys per PR/branch using Heroku pipelines.
 
 ## Testing
 
