@@ -184,7 +184,7 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 ## Production data
 
-We've transitioned to using development keys and seed data in development, but historically have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary the following steps can be taken:
+We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary the following steps can be taken:
 
 - Use a `DOPPLER_TOKEN` with development access, this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access). 
 - Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` enviroment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
