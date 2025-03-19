@@ -485,7 +485,7 @@ GEM
       logger
     mini_mime (1.1.5)
     mini_portile2 (2.8.8)
-    minitest (5.25.4)
+    minitest (5.25.5)
     monetize (1.13.0)
       money (~> 6.12)
     money (6.19.0)
@@ -518,7 +518,7 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.4)
-    nokogiri (1.18.3)
+    nokogiri (1.18.4)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     observer (0.1.2)
@@ -792,9 +792,9 @@ GEM
       openssl (> 2.0)
       openssl-signature_algorithm (~> 1.0)
     trailblazer-option (0.1.2)
-    turbo-rails (2.0.11)
-      actionpack (>= 6.0.0)
-      railties (>= 6.0.0)
+    turbo-rails (2.0.13)
+      actionpack (>= 7.1.0)
+      railties (>= 7.1.0)
     twilio-ruby (7.5.0)
       benchmark
       faraday (>= 0.9, < 3.0)
@@ -963,7 +963,7 @@ DEPENDENCIES
   stripe (= 11.7.0)
   strong_migrations (~> 1)
   terser (~> 1.2)
-  turbo-rails (~> 2.0.11)
+  turbo-rails (~> 2.0.13)
   twilio-ruby
   validates_email_format_of
   validates_zipcode
