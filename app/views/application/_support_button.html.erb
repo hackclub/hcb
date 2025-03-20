@@ -15,8 +15,6 @@
            location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
            user_id: current_user&.id
          } %>
-    <% end %>
-    <% if current_user&.events&.not_demo_mode&.any? %>
       <%= link_to "https://forms.hackclub.com/hcb-feedback?#{url_params.to_query}", class: "support-menu__item", target: "_blank" do %>
         <%= inline_icon "message-simple", size: 24 %> Share feedback
       <% end %>
