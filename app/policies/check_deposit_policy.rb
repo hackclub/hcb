@@ -23,6 +23,10 @@ class CheckDepositPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def auditor?
+    user&.auditor?
+  end
+
   def user?
     record.event.users.include?(user)
   end
