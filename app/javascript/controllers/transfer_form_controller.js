@@ -75,7 +75,7 @@ export default class extends Controller {
     } else {
       this.answerTextTarget.innerHTML = `${payload.type.replace('ach', 'ACH')} transfer`
       this.answerCTATarget.dataset.answer = payload.type
-      this.learnMoreValue = payload.link
+      this.learnMoreTarget.href = payload.link
 
       this.answerTarget.hidden = false
       this.wizardTarget.hidden = true
