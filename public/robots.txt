@@ -5,5 +5,8 @@
 #
 # https://support.google.com/webmasters/answer/7440203#indexed_though_blocked_by_robots_txt
 
+User-agent: YandexBot
+Disallow: /
+
 User-agent: *
 Allow: /

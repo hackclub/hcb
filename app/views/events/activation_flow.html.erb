@@ -32,6 +32,11 @@
       <%= form.label :plan, "Assign a plan" %>
       <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.type, include_blank: "Select a plan..." %>
     </div>
+
+    <div class="field pr2">
+      <%= form.label :risk_level %>
+      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
+    </div>
   </div>
 
   <% unless Flipper.enabled?(:organizer_position_contracts_2025_01_03, @event) %>

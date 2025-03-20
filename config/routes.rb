@@ -244,6 +244,7 @@ Rails.application.routes.draw do
       put "event_reject", to: "admin#event_reject"
       get "ach_start_approval", to: "admin#ach_start_approval"
       post "ach_approve", to: "admin#ach_approve"
+      post "ach_send_realtime", to: "admin#ach_send_realtime"
       post "ach_reject", to: "admin#ach_reject"
       get "disbursement_process", to: "admin#disbursement_process"
       post "disbursement_approve", to: "admin#disbursement_approve"
@@ -508,6 +509,7 @@ Rails.application.routes.draw do
 
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
+  get "security", to: "static_pages#security"
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "audit", to: "admin#audit"

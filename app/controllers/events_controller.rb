@@ -32,7 +32,7 @@ class EventsController < ApplicationController
           }
         }
 
-        if admin_signed_in?
+        if auditor_signed_in?
           events.concat(
             Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.select([:slug, :name]).map { |e|
               {
@@ -62,7 +62,7 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
-    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && admin_signed_in?) || @event.demo_mode?
+    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && auditor_signed_in?) || @event.demo_mode?
       redirect_to event_transactions_path(@event.slug)
     end
   end
@@ -923,6 +923,7 @@ class EventsController < ApplicationController
       :emburse_department_id,
       :country,
       :postal_code,
+      :risk_level,
       :point_of_contact_id,
       :slug,
       :hidden,

@@ -19,7 +19,7 @@ module PendingEventMappingEngine
             # 2. look up canonical - scoped to event for added accuracy
             cts = event.canonical_transactions.where(
               "memo ilike ? and date >= ?",
-              "%PAYOUT% #{ActiveRecord::Base.sanitize_sql_like prefix}%",
+              "%PAYOUT% #{ActiveRecord::Base.sanitize_sql_like(prefix)}%",
               cpt.date
             ).order("date asc")
 
@@ -41,13 +41,13 @@ module PendingEventMappingEngine
             # special case for invoices that are marked paid but are missing a payout! these seem to be sent to bill.com
             # these typically can match based on amount cents and nearest date as a result
 
-            cts = event.canonical_transactions.where("memo ilike '%bill.com%' and amount_cents = #{invoice.amount_due} and date > '#{invoice.created_at.strftime("%Y-%m-%d")}'")
-            cts = event.canonical_transactions.where("memo ilike 'DEPOSIT' and amount_cents = #{invoice.amount_due} and date > '#{invoice.created_at.strftime("%Y-%m-%d")}'") unless cts.present? # see sachacks examples
+            cts = event.canonical_transactions.where("memo ilike '%bill.com%' and amount_cents = ? and date > ?", invoice.amount_due, invoice.created_at.strftime("%Y-%m-%d"))
+            cts = event.canonical_transactions.where("memo ilike 'DEPOSIT' and amount_cents = ? and date > ?", invoice.amount_due, invoice.created_at.strftime("%Y-%m-%d")) unless cts.present? # see sachacks examples
             unless cts.present?
               prefix = grab_prefix_old(invoice:)
               cts = event.canonical_transactions.where(
                 "memo ilike ? and date > ?",
-                "HACK CLUB EVENT TRANSFER PAYOUT - #{ActiveRecord::Base.sanitize_sql_like prefix}%",
+                "HACK CLUB EVENT TRANSFER PAYOUT - #{ActiveRecord::Base.sanitize_sql_like(prefix)}%",
                 invoice.created_at.strftime("%Y-%m-%d").to_s
               )
             end
