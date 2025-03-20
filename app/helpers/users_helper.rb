@@ -95,7 +95,7 @@ module UsersHelper
                  elsif user.id == current_user&.id
                    current_user_flavor_text.sample
                  elsif user.auditor?
-                  "#{user.name} is an auditor"
+                   "#{user.name} is an auditor"
                  elsif user.admin?
                    "#{user.name} is an admin"
                  end
