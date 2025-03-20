@@ -35,7 +35,7 @@
 
     <div class="field pr2">
       <%= form.label :risk_level %>
-      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" } %>
+      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
     </div>
   </div>
 
