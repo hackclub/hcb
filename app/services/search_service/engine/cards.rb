@@ -20,8 +20,8 @@ module SearchService
           "users.full_name ILIKE :query OR users.email ILIKE :query OR stripe_cards.last4 ILIKE :query",
           query: "%#{User.sanitize_sql_like(@query['query'])}%"
         ).order("stripe_cards.created_at desc")
-        cards = cards.where("users.id = #{@context[:user_id]}") if @context[:user_id]
-        cards = cards.where("event_id = #{@context[:event_id]}") if @context[:event_id]
+        cards = cards.where("users.id = ?", @context[:user_id]) if @context[:user_id]
+        cards = cards.where("event_id = ?", @context[:event_id]) if @context[:event_id]
         return cards
       end
 

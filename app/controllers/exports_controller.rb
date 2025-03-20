@@ -23,7 +23,7 @@ class ExportsController < ApplicationController
         if should_queue
           handle_large_export(file_extension)
         else
-          send("stream_transactions_#{file_extension}")
+          send(export_options[file_extension][:stream_method])
         end
       end
 
@@ -98,9 +98,9 @@ class ExportsController < ApplicationController
 
   def export_options
     {
-      "csv"    => ExportJob::Csv,
-      "json"   => ExportJob::Json,
-      "ledger" => ExportJob::Ledger
+      "csv"    => { export_job: ExportJob::Csv, stream_method: "stream_transactions_csv" },
+      "json"   => { export_job: ExportJob::Json, stream_method: "stream_transactions_json" },
+      "ledger" => { export_job: ExportJob::Ledger, stream_method: "stream_transactions_ledger" },
     }
   end
 
@@ -111,13 +111,13 @@ class ExportsController < ApplicationController
     end
 
     if current_user
-      export_job = export_options[file_extension]
+      export_job = export_options[file_extension][:export_job]
       export_job.perform_later(event_id: @event.id, email: current_user.email, public_only: !organizer_signed_in?, **additional_args)
       flash[:success] = "This export is too big, so we'll send you an email when it's ready."
       redirect_back fallback_location: @event and return
     elsif params[:email]
       # this handles the second stage of large transparent exports
-      export_job = export_options[file_extension]
+      export_job = export_options[file_extension][:export_job]
       export_job.perform_later(event_id: @event.id, email: params[:email], public_only: true, **additional_args)
       flash[:success] = "We'll send you an email when your export is ready."
       redirect_to @event and return
