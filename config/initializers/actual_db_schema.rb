@@ -31,5 +31,5 @@ ActualDbSchema.configure do |config|
 
   # Define the migrated folder location.
   # config.migrated_folder = Rails.root.join("custom", "migrated")
-  config.migrated_folder = Rails.root.join("tmp", "migrated")
+  config.migrated_folder = Rails.root.join("tmp/migrated")
 end
