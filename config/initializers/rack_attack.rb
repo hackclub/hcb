@@ -106,6 +106,12 @@ class Rack::Attack
     end
   end
 
+  throttle("/hq/transactions/ip", limit: 5, period: 20.seconds) do |req|
+    if req.path.start_with?("/hq/transactions") && req.cookies[:session_token].nil?
+      req.ip
+    end
+  end
+
   # Lockout IP addresses that are hammering your donation page.
   # After 5 requests in 30 seconds, block all requests from that IP for 3 hours.
   blocklist("allow2ban donation scrapers") do |req|

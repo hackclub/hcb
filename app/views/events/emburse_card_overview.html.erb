@@ -54,13 +54,13 @@ West Hollywood, CA 90069</pre>
 </h2>
 <% if @event.emburse_cards.any? %>
   <section class="mixed-grid grid--spacious mt2">
-    <%= render @event.emburse_cards.active %>
+    <%= render partial: "emburse_cards/emburse_card", collection: @event.emburse_cards.active %>
   </section>
   <% if @event.emburse_cards.deactivated.size > 0 %>
     <details class="w-100 left-align">
       <summary><h3 class="inline-block pb0 border-none">Deactivated cards</h3></summary>
       <section class="mixed-grid grid--spacious mt2">
-      <%= render @event.emburse_cards.deactivated %>
+        <%= render partial: "emburse_cards/emburse_card", collection: @event.emburse_cards.deactivated %>
       </section>
     </details>
   <% end %>

@@ -365,4 +365,28 @@ module ApplicationHelper
     fallback
   end
 
+  # Link to a User-generated content that we can't trust. User-provided URIs may
+  # contain XSS (https://brakemanscanner.org/docs/warning_types/link_to_href/).
+  #
+  # This method is almost compatible with `link_to`, except that the second
+  # positional argument must be a string, and it doesn't support the block form.
+  def ugc_link_to(name, string, *options)
+    begin
+      uri = URI.parse(string)
+    rescue URI::InvalidURIError
+      # no op
+    end
+    parse_failure = uri.nil?
+    safe = uri&.scheme.nil? || uri&.scheme&.in?(%w[http https])
+
+    if parse_failure || !safe
+      # Could be either an invalid URI, or a non http/https link (such as
+      # javascript XSS attack). Either way, we don't want to link to it.
+      return capture { content_tag(:a, name, *options) } # empty href
+    end
+
+    # The link is safe, render it like normal
+    capture { link_to(name, uri.to_s, *options) }
+  end
+
 end

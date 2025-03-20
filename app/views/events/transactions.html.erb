@@ -39,7 +39,7 @@
 
 <h1 class="items-center hidden md:flex">
   Financials
-  <% if admin_signed_in? %>
+  <% if auditor_signed_in? %>
     <% admin_tool("p0 badge", "span") do %>
       <span class="m0 badge bg-muted">
         #<%= @event.id %>

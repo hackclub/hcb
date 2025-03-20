@@ -5,7 +5,7 @@ module HasBalanceMonitoring
 
   included do
     after_save do
-      Airbrake.notify("#{event.name} has a negative balance: #{ApplicationController.helpers.render_money event.balance}") if event.balance.negative?
+      CheckBalanceJob.set(wait: 5.minutes).perform_later(event: self.event)
     end
   end
 end

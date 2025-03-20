@@ -4,6 +4,8 @@ module SearchService
   class Engine
     class Reimbursements
       include SearchService::Shared
+      include DynamicFilters
+
       def initialize(query, user, context)
         @query = query
         @user = user
@@ -27,7 +29,7 @@ module SearchService
           case condition[:property]
           when "date"
             value = Chronic.parse(condition[:value], context: :past)
-            reimbursement_reports = reimbursement_reports.where("reimbursement_reports.created_at #{condition[:operator]} ?", value)
+            filter_by_column(reimbursement_reports, :created_at, condition[:operator], value)
           end
         end
         return reimbursement_reports.search(@query["query"]).first(50)
