@@ -69,7 +69,7 @@ class ApplicationController < ActionController::Base
   end
 
   def find_current_auditor
-    current_user if admin_signed_in?
+    current_user if auditor_signed_in?
   end
 
   private

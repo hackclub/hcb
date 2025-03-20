@@ -175,6 +175,7 @@ end
 
 group :development do
   gem "annotate" # comment models with database schema
+  gem "actual_db_schema" # rolls back phantom migrations
 
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
   gem "listen", "~> 3.9"
