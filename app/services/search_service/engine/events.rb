@@ -8,14 +8,14 @@ module SearchService
       def initialize(query, user, context)
         @query = query
         @user = user
-        @admin = user.admin?
+        @auditor = user.auditor?
         @context = context
       end
 
       def run
         if @context[:user_id] && @query["types"].length == 1
           events = User.find(@context[:user_id]).events
-        elsif @admin
+        elsif @auditor
           events = Event
         else
           events = @user.events

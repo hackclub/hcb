@@ -1058,7 +1058,7 @@ class EventsController < ApplicationController
     return false if @tag.present?
     return false if params[:q].present?
 
-    @show_running_balance = current_user&.admin? && current_user.running_balance_enabled?
+    @show_running_balance = current_user&.auditor? && current_user.running_balance_enabled?
   end
 
   def set_mock_data

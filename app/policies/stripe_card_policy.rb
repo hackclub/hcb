@@ -2,11 +2,11 @@
 
 class StripeCardPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def shipping?
-    user&.admin? || organizer?
+    user&.auditor? || organizer?
   end
 
   def freeze?
@@ -26,7 +26,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.admin? || organizer?
+    user&.auditor? || organizer?
   end
 
   def edit?
@@ -38,11 +38,11 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def transactions?
-    user&.admin? || organizer? || cardholder?
+    user&.auditor? || organizer? || cardholder?
   end
 
   def ephemeral_keys?
-    cardholder? || user&.admin?
+    cardholder? || user&.auditor?
   end
 
   def enable_cash_withdrawal?

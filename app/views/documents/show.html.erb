@@ -13,7 +13,7 @@
 
 <h1 class="heading pb2">
   <%= @document.name %>
-  <% if (@document.user == current_user) || current_user.admin? %>
+  <% if (@document.user == current_user) || current_user.auditor? %>
     <div class="flex items-center mt2" style="gap: 6px">
       <%= link_to document_download_path(@document), target: :_blank, class: "btn" do %>
         <%= inline_icon "download" %>
