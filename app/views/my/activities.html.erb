@@ -1,7 +1,7 @@
 <% title "Activity" %>
-<% page_md unless admin_signed_in? %>
-<%= render "users/nav", selected: :reimbursements unless admin_signed_in? %>
-<% @no_app_shell = true if admin_signed_in? %>
+<% page_md unless auditor_signed_in? %>
+<%= render "users/nav" unless auditor_signed_in? %>
+<% @no_app_shell = true if auditor_signed_in? %>
 
 <h2 class="heading">
   <span class="flex items-center w-100">
