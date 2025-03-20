@@ -24,10 +24,10 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@alpinejs/persist@^3.14.8":
-  version "3.14.8"
-  resolved "https://registry.yarnpkg.com/@alpinejs/persist/-/persist-3.14.8.tgz#ea3898f242bc8a469d12a53a5da29a6fd4475670"
-  integrity sha512-aK30sjUuvhoB4JIqY3QRu9WdBVHCuCq6tXq3vIzxyFSvdPI0vXAGAQNsjQ/Y2ak+GtSFVssd13NlUMotRYMQQA==
+"@alpinejs/persist@^3.14.9":
+  version "3.14.9"
+  resolved "https://registry.yarnpkg.com/@alpinejs/persist/-/persist-3.14.9.tgz#12df7449b727b6f20469c40ac908265580cfef6f"
+  integrity sha512-Td9hWEUtFFguYCRjXhq06sDultW21wXUnVro7YWJm+vjGu/nV/v3hepOXyYVjkGvH/F+zjx5UkzWXXzr3UiQ/w==
 
 "@ampproject/remapping@^2.2.0":
   version "2.3.0"
@@ -3778,10 +3778,10 @@ hasown@^2.0.0, hasown@^2.0.1, hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
-html-to-image@^1.11.12:
-  version "1.11.12"
-  resolved "https://registry.yarnpkg.com/html-to-image/-/html-to-image-1.11.12.tgz#3a87e82e14c32c2728ea6e8e48dc41c5d61d1479"
-  integrity sha512-rhfgxyBJ8wLGqetvYk0EmaiPQs+b5JqApb2ImZf46pt8QIw/UzGISXMXTZ/UARnU02TSrTmZMqF0ncIRa/4k4Q==
+html-to-image@^1.11.13:
+  version "1.11.13"
+  resolved "https://registry.yarnpkg.com/html-to-image/-/html-to-image-1.11.13.tgz#adbc989c993b7aaf90b629c0cacf833db84d5f43"
+  integrity sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==
 
 icss-utils@^5.0.0, icss-utils@^5.1.0:
   version "5.1.0"
@@ -6574,10 +6574,10 @@ ua-is-frozen@^0.1.2:
   resolved "https://registry.yarnpkg.com/ua-is-frozen/-/ua-is-frozen-0.1.2.tgz#bfbc5f06336e379590e36beca444188c7dc3a7f3"
   integrity sha512-RwKDW2p3iyWn4UbaxpP2+VxwqXh0jpvdxsYpZ5j/MLLiQOfbsV5shpgQiw93+KMYQPcteeMQ289MaAFzs3G9pw==
 
-ua-parser-js@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-2.0.2.tgz#fe68ea73166479649ce2368e54bfc8d82210ad39"
-  integrity sha512-NoaPjzMmuUlo5bJ2jrdkzvHL8gpcgVrhUugAqsqsundDO3R8rw7R0OwxLoWhcKtsTb+6u3z9dES8m6+vxEcJog==
+ua-parser-js@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-2.0.3.tgz#2f18f747c83d74c0902d14366bdf58cc14526088"
+  integrity sha512-LZyXZdNttONW8LjzEH3Z8+6TE7RfrEiJqDKyh0R11p/kxvrV2o9DrT2FGZO+KVNs3k+drcIQ6C3En6wLnzJGpw==
   dependencies:
     "@types/node-fetch" "^2.6.12"
     detect-europe-js "^0.1.2"

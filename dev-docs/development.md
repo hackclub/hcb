@@ -1,13 +1,18 @@
-## Development
+# Development
 
 We recommend using Docker to get an instance running locally. It should work out-of-the-box and is how most contributors work on HCB.
 
-- [Development](#development)
+- [Running HCB locally](#running-hcb-locally)
   - [Quickstart with GitHub Codespaces](#quickstart-with-github-codespaces)
   - [Automated setup with Docker](#automated-setup-with-docker)
   - [Manual setup with Docker](#manual-setup-with-docker)
   - [Native setup](#native-setup)
-- [Production Access](#production-access)
+- [Testing](#testing)
+- [Credentials](#credentials)
+
+## Running HCB locally
+
+Once HCB is running locally, log in into your local instance using the email `admin@bank.engineering`. Use Letter Opener (`/letter_opener`) to access the development email outbox and retrieve the login code.
 
 ### Quickstart with GitHub Codespaces
 
@@ -75,7 +80,7 @@ personally recommend using a version manager
 like [rbenv](https://rbenv.org/), [nvm](https://github.com/nvm-sh/nvm),
 or [asdf](https://asdf-vm.com/).
 
-#### [Step 2] Prereq: Install and run PostgreSQL
+#### [Step 2] Prerequisite: install and run PostgreSQL
 
 We recommend you use version `15.12` as that's what running in production. If
 you're on MacOS, I recommend using Homebrew to get Postgres up and running. If
@@ -153,11 +158,36 @@ Install [ImageMagick](https://imagemagick.org/)
 brew install imagemagick
 ```
 
-## Production Data
+## Testing
 
-We've transitioned to using development keys and seed data in development, but historically have used production keys and data on dev machines. It is recommended to not roll back to using production data & keys in development, but if absolutely necessary the following steps can be taken:
+### Automated testing w/ RSpec
 
-- Set environment variables `DOPPLER_TOKEN=<a doppler token with production access>`, `DOPPER_PROJECT=hcb`, `DOPPLER_CONFIG=production` in your docker container (usually via `.env.development`). N.B. this does not set [`RAILS_ENV=production`](https://guides.rubyonrails.org/configuring.html#rails-environment-settings), which you should **never** do on a development machine.
-- Put the production key in `config/credentials/production.key`. If you have heroku access you can get this from the `RAILS_MASTER_KEY` environment variable. If not then ask a team member (ping `@creds` in Slack). [DO NOT CHECK THIS INTO GIT](https://github.com/hackclub/hcb/blob/99fab73deb27a09a9424847e02080cb3ea5d09cf/.gitignore#L29)
-    - If you need to edit [`config/credentials/production.yml.enc`](./config/credentials/production.yml.enc), you can now run `bin/rails credentials:edit --environment=production`.
-- Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker using a dump of the production database.
+HCB has a limited set of tests created using [RSpec](https://rspec.info/). Run them using:
+
+```bash
+bundle exec rspec
+```
+
+### Staging access
+
+All PRs are deployed in a staging enviroment using Heroku. Login using the email `staging@bank.engineering`. Visit `#hcb-staging` on the [Hack Club Slack](https://hackclub.com/slack) for the code.
+
+## Credentials
+
+External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example).
+
+HCB relies on two services for the majority of it's financial features: Stripe and Column. We recommend creating a Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+
+We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
+
+Internally, we use [Doppler](https://www.doppler.com/) to manage our credentials; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file to load in credentials from Doppler.
+
+### Production data
+
+We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary a HCB engineer can take the following steps:
+
+- Use a `DOPPLER_TOKEN` with development access, this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access).
+
+- Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` enviroment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
+
+- Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
