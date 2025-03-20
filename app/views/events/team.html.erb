@@ -11,7 +11,7 @@
   <%= pop_icon_to @view == "list" ? "grid" : "list",
    "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{params[:q]}" if params[:q]}#{"&filter=#{params[:filter]}" if params[:filter]}" %>
 
-  <% if admin_signed_in? && @event.config.contact_email.present? %>
+  <% if auditor_signed_in? && @event.config.contact_email.present? %>
     <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 36px; width: 36px;" do %>
       <%= link_to "mailto:#{@event.config.contact_email}", class: "flex items-center justify-center", style: "transform: translateY(1px) scale(0.8)" do %>
         <%= inline_icon "email", color: "#ff8c37" %>

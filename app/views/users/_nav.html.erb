@@ -87,7 +87,7 @@
     <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
       <span class="flex items-center w-100">
           <span class="flex-grow">Recent activity</span>
-          <% if admin_signed_in? %>
+          <% if auditor_signed_in? %>
             <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :POST } do %>
               <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
                 👤 <%= User.currently_online.count %>
