@@ -2,11 +2,11 @@
 
 class CheckDepositPolicy < ApplicationPolicy
   def index?
-    admin_or_standard_user? && check_deposits_enabled?
+    admin_or_member_user? && check_deposits_enabled?
   end
 
   def create?
-    admin_or_standard_user? && !record.event.demo_mode?
+    admin_or_member_user? && !record.event.demo_mode?
   end
 
   def view_image?
@@ -31,7 +31,7 @@ class CheckDepositPolicy < ApplicationPolicy
     record.event.plan.check_deposits_enabled?
   end
 
-  def admin_or_standard_user?
+  def admin_or_member_user?
     (admin? || user?) && !reader?
   end
 
