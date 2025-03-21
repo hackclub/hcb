@@ -1,0 +1,15 @@
+<% title "Create an organization from Airtable" %>
+
+<h1>Create an organization from Airtable</h1>
+
+<%= form_with(model: nil, local: true, url: event_create_from_airtable_admin_index_path) do |form| %>
+  <p>
+    <%= form.label :airtable_record_id, "Airtable Record ID" %>
+    <br>
+    <%= form.text_field :airtable_record_id, placeholder: "Airtable Record ID", value: params[:airtable_record_id], required: true %>
+  </p>
+
+  <p>
+    <%= form.submit "Create organization" %>
+  </p>
+<% end %>

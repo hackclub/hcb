@@ -71,6 +71,9 @@ class AdminController < ApplicationController
   def event_new
   end
 
+  def event_new_from_airtable
+  end
+
   def event_create
     emails = [params[:organizer_email]].reject(&:empty?)
 
@@ -86,6 +89,22 @@ class AdminController < ApplicationController
       organized_by_hack_clubbers: params[:organized_by_hack_clubbers].to_i == 1,
       organized_by_teenagers: params[:organized_by_teenagers].to_i == 1,
       demo_mode: params[:demo_mode].to_i == 1
+    ).run
+
+    redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
+  rescue => e
+    redirect_to event_new_admin_index_path, flash: { error: e.message }
+  end
+
+  def event_create_from_airtable
+    application = ApplicationsTable.find(params[:airtable_record_id]).fields
+    ::EventService::Create.new(
+      name: application["Event Name"],
+      country: ISO3166::Country.find_country_by_any_name(application["Event Location"]).alpha2,
+      point_of_contact_id: current_user.id,
+      approved: true,
+      organized_by_teenagers: application["TEEN"] == "Teen",
+      demo_mode: true
     ).run
 
     redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
