@@ -13,7 +13,7 @@ class TransactionPolicy < ApplicationPolicy
   def show?
     # removing is_public check due to https://github.com/hackclub/hcb/issues/675
     # is_public || admin_or_teammember
-    admin_or_teammember
+    OrganizerPosition.role_at_least?(user, :reader)
   end
 
   def edit?
