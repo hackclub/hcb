@@ -13,19 +13,19 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def new?
-    !reader? && (user.admin? || users.include?(user))
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def create?
-    !reader? && (user.admin? || users.include?(user))
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def edit?
-    !reader? && (user.admin? || (users.include?(user) && record.user == user))
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def update?
-    !reader? && (user.admin? || (users.include?(user) && record.user == user))
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def react?
@@ -33,11 +33,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def show?
-    !reader? && (user&.admin? || (users.include?(user) && !record.admin_only))
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def destroy?
-    !reader? && (user.admin? || (users.include?(user) && record.user == user))
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   private

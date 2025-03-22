@@ -55,10 +55,6 @@ class InvoicePolicy < ApplicationPolicy
 
   private
 
-  def admin_or_user
-    user&.admin? || record.sponsor.event.users.include?(user)
-  end
-
   def is_public
     record&.sponsor&.event&.is_public?
   end

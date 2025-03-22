@@ -2,7 +2,7 @@
 
 class PaymentRecipientPolicy < ApplicationPolicy
   def destroy?
-    user&.admin? || record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
 end

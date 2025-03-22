@@ -27,7 +27,7 @@ class TransactionPolicy < ApplicationPolicy
   private
 
   def admin_or_teammember
-    user&.admin? || record&.event&.users&.include?(user)
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def is_public
