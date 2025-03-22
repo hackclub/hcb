@@ -90,7 +90,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def documentation?
-    allowed_user? && record.plan.documentation_enabled?
+    OrganizerPosition.role_at_least?(user, :reader) && record.plan.documentation_enabled?
   end
 
   def statements?
