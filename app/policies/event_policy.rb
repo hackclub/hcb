@@ -134,7 +134,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements?
-    allowed_user? && record.plan.reimbursements_enabled?
+    OrganizerPosition.role_at_least?(user, :reader) && record.plan.reimbursements_enabled?
   end
 
   def employees?
