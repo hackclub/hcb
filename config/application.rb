@@ -9,7 +9,7 @@ require_relative "../app/lib/credentials"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-Dotenv.load
+Dotenv.load if Rails.env.development?
 
 module Bank
   class Application < Rails::Application
