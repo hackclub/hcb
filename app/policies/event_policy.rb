@@ -146,7 +146,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    OrganizerPosition.role_at_least?(user, :reader) && record.plan.account_number_enabled?
+    OrganizerPosition.role_at_least?(user, :manager) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
