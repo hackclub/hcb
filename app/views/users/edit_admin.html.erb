@@ -52,7 +52,7 @@
         </div>
       <% end %>
     </section>
-    <% if admin_signed_in? %>
+    <% if auditor_signed_in? %>
       <section>
         <% if @user.transactions_missing_receipt.any? %>
           <h2>Missing Receipts</h2>

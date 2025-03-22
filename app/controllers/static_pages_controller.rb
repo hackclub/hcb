@@ -20,7 +20,7 @@ class StaticPagesController < ApplicationController
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
 
-      if admin_signed_in? && cookies[:admin_activities] == "everyone"
+      if auditor_signed_in? && cookies[:admin_activities] == "everyone"
         @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
       else
         @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
@@ -31,7 +31,7 @@ class StaticPagesController < ApplicationController
       @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
 
     end
-    if admin_signed_in?
+    if auditor_signed_in?
       @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
     end
   end

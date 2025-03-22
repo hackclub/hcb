@@ -2,11 +2,11 @@
 
 class DocumentPolicy < ApplicationPolicy
   def common_index?
-    user.admin?
+    user.auditor?
   end
 
   def index?
-    return true if user.admin?
+    return true if user.auditor?
     return true if record.blank?
 
     event_ids = record.map(&:event).pluck(:id)
@@ -23,7 +23,7 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin?
+    user.auditor?
   end
 
   def edit?
