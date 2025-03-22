@@ -14,11 +14,12 @@
         <strong>Mailed check</strong>
         <small>(10-12 biz. days)</small>
       <% end %>
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::PaypalTransfer" %>
+      <%= form.radio_button :payout_method_type, "User::PayoutMethod::PaypalTransfer", disabled: true %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::PaypalTransfer" do %>
         <%= inline_icon "paypal", size: 28 %>
         <strong>PayPal</strong>
-        <small>(2-3 biz. days)</small>
+        <div class="badge bg-warning m1 mt0" style="width: fit-content;">Unavailable</div>
+        <small class="xs-hide">Due to integration issues, transfers via PayPal are currently unavailable.</small>
       <% end %>
     </div>
   </fieldset>
@@ -67,6 +68,10 @@
     <% end %>
   </section>
   <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
+    <%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions do %>
+      Please update your payout method to either an ACH transfer or a mailed check.
+    <% end %>
+
     <%= render "callout",
         type: "info",
         title: "Important info about PayPal reimbursements" do %>

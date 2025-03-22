@@ -52,7 +52,7 @@
             <td><span class="badge bg-<%= check_deposit.state %> m0"><%= check_deposit.state_text %></span></td>
             <td><%= format_date check_deposit.created_at %></td>
             <td><%= render_money check_deposit.amount_cents %></td>
-            <td><%= link_to "Details", check_deposit.local_hcb_code.url %></td>
+            <td><%= link_to "Details", url_for(check_deposit.local_hcb_code) %></td>
           </tr>
         <% end %>
       </tbody>

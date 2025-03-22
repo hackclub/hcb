@@ -14,15 +14,15 @@ module UserService
 
       body = {
         email: @user.email,
-        firstName: @user.first_name(legal: true),
-        lastName: @user.last_name(legal: true),
+        firstName: @user.first_name,
+        lastName: @user.last_name,
         hcbSignedUpAt: format_unix(@user.created_at),
         birthday: format_unix(@user.birthday),
         hcbLastSeenAt: format_unix(@user.last_seen_at),
         hcbLastLoginAt: format_unix(@user.last_login_at),
         mailingLists: {
           # https://loops.so/docs/contacts/mailing-lists#api
-          Rails.application.credentials.loops[:mailing_list_id] => true
+          Credentials.fetch(:LOOPS, :MAILING_LIST) => true
         }
       }.compact_blank
 
@@ -58,7 +58,7 @@ module UserService
 
       resp = conn.send(:get) do |req|
         req.url("api/v1/contacts/find")
-        req.headers["Authorization"] = "Bearer #{Rails.application.credentials.loops[:key]}"
+        req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
         req.params[:email] = @user.email
       end
 
@@ -75,7 +75,7 @@ module UserService
         req.url("api/v1/contacts/update")
         req.body = body.to_json
         req.headers["Content-Type"] = "application/json"
-        req.headers["Authorization"] = "Bearer #{Rails.application.credentials.loops[:key]}"
+        req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
       end
 
     end

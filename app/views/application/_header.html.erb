@@ -24,12 +24,10 @@
                   'aria-label': "View transactions awaiting receipts" do %>
         <%= inline_icon "payment-docs", size: home_action_size %>
       <% end if @event %>
-      <% if @event %>
-        <%= link_to "javascript:void(0)",
-            data: { controller: "command-bar-trigger", "command-bar-trigger-target": "trigger" },
-            class: "muted tooltipped tooltipped--s -mr-0.5", id: "command_bar_trigger" do %>
-          <%= inline_icon "search" %>
-        <% end %>
+      <%= link_to "javascript:void(0)",
+          data: { controller: "command-bar-trigger", "command-bar-trigger-target": "trigger", "behavior": "command_bar_trigger" },
+          class: "muted tooltipped tooltipped--s -mr-0.5 #{"md:hidden" unless @event}" do %>
+        <%= inline_icon "search" %>
       <% end %>
       <%= button_to logout_users_path,
                     method: :delete,
@@ -42,7 +40,7 @@
                   class: "muted tooltipped tooltipped--s",
                   'aria-label': "Sign in" do %>
         <%= inline_icon "door-enter", size: home_action_size %>
-      <% end unless request.path.include?("auth") || request.path.include?("logins") %>
+      <% end unless request.path.include?("auth") || request.path.include?("logins") || request.path.include?("donations") %>
     <% end %>
   </div>
 

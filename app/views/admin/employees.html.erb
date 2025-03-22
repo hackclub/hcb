@@ -1,0 +1,40 @@
+<% title "Employees" %>
+
+<%= form_with method: :get do |form| %>
+  <%= form.text_field :q, value: @q, placeholder: "Search", class: "w-100" %>
+<% end %>
+
+<%= page_entries_info @employees, entry_name: "employees" %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Event</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @employees.each do |employee| %>
+      <tr class="<%= "admin-bg-pending" if employee.onboarding? %>">
+        <td><%= link_to employee.user.name, edit_user_path(employee.user) %> (<%= employee.user.email %>)</td>
+        <td><%= link_to employee.event.name, employee.event %></td>
+        <td><%= employee.aasm_state.humanize %></td>
+        <td>
+          <%= link_to "View payments", employee %> <br>
+          <%= employee.user.w9s.any? ? ugc_link_to("View latest W9", employee.user.w9s.order(signed_at: :asc).last.url) : "No W9 in HCB" %> <br>
+          <% if employee.onboarding? %>
+            <%= form_with model: nil, local: true, url: employee_onboard_path(employee), method: :post do |form| %>
+              <%= form.text_field :gusto_id, style: "width: 300px;", placeholder: "Gusto ID" %>
+              <%= form.submit "Onboard" %>
+            <% end %>
+          <% end %>
+          <%= link_to "Mark terminated", employee_terminate_path(employee), method: :POST if employee.onboarded? %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @employees %>

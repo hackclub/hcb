@@ -25,12 +25,18 @@
         <td><%= check_deposit.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to check_deposit.event.name, check_deposit.event %></td>
         <td><%= check_deposit.amount.format %></td>
-        <td><%= check_deposit.state_text %></td>
+        <td>
+          <% if check_deposit.manual_submission_required? %>
+            Manual Submission Required
+          <% else %>
+            <%= check_deposit.state_text %>
+          <% end %>
+        </td>
         <td>
           <% if check_deposit.manual_submission_required? %>
             <%= link_to "Process", [:admin, check_deposit] %>
           <% else %>
-            <%= link_to "View", check_deposit.local_hcb_code.url %>
+            <%= link_to "View", url_for(check_deposit.local_hcb_code) %>
           <% end %>
         </td>
       </tr>

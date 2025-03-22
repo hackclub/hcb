@@ -25,7 +25,7 @@ module Users
     private
 
     def set_data
-      if current_user.admin? && params[:user_email].present?
+      if current_user.auditor? && params[:user_email].present?
         @user = User.find_by(email: params[:user_email])
       end
       @user ||= current_user
@@ -82,6 +82,7 @@ module Users
           spendingByLocation: Metric::Hcb::SpendingByLocation.metric,
           spendingByCategory: Metric::Hcb::SpendingByCategory.metric,
           spendingByMerchant: Metric::Hcb::SpendingByMerchant.metric,
+          merchantCount: Metric::Hcb::MerchantCount.metric,
           spendingByDate: Metric::Hcb::SpendingByDate.metric,
         },
       }

@@ -455,6 +455,17 @@ class AdminController < ApplicationController
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
   end
 
+  def ach_send_realtime
+    ach_transfer = AchTransfer.find(params[:id])
+    ach_transfer.approve!(current_user, send_realtime: true)
+
+    redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
+  rescue Faraday::Error => e
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+  rescue => e
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
+  end
+
   def ach_reject
     ach_transfer = AchTransfer.find(params[:id])
     ach_transfer.mark_rejected!(current_user)
@@ -477,7 +488,7 @@ class AdminController < ApplicationController
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
-    notify_airbrake e
+    Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
   end
 
@@ -490,7 +501,7 @@ class AdminController < ApplicationController
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e
-    notify_airbrake e
+    Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
   end
 
@@ -717,7 +728,7 @@ class AdminController < ApplicationController
 
     relation = HcbCode
 
-    relation = relation.where("hcb_codes.hcb_code ilike '%#{@q}%'") if @q
+    relation = relation.where("hcb_codes.hcb_code ILIKE ?", "%#{@q}%") if @q
     relation = relation.receipt_required.missing_receipt if @has_receipt == "no"
     relation = relation.has_receipt_or_marked_no_or_lost if @has_receipt == "yes"
     relation = relation.lost_receipt if @has_receipt == "lost"
@@ -912,7 +923,7 @@ class AdminController < ApplicationController
             user: current_user
           ).run
         rescue => e
-          return redirect_to transaction_admin_path(id), flash: { error: e.message }
+          return redirect_to ledger_admin_index_path, flash: { error: e.message }
         end
       end
     end
@@ -1132,7 +1143,7 @@ class AdminController < ApplicationController
     @message_id = params[:message_id]
 
     respond_to do |format|
-      format.html { render inline: "<%== Ahoy::Message.find(@message_id).html_content %>" }
+      format.html { render html: Ahoy::Message.find(@message_id).html_content.html_safe } # rubocop:disable Rails/OutputSafety
     end
   end
 
@@ -1141,10 +1152,11 @@ class AdminController < ApplicationController
     @per = params[:per] || 100
     @q = params[:q].presence
     @user_id = params[:user_id]
+    @to = params[:to].presence
 
     messages = Ahoy::Message.all
     messages = messages.where(user: User.find(@user_id)) if @user_id.present?
-
+    messages = messages.where(to: @to) if @to
     messages = messages.search_subject(@q) if @q
 
     @count = messages.count
@@ -1159,10 +1171,25 @@ class AdminController < ApplicationController
         yp_name: merchant[:name],
         yp_network_id: network_id,
         memos: RawStripeTransaction
-          .where("stripe_transaction->'merchant_data'->>'network_id' = '#{network_id}'")
+          .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
           .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
       }
     end
+  end
+
+  def employees
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @employees = Employee.all.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'onboarding' DESC"),
+      "employees.created_at desc"
+    )
+  end
+
+  def employee_payments
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @payments = Employee::Payment.all.page(@page).per(@per)
   end
 
   private
@@ -1192,6 +1219,7 @@ class AdminController < ApplicationController
     @active = params[:active].present? ? params[:active] : "both" # both by default
     @organized_by = params[:organized_by].presence || "anyone"
     @tagged_with = params[:tagged_with].presence || "anything"
+    @risk_level = params[:risk_level].presence || "any"
     @point_of_contact_id = params[:point_of_contact_id].present? ? params[:point_of_contact_id] : "all"
     @plan = params[:plan].present? ? params[:plan] : "all"
     if params[:country] == 9999.to_s
@@ -1225,6 +1253,14 @@ class AdminController < ApplicationController
     relation = relation.not_demo_mode if @demo_mode == "full"
     relation = relation.includes(:event_tags)
     relation = relation.where(event_tags: { id: @tagged_with }) unless @tagged_with == "anything"
+    case @risk_level
+    when "any"
+      # don't filter
+    when "unset"
+      relation = relation.where(risk_level: nil)
+    else
+      relation = relation.where(risk_level: @risk_level)
+    end
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
     if @plan != "all"
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
@@ -1261,12 +1297,12 @@ class AdminController < ApplicationController
     info = airtable_info[task_name]
     task = Faraday.new { |c|
       c.response :json
-      c.authorization :Bearer, Rails.application.credentials.airtable[:pat]
+      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
     }.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
 
     task.size
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
     9999 # return something invalidly high to get the ops team to report it
   end
 
@@ -1301,8 +1337,6 @@ class AdminController < ApplicationController
         airtable_task_size :wallets
       when :pending_replit_airtable
         airtable_task_size :replit
-      when :pending_sendy_airtable
-        airtable_task_size :sendy
       when :pending_onepassword_airtable
         airtable_task_size :onepassword
       when :pending_domains_airtable
@@ -1311,8 +1345,6 @@ class AdminController < ApplicationController
         airtable_task_size :pvsa
       when :pending_theeventhelper_airtable
         airtable_task_size :theeventhelper
-      when :pending_first_grant_airtable
-        airtable_task_size :first_grant
       when :pending_wire_transfers_airtable
         airtable_task_size :wire_transfers
       when :pending_disputed_transactions_airtable
@@ -1325,10 +1357,6 @@ class AdminController < ApplicationController
         airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
-      when :pending_power_hour_airtable
-        airtable_task_size :power_hour
-      when :pending_arcade_airtable
-        airtable_task_size :arcade
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions
@@ -1370,12 +1398,10 @@ class AdminController < ApplicationController
     pending_task :pending_stickers_airtable
     pending_task :pending_wallets_airtable
     pending_task :pending_replit_airtable
-    pending_task :pending_sendy_airtable
     pending_task :pending_onepassword_airtable
     pending_task :pending_domains_airtable
     pending_task :pending_pvsa_airtable
     pending_task :pending_theeventhelper_airtable
-    pending_task :pending_first_grant_airtable
     pending_task :pending_feedback_airtable
     pending_task :wire_transfers
     pending_task :paypal_transfers

@@ -15,7 +15,7 @@ module Api
       end
 
       def activities
-        @activities ||= paginate(PublicActivity::Activity.joins("LEFT JOIN \"events\" ON activities.event_id = events.id OR (activities.recipient_id = events.id AND recipient_type = 'Event')").where({ events: { is_public: true, is_indexable: true } }).order(created_at: :asc))
+        @activities ||= paginate(PublicActivity::Activity.joins("LEFT JOIN \"events\" ON activities.event_id = events.id OR (activities.recipient_id = events.id AND recipient_type = 'Event')").where({ events: { is_public: true, is_indexable: true } }).order(created_at: :desc))
       end
 
       def org
@@ -221,8 +221,8 @@ module Api
     end
     get :git do
       {
-        commit_time: ApplicationController.helpers.commit_time,
-        commit_hash: ApplicationController.helpers.commit_hash
+        commit_time: Build.timestamp,
+        commit_hash: Build.commit_hash
       }
     end
 
@@ -693,7 +693,7 @@ module Api
       error!({ message: "Not authorized." }, 403)
     end
     rescue_from :all do |e|
-      Airbrake.notify(e)
+      Rails.error.report(e, handled: false, severity: "error", context: "api")
 
       # Provide error message in api response ONLY in development mode
       msg = if Rails.env.development?

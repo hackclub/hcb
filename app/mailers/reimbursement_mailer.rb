@@ -19,6 +19,12 @@ class ReimbursementMailer < ApplicationMailer
     mail to: @report.user.email_address_with_name, subject: "[Reimbursements] Rejected: #{@report.name}", from: hcb_email_with_name_of(@report.event)
   end
 
+  def reminder
+    @report = params[:report]
+
+    mail to: @report.user.email_address_with_name, subject: "[Reimbursements] Reminder: submit #{@report.name} for review", from: hcb_email_with_name_of(@report.event)
+  end
+
   def review_requested
     @report = params[:report]
 

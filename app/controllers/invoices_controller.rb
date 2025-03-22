@@ -134,7 +134,7 @@ class InvoicesController < ApplicationController
 
     redirect_to @invoice
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor)
@@ -200,7 +200,7 @@ class InvoicesController < ApplicationController
     @invoice.sync_remote!
     @invoice.reload
 
-    redirect_to @invoice.hosted_invoice_url, allow_other_host: true
+    redirect_to URI.parse(@invoice.hosted_invoice_url).to_s, allow_other_host: true
   end
 
   def pdf
@@ -211,7 +211,7 @@ class InvoicesController < ApplicationController
     @invoice.sync_remote!
     @invoice.reload
 
-    redirect_to @invoice.invoice_pdf, allow_other_host: true
+    redirect_to URI.parse(@invoice.invoice_pdf).to_s, allow_other_host: true
   end
 
   def refund
@@ -224,7 +224,8 @@ class InvoicesController < ApplicationController
       ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
     else
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "This invoice hasn't settled, only settled invoices can be refunded." }
+      InvoiceJob::Refund.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents, current_user)
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
     end
   end
 

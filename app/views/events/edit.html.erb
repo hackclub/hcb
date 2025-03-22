@@ -51,7 +51,7 @@
   <%= render "events/settings/card_grants", event: @event %>
 <% elsif @settings_tab == "audit_log" %>
   <%= render "events/settings/audit_log", event: @event %>
-<% elsif @settings_tab == "admin" && admin_signed_in? %>
+<% elsif @settings_tab == "admin" && auditor_signed_in? %>
   <%= render "events/settings/admin", event: @event %>
 <% else %>
   <%= render "events/settings/details", event: @event %>

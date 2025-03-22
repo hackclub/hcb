@@ -81,8 +81,8 @@ class UsersController < ApplicationController
       session = UserSession.find(params[:id])
       authorize session.user
 
-      session.destroy!
-      flash[:success] = "Deleted session!"
+      session.update(signed_out_at: Time.now, expiration_at: Time.now)
+      flash[:success] = "Logged out of session!"
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "Session is not found"
     end
@@ -104,7 +104,7 @@ class UsersController < ApplicationController
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding
     @mailbox_address = @user.active_mailbox_address
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
@@ -114,7 +114,7 @@ class UsersController < ApplicationController
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     redirect_to edit_user_path(@user) unless @user.stripe_cardholder
     @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
@@ -127,7 +127,7 @@ class UsersController < ApplicationController
   def edit_featurepreviews
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
@@ -135,7 +135,7 @@ class UsersController < ApplicationController
   def edit_security
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     @sessions = @sessions.not_expired
     @oauth_authorizations = @user.api_tokens
@@ -192,7 +192,7 @@ class UsersController < ApplicationController
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
 
     # User Information
@@ -211,25 +211,30 @@ class UsersController < ApplicationController
     @user = User.friendly.find(params[:id])
     authorize @user
 
-    if @user.admin? && params[:user][:running_balance_enabled].present?
-      enable_running_balance = params[:user][:running_balance_enabled] == "1"
-      if @user.running_balance_enabled? != enable_running_balance
-        @user.update_attribute(:running_balance_enabled, enable_running_balance)
+    if admin_signed_in?
+      if @user.auditor? && params[:user][:running_balance_enabled].present?
+        enable_running_balance = params[:user][:running_balance_enabled] == "1"
+        if @user.running_balance_enabled? != enable_running_balance
+          @user.update_attribute(:running_balance_enabled, enable_running_balance)
+        end
       end
-    end
 
-    if params[:user][:locked].present?
-      locked = params[:user][:locked] == "1"
-      if locked && @user == current_user
-        flash[:error] = "As much as you might desire to, you cannot lock yourself out."
-        return redirect_to admin_user_path(@user)
-      elsif locked && @user.admin?
-        flash[:error] = "Contact a engineer to lock out another admin."
-        return redirect_to admin_user_path(@user)
-      elsif locked
-        @user.lock!
-      else
-        @user.unlock!
+      if params[:user][:locked].present?
+        locked = params[:user][:locked] == "1"
+        if @user == current_user
+          flash[:error] = "As much as you might desire to, you cannot lock yourself out."
+          return redirect_to admin_user_path(@user)
+        elsif @user.admin? && !current_user.superadmin?
+          flash[:error] = "Only superadmins can lock or unlock admins."
+          return redirect_to admin_user_path(@user)
+        elsif locked && @user.superadmin?
+          flash[:error] = "To lock this user, demote them to a regular admin first."
+          return redirect_to admin_user_path(@user)
+        elsif locked
+          @user.lock!
+        else
+          @user.unlock!
+        end
       end
     end
 
@@ -271,7 +276,7 @@ class UsersController < ApplicationController
       end
     else
       set_onboarding
-      show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+      show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
       @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
       if @user.stripe_cardholder&.errors&.any?
         flash.now[:error] = @user.stripe_cardholder.errors.first.full_message

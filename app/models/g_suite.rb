@@ -28,7 +28,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class GSuite < ApplicationRecord
-  VALID_DOMAIN = /[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?\z/ix
+  VALID_DOMAIN = /\A[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?\z/ix
 
   acts_as_paranoid
   validates_as_paranoid
@@ -94,7 +94,7 @@ class GSuite < ApplicationRecord
   def verified_on_google?
     @verified_on_google ||= ::Partners::Google::GSuite::Domain.new(domain:).run.verified
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
 
     false
   end

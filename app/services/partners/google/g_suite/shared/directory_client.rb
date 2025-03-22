@@ -22,7 +22,7 @@ module Partners
           end
 
           def gsuite_customer_id
-            Rails.application.credentials.gsuite[:customer_id]
+            Credentials.fetch(:GSUITE, :CUSTOMER_ID)
           end
         end
       end

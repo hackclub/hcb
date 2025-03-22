@@ -12,6 +12,18 @@ class Rack::Attack
 
   # Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
+  # Safelist Hack Club Office
+  if office_ip = Credentials.fetch(:OFFICE_IP)
+    safelist_ip(office_ip)
+  end
+
+  # Get the IP addresses of stripe as an array
+  stripe_ips_webhooks = Net::HTTP.get(URI("https://stripe.com/files/ips/ips_webhooks.txt")).split("\n")
+  # Allow those IP addresses to send us as many webhooks as they like
+  Rack::Attack.safelist("allow from Stripe (To Webhooks)") do |req|
+    req.post? && stripe_ips_webhooks.include?(req.ip)
+  end
+
   ### Throttle Spammy Clients ###
 
   # If any single client IP is making tons of requests, then they're
@@ -90,6 +102,12 @@ class Rack::Attack
 
   throttle("donations/hq/ip", limit: 100, period: 20.seconds) do |req|
     if req.path.start_with?("/donations/hq")
+      req.ip
+    end
+  end
+
+  throttle("/hq/transactions/ip", limit: 5, period: 20.seconds) do |req|
+    if req.path.start_with?("/hq/transactions") && req.cookies[:session_token].nil?
       req.ip
     end
   end

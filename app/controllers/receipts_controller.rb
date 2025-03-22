@@ -134,7 +134,7 @@ class ReceiptsController < ApplicationController
 
     streams += generate_streams
 
-    unless @receiptable && (params[:upload_method] == :receipts_page || params[:upload_method] == "receipts_page_drag_and_drop")
+    unless @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
       receipt_upload_form_config = {
         upload_method: params[:upload_method].sub("_drag_and_drop", ""),
         restricted_dropzone: params[:upload_method] != :transaction_page,
@@ -166,7 +166,7 @@ class ReceiptsController < ApplicationController
     end
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
@@ -203,11 +203,17 @@ class ReceiptsController < ApplicationController
 
   private
 
+  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+                          EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
+                          Api::Models::CardCharge].index_by(&:to_s).freeze
+
   def find_receiptable
-    if params[:receiptable_type].present? && params[:receiptable_id].present?
-      @klass = params[:receiptable_type].constantize
-      @receiptable = @klass.find(params[:receiptable_id])
-    end
+    return unless params[:receiptable_type].present?
+    return unless params[:receiptable_id].present?
+    return unless RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+
+    @klass = RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+    @receiptable = @klass.find(params[:receiptable_id])
   end
 
   def generate_streams

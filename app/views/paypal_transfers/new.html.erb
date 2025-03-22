@@ -1,4 +1,4 @@
-<% disabled = !policy(@event).create_transfer? %>
+<% disabled = !policy(@event).create_transfer? || true %>
 
 <% title "Send a PayPal Transfer" %>
 <%= render "events/nav", selected: :transfers %>
@@ -13,11 +13,20 @@
 <%= render "callout",
     type: "info",
     title: "Important info about PayPal transfers" do %>
-    <p>Domestic PayPal transfers are free to send.</p>
-    <p>For international transfers, PayPal charges a fee of up to $5. This fee is not covered by HCB and will be passed on to the organization.</p>
-    <p>Domestic recipients are charged a <%= link_to "3% merchant fee", "https://www.paypal.com/us/business/paypal-business-fees" %>.</p>
-    <p>International recipients will be charged a ~10% fee after currency conversion and may have to pay an additional withdrawal fee.</p>
+    <p>HCB never charges fees to send transfers, however PayPal may charge processing fees to your organization or the recipient.</p>
+    <strong>Domestic fees:</strong>
+    <ul>
+      <li>No fee charged to your organization</li>
+      <li><%= link_to "3% merchant fee", "https://www.paypal.com/us/business/paypal-business-fees" %> charged to recipients</li>
+    </ul>
+    <strong>International fees:</strong>
+    <ul>
+      <li>PayPal charges a fee of up to $5 to your organization</li>
+      <li>Recipients will be charged a ~10% fee after currency conversion and may have to pay an additional withdrawal fee</li>
+    </ul>
 <% end %>
+
+<%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions %>
 
 <%= form_with(model: [@event, @paypal_transfer], local: true) do |form| %>
 

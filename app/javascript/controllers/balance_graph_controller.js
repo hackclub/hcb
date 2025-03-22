@@ -19,6 +19,18 @@ export default class extends Controller {
     )
   }
   connect() {
+    const getDates = (start, end) => {
+      const arr = []
+      for (
+        const day = new Date(start);
+        day <= new Date(end);
+        day.setDate(day.getDate() + 1)
+      ) {
+        arr.push(new Date(day))
+      }
+      return arr
+    }
+
     fetch(`/${this.slugValue}/balance_by_date`)
       .then(r => r.json())
       .then(jsonData => {
@@ -43,6 +55,19 @@ export default class extends Controller {
               ? this.availableValue
               : parseFloat(balanceByDate[date])
 
+          const mostRecentDate = balances[balances.length - 1]?.date
+          const range = getDates(new Date(date), new Date(mostRecentDate))
+          range.pop()
+          range.shift()
+          range.reverse()
+          for (const d of range) {
+            const date = d.toISOString().split('T')[0]
+            balances.push({
+              date,
+              value: value,
+            })
+          }
+
           balances.push({
             date,
             value,
@@ -59,7 +84,7 @@ export default class extends Controller {
         this.statTarget.style.minWidth =
           this.graphTarget.getBoundingClientRect().width + 'px'
         this.graphTarget.classList.add(`sparkline--${balanceTrend}`)
-        sparkline(this.graphTarget, balances.reverse(), {
+        sparkline(this.graphTarget, balances.slice(0, 365).reverse(), {
           interactive: true,
           onmousemove: this.update.bind(this),
           onmouseout: this.clear.bind(this),

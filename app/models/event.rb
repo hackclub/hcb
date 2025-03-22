@@ -29,6 +29,7 @@
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
+#  risk_level                                   :integer
 #  short_name                                   :string
 #  slug                                         :text
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
@@ -66,6 +67,7 @@ class Event < ApplicationRecord
   validates_as_paranoid
 
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
+  normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
@@ -225,6 +227,7 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :g_suites
@@ -250,6 +253,7 @@ class Event < ApplicationRecord
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
+  has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
@@ -264,6 +268,9 @@ class Event < ApplicationRecord
   has_many :payouts, through: :invoices
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+
+  has_many :employees
+  has_many :employee_payments, through: :employees, source: :payments, class_name: "Employee::Payment"
 
   has_many :documents
 
@@ -281,7 +288,7 @@ class Event < ApplicationRecord
 
   scope :dormant, -> { where.not(id: Event.engaged) }
 
-  has_many :fees, through: :canonical_event_mappings
+  has_many :fees
   has_many :bank_fees
 
   has_many :tags, -> { includes(:hcb_codes) }
@@ -305,9 +312,16 @@ class Event < ApplicationRecord
   has_many :grants
 
   has_one_attached :donation_header_image
+  validates :donation_header_image, content_type: [:png, :jpg, :jpeg]
+
   has_one_attached :background_image
+  validates :background_image, content_type: [:png, :jpg, :jpeg]
+
   has_one_attached :logo
+  validates :logo, content_type: [:png, :jpg, :jpeg]
+
   has_one_attached :stripe_card_logo
+  validates :stripe_card_logo, content_type: [:png, :jpg, :jpeg]
 
   include HasMetrics
 
@@ -319,8 +333,11 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
+  validate :contract_signed, unless: :demo_mode?
 
   validates :name, presence: true
+  before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
+
   validates :slug, presence: true, format: { without: /\s/ }
   validates :slug, format: { without: /\A\d+\z/ }
   validates_uniqueness_of_without_deleted :slug
@@ -331,7 +348,7 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
-  before_create { self.increase_account_id ||= IncreaseService::AccountIds::FS_MAIN }
+  before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
@@ -344,7 +361,7 @@ class Event < ApplicationRecord
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
-  after_commit :generate_stripe_card_designs, if: -> { stripe_card_logo&.blob&.saved_changes? && stripe_card_logo.attached? && !Rails.env.test? }
+  after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
   comma do
     id
@@ -370,6 +387,13 @@ class Event < ApplicationRecord
     express: 1,
     priority: 2,
   }
+
+  enum :risk_level, {
+    zero: 0,
+    slight: 1,
+    moderate: 2,
+    high: 3,
+  }, suffix: :risk_level
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.id }, only: [:create]
@@ -630,13 +654,13 @@ class Event < ApplicationRecord
     raise ArgumentError.new("This method requires a stripe_card_logo to be attached.") unless stripe_card_logo.attached?
 
     ActiveRecord::Base.transaction do
-      (attachment_changes["stripe_card_logo"]&.attachable || stripe_card_logo.blob).open do |tempfile|
+      stripe_card_personalization_designs.update(stale: true)
+      stripe_card_logo.blob.open do |tempfile|
         converted = ImageProcessing::MiniMagick.source(tempfile.path).convert!("png")
         ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :black, event: self).run
         converted.rewind
         ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :white, event: self).run
       end
-      stripe_card_personalization_designs.update(stale: true)
     end
   rescue Stripe::InvalidRequestError => e
     stripe_card_logo.delete
@@ -669,11 +693,12 @@ class Event < ApplicationRecord
     self[:short_name] || name[0...length]
   end
 
-  monetize :minimumn_wire_amount_cents
+  monetize :minimum_wire_amount_cents
 
-  def minimumn_wire_amount_cents
+  def minimum_wire_amount_cents
     return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
     return 100 if plan.exempt_from_wire_minimum?
+    return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
 
     return 500_00
   end
@@ -702,6 +727,12 @@ class Event < ApplicationRecord
     return if can_open_demo_mode? demo_mode_limit_email
 
     errors.add(:demo_mode, "limit reached for user")
+  end
+
+  def contract_signed
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none?
+
+    errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
 
   def sum_fronted_amount(pts)

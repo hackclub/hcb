@@ -40,7 +40,7 @@ West Hollywood, CA 90069</pre>
                 <%= inline_icon "private", size: 32, class: "smoke" %>
               </div>
           <% else %>
-            <% if @emburse_card.user == current_user || current_user.admin? %>
+            <% if @emburse_card.user == current_user || current_user.auditor? %>
               <%= link_to "View on Emburse", @emburse_card.emburse_path, target: "_blank" %>
             <% else %>
               <%= @emburse_card.formatted_card_number %>

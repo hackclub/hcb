@@ -57,17 +57,13 @@ class HcbCode < ApplicationRecord
     hcb_code "HCB Code"
     created_at "Created at"
     date "Transaction date"
-    url "URL" do |url| "https://hcb.hackclub.com#{url}" end
+    hashid "URL" do |hashid| "https://hcb.hackclub.com/hcb/#{hashid}" end
     memo
     receipts size: "Receipt count"
     receipts "Has receipt?" do |receipts| receipts.exists? end
   end
 
-  def url
-    "/hcb/#{hashid}"
-  end
-
-  def popover_url
+  def popover_path
     "/hcb/#{hashid}?frame=true"
   end
 
@@ -505,7 +501,7 @@ class HcbCode < ApplicationRecord
 
     if comment.admin_only?
       users += self.events.map(&:point_of_contact)
-      return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+      return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
     end
 
     users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)
@@ -541,7 +537,7 @@ class HcbCode < ApplicationRecord
   end
 
   def fee_waived?
-    pt&.fee_waived? || ct&.fee&.waived? || false
+    (pt&.fee_waived? || ct&.fee&.waived? || false) && canonical_transactions.all? { |ct| ct.fee&.waived? }
   end
 
   def accepts_receipts?

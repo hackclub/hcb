@@ -65,13 +65,18 @@ class CommentsController < ApplicationController
     params.require(:comment).permit(:content, :file, :admin_only)
   end
 
+  COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
+                          EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
+                          OrganizerPositionDeletionRequest, User, Reimbursement::Report].index_by(&:to_s).freeze
+
   # Given a route "/transactions/25/comments", this method sets @commentable to
   # Transaction with ID 25
   def set_commentable
     resource = params[:comment][:commentable_type] || request.path.split("/")[1]
     id =       params[:comment][:commentable_id]   || request.path.split("/")[2]
 
-    @commentable = resource.singularize.classify.constantize.find(id)
+    klass = COMMENTABLE_TYPE_MAP[resource.singularize.classify]
+    @commentable = klass.find(id)
   end
 
   def set_comment

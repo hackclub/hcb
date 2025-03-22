@@ -3,17 +3,19 @@
 module SearchService
   class Engine
     class Events
+      include DynamicFilters
+
       def initialize(query, user, context)
         @query = query
         @user = user
-        @admin = user.admin?
+        @auditor = user.auditor?
         @context = context
       end
 
       def run
         if @context[:user_id] && @query["types"].length == 1
           events = User.find(@context[:user_id]).events
-        elsif @admin
+        elsif @auditor
           events = Event
         else
           events = @user.events
@@ -22,7 +24,7 @@ module SearchService
           case condition[:property]
           when "date"
             value = Chronic.parse(condition[:value], context: :past)
-            events = events.where("created_at #{condition[:operator]} ?", value)
+            filter_by_column(events, :created_at, condition[:operator], value)
           end
         end
         events = events.search_name(@query["query"])

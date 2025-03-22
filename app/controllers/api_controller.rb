@@ -73,7 +73,7 @@ class ApiController < ApplicationController
 
   def check_token
     authed = authenticate_with_http_token do |token|
-      ActiveSupport::SecurityUtils.secure_compare(token, Rails.application.credentials.api_token)
+      ActiveSupport::SecurityUtils.secure_compare(token, Credentials.fetch(:API_TOKEN))
     end
 
     render json: { error: "Unauthorized" }, status: :unauthorized unless authed
