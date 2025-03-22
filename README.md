@@ -4,6 +4,10 @@
     <img src="https://cloud-5yru8jas0-hack-club-bot.vercel.app/0logo-512.png" width="126" alt="HCB logo">
   </picture>
   <h1>HCB by Hack Club</h1>
+
+  ![Transactions last week](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_week.size.total&style=flat&label=past%20week&color=%23ec3750&suffix=%20transactions) ![Transactions today](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_day.size.total&style=flat&label=today&color=%23338eda&suffix=%20transactions) ![Currently online](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.currently_online&style=flat&label=currently%20online&color=%2333d6a6&suffix=%20users)
+
+  
 </div>
 <br>
 
