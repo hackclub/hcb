@@ -44,7 +44,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def edit?
-    can_edit_or_manage?
+    OrganizerPosition.role_at_least?(user, :manager)
   end
 
   def pin?
@@ -52,7 +52,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def update?
-    can_edit_or_manage?
+    OrganizerPosition.role_at_least?(user, :manager)
   end
 
   alias remove_header_image? update?
@@ -102,11 +102,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_transfer?
-    can_edit_or_manage? && !record.demo_mode?
+    OrganizerPosition.role_at_least?(user, :manager) && !record.demo_mode?
   end
 
   def new_transfer?
-    can_edit_or_manage? && !record.demo_mode?
+    OrganizerPosition.role_at_least?(user, :manager) && !record.demo_mode?
   end
 
   def g_suite_overview?
@@ -114,7 +114,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def g_suite_create?
-    can_edit_or_manage? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    OrganizerPosition.role_at_least?(user, :manager) && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
@@ -146,7 +146,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    can_edit_or_manage? && record.plan.account_number_enabled?
+    OrganizerPosition.role_at_least?(user, :manager) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -154,7 +154,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def receive_grant?
-    record.users.include?(user)
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def audit_log?
@@ -166,7 +166,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def can_invite_user?
-    can_edit_or_manage?
+    OrganizerPosition.role_at_least?(user, :manager)
   end
 
   def claim_point_of_contact?
@@ -184,7 +184,7 @@ class EventPolicy < ApplicationPolicy
   private
 
   def allowed_user?
-    admin? || manager? || normal_user?
+    OrganizerPosition.role_at_least?(user, :member)
   end
 
   def admin?
@@ -195,18 +195,6 @@ class EventPolicy < ApplicationPolicy
     OrganizerPosition.find_by(user:, event: record)&.manager?
   end
 
-  def normal_user?
-    record.users.include?(user) && !reader?
-  end
-
-  def reader?
-    OrganizerPosition.find_by(user:, event: record)&.reader?
-  end
-
-  def can_edit_or_manage?
-    admin? || manager?
-  end
-
   def is_not_demo_mode?
     !record.demo_mode?
   end
@@ -214,4 +202,5 @@ class EventPolicy < ApplicationPolicy
   def is_public
     record.is_public?
   end
+
 end
