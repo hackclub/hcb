@@ -82,7 +82,7 @@ module UsersHelper
     avi = avatar_for(user, 24, options[:avatar] || {}, click_to_mention:, default_image:)
 
     klasses = ["mention"]
-    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.admin? && !options[:disable_tooltip]
+    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
     klasses << %w[mention--current-user tooltipped tooltipped--n] if current_user && (user&.id == current_user.id) && !options[:disable_tooltip]
     klasses << %w[badge bg-muted ml0] if comment_mention
     klasses << options[:class] if options[:class]
@@ -94,11 +94,13 @@ module UsersHelper
                    "No user found"
                  elsif user.id == current_user&.id
                    current_user_flavor_text.sample
+                 elsif user.auditor?
+                   "#{user.name} is an auditor"
                  elsif user.admin?
                    "#{user.name} is an admin"
                  end
 
-    content = if user&.admin? && !options[:hide_avatar]
+    content = if user&.auditor? && !options[:hide_avatar]
                 bolt = inline_icon "admin-badge", size: 20
                 avi + bolt + name
               elsif options[:hide_avatar]
@@ -111,7 +113,7 @@ module UsersHelper
   end
 
   def admin_tool(class_name = "", element = "div", override_pretend: false, **options, &block)
-    return unless current_user&.admin? || (override_pretend && current_user&.admin_override_pretend?)
+    return unless current_user&.auditor? || (override_pretend && current_user&.admin_override_pretend?)
 
     concat content_tag(element, class: "admin-tools #{class_name}", **options, &block)
   end

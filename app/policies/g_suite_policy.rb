@@ -2,7 +2,7 @@
 
 class GSuitePolicy < ApplicationPolicy
   def index?
-    user.admin?
+    user.auditor?
   end
 
   def create?
@@ -10,7 +10,7 @@ class GSuitePolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin? || record.event.users.include?(user)
+    user.auditor? || record.event.users.include?(user)
   end
 
   def edit?
@@ -26,7 +26,7 @@ class GSuitePolicy < ApplicationPolicy
   end
 
   def status?
-    user.admin? || record.event.users.include?(user)
+    user.auditor? || record.event.users.include?(user)
   end
 
 end
