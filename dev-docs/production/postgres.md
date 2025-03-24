@@ -50,7 +50,7 @@ host    bank_production rails           10.0.1.0/24             md5
 
 Change the following line
 ```
-local   all             all                                     md5
+local   all             all                                     peer
 ```
 to
 ```
@@ -135,6 +135,48 @@ To grant permission, use the following two:
 GRANT ALL PRIVILEGES ON SCHEMA public TO rails;
 -- GRANT USAGE ON SCHEMA public TO rails; -- seems to not be needed
 GRANT all on all tables in schema public to rails;
+```
+
+## Replication
+
+### Create a new database server
+follow instructions above
+
+### Configure `cluster_name` for each database server
+
+> Set the cluster_name parameter to be the server name in the postgresql.conf file.
+> - PostgreSQL 16 Administration Cookbook
+
+Remember to `systemctl restart postgresql`.
+
+### Create replication user on primary
+
+```sql
+CREATE USER repuser
+REPLICATION
+LOGIN
+CONNECTION LIMIT 2
+ENCRYPTED PASSWORD 'changeme';
+```
+
+### Allow replication user to connect
+
+Add the following line to pg_hba.conf on the primary node:
+```
+host    replication     repuser         PRIVATE_IP_OF_POSTGRES_2_SERVER/32             scram-sha-256
+```
+
+### Stop relica postgres and delete it's data directory
+
+```bash
+systemctl stop postgresql
+rm -rf /var/lib/postgresql/15/main
+```
+
+### `bg_basebackup`
+
+```bash
+pg_basebackup -d 'host=10.0.1.5 user=repuser' -D /var/lib/postgresql/15/main -R -P
 ```
 
 
