@@ -4,7 +4,7 @@ We store our queue of jobs in a Redis instance. When / if we change hosting prov
 
 Here are the steps to do the migration:
 
-1) Ensure that AOF persistence is enabled in the new server's Redis configuration, [view Redis' docs](https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/) for more context. This should be as simple as changing `appendonly no` to `appendonly yes` in the `redis.conf`.
+1) Ensure that AOF persistence is enabled in the new server's Redis configuration, [view Redis' docs](https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/) for more context. This should be as simple as changing `appendonly no` to `appendonly yes` in the `redis.conf` (`/etc/redis/redis.conf` on Hatchbox).
 2) Install [RIOT](https://github.com/redis/riot) locally (or any where you like to work!).
 3) Turn on maintenance mode - this is to prevent new jobs being added to the queue.
 4) Run the following command to migrate the keys from your old Redis instance to your new Redis instance:
