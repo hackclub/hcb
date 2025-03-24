@@ -2,7 +2,7 @@
 
 class InvoicePolicy < ApplicationPolicy
   def index?
-    return true if user&.admin?
+    return true if user&.auditor?
     return true if record.blank?
 
     event_ids = record.map(&:sponsor).map(&:event).pluck(:id)
@@ -22,7 +22,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def show?
-    is_public || OrganizerPosition.role_at_least?(user, :reader)
+    is_public || auditor_or_user
   end
 
   def archive?
@@ -46,7 +46,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def pdf?
-    OrganizerPosition.role_at_least?(user, :member)
+    auditor_or_user
   end
 
   def refund?
@@ -54,6 +54,14 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   private
+
+  def admin_or_user
+    user&.admin? || OrganizerPosition.role_at_least?(user, :member)
+  end
+
+  def auditor_or_user
+    user&.auditor? || OrganizerPosition.role_at_least?(user, :member)
+  end
 
   def is_public
     record&.sponsor&.event&.is_public?

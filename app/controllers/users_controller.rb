@@ -212,7 +212,7 @@ class UsersController < ApplicationController
     authorize @user
 
     if admin_signed_in?
-      if @user.admin? && params[:user][:running_balance_enabled].present?
+      if @user.auditor? && params[:user][:running_balance_enabled].present?
         enable_running_balance = params[:user][:running_balance_enabled] == "1"
         if @user.running_balance_enabled? != enable_running_balance
           @user.update_attribute(:running_balance_enabled, enable_running_balance)

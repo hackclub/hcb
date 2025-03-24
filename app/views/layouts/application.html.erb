@@ -35,6 +35,8 @@
       <script async src="https://cdn.headwayapp.co/widget.js"></script>
     <% end %>
 
+    <%= render "application/helpscout_beacon" %>
+
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
     <% end %>

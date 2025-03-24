@@ -3,7 +3,7 @@
 class CommentPolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user.admin?
+      if user.auditor?
         scope.all
       else
         scope.not_admin_only
@@ -13,11 +13,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def new?
-    OrganizerPosition.role_at_least?(user, :member)
+    user.auditor? || OrganizerPosition.role_at_least?(user, :member)
   end
 
   def create?
-    OrganizerPosition.role_at_least?(user, :member)
+    user.auditor? || OrganizerPosition.role_at_least?(user, :member)
   end
 
   def edit?
@@ -33,7 +33,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def show?
-    OrganizerPosition.role_at_least?(user, :member)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, :member)
   end
 
   def destroy?

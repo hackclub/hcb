@@ -6,12 +6,12 @@ module SearchService
       def initialize(query, user, context)
         @query = query
         @user = user
-        @admin = user.admin?
+        @auditor = user.auditor?
         @context = context
       end
 
       def run
-        if @admin
+        if @auditor
           cards = StripeCard.joins(stripe_cardholder: :user)
         else
           cards = StripeCard.where(event: @user.events).joins(stripe_cardholder: :user)
