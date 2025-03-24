@@ -3,6 +3,12 @@
     <%= inline_icon "question-mark", size: 18 %>
   </button>
   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact" style="padding: 0.5rem;">
+    <a class="support-menu__item" href="https://help.hcb.hackclub.com/" target="_blank">
+      <%= inline_icon "docs", size: 24 %> Help Center
+    </a>
+    <a class="support-menu__item" href="javascript:void(0);" onclick="window.Beacon && (window.Beacon('identify', { name: '<%= current_user&.name %>', email: '<%= current_user&.email %>' }), window.Beacon('session-data', { url: '<%= url_params[:url] %>', location: '<%= url_params[:location] %>', user_id: '<%= url_params[:user_id] %>' }), window.Beacon('open'))">
+      <%= inline_icon "message-new", size: 24 %> Get help
+    </a>
     <% if current_user&.events&.not_demo_mode&.any? %>
       <% routing = begin
            Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
@@ -19,14 +25,8 @@
         <%= inline_icon "message-simple", size: 24 %> Share feedback
       <% end %>
     <% end %>
-    <a class="support-menu__item" href="https://help.hcb.hackclub.com/" target="_blank">
-      <%= inline_icon "docs", size: 24 %> Help Center
-    </a>
     <a class="support-menu__item" href="<%= branding_path %>" target="_blank">
       <%= inline_icon "bank-account", size: 24 %> Brand guidelines
-    </a>
-    <a class="support-menu__item" href="javascript:void(0);" onclick="window.Beacon && (window.Beacon('identify', { name: '<%= current_user&.name %>', email: '<%= current_user&.email %>' }), window.Beacon('session-data', { url: '<%= url_params[:url] %>', location: '<%= url_params[:location] %>', user_id: '<%= url_params[:user_id] %>' }), window.Beacon('open'))">
-      <%= inline_icon "message-new", size: 24 %> Get help
     </a>
   </div>
 </div>
