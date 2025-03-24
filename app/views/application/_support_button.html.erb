@@ -3,6 +3,17 @@
     <%= inline_icon "question-mark", size: 18 %>
   </button>
   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact" style="padding: 0.5rem;">
+    <% routing = begin
+                   Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
+                 rescue
+                   {}
+                 end %>
+
+    <% url_params = {
+      url: "#{request.base_url}#{request.original_fullpath}",
+      location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
+      user_id: current_user&.id
+    } %>
     <a class="support-menu__item" href="https://help.hcb.hackclub.com/" target="_blank">
       <%= inline_icon "docs", size: 24 %> Help Center
     </a>
@@ -10,17 +21,6 @@
       <%= inline_icon "message-new", size: 24 %> Get help
     </a>
     <% if current_user&.events&.not_demo_mode&.any? %>
-      <% routing = begin
-           Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
-         rescue
-           {}
-         end %>
-
-      <% url_params = {
-           url: "#{request.base_url}#{request.original_fullpath}",
-           location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
-           user_id: current_user&.id
-         } %>
       <%= link_to "https://forms.hackclub.com/hcb-feedback?#{url_params.to_query}", class: "support-menu__item", target: "_blank" do %>
         <%= inline_icon "message-simple", size: 24 %> Share feedback
       <% end %>
