@@ -11,7 +11,7 @@ module Reimbursement
     end
 
     def show?
-      admin || team_member || creator
+      admin || team_member || creator || auditor
     end
 
     def edit?
@@ -58,6 +58,10 @@ module Reimbursement
 
     def admin
       user&.admin?
+    end
+
+    def auditor
+      user&.auditor?
     end
 
     def manager

@@ -82,7 +82,7 @@
 
       <span style="flex-grow: 1;"></span>
 
-      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user %>
+      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user&.events&.any? %>
         <%= pop_icon_to "attachment",
             "#",
             data: {
