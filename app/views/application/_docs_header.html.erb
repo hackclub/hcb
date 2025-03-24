@@ -1,0 +1,58 @@
+<div class="bg-smoke dark:bg-darkless mb3">
+  <header class="header mt3 mb4">
+    <div class="header-left line-height-0 flex items-center justify-end">
+      <% unless @event || request.path.include?("auth") || request.path.include?("logins") %>
+        <%= render partial: "application/theme_toggle" %>
+      <% end %>
+      <% if signed_in? %>
+        <a
+          href="https://changelog.hcb.hackclub.com"
+          target="_blank"
+          class="ml2 relative muted pointer tooltipped tooltipped--s"
+          aria-label="See what’s new with HCB"
+          id="changelog-icon">
+          <%= inline_icon "rep", size: home_action_size %>
+        </a>
+      <% end %>
+    </div>
+
+    <%= render partial: "logo" %>
+
+    <div class="header-right line-height-0 flex items-center gap-3.5">
+      <% if signed_in? %>
+        <%= link_to my_inbox_path,
+                    class: "muted tooltipped tooltipped--s",
+                    'aria-label': "View transactions awaiting receipts" do %>
+          <%= inline_icon "payment-docs", size: home_action_size %>
+        <% end if @event %>
+        <%= link_to "javascript:void(0)",
+            data: { controller: "command-bar-trigger", "command-bar-trigger-target": "trigger", "behavior": "command_bar_trigger" },
+            class: "muted tooltipped tooltipped--s -mr-0.5 #{"md:hidden" unless @event}" do %>
+          <%= inline_icon "search" %>
+        <% end %>
+        <%= button_to logout_users_path,
+                      method: :delete,
+                      class: "muted tooltipped tooltipped--s",
+                      'aria-label': "Sign out" do %>
+          <%= inline_icon "door-leave", size: home_action_size %>
+        <% end %>
+      <% else %>
+        <%= link_to auth_users_path,
+                    class: "muted tooltipped tooltipped--s",
+                    'aria-label': "Sign in" do %>
+          <%= inline_icon "door-enter", size: home_action_size %>
+        <% end unless request.path.include?("auth") || request.path.include?("logins") || request.path.include?("donations") %>
+      <% end %>
+
+    <%= render "application/command_bar" %>
+
+  </header>
+
+  <div class="container flex flex-row">
+
+    <h1 class="border-none"><%= yield(:title) if content_for?(:title) %></h1>
+
+
+
+  </div>
+</div>
