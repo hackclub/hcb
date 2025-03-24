@@ -116,6 +116,8 @@ class StaticPagesController < ApplicationController
         "Edit settings": :manager,
       }
     }
+
+    render layout: "docs"
   end
 
   def security
