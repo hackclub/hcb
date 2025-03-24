@@ -8,3 +8,4 @@
 shared:
   hack_on_hcb_form_url: https://forms.hackclub.com/t/mWH2ycXiDdus
   security_reporting_email: hcb-security@hackclub.com
+  github_repo: https://github.com/hackclub/hcb
