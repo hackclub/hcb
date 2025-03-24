@@ -13,6 +13,6 @@ Here are the steps to do the migration:
     riot replicate [old_connection_string] [new_connection_string]
     ```
     
-    If migrating from Heroku, you'll need to add`--source-insecure --no-ttl` [(context)](https://stackoverflow.com/questions/65042551/ssl-certification-verify-failed-on-heroku-redis/). Read more on [redis.github.io](https://redis.github.io/riot/#_replication).
+    If migrating from Heroku, you'll need to add `--source-insecure --no-ttl` [(context)](https://stackoverflow.com/questions/65042551/ssl-certification-verify-failed-on-heroku-redis/). Read more on [redis.github.io](https://redis.github.io/riot/#_replication).
 5) Change `REDIS_URL` in your enviroment variables.
 6) Turn off maintenance mode and verify the queue has migrated!
