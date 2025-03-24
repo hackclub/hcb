@@ -49,6 +49,8 @@ class StaticPagesController < ApplicationController
     ]
     @event_name = signed_in? && current_user.events.first&.name || "Hack Pennsylvania"
     @event_slug = signed_in? && current_user.events.first&.slug || "hack-pennsylvania"
+
+    render layout: "docs"
   end
 
   def roles
@@ -114,9 +116,13 @@ class StaticPagesController < ApplicationController
         "Edit settings": :manager,
       }
     }
+
+    render layout: "docs"
   end
 
-  def security; end
+  def security
+    render layout: "docs"
+  end
 
   def suggested_pairings
     render partial: "static_pages/suggested_pairings", locals: {

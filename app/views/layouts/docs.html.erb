@@ -1,0 +1,213 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
+
+<!DOCTYPE html>
+<html lang="en" data-dark="<%= @is_dark %>">
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <head>
+    <title>
+      <%= yield(:title).concat(" –") if content_for?(:title) %>
+      HCB
+    </title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
+
+    <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
+    <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
+    <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
+    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+
+    <%# Web component used for TOTP / donation QR codes %>
+    <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
+
+    <% if signed_in? %>
+      <script>
+        document.addEventListener("turbo:load", () => {
+          try {
+            Headway.init({
+              selector: "#changelog-icon",
+              account:  "7z8ovy",
+              trigger: "#changelog-icon"
+            })
+          } catch {}
+        })
+      </script>
+      <script async src="https://cdn.headwayapp.co/widget.js"></script>
+    <% end %>
+
+    <% unless Rails.env.production? %>
+      <meta name="turbo-prefetch" content="false">
+    <% end %>
+
+    <% if Rails.env.production? %>
+      <script>
+        console.log(`%c                -*%@@%*-
+              .=#@@@@@@@@@@#=.
+          .=%@@@@@*-..-*@@@@@%=.
+        -#@@@@@+:        :+@@@@@#-
+      :*@@@@@*:              :*@@@@@*:
+    =%@@@@#-                    -#@@@@%=.
+  *@@@@@+.                        .+@@@@@*
+  *@@*-   *@@*      *@@*      *@@*   :*@@*
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          @@@@      @@@@      @@@@
+          *@@*      *@@*      *@@*
+
+    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+
+          Come hack on HCB with us!
+  <%= Rails.configuration.constants.hack_on_hcb_form_url %>
+  `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+      </script>
+    <% end %>
+
+    <meta name="format-detection" content="telephone=no">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <% if content_for?(:favicon) %>
+      <%= yield :favicon %>
+    <% elsif user_birthday? %>
+      <link rel="icon" type="image/png" href="/favicon-party.gif">
+    <% else %>
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
+    <% end %>
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ec3750">
+    <meta name="msapplication-TileColor" content="#ec3750">
+    <%= yield(:head) if content_for?(:head) %>
+  </head>
+  <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <%= react_component "tour/TourOverlay",
+                        tour: @tour&.name,
+                        id: @tour&.id,
+                        step: @tour&.step || 0,
+                        options: @tour&.tourable&.try(:tourable_options) || {},
+                        back_to_tour: @back_to_tour %>
+
+    <% if current_session&.impersonated? %>
+      <div class="w-100 px4 bg-white transparency-banner">
+        <p class="h5 medium center mt1 mb1">
+          <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
+        </p>
+      </div>
+    <% end %>
+    <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
+      <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
+        <p class="h5 font-medium text-center text-balance mt1 mb1">
+          This HCB organization has made their finances public.
+          Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
+        </p>
+      </div>
+    <% end %>
+
+    <% if @event&.demo_mode? && !@no_app_shell && !@no_transparency_header %>
+      <div class="w-full dev-banner dev-banner--info rounded-b no-underline">
+        <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+          <%= link_to "#playground-callout", class: "no-underline text-[inherit] hover:text-[inherit]" do %>
+            <p class="font-semibold text-xl m0">Playground Mode</p>
+          <% end %>
+          <%= link_to({ show_mock_data: !show_mock_data? }, class: "btn btn-small w-fit shrink-none nowrap") do %>
+            <%= inline_icon "view" %>
+            <%= show_mock_data? ? "Hide" : "Show" %> mock data
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# LET THERE BE SNOW %>
+    <% if winter? %>
+      <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
+    <% end %>
+
+    <%# ghosts and ghouls %>
+    <% if fall? %>
+      <img src="https://cloud-iuqyduosh-hack-club-bot.vercel.app/0image.png" alt="oOoOoOoOo" class="flying-spook ghost">
+      <img src="https://cloud-fy14iajlp-hack-club-bot.vercel.app/0image__50_-removebg-preview.png" alt="witch orpheus" class="flying-spook">
+    <% end %>
+
+    <% if content_for?(:nav) %>
+      <main class="container app">
+        <% if @event && @first_time %>
+          <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
+            <div class="welcome__image mb3">
+              <div class="welcome__shine"></div>
+              <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
+              <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
+            </div>
+
+            <div class="welcome__content">
+              <div class="center">
+                <h3 class="h3 caps secondary block m0">Welcome to</h3>
+                <h1 class="primary mt0 border-none"><%= @organizer_position&.initial? ? "HCB" : @event.name %></h1>
+              </div>
+
+              <div class="mb2">
+                <button class="btn" data-action="welcome#tour">Show me around</button>
+              </div>
+              <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
+            </div>
+          </div>
+        <% end %>
+
+        <%= render "application/native_changelog" if @latest_changelog_post %>
+
+        <aside class="app__sidebar">
+          <%= render "application/docs_header" %>
+          <%= render "application/flash" %>
+          <%= yield(:nav) %>
+        </aside>
+        <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+          <%= yield(:container) %>
+          <%= yield %>
+          <%= render "application/footer" unless @no_app_shell || @hide_footer %>
+        </article>
+      </main>
+    <% else %>
+      <%= render "application/docs_header" unless @no_app_shell %>
+      <%= yield(:header) %>
+      <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+        <%= render "application/flash" unless @hide_flash %>
+        <%= yield %>
+        <%= render "application/footer" unless @no_app_shell || @hide_footer %>
+      </main>
+    <% end %>
+
+    <%= render "application/support_button" unless @no_app_shell %>
+
+    <%= render "application/fullstory" %>
+
+    <% if flash[:confetti] %>
+      <script src="/brand/js-confetti.browser.js"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+          const jsConfetti = new JSConfetti()
+          const emojis = <%= flash[:confetti_emojis].to_json.html_safe %>
+
+          setTimeout(() => {
+            if (!emojis) {
+              jsConfetti.addConfetti()
+            } else {
+              jsConfetti.addConfetti({
+                emojis: emojis.split(",")
+              })
+            }
+          }, 100);
+        });
+      </script>
+    <% end %>
+    <% if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
+      <style>
+        .success-dark {
+            color: #1f8164
+        }
+      </style>
+    <% end %>
+  </body>
+</html>
