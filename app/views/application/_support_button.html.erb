@@ -4,20 +4,20 @@
   </button>
   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact" style="padding: 0.5rem;">
     <% routing = begin
-                   Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
-                 rescue
-                   {}
-                 end %>
+         Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
+       rescue
+         {}
+       end %>
 
     <% url_params = {
-      url: "#{request.base_url}#{request.original_fullpath}",
-      location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
-      user_id: current_user&.id
-    } %>
+         url: "#{request.base_url}#{request.original_fullpath}",
+         location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
+         user_id: current_user&.id
+       } %>
     <a class="support-menu__item" href="https://help.hcb.hackclub.com/" target="_blank">
       <%= inline_icon "docs", size: 24 %> Help Center
     </a>
-    <a class="support-menu__item" href="javascript:void(0);" onclick="window.Beacon && (window.Beacon('identify', { name: '<%= current_user&.name %>', email: '<%= current_user&.email %>' }), window.Beacon('session-data', { url: '<%= url_params[:url] %>', location: '<%= url_params[:location] %>', user_id: '<%= url_params[:user_id] %>' }), window.Beacon('open'))">
+    <a class="support-menu__item" href="javascript:void(0);" onclick="window.Beacon && (window.Beacon('identify', { name: <%= current_user&.name.to_json %>, email: <%= current_user&.email.to_json %> }), window.Beacon('session-data', { url: <%= url_params[:url].to_json %>, location: <%= url_params[:location].to_json %>, user_id: <%= url_params[:user_id].to_json %> }), window.Beacon('open'))">
       <%= inline_icon "message-new", size: 24 %> Get help
     </a>
     <% if current_user&.events&.not_demo_mode&.any? %>
