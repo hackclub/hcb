@@ -177,7 +177,46 @@ rm -rf /var/lib/postgresql/15/main
 
 ```bash
 pg_basebackup -d 'host=10.0.1.5 user=repuser' -D /var/lib/postgresql/15/main -R -P
+# TODO: add --create-slot and --slot 
 ```
+
+### Configure replica
+
+```sql
+SELECT * FROM pg_create_physical_replication_slot('server_postgres_2_slot');
+SELECT slot_name, slot_type, active FROM pg_replication_slots;
+# slot_name        | slot_type | active
+# ------------------------+-----------+--------
+#  server_postgres_2_slot | physical  | f
+```
+vim /etc/postgresql/15/main/postgresql.conf
+# set primary_conninfo
+# set primary_slot_name
+
+## Install pgBackRest
+
+https://pgbackrest.org/user-guide.html#quickstart:~:text=C%20/build/pgbackrest-,Installation,-A%20new%20host
+```bash
+apt-get install pgbackrest
+
+# Ensure postgres user can run it
+sudo -u postgres pgbackrest --help
+
+mkdir -p /etc/pgbackrest
+mkdir -p /etc/pgbackrest/conf.d
+touch /etc/pgbackrest/pgbackrest.conf
+chmod 640 /etc/pgbackrest/pgbackrest.conf
+chown postgres:postgres /etc/pgbackrest/pgbackrest.conf
+```
+
+```bash 
+vim /etc/pgbackrest/pgbackrest.conf
+```
+```sql
+[demo]
+pg1-path=/var/lib/postgresql/15/demo
+```
+
 
 
 ## TODO
