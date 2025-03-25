@@ -3,8 +3,10 @@
 class ApplicationMailer < ActionMailer::Base
   OPERATIONS_EMAIL = "hcb@hackclub.com"
 
-  DOMAIN = Rails.env.production? ? "hackclub.com" : "staging.hcb.hackclub.com"
-  default from: "HCB <hcb@#{DOMAIN}>"
+  DOMAIN = Credentials.fetch(:SMTP, :DOMAIN) || (Rails.env.production? ? "hackclub.com" : "staging.hcb.hackclub.com")
+  USERNAME = Credentials.fetch(:SMTP, :USERNAME) || "hcb"
+
+  default from: "HCB <#{USERNAME}@#{DOMAIN}>"
   layout "mailer/default"
 
   # allow usage of application helper
@@ -20,7 +22,7 @@ class ApplicationMailer < ActionMailer::Base
       name = "HCB"
     end
 
-    email_address_with_name("hcb@hackclub.com", name)
+    email_address_with_name("#{USERNAME}@#{DOMAIN}", name)
   end
 
 end
