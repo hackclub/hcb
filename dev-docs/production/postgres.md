@@ -2,6 +2,23 @@
 
 Runbook for how the production postgres database is setup and configured.
 
+## Provision servers on Hetzner
+
+- us-east
+- Ubuntu
+- Dedicated vCPU
+  - CCX13 (2 AMD vCPUS, 8gb RAM, 80gb SSD,, 1TB traffic. $14.49/month)
+- Network. Attach to same private network as rest of HCB servers
+- Add your SSH key
+- SSH only firewall
+- Placement group: `hcb-postgres-placement`
+
+We want to create two of these e.g.
+- `server-postgres-1`
+- `server-postgres-2`
+
+# Shared instructions (regardless of primary or replica):
+
 ## Install PostgreSQL on a new Ubuntu server
 ```bash
 apt update
@@ -22,7 +39,7 @@ cat /usr/lib/systemd/system/postgresql.service
 # Make sure it prints something
 
 # Start postgres using Systemctl
-systemctl start postgresql.service
+systemctl start postgresql.service # This shouldn't be necessary since the apt install automatically starts it
 
 # You can validate that' it's running using
 ps aux | grep postgres
@@ -37,47 +54,25 @@ psql # This will NOT working unless you're the `postgres` linux user.
 
 ## Allow connections
 ```bash
-ssh root@IP_OF_SERVER
+# switch back to root. If you `su - postgres`'ed earlier, then you can simpily `exit`
 vim /etc/postgresql/15/main/pg_hba.conf
 ```
 
 Add the following files to the file:
 ```
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    bank_production rails           10.0.1.0/24             md5
+host    hcb_production  rails           10.0.1.0/16             scram-sha-256
+```
+This allows the `rails` user to connect from specific IPs (any in the local network).
+The Hetzner private network assigns IPs under 10.0.0.0/16 by default.
 
-```
-
-Change the following line
-```
-local   all             all                                     peer
-```
-to
-```
-local   all             all                                     md5
+# "local" is for Unix domain socket connections only
+local   all             all                                     scram-sha-256
 ```
 
 ```bash
-# Restart pogres
+# Restart postgres
 systemctl restart postgresql
-
-```
-
-## Set up postgres user
-
-### Create role
-```bash
-# Create postgres role (user)
-su - postgres
-psql
-# CREATE ROLE rails WITH INHERIT LOGIN CONNECTION LIMIT 500 PASSWORD 'password here';
-CREATE USER rails WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
-```
-- Heroku had a 500 connection limit, so we're mirroring that here.
-
-### Verify connection from localhost
-```bash
-psql "postgres://rails:YOUR_PASSWORD@localhost:5432/bank_production"
 ```
 
 ### Edit postgresql.conf's listen addresses
@@ -90,41 +85,36 @@ vim /etc/postgresql/15/main/postgresql.conf
 
 listen_addresses = 'PRIVATE IP OF THE POSTGRES SERVER'           # what IP address(es) to listen on;
 ```
+You can get the server's private IP from the Hetzner dashboard
 
-### Edit pg_hba.conf to allow `rails` user to connect from specific IPs
 ```bash
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    bank_production rails           10.0.1.0/24             md5
+# Restart pogres
+systemctl restart postgresql
 ```
 
-The Hetzner private network assigns IPs under 10.0.1.X (UPDATE: Technically it's
-10.0.0.0/16)
+# Primary server specific instructions
+## Set up postgres user
 
-## Restore database from dump
+### Create role
+Create postgres role (user)
 ```bash
-# Only your local machine, get the dump from Herkou
-heroku pg:backups:download # it downloads as latest.dump
-
-scp latest.dump root@IP_OF_SERVER:/tmp
-
-ssh root@IP_OF_SERVER
 su - postgres
 psql
-# This would be a good time to rename the database, but make sure Rails connects to the new name.
-CREATE DATABASE bank_production WITH OWNER rails; # The database and all tables must be owned by rails
-\q # exit
+# CREATE ROLE rails WITH INHERIT LOGIN CONNECTION LIMIT 500 PASSWORD 'password here';
+CREATE USER rails WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
 
-# Before running pg_restore, you may want to drop and recreate the database if
-# it already exists. This is because the `--clean` flag will only drop tables
-# that are in the dump.
-# If the current database contains a table not reference in the dump, a future
-# migration may run into a `relation "table_name" already exists` error.
-#
-# To drop database and recreate it, run:
-#   DROP DATABASE bank_production;
-#   CREATE DATABASE bank_production;
+# Create the database so that we can test connecting to it in the next step.
+CREATE DATABASE hcb_production WITH OWNER rails;
+```
+- Heroku had a 500 connection limit, so we're mirroring that here.
 
-pg_restore --verbose --no-owner --no-acl --clean -d bank_production -U rails /tmp/latest.dump
+### Verify connection from another server in the local network
+```bash
+psql "postgres://rails:YOUR_PASSWORD@IP_ADDRESS_OF_PRIMARY_SERVER:5432/hcb_production"
+```
+
+```SQL
+DROP DATABASE hcb_production;
 ```
 
 ### Provide database user access to read/write to the database
@@ -136,6 +126,198 @@ GRANT ALL PRIVILEGES ON SCHEMA public TO rails;
 -- GRANT USAGE ON SCHEMA public TO rails; -- seems to not be needed
 GRANT all on all tables in schema public to rails;
 ```
+
+## Install pgBackRest
+
+On primary...
+
+https://pgbackrest.org/user-guide.html#quickstart:~:text=C%20/build/pgbackrest-,Installation,-A%20new%20host
+```bash
+apt-get install pgbackrest
+
+# Ensure postgres user can run it
+sudo -u postgres pgbackrest --help
+
+```
+Follow guide
+https://pgbackrest.org/user-guide.html#quickstart:~:text=for%20more%20information.-,Quick%20Start,-The%20Quick%20Start
+
+### Install
+Guide's step 5:
+```
+sudo mkdir -p -m 770 /var/log/pgbackrest
+sudo chown postgres:postgres /var/log/pgbackrest
+sudo mkdir -p /etc/pgbackrest
+sudo mkdir -p /etc/pgbackrest/conf.d
+sudo touch /etc/pgbackrest/pgbackrest.conf
+sudo chmod 640 /etc/pgbackrest/pgbackrest.conf
+sudo chown postgres:postgres /etc/pgbackrest/pgbackrest.conf
+```
+
+### Configure Stanza
+Guide's step 6.2, 6.5, 6.6, and 15:
+- [Chapter 15](https://pgbackrest.org/user-guide.html#multi-repo:~:text=azure%20%2D%2Dstanza%3Ddemo-,S3%2DCompatible%20Object%20Store%20Support,-pgBackRest%20supports%20locating)
+
+```bash 
+vim /etc/pgbackrest/pgbackrest.conf
+```
+```sql
+[hcb_production]
+pg1-path=/var/lib/postgresql/15/main
+
+[global]
+process-max=4
+repo1-path=/pgbackrest/server-postgres-3
+repo1-retention-full-type=time
+repo1-retention-full=30
+repo1-s3-bucket=hcb-production-postgres
+repo1-s3-endpoint=fsn1.your-objectstorage.com
+repo1-s3-key=REPLACE_ME
+repo1-s3-key-secret=REPLACE_ME
+repo1-s3-region=fsn1
+repo1-type=s3
+repo1-cipher-pass=REPLACE_ME
+repo1-cipher-type=aes-256-cbc
+repo1-bundle=y
+repo1-block=y4
+start-fast=
+compress-type=zsty
+```
+You'll want to create an object storage on Hetzner and add credentials.
+
+Creds are stored in HCB Engineering 1Password
+
+### Configure archiving
+
+Follow chapter 6.4, but with these changes:
+```
+archive_command = 'pgbackrest --stanza=demo archive-push %p'
+max_wal_senders = 10
+wal_level = replica
+```
+We'll leave `#archive_mode = off` until after the `pg_restore`
+
+### Create stanza
+
+Follow chapter 6.7
+
+```bash
+sudo -u postgres pgbackrest --stanza=hcb_production --log-level-console=info stanza-create
+```
+
+You can check the configuration by running
+```bash
+sudo -u postgres pgbackrest --stanza=hcb_production --log-level-console=info check
+```
+Since we have `archive_mode = off`, we should expect see:
+```
+root@server-postgres-3:~# sudo -u postgres pgbackrest --stanza=hcb_production --log-level-console=info check
+2025-03-26 05:58:11.771 P00   INFO: check command begin 2.54.2: --exec-id=5676-95949e22 --log-level-console=info --pg1-path=/var/lib/postgresql/15/main --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/pgbackrest/server-postgres-3 --repo1-s3-bucket=hcb-production-postgres --repo1-s3-endpoint=fsn1.your-objectstorage.com --repo1-s3-key=<redacted> --repo1-s3-key-secret=<redacted> --repo1-s3-region=fsn1 --repo1-type=s3 --stanza=hcb_production
+2025-03-26 05:58:11.798 P00  ERROR: [087]: archive_mode must be enabled
+2025-03-26 05:58:11.798 P00   INFO: check command end: aborted with exception [087]
+```
+
+## Dry run of restore database from dump
+```bash
+# On your local machine, get the dump from Herkou
+heroku pg:backups:capture
+heroku pg:backups:download # it downloads as latest.dump
+
+scp latest.dump root@IP_OF_PRIMARY_SERVER:/tmp
+
+ssh root@IP_OF_SERVER
+su - postgres
+psql
+# This would be a good time to rename the database, but make sure Rails connects to the new name.
+CREATE DATABASE hcb_production WITH OWNER rails; # The database and all tables must be owned by rails
+\q # exit
+
+# Before running pg_restore, you may want to drop and recreate the database if
+# it already exists. This is because the `--clean` flag will only drop tables
+# that are in the dump.
+# If the current database contains a table not reference in the dump, a future
+# migration may run into a `relation "table_name" already exists` error.
+#
+# To drop database and recreate it, run:
+#   DROP DATABASE hcb_production;
+#   CREATE DATABASE hcb_production WITH OWNER rails;
+
+pg_restore --verbose --no-owner --no-acl --clean -d hcb_production -U rails /tmp/latest.dump
+```
+
+## Ensure you can read/write to the database from another server on the same network
+
+```bash
+# ssh into another server on the same network
+psql "postgres://rails:YOUR_PASSWORD@IP_ADDRESS_OF_PRIMARY_SERVER:5432/hcb_production"
+```
+```sql
+# attempt a read and write
+SELECT * from events order by id desc limit 1;
+UPDATE users SET full_name = 'testingsadflkjsdf' WHERE id = 1803;
+# verify write worked
+SELECT full_name from users where id = 1803 limit 1;
+```
+
+## Do the restore for real
+
+```sql
+DROP DATABASE hcb_production;
+CREATE DATABASE hcb_production WITH OWNER rails;
+```
+
+Shut down all traffic and write to current database/production
+1. Turn on maintenance mode on Hatchbox
+2. Disable all processes (e.g. Sidekiq, etc.)
+
+After traffic has been shutdown, perform the last write to the DB.
+```sql
+UPDATE users SET full_name = 'last update lkasdjf' WHERE id = 1803;
+# verify write worked
+SELECT full_name from users where id = 1803 limit 1;
+```
+
+```bash
+# On your local machine, get the dump from Herkou
+heroku pg:backups:capture
+heroku pg:backups:download # it downloads as latest.dump
+
+scp latest.dump root@IP_OF_PRIMARY_SERVER:/tmp
+
+ssh root@IP_OF_SERVER
+su - postgres
+psql
+# This would be a good time to rename the database, but make sure Rails connects to the new name.
+CREATE DATABASE hcb_production WITH OWNER rails; # The database and all tables must be owned by rails
+\q # exit
+
+# Before running pg_restore, you may want to drop and recreate the database if
+# it already exists. This is because the `--clean` flag will only drop tables
+# that are in the dump.
+# If the current database contains a table not reference in the dump, a future
+# migration may run into a `relation "table_name" already exists` error.
+#
+# To drop database and recreate it, run:
+#   DROP DATABASE hcb_production;
+#   CREATE DATABASE hcb_production WITH OWNER rails;
+
+pg_restore --verbose --no-owner --no-acl --clean -d hcb_production -U rails /tmp/latest.dump
+```
+
+## Start archiving
+Update archive_mode to on in postgresql.conf
+```bash
+sudo -u postgres pgbackrest --stanza=hcb_production --log-level-console=info check
+sudo -u postgres pgbackrest info
+```
+
+Check the S3 bucket for files
+
+## Start traffic
+1. Enable all processes (e.g. Sidekiq, etc.)
+2. Turn off maintenance mode on Hatchbox
+
+----
 
 ## Replication
 
@@ -192,30 +374,6 @@ SELECT slot_name, slot_type, active FROM pg_replication_slots;
 vim /etc/postgresql/15/main/postgresql.conf
 # set primary_conninfo
 # set primary_slot_name
-
-## Install pgBackRest
-
-https://pgbackrest.org/user-guide.html#quickstart:~:text=C%20/build/pgbackrest-,Installation,-A%20new%20host
-```bash
-apt-get install pgbackrest
-
-# Ensure postgres user can run it
-sudo -u postgres pgbackrest --help
-
-mkdir -p /etc/pgbackrest
-mkdir -p /etc/pgbackrest/conf.d
-touch /etc/pgbackrest/pgbackrest.conf
-chmod 640 /etc/pgbackrest/pgbackrest.conf
-chown postgres:postgres /etc/pgbackrest/pgbackrest.conf
-```
-
-```bash 
-vim /etc/pgbackrest/pgbackrest.conf
-```
-```sql
-[demo]
-pg1-path=/var/lib/postgresql/15/demo
-```
 
 
 
