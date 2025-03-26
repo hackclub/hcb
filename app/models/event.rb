@@ -91,7 +91,7 @@ class Event < ApplicationRecord
   scope :pending, -> { where(aasm_state: :pending) }
   scope :transparent, -> { where(is_public: true) }
   scope :not_transparent, -> { where(is_public: false) }
-  scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
+  scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false).includes(:event_tags).where(event_tags: { name: [EventTag::Tags::HACKATHON, EventTag::Tags::ROBOTICS_TEAM] }) }
   scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :hidden, -> { where("hidden_at is not null") }
