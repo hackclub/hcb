@@ -36,13 +36,15 @@
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
+#  application_airtable_record_id               :string
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
 #  point_of_contact_id                          :bigint
 #
 # Indexes
 #
-#  index_events_on_point_of_contact_id  (point_of_contact_id)
+#  index_events_on_application_airtable_record_id  (application_airtable_record_id) UNIQUE
+#  index_events_on_point_of_contact_id             (point_of_contact_id)
 #
 # Foreign Keys
 #

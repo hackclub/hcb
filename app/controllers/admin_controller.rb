@@ -98,9 +98,10 @@ class AdminController < ApplicationController
 
   def event_create_from_airtable
     application = ApplicationsTable.find(params[:airtable_record_id]).fields
+    country = ISO3166::Country.find_country_by_any_name(application["Event Location"])
     ::EventService::Create.new(
       name: application["Event Name"],
-      country: ISO3166::Country.find_country_by_any_name(application["Event Location"]).alpha2,
+      country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
       organized_by_teenagers: application["TEEN"] == "Teen",
