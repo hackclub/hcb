@@ -20,11 +20,6 @@ class CardGrantsController < ApplicationController
 
     last_card_grant = @event.card_grants.order(created_at: :desc).first
 
-    if last_card_grant.present?
-      @card_grant.amount_cents = last_card_grant.amount_cents
-      @card_grant.merchant_lock = last_card_grant.merchant_lock
-      @card_grant.category_lock = last_card_grant.category_lock
-    end
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
