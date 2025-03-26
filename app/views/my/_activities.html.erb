@@ -1,6 +1,4 @@
-<%
-=begin%>
- <ul class="list-reset comments w-100 my-0 py-2 activity overflow-y-scroll overflow-x-hidden">
+<ul class="list-reset comments w-100 my-0 py-2 activity overflow-y-scroll overflow-x-hidden">
   <%= turbo_stream_from current_user, "activities" %>
   <turbo-frame id="activities-<%= @activities.current_page %>" target="_top">
     <%= render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
@@ -15,6 +13,4 @@
       <% end %>
     <% end %>
   </turbo-frame>
-</ul> 
-<%
-=end%>
+</ul>
