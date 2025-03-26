@@ -19,7 +19,7 @@
 	"build": {
 		"args": {
 			// Update 'VARIANT' to pick a Ruby version: 2, 2.7, 2.6, 2.5, 2.4, 2.3, 2.2, 2.1, 2.0, 1.9
-			"VARIANT": "3.3-bookworm",
+			"VARIANT": "3.4-bookworm",
 			"NODE_VERSION": "22"  // Node version installed by nvm (https://github.com/devcontainers/images/tree/main/src/ruby#installing-nodejs)
 		}
 	},
