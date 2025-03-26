@@ -32,6 +32,17 @@ module ReceiptService
         if @receipt.receiptable.nil?
           content = turbo_stream_action_tag(:refresh_suggested_pairings)
           Turbo::StreamsChannel.broadcast_action_to([@receipt.user, :receipt_bin], action: :refresh_suggested_pairings)
+
+          if @receipt.email_receipt_bin? && pair = @receipt.suggested_pairings
+                                                           .unreviewed
+                                                           .where("distance <= ?", 20)
+                                                           .order(:receipt_id, distance: :asc)
+                                                           .select("DISTINCT ON (receipt_id) suggested_pairings.*")
+                                                           .select { |pairing| pairing.hcb_code.missing_receipt? }
+                                                           .first
+            pair.mark_accepted!
+            ReceiptBinMailer.with(suggested_pairing: pair).paired.deliver_later
+          end
         end
 
         pairings

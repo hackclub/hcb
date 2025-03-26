@@ -28,7 +28,7 @@ class DisbursementsController < ApplicationController
 
       # not being used at the moment
       format.png do
-        send_data ::DisbursementService::PreviewTransferConfirmationLetter.new(disbursement: @disbursement, event: @event).run, filename: "transfer_confirmation_letter.png"
+        send_data ::DocumentPreviewService.new(type: :disbursement_confirmation, disbursement: @disbursement, event: @event).run, filename: "transfer_confirmation_letter.png"
       end
 
     end

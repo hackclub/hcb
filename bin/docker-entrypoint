@@ -11,4 +11,8 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
 fi
 
+# The SOURCE_COMMIT environment variable is set by Coolify.
+# https://coolify.io/docs/knowledge-base/environment-variables#source-commit
+bundle exec rake airbrake:deploy REVISION=$SOURCE_COMMIT REPOSITORY=https://github.com/hackclub/hcb
+
 exec "${@}"

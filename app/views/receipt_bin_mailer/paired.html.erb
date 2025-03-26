@@ -1,0 +1,12 @@
+<p>
+  Your receipt has been automatically matched with a transaction: <%= link_to @suggested_pairing.hcb_code.memo, hcb_code_url(@suggested_pairing.hcb_code) %> from <%= time_ago_in_words @suggested_pairing.hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@suggested_pairing.hcb_code.raw_stripe_transaction.stripe_transaction["created"]) %> ago.
+</p>
+
+<p>
+  Did we get it wrong? Respond with <em>@reverse</em> to remove the receipt.
+</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

@@ -40,7 +40,7 @@
                   class: "muted tooltipped tooltipped--s",
                   'aria-label': "Sign in" do %>
         <%= inline_icon "door-enter", size: home_action_size %>
-      <% end unless request.path.include?("auth") || request.path.include?("logins") %>
+      <% end unless request.path.include?("auth") || request.path.include?("logins") || request.path.include?("donations") %>
     <% end %>
   </div>
 

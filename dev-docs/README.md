@@ -26,7 +26,7 @@ Let's get the HCB codebase set up on your computer! We have setup a easy and sim
 
 ## HCB's Structure
 
-We've been building HCB since 2018, navigating the codebase can be difficult at times. The codebase generally follows the [Model-View-Controller](https://developer.mozilla.org/en-US/docs/Glossary/MVC) design pattern, which Ruby on Rails is built around. If you need help, reach out to us in [#hcb-engr-help](https://hackclub.slack.com/archives/C068U0JMV19). ["Getting Started with Rails"](https://guides.rubyonrails.org/getting_started.html) is a comprehensive guide for first-time Rails developers.
+We've been building HCB since 2018, navigating the codebase can be difficult at times. The codebase generally follows the [Model-View-Controller](https://developer.mozilla.org/en-US/docs/Glossary/MVC) design pattern, which Ruby on Rails is built around. If you need help, reach out to us in [#hcb-dev](https://hackclub.slack.com/archives/C068U0JMV19). ["Getting Started with Rails"](https://guides.rubyonrails.org/getting_started.html) is a comprehensive guide for first-time Rails developers.
 
 ### Organizations
 
@@ -59,6 +59,8 @@ We collect fees on all revenue collected by organizations, typically 7%. This pr
 ### Transaction Engine
 
 The transaction engine is the core of HCB's codebase. It's role is to map transactions that happen in on our underlying bank accounts to their associated organization. Almost every action a user takes on HCB will go through the transaction engine at some point.
+
+Our transaction engine is summarised in [@sampoder](https://github.com/sampoder)'s talk at the SF Bay Area Ruby Meetup: [How we built a bank w/ Ruby on Rails](https://www.youtube.com/watch?v=CBxilReUkJ0&t=3553s).
 
 #### [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)
 

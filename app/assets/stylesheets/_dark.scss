@@ -461,4 +461,8 @@ html[data-dark='true'] {
     color: #1f2d3d !important;
     filter: invert(1);
   }
+
+  .modal__close {
+    background-color: rgb(23 23 29) !important;
+  }
 }

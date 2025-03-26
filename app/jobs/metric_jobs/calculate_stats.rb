@@ -2,7 +2,7 @@
 
 module MetricJobs
   class CalculateStats < ApplicationJob
-    queue_as :wrapped
+    queue_as :metrics
 
     def perform
       MetricJobs::CalculateSingle.perform_later(Metric::Hcb::Stats)

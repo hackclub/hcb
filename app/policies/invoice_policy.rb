@@ -2,7 +2,7 @@
 
 class InvoicePolicy < ApplicationPolicy
   def index?
-    return true if user&.admin?
+    return true if user&.auditor?
     return true if record.blank?
 
     event_ids = record.map(&:sponsor).map(&:event).pluck(:id)
@@ -22,7 +22,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def show?
-    is_public || admin_or_user
+    is_public || auditor_or_user
   end
 
   def archive?
@@ -46,7 +46,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def pdf?
-    admin_or_user
+    auditor_or_user
   end
 
   def refund?
@@ -57,6 +57,10 @@ class InvoicePolicy < ApplicationPolicy
 
   def admin_or_user
     user&.admin? || record.sponsor.event.users.include?(user)
+  end
+
+  def auditor_or_user
+    user&.auditor? || record.sponsor.event.users.include?(user)
   end
 
   def is_public

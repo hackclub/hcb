@@ -4,6 +4,9 @@
 
 <h1 class="heading flex gap-2 md:gap-4 text-3xl md:text-5xl border-0 md:border">
   <span class="flex-grow">Reimbursements</span>
+  <%= pop_icon_to "download",
+                  reimbursements_exports_path(@event, format: :csv),
+                  class: "tooltipped tooltipped--s", "aria-label": "Download CSV export" %>
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "reimbursements"),
       data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },

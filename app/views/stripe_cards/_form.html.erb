@@ -90,7 +90,11 @@
               </span>
               <div style="display: flex; flex-direction: row; justify-content: start; width: 100%;">
                 <div class="stripe-card--<%= design.color %>" style="display: flex; justify-content: end; align-items: center; width: 80%; border-radius: 0px 12px; padding: 1.5rem; padding-top: 1.5rem; padding-left: 0.5rem;">
-                  <%= image_tag design.logo, alt: design.name_without_id, style: "max-width: 100%; object-fit: contain; width: 100%; height: auto; aspect-ratio: 5 / 1; object-position: right;" %>
+                  <div class="stripe-card__personalization_image_wrapper">
+                    <div class="stripe-card__personalization_inner_image_wrapper">
+                      <%= image_tag design.logo, alt: design.name_without_id, class: "stripe-card__personalization-image" %>
+                    </div>
+                  </div>
                 </div>
               </div>
             <% end %>

@@ -10,6 +10,11 @@ class LoginsController < ApplicationController
 
   layout "login"
 
+  after_action only: [:new] do
+    # Allow indexing login page
+    response.delete_header("X-Robots-Tag")
+  end
+
   # view to log in
   def new
     render "users/logout" if current_user
@@ -67,7 +72,7 @@ class LoginsController < ApplicationController
   def login_code
     initialize_sms_params
 
-    resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.ip, user_agent: request.user_agent).run
+    resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     @use_sms_auth = resp[:method] == :sms
 
@@ -182,7 +187,8 @@ class LoginsController < ApplicationController
       @login = User.find_by_email(session[:auth_email]).logins.create
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
     else
-      raise ActionController::ParameterMissing.new("Missing login.")
+      flash[:error] = "Please try again."
+      redirect_to auth_users_path
     end
   end
 

@@ -55,8 +55,6 @@
   <% end %>
 <% end %>
 
-<% if Rails.env.production? %>
-  <%= render "application/fullstory" unless current_user && current_user.sessions_reported == false %>
-<% end %>
+<%= render "application/fullstory" %>
 
 <%= render "application/flash" %>

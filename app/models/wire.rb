@@ -262,8 +262,8 @@ class Wire < ApplicationRecord
   end
 
   validate on: :create do
-    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimumn_wire_amount_cents)
-      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimumn_wire_amount_cents} (USD).")
+    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimum_wire_amount_cents)
+      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
     end
   end
 
@@ -336,7 +336,7 @@ class Wire < ApplicationRecord
   end
 
   def admin_dropdown_description
-    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_email} from #{event.name}"
+    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
   end
 
   def local_hcb_code

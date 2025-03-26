@@ -7,16 +7,21 @@ class EventPolicy < ApplicationPolicy
 
   # Event homepage
   def show?
-    is_public || admin_or_user?
+    is_public || auditor_or_user?
   end
 
   # Turbo frames for the event homepage (show)
+  alias_method :team_stats?, :show?
+  alias_method :recent_activity?, :show?
+  alias_method :money_movement?, :show?
+  alias_method :balance_transactions?, :show?
   alias_method :merchants_categories?, :show?
   alias_method :top_categories?, :show?
   alias_method :tags_users?, :show?
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
+  alias_method :ledger?, :transactions?
 
   def toggle_hidden?
     user&.admin?
@@ -31,14 +36,14 @@ class EventPolicy < ApplicationPolicy
   end
 
   def balance_by_date?
-    is_public || admin_or_user?
+    is_public || auditor_or_user?
   end
 
   # NOTE(@lachlanjc): this is bad, I’m sorry.
   # This is the StripeCardsController#shipping method when rendered on the event
   # card overview page. This should be moved out of here.
   def shipping?
-    admin_or_user?
+    auditor_or_user?
   end
 
   def edit?
@@ -73,15 +78,15 @@ class EventPolicy < ApplicationPolicy
   end
 
   def team?
-    is_public || admin_or_user?
+    is_public || auditor_or_user?
   end
 
   def emburse_card_overview?
-    is_public || admin_or_user?
+    is_public || auditor_or_user?
   end
 
   def card_overview?
-    (is_public || admin_or_user?) && record.approved? && record.plan.cards_enabled?
+    (is_public || auditor_or_user?) && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -93,15 +98,15 @@ class EventPolicy < ApplicationPolicy
   end
 
   def documentation?
-    admin_or_user? && record.plan.documentation_enabled?
+    auditor_or_user? && record.plan.documentation_enabled?
   end
 
   def statements?
-    is_public || admin_or_user?
+    is_public || auditor_or_user?
   end
 
   def async_balance?
-    is_public || admin_or_user?
+    is_public || auditor_or_user?
   end
 
   def create_transfer?
@@ -113,7 +118,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def g_suite_overview?
-    admin_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
@@ -121,31 +126,35 @@ class EventPolicy < ApplicationPolicy
   end
 
   def g_suite_verify?
-    admin_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def transfers?
-    (is_public || admin_or_user?) && record.plan.transfers_enabled?
+    (is_public || auditor_or_user?) && record.plan.transfers_enabled?
   end
 
   def promotions?
-    admin_or_user? && record.plan.promotions_enabled?
+    auditor_or_user? && record.plan.promotions_enabled?
   end
 
   def reimbursements_pending_review_icon?
-    is_public || admin_or_user?
+    is_public || auditor_or_user?
   end
 
   def reimbursements?
-    admin_or_user? && record.plan.reimbursements_enabled?
+    auditor_or_user? && record.plan.reimbursements_enabled?
+  end
+
+  def employees?
+    auditor_or_user?
   end
 
   def donation_overview?
-    (is_public || admin_or_user?) && record.approved? && record.plan.donations_enabled?
+    (is_public || auditor_or_user?) && record.approved? && record.plan.donations_enabled?
   end
 
   def account_number?
-    admin_or_manager? && record.plan.account_number_enabled?
+    auditor_or_user? && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -157,15 +166,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def audit_log?
-    user.admin?
+    user.auditor?
   end
 
   def termination?
-    user&.admin?
-  end
-
-  def finish_signee_backfill?
-    user&.admin?
+    user&.auditor?
   end
 
   def can_invite_user?
@@ -190,8 +195,16 @@ class EventPolicy < ApplicationPolicy
     admin? || user?
   end
 
+  def auditor_or_user?
+    auditor? || user?
+  end
+
   def admin?
     user&.admin?
+  end
+
+  def auditor?
+    user&.auditor?
   end
 
   def user?

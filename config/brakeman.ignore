@@ -1,0 +1,359 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "331898aa15adc3446b48aada00d2cc1f56eb60f26b56ff486da0c5d596773837",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/sponsors/show.html.erb",
+      "line": 28,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"Open in Stripe dashboard\", Sponsor.friendly.find(params[:id]).stripe_dashboard_url, :target => \"_blank\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "SponsorsController",
+          "method": "show",
+          "line": 15,
+          "file": "app/controllers/sponsors_controller.rb",
+          "rendered": {
+            "name": "sponsors/show",
+            "file": "app/views/sponsors/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "sponsors/show"
+      },
+      "user_input": "Sponsor.friendly.find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
+    },
+    {
+      "warning_type": "Denial of Service",
+      "warning_code": 76,
+      "fingerprint": "33fd4663b98a1d3c429121aff4c7300b51235ad04569ab3f07ef5f30de9a9292",
+      "check_name": "RegexDoS",
+      "message": "Model attribute used in regular expression",
+      "file": "app/jobs/user/subordinate_summary_job.rb",
+      "line": 91,
+      "link": "https://brakemanscanner.org/docs/warning_types/denial_of_service/",
+      "code": "/\\A#{User.get_public_id_prefix}.*\\Z/",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "User::SubordinateSummaryJob",
+        "method": "s(:self).to_user"
+      },
+      "user_input": "User.get_public_id_prefix",
+      "confidence": "Medium",
+      "cwe_id": [
+        20,
+        185
+      ],
+      "note": "User.get_public_id_prefix calls a class method that returns :usr so this is safe"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "41118d19fb5e498f2b4ac5a7b8a9cddca6f3e089ced5eebdcf598a1a4ff9bad7",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/canonical_pending_transactions/show.html.erb",
+      "line": 19,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"View on Stripe\", CanonicalPendingTransaction.find(params[:id]).stripe_auth_dashboard_url, :class => \"btn bg-accent\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "CanonicalPendingTransactionsController",
+          "method": "show",
+          "line": 10,
+          "file": "app/controllers/canonical_pending_transactions_controller.rb",
+          "rendered": {
+            "name": "canonical_pending_transactions/show",
+            "file": "app/views/canonical_pending_transactions/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "canonical_pending_transactions/show"
+      },
+      "user_input": "CanonicalPendingTransaction.find(params[:id]).stripe_auth_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "It generates a https link that is based on 'stripe_transaction_id' which should be safe."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "4617f29bc313bdcb22f7d86aa1f42703bd5d76c9b69e380e396be65a55bb56bc",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/metric/hcb/total_raised.rb",
+      "line": 34,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.execute(\"SELECT SUM(amount_cents) as amount_cents FROM \\\"canonical_transactions\\\"\\nLEFT JOIN \\\"canonical_event_mappings\\\" ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id\\nLEFT JOIN \\\"events\\\" ON canonical_event_mappings.event_id = events.id\\nLEFT JOIN \\\"event_plans\\\" ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'\\nLEFT JOIN \\\"disbursements\\\" ON canonical_transactions.hcb_code = CONCAT('HCB-500-', disbursements.id)\\nWHERE amount_cents > 0\\nAND date_part('year', date) = 2024\\n#{Event::Plan.that(:omit_stats).map(&:name).map do\n \"AND event_plans.type != '#{p}'\"\n end.join(\" \")}\\nAND (disbursements.id IS NULL or disbursements.should_charge_fee = true)\\nAND NOT (\\n  canonical_transactions.hcb_code ILIKE 'HCB-300%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-310%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-350%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-400%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-401%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-600%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-601%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-710%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-712%'\\n)\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TotalRaised",
+        "method": "calculate"
+      },
+      "user_input": "Event::Plan.that(:omit_stats)",
+      "confidence": "High",
+      "cwe_id": [
+        89
+      ],
+      "note": "Event::Plan classes are manually created by engineers, so interpolating their class name is OK."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "9b86435f32d34208ef6e6a8465f5374fe7fc9f978e36ef755363d14120b959f8",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/google_workspace_process.html.erb",
+      "line": 76,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"DNS Check\", GSuite.find(params[:id]).dns_check_url, :target => \"_blank\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "google_workspace_process",
+          "line": 855,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/google_workspace_process",
+            "file": "app/views/admin/google_workspace_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/google_workspace_process"
+      },
+      "user_input": "GSuite.find(params[:id]).dns_check_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "Domain is validated to not have a javascript: url scheme & dns_check_url is injecting that domain in a https url."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "a3aa0c676bb018fe906f57502010e05e09135481fcbac02c277a9ca92cd8001e",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/g_suites/index.html.erb",
+      "line": 25,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"Verify\", (Unresolved Model).new.verification_url, :target => :blank)",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "GSuitesController",
+          "method": "index",
+          "line": 10,
+          "file": "app/controllers/g_suites_controller.rb",
+          "rendered": {
+            "name": "g_suites/index",
+            "file": "app/views/g_suites/index.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "g_suites/index"
+      },
+      "user_input": "(Unresolved Model).new.verification_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "Domain is validated to not have a javascript: url scheme & 'verification_url' is injecting that domain in a https url."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "a74cb8cbaf3547f667ba7a44a440c70a62ee5754c7b007e662bdd1ca4ce7e010",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/invoice_process.html.erb",
+      "line": 37,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"URL\", Invoice.find(params[:id]).hosted_invoice_url, :target => :_blank)",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "invoice_process",
+          "line": 789,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/invoice_process",
+            "file": "app/views/admin/invoice_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/invoice_process"
+      },
+      "user_input": "Invoice.find(params[:id]).hosted_invoice_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "These urls are being set by stripe calls to point to the real stripe invoice urls."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "bdc62cbde9149ebea74063a4d9163076b449ce86fc22403ddeb7da6622f2363a",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/invoice_process.html.erb",
+      "line": 32,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(Invoice.find(params[:id]).stripe_invoice_id, Invoice.find(params[:id]).stripe_dashboard_url, :target => :_blank)",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "invoice_process",
+          "line": 789,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/invoice_process",
+            "file": "app/views/admin/invoice_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/invoice_process"
+      },
+      "user_input": "Invoice.find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "d481458455ae77c564012369a37ac50d170afa950b5198b725be27503c08a432",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/g_suites/show.html.erb",
+      "line": 40,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"Verify \\u29C9\", GSuite.find(params[:id]).verification_url, :target => :blank, :class => \"btn bg-success mr2\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "GSuitesController",
+          "method": "show",
+          "line": 19,
+          "file": "app/controllers/g_suites_controller.rb",
+          "rendered": {
+            "name": "g_suites/show",
+            "file": "app/views/g_suites/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "g_suites/show"
+      },
+      "user_input": "GSuite.find(params[:id]).verification_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "Domain is validated to not have a javascript: url scheme & 'verification_url' is injecting that domain in a https url."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "dfba55e2b965a76eb73b782fe8eec7bb00457884aa38e4e4f02f1a2d62355faf",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/google_workspace_process.html.erb",
+      "line": 37,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(GSuite.find(params[:id]).domain, GSuite.find(params[:id]).dns_check_url, :target => :_blank)",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "google_workspace_process",
+          "line": 855,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/google_workspace_process",
+            "file": "app/views/admin/google_workspace_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/google_workspace_process"
+      },
+      "user_input": "GSuite.find(params[:id]).dns_check_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "Domain is validated to not have a javascript: url scheme & dns_check_url is injecting that domain in a https url"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "e1b7b2316416e1ea8245858b214318bb8b27d09cfe0445378785d4b94e7407ad",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/stripe_cards/show.html.erb",
+      "line": 6,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"View card on Stripe\", StripeCard.find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "StripeCardsController",
+          "method": "freeze",
+          "line": 30,
+          "file": "app/controllers/stripe_cards_controller.rb",
+          "rendered": {
+            "name": "stripe_cards/show",
+            "file": "app/views/stripe_cards/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "stripe_cards/show"
+      },
+      "user_input": "StripeCard.find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
+    }
+  ],
+  "updated": "2025-03-14 17:10:20 -0700",
+  "brakeman_version": "6.2.2"
+}

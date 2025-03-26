@@ -38,7 +38,7 @@
   </thead>
   <tbody>
     <% @users.each do |user| %>
-      <tr style="<%= "background: #ff8c38;" if user.admin? %>">
+      <tr style="<%= "background: #ff8c38;" if user.auditor? %>">
         <td><%= user.id %></td>
         <td><%= user.created_at.strftime("%Y-%m-%d") %></td>
         <td>

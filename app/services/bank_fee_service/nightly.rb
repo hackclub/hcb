@@ -48,7 +48,7 @@ module BankFeeService
         begin
           bank_fee.mark_settled!
         rescue => e
-          Airbrake.notify(e)
+          Rails.error.report(e)
         end
       end
 

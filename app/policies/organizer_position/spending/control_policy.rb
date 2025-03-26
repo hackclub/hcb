@@ -6,7 +6,7 @@ class OrganizerPosition
       def index?
         return unless enabled?
 
-        user.admin? || (
+        user.auditor? || (
           current_user_manager? || own_control?
         )
       end
