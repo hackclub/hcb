@@ -545,7 +545,7 @@ GEM
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
-    phonelib (0.10.3)
+    phonelib (0.10.6)
     pkg-config (1.5.8)
     plaid (34.0.0)
       faraday (>= 1.0.1, < 3.0)
