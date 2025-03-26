@@ -43,7 +43,7 @@
     "local-time": "^3.0.3",
     "lodash": "^4.17.21",
     "postcss": "^8.5.3",
-    "postcss-cli": "^11.0.0",
+    "postcss-cli": "^11.0.1",
     "postcss-scss": "^4.0.9",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
