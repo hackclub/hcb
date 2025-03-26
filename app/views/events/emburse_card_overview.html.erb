@@ -74,7 +74,7 @@ West Hollywood, CA 90069</pre>
 <h2 class="mt3 mb1">Card requests</h2>
   <% @emburse_card_requests.outstanding.each do |request| %>
     <%# Rails has link_to_if but that doesn't support blocks. I feel like there should be a better way to do this but couldn't find one. -Theo %>
-    <% if current_user&.admin? %>
+    <% if current_user&.auditor? %>
       <%= link_to request, class: "text-decoration-none mb2" do %>
         <%= creator_bar request, prefix: "requested " %>
         <div class="card">

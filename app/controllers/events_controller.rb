@@ -359,7 +359,6 @@ class EventsController < ApplicationController
     @view = cookies[:card_overview_view] || "grid"
 
     @user_id = params[:user].presence
-    @user = User.find(params[:user]) if params[:user]
 
     @has_filter = @status.present? || @type.present? || @user_id.present?
 
@@ -1067,7 +1066,7 @@ class EventsController < ApplicationController
     return false if @tag.present?
     return false if params[:q].present?
 
-    @show_running_balance = current_user&.admin? && current_user.running_balance_enabled?
+    @show_running_balance = current_user&.auditor? && current_user.running_balance_enabled?
   end
 
   def set_mock_data
