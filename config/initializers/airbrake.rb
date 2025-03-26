@@ -73,7 +73,7 @@ end
 # Rails.logger = Airbrake::AirbrakeLogger.new(Rails.logger)
 #
 
-noisy_errors = [ActionController::RoutingError, ActiveRecord::RecordNotFound, ActiveJob::DeserializationError]
+noisy_errors = [ActionController::RoutingError, ActiveRecord::RecordNotFound, ActiveJob::DeserializationError, MiniMagick::Error]
 
 Airbrake.add_filter do |notice|
   next unless noisy_errors.include?(notice.stash[:exception].class)
