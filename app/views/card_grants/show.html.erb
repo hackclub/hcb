@@ -57,3 +57,8 @@
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
 <% end %>
+
+<% unless @card_grant.user == current_user %>
+  <%= render "comments/list", comments: @card_grant %>
+  <%= render "comments/form", commentable: @card_grant %>
+<% end %>
