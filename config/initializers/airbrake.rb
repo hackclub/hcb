@@ -84,7 +84,7 @@ end
 
 
 Rails.application.reloader.to_prepare do
-  ignorable_errors = [SignalException, Sidekiq::Shutdown, ActiveRecord::ConnectionTimeoutError]
+  ignorable_errors = [SignalException, Sidekiq::Shutdown, ActiveRecord::ConnectionTimeoutError, Sidekiq::JobRetry::Handled]
 
   Airbrake.add_filter do |notice|
     next unless ignorable_errors.include?(notice.stash[:exception].class)
