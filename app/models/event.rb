@@ -159,6 +159,8 @@ class Event < ApplicationRecord
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
 
+  before_validation :enforce_transparency_eligibility
+
   BADGES = {
     # Qualifier must be a method on Event. If the method returns true, the badge
     # will be displayed for the event.
@@ -707,6 +709,14 @@ class Event < ApplicationRecord
     plan.omit_stats
   end
 
+  def eligible_for_transparency?
+    !plan.is_a?(Event::Plan::SalaryAccount)
+  end
+
+  def eligible_for_indexing?
+    eligible_for_transparency? && !risk_level.in?(%w[moderate high])
+  end
+
   private
 
   def point_of_contact_is_admin
@@ -750,6 +760,17 @@ class Event < ApplicationRecord
 
   def move_friendly_id_error_to_slug
     errors.add :slug, *errors.delete(:friendly_id) if errors[:friendly_id].present?
+  end
+
+  def enforce_transparency_eligibility
+    unless eligible_for_transparency?
+      self.is_public = false
+      self.is_indexable = false
+    end
+
+    unless eligible_for_indexing?
+      self.is_indexable = false
+    end
   end
 
 end
