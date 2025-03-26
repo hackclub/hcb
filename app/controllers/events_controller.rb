@@ -359,7 +359,7 @@ class EventsController < ApplicationController
     @view = cookies[:card_overview_view] || "grid"
 
     @user_id = params[:user].presence
-    @user = User.find(params[:user]) if params[:user]
+    @user = User.find_by_id(params[:user]) if params[:user]
 
     @has_filter = @status.present? || @type.present? || @user_id.present?
 
