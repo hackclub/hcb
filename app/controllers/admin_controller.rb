@@ -1192,6 +1192,16 @@ class AdminController < ApplicationController
     @payments = Employee::Payment.all.page(@page).per(@per)
   end
 
+  def my_ip
+    render json: {
+      remote_ip: request.remote_ip,
+      ip: request.ip,
+      forwarded_for: request.headers["HTTP_X_FORWARDED_FOR"],
+      forwarded_port: request.headers["HTTP_X_FORWARDED_PORT"],
+      forwarded_proto: request.headers["HTTP_X_FORWARDED_PROTO"],
+    }
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)

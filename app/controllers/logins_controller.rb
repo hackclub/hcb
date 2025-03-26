@@ -187,7 +187,8 @@ class LoginsController < ApplicationController
       @login = User.find_by_email(session[:auth_email]).logins.create
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
     else
-      raise ActionController::ParameterMissing.new("Missing login.")
+      flash[:error] = "Please try again."
+      redirect_to auth_users_path
     end
   end
 
