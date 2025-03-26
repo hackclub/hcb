@@ -180,7 +180,7 @@ GEM
       msgpack (~> 1.2)
     brakeman (6.2.2)
       racc
-    browser (6.1.0)
+    browser (6.2.0)
     builder (3.3.0)
     bullet (8.0.0)
       activesupport (>= 3.0.0)
@@ -872,7 +872,7 @@ DEPENDENCIES
   blind_index
   bootsnap (>= 1.4.4)
   brakeman
-  browser (~> 6.1)
+  browser (~> 6.2)
   bullet
   business_time
   byebug
