@@ -180,7 +180,7 @@ GEM
       msgpack (~> 1.2)
     brakeman (6.2.2)
       racc
-    browser (6.1.0)
+    browser (6.2.0)
     builder (3.3.0)
     bullet (8.0.0)
       activesupport (>= 3.0.0)
@@ -545,7 +545,7 @@ GEM
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
-    phonelib (0.10.3)
+    phonelib (0.10.6)
     pkg-config (1.5.8)
     plaid (34.0.0)
       faraday (>= 1.0.1, < 3.0)
@@ -872,7 +872,7 @@ DEPENDENCIES
   blind_index
   bootsnap (>= 1.4.4)
   brakeman
-  browser (~> 6.1)
+  browser (~> 6.2)
   bullet
   business_time
   byebug

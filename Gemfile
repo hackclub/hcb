@@ -75,7 +75,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
-gem "browser", "~> 6.1" # browser detection
+gem "browser", "~> 6.2" # browser detection
 
 # Pagination
 gem "kaminari"
