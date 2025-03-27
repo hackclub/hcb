@@ -34,7 +34,7 @@
 
   <div class="grid grid--wide mb-12">
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
-      <%= render grant.stripe_card, headless: true, href: card_grant_path(grant) %>
+      <%= render grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
     <% end %>
   </div>
 <% end %>
@@ -115,7 +115,7 @@
 </main>
 
 <div class="text-center">
-  <% if @events.empty? && @invites.empty? && !current_user.admin? %>
+  <% if @events.empty? && @invites.empty? && !current_user.auditor? %>
     <%= blankslate "No organizations associated with your account yet." %>
     <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
       <%= inline_icon "plus" %>

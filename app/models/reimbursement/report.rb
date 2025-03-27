@@ -265,7 +265,7 @@ module Reimbursement
 
       if comment.admin_only?
         users << self.event.point_of_contact if self.event
-        return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+        return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
       end
 
       users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)

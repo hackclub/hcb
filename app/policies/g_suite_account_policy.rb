@@ -2,7 +2,7 @@
 
 class GSuiteAccountPolicy < ApplicationPolicy
   def index?
-    user.admin?
+    user.auditor?
   end
 
   def create?
@@ -10,7 +10,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin? || record.event.users.include?(user)
+    user.auditor? || record.event.users.include?(user)
   end
 
   def reset_password?

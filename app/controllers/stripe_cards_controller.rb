@@ -58,7 +58,7 @@ class StripeCardsController < ApplicationController
   def show
     @card = StripeCard.includes(:event, :user).find(params[:id])
 
-    if @card.card_grant.present? && !current_user&.admin?
+    if @card.card_grant.present? && !current_user&.auditor?
       authorize @card.card_grant
       return redirect_to card_grant_path(@card.card_grant, frame: params[:frame])
     end
@@ -121,7 +121,7 @@ class StripeCardsController < ApplicationController
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     redirect_to event_cards_new_path(event), flash: { error: e.message }
   end

@@ -30,7 +30,7 @@ class GrantPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.admin? || user == record.recipient
+    user&.auditor? || user == record.recipient
   end
 
   def activate?

@@ -103,10 +103,11 @@
     <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
       <div class="flex flex-col-reverse lg:flex-row lg:w-screen lg:h-screen lg:dark:bg-neutral-900 w-full max-w-[500px] sm:max-w-[600px] mx-auto lg:max-w-full">
         <div class="relative sm:flex-1 md:min-w-[50vw] lg:min-w-[540px] max-w-[1000px] p-6 pt-10 sm:p-16 sm:overflow-y-auto sm:h-screen max-w-screen flex flex-col">
-          <%= yield %>
-          <div class="absolute top-7 left-1/2 transform -translate-x-1/2 z-10">
-            <%= render "application/flash" unless @hide_flash %>
+          <div class="flex items-center justify-between">
+            <%= render partial: "application/logo" %>
           </div>
+          <%= render "application/flash" unless @hide_flash %>
+          <%= yield %>
         </div>
         <% hackathon = sample_hackathon %>
         <div class="overflow-hidden max-h-none p-3 grid h-screen relative hidden lg:block flex-grow">
@@ -126,8 +127,6 @@
         </div>
       </div>
     </main>
-    <% if Rails.env.production? %>
-      <%= render "application/fullstory" if current_user&.sessions_reported %>
-    <% end %>
+    <%= render "application/fullstory" %>
   </body>
 </html>

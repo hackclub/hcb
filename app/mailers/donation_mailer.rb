@@ -2,7 +2,7 @@
 
 class DonationMailer < ApplicationMailer
   before_action :set_donation
-  before_action :set_emails, except: [:donor_receipt]
+  before_action :set_emails, except: [:donor_receipt, :refunded]
 
   def donor_receipt
     @initial_recurring_donation = @donation.initial_recurring_donation? && !@donation.recurring_donation&.migrated_from_legacy_stripe_account?
@@ -16,6 +16,10 @@ class DonationMailer < ApplicationMailer
 
   def notification
     mail to: @emails, subject: "You've received a donation for #{@donation.event.name}! 🎉", reply_to: @donation.email
+  end
+
+  def refunded
+    mail to: params[:requested_by].email, subject: "Your request to refund a donation from #{@donation.name} to #{@donation.event.name} was processed."
   end
 
   private

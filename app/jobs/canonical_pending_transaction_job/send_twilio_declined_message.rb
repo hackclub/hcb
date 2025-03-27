@@ -12,7 +12,7 @@ module CanonicalPendingTransactionJob
       @rpst = @cpt.raw_pending_stripe_transaction
       @card = @rpst.stripe_card
       @merchant = @rpst.stripe_transaction["merchant_data"]["name"]
-      @reason = @rpst.stripe_transaction["request_history"][0]["reason"]
+      @reason = @rpst.stripe_transaction["request_history"][0]&.[]("reason")
       @webhook_declined_reason = @rpst.stripe_transaction.dig("metadata", "declined_reason")
       @user = User.find(user_id)
 

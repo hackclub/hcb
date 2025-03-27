@@ -12,6 +12,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -96,9 +100,9 @@ jobs:
           node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
       - name: JS package cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -148,9 +152,9 @@ jobs:
           node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
       - name: JS package cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -163,3 +167,15 @@ jobs:
         env:
           RAILS_ENV: test
         run: bundle exec rails zeitwerk:check
+  brakeman:
+    name: Brakeman
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run Brakeman
+        run: bundle exec brakeman -q

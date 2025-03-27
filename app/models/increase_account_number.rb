@@ -31,8 +31,6 @@ class IncreaseAccountNumber < ApplicationRecord
            primary_key: :increase_account_number_id,
            inverse_of: :increase_account_number
 
-  before_create :create_increase_account_number
-
   validate do
     if event.demo_mode?
       errors.add(:base, "Can't create an account number for a Playground Mode org")
@@ -44,26 +42,5 @@ class IncreaseAccountNumber < ApplicationRecord
   end
 
   private
-
-  def create_increase_account_number
-    increase_account_number = Increase::AccountNumbers.create(
-      account_id: event.increase_account_id,
-      name: "##{event.id} (#{event.name})"
-    )
-
-    self.increase_account_number_id = increase_account_number["id"]
-    self.account_number = increase_account_number["account_number"]
-    self.routing_number = increase_account_number["routing_number"]
-
-    # Restrict debits to $1.00 per day
-    increase_limit = Increase::Limits.create(
-      interval: "day",
-      metric: "volume",
-      value: 100,
-      model_id: increase_account_number["id"],
-    )
-
-    self.increase_limit_id = increase_limit["id"]
-  end
 
 end

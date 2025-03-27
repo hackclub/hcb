@@ -2,11 +2,11 @@
 
 class SponsorPolicy < ApplicationPolicy
   def index?
-    user.admin?
+    user.auditor?
   end
 
   def show?
-    user.admin?
+    user.auditor?
   end
 
   def new?

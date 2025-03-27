@@ -15,6 +15,13 @@ class DonationsController < ApplicationController
   before_action :hide_seasonal_decorations
   skip_before_action :redirect_to_onboarding
 
+  before_action do
+    @force_fullstory = true
+    if (request&.env&.[]("HTTP_ACCEPT_LANGUAGE") && !request&.env&.[]("HTTP_ACCEPT_LANGUAGE")&.include?("-US")) || !@event&.country_US?
+      @international = true
+    end
+  end
+
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
 
@@ -53,7 +60,7 @@ class DonationsController < ApplicationController
       message: params[:message],
       fee_covered: params[:fee_covered],
       event: @event,
-      ip_address: request.ip,
+      ip_address: request.remote_ip,
       user_agent: request.user_agent,
       tax_deductible:,
       referrer: request.referrer,
@@ -97,7 +104,7 @@ class DonationsController < ApplicationController
       redirect_to root_url and return
     end
 
-    d_params[:ip_address] = request.ip
+    d_params[:ip_address] = request.remote_ip
     d_params[:user_agent] = request.user_agent
 
     tax_deductible = d_params[:goods].nil? ? true : d_params[:goods] == "0"
@@ -164,13 +171,13 @@ class DonationsController < ApplicationController
       ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
     else
-      DonationJob::Refund.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents)
+      DonationJob::Refund.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents, current_user)
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
     end
   end
 
   def export
-    authorize @event.donations.first
+    authorize @event.donations.build
 
     respond_to do |format|
       format.csv { stream_donations_csv }
@@ -179,7 +186,7 @@ class DonationsController < ApplicationController
   end
 
   def export_donors
-    authorize @event.donations.first
+    authorize @event.donations.build
 
     respond_to do |format|
       format.csv { stream_donors_csv }

@@ -508,7 +508,12 @@ class FlavorTextService
       "original recipe!",
       "now sugar-free!",
       "low-sodium edition",
-      'we put the ":3" in "501(c)3"!',
+      'we put the ":3" in "501(c)(3)"!',
+      'we put the "fun" in "restricted fund"!',
+      "we send checks <i>and</i> balances!".html_safe,
+      "do not adjust your television set.",
+      '#{FlavorTextService.new.generate}', # rubocop:disable Lint/InterpolationCheck
+      -> { missing_receipts = HcbCode.missing_receipt.receipt_required.count; "only #{missing_receipts} missing #{"receipt".pluralize(missing_receipts)}!" }, # => "only 20 missing receipts!"
     ]
   end
 

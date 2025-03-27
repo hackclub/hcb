@@ -14,11 +14,11 @@ class StripeController < ActionController::Base
       StatsD.measure("StripeController.#{method}") { self.send method, event }
     rescue JSON::ParserError => e
       head :bad_request
-      notify_airbrake(e)
+      Rails.error.report(e)
       return
     rescue NoMethodError => e
       puts e
-      notify_airbrake(e)
+      Rails.error.report(e)
       head :ok # success so that stripe doesn't retry (method is unsupported by HCB)
       return
     rescue Stripe::SignatureVerificationError
@@ -58,7 +58,9 @@ class StripeController < ActionController::Base
     StatsD.increment("stripe_webhook_timeout", 1) if is_closed && has_timeout
 
     rpst = PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction: event[:data][:object]).run
-    PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
+
+    # this has been commented out due to a suspected race condition
+    # PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
 
     head :ok
   end
