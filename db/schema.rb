@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_03_13_150555) do
+ActiveRecord::Schema[7.2].define(version: 2025_03_27_210003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -1382,6 +1382,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_03_13_150555) do
     t.string "external_id"
     t.string "cosigner_email"
     t.integer "purpose", default: 0
+    t.boolean "include_videos", default: false, null: false
     t.index ["document_id"], name: "index_organizer_position_contracts_on_document_id"
     t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_ab1516f568"
   end
