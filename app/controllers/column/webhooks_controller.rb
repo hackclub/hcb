@@ -13,10 +13,12 @@ module Column
         handle_ach_incoming_transfer_scheduled
       elsif type == "ach.outgoing_transfer.returned"
         handle_ach_outgoing_transfer_returned
-      elsif type == "check.outgoing_debit.deposited"
-        handle_check_deposit_deposited
+      elsif type == "check.outgoing_debit.settled"
+        handle_check_deposit_settled
       elsif type == "check.outgoing_debit.returned"
         handle_check_deposit_returned
+      elsif type == "swift.outgoing_transfer.returned"
+        handle_swift_outgoing_transfer_returned
       elsif type.start_with?("check.incoming_debit")
         handle_outgoing_check_update
       end
@@ -51,7 +53,7 @@ module Column
     end
 
     def handle_swift_outgoing_transfer_returned
-      Wire.find_by(column_id: @object[:id])&.mark_failed!(@object[:return_details].pick(:description)&.gsub(/\(trace #: \d+\)\Z/, "")&.strip)
+      Wire.find_by(column_id: @object[:id])&.mark_failed!(@object[:return_reason]&.gsub(/\(trace #: \d+\)\Z/, "")&.strip)
     end
 
     def handle_outgoing_check_update
@@ -65,7 +67,10 @@ module Column
       )
     end
 
-    def handle_check_deposit_deposited
+    # Column uses the "settled" state to represent when the
+    # check is deposited in our bank account.
+    # - @sampoder
+    def handle_check_deposit_settled
       check_deposit = CheckDeposit.find_by(column_id: @object[:id])
 
       check_deposit&.update!(status: :deposited)
@@ -81,7 +86,7 @@ module Column
       signature_valid = ActiveSupport::SecurityUtils.secure_compare(
         OpenSSL::HMAC.hexdigest(
           "SHA256",
-          Rails.application.credentials.column.dig(ColumnService::ENVIRONMENT, :webhook_secret),
+          Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :WEBHOOK_SECRET),
           request.body.read
         ),
         request.headers["Column-Signature"]

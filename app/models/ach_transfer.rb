@@ -114,6 +114,8 @@ class AchTransfer < ApplicationRecord
 
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
 
+  scope :realtime, -> { where("column_id ILIKE 'rttr%'") }
+
   after_initialize do
     self.same_day = true
   end
@@ -191,7 +193,7 @@ class AchTransfer < ApplicationRecord
     return unless may_mark_in_transit?
 
     account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,
@@ -216,6 +218,36 @@ class AchTransfer < ApplicationRecord
     save!
   end
 
+  def send_realtime_transfer!
+    return unless may_mark_in_transit?
+
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
+
+    column_counterparty = ColumnService.post("/counterparties", {
+      idempotency_key: self.id.to_s,
+      account_number:,
+      routing_number:
+    }.compact_blank)
+
+    column_realtime_transfer = ColumnService.post("/transfers/realtime", {
+      idempotency_key: self.id.to_s,
+      amount:,
+      currency_code: "USD",
+      counterparty_id: column_counterparty["id"],
+      description: payment_for,
+      account_number_id:,
+    }.compact_blank)
+
+    mark_in_transit
+    self.column_id = column_realtime_transfer["id"]
+
+    save!
+  end
+
+  def realtime?
+    column_id&.starts_with?("rttr")
+  end
+
   # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
@@ -227,9 +259,11 @@ class AchTransfer < ApplicationRecord
     local_hcb_code.has_pending_expired?
   end
 
-  def approve!(processed_by = nil)
+  def approve!(processed_by = nil, send_realtime: false)
     if scheduled_on.present?
       mark_scheduled!
+    elsif send_realtime
+      send_realtime_transfer!
     else
       send_ach_transfer!
     end
@@ -305,6 +339,8 @@ class AchTransfer < ApplicationRecord
     # https://column.com/docs/ach/timing
 
     now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
+
+    return now if realtime?
 
     if same_day? && now.workday?
       return now.change(hour: 10, minute: 0, second: 0) if now < now.change(hour: 7, min: 15, sec: 0)

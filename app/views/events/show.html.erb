@@ -36,16 +36,6 @@
       SL<%= @event.service_level %>
     </span>
   <% end %>
-
-  <% if @event.increase_account_id != IncreaseService::AccountIds::FS_MAIN %>
-    <% admin_tool("p0 badge", "span") do %>
-      <%= link_to "https://dashboard.increase.com/accounts/#{@event.increase_account_id}" do %>
-        <span class="m0 badge bg-muted">
-          <%= @event.increase_account_id %>
-        </span>
-      <% end %>
-    <% end %>
-  <% end %>
 </h1>
 
 <% if organizer_signed_in? && @event.demo_mode %>

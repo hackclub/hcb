@@ -2,7 +2,7 @@
 
 class CheckDepositPolicy < ApplicationPolicy
   def index?
-    admin_or_user? && check_deposits_enabled?
+    auditor_or_user? && check_deposits_enabled?
   end
 
   def create?
@@ -10,7 +10,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def view_image?
-    admin_or_manager?
+    auditor_or_manager?
   end
 
   def toggle_fronted?
@@ -21,6 +21,10 @@ class CheckDepositPolicy < ApplicationPolicy
 
   def admin?
     user&.admin?
+  end
+
+  def auditor?
+    user&.auditor?
   end
 
   def user?
@@ -35,7 +39,11 @@ class CheckDepositPolicy < ApplicationPolicy
     admin? || user?
   end
 
-  def admin_or_manager?
+  def auditor_or_user?
+    auditor? || user?
+  end
+
+  def auditor_or_manager?
     user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 

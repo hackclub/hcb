@@ -1,8 +1,5 @@
 <% title "You’re currently signed in as #{current_user.name}" %>
 <% @home_size = 50 %>
-<div class="flex items-center justify-between">
-  <%= render partial: "application/logo" %>
-</div>
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <%= render "header", label: "Hack Club" do %>
@@ -20,7 +17,7 @@
   <div class="flex justify-between items-center flex-wrap w-full">
     <%= link_to "Sign out", logout_users_path, method: :delete, class: "block mt-0 no-underline" %>
 
-    <%= link_to "Continue to HCB", params[:return_to] || root_path, class: "btn bg-info" %>
+    <%= ugc_link_to "Continue to HCB", params[:return_to].presence || root_path, class: "btn bg-info" %>
   </div>
 
 </div>

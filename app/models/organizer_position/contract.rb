@@ -204,7 +204,7 @@ class OrganizerPosition
         Faraday.new(url: "https://api.docuseal.co/") do |faraday|
           faraday.response :json
           faraday.adapter Faraday.default_adapter
-          faraday.headers["X-Auth-Token"] = Rails.application.credentials.docuseal_key
+          faraday.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
           faraday.headers["Content-Type"] = "application/json"
         end
       end
