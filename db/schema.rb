@@ -922,8 +922,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_03_13_150555) do
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.string "short_name"
     t.integer "risk_level"
-    t.string "application_airtable_record_id"
-    t.index ["application_airtable_record_id"], name: "index_events_on_application_airtable_record_id", unique: true
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
