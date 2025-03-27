@@ -58,7 +58,8 @@
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
 <% end %>
 
-<% unless @card_grant.user == current_user %>
-  <%= render "comments/list", comments: @card_grant %>
+<h2>Comments</h2>
+<% if policy(@card_grant.comments.build).create? %>
+  <%= render "comments/list", comments: @card_grant.comments %>
   <%= render "comments/form", commentable: @card_grant %>
 <% end %>
