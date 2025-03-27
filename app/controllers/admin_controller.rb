@@ -97,20 +97,26 @@ class AdminController < ApplicationController
   end
 
   def event_create_from_airtable
-    application = ApplicationsTable.find(params[:airtable_record_id]).fields
+    record = ApplicationsTable.find(params[:airtable_record_id])
+    application = record.fields
     country = ISO3166::Country.find_country_by_any_name(application["Event Location"])
-    ::EventService::Create.new(
+    event = ::EventService::Create.new(
       name: application["Event Name"],
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
       organized_by_teenagers: application["TEEN"] == "Teen",
-      demo_mode: true
+      demo_mode: true,
+      application_airtable_record_id: params[:airtable_record_id]
     ).run
 
-    redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
+    record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
+
+    record.save
+
+    redirect_to event_path(event), flash: { success: "Successfully created #{params[:name]}" }
   rescue => e
-    redirect_to event_new_admin_index_path, flash: { error: e.message }
+    redirect_to event_new_from_airtable_admin_index_path, flash: { error: e.message }
   end
 
   def event_balance
