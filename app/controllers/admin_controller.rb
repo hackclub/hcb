@@ -111,6 +111,7 @@ class AdminController < ApplicationController
     ).run
 
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
+    record["HCB ID"] = event.id
 
     record.save
 
