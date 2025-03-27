@@ -9,6 +9,7 @@
 #  cosigner_email               :string
 #  deleted_at                   :datetime
 #  external_service             :integer
+#  include_videos               :boolean          default(FALSE), not null
 #  purpose                      :integer          default("fiscal_sponsorship_agreement")
 #  signed_at                    :datetime
 #  void_at                      :datetime

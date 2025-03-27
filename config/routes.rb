@@ -209,7 +209,9 @@ Rails.application.routes.draw do
       get "wires", to: "admin#wires"
       get "events", to: "admin#events"
       get "event_new", to: "admin#event_new"
+      get "event_new_from_airtable", to: "admin#event_new_from_airtable"
       post "event_create", to: "admin#event_create"
+      post "event_create_from_airtable", to: "admin#event_create_from_airtable"
       get "donations", to: "admin#donations"
       get "recurring_donations", to: "admin#recurring_donations"
       get "disbursements", to: "admin#disbursements"
@@ -646,7 +648,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :card_grants, only: [:show, :edit, :update], path: "grants" do
+  resources :card_grants, only: [:show, :edit, :update], path: "grants", concerns: :commentable do
     member do
       post "activate"
       get "spending"
