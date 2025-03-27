@@ -2,7 +2,7 @@
 
 class PaypalTransferPolicy < ApplicationPolicy
   def new?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
   def create?

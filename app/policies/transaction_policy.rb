@@ -27,11 +27,11 @@ class TransactionPolicy < ApplicationPolicy
   private
 
   def auditor_or_teammember
-    user&.auditor? || OrganizerPosition.role_at_least?(user, :reader)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def admin_or_teammember
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record&.event, :member)
   end
 
   def is_public

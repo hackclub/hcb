@@ -36,7 +36,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def admin_or_member_user?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
   def auditor_or_user?

@@ -54,10 +54,10 @@ class OrganizerPosition < ApplicationRecord
     }
   end
 
-  def self.role_at_least?(user, role)
+  def self.role_at_least?(user, event, role)
     return true if user&.admin?
 
-    current = find_by(user: user)&.role
+    current = find_by(user:, event:)&.role
     current && roles[current] >= roles[role]
   end
 

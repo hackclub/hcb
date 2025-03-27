@@ -44,7 +44,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def edit?
-    OrganizerPosition.role_at_least?(user, :manager)
+    OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
   def pin?
@@ -52,7 +52,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def update?
-    OrganizerPosition.role_at_least?(user, :manager)
+    OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
   alias remove_header_image? update?
@@ -90,7 +90,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def documentation?
-    OrganizerPosition.role_at_least?(user, :reader) && record.plan.documentation_enabled?
+    OrganizerPosition.role_at_least?(user, record, :reader) && record.plan.documentation_enabled?
   end
 
   def statements?
@@ -102,11 +102,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_transfer?
-    OrganizerPosition.role_at_least?(user, :manager) && !record.demo_mode?
+    OrganizerPosition.role_at_least?(user, record, :manager) && !record.demo_mode?
   end
 
   def new_transfer?
-    OrganizerPosition.role_at_least?(user, :manager) && !record.demo_mode?
+    OrganizerPosition.role_at_least?(user, record, :manager) && !record.demo_mode?
   end
 
   def g_suite_overview?
@@ -114,7 +114,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def g_suite_create?
-    OrganizerPosition.role_at_least?(user, :manager) && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    OrganizerPosition.role_at_least?(user, record, :manager) && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
@@ -134,7 +134,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements?
-    OrganizerPosition.role_at_least?(user, :reader) && record.plan.reimbursements_enabled?
+    OrganizerPosition.role_at_least?(user, record, :reader) && record.plan.reimbursements_enabled?
   end
 
   def employees?
@@ -146,7 +146,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    OrganizerPosition.role_at_least?(user, :manager) && record.plan.account_number_enabled?
+    OrganizerPosition.role_at_least?(user, record, :manager) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -154,7 +154,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def receive_grant?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def audit_log?
@@ -166,7 +166,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def can_invite_user?
-    OrganizerPosition.role_at_least?(user, :manager)
+    OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
   def claim_point_of_contact?
@@ -184,7 +184,7 @@ class EventPolicy < ApplicationPolicy
   private
 
   def allowed_user?
-    auditor? || OrganizerPosition.role_at_least?(user, :member)
+    auditor? || OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def auditor_or_user?

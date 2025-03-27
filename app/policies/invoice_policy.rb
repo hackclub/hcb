@@ -14,11 +14,11 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def new?
-    !unapproved? && (is_public || OrganizerPosition.role_at_least?(user, :member))
+    !unapproved? && (is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member))
   end
 
   def create?
-    !record.unapproved? && record.plan.invoices_enabled? && (user&.admin? || OrganizerPosition.role_at_least?(user, :member))
+    !record.unapproved? && record.plan.invoices_enabled? && (user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member))
   end
 
   def show?
@@ -26,23 +26,23 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def archive?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def void?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def unarchive?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def manually_mark_as_paid?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def hosted?
-    OrganizerPosition.role_at_least?(user, :member)
+    OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def pdf?
@@ -56,11 +56,11 @@ class InvoicePolicy < ApplicationPolicy
   private
 
   def admin_or_user
-    user&.admin? || OrganizerPosition.role_at_least?(user, :member)
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def auditor_or_user
-    user&.auditor? || OrganizerPosition.role_at_least?(user, :member)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def is_public
