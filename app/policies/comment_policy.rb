@@ -54,7 +54,7 @@ class CommentPolicy < ApplicationPolicy
     end
   end
 
-  def event 
+  def event
     if record.commentable.respond_to?(:events)
       record.commentable.events.first
     elsif record.commentable.is_a?(Reimbursement::Report)
