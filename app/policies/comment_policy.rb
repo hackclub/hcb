@@ -13,31 +13,31 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def new?
-    user.auditor? || OrganizerPosition.role_at_least?(user, event, :member)
+    user.auditor? || has_role?(:reader)
   end
 
   def create?
-    user.auditor? || OrganizerPosition.role_at_least?(user, event, :member)
+    user.auditor? || has_role?(:member)
   end
 
   def edit?
-    OrganizerPosition.role_at_least?(user, event, :member)
+    has_role?(:member)
   end
 
   def update?
-    OrganizerPosition.role_at_least?(user, event, :member)
+    has_role?(:member)
   end
 
   def react?
-    show?
+    update?
   end
 
   def show?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, event, :member)
+    user&.auditor? || has_role?(:reader)
   end
 
   def destroy?
-    OrganizerPosition.role_at_least?(user, event, :member)
+    edit?
   end
 
   private
@@ -54,16 +54,22 @@ class CommentPolicy < ApplicationPolicy
     end
   end
 
-  def event
+  def has_role?(role)
     if record.commentable.respond_to?(:events)
-      record.commentable.events.first
-    elsif record.commentable.is_a?(Reimbursement::Report)
-      record.commentable.event
-    elsif record.commentable.is_a?(Event)
-      record.commentable
-    else
-      record.commentable.event
+      return record.commentable.events.any? do |event|
+        OrganizerPosition.role_at_least?(user, event, role)
+      end
     end
+
+    event = if record.commentable.is_a?(Reimbursement::Report)
+              record.commentable.event
+            elsif record.commentable.is_a?(Event)
+              record.commentable
+            else
+              record.commentable.event
+            end
+
+    OrganizerPosition.role_at_least?(user, event, role)
   end
 
 end
