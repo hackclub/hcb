@@ -114,7 +114,7 @@ class AdminController < ApplicationController
 
     record.save
 
-    redirect_to event_path(event), flash: { success: "Successfully created #{params[:name]}" }
+    redirect_to event_path(event), flash: { success: "Successfully created #{event.name}" }
   rescue => e
     redirect_to event_new_from_airtable_admin_index_path, flash: { error: e.message }
   end
