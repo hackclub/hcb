@@ -106,8 +106,7 @@ class AdminController < ApplicationController
       point_of_contact_id: current_user.id,
       approved: true,
       organized_by_teenagers: application["TEEN"] == "Teen",
-      demo_mode: true,
-      application_airtable_record_id: params[:airtable_record_id]
+      demo_mode: true
     ).run
 
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
