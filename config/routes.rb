@@ -646,7 +646,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :card_grants, only: [:show, :edit, :update], path: "grants" do
+  resources :card_grants, only: [:show, :edit, :update], path: "grants", concerns: :commentable do
     member do
       post "activate"
       get "spending"
