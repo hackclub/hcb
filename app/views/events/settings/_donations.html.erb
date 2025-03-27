@@ -1,3 +1,5 @@
+<% turbo_page_requires_reload %>
+
 <%= turbo_frame_tag :donations_settings do %>
   <%= form_with(model: event, local: true, class: @frame ? "" : "card") do |form| %>
     <%= form_errors event, "organization" %>
@@ -44,8 +46,68 @@
             <% end %>
           <% end %>
         </div>
+        <%= form.submit "Update", class: ("disabled" unless policy(event).update?), data: { turbo_frame: @frame ? "_top" : "" } %>
       </div>
-      <%= form.submit "Update", class: ("disabled" unless policy(event).update?), data: { turbo_frame: @frame ? "_top" : "" } %>
     <% end %>
+  <% end %>
+
+  <%= form_with(url: event_donation_goals_path(event), local: true, method: @event.donation_goal ? :patch : :post, class: @frame ? "" : "card mt-4") do |form| %>
+    <% if @frame %>
+      <div class="menu__divider m-0 my-8"></div>
+    <% end %>
+    <div data-controller="accordion">
+      <div class="field field--checkbox mb0">
+        <span style="font-weight: 700">Enable donation goals</span>
+        <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+          <%= form.label :donation_goal_enabled do %>
+            <%= form.check_box :donation_goal_enabled,
+              data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+              disabled: !policy(event).update?,
+              checked: @event.donation_goal.present?,
+              onchange: @event.donation_goal && "if (!this.checked && confirm('Remove donation goal?')) this.closest('form').requestSubmit();",
+              switch: true %>
+            <span class="slider"></span>
+          <% end %>
+        </div>
+      </div>
+      <div data-accordion-target="content" class="rounded-xl">
+        <div class="field">
+          <label for="donation_goal">Goal amount</label>
+          <span class="muted mb-2 block">
+            <% if @event.donation_goal&.amount_cents %>
+              <turbo-frame id="donation_goal_time">
+                <span class="muted mb-2 block">
+                  A progress bar on your donation page will track donations made after
+                  <strong id="time">
+                    <%= local_time @event.donation_goal.tracking_since %>.
+                  </strong>
+                  <% if organizer_signed_in?(as: :manager) %>
+                    <label class="inline underline color-inherit cursor-pointer">
+                      <input type="checkbox" name="reset_donation_goal" class="hidden" onclick="if(confirm('Are you sure you want to reset the goal\'s start date to the current time?')) this.closest('form').requestSubmit();">
+                      Reset
+                    </label>
+                  <% end %>
+                </span>
+              </turbo-frame>
+            <% end %>
+          </span>
+
+          <div class="flex items-center gap-2">
+            <div class="bg-gray-100 dark:bg-neutral-700 flex items-center border rounded-lg muted flex-1">
+              <span class="px-3">$</span>
+              <%= form.number_field :amount_cents, placeholder: "1000",
+                                                   class: "w-100 fit !border-none !bg-transparent !text-black dark:!text-white !pl-0",
+                                                   step: "1",
+                                                   value: (@event.donation_goal.amount_cents / 100 if @event.donation_goal.present?),
+                                                   disabled: !policy(event).update?,
+                                                   data: {
+                                                     action: "input->donation#update",
+                                                   } %>
+            </div>
+            <%= form.submit "Update", class: ("disabled" unless policy(event).update?), data: { turbo_frame: @frame ? "_top" : "" } %>
+          </div>
+        </div>
+      </div>
+    </div>
   <% end %>
 <% end %>

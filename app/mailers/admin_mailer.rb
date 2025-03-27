@@ -2,7 +2,7 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
-  default to: -> { Rails.application.credentials.admin_email[:slack] }
+  default to: -> { Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL) }
 
   def cash_withdrawal_notification
     @hcb_code = params[:hcb_code]

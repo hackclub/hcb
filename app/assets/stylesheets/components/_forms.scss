@@ -338,11 +338,13 @@ legend {
     margin-bottom: 0.25rem;
   }
 
-  input {
+  input,
+  .field_with_errors:has(> input) {
     display: none;
   }
 
-  label {
+  label,
+  .field_with_errors > label {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -355,12 +357,16 @@ legend {
     background-color: rgba(map-get($palette, accent), 0.25);
   }
 
-  input:disabled + label {
+  input:disabled + label,
+  .field_with_errors:has(> input:disabled) + .field_with_errors:has(> label) {
     opacity: 0.5;
     cursor: default;
   }
 
-  input:checked + label {
+  input:checked + label,
+  .field_with_errors:has(> input:checked)
+    + .field_with_errors:has(> label)
+    > label {
     box-shadow:
       0 0 0 1px white,
       0 0 0 3px map-get($palette, info);
@@ -397,4 +403,55 @@ form section.grid--split {
 
 .grid__half {
   grid-column: span 1 !important;
+}
+
+// Inspired by https://dev.to/madsstoumann/using-a-single-input-for-one-time-code-352l
+
+input:where([data-behavior='otp_input']) {
+  --otp-digits: 6;
+  --otp-ls: 2.3ch;
+  --otp-gap: 1.25;
+
+  /* private consts */
+  --_otp-bgsz: calc(var(--otp-ls) + 1ch);
+  --_otp-digit: 0;
+
+  all: unset;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(51, 142, 218, 0.125) calc(var(--otp-gap) * var(--otp-ls)),
+      transparent 0
+    ),
+    linear-gradient(
+      90deg,
+      #252429 calc(var(--otp-gap) * var(--otp-ls)),
+      transparent 0
+    );
+
+  background-position:
+    calc(var(--_otp-digit) * var(--_otp-bgsz)) 0,
+    0 0;
+  background-repeat: no-repeat, repeat-x;
+  background-size: var(--_otp-bgsz) 100%;
+
+  caret-color: #ddcfcf;
+  caret-shape: block;
+
+  clip-path: inset(0% calc(var(--otp-ls) / 2) 0% 0%);
+
+  font-family: ui-monospace, monospace;
+  font-size: 2em !important;
+  inline-size: calc(var(--otp-digits) * var(--_otp-bgsz));
+  letter-spacing: var(--otp-ls);
+  padding-block: 1ch;
+  padding: 0.2em 0px !important;
+  padding-inline-start: calc(
+    ((var(--otp-ls) - 0.9ch) / 2) * var(--otp-gap)
+  ) !important;
+
+  border-radius: 0px !important;
+  background-color: rgba(0, 0, 0, 0) !important;
+  border: none !important;
+  color: inherit !important;
 }

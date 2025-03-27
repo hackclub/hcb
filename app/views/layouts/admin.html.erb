@@ -46,6 +46,11 @@
            "Google Workspace Requests": [google_workspaces_admin_index_path, GSuite.needs_ops_review.count, %i[]],
            "Account Numbers": [account_numbers_admin_index_path, Column::AccountNumber.count, %i[counter]]
          },
+         Payroll: {
+           Employees: [employees_admin_index_path, Employee.onboarding.count, %i[]],
+           Payments: [employee_payments_admin_index_path, Employee::Payment.paid.count, %i[counter]],
+           W9s: [admin_w9s_path, W9.all.count, %i[counter]]
+         },
          Misc: {
            "Bank Accounts": [bank_accounts_admin_index_path, BankAccount.failing.count, %i[counter]],
            "HCB Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],

@@ -98,7 +98,7 @@
   <% if comment.content.blank? %>
     <div class="muted mb1"><em>Comment left blank.</em></div>
   <% else %>
-    <%== MarkdownService.instance.renderer(current_user:, record: comment).render comment.content %>
+    <%= sanitize(MarkdownService.instance.renderer(current_user:, record: comment).render(comment.content), scrubber: MarkdownScrubber.new) %>
   <% end %>
   <% if comment.has_attached_file? %>
     <p>
@@ -170,11 +170,11 @@
 <h4>Journey</h4>
 
 <p>CanonicalTransaction</p>
-<%= (ap @canonical_transaction).html_safe %>
+<%= sanitize(ap(@canonical_transaction), attributes: %w(style)) %>
 <p>↓</p>
 
 <p><%= @canonical_transaction.transaction_source_type %></p>
-<%= (ap @canonical_transaction.transaction_source).html_safe %>
+<%= sanitize(ap(@canonical_transaction.transaction_source), attributes: %w(style)) %>
 
 <br><hr>
 
@@ -182,7 +182,7 @@
 
 <% @ahoy_events.each do |ae| %>
   <p><%= ae.name %> <small><%= ae.time %></small></p>
-  <%= (ap ae.properties).html_safe %>
+  <%= sanitize(ap(ae.properties), attributes: %w(style)) %>
 <% end %>
 
 <br><hr>

@@ -29,7 +29,7 @@ class PublicActivity::Activity
     # i don't want it to break other features
     # as it's non-critical, hence this.
     # - @sampoder
-    begin
+    Rails.error.handle do
       streams = []
 
       if event_id
@@ -63,8 +63,6 @@ class PublicActivity::Activity
           locals: { activity: self, current_user: stream.first }
         )
       end
-    rescue => e
-      Airbrake.notify(e)
     end
 
   }

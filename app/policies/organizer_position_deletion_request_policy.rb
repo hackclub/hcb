@@ -2,7 +2,7 @@
 
 class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   def index?
-    user.admin?
+    user.auditor?
   end
 
   def new?
@@ -19,7 +19,7 @@ class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin?
+    user.auditor?
   end
 
   def close?

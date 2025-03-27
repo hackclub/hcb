@@ -105,7 +105,7 @@
   <div
     class="card__banner card__banner--top flex justify-between items-center promo-domains">
     <h3 class="h1 p2 my0 color-black">Domains</h3>
-      <% if !@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) %>
+      <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?)) && @event.event_tags.where(name: "Scrapyard").none? %>
         <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
           <span class="btn disabled">Apply</span>
         </div>

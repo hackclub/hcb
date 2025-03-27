@@ -31,7 +31,7 @@ class GrantsController < ApplicationController
 
   rescue => e
     flash.now[:error] = e.message
-    notify_airbrake(e)
+    Rails.error.report(e)
     render "new", status: :unprocessable_entity
   end
 
@@ -65,13 +65,13 @@ class GrantsController < ApplicationController
     return not_found unless @grant.waiting_on_recipient? || @grant.verifying? || @grant.fulfilled?
 
     if !signed_in?
-      return redirect_to auth_users_path(email: @grant.recipient.email, return_to: grant_path(@grant)), flash: { info: "Please sign in to continue." }
+      return redirect_to auth_users_path(return_to: grant_path(@grant)), flash: { info: "Please sign in to continue." }
     end
 
     authorize @grant
 
   rescue Pundit::NotAuthorizedError
-    redirect_to auth_users_path(email: @grant.recipient.email, return_to: grant_path(@grant)), flash: { info: "Please sign in with the same email you received the invitation at." }
+    redirect_to auth_users_path(return_to: grant_path(@grant)), flash: { info: "Please sign in with the same email you received the invitation at." }
   end
 
   def activate
@@ -188,7 +188,7 @@ class GrantsController < ApplicationController
 
   rescue => e
     flash[:error] = e.message
-    notify_airbrake(e)
+    Rails.error.report(e)
     redirect_back_or_to grant_path(@grant)
 
   end

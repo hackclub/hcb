@@ -32,30 +32,37 @@
       <%= form.label :plan, "Assign a plan" %>
       <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.type, include_blank: "Select a plan..." %>
     </div>
+
+    <div class="field pr2">
+      <%= form.label :risk_level %>
+      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
+    </div>
   </div>
 
-  <%= form.label :files, "Upload Activation Documents (FS Contract, MOA, etc.)", class: "mt2 mb1 h3 bold" %>
+  <% unless Flipper.enabled?(:organizer_position_contracts_2025_01_03, @event) %>
+    <%= form.label :files, "Upload Activation Documents (FS Contract, MOA, etc.)", class: "mt2 mb1 h3 bold" %>
 
-  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a file.">
-    <%= form.label :files, "Choose file", class: "field--fileupload__label", data: {
-          action: "
-        dragover@window->file-drop#dragover
-        drop@window->file-drop#drop
-        dragenter@window->file-drop#dragenter
-        dragleave@window->file-drop#dragleave
-      "
-        } %>
-    <%= form.file_field :files,
-        multiple: true,
-        include_hidden: false,
-        required: false,
-        accept: "image/*,image/heic,.pdf",
-        style: "margin: 8px 0px",
-        class: "field--fileupload__field",
-        data: {
-          "file-drop-target" => "fileInput"
-        } %>
-  </div>
+    <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a file.">
+      <%= form.label :files, "Choose file", class: "field--fileupload__label", data: {
+            action: "
+          dragover@window->file-drop#dragover
+          drop@window->file-drop#drop
+          dragenter@window->file-drop#dragenter
+          dragleave@window->file-drop#dragleave
+        "
+          } %>
+      <%= form.file_field :files,
+          multiple: true,
+          include_hidden: false,
+          required: false,
+          accept: "image/*,image/heic,.pdf",
+          style: "margin: 8px 0px",
+          class: "field--fileupload__field",
+          data: {
+            "file-drop-target" => "fileInput"
+          } %>
+    </div>
+  <% end %>
 
   <div class="action">
     <%= form.submit "Activate" %>
