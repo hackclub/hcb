@@ -77,7 +77,7 @@ class Export
         def header
           ::CSV::Row.new(headers, headers, true)
         end
-        
+
         def headers
           [:date, :status, :name, :amount_cents, :reimbursee_name, :reimbursee_email]
         end
