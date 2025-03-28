@@ -105,7 +105,14 @@ class ExportsController < ApplicationController
 
     respond_to do |format|
       format.csv do
-        stream_reimbursements_csv
+        @export = Export::Event::Reimbursements::Csv.create(
+          requested_by: current_user,
+          event_id: @event.id
+        )
+        headers["Content-Type"] = @export.mime_type
+        headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
+        response.status = 200
+        self.response_body = @export.content
       end
     end
   end
@@ -131,24 +138,6 @@ class ExportsController < ApplicationController
       flash[:error] = "End date cannot be before the start date."
       redirect_back fallback_location: event_statements_path(@event) and return
     end
-  end
-
-  def stream_reimbursements_csv
-    set_file_headers_csv
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = reimbursements_csv
-  end
-
-  def set_file_headers_csv
-    headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
-  end
-
-  def reimbursements_csv
-    ::ExportService::Reimbursement::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
   end
 
 end

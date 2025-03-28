@@ -23,7 +23,9 @@ class Export < ApplicationRecord
   belongs_to :requested_by, class_name: "User", optional: true
   validates_presence_of :requested_by, if: -> { async? }
 
-  self.abstract_class = true
+  after_initialize do
+    raise "Cannot directly instantiate an Export" if self.instance_of? Export
+  end
 
   # returns true / false, whether or not the export has to be done
   # asynchronously and emailed to the user or not.
