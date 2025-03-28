@@ -59,7 +59,7 @@ class Export
             :payout_holding,
           )
         end
-        
+
         def row(rr)
           ::CSV::Row.new(
             headers,
