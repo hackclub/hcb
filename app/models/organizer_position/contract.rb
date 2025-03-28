@@ -9,6 +9,7 @@
 #  cosigner_email               :string
 #  deleted_at                   :datetime
 #  external_service             :integer
+#  include_videos               :boolean          default(FALSE), not null
 #  purpose                      :integer          default("fiscal_sponsorship_agreement")
 #  signed_at                    :datetime
 #  void_at                      :datetime
@@ -37,6 +38,9 @@ class OrganizerPosition
 
     after_create_commit :send_using_docuseal!, unless: :sent_with_manual?
 
+    validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
+    normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
+
     after_create_commit do
       organizer_position_invite.update(is_signee: true)
       organizer_position_invite.organizer_position&.update(is_signee: true)
@@ -58,6 +62,9 @@ class OrganizerPosition
 
       event :mark_signed do
         transitions from: [:pending, :sent], to: :signed
+        after do
+          organizer_position_invite.deliver
+        end
       end
 
       event :mark_voided do
@@ -153,6 +160,11 @@ class OrganizerPosition
                 readonly: true
               },
               {
+                name: "Signature",
+                default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
+                readonly: false
+              },
+              {
                 name: "The Project",
                 default_value: organizer_position_invite.event.airtable_record&.[]("Tell us about your event"),
                 readonly: false
@@ -193,7 +205,7 @@ class OrganizerPosition
         Faraday.new(url: "https://api.docuseal.co/") do |faraday|
           faraday.response :json
           faraday.adapter Faraday.default_adapter
-          faraday.headers["X-Auth-Token"] = Rails.application.credentials.docuseal_key
+          faraday.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
           faraday.headers["Content-Type"] = "application/json"
         end
       end

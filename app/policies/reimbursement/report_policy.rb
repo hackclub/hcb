@@ -11,7 +11,7 @@ module Reimbursement
     end
 
     def show?
-      admin || team_member || creator
+      admin || team_member || creator || auditor
     end
 
     def edit?
@@ -51,13 +51,17 @@ module Reimbursement
     end
 
     def destroy?
-      ((manager || creator) && record.initial_draft?) || (admin && !record.reimbursed?)
+      ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
     end
 
     private
 
     def admin
       user&.admin?
+    end
+
+    def auditor
+      user&.auditor?
     end
 
     def manager

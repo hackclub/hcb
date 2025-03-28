@@ -29,6 +29,11 @@ class ApplicationController < ActionController::Base
     cookies.permanent[:first_visit] = 1
   end
 
+  before_action do
+    # Disallow indexing
+    response.set_header("X-Robots-Tag", "noindex")
+  end
+
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
@@ -58,13 +63,13 @@ class ApplicationController < ActionController::Base
     if Rails.env.development?
       raise
     else
-      notify_airbrake(exception)
+      Rails.error.report(exception)
       redirect_to root_url
     end
   end
 
   def find_current_auditor
-    current_user if admin_signed_in?
+    current_user if auditor_signed_in?
   end
 
   private

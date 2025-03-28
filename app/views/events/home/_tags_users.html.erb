@@ -7,7 +7,7 @@
             <h3 class="text-2xl font-bold mb-0">
               <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "It's quiet here..." : "Tags aren't enabled for this event" %>
             </h3>
-            <p class="text-gray-500 my-1">
+            <p class="text-gray-500 my-1 max-w-sm">
               <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "Either you don't have any tags, or you haven't categorized any transactions yet." : "With tags, you can neatly categorize your transactions." %>
             </p>
 
@@ -39,7 +39,7 @@
           </div>
         </div>
       <% else %>
-        <div class="flex flex-row justify-between items-center w-full">
+        <div class="flex flex-row justify-between items-center w-full mb-2">
           <h3 class="mt0 mb0">Top users</h3>
           <h5 class="homepage-eyebrow shrink-0 my-0">All&nbsp;time</h5>
         </div>

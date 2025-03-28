@@ -42,7 +42,7 @@
       <% end %>
       <p>
         <strong>Associated Report</strong>
-        <%= link_to expense.report.name, expense.report %>
+        <%= link_to expense.report.name, expense.report, data: { turbo_frame: "_top" } %>
       </p>
       <% if expense.description.present? %>
         <p>

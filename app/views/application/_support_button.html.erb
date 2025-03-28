@@ -3,35 +3,30 @@
     <%= inline_icon "question-mark", size: 18 %>
   </button>
   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact" style="padding: 0.5rem;">
-    <a class="support-menu__item" href="mailto:hcb@hackclub.com" target="_blank">
-      <%= inline_icon "email", size: 24 %> Contact us
+    <% routing = begin
+         Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
+       rescue
+         {}
+       end %>
+
+    <% url_params = {
+         url: "#{request.base_url}#{request.original_fullpath}",
+         location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
+         user_id: current_user&.id
+       } %>
+    <a class="support-menu__item" href="https://help.hcb.hackclub.com/" target="_blank">
+      <%= inline_icon "docs", size: 24 %> Help Center
+    </a>
+    <a class="support-menu__item" href="javascript:void(0);" onclick="window.Beacon && (window.Beacon('identify', { name: <%= current_user&.name.to_json %>, email: <%= current_user&.email.to_json %> }), window.Beacon('session-data', { url: <%= url_params[:url].to_json %>, location: <%= url_params[:location].to_json %>, user_id: <%= url_params[:user_id].to_json %> }), window.Beacon('open'))">
+      <%= inline_icon "message-new", size: 24 %> Get help
     </a>
     <% if current_user&.events&.not_demo_mode&.any? %>
-      <% routing = begin
-           Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
-         rescue
-           {}
-         end %>
-
-      <% url_params = {
-           name: current_user&.name,
-           email: current_user&.email,
-           url: "#{request.base_url}#{request.original_fullpath}",
-           location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
-         } %>
-
       <%= link_to "https://forms.hackclub.com/hcb-feedback?#{url_params.to_query}", class: "support-menu__item", target: "_blank" do %>
         <%= inline_icon "message-simple", size: 24 %> Share feedback
       <% end %>
     <% end %>
-    <a class="support-menu__item" href="https://help.hcb.hackclub.com/" target="_blank">
-      <%= inline_icon "docs", size: 24 %> Help Center
-    </a>
     <a class="support-menu__item" href="<%= branding_path %>" target="_blank">
       <%= inline_icon "bank-account", size: 24 %> Brand guidelines
-    </a>
-    <a class="support-menu__item" href="<%= docs_api_index_path %>" target="_blank">
-      <%= inline_icon "code", size: 24 %> API docs
     </a>
   </div>
 </div>

@@ -86,6 +86,8 @@ module Reimbursement
 
     after_create_commit do
       ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
+      ReimbursementJob::OneDayReminder.set(wait: 1.day).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
+      ReimbursementJob::SevenDaysReminder.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
     end
 
     aasm timestamps: true do
@@ -263,7 +265,7 @@ module Reimbursement
 
       if comment.admin_only?
         users << self.event.point_of_contact if self.event
-        return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+        return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
       end
 
       users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)

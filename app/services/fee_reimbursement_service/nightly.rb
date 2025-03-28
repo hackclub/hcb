@@ -19,16 +19,20 @@ module FeeReimbursementService
 
         amount_cents = fee_reimbursement.amount
 
-        topup = StripeTopup.create(
-          amount_cents:,
-          statement_descriptor: "FEE REIMBURSE",
-          description: "Fee reimbursement ##{fee_reimbursement.id}",
-          metadata: {
-            fee_reimbursement_id: fee_reimbursement.id,
-          }
-        )
+        if amount_cents.zero?
+          fee_reimbursement.update!(processed_at: Time.now)
+        else
+          topup = StripeTopup.create(
+            amount_cents:,
+            statement_descriptor: "FEE REIMBURSE",
+            description: "Fee reimbursement ##{fee_reimbursement.id}",
+            metadata: {
+              fee_reimbursement_id: fee_reimbursement.id,
+            }
+          )
 
-        fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
+          fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
+        end
       end
     end
 

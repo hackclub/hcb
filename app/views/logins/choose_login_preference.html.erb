@@ -1,38 +1,27 @@
-<% title "Sign in" %>
-<% @webauthn_available && @totp_available ? page_sm : page_xs %>
-<% @home_size = 128 %>
-<% content_for(:page_class) { "bg-snow pt4" } %>
+<% title "Choose login method" %>
+<% content_for(:page_class) %>
 
-<% content_for :head do %>
-  <% img = "/brand/hcb-icon-icon-original.png" %>
-  <meta name="twitter:card" content="summary">
-  <meta property="og:image" content="<%= img %>">
-  <meta name="twitter:image" content="<%= img %>">
-  <meta property="og:site_name" content="HCB">
-  <meta property="og:url" content="https://hcb.hackclub.com">
-  <meta property="og:title" content="Sign in">
-  <meta name="twitter:title" content="Sign in">
-  <meta property="og:description" content="Sign in to HCB.">
-  <meta name="twitter:description" content="Sign in to HCB.">
-  <meta name="description" content="Sign in to HCB.">
-<% end %>
-
-<article class="center mt3">
-  <h1 class="mt2">
-    <span class="h3 caps secondary block">Hack Club</span>
-    <span class="primary">Sign in to HCB</span>
-  </h1>
-
+<div class="flex flex-col flex-1 justify-center max-w-md w-full">
+  <%= render "header", label: "Sign in to HCB" do %>
+    How would you like to sign in?
+  <% end %>
+  <%= render "badge", user: @login.user %>
   <%= render partial: "users/sms_auth_notice" %>
-
-  <p>How would you like to sign in?</p>
-
   <%= form_with url: set_login_preference_login_path(@login), method: :post, data: @webauthn_available ? { "controller" => "webauthn-auth form-disable", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_return_to_value: @return_to, webauthn_auth_login_id_value: @login.hashid } : {} do |form| %>
     <div data-webauthn-auth-target="error" class="mb2 display-none">
-      <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
+      <div class="absolute top-7 left-1/2 transform -translate-x-1/2 z-10">
+        <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
+      </div>
     </div>
 
-    <div class="field field--options mx-auto <%= "trio max-w-md" if @webauthn_available && @totp_available %>">
+    <% methods = [
+         @email_available.presence,
+         @sms_available.presence,
+         @totp_available.presence,
+         @webauthn_available.presence
+       ].compact %>
+
+    <div class="field field--options max-w-full w-full mt-3 <%= "trio" if methods.length == 3 %>">
       <% if @webauthn_available %>
         <%= form.radio_button :login_preference, "webauthn", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
         <%= form.label :login_preference, value: "webauthn", class: "cursor-pointer" do %>
@@ -43,25 +32,36 @@
       <% if @totp_available %>
         <%= form.radio_button :login_preference, "totp", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
         <%= form.label :login_preference, value: "totp", class: "cursor-pointer" do %>
-         <%= inline_icon "clock", size: 28 %>
-         <strong>TOTP</strong>
+          <%= inline_icon "clock", size: 28 %>
+          <strong>TOTP</strong>
         <% end %>
       <% end %>
-      <%= form.radio_button :login_preference, "email", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
-      <%= form.label :login_preference, value: "email", class: "cursor-pointer" do %>
-        <%= inline_icon @user&.use_sms_auth? ? "message" : "email", size: 28 %>
-        <strong>Login code</strong>
+      <% if @email_available %>
+        <%= form.radio_button :login_preference, "email", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
+        <%= form.label :login_preference, value: "email", class: "cursor-pointer" do %>
+          <%= inline_icon "email", size: 28 %>
+          <strong>Email code</strong>
+        <% end %>
+      <% end %>
+      <% if @sms_available %>
+        <%= form.radio_button :login_preference, "sms", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
+        <%= form.label :login_preference, value: "sms", class: "cursor-pointer" do %>
+          <%= inline_icon "message", size: 28 %>
+          <strong>SMS code</strong>
+        <% end %>
       <% end %>
     </div>
-    <div class="field field--checkbox justify-center">
-        <%= form.check_box :remember, checked: true, data: { "webauthn-auth-target" => "rememberInput" } %>
-        <%= form.label :remember, "Remember my choice in this browser" %>
+    <div class="field field--checkbox justify-left hidden">
+      <%= form.check_box :remember, checked: true, data: { "webauthn-auth-target" => "rememberInput" } %>
+      <%= form.label :remember, "Remember my choice in this browser" %>
     </div>
     <%= form.hidden_field :email, value: @email, data: { "webauthn-auth-target" => "loginEmailInput" } %>
     <%= form.hidden_field :return_to, value: @return_to if @return_to %>
-    <%= form.submit "Continue", data: { "webauthn-auth-target" => "continueButton", "form-disable-target" => "submitButton" } %>
+    <div class="flex flex-row justify-between items-center mt-4">
+      <%= link_to "Cancel", logout_users_path, method: :delete, class: "no-underline block" %>
+      <%= form.submit "Continue", data: { "webauthn-auth-target" => "continueButton", "form-disable-target" => "submitButton" } %>
+    </div>
   <% end %>
-
-  <p class="h5 muted mt5">Need help? <%= help_email %></p>
-  <p class="h5 mt2"><a href="https://hackclub.com/hcb?ref=hcb_auth">What’s HCB?</a></p>
-</article>
+</div>
+<%= render partial: "environment_banner" %>
+<%= render partial: "footer" %>

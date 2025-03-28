@@ -25,7 +25,7 @@ module Users
     private
 
     def set_data
-      if current_user.admin? && params[:user_email].present?
+      if current_user.auditor? && params[:user_email].present?
         @user = User.find_by(email: params[:user_email])
       end
       @user ||= current_user
@@ -33,7 +33,7 @@ module Users
       @data = {
         individual: {
           name: @user.full_name,
-          firstName: @user.preferred_first_name.presence || @user.first_name,
+          firstName: @user.first_name,
           id: @user.id,
           profilePicture: profile_picture_for(@user, 256),
           totalMoneySpent: Metric::User::TotalSpent.from(@user).metric,

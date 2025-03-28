@@ -12,7 +12,7 @@
         data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
     <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
       <% if pinnable %>
-        <%= link_to pin_hcb_code_path(hcb_code), method: :post, class: "flex items-center", data: { confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
+        <%= link_to pin_hcb_code_path(hcb_code, event: @event), method: :post, class: "flex items-center", data: { confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
           <%= inline_icon "pin-fill", size: 24 %>
           <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
         <% end %>

@@ -64,6 +64,8 @@ class RecurringDonation < ApplicationRecord
                           conditions: -> { where(stripe_status: "active") },
                           message: ->(recurring_donation, data) { "You're already donating to #{recurring_donation.event.name}." }
 
+  normalizes :email, with: ->(email) { email.strip.downcase }
+
   enum :stripe_status, {
     active: "active",
     past_due: "past_due",

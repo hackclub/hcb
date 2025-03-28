@@ -2,7 +2,7 @@
 
 class ExportsController < ApplicationController
   include SetEvent
-  before_action :set_event, only: [:transactions]
+  before_action :set_event, only: [:transactions, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
@@ -100,6 +100,16 @@ class ExportsController < ApplicationController
     end
   end
 
+  def reimbursements
+    authorize @event, :reimbursements?
+
+    respond_to do |format|
+      format.csv do
+        stream_reimbursements_csv
+      end
+    end
+  end
+
   def collect_email
     if !params[:event_slug] || !params[:file_extension]
       redirect_to root_path
@@ -121,6 +131,24 @@ class ExportsController < ApplicationController
       flash[:error] = "End date cannot be before the start date."
       redirect_back fallback_location: event_statements_path(@event) and return
     end
+  end
+
+  def stream_reimbursements_csv
+    set_file_headers_csv
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = reimbursements_csv
+  end
+
+  def set_file_headers_csv
+    headers["Content-Type"] = "text/csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{action_name}_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
+  end
+
+  def reimbursements_csv
+    ::ExportService::Reimbursement::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
   end
 
 end

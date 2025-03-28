@@ -17,14 +17,14 @@
 class User
   module PayoutMethod
     class Check < ApplicationRecord
+      include Shared
+
       self.table_name = "user_payout_method_checks"
-      has_one :user, inverse_of: :payout_method, as: :payout_method
       validates_presence_of :address_line1, :address_city, :address_postal_code
       validates_presence_of :address_state, message: "Please select a state!"
       validates :address_state, inclusion: { in: ISO3166::Country.new("US").subdivisions.keys, message: "This isn't a valid US state!", allow_blank: true }
       validates :address_postal_code, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
       attribute :address_country, :text, default: "US"
-      after_save_commit -> { Reimbursement::PayoutHolding.where(report: user.reimbursement_reports).failed.each(&:mark_settled!) }
 
       def kind
         "check"

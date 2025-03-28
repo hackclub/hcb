@@ -155,7 +155,7 @@ class Transaction < ApplicationRecord
   # Utility method for getting the fee on the transaction if there is one. Used
   # in CSV export.
   def fee
-    is_event_related && fee_relationship&.fee_applies && fee_relationship&.fee_amount
+    is_event_related && fee_relationship&.fee_applies && fee_relationship.fee_amount
   end
 
   def fee_payment?
@@ -295,7 +295,7 @@ class Transaction < ApplicationRecord
     end
     # NOTE: we cannot curently auto-pair Expensify txs
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
   end
 
   # Tries to recover transaction data from a previously paired / modified

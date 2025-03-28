@@ -35,6 +35,8 @@
       <script async src="https://cdn.headwayapp.co/widget.js"></script>
     <% end %>
 
+    <%= render "application/helpscout_beacon" %>
+
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
     <% end %>
@@ -90,6 +92,7 @@
                         step: @tour&.step || 0,
                         options: @tour&.tourable&.try(:tourable_options) || {},
                         back_to_tour: @back_to_tour %>
+
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
@@ -122,7 +125,6 @@
 
     <%# LET THERE BE SNOW %>
     <% if winter? %>
-      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
       <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
     <% end %>
 
@@ -181,9 +183,7 @@
 
     <%= render "application/support_button" unless @no_app_shell %>
 
-    <% if Rails.env.production? %>
-      <%= render "application/fullstory" if current_user&.sessions_reported %>
-    <% end %>
+    <%= render "application/fullstory" %>
 
     <% if flash[:confetti] %>
       <script src="/brand/js-confetti.browser.js"></script>

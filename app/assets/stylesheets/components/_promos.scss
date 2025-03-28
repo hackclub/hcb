@@ -24,7 +24,8 @@
 
 .promo-domains {
   background-color: #f5f5f5;
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       to right,
       rgba(245, 246, 252, 0.25),
       rgba(248, 248, 248, 0.05)
@@ -36,7 +37,8 @@
 
 .promo-stickerninja {
   background-color: #f5f5f5;
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       to right,
       rgba(245, 246, 252, 0.25),
       rgba(248, 248, 248, 0.05)
@@ -47,11 +49,8 @@
 }
 
 .promo-stickers {
-  background-image: linear-gradient(
-      to right,
-      rgba(20, 20, 20, 0.3),
-      rgba(248, 248, 248, 0.05)
-    ),
+  background-image:
+    linear-gradient(to right, rgba(20, 20, 20, 0.3), rgba(248, 248, 248, 0.05)),
     url('https://cloud-gjqy3yr8t-hack-club-bot.vercel.app/0hero.jpg');
   background-size: cover;
   background-position: 0% 30%;
@@ -102,7 +101,8 @@
   border: 2px solid $red;
 
   .card__banner--top {
-    background-image: linear-gradient(to right, $dark 10%, transparent),
+    background-image:
+      linear-gradient(to right, $dark 10%, transparent),
       url('https://cloud-3aeson6ue-hack-club-bot.vercel.app/0lahacks3.jpeg');
     background-size: cover;
     background-position: left center;
