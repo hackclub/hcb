@@ -11,38 +11,6 @@
 </div>
 <br>
 
-> [!TIP]
-> 👋 Welcome Hack Clubbers! We're planning on open sourcing HCB in the near
-> future, however, you folks have got 🎟️ early access to the HCB codebase!
->
-> As you explore the codebase, I ask three things of you:
-> - 📖 **Help us improve our docs.**
->
->   Ran into an issue setting up HCB locally or found a typo? Submit a PR!
->
-> - 🔒 **Find and report security vulnerabilities.**
->
->   Discover a notable issue and we’ll ship you a cool HCB t-shirt as a thank
->   you!
->
-> - 👥 **Keep it within the Hack Club community.**
->
->   Remember, you’ve got early access!
->
-> If you have any questions, check out
-> [#hcb-dev](https://hackclub.slack.com/archives/C068U0JMV19)
->
-> ~ [@garyhtou](https://garytou.com)
-
-> [!CAUTION]
-> If you previously cloned this repository, please:
-> 1. Delete your existing clone of this repository
-> 2. Reclone it
->
-> We recently performed a re-write of the git history in preparation for open
-> sourcing HCB. Your old clone will cause conflicts unless it is deleted and
-> recloned. Thank you!
-
 Welcome to the [HCB](https://hackclub.com/fiscal-sponsorship/) codebase. We are so excited to have you. With your help, we can make HCB the best platform to run a nonprofit.
 
 ## What is HCB?
