@@ -13,7 +13,7 @@
 
 > [!TIP]
 > 👋 Welcome Hack Clubbers! We're planning on open sourcing HCB in the near
-> future, however, you folks have got 🎟️ early access to the HCB codebase!
+> future, however, you folks have gotten 🎟️ early access to the HCB codebase!
 >
 > As you explore the codebase, I ask three things of you:
 > - 📖 **Help us improve our docs.**
