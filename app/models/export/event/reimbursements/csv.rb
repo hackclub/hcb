@@ -49,9 +49,9 @@ class Export
             end
           end
         end
-        
+
         private
-        
+
         def reports
           event.reimbursement_reports.visible.order(created_at: :asc).includes(
             :user,
