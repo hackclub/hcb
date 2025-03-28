@@ -43,7 +43,7 @@ class Export
         def content
           Enumerator.new do |y|
             y << header.to_s
-        
+
             reports.each do |rr|
               y << row(rr).to_s
             end
