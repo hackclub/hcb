@@ -73,7 +73,7 @@ class Export
             ]
           )
         end
-        
+
         def header
           ::CSV::Row.new(headers, headers, true)
         end
