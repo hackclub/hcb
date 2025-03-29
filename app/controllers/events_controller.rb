@@ -165,24 +165,14 @@ class EventsController < ApplicationController
     end
   end
 
-  def no_filter?
-    params[:q].blank? &&
-    @user.nil? &&
-    @tag.blank? &&
-    @type.blank? &&
-    @start_date.blank? &&
-    @end_date.blank? &&
-    @minimum_amount.nil? &&
-    @maximum_amount.nil? &&
-    !@missing_receipts
-  end
-
   def ledger
     begin
       authorize @event
     rescue Pundit::NotAuthorizedError
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
+
+    set_cacheable
 
     @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
@@ -1079,6 +1069,22 @@ class EventsController < ApplicationController
     return false if params[:q].present?
 
     @show_running_balance = current_user&.auditor? && current_user.running_balance_enabled?
+  end
+
+  def set_cacheable
+    return false unless params[:q].blank? &&
+                  @user.nil? &&
+                  @tag.blank? &&
+                  @type.blank? &&
+                  @start_date.blank? &&
+                  @end_date.blank? &&
+                  @minimum_amount.nil? &&
+                  @maximum_amount.nil? &&
+                  !@missing_receipts
+    return false if organizer_signed_in?
+    return false unless @event.id == 183
+
+    true
   end
 
   def set_mock_data

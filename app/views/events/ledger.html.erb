@@ -1,4 +1,4 @@
-<% cache_if no_filter?, "hq_ledger" do %>
+<% cache_if @cacheable, "#{@event.id}_ledger", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
   <%= turbo_frame_tag [dom_id(@event), :ledger] do %>
     <%= render partial: "filter" %>
 
