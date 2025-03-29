@@ -184,28 +184,18 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
-    # Cache HQ org
-    if @event.id == 183 && no_filter?
-      Rails.cache.fetch("hq_ledger", expires_in: 5.minutes, race_condition_ttl: 1.minutes) do
-        @pending_transactions = _show_pending_transactions
-        @all_transactions = TransactionGroupingEngine::Transaction::All.new(
-          event_id: @event.id,
-        ).run
-      end
-    else
-      @pending_transactions = _show_pending_transactions
-      @all_transactions = TransactionGroupingEngine::Transaction::All.new(
-        event_id: @event.id,
-        search: params[:q],
-        tag_id: @tag&.id,
-        minimum_amount: @minimum_amount,
-        maximum_amount: @maximum_amount,
-        user: @user,
-        start_date: @start_date,
-        end_date: @end_date,
-        missing_receipts: @missing_receipts
-      ).run
-    end
+    @pending_transactions = _show_pending_transactions
+    @all_transactions = TransactionGroupingEngine::Transaction::All.new(
+      event_id: @event.id,
+      search: params[:q],
+      tag_id: @tag&.id,
+      minimum_amount: @minimum_amount,
+      maximum_amount: @maximum_amount,
+      user: @user,
+      start_date: @start_date,
+      end_date: @end_date,
+      missing_receipts: @missing_receipts
+    ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
       @all_transactions.reject!(&:likely_account_verification_related?)
