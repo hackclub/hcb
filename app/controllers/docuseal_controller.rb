@@ -17,7 +17,7 @@ class DocusealController < ActionController::Base
         )
 
         document.file.attach(
-          io: URI.parse(params[:data][:documents][0][:url]).open,
+          io: URI.open(URI.parse(params[:data][:documents][0][:url])), "X-Auth-Token" => Credentials.fetch(:DOCUSEAL)),
           filename: "#{params[:data][:documents][0][:name]}.pdf"
         )
 
