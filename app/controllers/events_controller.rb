@@ -167,14 +167,14 @@ class EventsController < ApplicationController
 
   def no_filter?
     params[:q].blank? &&
-    params[:tag].blank? &&
-    params[:user].blank? &&
-    params[:type].blank? &&
-    params[:start].blank? &&
-    params[:end].blank? &&
-    params[:minimum_amount].blank? &&
-    params[:maximum_amount].blank? &&
-    params[:missing_receipts].blank?
+    @user.nil? &&
+    @tag.blank? &&
+    @type.blank? &&
+    @start_date.blank? &&
+    @end_date.blank? &&
+    @minimum_amount.nil? &&
+    @maximum_amount.nil? &&
+    !@missing_receipts
   end
 
   def ledger
