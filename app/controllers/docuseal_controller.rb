@@ -17,7 +17,7 @@ class DocusealController < ActionController::Base
         )
 
         response = Faraday.get(params[:data][:documents][0][:url]) do |req|
-          req.headers['X-Auth-Token'] = Credentials.fetch(:DOCUSEAL)
+          req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
         end
 
         document.file.attach(
