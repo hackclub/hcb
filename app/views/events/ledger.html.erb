@@ -18,6 +18,7 @@
         </thead>
         <tbody data-behavior="transactions">
         <%= render "pending_fee_transaction" if @event.fronted_fee_balance_v2_cents > 0 %>
+        <%= render "pending_reimbursements_transaction" if @event.pending_reimbursements_balance > 0 %>
 
         <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0, show_author_column: true } %>
 

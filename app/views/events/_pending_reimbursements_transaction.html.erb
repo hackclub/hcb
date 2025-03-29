@@ -1,0 +1,17 @@
+<tr class="transaction <%= "transaction--negative" unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user) %> muted">
+  <td class="transaction__icon transaction__fee_icon tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
+    <%= inline_icon "attachment" %>
+  </td>
+  <td><%= format_date Time.now %></td>
+  <td class="transaction__memo">
+    <span class="badge bg-transparent border border-dashed border-muted m0 mr1 bg-muted">Pending</span>
+    <%= link_to "Reimbursements", event_reimbursements_path(@event), class: "no-underline hover:underline", data: { turbo_frame: "_top" } %>
+  </td>
+  <td class="nowrap text-right">
+    <%= render_transaction_amount(-1 * @event.pending_reimbursements_balance) %>
+  </td>
+  <% if @show_running_balance %>
+    <td></td>
+  <% end %>
+  <td><%# user avatar %></td>
+</tr>

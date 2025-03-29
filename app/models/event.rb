@@ -515,13 +515,17 @@ class Event < ApplicationRecord
     cpt.sum(:amount_cents)
   end
 
+  def pending_reimbursements_balance
+    Reimbursement::Expense.where(report: reimbursement_reports.reimbursement_requested).approved.sum(:amount_cents)
+  end
+
   def balance_available_v2_cents
     @balance_available_v2_cents ||= begin
       fee_balance = can_front_balance? ? fronted_fee_balance_v2_cents : fee_balance_v2_cents
       if fee_balance.positive?
-        balance_v2_cents - fee_balance
+        balance_v2_cents - fee_balance - pending_reimbursements_balance
       else # `fee_balance` is negative, indicating a fee credit
-        balance_v2_cents
+        balance_v2_cents - pending_reimbursements_balance
       end
     end
   end
