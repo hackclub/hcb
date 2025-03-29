@@ -72,15 +72,15 @@ env $(cat .env.docker) docker-compose -f docker-compose.yml -f docker-compose.so
 Before beginning this process, please **ensure you have both Ruby and Node
 installed**, as well as a PostgreSQL database running.
 
-#### [Step 1] Prereq: Install Ruby and Node
+#### [Step 1] Prerequisite: Install Ruby and Node
 
 See [`.ruby-version`](.ruby-version)
-and [`.node-version](.node-version) for which versions you need installed. I
+and [`.node-version`](.node-version) for which versions you need installed. I
 personally recommend using a version manager
-like [rbenv](https://rbenv.org/), [nvm](https://github.com/nvm-sh/nvm),
-or [asdf](https://asdf-vm.com/).
+like [rbenv](https://rbenv.org/) for ruby, [nvm](https://github.com/nvm-sh/nvm) for node,
+or [asdf](https://asdf-vm.com/) for both.
 
-#### [Step 2] Prerequisite: install and run PostgreSQL
+#### [Step 2] Prerequisite: Install and run PostgreSQL
 
 We recommend you use version `15.12` as that's what running in production. If
 you're on MacOS, I recommend using Homebrew to get Postgres up and running. If

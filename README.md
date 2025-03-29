@@ -34,7 +34,7 @@ Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to re
 
 ## Quick start
 
-To run HCB in a development enviroment, follow the setup instructions in our [documentation](/dev-docs/development.md). We support development through Codespaces, Docker, and a native setup.
+To run HCB in a development environment, follow the setup instructions in our [documentation](/dev-docs/development.md). We support development through Codespaces, Docker, and a native setup.
 
 ## Contributing
 
