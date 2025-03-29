@@ -11,6 +11,10 @@
 
     <%= yield :head if content_for?(:head) %>
 
+    <% if Rails.env.production? %>
+      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
+
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
 
     <meta name="format-detection" content="telephone=no">
@@ -32,6 +36,6 @@
 
     <%= yield %>
 
-    <%= render "application/analytics" %>
+    <%= render "application/fullstory" %>
   </body>
 </html>

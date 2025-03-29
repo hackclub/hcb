@@ -20,6 +20,10 @@
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 
+    <% if Rails.env.production? %>
+      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
+
     <% if signed_in? %>
       <script>
         document.addEventListener("turbo:load", () => {
@@ -183,7 +187,7 @@
 
     <%= render "application/support_button" unless @no_app_shell %>
 
-    <%= render "application/analytics" %>
+    <%= render "application/fullstory" %>
 
     <% if flash[:confetti] %>
       <script src="/brand/js-confetti.browser.js"></script>

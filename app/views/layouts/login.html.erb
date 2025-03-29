@@ -16,6 +16,9 @@
     <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
     <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+    <% if Rails.env.production? %>
+      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
     <% end %>
@@ -127,6 +130,6 @@
         </div>
       </div>
     </main>
-    <%= render "application/analytics" %>
+    <%= render "application/fullstory" %>
   </body>
 </html>
