@@ -1073,6 +1073,8 @@ class EventsController < ApplicationController
 
   def set_cacheable
     return false unless params[:q].blank? &&
+                        params[:page].blank? &&
+                        params[:per].blank? &&
                         @user.nil? &&
                         @tag.blank? &&
                         @type.blank? &&
