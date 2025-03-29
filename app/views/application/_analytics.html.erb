@@ -1,6 +1,6 @@
 <% if Rails.env.production? %>
   <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
-<% end $>
+<% end %>
 
 <% if Rails.env.production? && (current_user&.sessions_reported || @force_fullstory.present?) && !(current_user&.sessions_reported == false) %>
   <script defer>
