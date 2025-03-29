@@ -1082,7 +1082,6 @@ class EventsController < ApplicationController
                         @maximum_amount.nil? &&
                         !@missing_receipts
     return false if organizer_signed_in?
-    return false unless @event.id == 183
 
     true
   end
