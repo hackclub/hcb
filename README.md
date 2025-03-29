@@ -11,11 +11,17 @@
 </div>
 <br>
 
-Welcome to the [HCB](https://hackclub.com/fiscal-sponsorship/) codebase. We are so excited to have you. With your help, we can make HCB the best platform to run a nonprofit.
+Welcome to the [HCB](https://hackclub.com/fiscal-sponsorship/) codebase. We are so excited to have you.
 
 ## What is HCB?
 
-HCB is a powerful, safe, and easy-to-use fiscal sponsorship platform for hackathons, Hack Clubs, robotic teams and more. We use it to run our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/), we provide high schoolers with a 501(c)(3) status-backed restricted fund for their organization. Behind the scenes, HCB is a Ruby on Rails application (learn more by reading [our documentation](/dev-docs)).
+HCB is an [open source](https://hackclub.com/fiscal-sponsorship/open-source/),
+safe, and easy-to-use fiscal sponsorship platform for hackathons, Hack Clubs,
+robotic teams and more. We use it to run
+our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/), we
+provide high schoolers with a 501(c)(3) status-backed restricted fund for their
+organization. Behind the scenes, HCB is a Ruby on Rails application (learn more
+by reading [our documentation](/dev-docs)).
 
 <img width="1377" alt="Screenshot of Hack Club HQ's finances on HCB" src="https://github.com/hackclub/hcb/assets/39828164/b19a83b2-ba81-46b0-9f6f-2772f4249071">
 
@@ -30,17 +36,25 @@ HCB is a powerful, safe, and easy-to-use fiscal sponsorship platform for hackath
 
 ## I found a security vulnerability! What should I do?
 
-Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to report the vulnerability. We currently don't have a bug bounty program but, as a token of appreciation, we'd love to mail you a t-shirt and give you a shoutout on our GitHub.
+Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to
+report the vulnerability. We currently don't have a bug bounty program but, as a
+token of appreciation, we'd love to mail you a t-shirt and give you a shoutout
+on our GitHub.
 
 ## Quick start
 
-To run HCB in a development environment, follow the setup instructions in our [documentation](/dev-docs/development.md). We support development through Codespaces, Docker, and a native setup.
+To run HCB in a development environment, follow the setup instructions in
+our [documentation](/dev-docs/development.md). We support development through
+Codespaces, Docker, and a native setup.
 
 ## Contributing
 
-We are so excited for you to join the codebase! We have a getting started documentation in the [`dev-docs` folder](/dev-docs/development.md).
+We are so excited for you to join the codebase! We have a getting started
+documentation in the [`dev-docs` folder](/dev-docs/development.md).
 
-All contributors are expected to follow the Hack Club [Code of Conduct](https://hackclub.com/conduct) and Hack Club's [contributing guidelines](https://github.com/hackclub/hackclub/blob/main/CONTRIBUTING.md).
+All contributors are expected to follow the Hack
+Club [Code of Conduct](https://hackclub.com/conduct) and Hack
+Club's [contributing guidelines](https://github.com/hackclub/hackclub/blob/main/CONTRIBUTING.md).
 
 Join the [#hcb-dev](https://hackclub.slack.com/archives/C068U0JMV19) channel on the [Hack Club Slack](https://hackclub.com/slack) for support.
 
