@@ -16,8 +16,11 @@ class DocusealController < ActionController::Base
           name: "Fiscal sponsorship contract with #{@contract.organizer_position_invite.user.name}"
         )
 
+        uri = URI.parse(params[:data][:documents][0][:url])
+        break unless ["http", "https"].include?(uri.scheme)
+
         document.file.attach(
-          io: URI.open(URI.parse(params[:data][:documents][0][:url]), "X-Auth-Token" => Credentials.fetch(:DOCUSEAL)),
+          io: URI.open(uri, "X-Auth-Token" => Credentials.fetch(:DOCUSEAL)),
           filename: "#{params[:data][:documents][0][:name]}.pdf"
         )
 
