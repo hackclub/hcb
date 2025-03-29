@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto">
+<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0">
   <div>
     <% if current_user.hack_clubber? %>
       <a
@@ -42,6 +42,8 @@
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
     <% if @events.any? %>
+      <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 pl-0 border-none">Your organizations</h2>
+
       <% if @show_event_reorder_tip %>
         <% if @events.size > 1 %>
           <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
@@ -68,6 +70,15 @@
             </div>
           </li>
         <% end %>
+      </ul>
+
+      <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 pl-0 border-none">Featured organizations</h2>
+
+      <ul
+        class="grid grid--medium-narrow left-align w-100 mt0">
+
+        <%= render partial: "events/event_card", collection: Event.where(id: [183, 6, 1]), as: :event, locals: { message: true } %>
+
       </ul>
 
       <% if @events.hidden.any? %>
