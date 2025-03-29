@@ -165,6 +165,18 @@ class EventsController < ApplicationController
     end
   end
 
+  def no_filter?
+    params[:q].blank? &&
+    params[:tag].blank? &&
+    params[:user].blank? &&
+    params[:type].blank? &&
+    params[:start].blank? &&
+    params[:end].blank? &&
+    params[:minimum_amount].blank? &&
+    params[:maximum_amount].blank? &&
+    params[:missing_receipts].blank?
+  end
+
   def ledger
     begin
       authorize @event
@@ -172,6 +184,7 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
+    # Cache HQ org
     if @event.id == 183 && no_filter?
       Rails.cache.fetch("hq_ledger", expires_in: 5.minutes, race_condition_ttl: 1.minutes) do
         @pending_transactions = _show_pending_transactions
