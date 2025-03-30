@@ -67,8 +67,8 @@
   </nav>
 
   <% if Flipper.enabled?(:product_hunt, current_user) %>
-    <a href="https://www.producthunt.com/posts/hcb?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-hcb" target="_blank" class="dark:hidden block mt-4"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=947520&theme=light&t=1743322903224" alt="HCB - The&#0032;open&#0045;source&#0044;&#0032;nonprofit&#0032;neobank | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-    <a href="https://www.producthunt.com/posts/hcb?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-hcb" target="_blank" class="hidden dark:block mt-4"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=947520&theme=dark&t=1743322903224" alt="HCB - The&#0032;open&#0045;source&#0044;&#0032;nonprofit&#0032;neobank | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+    <a href="https://www.producthunt.com/posts/hcb?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-hcb" target="_blank" class="dark:hidden block mt-4"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=947520&theme=light&t=1743322903224" alt="HCB - The&#0032;open&#0045;source&#0044;&#0032;nonprofit&#0032;neobank | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54"></a>
+    <a href="https://www.producthunt.com/posts/hcb?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-hcb" target="_blank" class="hidden dark:block mt-4"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=947520&theme=dark&t=1743322903224" alt="HCB - The&#0032;open&#0045;source&#0044;&#0032;nonprofit&#0032;neobank | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54"></a>
   <% end %>
 
   <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
