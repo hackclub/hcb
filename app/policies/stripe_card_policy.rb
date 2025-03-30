@@ -6,7 +6,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def shipping?
-    user&.auditor? || organizer?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def freeze?
