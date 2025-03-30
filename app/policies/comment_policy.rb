@@ -17,7 +17,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def create?
-    user.auditor? || has_role?(:member)
+    user.auditor? || has_role?(:reader)
   end
 
   def edit?
@@ -29,7 +29,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def react?
-    update?
+    has_role?(:reader)
   end
 
   def show?
