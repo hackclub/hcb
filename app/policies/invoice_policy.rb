@@ -14,7 +14,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def new?
-    !unapproved? && (is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member))
+    !unapproved? && OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
   def create?
@@ -22,7 +22,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def show?
-    is_public || auditor_or_user
+    is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
   end
 
   def archive?
@@ -46,7 +46,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def pdf?
-    auditor_or_user
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
   end
 
   def refund?
@@ -54,14 +54,6 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   private
-
-  def admin_or_user
-    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
-  end
-
-  def auditor_or_user
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
-  end
 
   def is_public
     record&.sponsor&.event&.is_public?
