@@ -10,6 +10,6 @@ Here the currently negative events:
 
 <ul>
   <% Event.negatives.each do |event| %>
-    <li style="margin-top: 8px;"><%= link_to event.name, event %></li>
+    <li style="margin-top: 8px;"><%= link_to event.name, event %>: <%= render_money @event.balance %></li>
   <% end %>
 </ul>
