@@ -61,26 +61,4 @@ class HcbCodePolicy < ApplicationPolicy
     record.events.select { |e| e.try(:users).try(:include?, user) }.present?
   end
 
-  def event
-    record.events.find { |e| e.try(:users).try(:include?, user) }
-  end
-
-  def has_role?(role)
-    if record.respond_to?(:events)
-      return record.events.any? do |event|
-        OrganizerPosition.role_at_least?(user, event, role)
-      end
-    end
-
-    event = if record.is_a?(Reimbursement::Report)
-              record.event
-            elsif record.is_a?(Event)
-              record
-            else
-              record.event
-            end
-
-    OrganizerPosition.role_at_least?(user, event, role)
-  end
-
 end
