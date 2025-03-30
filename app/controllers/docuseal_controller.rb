@@ -16,8 +16,12 @@ class DocusealController < ActionController::Base
           name: "Fiscal sponsorship contract with #{@contract.organizer_position_invite.user.name}"
         )
 
+        response = Faraday.get(params[:data][:documents][0][:url]) do |req|
+          req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
+        end
+
         document.file.attach(
-          io: URI.parse(params[:data][:documents][0][:url]).open,
+          io: StringIO.new(response.body),
           filename: "#{params[:data][:documents][0][:name]}.pdf"
         )
 

@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
-  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
   <head>
     <title>
       <%= yield(:title).concat(" –") if content_for?(:title) %>
@@ -19,6 +19,10 @@
 
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
+
+    <% if Rails.env.production? %>
+      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
 
     <% if signed_in? %>
       <script>
@@ -41,7 +45,7 @@
       <meta name="turbo-prefetch" content="false">
     <% end %>
 
-    <% if Rails.env.production? %>
+    <% if !Rails.env.production? %>
       <script>
         console.log(`%c                -*%@@%*-
               .=#@@@@@@@@@@#=.
@@ -64,7 +68,7 @@
     *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
           Come hack on HCB with us!
-  <%= Rails.configuration.constants.hack_on_hcb_form_url %>
+  <%= Rails.configuration.constants.github_url %>
   `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
       </script>
     <% end %>
