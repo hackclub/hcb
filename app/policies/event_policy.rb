@@ -70,15 +70,15 @@ class EventPolicy < ApplicationPolicy
   end
 
   def team?
-    is_public || auditor_or_user?
+    is_public || allowed_user?
   end
 
   def emburse_card_overview?
-    is_public || auditor_or_user?
+    is_public || allowed_user?
   end
 
   def card_overview?
-    (is_public || auditor_or_user?) && record.approved? && record.plan.cards_enabled?
+    (is_public || allowed_user?) && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -187,7 +187,7 @@ class EventPolicy < ApplicationPolicy
     auditor? || OrganizerPosition.role_at_least?(user, record, :member)
   end
 
-  def auditor_or_user?
+  def allowed_user?
     auditor? || user?
   end
 
