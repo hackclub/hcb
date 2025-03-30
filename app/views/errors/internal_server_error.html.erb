@@ -6,11 +6,11 @@
   <img
     src="/dino_debugging.svg"
     class="dino-svg mt3 mx-auto w-100 block max-width-1"
-    title="wanna help us fix this bug? <%= Rails.configuration.constants.hack_on_hcb_form_url %>">
+    title="wanna help us fix this bug? <%= Rails.configuration.constants.github_url %>">
 </div>
 
 <script>
-  const formUrl = <%= raw Rails.configuration.constants.hack_on_hcb_form_url.to_json %>;
+  const formUrl = <%= raw Rails.configuration.constants.github_url.to_json %>;
 
   console.log(
     `%cOops, something went wrong!\n\n%cwanna help us fix this bug?\n%c${formUrl}`,
