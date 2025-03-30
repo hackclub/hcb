@@ -99,8 +99,8 @@ Rails.application.configure do
   Rails.application.routes.default_url_options[:host] = Credentials.fetch(:TEST_URL_HOST)
 
   # SMTP config
-  config.action_mailer.delivery_method = :letter_opener_web
-
+  config.action_mailer.delivery_method = Credentials.fetch(:SMTP, :ENABLED) == "true" ? :smtp : :letter_opener_web
+  
   # Bullet for finding N+1s
   config.after_initialize do
     Bullet.enable        = true
