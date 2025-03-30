@@ -7,7 +7,7 @@ class EventPolicy < ApplicationPolicy
 
   # Event homepage
   def show?
-    is_public || allowed_user?
+    is_public || OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   # Turbo frames for the event homepage (show)
@@ -36,11 +36,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def balance_by_date?
-    is_public || allowed_user?
+    is_public || member_or_higher?
   end
 
   def shipping?
-    allowed_user?
+    member_or_higher?
   end
 
   def edit?
@@ -48,7 +48,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def pin?
-    allowed_user?
+    member_or_higher?
   end
 
   def update?
@@ -62,7 +62,7 @@ class EventPolicy < ApplicationPolicy
   alias disable_feature? update?
 
   def validate_slug?
-    allowed_user?
+    member_or_higher?
   end
 
   def destroy?
@@ -86,7 +86,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_stripe_card?
-    allowed_user? && is_not_demo_mode?
+    member_or_higher? && is_not_demo_mode?
   end
 
   def documentation?
@@ -94,11 +94,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def statements?
-    is_public || allowed_user?
+    is_public || member_or_higher?
   end
 
   def async_balance?
-    is_public || allowed_user?
+    is_public || member_or_higher?
   end
 
   def create_transfer?
@@ -110,7 +110,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def g_suite_overview?
-    allowed_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    member_or_higher? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
@@ -118,19 +118,19 @@ class EventPolicy < ApplicationPolicy
   end
 
   def g_suite_verify?
-    allowed_user? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    member_or_higher? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def transfers?
-    (is_public || allowed_user?) && record.plan.transfers_enabled?
+    (is_public || member_or_higher?) && record.plan.transfers_enabled?
   end
 
   def promotions?
-    allowed_user? && record.plan.promotions_enabled?
+    member_or_higher? && record.plan.promotions_enabled?
   end
 
   def reimbursements_pending_review_icon?
-    is_public || allowed_user?
+    is_public || member_or_higher?
   end
 
   def reimbursements?
@@ -138,11 +138,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def employees?
-    allowed_user?
+    member_or_higher?
   end
 
   def donation_overview?
-    (is_public || allowed_user?) && record.approved? && record.plan.donations_enabled?
+    (is_public || member_or_higher?) && record.approved? && record.plan.donations_enabled?
   end
 
   def account_number?
@@ -183,7 +183,7 @@ class EventPolicy < ApplicationPolicy
 
   private
 
-  def allowed_user?
+  def member_or_higher?
     auditor? || OrganizerPosition.role_at_least?(user, record, :member)
   end
 
