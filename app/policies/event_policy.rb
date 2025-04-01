@@ -7,7 +7,7 @@ class EventPolicy < ApplicationPolicy
 
   # Event homepage
   def show?
-    is_public || OrganizerPosition.role_at_least?(user, record, :reader)
+    is_public || auditor? || OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   # Turbo frames for the event homepage (show)

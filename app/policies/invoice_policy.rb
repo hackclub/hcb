@@ -14,7 +14,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def new?
-    !unapproved? && OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
+    !unapproved? && (is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member))
   end
 
   def create?
@@ -22,7 +22,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def show?
-    is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
+    is_public || user&.auditor || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
   end
 
   def archive?
