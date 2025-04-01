@@ -17,7 +17,7 @@
   <div class="flex justify-between items-center flex-wrap w-full">
     <%= link_to "Sign out", logout_users_path, method: :delete, class: "block mt-0 no-underline" %>
 
-    <%= ugc_link_to "Continue to HCB", params[:return_to].presence || root_path, class: "btn bg-info" %>
+    <%= ugc_link_to "Continue to HCB", @return_to || root_path, class: "btn bg-info" %>
   </div>
 
 </div>
