@@ -7,8 +7,6 @@
 
   ![Transactions last week](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_week.size.total&style=flat&label=past%20week&color=%23ec3750&suffix=%20transactions) ![Transactions today](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_day.size.total&style=flat&label=today&color=%23338eda&suffix=%20transactions) ![Currently online](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.currently_online&style=flat&label=currently%20online&color=%2333d6a6&suffix=%20users)
 
-<a href="https://www.producthunt.com/posts/hcb?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_souce=badge-github" target="_blank" class="dark:hidden block mt-4"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=947520&amp;theme=light" alt="HCB - The open-source, nonprofit neobank | Product Hunt" style="width: 250px; height: 54px; max-width: 100%" width="250" height="54"></a>
-  
 </div>
 <br>
 
