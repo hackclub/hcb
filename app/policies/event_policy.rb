@@ -7,7 +7,7 @@ class EventPolicy < ApplicationPolicy
 
   # Event homepage
   def show?
-    is_public || auditor? || OrganizerPosition.role_at_least?(user, record, :reader)
+    is_public || auditor_or_reader?
   end
 
   # Turbo frames for the event homepage (show)
@@ -24,61 +24,69 @@ class EventPolicy < ApplicationPolicy
   alias_method :ledger?, :transactions?
 
   def toggle_hidden?
-    admin?
+    user&.admin?
   end
 
   def new?
-    admin?
+    user&.admin?
   end
 
   def create?
-    admin?
+    user&.admin?
   end
 
   def balance_by_date?
-    is_public || member_or_higher?
+    is_public || auditor_or_reader?
   end
 
+  # NOTE(@lachlanjc): this is bad, I’m sorry.
+  # This is the StripeCardsController#shipping method when rendered on the event
+  # card overview page. This should be moved out of here.
   def shipping?
-    member_or_higher?
+    auditor_or_reader?
   end
 
   def edit?
-    OrganizerPosition.role_at_least?(user, record, :member)
+    admin_or_member?
   end
 
+  # pinning a transaction to an event
   def pin?
-    member_or_higher?
+    admin_or_member?
   end
 
   def update?
-    OrganizerPosition.role_at_least?(user, record, :manager)
+    admin_or_manager?
   end
 
   alias remove_header_image? update?
+
   alias remove_background_image? update?
+
   alias remove_logo? update?
+
   alias enable_feature? update?
+
   alias disable_feature? update?
 
   def validate_slug?
-    member_or_higher?
+    admin_or_member?
   end
 
   def destroy?
-    admin? && record.demo_mode?
+    user&.admin? && record.demo_mode?
   end
 
   def team?
-    is_public || allowed_user?
+    is_public || auditor_or_reader?
   end
 
   def emburse_card_overview?
-    is_public || allowed_user?
+    is_public || auditor_or_reader?
   end
 
   def card_overview?
-    (is_public || allowed_user?) && record.approved? && record.plan.cards_enabled?
+    (is_public || auditor_or_reader?) && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -86,109 +94,109 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_stripe_card?
-    member_or_higher? && is_not_demo_mode?
+    admin_or_member? && is_not_demo_mode?
   end
 
   def documentation?
-    OrganizerPosition.role_at_least?(user, record, :reader) && record.plan.documentation_enabled?
+    auditor_or_reader? && record.plan.documentation_enabled?
   end
 
   def statements?
-    is_public || member_or_higher?
+    is_public || auditor_or_reader?
   end
 
   def async_balance?
-    is_public || member_or_higher?
+    is_public || auditor_or_reader?
   end
 
   def create_transfer?
-    OrganizerPosition.role_at_least?(user, record, :manager) && !record.demo_mode?
+    admin_or_manager? && !record.demo_mode?
   end
 
   def new_transfer?
-    OrganizerPosition.role_at_least?(user, record, :manager) && !record.demo_mode?
+    admin_or_manager? && !record.demo_mode?
   end
 
   def g_suite_overview?
-    member_or_higher? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
-    OrganizerPosition.role_at_least?(user, record, :manager) && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    admin_or_manager? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
-    member_or_higher? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def transfers?
-    (is_public || member_or_higher?) && record.plan.transfers_enabled?
+    (is_public || auditor_or_reader?) && record.plan.transfers_enabled?
   end
 
   def promotions?
-    member_or_higher? && record.plan.promotions_enabled?
+    auditor_or_reader? && record.plan.promotions_enabled?
   end
 
   def reimbursements_pending_review_icon?
-    is_public || member_or_higher?
+    is_public || auditor_or_reader?
   end
 
   def reimbursements?
-    OrganizerPosition.role_at_least?(user, record, :reader) && record.plan.reimbursements_enabled?
+    auditor_or_reader? && record.plan.reimbursements_enabled?
   end
 
   def employees?
-    member_or_higher?
+    auditor_or_reader?
   end
 
   def donation_overview?
-    (is_public || member_or_higher?) && record.approved? && record.plan.donations_enabled?
+    (is_public || auditor_or_reader?) && record.approved? && record.plan.donations_enabled?
   end
 
   def account_number?
-    user&.auditor || OrganizerPosition.role_at_least?(user, record, :manager) && record.plan.account_number_enabled?
+    auditor_or_reader? && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
-    admin?
+    user.admin?
   end
 
   def receive_grant?
-    OrganizerPosition.role_at_least?(user, record, :member)
+    record.users.include?(user)
   end
 
   def audit_log?
-    admin?
+    user.auditor?
   end
 
   def termination?
-    admin?
+    user&.auditor?
   end
 
   def can_invite_user?
-    OrganizerPosition.role_at_least?(user, record, :manager)
+    admin_or_manager?
   end
 
   def claim_point_of_contact?
-    admin?
+    user&.admin?
   end
 
   def activation_flow?
-    admin? && record.demo_mode?
+    user&.admin? && record.demo_mode?
   end
 
   def activate?
-    admin? && record.demo_mode?
+    user&.admin? && record.demo_mode?
   end
 
   private
 
-  def member_or_higher?
-    auditor? || OrganizerPosition.role_at_least?(user, record, :member)
+  def admin_or_member?
+    admin? || member?
   end
 
-  def allowed_user?
-    auditor? || user?
+  def auditor_or_reader?
+    auditor? || reader?
   end
 
   def admin?
@@ -199,12 +207,20 @@ class EventPolicy < ApplicationPolicy
     user&.auditor?
   end
 
-  def user?
-    record.users.include?(user)
+  def member?
+    OrganizerPosition.role_at_least?(user, record, :member)
+  end
+
+  def reader?
+    OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   def manager?
     OrganizerPosition.find_by(user:, event: record)&.manager?
+  end
+
+  def admin_or_manager?
+    admin? || manager?
   end
 
   def is_not_demo_mode?
