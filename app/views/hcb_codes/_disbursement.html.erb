@@ -82,12 +82,12 @@
     <% else %>
       <p>
         <strong>From</strong>
-        <%= link_to @source.name, @source %>
+        <%= link_to @source.name, @source, target: "_top" %>
       </p>
 
       <p>
         <strong>To</strong>
-        <%= link_to @destination.name, @destination %>
+        <%= link_to @destination.name, @destination, target: "_top" %>
       </p>
     <% end %>
 
