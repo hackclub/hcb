@@ -10,19 +10,19 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def edit?
-    OrganizerPosition.role_at_least?(user, event?(:event), :member) || present_in_events?
+    member_role_present?
   end
 
   def update?
-    OrganizerPosition.role_at_least?(user, event?(:event), :member) || present_in_events?
+    member_role_present?
   end
 
   def comment?
-    OrganizerPosition.role_at_least?(user, event?(:event), :member) || present_in_events?
+    member_role_present?
   end
 
   def attach_receipt?
-    OrganizerPosition.role_at_least?(user, event?(:event), :member) && (present_in_events? || user_made_purchase?)
+    member_role_present? && (present_in_events? || user_made_purchase?)
   end
 
   def send_receipt_sms?
@@ -30,23 +30,23 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def dispute?
-    OrganizerPosition.role_at_least?(user, gte_member?, :member) || present_in_events?
+    member_role_present?
   end
 
   def pin?
-    OrganizerPosition.role_at_least?(user, gte_member?, :member) || present_in_events?
+    member_role_present?
   end
 
   def toggle_tag?
-    OrganizerPosition.role_at_least?(user, gte_member?, :member) || present_in_events?
+    member_role_present?
   end
 
   def invoice_as_personal_transaction?
-    OrganizerPosition.role_at_least?(user, gte_member?, :member) || present_in_events?
+    member_role_present?
   end
 
   def link_receipt_modal?
-    OrganizerPosition.role_at_least?(user, gte_member?, :member) || present_in_events?
+    member_role_present?
   end
 
   def user_made_purchase?
@@ -61,23 +61,10 @@ class HcbCodePolicy < ApplicationPolicy
     record.events.select { |e| e.try(:users).try(:include?, user) }.present?
   end
 
-  # >= member role
-  def gte_member?
-    if record.respond_to?(:events)
-      return record.events.any? do |event|
-        OrganizerPosition.role_at_least?(user, event, :member)
-      end
+  def member_role_present?
+    record.events.any? do |e|
+      e.try(:users).try(:include?, user) && OrganizerPosition.role_at_least?(user, e, :member)
     end
-
-    event = if record.is_a?(Reimbursement::Report)
-              record.event
-            elsif record.is_a?(Event)
-              record
-            else
-              record.event
-            end
-
-    OrganizerPosition.role_at_least?(user, event, :member)
   end
 
 end
