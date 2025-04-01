@@ -35,7 +35,8 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
-    # Disallow external redirects
+    # Disallow all external redirects
+    # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
     params[:return_to] = url_from(params[:return_to])
   end
 
