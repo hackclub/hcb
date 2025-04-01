@@ -14,11 +14,11 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def new?
-    !unapproved? && (is_public || admin_or_user)
+    !unapproved? && (is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader))
   end
 
   def create?
-    !record.unapproved? && record.plan.invoices_enabled? && admin_or_user
+    !record.unapproved? && record.plan.invoices_enabled? && member_or_higher
   end
 
   def show?
@@ -26,23 +26,23 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def archive?
-    admin_or_user
+    member_or_higher
   end
 
   def void?
-    admin_or_user
+    member_or_higher
   end
 
   def unarchive?
-    admin_or_user
+    member_or_higher
   end
 
   def manually_mark_as_paid?
-    admin_or_user
+    member_or_higher
   end
 
   def hosted?
-    admin_or_user
+    member_or_higher
   end
 
   def pdf?
@@ -55,7 +55,7 @@ class InvoicePolicy < ApplicationPolicy
 
   private
 
-  def admin_or_user
+  def member_or_higher
     OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
   end
 
