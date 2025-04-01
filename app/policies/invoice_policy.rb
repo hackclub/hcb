@@ -18,7 +18,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def create?
-    !record.unapproved? && record.plan.invoices_enabled? && member_or_higher
+    !record.unapproved? && record.plan.invoices_enabled? && OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def show?
@@ -56,7 +56,7 @@ class InvoicePolicy < ApplicationPolicy
   private
 
   def member_or_higher
-    OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :member)
+    OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def is_public
