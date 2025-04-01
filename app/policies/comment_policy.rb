@@ -13,11 +13,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def new?
-    user.auditor? || has_role?(:reader)
+    user.auditor? || users.include?(user)
   end
 
   def create?
-    user.auditor? || has_role?(:reader)
+    user.auditor? || users.include?(user)
   end
 
   def edit?
@@ -37,7 +37,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def destroy?
-    record.user == user || user.admin?
+    user.admin? || (users.include?(user) && record.user == user)
   end
 
   private
