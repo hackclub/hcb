@@ -22,7 +22,7 @@
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
     <% end %>
-    <% if !Rails.env.production? %>
+    <% if Rails.env.production? %>
         <script>
           console.log(`%c                    -*%@@%*-
                 .=#@@@@@@@@@@#=.
@@ -40,10 +40,10 @@
             @@@@      @@@@      @@@@
             @@@@      @@@@      @@@@
             *@@*      *@@*      *@@*
-    
+
       *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
       *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-    
+
             Come hack on HCB with us!
          ${<%= Rails.configuration.constants.github_url.to_json.html_safe %>}
     `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
