@@ -21,11 +21,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def edit?
-    has_role?(:member)
+    has_role?(:member) && (record.user == user || user.admin?)
   end
 
   def update?
-    has_role?(:member)
+    has_role?(:member) && (record.user == user || user.admin?)
   end
 
   def react?
@@ -33,11 +33,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || has_role?(:reader)
+    (user&.auditor? || has_role?(:reader)) && (record.user == user || user.admin?)
   end
 
   def destroy?
-    edit?
+    edit? && (record.user == user || user.admin?)
   end
 
   private
