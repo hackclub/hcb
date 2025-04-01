@@ -22,7 +22,7 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def attach_receipt?
-    member_role_present? && (present_in_events? || user_made_purchase?)
+    user&.admin? || present_in_events? || user_made_purchase?
   end
 
   def send_receipt_sms?
