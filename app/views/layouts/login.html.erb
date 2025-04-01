@@ -23,30 +23,31 @@
       <meta name="turbo-prefetch" content="false">
     <% end %>
     <% if Rails.env.production? %>
-      <script>
-        console.log(`%c                -*%@@%*-
-              .=#@@@@@@@@@@#=.
-          .=%@@@@@*-..-*@@@@@%=.
-        -#@@@@@+:        :+@@@@@#-
-            :*@@@@@*:              :*@@@@@*:
-            =%@@@@#-                    -#@@@@%=.
-          *@@@@@+.                        .+@@@@@*
-          *@@*-   *@@*      *@@*      *@@*   :*@@*
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          *@@*      *@@*      *@@*
-            *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-            *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+        <script>
+          console.log(`%c                    -*%@@%*-
+                .=#@@@@@@@@@@#=.
+            .=%@@@@@*-..-*@@@@@%=.
+          -#@@@@@+:        :+@@@@@#-
+        :*@@@@@*:              :*@@@@@*:
+      =%@@@@#-                    -#@@@@%=.
+    *@@@@@+.                        .+@@@@@*
+    *@@*-   *@@*      *@@*      *@@*   :*@@*
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            *@@*      *@@*      *@@*
 
-          Come hack on HCB with us!
-          <%= Rails.configuration.constants.github_url.to_json %>
-          `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
-      </script>
+      *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+      *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+
+            Come hack on HCB with us!
+         ${<%= Rails.configuration.constants.github_url.to_json.html_safe %>}
+    `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+        </script>
     <% end %>
     <meta name="format-detection" content="telephone=no">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
