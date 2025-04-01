@@ -21,23 +21,23 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def edit?
-    has_role?(:member) && (record.user == user || user.admin?)
+    user.admin? || (users.include?(user) && record.user == user)
   end
 
   def update?
-    has_role?(:member) && (record.user == user || user.admin?)
+    user.admin? || (users.include?(user) && record.user == user)
   end
 
   def react?
-    has_role?(:reader)
+    show?
   end
 
   def show?
-    (user&.auditor? || has_role?(:reader)) && (record.user == user || user.admin?)
+    user&.auditor? || (users.include?(user) && !record.admin_only)
   end
 
   def destroy?
-    edit? && (record.user == user || user.admin?)
+    record.user == user || user.admin?
   end
 
   private
@@ -52,24 +52,6 @@ class CommentPolicy < ApplicationPolicy
     else
       record.commentable.event.users
     end
-  end
-
-  def has_role?(role)
-    if record.commentable.respond_to?(:events)
-      return record.commentable.events.any? do |event|
-        OrganizerPosition.role_at_least?(user, event, role)
-      end
-    end
-
-    event = if record.commentable.is_a?(Reimbursement::Report)
-              record.commentable.event
-            elsif record.commentable.is_a?(Event)
-              record.commentable
-            else
-              record.commentable.event
-            end
-
-    OrganizerPosition.role_at_least?(user, event, role)
   end
 
 end
