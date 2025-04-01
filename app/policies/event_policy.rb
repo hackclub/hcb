@@ -44,7 +44,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def edit?
-    OrganizerPosition.role_at_least?(user, record, :manager)
+    OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def pin?
@@ -146,7 +146,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    OrganizerPosition.role_at_least?(user, record, :manager) && record.plan.account_number_enabled?
+    user&.auditor || OrganizerPosition.role_at_least?(user, record, :manager) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
