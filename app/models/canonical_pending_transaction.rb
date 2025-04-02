@@ -74,7 +74,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
   belongs_to :check_deposit, optional: true
-  belongs_to :grant, optional: true
   belongs_to :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", optional: true
   belongs_to :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", optional: true
 
