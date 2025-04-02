@@ -63,7 +63,6 @@ class IncreaseCheck < ApplicationRecord
   belongs_to :user, optional: true
 
   has_one :canonical_pending_transaction
-  has_one :grant, required: false
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
 
@@ -222,10 +221,6 @@ class IncreaseCheck < ApplicationRecord
     send_column!
 
     mark_approved!
-
-    if grant.present?
-      grant.mark_fulfilled!
-    end
   end
 
   private
