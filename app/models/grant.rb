@@ -93,10 +93,6 @@ class Grant < ApplicationRecord
     state :fulfilled, display: "Sent"
 
     event :mark_approved do
-      after do
-        GrantMailer.with(grant: self).invitation.deliver_later
-        GrantMailer.with(grant: self).approved.deliver_later
-      end
       transitions from: [:pending, :additional_info_needed], to: :waiting_on_recipient
     end
 
