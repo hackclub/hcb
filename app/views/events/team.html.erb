@@ -6,6 +6,9 @@
   <span class="flex flex-grow items-center">
     Team
     <%= badge_for @all_positions.size, class: "bg-muted" %>
+    <% admin_tool("p0 badge", "span") do %>
+      <%= badge_for "#{@all_positions.count { |op| op.user.teenager? }} teenagers", class: "bg-muted ml0" %>
+    <% end %>
   </span>
 
   <%= pop_icon_to @view == "list" ? "grid" : "list",
