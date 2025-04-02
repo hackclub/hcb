@@ -3,7 +3,7 @@
 module UserService
   class SyncWithLoops
     def initialize(user_id:, queue: Limiter::RateQueue.new(2, interval: 1), new_user: false)
-      @user = User.find(user_id).includes(:events)
+      @user = User.includes(:events).find(user_id)
       @queue = queue
       @new_user = new_user
       @contact_details = contact_details
