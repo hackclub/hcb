@@ -217,6 +217,10 @@ class HcbCode < ApplicationRecord
     pt.try(:stripe_cardholder) || ct.try(:stripe_cardholder)
   end
 
+  def raw_pending_stripe_transaction
+    pt&.raw_pending_stripe_transaction
+  end
+
   def stripe_merchant
     pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transaction.stripe_transaction["merchant_data"]
   end
