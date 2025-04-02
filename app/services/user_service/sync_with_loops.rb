@@ -27,7 +27,7 @@ module UserService
         }
       }.compact_blank
 
-      body[:userGroup] = (@user.teenager? || @user.events.organized_by_teenagers.any?) ? "Hack Clubber" : "HCB Adult"
+      body[:userGroup] = @user.teenager? || @user.events.organized_by_teenagers.any? ? "Hack Clubber" : "HCB Adult"
       body[:subscribed] = true if @contact_details.nil?
       body[:source] = "HCB" if @contact_details.nil?
 
