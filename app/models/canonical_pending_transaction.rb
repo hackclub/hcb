@@ -15,7 +15,6 @@
 #  created_at                                       :datetime         not null
 #  updated_at                                       :datetime         not null
 #  check_deposit_id                                 :bigint
-#  grant_id                                         :bigint
 #  increase_check_id                                :bigint
 #  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
@@ -33,7 +32,6 @@
 # Indexes
 #
 #  index_canonical_pending_transactions_on_check_deposit_id         (check_deposit_id)
-#  index_canonical_pending_transactions_on_grant_id                 (grant_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
 #  index_canonical_pending_transactions_on_paypal_transfer_id       (paypal_transfer_id)

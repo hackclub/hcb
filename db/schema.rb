@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_02_192611) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_02_194912) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -365,13 +365,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_02_192611) do
     t.boolean "fee_waived", default: false
     t.bigint "increase_check_id"
     t.bigint "check_deposit_id"
-    t.bigint "grant_id"
     t.bigint "reimbursement_expense_payout_id"
     t.bigint "paypal_transfer_id"
     t.bigint "reimbursement_payout_holding_id"
     t.bigint "wire_id"
     t.index ["check_deposit_id"], name: "index_canonical_pending_transactions_on_check_deposit_id"
-    t.index ["grant_id"], name: "index_canonical_pending_transactions_on_grant_id"
     t.index ["hcb_code"], name: "index_canonical_pending_transactions_on_hcb_code"
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"
     t.index ["paypal_transfer_id"], name: "index_canonical_pending_transactions_on_paypal_transfer_id"
