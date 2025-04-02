@@ -56,6 +56,8 @@
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
+  self.ignored_columns = ["grant_id"]
+
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
   pg_search_scope :pg_text_search, lambda { |query, options_hash| { query: }.merge(options_hash) }
@@ -74,7 +76,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
   belongs_to :check_deposit, optional: true
-  belongs_to :grant, optional: true
   belongs_to :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", optional: true
   belongs_to :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", optional: true
 
