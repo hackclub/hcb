@@ -23,7 +23,6 @@ class HcbCode
         return increase_check_memo if increase_check?
         return check_deposit_memo if check_deposit?
         return fee_revenue_memo if fee_revenue?
-        return grant_memo if grant?
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
         return stripe_card_memo if stripe_card? && stripe_card_memo
 
