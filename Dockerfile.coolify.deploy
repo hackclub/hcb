@@ -1,0 +1,89 @@
+# Use the official Ruby image as the base
+FROM ruby:3.3.6
+
+# Install necessary system dependencies
+RUN apt-get update -qq && \
+    apt-get install -y \
+    build-essential \
+    libpq-dev \
+    curl \
+    gnupg2 \
+    # GObject dependencies
+    libgirepository1.0-dev \
+    libcairo2-dev \
+    libpoppler-glib-dev \
+    gobject-introspection \
+    python3-pkg-resources \
+    # Memory management
+    libjemalloc2 \
+    # Image processing dependencies
+    libgif7 \
+    libvips \
+    imagemagick \
+    libwebp-dev \
+    # OCR dependencies
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    libtesseract5 \
+    # PDF processing
+    wkhtmltopdf \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Node.js and Yarn repositories
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+
+# Install Node.js and Yarn
+RUN apt-get update -qq && \
+    apt-get install -y nodejs yarn && \
+    rm -rf /var/lib/apt/lists/*
+
+# Configure memory management
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 \
+    MALLOC_ARENA_MAX=2
+
+# Set Rails environment variables
+ENV RAILS_ENV=production \
+    RACK_ENV=production \
+    RAILS_SERVE_STATIC_FILES=true \
+    RAILS_LOG_TO_STDOUT=true \
+    RAILS_GROUPS=assets
+
+# Set Node environment variables
+ENV NODE_ENV=production \
+    NODE_OPTIONS=--max-old-space-size=4096 \
+    NPM_CONFIG_LOGLEVEL=error \
+    USE_YARN_CACHE=true \
+    NODE_VERBOSE=false \
+    NODE_MODULES_CACHE=true
+
+# Set up working directory
+WORKDIR /app
+
+# Copy dependency files first
+COPY .ruby-version Gemfile Gemfile.lock ./
+
+# Install Ruby dependencies
+RUN gem install bundler:2.3.26 && \
+    bundle config set --local without 'development test' && \
+    bundle install --jobs 4
+
+# Copy the rest of the application
+COPY . .
+
+# Create asset directories
+RUN mkdir -p \
+    /app/public/assets \
+    /app/public/packs \
+    /app/tmp/cache/assets/sprockets \
+    /app/tmp/pids
+
+# Install JavaScript dependencies
+RUN yarn install
+
+# Expose port 3000
+EXPOSE 3000
+
+# Start Puma with asset compilation
+CMD bash -c "bundle exec rake assets:precompile && exec bundle exec puma -C config/puma.rb"
