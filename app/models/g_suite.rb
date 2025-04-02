@@ -29,7 +29,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class GSuite < ApplicationRecord
-  VALID_DOMAIN = /[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?\z/ix
+  VALID_DOMAIN = /\A[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?\z/ix
 
   acts_as_paranoid
   validates_as_paranoid

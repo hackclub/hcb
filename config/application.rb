@@ -9,18 +9,14 @@ require_relative "../app/lib/credentials"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+Dotenv.load if Rails.env.development?
+
 module Bank
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.2
 
     Credentials.load if ENV["DOPPLER_TOKEN"]
-
-    if ENV["USE_PROD_CREDENTIALS"]&.downcase == "true"
-      config.credentials.content_path = Rails.root.join("config/credentials/production.yml.enc")
-      config.credentials.key_path = Rails.root.join("config/credentials/production.key")
-      raise StandardError, "USE_PROD_CREDENTIALS is set to true but config/credentials/production.key is missing" unless File.file?(config.credentials.key_path)
-    end
 
     config.action_mailer.default_url_options = {
       host: Credentials.fetch(:LIVE_URL_HOST)

@@ -8,9 +8,9 @@
 module Credentials
   NESTING_DELIMITER = "__"
 
-  def self.fetch(*key_segments)
+  def self.fetch(*key_segments, fallback: nil)
     key = key_segments.join(NESTING_DELIMITER).upcase
-    ENV[key] || Rails.application.credentials.dig(*key_segments)
+    ENV[key] || Rails.application.credentials.dig(*key_segments) || fallback
   end
 
   def self.load

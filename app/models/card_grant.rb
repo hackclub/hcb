@@ -45,6 +45,8 @@ class CardGrant < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :cdg
 
+  include Commentable
+
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :stripe_card, optional: true

@@ -32,7 +32,7 @@
     <span>
       <%= et.memo.humanize %>
     </span>
-    <%= list_badge_for admin_signed_in? ? et.comments.size : et.comments.not_admin_only.size, "comment", "post", optional: true %>
+    <%= list_badge_for auditor_signed_in? ? et.comments.size : et.comments.not_admin_only.size, "comment", "post", optional: true %>
     <%= list_badge_for et.receipts.size, "receipt", "payment-docs", required: true unless et.is_transfer? %>
   </td>
   <td class="nowrap">

@@ -71,6 +71,11 @@
       </div>
 
       <div class="field">
+        <%= form.label :risk_level %>
+        <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" } %>
+      </div>
+
+      <div class="field">
         <%= form.label :point_of_contact_id, capture { %>
           Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(@event), method: :post %>
         <% } %>
@@ -116,6 +121,17 @@
           <% end %>
       </ul>
     </details>
+  <% end %>
+
+  <% unless @event.plan.exempt_from_wire_minimum? %>
+    <% admin_tool do %>
+      <h3 id="admin_fees" class="mb2 mt1">Wire minimum exemption</h3>
+      <% if Flipper.enabled?(:exempt_from_wire_minimum, @event) %>
+        <%= link_to "Disable", disable_feature_path(feature: :exempt_from_wire_minimum, event_id: @event.id), method: :post, class: "btn bg-accent", data: { turbo_method: "post" } %>
+      <% else %>
+        <%= link_to "Enable", enable_feature_path(feature: :exempt_from_wire_minimum, event_id: @event.id), method: :post, class: "btn bg-info" %>
+      <% end %>
+    <% end %>
   <% end %>
 
   <% admin_tool do %>

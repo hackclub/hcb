@@ -5,6 +5,35 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # We don't use Rails' default encrypted credentials in Production. However,
+  # Rails doesn't provide an explicit way to disable encrypted credentials.
+  # As a workaround, we set `content_path` and `key_path` to an invalid path.
+  #
+  # Without this workaround, Rails will fallback to `config/credentials.yml.enc`
+  # which is NOT used for production. It will then attempt to decrypt that file,
+  # resulting in `ActiveSupport::MessageEncryptor::InvalidMessage` on boot.
+  #
+  # `content_path` and `key_path` are used to create an
+  # `ActiveSupport::EncryptedConfiguration` object which is
+  # `Rails.application.credentials`. When `EncryptedConfiguration`
+  # (subclass of `EncryptedFile`) has either an invalid key or content path,
+  # Rails will internally just use an empty string as the decrypted contents of
+  # the file.
+  #
+  # REFERENCES
+  # * Where `Rails.application.credentials` is set:
+  #   https://github.com/rails/rails/blob/f575fca24a72cf0631c59ed797c575392fbbc527/railties/lib/rails/application.rb#L497-L499
+  # * `EncryptedFile#read` raises `MissingContentError`
+  #   when missing either a key or content_path.
+  #   https://github.com/rails/rails/blob/f575fca24a72cf0631c59ed797c575392fbbc527/activesupport/lib/active_support/encrypted_file.rb#L70-L76
+  # * `EncryptedConfiguration#read` (overrides `EncryptedFile#read`) rescues
+  #   `MissingContentError` and returns an empty string.
+  #   https://github.com/rails/rails/blob/f575fca24a72cf0631c59ed797c575392fbbc527/activesupport/lib/active_support/encrypted_configuration.rb#L64-L66
+  #
+  # ~ @garyhtou
+  config.credentials.content_path = "noop"
+  config.credentials.key_path = "noop"
+
   # Prepare the ingress controller used to receive mail
   config.action_mailbox.ingress = :sendgrid
 

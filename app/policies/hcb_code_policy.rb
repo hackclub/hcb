@@ -2,7 +2,7 @@
 
 class HcbCodePolicy < ApplicationPolicy
   def show?
-    user&.admin? || present_in_events?
+    user&.auditor? || present_in_events?
   end
 
   def memo_frame?

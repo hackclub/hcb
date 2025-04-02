@@ -23,7 +23,7 @@ gem "jsbundling-rails", "~> 1.3"
 gem "terser", "~> 1.2" # JS compressor
 gem "jquery-rails"
 gem "react-rails"
-gem "turbo-rails", "~> 2.0.11"
+gem "turbo-rails", "~> 2.0.13"
 
 gem "invisible_captcha"
 gem "local_time" # client-side timestamp converter for cache-safe rendering
@@ -75,7 +75,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
-gem "browser", "~> 6.1" # browser detection
+gem "browser", "~> 6.2" # browser detection
 
 # Pagination
 gem "kaminari"
@@ -159,7 +159,7 @@ group :development, :test do
   gem "rubocop-rails", "~> 2.30"
   gem "relaxed-rubocop"
 
-  gem "rspec-rails", "~> 7.1.0"
+  gem "rspec-rails", "~> 7.1.1"
 
   # Lets you set a breakpoint with a REPL using binding.pry
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"
@@ -175,6 +175,7 @@ end
 
 group :development do
   gem "annotate" # comment models with database schema
+  gem "actual_db_schema" # rolls back phantom migrations
 
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
   gem "listen", "~> 3.9"

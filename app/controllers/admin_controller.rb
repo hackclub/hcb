@@ -71,6 +71,9 @@ class AdminController < ApplicationController
   def event_new
   end
 
+  def event_new_from_airtable
+  end
+
   def event_create
     emails = [params[:organizer_email]].reject(&:empty?)
 
@@ -91,6 +94,29 @@ class AdminController < ApplicationController
     redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
   rescue => e
     redirect_to event_new_admin_index_path, flash: { error: e.message }
+  end
+
+  def event_create_from_airtable
+    record = ApplicationsTable.find(params[:airtable_record_id])
+    application = record.fields
+    country = ISO3166::Country.find_country_by_any_name(application["Event Location"])
+    event = ::EventService::Create.new(
+      name: application["Event Name"],
+      country: country&.alpha2,
+      point_of_contact_id: current_user.id,
+      approved: true,
+      organized_by_teenagers: application["TEEN"] == "Teen",
+      demo_mode: true
+    ).run
+
+    record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
+    record["HCB ID"] = event.id
+
+    record.save
+
+    redirect_to event_path(event), flash: { success: "Successfully created #{event.name}" }
+  rescue => e
+    redirect_to event_new_from_airtable_admin_index_path, flash: { error: e.message }
   end
 
   def event_balance
@@ -455,6 +481,17 @@ class AdminController < ApplicationController
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
   end
 
+  def ach_send_realtime
+    ach_transfer = AchTransfer.find(params[:id])
+    ach_transfer.approve!(current_user, send_realtime: true)
+
+    redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
+  rescue Faraday::Error => e
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+  rescue => e
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
+  end
+
   def ach_reject
     ach_transfer = AchTransfer.find(params[:id])
     ach_transfer.mark_rejected!(current_user)
@@ -717,7 +754,7 @@ class AdminController < ApplicationController
 
     relation = HcbCode
 
-    relation = relation.where("hcb_codes.hcb_code ilike '%#{@q}%'") if @q
+    relation = relation.where("hcb_codes.hcb_code ILIKE ?", "%#{@q}%") if @q
     relation = relation.receipt_required.missing_receipt if @has_receipt == "no"
     relation = relation.has_receipt_or_marked_no_or_lost if @has_receipt == "yes"
     relation = relation.lost_receipt if @has_receipt == "lost"
@@ -1137,7 +1174,7 @@ class AdminController < ApplicationController
     @message_id = params[:message_id]
 
     respond_to do |format|
-      format.html { render inline: "<%== Ahoy::Message.find(@message_id).html_content %>" }
+      format.html { render html: Ahoy::Message.find(@message_id).html_content.html_safe } # rubocop:disable Rails/OutputSafety
     end
   end
 
@@ -1165,7 +1202,7 @@ class AdminController < ApplicationController
         yp_name: merchant[:name],
         yp_network_id: network_id,
         memos: RawStripeTransaction
-          .where("stripe_transaction->'merchant_data'->>'network_id' = '#{network_id}'")
+          .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
           .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
       }
     end
@@ -1184,6 +1221,16 @@ class AdminController < ApplicationController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @payments = Employee::Payment.all.page(@page).per(@per)
+  end
+
+  def my_ip
+    render json: {
+      remote_ip: request.remote_ip,
+      ip: request.ip,
+      forwarded_for: request.headers["HTTP_X_FORWARDED_FOR"],
+      forwarded_port: request.headers["HTTP_X_FORWARDED_PORT"],
+      forwarded_proto: request.headers["HTTP_X_FORWARDED_PROTO"],
+    }
   end
 
   private
@@ -1213,6 +1260,7 @@ class AdminController < ApplicationController
     @active = params[:active].present? ? params[:active] : "both" # both by default
     @organized_by = params[:organized_by].presence || "anyone"
     @tagged_with = params[:tagged_with].presence || "anything"
+    @risk_level = params[:risk_level].presence || "any"
     @point_of_contact_id = params[:point_of_contact_id].present? ? params[:point_of_contact_id] : "all"
     @plan = params[:plan].present? ? params[:plan] : "all"
     if params[:country] == 9999.to_s
@@ -1246,6 +1294,14 @@ class AdminController < ApplicationController
     relation = relation.not_demo_mode if @demo_mode == "full"
     relation = relation.includes(:event_tags)
     relation = relation.where(event_tags: { id: @tagged_with }) unless @tagged_with == "anything"
+    case @risk_level
+    when "any"
+      # don't filter
+    when "unset"
+      relation = relation.where(risk_level: nil)
+    else
+      relation = relation.where(risk_level: @risk_level)
+    end
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
     if @plan != "all"
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")

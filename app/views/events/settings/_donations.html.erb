@@ -52,6 +52,9 @@
   <% end %>
 
   <%= form_with(url: event_donation_goals_path(event), local: true, method: @event.donation_goal ? :patch : :post, class: @frame ? "" : "card mt-4") do |form| %>
+    <% if @frame %>
+      <div class="menu__divider m-0 my-8"></div>
+    <% end %>
     <div data-controller="accordion">
       <div class="field field--checkbox mb0">
         <span style="font-weight: 700">Enable donation goals</span>

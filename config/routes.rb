@@ -6,6 +6,7 @@ require "sidekiq/cron/web"
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   get "up" => "rails/health#show", as: :rails_health_check
+  get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
     mount Audits1984::Engine => "/console"
@@ -208,7 +209,9 @@ Rails.application.routes.draw do
       get "wires", to: "admin#wires"
       get "events", to: "admin#events"
       get "event_new", to: "admin#event_new"
+      get "event_new_from_airtable", to: "admin#event_new_from_airtable"
       post "event_create", to: "admin#event_create"
+      post "event_create_from_airtable", to: "admin#event_create_from_airtable"
       get "donations", to: "admin#donations"
       get "recurring_donations", to: "admin#recurring_donations"
       get "disbursements", to: "admin#disbursements"
@@ -244,6 +247,7 @@ Rails.application.routes.draw do
       put "event_reject", to: "admin#event_reject"
       get "ach_start_approval", to: "admin#ach_start_approval"
       post "ach_approve", to: "admin#ach_approve"
+      post "ach_send_realtime", to: "admin#ach_send_realtime"
       post "ach_reject", to: "admin#ach_reject"
       get "disbursement_process", to: "admin#disbursement_process"
       post "disbursement_approve", to: "admin#disbursement_approve"
@@ -509,6 +513,7 @@ Rails.application.routes.draw do
 
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
+  get "security", to: "static_pages#security"
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "audit", to: "admin#audit"
@@ -644,7 +649,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :card_grants, only: [:show, :edit, :update], path: "grants" do
+  resources :card_grants, only: [:show, :edit, :update], path: "grants", concerns: :commentable do
     member do
       post "activate"
       get "spending"

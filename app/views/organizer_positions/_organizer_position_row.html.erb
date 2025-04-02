@@ -9,7 +9,7 @@
       <%= inline_icon("email", size: 20) %>
       <%= organizer_signed_in? ? organizer_position.user.email : "Hidden" %>
     <% end %>
-    <% if admin_signed_in? %>
+    <% if auditor_signed_in? %>
       <p class="warning m0">
         <%= copy_to_clipboard(organizer_position.user.phone_number, class: "inline-flex items-center g1 line-height-0") do %>
           <%= inline_icon("message-simple", size: 20) %>

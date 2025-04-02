@@ -3,8 +3,19 @@
 module Build
   class << self
     def commit_hash
-      # https://coolify.io/docs/knowledge-base/environment-variables#source-commit
-      @commit_hash ||= ENV["SOURCE_COMMIT"] || `git show --pretty=%H -q 2> /dev/null`.chomp
+      # Cache commit hash globally to avoid reading the file multiple times
+      # rubocop:disable Style/GlobalVars
+      $commit_hash ||=
+        begin
+          # This file is created by Hatchbox during deployment
+          File.open("REVISION") do |file|
+            file.read.strip.presence
+          end
+        rescue
+          nil
+        end
+      $commit_hash ||= `git show --pretty=%H -q 2> /dev/null`.chomp
+      # rubocop:enable Style/GlobalVars
     end
 
     def commit_dirty?
@@ -24,8 +35,10 @@ module Build
 
     def timestamp
       # Cache timestamp globally to avoid reading the file multiple times
-      $build_timestamp ||= # rubocop:disable Style/GlobalVars
+      # rubocop:disable Style/GlobalVars
+      $build_timestamp ||=
         begin
+          # This file is created by the production Dockerfile
           File.open(".build-timestamp") do |file|
             timestamp = file.read.strip
             next unless timestamp.present?
@@ -35,10 +48,15 @@ module Build
         rescue
           nil
         end
+      # `Time.now` will update every time Rails is (re)started, rather than
+      # after each build.
+      $build_timestamp ||= Time.now if Rails.env.production?
+      $build_timestamp
+      # rubocop:enable Style/GlobalVars
     end
 
     def age
-      return unless timestamp.present?
+      return if timestamp.nil?
 
       ApplicationController.helpers.distance_of_time_in_words timestamp, Time.now
     end
