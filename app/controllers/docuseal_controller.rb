@@ -8,8 +8,8 @@ class DocusealController < ActionController::Base
       contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
       return render json: { success: true } unless contract # sometimes contracts are sent using Docuseal that aren't in HCB
 
-      signee = contract.docuseal_document["submitters"].select {|r| r["role"] == "Cosigner" }
-      cosigneer = contract.docuseal_document["submitters"].select {|r| r["role"] == "Contract Signee" }
+      signee = contract.docuseal_document["submitters"].select { |r| r["role"] == "Cosigner" }
+      cosigneer = contract.docuseal_document["submitters"].select { |r| r["role"] == "Contract Signee" }
 
       if params[:event_type] == "form.completed" && params[:data][:submission][:status] == "completed"
         return render json: { success: true } if contract.signed?
