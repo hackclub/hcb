@@ -42,7 +42,7 @@ class ApplicationController < ActionController::Base
 
   # Enable Rack::MiniProfiler for admins
   before_action do
-    if current_user&.is_admin?
+    if current_user&.admin?
       Rack::MiniProfiler.authorize_request
     end
   end
