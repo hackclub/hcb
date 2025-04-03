@@ -22,7 +22,16 @@ module Api
           ]
         }
         expose :recurring?, as: :recurring, documentation: { type: "boolean" }
-
+        expose :message
+        
+        # Add UTM parameters
+        expose :utm_params do
+          expose :utm_source
+          expose :utm_medium
+          expose :utm_campaign
+          expose :utm_term
+          expose :utm_content
+        end
       end
 
     end
