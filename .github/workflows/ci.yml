@@ -25,6 +25,9 @@ jobs:
       - name: Comment suggested changes
         uses: parkerbxyz/suggest-changes@v2.0.0
         if: ${{ github.event.pull_request }}
+        with:
+          comment: 'Please resolve the following Rubocop issues.'
+          event: 'REQUEST_CHANGES'
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
