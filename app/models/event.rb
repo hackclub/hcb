@@ -719,7 +719,7 @@ class Event < ApplicationRecord
 
   def sync_to_airtable
     # Sync stats to application's airtable record
-    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app|
+    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
       app["Active Teens (last 30 days)"] = users.where(teenager: true).last_seen_within(30.days.ago).size
       app.save
     end
