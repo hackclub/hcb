@@ -721,13 +721,6 @@ class Event < ApplicationRecord
     # Sync stats to application's airtable record
     ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
       app["Active Teens (last 30 days)"] = users.where(teenager: true).last_seen_within(30.days.ago).size
-
-      # For Anish's TUB
-      app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: {teenager: true}).any?
-      app["Referral Raised 25"] = total_raised > 25_00
-      app["Referral Transparent"] = is_public
-      app["Referral 2 Teen Members"] = organizer_positions.includes(:user).where(user: {teenager: true}).count > 2
-
       app.save
     end
   end
