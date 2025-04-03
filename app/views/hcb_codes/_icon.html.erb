@@ -52,9 +52,6 @@
   <% elsif tx.local_hcb_code.card_grant? %>
     <% label = "Outgoing grant" %>
     <% icon = inline_icon "bag" %>
-  <% elsif tx.try(:grant_id) %>
-    <% label = "Outgoing grant" %>
-    <% icon = inline_icon "idea" %>
   <% elsif tx.local_hcb_code.disbursement? %>
     <% if tx.amount.negative? %>
       <% label = "Outgoing transfer" %>

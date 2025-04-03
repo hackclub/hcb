@@ -103,7 +103,6 @@ class AchTransfer < ApplicationRecord
   validates :company_name, length: { maximum: 16 }, allow_blank: true
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
-  has_one :grant, required: false
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
@@ -269,8 +268,6 @@ class AchTransfer < ApplicationRecord
     end
 
     update!(processor: processed_by) if processed_by.present?
-
-    grant.mark_fulfilled! if grant.present?
   end
 
   def status
