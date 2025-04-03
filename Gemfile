@@ -166,12 +166,10 @@ group :development, :test do
   gem "pry-rails", require: ENV["EXCLUDE_PRY"] != "true"
 end
 
-group :development, :staging do
-  gem "query_count"
+gem "query_count"
 
-  gem "rack-mini-profiler", "~> 3.3"
-  gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
-end
+gem "rack-mini-profiler", "~> 3.3"
+gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 
 group :development do
   gem "annotate" # comment models with database schema
