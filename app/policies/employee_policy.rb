@@ -10,7 +10,7 @@ class EmployeePolicy < ApplicationPolicy
   end
 
   def show?
-    team_member || admin || employee
+    team_member || admin || employee || auditor
   end
 
   def onboard?
@@ -29,6 +29,10 @@ class EmployeePolicy < ApplicationPolicy
 
   def admin
     user&.admin?
+  end
+
+  def auditor
+    user&.auditor?
   end
 
   def manager

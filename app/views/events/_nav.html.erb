@@ -79,11 +79,6 @@
       tooltip: "Reimburse team members & volunteers",
       icon: "attachment",
       selected: local_assigns[:selected] == :reimbursements if policy(@event).reimbursements? %>
-    <%= dock_item "Grants",
-      event_grants_path(@event),
-      tooltip: "Send & manage grants",
-      icon: "idea",
-      selected: local_assigns[:selected] == :grants if Flipper.enabled?(:grants_2023_06_21, @event) %>
     <%= dock_item "Contractors",
       event_employees_path(event_id: @event.slug),
       tooltip: "Manage payroll",

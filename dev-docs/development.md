@@ -72,15 +72,15 @@ env $(cat .env.docker) docker-compose -f docker-compose.yml -f docker-compose.so
 Before beginning this process, please **ensure you have both Ruby and Node
 installed**, as well as a PostgreSQL database running.
 
-#### [Step 1] Prereq: Install Ruby and Node
+#### [Step 1] Prerequisite: Install Ruby and Node
 
 See [`.ruby-version`](.ruby-version)
-and [`.node-version](.node-version) for which versions you need installed. I
+and [`.node-version`](.node-version) for which versions you need installed. I
 personally recommend using a version manager
-like [rbenv](https://rbenv.org/), [nvm](https://github.com/nvm-sh/nvm),
-or [asdf](https://asdf-vm.com/).
+like [rbenv](https://rbenv.org/) for ruby, [nvm](https://github.com/nvm-sh/nvm) for node,
+or [asdf](https://asdf-vm.com/) for both.
 
-#### [Step 2] Prerequisite: install and run PostgreSQL
+#### [Step 2] Prerequisite: Install and run PostgreSQL
 
 We recommend you use version `15.12` as that's what running in production. If
 you're on MacOS, I recommend using Homebrew to get Postgres up and running. If
@@ -176,7 +176,7 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example).
 
-HCB relies on two services for the majority of it's financial features: Stripe and Column. We recommend creating a Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+HCB relies on two services for the majority of it's financial features: Stripe and Column. We recommend creating a US Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
 We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
 

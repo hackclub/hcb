@@ -48,7 +48,7 @@ module Column
         entry_class_code: "CCD",
         counterparty: {
           account_number: Credentials.fetch(:SVB_ACCOUNT_NUMBER),
-          routing_number: Credentials.fetch(:SVB_ACCOUNT_NUMBER),
+          routing_number: Credentials.fetch(:SVB_ROUTING_NUMBER),
         },
         description:,
         company_entry_description: "HCB-SWEEP",

@@ -27,9 +27,9 @@
       </div>
     <% end %>
 
-    <% if @user_id %>
+    <% if user = User.find_by_id(@user_id) %>
       <div class="badge badge-large bg-muted">
-        User: <%= User.find(@user_id).name %>
+        User: <%= user.name %>
         <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
           <%= inline_icon "view-close", size: 20 %>
         <% end %>

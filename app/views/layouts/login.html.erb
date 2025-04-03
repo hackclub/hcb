@@ -3,7 +3,7 @@
 <% page_full %>
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
-  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
   <head>
     <title>
       <%= yield(:title).concat(" –") if content_for?(:title) %>
@@ -16,34 +16,38 @@
     <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
     <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+    <% if Rails.env.production? %>
+      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
     <% end %>
     <% if Rails.env.production? %>
-      <script>
-        console.log(`%c                -*%@@%*-
-              .=#@@@@@@@@@@#=.
-          .=%@@@@@*-..-*@@@@@%=.
-        -#@@@@@+:        :+@@@@@#-
-            :*@@@@@*:              :*@@@@@*:
-            =%@@@@#-                    -#@@@@%=.
-          *@@@@@+.                        .+@@@@@*
-          *@@*-   *@@*      *@@*      *@@*   :*@@*
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          *@@*      *@@*      *@@*
-            *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-            *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+        <script>
+          console.log(`%c                    -*%@@%*-
+                .=#@@@@@@@@@@#=.
+            .=%@@@@@*-..-*@@@@@%=.
+          -#@@@@@+:        :+@@@@@#-
+        :*@@@@@*:              :*@@@@@*:
+      =%@@@@#-                    -#@@@@%=.
+    *@@@@@+.                        .+@@@@@*
+    *@@*-   *@@*      *@@*      *@@*   :*@@*
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            *@@*      *@@*      *@@*
 
-          Come hack on HCB with us!
-          <%= Rails.configuration.constants.hack_on_hcb_form_url.to_json %>
-          `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
-      </script>
+      *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+      *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+
+            Come hack on HCB with us!
+         ${<%= Rails.configuration.constants.github_url.to_json.html_safe %>}
+    `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+        </script>
     <% end %>
     <meta name="format-detection" content="telephone=no">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">

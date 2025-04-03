@@ -53,7 +53,7 @@ GEM
       erubi (~> 1.11)
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
-    active_storage_validations (1.3.5)
+    active_storage_validations (2.0.2)
       activejob (>= 6.1.4)
       activemodel (>= 6.1.4)
       activestorage (>= 6.1.4)
@@ -180,7 +180,7 @@ GEM
       msgpack (~> 1.2)
     brakeman (6.2.2)
       racc
-    browser (6.1.0)
+    browser (6.2.0)
     builder (3.3.0)
     bullet (8.0.0)
       activesupport (>= 3.0.0)
@@ -226,7 +226,7 @@ GEM
       unicode (>= 0.4.4.5)
     css_parser (1.17.1)
       addressable
-    cssbundling-rails (1.4.1)
+    cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
     csv (3.3.2)
     date (3.4.1)
@@ -469,7 +469,7 @@ GEM
       rb-inotify (~> 0.9, >= 0.9.10)
     local_time (3.0.2)
     lockbox (2.0.1)
-    logger (1.6.6)
+    logger (1.7.0)
     lograge (0.14.0)
       actionpack (>= 4)
       activesupport (>= 4)
@@ -524,7 +524,7 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.4)
-    nokogiri (1.18.4)
+    nokogiri (1.18.7)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     observer (0.1.2)
@@ -545,7 +545,7 @@ GEM
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
-    phonelib (0.10.3)
+    phonelib (0.10.6)
     pkg-config (1.5.8)
     plaid (34.0.0)
       faraday (>= 1.0.1, < 3.0)
@@ -641,7 +641,7 @@ GEM
     rbs (3.8.1)
       logger
     rbtree3 (0.7.1)
-    rdoc (6.12.0)
+    rdoc (6.13.1)
       psych (>= 4.0.0)
     react-rails (3.2.1)
       babel-transpiler (>= 0.7.0)
@@ -784,7 +784,7 @@ GEM
     stackprof (0.2.26)
     statsd-instrument (3.9.9)
     statsd-ruby (1.5.0)
-    stringio (3.1.5)
+    stringio (3.1.6)
     stripe (11.7.0)
     strong_migrations (1.8.0)
       activerecord (>= 5.2)
@@ -854,7 +854,7 @@ PLATFORMS
 
 DEPENDENCIES
   aasm
-  active_storage_validations (= 1.3.5)
+  active_storage_validations (= 2.0.2)
   acts_as_paranoid (~> 0.10.3)
   actual_db_schema
   ahoy_email (~> 2.4)
@@ -872,7 +872,7 @@ DEPENDENCIES
   blind_index
   bootsnap (>= 1.4.4)
   brakeman
-  browser (~> 6.1)
+  browser (~> 6.2)
   bullet
   business_time
   byebug
@@ -983,7 +983,7 @@ DEPENDENCIES
   yellow_pages!
 
 RUBY VERSION
-   ruby 3.3.7p123
+   ruby 3.4.2p28
 
 BUNDLED WITH
    2.5.22
