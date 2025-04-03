@@ -5,7 +5,7 @@
 <h1 class="heading flex items-center">
   <span class="flex items-center">
     Cards
-    <%= badge_for @stripe_cards.count + @emburse_cards.count, class: "bg-muted" %>
+    <%= badge_for @stripe_cards.active.count + @emburse_cards.count, class: "bg-muted" %>
   </span>
   <div class="flex ml-auto gap-3 items-center -mt-3">
     <%= render partial: "cards_filter_menu" unless @filter_applied %>

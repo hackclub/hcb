@@ -34,6 +34,12 @@ class ApplicationController < ActionController::Base
     response.set_header("X-Robots-Tag", "noindex")
   end
 
+  before_action do
+    # Disallow all external redirects
+    # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
+    params[:return_to] = url_from(params[:return_to])
+  end
+
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 

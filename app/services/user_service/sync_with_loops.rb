@@ -3,7 +3,7 @@
 module UserService
   class SyncWithLoops
     def initialize(user_id:, queue: Limiter::RateQueue.new(2, interval: 1), new_user: false)
-      @user = User.find(user_id)
+      @user = User.includes(:events).find(user_id)
       @queue = queue
       @new_user = new_user
       @contact_details = contact_details
@@ -20,13 +20,14 @@ module UserService
         birthday: format_unix(@user.birthday),
         hcbLastSeenAt: format_unix(@user.last_seen_at),
         hcbLastLoginAt: format_unix(@user.last_login_at),
+        hcbHasActiveOrg: @user.events.active.any?,
         mailingLists: {
           # https://loops.so/docs/contacts/mailing-lists#api
           Credentials.fetch(:LOOPS, :MAILING_LIST) => true
         }
       }.compact_blank
 
-      body[:userGroup] = @user.teenager? ? "Hack Clubber" : "HCB Adult"
+      body[:userGroup] = @user.teenager? || @user.events.organized_by_teenagers.any? ? "Hack Clubber" : "HCB Adult"
       body[:subscribed] = true if @contact_details.nil?
       body[:source] = "HCB" if @contact_details.nil?
 
