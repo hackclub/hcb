@@ -31,8 +31,8 @@ export default class extends Controller {
   }
 
   continue() {
-    document.getElementById('invoice').disabled = false;
-    document.getElementById('invoice').click();
+    document.getElementById('invoice').disabled = false
+    document.getElementById('invoice').click()
   }
 
   selectSponsor() {
