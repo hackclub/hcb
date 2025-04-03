@@ -134,7 +134,7 @@ class InvoicesController < ApplicationController
 
     redirect_to @invoice
   rescue Pundit::NotAuthorizedError
-    redirect_to event_invoices_path(@event), flash: { error: "You are not authorized to perform this action." }
+    raise
   rescue => e
     Rails.error.report(e)
 
