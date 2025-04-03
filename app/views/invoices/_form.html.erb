@@ -7,20 +7,24 @@
     <div data-controller="tabs" data-tabs-default-tab-value="sponsor">
       <div class="flex mb-4 gap-5">
         <div
-        id="sponsor"
-        data-tabs-target="btn"
-        data-action="click->tabs#select"
+          id="sponsor"
+          data-tabs-target="btn"
+          data-action="click->tabs#select"
           class="invoice-tab">
           <div class="invoice-tab__number">1</div>
           <span>Sponsor details</span>
         </div>
-        <div
-        id="invoice"
-        data-tabs-target="btn" data-action="click->tabs#select"
+        <button
+          disabled
+          type="button"
+          id="invoice"
+          style="font-size: inherit;"
+          data-tabs-target="btn"
+          data-action="click->tabs#select"
           class="invoice-tab">
           <div class="invoice-tab__number">2</div>
           <span>Invoice details</span>
-        </div>
+        </button>
       </div>
       <%= form_errors invoice %>
       <%= form_errors sponsor %>
@@ -41,8 +45,8 @@
           </select>
         </div>
         <details
-        id="sponsor-collapsible"
-        data-invoice-form-target="sponsorCollapsible">
+          id="sponsor-collapsible"
+          data-invoice-form-target="sponsorCollapsible">
           <summary class="list-none select-none flex !hidden items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:active:bg-neutral-600 transition-colors px-7 p-4" data-invoice-form-target="sponsorPreview">
             <div class="flex flex-col">
               <span class="font-bold text-lg" data-invoice-form-target="sponsorPreviewName"></span>
@@ -100,12 +104,12 @@
           <% end %>
         </details>
         <button
-        type="button"
-        id="invoice"
-        data-invoice-form-target="continueButton"
-        onclick="document.getElementById('invoice').click()"
-        class="btn bg-accent mt-4 w-full"
-        disabled>
+          type="button"
+          id="invoice"
+          data-invoice-form-target="continueButton"
+          class="btn bg-accent mt-4 w-full"
+          data-action="click->invoice-form#continue"
+          disabled>
           Continue
           <%= inline_icon "view-forward" %>
         </button>
@@ -116,13 +120,13 @@
           <div class="flex items-center border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3">
             <span class="bold muted" style="width: 1rem;">$</span>
             <%= form.number_field :item_amount,
-        value: (invoice.item_amount.nil? ? nil : (invoice.item_amount.to_f / 100)), placeholder: "500.00",
-        step: 0.01,
-        style: "max-width:100%!important",
-        class: "!border-none bg-transparent",
-        min: 1.00, required: true, disabled: @event.demo_mode?,
-        data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" },
-        "x-model.fill.number" => "amount" %>
+                                  value: (invoice.item_amount.nil? ? nil : (invoice.item_amount.to_f / 100)), placeholder: "500.00",
+                                  step: 0.01,
+                                  style: "max-width:100%!important",
+                                  class: "!border-none bg-transparent",
+                                  min: 1.00, required: true, disabled: @event.demo_mode?,
+                                  data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" },
+                                  "x-model.fill.number" => "amount" %>
           </div>
           <% if invoice.event.revenue_fee != 0 %>
             <span class="muted block mt-1 empty:hidden text-center" data-behavior="amount-preview" data-fee="<%= sponsor.event.revenue_fee %>"></span>

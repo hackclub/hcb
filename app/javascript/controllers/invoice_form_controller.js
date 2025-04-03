@@ -30,6 +30,11 @@ export default class extends Controller {
     }
   }
 
+  continue() {
+    document.getElementById('invoice').disabled = false;
+    document.getElementById('invoice').click();
+  }
+
   selectSponsor() {
     this.continueButtonTarget.disabled = false
 
