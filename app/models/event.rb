@@ -717,6 +717,14 @@ class Event < ApplicationRecord
     eligible_for_transparency? && !risk_level.in?(%w[moderate high])
   end
 
+  def sync_to_airtable
+    # Sync stats to application's airtable record
+    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app|
+      app["Active Teens (last 30 days)"] = users.where(teenager: true).last_seen_within(30.days.ago).size
+      app.save
+    end
+  end
+
   private
 
   def point_of_contact_is_admin
