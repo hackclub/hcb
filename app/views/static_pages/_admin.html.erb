@@ -43,7 +43,6 @@
       <%= card_to "ACH", ach_admin_index_path, { badge: AchTransfer.pending.count } %>
       <%= card_to "Check", increase_checks_admin_index_path, { badge: IncreaseCheck.pending.count } %>
       <%= card_to "Check deposits", admin_check_deposits_path, { badge: CheckDeposit.unprocessed.count } %>
-      <%= card_to "Grants", grants_admin_index_path, { badge: Grant.admin_action_needed.count } %>
       <%= card_to "PayPal", paypal_transfers_admin_index_path, { badge: PaypalTransfer.pending.count } %>
       <%= card_to "Wires", wires_admin_index_path, { badge: Wire.pending.count } %>
       <%= card_to "Disbursements", disbursements_admin_index_path, { badge: Disbursement.reviewing.count } %>

@@ -1120,18 +1120,6 @@ class AdminController < ApplicationController
     end
   end
 
-  def grants
-    @page = params[:page] || 1
-    @per = params[:per] || 20
-    @grants = Grant.includes(:event, :recipient).page(@page).per(@per).order(created_at: :desc)
-
-  end
-
-  def grant_process
-    @grant = Grant.find(params[:id])
-
-  end
-
   def hq_receipts
     @page = params[:page] || 1
     @per = params[:per] || 20

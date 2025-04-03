@@ -314,16 +314,16 @@ class Event < ApplicationRecord
   has_many :grants
 
   has_one_attached :donation_header_image
-  validates :donation_header_image, content_type: [:png, :jpg, :jpeg]
+  validates :donation_header_image, content_type: [:png, :jpeg]
 
   has_one_attached :background_image
-  validates :background_image, content_type: [:png, :jpg, :jpeg]
+  validates :background_image, content_type: [:png, :jpeg]
 
   has_one_attached :logo
-  validates :logo, content_type: [:png, :jpg, :jpeg]
+  validates :logo, content_type: [:png, :jpeg]
 
   has_one_attached :stripe_card_logo
-  validates :stripe_card_logo, content_type: [:png, :jpg, :jpeg]
+  validates :stripe_card_logo, content_type: [:png, :jpeg]
 
   include HasMetrics
 
@@ -715,6 +715,21 @@ class Event < ApplicationRecord
 
   def eligible_for_indexing?
     eligible_for_transparency? && !risk_level.in?(%w[moderate high])
+  end
+
+  def sync_to_airtable
+    # Sync stats to application's airtable record
+    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
+      app["Active Teens (last 30 days)"] = users.where(teenager: true).last_seen_within(30.days.ago).size
+
+      # For Anish's TUB
+      app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
+      app["Referral Raised 25"] = total_raised > 25_00
+      app["Referral Transparent"] = is_public
+      app["Referral 2 Teen Members"] = organizer_positions.includes(:user).where(user: { teenager: true }).count > 2
+
+      app.save
+    end
   end
 
   private

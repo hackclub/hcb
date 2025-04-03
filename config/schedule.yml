@@ -179,3 +179,7 @@ column_sweep_job:
 stripe_missed_webhooks_job:
   cron: "0/5 * * * *" # run every 5 minutes
   class: "StripeMissedWebhooksJob"
+
+events_sync_to_airtable_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Event::SyncToAirtableJob"
