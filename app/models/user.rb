@@ -195,6 +195,8 @@ class User < ApplicationRecord
 
   scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
+  scope :active, -> { last_seen_within(30.days.ago) }
+  def active? = last_seen_at >= 30.days.ago
 
   # a auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
