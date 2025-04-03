@@ -1,0 +1,52 @@
+<div class="flex items-center filter-menu">
+  <%= render "events/filters/menu", filters: %>
+  <%= link_to nil,
+              class: "-ml-2 pop muted tooltipped tooltipped--s",
+              aria: { label: "Clear filters" },
+              data: { turbo_prefetch: "false" } do %>
+    <%= inline_icon "view-close", size: 28 %>
+  <% end %>
+
+  <div class="filter-menu__chips">
+    <% filters.each do |filter| %>
+      <% if params[filter[:label].downcase] %>
+        <div class="badge badge-large bg-muted">
+          <%= params[filter[:label].downcase].humanize %>
+          <%= link_to upsert_query_params(filter[:label].downcase => nil),
+                      class: "flex items-center",
+                      data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+
+    <% [:amount_less_than, :amount_greater_than].each do |amount_filter| %>
+      <% if params[amount_filter].present? %>
+        <div class="badge badge-large bg-muted">
+          <%= amount_filter.to_s.humanize %> 
+          <%= render_money params[amount_filter].to_i %>
+          <%= link_to upsert_query_params(amount_filter => nil),
+                      class: "flex items-center",
+                      data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+
+    <% [:date_after, :date_before].each do |date_filter| %>
+      <% if params[date_filter].present? %>
+        <div class="badge badge-large bg-muted">
+          <%= date_filter.to_s.humanize %>
+          <%= Date.parse(params[date_filter]).strftime("%B %-d, %Y") %>
+          <%= link_to upsert_query_params(date_filter => nil),
+                      class: "flex items-center",
+                      data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>
