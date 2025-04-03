@@ -261,9 +261,13 @@ class Wire < ApplicationRecord
     end
   end
 
+  UNSUPPORTED_WISE_COUNTRIES = ["IN"]
+
   validate on: :create do
-    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimum_wire_amount_cents)
-      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
+    unless Flipper.enabled?(:wise_transfers, Event.find(event.id)) && !UNSUPPORTED_WISE_COUNTRIES.include?(recipient_country)
+      if usd_amount_cents < (Event.find(event.id).minimum_wire_amount_cents) && !user.admin?
+        errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
+      end
     end
   end
 

@@ -20,7 +20,7 @@
           <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
             <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
               <%= inline_icon "web", size: 28 %>
-              <strong>International Wire</strong>
+              <strong>International transfer</strong>
             <% end %>
           <% end %>
           <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>

@@ -1,6 +1,6 @@
 <% disabled = !policy(@event).create_transfer? %>
 
-<% title "Send a wire" %>
+<% title "Send money internationally" %>
 <%= render "events/nav", selected: :transfers %>
 <% page_sm %>
 
@@ -8,20 +8,34 @@
   <%= render "events/transfers/unauthorized_callout" %>
 <% end %>
 
-<h1>Send a wire</h1>
+<h1>Send money internationally</h1>
 
-<% callout_footer = "This requirement is waived for organizations that have raised over $50,000 in the past year" %>
-<% callout_footer += " and events on plans with exemptions" if @event.plan.exempt_from_wire_minimum? %>
-<% callout_footer += " and exempted events" if !@event.plan.exempt_from_wire_minimum? && Flipper.enabled?(:exempt_from_wire_minimum, @event) %>
-<% callout_footer += "— including #{@event.name}!" unless @event.minimum_wire_amount_cents > 100 %>
-<% callout_footer += " (admins can bypass this)" if current_user.admin? %>
+<% if Flipper.enabled?(:wise_transfers, @event) && @event.minimum_wire_amount_cents > 100 %>
+  <%= render "callout",
+      type: "info",
+      title: "Important information about international transfers" do %>
+      <p>HCB supports two methods of international money transfer: wires and transfers through an external service, <%= link_to "Wise", "https://wise.com/" %>.</p>
+      
+      <p>Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you, <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). </p>
+      
+      <p>Smaller transfers will be send with Wise. Wise will charge a fee ranging from 2% to 10%, an estimate is available <%= link_to "here", "https://wise.com/us/pricing/business/send-money" %>.</p>
+      
+      <p>Wise transfers to India are not supported, therefore, transfers to India have a minimum of $500.</p>
+  <% end %>
+<% else %>
+  <% callout_footer = "The $500 minimum is waived for organizations that have raised over $50,000 in the past year" %>
+  <% callout_footer += " and events on plans with exemptions" if @event.plan.exempt_from_wire_minimum? %>
+  <% callout_footer += " and exempted events" if !@event.plan.exempt_from_wire_minimum? %>
+  <% callout_footer += "— including #{@event.name}!" unless @event.minimum_wire_amount_cents > 100 %>
+  <% callout_footer += " (admins can bypass this)" if current_user.admin? %>
 
-<%= render "callout",
-    type: "info",
-    title: "Important information about wire transfers",
-    footer: callout_footer do %>
-    Unfortunately, wires are expensive to send. Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you,
-    <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). For smaller wires, please reach out to us at <%= mail_to "hcb@hackclub.com" %>.
+  <%= render "callout",
+      type: "info",
+      title: "Important information about wire transfers",
+      footer: callout_footer do %>
+      Unfortunately, wires are expensive to send. Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you,
+      <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). For smaller wires, please reach out to us at <%= mail_to "hcb@hackclub.com" %>.
+  <% end %>
 <% end %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {
