@@ -13,7 +13,7 @@ class ErrorsController < ApplicationController
   end
 
   def timeout
-    render status: 504, layout: "application"
+    render status: :gateway_timeout, layout: "application"
   end
 
   def error
