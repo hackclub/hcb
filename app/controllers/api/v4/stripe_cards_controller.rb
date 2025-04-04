@@ -32,8 +32,6 @@ module Api
 
         if params[:status] == "frozen"
           @stripe_card.freeze! unless @stripe_card.frozen?
-        elsif params[:status] == "active"
-          @stripe_card.defrost! unless @stripe_card.stripe_status == "active"
         end
 
         render "show"
