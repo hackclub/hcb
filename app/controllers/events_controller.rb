@@ -263,6 +263,8 @@ class EventsController < ApplicationController
       @filter = "member"
     when "managers"
       @filter = "manager"
+    when "readers"
+      @filter = "reader"
     end
 
     @q = params[:q] || ""
@@ -272,9 +274,9 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-                           .where(role: @filter || %w[member manager])
-                           .where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
-                           .order(created_at: :desc)
+    @all_positions = @all_positions.where(role: @filter) if @filter
+    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
+                                   .order(created_at: :desc)
 
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
 
