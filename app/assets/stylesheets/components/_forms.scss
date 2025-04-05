@@ -416,8 +416,7 @@ input:where([data-behavior='otp_input']) {
   --_otp-digit: 0;
 
   all: unset;
-  background:
-    linear-gradient(
+  background: linear-gradient(
       90deg,
       rgba(51, 142, 218, 0.125) calc(var(--otp-gap) * var(--otp-ls)),
       transparent 0

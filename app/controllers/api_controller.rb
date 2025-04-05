@@ -1,12 +1,17 @@
 # frozen_string_literal: true
 
 class ApiController < ApplicationController
+  include CountryEnumable
   before_action :check_token, except: [:the_current_user]
   skip_before_action :verify_authenticity_token # do not use CSRF token checking for API routes
   skip_after_action :verify_authorized # do not force pundit
   skip_before_action :signed_in_user
 
   rescue_from(ActiveRecord::RecordNotFound) { render json: { error: "Record not found" }, status: :not_found }
+
+  before_save do
+    self.country_alpha2 = ISO3166::Country[params[:country]]&.alpha2
+  end
 
   def the_current_user
     return head :not_found unless signed_in?

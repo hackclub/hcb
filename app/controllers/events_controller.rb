@@ -17,6 +17,10 @@ class EventsController < ApplicationController
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
 
+  before_save do
+    self.country_alpha2 = ISO3166::Country[params[:country]]&.alpha2
+  end
+
   # GET /events
   def index
     authorize Event
