@@ -3,6 +3,11 @@
 # installs dependencies with Docker Compose and seeds the development database
 # reach out to Max Wofford (max@hackclub.com) if you have any questions or issues
 
+if [[ $* == *--pg15* ]]
+then
+  export COMPOSE_FILE=docker-compose.yml:docker-compose.postgres-12.yml
+fi
+
 echo "
 $(tput setaf 9)HCB:$(tput sgr0) Step 1/5: Copy .env file"
 cp -n .env.development.example .env.development
