@@ -93,7 +93,7 @@
 
   <div class="field">
     <%= form.label :due_date %>
-    <%= form.date_select :due_date, selected: (Date.today + 30.days), disabled: @event.demo_mode? %>
+    <%= form.date_select :due_date, selected: (Date.today + 30.days), min: Date.today, disabled: @event.demo_mode? %>
   </div>
 
   <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
