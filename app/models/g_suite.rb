@@ -9,6 +9,7 @@
 #  deleted_at           :datetime
 #  dkim_key             :text
 #  domain               :citext
+#  immune_to_revocation :boolean          default(FALSE), not null
 #  remote_org_unit_path :text
 #  verification_key     :text
 #  created_at           :datetime         not null
@@ -42,7 +43,8 @@ class GSuite < ApplicationRecord
 
   belongs_to :event
   belongs_to :created_by, class_name: "User", optional: true
-  has_many :accounts, class_name: "GSuiteAccount"
+  has_many :accounts, class_name: "GSuiteAccount", dependent: :destroy
+  has_one :revocation, class_name: "GSuiteRevocation", dependent: :destroy
 
   aasm do
     state :creating, initial: true
@@ -87,6 +89,17 @@ class GSuite < ApplicationRecord
 
   before_validation :clean_up_verification_key
 
+  before_destroy do
+    begin
+      Partners::Google::GSuite::DeleteDomain.new(domain: domain).run
+      Partners::Google::GSuite::Shared::DirectoryClient.directory_client.delete_org_unit(org_unit_path: remote_org_unit_path) if remote_org_unit_path.present?
+    rescue => e
+      Rails.error.report(e)
+      throw :abort
+    end
+    true
+  end
+
   def needs_ops_review?
     @needs_ops_review ||= creating? || verifying?
   end
@@ -113,6 +126,33 @@ class GSuite < ApplicationRecord
 
   def previously_verified?
     versions.where_object_changes_to(aasm_state: "verified").any?
+  end
+
+  def accounts_inactive?
+    begin
+      res = Partners::Google::GSuite::Shared::DirectoryClient.directory_client.list_users(customer: Partners::Google::GSuite::Shared::DirectoryClient.gsuite_customer_id, domain:, max_results: 500)
+      res_count = res.users.count
+      inactive_accounts = []
+      res.users.each do |user|
+        if user.is_admin
+          res_count -= 1
+          next
+        end
+        if user.suspended?
+          res_count -= 1
+          next
+        end
+        user_last_login = Partners::Google::GSuite::Shared::DirectoryClient.directory_client.get_user(user.id).last_login_time
+        if user_last_login.nil? || user_last_login < 6.months.ago
+          inactive_accounts << user
+        end
+      end
+
+      inactive_accounts.count == res_count
+    rescue => e
+      Rails.error.report(e)
+      throw :abort
+    end
   end
 
   private
