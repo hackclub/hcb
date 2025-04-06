@@ -32,7 +32,7 @@ module Api
 
         if params[:status] == "frozen"
           if @stripe_card.canceled?
-            return render json: { error: "Card has been cancelled, it can't be frozen"}, status: :unprocessable_entity
+            return render json: { error: "Card has been cancelled, it can't be frozen" }, status: :unprocessable_entity
           end
 
           @stripe_card.freeze!
