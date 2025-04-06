@@ -30,11 +30,46 @@ module Api
       def update
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
-        if params[:status] == "frozen" && !@stripe_card.frozen?
+        if params[:status] == "frozen"
+          if @stripe_card.canceled?
+            return render json: { error: "Card has been cancelled, it can't be frozen"}, status: :unprocessable_entity
+          end
           @stripe_card.freeze!
-        end
+        elsif params[:status] == "active"
+          if params[:last4].blank?
+            return render json: { error: "Last four digits are required" }, status: :unprocessable_entity
+          end
 
-        render "show"
+          # Find the correct card based on it's last4
+          card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
+          if card.nil? || card.id != @stripe_card.id
+            return render json: { error: "Last four digits are incorrect" }, status: :unprocessable_entity
+          end
+
+          if @stripe_card.canceled?
+            return render json: { error: "Card has been cancelled, it can't be activated." }, status: :unprocessable_entity
+          end
+
+          if @stripe_card.initially_activated?
+            if @stripe_card.created_at < Date.new(2024, 2, 22)
+              @stripe_card.defrost! unless @stripe_card.stripe_status == "active"
+              return render json: { success: "Card activated!" }
+            else
+              return render json: { error: "Card already activated" }, status: :unprocessable_entity
+            end
+          end
+          # If this replaces another card, attempt to cancel the old card. 
+          if @stripe_card.replacement_for
+            suppress(Stripe::InvalidRequestError) do
+              @stripe_card.replacement_for.cancel!
+            end
+          end
+
+          @stripe_card.update(initially_activated: true)
+          @stripe_card.defrost!
+
+          render json: { success: "Card activated!" }
+        end
       end
 
       def ephemeral_keys
