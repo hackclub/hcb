@@ -34,6 +34,7 @@ module Api
           if @stripe_card.canceled?
             return render json: { error: "Card has been cancelled, it can't be frozen"}, status: :unprocessable_entity
           end
+
           @stripe_card.freeze!
         elsif params[:status] == "active"
           if params[:last4].blank?
@@ -58,7 +59,7 @@ module Api
               return render json: { error: "Card already activated" }, status: :unprocessable_entity
             end
           end
-          # If this replaces another card, attempt to cancel the old card. 
+          # If this replaces another card, attempt to cancel the old card.
           if @stripe_card.replacement_for
             suppress(Stripe::InvalidRequestError) do
               @stripe_card.replacement_for.cancel!
