@@ -28,7 +28,7 @@ class Event
       end
 
       def description
-        "The organization, including all of its cards, is frozen."
+        "The organization, including all of its cards, is frozen and hidden."
       end
 
       def features
@@ -37,6 +37,10 @@ class Event
 
       def writeable?
         false
+      end
+
+      def hidden?
+        true
       end
 
     end

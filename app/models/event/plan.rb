@@ -42,6 +42,9 @@ class Event
               card.freeze!
             end
           end
+          if event.plan.hidden?
+            event.update(hidden_at: Time.now)
+          end
         end
       end
     end

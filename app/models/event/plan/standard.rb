@@ -55,6 +55,10 @@ class Event
         true # false if an organization should be read-only
       end
 
+      def hidden?
+        false
+      end
+
     end
 
   end
