@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-4">
   <% admin_tool do %>
-    <strong>Org’s slug history:</strong> <%= @event.slugs.pluck(:slug).join ", " %>
+    <strong>Organization’s slug history:</strong> <%= @event.slugs.pluck(:slug).join ", " %>
   <% end %>
 
   <%= render partial: "admin_viewer", locals: { record: @event } %>
@@ -89,7 +89,7 @@
 
       <div class="field field--checkbox">
         <%= form.check_box :financially_frozen, switch: true %>
-        <%= form.label :financially_frozen, "Is finanically frozen? ⚠️ 🚨" %>
+        <%= form.label :financially_frozen, "Is financially frozen? ⚠️ 🚨" %>
       </div>
 
       <div class="field field--checkbox">
