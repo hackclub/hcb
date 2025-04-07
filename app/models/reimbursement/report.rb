@@ -103,7 +103,7 @@ module Reimbursement
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
             user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts? &&
-              user.payout_method.class != User::PayoutMethod::PaypalTransfer
+              user.payout_method.class != User::PayoutMethod::PaypalTransfer && !event.financially_frozen?
           end
         end
         after do
@@ -122,7 +122,7 @@ module Reimbursement
       event :mark_reimbursement_requested do
         transitions from: :submitted, to: :reimbursement_requested do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
+            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event) && !event.financially_frozen?
           end
         end
         after do
@@ -133,7 +133,7 @@ module Reimbursement
       event :mark_reimbursement_approved do
         transitions from: :reimbursement_requested, to: :reimbursement_approved do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)
+            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event) && !event.financially_frozen?
           end
         end
         after do
@@ -290,7 +290,7 @@ module Reimbursement
     end
 
     def team_review_required?
-      !event.users.include?(user) || OrganizerPosition.find_by(user:, event:)&.member? || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+      !event.users.include?(user) || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
     def reimbursement_confirmation_message

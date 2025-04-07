@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
-  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
   <head>
     <title>
       <%= yield(:title).concat(" –") if content_for?(:title) %>
@@ -20,6 +20,10 @@
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 
+    <% if Rails.env.production? %>
+      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
+
     <% if signed_in? %>
       <script>
         document.addEventListener("turbo:load", () => {
@@ -34,6 +38,8 @@
       </script>
       <script async src="https://cdn.headwayapp.co/widget.js"></script>
     <% end %>
+
+    <%= render "application/helpscout_beacon" %>
 
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
@@ -62,7 +68,7 @@
     *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
           Come hack on HCB with us!
-  <%= Rails.configuration.constants.hack_on_hcb_form_url %>
+  <%= Rails.configuration.constants.github_url %>
   `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
       </script>
     <% end %>
@@ -117,6 +123,14 @@
             <%= inline_icon "view" %>
             <%= show_mock_data? ? "Hide" : "Show" %> mock data
           <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @event&.financially_frozen? && !@no_app_shell && !@no_transparency_header %>
+      <div class="w-full dev-banner no-underline">
+        <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+          <p class="font-bold text-xl m0">⚠️ <%= @event.name %> is currently financially frozen, all incoming and outgoing transactions will be blocked.</p>
         </div>
       </div>
     <% end %>

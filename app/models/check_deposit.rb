@@ -28,6 +28,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CheckDeposit < ApplicationRecord
+  include Freezable
   has_paper_trail
 
   REJECTION_DESCRIPTIONS = {
@@ -71,8 +72,8 @@ class CheckDeposit < ApplicationRecord
   has_one_attached :back
 
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true
-  validates :front, attached: true, processable_image: true
-  validates :back, attached: true, processable_image: true
+  validates :front, attached: true, processable_file: true
+  validates :back, attached: true, processable_file: true
   validates_uniqueness_of :column_id, allow_nil: true
 
   scope :unprocessed, -> { where(increase_id: nil, column_id: nil) }

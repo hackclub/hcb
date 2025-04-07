@@ -53,6 +53,8 @@ class Wire < ApplicationRecord
 
   include AASM
 
+  include Freezable
+
   include CountryEnumable
   has_country_enum(field: :recipient_country)
 
@@ -567,6 +569,12 @@ class Wire < ApplicationRecord
     self.column_id = column_wire_transfer["id"]
     mark_approved
     save!
+  end
+
+  def last_user_change_to(...)
+    user_id = versions.where_object_changes_to(...).last&.whodunnit
+
+    user_id && User.find(user_id)
   end
 
 end
