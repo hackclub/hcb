@@ -42,7 +42,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def hosted?
-    member_or_higher
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
   end
 
   def pdf?
