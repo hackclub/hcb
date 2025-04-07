@@ -1,5 +1,5 @@
-<% if admin_signed_in? || Flipper.enabled?(:command_bar_2024_02_05, current_user) %>
-   <% @admin_urls = current_user&.admin? ? {
+<% if auditor_signed_in? || Flipper.enabled?(:command_bar_2024_02_05, current_user) %>
+   <% @admin_urls = current_user&.auditor? ? {
         "Applications"              => "https://airtable.com/tblctmRFEeluG4do7/viwGhv19cV1ZRj61a",
         "OnBoard ID"                => "https://airtable.com/app4Bs8Tjwvk5qcD4/tblVZwB8QMUSDAd41/viwJ15CT6VHCZ0UZ4",
         "Disputes"                  => "https://airtable.com/appEzv7w2IBMoxxHe/tblTqbwz5AUkzOcVb",
@@ -14,5 +14,5 @@
         "Google Workspace Waitlist" => "https://airtable.com/appEzv7w2IBMoxxHe/tbl9CkfZHKZYrXf1T/viwgfJvrrD9Jn9VLj"
       } : {} %>
 
-   <%= react_component "command_bar/CommandBar", { admin: current_user&.admin?, adminUrls: @admin_urls }, { camelize_props: false } %>
+   <%= react_component "command_bar/CommandBar", { admin: current_user&.auditor?, adminUrls: @admin_urls }, { camelize_props: false } %>
 <% end %>

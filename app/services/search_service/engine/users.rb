@@ -8,14 +8,14 @@ module SearchService
       def initialize(query, user, context)
         @query = query
         @user = user
-        @admin = user.admin?
+        @auditor = user.auditor?
         @context = context
       end
 
       def run
         if @context[:event_id] && @query["types"].length == 1
           users = Event.find(@context[:event_id]).users.where.not(full_name: nil)
-        elsif @admin
+        elsif @auditor
           users = User.where.not(full_name: nil)
         else
           users = User.where(id: @user.events.map { |e| e.users.pluck(:id) }.flatten)
