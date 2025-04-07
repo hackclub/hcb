@@ -109,6 +109,8 @@ class AdminController < ApplicationController
       demo_mode: true
     ).run
 
+    Flipper.enable_actor(:organizer_position_contracts_2025_01_03, event)
+
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
     record["HCB ID"] = event.id
 
