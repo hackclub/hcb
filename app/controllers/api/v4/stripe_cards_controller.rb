@@ -37,6 +37,11 @@ module Api
 
           @stripe_card.freeze!
         elsif params[:status] == "active"
+          if @stripe_card.initially_activated?
+            @stripe_card.defrost! unless @stripe_card.stripe_status == "active"
+            return render json: { success: "Card activated!" }
+          end
+
           if params[:last4].blank?
             return render json: { error: "Last four digits are required" }, status: :unprocessable_entity
           end
