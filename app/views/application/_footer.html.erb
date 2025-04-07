@@ -16,9 +16,11 @@
 
   <p class="footer-extras text-xs flex justify-center gap-1">
     <% if Build.commit_hash.present? %>
-      <span class="tooltipped tooltipped--n tooltipped--xl underline" aria-label="Build <%= Build.commit_name %><%= " from #{Build.age} ago" if Build.age.present? %>">
-        Build info
-      </span>
+      <%= error_boundary fallback_text: "Build info unavailable" do %>
+        <span class="tooltipped tooltipped--n tooltipped--xl underline" aria-label="Build <%= Build.commit_name %>">
+          <%= Build.age.present? ?  "Last built #{Build.age} ago" : "Build info" %>
+        </span>
+      <% end %>
       •
     <% end %>
     <%= link_to "Security", security_path %>
