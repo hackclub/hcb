@@ -691,7 +691,7 @@ class Event < ApplicationRecord
   end
 
   def public_reimbursement_page_available?
-    public_reimbursement_page_enabled && plan.reimbursements_enabled?
+    public_reimbursement_page_enabled && plan.reimbursements_enabled? && finanically_frozen?
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)
