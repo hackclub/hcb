@@ -59,7 +59,7 @@ class Employee
       event :mark_approved do
         transitions from: :submitted, to: :approved do
           guard do
-            !event.frozen?
+            !event.finanically_frozen?
           end
         end
         after do

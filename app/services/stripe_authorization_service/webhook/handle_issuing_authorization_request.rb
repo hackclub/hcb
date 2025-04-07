@@ -55,7 +55,7 @@ module StripeAuthorizationService
       end
 
       def approve?
-        return decline_with_reason!("event_frozen") if event.frozen?
+        return decline_with_reason!("event_frozen") if event.finanically_frozen?
 
         return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?
 

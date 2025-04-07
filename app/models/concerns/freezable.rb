@@ -5,7 +5,7 @@ module Freezable
 
   included do
     validate on: :create do
-      if event.frozen?
+      if event.finanically_frozen?
         errors.add(:base, "This transfer can't be created, #{event.name} is currently frozen.")
       end
     end
