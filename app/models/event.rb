@@ -687,11 +687,11 @@ class Event < ApplicationRecord
   end
 
   def donation_page_available?
-    donation_page_enabled && plan.donations_enabled? && finanically_frozen?
+    donation_page_enabled && plan.donations_enabled? && !finanically_frozen?
   end
 
   def public_reimbursement_page_available?
-    public_reimbursement_page_enabled && plan.reimbursements_enabled? && finanically_frozen?
+    public_reimbursement_page_enabled && plan.reimbursements_enabled? && !finanically_frozen?
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)
