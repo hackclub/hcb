@@ -18,6 +18,7 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
+#  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
 #  is_indexable                                 :boolean          default(TRUE)
@@ -648,6 +649,10 @@ class Event < ApplicationRecord
     !engaged?
   end
 
+  def frozen?
+    Flipper.enabled?(:frozen, self)
+  end
+
   def revenue_fee
     plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
   end
@@ -682,11 +687,11 @@ class Event < ApplicationRecord
   end
 
   def donation_page_available?
-    donation_page_enabled && plan.donations_enabled?
+    donation_page_enabled && plan.donations_enabled? && !financially_frozen?
   end
 
   def public_reimbursement_page_available?
-    public_reimbursement_page_enabled && plan.reimbursements_enabled?
+    public_reimbursement_page_enabled && plan.reimbursements_enabled? && !financially_frozen?
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)

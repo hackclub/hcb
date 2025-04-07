@@ -14,7 +14,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def defrost?
-    freeze?
+    freeze? && !record.event.financially_frozen?
   end
 
   def cancel?
@@ -22,7 +22,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def activate?
-    (user&.admin? || organizer_and_cardholder?) && !record&.canceled?
+    (user&.admin? || organizer_and_cardholder?) && !record&.canceled? && !record.event.financially_frozen?
   end
 
   def show?

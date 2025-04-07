@@ -52,6 +52,7 @@
 class StripeCard < ApplicationRecord
   include Hashid::Rails
   include PublicIdentifiable
+  include Freezable
   set_public_id_prefix :crd
 
   include HasStripeDashboardUrl
