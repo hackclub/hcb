@@ -57,7 +57,11 @@ class Employee
       state :failed
 
       event :mark_approved do
-        transitions from: :submitted, to: :approved
+        transitions from: :submitted, to: :approved do
+          guard do
+            !event.finanically_frozen?
+          end
+        end
         after do
           update!(payout: nil)
         end

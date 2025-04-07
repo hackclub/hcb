@@ -47,6 +47,14 @@ class Disbursement < ApplicationRecord
   include AASM
   include Commentable
 
+  include Freezable
+
+  validate on: :create do
+    if source_event.finanically_frozen?
+      errors.add(:base, "This transfer can't be created, #{source_event.name} is currently frozen.")
+    end
+  end
+
   has_paper_trail
 
   include PublicIdentifiable
