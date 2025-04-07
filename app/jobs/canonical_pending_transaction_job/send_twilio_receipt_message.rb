@@ -29,7 +29,7 @@ module CanonicalPendingTransactionJob
     end
 
     discard_on(Twilio::REST::RestError) do |job, error|
-      Airbrake.notify(error) unless User.find(job.arguments["user_id"]).phone_number.starts_with?("+44") # we can't send text messages to the UK
+      Airbrake.notify(error) unless User.find(job.arguments.first[:user_id]).phone_number.starts_with?("+44") # we can't send text messages to the UK
     end
 
     private
