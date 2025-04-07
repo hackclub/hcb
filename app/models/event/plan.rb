@@ -36,6 +36,12 @@ class Event
         after do |new_type|
           event.reload
           event.create_plan!(type: new_type)
+          unless event.plan.writeable?
+            event.update(financially_frozen: true)
+            event.stripe_cards.active.each do |card|
+              card.freeze!
+            end
+          end
         end
       end
     end
