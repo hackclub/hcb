@@ -3,7 +3,7 @@
     <div class="flex g2 items-start grow">
       <div class="flex justify-between">
         <div class="relative">
-          <%= inline_icon("admin-badge", size: 48, class: "avatar-container__admin-bolt stroke-white dark:stroke-darkless") if organizer_position.user.admin? %>
+          <%= inline_icon("admin-badge", size: 48, class: "avatar-container__admin-bolt stroke-white dark:stroke-darkless") if organizer_position.user.auditor? %>
           <%= avatar_for organizer_position.user, 64 %>
         </div>
       </div>
@@ -77,7 +77,7 @@
           <%= organizer_position.user.email %>
         <% end %>
       </p>
-      <% if admin_signed_in? %>
+      <% if auditor_signed_in? %>
         <p class="organizer-position__contact-block-separator h3 m0 line-height-1">•</p>
         <p class="warning m0">
           <%= copy_to_clipboard(organizer_position.user.phone_number, class: "inline-flex items-center g1 line-height-0") do %>

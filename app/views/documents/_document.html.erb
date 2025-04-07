@@ -1,4 +1,4 @@
-<%= link_to admin_signed_in? ? document : document_download_path(document) do %>
+<%= link_to auditor_signed_in? ? document : document_download_path(document) do %>
   <li class="card card--hover h-100">
     <div class="overflow-hidden" style="max-height: 270px;">
       <%= render "documents/preview", document: %>

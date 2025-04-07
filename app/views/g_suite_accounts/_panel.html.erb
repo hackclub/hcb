@@ -25,7 +25,7 @@
                     <%= status_badge :pending %>
                     <span><%= account.status %>.</span>
                   <% end %>
-                  <% if admin_signed_in? || account.backup_email == current_user&.email %>
+                  <% if auditor_signed_in? || account.backup_email == current_user&.email %>
                     <span>Backup email: <%= content_tag :code, account.backup_email %></span>
                   <% end %>
                 </p>

@@ -2,7 +2,7 @@
 
 class DisbursementPolicy < ApplicationPolicy
   def show?
-    user.admin?
+    user.auditor?
   end
 
   def new?
@@ -20,7 +20,7 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def transfer_confirmation_letter?
-    admin_or_user?
+    auditor_or_user?
   end
 
   def edit?
@@ -49,8 +49,8 @@ class DisbursementPolicy < ApplicationPolicy
 
   private
 
-  def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+  def auditor_or_user?
+    user&.auditor? || record.event.users.include?(user)
   end
 
 end

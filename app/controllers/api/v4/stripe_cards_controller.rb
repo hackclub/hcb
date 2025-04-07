@@ -30,10 +30,8 @@ module Api
       def update
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
-        if params[:status] == "frozen"
-          @stripe_card.freeze! unless @stripe_card.frozen?
-        elsif params[:status] == "active"
-          @stripe_card.defrost! unless @stripe_card.stripe_status == "active"
+        if params[:status] == "frozen" && !@stripe_card.frozen?
+          @stripe_card.freeze!
         end
 
         render "show"

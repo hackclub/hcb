@@ -6,12 +6,15 @@
   <span class="flex flex-grow items-center">
     Team
     <%= badge_for @all_positions.size, class: "bg-muted" %>
+    <% admin_tool("p0 badge", "span") do %>
+      <%= badge_for "#{@all_positions.count { |op| op.user.teenager? && op.user.active? }} active teenagers (30d)", class: "bg-muted ml0" %>
+    <% end %>
   </span>
 
   <%= pop_icon_to @view == "list" ? "grid" : "list",
    "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{params[:q]}" if params[:q]}#{"&filter=#{params[:filter]}" if params[:filter]}" %>
 
-  <% if admin_signed_in? && @event.config.contact_email.present? %>
+  <% if auditor_signed_in? && @event.config.contact_email.present? %>
     <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 36px; width: 36px;" do %>
       <%= link_to "mailto:#{@event.config.contact_email}", class: "flex items-center justify-center", style: "transform: translateY(1px) scale(0.8)" do %>
         <%= inline_icon "email", color: "#ff8c37" %>
@@ -44,7 +47,7 @@
     <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
   <div style="text-align: center;">
-    <% ["all", "members", "managers"].each do |filter| %>
+    <% ["all", "readers", "members", "managers"].each do |filter| %>
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
     <% end %>
   </div>

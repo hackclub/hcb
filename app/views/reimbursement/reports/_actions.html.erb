@@ -181,7 +181,7 @@
         <% elsif report.reimbursement_requested? && !admin_signed_in? %>
           <div class="btn bg-info disabled" style="opacity: 0.75" disabled>
             <%= inline_icon "clock" %>
-            Pending HCB Team Review
+            Pending HCB team review
           </div>
         <% elsif report.reimbursement_requested? %>
           <% admin_tool("overflow-visible") do %>

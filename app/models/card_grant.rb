@@ -46,6 +46,7 @@ class CardGrant < ApplicationRecord
   set_public_id_prefix :cdg
 
   include Freezable
+  include Commentable
 
   belongs_to :event
   belongs_to :subledger, optional: true

@@ -11,7 +11,7 @@
         <span class="regular muted">Attempted to wire</span>
         <%= @hcb_code.wire.recipient_name %>
         <span class="regular"><%= Money.from_cents(@hcb_code.wire.amount_cents, @hcb_code.wire.currency).format %></span>
-        <span class="regular muted">(charged <%= render_money @hcb_code.amount_cents %>)</span>
+        <span class="regular muted">(charged <%= render_money(@hcb_code.amount_cents * -1) %>)</span>
       <% else %>
         <span class="regular muted"><%= @hcb_code.wire.deposited? ? "Transferred " : "Transferring " %> </span>
         <%= @hcb_code.wire.recipient_name %>

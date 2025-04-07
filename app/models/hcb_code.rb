@@ -306,7 +306,7 @@ class HcbCode < ApplicationRecord
   end
 
   def grant?
-    canonical_pending_transactions.first&.grant.present?
+    false
   end
 
   def stripe_card?
@@ -501,7 +501,7 @@ class HcbCode < ApplicationRecord
 
     if comment.admin_only?
       users += self.events.map(&:point_of_contact)
-      return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+      return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
     end
 
     users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)

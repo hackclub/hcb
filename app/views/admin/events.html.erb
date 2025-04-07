@@ -17,6 +17,7 @@
   <div class="flex-grow">
     <%= page_entries_info @events, entry_name: "organizations" %>.
     <%= link_to "Create a new organization", event_new_admin_index_path %>.
+    <%= link_to "Create a new organization from Airtable", event_new_from_airtable_admin_index_path %>.
   </div>
   <%= paginate @events %>
 </div>

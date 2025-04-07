@@ -5,7 +5,7 @@ class MyController < ApplicationController
 
   def activities
     @before = params[:before] || Time.now
-    if admin_signed_in? && cookies[:admin_activities] == "everyone"
+    if auditor_signed_in? && cookies[:admin_activities] == "everyone"
       @activities = PublicActivity::Activity.all.before(@before).order(created_at: :desc).page(params[:page]).per(25)
     else
       @activities = PublicActivity::Activity.for_user(current_user).before(@before).order(created_at: :desc).page(params[:page]).per(25)
@@ -21,8 +21,8 @@ class MyController < ApplicationController
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
-    @status = %w[active inactive canceled].include?(params[:status]) ? params[:status] : nil
-    @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
+    @status = params[:status].presence_in(%w[active inactive canceled]) || nil
+    @type = params[:type].presence_in(%w[virtual physical]) || nil
     @filter_applied = @status || @type
 
     @stripe_cards = @stripe_cards.where(stripe_status: @status) if @status

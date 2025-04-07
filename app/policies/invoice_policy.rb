@@ -2,7 +2,7 @@
 
 class InvoicePolicy < ApplicationPolicy
   def index?
-    return true if user&.admin?
+    return true if user&.auditor?
     return true if record.blank?
 
     event_ids = record.map(&:sponsor).map(&:event).pluck(:id)
@@ -14,39 +14,39 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def new?
-    !unapproved? && (is_public || admin_or_user)
+    !unapproved? && (is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader))
   end
 
   def create?
-    !record.unapproved? && record.plan.invoices_enabled? && (user&.admin? || record.users.include?(user))
+    !record.unapproved? && record.plan.invoices_enabled? && OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def show?
-    is_public || admin_or_user
+    is_public || user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
   end
 
   def archive?
-    admin_or_user
+    member_or_higher
   end
 
   def void?
-    admin_or_user
+    member_or_higher
   end
 
   def unarchive?
-    admin_or_user
+    member_or_higher
   end
 
   def manually_mark_as_paid?
-    admin_or_user
+    member_or_higher
   end
 
   def hosted?
-    admin_or_user
+    member_or_higher
   end
 
   def pdf?
-    admin_or_user
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
   end
 
   def refund?
@@ -55,8 +55,8 @@ class InvoicePolicy < ApplicationPolicy
 
   private
 
-  def admin_or_user
-    user&.admin? || record.sponsor.event.users.include?(user)
+  def member_or_higher
+    OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def is_public
