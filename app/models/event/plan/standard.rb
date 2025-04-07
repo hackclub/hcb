@@ -51,6 +51,10 @@ class Event
         false
       end
 
+      def writeable?
+        true # false if an organization should be read-only
+      end
+
     end
 
   end
