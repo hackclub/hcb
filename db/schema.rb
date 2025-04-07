@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_02_194912) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_07_054637) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -920,6 +920,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_02_194912) do
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.string "short_name"
     t.integer "risk_level"
+    t.boolean "finanically_frozen", default: false, null: false
+    t.boolean "financially_frozen", default: false, null: false
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
