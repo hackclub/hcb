@@ -50,7 +50,7 @@ class Disbursement < ApplicationRecord
   include Freezable
 
   validate on: :create do
-    if source_event.finanically_frozen?
+    if source_event.financially_frozen?
       errors.add(:base, "This transfer can't be created, #{source_event.name} is currently frozen.")
     end
   end

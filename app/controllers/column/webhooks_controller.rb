@@ -35,9 +35,9 @@ module Column
 
       return if account_number.nil? # Allow debits to non-HCB-managed account numbers
 
-      return if (@object[:type].downcase == "credit" || @object[:amount] <= 100) && !account_number.event.finanically_frozen? # Allow incoming ACH credits and small debits
+      return if (@object[:type].downcase == "credit" || @object[:amount] <= 100) && !account_number.event.financially_frozen? # Allow incoming ACH credits and small debits
 
-      if account_number.event.finanically_frozen?
+      if account_number.event.financially_frozen?
         ColumnService.return_ach(@object[:id], with: ColumnService::AchCodes::STOP_PAYMENT)
       elsif account_number.deposit_only?
         ColumnService.return_ach(@object[:id], with: ColumnService::AchCodes::STOP_PAYMENT)
