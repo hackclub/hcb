@@ -14,7 +14,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def defrost?
-    freeze?
+    freeze? && !record.event.financially_frozen?
   end
 
   def cancel?
