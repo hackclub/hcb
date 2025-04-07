@@ -687,7 +687,7 @@ class Event < ApplicationRecord
   end
 
   def donation_page_available?
-    donation_page_enabled && plan.donations_enabled?
+    donation_page_enabled && plan.donations_enabled? && finanically_frozen?
   end
 
   def public_reimbursement_page_available?
