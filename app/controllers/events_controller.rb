@@ -945,6 +945,7 @@ class EventsController < ApplicationController
       :stripe_card_logo,
       :stripe_card_shipping_type,
       :plan,
+      :finanically_frozen,
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,
