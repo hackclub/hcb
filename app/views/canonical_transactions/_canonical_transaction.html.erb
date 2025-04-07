@@ -174,7 +174,7 @@
       <% end %>
     </td>
 
-    <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
+    <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) && !local_assigns[:receipt_upload_button_disabled] %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
         <%= turbo_frame_tag "link_modal_#{ct.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: ct.local_hcb_code.id), turbo_frame: "_top" do %>
