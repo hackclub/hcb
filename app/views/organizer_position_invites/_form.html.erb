@@ -37,6 +37,8 @@
     </ul>
   </div>
 
+  <p class="muted mb1"><span class="bold info">Readers</span> have read-only access to the organization.</p>
+
   <% if Flipper.enabled?(:spending_controls_2024_06_03, @event || invite.event) %>
     <div x-show="role === 'member'" x-cloak x-transition.duration.500ms class="my-4">
       <%= form.label :enable_controls, class: "mb1 inline-flex flex-col" do %>
