@@ -19,7 +19,7 @@
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
 #  financially_frozen                           :boolean          default(FALSE), not null
-#  financially_frozen                           :boolean          default(FALSE), not null
+#  finanically_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
 #  is_indexable                                 :boolean          default(TRUE)
@@ -52,6 +52,8 @@
 #
 class Event < ApplicationRecord
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
+
+  self.ignored_columns = ["finanically_frozen"]
 
   include Hashid::Rails
   extend FriendlyId
