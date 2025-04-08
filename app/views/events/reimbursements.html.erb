@@ -10,7 +10,7 @@
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "reimbursements"),
       data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" %>
+      class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" if organizer_signed_in?(as: :member) %>
   <% if @event.public_reimbursement_page_available? %>
     <%= pop_icon_to "external",
         reimbursement_start_reimbursement_report_url(@event),

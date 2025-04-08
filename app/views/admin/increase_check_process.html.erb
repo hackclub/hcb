@@ -3,7 +3,7 @@
     Back to checks
 <% end %>
 
-<h1>Process Check #<%= @check.id %></h1>
+<h1>Process Check #<%= @check.id %> for <%= @check.event.name %> <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @check.event.financially_frozen? %></h1>
 <p><small>Current Status: <%= @check.aasm_state %></small></p>
 
 <hr>

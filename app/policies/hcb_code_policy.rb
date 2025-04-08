@@ -10,19 +10,19 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def edit?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def update?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def comment?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def attach_receipt?
-    user&.admin? || present_in_events? || user_made_purchase?
+    user&.admin? || gte_member_in_events? || user_made_purchase?
   end
 
   def send_receipt_sms?
@@ -30,23 +30,23 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def dispute?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def pin?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def toggle_tag?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def invoice_as_personal_transaction?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def link_receipt_modal?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def user_made_purchase?
@@ -59,6 +59,13 @@ class HcbCodePolicy < ApplicationPolicy
 
   def present_in_events?
     record.events.select { |e| e.try(:users).try(:include?, user) }.present?
+  end
+
+  # if users have permissions greater than or equal to member in events
+  def gte_member_in_events?
+    record.events.any? do |e|
+      e.try(:users).try(:include?, user) && OrganizerPosition.role_at_least?(user, e, :member)
+    end
   end
 
 end

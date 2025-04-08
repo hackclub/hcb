@@ -6,7 +6,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def shipping?
-    user&.auditor? || organizer?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def freeze?
@@ -14,7 +14,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def defrost?
-    freeze?
+    freeze? && !record.event.financially_frozen?
   end
 
   def cancel?
@@ -22,11 +22,11 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def activate?
-    (user&.admin? || organizer_and_cardholder?) && !record&.canceled?
+    (user&.admin? || organizer_and_cardholder?) && !record&.canceled? && !record.event.financially_frozen?
   end
 
   def show?
-    user&.auditor? || organizer?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def edit?
@@ -38,7 +38,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def transactions?
-    user&.auditor? || organizer? || cardholder?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader) || cardholder?
   end
 
   def ephemeral_keys?
@@ -56,7 +56,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def organizer?
-    record&.event&.users&.include?(user)
+    OrganizerPosition.role_at_least?(user, record&.event, :member)
   end
 
   def cardholder?

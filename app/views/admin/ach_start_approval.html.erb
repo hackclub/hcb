@@ -15,6 +15,10 @@
     (<%= link_to @ach_transfer.creator.phone_number, "tel:#{@ach_transfer.creator.phone_number}" %>, <%= mail_to @ach_transfer.creator.email %>) of <%= link_to @ach_transfer.event.name, @ach_transfer.event %>
   </p>
 
+  <% if @ach_transfer.event.financially_frozen? %>
+    <p class="font-bold">(❄️ ⚠️ EVENT CURRENTLY FINANCIALLY FROZEN)</p>
+  <% end %>
+
   <p>
     <%= avatar_for @ach_transfer.creator %>
   </p>
