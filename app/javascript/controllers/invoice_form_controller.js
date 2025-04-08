@@ -31,8 +31,14 @@ export default class extends Controller {
   }
 
   continue() {
-    document.getElementById('invoice').disabled = false
-    document.getElementById('invoice').click()
+    const inputs = this.sponsorFormTarget.querySelectorAll('input');
+    if ([...inputs].every(input => input.checkValidity())) {
+      document.getElementById('invoice').disabled = false;
+      document.getElementById('invoice').click();
+    } else {
+      this.showNewSponsorCard();
+      [...inputs].reverse().forEach(input => input.reportValidity());
+    }
   }
 
   selectSponsor() {
