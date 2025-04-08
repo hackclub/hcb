@@ -7,7 +7,7 @@
       <p class="bold mt0 mb0">
         This grant has been canceled
         <% if canceled_by = card_grant.last_user_change_to(status: :canceled) %>
-          by <%= user_mention canceled_by %>
+          by <%= user_mention canceled_by, { disable_tooltip: true } %>
         <% end %>
         <% if canceled_at = card_grant.last_time_change_to(status: :canceled) %>
           <span class="tooltipped" aria-label="<%= canceled_at.to_formatted_s(:long) %>">

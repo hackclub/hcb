@@ -22,41 +22,25 @@
 #
 class Event
   class Plan
-    class Standard < Plan
-      def revenue_fee
-        0.07
-      end
-
+    class Terminated < Standard
       def label
-        "full fiscal sponsorship (#{revenue_fee_label})"
+        "terminated"
       end
 
       def description
-        "Has access to all standard features, used for most organizations."
+        "The organization, including all of its cards, is frozen and hidden."
       end
 
       def features
-        Event::Plan.available_features
-      end
-
-      def exempt_from_wire_minimum?
-        false
-      end
-
-      def requires_reimbursement_expense_categorization?
-        false
-      end
-
-      def omit_stats
-        false
+        %w[documentation]
       end
 
       def writeable?
-        true # false if an organization should be read-only
+        false
       end
 
       def hidden?
-        false
+        true
       end
 
     end

@@ -49,7 +49,7 @@
 <% end %>
 
 <div class="flex flex-col gap-[20px]">
-  <% if organizer_signed_in? %>
+  <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden">
       <%= link_to "#", class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
         <%= inline_icon "payment-transfer", size: 20 %>

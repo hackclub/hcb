@@ -2,9 +2,8 @@
   <button
     data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
     data-menu-target="toggle"
-    class="muted tooltipped tooltipped--<%= local_assigns[:tooltip_location] || "s" %> <%= "bg-transparent border-0 p-0" if defined?(top) %>"
+    class="muted <%= "bg-transparent border-0 p-0" if defined?(top) %>"
     type="button"
-    aria-label="Appearance"
     data-action="class#toggle focus#focus">
     <%= inline_icon "moon", size: home_action_size, class: "hidden dark:block" %>
     <%= inline_icon "sun", size: home_action_size, class: "dark:hidden" %>

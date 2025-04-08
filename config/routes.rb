@@ -650,6 +650,8 @@ Rails.application.routes.draw do
 
   match "/404", to: "errors#not_found", via: :all
   match "/500", to: "errors#internal_server_error", via: :all
+  match "/504", to: "errors#timeout", via: :all
+  get "timeout", to: "errors#timeout", via: :all
 
   Rack::Utils::HTTP_STATUS_CODES.keys.select { |c| c >= 400 }.each do |code|
     match "/#{code}", to: "errors#error", via: :all, code:
