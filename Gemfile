@@ -58,7 +58,7 @@ gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
-gem "active_storage_validations", "1.3.5" # file validations
+gem "active_storage_validations", "2.0.2" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
@@ -75,7 +75,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
-gem "browser", "~> 6.1" # browser detection
+gem "browser", "~> 6.2" # browser detection
 
 # Pagination
 gem "kaminari"
@@ -166,12 +166,10 @@ group :development, :test do
   gem "pry-rails", require: ENV["EXCLUDE_PRY"] != "true"
 end
 
-group :development, :staging do
-  gem "query_count"
+gem "query_count"
 
-  gem "rack-mini-profiler", "~> 3.3"
-  gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
-end
+gem "rack-mini-profiler", "~> 3.3"
+gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 
 group :development do
   gem "annotate" # comment models with database schema

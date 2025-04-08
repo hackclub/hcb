@@ -306,7 +306,7 @@ class HcbCode < ApplicationRecord
   end
 
   def grant?
-    canonical_pending_transactions.first&.grant.present?
+    false
   end
 
   def stripe_card?
