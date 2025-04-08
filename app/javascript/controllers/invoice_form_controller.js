@@ -31,13 +31,13 @@ export default class extends Controller {
   }
 
   continue() {
-    const inputs = this.sponsorFormTarget.querySelectorAll('input');
+    const inputs = this.sponsorFormTarget.querySelectorAll('input')
     if ([...inputs].every(input => input.checkValidity())) {
-      document.getElementById('invoice').disabled = false;
-      document.getElementById('invoice').click();
+      document.getElementById('invoice').disabled = false
+      document.getElementById('invoice').click()
     } else {
-      this.showNewSponsorCard();
-      [...inputs].reverse().forEach(input => input.reportValidity());
+      this.showNewSponsorCard()
+      ;[...inputs].reverse().forEach(input => input.reportValidity())
     }
   }
 
