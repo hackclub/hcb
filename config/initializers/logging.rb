@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # https://docs.appsignal.com/logging/integrations/ruby.html#rails-logger
 
 appsignal_logger = Appsignal::Logger.new("rails")
