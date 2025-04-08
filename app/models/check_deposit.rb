@@ -54,7 +54,7 @@ class CheckDeposit < ApplicationRecord
   end
 
   after_update if: -> { increase_status_previously_changed?(to: "deposited") } do
-    canonical_pending_transaction.decline!
+    canonical_pending_transaction.update(fronted: true)
     CheckDepositMailer.with(check_deposit: self).deposited.deliver_later
   end
 
