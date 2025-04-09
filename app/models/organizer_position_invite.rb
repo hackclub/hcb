@@ -97,7 +97,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def pending_signature?
-    is_signee && Flipper.enabled?(:organizer_position_contracts_2025_01_03, event) && organizer_position_contracts.where(aasm_state: :signed).none?
+    is_signee && organizer_position_contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
