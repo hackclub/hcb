@@ -11,6 +11,7 @@
         aria-label="See what’s new with HCB"
         id="changelog-icon">
         <%= inline_icon "rep", size: home_action_size %>
+        <iframe src="https://blog.hcb.hackclub.com/widget?nocache=<%= Time.current.to_i %>" class="absolute top-0 left-0 bg-none border-none scale-[0.4] translate-x-4 pointer-events-none origin-top-left"></iframe>
       </a>
     <% end %>
   </div>
