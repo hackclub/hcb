@@ -57,3 +57,9 @@
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
 <% end %>
+
+<h2>Comments</h2>
+<% if policy(@card_grant.comments.build).create? %>
+  <%= render "comments/list", comments: @card_grant.comments %>
+  <%= render "comments/form", commentable: @card_grant %>
+<% end %>

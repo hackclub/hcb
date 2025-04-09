@@ -32,7 +32,7 @@ class EventsController < ApplicationController
           }
         }
 
-        if admin_signed_in?
+        if auditor_signed_in?
           events.concat(
             Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.select([:slug, :name]).map { |e|
               {
@@ -62,7 +62,7 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
-    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && admin_signed_in?) || @event.demo_mode?
+    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && auditor_signed_in?) || @event.demo_mode?
       redirect_to event_transactions_path(@event.slug)
     end
   end
@@ -172,6 +172,8 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
+    set_cacheable
+
     @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
       event_id: @event.id,
@@ -189,64 +191,9 @@ class EventsController < ApplicationController
       @all_transactions.reject!(&:likely_account_verification_related?)
     end
 
-    @type_filters = {
-      "ach_transfer"           => {
-        "settled" => ->(t) { t.local_hcb_code.ach_transfer? },
-        "pending" => ->(t) { t.raw_pending_outgoing_ach_transaction_id }
-      },
-      "mailed_check"           => {
-        "settled" => ->(t) { t.local_hcb_code.check? || t.local_hcb_code.increase_check? },
-        "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
-      },
-      "hcb_transfer"           => {
-        "settled" => ->(t) { t.local_hcb_code.disbursement? },
-        "pending" => ->(t) { t.local_hcb_code.disbursement? }
-      },
-      "card_charge"            => {
-        "settled" => ->(t) { t.raw_stripe_transaction },
-        "pending" => ->(t) { t.raw_pending_stripe_transaction_id }
-      },
-      "check_deposit"          => {
-        "settled" => ->(t) { t.local_hcb_code.check_deposit? },
-        "pending" => ->(t) { t.check_deposit_id }
-      },
-      "donation"               => {
-        "settled" => ->(t) { t.local_hcb_code.donation? },
-        "pending" => ->(t) { t.raw_pending_donation_transaction_id }
-      },
-      "invoice"                => {
-        "settled" => ->(t) { t.local_hcb_code.invoice? },
-        "pending" => ->(t) { t.raw_pending_invoice_transaction_id }
-      },
-      "refund"                 => {
-        "settled" => ->(t) { t.local_hcb_code.stripe_refund? },
-        "pending" => ->(t) { false }
-      },
-      "fiscal_sponsorship_fee" => {
-        "settled" => ->(t) { t.local_hcb_code.fee_revenue? || t.fee_payment? },
-        "pending" => ->(t) { t.raw_pending_bank_fee_transaction_id }
-      },
-      "reimbursement"          => {
-        "settled" => ->(t) { t.local_hcb_code.reimbursement_expense_payout? },
-        "pending" => ->(t) { false }
-      },
-      "wire"                   => {
-        "settled" => ->(t) { t.local_hcb_code.wire? },
-        "pending" => ->(t) { t.wire_id }
-      },
-      "paypal_transfer"        => {
-        "settled" => ->(t) { t.local_hcb_code.paypal_transfer? },
-        "pending" => ->(t) { t.paypal_transfer_id }
-      }
-    }
-
-    if @type
-      filter = @type_filters[@type]
-      if filter
-        @all_transactions = @all_transactions.select(&filter["settled"])
-        @pending_transactions = @pending_transactions.select(&filter["pending"])
-      end
-    end
+    type_results = self.class.filter_transaction_type(@type, settled_transactions: @all_transactions, pending_transactions: @pending_transactions)
+    @all_transactions = type_results[:settled_transactions]
+    @pending_transactions = type_results[:pending_transactions]
 
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i
@@ -316,6 +263,8 @@ class EventsController < ApplicationController
       @filter = "member"
     when "managers"
       @filter = "manager"
+    when "readers"
+      @filter = "reader"
     end
 
     @q = params[:q] || ""
@@ -325,9 +274,9 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-                           .where(role: @filter || %w[member manager])
-                           .where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
-                           .order(created_at: :desc)
+    @all_positions = @all_positions.where(role: @filter) if @filter
+    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
+                                   .order(created_at: :desc)
 
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
 
@@ -369,13 +318,14 @@ class EventsController < ApplicationController
     end
     fixed_user_event_params.delete(:hidden)
 
-    if fixed_event_params[:plan] && fixed_event_params[:plan] != @event.plan&.type
-      @event.plan.mark_inactive!(fixed_event_params[:plan]) # deactivate old plan and replace it
-    end
-
+    plan_param = fixed_event_params[:plan]
     fixed_event_params.delete(:plan)
+
     begin
       if @event.update(current_user.admin? ? fixed_event_params : fixed_user_event_params)
+        if plan_param && plan_param != @event.plan&.type
+          @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
+        end
         flash[:success] = "Organization successfully updated."
         redirect_back fallback_location: edit_event_path(@event.slug)
       else
@@ -414,7 +364,6 @@ class EventsController < ApplicationController
     @view = cookies[:card_overview_view] || "grid"
 
     @user_id = params[:user].presence
-    @user = User.find(params[:user]) if params[:user]
 
     @has_filter = @status.present? || @type.present? || @user_id.present?
 
@@ -907,6 +856,70 @@ class EventsController < ApplicationController
     redirect_back fallback_location: edit_event_path(@event.slug)
   end
 
+  def self.filter_transaction_type(type, settled_transactions:, pending_transactions:)
+    # Be careful! This is used by the v4 API so beware of breaking changes.
+    type_filters = {
+      "ach_transfer"           => {
+        "settled" => ->(t) { t.local_hcb_code.ach_transfer? },
+        "pending" => ->(t) { t.raw_pending_outgoing_ach_transaction_id }
+      },
+      "mailed_check"           => {
+        "settled" => ->(t) { t.local_hcb_code.check? || t.local_hcb_code.increase_check? },
+        "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
+      },
+      "hcb_transfer"           => {
+        "settled" => ->(t) { t.local_hcb_code.disbursement? },
+        "pending" => ->(t) { t.local_hcb_code.disbursement? }
+      },
+      "card_charge"            => {
+        "settled" => ->(t) { t.raw_stripe_transaction },
+        "pending" => ->(t) { t.raw_pending_stripe_transaction_id }
+      },
+      "check_deposit"          => {
+        "settled" => ->(t) { t.local_hcb_code.check_deposit? },
+        "pending" => ->(t) { t.check_deposit_id }
+      },
+      "donation"               => {
+        "settled" => ->(t) { t.local_hcb_code.donation? },
+        "pending" => ->(t) { t.raw_pending_donation_transaction_id }
+      },
+      "invoice"                => {
+        "settled" => ->(t) { t.local_hcb_code.invoice? },
+        "pending" => ->(t) { t.raw_pending_invoice_transaction_id }
+      },
+      "refund"                 => {
+        "settled" => ->(t) { t.local_hcb_code.stripe_refund? },
+        "pending" => ->(t) { false }
+      },
+      "fiscal_sponsorship_fee" => {
+        "settled" => ->(t) { t.local_hcb_code.fee_revenue? || t.fee_payment? },
+        "pending" => ->(t) { t.raw_pending_bank_fee_transaction_id }
+      },
+      "reimbursement"          => {
+        "settled" => ->(t) { t.local_hcb_code.reimbursement_expense_payout? },
+        "pending" => ->(t) { false }
+      },
+      "wire"                   => {
+        "settled" => ->(t) { t.local_hcb_code.wire? },
+        "pending" => ->(t) { t.wire_id }
+      },
+      "paypal_transfer"        => {
+        "settled" => ->(t) { t.local_hcb_code.paypal_transfer? },
+        "pending" => ->(t) { t.paypal_transfer_id }
+      }
+    }
+
+    if type
+      filter = type_filters[type]
+      if filter
+        settled_transactions = settled_transactions.select(&filter["settled"])
+        pending_transactions = pending_transactions.select(&filter["pending"])
+      end
+    end
+
+    { settled_transactions:, pending_transactions: }
+  end
+
   private
 
   # Only allow a trusted parameter "white list" through.
@@ -945,6 +958,7 @@ class EventsController < ApplicationController
       :stripe_card_logo,
       :stripe_card_shipping_type,
       :plan,
+      :financially_frozen,
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,
@@ -1058,7 +1072,24 @@ class EventsController < ApplicationController
     return false if @tag.present?
     return false if params[:q].present?
 
-    @show_running_balance = current_user&.admin? && current_user.running_balance_enabled?
+    @show_running_balance = current_user&.auditor? && current_user.running_balance_enabled?
+  end
+
+  def set_cacheable
+    return false unless params[:q].blank? &&
+                        params[:page].blank? &&
+                        params[:per].blank? &&
+                        @user.nil? &&
+                        @tag.blank? &&
+                        @type.blank? &&
+                        @start_date.blank? &&
+                        @end_date.blank? &&
+                        @minimum_amount.nil? &&
+                        @maximum_amount.nil? &&
+                        !@missing_receipts
+    return false if organizer_signed_in?
+
+    true
   end
 
   def set_mock_data

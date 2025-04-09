@@ -45,7 +45,7 @@
         }
     }">
       <div class="field">
-        <% if !@event.country_US? %>
+        <% if @international %>
           <%= form.label :amount, "Donation amount (USD)" %>
         <% else %>
           <%= form.label :amount, "Donation amount" %>

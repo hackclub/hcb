@@ -13,6 +13,13 @@
 <table class="table--autosize">
   <tbody>
     <tr>
+      <td>Event:</td>
+      <td>
+        <%= @wire.event.name %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @wire.event.financially_frozen? %>
+      </td>
+    </tr>
+    <tr>
       <td>Requested at:</td>
       <td><%= format_datetime @wire.created_at %></td>
     </tr>

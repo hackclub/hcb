@@ -71,6 +71,9 @@ class AdminController < ApplicationController
   def event_new
   end
 
+  def event_new_from_airtable
+  end
+
   def event_create
     emails = [params[:organizer_email]].reject(&:empty?)
 
@@ -91,6 +94,31 @@ class AdminController < ApplicationController
     redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
   rescue => e
     redirect_to event_new_admin_index_path, flash: { error: e.message }
+  end
+
+  def event_create_from_airtable
+    record = ApplicationsTable.find(params[:airtable_record_id])
+    application = record.fields
+    country = ISO3166::Country.find_country_by_any_name(application["Event Location"])
+    event = ::EventService::Create.new(
+      name: application["Event Name"],
+      country: country&.alpha2,
+      point_of_contact_id: current_user.id,
+      approved: true,
+      organized_by_teenagers: application["TEEN"] == "Teen",
+      demo_mode: true
+    ).run
+
+    Flipper.enable_actor(:organizer_position_contracts_2025_01_03, event)
+
+    record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
+    record["HCB ID"] = event.id
+
+    record.save
+
+    redirect_to event_path(event), flash: { success: "Successfully created #{event.name}" }
+  rescue => e
+    redirect_to event_new_from_airtable_admin_index_path, flash: { error: e.message }
   end
 
   def event_balance
@@ -449,6 +477,17 @@ class AdminController < ApplicationController
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
+  rescue Faraday::Error => e
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+  rescue => e
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
+  end
+
+  def ach_send_realtime
+    ach_transfer = AchTransfer.find(params[:id])
+    ach_transfer.approve!(current_user, send_realtime: true)
+
+    redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
   rescue Faraday::Error => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
   rescue => e
@@ -1083,18 +1122,6 @@ class AdminController < ApplicationController
     end
   end
 
-  def grants
-    @page = params[:page] || 1
-    @per = params[:per] || 20
-    @grants = Grant.includes(:event, :recipient).page(@page).per(@per).order(created_at: :desc)
-
-  end
-
-  def grant_process
-    @grant = Grant.find(params[:id])
-
-  end
-
   def hq_receipts
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -1179,6 +1206,16 @@ class AdminController < ApplicationController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @payments = Employee::Payment.all.page(@page).per(@per)
+  end
+
+  def my_ip
+    render json: {
+      remote_ip: request.remote_ip,
+      ip: request.ip,
+      forwarded_for: request.headers["HTTP_X_FORWARDED_FOR"],
+      forwarded_port: request.headers["HTTP_X_FORWARDED_PORT"],
+      forwarded_proto: request.headers["HTTP_X_FORWARDED_PROTO"],
+    }
   end
 
   private

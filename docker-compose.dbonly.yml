@@ -1,6 +1,5 @@
 # To use this DB-only ("dockerless") setup, pass a `-f docker-compose.dbonly.yml` to docker compose.
 # e.g. `docker compose -f docker-compose.dbonly.yml up`
-version: '3'
 services:
   db:
     image: "postgres:11.16"

@@ -1,19 +1,9 @@
-<% title "Email My Export File" %>
-
-<% content_for :head do %>
-  <meta property="og:site_name" content="HCB">
-  <meta property="og:url" content="https://hcb.hackclub.com">
-  <meta property="og:title" content="Email My Export File">
-<% end %>
+<% title "Email me my export" %>
 
 <div class="container container--sm card py3 md-p3 lg-p4 mt2 mt3 md-mt4 overflow-visible">
   <h3 class="mt2 md-mt0">
     This export is too big, so we'll send you an email when it's ready.
   </h3>
-  <p>
-    We don't store emails submitted here in any of our databases, once you've received your file,
-    you won't hear from us again.
-  </p>
   <%= form_with(model: nil, local: true, method: "get", url: transactions_exports_path(event: @event_slug, format: @file_extension)) do |form| %>
     <%= form.text_field :event, style: "display: none", value: @event_slug %>
     <%= form.text_field :email, class: "w-100 fit my2", placeholder: "fiona@hackclub.com", required: true, type: "email" %>

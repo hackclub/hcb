@@ -16,6 +16,7 @@ WickedPdf.configure do |c|
   # c.exe_path = '/usr/local/bin/wkhtmltopdf',
   #   or
   # exe_path = Gem.bin_path('wkhtmltopdf-binary', 'wkhtmltopdf'),
+  c.exe_path = ENV["WKHTMLTOPDF_PATH"] if ENV["WKHTMLTOPDF_PATH"].present?
 
   # Layout file to be used for all PDFs
   # (but can be overridden in `render :pdf` calls)
