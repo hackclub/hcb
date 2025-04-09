@@ -38,7 +38,7 @@ module Column
 
       event = Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)
 
-      account_number_id = event.column_account_number&.column_id || Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+      account_number_id = event.column_account_number&.column_id || Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
       ColumnService.post("/transfers/ach", {
         idempotency_key:,
@@ -47,8 +47,8 @@ module Column
         type:,
         entry_class_code: "CCD",
         counterparty: {
-          account_number: Rails.application.credentials.svb[:account_number],
-          routing_number: Rails.application.credentials.svb[:routing_number],
+          account_number: Credentials.fetch(:SVB_ACCOUNT_NUMBER),
+          routing_number: Credentials.fetch(:SVB_ROUTING_NUMBER),
         },
         description:,
         company_entry_description: "HCB-SWEEP",

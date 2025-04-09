@@ -203,11 +203,17 @@ class ReceiptsController < ApplicationController
 
   private
 
+  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+                          EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
+                          Api::Models::CardCharge].index_by(&:to_s).freeze
+
   def find_receiptable
-    if params[:receiptable_type].present? && params[:receiptable_id].present?
-      @klass = params[:receiptable_type].constantize
-      @receiptable = @klass.find(params[:receiptable_id])
-    end
+    return unless params[:receiptable_type].present?
+    return unless params[:receiptable_id].present?
+    return unless RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+
+    @klass = RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+    @receiptable = @klass.find(params[:receiptable_id])
   end
 
   def generate_streams

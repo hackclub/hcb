@@ -27,7 +27,7 @@ class Fee < ApplicationRecord
   has_paper_trail
 
   belongs_to :canonical_event_mapping, optional: true
-  belongs_to :event, optional: true
+  belongs_to :event
   has_one :canonical_transaction, through: :canonical_event_mapping
 
   validates :reason, presence: true
@@ -41,10 +41,11 @@ class Fee < ApplicationRecord
   scope :exclude_outflows, -> { where("canonical_transactions.amount_cents > 0") }
   scope :exclude_outflows, -> { includes(canonical_event_mapping: :canonical_transaction).where("canonical_transactions.amount_cents > 0").references(canonical_event_mapping: :canonical_transaction) }
 
-  delegate :date, :memo, :smart_memo, :amount, :amount_cents, to: :canonical_transaction
+  delegate :date, :smart_memo, :amount, :amount_cents, to: :canonical_transaction
 
   enum :reason, {
     revenue: "REVENUE",                     # (Charges fee) Normal revenue
+    manual: "MANUAL",                       # (Charges fee) Manual fee charge
     donation_refunded: "DONATION REFUNDED", # (Doesn't charge fee) Donation refunds
     hack_club_fee: "HACK CLUB FEE",         # (Doesn't charge fee) HCB fee transactions
     revenue_waived: "REVENUE WAIVED",       # (Doesn't charge fee) Revenue transactions with fee waived (either manually or automatically in certain cases)
@@ -61,7 +62,7 @@ class Fee < ApplicationRecord
   end
 
   def waived?
-    reason != "revenue"
+    reason != "revenue" && reason != "manual"
   end
 
   validate do

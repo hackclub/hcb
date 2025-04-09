@@ -1,8 +1,6 @@
 <% title "Enter TOTP code" %>
 <% content_for(:page_class) { "bg-snow" } %>
-<div class="flex items-center justify-between">
-  <%= render partial: "application/logo" %>
-</div>
+
 <div class="flex flex-col flex-1 justify-center">
   <div class="flex flex-col justify-between items-start">
     <%= render "header", label: "Sign in to HCB" do %>
@@ -34,6 +32,7 @@
     </div>
   <% end %>
   <%= javascript_include_tag "otp.js", defer: true %>
+  <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
 <%= render partial: "environment_banner" %>

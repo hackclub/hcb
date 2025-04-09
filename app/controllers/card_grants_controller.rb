@@ -83,7 +83,7 @@ class CardGrantsController < ApplicationController
     render :show, layout: !@frame
 
   rescue Pundit::NotAuthorizedError
-    redirect_to auth_users_path(return_to: card_grant_path(@card_grant)), flash: { info: "Please sign in with the same email you received the invitation at." }
+    redirect_to auth_users_path(return_to: card_grant_path(@card_grant), error: "unauthorised_card_grant")
   end
 
   def spending

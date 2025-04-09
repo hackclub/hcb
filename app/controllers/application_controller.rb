@@ -29,10 +29,32 @@ class ApplicationController < ActionController::Base
     cookies.permanent[:first_visit] = 1
   end
 
+  before_action do
+    # Disallow indexing
+    response.set_header("X-Robots-Tag", "noindex")
+  end
+
+  before_action do
+    # Disallow all external redirects
+    # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
+    params[:return_to] = url_from(params[:return_to])
+  end
+
+  # Enable Rack::MiniProfiler for admins
+  before_action do
+    if current_user&.admin?
+      Rack::MiniProfiler.authorize_request
+    end
+  end
+
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  rescue_from Rack::Timeout::RequestTimeoutException do
+    redirect_to timeout_path
+  end
 
   def hide_footer
     @hide_footer = true
@@ -64,7 +86,7 @@ class ApplicationController < ActionController::Base
   end
 
   def find_current_auditor
-    current_user if admin_signed_in?
+    current_user if auditor_signed_in?
   end
 
   private

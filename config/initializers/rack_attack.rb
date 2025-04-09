@@ -13,7 +13,10 @@ class Rack::Attack
   # Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
   # Safelist Hack Club Office
-  safelist_ip(Rails.application.credentials.office_ip)
+  if office_ip = Credentials.fetch(:OFFICE_IP)
+    safelist_ip(office_ip)
+  end
+  safelist_ip("10.0.0.0/16")
 
   # Get the IP addresses of stripe as an array
   stripe_ips_webhooks = Net::HTTP.get(URI("https://stripe.com/files/ips/ips_webhooks.txt")).split("\n")
@@ -100,6 +103,12 @@ class Rack::Attack
 
   throttle("donations/hq/ip", limit: 100, period: 20.seconds) do |req|
     if req.path.start_with?("/donations/hq")
+      req.ip
+    end
+  end
+
+  throttle("/hq/transactions/ip", limit: 5, period: 20.seconds) do |req|
+    if req.path.start_with?("/hq/transactions") && req.cookies[:session_token].nil?
       req.ip
     end
   end

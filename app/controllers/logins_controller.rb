@@ -10,8 +10,14 @@ class LoginsController < ApplicationController
 
   layout "login"
 
+  after_action only: [:new] do
+    # Allow indexing login page
+    response.delete_header("X-Robots-Tag")
+  end
+
   # view to log in
   def new
+    @return_to = url_from(params[:return_to])
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
@@ -182,7 +188,8 @@ class LoginsController < ApplicationController
       @login = User.find_by_email(session[:auth_email]).logins.create
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
     else
-      raise ActionController::ParameterMissing.new("Missing login.")
+      flash[:error] = "Please try again."
+      redirect_to auth_users_path
     end
   end
 

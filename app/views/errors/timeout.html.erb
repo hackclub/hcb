@@ -1,0 +1,21 @@
+<% turbo_page_requires_reload %>
+
+<div class="center">
+  <h1>That didn't work!</h1>
+  <p>This request timed out.</p>
+  <img
+    src="/dino_debugging.svg"
+    class="dino-svg mt3 mx-auto w-100 block max-width-1"
+    title="wanna help us fix this bug? <%= Rails.configuration.constants.github_url %>">
+</div>
+
+<script>
+  const formUrl = <%= raw Rails.configuration.constants.github_url.to_json %>;
+
+  console.log(
+    `%cOops, something went wrong!\n\n%cwanna help us fix this bug?\n%c${formUrl}`,
+    'font-size: 1.5em; font-weight: bold; color: red;',
+    'font-size: 1.2em; font-weight: bold;',
+    'font-size: 1.2em; font-weight: bold; color: blue;'
+  )
+</script>

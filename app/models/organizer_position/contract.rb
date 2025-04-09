@@ -9,6 +9,7 @@
 #  cosigner_email               :string
 #  deleted_at                   :datetime
 #  external_service             :integer
+#  include_videos               :boolean          default(FALSE), not null
 #  purpose                      :integer          default("fiscal_sponsorship_agreement")
 #  signed_at                    :datetime
 #  void_at                      :datetime
@@ -204,7 +205,7 @@ class OrganizerPosition
         Faraday.new(url: "https://api.docuseal.co/") do |faraday|
           faraday.response :json
           faraday.adapter Faraday.default_adapter
-          faraday.headers["X-Auth-Token"] = Rails.application.credentials.docuseal_key
+          faraday.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
           faraday.headers["Content-Type"] = "application/json"
         end
       end

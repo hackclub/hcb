@@ -107,5 +107,25 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         expect(service.run).to be(true)
       end
     end
+
+    context "when category and merchant locked" do
+      it "approve with a valid merchant and invalid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["1234567890"], category_lock: ["government_licensed_online_casions_online_gambling_us_region_only"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "approve with a valid category and invalid merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["000737075554888"], category_lock: ["grocery_stores_supermarkets"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with invalid category and invalid merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["W9JEIROWXKO5PEO"], category_lock: ["wrecking_and_salvage_yards"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+      end
+    end
   end
 end

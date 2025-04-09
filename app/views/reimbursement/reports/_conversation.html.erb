@@ -3,7 +3,7 @@
 </h2>
 <article>
   <ul class="list-reset comments mb5">
-    <% versions = @report.versions.select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
+    <% versions = @report.versions.includes([:item]).select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
     <% comments = policy_scope(@report.comments) %>
     <% (versions + comments).sort_by(&:created_at).each do |item| %>
       <% if item.instance_of?(Comment) %>

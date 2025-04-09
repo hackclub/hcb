@@ -1,8 +1,6 @@
 <% title "Enter login code" %>
 <% content_for(:page_class) { "bg-snow" } %>
-<div class="flex items-center justify-between">
-  <%= render partial: "application/logo" %>
-</div>
+
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <%= render "header", label: "Sign in to HCB" do %>
     <%= @use_sms_auth ? "SMS" : "Email" %> code
@@ -20,7 +18,7 @@
   <%= form_tag complete_login_path(@login) do %>
     <%= text_field :login_code, "", placeholder: "Enter your login code", name: "login_code", class: "!max-w-full w-max", required: true, autofocus: true unless Flipper.enabled?(:otp_single_input, @login.user) %>
 
-    <%= text_field :login_code, "", name: "code", class: "otp_code", autocomplete: "one-time-code", required: true, inputmode: "numeric", maxlength: "6", autofocus: true, data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
+    <%= text_field :login_code, "", class: "otp_code", autocomplete: "one-time-code", required: true, inputmode: "numeric", maxlength: "6", autofocus: true, data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
     <%= hidden_field_tag :method, :login_code %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>
@@ -41,6 +39,7 @@
       </button>
     </div>
   <% end %>
+  <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
 <%= render partial: "environment_banner" %>
