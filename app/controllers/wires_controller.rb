@@ -6,6 +6,10 @@ class WiresController < ApplicationController
   before_action :set_event, only: %i[new create]
   before_action :set_wire, only: %i[approve reject send_wire]
 
+  before_save do
+    self.country_alpha2 = ISO3166::Country[params[:recipient_country]]&.alpha2
+  end
+
   def new
     @wire = @event.wires.build
 
