@@ -26,7 +26,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def archive?
-     user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
   end
 
   def void?
