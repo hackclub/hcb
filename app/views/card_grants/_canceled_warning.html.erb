@@ -4,7 +4,17 @@
   <div class="card border b--info mt3 container--sm mr-auto">
     <div class="flex items-center info">
       <%= inline_icon "info", size: 32, class: "mr1" %>
-      <p class="bold mt0 mb0">This grant has been canceled.</p>
+      <p class="bold mt0 mb0">
+        This grant has been canceled
+        <% if canceled_by = card_grant.last_user_change_to(status: :canceled) %>
+          by <%= user_mention canceled_by, { disable_tooltip: true } %>
+        <% end %>
+        <% if canceled_at = card_grant.last_time_change_to(status: :canceled) %>
+          <span class="tooltipped" aria-label="<%= canceled_at.to_formatted_s(:long) %>">
+            <%= time_ago_in_words canceled_at %> ago
+          </span>
+        <% end %>
+      </p>
     </div>
   </div>
 <% end %>

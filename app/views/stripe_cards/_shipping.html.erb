@@ -14,10 +14,9 @@
   </h3>
   <section class="pl2 mb2 drop-shadow-lg flex flex-col" style="gap: 8px;">
     <%= render_address OpenStruct.new(stripe_card.attributes.transform_keys { |key| key.gsub(/^stripe_shipping_/, "") }) %>
-    <% eta = stripe_card.stripe_obj&.shipping&.eta %>
     <span>
-      <% if eta %>
-        Estimated to arrive <%= format_date Time.at(stripe_card.stripe_obj&.shipping&.eta).to_date %>.
+      <% if stripe_card.shipping_eta.present? %>
+        Estimated to arrive <%= format_date stripe_card.shipping_eta %>.
       <% else %>
         No estimated arrival date at this time.
       <% end %>

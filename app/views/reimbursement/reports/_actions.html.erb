@@ -70,13 +70,18 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex justify-end">
-        <% if !user.payout_method.present? || report.payout_holding&.failed? %>
+        <% if !user.payout_method.present? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer) %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
-              <%= report.payout_holding&.failed? ? "Edit" : "Add" %> Payout Information
+              <%= report.payout_holding&.failed? || user.payout_method.present? ? "Edit" : "Add" %> Payout Information
               <% button_hint = capture do %>
-                <span class="bold">Your next step:</span> before you can be reimbursed, you need to provide HCB your payout information.
+                <span class="bold">Your next step:</span> before you can be reimbursed, you need to
+                <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
+                  update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                <% else %>
+                  provide HCB your payout information.
+                <% end %>
               <% end %>
             <% end %>
           <% elsif admin_signed_in? %>
@@ -84,7 +89,12 @@
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s Payout Information
               <% button_hint = capture do %>
-                <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
+                <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
+                <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
+                  update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                <% else %>
+                  add their payout information.
+                <% end %>
               <% end %>
             <% end %>
           <% elsif !user.payout_method.present? %>
@@ -120,6 +130,8 @@
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
+              <% elsif report.event&.financially_frozen? %>
+               <span class="bold warning">Warning</span>: <%= report.event.name %> is currently frozen.
               <% elsif report.event.nil? %>
                <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { behavior: "modal_trigger", modal: "edit" } %> to request reimbursement from.
               <% end %>
@@ -154,22 +166,22 @@
             <%= inline_icon "payment-transfer" %>
             Reimburse <%= render_money report.amount_to_reimburse %>
           <% end %>
-        <% elsif report.submitted? && !::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) && policy(report).request_reimbursement? %>
+        <% elsif report.submitted? && (!::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) || report.event.financially_frozen?) && policy(report).request_reimbursement? %>
           <div class="tooltipped tooltipped--n" aria-label="This event can not fulfill this request.">
             <div class="btn bg-info disabled">
               <%= inline_icon "payment-transfer" %>
               Reimburse <%= render_money report.amount_to_reimburse %>
             </div>
           </div>
-        <% elsif report.submitted? && policy(report).approve_all_expenses? %>
+        <% elsif report.submitted? && policy(report).approve_all_expenses? && report.expenses.approved.none? %>
           <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", method: :post do %>
             <%= inline_icon "thumbsup" %>
-            Approve All Expenses
+            Approve all expenses
           <% end %>
         <% elsif report.reimbursement_requested? && !admin_signed_in? %>
           <div class="btn bg-info disabled" style="opacity: 0.75" disabled>
             <%= inline_icon "clock" %>
-            Pending HCB Team Review
+            Pending HCB team review
           </div>
         <% elsif report.reimbursement_requested? %>
           <% admin_tool("overflow-visible") do %>

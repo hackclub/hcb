@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module Event
@@ -22,14 +23,19 @@ class Metric
       include Subject
 
       def calculate
-        transactions = TransactionGroupingEngine::Transaction::All.new(event_id: event.id).run
-        TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions:, event:).run!
+        # 1. Get memos from event
+        transactions = event.canonical_transactions
+                            .where("EXTRACT(YEAR FROM date) = 2024")
+                            .select("COALESCE(custom_memo, memo) as memo, hcb_code")
+                            .to_h { |r| [r.hcb_code, r.memo] }
 
-        # 1. Filter transactions by year
-        transactions.filter! { |t| t.date&.to_date&.year == 2024 }
+        event.canonical_pending_transactions
+             .where("EXTRACT(YEAR FROM date) = 2024")
+             .select("COALESCE(custom_memo, memo) as memo, hcb_code")
+             .each { |r| transactions[r.hcb_code] ||= r.memo }
 
         # 2. Get words from transaction memos
-        words = transactions.flat_map { |t| t.local_hcb_code.memo(event:).split }
+        words = transactions.values.flat_map(&:split)
 
         # 3. Clean words
         words.map!(&method(:clean))
@@ -56,7 +62,9 @@ class Metric
       end
 
       def stop_word?(str)
-        str.in? %w[the of and to in is for from a]
+        stop_words = %w[the of and to in is for from a]
+        boring_words = %w[tax cnd net tst* inc inc.]
+        str.in?(stop_words + boring_words)
       end
 
       def numeric?(str)

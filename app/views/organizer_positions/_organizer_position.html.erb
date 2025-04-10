@@ -3,7 +3,7 @@
     <div class="flex g2 items-start grow">
       <div class="flex justify-between">
         <div class="relative">
-          <%= inline_icon("admin-badge", size: 48, class: "avatar-container__admin-bolt stroke-white dark:stroke-darkless") if organizer_position.user.admin? %>
+          <%= inline_icon("admin-badge", size: 48, class: "avatar-container__admin-bolt stroke-white dark:stroke-darkless") if organizer_position.user.auditor? %>
           <%= avatar_for organizer_position.user, 64 %>
         </div>
       </div>
@@ -77,7 +77,7 @@
           <%= organizer_position.user.email %>
         <% end %>
       </p>
-      <% if admin_signed_in? %>
+      <% if auditor_signed_in? %>
         <p class="organizer-position__contact-block-separator h3 m0 line-height-1">•</p>
         <p class="warning m0">
           <%= copy_to_clipboard(organizer_position.user.phone_number, class: "inline-flex items-center g1 line-height-0") do %>
@@ -92,21 +92,31 @@
     <p class="m0">
       Invited
       <%= relative_timestamp(organizer_position.organizer_position_invite.created_at) %>
-      <%= "as a contract signee" if organizer_position.signee? && organizer_position.event.organizer_positions.where(is_signee: nil).none? %>
+      <%= "as a contract signee" if organizer_position.signee? || organizer_position.organizer_position_invite&.organizer_position_contract.present? %>
       by <%= organizer_position.organizer_position_invite.sender.name %>
     </p>
     <% user_mention organizer_position.organizer_position_invite.sender %>
     <% if admin_signed_in? %>
-      <div class="absolute right-0 bottom-0 line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.signee? ? "Contract signee" : "No contract signature") + ". Click to toggle." %>">
-        <%= link_to toggle_signee_status_organizer_path(organizer_position.id), data: { turbo_method: "post", turbo_frame: "_top", turbo_confirm: "Are you sure you want to toggle #{organizer_position.user.name}'s contract signee status?" } do %>
-          <div class="warning">
-            <% if organizer_position.signee? %>
+      <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.organizer_position_invite.organizer_position_contract.present? ? organizer_position.organizer_position_invite.organizer_position_contract.signed? ? "Contract signee" : "Pending signature, click to void this contract" : "No contract signature") %>">
+        <div class="warning">
+          <% if organizer_position.organizer_position_invite.organizer_position_contract&.signed? %>
+            <%= link_to organizer_position.organizer_position_invite.organizer_position_contract.document || event_documents_path(event: organizer_position.event), class: "success", data: { turbo_frame: "_top" } do %>
               <%= inline_icon("docs-positive", size: 24) %>
-            <% else %>
+            <% end %>
+          <% elsif organizer_position.organizer_position_invite.organizer_position_contract&.present? %>
+            <%= link_to void_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), class: "primary", data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :POST } do %>
+              <%= inline_icon("clock", size: 24) %>
+            <% end %>
+          <% else %>
+            <%= link_to "#", class: "warning", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position.organizer_position_invite.id}" } do %>
               <%= inline_icon("docs-negative", size: 24) %>
             <% end %>
-          </div>
-        <% end %>
+            <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position.organizer_position_invite.id %>">
+              <%= modal_header "Send a contract" %>
+              <%= render "organizer_position_contract/form", organizer_position_contract: OrganizerPosition::Contract.new(organizer_position_invite_id: organizer_position.organizer_position_invite.id) %>
+            </section>
+          <% end %>
+        </div>
       </div>
     <% end %>
   </div>

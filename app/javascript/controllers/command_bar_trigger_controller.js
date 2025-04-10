@@ -5,8 +5,9 @@ export default class extends Controller {
 
   connect() {
     const isWindows = navigator.userAgent.toUpperCase().indexOf('WIN') >= 0
-    document
-      .getElementById('command_bar_trigger')
-      .setAttribute('aria-label', `Jump to (${isWindows ? 'Ctrl' : '⌘'} + K)`)
+    this.triggerTarget.setAttribute(
+      'aria-label',
+      `Jump to (${isWindows ? 'Ctrl' : '⌘'} + K)`
+    )
   }
 }

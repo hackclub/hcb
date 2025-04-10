@@ -14,6 +14,9 @@
   <% elsif @card_grant.user == current_user %>
     <div>
       <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
+      <% if @card_grant.purpose.present? %>
+        <h2><%= @card_grant.purpose %></h2>
+      <% end %>
       <%= render @card_grant.stripe_card, headless: true, show_card_number: true %>
       <%= render partial: "balance", locals: { card_grant: @card_grant } %>
       <div class="flex items-center mt3 justify-center">
@@ -44,6 +47,7 @@
           <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
         <% end %>
       <% end %>
+      <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
     </div>
   <% end %>
 </div>
@@ -52,4 +56,10 @@
 
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
+<% end %>
+
+<h2>Comments</h2>
+<% if policy(@card_grant.comments.build).create? %>
+  <%= render "comments/list", comments: @card_grant.comments %>
+  <%= render "comments/form", commentable: @card_grant %>
 <% end %>

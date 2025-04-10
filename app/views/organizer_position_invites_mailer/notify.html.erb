@@ -2,6 +2,9 @@
 
 <% if @invite.event.demo_mode? == false || @invite.initial? == false %>
   <p>
+    <% if @invite.organizer_position_contracts.where(aasm_state: :signed).any? %>
+      Thank you for signing the HCB contract!
+    <% end %>
     You've been invited by <strong><%= @invite.sender.name %></strong> to <%= @invite.manager? ? "manage" : "be a member of" %> <strong><%= @invite.event.name %></strong>,
     <% if @invite.event.demo_mode? %>
       a Demo Account
@@ -34,5 +37,5 @@
 
 <p>
   Best,<br>
-  The <%= link_to "HCB", "https://hackclub.com/hcb" %> Team
+  The <%= link_to "HCB", "https://hackclub.com/hcb?utm_source=hcb&utm_medium=email" %> Team
 </p>

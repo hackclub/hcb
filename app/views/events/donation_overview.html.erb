@@ -37,7 +37,7 @@
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "donations"),
       data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "donation_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" if organizer_signed_in? %>
+      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" if organizer_signed_in?(as: :member) %>
   <% if @event.donation_page_available? %>
     <%= link_to start_donation_donations_path(@event), target: "_blank", class: "btn" do %>
       <%= inline_icon "external" %>
@@ -134,7 +134,7 @@
   </div>
 </div>
 
-<% if @recurring_donations.size > 0 %>
+<% if @recurring_donations.size > 0 && @donations.current_page == 1 %>
   <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
     Recurring donations
   </h2>
@@ -218,7 +218,6 @@
 
 <% if @donations.size > 0 %>
 <article class="table-container">
-
   <table>
     <thead>
       <tr>
@@ -266,7 +265,7 @@
       <% end %>
     </tbody>
   </table>
-
+  <%= paginate @donations %>
 </article>
 
 <% else %>

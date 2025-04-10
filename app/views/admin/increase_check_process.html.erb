@@ -3,7 +3,7 @@
     Back to checks
 <% end %>
 
-<h1>Process Check #<%= @check.id %></h1>
+<h1>Process Check #<%= @check.id %> for <%= @check.event.name %> <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @check.event.financially_frozen? %></h1>
 <p><small>Current Status: <%= @check.aasm_state %></small></p>
 
 <hr>
@@ -36,6 +36,16 @@
       <td style="text-align: right;">Amount:</td>
       <td><%= render_money @check.amount %></td>
     </tr>
+    <% if @check.employee_payment.present? %>
+      <tr>
+        <td style="text-align: right;">Employee:</td>
+        <td><%= @check.employee_payment.employee.user.name %></td>
+      </tr>
+      <tr>
+        <td style="text-align: right;">Event:</td>
+        <td><%= @check.employee_payment.employee.event.name %></td>
+      </tr>
+    <% end %>
   </tbody>
 </table>
 

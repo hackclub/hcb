@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module User
@@ -22,16 +23,7 @@ class Metric
       include Subject
 
       def calculate
-        count = 0
-
-        stripe_cards = user.stripe_cards.includes(:event)
-        emburse_cards = user.emburse_cards.includes(:event)
-
-        (stripe_cards + emburse_cards).each do |card|
-          card.hcb_codes.missing_receipt.receipt_required.count
-        end
-
-        count
+        user.transactions_missing_receipt_count
       end
 
     end

@@ -24,6 +24,7 @@
 #  recipient_email           :string           not null
 #  recipient_information     :jsonb
 #  recipient_name            :string           not null
+#  return_reason             :text
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -51,6 +52,8 @@ class Wire < ApplicationRecord
   blind_index :account_number, :bic_code
 
   include AASM
+
+  include Freezable
 
   include CountryEnumable
   has_country_enum(field: :recipient_country)
@@ -248,9 +251,21 @@ class Wire < ApplicationRecord
     end
   end
 
+  # View https://github.com/hackclub/hcb/issues/9037 for context. Limited in India only, at the moment.
+
+  RESTRICTED_PURPOSE_CODES = {
+    "IN": ["P1302", "P1303", "P1304", "P1499", "P0099", "P0001", "P1011", "P1099"]
+  }.freeze
+
   validate on: :create do
-    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimumn_wire_amount_cents)
-      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimumn_wire_amount_cents} (USD).")
+    if recipient_information[:purpose_code].present? && RESTRICTED_PURPOSE_CODES[recipient_country.to_sym]&.include?(recipient_information[:purpose_code])
+      errors.add(:purpose_code, "can not be used on HCB, please use a more specific purpose code or contact us.")
+    end
+  end
+
+  validate on: :create do
+    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimum_wire_amount_cents)
+      errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
     end
   end
 
@@ -279,9 +294,10 @@ class Wire < ApplicationRecord
 
     event :mark_failed do
       transitions from: [:deposited, :approved], to: :failed
-      after do |reason: nil|
+      after do |reason = nil|
         WireMailer.with(wire: self, reason:).notify_failed.deliver_later
         create_activity(key: "wire.failed", owner: nil)
+        update(return_reason: reason)
       end
     end
   end
@@ -289,6 +305,7 @@ class Wire < ApplicationRecord
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
 
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
 
@@ -321,7 +338,7 @@ class Wire < ApplicationRecord
   end
 
   def admin_dropdown_description
-    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_email} from #{event.name}"
+    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
   end
 
   def local_hcb_code
@@ -552,6 +569,12 @@ class Wire < ApplicationRecord
     self.column_id = column_wire_transfer["id"]
     mark_approved
     save!
+  end
+
+  def last_user_change_to(...)
+    user_id = versions.where_object_changes_to(...).last&.whodunnit
+
+    user_id && User.find(user_id)
   end
 
 end

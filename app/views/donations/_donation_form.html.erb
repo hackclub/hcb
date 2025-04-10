@@ -9,7 +9,7 @@
   </ul>
 
   <%= form_with(model: @monthly ? [@event, @recurring_donation] : donation, local: true, url: (make_donation_donations_path unless @monthly),
-                class: "card mx-auto max-width-1 mb3", data: { turbo: true, turbo_action: "advance" }) do |form| %>
+                class: "card mx-auto max-width-1 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
     <% donation = @recurring_donation if @monthly %>
 
     <%= form.invisible_captcha :subtitle %>
@@ -17,13 +17,13 @@
 
     <div class="field mb2">
       <%= form.label :name, "Your name" %>
-      <%= form.text_field :name, placeholder: "Fiona Hackworth", required: true, autofocus: true %>
+      <%= form.text_field :name, placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
     </div>
 
     <div class="field mb2">
       <%= form.label :email, "Your email" %>
       <span class="muted block h5">We’ll send <%= @monthly ? "receipts" : "a receipt" %> here for your tax records.</span>
-      <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true %>
+      <%= form.email_field :email, placeholder: "jsmith@gmail.com", required: true, autocomplete: "off" %>
       <% donation.errors.messages_for(:email).each do |message| %>
         <div class="primary"><%= message %></div>
       <% end %>
@@ -45,7 +45,7 @@
         }
     }">
       <div class="field">
-        <% if !@event.country_US? %>
+        <% if @international %>
           <%= form.label :amount, "Donation amount (USD)" %>
         <% else %>
           <%= form.label :amount, "Donation amount" %>
@@ -82,7 +82,7 @@
           <%= form.label :fee_covered, style: "display: inline; flex-grow: 1;" do %>
             <span x-text="'Add $' + additionalAmountToCoverFee + ' to cover all fees'"></span>
           <% end %>
-          <a class="tooltipped tooltipped--w link--ignore flex" aria-label="By clicking this box, you are covering fiscal sponsorship and credit card processing fees." tabindex="0">
+          <a class="tooltipped tooltipped--w link--ignore flex" aria-label="By clicking this box, you are covering credit card processing and fiscal sponsorship fees." tabindex="0">
             <%= inline_icon "info", width: 24 %>
           </a>
         </div>
@@ -105,6 +105,13 @@
       <%# we include it here to ensure that this colour is used at all stages %>
       <%= form.hidden_field :background, value: @background, name: :background %>
     <% end %>
+
+    <%= form.hidden_field :utm_source %>
+    <%= form.hidden_field :utm_medium %>
+    <%= form.hidden_field :utm_campaign %>
+    <%= form.hidden_field :utm_term %>
+    <%= form.hidden_field :utm_content %>
+    <%= form.hidden_field :referrer %>
 
     <% if @event.demo_mode? %>
       <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: "true" %>

@@ -17,13 +17,13 @@ module PendingEventMappingEngine
           prefix = grab_prefix(donation:)
 
           # 2. look up canonical - using HCB short code
-          cts ||= event.canonical_transactions.where("memo ilike 'HCKCLB HCB-#{cpt.local_hcb_code.short_code}%'")
+          cts ||= event.canonical_transactions.where("memo ilike ?", "HCKCLB HCB-#{ActiveRecord::Base.sanitize_sql_like(cpt.local_hcb_code.short_code)}%")
 
           # 2b. look up canonical - scoped to event for added accuracy
-          cts ||= event.canonical_transactions.where("memo ilike '%DONAT% #{prefix}%'")
+          cts ||= event.canonical_transactions.where("memo ilike ?", "%DONAT% #{ActiveRecord::Base.sanitize_sql_like(prefix)}%")
 
           # 2.b special case if donation is quite old & now results
-          cts ||= event.canonical_transactions.where("memo ilike '%DONAT% #{prefix[0]}%'") if cts.count < 1 && donation.created_at < Time.utc(2020, 1, 1) # shorter prefix. see Donation id 1 for example.
+          cts ||= event.canonical_transactions.where("memo ilike ?", "%DONAT% #{ActiveRecord::Base.sanitize_sql_like(prefix[0])}%") if cts.count < 1 && donation.created_at < Time.utc(2020, 1, 1) # shorter prefix. see Donation id 1 for example.
 
           next if cts.count < 1 # no match found yet. not processed.
 

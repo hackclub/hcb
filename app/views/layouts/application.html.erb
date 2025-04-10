@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
-  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
   <head>
     <title>
       <%= yield(:title).concat(" –") if content_for?(:title) %>
@@ -20,6 +20,10 @@
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 
+    <% if Rails.env.production? %>
+      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
+
     <% if signed_in? %>
       <script>
         document.addEventListener("turbo:load", () => {
@@ -34,6 +38,8 @@
       </script>
       <script async src="https://cdn.headwayapp.co/widget.js"></script>
     <% end %>
+
+    <%= render "application/helpscout_beacon" %>
 
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
@@ -62,7 +68,7 @@
     *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
           Come hack on HCB with us!
-  <%= Rails.configuration.constants.hack_on_hcb_form_url %>
+  <%= Rails.configuration.constants.github_url %>
   `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
       </script>
     <% end %>
@@ -90,6 +96,7 @@
                         step: @tour&.step || 0,
                         options: @tour&.tourable&.try(:tourable_options) || {},
                         back_to_tour: @back_to_tour %>
+
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
@@ -101,7 +108,7 @@
       <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
         <p class="h5 font-medium text-center text-balance mt1 mb1">
           This HCB organization has made their finances public.
-          Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
+          Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=hcb-transparency&utm_content=banner", target: "_blank", class: "primary" %>
         </p>
       </div>
     <% end %>
@@ -120,9 +127,24 @@
       </div>
     <% end %>
 
+    <% if @event&.financially_frozen? && !@no_app_shell && !@no_transparency_header %>
+      <% if @event.plan.is_a?(Event::Plan::Terminated) %>
+        <div class="w-full dev-banner dev-banner--info rounded-b no-underline">
+          <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+            <p class="font-bold text-xl m0"><%= @event.name %> has been terminated, thanks for working with HCB!</p>
+          </div>
+        </div>
+      <% else %>
+        <div class="w-full dev-banner no-underline">
+          <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+            <p class="font-bold text-xl m0">⚠️ <%= @event.name %> is currently financially frozen, all incoming and outgoing transactions will be blocked.</p>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
     <%# LET THERE BE SNOW %>
     <% if winter? %>
-      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
       <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
     <% end %>
 
@@ -181,9 +203,7 @@
 
     <%= render "application/support_button" unless @no_app_shell %>
 
-    <% if Rails.env.production? %>
-      <%= render "application/fullstory" if current_user&.sessions_reported %>
-    <% end %>
+    <%= render "application/fullstory" %>
 
     <% if flash[:confetti] %>
       <script src="/brand/js-confetti.browser.js"></script>

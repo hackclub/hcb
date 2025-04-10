@@ -1,6 +1,7 @@
 <% @donation = @hcb_code.donation %>
 
 <% title "#{render_money(@donation.amount)} donation to #{@donation.event.name}" %>
+<% instance = @hcb_code.hashid %>
 
 <%= render partial: "admin_viewer", locals: { record: @donation } %>
 <%= render partial: "admin_viewer", locals: { record: @donation.payout } unless @donation.payout.nil? %>
@@ -133,6 +134,22 @@
         </span>
       </span>
     </p>
+    <% if [@donation.referrer, @donation.utm_source, @donation.utm_medium, @donation.utm_campaign, @donation.utm_term, @donation.utm_content].any?(&:present?) %>
+      <p>
+        <strong>Referrer</strong>
+
+        <action data-behavior="modal_trigger" data-modal="referrer_details_<%= instance %>" class="pointer" tabindex="0">
+          <span class="inline-flex">
+              <% if @donation.referrer_favicon_url.present? %>
+                <img src="<%= @donation.referrer_favicon_url %>" height="24" width="24" class="mr-2 rounded-lg" alt="Icon indicating referrer">
+              <% end %>
+              <%= @donation.referrer_domain || @donation.referrer || "Unknown" %>
+
+            <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
+          </span>
+        </action>
+      </p>
+    <% end %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
@@ -196,3 +213,52 @@
     </article>
   </section>
 <% end %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="referrer_details_<%= instance %>">
+  <% header = capture do %>
+    <% if @donation.referrer_favicon_url.present? %>
+      <img src="<%= @donation.referrer_favicon_url %>" height="36" width="36" class="mr-2 rounded-lg align-bottom" alt="Icon indicating referrer">
+    <% end %>
+    <%= @donation.referrer_domain || @donation.referrer || "Referrer and UTM parameters" %>
+  <% end %>
+
+  <%= modal_header header %>
+
+  <% none = capture do %>
+    <span class="muted">Unknown</span>
+  <% end %>
+
+  <div class="details mb2">
+    <p>
+      <strong>Referrer</strong>
+      <%= @donation.referrer.presence || capture do %>
+        <span class="muted">Unknown</span>
+      <% end %>
+    </p>
+    <p>
+      <strong>UTM source</strong>
+      <%= @donation.utm_source.presence || none %>
+    </p>
+    <p>
+      <strong>UTM medium</strong>
+      <%= @donation.utm_medium.presence || none %>
+    </p>
+    <p>
+      <strong>UTM campaign</strong>
+      <%= @donation.utm_campaign.presence || none %>
+    </p>
+    <p>
+      <strong>UTM term</strong>
+      <%= @donation.utm_term.presence || none %>
+    </p>
+    <p>
+      <strong>UTM content</strong>
+      <%= @donation.utm_content.presence || none %>
+    </p>
+  </div>
+  <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
+    <p class="my0 muted">
+      Referrer and UTM information are used to understand the source of donations. This data is provided by the donor's browser and may not be accurate.
+    </p>
+  </article>
+</section>

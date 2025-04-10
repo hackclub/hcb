@@ -4,11 +4,11 @@
   <div style="overflow-x: auto;">
     <table>
       <tbody data-behavior="transactions">
-        <% local_assigns[:hcb_codes].order(created_at: :desc).each do |hcb_code| %>
+        <% local_assigns[:hcb_codes].each do |hcb_code| %>
           <% if hcb_code.canonical_transactions.any? %>
-            <%= render partial: "canonical_transactions/canonical_transaction", collection: hcb_code.canonical_transactions, as: :ct, locals: { authorless: true, receipt_upload_button: !local_assigns[:public] } %>
+            <%= render partial: "canonical_transactions/canonical_transaction", collection: hcb_code.canonical_transactions.select { |ct| ct.canonical_event_mapping.subledger.present? }, as: :ct, locals: { authorless: true, receipt_upload_button: !local_assigns[:public], receipt_upload_button_disabled: !hcb_code.receipt_required? } %>
           <% else %>
-            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions, as: :pt, locals: { authorless: true, receipt_upload_button: !local_assigns[:public] } %>
+            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions.select { |pt| pt.canonical_pending_event_mapping.subledger.present? }, as: :pt, locals: { authorless: true, receipt_upload_button: !local_assigns[:public], receipt_upload_button_disabled: !hcb_code.receipt_required? } %>
           <% end %>
         <% end %>
       </tbody>

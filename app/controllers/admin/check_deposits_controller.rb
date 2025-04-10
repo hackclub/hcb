@@ -15,6 +15,10 @@ module Admin
 
     def show
       @check_deposit = CheckDeposit.find(params[:id])
+
+      unless @check_deposit.manual_submission_required?
+        redirect_to @check_deposit.local_hcb_code.url
+      end
     end
 
     def submit
@@ -26,11 +30,11 @@ module Admin
       flash.now[:error] = "Another check deposit has already been processed with this ID."
       render :show, status: :unprocessable_entity
     rescue Faraday::Error => e
-      notify_airbrake(e)
+      Rails.error.report(e)
       flash.now[:error] = "Something went wrong: #{e.response_body["message"]}"
       render :show, status: :unprocessable_entity
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
       flash.now[:error] = "Something went wrong :("
       render :show, status: :unprocessable_entity
     end

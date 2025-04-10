@@ -16,7 +16,7 @@
           <div class="menu__content h5" data-behavior="menu_content">
             <div class="field--fileupload">
               <%= form.label :background_image, "Choose file", class: "field--fileupload__label" %>
-              <%= form.file_field :background_image, accept: "image/*,image/heic", class: "field--fileupload__field" %>
+              <%= form.file_field :background_image, accept: "image/png,image/jpeg", class: "field--fileupload__field" %>
             </div>
             <% if @event.background_image.attached? %>
               <div class="menu__divider"></div>
@@ -42,7 +42,7 @@
             <div class="menu__content menu__content--left h5" data-behavior="menu_content">
               <div class="field--fileupload">
                 <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
-                <%= form.file_field :logo, accept: "image/*,image/heic", class: "field--fileupload__field" %>
+                <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field" %>
               </div>
               <% if @event.logo.attached? %>
                 <div class="menu__divider"></div>
@@ -56,13 +56,13 @@
     <div class="event_settings__content">
       <h2><%= @event.name %></h2>
       <div class="w-full">
-        <% if @event.name.length > 16 %>
+        <% if @event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
           <div class="field flex-1">
             <%= form.label :short_name, "Nickname" %>
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
             </p>
-            <%= form.text_field :short_name, placeholder: "#{@event.name[0...16]}...", disabled: !policy(@event).update? %>
+            <%= form.text_field :short_name, placeholder: "#{@event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: !policy(@event).update? %>
           </div>
         <% end %>
         <div class="field flex-1">
@@ -145,7 +145,7 @@
       <div class="field">
         <%= form.label :stripe_card_logo, "Card logo" %>
         <p class="h5 muted mt0 mb2">
-          Displayed in the top right of each of your organization's cards. A logo needs to be a binary image containing a black logo on a white background.
+          Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
           The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
         </p>
         <% if @event.stripe_card_logo.attached? %>
@@ -153,7 +153,7 @@
         <% end %>
         <div class="field--fileupload mt2">
           <%= form.label :stripe_card_logo, "Choose File", class: "field--fileupload__label" %>
-          <%= form.file_field :stripe_card_logo, accept: "image/*,image/heic", class: "field--fileupload__field" %>
+          <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true %>
         </div>
       </div>
       <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>

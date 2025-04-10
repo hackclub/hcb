@@ -59,7 +59,7 @@
       </div>
       <div class="field flex-auto ml1">
         <%= form.label :address_country, "Country" %>
-        <%= form.country_select :address_country, ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true, disabled: @event.demo_mode? %>
+        <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true, disabled: @event.demo_mode? %>
       </div>
     </div>
   <% end %>
@@ -93,7 +93,7 @@
 
   <div class="field">
     <%= form.label :due_date %>
-    <%= form.date_select :due_date, selected: (Date.today + 30.days), disabled: @event.demo_mode? %>
+    <%= form.date_select :due_date, selected: (Date.today + 30.days), min: Date.today, disabled: @event.demo_mode? %>
   </div>
 
   <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">

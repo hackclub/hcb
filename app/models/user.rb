@@ -9,6 +9,7 @@
 #  birthday_ciphertext           :text
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
+#  creation_method               :integer
 #  email                         :text
 #  full_name                     :string
 #  locked_at                     :datetime
@@ -23,6 +24,7 @@
 #  session_duration_seconds      :integer          default(2592000), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
+#  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
 #  created_at                    :datetime         not null
@@ -63,12 +65,21 @@ class User < ApplicationRecord
     monthly: 2,
   }, prefix: :receipt_report, default: :weekly
 
-  enum :access_level, { user: 0, admin: 1, superadmin: 2 }, scopes: false, default: :user
+  enum :access_level, { user: 0, admin: 1, superadmin: 2, auditor: 3 }, scopes: false, default: :user
+
+  enum :creation_method, {
+    login: 0,
+    reimbursement_report: 1,
+    organizer_position_invite: 2,
+    card_grant: 3,
+    grant: 4
+  }
 
   has_many :logins
   has_many :login_codes
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_positions
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
   has_many :organizer_position_deletion_requests, inverse_of: :closed_by
@@ -105,9 +116,14 @@ class User < ApplicationRecord
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
 
+  has_many :jobs, as: :entity, class_name: "Employee"
+  has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
+
   has_many :card_grants
 
   has_one_attached :profile_picture
+
+  has_many :w9s, class_name: "W9", as: :entity
 
   has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
   has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
@@ -149,6 +165,12 @@ class User < ApplicationRecord
 
   validate :profile_picture_format
 
+  validate on: :update do
+    if Rails.env.production? && admin_override_pretend? && !use_two_factor_authentication?
+      errors.add(:access_level, "two factor authentication is required for this access level")
+    end
+  end
+
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
   enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications
@@ -171,18 +193,28 @@ class User < ApplicationRecord
     end
   end
 
-  scope :currently_online, -> { where(id: UserSession.where("last_seen_at > ?", 15.minutes.ago).pluck(:user_id)) }
+  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
+  scope :currently_online, -> { last_seen_within(15.minutes.ago) }
+  scope :active, -> { last_seen_within(30.days.ago) }
+  def active? = last_seen_at && (last_seen_at >= 30.days.ago)
+
+  # a auditor is an admin who can only view things.
+  # auditor? takes into account an admin user's preference
+  # to pretend to be a non-admin, normal user
+  def auditor?
+    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  end
 
   # admin? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def admin?
-    (self.access_level == "admin" || self.access_level == "superadmin") && !self.pretend_is_not_admin
+    ["admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
   end
 
   # admin_override_pretend? ignores an admin user's
   # preference to pretend not to be an admin.
   def admin_override_pretend?
-    self.access_level == "admin" || self.access_level == "superadmin"
+    ["admin", "superadmin"].include?(self.access_level)
   end
 
   def make_admin!
@@ -310,7 +342,7 @@ class User < ApplicationRecord
   end
 
   def teenager?
-    birthday&.after?(19.years.ago) || events.organized_by_teenagers.any?
+    birthday&.after?(19.years.ago)
   end
 
   def last_seen_at
@@ -332,6 +364,10 @@ class User < ApplicationRecord
   def sync_with_loops
     new_user = full_name_before_last_save.blank? && !onboarding?
     UserService::SyncWithLoops.new(user_id: id, new_user:).run
+  end
+
+  def only_card_grant_user?
+    card_grants.size >= 1 && events.size == 0
   end
 
   private
@@ -365,7 +401,7 @@ class User < ApplicationRecord
 
   def profile_picture_format
     return unless profile_picture.attached?
-    return if profile_picture.blob.content_type.start_with? "image/"
+    return if profile_picture.blob.content_type.start_with?("image/") && profile_picture.blob.variable?
 
     profile_picture.purge_later
     errors.add(:profile_picture, "needs to be an image")

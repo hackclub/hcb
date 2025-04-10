@@ -25,7 +25,7 @@
 
       <% if expense.receipts.any? %>
         <div class="flex flex-col p1" id="link_receipt__form">
-          <% column_amount = [((expense.receipts.count - 1) / 2.to_f).ceil, expense.receipts.count == 2 ? 2 : 1].max %>
+          <% column_amount = [((expense.receipts.length - 1) / 2.to_f).ceil, expense.receipts.length == 2 ? 2 : 1].max %>
           <div class="receipts" style="grid-template-columns: 1fr repeat(<%= column_amount %>, 1fr)">
             <% if policy(expense).update? %>
               <div class="card card--sunken bg-transparent flex flex-col items-center justify-center g1 p-0 h-100" id="link_receipt__form" style="min-width: 200px">
@@ -41,7 +41,7 @@
                 <% end %>
               </div>
             <% end %>
-            <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :desc), as: :receipt, locals: { hide_info: false, delete_on_hover: !expense.report.locked?, style: "margin: 0px; min-width: 150px; max-width: 300px; height: 100%; object-fit: cover;" } %>
+            <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :desc).includes(file_attachment: [blob: [variant_records: { image_attachment: :blob }]]), as: :receipt, locals: { hide_info: false, delete_on_hover: !expense.report.locked?, style: "margin: 0px; min-width: 150px; max-width: 300px; height: 100%; object-fit: cover;" } %>
           </div>
         </div>
       <% elsif policy(expense).update? %>
@@ -69,6 +69,7 @@
 
       <%= form.file_field :file,
                           id: "file_#{expense.id}",
+                          direct_upload: true,
                           multiple: true,
                           include_hidden: false,
                           required: true,

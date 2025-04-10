@@ -29,43 +29,45 @@
 
 <%= render partial: "reimbursement/reports/create_form" %>
 
-<section class="grid grid--split grid--spacious mb2">
-  <div>
-    <label for="sms_number">Start a report via SMS</label>
-    <p class="h5 muted mt0 mb1">
-      Message photos from your phone.
-    </p>
-    <div class="relative block" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
-      <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit">
-      <button
-        type="button"
-        class="pointer pop mr2 align-middle tooltipped tooltipped--n"
-        style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
-        aria-label="Copy number"
-        data-action="clipboard#copy:prevent">
-        <%= inline_icon "copy", size: 28 %>
-      </button>
+<% if current_user.events.not_demo_mode.any? %>
+  <section class="grid grid--split grid--spacious mb2">
+    <div>
+      <label for="sms_number">Start a report via SMS</label>
+      <p class="h5 muted mt0 mb1">
+        Message photos from your phone.
+      </p>
+      <div class="relative block" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
+        <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit">
+        <button
+          type="button"
+          class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+          style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+          aria-label="Copy number"
+          data-action="clipboard#copy:prevent">
+          <%= inline_icon "copy", size: 28 %>
+        </button>
+      </div>
     </div>
-  </div>
 
-  <div>
-    <label for="email_address">Start a report via email</label>
-    <p class="h5 muted mt0 mb1">
-      Send or forward from your email address.
-    </p>
-    <div class="relative block" data-controller="clipboard" data-clipboard-text-value="reimburse@hcb.gg">
-      <input id="email_address" type="email" value="reimburse@hcb.gg" readonly style="cursor: text;" class="fit">
-      <button
-        type="button"
-        class="pointer pop mr2 align-middle tooltipped tooltipped--n"
-        style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
-        aria-label="Copy email address"
-        data-action="clipboard#copy:prevent">
-        <%= inline_icon "copy", size: 28 %>
-      </button>
+    <div>
+      <label for="email_address">Start a report via email</label>
+      <p class="h5 muted mt0 mb1">
+        Send or forward from your email address.
+      </p>
+      <div class="relative block" data-controller="clipboard" data-clipboard-text-value="reimburse@hcb.gg">
+        <input id="email_address" type="email" value="reimburse@hcb.gg" readonly style="cursor: text;" class="fit">
+        <button
+          type="button"
+          class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+          style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+          aria-label="Copy email address"
+          data-action="clipboard#copy:prevent">
+          <%= inline_icon "copy", size: 28 %>
+        </button>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+<% end %>
 
 <% if @reports_to_review.any? %>
   <h3 class="mb1">Review requested on</h3>

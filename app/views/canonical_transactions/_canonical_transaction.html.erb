@@ -106,7 +106,7 @@
         </div>
       <% end %>
       <% if ct.local_hcb_code %>
-        <%= list_badge_for admin_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
+        <%= list_badge_for auditor_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
         <%= list_badge_for ct.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: ct.local_hcb_code.receipt_optional?, required: ct.local_hcb_code.missing_receipt? %>
       <% end %>
     </div>
@@ -152,14 +152,14 @@
           <%= form.hidden_field :receiptable_type, value: ct.local_hcb_code.class %>
           <%= form.hidden_field :receiptable_id, value: ct.local_hcb_code.id %>
           <%= form.hidden_field :upload_method, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
-          <div class="<%= "btn-group btn-group--no-wrap" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
-            <%= form.label "file_#{ct.local_hcb_code.hashid}", class: "btn", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
+          <div class="<%= "btn-group btn-group--no-wrap w-100" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
+            <%= form.label "file_#{ct.local_hcb_code.hashid}", class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>
-              Upload receipt
+              <%= ct.local_hcb_code.receipts.any? ? "Upload another receipt" : "Upload receipt" %>
             <% end %>
 
             <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-              <%= link_to my_receipts_upload_path, class: "btn bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+              <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
                 <%= inline_icon "payment-docs" %>
                 <span>Select</span>
               <% end %>
@@ -174,7 +174,7 @@
       <% end %>
     </td>
 
-    <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
+    <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) && !local_assigns[:receipt_upload_button_disabled] %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
         <%= turbo_frame_tag "link_modal_#{ct.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: ct.local_hcb_code.id), turbo_frame: "_top" do %>
@@ -188,9 +188,9 @@
 <% event = @event || ct.local_hcb_code.event %>
 <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present? && !show_mock_data?(event) %>
   <% pretty_title = ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event&.name, amount_cents: ct.amount) %>
-  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>" data-state-url="<%= ct.local_hcb_code.url %>" data-state-title="<%= pretty_title %>">
-    <%= modal_header(pretty_title, external_link: ct.local_hcb_code.url) %>
-    <%= turbo_frame_tag ct.local_hcb_code.public_id, src: ct.local_hcb_code.popover_url, loading: :lazy do %>
+  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>" data-state-url="<%= hcb_code_path(ct.local_hcb_code) %>" data-state-title="<%= pretty_title %>">
+    <%= modal_header(pretty_title, external_link: url_for(ct.local_hcb_code)) %>
+    <%= turbo_frame_tag ct.local_hcb_code.public_id, src: ct.local_hcb_code.popover_path, loading: :lazy do %>
       <div class="shimmer mb1 mt3">
         <div class="shimmer__border"></div>
         <div class="shimmer__main">

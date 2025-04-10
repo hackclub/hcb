@@ -16,7 +16,7 @@ module Api
       def create
         @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
 
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock).merge(sent_by: current_user))
+        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose).merge(sent_by: current_user))
 
         authorize @card_grant
 
@@ -45,7 +45,7 @@ module Api
 
         authorize @card_grant
 
-        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock))
+        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose))
 
         render :show
       end

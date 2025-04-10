@@ -24,7 +24,12 @@ module DisbursementService
     def run
       raise ArgumentError, "amount is required" unless @amount
       raise ArgumentError, "amount_cents must be greater than 0" unless amount_cents > 0
-      raise ArgumentError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
+
+      if @source_subledger_id.present?
+        raise ArgumentError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
+      else
+        raise ArgumentError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
+      end
 
       disbursement = Disbursement.create!(attrs)
 

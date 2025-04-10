@@ -13,6 +13,13 @@
 <table class="table--autosize">
   <tbody>
     <tr>
+      <td>Event:</td>
+      <td>
+        <%= @wire.event.name %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @wire.event.financially_frozen? %>
+      </td>
+    </tr>
+    <tr>
       <td>Requested at:</td>
       <td><%= format_datetime @wire.created_at %></td>
     </tr>
@@ -103,6 +110,8 @@
     <small>(This requires you to communicate to the organizer about the reason why.)</small>
   <% end %>
 <% else %>
-  <p>This transfer has been <b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
-  <%= button_to "Reject as failed", reject_wire_path(@wire) %>
+  <p>This wire <%= @wire.failed? ? "" : "is " %><b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wire.failed? ? @wire.return_reason.present? ? " with the following failure reason: #{@wire.return_reason}" : " for an unknown reason" : "" %>.</p>
+  <% unless @wire.failed? %>
+    <%= button_to "Reject as failed", reject_wire_path(@wire) %>
+  <% end %>
 <% end %>

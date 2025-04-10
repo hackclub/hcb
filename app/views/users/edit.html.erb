@@ -160,8 +160,7 @@
           <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
             <p class="h5 mt1 m0 warning flex items-center">
               <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>
-              <span>Your phone number is unverified. <%= link_to "Click here", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } %>
-                to verify it.</span>
+              <span>Your phone number is unverified. <%= link_to "Click here to verify it.", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } if current_user == @user %></span>
             </p>
           <% end %>
         </div>
