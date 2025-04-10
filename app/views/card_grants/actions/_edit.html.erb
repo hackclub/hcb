@@ -1,0 +1,15 @@
+<% if card_grant.active? && policy(card_grant).update? %>
+  <div class="tooltipped tooltipped--n" aria-label="Set this grant's purpose">
+    <%= link_to edit_card_grant_path(card_grant),
+                class: "btn bg-success",
+                data: { behavior: "modal_trigger", modal: "edit_card_grant" } do %>
+      <%= inline_icon "edit" %>
+      Set purpose
+    <% end %>
+  </div>
+
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_card_grant">
+    <%= modal_header "What's this grant for?" %>
+    <%= render "card_grants/edit_form" %>
+  </section>
+<% end %>

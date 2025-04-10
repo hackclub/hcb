@@ -8,7 +8,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
     raise ArgumentError, "check deposit already processed" if check_deposit.column_id.present? || check_deposit.increase_id.present?
 
     conn = Faraday.new url: "https://api.column.com" do |f|
-      f.request :basic_auth, "", Rails.application.credentials.column.dig(ColumnService::ENVIRONMENT, :api_key)
+      f.request :basic_auth, "", Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :API_KEY)
       f.request :multipart
       f.response :raise_error
       f.response :json
@@ -27,7 +27,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
     end
 
     column_check_deposit = ColumnService.post("/transfers/checks/deposit", bank_account_id: ColumnService::Accounts::FS_MAIN,
-                                                                           account_number_id: Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number),
+                                                                           account_number_id: Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER),
                                                                            deposited_amount: check_deposit.amount_cents,
                                                                            currency_code: "USD",
                                                                            micr_line: front["micr_line"],

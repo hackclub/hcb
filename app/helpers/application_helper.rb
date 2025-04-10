@@ -269,46 +269,6 @@ module ApplicationHelper
     content_for :title, text
   end
 
-  def commit_name
-    @short_hash ||= commit_hash[0...7]
-    @commit_name ||= begin
-      if commit_dirty?
-        "#{@short_hash}-dirty"
-      else
-        @short_hash
-      end
-    end
-  end
-
-  def commit_dirty?
-    ::Util.commit_dirty?
-  end
-
-  def commit_hash
-    ::Util.commit_hash
-  end
-
-  def commit_time
-    @commit_time ||= begin
-      heroku_time = ENV["HEROKU_RELEASE_CREATED_AT"]
-      git_time = `git log -1 --format=%at 2> /dev/null`.chomp
-
-      return nil if heroku_time.blank? && git_time.blank?
-
-      heroku_time.blank? ? git_time.to_i : Time.parse(heroku_time)
-    end
-
-    @commit_time
-  end
-
-  def commit_duration
-    @commit_duration ||= begin
-      return nil if commit_time.nil?
-
-      distance_of_time_in_words Time.at(commit_time), Time.now
-    end
-  end
-
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
@@ -403,6 +363,30 @@ module ApplicationHelper
     return content_tag(:p, fallback_text || "That didn't work, sorry.") unless fallback
 
     fallback
+  end
+
+  # Link to a User-generated content that we can't trust. User-provided URIs may
+  # contain XSS (https://brakemanscanner.org/docs/warning_types/link_to_href/).
+  #
+  # This method is almost compatible with `link_to`, except that the second
+  # positional argument must be a string, and it doesn't support the block form.
+  def ugc_link_to(name, string, *options)
+    begin
+      uri = URI.parse(string)
+    rescue URI::InvalidURIError
+      # no op
+    end
+    parse_failure = uri.nil?
+    safe = uri&.scheme.nil? || uri&.scheme&.in?(%w[http https])
+
+    if parse_failure || !safe
+      # Could be either an invalid URI, or a non http/https link (such as
+      # javascript XSS attack). Either way, we don't want to link to it.
+      return capture { content_tag(:a, name, *options) } # empty href
+    end
+
+    # The link is safe, render it like normal
+    capture { link_to(name, uri.to_s, *options) }
   end
 
 end

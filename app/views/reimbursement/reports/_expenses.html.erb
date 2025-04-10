@@ -1,5 +1,5 @@
 <% if report.expenses.any? %>
-  <% report.expenses.order(created_at: :asc).includes(receipts: { file_attachment: :blob }).each do |expense| %>
+  <% report.expenses.order(created_at: :asc).includes(:approved_by, receipts: { file_attachment: [blob: [variant_records: { image_attachment: :blob }]] }).each do |expense| %>
     <%= render "reimbursement/expenses/expense", expense:, new: @editing == expense.id %>
   <% end %>
 <% end %>

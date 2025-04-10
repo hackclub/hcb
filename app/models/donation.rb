@@ -22,11 +22,17 @@
 #  payout_creation_balance_stripe_fee   :integer
 #  payout_creation_queued_at            :datetime
 #  payout_creation_queued_for           :datetime
+#  referrer                             :text
 #  status                               :string
 #  stripe_client_secret                 :string
 #  tax_deductible                       :boolean          default(TRUE), not null
 #  url_hash                             :string
 #  user_agent                           :text
+#  utm_campaign                         :text
+#  utm_content                          :text
+#  utm_medium                           :text
+#  utm_source                           :text
+#  utm_term                             :text
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  collected_by_id                      :bigint
@@ -57,6 +63,7 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include Freezable
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -73,6 +80,8 @@ class Donation < ApplicationRecord
   belongs_to :recurring_donation, optional: true
   belongs_to :collected_by, class_name: "User", optional: true
 
+  before_save :trim_utm_referrer_fields
+
   before_create :create_stripe_payment_intent, unless: -> { recurring? || in_person? }
   before_create :assign_unique_hash, unless: -> { recurring? }
 
@@ -82,6 +91,8 @@ class Donation < ApplicationRecord
   validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
+
+  normalizes :email, with: ->(email) { email.strip.downcase }
 
   scope :succeeded, -> { where(status: "succeeded") }
   scope :missing_payout, -> { where(payout_id: nil) }
@@ -196,7 +207,7 @@ class Donation < ApplicationRecord
   end
 
   def arrival_date
-    arrival = self&.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and HCB processing time
     arrival + 1.day
@@ -317,6 +328,16 @@ class Donation < ApplicationRecord
     recurring_donation&.email || super
   end
 
+  def referrer_domain
+    Addressable::URI.parse(referrer.presence)&.host
+  end
+
+  def referrer_favicon_url
+    return unless referrer_domain
+
+    "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
+  end
+
   private
 
   def raw_pending_donation_transaction
@@ -364,6 +385,15 @@ class Donation < ApplicationRecord
 
   def assign_unique_hash
     self.url_hash = SecureRandom.hex(8)
+  end
+
+  def trim_utm_referrer_fields
+    self.referrer = referrer&.presence&.strip&.truncate(500)
+    self.utm_source = utm_source&.presence&.strip&.truncate(500)
+    self.utm_medium = utm_medium&.presence&.strip&.truncate(500)
+    self.utm_campaign = utm_campaign&.presence&.strip&.truncate(500)
+    self.utm_term = utm_term&.presence&.strip&.truncate(500)
+    self.utm_content = utm_content&.presence&.strip&.truncate(500)
   end
 
 end

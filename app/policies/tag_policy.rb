@@ -2,15 +2,15 @@
 
 class TagPolicy < ApplicationPolicy
   def create?
-    user&.admin? || record.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def destroy?
-    user&.admin? || record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
   def toggle_tag?
-    user&.admin? || record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
 end

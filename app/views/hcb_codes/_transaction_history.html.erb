@@ -13,7 +13,7 @@
     </thead>
     <tbody>
       <% @hcb_code.canonical_transactions.each do |ct| %>
-        <% if current_user.admin? || ct.event.try(:users).try(:include?, current_user) %>
+        <% if current_user.auditor? || ct.event.try(:users).try(:include?, current_user) %>
           <tr>
             <td><%= format_date ct.date %></td>
             <td><%= ct.smart_memo %></td>

@@ -74,12 +74,6 @@ module StaticPagesHelper
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tbl6cbpdId4iA96mD/viw2T8d98ZhhacHCf"
       },
-      sendy: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Sendy",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl1MRaNpF4KphbOd/viwb7ELYyxpuAz6gQ"
-      },
       domains: {
         id: "appEzv7w2IBMoxxHe",
         table: "Domains",
@@ -103,12 +97,6 @@ module StaticPagesHelper
         table: "Event%20Insurance",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblWlQxkf6L7mEjC4/viwzbku7oWsw5GFEa"
-      },
-      first_grant: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Hackathon%20Grant",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblnNB5iMbidfB552/viwjF8iDPU3gAiXJU"
       },
       wire_transfers: {
         id: "appEzv7w2IBMoxxHe",
@@ -160,8 +148,9 @@ module StaticPagesHelper
     }
   end
 
-  def apply_form_url(user = current_user)
-    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form({ userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year }.compact)}"
+  def apply_form_url(user = current_user, **query_params)
+    query_params = { userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year, utm_source: "hcb", utm_medium: "web" }.merge(query_params) # allow method arguments to override default.
+    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form(query_params.compact)}"
   end
 
   def render_permissions(permissions, depth = 0)

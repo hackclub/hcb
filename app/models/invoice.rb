@@ -109,6 +109,8 @@ class Invoice < ApplicationRecord
   extend FriendlyId
   include AASM
 
+  include Freezable
+
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
@@ -200,11 +202,11 @@ class Invoice < ApplicationRecord
   end
 
   def payout_transaction
-    self&.payout&.t_transaction
+    self.payout&.t_transaction
   end
 
   def completed_deprecated?
-    (payout_transaction && !self&.fee_reimbursement) || (payout_transaction && self&.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
+    (payout_transaction && !self.fee_reimbursement) || (payout_transaction && self.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
   end
 
   def archived?
@@ -307,7 +309,7 @@ class Invoice < ApplicationRecord
   end
 
   def arrival_date
-    arrival = self&.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and Bank processing time
     arrival + 1.day

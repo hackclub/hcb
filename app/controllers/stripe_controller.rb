@@ -14,11 +14,11 @@ class StripeController < ActionController::Base
       StatsD.measure("StripeController.#{method}") { self.send method, event }
     rescue JSON::ParserError => e
       head :bad_request
-      notify_airbrake(e)
+      Rails.error.report(e)
       return
     rescue NoMethodError => e
       puts e
-      notify_airbrake(e)
+      Rails.error.report(e)
       head :ok # success so that stripe doesn't retry (method is unsupported by HCB)
       return
     rescue Stripe::SignatureVerificationError
@@ -58,7 +58,9 @@ class StripeController < ActionController::Base
     StatsD.increment("stripe_webhook_timeout", 1) if is_closed && has_timeout
 
     rpst = PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction: event[:data][:object]).run
-    PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
+
+    # this has been commented out due to a suspected race condition
+    # PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
 
     head :ok
   end
@@ -280,7 +282,7 @@ class StripeController < ActionController::Base
   alias_method :handle_issuing_personalization_design_activated, :handle_issuing_personalization_design_updated
   alias_method :handle_issuing_personalization_design_deactivated, :handle_issuing_personalization_design_updated
 
-  def handle_issuing_dispute_funds_reinstated
+  def handle_issuing_dispute_funds_reinstated(event)
     dispute = event.data.object
     transaction = Stripe::Issuing::Transaction.retrieve(dispute["transaction"])
     hcb_code = RawPendingStripeTransaction.find_by!(stripe_transaction_id: transaction["authorization"]).canonical_pending_transaction.local_hcb_code
@@ -301,6 +303,10 @@ class StripeController < ActionController::Base
     elsif dispute["currency"] != "usd"
       Airbrake.notify("Dispute with funds reinstated but non-USD currency. Must be manually handled.")
     end
+  end
+
+  def handle_refund_failed(event)
+    Airbrake.notify("Refund failed on Stripe: #{event}.")
   end
 
 end

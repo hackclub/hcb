@@ -4,7 +4,7 @@ module Admin
   module LedgerAudits
     class TasksController < AdminController
       def index
-        @tasks = Admin::LedgerAudit::Task.flagged
+        @tasks = Admin::LedgerAudit::Task.flagged.page(params[:page]).per(25)
       end
 
       def show

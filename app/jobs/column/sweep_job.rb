@@ -2,14 +2,20 @@
 
 module Column
   class SweepJob < ApplicationJob
-    FLOATING_BALANCE = 6_000_000_00
+    MINIMUM_AVG_BALANCE = 5_000_000_00 # 5 mil
+    FLOATING_BALANCE = MINIMUM_AVG_BALANCE + 500_000_00 # 5.5 mil
     queue_as :low
+
     def perform
       account = ::ColumnService.get("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}")
       balance = account["balances"]["available_amount"]
       difference = balance - FLOATING_BALANCE
 
-      if difference.abs > 200_000_00
+      if balance < MINIMUM_AVG_BALANCE
+        Airbrake.notify("Column available balance under #{MINIMUM_AVG_BALANCE}")
+      end
+
+      if difference.abs > 200_000_00 && difference.negative? # if negative, it is a transfer from SVB (FS Main) to Column
         Airbrake.notify("Column::SweepJob > $200,000. Requires human review / processing.")
         return
       end
@@ -32,7 +38,7 @@ module Column
 
       event = Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)
 
-      account_number_id = event.column_account_number&.column_id || Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+      account_number_id = event.column_account_number&.column_id || Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
       ColumnService.post("/transfers/ach", {
         idempotency_key:,
@@ -41,8 +47,8 @@ module Column
         type:,
         entry_class_code: "CCD",
         counterparty: {
-          account_number: Rails.application.credentials.svb[:account_number],
-          routing_number: Rails.application.credentials.svb[:routing_number],
+          account_number: Credentials.fetch(:SVB_ACCOUNT_NUMBER),
+          routing_number: Credentials.fetch(:SVB_ROUTING_NUMBER),
         },
         description:,
         company_entry_description: "HCB-SWEEP",

@@ -26,6 +26,7 @@ module SessionsHelper
     session_token = SecureRandom.urlsafe_base64
     expiration_at = Time.now + user.session_duration_seconds
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
+    cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
       session_token:,
       fingerprint: fingerprint_info[:fingerprint],
@@ -51,6 +52,10 @@ module SessionsHelper
     !current_user.nil?
   end
 
+  def auditor_signed_in?
+    signed_in? && current_user&.auditor?
+  end
+
   def admin_signed_in?
     signed_in? && current_user&.admin?
   end
@@ -65,9 +70,9 @@ module SessionsHelper
     @current_user = user
   end
 
-  def organizer_signed_in?(event = @event, as: :member)
+  def organizer_signed_in?(event = @event, as: :reader)
     run = ->(inner_event:, inner_as:) do
-      next true if admin_signed_in?
+      next true if auditor_signed_in?
       next false unless signed_in? && inner_event.present?
 
       required_role_num = OrganizerPosition.roles[inner_as]
@@ -121,7 +126,7 @@ module SessionsHelper
   end
 
   def signed_in_admin
-    unless admin_signed_in?
+    unless auditor_signed_in?
       redirect_to auth_users_path, flash: { error: "You’ll need to sign in as an admin." }
     end
   end

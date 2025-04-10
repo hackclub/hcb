@@ -32,6 +32,17 @@ module ReceiptService
         if @receipt.receiptable.nil?
           content = turbo_stream_action_tag(:refresh_suggested_pairings)
           Turbo::StreamsChannel.broadcast_action_to([@receipt.user, :receipt_bin], action: :refresh_suggested_pairings)
+
+          if @receipt.email_receipt_bin? && pair = @receipt.suggested_pairings
+                                                           .unreviewed
+                                                           .where("distance <= ?", 20)
+                                                           .order(:receipt_id, distance: :asc)
+                                                           .select("DISTINCT ON (receipt_id) suggested_pairings.*")
+                                                           .select { |pairing| pairing.hcb_code.missing_receipt? }
+                                                           .first
+            pair.mark_accepted!
+            ReceiptBinMailer.with(suggested_pairing: pair).paired.deliver_later
+          end
         end
 
         pairings
@@ -52,14 +63,16 @@ module ReceiptService
         },
         date: {
           value: begin
-            return 1 unless @extracted.extracted_date.present?
+            if @extracted.extracted_date.present?
+              distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
 
-            distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
-
-            if distance <= 1
-              0
-            elsif distance <= 5
-              0.2 + 0.8 * (distance / 5)
+              if distance <= 1
+                0
+              elsif distance <= 5
+                0.2 + 0.8 * (distance / 5)
+              else
+                1
+              end
             else
               1
             end

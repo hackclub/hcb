@@ -57,6 +57,8 @@ class Sponsor < ApplicationRecord
   before_destroy :destroy_invoices
   before_destroy :destroy_stripe_customer
 
+  normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
+
   def status
     i = invoices.last
     if i.nil?
