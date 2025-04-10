@@ -51,7 +51,7 @@ class DonationsController < ApplicationController
       return not_found
     end
 
-    tax_deductible = params[:goods].nil? ? true : params[:goods] == "0"
+    tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
     @donation = Donation.new(
       name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
@@ -107,7 +107,7 @@ class DonationsController < ApplicationController
     d_params[:ip_address] = request.remote_ip
     d_params[:user_agent] = request.user_agent
 
-    tax_deductible = d_params[:goods].nil? ? true : d_params[:goods] == "0"
+    tax_deductible = d_params[:goods].nil? || d_params[:goods] == "0"
 
     @donation = Donation.new(d_params.except(:goods).merge({ tax_deductible: }))
     @donation.event = @event
