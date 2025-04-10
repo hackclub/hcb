@@ -8,6 +8,10 @@ class ErrorsController < ApplicationController
     render status: :not_found
   end
 
+  def bad_request
+    render status: :bad_request, layout: "application"
+  end
+
   def internal_server_error
     render status: :internal_server_error, layout: "application"
   end

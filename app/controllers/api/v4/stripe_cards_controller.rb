@@ -45,8 +45,8 @@ module Api
           :birthday
         )
 
-        return render json: { error: "internal_server_error" }, status: :internal_server_error if current_user.birthday.nil?
-        return render json: { error: "internal_server_error" }, status: :internal_server_error unless card[:shipping_address_country] == "US"
+        return render json: { error: "bad_request" }, status: :bad_request if current_user.birthday.nil?
+        return render json: { error: "bad_request" }, status: :bad_request unless card[:shipping_address_country] == "US"
 
         new_card = ::StripeCardService::Create.new(
           current_user:,
