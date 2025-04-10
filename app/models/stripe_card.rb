@@ -426,15 +426,17 @@ class StripeCard < ApplicationRecord
   end
 
   def within_card_limit
-    user_cards_today = user.stripe_cards.where(created_at: 1.day.ago..).count
-    event_cards_today = event.stripe_cards.where(created_at: 1.day.ago..).count
-    event_card_grants_today = event.card_grants.where(created_at: 1.day.ago..).count
+    return if subledger.present?
+
+    # card grants don't count against the limit, hence the subledger_id: nil check
+    user_cards_today = user.stripe_cards.where(subledger_id: nil, created_at: 1.day.ago..).count
+    event_cards_today = event.stripe_cards.where(subledger_id: nil, created_at: 1.day.ago..).count
 
     if user_cards_today > 20
       errors.add(:base, "Your account has been rate-limited from creating new cards. Please try again tomorrow; for help, email hcb@hackclub.com.")
     end
 
-    if (event_cards_today - event_card_grants_today) > 20 # card grants don't count against the limit
+    if event_cards_today > 20
       errors.add(:base, "Your organization has been rate-limited from creating new cards. Please try again tomorrow; for help, email hcb@hackclub.com.")
     end
   end
