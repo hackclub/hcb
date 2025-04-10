@@ -13,11 +13,11 @@ RSpec.describe Column::AccountNumber, type: :model do
     event = create(:event)
 
     expect(ColumnService).to receive(:post).with(/\/account-numbers\Z/, { description: /#{event.id}/, idempotency_key: anything }).and_return({
-                                                                                                                     "id"             => "acno_1234",
-                                                                                                                     "account_number" => "1234",
-                                                                                                                     "routing_number" => "1234",
-                                                                                                                     "bic"            => "1234",
-                                                                                                                   })
+                                                                                                                                                "id"             => "acno_1234",
+                                                                                                                                                "account_number" => "1234",
+                                                                                                                                                "routing_number" => "1234",
+                                                                                                                                                "bic"            => "1234",
+                                                                                                                                              })
 
     account_number = event.create_column_account_number!
 
