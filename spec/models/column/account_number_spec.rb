@@ -12,7 +12,7 @@ RSpec.describe Column::AccountNumber, type: :model do
   it "creates an account number remotely on Column" do
     event = create(:event)
 
-    expect(ColumnService).to receive(:post).with(/\/account-numbers\Z/, { description: /#{event.id}/ }).and_return({
+    expect(ColumnService).to receive(:post).with(/\/account-numbers\Z/, { description: /#{event.id}/, idempotency_key: anything }).and_return({
                                                                                                                      "id"             => "acno_1234",
                                                                                                                      "account_number" => "1234",
                                                                                                                      "routing_number" => "1234",
