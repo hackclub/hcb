@@ -42,7 +42,7 @@
 
   <div class="field mt2">
     <%= form.label :recipient_name, "Name (use company name if applicable)" %>
-    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250 %>
+    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250, disabled: %>
   </div>
 
   <div class="field">
@@ -52,7 +52,7 @@
 
   <div class="field mb1">
     <%= form.label :address_line1, "Street address" %>
-    <%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar", required: true %>
+    <%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar", required: true, disabled: %>
   </div>
 
   <div class="field mt0">
@@ -62,22 +62,22 @@
   <div class="flex">
     <div class="field flex-auto mr1">
       <%= form.label :address_city, "City" %>
-      <%= form.text_field :address_city, placeholder: "Gurgaon", required: true %>
+      <%= form.text_field :address_city, placeholder: "Gurgaon", required: true, disabled: %>
     </div>
     <div class="field flex-auto mr1">
       <%= form.label :address_state, "State / province" %>
-      <%= form.text_field :address_state, placeholder: "Haryana", required: true %>
+      <%= form.text_field :address_state, placeholder: "Haryana", required: true, disabled: %>
     </div>
   </div>
 
   <div class="field">
     <%= form.label :address_postal_code, "Postal code / ZIP code" %>
-    <%= form.text_field :address_postal_code, placeholder: "122022", required: true %>
+    <%= form.text_field :address_postal_code, placeholder: "122022", required: true, disabled: %>
   </div>
 
   <div class="field">
     <%= form.label :recipient_country, "Country" %>
-    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" } %>
+    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" }, disabled: %>
   </div>
 
   <h2 class="mb2 mt3">Payment information</h2>
@@ -87,7 +87,7 @@
   <div class="field">
     <div class="flex items-center g1">
       <div style="width: 72px">
-        <%= form.select :currency, ::EuCentralBank::CURRENCIES + ["EUR"], required: true, disabled:, default: "USD" %>
+        <%= form.select :currency, ::EuCentralBank::CURRENCIES + ["EUR"], required: true, default: "USD", disabled: %>
       </div>
       <div class="flex flex-col flex-grow">
         <%= form.number_field :amount,
