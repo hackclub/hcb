@@ -134,7 +134,7 @@
             <% elsif d.is_a?(CardGrant) %>
               Card Grant
             <% else %>
-              <%= d.payment_for %>
+              <%= d.try(:payment_for) %>
             <% end %>
           </td>
           <td style="text-align: right;">
