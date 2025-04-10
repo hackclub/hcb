@@ -2,7 +2,7 @@
 
 class CanonicalPendingTransactionPolicy < ApplicationPolicy
   def show?
-    admin_or_teammember || record.stripe_cardholder&.user_id == user.id
+    admin_or_teammember
   end
 
   def edit?
