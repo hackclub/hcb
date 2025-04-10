@@ -21,12 +21,26 @@ jobs:
         with:
           bundler-cache: true
       - name: Run Rubocop
+        run: bundle exec rubocop
+  rubocop_suggest_changes:
+    name: Rubocop (Suggest changes)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run Rubocop
         run: bundle exec rubocop -a
       - name: Comment suggested changes
         uses: parkerbxyz/suggest-changes@v2.0.0
         if: ${{ github.event.pull_request }}
-      - name: Run Rubocop
-        run: bundle exec rubocop
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
