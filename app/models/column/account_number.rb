@@ -41,7 +41,7 @@ module Column
     private
 
     def create_column_account_number
-      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})")
+      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})", idempotency_key: self.id.to_s)
 
       self.column_id = account_number["id"]
       self.account_number = account_number["account_number"]

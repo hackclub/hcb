@@ -23,7 +23,7 @@ class ApiController < ApplicationController
       email: params[:email],
       country: params[:country],
       postal_code: ValidatesZipcode.valid?(params[:postal_code], params[:country]) ? params[:postal_code] : nil,
-      is_public: params[:transparent].nil? ? true : params[:transparent],
+      is_public: params[:transparent].nil? || params[:transparent],
     ).run
 
     render json: {

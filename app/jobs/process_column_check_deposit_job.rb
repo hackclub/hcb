@@ -32,7 +32,8 @@ class ProcessColumnCheckDepositJob < ApplicationJob
                                                                            currency_code: "USD",
                                                                            micr_line: front["micr_line"],
                                                                            image_front: front["image_front"],
-                                                                           image_back: back["image_back"])
+                                                                           image_back: back["image_back"],
+                                                                           idempotency_key: self.id.to_s)
 
     check_deposit.update!(column_id: column_check_deposit["id"], status: :submitted)
 
