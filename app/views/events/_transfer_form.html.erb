@@ -11,11 +11,11 @@
         <div class="field field--options fit">
           <%= link_to new_event_ach_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "payment-transfer", size: 28 %>
-            <strong>ACH transfer</strong>
+            <strong>ACH Transfer</strong>
           <% end %>
           <%= link_to new_event_increase_check_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "email", size: 28 %>
-            <strong>Mailed check</strong>
+            <strong>Mailed Check</strong>
           <% end %>
           <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
             <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
@@ -25,14 +25,13 @@
           <% end %>
           <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "bank-account", size: 28 %>
-            <strong>HCB transfer</strong>
-            <small>(between HCB accounts)</small>
+            <strong>HCB Transfer</strong>
+            <small>(between HCB organizations)</small>
           <% end %>
           <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
             <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
               <%= inline_icon "card", size: 28 %>
-              <strong>Grant</strong>
-              <small>A grant sent through an HCB card.</small>
+              <strong>Card Grant</strong>
             <% end %>
           <% end %>
         </div>
