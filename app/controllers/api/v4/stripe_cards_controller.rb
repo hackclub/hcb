@@ -28,44 +28,44 @@ module Api
       end
 
       def create
-        event = authorize(Event.find(params[:stripe_card][:organization_id]))
+        event = authorize(Event.find(params[:card][:organization_id]))
         authorize event, :create_stripe_card?, policy_class: EventPolicy
 
-        sc = params.require(:stripe_card).permit(
+        card = params.require(:card).permit(
           :organization_id,
           :card_type,
-          :stripe_shipping_name,
-          :stripe_shipping_address_city,
-          :stripe_shipping_address_line1,
-          :stripe_shipping_address_postal_code,
-          :stripe_shipping_address_line2,
-          :stripe_shipping_address_state,
-          :stripe_shipping_address_country,
-          :stripe_card_personalization_design_id,
+          :shipping_name,
+          :shipping_address_city,
+          :shipping_address_line1,
+          :shipping_address_postal_code,
+          :shipping_address_line2,
+          :shipping_address_state,
+          :shipping_address_country,
+          :card_personalization_design_id,
           :birthday
         )
 
         if current_user.birthday.nil?
-          user_params = sc.slice("birthday(1i)", "birthday(2i)", "birthday(3i)")
+          user_params = card.slice("birthday(1i)", "birthday(2i)", "birthday(3i)")
           current_user.update(user_params)
         end
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if current_user.birthday.nil?
-        return render json: { error: "internal_server_error" }, status: :internal_server_error unless sc[:stripe_shipping_address_country] == "US"
+        return render json: { error: "internal_server_error" }, status: :internal_server_error unless card[:shipping_address_country] == "US"
 
         new_card = ::StripeCardService::Create.new(
           current_user:,
           current_session: {ip: request.remote_ip},
           event_id: event.id,
-          card_type: sc[:card_type],
-          stripe_shipping_name: sc[:stripe_shipping_name],
-          stripe_shipping_address_city: sc[:stripe_shipping_address_city],
-          stripe_shipping_address_state: sc[:stripe_shipping_address_state],
-          stripe_shipping_address_line1: sc[:stripe_shipping_address_line1],
-          stripe_shipping_address_line2: sc[:stripe_shipping_address_line2],
-          stripe_shipping_address_postal_code: sc[:stripe_shipping_address_postal_code],
-          stripe_shipping_address_country: sc[:stripe_shipping_address_country],
-          stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+          card_type: card[:card_type],
+          stripe_shipping_name: card[:shipping_name],
+          stripe_shipping_address_city: card[:shipping_address_city],
+          stripe_shipping_address_state: card[:shipping_address_state],
+          stripe_shipping_address_line1: card[:shipping_address_line1],
+          stripe_shipping_address_line2: card[:shipping_address_line2],
+          stripe_shipping_address_postal_code: card[:shipping_address_postal_code],
+          stripe_shipping_address_country: card[:shipping_address_country],
+          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
         ).run
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if new_card.nil?
