@@ -94,6 +94,7 @@ module Reimbursement
       raise ArgumentError, "ACH must have been rejected / failed" unless ach_transfer.nil? || ach_transfer.failed? || ach_transfer.rejected?
       raise ArgumentError, "PayPal transfer must have been rejected" unless paypal_transfer.nil? || paypal_transfer.rejected?
       raise ArgumentError, "a check is present" if increase_check.present?
+      raise ArgumentError, "must have settled expense payouts" unless expense_payouts.all?(:settled?)
 
       ActiveRecord::Base.transaction do
 
