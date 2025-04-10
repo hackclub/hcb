@@ -132,7 +132,7 @@
             <% if d.is_a?(Disbursement) %>
               <%= d.name %>
             <% elsif d.is_a?(CardGrant) %>
-              Card Grant
+              <%= d.purpose %>
             <% else %>
               <%= d.try(:payment_for) %>
             <% end %>
