@@ -28,11 +28,11 @@ module Api
       end
 
       def create
-        event = authorize(Event.find(params[:stripe_card][:event_id]))
+        event = authorize(Event.find(params[:stripe_card][:organization_id]))
         authorize event, :create_stripe_card?, policy_class: EventPolicy
 
         sc = params.require(:stripe_card).permit(
-          :event_id,
+          :organization_id,
           :card_type,
           :stripe_shipping_name,
           :stripe_shipping_address_city,
