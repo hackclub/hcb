@@ -45,11 +45,6 @@ module Api
           :birthday
         )
 
-        if current_user.birthday.nil?
-          user_params = card.slice("birthday(1i)", "birthday(2i)", "birthday(3i)")
-          current_user.update(user_params)
-        end
-
         return render json: { error: "internal_server_error" }, status: :internal_server_error if current_user.birthday.nil?
         return render json: { error: "internal_server_error" }, status: :internal_server_error unless card[:shipping_address_country] == "US"
 
