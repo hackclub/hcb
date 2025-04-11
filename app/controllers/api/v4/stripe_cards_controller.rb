@@ -27,6 +27,57 @@ module Api
         @has_more = false # TODO: implement pagination
       end
 
+      def create
+        event = authorize(Event.find(params[:stripe_card][:event_id]))
+        authorize event, :create_stripe_card?, policy_class: EventPolicy
+
+        sc = params.require(:stripe_card).permit(
+          :event_id,
+          :card_type,
+          :stripe_shipping_name,
+          :stripe_shipping_address_city,
+          :stripe_shipping_address_line1,
+          :stripe_shipping_address_postal_code,
+          :stripe_shipping_address_line2,
+          :stripe_shipping_address_state,
+          :stripe_shipping_address_country,
+          :stripe_card_personalization_design_id,
+          :birthday
+        )
+
+        if current_user.birthday.nil?
+          user_params = sc.slice("birthday(1i)", "birthday(2i)", "birthday(3i)")
+          current_user.update(user_params)
+        end
+
+        return render json: { error: "internal_server_error" }, status: :internal_server_error if current_user.birthday.nil?
+        return render json: { error: "internal_server_error" }, status: :internal_server_error unless sc[:stripe_shipping_address_country] == "US"
+
+        new_card = ::StripeCardService::Create.new(
+          current_user:,
+          current_session: {ip: request.remote_ip},
+          event_id: event.id,
+          card_type: sc[:card_type],
+          stripe_shipping_name: sc[:stripe_shipping_name],
+          stripe_shipping_address_city: sc[:stripe_shipping_address_city],
+          stripe_shipping_address_state: sc[:stripe_shipping_address_state],
+          stripe_shipping_address_line1: sc[:stripe_shipping_address_line1],
+          stripe_shipping_address_line2: sc[:stripe_shipping_address_line2],
+          stripe_shipping_address_postal_code: sc[:stripe_shipping_address_postal_code],
+          stripe_shipping_address_country: sc[:stripe_shipping_address_country],
+          stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+        ).run
+
+        return render json: { error: "internal_server_error" }, status: :internal_server_error if new_card.nil?
+
+        @stripe_card = new_card
+        render :show
+        
+        rescue => e
+          notify_airbrake(e)
+          render json: { error: "internal_server_error" }, status: :internal_server_error
+      end
+
       def update
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
