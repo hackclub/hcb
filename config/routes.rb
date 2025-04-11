@@ -589,7 +589,7 @@ Rails.application.routes.draw do
 
         resources :transactions, only: [:show]
 
-        resources :stripe_cards, path: "cards", only: [:show, :update] do
+        resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           member do
             get "transactions"
             get "ephemeral_keys"
@@ -648,6 +648,7 @@ Rails.application.routes.draw do
     end
   end
 
+  match "/400", to: "errors#bad_request", via: :all
   match "/404", to: "errors#not_found", via: :all
   match "/500", to: "errors#internal_server_error", via: :all
   match "/504", to: "errors#timeout", via: :all
