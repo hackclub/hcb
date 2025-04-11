@@ -25,7 +25,17 @@ class AdminController < ApplicationController
   end
 
   def negative_events
-    @negative_events = Event.negatives
+    # Event.find_each(batch_size: 100) do |event|
+    #   Rails.cache.write "event_balance_#{event.id}", event.balance
+    # end
+    
+
+    ids = Event.all.select(:id).map do |event|
+      [event.id, Rails.cache.read("event_balance_#{event.id}")]
+    end.reject { |id, balance| balance.nil? || balance >= 0 }.map(&:first)
+
+
+    @negative_events = Event.where(id: ids)
   end
 
   def transaction
