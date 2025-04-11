@@ -33,7 +33,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
                                                                            micr_line: front["micr_line"],
                                                                            image_front: front["image_front"],
                                                                            image_back: back["image_back"],
-                                                                           idempotency_key: self.id.to_s)
+                                                                           idempotency_key: check_deposit.id.to_s)
 
     check_deposit.update!(column_id: column_check_deposit["id"], status: :submitted)
 
