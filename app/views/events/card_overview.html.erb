@@ -3,23 +3,19 @@
 <%= render "nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
 <% if current_user.try(:full_name).try(:blank?) %>
-
   <h1 class="heading">
     <span class="flex items-center">
       Cards
     </span>
   </h1>
-
   <%= render "cards/name_required" %>
 <% else %>
-
   <h1 class="flex heading items-center">
     <span class="flex-grow flex items-center flex-1">
       Cards
       <%= badge_for @event.stripe_cards.active.on_main_ledger.count, class: "bg-muted" %>
     </span>
-
-    <%= render "filter_cards_menu" unless @has_filter %>
+    <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
     <%= pop_icon_to @view == "list" ? "grid" : "list",
                     "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
     <% if organizer_signed_in? %>
@@ -29,9 +25,7 @@
       <% end %>
     <% end %>
   </h1>
-
-  <%= render "filter_cards" if @has_filter %>
-
+  <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
   <% if control = @organizer_position&.active_spending_control %>
     <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
     <%= render "callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
@@ -45,21 +39,18 @@
       </ul>
     <% end %>
   <% end %>
-
   <% if organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
       <%= modal_header "Order a card" %>
       <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
     </section>
   <% end %>
-
   <% if @view == "list" %>
     <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
   <% else %>
     <article class="mixed-grid grid--spacious">
       <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards %>
     </article>
-
     <% if @paginated_stripe_cards.blank? %>
       <% if organizer_signed_in? %>
         <%= blankslate "You don't have any #{@status} cards yet." %>
@@ -67,11 +58,8 @@
         <%= blankslate "This organization doesn't have any #{@status} cards" %>
       <% end %>
     <% end %>
-
   <% end %>
-
   <%= paginate @paginated_stripe_cards %>
-
   <% if organizer_signed_in? || @event.used_emburse? %>
     <div class="flex flex-col justify-center mt4">
       <section class="grid">
@@ -91,5 +79,4 @@
       </section>
     </div>
   <% end %>
-
 <% end %>
