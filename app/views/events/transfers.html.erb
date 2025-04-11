@@ -61,6 +61,7 @@
         <th>Status</th>
         <th>Date</th>
         <th>To</th>
+        <th>For</th>
         <th class="text-right">Amount</th>
         <th></th>
       </tr>
@@ -119,14 +120,21 @@
                   <%= d.destination_event.name %>
                 <% end %>
               </strong>
-              for
-              <%= d.name %>
             <% elsif d.is_a? CardGrant %>
               <strong>
                 <%= link_to d.user.name, organizer_signed_in? ? d : spending_card_grant_path(d) %>
               </strong>
             <% else %>
               <%= d.name %>
+            <% end %>
+          </td>
+          <td>
+            <% if d.is_a?(Disbursement) %>
+              <%= d.name %>
+            <% elsif d.is_a?(CardGrant) %>
+              <%= d.purpose %>
+            <% else %>
+              <%= d.try(:payment_for) %>
             <% end %>
           </td>
           <td style="text-align: right;">
