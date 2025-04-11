@@ -24,12 +24,6 @@
       </div>
     </div>
     <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
-    <% if policy(@card_grant.comments.build).create? %>
-      <h2>Comments</h2>
-      <%= render "comments/list", comments: @card_grant.comments %>
-      <%= render "comments/form", commentable: @card_grant %>
-    <% end %>
-
   <%# Organizers and admins' view %>
   <% else %>
     <% if @card_grant.stripe_card %>
@@ -53,11 +47,6 @@
       <% end %>
       <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
     </div>
-    <% if policy(@card_grant.comments.build).create? %>
-      <h2>Comments</h2>
-      <%= render "comments/list", comments: @card_grant.comments %>
-      <%= render "comments/form", commentable: @card_grant %>
-    <% end %>
   <% end %>
 </div>
 
@@ -65,4 +54,10 @@
 
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
+<% end %>
+
+<% if policy(@card_grant.comments.build).create? %>
+  <h2>Comments</h2>
+  <%= render "comments/list", comments: @card_grant.comments %>
+  <%= render "comments/form", commentable: @card_grant %>
 <% end %>
