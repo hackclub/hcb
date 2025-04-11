@@ -122,9 +122,37 @@ class Receipt < ApplicationRecord
     Rails.application.routes.url_helpers.rails_blob_url(file)
   end
 
+  def preview_csv(file)
+    csv_content = file.download
+    rows = CSV.parse(csv_content, headers: true).first(5)
+
+    <<~HTML
+      <table>
+        <thead>
+          <tr>#{rows.headers.map { |h| "<th>#{h}</th>" }.join}</tr>
+        </thead>
+        <tbody>
+          #{rows.map { |row| "<tr>#{row.fields.map { |cell| "<td>#{cell}</td>" }.join}</tr>" }.join}
+        </tbody>
+      </table>
+    HTML
+  end
+
+
   def preview(resize: "1024x1024", only_path: true)
-    if file.previewable?
-      Rails.application.routes.url_helpers.rails_representation_url(file.preview(resize:).processed, only_path:)
+    if file.previewable? || file.content_type == "text/csv"
+      if file.content_type == "text/csv"
+        t = preview_csv(file)
+        t = MiniMagick::Image.read(t)
+        t.format("png")
+        t.resize(resize)
+        t.write("preview.png")
+        t = Rails.application.routes.url_helpers.rails_blob_url(t, only_path:)
+        puts "Preview URL: #{t}"
+        t
+      else
+        Rails.application.routes.url_helpers.rails_representation_url(file.preview(resize:).processed, only_path:)
+      end
     elsif file.variable?
       Rails.application.routes.url_helpers.rails_representation_url(
         (resize.in?(PREPROCESSED_SIZES) ? file.variant(resize.to_sym) : file.variant(resize:)).processed, only_path:
