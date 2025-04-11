@@ -48,6 +48,8 @@ class GSuitesController < ApplicationController
   def destroy
     authorize @g_suite
 
+    @g_suite = Partners::Google::GSuite::DeleteDomain.new(domain: @g_suite.domain).run
+
     if @g_suite.destroy
       flash[:success] = "Google Workspace was successfully destroyed."
       redirect_to g_suites_url
