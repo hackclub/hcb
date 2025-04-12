@@ -183,3 +183,7 @@ stripe_missed_webhooks_job:
 events_sync_to_airtable_job:
   cron: "0 0 * * *" # run every 1 day
   class: "Event::SyncToAirtableJob"
+
+monthly_donation_summary_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "MonthlyDonationSummaryJob"
