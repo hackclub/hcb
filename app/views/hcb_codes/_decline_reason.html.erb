@@ -1,20 +1,27 @@
-<%# locals: (hcb_code:, extended: false, rich: true) %>
+<%# locals: (hcb_code: nil, canonical_pending_transaction: nil, extended: false, rich: true, email: false) %>
 
-<% hcb_decline_reason = local_assigns[:hcb_code].pt.hcb_decline_reason %>
-<% stripe_decline_reason = local_assigns[:hcb_code].pt.stripe_decline_reason %>
+<% pt = local_assigns[:canonical_pending_transaction] || hcb_code.pt %>
+<% hcb_code = hcb_code || pt.local_hcb_code %>
+
+<% hcb_decline_reason = pt.hcb_decline_reason %>
+<% stripe_decline_reason = pt.stripe_decline_reason %>
+
+<% this_transaction = local_assigns[:email] ? (
+    "A #{humanized_money_with_symbol pt.amount.abs} charge to your card ending in #{hcb_code.stripe_card.last4} at '#{pt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]}'"
+) : "This transaction" %>
 
 <span class="inline-flex">
     <% if local_assigns[:extended] %>
         <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
-            <span>This transaction was declined
+            <span><%= this_transaction %> was declined
             <%= {
-                    merchant_not_allowed: "by #{local_assigns[:hcb_code].event.name} because this merchant is not allowed",
+                    merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
                     cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
                 }[hcb_decline_reason] || "due to insufficient funds" %>.</span>
         <% else %>
             <span>
-            <%= ("This transaction was declined by our card issuer " + ({
-                    card_inactive: !local_assigns[:hcb_code].stripe_card.initially_activated? ? "because this card hasn't been activated yet" : "this card is frozen",
+            <%= ("#{this_transaction} was declined by our card issuer " + ({
+                    card_inactive: !hcb_code.stripe_card.initially_activated? ? "because this card hasn't been activated yet" : "this card is frozen",
                     card_canceled: "because this card is canceled",
                     card_expired: "because this card is expired",
                     verification_failed: "because the card verification failed",
@@ -35,7 +42,7 @@
                 }[hcb_decline_reason] || "Insufficient funds" %>
         <% else %>
             <%= {
-                    card_inactive: !local_assigns[:hcb_code].stripe_card.initially_activated? ? "Card not activated" : "Card frozen",
+                    card_inactive: !hcb_code.stripe_card.initially_activated? ? "Card not activated" : "Card frozen",
                     card_canceled: "Card canceled",
                     card_expired: "Card expired",
                     verification_failed: "Card verification failed",
@@ -56,25 +63,37 @@
 </span>
 
 <% if local_assigns[:extended] %>
-    <% unless hcb_decline_reason == :inadequate_balance || stripe_decline_reason == :card_inactive %>
+    <% unless hcb_decline_reason == :inadequate_balance %>
         <h3>Troubleshooting</h3>
     <% end %>
 
     <p class="mb-0">
         <% if hcb_decline_reason == :merchant_not_allowed %>
-            If you believe that this merchant should be enabled, please reach out to the <%= local_assigns[:hcb_code].event.name %> team.
+            If you believe that this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team.
         <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
             Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
         <% elsif stripe_decline_reason == :authorization_controls %>
             This transaction exceeded daily limits set by our card issuer. Please try again later, or use a different card for this transaction.
         <% elsif stripe_decline_reason == :webhook_timeout %>
             HCB experienced a network issue while processing this transaction. Please try again.
-        <% elsif stripe_decline_reason.in? %i[card_canceled card_expired] %>
+        <% elsif stripe_decline_reason == :card_inactive %>
+            <% if hcb_code.stripe_card.initially_activated? %>
+                You can defrost your card at any time <%= link_to "here", stripe_card_url(hcb_code.stripe_card) %>.
+            <% else %>
+                Activate your new card <%= link_to "here", stripe_card_url(hcb_code.stripe_card) %> before using it.
+            <% end %>
+        <% elsif stripe_decline_reason == :card_canceled %>
+            <% if @card.replacement %>
+                Try using its <%= link_to "replacement card", stripe_card_url(@card.replacement) %> ending in <%= @card.replacement.last4 %>.
+            <% else %>
+                Try using another card.
+            <% end %>
+        <% elsif stripe_decline_reason == :card_expired %>
             Try again using a different card.
         <% elsif stripe_decline_reason.in? %i[cardholder_verification_required insufficient_funds] %>
         This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <a href="mailto:hcb@hackclub.com" target="_blank">hcb@hackclub.com</a>.
         <% elsif stripe_decline_reason == :insecure_authorization_method %>
-        <% auth_method = local_assigns[:hcb_code].pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] %>
+        <% auth_method = pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] %>
         <% if auth_method == "swipe" %>
             Your card was swiped, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
         <% elsif auth_method == "keyed_in" %>
@@ -83,10 +102,10 @@
             The card issuer deemed this transaction insecure. Try again using chip, if possible.
         <% end %>
         <% elsif stripe_decline_reason.in? %i[verification_failed suspected_fraud] %>
-        <% verification_data = local_assigns[:hcb_code].pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
+        <% verification_data = pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
         <% card_details = capture do %>
-            <% if local_assigns[:hcb_code].stripe_card.user == current_user %>
-            <%= link_to "your card details", stripe_card_path(local_assigns[:hcb_code].stripe_card) %>
+            <% if defined?(current_user) && hcb_code.stripe_card.user == current_user %>
+                <%= link_to "your card details", stripe_card_path(hcb_code.stripe_card) %>
             <% else %>
             the card details
             <% end %>
@@ -95,30 +114,38 @@
 
         <% if verification_data["cvc_check"] == "mismatch" %>
             <span>
-            <span class="align-top"><%= stripe_verification_check_badge("cvc", verification_data) %></span>
-            <b class="font-bold">CVC</b> did not match <%= card_details %>
+                <% unless local_assigns[:email] %>
+                    <span class="align-top"><%= stripe_verification_check_badge("cvc", verification_data) %></span>
+                <% end %>
+                <b class="font-bold">CVC</b> did not match <%= card_details %>
             </span>
         <% elsif verification_data["address_postal_code_check"] == "mismatch" %>
             <span>
-            <span class="align-top"><%= stripe_verification_check_badge("address_postal_code", verification_data) %></span>
-            <b class="font-bold">Zip</b> did not match <%= card_details %>
+                <% unless local_assigns[:email] %>
+                    <span class="align-top"><%= stripe_verification_check_badge("address_postal_code", verification_data) %></span>
+                <% end %>
+                <b class="font-bold">Zip</b> did not match <%= card_details %>
             </span>
         <% elsif verification_data["address_line1_check"] == "mismatch" %>
             <span>
-            <span class="align-top"><%= stripe_verification_check_badge("address_line1", verification_data) %></span>
-            <b class="font-bold">Address</b> did not match <%= card_details %>
+                <% unless local_assigns[:email] %>
+                    <span class="align-top"><%= stripe_verification_check_badge("address_line1", verification_data) %></span>
+                <% end %>
+                <b class="font-bold">Address</b> did not match <%= card_details %>
             </span>
         <% elsif verification_data["expiry_check"] == "mismatch" %>
             <span>
-            <span class="align-top"><%= stripe_verification_check_badge("expiry", verification_data) %></span>
-            <b class="font-bold">Expiration date</b> did not match <%= card_details %>
+                <% unless local_assigns[:email] %>
+                    <span class="align-top"><%= stripe_verification_check_badge("expiry", verification_data) %></span>
+                <% end %>
+                <b class="font-bold">Expiration date</b> did not match <%= card_details %>
             </span>
         <% end %>
 
         <br>
 
-        <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", freeze_stripe_card_path(local_assigns[:hcb_code].stripe_card), method: :post %>.</span>
-        <% elsif stripe_decline_reason != :card_inactive %>
+        <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(hcb_code.stripe_card), method: :post %>.</span>
+        <% elsif hcb_decline_reason != :inadequate_balance %>
             Try again, or contact the HCB team at <a href="mailto:hcb@hackclub.com" target="_blank">hcb@hackclub.com</a>.
             
             <% if stripe_decline_reason %>
