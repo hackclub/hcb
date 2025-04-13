@@ -62,10 +62,12 @@
             <%= inline_icon :info, size: 20 %>
           </span>
         <% elsif @hcb_code.pt.declined? %>
-          <span class="badge h4 md-right bg-accent">
-            Declined
-            <%= inline_icon :info, size: 20 %>
-          </span>
+          <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
+            <span class="badge h4 md-right bg-accent">
+              Declined
+              <%= inline_icon :info, size: 20 %>
+            </span>
+          </action>
         <% else %>
           <span class="badge h4 md-right bg-muted">
             Pending
@@ -119,91 +121,15 @@
         <% reason = @hcb_code.pt.decline_reason %>
         <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
         <p>
-        <strong>Declined</strong>
-        <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
-              <span class="inline-flex">
+          <strong>Declined</strong>
+          <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
 
-            <% if @hcb_code.pt.hcb_decline_reason.present? || @hcb_code.pt.stripe_decline_reason == "webhook_declined" %>
-              <span>This transaction was declined
-                <%= {
-                      merchant_not_allowed: "by #{@hcb_code.event.name} because this merchant is not allowed",
-                      cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
-                    }[@hcb_code.pt.hcb_decline_reason] || "due to insufficient funds" %>.</span>
-            <% else %>
-              <span>This transaction was declined by our card issuer because
-                <%= {
-                      card_inactive: !@hcb_code.stripe_card.initially_activated? ? "this card hasn't been activated yet" : "this card is frozen",
-                      card_canceled: "this card is canceled",
-                      verification_failed: "the card verification failed",
-                      suspected_fraud: "of suspected fraud",
-                      reversed_by_merchant: "the merchant reversed the transaction",
-                      cardholder_verification_required: "cardholder verification is required",
-                      insufficient_funds: "of an integration issue",
-                      insecure_authorization_method: "the authorization method is insecure",
-                      webhook_timeout: "of a network issue. Please try this purchase again",
-                    }[@hcb_code.pt.stripe_decline_reason] || "the transaction could not go through" %>.</span>
-
-              <% if @hcb_code.pt.stripe_decline_reason.in? %i[cardholder_verification_required insufficient_funds] %>
-                This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <a href="mailto:hcb@hackclub.com" target="_blank">hcb@hackclub.com</a>.
-              <% end %>
-
-              <% if @hcb_code.pt.stripe_decline_reason == :insecure_authorization_method %>
-                <% auth_method = cpt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] %>
-                <% if auth_method == "swipe" %>
-                  Your card was swiped, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
-                <% elsif auth_method == "keyed_in" %>
-                  Your card was keyed in by the merchant, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
-                <% end %>
-              <% end %>
-
-              <% if @hcb_code.pt.stripe_decline_reason.in? %i[verification_failed suspected_fraud] %>
-                <% @verification_data = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
-                <% card_details = capture do %>
-                  <% if @hcb_code.stripe_card.user == current_user %>
-                    <%= link_to "your card details", stripe_card_path(@hcb_code.stripe_card) %>
-                  <% else %>
-                    the card details
-                  <% end %>
-                <% end %>
-
-                <br>
-
-                <% if @verification_data["cvc_check"] == "mismatch" %>
-                  <br>
-                  <span>
-                    <span class="align-top"><%= stripe_verification_check_badge "cvc" %></span>
-                    <b class="font-bold">CVC</b> did not match the <%= card_details %>
-                  </span>
-                <% elsif @verification_data["address_postal_code_check"] == "mismatch" %>
-                  <br>
-                  <span>
-                    <span class="align-top"><%= stripe_verification_check_badge "address_postal_code" %></span>
-                    <b class="font-bold">Zip</b> did not match the <%= card_details %>
-                  </span>
-                <% elsif @verification_data["address_line1_check"] == "mismatch" %>
-                  <br>
-                  <span>
-                    <span class="align-top"><%= stripe_verification_check_badge "address_line1" %></span>
-                    <b class="font-bold">Address</b> did not match the <%= card_details %>
-                  </span>
-                <% elsif @verification_data["expiry_check"] == "mismatch" %>
-                  <br>
-                  <span>
-                    <span class="align-top"><%= stripe_verification_check_badge "expiry" %></span>
-                    <b class="font-bold">Expiration date</b> did not match the <%= card_details %>
-                  </span>
-                <% end %>
-
-                <br>
-
-                <span>If you don't recognize this transaction, <%= link_to "freeze your card", freeze_stripe_card_path(@hcb_code.stripe_card), method: :post %>.</span>
-              <% end %>
-            <% end %>
-
-                <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
-              </span>
-            </action>
-
+            <%= render partial: "hcb_codes/decline_reason", locals: {
+              hcb_code: @hcb_code,
+              extended: false,
+              rich: true
+            } %>
+          </action>
         </p>
       <% end %>
       <% if @hcb_code.pt&.unsettled? %>
@@ -438,27 +364,13 @@
     </section>
 
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
-      <%= modal_header "Transaction declined by #{@hcb_code.pt.declined_by}" %>
-
-      <div class="details mb2">
-        <p>
-          <strong>Key</strong>
-          <span>
-            Value
-          </span>
-        </p>
-        <p>
-          <strong>Key</strong>
-          <%= copy_to_clipboard("Value", class: "w-fit", tooltip_direction: "s") do %>
-            Value
-          <% end %>
-        </p>
-      </div>
-      <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
-        <p class="my0 muted">
-          Card declined
-        </p>
-      </article>
+      <%= modal_header "Transaction declined" %>
+      
+      <%= render partial: "hcb_codes/decline_reason", locals: {
+        hcb_code: @hcb_code,
+        extended: true,
+        rich: true
+      } %>
     </section>
   <% end %>
 
