@@ -9,7 +9,7 @@
     <tr>
       <th>Event</th>
       <th>Account balance</th>
-      <th>Team</th>
+      <th>Card balance</th>
       <th>Pending withdrawals</th>
     </tr>
   </thead>
@@ -26,20 +26,11 @@
           <% end %>
         </td>
         <td>
-          <% @event = event %>
-          <% @organizers = event.organizer_positions %>
-          <div class="flex gap-3 w-full w-100 m-0 p-0 avatar-row avatar-row--no-transform" style="padding-left: 25px">
-            <% @organizers.first(@organizers.length == 12 ? 12 : 11).each do |position| %>
-              <div style="transform:none" class="avatar-grow line-height-0 tooltipped tooltipped--e mb-0" aria-label="<%= position.user == current_user ? current_user_flavor_text.sample : position.user.name %>">
-                <%= avatar_for position.user, 40, { style: "margin-left: -10px; marign-bottom: 0px;" } %>
-              </div>
-            <% end %>
-            <% if @organizers.length > 12 %>
-              <div style="transform:none;width:40px;height:40px;margin-left:-10px;z-index:1" class="mb-0 bg-muted flex items-center justify-center rounded-full avatar-grow">
-                +<%= @organizers.length - 11 %>
-              </div>
-            <% end %>
-          </div>
+          <% if event.emburse_balance < 0 %>
+            <strong><%= render_money event.emburse_balance %></strong>
+          <% else %>
+            <%= render_money event.emburse_balance %>
+          <% end %>
         </td>
         <td>
           <% if event.fee_balance < 0 %>
