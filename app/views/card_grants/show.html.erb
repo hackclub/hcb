@@ -3,13 +3,13 @@
 
 <div class="mt4 mb4 check--form flex justify-center <%= "flex-wrap" if @frame %>" style="gap: 3rem">
   <%# Grantee has pending invite %>
-
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
     <% if @card_grant.canceled? %>
       <%= blankslate "Sorry, this grant was canceled!" %>
     <% else %>
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
+
   <%# Grantee view after accepting invite %>
   <% elsif @card_grant.user == current_user %>
     <div>
@@ -23,9 +23,7 @@
         <%= render "card_grants/actions/return", card_grant: @card_grant %>
       </div>
     </div>
-
     <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
-
   <%# Organizers and admins' view %>
   <% else %>
     <% if @card_grant.stripe_card %>
@@ -58,8 +56,8 @@
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
 <% end %>
 
-<h2>Comments</h2>
 <% if policy(@card_grant.comments.build).create? %>
+  <h2>Comments</h2>
   <%= render "comments/list", comments: @card_grant.comments %>
   <%= render "comments/form", commentable: @card_grant %>
 <% end %>

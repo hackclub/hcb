@@ -26,19 +26,19 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def archive?
-    member_or_higher
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
   end
 
   def void?
-    member_or_higher
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
   end
 
   def unarchive?
-    member_or_higher
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
   end
 
   def manually_mark_as_paid?
-    member_or_higher
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
   end
 
   def hosted?
@@ -54,10 +54,6 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   private
-
-  def member_or_higher
-    OrganizerPosition.role_at_least?(user, record, :member)
-  end
 
   def is_public
     record&.sponsor&.event&.is_public?
