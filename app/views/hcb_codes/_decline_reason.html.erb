@@ -91,7 +91,7 @@
         <% elsif stripe_decline_reason == :card_expired %>
             Try again using a different card.
         <% elsif stripe_decline_reason.in? %i[cardholder_verification_required insufficient_funds] %>
-        This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <a href="mailto:hcb@hackclub.com" target="_blank">hcb@hackclub.com</a>.
+        This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
         <% elsif stripe_decline_reason == :insecure_authorization_method %>
         <% auth_method = pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] %>
         <% if auth_method == "swipe" %>
@@ -146,7 +146,7 @@
 
         <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(hcb_code.stripe_card), method: :post %>.</span>
         <% elsif hcb_decline_reason != :inadequate_balance %>
-            Try again, or contact the HCB team at <a href="mailto:hcb@hackclub.com" target="_blank">hcb@hackclub.com</a>.
+            Try again, or contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
             
             <% if stripe_decline_reason %>
 
