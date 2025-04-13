@@ -75,13 +75,7 @@ class AdminMailer < ApplicationMailer
       }
     end
 
-    @negative_events = []
-
-    Event.find_each do |event|
-      Rails.cache.write "event_balance_#{event.id}", event.balance
-
-      @negative_events << event if event.balance < 0
-    end
+    return if @tasks.none?
 
     mail subject: "24 Hour Reminders for the Operations Team"
   end
