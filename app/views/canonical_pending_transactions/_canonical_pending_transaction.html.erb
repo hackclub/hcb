@@ -50,12 +50,12 @@
               </action>
               <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_pt_<%= instance %>">
                 <%= modal_header "Transaction declined" %>
-                
+
                 <%= render partial: "hcb_codes/decline_reason", locals: {
-                  hcb_code: pt.local_hcb_code,
-                  extended: true,
-                  rich: true
-                } %>
+                      hcb_code: pt.local_hcb_code,
+                      extended: true,
+                      rich: true
+                    } %>
               </section>
             <% end %>
           <% else %>

@@ -1,10 +1,10 @@
-  
+
 <%= render partial: "hcb_codes/decline_reason", locals: {
-  canonical_pending_transaction: @cpt,
-  extended: true,
-  rich: true,
-  email: true
-} %>
+      canonical_pending_transaction: @cpt,
+      extended: true,
+      rich: true,
+      email: true
+    } %>
 
 <% if @cpt.hcb_decline_reason == :inadequate_balance %>
 

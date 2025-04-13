@@ -125,10 +125,10 @@
           <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
 
             <%= render partial: "hcb_codes/decline_reason", locals: {
-              hcb_code: @hcb_code,
-              extended: false,
-              rich: true
-            } %>
+                  hcb_code: @hcb_code,
+                  extended: false,
+                  rich: true
+                } %>
           </action>
         </p>
       <% end %>
@@ -365,12 +365,12 @@
 
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
       <%= modal_header "Transaction declined" %>
-      
+
       <%= render partial: "hcb_codes/decline_reason", locals: {
-        hcb_code: @hcb_code,
-        extended: true,
-        rich: true
-      } %>
+            hcb_code: @hcb_code,
+            extended: true,
+            rich: true
+          } %>
     </section>
   <% end %>
 
