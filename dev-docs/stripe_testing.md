@@ -18,6 +18,8 @@ stripe listen --forward-to localhost:3000/stripe/webhook
 
 Stripe Issuing is how HCB is able to issue virtual and physical credit cards to users. It requires a little more setup to get started. Head over to the [Issuing tab](https://dashboard.stripe.com/test/issuing/overview) on the Stripe dashboard (it's hidden under "More" in the sidebar), and enable it. You'll then need to add funds to your Issuing Balance, which you can do in the [Balances tab](https://dashboard.stripe.com/test/balance/overview#issuing-summary). Click on "Add to balance" in the Issuing balance section, and add up to $2,500. It's all fake money in test mode!
 
+![Screenshot of Issuing balance in the Stripe dashboard](./images/issuing_balance.png)
+
 Once you've started the transfer, it may take some time for the money to actually be available to spend on issued cards.
 
 ## Spending money
@@ -30,6 +32,10 @@ For donating money in development, use card number 4242 4242 4242 4242, with any
 
 ### Card transactions
 
-Stripe also lets you simulate charges on an issued card! First, issue a virtual card from HCB. Then, go into the Stripe dashboard, and go to the [Cards tab in Stripe Issuing](https://dashboard.stripe.com/test/issuing/cards). There, you should be able to see all the cards you've issued. Click on the card you'd like to charge, and then click on "Create test purchase" in the three-dots menu that appears. From here, you can fill out any data you wish - most is optional. If you'd like to simulate a charge from a specific merchant, check out the [yellow_pages merchants file](https://github.com/hackclub/yellow_pages/blob/main/lib/yellow_pages/merchants.yaml) - this contains network IDs for a ton of common merchants.
+Stripe also lets you simulate charges on an issued card! First, issue a virtual card from HCB. Then, go into the Stripe dashboard, and go to the [Cards tab in Stripe Issuing](https://dashboard.stripe.com/test/issuing/cards). There, you should be able to see all the cards you've issued. Click on the card you'd like to charge, and then click on "Create test purchase" in the three-dots menu that appears.
+
+![Screenshot of the test purchase button in the Stripe dashboard](./images/test_purchase.png)
+
+From here, you can fill out any data you wish - most is optional. If you'd like to simulate a charge from a specific merchant, check out the [yellow_pages merchants file](https://github.com/hackclub/yellow_pages/blob/main/lib/yellow_pages/merchants.yaml) - this contains network IDs for a ton of common merchants.
 
 For more information on how card transactions work, see [the card transactions guide](./guides/card_transactions.md).
