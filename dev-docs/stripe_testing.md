@@ -4,7 +4,6 @@ Stripe is one of the primary services used by HCB for its financial features. Fo
 
 ## Getting setup
 
-To start, create a US Stripe account in "test mode".
 We recommend creating a US Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). Once you create a Stripe account, you'll be in the default sandbox.
 
 Now that you have a Stripe account, go to the Developers menu in the bottom-left corner and click on API keys. You'll need a publishable key and a secret key - create and copy both of these into the `.env.development` file, with the names `STRIPE__TEST__PUBLISHABLE_KEY` and `STRIPE__TEST__SECRET_KEY`, respectively. Remember that if you're using the devcontainer (such as with GitHub Codespaces), you must rebuild the container after modifying the `.env.development` file to pull in the new variables.
