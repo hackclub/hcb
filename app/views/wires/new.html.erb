@@ -77,7 +77,7 @@
 
   <div class="field">
     <%= form.label :recipient_country, "Country" %>
-    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" }, disabled: %>
+    <%= form.select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), prompt: { include_blank: "Select a country" }, disabled:, data: { "@change": "country = $event.target.value" } %>
   </div>
 
   <h2 class="mb2 mt3">Payment information</h2>
