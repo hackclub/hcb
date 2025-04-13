@@ -11,9 +11,13 @@
 <% if @ach_transfer.creator %>
   <p>
     Submitted by:
-    <%= "ADMIN" if @ach_transfer.creator.admin? %> <%= @ach_transfer.creator.name %>
+    <%= "ADMIN" if @ach_transfer.creator.auditor? %> <%= @ach_transfer.creator.name %>
     (<%= link_to @ach_transfer.creator.phone_number, "tel:#{@ach_transfer.creator.phone_number}" %>, <%= mail_to @ach_transfer.creator.email %>) of <%= link_to @ach_transfer.event.name, @ach_transfer.event %>
   </p>
+
+  <% if @ach_transfer.event.financially_frozen? %>
+    <p class="font-bold">(❄️ ⚠️ EVENT CURRENTLY FINANCIALLY FROZEN)</p>
+  <% end %>
 
   <p>
     <%= avatar_for @ach_transfer.creator %>
@@ -28,6 +32,12 @@
     <% if @ach_transfer.scheduled_on.present? %>
       <br>
       <small>Once approved, this ACH transfer will automatically send on <%= @ach_transfer.scheduled_on.strftime("%Y-%m-%d") %>.</small>
+    <% end %>
+  <% end %>
+
+  <% unless @ach_transfer.scheduled_on.present? %>
+    <%= form_with(model: nil, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
+      <%= form.submit "⚡ Send in realtime", data: { confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incurr a $1 fee from Column, that will be covered by HCB." } %>
     <% end %>
   <% end %>
 
@@ -52,7 +62,7 @@
     Processed by:
     <span>
       <%= avatar_for @ach_transfer.processor, 24, { style: "margin: 0; vertical-align: bottom" } %>
-      <%= inline_icon "admin-badge", size: 20, style: "vertical-align: middle; margin: -0.2rem -0.3rem 0 -0.3rem;" if @ach_transfer.processor.admin? %>
+      <%= inline_icon "admin-badge", size: 20, style: "vertical-align: middle; margin: -0.2rem -0.3rem 0 -0.3rem;" if @ach_transfer.processor.auditor? %>
       <span><%= @ach_transfer.processor.initial_name %></span>
     </span>
   </p>

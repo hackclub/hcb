@@ -32,6 +32,9 @@ class Employee
   class Payment < ApplicationRecord
     include AASM
 
+    include PublicActivity::Model
+    tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.employee.event.id }, only: [:create]
+
     belongs_to :payout, polymorphic: true, optional: true
 
     belongs_to :employee
@@ -44,29 +47,31 @@ class Employee
 
     monetize :amount_cents
 
+    has_paper_trail
+
     aasm timestamps: true do
       state :submitted, initial: true
-      state :organizer_approved
-      state :admin_approved
+      state :approved
       state :paid
       state :rejected
       state :failed
 
-      event :mark_organizer_approved do
-        transitions from: :submitted, to: :organizer_approved
-      end
-
-      event :mark_admin_approved do
-        transitions from: [:failed, :organizer_approved, :admin_approved], to: :admin_approved
+      event :mark_approved do
+        transitions from: :submitted, to: :approved do
+          guard do
+            !event.financially_frozen?
+          end
+        end
         after do
-          mark_paid if payout.present?
+          update!(payout: nil)
         end
       end
 
       event :mark_paid do
-        transitions from: :admin_approved, to: :paid
+        transitions from: :approved, to: :paid
         after do
           Employee::PaymentMailer.with(payment: self).approved.deliver_later
+          create_activity(key: "employee_payment.paid", owner: employee.user)
         end
       end
 
@@ -78,7 +83,7 @@ class Employee
       end
 
       event :mark_failed do
-        transitions from: [:admin_approved, :paid], to: :failed
+        transitions from: :paid, to: :failed
         after do |reason: nil|
           Employee::PaymentMailer.with(payment: self, reason:).failed.deliver_later
         end
@@ -91,13 +96,22 @@ class Employee
 
     def state_color
       return "error" if rejected?
+      return "warning" if failed?
       return "info" if submitted?
 
       "success"
     end
 
     def payout_method_name
-      payout&.title_kind
+      return "ACH transfer" if payout.is_a?(AchTransfer)
+      return "PayPal transfer" if payout.is_a?(PaypalTransfer)
+      return "Mailed check" if payout.is_a?(IncreaseCheck)
+
+      "Unknown"
+    end
+
+    def previously_paid?
+      versions.where_object_changes_to(aasm_state: "paid").any?
     end
 
   end

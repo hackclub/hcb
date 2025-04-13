@@ -44,9 +44,22 @@ class Metric
                                .where(creator_id: user.id)
                                .group("date(created_at)")
 
-        combined_result_subquery = Arel.sql("(#{stripe_transactions_subquery.to_sql} UNION ALL #{ach_transfers_subquery.to_sql} UNION ALL #{increase_checks_subquery.to_sql} UNION ALL #{checks_subquery.to_sql}) AS combined_table")
+        combined_result_subquery = <<~SQL
+          (#{stripe_transactions_subquery.to_sql}
+          UNION ALL
+          #{ach_transfers_subquery.to_sql}
+          UNION ALL
+          #{increase_checks_subquery.to_sql}
+          UNION ALL
+          #{checks_subquery.to_sql}) AS combined_table
+        SQL
 
-        final_result = Arel.sql("SELECT date(transaction_date) AS transaction_date, SUM(amount) AS amount FROM #{combined_result_subquery} GROUP BY date(transaction_date) ORDER BY date(transaction_date) ASC")
+        final_result = <<~SQL
+          SELECT DATE(transaction_date) AS transaction_date, SUM(amount) AS amount
+          FROM #{combined_result_subquery}
+          GROUP BY DATE(transaction_date)
+          ORDER BY DATE(transaction_date) ASC
+        SQL
 
         hash = {}
         (Date.new(2024, 1, 1)..Date.new(2024, 12, 31)).each do |date|

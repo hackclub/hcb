@@ -10,6 +10,7 @@
 #  email           :string           not null
 #  keyword_lock    :string
 #  merchant_lock   :string
+#  purpose         :string
 #  status          :integer          default("active"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
@@ -44,13 +45,16 @@ class CardGrant < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :cdg
 
+  include Freezable
+  include Commentable
+
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :stripe_card, optional: true
   belongs_to :user, optional: true
   belongs_to :sent_by, class_name: "User"
   belongs_to :disbursement, optional: true
-  has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id) }, through: :event
+  has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id).or(where(source_subledger_id: record.subledger_id)) }, through: :event
   has_one :card_grant_setting, through: :event, required: true
   alias_method :setting, :card_grant_setting
 
@@ -72,6 +76,7 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
+  validates :purpose, length: { maximum: 30 }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
@@ -81,9 +86,7 @@ class CardGrant < ApplicationRecord
 
   monetize :amount_cents
 
-  def name
-    "#{user.name} (#{user.email})"
-  end
+  delegate :name, to: :user
 
   def state
     if canceled? || expired?

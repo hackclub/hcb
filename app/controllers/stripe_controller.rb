@@ -58,7 +58,9 @@ class StripeController < ActionController::Base
     StatsD.increment("stripe_webhook_timeout", 1) if is_closed && has_timeout
 
     rpst = PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction: event[:data][:object]).run
-    PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
+
+    # this has been commented out due to a suspected race condition
+    # PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
 
     head :ok
   end

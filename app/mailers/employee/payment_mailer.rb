@@ -29,7 +29,7 @@ class Employee
       @employee = @payment.employee
       @reason = params[:reason]
 
-      mail subject: "[Payroll] Transfer for #{@payment.name} failed to send", to: @employee.user.email_address_with_name
+      mail subject: "[Payroll] Transfer for #{@payment.title} failed to send", to: @employee.user.email_address_with_name
     end
 
 

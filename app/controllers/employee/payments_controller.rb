@@ -16,7 +16,7 @@ class Employee
           upload_method: :employee_payment,
           receiptable: @payment
         ).run!
-        redirect_to my_payroll_path, flash: { success: "Payment successfully requested." }
+        redirect_to current_user == @employee.user ? my_payroll_path : event_employees_path(@employee.event), flash: { success: "Payment successfully requested." }
       else
         redirect_to my_payroll_path, flash: { error: @payment.errors.full_messages.to_sentence }
       end
@@ -28,12 +28,18 @@ class Employee
       @payment.update(review_message: params[:review_message]) if params[:review_message]
       @payment.update(reviewed_by: current_user)
       if params[:approved]
-        @payment.mark_organizer_approved!
+        @payment.mark_approved!
         redirect_to event_employees_path(@payment.employee.event), flash: { success: "Payment approved." }
       elsif params[:rejected]
         @payment.mark_rejected!
         redirect_to event_employees_path(@payment.employee.event), flash: { success: "Payment rejected, successfully." }
       end
+    end
+
+    def stub
+      @payment = Employee::Payment.find(params[:payment_id])
+      authorize @payment
+      render pdf: "paystub", page_height: "11in", page_width: "8.5in"
     end
 
     private

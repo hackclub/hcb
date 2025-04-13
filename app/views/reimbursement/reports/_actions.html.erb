@@ -130,6 +130,8 @@
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
+              <% elsif report.event&.financially_frozen? %>
+               <span class="bold warning">Warning</span>: <%= report.event.name %> is currently frozen.
               <% elsif report.event.nil? %>
                <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { behavior: "modal_trigger", modal: "edit" } %> to request reimbursement from.
               <% end %>
@@ -164,7 +166,7 @@
             <%= inline_icon "payment-transfer" %>
             Reimburse <%= render_money report.amount_to_reimburse %>
           <% end %>
-        <% elsif report.submitted? && !::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) && policy(report).request_reimbursement? %>
+        <% elsif report.submitted? && (!::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) || report.event.financially_frozen?) && policy(report).request_reimbursement? %>
           <div class="tooltipped tooltipped--n" aria-label="This event can not fulfill this request.">
             <div class="btn bg-info disabled">
               <%= inline_icon "payment-transfer" %>
@@ -179,7 +181,7 @@
         <% elsif report.reimbursement_requested? && !admin_signed_in? %>
           <div class="btn bg-info disabled" style="opacity: 0.75" disabled>
             <%= inline_icon "clock" %>
-            Pending HCB Team Review
+            Pending HCB team review
           </div>
         <% elsif report.reimbursement_requested? %>
           <% admin_tool("overflow-visible") do %>

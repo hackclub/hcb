@@ -5,7 +5,7 @@ class MyController < ApplicationController
 
   def activities
     @before = params[:before] || Time.now
-    if admin_signed_in? && cookies[:admin_activities] == "everyone"
+    if auditor_signed_in? && cookies[:admin_activities] == "everyone"
       @activities = PublicActivity::Activity.all.before(@before).order(created_at: :desc).page(params[:page]).per(25)
     else
       @activities = PublicActivity::Activity.for_user(current_user).before(@before).order(created_at: :desc).page(params[:page]).per(25)
@@ -18,14 +18,20 @@ class MyController < ApplicationController
   end
 
   def cards
-    @stripe_cards = current_user.stripe_cards.includes(:event).order(
+    @stripe_cards = current_user.stripe_cards.includes(:event)
+    @emburse_cards = current_user.emburse_cards.includes(:event)
+
+    @status = params[:status].presence_in(%w[active inactive canceled]) || nil
+    @type = params[:type].presence_in(%w[virtual physical]) || nil
+    @filter_applied = @status || @type
+
+    @stripe_cards = @stripe_cards.where(stripe_status: @status) if @status
+    @stripe_cards = @stripe_cards.where(card_type: @type) if @type
+
+    @stripe_cards = @stripe_cards.order(
       Arel.sql("stripe_status = 'active' DESC"),
       Arel.sql("stripe_status = 'inactive' DESC")
     )
-    @emburse_cards = current_user.emburse_cards.includes(:event)
-
-    @active_stripe_cards = @stripe_cards.where.not(stripe_status: "canceled")
-    @canceled_stripe_cards = @stripe_cards.where(stripe_status: "canceled")
   end
 
   def tasks
@@ -50,12 +56,13 @@ class MyController < ApplicationController
     count = current_user.transactions_missing_receipt.count
 
     emojis = {
-      "🤡 ": 300,
-      "💀 ": 200,
-      "😱 ": 100,
+      "🤡": 300,
+      "💀": 200,
+      "😱": 100
     }
 
-    @missing_receipt_count = "#{emojis.find { |emoji, value| count >= value }&.first}#{count}"
+    @missing_receipt_count = count
+    @missing_receipt_emoji = emojis.find { |emoji, value| count >= value }&.first
 
     render :missing_receipts_icon, layout: false
   end

@@ -10,13 +10,18 @@ class AirbrakeSubscriber
   def extract_context(context)
     controller = context.delete(:controller)
 
-    context.merge!({
-                     controller_name: controller&.controller_name,
-                     action_name: controller&.action_name,
-                     current_user_id: controller&.current_user&.id,
-                     current_user_email: controller&.current_user&.email,
-                     current_session_id: controller&.session&.id,
-                   })
+    context.merge!(
+      {
+        controller_name: controller&.controller_name,
+        action_name: controller&.action_name,
+
+        # We use `try` because some controllers (e.g. Rails::MailerController)
+        # don't have these methods defined.
+        current_user_id: controller&.try(:current_user)&.id,
+        current_user_email: controller&.try(:current_user)&.email,
+        current_session_id: controller&.try(:current_session)&.id,
+      }
+    )
   end
 
 end

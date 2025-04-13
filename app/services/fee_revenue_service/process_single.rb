@@ -16,6 +16,7 @@ module FeeRevenueService
         receiver_bank_account_id = ColumnService::Accounts.id_of fee_revenue.book_transfer_receiving_account
 
         ColumnService.post "/transfers/book",
+                           idempotency_key: fee_revenue.id,
                            amount: amount_cents.abs,
                            currency_code: "USD",
                            sender_bank_account_id:,

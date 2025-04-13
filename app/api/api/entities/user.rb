@@ -8,6 +8,7 @@ module Api
       # Since User is a small object, the full name and photo is included in the
       # minimized version of the object.
       expose :name, as: :full_name
+      expose :auditor?, as: :auditor, documentation: { type: "boolean" }
       expose :admin?, as: :admin, documentation: { type: "boolean" }
       expose :photo do |user, options|
         profile_picture_for user

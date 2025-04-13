@@ -50,7 +50,7 @@ RSpec.describe StaticPageService::Index, type: :model do
 
     context "when only 1 event and zero invites and not admin" do
       before do
-        allow(service).to receive(:admin?).and_return(false)
+        allow(service).to receive(:auditor?).and_return(false)
         allow(service).to receive(:events).and_return([current_user.events.first])
         allow(service).to receive(:invites).and_return([])
       end
@@ -64,9 +64,9 @@ RSpec.describe StaticPageService::Index, type: :model do
   end
 
   describe "private" do
-    describe "#admin?" do
+    describe "#auditor?" do
       it "returns true" do
-        result = service.send(:admin?)
+        result = service.send(:auditor?)
 
         expect(result).to eql(true)
       end

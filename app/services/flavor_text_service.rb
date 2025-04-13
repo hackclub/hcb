@@ -500,7 +500,7 @@ class FlavorTextService
       "I would rather check my Facebook than face my checkbook.",
       "The only part not outstanding is our balance",
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
-      "Wanna&nbsp;<a href='#{Rails.configuration.constants.hack_on_hcb_form_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
+      "Wanna&nbsp;<a href='#{Rails.configuration.constants.github_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
       "everyone's favorite money thing!",
       -> { "#{UserSession.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
       "We Column like we see 'em!",
@@ -508,7 +508,12 @@ class FlavorTextService
       "original recipe!",
       "now sugar-free!",
       "low-sodium edition",
-      'we put the ":3" in "501(c)3"!',
+      'we put the ":3" in "501(c)(3)"!',
+      'we put the "fun" in "restricted fund"!',
+      "we send checks <i>and</i> balances!".html_safe,
+      "do not adjust your television set.",
+      '#{FlavorTextService.new.generate}', # rubocop:disable Lint/InterpolationCheck
+      -> { missing_receipts = HcbCode.missing_receipt.receipt_required.count; "only #{missing_receipts} missing #{"receipt".pluralize(missing_receipts)}!" }, # => "only 20 missing receipts!"
     ]
   end
 

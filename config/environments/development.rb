@@ -93,10 +93,10 @@ Rails.application.configure do
 
   # Configure the URL host for links
   config.action_mailer.default_url_options = {
-    host: Rails.application.credentials.default_url_host[:test]
+    host: Credentials.fetch(:TEST_URL_HOST)
   }
 
-  Rails.application.routes.default_url_options[:host] = Rails.application.credentials.default_url_host[:test]
+  Rails.application.routes.default_url_options[:host] = Credentials.fetch(:TEST_URL_HOST)
 
   # SMTP config
   config.action_mailer.delivery_method = :letter_opener_web
@@ -108,5 +108,4 @@ Rails.application.configure do
     Bullet.rails_logger  = true
   end
 
-  Credentials::Doppler.load if ENV["DOPPLER_TOKEN"]
 end

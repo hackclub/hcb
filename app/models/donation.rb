@@ -63,6 +63,7 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include Freezable
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -90,6 +91,8 @@ class Donation < ApplicationRecord
   validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
+
+  normalizes :email, with: ->(email) { email.strip.downcase }
 
   scope :succeeded, -> { where(status: "succeeded") }
   scope :missing_payout, -> { where(payout_id: nil) }
@@ -385,12 +388,12 @@ class Donation < ApplicationRecord
   end
 
   def trim_utm_referrer_fields
-    self.referrer = referrer&.strip&.truncate(500)
-    self.utm_source = utm_source&.strip&.truncate(500)
-    self.utm_medium = utm_medium&.strip&.truncate(500)
-    self.utm_campaign = utm_campaign&.strip&.truncate(500)
-    self.utm_term = utm_term&.strip&.truncate(500)
-    self.utm_content = utm_content&.strip&.truncate(500)
+    self.referrer = referrer&.presence&.strip&.truncate(500)
+    self.utm_source = utm_source&.presence&.strip&.truncate(500)
+    self.utm_medium = utm_medium&.presence&.strip&.truncate(500)
+    self.utm_campaign = utm_campaign&.presence&.strip&.truncate(500)
+    self.utm_term = utm_term&.presence&.strip&.truncate(500)
+    self.utm_content = utm_content&.presence&.strip&.truncate(500)
   end
 
 end

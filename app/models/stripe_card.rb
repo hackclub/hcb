@@ -52,12 +52,15 @@
 class StripeCard < ApplicationRecord
   include Hashid::Rails
   include PublicIdentifiable
+  include Freezable
   set_public_id_prefix :crd
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "issuing/cards", :stripe_id
 
   has_paper_trail
+
+  validate :within_card_limit, on: :create
 
   after_create_commit :notify_user, unless: :skip_notify_user
 
@@ -419,6 +422,22 @@ class StripeCard < ApplicationRecord
   def personalization_design_must_be_of_the_same_event
     if personalization_design&.event.present? && personalization_design.event != event
       errors.add(:personalization_design, "must be of the same event")
+    end
+  end
+
+  def within_card_limit
+    return if subledger.present?
+
+    # card grants don't count against the limit, hence the subledger_id: nil check
+    user_cards_today = user.stripe_cards.where(subledger_id: nil, created_at: 1.day.ago..).count
+    event_cards_today = event.stripe_cards.where(subledger_id: nil, created_at: 1.day.ago..).count
+
+    if user_cards_today > 20
+      errors.add(:base, "Your account has been rate-limited from creating new cards. Please try again tomorrow; for help, email hcb@hackclub.com.")
+    end
+
+    if event_cards_today > 20
+      errors.add(:base, "Your organization has been rate-limited from creating new cards. Please try again tomorrow; for help, email hcb@hackclub.com.")
     end
   end
 
