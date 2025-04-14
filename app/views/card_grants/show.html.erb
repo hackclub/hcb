@@ -3,31 +3,15 @@
 
 <div class="mt4 mb4 check--form flex justify-center <%= "flex-wrap" if @frame %>" style="gap: 3rem">
   <%# Grantee has pending invite %>
-
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
     <% if @card_grant.canceled? %>
       <%= blankslate "Sorry, this grant was canceled!" %>
     <% else %>
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
-  <%# Grantee view after accepting invite %>
-  <% elsif @card_grant.user == current_user %>
-    <div>
-      <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
-      <% if @card_grant.purpose.present? %>
-        <h2><%= @card_grant.purpose %></h2>
-      <% end %>
-      <%= render @card_grant.stripe_card, headless: true, show_card_number: true %>
-      <%= render partial: "balance", locals: { card_grant: @card_grant } %>
-      <div class="flex items-center mt3 justify-center">
-        <%= render "card_grants/actions/return", card_grant: @card_grant %>
-      </div>
-    </div>
-
-    <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
 
   <%# Organizers and admins' view %>
-  <% else %>
+  <% elsif @card_grant.user.admin? || organizer_signed_in? %>
     <% if @card_grant.stripe_card %>
       <div>
         <%= render @card_grant.stripe_card %>
@@ -49,6 +33,21 @@
       <% end %>
       <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
     </div>
+
+  <%# Grantee view after accepting invite %>
+  <% elsif @card_grant.user == current_user %>
+    <div>
+      <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
+      <% if @card_grant.purpose.present? %>
+        <h2><%= @card_grant.purpose %></h2>
+      <% end %>
+      <%= render @card_grant.stripe_card, headless: true, show_card_number: true %>
+      <%= render partial: "balance", locals: { card_grant: @card_grant } %>
+      <div class="flex items-center mt3 justify-center">
+        <%= render "card_grants/actions/return", card_grant: @card_grant %>
+      </div>
+    </div>
+    <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
   <% end %>
 </div>
 
@@ -58,8 +57,8 @@
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
 <% end %>
 
-<h2>Comments</h2>
 <% if policy(@card_grant.comments.build).create? %>
+  <h2>Comments</h2>
   <%= render "comments/list", comments: @card_grant.comments %>
   <%= render "comments/form", commentable: @card_grant %>
 <% end %>

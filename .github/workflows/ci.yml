@@ -21,6 +21,22 @@ jobs:
         with:
           bundler-cache: true
       - name: Run Rubocop
+        run: bundle exec rubocop
+  rubocop_suggest_changes:
+    name: Rubocop (Suggest changes)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run Rubocop
         run: bundle exec rubocop -a
       - name: Comment suggested changes
         uses: parkerbxyz/suggest-changes@v2.0.0
@@ -39,8 +55,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Run erblint
-        run: bundle exec erblint app/views/
+      - name: Run erb_lint
+        run: bundle exec erb_lint app/views/
   eslint:
     name: ESLint
     runs-on: ubuntu-latest

@@ -193,7 +193,10 @@ class User < ApplicationRecord
     end
   end
 
-  scope :currently_online, -> { where(id: UserSession.where("last_seen_at > ?", 15.minutes.ago).pluck(:user_id)) }
+  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
+  scope :currently_online, -> { last_seen_within(15.minutes.ago) }
+  scope :active, -> { last_seen_within(30.days.ago) }
+  def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
   # a auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
@@ -339,7 +342,7 @@ class User < ApplicationRecord
   end
 
   def teenager?
-    birthday&.after?(19.years.ago) || events.organized_by_teenagers.any?
+    birthday&.after?(19.years.ago)
   end
 
   def last_seen_at
@@ -361,6 +364,10 @@ class User < ApplicationRecord
   def sync_with_loops
     new_user = full_name_before_last_save.blank? && !onboarding?
     UserService::SyncWithLoops.new(user_id: id, new_user:).run
+  end
+
+  def only_card_grant_user?
+    card_grants.size >= 1 && events.size == 0
   end
 
   private
@@ -414,8 +421,8 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer)
-      errors.add(:payout_method, "is an invalid method, must be check or ACH transfer")
+    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire)
+      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, or ACH transfer")
     end
   end
 

@@ -109,6 +109,8 @@ class AdminController < ApplicationController
       demo_mode: true
     ).run
 
+    Flipper.enable_actor(:organizer_position_contracts_2025_01_03, event)
+
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
     record["HCB ID"] = event.id
 
@@ -1120,18 +1122,6 @@ class AdminController < ApplicationController
     end
   end
 
-  def grants
-    @page = params[:page] || 1
-    @per = params[:per] || 20
-    @grants = Grant.includes(:event, :recipient).page(@page).per(@per).order(created_at: :desc)
-
-  end
-
-  def grant_process
-    @grant = Grant.find(params[:id])
-
-  end
-
   def hq_receipts
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -1349,7 +1339,8 @@ class AdminController < ApplicationController
                  .body
 
     hackathons.dig("status", "pending", "meta", "count")
-  rescue Faraday::Error
+  rescue => e
+    Rails.error.report(e)
     9999
   end
 

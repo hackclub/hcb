@@ -17,6 +17,7 @@ class LoginsController < ApplicationController
 
   # view to log in
   def new
+    @return_to = url_from(params[:return_to])
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?

@@ -23,7 +23,7 @@ class Export
   module Event
     module Reimbursements
       class Csv < Export
-        store :parameters, accessors: %w[event_id]
+        store :parameters, accessors: %w[event_id], coder: JSON
         def async?
           false
         end

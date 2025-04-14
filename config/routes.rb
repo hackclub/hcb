@@ -221,7 +221,6 @@ Rails.application.routes.draw do
       get "google_workspaces", to: "admin#google_workspaces"
       post "google_workspaces_verify_all", to: "admin#google_workspaces_verify_all"
       get "balances", to: "admin#balances"
-      get "grants", to: "admin#grants"
       get "hq_receipts", to: "admin#hq_receipts"
       get "account_numbers", to: "admin#account_numbers"
       get "employees", to: "admin#employees"
@@ -230,12 +229,6 @@ Rails.application.routes.draw do
       get "email", to: "admin#email"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
 
-      resources :grants, only: [] do
-        post "approve"
-        post "additional_info_needed"
-        post "reject"
-        post "mark_fulfilled"
-      end
     end
 
     member do
@@ -261,7 +254,6 @@ Rails.application.routes.draw do
       post "google_workspace_update", to: "admin#google_workspace_update"
       get "invoice_process", to: "admin#invoice_process"
       post "invoice_mark_paid", to: "admin#invoice_mark_paid"
-      get "grant_process", to: "admin#grant_process"
     end
   end
 
@@ -656,14 +648,10 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :grants, only: [:show], path: "grants_v2" do
-    member do
-      post "activate"
-    end
-  end
-
   match "/404", to: "errors#not_found", via: :all
   match "/500", to: "errors#internal_server_error", via: :all
+  match "/504", to: "errors#timeout", via: :all
+  get "timeout", to: "errors#timeout", via: :all
 
   Rack::Utils::HTTP_STATUS_CODES.keys.select { |c| c >= 400 }.each do |code|
     match "/#{code}", to: "errors#error", via: :all, code:
@@ -757,8 +745,6 @@ Rails.application.routes.draw do
         post "topup"
       end
     end
-
-    resources :grants, only: [:index, :new, :create]
 
     resource :column_account_number, controller: "column/account_number", only: [:create, :update], path: "account-number"
 

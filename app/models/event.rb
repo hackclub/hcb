@@ -18,6 +18,7 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
+#  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
 #  is_indexable                                 :boolean          default(TRUE)
@@ -314,16 +315,16 @@ class Event < ApplicationRecord
   has_many :grants
 
   has_one_attached :donation_header_image
-  validates :donation_header_image, content_type: [:png, :jpg, :jpeg]
+  validates :donation_header_image, content_type: [:png, :jpeg]
 
   has_one_attached :background_image
-  validates :background_image, content_type: [:png, :jpg, :jpeg]
+  validates :background_image, content_type: [:png, :jpeg]
 
   has_one_attached :logo
-  validates :logo, content_type: [:png, :jpg, :jpeg]
+  validates :logo, content_type: [:png, :jpeg]
 
   has_one_attached :stripe_card_logo
-  validates :stripe_card_logo, content_type: [:png, :jpg, :jpeg]
+  validates :stripe_card_logo, content_type: [:png, :jpeg]
 
   include HasMetrics
 
@@ -449,6 +450,10 @@ class Event < ApplicationRecord
       balance += fronted_incoming_balance_v2_cents
     end
     balance
+  end
+
+  def total_spent_cents
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil)
@@ -648,6 +653,10 @@ class Event < ApplicationRecord
     !engaged?
   end
 
+  def frozen?
+    Flipper.enabled?(:frozen, self)
+  end
+
   def revenue_fee
     plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
   end
@@ -682,11 +691,11 @@ class Event < ApplicationRecord
   end
 
   def donation_page_available?
-    donation_page_enabled && plan.donations_enabled?
+    donation_page_enabled && plan.donations_enabled? && !financially_frozen?
   end
 
   def public_reimbursement_page_available?
-    public_reimbursement_page_enabled && plan.reimbursements_enabled?
+    public_reimbursement_page_enabled && plan.reimbursements_enabled? && !financially_frozen?
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)
@@ -715,6 +724,21 @@ class Event < ApplicationRecord
 
   def eligible_for_indexing?
     eligible_for_transparency? && !risk_level.in?(%w[moderate high])
+  end
+
+  def sync_to_airtable
+    # Sync stats to application's airtable record
+    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
+      app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
+
+      # For Anish's TUB
+      app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
+      app["Referral Raised 25"] = total_raised > 25_00
+      app["Referral Transparent"] = is_public
+      app["Referral 2 Teen Members"] = organizer_positions.includes(:user).where(user: { teenager: true }).count > 2
+
+      app.save
+    end
   end
 
   private

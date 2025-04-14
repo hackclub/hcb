@@ -65,6 +65,7 @@ class AchTransfer < ApplicationRecord
   include Commentable
   include Payoutable
   include Payment
+  include Freezable
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]
@@ -103,7 +104,6 @@ class AchTransfer < ApplicationRecord
   validates :company_name, length: { maximum: 16 }, allow_blank: true
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
-  has_one :grant, required: false
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
@@ -252,7 +252,7 @@ class AchTransfer < ApplicationRecord
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
 
-    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:
+    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: self.id.to_s
   end
 
   def pending_expired?
@@ -269,8 +269,6 @@ class AchTransfer < ApplicationRecord
     end
 
     update!(processor: processed_by) if processed_by.present?
-
-    grant.mark_fulfilled! if grant.present?
   end
 
   def status
