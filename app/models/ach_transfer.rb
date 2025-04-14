@@ -63,7 +63,9 @@ class AchTransfer < ApplicationRecord
 
   include AASM
   include Commentable
+  include Payoutable
   include Payment
+  include Freezable
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]
@@ -102,15 +104,17 @@ class AchTransfer < ApplicationRecord
   validates :company_name, length: { maximum: 16 }, allow_blank: true
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
-  has_one :grant, required: false
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
 
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
+
+  scope :realtime, -> { where("column_id ILIKE 'rttr%'") }
 
   after_initialize do
     self.same_day = true
@@ -127,6 +131,7 @@ class AchTransfer < ApplicationRecord
     event :mark_in_transit do
       after do
         AchTransferMailer.with(ach_transfer: self).notify_recipient.deliver_later if self.send_email_notification
+        employee_payment.mark_paid! if employee_payment.present?
       end
       transitions from: [:pending, :deposited, :scheduled], to: :in_transit
     end
@@ -136,6 +141,7 @@ class AchTransfer < ApplicationRecord
         canonical_pending_transaction&.decline!
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
       transitions from: [:pending, :scheduled], to: :rejected
     end
@@ -153,6 +159,8 @@ class AchTransfer < ApplicationRecord
         if reimbursement_payout_holding.present?
           ReimbursementMailer.with(reimbursement_payout_holding:, reason:).ach_failed.deliver_later
           reimbursement_payout_holding.mark_failed!
+        elsif employee_payment.present?
+          employee_payment.mark_failed!(reason:)
         else
           AchTransferMailer.with(ach_transfer: self, reason:).notify_failed.deliver_later
         end
@@ -185,7 +193,7 @@ class AchTransfer < ApplicationRecord
     return unless may_mark_in_transit?
 
     account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,
@@ -210,27 +218,57 @@ class AchTransfer < ApplicationRecord
     save!
   end
 
+  def send_realtime_transfer!
+    return unless may_mark_in_transit?
+
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
+
+    column_counterparty = ColumnService.post("/counterparties", {
+      idempotency_key: self.id.to_s,
+      account_number:,
+      routing_number:
+    }.compact_blank)
+
+    column_realtime_transfer = ColumnService.post("/transfers/realtime", {
+      idempotency_key: self.id.to_s,
+      amount:,
+      currency_code: "USD",
+      counterparty_id: column_counterparty["id"],
+      description: payment_for,
+      account_number_id:,
+    }.compact_blank)
+
+    mark_in_transit
+    self.column_id = column_realtime_transfer["id"]
+
+    save!
+  end
+
+  def realtime?
+    column_id&.starts_with?("rttr")
+  end
+
   # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
 
-    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:
+    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: self.id.to_s
   end
 
   def pending_expired?
     local_hcb_code.has_pending_expired?
   end
 
-  def approve!(processed_by = nil)
+  def approve!(processed_by = nil, send_realtime: false)
     if scheduled_on.present?
       mark_scheduled!
+    elsif send_realtime
+      send_realtime_transfer!
     else
       send_ach_transfer!
     end
 
     update!(processor: processed_by) if processed_by.present?
-
-    grant.mark_fulfilled! if grant.present?
   end
 
   def status
@@ -299,6 +337,8 @@ class AchTransfer < ApplicationRecord
     # https://column.com/docs/ach/timing
 
     now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
+
+    return now if realtime?
 
     if same_day? && now.workday?
       return now.change(hour: 10, minute: 0, second: 0) if now < now.change(hour: 7, min: 15, sec: 0)

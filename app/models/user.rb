@@ -65,7 +65,7 @@ class User < ApplicationRecord
     monthly: 2,
   }, prefix: :receipt_report, default: :weekly
 
-  enum :access_level, { user: 0, admin: 1, superadmin: 2 }, scopes: false, default: :user
+  enum :access_level, { user: 0, admin: 1, superadmin: 2, auditor: 3 }, scopes: false, default: :user
 
   enum :creation_method, {
     login: 0,
@@ -116,9 +116,14 @@ class User < ApplicationRecord
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
 
+  has_many :jobs, as: :entity, class_name: "Employee"
+  has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
+
   has_many :card_grants
 
   has_one_attached :profile_picture
+
+  has_many :w9s, class_name: "W9", as: :entity
 
   has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
   has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
@@ -188,7 +193,17 @@ class User < ApplicationRecord
     end
   end
 
-  scope :currently_online, -> { where(id: UserSession.where("last_seen_at > ?", 15.minutes.ago).pluck(:user_id)) }
+  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
+  scope :currently_online, -> { last_seen_within(15.minutes.ago) }
+  scope :active, -> { last_seen_within(30.days.ago) }
+  def active? = last_seen_at && (last_seen_at >= 30.days.ago)
+
+  # a auditor is an admin who can only view things.
+  # auditor? takes into account an admin user's preference
+  # to pretend to be a non-admin, normal user
+  def auditor?
+    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  end
 
   # admin? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
@@ -327,7 +342,7 @@ class User < ApplicationRecord
   end
 
   def teenager?
-    birthday&.after?(19.years.ago) || events.organized_by_teenagers.any?
+    birthday&.after?(19.years.ago)
   end
 
   def last_seen_at
@@ -349,6 +364,10 @@ class User < ApplicationRecord
   def sync_with_loops
     new_user = full_name_before_last_save.blank? && !onboarding?
     UserService::SyncWithLoops.new(user_id: id, new_user:).run
+  end
+
+  def only_card_grant_user?
+    card_grants.size >= 1 && events.size == 0
   end
 
   private
@@ -382,7 +401,7 @@ class User < ApplicationRecord
 
   def profile_picture_format
     return unless profile_picture.attached?
-    return if profile_picture.blob.content_type.start_with? "image/"
+    return if profile_picture.blob.content_type.start_with?("image/") && profile_picture.blob.variable?
 
     profile_picture.purge_later
     errors.add(:profile_picture, "needs to be an image")

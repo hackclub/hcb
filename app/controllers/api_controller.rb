@@ -23,7 +23,7 @@ class ApiController < ApplicationController
       email: params[:email],
       country: params[:country],
       postal_code: ValidatesZipcode.valid?(params[:postal_code], params[:country]) ? params[:postal_code] : nil,
-      is_public: params[:transparent].nil? ? true : params[:transparent],
+      is_public: params[:transparent].nil? || params[:transparent],
     ).run
 
     render json: {
@@ -73,7 +73,7 @@ class ApiController < ApplicationController
 
   def check_token
     authed = authenticate_with_http_token do |token|
-      ActiveSupport::SecurityUtils.secure_compare(token, Rails.application.credentials.api_token)
+      ActiveSupport::SecurityUtils.secure_compare(token, Credentials.fetch(:API_TOKEN))
     end
 
     render json: { error: "Unauthorized" }, status: :unauthorized unless authed

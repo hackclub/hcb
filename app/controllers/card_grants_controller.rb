@@ -31,7 +31,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -41,9 +41,27 @@ class CardGrantsController < ApplicationController
 
   rescue => e
     flash[:error] = "Something went wrong. #{e.message}"
-    notify_airbrake(e)
+    Rails.error.report(e)
   ensure
     redirect_to event_transfers_path(@event)
+  end
+
+  def update
+    authorize @card_grant
+
+    if @card_grant.update(params.require(:card_grant).permit(:purpose))
+      flash[:success] = "Grant's purpose has been successfully updated!"
+    else
+      flash[:error] = @card_grant.errors.full_messages.to_sentence
+    end
+
+    redirect_to card_grant_url(@card_grant)
+  end
+
+  def clear_purpose
+    authorize @card_grant, :update?
+    @card_grant.update(purpose: nil)
+    redirect_back fallback_location: card_grant_url(@card_grant)
   end
 
   def show
@@ -65,7 +83,7 @@ class CardGrantsController < ApplicationController
     render :show, layout: !@frame
 
   rescue Pundit::NotAuthorizedError
-    redirect_to auth_users_path(email: @card_grant.user.email, return_to: card_grant_path(@card_grant)), flash: { info: "Please sign in with the same email you received the invitation at." }
+    redirect_to auth_users_path(return_to: card_grant_path(@card_grant), error: "unauthorised_card_grant")
   end
 
   def spending
@@ -110,6 +128,10 @@ class CardGrantsController < ApplicationController
     @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
 
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+  end
+
+  def edit
+    authorize @card_grant
   end
 
   private

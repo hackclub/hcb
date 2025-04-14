@@ -2,9 +2,9 @@
 <% page_sm %>
 <% no_app_shell %>
 
-<%= render "header" %>
+<%= render "header" if signed_in? %>
 
-<div class="card mb3 pt3 pb3">
+<div class="card mb3 <%= signed_in? ? "mt3" : "mt6" %> pt3 pb3">
   <%= inline_icon :checkmark, size: 48, class: "success block mx-auto mb1" %>
   <h2 class="border-none center mt1 ml0 mr0 regular">Thanks for donating!</h2>
   <p class="center secondary">

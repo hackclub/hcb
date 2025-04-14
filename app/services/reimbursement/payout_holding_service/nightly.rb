@@ -47,7 +47,7 @@ module Reimbursement
               Airbrake.notify(e)
             end
           when User::PayoutMethod::Check
-            begin
+            Rails.error.handle do
               check = clearinghouse.increase_checks.build(
                 memo: "Reimbursement for #{payout_holding.report.name}."[0...40],
                 amount: payout_holding.amount_cents,
@@ -67,11 +67,9 @@ module Reimbursement
               payout_holding.increase_check = check
               payout_holding.save!
               payout_holding.mark_sent!
-            rescue => e
-              Airbrake.notify(e)
             end
           when User::PayoutMethod::AchTransfer
-            begin
+            Rails.error.handle do
               ach_transfer = clearinghouse.ach_transfers.build(
                 amount: payout_holding.amount_cents,
                 payment_for: "Reimbursement for #{payout_holding.report.name}.",
@@ -100,11 +98,9 @@ module Reimbursement
                 payout_holding.save!
                 payout_holding.mark_sent!
               end
-            rescue => e
-              Airbrake.notify(e)
             end
           when User::PayoutMethod::PaypalTransfer
-            begin
+            Rails.error.handle do
               paypal_transfer = clearinghouse.paypal_transfers.build(
                 amount_cents: payout_holding.amount_cents,
                 payment_for: "Reimbursement for #{payout_holding.report.name}.",
@@ -117,8 +113,6 @@ module Reimbursement
               payout_holding.paypal_transfer = paypal_transfer
               payout_holding.save!
               payout_holding.mark_sent!
-            rescue => e
-              Airbrake.notify(e)
             end
           else
             raise ArgumentError, "🚨⚠️ unsupported payout method!"

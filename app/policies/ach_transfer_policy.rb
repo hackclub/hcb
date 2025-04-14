@@ -2,7 +2,7 @@
 
 class AchTransferPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def new?

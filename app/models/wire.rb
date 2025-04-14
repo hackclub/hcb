@@ -54,6 +54,10 @@ class Wire < ApplicationRecord
 
   validates_length_of :payment_for, maximum: 140
   include AASM
+  include Freezable
+
+  include CountryEnumable
+  has_country_enum(field: :recipient_country)
 
   belongs_to :event
   belongs_to :user
@@ -159,7 +163,7 @@ class Wire < ApplicationRecord
   end
 
   def admin_dropdown_description
-    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_email} from #{event.name}"
+    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
   end
 
   def local_hcb_code
@@ -222,6 +226,12 @@ class Wire < ApplicationRecord
     self.column_id = column_wire_transfer["id"]
     mark_approved
     save!
+  end
+
+  def last_user_change_to(...)
+    user_id = versions.where_object_changes_to(...).last&.whodunnit
+
+    user_id && User.find(user_id)
   end
 
 end

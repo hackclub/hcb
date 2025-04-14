@@ -5,6 +5,7 @@ module ReimbursementJob
     queue_as :low
     def perform(report)
       return unless report.draft?
+      return if report.deleted?
 
       if report.updated_at < 23.hours.ago
         ReimbursementMailer.with(report:).reminder.deliver_later

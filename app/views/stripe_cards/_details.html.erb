@@ -17,11 +17,10 @@
       </p>
     <% end %>
 
-    <% eta = stripe_card.stripe_obj.to_hash&.dig(:shipping, :eta) %>
-    <% if eta && Time.now.before?(Time.at(eta) + 3.days) %>
+    <% if !stripe_card.initially_activated? && stripe_card.shipping_eta&.after?(1.week.ago) %>
       <p>
         <strong>Expected arrival</strong>
-        <%= format_date Time.at(eta).to_date %>
+        <%= format_date stripe_card.shipping_eta %>
       </p>
     <% else %>
       <p>

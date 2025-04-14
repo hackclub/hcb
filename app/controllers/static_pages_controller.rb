@@ -4,8 +4,13 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :roles]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :roles]
+  skip_before_action :signed_in_user, only: [:branding, :roles, :security]
+  skip_before_action :redirect_to_onboarding, only: [:branding, :roles, :security]
+
+  after_action only: [:index, :branding, :security] do
+    # Allow indexing home and branding pages
+    response.delete_header("X-Robots-Tag")
+  end
 
   def index
     if signed_in?
@@ -15,7 +20,7 @@ class StaticPagesController < ApplicationController
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
 
-      if admin_signed_in? && cookies[:admin_activities] == "everyone"
+      if auditor_signed_in? && cookies[:admin_activities] == "everyone"
         @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
       else
         @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
@@ -26,7 +31,7 @@ class StaticPagesController < ApplicationController
       @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
 
     end
-    if admin_signed_in?
+    if auditor_signed_in?
       @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
     end
   end
@@ -44,6 +49,8 @@ class StaticPagesController < ApplicationController
     ]
     @event_name = signed_in? && current_user.events.first&.name || "Hack Pennsylvania"
     @event_slug = signed_in? && current_user.events.first&.slug || "hack-pennsylvania"
+
+    render layout: "docs"
   end
 
   def roles
@@ -109,6 +116,12 @@ class StaticPagesController < ApplicationController
         "Edit settings": :manager,
       }
     }
+
+    render layout: "docs"
+  end
+
+  def security
+    render layout: "docs"
   end
 
   def suggested_pairings
@@ -138,7 +151,7 @@ class StaticPagesController < ApplicationController
     redirect_back
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash[:error] = e.message
     return redirect_to params[:redirect_url] if params[:redirect_url]

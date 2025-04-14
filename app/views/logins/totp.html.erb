@@ -1,8 +1,6 @@
 <% title "Enter TOTP code" %>
 <% content_for(:page_class) { "bg-snow" } %>
-<div class="flex items-center justify-between">
-  <%= render partial: "application/logo" %>
-</div>
+
 <div class="flex flex-col flex-1 justify-center">
   <div class="flex flex-col justify-between items-start">
     <%= render "header", label: "Sign in to HCB" do %>
@@ -12,29 +10,13 @@
   </div>
   <p>
     <% if @login.authentication_factors_count > 0 %>
-      For additional security, e<% else %>E<% end %>nter your one time password from your authenticator app
+      For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
   </p>
   <%= form_tag complete_login_path(@login) do %>
-    <div class="card px-6 sm:px-4 py-6 mb-4 shadow-sm border" style="max-width: 450px;" data-controller="login-code">
-      <div class="block sm:hidden md:block">
-        <%= label_tag :login_code_1, "Enter your one time password code", class: "left-align mb-2" %>
-        <div class="flex font-mono transition-none items-center" data-login-code-target="wrapper">
-          <% 6.times do |i| %>
-            <%= number_field_tag "login_code_#{i + 1}".to_sym, "",
-               autofocus: true,
-               autocomplete: i != 0 ? "off" : "one-time-code",
-               data: { "login-code-target": "input" },
-               class: "text-center mb-0 text-lg font-bold dark:!border-gray-600 !rounded-none focus:z-10 -mr-[1px] first:!rounded-l-lg #{ [2, 5].include?(i) && "!rounded-r-lg"}  #{ (i == 3) && "!rounded-l-lg"}",
-               style: i != 0 ? "transform: translateX(-20px); width: 60px; z-index: 2" : "width: 80px; z-index: 1; padding-right: 28px;",
-               required: true %>
-            <% if i == 2 %>
-              <span style="transform: translateX(-20px); z-index: 2; opacity: 0;">&mdash;</span>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-      <%= hidden_field_tag :code, "", class: "left-align mb2 !max-w-full w-max", required: true, data: { "login-code-target": "composite", "1p-ignore": "true" } %>
-    </div>
+    <%= text_field :code, "", name: "code", placeholder: "Enter your one time password code", class: "left-align mb2 !max-w-full w-max", required: true, autofocus: true unless Flipper.enabled?(:otp_single_input, @login.user) %>
+
+    <%= text_field :code, "", name: "code", class: "otp_code", autocomplete: "one-time-code", required: true, autofocus: true, inputmode: "numeric", maxlength: "6", data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
+
     <%= hidden_field_tag :email, @email %>
     <%= hidden_field_tag :method, :totp %>
     <%= hidden_field_tag :fingerprint %>
@@ -49,6 +31,8 @@
       </button>
     </div>
   <% end %>
+  <%= javascript_include_tag "otp.js", defer: true %>
+  <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
 <%= render partial: "environment_banner" %>

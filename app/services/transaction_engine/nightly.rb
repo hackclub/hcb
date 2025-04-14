@@ -13,14 +13,12 @@ module TransactionEngine
       safely { import_raw_plaid_transactions! }
       safely { import_raw_stripe_transactions! }
       safely { import_raw_csv_transactions! }
-      safely { import_raw_increase_transactions! }
       safely { import_raw_column_transactions! }
 
       # (2) Hash transactions
       safely { hash_raw_plaid_transactions! }
       safely { hash_raw_stripe_transactions! }
       safely { hash_raw_csv_transactions! }
-      safely { hash_raw_increase_transactions! }
 
       # (3) Canonize transactions
       safely { canonize_hashed_transactions! }
@@ -36,12 +34,10 @@ module TransactionEngine
 
     def import_raw_plaid_transactions!
       BankAccount.syncing_v2.pluck(:id).each do |bank_account_id|
-        begin
+        Rails.error.handle do
           puts "raw_plaid_transactions: #{bank_account_id}"
 
           ::TransactionEngine::RawPlaidTransactionService::Plaid::Import.new(bank_account_id:, start_date: @start_date).run
-        rescue => e
-          Airbrake.notify(e)
         end
       end
     end
@@ -52,10 +48,6 @@ module TransactionEngine
 
     def import_raw_csv_transactions!
       ::TransactionEngine::RawCsvTransactionService::Import.new.run
-    end
-
-    def import_raw_increase_transactions!
-      ::TransactionEngine::RawIncreaseTransactionService::Increase::Import.new(start_date: @start_date).run
     end
 
     def import_raw_column_transactions!
@@ -106,20 +98,14 @@ module TransactionEngine
       ::TransactionEngine::HashedTransactionService::RawCsvTransaction::Import.new.run
     end
 
-    def hash_raw_increase_transactions!
-      ::TransactionEngine::HashedTransactionService::RawIncreaseTransaction::Import.new(start_date: @start_date).run
-    end
-
     def canonize_hashed_transactions!
       ::TransactionEngine::CanonicalTransactionService::Import::All.new.run
     end
 
     def fix_plaid_mistakes!
       BankAccount.syncing_v2.pluck(:id).each do |bank_account_id|
-        begin
+        Rails.error.handle do
           ::TransactionEngine::FixMistakes::Plaid.new(bank_account_id:, start_date: @start_date.to_date.iso8601, end_date: nil).run
-        rescue => e
-          Airbrake.notify(e)
         end
       end
     end

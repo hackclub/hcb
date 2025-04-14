@@ -1,19 +1,30 @@
-<footer class="[&_*]:transition-colors [&_*]:text-muted/50 [&:hover_*]:text-muted/80 [&_a:hover]:text-muted">
-  <p class="center mt-12">
+<footer class="[&_*]:transition-colors [&_*]:text-muted/50 [&:hover_*]:text-muted/80 [&_a:hover]:text-muted [&_.footer-extras]:transition-opacity [&_.footer-extras]:invisible [&:hover_.footer-extras]:visible py-2 mt-10">
+  <p class="text-center">
     <%= help_message if current_user && local_assigns[:help_message] != false %>
   </p>
 
-  <p class="text-center text-xs">
-    <% if commit_hash.present? %>
-      Build <em><%= commit_name %></em>
-      <% if commit_duration.present? %>
-        from <%= commit_duration %> ago.
-      <% end %>
+  <% unless Rails.env.production? %>
+    <% @sql_count = QueryCount::Counter.counter %>
+    <% @sql_cached_count = QueryCount::Counter.counter_cache %>
+    <p class="text-center text-xs">
+      Loaded using <%= @sql_count %> unique
+      SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %>
+      cached). Running on Rails <%= Rails::VERSION::STRING %> with
+      Ruby <%= RUBY_VERSION %>.
+    </p>
+  <% end %>
+
+  <p class="footer-extras text-xs flex justify-center gap-1">
+    <% if Build.commit_hash.present? %>
+      <span class="tooltipped tooltipped--n tooltipped--xl underline" aria-label="Build <%= Build.commit_name %>">
+        <%= Build.age.present? ? "Last built #{Build.age} ago" : "Build info" %>
+      </span>
+      •
     <% end %>
-    <% unless Rails.env.production? %>
-      <% @sql_count = QueryCount::Counter.counter %>
-      <% @sql_cached_count = QueryCount::Counter.counter_cache %>
-      Loaded using <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %> cached). Running on Rails <%= Rails::VERSION::STRING %> with Ruby <%= RUBY_VERSION %>.
-    <% end %>
+    <%= link_to "Security", security_path %>
+    •
+    <%= link_to "API docs", docs_api_index_path %>
+    •
+    <%= link_to "Open source", Rails.configuration.constants.github_url %>
   </p>
 </footer>

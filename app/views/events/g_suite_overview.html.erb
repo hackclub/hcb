@@ -274,7 +274,7 @@
           </ol>
         </article>
       </details>
-      <% if !@g_suite.verified? && @g_suite.previously_verified? %>
+      <% if !@g_suite.verified? && (@g_suite.previously_verified? || @g_suite.accounts.any?) %>
         <article class="card mb3">
           <%= render "g_suite_accounts/panel" %>
         </article>

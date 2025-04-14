@@ -4,8 +4,8 @@ class ColumnService
   ENVIRONMENT = Rails.env.production? ? :production : :sandbox
 
   module Accounts
-    FS_MAIN = Rails.application.credentials.column.dig(ENVIRONMENT, :fs_main_account_id)
-    FS_OPERATING = Rails.application.credentials.column.dig(ENVIRONMENT, :fs_operating_account_id)
+    FS_MAIN = Credentials.fetch(:COLUMN, ENVIRONMENT, :fs_main_account_id)
+    FS_OPERATING = Credentials.fetch(:COLUMN, ENVIRONMENT, :fs_operating_account_id)
 
     def self.id_of(account_sym)
       const_get(account_sym.upcase)
@@ -21,7 +21,7 @@ class ColumnService
 
   def self.conn
     @conn ||= Faraday.new url: "https://api.column.com" do |f|
-      f.request :basic_auth, "", Rails.application.credentials.column.dig(ENVIRONMENT, :api_key)
+      f.request :basic_auth, "", Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :API_KEY)
       f.request :url_encoded
       f.response :raise_error
       f.response :json
@@ -33,6 +33,8 @@ class ColumnService
   end
 
   def self.post(url, params = {})
+    raise ArgumentError, "missing idempotency_key: #{url}" if params[:idempotency_key].nil?
+
     idempotency_key = params.delete(:idempotency_key)
     conn.post(url, params, { "Idempotency-Key" => idempotency_key }.compact_blank).body
   end

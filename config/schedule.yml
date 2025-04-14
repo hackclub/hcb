@@ -79,6 +79,10 @@ reimbursement_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "ReimbursementJob::Nightly"
 
+payroll_nightly_job:
+  cron: "*/5 * * * *" # run every 5 minutes
+  class: "PayrollJob::Nightly"
+
 bank_fee_nightly_job:
   cron: "*/30 2-23 * * *" # run every 30 minutes
   class: "BankFeeJob::Nightly"
@@ -144,10 +148,6 @@ user_subordinate_summary_job:
   cron: "0 12 * * mon" # noon UTC every Monday (7am eastern)
   class: "User::SubordinateSummaryJob"
 
-headway_job:
-  cron: "*/5 * * * *"
-  class: "HeadwayJob"
-
 user_sync_to_loops_job:
   cron: "0 7 * * *" # run every 1 day
   class: "User::SyncToLoopsJob"
@@ -175,3 +175,11 @@ user_seen_at_history_snapshot_job:
 column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "Column::SweepJob"
+
+stripe_missed_webhooks_job:
+  cron: "0/5 * * * *" # run every 5 minutes
+  class: "StripeMissedWebhooksJob"
+
+events_sync_to_airtable_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Event::SyncToAirtableJob"

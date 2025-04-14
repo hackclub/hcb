@@ -23,7 +23,7 @@ module Api
           begin
             id = params[:organization_id]
             event ||= Event.transparent.find_by_public_id id # by public id (ex. org_1234). Will NOT error if not found
-            event ||= Event.transparent.friendly.find id # by slug or numeric id. Will error if not found
+            event ||= Event.transparent.friendly.find_by_friendly_id id # by slug. Will error if not found
           end
       rescue ActiveRecord::RecordNotFound
         error!({ message: "Organization not found." }, 404)
@@ -221,8 +221,8 @@ module Api
     end
     get :git do
       {
-        commit_time: ApplicationController.helpers.commit_time,
-        commit_hash: ApplicationController.helpers.commit_hash
+        commit_time: Build.timestamp,
+        commit_hash: Build.commit_hash
       }
     end
 
@@ -693,7 +693,7 @@ module Api
       error!({ message: "Not authorized." }, 403)
     end
     rescue_from :all do |e|
-      Airbrake.notify(e)
+      Rails.error.report(e, handled: false, severity: "error", context: "api")
 
       # Provide error message in api response ONLY in development mode
       msg = if Rails.env.development?

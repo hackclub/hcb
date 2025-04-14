@@ -25,7 +25,7 @@ json.missing_receipt hcb_code.missing_receipt?
 json.lost_receipt hcb_code.no_or_lost_receipt?
 json.appearance hcb_code.disbursement.special_appearance_name if hcb_code.disbursement&.special_appearance? && amount.positive?
 
-if current_user&.admin?
+if current_user&.auditor?
   json._debug do
     json.hcb_code hcb_code.hcb_code
   end
