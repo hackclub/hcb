@@ -1,6 +1,6 @@
 <%= form_with model: user, html: {
-                "x-data": "{ country: #{user.payout_method.instance_of?(User::PayoutMethod::Wire) ? "'#{user.payout_method.recipient_country}'" : "null"} }"
-              } do |form| %>
+      "x-data": "{ country: #{user.payout_method.instance_of?(User::PayoutMethod::Wire) ? "'#{user.payout_method.recipient_country}'" : "null"} }"
+    } do |form| %>
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
     <div class="field field--options" style="max-width: none;">
