@@ -132,9 +132,6 @@ class Wire < ApplicationRecord
     end
   end
 
-
-  # BEGIN RECIPIENT DATA & VALIDATIONS
-
   include HasWireRecipient
 
   def state
