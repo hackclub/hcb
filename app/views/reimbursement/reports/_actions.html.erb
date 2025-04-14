@@ -135,7 +135,7 @@
               <% elsif report.event.nil? %>
                <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { behavior: "modal_trigger", modal: "edit" } %> to request reimbursement from.
               <% elsif report.below_minimum_amount? %>
-               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == 500_00 %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/article/61-what-are-international-wires", data: { behavior: "modal_trigger", modal: "wire_requirements" } %>. <%# TODO: Add PayPal back when it's supported again %>
+               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == 500_00 %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/article/61-what-are-international-wires", data: { behavior: "modal_trigger", modal: "wire_requirements" } %>.
               <% end %>
             <% end %>
           </div>
