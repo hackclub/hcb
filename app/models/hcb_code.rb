@@ -388,6 +388,8 @@ class HcbCode < ApplicationRecord
       ach_transfer
     elsif paypal_transfer? && paypal_transfer&.reimbursement_payout_holding.present?
       paypal_transfer
+    elsif wire? && wire&.reimbursement_payout_holding.present?
+      wire
     else
       nil
     end
