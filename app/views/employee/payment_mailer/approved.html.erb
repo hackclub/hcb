@@ -17,7 +17,6 @@
   <% elsif @employee.user&.payout_method&.kind == "international_wire" %>
     You'll receive an international wire transfer of <%= render_money @report.amount_to_reimburse %> USD from us in approximately 2-3 business days.
   <% else %>
-  <% else %>
     We don't have a payout method on file for you, <%= link_to "please configure one here", settings_payouts_url %>
     to receive the  <%= render_money @payment.amount_cents %> reimbursement.
   <% end %>
