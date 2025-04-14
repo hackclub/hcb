@@ -11,19 +11,6 @@
 <h1>Send a wire</h1>
 
 <%= render partial: "requirements", locals: { event: @event } %>
-<% callout_footer = "This requirement is waived for organizations that have raised over $50,000 in the past year" %>
-<% callout_footer += " and events on plans with exemptions" if @event.plan.exempt_from_wire_minimum? %>
-<% callout_footer += " and exempted events" if !@event.plan.exempt_from_wire_minimum? && Flipper.enabled?(:exempt_from_wire_minimum, @event) %>
-<% callout_footer += "— including #{@event.name}!" unless @event.minimum_wire_amount_cents > 100 %>
-<% callout_footer += " (admins can bypass this)" if current_user.admin? %>
-
-<%= render "callout",
-    type: "info",
-    title: "Important information about wire transfers",
-    footer: callout_footer do %>
-    Unfortunately, wires are expensive to send. Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you,
-    <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). For smaller wires, please reach out to us at <%= mail_to "hcb@hackclub.com" %>.
-<% end %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {
                 "x-data": "{ country: null }"
@@ -86,21 +73,6 @@
   </div>
 
   <%= render partial: "account_details", locals: { form:, disabled: } %>
-  <div class="field">
-    <%= form.label :bic_code, "Beneficiary bank SWIFT / BIC code" %>
-    <%= form.text_field :bic_code,
-        required: true,
-        disabled:,
-        placeholder: "CLNOUS66" %>
-  </div>
-
-  <div class="field">
-    <%= form.label :account_number, "Account number (IBAN, if available)" %>
-    <%= form.text_field :account_number,
-        required: true,
-        disabled:,
-        placeholder: "123456789" %>
-  </div>
 
   <% (Event.countries_for_select + [nil]).each do |country| %>
     <template x-if="country == '<%= country.nil? ? "null" : country[0] %>'">

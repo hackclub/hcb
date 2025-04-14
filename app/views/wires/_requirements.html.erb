@@ -3,6 +3,7 @@
 <% callout_footer = "This requirement is waived for organizations that have raised over $50,000 in the past year" %>
 <% callout_footer += " and events on plans with exemptions" if local_assigns[:event].plan.exempt_from_wire_minimum? %>
 <% callout_footer += "— including #{local_assigns[:event].name}!" unless local_assigns[:event].minimum_wire_amount_cents > 100 %>
+<% callout_footer += " and exempted events" if !@event.plan.exempt_from_wire_minimum? && Flipper.enabled?(:exempt_from_wire_minimum, @event) %>
 <% callout_footer += " (admins can bypass this)" if current_user.admin? %>
 
 <%= render "callout",
