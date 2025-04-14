@@ -123,7 +123,7 @@
                 <% unless local_assigns[:email] %>
                     <span class="align-top"><%= stripe_verification_check_badge("address_postal_code", verification_data) %></span>
                 <% end %>
-                <b class="font-bold">Zip</b> did not match <%= card_details %>
+                <b class="font-bold">Zip code</b> did not match <%= card_details %>
             </span>
         <% elsif verification_data["address_line1_check"] == "mismatch" %>
             <span>
