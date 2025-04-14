@@ -34,7 +34,7 @@ class HcbCode
       end
 
       def card_grant_memo
-        "Grant to #{disbursement.card_grant.user.name}"
+        "Grant to #{disbursement.card_grant.user.name}".strip.upcase
       end
 
       def disbursement_memo(event: nil)
@@ -51,11 +51,11 @@ class HcbCode
       end
 
       def invoice_memo
-        "Invoice to #{invoice.smart_memo}"
+        "Invoice to #{invoice.smart_memo}".strip.upcase
       end
 
       def donation_memo
-        "Donation from #{donation.smart_memo}#{donation.refunded? ? " (REFUNDED)" : ""}"
+        "Donation from #{donation.smart_memo}#{donation.refunded? ? " (REFUNDED)" : ""}".strip.upcase
       end
 
       def bank_fee_memo
@@ -73,15 +73,15 @@ class HcbCode
       end
 
       def check_memo
-        "Check to #{check.smart_memo}"
+        "Check to #{check.smart_memo}".strip.upcase
       end
 
       def increase_check_memo
-        "Check to #{increase_check.recipient_name}".upcase
+        "Check to #{increase_check.recipient_name}".strip.upcase
       end
 
       def check_deposit_memo
-        "Check deposit"
+        "Check deposit".upcase
       end
 
       def fee_revenue_memo
