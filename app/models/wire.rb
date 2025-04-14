@@ -56,9 +56,6 @@ class Wire < ApplicationRecord
   include AASM
   include Freezable
 
-  include CountryEnumable
-  has_country_enum(field: :recipient_country)
-
   belongs_to :event
   belongs_to :user
 

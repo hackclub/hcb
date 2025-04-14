@@ -402,7 +402,7 @@ class UsersController < ApplicationController
           :recipient_country,
           :bic_code,
           :account_number
-        ]
+        ] + Wire.recipient_information_accessors
       }
     end
 

@@ -31,7 +31,7 @@ class User
       include HasWireRecipient
 
       def kind
-        "international wire"
+        "international_wire"
       end
 
       def icon

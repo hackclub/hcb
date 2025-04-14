@@ -1,9 +1,11 @@
 <%# local_assigns: (event:, class: "") %>
 
 <% callout_footer = "This requirement is waived for organizations that have raised over $50,000 in the past year" %>
-<% callout_footer += " and events on plans with exemptions" if local_assigns[:event].plan.exempt_from_wire_minimum? %>
-<% callout_footer += "— including #{local_assigns[:event].name}!" unless local_assigns[:event].minimum_wire_amount_cents > 100 %>
-<% callout_footer += " and exempted events" if !@event.plan.exempt_from_wire_minimum? && Flipper.enabled?(:exempt_from_wire_minimum, @event) %>
+<% if local_assigns[:event].present? %>
+    <% callout_footer += " and events on plans with exemptions" if local_assigns[:event].plan.exempt_from_wire_minimum? %>
+    <% callout_footer += "— including #{local_assigns[:event].name}!" unless local_assigns[:event].minimum_wire_amount_cents > 100 %>
+    <% callout_footer += " and exempted events" if !@event.plan.exempt_from_wire_minimum? && Flipper.enabled?(:exempt_from_wire_minimum, @event) %>
+<% end %>
 <% callout_footer += " (admins can bypass this)" if current_user.admin? %>
 
 <%= render "callout",
@@ -12,5 +14,5 @@
     class: local_assigns[:class],
     footer: callout_footer do %>
     Unfortunately, wires are expensive to send. Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you,
-    <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD). Consider a <%= link_to "PayPal transfer", new_event_paypal_transfer_path(local_assigns[:event]) %> for smaller amounts or reach out to <%= mail_to "hcb@hackclub.com" %>.
+    <span class="font-bold">each wire sent must be at least $500</span> (after conversion to USD).
 <% end %>

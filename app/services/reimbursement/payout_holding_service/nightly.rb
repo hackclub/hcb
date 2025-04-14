@@ -6,6 +6,7 @@ module Reimbursement
       def run
         clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
         Reimbursement::PayoutHolding.settled.find_each(batch_size: 100) do |payout_holding|
+
           case payout_holding.report.user.payout_method
           when User::PayoutMethod::Wire
             begin
@@ -23,12 +24,15 @@ module Reimbursement
                 recipient_name: payout_holding.report.user.full_name,
                 account_number: payout_holding.report.user.payout_method.account_number,
                 bic_code: payout_holding.report.user.payout_method.bic_code,
+                recipient_information: payout_holding.report.user.payout_method.recipient_information.merge({
+                                                                                                              purpose_code: Wire.reimbursement_purpose_code_for(payout_holding.report.user.payout_method.recipient_country),
+                                                                                                              remittance_info: Wire.reimbursement_remittance_info_for(payout_holding.report.user.payout_method.recipient_country),
+                                                                                                            }),
                 currency: "USD",
                 user: User.find_by(email: "bank@hackclub.com")
               )
               begin
                 wire.save!
-                wire.mark_approved!
                 wire.send_wire!
               rescue
                 payout_holding.mark_failed!

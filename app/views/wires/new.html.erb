@@ -13,7 +13,7 @@
 <%= render partial: "requirements", locals: { event: @event } %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {
-                "x-data": "{ country: null }"
+                "x-data": "{ country: #{@wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"} }"
               }) do |form| %>
 
   <%= form_errors(@wire, "wire", "We couldn't send this") %>
@@ -74,28 +74,7 @@
 
   <%= render partial: "account_details", locals: { form:, disabled: } %>
 
-  <% (Event.countries_for_select + [nil]).each do |country| %>
-    <template x-if="country == '<%= country.nil? ? "null" : country[0] %>'">
-      <div>
-        <% Wire.information_required_for(country.nil? ? nil : country[0]).each do |field| %>
-          <div class="field">
-            <%= form.label field[:key], field[:label], class: "mb1" %>
-            <% if field[:type] == :select %>
-              <%= form.select field[:key], field[:options], required: true, disabled: "", prompt: "Please select..." %>
-            <% else %>
-              <%= form.send(field[:type], field[:key], required: true) %>
-            <% end %>
-            <div class="muted mt1">
-              <%= field[:description] %>
-              <% if field[:refer_to] %>
-                <%= link_to "Refer to this document", field[:refer_to], target: "_blank" %>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    </template>
-  <% end %>
+  <%= render partial: "country_specific_details", locals: { form:, disabled: } %>
 
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">

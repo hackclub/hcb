@@ -130,12 +130,12 @@
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
-              <% elsif report.below_minimum_amount? %>
-               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == 500_00 %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/article/61-what-are-international-wires", data: { behavior: "modal_trigger", modal: "wire_requirements" } %>. <%# TODO: Add PayPal back when it's supported again %>
               <% elsif report.event&.financially_frozen? %>
                <span class="bold warning">Warning</span>: <%= report.event.name %> is currently frozen.
               <% elsif report.event.nil? %>
                <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { behavior: "modal_trigger", modal: "edit" } %> to request reimbursement from.
+              <% elsif report.below_minimum_amount? %>
+               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == 500_00 %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/article/61-what-are-international-wires", data: { behavior: "modal_trigger", modal: "wire_requirements" } %>. <%# TODO: Add PayPal back when it's supported again %>
               <% end %>
             <% end %>
           </div>

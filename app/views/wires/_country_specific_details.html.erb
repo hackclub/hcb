@@ -1,0 +1,26 @@
+<%# locals: (form:, disabled:, excluded_fields: []) %>
+
+<% (Event.countries_for_select + [nil]).each do |country| %>
+  <template x-if="country == '<%= country.nil? ? "null" : country[0] %>'">
+    <div>
+      <% Wire.information_required_for(country.nil? ? nil : country[0]).each do |field| %>
+        <% unless (field[:key]).in?(local_assigns[:excluded_fields] || []) %>
+        <div class="field">
+          <%= form.label field[:key], field[:label], class: "mb1" %>
+          <% if field[:type] == :select %>
+            <%= form.select field[:key], field[:options], required: true, disabled: "", prompt: "Please select..." %>
+          <% else %>
+            <%= form.send(field[:type], field[:key], required: true) %>
+          <% end %>
+          <div class="muted mt1">
+            <%= field[:description] %>
+            <% if field[:refer_to] %>
+              <%= link_to "Refer to this document", field[:refer_to], target: "_blank" %>
+            <% end %>
+          </div>
+        </div>
+        <% end %>
+      <% end %>
+    </div>
+  </template>
+<% end %>

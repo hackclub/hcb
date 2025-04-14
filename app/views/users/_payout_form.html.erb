@@ -1,4 +1,6 @@
-<%= form_with model: user do |form| %>
+<%= form_with model: user, html: {
+                "x-data": "{ country: #{user.payout_method.instance_of?(User::PayoutMethod::Wire) ? "'#{user.payout_method.recipient_country}'" : "null"} }"
+              } do |form| %>
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
     <div class="field field--options" style="max-width: none;">
@@ -83,6 +85,8 @@
         <%= render partial: "wires/recipient_details", locals: { form:, disabled: false } %>
 
         <%= render partial: "wires/account_details", locals: { form:, disabled: false, account_number_field_name: :account_number } %>
+
+        <%= render partial: "wires/country_specific_details", locals: { form:, disabled: false, excluded_fields: ["remittance_info", "purpose_code"] } %>
 
         <div class="actions inline-block mt1">
           <%= form.submit "Save" %>
