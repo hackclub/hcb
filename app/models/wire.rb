@@ -53,8 +53,11 @@ class Wire < ApplicationRecord
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
 
   validates_length_of :payment_for, maximum: 140
+
   include AASM
   include Freezable
+
+  include HasWireRecipient
 
   belongs_to :event
   belongs_to :user
@@ -131,8 +134,6 @@ class Wire < ApplicationRecord
       errors.add(:base, "You don't have enough money to send this transfer! Your balance is #{(event.balance_available_v2_cents / 100).to_money.format}. At current exchange rates, this transfer would cost #{(usd_amount_cents / 100).to_money.format} (USD).")
     end
   end
-
-  include HasWireRecipient
 
   def state
     if pending?
