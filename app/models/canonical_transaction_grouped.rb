@@ -126,7 +126,7 @@ class CanonicalTransactionGrouped
   end
 
   def check_memo
-    smartish_custom_memo || "Check to #{check.smart_memo}"
+    smartish_custom_memo || "CHECK TO #{check.smart_memo}"
   end
 
   def disbursement
