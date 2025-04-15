@@ -178,7 +178,7 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
 
-HCB relies on two services for the majority of it's financial features: Stripe and Column. See [the Stripe testing guide](./stripe_testing.md) for getting setup with Stripe in development. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+HCB relies on two services for the majority of it's financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
 We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
 
