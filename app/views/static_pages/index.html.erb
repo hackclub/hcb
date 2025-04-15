@@ -141,17 +141,3 @@
   <% end %>
   <%= render partial: "static_pages/admin" %>
 </main>
-<%
-=begin%>
- 
-<div class="text-center">
-  <% if @events.empty? && @invites.empty? && !current_user.auditor? %>
-    <%= blankslate "No organizations associated with your account yet." %>
-    <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
-      <%= inline_icon "plus" %>
-      New organization
-    <% end %>
-  <% end %>
-</div> 
-<%
-=end%>
