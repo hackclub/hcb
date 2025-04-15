@@ -7,7 +7,7 @@
 <ul>
   <% @donations.each do |donation| %>
     <li>
-      <%= donation.name(show_anonymous: true) %> <%= donation.anonymous ? "anonymously" : "" %> donated <%= render_money donation.amount %>
+      <%= donation.name(show_anonymous: true) %> <%= "anonymously" if donation.anonymous %> donated <%= render_money donation.amount %>
       <% if donation.recurring? %>
         <% recurring_times = (donation.recurring_donation.donations.find_index(donation) + 1) %>
         - this is their <%= "#{recurring_times}#{recurring_times.ordinal}" %> monthly donation
