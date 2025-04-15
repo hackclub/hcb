@@ -238,6 +238,14 @@ export const adminActions = adminUrls => [
     perform: () => (window.location.href = '/admin/wires'),
   },
   {
+    id: 'admin_tool_8',
+    section: 'Admin Tools',
+    priority: Priority.HIGH,
+    name: 'PayPal',
+    icon: <Icon glyph="grid" size={16} />,
+    perform: () => (window.location.href = '/admin/paypal_transfers'),
+  },
+  {
     id: 'admin_tool_9',
     section: 'Admin Tools',
     priority: Priority.HIGH,
