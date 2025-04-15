@@ -38,12 +38,6 @@ module StaticPagesHelper
 
   def airtable_info
     {
-      grant: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Github%20Grant",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblsYQ54Rg1Pjz1xP/viwjETKo05TouqYev"
-      },
       onboard_id: {
         id: "app4Bs8Tjwvk5qcD4",
         table: "Verifications%20-%20Depreciated",
@@ -61,18 +55,6 @@ module StaticPagesHelper
         table: "Bank%20Stickers",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblyhkntth4OyQxiO/viwHcxhOKMZnPXUUU"
-      },
-      stickermule: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "StickerMule",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblwYTdp2fiBv7JqA/viwET9tCYBwaZ3NIq"
-      },
-      replit: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Repl.it%20Hacker%20Plan",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl6cbpdId4iA96mD/viw2T8d98ZhhacHCf"
       },
       domains: {
         id: "appEzv7w2IBMoxxHe",
@@ -115,12 +97,6 @@ module StaticPagesHelper
         table: "Feedback",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblOmqLjWtJZWXn4O/viwuk2j4xsKJo5EqA"
-      },
-      wallets: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Wallets",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblJtjtY9qAOG3FS8/viwUz9aheNAvXwzjg"
       },
       google_workspace_waitlist: {
         id: "appEzv7w2IBMoxxHe",
