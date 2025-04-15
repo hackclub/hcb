@@ -50,18 +50,14 @@ class DisbursementsController < ApplicationController
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end
-    @allowed_destination_events = if current_user.admin?
-                                    Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                                  else
-                                    current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
-                                  end
+    @allowed_destination_events = Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
 
     authorize @disbursement
   end
 
   def create
     @source_event = Event.find(disbursement_params[:source_event_id])
-    @destination_event = Event.find(disbursement_params[:event_id])
+    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
