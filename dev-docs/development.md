@@ -22,8 +22,6 @@ Once HCB is running locally, log in into your local instance using the email `ad
 
 To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces.
 
-After creating your codespace, run `./codespaces_setup.sh`. This will finish preparing HCB for development.
-
 You can then run `bin/dev` to launch HCB. If you can't open the link that is printed in the terminal, navigate to the `PORTS` tab in your terminal and set port `3000` to public and then back to private.
 
 ### Automated setup with Docker
