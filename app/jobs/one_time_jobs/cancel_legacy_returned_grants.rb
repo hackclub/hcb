@@ -2,7 +2,7 @@
 
 module OneTimeJobs
   class CancelLegacyReturnedGrants
-    def self.perform()
+    def self.perform
       CardGrant.where(status: :canceled).or(CardGrant.where(status: :expired)).find_each do |card_grant|
         @card = StripeCard.find(card_grant.stripe_card_id)
         unless @card.canceled?
@@ -11,4 +11,5 @@ module OneTimeJobs
       end
     end
   end
+
 end
