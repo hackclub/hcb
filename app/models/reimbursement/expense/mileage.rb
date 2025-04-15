@@ -34,13 +34,7 @@ module Reimbursement
   class Expense
     class Mileage < ::Reimbursement::Expense
       def rate
-        # Before March 27th, 2025, we were accidentally using the business
-        # mileage rate. This method now adheres to the charity mileage rate.
-        # https://www.irs.gov/tax-professionals/standard-mileage-rates
-        return 67 if created_at < Date.new(2025, 1, 1)
-        return 70 if created_at < Date.new(2025, 3, 27)
-
-        14
+        event.plan.mileage_rate(created_at)
       end
 
       def value_label

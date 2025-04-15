@@ -2,7 +2,7 @@
 
 class HcbCodePolicy < ApplicationPolicy
   def show?
-    user&.auditor? || present_in_events?
+    user&.auditor? || present_in_events? || (record.stripe_cardholder.present? && record.stripe_cardholder.user == user)
   end
 
   def memo_frame?
@@ -63,7 +63,7 @@ class HcbCodePolicy < ApplicationPolicy
 
   # if users have permissions greater than or equal to member in events
   def gte_member_in_events?
-    record.events.any? do |e|
+    user&.admin? || record.events.any? do |e|
       e.try(:users).try(:include?, user) && OrganizerPosition.role_at_least?(user, e, :member)
     end
   end

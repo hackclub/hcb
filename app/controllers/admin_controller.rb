@@ -1339,7 +1339,8 @@ class AdminController < ApplicationController
                  .body
 
     hackathons.dig("status", "pending", "meta", "count")
-  rescue Faraday::Error
+  rescue => e
+    Rails.error.report(e)
     9999
   end
 
@@ -1349,20 +1350,12 @@ class AdminController < ApplicationController
       case task_name
       when :pending_hackathons_airtable
         hackathons_task_size
-      when :pending_grant_airtable
-        airtable_task_size :grant
       when :pending_bank_applications_airtable
         airtable_task_size :bank_applications
       when :pending_onboard_id_airtable
         airtable_task_size :onboard_id
-      when :pending_stickermule_airtable
-        airtable_task_size :stickermule
       when :pending_stickers_airtable
         airtable_task_size :stickers
-      when :pending_wallets_airtable
-        airtable_task_size :wallets
-      when :pending_replit_airtable
-        airtable_task_size :replit
       when :pending_onepassword_airtable
         airtable_task_size :onepassword
       when :pending_domains_airtable
@@ -1417,13 +1410,9 @@ class AdminController < ApplicationController
   def pending_tasks
     # This method could take upwards of 10 seconds. USE IT SPARINGLY
     pending_task :pending_hackathons_airtable
-    pending_task :pending_grant_airtable
     pending_task :pending_bank_applications_airtable
     pending_task :pending_onboard_id_airtable
-    pending_task :pending_stickermule_airtable
     pending_task :pending_stickers_airtable
-    pending_task :pending_wallets_airtable
-    pending_task :pending_replit_airtable
     pending_task :pending_onepassword_airtable
     pending_task :pending_domains_airtable
     pending_task :pending_pvsa_airtable

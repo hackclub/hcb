@@ -19,6 +19,7 @@ module DisbursementService
 
           # FS Main -> FS Operating
           ColumnService.post "/transfers/book",
+                             idempotency_key: "#{disbursement.id}_outgoing",
                              amount: amount_cents,
                              currency_code: "USD",
                              sender_bank_account_id: ColumnService::Accounts::FS_MAIN,
@@ -27,6 +28,7 @@ module DisbursementService
 
           # FS Operating -> FS Main
           ColumnService.post "/transfers/book",
+                             idempotency_key: "#{disbursement.id}_incoming",
                              amount: amount_cents,
                              currency_code: "USD",
                              sender_bank_account_id: ColumnService::Accounts::FS_OPERATING,

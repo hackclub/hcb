@@ -5,6 +5,6 @@
   </div>
   <div class="stat stat--small flex flex-col">
     <span class="muted uppercase text-sm" style="font-weight: 700">Total spent</span>
-    <span class="stat__value"><%= render_money_amount @event.total_raised - @event.balance %></span>
+    <span class="stat__value"><%= render_money_amount @event.total_spent_cents %></span>
   </div>
 </div>

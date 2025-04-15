@@ -33,6 +33,8 @@ class ColumnService
   end
 
   def self.post(url, params = {})
+    raise ArgumentError, "missing idempotency_key: #{url}" if params[:idempotency_key].nil?
+
     idempotency_key = params.delete(:idempotency_key)
     conn.post(url, params, { "Idempotency-Key" => idempotency_key }.compact_blank).body
   end
@@ -108,7 +110,7 @@ class ColumnService
   end
 
   def self.return_ach(id, with:)
-    post("/transfers/ach/#{id}/return", return_code: with)
+    post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
   end
 
 end
