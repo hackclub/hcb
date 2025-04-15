@@ -10,7 +10,7 @@ class Donation
         DonationService::Refund.new(donation_id: donation.id, amount:).run
         DonationMailer.with(donation:, requested_by:).refunded.deliver_later if requested_by
       else
-        DonationJob::Refund.set(wait: 1.day).perform_later(donation, amount, requested_by)
+        Donation::RefundJob.set(wait: 1.day).perform_later(donation, amount, requested_by)
       end
     end
 

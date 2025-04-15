@@ -18,7 +18,7 @@ class Metric
 
     def queue_calculations_for(metric_class)
       metric_class.subject_model.all.find_each do |record|
-        MetricJobs::CalculateSingle.perform_later(metric_class, record)
+        Metric::CalculateSingleJob.perform_later(metric_class, record)
       end
     end
 

@@ -10,7 +10,7 @@ class Invoice
         InvoiceService::Refund.new(invoice_id: invoice.id, amount:).run
         InvoiceMailer.with(invoice:, requested_by:).refunded.deliver_later if requested_by
       else
-        InvoiceJob::Refund.set(wait: 1.day).perform_later(invoice, amount, requested_by)
+        Invoice::RefundJob.set(wait: 1.day).perform_later(invoice, amount, requested_by)
       end
     end
 

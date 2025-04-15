@@ -5,7 +5,7 @@ class Metric
     queue_as :metrics
 
     def perform
-      MetricJobs::CalculateSingle.perform_later(Metric::Hcb::Stats)
+      Metric::CalculateSingleJob.perform_later(Metric::Hcb::Stats)
     end
 
   end

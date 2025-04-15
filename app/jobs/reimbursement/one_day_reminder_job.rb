@@ -10,7 +10,7 @@ module Reimbursement
       if report.updated_at < 23.hours.ago
         ReimbursementMailer.with(report:).reminder.deliver_later
       else
-        ReimbursementJob::OneDayReminder.set(wait: 1.day).perform_later(report)
+        Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(report)
       end
     end
 

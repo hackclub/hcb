@@ -10,7 +10,7 @@ class Metric
 
     def perform
       metric_classes.each do |metric_class|
-        MetricJobs::CalculateSingle.perform_later(metric_class)
+        Metric::CalculateSingleJob.perform_later(metric_class)
       end
     end
 

@@ -95,7 +95,7 @@ class UsersController < ApplicationController
   end
 
   def receipt_report
-    ReceiptReportJob::Send.perform_later(current_user.id, force_send: true)
+    ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
     redirect_to settings_previews_path
   end
