@@ -1,0 +1,5 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: employee_path(activity.trackable.employee) } do %>
+  was paid <%= render_money activity.trackable.amount %> for <%= link_to activity.trackable.title, activity.trackable.employee %>
+<% end %>

@@ -79,11 +79,11 @@
       tooltip: "Reimburse team members & volunteers",
       icon: "attachment",
       selected: local_assigns[:selected] == :reimbursements if policy(@event).reimbursements? %>
-    <%= dock_item "Grants",
-      event_grants_path(@event),
-      tooltip: "Send & manage grants",
-      icon: "idea",
-      selected: local_assigns[:selected] == :grants if Flipper.enabled?(:grants_2023_06_21, @event) %>
+    <%= dock_item "Contractors",
+      event_employees_path(event_id: @event.slug),
+      tooltip: "Manage payroll",
+      icon: "person-badge",
+      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) %>
     <hr>
     <%= dock_item "Team",
       event_team_path(event_id: @event.slug),
@@ -107,7 +107,7 @@
       selected: local_assigns[:selected] == :google_workspace if organizer_signed_in? %>
     <%= dock_item "Documents",
       event_documents_path(event_id: @event.slug),
-      tooltip: "View legal documents, financial statements, and FAQ",
+      tooltip: "View legal documents and financial statements",
       icon: "docs",
       selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
     <%= dock_item "Settings",
@@ -118,8 +118,15 @@
       selected: local_assigns[:selected] == :settings if organizer_signed_in? %>
   </nav>
   <nav class="dock dock--mobile">
+    <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !@event.demo_mode? %>
+      <%= dock_item "Home",
+          event_path(id: @event.slug),
+          tooltip: "See everything at-a-glance",
+          icon: "home",
+          selected: local_assigns[:selected] == :home %>
+    <% end %>
     <%= dock_item "Transactions",
-      event_path(id: @event.slug),
+      event_transactions_path(event_id: @event.slug),
       icon: "transactions",
       selected: local_assigns[:selected] == :transactions %>
     <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>

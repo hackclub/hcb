@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module User
@@ -33,11 +34,6 @@ class Metric
                                             .where(creator_id: user.id)
                                             .group("date(created_at)")
 
-        disbursements_subquery = Disbursement.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                             .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
-                                             .where(requested_by_id: user.id)
-                                             .group("date(created_at)")
-
         increase_checks_subquery = IncreaseCheck.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
                                                 .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
                                                 .where(user_id: user.id)
@@ -48,9 +44,22 @@ class Metric
                                .where(creator_id: user.id)
                                .group("date(created_at)")
 
-        combined_result_subquery = Arel.sql("(#{stripe_transactions_subquery.to_sql} UNION ALL #{ach_transfers_subquery.to_sql} UNION ALL #{disbursements_subquery.to_sql} UNION ALL #{increase_checks_subquery.to_sql} UNION ALL #{checks_subquery.to_sql}) AS combined_table")
+        combined_result_subquery = <<~SQL
+          (#{stripe_transactions_subquery.to_sql}
+          UNION ALL
+          #{ach_transfers_subquery.to_sql}
+          UNION ALL
+          #{increase_checks_subquery.to_sql}
+          UNION ALL
+          #{checks_subquery.to_sql}) AS combined_table
+        SQL
 
-        final_result = Arel.sql("SELECT date(transaction_date) AS transaction_date, SUM(amount) AS amount FROM #{combined_result_subquery} GROUP BY date(transaction_date) ORDER BY date(transaction_date) ASC")
+        final_result = <<~SQL
+          SELECT DATE(transaction_date) AS transaction_date, SUM(amount) AS amount
+          FROM #{combined_result_subquery}
+          GROUP BY DATE(transaction_date)
+          ORDER BY DATE(transaction_date) ASC
+        SQL
 
         hash = {}
         (Date.new(2024, 1, 1)..Date.new(2024, 12, 31)).each do |date|

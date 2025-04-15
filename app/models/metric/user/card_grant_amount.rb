@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module User
@@ -22,7 +23,7 @@ class Metric
       include Subject
 
       def calculate
-        user.card_grants.sum(:amount_cents)
+        user.card_grants.where("EXTRACT(YEAR FROM created_at) = ?", 2024).sum(:amount_cents)
       end
 
     end

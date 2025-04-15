@@ -22,6 +22,11 @@
       </div>
     </div>
 
+    <div class="field">
+      <%= form.label :purpose, "Purpose (optional, shown to recipient)" %>
+      <%= form.text_field :purpose, placeholder: "Pizza for a club meeting" %>
+    </div>
+
     <div class="actions">
       <%= form.submit "Send grant" %>
     </div>

@@ -34,11 +34,11 @@ module Reimbursement
   class Expense
     class Mileage < ::Reimbursement::Expense
       def rate
-        67
+        event.plan.mileage_rate(created_at)
       end
 
       def value_label
-        "Miles (67¢/mile)"
+        "Miles (#{rate}¢/mile)"
       end
 
     end

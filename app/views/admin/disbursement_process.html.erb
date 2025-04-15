@@ -11,11 +11,17 @@
   <tbody>
     <tr>
       <td style="text-align: right;">From:</td>
-      <td><%= link_to @disbursement.source_event.name, @disbursement.source_event %></td>
+      <td>
+        <%= link_to @disbursement.source_event.name, @disbursement.source_event %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.source_event.financially_frozen? %>
+      </td>
     </tr>
     <tr>
       <td style="text-align: right;">To:</td>
-      <td><%= link_to @disbursement.destination_event.name, @disbursement.destination_event %></td>
+      <td>
+        <%= link_to @disbursement.destination_event.name, @disbursement.destination_event %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.destination_event.financially_frozen? %>
+      </td>
     </tr>
     <tr>
       <td style="text-align: right;">Amount:</td>

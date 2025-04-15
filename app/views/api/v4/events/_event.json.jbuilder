@@ -17,6 +17,11 @@ if expand?(:balance_cents)
   json.fee_balance_cents event.fronted_fee_balance_v2_cents
 end
 
+if expand?(:reporting)
+  json.total_spent_cents event.total_spent_cents
+  json.total_raised_cents event.total_raised
+end
+
 if policy(event).account_number? && expand?(:account_number)
   json.account_number event.account_number
   json.routing_number event.routing_number

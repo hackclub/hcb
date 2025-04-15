@@ -15,7 +15,6 @@
 #  created_at                                       :datetime         not null
 #  updated_at                                       :datetime         not null
 #  check_deposit_id                                 :bigint
-#  grant_id                                         :bigint
 #  increase_check_id                                :bigint
 #  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
@@ -33,7 +32,6 @@
 # Indexes
 #
 #  index_canonical_pending_transactions_on_check_deposit_id         (check_deposit_id)
-#  index_canonical_pending_transactions_on_grant_id                 (grant_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
 #  index_canonical_pending_transactions_on_paypal_transfer_id       (paypal_transfer_id)
@@ -61,6 +59,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   pg_search_scope :pg_text_search, lambda { |query, options_hash| { query: }.merge(options_hash) }
 
   belongs_to :raw_pending_stripe_transaction, optional: true
+  validates_uniqueness_of :raw_pending_stripe_transaction_id, allow_nil: true
+
   belongs_to :raw_pending_outgoing_check_transaction, optional: true
   belongs_to :raw_pending_outgoing_ach_transaction, optional: true
   belongs_to :raw_pending_donation_transaction, optional: true
@@ -72,7 +72,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
   belongs_to :check_deposit, optional: true
-  belongs_to :grant, optional: true
   belongs_to :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", optional: true
   belongs_to :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", optional: true
 

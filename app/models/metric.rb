@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 
 class Metric < ApplicationRecord
@@ -67,6 +68,7 @@ class Metric < ApplicationRecord
 
     if repopulate
       metric.populate
+      metric.updated_at = Time.now # force touch even if no changes
       unless metric.save
         Airbrake.notify("Failed to save metric #{metric.inspect}")
         metric.reload

@@ -6,12 +6,15 @@
   <span class="flex flex-grow items-center">
     Team
     <%= badge_for @all_positions.size, class: "bg-muted" %>
+    <% admin_tool("p0 badge", "span") do %>
+      <%= badge_for "#{@all_positions.count { |op| op.user.teenager? && op.user.active? }} active teenagers (30d)", class: "bg-muted ml0" %>
+    <% end %>
   </span>
 
   <%= pop_icon_to @view == "list" ? "grid" : "list",
    "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{params[:q]}" if params[:q]}#{"&filter=#{params[:filter]}" if params[:filter]}" %>
 
-  <% if admin_signed_in? && @event.config.contact_email.present? %>
+  <% if auditor_signed_in? && @event.config.contact_email.present? %>
     <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 36px; width: 36px;" do %>
       <%= link_to "mailto:#{@event.config.contact_email}", class: "flex items-center justify-center", style: "transform: translateY(1px) scale(0.8)" do %>
         <%= inline_icon "email", color: "#ff8c37" %>
@@ -44,7 +47,7 @@
     <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
   <div style="text-align: center;">
-    <% ["all", "members", "managers"].each do |filter| %>
+    <% ["all", "readers", "members", "managers"].each do |filter| %>
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
     <% end %>
   </div>
@@ -77,7 +80,7 @@
   <% if @all_positions.any? %>
     <%= turbo_frame_tag "team_position" do %>
       <div class="grid grid-cols-1 lg:grid-cols-2">
-        <%= render @positions %>
+        <%= render partial: "organizer_positions/organizer_position", collection: @positions %>
       </div>
       <%= paginate @positions %>
     <% end %>
@@ -93,17 +96,27 @@
   </h2>
 
   <div class="flex flex-col" style="gap: 0.5rem">
-    <%= render @pending %>
+    <%= render partial: "organizer_position_invites/organizer_position_invite", collection: @pending %>
   </div>
 <% end %>
 
-<% admin_tool("flex justify-center mt2") do %>
-  <%= link_to @event.organizer_positions.where(is_signee: nil).any? ? "Finish signee backfill" : "✅ Signee backfill complete, thanks.",
-              event_finish_signee_backfill_path(@event),
-              method: :post,
-              disabled: @event.organizer_positions.where(is_signee: nil).none?,
-              "data-confirm": "Are you sure you have backfilled all organizers of #{@event.name} with their correct contract signee status? Continuing will convert #{@event.organizer_positions.where(is_signee: nil).count} null(s) to false.",
-              class: "btn" %>
+<% admin_tool("mt2") do %>
+  <h2 class="flex items-center mt3 mb2">
+    Previous members
+    <%= badge_for @event.organizer_positions.with_deleted.where.not(deleted_at: nil).count, class: "bg-muted" %>
+  </h2>
+  <ul>
+    <% @event.organizer_positions.with_deleted.where.not(deleted_at: nil).order(deleted_at: :desc).each do |op| %>
+      <li>
+        <%= link_to op.user.name, admin_user_path(op.user) %> was removed <%= time_ago_in_words op.deleted_at %> ago
+        <%= error_boundary fallback_text: "; the context failed to load." do %>
+          <% if opdr = op.organizer_position_deletion_requests.last %>
+            by <%= opdr.closed_by.name %> at the request of <%= opdr.submitted_by.name %> <%= link_to "(context)", opdr %>
+          <% end %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
 <% end %>
 
 <% if policy(@event).can_invite_user? %>

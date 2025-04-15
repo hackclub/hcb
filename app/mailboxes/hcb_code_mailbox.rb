@@ -38,6 +38,7 @@ class HcbCodeMailbox < ApplicationMailbox
       reply_to: @hcb_code.receipt_upload_email,
       renamed_to: @renamed_to,
       tagged_with: @tagged_with,
+      reversed_pairing: @reversed_pairing,
       receipts_count: result&.size || 0
     ).bounce_success.deliver_now
   end
@@ -74,6 +75,11 @@ class HcbCodeMailbox < ApplicationMailbox
         @hcb_code.tags << tag
       end
       @tagged_with << tag.label
+    when "@reverse"
+      @reversed_pairing = SuggestedPairing.find_by(hcb_code_id: @hcb_code.id, aasm_state: :accepted)
+      return unless @reversed_pairing
+
+      @reversed_pairing.mark_reveresed!
     end
   end
 

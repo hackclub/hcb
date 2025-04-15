@@ -1,12 +1,14 @@
-<%= form_with model: user do |form| %>
+<%= form_with model: user, html: {
+      "x-data": "{ country: #{user.payout_method.instance_of?(User::PayoutMethod::Wire) ? "'#{user.payout_method.recipient_country}'" : "null"} }"
+    } do |form| %>
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
-    <div class="field field--options trio" style="max-width: none;">
+    <div class="field field--options" style="max-width: none;">
       <%= form.radio_button :payout_method_type, "User::PayoutMethod::AchTransfer" %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::AchTransfer" do %>
         <%= inline_icon "payment-transfer", size: 28 %>
         <strong>ACH Transfer</strong>
-        <small>(2-3 biz. days)</small>
+        <small>(1-3 biz. days)</small>
       <% end %>
       <%= form.radio_button :payout_method_type, "User::PayoutMethod::Check" %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::Check" do %>
@@ -14,11 +16,21 @@
         <strong>Mailed check</strong>
         <small>(10-12 biz. days)</small>
       <% end %>
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::PaypalTransfer" %>
+      <% if Flipper.enabled?(:wire_reimbursements_2025_02_05, current_user) %>
+        <%= form.radio_button :payout_method_type, "User::PayoutMethod::Wire" %>
+        <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
+          <%= inline_icon "web", size: 28 %>
+          <strong>International wire</strong>
+          <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
+          <small>(1-5 biz. days)</small>
+        <% end %>
+      <% end %>
+      <%= form.radio_button :payout_method_type, "User::PayoutMethod::PaypalTransfer", disabled: true %>
       <%= form.label :payout_method_type, value: "User::PayoutMethod::PaypalTransfer" do %>
         <%= inline_icon "paypal", size: 28 %>
         <strong>PayPal</strong>
-        <small>(2-3 biz. days)</small>
+        <div class="badge badge--corner bg-warning m1 mt0" style="width: fit-content;">Unavailable</div>
+        <small class="xs-hide">Due to integration issues, transfers via PayPal are currently unavailable.</small>
       <% end %>
     </div>
   </fieldset>
@@ -66,7 +78,28 @@
       </div>
     <% end %>
   </section>
+
+  <% if Flipper.enabled?(:wire_reimbursements_2025_02_05, current_user) %>
+    <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
+      <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
+        <%= render partial: "wires/recipient_details", locals: { form:, disabled: false } %>
+
+        <%= render partial: "wires/account_details", locals: { form:, disabled: false, account_number_field_name: :account_number } %>
+
+        <%= render partial: "wires/country_specific_details", locals: { form:, disabled: false, excluded_fields: ["remittance_info", "purpose_code"] } %>
+
+        <div class="actions inline-block mt1">
+          <%= form.submit "Save" %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+
   <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
+    <%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions do %>
+      Please update your payout method to either an ACH transfer or a mailed check.
+    <% end %>
+
     <%= render "callout",
         type: "info",
         title: "Important info about PayPal reimbursements" do %>

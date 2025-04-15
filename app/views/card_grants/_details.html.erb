@@ -76,6 +76,18 @@
         <span>All categories allowed</span>
       <% end %>
     </p>
+    <% if @card_grant.purpose.present? %>
+      <p>
+        <strong>Purpose</strong>
+        <span><%= @card_grant.purpose %></span>
+      </p>
+    <% end %>
+    <% if card_grant.keyword_lock.present? %>
+      <p>
+        <strong>Merchant keyword lock</strong>
+        <span class="font-mono h5"><%= card_grant.keyword_lock %></span>
+      </p>
+    <% end %>
   </section>
   <% if card_grant.pending_invite? %>
     <%# Once the user has accepted the invite, these action buttons are shown elsewhere %>

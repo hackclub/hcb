@@ -1,44 +1,80 @@
 <%= form_with(local: true) do |form| %>
-  <fieldset>
-    <legend class="heading h2 pt2 pb2">What type of transfer?</legend>
-    <div class="field field--options fit">
-
-      <%= link_to new_event_ach_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-        <%= inline_icon "payment-transfer", size: 28 %>
-        <strong>ACH transfer</strong>
-      <% end %>
-
-      <%= link_to new_event_increase_check_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-        <%= inline_icon "email", size: 28 %>
-        <strong>Mailed check</strong>
-      <% end %>
-
-      <%= link_to new_event_paypal_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-        <%= inline_icon "paypal", size: 28 %>
-        <strong>PayPal</strong>
-      <% end %>
-
-      <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
-        <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-          <%= inline_icon "web", size: 28 %>
-          <strong>International Wire</strong>
-        <% end %>
-      <% end %>
-
-      <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-        <%= inline_icon "bank-account", size: 28 %>
-        <strong>HCB transfer</strong>
-        <small>(between HCB accounts)</small>
-      <% end %>
-
-      <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
-        <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", style: "border: 1px dashed #ff8c37", data: { turbo: true } do %>
-          <%= inline_icon "card", size: 28 %>
-          <strong>Grant <span class="warning regular">(beta)</span></strong>
-          <small>A grant sent through an HCB card.</small>
-        <% end %>
-      <% end %>
+  <div
+    data-controller="transfer-form"
+    data-transfer-form-ach-value="<%= new_event_ach_transfer_path(@event) %>"
+    data-transfer-form-check-value="<%= new_event_increase_check_path(@event) %>"
+    data-transfer-form-wire-value="<%= new_event_wire_path(@event) %>"
+    data-transfer-form-disbursement-value="<%= new_disbursement_path(source_event_id: @event) %>">
+    <div data-transfer-form-target="home">
+      <fieldset>
+        <legend class="heading h2 pt2 pb2">What type of transfer?</legend>
+        <div class="field field--options fit">
+          <%= link_to new_event_ach_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+            <%= inline_icon "payment-transfer", size: 28 %>
+            <strong>ACH transfer</strong>
+          <% end %>
+          <%= link_to new_event_increase_check_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+            <%= inline_icon "email", size: 28 %>
+            <strong>Mailed check</strong>
+          <% end %>
+          <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
+            <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+              <%= inline_icon "web", size: 28 %>
+              <strong>International Wire</strong>
+            <% end %>
+          <% end %>
+          <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+            <%= inline_icon "bank-account", size: 28 %>
+            <strong>HCB transfer</strong>
+            <small>(between HCB accounts)</small>
+          <% end %>
+          <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
+            <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
+              <%= inline_icon "card", size: 28 %>
+              <strong>Grant</strong>
+              <small>A grant sent through an HCB card.</small>
+            <% end %>
+          <% end %>
+        </div>
+      </fieldset>
+      <a class="w-full text-center block no-underline -mb-2" href="javascript:void(0)" data-action="click->transfer-form#showWizard">Which method should I use? <strong>Help me decide &rarr;</a>
     </div>
-  </fieldset>
-
-<% end %>
+    <div data-transfer-form-target="wizard" hidden>
+      <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
+        <%= inline_icon "view-back" %>
+        Exit
+      </a>
+      <p class="homepage-eyebrow pt-2 mb-0">Help me decide</p>
+      <h3 class="mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
+      <div class="flex gap-2">
+        <button type="button" class="btn shadow-none" data-transfer-form-target="yes" data-action="click->transfer-form#yesClickHandler">
+          Yes
+          <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+        <button type="button" class="btn shadow-none" data-transfer-form-target="no" data-action="click->transfer-form#noClickHandler">
+          No
+          <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+      </div>
+    </div>
+    <div data-transfer-form-target="answer" hidden>
+      <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
+        <%= inline_icon "view-back" %>
+        Exit
+      </a>
+      <p class="homepage-eyebrow pt-2 mb-0">Our recommendation</p>
+      <h3 class="mt-2 font-bold mb-2 capitalize" data-transfer-form-target="answerText"></h3>
+      <a href="#" data-transfer-form-target="learnMore" class="mb-6 inline-block no-underline" target="_blank">Learn more &rarr;</a>
+      <div class="flex gap-2">
+        <button type="button" class="btn bg-secondary shadow-none" data-transfer-form-target="answerCTA" data-action="click->transfer-form#showAnswer">
+          Let's do it!
+          <%= inline_icon "view-forward", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+        <button type="button" class="btn bg-muted shadow-none" data-action="click->transfer-form#reset">
+          Reset
+          <%= inline_icon "view-reload", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+      </div>
+      <div>
+      </div>
+    <% end %>

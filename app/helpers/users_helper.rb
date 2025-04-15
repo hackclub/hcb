@@ -20,7 +20,7 @@ module UsersHelper
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
       default_image
-    elsif Rails.env.production? && (user.is_a?(User) && user&.profile_picture&.attached?)
+    elsif Rails.env.production? && user.is_a?(User) && user&.profile_picture&.attached?
       Rails.application.routes.url_helpers.url_for(user.profile_picture.variant(
                                                      thumbnail: "#{size * 2}x#{size * 2}^",
                                                      gravity: "center",
@@ -51,7 +51,10 @@ module UsersHelper
       "Yahoo!",
       "dats me!",
       "dats u!",
-      "byte me!"
+      "byte me!",
+      "despite everything, it's still you!",
+      "the person reading this :-)",
+      "our favorite user currently reading this text!"
     ]
   end
 
@@ -79,21 +82,25 @@ module UsersHelper
     avi = avatar_for(user, 24, options[:avatar] || {}, click_to_mention:, default_image:)
 
     klasses = ["mention"]
-    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.admin? && !options[:disable_tooltip]
+    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
     klasses << %w[mention--current-user tooltipped tooltipped--n] if current_user && (user&.id == current_user.id) && !options[:disable_tooltip]
     klasses << %w[badge bg-muted ml0] if comment_mention
     klasses << options[:class] if options[:class]
     klass = klasses.uniq.join(" ")
 
-    aria = if user.nil?
-             "No user found"
-           elsif user.id == current_user&.id
-             current_user_flavor_text.sample
-           elsif user.admin?
-             "#{user.name} is an admin"
-           end
+    aria_label = if options[:aria_label]
+                   options[:aria_label]
+                 elsif user.nil?
+                   "No user found"
+                 elsif user.id == current_user&.id
+                   current_user_flavor_text.sample
+                 elsif user.admin?
+                   "#{user.name} is an admin"
+                 elsif user.auditor?
+                   "#{user.name} is an auditor"
+                 end
 
-    content = if user&.admin? && !options[:hide_avatar]
+    content = if user&.auditor? && !options[:hide_avatar]
                 bolt = inline_icon "admin-badge", size: 20
                 avi + bolt + name
               elsif options[:hide_avatar]
@@ -102,11 +109,11 @@ module UsersHelper
                 avi + name
               end
 
-    content_tag :span, content, class: klass, 'aria-label': aria
+    content_tag :span, content, class: klass, 'aria-label': aria_label
   end
 
   def admin_tool(class_name = "", element = "div", override_pretend: false, **options, &block)
-    return unless current_user&.admin? || (override_pretend && current_user&.admin_override_pretend?)
+    return unless current_user&.auditor? || (override_pretend && current_user&.admin_override_pretend?)
 
     concat content_tag(element, class: "admin-tools #{class_name}", **options, &block)
   end

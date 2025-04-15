@@ -97,8 +97,8 @@
       <span class="h2 bold">Sessions</span>
       <%= badge_for @all_sessions.count, class: "bg-muted" %>
     </legend>
-    <%= link_to logout_all_users_path, method: :delete,
-            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= 1 do %>
+    <%= link_to logout_all_user_path(@user), method: :delete,
+            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) do %>
       <%= inline_icon "door-leave", size: home_action_size %>
       Sign out everywhere else
     <% end %>

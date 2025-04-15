@@ -38,7 +38,9 @@ module FeeEngine
 
       reason = :revenue_waived if canonical_transaction.likely_check_clearing_dda? # this typically has a negative balancing transaction with it
       reason = :revenue_waived if canonical_transaction.likely_card_transaction_refund? # sometimes a user is issued a refund on a transaction
-      reason = :revenue_waived if canonical_transaction.local_hcb_code.ach_transfer? # outgoing ACH transfers are sometimes returned to the account upon failure
+
+      reason = :transfer_returned if canonical_transaction.local_hcb_code.ach_transfer? # outgoing ACH transfers are sometimes returned to the account upon failure
+      reason = :transfer_returned if canonical_transaction.local_hcb_code.wire? # outgoing wires are sometimes returned to the account upon failure
 
       # don't run fee if other transactions in it's HCB Code have fees waived
       reason = :revenue_waived if canonical_transaction.local_hcb_code.canonical_transactions.includes(:fee).any? { |ct| ct.fee&.revenue_waived? }

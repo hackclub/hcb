@@ -1,45 +1,25 @@
 <% turbo_page_requires_reload %>
-
 <% title "Sign in" %>
-<% page_xs %>
-<% @home_size = 128 %>
-<% content_for(:page_class) { "bg-snow pt4" } %>
 
-<% content_for :head do %>
-  <% img = "/brand/hcb-icon-icon-original.png" %>
-  <meta name="twitter:card" content="summary">
-  <meta property="og:image" content="<%= img %>">
-  <meta name="twitter:image" content="<%= img %>">
-  <meta property="og:site_name" content="HCB">
-  <meta property="og:url" content="https://hcb.hackclub.com">
-  <meta property="og:title" content="Sign in">
-  <meta name="twitter:title" content="Sign in">
-  <meta property="og:description" content="Sign in to HCB.">
-  <meta name="twitter:description" content="Sign in to HCB.">
-  <meta name="description" content="Sign in to HCB.">
-<% end %>
-
-<article class="center mt3" data-controller="webauthn-auth" data-webauthn-auth-return-to-value="<%= @return_to %>" data-webauthn-auth-require-webauthn-preference-value="true">
-  <h1 class="mt2">
-    <span class="h3 caps secondary block">Hack Club</span>
-    <span class="primary">Sign in to HCB</span>
-  </h1>
-  <%= render partial: "users/sms_auth_notice" %>
-
-  <%= form_tag logins_path, 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
-    <div data-webauthn-auth-target="error" class="mb2 display-none">
-      <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
-    </div>
-
-    <%= label_tag :email, "Enter your email…", class: "left-align" %>
-    <%= hidden_field_tag :return_to, @return_to if @return_to %>
-    <%= email_field_tag :email, @prefill_email, placeholder: "Email address", autofocus: true, autocomplete: "username", class: "left-align mb2", required: true, "data-webauthn-auth-target" => "loginEmailInput" %>
-    <div class="flex justify-center">
-      <%= submit_tag "Continue", data: { "webauthn-auth-target" => "continueButton" } %>
-    </div>
-
-    <%= link_to "Sign in another way", choose_login_preference_logins_path(return_to: @return_to), class: "display-none block mt2", data: { "webauthn-auth-target" => "loginCode" } %>
-  <% end %>
-  <p class="h5 muted mt5">Need help? <%= help_email %></p>
-  <p class="h5 mt2"><a href="https://hackclub.com/hcb?ref=hcb_auth">What’s HCB?</a></p>
-</article>
+<div class="flex flex-col flex-1 justify-center max-w-md w-full">
+  <div class="my-auto">
+    <%= render "header", label: "Hack Club" do %>
+      Sign in to HCB
+    <% end %>
+    <%= form_tag logins_path, class: "mt-1", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
+      <div data-webauthn-auth-target="error" class="mb2 display-none">
+        <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
+      </div>
+      <%= hidden_field_tag :return_to, @return_to if @return_to %>
+      <%= email_field_tag :email, @prefill_email, placeholder: "Enter your email...", autofocus: true, autocomplete: "username", class: "!max-w-full w-full", style: "padding: 12px 15px", required: true, "data-webauthn-auth-target" => "loginEmailInput" %>
+      <div class="flex">
+        <button data-webauthn-auth-target="continueButton" type="submit" class="ml-auto mt-4 gap-2 btn">
+          Continue
+        </button>
+      </div>
+      <%= link_to "Sign in another way", choose_login_preference_logins_path(return_to: @return_to), class: "display-none block mt2 no-underline", data: { "webauthn-auth-target" => "loginCode" } %>
+    <% end %>
+  </div>
+  <%= render partial: "environment_banner" %>
+</div>
+<%= render partial: "footer", locals: { whats_hcb: true } %>

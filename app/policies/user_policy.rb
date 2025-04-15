@@ -2,7 +2,7 @@
 
 class UserPolicy < ApplicationPolicy
   def show?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def impersonate?
@@ -78,6 +78,14 @@ class UserPolicy < ApplicationPolicy
   end
 
   def disable_feature?
+    user.admin? || record == user
+  end
+
+  def logout_session?
+    user.admin? || record == user
+  end
+
+  def logout_all?
     user.admin? || record == user
   end
 

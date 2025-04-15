@@ -1,0 +1,4 @@
+<%= turbo_frame_tag "team_stats" do %>
+  <%= render partial: "events/home/team", event: @event %>
+  <%= render partial: "events/home/number_stats", event: @event %>
+<% end %>

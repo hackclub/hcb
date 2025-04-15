@@ -7,14 +7,10 @@ RSpec.describe EventMappingEngine::Nightly do
 
   it "succeeds" do
     expect(service).to receive(:map_stripe_transactions!).and_return(true)
-    expect(service).to receive(:map_checks!).and_return(true)
+    expect(service).to receive(:map_increase_checks!).and_return(true)
     expect(service).to receive(:map_achs!).and_return(true)
     expect(service).to receive(:map_disbursements!).and_return(true)
-    expect(service).to receive(:map_hack_club_bank_issued_cards!).and_return(true)
     expect(service).to receive(:map_stripe_top_ups!).and_return(true)
-    expect(service).to receive(:map_bank_fees!).and_return(true)
-    expect(service).to receive(:map_hcb_codes_invoice!).and_return(true)
-    expect(service).to receive(:map_hcb_codes_donation!).and_return(true)
     expect(service).to receive(:map_hcb_codes_short!).and_return(true)
 
     service.run

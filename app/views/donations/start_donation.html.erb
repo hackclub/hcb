@@ -19,11 +19,12 @@
 <% if @event.donation_page_message.present? %>
   <div class="container container--sm">
     <div class="card border b--info mt3 mb3 pb0 pt0 public-message">
-      <%== MarkdownService.instance.renderer.render @event.donation_page_message %>
+      <%= sanitize(MarkdownService.instance.renderer.render(@event.donation_page_message), scrubber: MarkdownScrubber.new) %>
     </div>
   </div>
 <% end %>
 
+<%= render "donations/donation_goal", donation: @donation %>
 <%= render "donations/donation_form", donation: @donation %>
 
 <% if @event.demo_mode? %>

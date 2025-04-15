@@ -52,9 +52,6 @@
   <% elsif tx.local_hcb_code.card_grant? %>
     <% label = "Outgoing grant" %>
     <% icon = inline_icon "bag" %>
-  <% elsif tx.try(:grant_id) %>
-    <% label = "Outgoing grant" %>
-    <% icon = inline_icon "idea" %>
   <% elsif tx.local_hcb_code.disbursement? %>
     <% if tx.amount.negative? %>
       <% label = "Outgoing transfer" %>
@@ -73,7 +70,7 @@
       data-action="click->transactions#select"
       data-transaction="<%= selects %>"
     <% end %>>
-  <div class="tooltipped tooltipped--e" aria-label="<%= label %>">
+  <div class="tooltipped tooltipped--<%= defined?(tooltip_direction) ? tooltip_direction : "e" %>" aria-label="<%= label %>">
     <%= icon %>
   </div>
 </td>

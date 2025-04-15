@@ -32,6 +32,6 @@
   <%= form.submit "Update report", class: "left mt2" %>
 <% end %>
 
-<% admin_tool_if !@report.initial_draft? do %>
+<% admin_tool_if !@report.draft? do %>
   <%= button_to "Delete report", reimbursement_report_path(@report), class: "right mt2 bg-error btn", method: :delete, type: "button" %>
 <% end %>

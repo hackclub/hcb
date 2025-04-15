@@ -5,7 +5,7 @@
 <% location ||= "hcb_code_show_page" %>
 <% renamed ||= false %>
 <% disabled ||= false %>
-<% organizer_signed_in = organizer_signed_in?(@event || hcb_code.event) || (hcb_code.events && organizer_signed_in?(hcb_code.events.last)) %>
+<% organizer_signed_in = current_user && (organizer_signed_in?(@event || hcb_code.event) || (hcb_code.events && organizer_signed_in?(hcb_code.events.last))) %>
 
 <% if (organizer_signed_in && (@event || hcb_code.event) || force_display_details) && !(@event || hcb_code.event)&.demo_mode? %>
   <%= turbo_frame_tag "#{location}:#{dom_id(hcb_code)}:memo", style: "flex-grow: 1"  do %>
@@ -28,7 +28,7 @@
         <% end %>
 
     <% else %>
-      <% details_link = hcb_code.card_grant? ? spending_card_grant_path(hcb_code.disbursement.card_grant) : hcb_code.url %>
+      <% details_link = hcb_code.card_grant? ? spending_card_grant_path(hcb_code.disbursement.card_grant) : url_for(hcb_code) %>
       <% modal = hcb_code.card_grant? ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
       <% contents = capture do %>
         <span class="<%= "renamed" if renamed %>"

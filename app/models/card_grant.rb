@@ -10,6 +10,7 @@
 #  email           :string           not null
 #  keyword_lock    :string
 #  merchant_lock   :string
+#  purpose         :string
 #  status          :integer          default("active"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
@@ -39,9 +40,13 @@
 #
 class CardGrant < ApplicationRecord
   include Hashid::Rails
+  has_paper_trail
 
   include PublicIdentifiable
   set_public_id_prefix :cdg
+
+  include Freezable
+  include Commentable
 
   belongs_to :event
   belongs_to :subledger, optional: true
@@ -49,7 +54,7 @@ class CardGrant < ApplicationRecord
   belongs_to :user, optional: true
   belongs_to :sent_by, class_name: "User"
   belongs_to :disbursement, optional: true
-  has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id) }, through: :event
+  has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id).or(where(source_subledger_id: record.subledger_id)) }, through: :event
   has_one :card_grant_setting, through: :event, required: true
   alias_method :setting, :card_grant_setting
 
@@ -61,7 +66,8 @@ class CardGrant < ApplicationRecord
   after_create :transfer_money
   after_create_commit :send_email
 
-  before_validation { self.email = email.presence&.downcase&.strip }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
   delegate :balance, to: :subledger
 
@@ -70,6 +76,7 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
+  validates :purpose, length: { maximum: 30 }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
@@ -79,9 +86,7 @@ class CardGrant < ApplicationRecord
 
   monetize :amount_cents
 
-  def name
-    "#{user.name} (#{user.email})"
-  end
+  delegate :name, to: :user
 
   def state
     if canceled? || expired?
@@ -116,17 +121,30 @@ class CardGrant < ApplicationRecord
   def topup!(amount_cents:, topped_up_by: User.find(sent_by_id))
     raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
 
+    custom_memo = "Topup of grant to #{user.name}"
+
     ActiveRecord::Base.transaction do
       update!(amount_cents: self.amount_cents + amount_cents)
-      DisbursementService::Create.new(
+      disbursement = DisbursementService::Create.new(
         source_event_id: event_id,
         destination_event_id: event_id,
-        name: "Topup of funds for grant to #{user.name}",
+        name: custom_memo,
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
       ).run
+
+      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
     end
+  end
+
+  def topup_disbursements
+    Disbursement.where(destination_subledger_id: subledger.id).where.not(id: disbursement_id)
+  end
+
+  def visible_hcb_codes
+    ((stripe_card&.hcb_codes || []) + topup_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
   end
 
   def expire!
@@ -134,25 +152,28 @@ class CardGrant < ApplicationRecord
     cancel!(hcb_user, expired: true)
   end
 
+  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"), allow_topups: false)
+    raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
+    raise ArgumentError, "card grant should have a positive balance" unless balance.positive? || allow_topups
+
+    return topup!(amount_cents: balance.cents * -1, topped_up_by: requested_by) if balance.negative?
+
+    disbursement = DisbursementService::Create.new(
+      source_event_id: event_id,
+      destination_event_id: event_id,
+      name: custom_memo,
+      amount: balance.amount,
+      source_subledger_id: subledger_id,
+      requested_by_id: requested_by.id,
+    ).run
+    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+  end
+
   def cancel!(canceled_by = User.find_by!(email: "bank@hackclub.com"), expired: false)
     raise ArgumentError, "Grant is already #{status}" unless active?
 
-    if balance > 0
-      custom_memo = "Return of funds from #{expired ? "expiration" : "cancellation"} of grant to #{user.name}"
-
-      disbursement = DisbursementService::Create.new(
-        source_event_id: event_id,
-        destination_event_id: event_id,
-        name: custom_memo,
-        amount: balance.amount,
-        source_subledger_id: subledger_id,
-        requested_by_id: canceled_by.id,
-      ).run
-
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
-
-    end
+    zero!(custom_memo: "Return of funds from #{expired ? "expiration" : "cancellation"} of grant to #{user.name}", requested_by: canceled_by) if balance > 0
 
     update!(status: :canceled) unless expired
     update!(status: :expired) if expired
@@ -202,6 +223,16 @@ class CardGrant < ApplicationRecord
     created_at + expires_after.days
   end
 
+  def last_user_change_to(...)
+    user_id = versions.where_object_changes_to(...).last&.whodunnit
+
+    user_id && User.find(user_id)
+  end
+
+  def last_time_change_to(...)
+    versions.where_object_changes_to(...).last&.created_at
+  end
+
   private
 
   def create_card_grant_setting
@@ -209,7 +240,7 @@ class CardGrant < ApplicationRecord
   end
 
   def create_user
-    self.user = User.find_or_create_by!(email:)
+    self.user = User.create_with(creation_method: :card_grant).find_or_create_by!(email:)
   end
 
   def create_subledger

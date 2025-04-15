@@ -1,0 +1,89 @@
+<head>
+  <meta charset="UTF-8">
+  <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+  <script>
+    window.onload = function () {
+      twemoji.parse(document.body);
+    }
+  </script>
+</head>
+
+<div>
+  <img src="https://assets.hackclub.com/hcb-light.png" height="100px" />
+  <div>
+    <h1 style="margin-block: 0">
+      The Hack Foundation
+    </h1>
+    <h4 style="margin-block: 0">
+      8605 Santa Monica Blvd #86294
+      <br />
+      West Hollywood, CA, 90069
+    </h4>
+  </div>
+  <div>
+    <u>PAYMENT STATEMENT</u>
+    <span style="text-transform: uppercase">FOR: <b><%= @payment.employee.user.name %></b></span>
+    on
+    <span>
+      <b><%= @payment.payout.created_at.strftime("%Y-%m-%d") %></b>
+    </span>
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th>Project</th>
+    <th>Description</th>
+    <th>Amount</th>
+    <th>YTD earnings</th>
+  </tr>
+  <tr>
+    <td><%= @payment.employee.event.name %></td>
+    <td><%= @payment.title %></td>
+    <td>
+      <%= render_money @payment.amount  %>
+    </td>
+    <td>
+      <%= render_money @payment.employee.payments.paid.where(created_at: @payment.created_at.beginning_of_year.to_time..@payment.created_at).sum(:amount_cents)  %>
+    </td>
+  </tr>
+</table>
+
+<p>
+  <i><%= @payment.employee.event.name %></i> is fiscally sponsored by The Hack Foundation, a 501(c)(3) nonprofit with the EIN 81-2908499.
+</p>
+
+<style>
+  body {
+    padding: 16px;
+    color: black;
+  }
+  h4 {
+    font-weight: 400
+  }
+  table {
+    width: 100%;
+    margin-top: 36px;
+    border-spacing: 0;
+  }
+  th {
+    background: #ec3750;
+    color: #fff;
+    font-weight: 400;
+    text-align: left;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  tr:nth-child(odd) {
+      background-color: #ececec;
+  }
+  td {
+    border: none;
+  }
+  img.emoji {
+    height: 1em;
+    width: 1em;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1em;
+  }
+</style>

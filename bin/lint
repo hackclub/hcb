@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 set -e
 
-echo "=== Running Rubocop ==="
-bundle exec rubocop -a
-# To run potentially unsafe cops, use: bundle exec rubocop -A
+# Check if lint is to be run concurrently
+if [[ $@ =~ "-c" ]]; then
+  echo "=== Running Linters with Concurrently ==="
+  yarn run concurrently "bundle exec rubocop -a" "bundle exec erb_lint app/views/ -a" "yarn lint --fix" "yarn format" --raw --group
+else
+  echo "=== Running Rubocop ==="
+  bundle exec rubocop -a
+  # To run potentially unsafe cops, use: bundle exec rubocop -A
 
-echo "=== Running ERB Lint ==="
-bundle exec erblint app/views/ -a
+  echo "=== Running ERB Lint ==="
+  bundle exec erb_lint app/views/ -a
 
-echo "=== Running ESLint ==="
-yarn lint --fix
+  echo "=== Running ESLint ==="
+  yarn lint --fix
 
-echo "=== Running Prettier ==="
-yarn format
+  echo "=== Running Prettier ==="
+  yarn format
+fi

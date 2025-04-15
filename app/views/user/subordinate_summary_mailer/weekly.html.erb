@@ -22,7 +22,7 @@
     <% subordinate.hcb_codes.sort_by(&:amount_cents).each do |hcb_code| %>
       <tr>
         <td>
-          <a href="<%= hcb_code.local_hcb_code.url %>">
+          <a href="<%= url_for(hcb_code) %>">
             <%= hcb_code.memo %>
           </a>
         </td>
@@ -75,7 +75,7 @@
       <% user.transactions_missing_receipt.each do |hcb_code| %>
         <tr>
           <td>
-            <a href="<%= hcb_code.local_hcb_code.url %>">
+            <a href="<%= url_for(hcb_code) %>">
               <%= hcb_code.memo %>
             </a>
           </td>

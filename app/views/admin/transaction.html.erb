@@ -35,7 +35,6 @@
   <thead>
     <tr>
       <th>Map to an Event</th>
-      <th>Map to a PayPal Transfer</th>
       <th>Map to a Wire</th>
     </tr>
   </thead>
@@ -50,12 +49,6 @@
         <%= form_with url: set_event_path(@canonical_transaction), method: :post do |form| %>
           <%= form.hidden_field :event_id, value: EventMappingEngine::EventIds::NOEVENT %>
           <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" } %>
-        <% end %>
-      </td>
-      <td>
-        <%= form_with model: nil, local: true, url: set_paypal_transfer_path(@canonical_transaction), method: :post do |form| %>
-          <%= form.collection_select(:paypal_transfer_id, PaypalTransfer.approved + [@canonical_transaction.paypal_transfer].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.paypal_transfer&.id }, { style: "width: 300px;" }) %>
-          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>
       </td>
       <td>
@@ -98,7 +91,7 @@
   <% if comment.content.blank? %>
     <div class="muted mb1"><em>Comment left blank.</em></div>
   <% else %>
-    <%== MarkdownService.instance.renderer(current_user:, record: comment).render comment.content %>
+    <%= sanitize(MarkdownService.instance.renderer(current_user:, record: comment).render(comment.content), scrubber: MarkdownScrubber.new) %>
   <% end %>
   <% if comment.has_attached_file? %>
     <p>
@@ -170,11 +163,11 @@
 <h4>Journey</h4>
 
 <p>CanonicalTransaction</p>
-<%= (ap @canonical_transaction).html_safe %>
+<%= sanitize(ap(@canonical_transaction), attributes: %w(style)) %>
 <p>↓</p>
 
 <p><%= @canonical_transaction.transaction_source_type %></p>
-<%= (ap @canonical_transaction.transaction_source).html_safe %>
+<%= sanitize(ap(@canonical_transaction.transaction_source), attributes: %w(style)) %>
 
 <br><hr>
 
@@ -182,7 +175,7 @@
 
 <% @ahoy_events.each do |ae| %>
   <p><%= ae.name %> <small><%= ae.time %></small></p>
-  <%= (ap ae.properties).html_safe %>
+  <%= sanitize(ap(ae.properties), attributes: %w(style)) %>
 <% end %>
 
 <br><hr>

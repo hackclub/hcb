@@ -6,17 +6,35 @@
 
     <div class="flex g1 items-center">
       <% if admin_signed_in? %>
-        <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position_invite.signee? ? "Contract signee" : "No contract signature") + ". Click to toggle." %>">
-          <%= link_to toggle_signee_status_organizer_position_invite_path(organizer_position_invite.id), data: { turbo_method: "post", turbo_frame: "_top", turbo_confirm: "Are you sure you want to toggle #{organizer_position_invite.user.name}'s contract signee status?" } do %>
+        <% if organizer_position_invite.organizer_position_contract&.pending? || organizer_position_invite.organizer_position_contract&.sent? %>
+          <div class="flex">
+            <div class="line-height-0 tooltipped tooltipped--w" aria-label="Pending signature, click to void this contract.">
+              <div class="warning">
+                <%= link_to void_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), class: "primary", data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :POST } do %>
+                  <%= inline_icon("clock", size: 24) %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% else %>
+          <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position_invite.organizer_position_contract&.signed? ? "Contract signee, click to view the contract." : "No contract signature, click to send a contract.") %>">
             <div class="warning">
-              <% if organizer_position_invite.signee? %>
-                <%= inline_icon("docs-positive", size: 24) %>
+              <% if organizer_position_invite.organizer_position_contract&.signed? %>
+                <%= link_to organizer_position_invite.organizer_position_contract.document || event_documents_path(event: organizer_position_invite.event), class: "success" do %>
+                  <%= inline_icon("docs-positive", size: 24) %>
+                <% end %>
               <% else %>
-                <%= inline_icon("docs-negative", size: 24) %>
+                <%= link_to "#", class: "warning", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position_invite.id}" } do %>
+                  <%= inline_icon("docs-negative", size: 24) %>
+                <% end %>
+                <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position_invite.id %>">
+                  <%= modal_header "Send a contract" %>
+                  <%= render "organizer_position_contract/form", organizer_position_contract: OrganizerPosition::Contract.new(organizer_position_invite_id: organizer_position_invite.id) %>
+                </section>
               <% end %>
             </div>
-          <% end %>
-        </div>
+          </div>
+        <% end %>
       <% end %>
 
       <% if organizer_signed_in? %>
