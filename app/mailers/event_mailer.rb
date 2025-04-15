@@ -13,7 +13,7 @@ class EventMailer < ApplicationMailer
 
     @total = @donations.sum(:amount)
 
-    mail to: @emails, subject: "Monthly donation summary for #{@event.name}"
+    mail to: @emails, subject: "#{@event.name} received #{@donations.length} donations this past month"
   end
 
   private
