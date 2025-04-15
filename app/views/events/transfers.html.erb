@@ -111,7 +111,7 @@
           <td>
             <%= format_date d.created_at %>
           </td>
-          <td style="max-width: 40ch;" class="overflow-hidden truncate" title="<%= d.name %>">
+          <td style="max-width: 15ch;" class="overflow-hidden truncate" title="<%= d.name %>">
             <% if d.is_a?(Disbursement) %>
               <strong>
                 <% if d.destination_event.is_public? || organizer_signed_in?(d.destination_event) %>
@@ -128,7 +128,7 @@
               <%= d.name %>
             <% end %>
           </td>
-          <td>
+          <td style="max-width: 25ch;" class="overflow-hidden truncate">
             <% if d.is_a?(Disbursement) %>
               <%= d.name %>
             <% elsif d.is_a?(CardGrant) %>
