@@ -8,6 +8,9 @@ class EventMailer < ApplicationMailer
     @event = params[:event]
 
     @donations = @event.donations.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
+
+    return if @donations.none?
+
     @total = @donations.sum(:amount)
 
     mail to: @emails, subject: "Monthly donation summary for #{@event.name}"
