@@ -1,6 +1,6 @@
 # Stripe Testing
 
-Stripe is one of the primary services used by HCB for its financial features. Fortunately, Stripe has amazing developer tools which allow you to use it in development very easily.
+A range of HCB's features are built using Stripe; including donations, invoices and issued cards. Fortunately, Stripe has amazing developer tools which allow you to use it in development very easily.
 
 ## Getting setup
 
@@ -16,7 +16,7 @@ stripe listen --forward-to localhost:3000/stripe/webhook
 
 ### Stripe Issuing
 
-Stripe Issuing is how HCB is able to issue virtual and physical credit cards to users. It requires a little more setup to get started. Head over to the [Issuing tab](https://dashboard.stripe.com/test/issuing/overview) on the Stripe dashboard (it's hidden under "More" in the sidebar), and enable it. You'll then need to add funds to your Issuing Balance, which you can do in the [Balances tab](https://dashboard.stripe.com/test/balance/overview#issuing-summary). Click on "Add to balance" in the Issuing balance section, and add up to $2,500. It's all fake money in test mode!
+We use Stripe Issuing to issue virtual and physical credit cards to users. It requires a little more setup to get started. Head over to the [Issuing tab](https://dashboard.stripe.com/test/issuing/overview) on the Stripe dashboard (it's hidden under "More" in the sidebar), and enable it. You'll then need to add funds to your Issuing Balance, which you can do in the [Balances tab](https://dashboard.stripe.com/test/balance/overview#issuing-summary). Click on "Add to balance" in the Issuing balance section, and add up to $2,500. It's all fake money in test mode!
 
 ![Screenshot of Issuing balance in the Stripe dashboard](./images/issuing_balance.png)
 
@@ -28,7 +28,7 @@ Once you're setup, you can use most of HCB's Stripe features like normal! Read m
 
 ### Donations
 
-For donating money in development, use card number 4242 4242 4242 4242, with any 3 digits for the CVC and any future date as the expiration date. You can also browse [other test cards](https://docs.stripe.com/testing?testing-method=card-numbers#cards) if you'd like to simulate a different card brand or country. As long as your local webhook listener is running, the donation should immediately appear in HCB after you submit.
+For donating money in development, use card number `4242 4242 4242 4242`, with any 3 digits for the CVC and any future date as the expiration date. You can also browse [other test cards](https://docs.stripe.com/testing?testing-method=card-numbers#cards) if you'd like to simulate a different card brand or country. As long as your local webhook listener is running, the donation should immediately appear in HCB after you submit.
 
 ### Card transactions
 
@@ -36,6 +36,6 @@ Stripe also lets you simulate charges on an issued card! First, issue a virtual 
 
 ![Screenshot of the test purchase button in the Stripe dashboard](./images/test_purchase.png)
 
-From here, you can fill out any data you wish - most is optional. If you'd like to simulate a charge from a specific merchant, check out the [yellow_pages merchants file](https://github.com/hackclub/yellow_pages/blob/main/lib/yellow_pages/merchants.yaml) - this contains network IDs for a ton of common merchants.
+From here, you can fill out any data you wish - most is optional. If you'd like to simulate a charge from a specific merchant, check out the [`yellow_pages` merchants file](https://github.com/hackclub/yellow_pages/blob/main/lib/yellow_pages/merchants.yaml) - this contains network IDs for a ton of common merchants.
 
 For more information on how card transactions work, see [the card transactions guide](./guides/card_transactions.md).
