@@ -176,7 +176,7 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 ## Credentials
 
-External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example). Note that if you're using the devcontainer (such as with GitHub Codespaces), you must rebuild the container after modifying the `.env.development` file to pull in the new variables.
+External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
 
 HCB relies on two services for the majority of it's financial features: Stripe and Column. See [the Stripe testing guide](./stripe_testing.md) for getting setup with Stripe in development. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
