@@ -41,61 +41,60 @@
 
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
-    <% if true %>
-      <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 border-none ml-0 pl-0">Your organizations</h2>
 
-      <% if @events.any? %>
-        <% if @show_event_reorder_tip %>
-          <% if @events.size > 1 %>
-            <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
-              <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
-            <% end %>
+    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 border-none ml-0 pl-0">Your organizations</h2>
+
+    <% if @events.any? %>
+      <% if @show_event_reorder_tip %>
+        <% if @events.size > 1 %>
+          <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
+            <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
           <% end %>
         <% end %>
-        <ul
-          class="grid grid--medium-narrow left-align w-100 mt0"
-          data-controller="sortable event-sort"
-          data-sortable-append-to-value="body"
-          data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"
-          data-action="sortable:stop->event-sort#sort">
+      <% end %>
+      <ul
+        class="grid grid--medium-narrow left-align w-100 mt0"
+        data-controller="sortable event-sort"
+        data-sortable-append-to-value="body"
+        data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"
+        data-action="sortable:stop->event-sort#sort">
 
-          <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
+        <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
 
-          <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "returning-organizer") do %>
-            <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
-              <div class="center">
-                <div class="pop success mx-auto flex mb-1">
-                  <%= inline_icon "plus", size: 28 %>
-                </div>
-                New organization
+        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "returning-organizer") do %>
+          <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
+            <div class="center">
+              <div class="pop success mx-auto flex mb-1">
+                <%= inline_icon "plus", size: 28 %>
               </div>
-            </li>
-          <% end %>
-        </ul>
-      <% end %>
-
-      <% if @events.hidden.any? %>
-        <details class="w-full text-left">
-          <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
-          <ul class="grid grid--medium-narrow text-left mt-0">
-            <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
-          </ul>
-        </details>
-      <% end %>
-
-      <% if @events.empty? %>
-        <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border flex flex-col w-full items-center justify-center">
-          <span>
-            No organizations associated with your account yet.
-          </span>
-          <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
-            <%= inline_icon "plus" %>
-            New organization
-          <% end %>
-        </div>
-      <% end %>
-
+              New organization
+            </div>
+          </li>
+        <% end %>
+      </ul>
     <% end %>
+
+    <% if @events.hidden.any? %>
+      <details class="w-full text-left">
+        <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
+        <ul class="grid grid--medium-narrow text-left mt-0">
+          <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
+        </ul>
+      </details>
+    <% end %>
+
+    <% if @events.empty? %>
+      <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border flex flex-col w-full items-center justify-center">
+        <span>
+          No organizations associated with your account yet.
+        </span>
+        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
+          <%= inline_icon "plus" %>
+          New organization
+        <% end %>
+      </div>
+    <% end %>
+
     <% if @invites.any? %>
       <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending invitations</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
