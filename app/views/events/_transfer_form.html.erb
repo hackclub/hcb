@@ -20,18 +20,18 @@
           <% if Flipper.enabled?(:international_wires_2024_09_22, @event) %>
             <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
               <%= inline_icon "web", size: 28 %>
-              <strong>International Wire</strong>
+              <strong>International wire</strong>
             <% end %>
           <% end %>
           <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "bank-account", size: 28 %>
             <strong>HCB transfer</strong>
-            <small>(between HCB accounts)</small>
+            <small>(between HCB organizations)</small>
           <% end %>
           <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
             <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
               <%= inline_icon "card", size: 28 %>
-              <strong>Grant</strong>
+              <strong>Card grant</strong>
               <small>A grant sent through an HCB card.</small>
             <% end %>
           <% end %>

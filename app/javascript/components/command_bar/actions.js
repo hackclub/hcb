@@ -230,14 +230,6 @@ export const adminActions = adminUrls => [
     perform: () => (window.location.href = '/admin/increase_checks'),
   },
   {
-    id: 'admin_tool_6',
-    section: 'Admin Tools',
-    priority: Priority.HIGH,
-    name: 'Grants',
-    icon: <Icon glyph="support" size={16} />,
-    perform: () => (window.location.href = '/admin/grants'),
-  },
-  {
     id: 'admin_tool_7',
     section: 'Admin Tools',
     priority: Priority.HIGH,
@@ -349,14 +341,6 @@ export const adminActions = adminUrls => [
     name: 'Stickers',
     icon: <Icon glyph="sticker" size={16} />,
     perform: () => (window.location.href = adminUrls['Stickers']),
-  },
-  {
-    id: 'admin_tool_22',
-    section: 'Admin Tools',
-    priority: Priority.HIGH,
-    name: 'Wallets',
-    icon: <Icon glyph="send" size={16} />,
-    perform: () => (window.location.href = adminUrls['Wallets']),
   },
   {
     id: 'admin_tool_23',

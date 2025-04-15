@@ -193,3 +193,7 @@ We've transitioned to using development keys and seed data in development, but h
 - Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` enviroment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
 
 - Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
+
+## Flipper
+
+[Flipper](https://github.com/flippercloud/flipper) is used to toggle feature flags on HCB. Flipper can be accessed at [localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a flag, press "Add Feature", paste in the name of a feature from [this list](https://hcb.hackclub.com/api/flags), and then press "Fully Enable".
