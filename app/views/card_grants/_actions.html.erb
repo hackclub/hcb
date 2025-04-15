@@ -1,7 +1,7 @@
 <%# locals: (card_grant:) %>
 
 <% if card_grant.active? %>
-  <div class="mt3 flex flex-wrap align-items-center justify-start g1">
+  <div class="mt3 flex flex-wrap align-items-center justify-start g1 justify-center">
     <% if card_grant.stripe_card %>
       <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card %>
     <% end %>

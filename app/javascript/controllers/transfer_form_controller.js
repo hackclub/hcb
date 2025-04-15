@@ -38,7 +38,7 @@ export default class extends Controller {
       question: 'Do you have their account & routing number?',
       yes: {
         type: 'ach',
-        link: 'https://help.hcb.hackclub.com/article/59-what-is-an-ach-transfer',
+        link: 'https://help.hcb.hackclub.com/article/60-what-is-an-ach-transfer',
       },
       no: {
         type: 'check',
