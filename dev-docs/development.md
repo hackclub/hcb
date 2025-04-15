@@ -195,4 +195,4 @@ We've transitioned to using development keys and seed data in development, but h
 - Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
 
 ## Flipper
-Flipper is used to toggle certain features on HCB. Flipper can be accessed at [http://127.0.0.1:3000/flipper/features](http://127.0.0.1:3000/flipper/features). To enable a feature, press "Add Feature", paste in the name of a feature from [this list](flippers.txt), and then press "Fully Enable".
+[Flipper](https://github.com/flippercloud/flipper) is used to toggle certain features on HCB. Flipper can be accessed at [http://localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a feature, press "Add Feature", paste in the name of a feature from [this list](flippers.txt), and then press "Fully Enable".
