@@ -2,7 +2,7 @@
 
 class EventMailerPreview < ActionMailer::Preview
   def monthly_donation_summary
-    EventMailer.with(event: Event.not_demo_mode.first).monthly_donation_summary
+    EventMailer.with(event: Donation.last.event).monthly_donation_summary
   end
 
 end
