@@ -11,8 +11,8 @@ module StripeCardsHelper
 
   def stripe_card_mention(stripe_card, size: 24)
     icon = inline_icon "card",
-                       size: options[:size],
-                       class: "muted #{options[:size] <= 24 ? 'pr1' : ''}"
+                       size:,
+                       class: "muted #{size <= 24 ? 'pr1' : ''}"
     if organizer_signed_in? || stripe_card.user == current_user
       text = content_tag :span, stripe_card.last_four
       return link_to(stripe_card, class: "mention", data: { turbo_frame: "_top" }) { icon + text }
