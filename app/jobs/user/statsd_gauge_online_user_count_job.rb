@@ -11,7 +11,3 @@ class User
   end
 
 end
-
-module Statsd
-  GaugeOnlineUserCountJob = User::StatsdGaugeOnlineUserCountJob
-end
