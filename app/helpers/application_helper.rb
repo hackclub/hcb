@@ -58,23 +58,23 @@ module ApplicationHelper
     content_tag(:span, content.join.html_safe)
   end
 
-  def blankslate(text, options = {})
+  def blankslate(text, **options)
     other_options = options.except(:class)
     content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
   end
 
-  def list_badge_for(count, item, glyph, options = { optional: false, required: false })
-    return nil if options[:optional] && count == 0
+  def list_badge_for(count, item, glyph, optional: false, required: false, **options)
+    return nil if optional && count == 0
 
     icon = inline_icon(glyph, size: 20, 'aria-hidden': true)
 
     content_tag(:span,
                 icon + count.to_s,
                 'aria-label': pluralize(count, item),
-                class: "list-badge tooltipped tooltipped--w #{options[:required] && count == 0 ? 'b--warning warning' : ''} #{options[:class]}")
+                class: "list-badge tooltipped tooltipped--w #{required && count == 0 ? 'b--warning warning' : ''} #{options[:class]}")
   end
 
-  def badge_for(value, options = {})
+  def badge_for(value, **options)
     content_tag :span, value, class: "badge #{options[:class]} #{'bg-muted' if [0, "Pending"].include?(value)}"
   end
 
@@ -86,7 +86,7 @@ module ApplicationHelper
     status_badge(type) if condition
   end
 
-  def pop_icon_to(icon, url, options = { class: "info" })
+  def pop_icon_to(icon, url, class: "info", **options)
     link_to url, options.merge(class: "pop #{options[:class]}") do
       inline_icon icon, size: options[:icon_size] || 28
     end
@@ -151,7 +151,7 @@ module ApplicationHelper
     end
   end
 
-  def relative_timestamp(time, options = {})
+  def relative_timestamp(time, **options)
     content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
   end
 
@@ -163,7 +163,7 @@ module ApplicationHelper
     content_tag :pre, pp(item.attributes.to_yaml)
   end
 
-  def inline_icon(filename, options = {})
+  def inline_icon(filename, **options)
     # cache parsed SVG files to reduce file I/O operations
     @icon_svg_cache ||= {}
     if !@icon_svg_cache.key?(filename)

@@ -61,7 +61,7 @@
         </div>
       <% end %>
       <% event.organizer_positions.first(event.organizer_positions.size > 9 ? 8 : 9).each do |position| %>
-        <%= avatar_for position.user, 24 %>
+        <%= avatar_for position.user %>
       <% end %>
     </div>
   </li>

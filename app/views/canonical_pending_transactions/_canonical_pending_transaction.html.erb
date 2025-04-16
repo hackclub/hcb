@@ -112,7 +112,7 @@
     <td>
       <div class="flex items-center justify-center <%= "tooltipped tooltipped--w" if author_name %>" aria-label="<%= author_name %>">
         <% if author.present? %>
-          <%= avatar_for author, 24, { class: "align-middle author" } %>
+          <%= avatar_for author, class: "align-middle author" %>
         <% elsif pt.local_hcb_code.fallback_avatar %>
           <%= image_tag(pt.local_hcb_code.fallback_avatar, loading: "lazy", width: 24, height: 24, class: "rounded-full shrink-none") %>
         <% end %>

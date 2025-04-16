@@ -3,7 +3,7 @@
     <% if defined?(icon) && defined?(color) %>
       <%= inline_icon icon, width: 24, class: "bg-#{color}", style: "height: 24px; color: white; border-radius: 999px; padding: 4px;" %>
     <% else %>
-      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, 24, default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png") %>
+      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png") %>
     <% end %>
     <div class="flex flex-col" style="transform: translateY(-3px); line-height: 1.6">
       <span>

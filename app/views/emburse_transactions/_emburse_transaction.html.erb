@@ -8,7 +8,7 @@
         class="transaction__icon tooltipped tooltipped--e"
         aria-label="Card transaction by <%= et.card.user.initial_name %>">
         <%= link_to et.card do %>
-          <%= avatar_for et.card.user, 24 %>
+          <%= avatar_for et.card.user %>
         <% end %>
       </td>
     <% else %>
