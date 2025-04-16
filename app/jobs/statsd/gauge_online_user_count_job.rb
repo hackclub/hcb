@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Statsd
+class Statsd
   class GaugeOnlineUserCountJob < ApplicationJob
     queue_as :default
 
