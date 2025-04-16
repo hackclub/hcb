@@ -9,6 +9,7 @@ class User
     end
 
   end
+
 end
 
 module Statsd
