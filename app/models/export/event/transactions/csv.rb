@@ -66,7 +66,7 @@ class Export
         end
 
         def header
-          ::CSV::Row.new(headers, ["date", "memo", "amount_cents", "tags", "comments"], true)
+          ::CSV::Row.new(headers, ["date", "memo", "amount_cents", "tags", "comments", "user_id", "user_name"], true)
         end
 
         def row(ct)
@@ -77,7 +77,9 @@ class Export
               ct.local_hcb_code.memo,
               public_only && ct.likely_account_verification_related? ? 0 : ct.amount_cents,
               ct.local_hcb_code.tags.filter { |tag| tag.event_id == event_id }.pluck(:label).join(", "),
-              public_only ? "" : ct.local_hcb_code.comments.not_admin_only.pluck(:content).join("\n\n")
+              public_only ? "" : ct.local_hcb_code.comments.not_admin_only.pluck(:content).join("\n\n"),
+              ct.local_hcb_code.author&.public_id || "",
+              ct.local_hcb_code.author&.name || "",
             ]
           )
         end

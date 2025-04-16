@@ -46,7 +46,7 @@ class StripeController < ActionController::Base
     auth_id = event[:data][:object][:id]
 
     # put the transaction on the pending ledger in almost realtime
-    ::StripeAuthorizationJob::CreateFromWebhook.perform_later(auth_id)
+    ::StripeAuthorization::CreateFromWebhookJob.perform_later(auth_id)
 
     head :ok
   end

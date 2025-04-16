@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto">
+<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0">
   <div>
     <% if current_user.hack_clubber? %>
       <a
@@ -41,6 +41,9 @@
 
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
+
+    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 border-none ml-0 pl-0">Your organizations</h2>
+
     <% if @events.any? %>
       <% if @show_event_reorder_tip %>
         <% if @events.size > 1 %>
@@ -69,30 +72,55 @@
           </li>
         <% end %>
       </ul>
-
-      <% if @events.hidden.any? %>
-        <details class="w-full text-left">
-          <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
-          <ul class="grid grid--medium-narrow text-left mt-0">
-            <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
-          </ul>
-        </details>
-      <% end %>
-
     <% end %>
+
+    <% if @events.hidden.any? %>
+      <details class="w-full text-left">
+        <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
+        <ul class="grid grid--medium-narrow text-left mt-0">
+          <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
+        </ul>
+      </details>
+    <% end %>
+
+    <% if @events.empty? %>
+      <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border flex flex-col w-full items-center justify-center">
+        <span>
+          You aren't a part of an organization yet, looking to start one?
+        </span>
+        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
+          <%= inline_icon "plus" %>
+          New organization
+        <% end %>
+      </div>
+    <% end %>
+
     <% if @invites.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none">Your pending invitations</h2>
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending invitations</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
         <% @invites.each do |invite| %>
           <%= link_to invite do %>
-            <li class="card">
-              <%= status_badge "info" %>
-              <strong><%= invite.event.name %></strong>
+            <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+              <span>
+                <%= status_badge "info" %>
+                <strong><%= invite.event.name %></strong>
+              </span>
             </li>
           <% end %>
         <% end %>
       </ul>
     <% end %>
+      <div class="flex flex-row w-full justify-between items-center">
+        <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">Explore HCB</h2>
+          <%= link_to "https://hackclub.com/fiscal-sponsorship/directory?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
+          View all organizations<%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+        <% end %>
+      </div>
+
+      <ul class="grid grid--medium-narrow left-align w-100 mt0">
+        <%= render partial: "events/event_card", collection: @featured_events, as: :event, locals: { show_category_badge: true, show_date_stat: true } %>
+      </ul>
+
     <% if current_user.organizer_position_contracts.sent.any? %>
       <h2 class="w-full text-left mt-4 pb-0 border-none">Your pending contracts</h2>
       <p class="text-left my0 w-100 muted">Contracts are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
@@ -113,13 +141,3 @@
   <% end %>
   <%= render partial: "static_pages/admin" %>
 </main>
-
-<div class="text-center">
-  <% if @events.empty? && @invites.empty? && !current_user.auditor? %>
-    <%= blankslate "No organizations associated with your account yet." %>
-    <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
-      <%= inline_icon "plus" %>
-      New organization
-    <% end %>
-  <% end %>
-</div>

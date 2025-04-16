@@ -452,6 +452,10 @@ class Event < ApplicationRecord
     balance
   end
 
+  def total_spent_cents
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
+  end
+
   def balance_v2_cents(start_date: nil, end_date: nil)
     sum = settled_balance_cents(start_date:, end_date:)
     sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
