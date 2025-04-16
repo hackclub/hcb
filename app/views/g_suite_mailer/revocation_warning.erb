@@ -8,7 +8,7 @@
   <% if @g_suite_revocation.because_of_invalid_dns? %>
     If you would like to keep your Google Workspace access, follow the steps <%= link_to "here on your Google Workspace page", event_g_suite_overview_url(event_id: @g_suite.event.slug) %> to configure your DNS for Google Workspace. Once your domain is verified, you'll get an email that confirms the revocation has been cancelled.
   <% elsif @g_suite_revocation.because_of_accounts_inactive? %>
-    If you would like to keep your Google Workspace access, please have at least one account on your domain log in to Google Workspace before <%= (@g_suite_revocation.created_at + 2.weeks).strftime("%B %d, %Y") %>. You'll get an email that confirms the revocation has been cancelled a day or two after we detect a login.
+    If you would like to keep your Google Workspace access, please sign into your <%= @g_suite.domain %> account before <%= (@g_suite_revocation.created_at + 2.weeks).strftime("%B %d, %Y") %>. You'll get an email that confirms the revocation has been cancelled a day or two after we detect a login.
   <% end %>
   Please don't hesitate to reply with any questions.
 </p>

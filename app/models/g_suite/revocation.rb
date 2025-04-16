@@ -62,7 +62,7 @@ class GSuite
     end
 
     after_destroy_commit do
-      unless destroyed_by_association?
+      unless destroyed_by_association.present?
         GSuiteMailer.with(g_suite_id: g_suite.id).revocation_canceled.deliver_later
       end
     end
