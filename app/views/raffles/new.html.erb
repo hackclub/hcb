@@ -1,7 +1,20 @@
-<%= form_with(url: raffle_path) do |f| %>
-  <% if params[:program] %>
-    <%= f.hidden_field :program, params[:program] %>
-  <% else params[:program] %>
-    <%= f.text_field :program %>
+<div class="mx-auto max-w-[500px]">
+  <h1>Join the Raffle</h1>
+  <ul>
+    <li><strong>Name:</strong> <%= current_user&.name %> </li>
+    <li><strong>Email:</strong> <%= current_user&.email %> </li>
+  </ul>
+  <%= form_with(url: raffles_path) do |f| %>
+    <% if params[:program] %>
+      <%= f.hidden_field :program, value: params[:program] %>
+    <% else
+         params[:program] %>
+      <%= f.label :program do %>
+        Program
+        <%= f.text_field :program %>
+      <% end %>
+    <% end %>
+
+    <%= f.submit "Join", class: "btn mt-4" %>
   <% end %>
-<% end %>
+</div>
