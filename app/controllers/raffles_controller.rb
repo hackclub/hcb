@@ -14,4 +14,5 @@ class RafflesController < ApplicationController
       redirect_to new_raffle_path
     end
   end
+
 end
