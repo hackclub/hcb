@@ -235,7 +235,7 @@ GEM
     diff-lcs (1.6.0)
     diffy (3.4.3)
     docile (1.4.0)
-    doorkeeper (5.8.1)
+    doorkeeper (5.8.2)
       railties (>= 5)
     dotenv (3.1.7)
     dotenv-rails (3.1.7)
@@ -662,7 +662,7 @@ GEM
       connection_pool
     regexp_parser (2.10.0)
     relaxed-rubocop (2.5)
-    reline (0.6.0)
+    reline (0.6.1)
       io-console (~> 0.5)
     representable (3.2.0)
       declarative (< 0.1.0)
