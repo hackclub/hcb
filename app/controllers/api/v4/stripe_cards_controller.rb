@@ -45,8 +45,8 @@ module Api
           :birthday
         )
 
-        return render json: { error: "bad_request" }, status: :bad_request if current_user.birthday.nil?
-        return render json: { error: "bad_request" }, status: :bad_request unless card[:shipping_address_country] == "US"
+        return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
+        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request unless card[:shipping_address_country] == "US"
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
