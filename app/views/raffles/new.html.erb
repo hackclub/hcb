@@ -1,0 +1,7 @@
+<%= form_with(url: raffle_path) do |f| %>
+  <% if params[:program] %>
+    <%= f.hidden_field :program, params[:program] %>
+  <% else params[:program] %>
+    <%= f.text_field :program %>
+  <% end %>
+<% end %>
