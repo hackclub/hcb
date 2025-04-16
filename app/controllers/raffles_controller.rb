@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RafflesController < ApplicationController
   skip_after_action :verify_authorized, only: [:new, :create]
 
