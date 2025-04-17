@@ -17,6 +17,15 @@ class StaticPagesController < ApplicationController
       @service = StaticPageService::Index.new(current_user:)
 
       @events = @service.events
+
+      featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
+
+      @featured_events = featured_event_ids.map do |id|
+        Event.find_by_public_id(id)
+      end.select do |event|
+        event&.is_public? && event.is_indexable?
+      end.sample(6)
+
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
 
@@ -49,6 +58,8 @@ class StaticPagesController < ApplicationController
     ]
     @event_name = signed_in? && current_user.events.first&.name || "Hack Pennsylvania"
     @event_slug = signed_in? && current_user.events.first&.slug || "hack-pennsylvania"
+
+    render layout: "docs"
   end
 
   def roles
@@ -114,9 +125,13 @@ class StaticPagesController < ApplicationController
         "Edit settings": :manager,
       }
     }
+
+    render layout: "docs"
   end
 
-  def security; end
+  def security
+    render layout: "docs"
+  end
 
   def suggested_pairings
     render partial: "static_pages/suggested_pairings", locals: {

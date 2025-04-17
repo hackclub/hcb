@@ -6,7 +6,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_user? && !record.event.demo_mode?
+    OrganizerPosition.role_at_least?(user, record.event, :member) && !record.event.demo_mode?
   end
 
   def view_image?
@@ -33,10 +33,6 @@ class CheckDepositPolicy < ApplicationPolicy
 
   def check_deposits_enabled?
     record.event.plan.check_deposits_enabled?
-  end
-
-  def admin_or_user?
-    admin? || user?
   end
 
   def auditor_or_user?

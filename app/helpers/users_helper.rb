@@ -20,7 +20,7 @@ module UsersHelper
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
       default_image
-    elsif Rails.env.production? && (user.is_a?(User) && user&.profile_picture&.attached?)
+    elsif Rails.env.production? && user.is_a?(User) && user&.profile_picture&.attached?
       Rails.application.routes.url_helpers.url_for(user.profile_picture.variant(
                                                      thumbnail: "#{size * 2}x#{size * 2}^",
                                                      gravity: "center",

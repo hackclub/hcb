@@ -28,6 +28,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CheckDeposit < ApplicationRecord
+  include Freezable
   has_paper_trail
 
   REJECTION_DESCRIPTIONS = {
@@ -53,6 +54,7 @@ class CheckDeposit < ApplicationRecord
   end
 
   after_update if: -> { increase_status_previously_changed?(to: "deposited") } do
+    canonical_pending_transaction.update(fronted: true)
     CheckDepositMailer.with(check_deposit: self).deposited.deliver_later
   end
 

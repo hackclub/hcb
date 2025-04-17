@@ -83,6 +83,10 @@
     </script>
   <% end %>
 
+  <% if (current_user.teenager? && current_user.only_card_grant_user?) %>
+    <%= render partial: "users/card_grant_conversion_callout" %>
+  <% end %>
+
   <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
     <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
       <span class="flex items-center w-100">

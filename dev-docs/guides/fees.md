@@ -69,13 +69,13 @@ You can use the `pending_fees_v2` scope to get a list of events that need to be 
 
 ### When do we charge them?
 
-`BankFeeJob::Weekly` runs every week. It just calls `BankFeeService::Weekly`.
+`BankFee::WeeklyJob` runs every week. It just calls `BankFeeService::Weekly`.
 
 It runs through every event with pending fees, and creates one `BankFee` record per event. So this is this event’s “fee” for this week. It then creates one `FeeRevenue` that is HCB’s revenue for that week.
 
 But these are just records in a database, they don’t appear on our bank statement. And that’s the number one rule of HCB, every transaction must appear on our bank statement. 
 
-That’s the job of `BankFeeJob::Nightly` / `BankFeeService::Nightly`. 
+That’s the job of `BankFee::NightlyJob` / `BankFeeService::Nightly`. 
 
 It loops through the pending `BankFee`s and `FeeRevenue`s and creates Column transfers for them. It 99% of cases the flow looks like this:
 

@@ -132,14 +132,14 @@
           <%= form.hidden_field :receiptable_type, value: pt.local_hcb_code.class %>
           <%= form.hidden_field :receiptable_id, value: pt.local_hcb_code.id %>
           <%= form.hidden_field :upload_method, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
-          <div class="<%= "btn-group btn-group--no-wrap" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
-            <%= form.label "file_#{pt.local_hcb_code.hashid}", class: "btn", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
+          <div class="<%= "btn-group btn-group--no-wrap w-100" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
+            <%= form.label "file_#{pt.local_hcb_code.hashid}", class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>
               <%= pt.local_hcb_code.receipts.any? ? "Upload another receipt" : "Upload receipt" %>
             <% end %>
 
             <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-              <%= link_to my_receipts_upload_path, class: "btn bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+              <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
                 <%= inline_icon "payment-docs" %>
                 <span>Select</span>
               <% end %>
@@ -154,7 +154,7 @@
       <% end %>
     </td>
 
-    <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
+    <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) && !local_assigns[:receipt_upload_button_disabled] %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
         <%= turbo_frame_tag "link_modal_#{pt.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id), turbo_frame: "_top" do %>

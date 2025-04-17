@@ -1,0 +1,45 @@
+<div class="bg-smoke dark:bg-darkless mb3">
+  <div class="container flex flex-row items-center">
+    <h1 class="border-none flex-grow">
+      <%= yield(:title) if content_for?(:title) %>
+    </h1>
+    <header class="header flex items-center justify-end">
+      <div style="height: 28px;">
+        <%= render partial: "application/theme_toggle" %>
+      </div>
+      <% if signed_in? %>
+        <a
+          href="https://changelog.hcb.hackclub.com"
+          target="_blank"
+          class="relative muted pointer tooltipped tooltipped--s"
+          aria-label="See what’s new with HCB"
+          id="changelog-icon"
+          style="height: 28px">
+          <%= inline_icon "rep", size: home_action_size %>
+        </a>
+      <% end %>
+
+      <% if signed_in? %>
+        <%= button_to logout_users_path,
+                      method: :delete,
+                      class: "muted tooltipped tooltipped--s",
+                      form_class: "h-[28px]",
+                      'aria-label': "Sign out" do %>
+          <%= inline_icon "door-leave", size: home_action_size %>
+        <% end %>
+      <% else %>
+        <%= link_to auth_users_path,
+                    class: "muted tooltipped tooltipped--s",
+                    form_class: "h-[28px]",
+                    'aria-label': "Sign in" do %>
+          <%= inline_icon "door-enter", size: home_action_size %>
+        <% end %>
+      <% end %>
+
+      <%= render partial: "logo" %>
+
+      <%= render "application/command_bar" %>
+
+    </header>
+  </div>
+</div>

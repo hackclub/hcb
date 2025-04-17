@@ -1,3 +1,5 @@
+<%# locals: (event:, show_category_badge: false, show_date_stat: false) %>
+
 <%= link_to event, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
   <li class="card card--hover flex flex-col justify-between h-full mx-auto <%= "card--background-image" if event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
     <div id="event-<%= event.id %>-title" class="flex mb-4">
@@ -17,17 +19,40 @@
     <% if event.demo_mode? %>
       <div class="badge bg-info ml0 mb2 w-fit">Playground Mode</div>
     <% end %>
-    <div class="h4 line-height-2 mb2 flex justify-between item-center">
+    <% colors = {
+         "Robotics Team"              => "blue",
+         "Hackathon"                  => "purple",
+         "Organized by Teenagers"     => "red",
+         "Organized by Hack Clubbers" => "green",
+         "Nonprofit"                  => "orange",
+       } %>
+    <% if local_assigns[:show_category_badge] %>
+      <div class="flex flex-row items-center gap-1 mb-2 m-0 mt-[-4px]">
+        <% tag = event.event_tags.last&.name || "Nonprofit" %>
+        <span class="badge m-0 bg-<%= colors[tag] %>">
+          <%= tag %>
+        </span>
+        <span class="bg-red bg-orange bg-yellow bg-green bg-blue bg-purple"></span>
+      </div>
+    <% end %>
+    <div class="h4 line-height-2 mb2 mt-1 flex justify-between item-center">
       <span class="flex items-center gap-1 whitespace-nowrap tabular-nums">
         <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
         <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
           —
         <% end %>
       </span>
-      <span class="flex items-center gap-1 tabular-nums">
-        <%= inline_icon "card", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
-        <%= event.stripe_cards.active.count %>
-      </span>
+      <% if local_assigns[:show_date_stat] %>
+        <span class="flex items-center gap-1 tabular-nums">
+          <%= inline_icon "event-add", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
+          <%= time_ago_in_words(event.created_at).sub("about ", "").sub("over ", "") %> ago
+        </span>
+      <% else %>
+        <span class="flex items-center gap-1 tabular-nums">
+          <%= inline_icon "card", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
+          <%= event.stripe_cards.active.count %>
+        </span>
+      <% end %>
     </div>
     <div class="avatar-row">
       <% if event.organizer_positions.size > 9 %>

@@ -47,6 +47,8 @@ Rails.application.routes.draw do
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
 
+  resources :raffles, only: [:new, :create]
+
   resources :receipts, only: [:create, :destroy] do
     collection do
       post "link"
@@ -614,6 +616,7 @@ Rails.application.routes.draw do
   post "api/v1/users/find", to: "api#user_find"
   post "api/v1/events/create_demo", to: "api#create_demo_event"
   get "api/current_user", to: "api#the_current_user"
+  get "api/flags", to: "api#flags"
 
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
@@ -651,6 +654,8 @@ Rails.application.routes.draw do
 
   match "/404", to: "errors#not_found", via: :all
   match "/500", to: "errors#internal_server_error", via: :all
+  match "/504", to: "errors#timeout", via: :all
+  get "timeout", to: "errors#timeout", via: :all
 
   Rack::Utils::HTTP_STATUS_CODES.keys.select { |c| c >= 400 }.each do |code|
     match "/#{code}", to: "errors#error", via: :all, code:
