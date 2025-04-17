@@ -78,6 +78,8 @@
               <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
             </div>
           </div>
+          <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to] %>
+
           <div class="actions flex">
             <button type="submit" class="btn w-full gap-2">
               Start using HCB
