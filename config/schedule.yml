@@ -142,7 +142,7 @@ send_admin_reminders_job:
 
 gauge_online_user_count_job:
   cron: "*/5 * * * *" # Every 5 minutes
-  class: "Statsd::GaugeOnlineUserCountJob"
+  class: "User::StatsdGaugeOnlineUserCountJob"
 
 user_subordinate_summary_job:
   cron: "0 12 * * mon" # noon UTC every Monday (7am eastern)
