@@ -47,6 +47,8 @@ Rails.application.routes.draw do
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
 
+  resources :raffles, only: [:new, :create]
+
   resources :receipts, only: [:create, :destroy] do
     collection do
       post "link"
