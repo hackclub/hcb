@@ -50,7 +50,7 @@ module Api
 
         new_card = ::StripeCardService::Create.new(
           current_user:,
-          current_session: {ip: request.remote_ip},
+          current_session: { ip: request.remote_ip },
           event_id: event.id,
           card_type: card[:card_type],
           stripe_shipping_name: card[:shipping_name],
@@ -67,10 +67,10 @@ module Api
 
         @stripe_card = new_card
         render :show
-        
-        rescue => e
-          notify_airbrake(e)
-          render json: { error: "internal_server_error" }, status: :internal_server_error
+
+      rescue => e
+        notify_airbrake(e)
+        render json: { error: "internal_server_error" }, status: :internal_server_error
       end
 
       def update

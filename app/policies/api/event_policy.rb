@@ -49,7 +49,7 @@ module Api
     def admin?
       user&.admin?
     end
-  
+
     def user?
       record.users.include?(user)
     end
@@ -57,5 +57,6 @@ module Api
     def is_not_demo_mode?
       !record.demo_mode?
     end
+
   end
 end
