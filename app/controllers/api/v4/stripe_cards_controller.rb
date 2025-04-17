@@ -64,6 +64,7 @@ module Api
         ).run
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?
+
         render :show
 
       rescue => e
