@@ -45,10 +45,10 @@ module Api
           :birthday
         )
 
-        return render json: { error: "bad_request" }, status: :bad_request if current_user.birthday.nil?
-        return render json: { error: "bad_request" }, status: :bad_request unless card[:shipping_address_country] == "US"
+        return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
+        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request unless card[:shipping_address_country] == "US"
 
-        new_card = ::StripeCardService::Create.new(
+        @stripe_card = ::StripeCardService::Create.new(
           current_user:,
           current_session: { ip: request.remote_ip },
           event_id: event.id,
@@ -63,9 +63,7 @@ module Api
           stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
         ).run
 
-        return render json: { error: "internal_server_error" }, status: :internal_server_error if new_card.nil?
-
-        @stripe_card = new_card
+        return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?
         render :show
 
       rescue => e
