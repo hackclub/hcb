@@ -86,8 +86,8 @@ module Reimbursement
 
     after_create_commit do
       ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
-      ReimbursementJob::OneDayReminder.set(wait: 1.day).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
-      ReimbursementJob::SevenDaysReminder.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
+      Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
+      Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
     end
 
     aasm timestamps: true do
@@ -102,7 +102,7 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts? &&
+            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? && expenses.any? && !missing_receipts? &&
               user.payout_method.class != User::PayoutMethod::PaypalTransfer && !event.financially_frozen?
           end
         end
@@ -126,7 +126,7 @@ module Reimbursement
           end
         end
         after do
-          # ReimbursementJob::Nightly.perform_later
+          # Reimbursement::NightlyJob.perform_later
         end
       end
 
@@ -305,6 +305,10 @@ module Reimbursement
 
     def exceeds_maximum_amount?
       maximum_amount_cents && amount_cents > maximum_amount_cents
+    end
+
+    def below_minimum_amount?
+      user.payout_method.is_a?(User::PayoutMethod::Wire) && amount_cents < event.minimum_wire_amount_cents
     end
 
     def from_public_reimbursement_form?

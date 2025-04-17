@@ -22,8 +22,6 @@ Once HCB is running locally, log in into your local instance using the email `ad
 
 To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces.
 
-After creating your codespace, run `bundle install` and `bin/rails db:migrate`. This will finish preparing HCB for development.
-
 You can then run `bin/dev` to launch HCB. If you can't open the link that is printed in the terminal, navigate to the `PORTS` tab in your terminal and set port `3000` to public and then back to private.
 
 ### Automated setup with Docker
@@ -176,9 +174,9 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 ## Credentials
 
-External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example).
+External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
 
-HCB relies on two services for the majority of it's financial features: Stripe and Column. We recommend creating a US Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+HCB relies on two services for the majority of it's financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
 We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
 
@@ -193,3 +191,7 @@ We've transitioned to using development keys and seed data in development, but h
 - Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` enviroment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
 
 - Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
+
+## Flipper
+
+[Flipper](https://github.com/flippercloud/flipper) is used to toggle feature flags on HCB. Flipper can be accessed at [localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a flag, press "Add Feature", paste in the name of a feature from [this list](https://hcb.hackclub.com/api/flags), and then press "Fully Enable".
