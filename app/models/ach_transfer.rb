@@ -173,7 +173,7 @@ class AchTransfer < ApplicationRecord
   before_validation { self.recipient_name = recipient_name.presence&.strip }
 
   before_validation do
-    self.company_name = event.short_name if company_name.blank?
+    self.company_name = "HCB (Hack Club)"
   end
 
   # Eagerly create HcbCode object
