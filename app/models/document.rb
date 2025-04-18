@@ -76,6 +76,18 @@ class Document < ApplicationRecord
       return nil unless file.previewable?
 
       file.preview(resize:)
+    when "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "application/msword"
+      if Rails.env.staging?
+        heroku_app_name = ENV["HEROKU_APP_NAME"]
+        production_host = "https://#{heroku_app_name}.herokuapp.com"
+      else
+        production_host = Rails.application.routes.default_url_options[:host]
+      end
+
+      file_url = Rails.application.routes.url_helpers.rails_blob_url(file, host: production_host, only_path: false)
+      preview = "https://drive.google.com/viewer?embedded=true&url=#{CGI.escape(file_url)}"
+      preview
     else
     end
   end
