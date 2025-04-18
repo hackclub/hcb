@@ -7,16 +7,13 @@ class DisbursementPolicy < ApplicationPolicy
 
   def new?
     user&.admin? || (
-      (record.destination_event.nil? || record.destination_event.users.include?(user)) &&
+      record.destination_event.nil? &&
       (record.source_event.nil?      || record.source_event.users.include?(user))
     )
   end
 
   def create?
-    user&.admin? || (
-      record.destination_event.users.include?(user) &&
-      Pundit.policy(user, record.source_event).create_transfer?
-    )
+    user&.admin? || Pundit.policy(user, record.source_event).create_transfer?
   end
 
   def transfer_confirmation_letter?
