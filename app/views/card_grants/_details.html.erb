@@ -1,11 +1,19 @@
 <%# locals: (card_grant:) %>
 
 <div class="card mt2">
-  <h2 class="border-none mx0 mt0 inline-flex items-center">
+  <h2 class="h2 mt0 border-none">
     <%= pop_icon_to "edit",
-        [:edit, card_grant.disbursement.local_hcb_code],
-        class: "mr2 align-middle", "aria-label": "Rename transaction" %>
-    Grant to &nbsp; <%= user_mention card_grant.user %>
+        edit_hcb_code_path(card_grant.disbursement.local_hcb_code),
+        class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
+        data: { turbo: false } %>
+    <span class="regular muted"> 
+      Grant to
+    </span>
+    <%= card_grant.user.initial_name %>
+    <span class="regular muted">
+      for
+    </span>
+    <span class="regular"><%= render_money card_grant.amount %></span>
   </h2>
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
@@ -25,12 +33,12 @@
   </section>
   <section class="details details--wide pt2 pb2 details--tall">
     <p>
-      <strong>Grant Status</strong>
+      <strong>Grant status</strong>
       <span><%= card_grant.state_text %></span>
     </p>
     <% if (stripe_card = card_grant.stripe_card).present? %>
       <p>
-        <strong>Card Status</strong>
+        <strong>Card status</strong>
         <span>
           <%= stripe_card.state_text %>
 

@@ -20,38 +20,22 @@
 <article class="card pb0 mt3 mb1">
 
   <h2 class="h2 mt0 mx0 border-none flex items-center justify-between" style="gap: 8px">
+    <%= pop_icon_to "edit",
+        edit_hcb_code_path(@hcb_code),
+        class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
+        data: { turbo: false } %>
     <span class="flex-auto">
-      <%= turbo_frame_tag @hcb_code, class: "flex items-center" do %>
-        <%= pop_icon_to "edit",
-            edit_hcb_code_path(@hcb_code),
-            class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
-            data: { turbo: true } %>
-
-        <span class="align-middle"
-              data-controller="navigation"
-              data-action="dblclick->navigation#navigate"
-              data-navigation-location-param="<%= edit_hcb_code_path(@hcb_code) %>"
-              data-navigation-frame-param="<%= dom_id(@hcb_code) %>">
-          <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
-            <span>
-              <%= render_money(renderable_amount_cents) %>
-            </span>
-            <span class="regular muted">
-              withdrawal from
-            </span>
-            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
-          <% else %>
-            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
-            <span class="regular muted"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
-            <%= render_money(renderable_amount_cents) %>
-          <% end %>
-        </span>
-
-        <%= render "hcb_codes/memo_stream", hcb_code: @hcb_code %>
-
-        <span style="flex-grow: 1;"></span>
-
-        <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: @hcb_code } %>
+      <%= turbo_frame_tag @hcb_code, class: "flex items-center flex-wrap" do %>
+        <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
+          <span class="regular muted">
+            Withdrawal from
+          </span>
+        <% else %>
+          <span class="regular muted">Purchase at </span>
+          &nbsp;<%= humanized_merchant_name @hcb_code.stripe_merchant %>&nbsp;
+          <span class="regular muted"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
+          <span class="regular"><%= render_money(renderable_amount_cents) %></span>
+        <% end %>
       <% end %>
     </span>
 
@@ -143,8 +127,12 @@
       <% end %>
       <% if @hcb_code.pt&.unsettled? %>
       <p>
-      <strong>Pending</strong>
-      <span><em>This transaction is still pending, the amount may be more or less than shown here.</em></span>
+        <strong>Transaction memo</strong>
+        <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
+      </p>
+      <p>
+        <strong>Pending</strong>
+        <span><em>This transaction is still pending, the amount may be more or less than shown here.</em></span>
       </p>
       <% end %>
       <div>
