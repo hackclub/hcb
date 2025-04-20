@@ -42,7 +42,7 @@
             <%= link_to(upsert_query_params(user: position.user.id), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.id == position.user.id}", data: { turbo_prefetch: "false" }) do %>
 
               <div class="avatar-grow line-height-0 mr1">
-                <%= avatar_for position.user, 18 %>
+                <%= avatar_for position.user, size: 18 %>
               </div>
               <%= position.user.name %>
             <% end %>

@@ -173,7 +173,7 @@ class AchTransfer < ApplicationRecord
   before_validation { self.recipient_name = recipient_name.presence&.strip }
 
   before_validation do
-    self.company_name = event.short_name if company_name.blank?
+    self.company_name = "HCB (Hack Club)" # https://hackclub.slack.com/archives/C065957QPC7/p1745005224201699
   end
 
   # Eagerly create HcbCode object
@@ -318,7 +318,7 @@ class AchTransfer < ApplicationRecord
   end
 
   def smart_memo
-    recipient_name.to_s.upcase
+    recipient_name.to_s
   end
 
   def canonical_transactions

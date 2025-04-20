@@ -83,7 +83,7 @@ module InvoicesHelper
   end
 end
 
-def invoice_payment_method_mention(invoice = @invoice, options = {})
+def invoice_payment_method_mention(invoice = @invoice, **options)
   return "–" unless invoice&.manually_marked_as_paid? || invoice&.payment_method_type
 
   if invoice.manually_marked_as_paid?

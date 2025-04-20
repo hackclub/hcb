@@ -50,7 +50,6 @@ module PayrollService
               account_number: payment.employee.user.payout_method.account_number,
               bank_name: (ColumnService.get("/institutions/#{payment.employee.user.payout_method.routing_number}")["full_name"] rescue "Bank Account"),
               creator: User.find_by(email: "bank@hackclub.com"),
-              company_name: payment.employee.event.name[0...16],
               company_entry_description: "SALARY",
             )
 

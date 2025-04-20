@@ -72,7 +72,7 @@
           </div>
           <%= form.label :profile_picture %>
           <div class="flex items-center mt1">
-            <%= avatar_for @user, 48, { class: "mr2" } %>
+            <%= avatar_for @user, size: 48, class: "mr2" %>
             <div class="field--fileupload">
               <%= form.label :profile_picture, "Choose File", class: "field--fileupload__label" %>
               <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
@@ -200,7 +200,7 @@
         <div class="field">
           <%= form.label :profile_picture %>
           <p class="flex items-center mt1">
-            <%= avatar_for @user, 48, { class: "mr2" } %>
+            <%= avatar_for @user, size: 48, class: "mr2" %>
             <span>
               <% if @user.profile_picture.attached? %>
               You're currently using an uploaded profile picture.<br>

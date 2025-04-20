@@ -4,7 +4,7 @@
       <div class="flex justify-between">
         <div class="relative">
           <%= inline_icon("admin-badge", size: 48, class: "avatar-container__admin-bolt stroke-white dark:stroke-darkless") if organizer_position.user.auditor? %>
-          <%= avatar_for organizer_position.user, 64 %>
+          <%= avatar_for organizer_position.user, size: 64 %>
         </div>
       </div>
       <div class="flex flex-col justify-center">
