@@ -54,7 +54,7 @@ class Export
       private
 
       def events
-         Event.all.not_demo_mode
+        Event.all.not_demo_mode
       end
 
       def header
