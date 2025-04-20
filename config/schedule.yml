@@ -95,6 +95,10 @@ receipt_report_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "ReceiptReport::WeeklyJob"
 
+delete_stale_playground_events:
+  cron: "0 0 * * MON" # run first day of each week
+  class: "DeleteStalePlaygroundEvents"
+
 receipt_report_monthly_job:
   cron: "0 0 3 * *" # run first day of each month
   class: "ReceiptReport::MonthlyJob"
