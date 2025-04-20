@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-cd /Users/ruienluo/Documents/hcb
-cp config/database.yml.bak config/database.yml
-rake db:drop db:create db:migrate db:seed

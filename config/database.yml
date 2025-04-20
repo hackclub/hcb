@@ -2,11 +2,8 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  pool: 5
-  username: bank
-  password: password1
-  host: localhost
-  url: postgres://bank:password1@localhost:5433/bank
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  url: <%= ENV['DATABASE_URL'] %>
 
 development:
   <<: *default
@@ -18,4 +15,4 @@ test:
 
 production:
   <<: *default
-  database: bank_production
+  database: hcb_production

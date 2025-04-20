@@ -2,7 +2,7 @@
 
 if [[ $* == *--with-stripe* ]]
 then
-    dotenv -f ".env.development" bundle exec foreman start -f Procfile.dev $@
+    bundle exec foreman start -f Procfile.dev $@
 else
-    dotenv -f ".env.development" bundle exec foreman start -f Procfile.dev -m all=1,stripe=0 $@
+    bundle exec foreman start -f Procfile.dev -m all=1,stripe=0 $@
 fi
