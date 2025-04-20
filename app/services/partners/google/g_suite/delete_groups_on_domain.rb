@@ -11,7 +11,7 @@ module Partners
         end
 
         def run
-          unless Rails.env.production?
+          if Rails.env.production?
             puts "☣️ In production, we would currently be updating the GSuite on Google Admin ☣️"
             return
           end
@@ -21,6 +21,11 @@ module Partners
               directory_client.delete_group(group.id)
             end
           rescue => e
+            puts "abcdef #{e}"
+            if e.message.include?("Domain not found")
+              return
+            end
+
             Rails.error.report(e)
             throw :abort
           end

@@ -48,14 +48,18 @@ class GSuitesController < ApplicationController
   def destroy
     authorize @g_suite
 
-    @g_suite = Partners::Google::GSuite::DeleteDomain.new(domain: @g_suite.domain).run
-
-    if @g_suite.destroy
-      flash[:success] = "Google Workspace was successfully destroyed."
-      redirect_to g_suites_url
-    else
-      render :index, status: :unprocessable_entity
+    ActiveRecord::Base.transaction do
+      Partners::Google::GSuite::DeleteDomain.new(domain: @g_suite.domain).run
+      if @g_suite.destroy
+        flash[:success] = "Google Workspace was successfully destroyed."
+        redirect_to google_workspaces_admin_index_path
+      else
+        raise ActiveRecord::Rollback, "Failed to destroy Google Workspace"
+      end
     end
+  rescue => e
+    flash[:error] = "An error occurred: #{e.message}"
+    redirect_to google_workspaces_admin_index_path
   end
 
   private

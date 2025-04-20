@@ -1,5 +1,18 @@
 <h1>Process Google Workspace #<%= @g_suite.id %></h1>
-<p><small>Current Status: <%= @g_suite.aasm_state %></small></p>
+<p>
+  <small>
+    Current Status:
+    <% if @g_suite.revocation.present? %>
+      <% if @g_suite.revocation.pending? %>
+        Pending Revocation (scheduled for <%= format_datetime @g_suite.revocation.scheduled_at %>)
+      <% else %>
+        Revoked at <%= format_datetime @g_suite.revocation.revoked_at %>
+      <% end %>
+    <% else %>
+      <%= @g_suite.aasm_state %>
+    <% end %>
+  </small>
+</p>
 
 <h3>Google Workspace Details</h3>
 <table class="table--autosize">
@@ -145,9 +158,8 @@
   <h3>Begin Revocation</h3>
   <p>This will begin the revocation of the organization's Google Workspace access and send an email to the users on the organization notifying them of the upcoming revocation. The users will have 2 weeks to wrap up their activities before access is revoked.</p>
   <%= form_with(model: [@g_suite, GSuite::Revocation.new], url: g_suite_revocations_path(@g_suite), method: :post, local: true) do |form| %>
-    <%= form.hidden_field :reason, value: "other" %>
-    <%= form.label :other_reason, "This Google Workspace is being revoked because..." %>
-    <%= form.text_field :other_reason placeholder: "you have broken the Google Workspace terms of service" %>
+    <%= form.label :other_reason, "This Google Workspace is being revoked because..." %><br/><br/>
+    <%= form.text_field :other_reason, placeholder: "you have broken the Google Workspace terms of service", style: "width: 50%; min-width:200px"%><br/><br/>
     <%= form.submit "Begin Revocation", data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
   <% end %>
 <% end %>

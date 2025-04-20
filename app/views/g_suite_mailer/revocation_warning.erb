@@ -1,7 +1,12 @@
 <p>Hi there,</p>
 
 <p>
-  This is a notice that your Google Workspace access for <strong><%= @g_suite.domain %></strong> will be revoked <strong>in two weeks on <%= @g_suite_revocation.scheduled_at.strftime("%B %d, %Y") %></strong> because <%= @reason %>. If you do not take action to remedy the issue, your data and accounts will be irrecoverably deleted and you will no longer be able to access Google Workspace services through HCB until you reapply and are approved for access from the waitlist.
+  This is a notice that your Google Workspace access for <strong><%= @g_suite.domain %></strong> will be revoked <strong>in two weeks on <%= @g_suite_revocation.scheduled_at.strftime("%B %d, %Y") %></strong> because <%= @reason %>.
+  <% unless @g_suite_revocation.because_of_other? %>
+    If you do not take action to remedy the issue, your data and accounts will be irrecoverably deleted and you will no longer be able to access Google Workspace services through HCB until you reapply and are approved for access from the waitlist.
+  <% else %>
+    On this date, you will no longer be able to access Google Workspace services through HCB and your data and accounts will be permanently deleted.
+  <% end %>
 </p>
 
 <p>

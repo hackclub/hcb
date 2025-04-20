@@ -10,7 +10,7 @@ class GSuitePolicy < ApplicationPolicy
   end
 
   def show?
-    user.auditor? || record.event.users.include?(user)
+    user.auditor? || (record.event.users.include?(user) && !record.revocation.present?)
   end
 
   def edit?
@@ -26,7 +26,7 @@ class GSuitePolicy < ApplicationPolicy
   end
 
   def status?
-    user.auditor? || record.event.users.include?(user)
+    user.auditor? || (record.event.users.include?(user) && !record.revocation.present?)
   end
 
 end

@@ -5,24 +5,25 @@ class GSuiteRevocationsController < ApplicationController
 
   def create
     @g_suite = GSuite.find(params[:g_suite_id])
-    @revocation = @g_suite.revocations.build(revocation_params)
+    @revocation = @g_suite.build_revocation(revocation_params.merge(reason: :other))
 
     authorize @revocation
 
     if @revocation.save
-      redirect_to @g_suite, notice: "Revocation was successfully created."
+      flash[:success] = "Revocation was successfully created."
     else
       flash[:error] = "Revocation could not be created."
-      redirect_to g_suites_url
     end
+    redirect_to google_workspace_process_admin_path(@g_suite)
   end
 
   def destroy
     authorize @g_suite_revocation
+    @g_suite = @g_suite_revocation.g_suite
 
     if @g_suite_revocation.destroy
-      flash[:success] = "Revocation was successfully destroyed."
-      redirect_to g_suites_url
+      flash[:success] = "Revocation was successfully canceled."
+      redirect_to google_workspace_process_admin_path(@g_suite)
     else
       render :index, status: :unprocessable_entity
     end
@@ -30,13 +31,12 @@ class GSuiteRevocationsController < ApplicationController
 
   private
 
-  # Use callbacks to share common setup or constraints between actions.
   def set_g_suite_revocation
-    @g_suite_revocation = GSuite::Revocation.find(params[:id])
+    @g_suite_revocation = GSuite.find(params[:id])&.revocation
   end
 
   def revocation_params
-    params.require(:g_suite_revocation).permit(:reason, :other_reason)
+    params.require(:g_suite_revocation).permit(:other_reason)
   end
 
 end

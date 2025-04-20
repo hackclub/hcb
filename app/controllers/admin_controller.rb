@@ -887,8 +887,8 @@ class AdminController < ApplicationController
     relation = relation.needs_ops_review if @needs_ops_review
     relation = relation.configuring if @configuring
     relation = relation.verification_error if @verification_error
-    relation = relation.joins(:revocation).where(revocation: {aasm_state: "pending"}) if @revocation_present
-    relation = relation.joins(:revocation).where(revocation: {aasm_state: "revoked"}) if @pending_deletion
+    relation = relation.joins(:revocation).where(revocation: { aasm_state: "pending" }) if @revocation_present
+    relation = relation.joins(:revocation).where(revocation: { aasm_state: "revoked" }) if @pending_deletion
 
     @count = relation.count
     @g_suites = relation.page(@page).per(@per).order("created_at desc")

@@ -44,7 +44,7 @@ class GSuite < ApplicationRecord
   belongs_to :event
   belongs_to :created_by, class_name: "User", optional: true
   has_many :accounts, class_name: "GSuiteAccount", dependent: :destroy
-  has_one :revocation, class_name: "GSuiteRevocation", dependent: :destroy
+  has_one :revocation, class_name: "GSuite::Revocation", dependent: :destroy
 
   aasm do
     state :creating, initial: true

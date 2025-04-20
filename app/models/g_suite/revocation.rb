@@ -30,7 +30,7 @@ class GSuite
 
     include AASM
 
-    enum :reason, prefix: :because_of
+    enum :reason, { invalid_dns: 0, accounts_inactive: 1, other: 2 }, prefix: :because_of
 
     belongs_to :g_suite
 

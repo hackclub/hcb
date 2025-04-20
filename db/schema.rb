@@ -1034,6 +1034,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.bigint "g_suite_id", null: false
     t.string "aasm_state"
     t.datetime "scheduled_at", null: false
+    t.datetime "deleted_at"
     t.boolean "one_week_notice_sent", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
