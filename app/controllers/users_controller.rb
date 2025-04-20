@@ -357,6 +357,7 @@ class UsersController < ApplicationController
       :sessions_reported,
       :session_duration_seconds,
       :receipt_report_option,
+      :donation_summary_option,
       :birthday,
       :seasonal_themes_enabled,
       :payout_method_type,

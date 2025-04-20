@@ -19,7 +19,7 @@ class EventMailer < ApplicationMailer
   private
 
   def set_emails
-    @emails = @event.users.map(&:email_address_with_name)
+    @emails = @event.users.select{ |user| user.donation_summary_option == "on" }.map(&:email_address_with_name)
     @emails << @event.config.contact_email if @event.config.contact_email.present?
   end
 
