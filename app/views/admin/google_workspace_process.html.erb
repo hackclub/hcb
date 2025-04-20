@@ -158,8 +158,8 @@
   <h3>Begin Revocation</h3>
   <p>This will begin the revocation of the organization's Google Workspace access and send an email to the users on the organization notifying them of the upcoming revocation. The users will have 2 weeks to wrap up their activities before access is revoked.</p>
   <%= form_with(model: [@g_suite, GSuite::Revocation.new], url: g_suite_revocations_path(@g_suite), method: :post, local: true) do |form| %>
-    <%= form.label :other_reason, "This Google Workspace is being revoked because..." %><br/><br/>
-    <%= form.text_field :other_reason, placeholder: "you have broken the Google Workspace terms of service", style: "width: 50%; min-width:200px"%><br/><br/>
+    <%= form.label :other_reason, "This Google Workspace is being revoked because..." %><br><br>
+    <%= form.text_field :other_reason, placeholder: "you have broken the Google Workspace terms of service", style: "width: 50%; min-width:200px" %><br><br>
     <%= form.submit "Begin Revocation", data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
   <% end %>
 <% end %>
