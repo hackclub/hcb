@@ -130,7 +130,7 @@ class GSuite < ApplicationRecord
 
   def accounts_inactive?
     begin
-      res = Partners::Google::GSuite::Shared::DirectoryClient.directory_client.list_users(customer: Partners::Google::GSuite::Shared::DirectoryClient.gsuite_customer_id, domain:, max_results: 500)
+      res = Partners::Google::GSuite::Users.new(domain:).run
       res_count = res.users.count
       inactive_accounts = []
       res.users.each do |user|
@@ -142,7 +142,7 @@ class GSuite < ApplicationRecord
           res_count -= 1
           next
         end
-        user_last_login = Partners::Google::GSuite::Shared::DirectoryClient.directory_client.get_user(user.id).last_login_time
+        user_last_login = Partners::Google::GSuite::User.new(email: user.primary_email).run.last_login_time
         if user_last_login.nil? || user_last_login < 6.months.ago
           inactive_accounts << user
         end
@@ -150,6 +150,11 @@ class GSuite < ApplicationRecord
 
       inactive_accounts.count == res_count
     rescue => e
+      puts "Error in accounts_inactive? #{e}"
+      if e.message.include?("Domain not found")
+        return true
+      end
+
       Rails.error.report(e)
       throw :abort
     end
