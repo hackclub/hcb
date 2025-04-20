@@ -11,7 +11,7 @@ module Partners
         end
 
         def run
-          if Rails.env.production?
+          unless Rails.env.production?
             puts "☣️ In production, we would currently be updating the GSuite on Google Admin ☣️"
             return
           end
