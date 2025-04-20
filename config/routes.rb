@@ -605,6 +605,8 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :invoices, only: [:show, :create]
+
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
         match "*path" => "application#not_found", via: [:get, :post]
