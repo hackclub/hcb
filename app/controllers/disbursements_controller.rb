@@ -50,7 +50,7 @@ class DisbursementsController < ApplicationController
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end
-    @allowed_destination_events = if @source_event.plan.id == 4
+    @allowed_destination_events = if @source_event.plan.unrestricted_disbursements_allowed?
       Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
     else
       current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)

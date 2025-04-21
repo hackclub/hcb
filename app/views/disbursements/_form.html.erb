@@ -16,7 +16,7 @@
 
   <div class="field event-select-target">
     <%= form.label :event_id, "To" %>
-    <% if @source_event.plan.id == 4 %>
+    <% if @source_event.plan.unrestricted_disbursements_allowed? %>
       <%= form.text_field :event_id, placeholder: "hack_the_seas", required: true, disabled: %>
     <% else %>
       <%= form.select(:event_id,
