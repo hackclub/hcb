@@ -4,6 +4,17 @@
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div class="field event-select-target">
+    <%= form.label :source_event_id, "From" %>
+    <%= form.collection_select(:source_event_id,
+                                @allowed_source_events,
+                                :id,
+                                current_user.admin? ? :admin_dropdown_description : :disbursement_dropdown_description,
+                                { prompt: "Select one…", disabled: ->(e) { e != @source_event && !policy(e).create_transfer? || (!current_user.admin? && e.balance_available <= 0) } },
+                                required: true,
+                                disabled: ) %>
+  </div>
+
+  <div class="field event-select-target">
     <%= form.label :event_id, "To" %>
     <% if @source_event.plan.id == 4 %>
       <%= form.text_field :event_id, placeholder: "hack_the_seas", required: true, disabled: %>
