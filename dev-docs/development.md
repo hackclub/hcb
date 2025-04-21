@@ -195,3 +195,16 @@ We've transitioned to using development keys and seed data in development, but h
 ## Flipper
 
 [Flipper](https://github.com/flippercloud/flipper) is used to toggle feature flags on HCB. Flipper can be accessed at [localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a flag, press "Add Feature", paste in the name of a feature from [this list](https://hcb.hackclub.com/api/flags), and then press "Fully Enable".
+
+
+## Getting an OAuth token
+
+To begin, open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "https://hackclub.com/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://127.0.0.1/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=https://hackclub.com/&response_type=code&scope=read write`. Press the button to approve access on the page, then copy the code that appears in the address bar after being redirected. Now, send a POST request to `http://127.0.0.1/api/v4/oauth/token` with a content type of `application/x-www-form-urlencoded` (you can use a tool like Postman to do this!). The request body fields are as follows:
+```
+grant_type=authorization_code
+code=<CODE>
+client_id=<UID>
+client_secret=<SECRET>
+redirect_uri=https://hackclub.com/
+```
+This request will return your OAuth access token. It can then be passed into future API requests in the Authorization header. Ex. `Authorization: Bearer <ACCESS TOKEN>`
