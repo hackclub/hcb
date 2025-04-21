@@ -52,6 +52,7 @@ class IncreaseCheck < ApplicationRecord
 
   include AASM
   include Payoutable
+  include Freezable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -63,7 +64,6 @@ class IncreaseCheck < ApplicationRecord
   belongs_to :user, optional: true
 
   has_one :canonical_pending_transaction
-  has_one :grant, required: false
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
 
@@ -83,8 +83,8 @@ class IncreaseCheck < ApplicationRecord
     event :mark_approved do
       after do
         if self.send_email_notification
-          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: 30.days).perform_later(self)
-          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: (180 - 30).days).perform_later(self)
+          IncreaseCheck::RemindUndepositedRecipientJob.set(wait: 30.days).perform_later(self)
+          IncreaseCheck::RemindUndepositedRecipientJob.set(wait: (180 - 30).days).perform_later(self)
         end
 
         canonical_pending_transaction.update(fronted: true)
@@ -222,10 +222,6 @@ class IncreaseCheck < ApplicationRecord
     send_column!
 
     mark_approved!
-
-    if grant.present?
-      grant.mark_fulfilled!
-    end
   end
 
   private

@@ -43,6 +43,14 @@ class Event
         true
       end
 
+      def mileage_rate(date)
+        return 67 if date < Date.new(2025, 1, 1)
+        return 70 if date < Date.new(2025, 3, 27)
+        return 14 if date < Date.new(2025, 4, 11) # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743055747682219
+
+        35 # custom rate for HQ events
+      end
+
     end
 
   end

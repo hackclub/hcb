@@ -1,6 +1,6 @@
 <% content_for(:nav) do %>
   <h1 class="flex items-center xs-hide border-none h1 mt0 mb0 pt2">
-    <%= avatar_for current_user, 36, { class: "mr1" } %>
+    <%= avatar_for current_user, size: 36, class: "mr1" %>
     <%= current_user.initial_name %>
   </h1>
 
@@ -81,6 +81,10 @@
         document.getElementById('bank-wrapped-dialog').style.display = 'block';
       }
     </script>
+  <% end %>
+
+  <% if (current_user.teenager? && current_user.only_card_grant_user?) %>
+    <%= render partial: "users/card_grant_conversion_callout" %>
   <% end %>
 
   <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>

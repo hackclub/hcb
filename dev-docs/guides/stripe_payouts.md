@@ -37,7 +37,7 @@ For invoices, this takes starts in the `InvoiceService::OpenToPaid` service. Thi
 
 The equivalent logic for donations is handled in `Donation#set_fields_from_stripe_payment_intent!`. Donations at this time are marked as  `in_transit`. 
 
-Next, we will create payouts from our Stripe balance. This payouts are a bank transfer from Stripe to Column. For both donations and invoices, this starts in `PayoutService::Nightly`. This service queues `PayoutJob::Donation` and `PayoutJob::Invoice` which each call `PayoutService::Donation::Create` and `PayoutService::Invoice::Create` respectively.
+Next, we will create payouts from our Stripe balance. This payouts are a bank transfer from Stripe to Column. For both donations and invoices, this starts in `PayoutService::Nightly`. This service queues `Payout::DonationJob` and `Payout::InvoiceJob` which each call `PayoutService::Donation::Create` and `PayoutService::Invoice::Create` respectively.
 
 These create `DonationPayout`s and `InvoicePayout`s. Both models have a `before_create` callback called `create_stripe_payout` that creates the payout from Stripe’s end.
 

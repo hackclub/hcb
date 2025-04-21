@@ -17,6 +17,7 @@ class LoginsController < ApplicationController
 
   # view to log in
   def new
+    @return_to = url_from(params[:return_to])
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
@@ -144,7 +145,7 @@ class LoginsController < ApplicationController
     if @login.complete? && @login.user_session.nil?
       @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
       if @user.full_name.blank? || @user.phone_number.blank?
-        redirect_to edit_user_path(@user.slug)
+        redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       else
         redirect_to(params[:return_to] || root_path)
       end

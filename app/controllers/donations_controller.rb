@@ -51,7 +51,7 @@ class DonationsController < ApplicationController
       return not_found
     end
 
-    tax_deductible = params[:goods].nil? ? true : params[:goods] == "0"
+    tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
     @donation = Donation.new(
       name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
@@ -107,7 +107,7 @@ class DonationsController < ApplicationController
     d_params[:ip_address] = request.remote_ip
     d_params[:user_agent] = request.user_agent
 
-    tax_deductible = d_params[:goods].nil? ? true : d_params[:goods] == "0"
+    tax_deductible = d_params[:goods].nil? || d_params[:goods] == "0"
 
     @donation = Donation.new(d_params.except(:goods).merge({ tax_deductible: }))
     @donation.event = @event
@@ -171,7 +171,7 @@ class DonationsController < ApplicationController
       ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
     else
-      DonationJob::Refund.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents, current_user)
+      Donation::RefundJob.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents, current_user)
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
     end
   end

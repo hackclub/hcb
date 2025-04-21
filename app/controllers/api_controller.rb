@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ApiController < ApplicationController
-  before_action :check_token, except: [:the_current_user]
+  before_action :check_token, except: [:the_current_user, :flags]
   skip_before_action :verify_authenticity_token # do not use CSRF token checking for API routes
   skip_after_action :verify_authorized # do not force pundit
   skip_before_action :signed_in_user
@@ -23,7 +23,7 @@ class ApiController < ApplicationController
       email: params[:email],
       country: params[:country],
       postal_code: ValidatesZipcode.valid?(params[:postal_code], params[:country]) ? params[:postal_code] : nil,
-      is_public: params[:transparent].nil? ? true : params[:transparent],
+      is_public: params[:transparent].nil? || params[:transparent],
     ).run
 
     render json: {
@@ -67,6 +67,10 @@ class ApiController < ApplicationController
       recent_transactions:,
       timezone: user.user_sessions.where.not(timezone: nil).order(created_at: :desc).first&.timezone,
     }
+  end
+
+  def flags
+    render json: Flipper.features.collect { |f| f.name }
   end
 
   private

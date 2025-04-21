@@ -35,7 +35,7 @@ module StripeAuthorizationService
         if remote_stripe_transaction.approved
           CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_approved.deliver_later
           if user.sms_charge_notifications_enabled?
-            CanonicalPendingTransactionJob::SendTwilioReceiptMessage.perform_later(cpt_id: cpt.id, user_id: user.id)
+            CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_later(cpt_id: cpt.id, user_id: user.id)
           end
 
           SuggestTagsJob.perform_later(event_id: cpt.event.id, hcb_code_id: cpt.local_hcb_code.id)
@@ -46,7 +46,7 @@ module StripeAuthorizationService
         else
           unless cpt&.stripe_card&.frozen?
             CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_declined.deliver_later
-            CanonicalPendingTransactionJob::SendTwilioDeclinedMessage.perform_later(cpt_id: cpt.id, user_id: user.id)
+            CanonicalPendingTransaction::SendTwilioDeclinedMessageJob.perform_later(cpt_id: cpt.id, user_id: user.id)
           end
         end
       end

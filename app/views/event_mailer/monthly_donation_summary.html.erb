@@ -1,0 +1,24 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  Here's your monthly donation summary for <%= @event.name %>:
+</p>
+
+<ul>
+  <% @donations.each do |donation| %>
+    <li>
+      <%= donation.name(show_anonymous: true) %> <%= "anonymously" if donation.anonymous %> donated <%= render_money donation.amount %>
+      <% if donation.recurring? %>
+        <% recurring_times = (donation.recurring_donation.donations.find_index(donation) + 1) %>
+        - this is their <%= "#{recurring_times}#{recurring_times.ordinal}" %> monthly donation
+      <% end %>
+    </li>
+  <% end %>
+</ul>
+
+<p>In total, you raised <strong><%= render_money @total %></strong> last month - great job!</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

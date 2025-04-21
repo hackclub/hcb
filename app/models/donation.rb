@@ -63,6 +63,7 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include Freezable
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -268,7 +269,7 @@ class Donation < ApplicationRecord
   end
 
   def smart_memo
-    anonymous? ? "ANONYMOUS DONOR" : name.to_s.upcase
+    anonymous? ? "Anonymous Donor" : name.to_s
   end
 
   def hcb_code

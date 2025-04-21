@@ -23,7 +23,6 @@ class HcbCode
         return increase_check_memo if increase_check?
         return check_deposit_memo if check_deposit?
         return fee_revenue_memo if fee_revenue?
-        return grant_memo if grant?
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
         return stripe_card_memo if stripe_card? && stripe_card_memo
 
@@ -35,50 +34,50 @@ class HcbCode
       end
 
       def card_grant_memo
-        "Grant to #{disbursement.card_grant.user.name}"
+        "Grant to #{disbursement.card_grant.user.name}".strip
       end
 
       def disbursement_memo(event: nil)
         return disbursement.special_appearance_memo if disbursement.special_appearance_memo
 
         if event == disbursement.source_event
-          "Transfer to #{disbursement.destination_event.name}".strip.upcase
+          "Transfer to #{disbursement.destination_event.name}".strip
         elsif event == disbursement.destination_event
-          "Transfer from #{disbursement.source_event.name}".strip.upcase
+          "Transfer from #{disbursement.source_event.name}".strip
         else
-          "Transfer from #{disbursement.source_event.name} to #{disbursement.destination_event.name}".strip.upcase
+          "Transfer from #{disbursement.source_event.name} to #{disbursement.destination_event.name}".strip
         end
 
       end
 
       def invoice_memo
-        "Invoice to #{invoice.smart_memo}"
+        "Invoice to #{invoice.smart_memo}".strip
       end
 
       def donation_memo
-        "Donation from #{donation.smart_memo}#{donation.refunded? ? " (REFUNDED)" : ""}"
+        "Donation from #{donation.smart_memo}#{donation.refunded? ? " (refunded)" : ""}".strip
       end
 
       def bank_fee_memo
         if bank_fee.amount_cents.negative? && bank_fee.fee_revenue.present?
-          return "FISCAL SPONSORSHIP FOR #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} TO #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
+          return "Fiscal sponsorship for #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} to #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
         elsif bank_fee.amount_cents.negative?
-          return "FISCAL SPONSORSHIP"
+          return "Fiscal sponsorship"
         else
-          return "FISCAL SPONSORSHIP FEE CREDIT"
+          return "Fiscal sponsorship fee credit"
         end
       end
 
       def ach_transfer_memo
-        "ACH to #{ach_transfer.smart_memo}".strip.upcase
+        "ACH to #{ach_transfer.smart_memo}".strip
       end
 
       def check_memo
-        "Check to #{check.smart_memo}"
+        "Check to #{check.smart_memo}".strip
       end
 
       def increase_check_memo
-        "Check to #{increase_check.recipient_name}".upcase
+        "Check to #{increase_check.recipient_name}".strip
       end
 
       def check_deposit_memo
@@ -87,10 +86,6 @@ class HcbCode
 
       def fee_revenue_memo
         "Fee revenue from #{fee_revenue.start.strftime("%b %e")} to #{fee_revenue.end.strftime("%b %e")}"
-      end
-
-      def grant_memo
-        "Grant to #{canonical_pending_transactions.first.grant.recipient_organization}"
       end
 
       def outgoing_fee_reimbursement_memo
