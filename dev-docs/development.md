@@ -199,7 +199,7 @@ We've transitioned to using development keys and seed data in development, but h
 
 ## Getting an OAuth token
 
-To begin, open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "https://hackclub.com/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://127.0.0.1/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=https://hackclub.com/&response_type=code&scope=read write`. Press the button to approve access on the page, then copy the code that appears in the address bar after being redirected. Now, send a POST request to `http://127.0.0.1/api/v4/oauth/token` with a content type of `application/x-www-form-urlencoded` (you can use a tool like Postman to do this!). The request body fields are as follows:
+To begin, open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "https://hackclub.com/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://localhost:3000/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=https://hackclub.com/&response_type=code&scope=read write`. Press the button to approve access on the page, then copy the code that appears in the address bar after being redirected. Now, send a POST request to `http://localhost:3000/api/v4/oauth/token` with a content type of `application/x-www-form-urlencoded` (you can use a tool like Postman to do this!). The request body fields are as follows:
 ```
 grant_type=authorization_code
 code=<CODE>
