@@ -1,11 +1,8 @@
-<% disabled = !policy(@event).create_transfer? %>
-
-<% title "Send a grant" %>
-<%= render "events/nav", selected: :transfers %>
 <% page_sm %>
+<%= render "events/nav", selected: :transfers %>
 
 <%= turbo_frame_tag :transfer_form do %>
-  <h1>Send a grant</h1>
+  <%= modal_header "Send a grant" %>
 
   <% if @event.card_grant_setting.present? %>
     <p class="muted">See your <%= link_to "card grant settings", edit_event_path(@event, anchor: "card-grants"), data: { turbo_frame: "_top" } %>.</p>

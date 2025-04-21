@@ -29,7 +29,7 @@
             <small>(between HCB accounts)</small>
           <% end %>
           <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
-            <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+            <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
               <%= inline_icon "card", size: 28 %>
               <strong>Grant</strong>
               <small>A grant sent through an HCB card.</small>
