@@ -4,19 +4,26 @@
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div class="field event-select-target">
-    <%= form.label :source_event_id, "From" %>
-    <%= form.collection_select(:source_event_id,
-                                @allowed_source_events,
-                                :id,
-                                current_user.admin? ? :admin_dropdown_description : :disbursement_dropdown_description,
-                                { prompt: "Select one…", disabled: ->(e) { e != @source_event && !policy(e).create_transfer? || (!current_user.admin? && e.balance_available <= 0) } },
-                                required: true,
-                                disabled: ) %>
-  </div>
-
-  <div class="field event-select-target">
     <%= form.label :event_id, "To" %>
-    <%= form.text_field :event_id, placeholder: "hq", required: true, disabled: %>
+    <% if @source_event.plan.id == 4 %>
+      <%= form.text_field :event_id, placeholder: "hack_the_seas", required: true, disabled: %>
+    <% else %>
+      <%= form.select(:event_id,
+                    @allowed_destination_events.map do |event|
+                      [
+                        current_user.admin? ? event.admin_dropdown_description : event.disbursement_dropdown_description,
+                        event.id,
+                        { "data-fee" => event.revenue_fee.to_s },
+                      ]
+                    end,
+                    { prompt: "Select one…" },
+                    required: true,
+                    disabled:,
+                    "x-on:input" => "fee = $event.target.options[$event.target.selectedIndex].dataset.fee") %>
+      <% unless admin_signed_in? %>
+        <span class="muted">You can transfer to any organization you're a part of.</span>
+      <% end %>
+    <% end %>
   </div>
 
   <% if admin_signed_in? %>
