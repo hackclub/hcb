@@ -1,5 +1,6 @@
 <% page_sm %>
 <%= render "events/nav", selected: :transfers %>
+<% disabled = !policy(@card_grant).create? %>
 
 <%= turbo_frame_tag :transfer_form do %>
   <%= modal_header "Send a grant" %>
