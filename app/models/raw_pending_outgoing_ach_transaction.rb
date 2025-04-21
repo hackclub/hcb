@@ -22,7 +22,7 @@ class RawPendingOutgoingAchTransaction < ApplicationRecord
   end
 
   def memo
-    "ACH to #{raw_name}".strip
+    "ACH transfer to #{raw_name}".strip
   end
 
   def likely_event_id

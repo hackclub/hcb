@@ -74,7 +74,7 @@ class Wire < ApplicationRecord
     create_canonical_pending_transaction!(
       event:,
       amount_cents: -1 * usd_amount_cents,
-      memo: "Wire to #{recipient_name}".strip,
+      memo: "Wire transfer to #{recipient_name}".strip,
       date: created_at
     )
   end

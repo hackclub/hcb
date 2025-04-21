@@ -118,7 +118,7 @@ class CanonicalTransactionGrouped
   end
 
   def ach_transfer_memo
-    smartish_custom_memo || "ACH to #{ach_transfer.smart_memo}".strip
+    smartish_custom_memo || "ACH transfer to #{ach_transfer.smart_memo}".strip
   end
 
   def check

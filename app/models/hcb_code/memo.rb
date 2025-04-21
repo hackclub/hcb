@@ -69,7 +69,7 @@ class HcbCode
       end
 
       def ach_transfer_memo
-        "ACH to #{ach_transfer.smart_memo}".strip
+        "ACH transfer to #{ach_transfer.smart_memo}".strip
       end
 
       def check_memo
