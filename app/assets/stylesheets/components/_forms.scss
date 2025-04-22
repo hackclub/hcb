@@ -454,3 +454,37 @@ input:where([data-behavior='otp_input']) {
   border: none !important;
   color: inherit !important;
 }
+
+.button-variant-select {
+  position: absolute;
+  top: 0px;
+  padding-left: 2.5rem;
+  width: calc(2.5rem + 100%);
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid #000;
+}
+
+.button-variant-select:after {
+  width: 0; 
+  height: 0; 
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #f00;
+  position: absolute;
+  top: 40%;
+  right: 5px;
+  content: "";
+  z-index: 98;
+}
+
+.select-bg-success {
+  background-color: $green !important;
+}
+
+.button-variant-btn {
+  border-radius: 0.75rem 0px 0px 0.75rem;
+  border-right-color: $dark;
+  border-right-width: 2px;
+  border-right-style: solid;
+}
