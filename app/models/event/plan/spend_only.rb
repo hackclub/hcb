@@ -35,10 +35,6 @@ class Event
         %w[cards transfers promotions google_workspace documentation reimbursements]
       end
 
-      def unrestricted_disbursements_allowed?
-        false
-      end
-
     end
 
   end

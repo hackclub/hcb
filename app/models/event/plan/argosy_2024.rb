@@ -31,10 +31,6 @@ class Event
         super - %w[promotions google_workspace]
       end
 
-      def unrestricted_disbursements_allowed?
-        false
-      end
-
     end
 
   end

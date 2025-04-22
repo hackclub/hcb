@@ -35,10 +35,6 @@ class Event
         "high school hackathon (2024 fee waiver)"
       end
 
-      def unrestricted_disbursements_allowed?
-        false
-      end
-
     end
 
   end

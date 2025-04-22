@@ -31,10 +31,6 @@ class Event
         true
       end
 
-      def unrestricted_disbursements_allowed?
-        false
-      end
-
     end
 
   end
