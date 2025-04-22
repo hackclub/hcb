@@ -571,6 +571,7 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
+          resources :invoices, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:create, :index]
             resources :comments, only: [:index]
