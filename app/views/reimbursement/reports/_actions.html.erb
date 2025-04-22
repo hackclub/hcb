@@ -14,12 +14,12 @@
       <div class="flex justify-start">
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
-            <div class="relative">
-              <button class="btn bg-success add-expense-dropzone z-10 button-variant-btn" data-file-drop-target="dropzone" data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave">
+            <div class="relative" data-controller="dropdown-button">
+              <button class="btn bg-success add-expense-dropzone z-10 button-variant-btn" data-template="Add <%= report.expenses.count > 0 ? "another" : "an" %> <%= %> [VALUE] expense" data-dropdown-button-target="button" data-file-drop-target="dropzone" data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave">
                   <%= inline_icon "plus" %>
-                  Add <%= report.expenses.count > 0 ? "another" : "an" %> <%= %> expense
+                  Add <%= report.expenses.count > 0 ? "another" : "an" %> <%= %> standard expense
               </button>
-              <%= form.select :type, ["Standard", "Mileage"], {}, { class: "button-variant-select select-bg-success" } %>
+              <%= form.select :type, [["Standard", "standard"], ["Mileage", "mileage"]], {}, { class: "button-variant-select select-bg-success", data: { action: "change->dropdown-button#change", "dropdown-button-target": "select" } } %>
               <%= form.file_field :file,
                   multiple: true,
                   include_hidden: false,
