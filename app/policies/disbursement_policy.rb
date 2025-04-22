@@ -8,7 +8,7 @@ class DisbursementPolicy < ApplicationPolicy
   def new?
     user&.admin? || (
       record.destination_event.nil? &&
-      (record.source_event.nil?      || record.source_event.users.include?(user))
+      (record.source_event.nil?      || record.source_event.users.include?(user) || record.source_event.unrestricted_disbursements_allowed?)
     )
   end
 
