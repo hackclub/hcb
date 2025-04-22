@@ -46,7 +46,8 @@
           <%= (form.hidden_field :popover, value: local_assigns[:popover]) %>
           <%= (form.hidden_field :show_link, value: true) if defined?(inline_linking) %>
           <%= form.hidden_field :upload_method, value: upload_method, data: { "file-drop-target" => "uploadMethod" } %>
-          <%= (form.hidden_field :s, value: secret) if defined?(secret) %>
+          <%= (form.hidden_field :show_receipt_button, value: local_assigns[:show_receipt_button]) %>
+          <%= (form.hidden_field :show_author_img, value: local_assigns[:show_author_img]) %>
 
           <%= form.file_field :file,
                               multiple: true,
