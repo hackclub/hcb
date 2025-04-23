@@ -86,6 +86,7 @@ module Api
             if @stripe_card.stripe_status == "active"
               return render json: { error: "Card is already active" }, status: :unprocessable_entity
             end
+
             @stripe_card.defrost!
             return render json: { success: "Card activated!" }
           end
