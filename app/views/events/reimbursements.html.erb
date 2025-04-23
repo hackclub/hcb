@@ -24,7 +24,7 @@
         data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
   <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
       <%= inline_icon "plus" %> New
-  <% end %>
+  <% end if organizer_signed_in?(as: :member) %>
 </h1>
 
 <%= render partial: "reimbursement/reports/create_form" %>

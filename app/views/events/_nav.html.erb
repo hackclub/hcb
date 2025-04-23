@@ -115,7 +115,7 @@
       tooltip: "Edit organization settings",
       icon: "settings",
       disabled: !policy(@event).edit?,
-      selected: local_assigns[:selected] == :settings if organizer_signed_in? %>
+      selected: local_assigns[:selected] == :settings if organizer_signed_in?(as: :member) %>
   </nav>
   <nav class="dock dock--mobile">
     <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !@event.demo_mode? %>
@@ -169,7 +169,7 @@
         <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
         <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
         <%= link_to "Documents", event_documents_path(event_id: @event.slug) if policy(@event).documentation? %>
-        <%= link_to "Settings", edit_event_path(@event) %>
+        <%= link_to "Settings", edit_event_path(@event) if organizer_signed_in?(as: :member) %>
       </div>
     </button>
   </nav>
