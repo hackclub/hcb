@@ -8,7 +8,7 @@
 <div class="md:mt-12">
   <h3 class="mt2 mb1 muted flex items-center" style="font-weight: 400; gap: 8px;">
     <span style="flex-grow: 1;">
-      <%= user_mention @user, { class: "tooltipped--s align-top" } %>
+      <%= user_mention @user, class: "tooltipped--s align-top" %>
       <%= "will be reimbursed " if @report.reimbursement_approved? || @report.reimbursed? && !@report.payout_holding.sent? %>
       <%= "was reimbursed " if @report.reimbursed? && @report.payout_holding.sent? %>
       <%= "requested " if @report.rejected? || @report.reversed? %>

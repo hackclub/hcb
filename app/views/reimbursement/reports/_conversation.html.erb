@@ -61,7 +61,7 @@
                 </div>
                 <div class="conversation_item_text">
                   <span class="muted" style="margin-right: -0.25em;">
-                    <%= user_mention whodunnit, { avatar: { style: "vertical-align: sub;" } }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                    <%= user_mention whodunnit, avatar: { style: "vertical-align: sub;" }, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
                   </span>
                   <% if state_change == "reimbursement_requested" %>
                     <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
@@ -87,7 +87,7 @@
               </div>
               <div style="display: flex; align-items: center; gap: 4px">
                 <span class="muted; margin-right: -0.25em;">
-                  <%= user_mention User.find_by(id: item.whodunnit), { hide_avatar: true }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                  <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
                 </span>
                 <span class="align-middle"><%= item.event %>d this report</span>
                 <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">

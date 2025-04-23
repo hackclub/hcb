@@ -207,6 +207,7 @@ class UsersController < ApplicationController
   end
 
   def update
+    return_to = params[:return_to]
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     @user = User.friendly.find(params[:id])
     authorize @user
@@ -260,7 +261,7 @@ class UsersController < ApplicationController
 
       if @user.full_name_before_last_save.blank?
         flash[:success] = "Profile created!"
-        redirect_to root_path
+        redirect_to(return_to || root_path)
       else
         if @user.payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."

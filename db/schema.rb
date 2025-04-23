@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_07_060157) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -1479,6 +1479,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_07_060157) do
     t.index ["user_id"], name: "index_paypal_transfers_on_user_id"
   end
 
+  create_table "raffles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "program", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_raffles_on_user_id"
+  end
+
   create_table "raw_column_transactions", force: :cascade do |t|
     t.string "column_report_id"
     t.integer "transaction_index"
@@ -2317,6 +2325,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_07_060157) do
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"
+  add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
