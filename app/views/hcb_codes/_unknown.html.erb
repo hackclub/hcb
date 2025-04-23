@@ -7,7 +7,7 @@
           <%= pop_icon_to "edit",
               edit_hcb_code_path(@hcb_code),
               class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
-              data: { turbo: true } %>
+              data: { turbo: true } if organizer_signed_in?(as: :member) %>
 
           <span class="align-middle"
                 data-controller="navigation"

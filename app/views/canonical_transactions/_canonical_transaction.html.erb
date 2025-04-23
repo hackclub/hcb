@@ -200,7 +200,7 @@
                 <%= pop_icon_to "edit",
                     my_inbox_path,
                     class: "mr2 align-middle", "aria-label": "Rename transaction",
-                    data: { turbo: true } if organizer_signed_in? %>
+                    data: { turbo: true } if organizer_signed_in?(as: :member) %>
                 <span class="align-middle"
                       data-controller="navigation"
                       data-action="dblclick->navigation#navigate"
