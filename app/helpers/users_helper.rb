@@ -20,7 +20,7 @@ module UsersHelper
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
       default_image
-    elsif Rails.env.production? && (user.is_a?(User) && user&.profile_picture&.attached?)
+    elsif Rails.env.production? && user.is_a?(User) && user&.profile_picture&.attached?
       Rails.application.routes.url_helpers.url_for(user.profile_picture.variant(
                                                      thumbnail: "#{size * 2}x#{size * 2}^",
                                                      gravity: "center",
@@ -58,7 +58,7 @@ module UsersHelper
     ]
   end
 
-  def avatar_for(user, size = 24, options = {}, click_to_mention: false, default_image: nil)
+  def avatar_for(user, size: 24, click_to_mention: false, default_image: nil, **options)
     src = profile_picture_for(user, size, default_image:)
     current_user = defined?(current_user) ? current_user : nil
 
@@ -76,10 +76,10 @@ module UsersHelper
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
-  def user_mention(user, options = {}, default_name = "No User", click_to_mention: false, comment_mention: false, default_image: nil)
+  def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
     current_user = defined?(current_user) ? current_user : nil
-    avi = avatar_for(user, 24, options[:avatar] || {}, click_to_mention:, default_image:)
+    avi = avatar_for(user, click_to_mention:, default_image:, **options[:avatar])
 
     klasses = ["mention"]
     klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
@@ -126,7 +126,7 @@ module UsersHelper
     admin_tool(*args, **options, &block)
   end
 
-  def creator_bar(object, options = {})
+  def creator_bar(object, **options)
     creator = if defined?(object.creator)
                 object.creator
               elsif defined?(object.sender)
@@ -134,7 +134,7 @@ module UsersHelper
               else
                 object.user
               end
-    mention = user_mention(creator, options, default_name = "Anonymous User")
+    mention = user_mention(creator, default_name: "Anonymous User", **options)
     content_tag :div, class: "comment__name" do
       mention + relative_timestamp(object.created_at, prefix: options[:prefix], class: "h5 muted")
     end

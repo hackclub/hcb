@@ -2,7 +2,7 @@
 
 <% @destination = @hcb_code.disbursement.destination_event %>
 <% @source = @hcb_code.disbursement.source_event %>
-<% @subledger = @hcb_code.disbursement.destination_subledger %>
+<% @subledger = @hcb_code.disbursement.destination_subledger || @hcb_code.disbursement.source_subledger %>
 
 <article class="card pb0 mt3 mb1">
   <h2 class="h2 mt0 border-none flex items-center justify-between" style="gap: 8px">
@@ -82,12 +82,12 @@
     <% else %>
       <p>
         <strong>From</strong>
-        <%= link_to @source.name, @source %>
+        <%= link_to @source.name, @source, target: "_top" %>
       </p>
 
       <p>
         <strong>To</strong>
-        <%= link_to @destination.name, @destination %>
+        <%= link_to @destination.name, @destination, target: "_top" %>
       </p>
     <% end %>
 

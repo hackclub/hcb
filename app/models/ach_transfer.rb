@@ -173,7 +173,7 @@ class AchTransfer < ApplicationRecord
   before_validation { self.recipient_name = recipient_name.presence&.strip }
 
   before_validation do
-    self.company_name = event.short_name if company_name.blank?
+    self.company_name = "HCB (Hack Club)" # Column requires "Hack Club" to be included in the company_name for all outgoing ACHs
   end
 
   # Eagerly create HcbCode object
@@ -252,7 +252,7 @@ class AchTransfer < ApplicationRecord
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
 
-    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:
+    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: self.id.to_s
   end
 
   def pending_expired?
@@ -318,7 +318,7 @@ class AchTransfer < ApplicationRecord
   end
 
   def smart_memo
-    recipient_name.to_s.upcase
+    recipient_name.to_s
   end
 
   def canonical_transactions

@@ -345,7 +345,7 @@ class Invoice < ApplicationRecord
   end
 
   def smart_memo
-    sponsor.name.upcase
+    sponsor.name
   end
 
   def hcb_code

@@ -20,7 +20,7 @@ class RawPendingInvoiceTransaction < ApplicationRecord
   end
 
   def memo
-    "INVOICE".strip.upcase
+    "Invoice"
   end
 
   def likely_event_id

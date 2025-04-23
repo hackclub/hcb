@@ -106,7 +106,7 @@
       <% end %>
       <% if @user %>
         <div class="badge badge-large bg-muted">
-          <%= avatar_for @user, 18 %>
+          <%= avatar_for @user, size: 18 %>
           <%= @user.name %>
 
           <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>

@@ -37,49 +37,49 @@
     </div>
     <h2>Tasks</h2>
     <ul class="grid left-align w-100 mt0" id="task-grid">
-      <%= card_to "Applications", link_to_airtable_task(:bank_applications), { async_badge: :pending_bank_applications_airtable } %>
-      <%= card_to "OnBoard ID", link_to_airtable_task(:onboard_id), { async_badge: :pending_onboard_id_airtable } %>
-      <%= card_to "Ledger", ledger_admin_index_path, { badge: CanonicalTransaction.not_stripe_top_up.unmapped.count } %>
-      <%= card_to "ACH", ach_admin_index_path, { badge: AchTransfer.pending.count } %>
-      <%= card_to "Check", increase_checks_admin_index_path, { badge: IncreaseCheck.pending.count } %>
-      <%= card_to "Check deposits", admin_check_deposits_path, { badge: CheckDeposit.unprocessed.count } %>
-      <%= card_to "PayPal", paypal_transfers_admin_index_path, { badge: PaypalTransfer.pending.count } %>
-      <%= card_to "Wires", wires_admin_index_path, { badge: Wire.pending.count } %>
-      <%= card_to "Disbursements", disbursements_admin_index_path, { badge: Disbursement.reviewing.count } %>
-      <%= card_to "Reimbursements", reimbursements_admin_index_path, { badge: Reimbursement::Report.reimbursement_requested.count } %>
-      <%= card_to "Deletion requests", organizer_position_deletion_requests_path, { badge: OrganizerPositionDeletionRequest.under_review.count } %>
-      <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), { async_badge: :pending_disputed_transactions_airtable } %>
-      <%= card_to "Feedback", link_to_airtable_task(:feedback), { async_badge: :pending_feedback_airtable } %>
-      <%= card_to "Boba", link_to_airtable_task(:boba), { async_badge: :pending_boba_airtable } %>
-      <%= card_to "YSWS Verification", link_to_airtable_task(:you_ship_we_ship), { async_badge: :pending_you_ship_we_ship_airtable } %>
+      <%= card_to "Applications", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
+      <%= card_to "OnBoard ID", link_to_airtable_task(:onboard_id), async_badge: :pending_onboard_id_airtable %>
+      <%= card_to "Ledger", ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count %>
+      <%= card_to "ACH", ach_admin_index_path, badge: AchTransfer.pending.count %>
+      <%= card_to "Check", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
+      <%= card_to "Check deposits", admin_check_deposits_path, badge: CheckDeposit.unprocessed.count %>
+      <%= card_to "PayPal", paypal_transfers_admin_index_path, badge: PaypalTransfer.pending.count %>
+      <%= card_to "Wires", wires_admin_index_path, badge: Wire.pending.count %>
+      <%= card_to "Disbursements", disbursements_admin_index_path, badge: Disbursement.reviewing.count %>
+      <%= card_to "Reimbursements", reimbursements_admin_index_path, badge: Reimbursement::Report.reimbursement_requested.count %>
+      <%= card_to "Deletion requests", organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count %>
+      <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable %>
+      <%= card_to "Feedback", link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable %>
+      <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>
+      <%= card_to "YSWS Verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
       <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
     </ul>
     <h2>Info</h2>
     <ul class="grid left-align w-100 mt0" id="info-grid">
-      <%= card_to "Organizations", events_admin_index_path, { badge: Event.approved.count, subtle_badge: true } %>
+      <%= card_to "Organizations", events_admin_index_path, badge: Event.approved.count, subtle_badge: true %>
       <%= card_to "Users", users_admin_index_path %>
       <%= card_to "Donations", donations_admin_index_path %>
       <%= card_to "Invoices", invoices_admin_index_path %>
       <%= card_to "Sponsors", sponsors_admin_index_path %>
       <%= card_to "Cards", stripe_cards_admin_index_path %>
       <%= card_to "Card designs", stripe_card_personalization_designs_admin_index_path %>
-      <%= card_to "Emails", emails_admin_index_path, { badge: Ahoy::Message.count, subtle_badge: true } %>
+      <%= card_to "Emails", emails_admin_index_path, badge: Ahoy::Message.count, subtle_badge: true %>
     </ul>
     <h2>Perks</h2>
     <ul class="grid left-align w-100 mt0" id="perks-grid">
-      <%= card_to "Google Workspaces", google_workspaces_admin_index_path, { badge: GSuite.needs_ops_review.count } %>
-      <%= card_to "Stickers", link_to_airtable_task(:stickers), { async_badge: :pending_stickers_airtable } %>
-      <%= card_to "Hackathons", "https://dash.hackathons.hackclub.com/sign_in", { async_badge: :pending_hackathons_airtable } %>
-      <%= card_to "1Password", link_to_airtable_task(:onepassword), { async_badge: :pending_onepassword_airtable } %>
-      <%= card_to "Domains", link_to_airtable_task(:domains), { async_badge: :pending_domains_airtable } %>
-      <%= card_to "PVSA", link_to_airtable_task(:pvsa), { async_badge: :pending_pvsa_airtable } %>
-      <%= card_to "The Event Helper", link_to_airtable_task(:theeventhelper), { async_badge: :pending_theeventhelper_airtable } %>
-      <%= card_to "Google Workspace Waitlist", link_to_airtable_task(:google_workspace_waitlist), { async_badge: :pending_google_workspace_waitlist_airtable } %>
+      <%= card_to "Google Workspaces", google_workspaces_admin_index_path, badge: GSuite.needs_ops_review.count %>
+      <%= card_to "Stickers", link_to_airtable_task(:stickers), async_badge: :pending_stickers_airtable %>
+      <%= card_to "Hackathons", "https://dash.hackathons.hackclub.com/sign_in", async_badge: :pending_hackathons_airtable %>
+      <%= card_to "1Password", link_to_airtable_task(:onepassword), async_badge: :pending_onepassword_airtable %>
+      <%= card_to "Domains", link_to_airtable_task(:domains), async_badge: :pending_domains_airtable %>
+      <%= card_to "PVSA", link_to_airtable_task(:pvsa), async_badge: :pending_pvsa_airtable %>
+      <%= card_to "The Event Helper", link_to_airtable_task(:theeventhelper), async_badge: :pending_theeventhelper_airtable %>
+      <%= card_to "Google Workspace Waitlist", link_to_airtable_task(:google_workspace_waitlist), async_badge: :pending_google_workspace_waitlist_airtable %>
     </ul>
     <h2>Accounting</h2>
     <ul class="grid left-align w-100 mt0" id="accounting-grid">
-      <%= card_to "Bank Fees", bank_fees_admin_index_path, { badge: BankFee.in_transit_or_pending.count } %>
-      <%= card_to "Ledger audits", admin_ledger_audits_path, { badge: Admin::LedgerAudit.pending.count } %>
+      <%= card_to "Bank Fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
+      <%= card_to "Ledger audits", admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count %>
       <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization Balances" } %>
       <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "BI tool" } %>
       <%= card_to "Column Statements", admin_column_statements_path %>
@@ -88,9 +88,9 @@
     <ul class="grid left-align w-100 mt0" id="other-grid">
       <%= render partial: "static_pages/card", locals: { task_path: common_documents_path, human_name: "Common docs" } %>
       <%= render partial: "static_pages/card", locals: { task_path: flipper_path, human_name: "Flipper" } %>
-      <%= card_to "Pending Ledger", pending_ledger_admin_index_path, { badge: CanonicalPendingTransaction.unsettled.count } %>
-      <%= card_to "Account Numbers", account_numbers_admin_index_path, { badge: Column::AccountNumber.count, subtle_badge: true } %>
-      <%= card_to "Recurring donations", recurring_donations_admin_index_path, { badge: RecurringDonation.active.count } %>
+      <%= card_to "Pending Ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
+      <%= card_to "Account Numbers", account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true %>
+      <%= card_to "Recurring donations", recurring_donations_admin_index_path, badge: RecurringDonation.active.count %>
     </ul>
     <details>
       <summary>Old cards</summary>
@@ -108,9 +108,9 @@
         <%= render partial: "static_pages/card", locals: { task_path: "https://hack.af/hcb-knowledgebase", human_name: "Knowledgebase" } %>
         <%= render partial: "static_pages/card", locals: { task_path: bank_accounts_path, human_name: "Bank accounts" } %>
         <%= render partial: "static_pages/card", locals: { task_path: new_bank_account_path, human_name: "Setup HCB" } %>
-        <%= card_to "Bank Accounts", bank_accounts_admin_index_path, { badge: BankAccount.failing.count } %>
+        <%= card_to "Bank Accounts", bank_accounts_admin_index_path, badge: BankAccount.failing.count %>
         <%= card_to "HCB Codes", hcb_codes_admin_index_path %>
-        <%= card_to "Raw Transactions", raw_transactions_admin_index_path, { badge: RawCsvTransaction.unhashed.count } %>
+        <%= card_to "Raw Transactions", raw_transactions_admin_index_path, badge: RawCsvTransaction.unhashed.count %>
       </ul>
     </details>
   </div>

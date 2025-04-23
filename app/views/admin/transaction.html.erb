@@ -35,7 +35,6 @@
   <thead>
     <tr>
       <th>Map to an Event</th>
-      <th>Map to a PayPal Transfer</th>
       <th>Map to a Wire</th>
     </tr>
   </thead>
@@ -50,12 +49,6 @@
         <%= form_with url: set_event_path(@canonical_transaction), method: :post do |form| %>
           <%= form.hidden_field :event_id, value: EventMappingEngine::EventIds::NOEVENT %>
           <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" } %>
-        <% end %>
-      </td>
-      <td>
-        <%= form_with model: nil, local: true, url: set_paypal_transfer_path(@canonical_transaction), method: :post do |form| %>
-          <%= form.collection_select(:paypal_transfer_id, PaypalTransfer.approved + [@canonical_transaction.paypal_transfer].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.paypal_transfer&.id }, { style: "width: 300px;" }) %>
-          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>
       </td>
       <td>

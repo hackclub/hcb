@@ -318,7 +318,7 @@ class Event < ApplicationRecord
   validates :donation_header_image, content_type: [:png, :jpeg]
 
   has_one_attached :background_image
-  validates :background_image, content_type: [:png, :jpeg]
+  validates :background_image, content_type: [:png, :jpeg, :gif]
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
@@ -450,6 +450,10 @@ class Event < ApplicationRecord
       balance += fronted_incoming_balance_v2_cents
     end
     balance
+  end
+
+  def total_spent_cents
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil)

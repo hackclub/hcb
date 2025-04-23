@@ -167,7 +167,7 @@ class HcbCodesController < ApplicationController
     cpt = @hcb_code.canonical_pending_transactions.first
 
     if cpt
-      CanonicalPendingTransactionJob::SendTwilioReceiptMessage.perform_now(cpt_id: cpt.id, user_id: current_user.id)
+      CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_now(cpt_id: cpt.id, user_id: current_user.id)
       flash[:success] = "SMS queued for delivery!"
     else
       flash[:error] = "This transaction doesn't support SMS notifications."
