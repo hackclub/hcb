@@ -26,7 +26,7 @@
     "@hugocxl/react-to-image": "^0.0.9",
     "@oddbird/popover-polyfill": "^0.5.2",
     "@shopify/draggable": "^1.1.4",
-    "@stripe/stripe-js": "^7.1.0",
+    "@stripe/stripe-js": "^7.2.0",
     "ahoy.js": "^0.4.4",
     "alpinejs": "^3.14.9",
     "autoprefixer": "^10.4.21",
