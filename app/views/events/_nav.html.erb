@@ -57,7 +57,7 @@
       event_check_deposits_path(@event),
       tooltip: "Deposit checks",
       icon: "cheque",
-      selected: local_assigns[:selected] == :deposit_check if policy(@event.check_deposits.build).index? %>
+      selected: local_assigns[:selected] == :deposit_check if policy(@event.check_deposits.build).index? && organizer_signed_in?(as: :member) %>
     <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? || Flipper.enabled?(:grants_2023_06_21, @event) %>
       <h4 class="mb0 h5 font-medium muted">Spend</h4>
       <hr>
@@ -140,7 +140,7 @@
           <%= link_to "Donations", event_donation_overview_path(@event) if policy(@event).donation_overview? %>
           <%= link_to "Invoices", event_invoices_path(@event) if @event.approved? && @event.plan.invoices_enabled? %>
           <%= link_to "Account numbers", account_number_event_path(@event) if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-          <%= link_to "Check deposits", event_check_deposits_path(@event) if policy(@event.check_deposits.build).index? %>
+          <%= link_to "Check deposits", event_check_deposits_path(@event) if policy(@event.check_deposits.build).index? && organizer_signed_in?(as: :member) %>
         </div>
       </button>
     <% end %>
