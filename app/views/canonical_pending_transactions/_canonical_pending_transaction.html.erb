@@ -159,7 +159,7 @@
     <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) && !local_assigns[:receipt_upload_button_disabled] %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
-        <%= turbo_frame_tag "link_modal_#{pt.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id), turbo_frame: "_top" do %>
+        <%= turbo_frame_tag "link_modal_#{pt.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column]), turbo_frame: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
       </section>

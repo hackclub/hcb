@@ -46,6 +46,9 @@ class ReceiptsController < ApplicationController
 
     @receipt.update!(receiptable: @receiptable)
 
+    @show_receipt_button = params[:show_receipt_button] == "true"
+    @show_author_img = params[:show_author_img] == "true"
+
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
@@ -79,6 +82,9 @@ class ReceiptsController < ApplicationController
     if params[:popover].present?
       @popover = params[:popover]
     end
+
+    @show_author_img = params[:show_author_img]
+    @show_receipt_button = params[:show_receipt_button]
 
     if @receiptable.instance_of?(HcbCode)
       pairings_sql = <<~SQL
