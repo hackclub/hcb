@@ -1,12 +1,16 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = [ "text", "menu" ]
+  static targets = [ "text", "menu", "container" ]
 
   open = false
 
   connect() {
-    this.updateText(this.selectTarget.value);
+    document.addEventListener("click", this.handleDocumentClick.bind(this));
+  }
+
+  disconnect() {
+    document.removeEventListener("click", this.handleDocumentClick.bind(this));
   }
 
   toggle() {
@@ -26,5 +30,11 @@ export default class extends Controller {
 
   updateMenu() {
     this.menuTarget.style = this.open ? "display: block;" : "display: none;"
+  }
+
+  handleDocumentClick(event) {
+    if (!this.containerTarget.contains(event.target) && this.open == true) {
+      this.toggle();
+    }
   }
 }

@@ -14,7 +14,7 @@
       <div class="flex justify-start">
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
-            <div class="relative" data-controller="dropdown-button">
+            <div class="relative" data-controller="dropdown-button" data-dropdown-button-target="container">
               <div class="dropdown-button-container">
                 <button class="btn bg-success add-expense-dropzone btn-dropdown" data-file-drop-target="dropzone" data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave">
                     <%= inline_icon "plus" %>
