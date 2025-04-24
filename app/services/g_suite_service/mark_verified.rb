@@ -12,10 +12,6 @@ module GSuiteService
           g_suite.mark_verified!
 
           notify_of_verified
-
-          if g_suite.revocation.present?
-            g_suite.revocation.destroy!
-          end
         end
 
         g_suite
