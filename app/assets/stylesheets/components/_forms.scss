@@ -462,15 +462,10 @@ input:where([data-behavior='otp_input']) {
   top: 105%;
   left: 0px;
 
-  overflow: clip;
-  border-width: 2px;
-  border-style: solid;
   background-color: $smoke;
-  border-color: $white;
 
   [data-dark='true'] & {
     background-color: $darker;
-    border-color: $dark;
   }
 
   display: none;
@@ -507,14 +502,34 @@ input:where([data-behavior='otp_input']) {
 
 .btn-dropdown {
   border-radius: 0.75rem 0px 0px 0.75rem;
+  transform: unset !important;
 }
 
 .btn-dropdown-toggle {
   border-radius: 0px 0.75rem 0.75rem 0px;
   width: 3rem;
   margin-left: 2px;
+  transform: unset !important;
 }
 
 .btn-dropdown-toggle svg {
   margin-right: 0px;
+}
+
+.dropdown-button-container {
+  display: flex;
+  border-radius: 0.75rem;
+
+  transform: scale(1);
+  transition:
+    transform 0.125s ease-in-out,
+    box-shadow 0.25s ease-in-out;
+    
+  &:hover,
+  &:focus,
+  &[aria-expanded='true'] {
+    color: $white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
+    transform: scale(1.0625);
+  }
 }
