@@ -17,6 +17,7 @@ export default class extends Controller {
   change(event) {
     const newType = event.target.value;
     this.updateText(newType);
+    this.toggle();
   }
 
   updateText(value) {
