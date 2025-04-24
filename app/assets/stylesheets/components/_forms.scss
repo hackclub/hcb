@@ -463,10 +463,15 @@ input:where([data-behavior='otp_input']) {
   left: 0px;
 
   overflow: clip;
-  border-color: $dark;
   border-width: 2px;
   border-style: solid;
-  background-color: $darker;
+  background-color: $smoke;
+  border-color: $white;
+
+  [data-dark='true'] & {
+    background-color: $darker;
+    border-color: $dark;
+  }
 
   display: none;
 }
@@ -502,17 +507,12 @@ input:where([data-behavior='otp_input']) {
 
 .btn-dropdown {
   border-radius: 0.75rem 0px 0px 0.75rem;
-  border-right-color: $darker;
-  border-right-width: 2px;
-  border-right-style: solid;
 }
 
 .btn-dropdown-toggle {
   border-radius: 0px 0.75rem 0.75rem 0px;
-  border-left-color: $darker;
-  border-left-width: 2px;
-  border-left-style: solid;
   width: 3rem;
+  margin-left: 2px;
 }
 
 .btn-dropdown-toggle svg {
