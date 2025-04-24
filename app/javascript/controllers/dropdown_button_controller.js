@@ -1,10 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = [ "button", "select" ]
+  static targets = [ "text", "menu" ]
+
+  open = false
 
   connect() {
     this.updateText(this.selectTarget.value);
+  }
+
+  toggle() {
+    this.open = !this.open;
+    this.updateMenu();
   }
 
   change(event) {
@@ -13,6 +20,10 @@ export default class extends Controller {
   }
 
   updateText(value) {
-    this.buttonTarget.innerText = this.buttonTarget.dataset.template.replaceAll("[VALUE]", value);
+    this.textTarget.innerText = this.textTarget.dataset.template.replaceAll("[VALUE]", value);
+  }
+
+  updateMenu() {
+    this.menuTarget.style = this.open ? "display: block;" : "display: none;"
   }
 }
