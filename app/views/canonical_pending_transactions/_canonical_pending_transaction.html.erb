@@ -132,6 +132,8 @@
           <%= form.hidden_field :receiptable_type, value: pt.local_hcb_code.class %>
           <%= form.hidden_field :receiptable_id, value: pt.local_hcb_code.id %>
           <%= form.hidden_field :upload_method, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
+          <%= form.hidden_field :show_receipt_button, value: local_assigns[:receipt_upload_button] %>
+          <%= form.hidden_field :show_author_img, value: local_assigns[:show_author_column] %>
           <div class="<%= "btn-group btn-group--no-wrap w-100" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
             <%= form.label "file_#{pt.local_hcb_code.hashid}", class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>

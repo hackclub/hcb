@@ -127,11 +127,11 @@ class ReceiptsController < ApplicationController
                      ))
     end
 
+    @show_receipt_button = params[:show_receipt_button] == "true"
+    @show_author_img = params[:show_author_img] == "true"
 
     if %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
       @frame = true
-      @show_receipt_button = params[:show_receipt_button] == "true"
-      @show_author_img = params[:show_author_img] == "true"
     end
 
     streams += generate_streams
