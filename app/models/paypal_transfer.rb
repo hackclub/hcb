@@ -53,7 +53,7 @@ class PaypalTransfer < ApplicationRecord
   end
 
   after_create do
-    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "PayPal transfer to #{recipient_name}".strip.upcase, date: created_at)
+    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "PayPal transfer to #{recipient_name}".strip, date: created_at)
   end
 
   aasm timestamps: true, whiny_persistence: true do

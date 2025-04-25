@@ -43,7 +43,7 @@ module DonationsHelper
     content_tag(:p) { strong_tag + date_tag }
   end
 
-  def donation_payment_method_mention(donation = @donation, options = {})
+  def donation_payment_method_mention(donation = @donation, **options)
     payout = donation&.payout
     payout_t = donation&.payout&.t_transaction
 
