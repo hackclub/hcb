@@ -230,6 +230,7 @@ Rails.application.routes.draw do
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
+      get "unknown_merchants", to: "admin#unknown_merchants"
 
     end
 

@@ -1181,6 +1181,32 @@ class AdminController < ApplicationController
 
   end
 
+  def unknown_merchants
+    @merchants = Rails.cache.fetch("admin_unknown_merchants", expires_in: 12.hours) do
+      RawStripeTransaction.all.group_by { |rst| rst.stripe_transaction["merchant_data"]["network_id"] }.map do |network_id, rsts|
+        memos = rsts.map do |rst|
+          {
+            memo: rst.stripe_transaction["merchant_data"]["name"],
+            url: rst.stripe_transaction["merchant_data"]["url"],
+            authorization: rst.stripe_authorization_id
+          }
+        end.uniq { |memo| memo[:memo] }
+        
+        memos = memos.map do |memo|
+          memo[:occurrences] = memos.count { |m| m[:memo] == memo[:memo] }
+
+          memo
+        end
+
+        {
+          network_id:,
+          memos:,
+          total_transactions: rsts.count,
+        }
+      end.reject { |data| data[:total_transactions] < 30 || YellowPages::Merchant.lookup(network_id: data[:network_id]).in_dataset? }.sort_by { |data| data[:total_transactions] }.reverse
+    end
+  end
+
   def merchant_memo_check
     @data = YellowPages::Merchant.merchants.map do |network_id, merchant|
       {

@@ -57,7 +57,8 @@
            "Column Statements": [admin_column_statements_path, Column::Statement.count, %i[counter]],
            "Users": [users_admin_index_path, User.count, %i[counter]],
            "Card Designs": [stripe_card_personalization_designs_admin_index_path, StripeCard::PersonalizationDesign.count, %i[counter]],
-           "Emails": [emails_admin_index_path, Ahoy::Message.count, %i[counter]]
+           "Emails": [emails_admin_index_path, Ahoy::Message.count, %i[counter]],
+           "Unknown Merchants": [unknown_merchants_admin_index_path, 0, %i[]],
          }
        } %>
 
