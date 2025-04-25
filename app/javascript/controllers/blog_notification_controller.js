@@ -18,7 +18,7 @@ export default class extends Controller {
       this.badgeTarget.innerText = count
       this.badgeTarget.classList.remove('hidden')
     } catch (error) {
-      console.error("Error fetching notification count", error)
+      console.error('Error fetching notification count', error)
     }
   }
 }
