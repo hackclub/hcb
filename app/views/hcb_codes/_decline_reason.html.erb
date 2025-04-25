@@ -91,71 +91,71 @@
         <% elsif stripe_decline_reason == :card_expired %>
             Try again using a different card.
         <% elsif stripe_decline_reason.in? %i[cardholder_verification_required insufficient_funds] %>
-        This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
+            This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
         <% elsif stripe_decline_reason == :insecure_authorization_method %>
-        <% auth_method = pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] %>
-        <% if auth_method == "swipe" %>
-            Your card was swiped, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
-        <% elsif auth_method == "keyed_in" %>
-            Your card was keyed in by the merchant, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
-        <% else %>
-            The card issuer deemed this transaction insecure. Try again using chip, if possible.
-        <% end %>
-        <% elsif stripe_decline_reason.in? %i[verification_failed suspected_fraud] %>
-        <% verification_data = pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
-        <% card_details = capture do %>
-            <% if defined?(current_user) && hcb_code.stripe_card.user == current_user %>
-                <%= link_to "your card details", stripe_card_path(hcb_code.stripe_card) %>
+            <% auth_method = pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] %>
+            <% if auth_method == "swipe" %>
+                Your card was swiped, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
+            <% elsif auth_method == "keyed_in" %>
+                Your card was keyed in by the merchant, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
             <% else %>
-            the card details
+                The card issuer deemed this transaction insecure. Try again using chip, if possible.
             <% end %>
-        <% end %>
+        <% elsif stripe_decline_reason.in? %i[verification_failed suspected_fraud] %>
+            <% verification_data = pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
+            <% card_details = capture do %>
+                <% if defined?(current_user) && hcb_code.stripe_card.user == current_user %>
+                    <%= link_to "your card details", stripe_card_path(hcb_code.stripe_card) %>
+                <% else %>
+                    the card details
+                <% end %>
+            <% end %>
 
-        <% if verification_data["cvc_check"] == "mismatch" %>
-            <span>
-                <% unless local_assigns[:is_email] %>
-                    <span class="align-top"><%= stripe_verification_check_badge("cvc", verification_data) %></span>
-                <% end %>
-                <b class="font-bold">CVC</b> did not match <%= card_details %>
-            </span>
-        <% elsif verification_data["address_postal_code_check"] == "mismatch" %>
-            <span>
-                <% unless local_assigns[:is_email] %>
-                    <span class="align-top"><%= stripe_verification_check_badge("address_postal_code", verification_data) %></span>
-                <% end %>
-                <b class="font-bold">Zip code</b> did not match <%= card_details %>
-            </span>
-        <% elsif verification_data["address_line1_check"] == "mismatch" %>
-            <span>
-                <% unless local_assigns[:is_email] %>
-                    <span class="align-top"><%= stripe_verification_check_badge("address_line1", verification_data) %></span>
-                <% end %>
-                <b class="font-bold">Address</b> did not match <%= card_details %>
-            </span>
-        <% elsif verification_data["expiry_check"] == "mismatch" %>
-            <span>
-                <% unless local_assigns[:is_email] %>
-                    <span class="align-top"><%= stripe_verification_check_badge("expiry", verification_data) %></span>
-                <% end %>
-                <b class="font-bold">Expiration date</b> did not match <%= card_details %>
-            </span>
-        <% end %>
+            <% if verification_data["cvc_check"] == "mismatch" %>
+                <span>
+                    <% unless local_assigns[:is_email] %>
+                        <span class="align-top"><%= stripe_verification_check_badge("cvc", verification_data) %></span>
+                    <% end %>
+                    <b class="font-bold">CVC</b> did not match <%= card_details %>
+                </span>
+            <% elsif verification_data["address_postal_code_check"] == "mismatch" %>
+                <span>
+                    <% unless local_assigns[:is_email] %>
+                        <span class="align-top"><%= stripe_verification_check_badge("address_postal_code", verification_data) %></span>
+                    <% end %>
+                    <b class="font-bold">Zip code</b> did not match <%= card_details %>
+                </span>
+            <% elsif verification_data["address_line1_check"] == "mismatch" %>
+                <span>
+                    <% unless local_assigns[:is_email] %>
+                        <span class="align-top"><%= stripe_verification_check_badge("address_line1", verification_data) %></span>
+                    <% end %>
+                    <b class="font-bold">Address</b> did not match <%= card_details %>
+                </span>
+            <% elsif verification_data["expiry_check"] == "mismatch" %>
+                <span>
+                    <% unless local_assigns[:is_email] %>
+                        <span class="align-top"><%= stripe_verification_check_badge("expiry", verification_data) %></span>
+                    <% end %>
+                    <b class="font-bold">Expiration date</b> did not match <%= card_details %>
+                </span>
+            <% end %>
 
-        <br>
+            <br>
 
-        <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(hcb_code.stripe_card), method: :post %>.</span>
+            <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(hcb_code.stripe_card), method: :post %>.</span>
         <% elsif hcb_decline_reason != :inadequate_balance %>
             Try again, or contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
 
             <% if stripe_decline_reason %>
 
-                            <code class="mt-3 block">stripe:<%= stripe_decline_reason %></code>
-                        <% end %>
+                <code class="mt-3 block">stripe:<%= stripe_decline_reason %></code>
+            <% end %>
 
-                        <% if hcb_decline_reason %>
-                            <code class="mt-3 block">hcb:<%= hcb_decline_reason %></code>
-                        <% end %>
+            <% if hcb_decline_reason %>
+                <code class="mt-3 block">hcb:<%= hcb_decline_reason %></code>
+            <% end %>
         <% end %>
-        </p>
+    </p>
 
 <% end %>
