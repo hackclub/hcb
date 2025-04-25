@@ -43,7 +43,7 @@
             <% else %>
               Approval removed by
             <% end %>
-            <%= user_mention expense.approved_by, { avatar: { style: "vertical-align: sub;" }, disable_tooltip: true }, "Unknown User" %>
+            <%= user_mention expense.approved_by, avatar: { style: "vertical-align: sub;" }, disable_tooltip: true, default_name: "Unknown User" %>
           <% end %>
           <% unless expense.report.reimbursed? %>
             <button class="edit-or-save pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is read-only. #{"Mark it as a draft to edit." unless expense.report.closed? || read_only}" %>">

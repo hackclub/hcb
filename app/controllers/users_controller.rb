@@ -95,7 +95,7 @@ class UsersController < ApplicationController
   end
 
   def receipt_report
-    ReceiptReportJob::Send.perform_later(current_user.id, force_send: true)
+    ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
     redirect_to settings_previews_path
   end
@@ -207,6 +207,7 @@ class UsersController < ApplicationController
   end
 
   def update
+    return_to = params[:return_to]
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     @user = User.friendly.find(params[:id])
     authorize @user
@@ -260,7 +261,7 @@ class UsersController < ApplicationController
 
       if @user.full_name_before_last_save.blank?
         flash[:success] = "Profile created!"
-        redirect_to root_path
+        redirect_to(return_to || root_path)
       else
         if @user.payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
@@ -391,6 +392,21 @@ class UsersController < ApplicationController
       }
     end
 
+    if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
+      attributes << {
+        payout_method_wire: [
+          :address_line1,
+          :address_line2,
+          :address_city,
+          :address_state,
+          :address_postal_code,
+          :recipient_country,
+          :bic_code,
+          :account_number
+        ] + Wire.recipient_information_accessors
+      }
+    end
+
     if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
       attributes << {
         payout_method_attributes: [
@@ -412,7 +428,13 @@ class UsersController < ApplicationController
       attributes << :access_level
     end
 
-    params.require(:user).permit(attributes)
+    p = params.require(:user).permit(attributes)
+
+    # The Wire payout method attributes are under the `payout_method_wire` param instead of `payout_method_attributes` to prevent conflict with existing keys for other payout methods such as AchTransfer.
+    # Rails requires that DOM form inputs have unique names.
+    p[:payout_method_attributes] = p.delete(:payout_method_wire) if p[:payout_method_wire]
+
+    p
   end
 
 end

@@ -16,7 +16,7 @@ module BankFeeService
         receiver_bank_account_id = ColumnService::Accounts.id_of bank_fee.book_transfer_receiving_account
 
         ColumnService.post "/transfers/book",
-                           idempotency_key: bank_fee.id,
+                           idempotency_key: bank_fee.id.to_s,
                            amount: amount_cents.abs,
                            currency_code: "USD",
                            sender_bank_account_id:,

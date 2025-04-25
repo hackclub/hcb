@@ -65,7 +65,7 @@ class OrganizerPositionInvitesController < ApplicationController
     if @invite.accept
       redirect_to @invite.event
     else
-      flash[:error] = @invite.pending_signature? ? "Invite requires contract to be signed" : "Failed to accept"
+      flash[:error] = @invite.pending_signature? ? "Before accepting the invite, you need to sign the associated contract." : "Failed to accept"
       redirect_to @invite
     end
   end

@@ -110,7 +110,7 @@ class ColumnService
   end
 
   def self.return_ach(id, with:)
-    post("/transfers/ach/#{id}/return", return_code: with)
+    post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
   end
 
 end

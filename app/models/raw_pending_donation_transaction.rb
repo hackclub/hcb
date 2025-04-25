@@ -20,7 +20,7 @@ class RawPendingDonationTransaction < ApplicationRecord
   end
 
   def memo
-    "DONATION".strip.upcase
+    "Donation"
   end
 
   def likely_event_id
