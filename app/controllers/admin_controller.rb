@@ -1191,12 +1191,12 @@ class AdminController < ApplicationController
             authorization: rst.stripe_authorization_id
           }
         end.uniq { |memo| memo[:memo] }
-        
+
         memos = memos.map do |memo|
           memo[:occurrences] = memos.count { |m| m[:memo] == memo[:memo] }
 
           memo
-        end
+        end.sort_by{ |memo| memo[:occurrences] }
 
         {
           network_id:,

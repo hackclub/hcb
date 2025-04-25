@@ -18,7 +18,7 @@
         </td>
         <td>
           <ul>
-             <% merchant[:memos].sort_by{|m|m[:occurrences]}.reverse.first(10).each do |memo| %>
+             <% merchant[:memos].reverse.first(10).each do |memo| %>
               <li>
                 <% if memo[:authorization].present? %>
                   <%= link_to memo[:memo], hcb_code_path("HCB-600-#{memo[:authorization]}") %>
