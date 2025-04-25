@@ -1,9 +1,9 @@
 
 <%= render partial: "hcb_codes/decline_reason", locals: {
       canonical_pending_transaction: @cpt,
-      extended: true,
-      rich: true,
-      email: true
+      include_troubleshooting: true,
+      include_external: true,
+      is_email: true
     } %>
 
 <% if @cpt.hcb_decline_reason == :inadequate_balance %>

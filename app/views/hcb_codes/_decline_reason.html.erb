@@ -1,4 +1,4 @@
-<%# locals: (hcb_code: nil, canonical_pending_transaction: nil, extended: false, rich: true, email: false) %>
+<%# locals: (hcb_code: nil, canonical_pending_transaction: nil, include_troubleshooting: false, include_external: true, is_email: false) %>
 
 <% pt = local_assigns[:canonical_pending_transaction] || hcb_code.pt %>
 <% hcb_code ||= pt.local_hcb_code %>
@@ -6,12 +6,12 @@
 <% hcb_decline_reason = pt.hcb_decline_reason %>
 <% stripe_decline_reason = pt.stripe_decline_reason %>
 
-<% this_transaction = local_assigns[:email] ?
+<% this_transaction = local_assigns[:is_email] ?
     "A #{humanized_money_with_symbol pt.amount.abs} charge to your card ending in #{hcb_code.stripe_card.last4} at '#{pt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]}'"
    : "This transaction" %>
 
 <span class="inline-flex">
-    <% if local_assigns[:extended] %>
+    <% if local_assigns[:include_troubleshooting] %>
         <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
             <span><%= this_transaction %> was declined
             <%= {
@@ -57,12 +57,12 @@
         </span>
     <% end %>
 
-    <% if local_assigns[:rich] && !local_assigns[:extended] %>
+    <% if local_assigns[:include_external] && !local_assigns[:include_troubleshooting] %>
         <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
     <% end %>
 </span>
 
-<% if local_assigns[:extended] %>
+<% if local_assigns[:include_troubleshooting] %>
     <% unless hcb_decline_reason == :inadequate_balance %>
         <h3>Troubleshooting</h3>
     <% end %>
@@ -113,28 +113,28 @@
 
         <% if verification_data["cvc_check"] == "mismatch" %>
             <span>
-                <% unless local_assigns[:email] %>
+                <% unless local_assigns[:is_email] %>
                     <span class="align-top"><%= stripe_verification_check_badge("cvc", verification_data) %></span>
                 <% end %>
                 <b class="font-bold">CVC</b> did not match <%= card_details %>
             </span>
         <% elsif verification_data["address_postal_code_check"] == "mismatch" %>
             <span>
-                <% unless local_assigns[:email] %>
+                <% unless local_assigns[:is_email] %>
                     <span class="align-top"><%= stripe_verification_check_badge("address_postal_code", verification_data) %></span>
                 <% end %>
                 <b class="font-bold">Zip code</b> did not match <%= card_details %>
             </span>
         <% elsif verification_data["address_line1_check"] == "mismatch" %>
             <span>
-                <% unless local_assigns[:email] %>
+                <% unless local_assigns[:is_email] %>
                     <span class="align-top"><%= stripe_verification_check_badge("address_line1", verification_data) %></span>
                 <% end %>
                 <b class="font-bold">Address</b> did not match <%= card_details %>
             </span>
         <% elsif verification_data["expiry_check"] == "mismatch" %>
             <span>
-                <% unless local_assigns[:email] %>
+                <% unless local_assigns[:is_email] %>
                     <span class="align-top"><%= stripe_verification_check_badge("expiry", verification_data) %></span>
                 <% end %>
                 <b class="font-bold">Expiration date</b> did not match <%= card_details %>

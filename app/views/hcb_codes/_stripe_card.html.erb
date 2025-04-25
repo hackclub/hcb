@@ -126,8 +126,8 @@
 
             <%= render partial: "hcb_codes/decline_reason", locals: {
                   hcb_code: @hcb_code,
-                  extended: false,
-                  rich: true
+                  include_troubleshooting: false,
+                  include_external: true
                 } %>
           </action>
         </p>
@@ -368,8 +368,8 @@
 
       <%= render partial: "hcb_codes/decline_reason", locals: {
             hcb_code: @hcb_code,
-            extended: true,
-            rich: true
+            include_troubleshooting: true,
+            include_external: true
           } %>
     </section>
   <% end %>

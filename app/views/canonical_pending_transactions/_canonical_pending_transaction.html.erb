@@ -53,8 +53,8 @@
 
                 <%= render partial: "hcb_codes/decline_reason", locals: {
                       hcb_code: pt.local_hcb_code,
-                      extended: true,
-                      rich: true
+                      include_troubleshooting: true,
+                      include_external: true
                     } %>
               </section>
             <% end %>
