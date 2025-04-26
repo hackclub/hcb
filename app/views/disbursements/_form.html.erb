@@ -40,7 +40,7 @@
                   disabled:,
                   "x-on:input" => "fee = $event.target.options[$event.target.selectedIndex].dataset.fee; event_id = $event.target.options[$event.target.selectedIndex].dataset.event_id; console.log(event_id)") %>
     <% unless admin_signed_in? %>
-      <% if @source_event.plan.unrestricted_disbursements_allowed? %>
+      <% if @source_event&.plan&.unrestricted_disbursements_allowed? %>
         <template x-if="event_id == 'other'">
           <div class="mt2">
             <%= form.label :destination_event_id_select, "Destination event's slug" %>
