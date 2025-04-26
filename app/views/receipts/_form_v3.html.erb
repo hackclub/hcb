@@ -101,7 +101,7 @@
           <%= pop_icon_to "view-close", nil, class: "modal__close muted m1", tabindex: 0, onclick: "event.preventDefault(); $('#link_receipt_#{instance.to_json}_select').hide(); $('#link_receipt_#{instance.to_json}_form').show();" %>
           <h2 class="h1 mt0 mb0 pb0 border-none">Select receipt</h2>
         </header>
-        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false") do %>
+        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false", show_author_img: true) do %>
           <strong>Loading...</strong>
         <% end %>
       </section>
