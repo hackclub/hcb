@@ -5,15 +5,29 @@ class DisbursementPolicy < ApplicationPolicy
     user.auditor?
   end
 
+  def can_send?
+    return true if user&.admin?
+    return true if record.source_event.nil?
+    return true if record.source_event.users.include?(user)
+
+    false
+  end
+
+  def can_receive?
+    return true if user&.admin?
+    return true if record.source_event&.unrestricted_disbursements_allowed?
+    return true if record.destination_event.nil?
+    return true if record.destination_event.users.include?(user)
+
+    false
+  end
+
   def new?
-    user&.admin? || (
-      record.destination_event.nil? &&
-      (record.source_event.nil?      || record.source_event.users.include?(user) || record.source_event.unrestricted_disbursements_allowed?)
-    )
+    can_send? && can_receive?
   end
 
   def create?
-    user&.admin? || Pundit.policy(user, record.source_event).create_transfer?
+    can_send? && can_receive?
   end
 
   def transfer_confirmation_letter?
