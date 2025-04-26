@@ -9,9 +9,12 @@ export default class extends Controller {
 
   async updateBadge() {
     try {
-      const { count } = await fetch('https://blog.hcb.hackclub.com/api/unreads', {
-        credentials: 'include',
-      }).then(res => res.json())
+      const { count } = await fetch(
+        'https://blog.hcb.hackclub.com/api/unreads',
+        {
+          credentials: 'include',
+        }
+      ).then(res => res.json())
 
       if (count < 1) return
 
