@@ -202,6 +202,7 @@ class AchTransfer < ApplicationRecord
       type: "CREDIT",
       entry_class_code: "PPD",
       counterparty: {
+        name: recipient_name,
         account_number:,
         routing_number:,
       },
