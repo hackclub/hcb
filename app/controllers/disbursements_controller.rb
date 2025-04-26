@@ -51,10 +51,10 @@ class DisbursementsController < ApplicationController
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end
     @allowed_destination_events = if current_user.admin?
-      Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
-    else
-      current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
-    end
+                                    Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                                  else
+                                    current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
+                                  end
 
     authorize @disbursement
   end

@@ -26,8 +26,8 @@
                         "data-event_id": event.id
                       },
                     ]
-                  end) + 
-                  (@source_event.plan.unrestricted_disbursements_allowed? && !admin_signed_in? ? [[
+                  end) +
+                  (@source_event&.plan&.unrestricted_disbursements_allowed? && !admin_signed_in? ? [[
                     "Other",
                     "other",
                     {
