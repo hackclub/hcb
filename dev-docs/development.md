@@ -199,7 +199,9 @@ We've transitioned to using development keys and seed data in development, but h
 ## Sidekiq
 
 [Sidekiq](https://github.com/sidekiq/sidekiq) is the Active Job backend used for HCB, with features such as scheduled jobs and a web UI. While it is enabled in development, you may need to manually load schedule jobs (located in `config/schedule.yml`) using:
+
 ```ruby
 Sidekiq::Cron::Job.load_from_hash YAML.load_file("config/schedule.yml")
 ```
-in the Rails console. The web UI is available at [localhost:3000/sidekiq](http://localhost:3000/sidekiq).
+
+in the Rails console (`bin/rails c`). The web UI is available at [localhost:3000/sidekiq](http://localhost:3000/sidekiq).
