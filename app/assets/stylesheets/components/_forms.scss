@@ -455,6 +455,11 @@ input:where([data-behavior='otp_input']) {
   color: inherit !important;
 }
 
+.dropdown-button {
+  position: relative;
+  width: fit-content;
+}
+
 .dropdown-button-menu {
   width: 100%;
 
@@ -470,6 +475,8 @@ input:where([data-behavior='otp_input']) {
 
   display: none;
   opacity: 0;
+
+  z-index: 10;
 }
 
 .dropdown-button-menu-hidden {

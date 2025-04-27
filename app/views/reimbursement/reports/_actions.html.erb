@@ -14,31 +14,16 @@
       <div class="flex justify-start">
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
-            <div class="relative" data-controller="dropdown-button" data-dropdown-button-target="container">
-              <div class="dropdown-button-container">
-                <button class="btn bg-success add-expense-dropzone btn-dropdown" data-file-drop-target="dropzone" data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave">
-                    <%= inline_icon "plus" %>
-                    <span data-dropdown-button-target="text" data-template="Add <%= report.expenses.count > 0 ? "another" : "an" %> <%= %> [VALUE] expense">Add <%= report.expenses.count > 0 ? "another" : "an" %> <%= %> standard expense</span>
-                </button>
-                <button type="button" class="btn bg-success btn-dropdown-toggle" data-action="click->dropdown-button#toggle">
-                  <%= inline_icon "down-caret" %>
-                </button>
-              </div>
-              <div class="dropdown-button-menu dropdown-button-menu-hidden" data-dropdown-button-target="menu">
-                <div>
-                  <%= form.radio_button :type, :standard, { data: { action: "change->dropdown-button#change", "dropdown-button-target": "select" } } %>
-                  <%= form.label :type, value: :standard do %>
-                    <strong>Standard expense</strong>
-                    <p>Generic expense with a specified amount.</p>
-                  <% end %>
-
-                  <%= form.radio_button :type, :mileage, { data: { action: "change->dropdown-button#change", "dropdown-button-target": "select" } } %>
-                  <%= form.label :type, value: :mileage do %>
-                    <strong>Mileage expense</strong>
-                    <p>Expense for miles traveled based on the standard mileage rate.</p>
-                  <% end %>
-                </div>
-              </div>
+            <div class="add-expense-dropzone">
+              <%= dropdown_button form:,
+                options: [
+                  ["Standard expense", "standard", "Generic expense with a specified amount."],
+                  ["Mileage expense", "mileage", "Expense for miles traveled based on the standard mileage rate."]],
+                button_icon: "plus",
+                name: "type",
+                button_container_options: { data: { "file-drop-target": "dropzone", action: "dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave" }},
+                template: "Add #{report.expenses.count > 0 ? "another" : "an"} [VALUE] expense"
+              %>
               <%= form.file_field :file,
                   multiple: true,
                   include_hidden: false,
