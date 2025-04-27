@@ -114,9 +114,10 @@
       <div class="field event-select-target">
         <%= form.label :event_id, "Create a new report", class: "mt2 bold" %>
         <%= form.select(
-            :event_id,
+              :event_id,
             current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
-            { prompt: "Select an event…", required: false }, "x-model": "eventId") %>
+            { prompt: "Select an event…", required: false }, "x-model": "eventId"
+            ) %>
         <% unless admin_signed_in? %>
           <span class="muted mt1">You can transfer an expense to any report of yours.</span>
         <% end %>
