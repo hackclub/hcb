@@ -459,7 +459,7 @@ input:where([data-behavior='otp_input']) {
   width: 100%;
 
   position: absolute;
-  top: 105%;
+  top: 110%;
   left: 0px;
 
   background-color: $smoke;
@@ -469,6 +469,40 @@ input:where([data-behavior='otp_input']) {
   }
 
   display: none;
+  opacity: 0;
+}
+
+.dropdown-button-menu-hidden {
+  animation: dropdown-button-menu-close 0.1s ease-out forwards;
+}
+
+.dropdown-button-menu-show {
+  animation: dropdown-button-menu-open 0.1s ease-out forwards;
+  display: flex;
+}
+
+@keyframes dropdown-button-menu-open {
+  from {
+    opacity: 0;
+    display: none;
+  }
+
+  to {
+    opacity: 1;
+    display: flex;
+  }
+}
+
+@keyframes dropdown-button-menu-close {
+  from {
+    opacity: 1;
+    display: flex;
+  }
+
+  to {
+    opacity: 0;
+    display: none;
+  }
 }
 
 .dropdown-button-menu div {

@@ -29,7 +29,8 @@ export default class extends Controller {
   }
 
   updateMenu() {
-    this.menuTarget.style = this.open ? "display: block;" : "display: none;"
+    this.menuTarget.classList.remove(this.open ? "dropdown-button-menu-hidden" : "dropdown-button-menu-show");
+    this.menuTarget.classList.add(this.open ? "dropdown-button-menu-show" : "dropdown-button-menu-hidden");
   }
 
   handleDocumentClick(event) {

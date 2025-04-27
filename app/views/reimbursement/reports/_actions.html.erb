@@ -24,7 +24,7 @@
                   <%= inline_icon "down-caret" %>
                 </button>
               </div>
-              <div class="dropdown-button-menu" data-dropdown-button-target="menu">
+              <div class="dropdown-button-menu dropdown-button-menu-hidden" data-dropdown-button-target="menu">
                 <div>
                   <%= form.radio_button :type, :standard, { data: { action: "change->dropdown-button#change", "dropdown-button-target": "select" } } %>
                   <%= form.label :type, value: :standard do %>
