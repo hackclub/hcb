@@ -41,7 +41,21 @@
             <% if pt.local_hcb_code.stripe_reversed_by_merchant? %>
               <%= badge_for "Reversed", class: "bg-info m0 mr1" %>
             <% else %>
-              <%= badge_for "Declined", class: "bg-error m0 mr1" %>
+              <action data-behavior="modal_trigger" data-modal="declined_information_pt_<%= instance %>" class="pointer" tabindex="0">
+                <span class="badge m-0 pr-[6px] mr-2 bg-error">
+                  Declined
+                  <%= inline_icon :info, size: 16 %>
+                </span>
+              </action>
+              <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_pt_<%= instance %>">
+                <%= modal_header "Transaction declined" %>
+
+                <%= render partial: "hcb_codes/decline_reason", locals: {
+                      hcb_code: pt.local_hcb_code,
+                      include_troubleshooting: true,
+                      include_external: true
+                    } %>
+              </section>
             <% end %>
           <% else %>
             <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>

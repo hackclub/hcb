@@ -1,34 +1,12 @@
-<% if @reason == "card_inactive" && !@card.initially_activated? %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your card ending in <%= @card.last4 %> at '<%= @merchant %>' was declined because this card hasn't been activated yet.
-  <br><br>
-  Activate your new card <%= link_to "here", stripe_card_url(@card) %>!
-<% elsif @reason == "card_inactive" %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your card ending in <%= @card.last4 %> at '<%= @merchant %>' was declined because this card has been frozen.
 
-  You can defrost your card at any time <%= link_to "here", stripe_card_url(@card) %>.
-<% elsif @reason == "suspected_fraud" || @reason == "verification_failed" %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your card ending in <%= @card.last4 %> at '<%= @merchant %>' was declined due to suspected fraud.
+<%= render partial: "hcb_codes/decline_reason", locals: {
+      canonical_pending_transaction: @cpt,
+      include_troubleshooting: true,
+      include_external: true,
+      is_email: true
+    } %>
 
-  <% if @failed_verification_checks.any? %>
-    <br><br>
-    Specifically, the <strong><%= t(@failed_verification_checks, scope: :stripe_verification_checks).to_sentence %></strong> didn't match what we have on file.
-  <% end %>
-
-  <br><br>
-
-  If you meant to make this purchase, make sure you have the correct numbers by visiting <%= link_to "your card's page", stripe_card_url(@card) %>.
-
-  <br><br>
-
-  <strong>If you didn't authorize this purchase,</strong> <%= link_to "click here", stripe_card_url(@card) %> to freeze your card immediately.
-<% elsif @reason == "webhook_declined" && @webhook_declined_reason == "merchant_not_allowed" %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your <%= @card.event.name %> card ending in <%= @card.last4 %> was declined because this card isn't allowed to make purchases at '<%= @merchant %>'. If you believe this merchant should be allowed, please contact the <%= @card.event.name %> team for assistance.
-<% elsif @reason == "webhook_declined" && @webhook_declined_reason == "cash_withdrawals_not_allowed" %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your <%= @card.event.name %> card ending in <%= @card.last4 %> was declined because this card isn't allowed to make cash withdrawals.
-<% elsif @reason == "webhook_declined" %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your <%= @card.event.name %> card ending in <%= @card.last4 %> at '<%= @merchant %>' was declined due to insufficient funds on the card.
-
-  <br><br>
+<% if @cpt.hcb_decline_reason == :inadequate_balance %>
 
   <% if @card.subledger.present? || @card.active_spending_control %>
     The balance available on this card is <%= render_money @card.balance_available %>.
@@ -38,14 +16,6 @@
   <% else %>
     The account balance for <%= @event.name %> is <%= render_money @card.balance_available %>.
   <% end %>
-<% elsif @card.canceled? %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your card ending in <%= @card.last4 %> at '<%= @merchant %>' was declined because this card has been canceled.
-  <% if @card.replacement %>
-    <br><br>
-    It was replaced by <%= link_to "this card", stripe_card_url(@card.replacement) %> ending in <%= @card.replacement.last4 %>.
-  <% end %>
-<% else %>
-  A <%= humanized_money_with_symbol @cpt.amount.abs %> charge to your card ending in <%= @card.last4 %> at '<%= @merchant %>' was declined.
 <% end %>
 
 <p>
