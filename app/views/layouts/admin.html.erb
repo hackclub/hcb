@@ -32,6 +32,7 @@
            Ledger: [ledger_admin_index_path, CanonicalTransaction.not_stripe_top_up.unmapped.count, %i[]],
            "Pending Ledger": [pending_ledger_admin_index_path, CanonicalPendingTransaction.unsettled.count, %i[counter]],
            "Raw Transactions": [raw_transactions_admin_index_path, RawCsvTransaction.unhashed.count, %i[]],
+           "Intrafi Transactions": [raw_intrafi_transactions_admin_index_path, RawIntrafiTransaction.count, %i[counter]],
            "HCB codes": [hcb_codes_admin_index_path, 0, %i[counter]],
            "Audits": [admin_ledger_audits_path, Admin::LedgerAudit.pending.count, %i[]]
          },
@@ -137,7 +138,7 @@
       </div>
     </nav>
 
-    <% flash.each do |key, value| %>
+    <% flash.to_h.slice("success", "error").each do |key, value| %>
       <% if key == "error" %>
         <p style="text-align:center;background:red;color:white;"><%= value %></p>
       <% elsif key == "success" %>
