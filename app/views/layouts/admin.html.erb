@@ -138,7 +138,7 @@
       </div>
     </nav>
 
-    <% flash.to_h.slice("success", "error").each do |key, value| %>
+    <% flash.to_h.exclude("imported_transactions", "file").each do |key, value| %>
       <% if key == "error" %>
         <p style="text-align:center;background:red;color:white;"><%= value %></p>
       <% elsif key == "success" %>
