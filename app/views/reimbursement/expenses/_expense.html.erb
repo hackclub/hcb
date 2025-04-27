@@ -102,7 +102,7 @@
         <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
         <%= form.select(:reimbursement_report_id,
             current_user.admin? ?
-              (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
+              (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
             current_user == expense.report.user ?
               current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
               expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
