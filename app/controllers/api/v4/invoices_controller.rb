@@ -48,10 +48,6 @@ module Api
           sponsor_address_country: sponsor_attrs[:address_country]
         ).run
     
-        unless OrganizerPosition.find_by(user: @invoice.creator, event: @event)&.manager?
-          InvoiceMailer.with(invoice: @invoice).notify_organizers_sent.deliver_later
-        end
-    
         render :show
       rescue Pundit::NotAuthorizedError
         raise
