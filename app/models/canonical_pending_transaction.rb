@@ -170,6 +170,22 @@ class CanonicalPendingTransaction < ApplicationRecord
     @declined ||= canonical_pending_declined_mapping.present?
   end
 
+  def stripe_decline_reason
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history", 0, "reason")&.to_sym
+  end
+
+  def hcb_decline_reason
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("metadata", "declined_reason")&.to_sym
+  end
+
+  def decline_reason
+    hcb_decline_reason || stripe_decline_reason
+  end
+
+  def declined_by
+    hcb_decline_reason ? "HCB" : "Stripe"
+  end
+
   def unsettled?
     @unsettled ||= !settled? && !declined?
   end

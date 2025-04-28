@@ -63,8 +63,10 @@ class HcbCode < ApplicationRecord
     receipts "Has receipt?" do |receipts| receipts.exists? end
   end
 
-  def popover_path
-    "/hcb/#{hashid}?frame=true"
+  def popover_path(**params)
+    author_img_param = "&transaction_show_author_img=#{params[:transaction_show_author_img]}" if params[:transaction_show_author_img]
+    receipt_button_param = "&transaction_show_receipt_button=#{params[:transaction_show_receipt_button]}" if params[:transaction_show_receipt_button]
+    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}"
   end
 
   def receipt_upload_email
@@ -388,6 +390,8 @@ class HcbCode < ApplicationRecord
       ach_transfer
     elsif paypal_transfer? && paypal_transfer&.reimbursement_payout_holding.present?
       paypal_transfer
+    elsif wire? && wire&.reimbursement_payout_holding.present?
+      wire
     else
       nil
     end
@@ -450,7 +454,7 @@ class HcbCode < ApplicationRecord
   # HCB-300: ACH Transfers (receipts required starting from Feb. 2024)
   # HCB-310: Wires
   # HCB-350: PayPal Transfers
-  # HCB-400 & HCB-402: Checks & Increase Checks (receipts required starting from Feb. 2024)
+  # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024)
   # HCB-600: Stripe card charges (always required)
   # @sampoder
 
@@ -460,7 +464,7 @@ class HcbCode < ApplicationRecord
       .where("(hcb_codes.hcb_code LIKE 'HCB-600%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-402%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-350%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-310%' AND canonical_pending_declined_mappings.id IS NULL)
               ")

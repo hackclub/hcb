@@ -2,7 +2,7 @@
   <ul class="list-reset">
     <% @event.versions.select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } }.map do |version| %>
       <li>
-        <div><%= user_mention User.find_by(id: version.whodunnit), {}, "Unknown User" %> <%= version.event %>d <span class="muted tooltipped tooltipped--n" style="cursor: default" aria-label="<%= version.created_at.strftime("%b %e, %Y") %>"><%= time_ago_in_words version.created_at %> ago</span></div>
+        <div><%= user_mention User.find_by(id: version.whodunnit), default_name: "Unknown User" %> <%= version.event %>d <span class="muted tooltipped tooltipped--n" style="cursor: default" aria-label="<%= version.created_at.strftime("%b %e, %Y") %>"><%= time_ago_in_words version.created_at %> ago</span></div>
         <% if version.event == "update" %>
           <ul class="list-reset">
             <% version.changeset.excluding("updated_at").select { |field, changes| changes.any?(&:present?) }.each do |field, changes| %>

@@ -47,6 +47,8 @@ Rails.application.routes.draw do
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
 
+  resources :raffles, only: [:new, :create]
+
   resources :receipts, only: [:create, :destroy] do
     collection do
       post "link"
@@ -194,6 +196,8 @@ Rails.application.routes.draw do
       get "raw_transactions", to: "admin#raw_transactions"
       get "raw_transaction_new", to: "admin#raw_transaction_new"
       post "raw_transaction_create", to: "admin#raw_transaction_create"
+      get "raw_intrafi_transactions", to: "admin#raw_intrafi_transactions"
+      post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
       get "stripe_cards", to: "admin#stripe_cards"
       get "pending_ledger", to: "admin#pending_ledger"
@@ -228,6 +232,7 @@ Rails.application.routes.draw do
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
+      get "unknown_merchants", to: "admin#unknown_merchants"
 
     end
 
@@ -378,7 +383,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :wires, only: [] do
+  resources :wires, only: [:edit, :update] do
     member do
       post "approve"
       post "send", to: "wires#send_wire"
@@ -589,7 +594,7 @@ Rails.application.routes.draw do
 
         resources :transactions, only: [:show]
 
-        resources :stripe_cards, path: "cards", only: [:show, :update] do
+        resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           member do
             get "transactions"
             get "ephemeral_keys"
@@ -613,6 +618,7 @@ Rails.application.routes.draw do
   post "api/v1/users/find", to: "api#user_find"
   post "api/v1/events/create_demo", to: "api#create_demo_event"
   get "api/current_user", to: "api#the_current_user"
+  get "api/flags", to: "api#flags"
 
   post "twilio/webhook", to: "twilio#webhook"
   post "stripe/webhook", to: "stripe#webhook"
@@ -648,6 +654,7 @@ Rails.application.routes.draw do
     end
   end
 
+  match "/400", to: "errors#bad_request", via: :all
   match "/404", to: "errors#not_found", via: :all
   match "/500", to: "errors#internal_server_error", via: :all
   match "/504", to: "errors#timeout", via: :all

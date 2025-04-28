@@ -256,6 +256,54 @@ class AdminController < ApplicationController
     redirect_to raw_transaction_new_admin_index_path, flash: { error: e.message }
   end
 
+  def raw_intrafi_transactions
+    @page = params[:page] || 1
+    @per = params[:per] || 100
+
+    @count = RawIntrafiTransaction.count
+    @imported = flash[:imported_transactions] || []
+    @raw_imported_file = flash[:file]
+
+    @raw_intrafi_transactions = RawIntrafiTransaction.page(@page).per(@per).order("date_posted desc")
+  end
+
+  def raw_intrafi_transactions_import
+    file = params[:file].read.force_encoding("UTF-8")
+
+    transactions = []
+
+    CSV.parse(file, headers: true) do |row|
+      date_posted, memo, amount = row.to_h.values
+      transactions << {
+        date_posted: Date.strptime(date_posted, "%m/%d/%Y"),
+        memo:,
+        amount_cents: amount.to_i * 100
+      }
+    end
+
+    raw_intrafi_transactions = []
+
+    ActiveRecord::Base.transaction do
+      transactions.each do |tx|
+        date_posted, memo, amount_cents = tx.values_at(:date_posted, :memo, :amount_cents)
+
+        unless RawIntrafiTransaction.where(date_posted:, memo:, amount_cents:).count > 0
+          raw_intrafi_transactions << RawIntrafiTransaction.create!(date_posted:, memo:, amount_cents:)
+        end
+      end
+    end
+
+    duplicates = transactions.count - raw_intrafi_transactions.count
+
+    redirect_to raw_intrafi_transactions_admin_index_path, flash: {
+      success: "Successfully imported #{raw_intrafi_transactions.count} transactions (#{duplicates} duplicates)",
+      imported_transactions: raw_intrafi_transactions.pluck(:id),
+      file:
+    }
+  rescue => e
+    redirect_to raw_intrafi_transactions_admin_index_path, flash: { error: e.message }
+  end
+
   def ledger
     @page = params[:page] || 1
     @per = params[:per] || 100
@@ -899,7 +947,7 @@ class AdminController < ApplicationController
 
     has_existing_key = @g_suite.verification_key.present?
 
-    GSuiteJob::SetVerificationKey.perform_later(@g_suite.id)
+    GSuite::SetVerificationKeyJob.perform_later(@g_suite.id)
 
     redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "#{has_existing_key ? 'Updated verification key' : 'Approved'} (it may take a few seconds for the dashboard to reflect this change)" }
   end
@@ -913,7 +961,7 @@ class AdminController < ApplicationController
   end
 
   def google_workspaces_verify_all
-    GSuiteJob::VerifyAll.perform_later
+    GSuite::VerifyAllJob.perform_later
 
     redirect_to google_workspaces_admin_index_path, flash: { success: "Verification in progress. It may take a few minutes for domains to reflect updated verification statuses." }
   end
@@ -1181,6 +1229,32 @@ class AdminController < ApplicationController
 
   end
 
+  def unknown_merchants
+    @merchants = Rails.cache.fetch("admin_unknown_merchants", expires_in: 12.hours) do
+      RawStripeTransaction.all.group_by { |rst| rst.stripe_transaction["merchant_data"]["network_id"] }.map do |network_id, rsts|
+        memos = rsts.map do |rst|
+          {
+            memo: rst.stripe_transaction["merchant_data"]["name"],
+            url: rst.stripe_transaction["merchant_data"]["url"],
+            authorization: rst.stripe_authorization_id
+          }
+        end.uniq { |memo| memo[:memo] }
+
+        memos = memos.map do |memo|
+          memo[:occurrences] = memos.count { |m| m[:memo] == memo[:memo] }
+
+          memo
+        end.sort_by{ |memo| memo[:occurrences] }
+
+        {
+          network_id:,
+          memos:,
+          total_transactions: rsts.count,
+        }
+      end.reject { |data| data[:total_transactions] < 30 || YellowPages::Merchant.lookup(network_id: data[:network_id]).in_dataset? }.sort_by { |data| data[:total_transactions] }.reverse
+    end
+  end
+
   def merchant_memo_check
     @data = YellowPages::Merchant.merchants.map do |network_id, merchant|
       {
@@ -1339,7 +1413,8 @@ class AdminController < ApplicationController
                  .body
 
     hackathons.dig("status", "pending", "meta", "count")
-  rescue Faraday::Error
+  rescue => e
+    Rails.error.report(e)
     9999
   end
 
@@ -1349,20 +1424,12 @@ class AdminController < ApplicationController
       case task_name
       when :pending_hackathons_airtable
         hackathons_task_size
-      when :pending_grant_airtable
-        airtable_task_size :grant
       when :pending_bank_applications_airtable
         airtable_task_size :bank_applications
       when :pending_onboard_id_airtable
         airtable_task_size :onboard_id
-      when :pending_stickermule_airtable
-        airtable_task_size :stickermule
       when :pending_stickers_airtable
         airtable_task_size :stickers
-      when :pending_wallets_airtable
-        airtable_task_size :wallets
-      when :pending_replit_airtable
-        airtable_task_size :replit
       when :pending_onepassword_airtable
         airtable_task_size :onepassword
       when :pending_domains_airtable
@@ -1417,13 +1484,9 @@ class AdminController < ApplicationController
   def pending_tasks
     # This method could take upwards of 10 seconds. USE IT SPARINGLY
     pending_task :pending_hackathons_airtable
-    pending_task :pending_grant_airtable
     pending_task :pending_bank_applications_airtable
     pending_task :pending_onboard_id_airtable
-    pending_task :pending_stickermule_airtable
     pending_task :pending_stickers_airtable
-    pending_task :pending_wallets_airtable
-    pending_task :pending_replit_airtable
     pending_task :pending_onepassword_airtable
     pending_task :pending_domains_airtable
     pending_task :pending_pvsa_airtable

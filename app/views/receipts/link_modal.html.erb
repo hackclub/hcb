@@ -17,6 +17,8 @@
       <%= form.hidden_field :receiptable_type, value: @receiptable.class %>
       <%= form.hidden_field :show_link, value: @show_link %>
       <%= (form.hidden_field :popover, value: @popover) if defined?(@popover) %>
+      <%= form.hidden_field :show_receipt_button, value: @show_receipt_button %>
+      <%= form.hidden_field :show_author_img, value: @show_author_img %>
 
       <ul class="grid grid--narrow left-align w-100 grid--spacious mt0 justify-center">
         <% @receipts.each do |receipt| %>

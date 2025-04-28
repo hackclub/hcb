@@ -14,9 +14,11 @@
     You'll receive an ACH transfer of <%= render_money @report.amount_to_reimburse %> from us in approximately 2-3 business days.
   <% elsif @report.user&.payout_method&.kind == "paypal_transfer" %>
     You'll receive an PayPal transfer of <%= render_money @report.amount_to_reimburse %> from us in approximately 2-3 business days.
+  <% elsif @report.user&.payout_method&.kind == "international_wire" %>
+    You'll receive an international wire transfer of <%= render_money @report.amount_to_reimburse %> USD from us in approximately 2-3 business days.
   <% else %>
     We don't have a payout method on file for you, <%= link_to "please configure one here", settings_payouts_url %>
-    to receive the  <%= render_money @report.amount_to_reimburse %> reimbursement.
+    to receive the <%= render_money @report.amount_to_reimburse %> reimbursement.
   <% end %>
 </p>
 

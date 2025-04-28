@@ -29,7 +29,7 @@ export default class extends Controller {
       question: 'Does your recipient live within the US?',
       yes: 2,
       no: {
-        type: 'wire',
+        type: 'International wire',
         link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
       },
     },
@@ -37,11 +37,11 @@ export default class extends Controller {
       id: 2,
       question: 'Do you have their account & routing number?',
       yes: {
-        type: 'ach',
-        link: 'https://help.hcb.hackclub.com/article/59-what-is-an-ach-transfer',
+        type: 'ACH transfer',
+        link: 'https://help.hcb.hackclub.com/article/60-what-is-an-ach-transfer',
       },
       no: {
-        type: 'check',
+        type: 'Mailed check',
         link: 'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
       },
     },
@@ -73,7 +73,7 @@ export default class extends Controller {
       this.yesClickHandler = () => this.renderQuestion(question.yes)
       this.noClickHandler = () => this.renderQuestion(question.no)
     } else {
-      this.answerTextTarget.innerHTML = `${payload.type.replace('ach', 'ACH')} transfer`
+      this.answerTextTarget.innerHTML = payload.type
       this.answerCTATarget.dataset.answer = payload.type
       this.learnMoreTarget.href = payload.link
 

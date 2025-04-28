@@ -318,7 +318,7 @@ class Event < ApplicationRecord
   validates :donation_header_image, content_type: [:png, :jpeg]
 
   has_one_attached :background_image
-  validates :background_image, content_type: [:png, :jpeg]
+  validates :background_image, content_type: [:png, :jpeg, :gif]
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
