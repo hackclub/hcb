@@ -53,9 +53,6 @@ module Api
         raise
       rescue => e
         Rails.error.report(e)
-    
-        @sponsor = Sponsor.new(event: @event)
-        @invoice = Invoice.new(sponsor: @sponsor)
 
         return render json: { error: e.message }, status: :internal_server_error
       end
