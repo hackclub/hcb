@@ -35,6 +35,8 @@
                 receipt_upload_form_config[:inline_linking] = true if @frame
                 receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
                 receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
+                receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
+                receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
                 render partial: "receipts/form_v3", locals: receipt_upload_form_config end %>
     <% end %>
   <% end %>

@@ -9,7 +9,13 @@ module HasWireRecipient
     validates_length_of :remittance_info, maximum: 140
 
     validate do
-      if IBAN_FORMATS[recipient_country.to_sym] && !account_number.match(IBAN_FORMATS[recipient_country.to_sym])
+      unless bic_code.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
+        errors.add(:bic_code, "is not a valid SWIFT / BIC code")
+      end
+    end
+
+    validate do
+      if IBAN_FORMATS[bank_country.to_sym] && !account_number.match(IBAN_FORMATS[bank_country.to_sym])
         errors.add(:account_number, "does not meet the required format for this country")
       end
     end
@@ -21,13 +27,7 @@ module HasWireRecipient
     end
 
     validate do
-      unless bic_code.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
-        errors.add(:bic_code, "is not a valid SWIFT / BIC code")
-      end
-    end
-
-    validate do
-      if recipient_country == "US"
+      if bank_country == "US"
         errors.add(:recipient_country, "International wires can not be sent to US bank accounts, please send an ACH transfer instead.")
       end
     end
@@ -379,4 +379,8 @@ module HasWireRecipient
       "Sole proprietor": "sole_proprietor"
     }
   }.freeze
+
+  def bank_country
+    ColumnService.get("/institutions/#{bic_code}")["country_code"] rescue recipient_country
+  end
 end

@@ -20,7 +20,7 @@ class IncreaseCheckPolicy < ApplicationPolicy
   private
 
   def admin_or_user?
-    OrganizerPosition.role_at_least?(user, record.event, :member)
+    user&.admin? || record.event.users.include?(user)
   end
 
   def user_who_can_transfer?

@@ -196,6 +196,8 @@ Rails.application.routes.draw do
       get "raw_transactions", to: "admin#raw_transactions"
       get "raw_transaction_new", to: "admin#raw_transaction_new"
       post "raw_transaction_create", to: "admin#raw_transaction_create"
+      get "raw_intrafi_transactions", to: "admin#raw_intrafi_transactions"
+      post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
       get "stripe_cards", to: "admin#stripe_cards"
       get "pending_ledger", to: "admin#pending_ledger"
@@ -230,6 +232,7 @@ Rails.application.routes.draw do
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
+      get "unknown_merchants", to: "admin#unknown_merchants"
 
     end
 
@@ -380,7 +383,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :wires, only: [] do
+  resources :wires, only: [:edit, :update] do
     member do
       post "approve"
       post "send", to: "wires#send_wire"

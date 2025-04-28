@@ -26,8 +26,11 @@ class ProcessColumnCheckDepositJob < ApplicationJob
       conn.post("/transfers/checks/image/back", { file: Faraday::Multipart::FilePart.new(file.path, check_deposit.back.content_type) }).body
     end
 
+    event = check_deposit.event
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
+
     column_check_deposit = ColumnService.post("/transfers/checks/deposit", bank_account_id: ColumnService::Accounts::FS_MAIN,
-                                                                           account_number_id: Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER),
+                                                                           account_number_id:,
                                                                            deposited_amount: check_deposit.amount_cents,
                                                                            currency_code: "USD",
                                                                            micr_line: front["micr_line"],
