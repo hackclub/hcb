@@ -1,0 +1,29 @@
+<% disabled = !policy(card_grant).create? %>
+
+<% if @event.card_grant_setting.present? %>
+  <p class="muted">See your <%= link_to "card grant settings", edit_event_path(@event, anchor: "card-grants"), data: { turbo_frame: "_top" } %>.</p>
+<% end %>
+
+<%= form_with model: [@event, card_grant], data: { turbo_frame: "_top" } do |form| %>
+  <div class="field">
+    <%= form.label :email %>
+    <%= form.email_field :email, value: @prefill_email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: %>
+  </div>
+
+  <div class="field">
+    <%= form.label :amount_cents, "Amount" %>
+    <div class="flex items-center">
+      <span class="bold muted shrink-none" style="width: 1rem;">$</span>
+      <%= form.number_field :amount_cents, value: (card_grant.amount_cents.nil? ? nil : ("%.2f" % (card_grant.amount_cents.to_f / 100))), placeholder: "10.00", required: true, min: 0.01, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, disabled: %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :purpose, "Purpose (optional, shown to recipient)" %>
+    <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled: %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit "Send grant", disabled: %>
+  </div>
+<% end %>

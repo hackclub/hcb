@@ -1,0 +1,9 @@
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="create_card_grant">
+  <%= turbo_frame_tag :transfer_form do %>
+    <%= modal_header "Send a grant" %>
+
+    <%= render "events/transfers/unauthorized_callout" unless policy(@event).create_transfer? %>
+
+    <%= render "card_grants/create_form", card_grant: @event.card_grants.build %>
+  <% end %>
+</section>
