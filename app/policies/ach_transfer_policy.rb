@@ -53,7 +53,7 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def admin_or_user?
-    OrganizerPosition.role_at_least?(user, record.event, :member)
+    user&.admin? || record.event.users.include?(user)
   end
 
   def admin_or_manager?
