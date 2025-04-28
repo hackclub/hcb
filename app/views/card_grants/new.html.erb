@@ -32,4 +32,11 @@
       <%= form.submit "Send grant", disabled: %>
     </div>
   <% end %>
+
+  <script>
+    // this is used to refresh the modal when someone clicks off of the card grant modal
+    $("body").on($.modal.CLOSE, function(event, m) {
+        Turbo.visit(window.location.pathname, { action: "replace" })
+    });
+  </script>
 <% end %>
