@@ -10,7 +10,7 @@
 
 <h2 class="mt5">Edit wire to <%= @wire.recipient_name %> (#<%= @wire.id %>)</h2>
 
-<hr class="mt1 mb1" />
+<hr class="mt1 mb1">
 
 <%= form_with(model: @wire, local: true, html: {
                 "x-data": "{ country: #{@wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"} }"
