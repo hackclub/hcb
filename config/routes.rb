@@ -383,7 +383,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :wires, only: [] do
+  resources :wires, only: [:edit, :update] do
     member do
       post "approve"
       post "send", to: "wires#send_wire"
