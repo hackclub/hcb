@@ -3,7 +3,7 @@
 module Api
   class InvoicePolicy < ApplicationPolicy
     def show?
-      record.event.is_public?
+      record.event.is_public? || OrganizerPosition.role_at_least?(user, record, :reader)
     end
 
     def create?
