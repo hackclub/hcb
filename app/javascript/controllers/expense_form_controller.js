@@ -108,7 +108,8 @@ export default class extends Controller {
 
   #memoInput() {
     if (this.enabledValue) {
-      // this.memoFieldTarget.focus()
+      console.log(this.memoFieldTarget)
+      this.memoFieldTarget?.focus()
     }
   }
 
