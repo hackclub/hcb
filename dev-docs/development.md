@@ -196,16 +196,6 @@ We've transitioned to using development keys and seed data in development, but h
 
 [Flipper](https://github.com/flippercloud/flipper) is used to toggle feature flags on HCB. Flipper can be accessed at [localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a flag, press "Add Feature", paste in the name of a feature from [this list](https://hcb.hackclub.com/api/flags), and then press "Fully Enable".
 
-## Sidekiq
-
-[Sidekiq](https://github.com/sidekiq/sidekiq) is the Active Job backend used for HCB, with features such as scheduled jobs and a web UI. While it is enabled in development, you may need to manually load schedule jobs (located in `config/schedule.yml`) using:
-
-```ruby
-Sidekiq::Cron::Job.load_from_hash YAML.load_file("config/schedule.yml")
-```
-
-in the Rails console (`bin/rails c`). The web UI is available at [localhost:3000/sidekiq](http://localhost:3000/sidekiq).
-
 ## Getting an OAuth token
 
 There is two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference.
