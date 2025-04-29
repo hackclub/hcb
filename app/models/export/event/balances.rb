@@ -73,7 +73,7 @@ class Export
             event.plan.revenue_fee_label,
             Rails.application.routes.url_helpers.url_for(event),
             event.balance,
-            event.omitted
+            event.omit_stats?
           ]
         )
       end
