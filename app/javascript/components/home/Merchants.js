@@ -16,7 +16,7 @@ export default function Merchants({ data }) {
   const isDark = useDarkMode()
 
   return (
-    <ResponsiveContainer width="100%" height={420} style={{ marginLeft: -50 }}>
+    <ResponsiveContainer width="100%" height={420}>
       <BarChart data={data}>
         <YAxis
           tickFormatter={n => USDollarNoCents.format(n)}
