@@ -1065,6 +1065,12 @@ class AdminController < ApplicationController
   def bookkeeping
   end
 
+  def request_balance_export
+    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user).id)
+    flash[:success] = "We've emailed you an export of all HCB organizations' balances."
+    redirect_back(fallback_location: root_path)
+  end
+
   def balances
     @start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
     @end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil

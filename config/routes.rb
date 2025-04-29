@@ -233,7 +233,7 @@ Rails.application.routes.draw do
       get "email", to: "admin#email"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "unknown_merchants", to: "admin#unknown_merchants"
-
+      post "request_balance_export", to: "admin#request_balance_export"
     end
 
     member do
