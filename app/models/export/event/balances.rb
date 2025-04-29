@@ -70,7 +70,7 @@ class Export
             event.postal_code,
             event.config.contact_email,
             event.users.pluck(:email).join(", "),
-            event.revenue_fee_label,
+            event.plan.revenue_fee_label,
             Rails.application.routes.url_helpers.url_for(event),
             event.balance,
             event.omitted
