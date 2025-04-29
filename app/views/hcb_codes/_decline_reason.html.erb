@@ -1,12 +1,12 @@
 <%# locals: (hcb_code: nil, canonical_pending_transaction: nil, include_troubleshooting: false, include_external: true, is_email: false) %>
 
 <% pt = local_assigns[:canonical_pending_transaction] || hcb_code.pt %>
-<% hcb_code ||= pt.local_hcb_code %>
+<% hcb_code ||= pt&.local_hcb_code %>
 
-<% hcb_decline_reason = pt.hcb_decline_reason %>
-<% stripe_decline_reason = pt.stripe_decline_reason %>
+<% hcb_decline_reason = pt&.hcb_decline_reason %>
+<% stripe_decline_reason = pt&.stripe_decline_reason %>
 
-<% this_transaction = local_assigns[:is_email] ?
+<% this_transaction = local_assigns[:is_email] && pt.present? ?
     "A #{humanized_money_with_symbol pt.amount.abs} charge to your card ending in #{hcb_code.stripe_card.last4} at '#{pt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]}'"
    : "This transaction" %>
 
@@ -93,7 +93,7 @@
         <% elsif stripe_decline_reason.in? %i[cardholder_verification_required insufficient_funds] %>
             This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
         <% elsif stripe_decline_reason == :insecure_authorization_method %>
-            <% auth_method = pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] %>
+            <% auth_method = pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("authorization_method") %>
             <% if auth_method == "swipe" %>
                 Your card was swiped, which can be considered insecure in some cases. Try again using chip or contactless, if possible.
             <% elsif auth_method == "keyed_in" %>
@@ -102,7 +102,7 @@
                 The card issuer deemed this transaction insecure. Try again using chip, if possible.
             <% end %>
         <% elsif stripe_decline_reason.in? %i[verification_failed suspected_fraud] %>
-            <% verification_data = pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
+            <% verification_data = pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("verification_data") %>
             <% card_details = capture do %>
                 <% if defined?(current_user) && hcb_code.stripe_card.user == current_user %>
                     <%= link_to "your card details", stripe_card_path(hcb_code.stripe_card) %>
