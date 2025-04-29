@@ -532,7 +532,7 @@ input:where([data-behavior='otp_input']) {
 .dropdown-button__menu label:hover {
   background-color: color-mix(in srgb, $slate 20%, transparent);
 }
-.dropdown-button__menu input:checked+label {
+.dropdown-button__menu input:checked + label {
   background-color: color-mix(in srgb, $green-dark 20%, transparent);
 }
 
@@ -544,7 +544,7 @@ input:where([data-behavior='otp_input']) {
   transition:
     transform 0.125s ease-in-out,
     box-shadow 0.25s ease-in-out;
-    
+
   &:hover,
   &:focus,
   &[aria-expanded='true'] {
