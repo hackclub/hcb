@@ -15,7 +15,11 @@
         b--<%= expense.status_color %>
         <%= "translucent" if expense.rejected? && !expense.report.rejected? %>
       "
-      data-expense-form-target="card">
+      data-expense-form-target="card"
+      <% if new %>
+        data-controller="scroll-into-view"
+        data-scroll-into-view-alignment-value="center"
+      <% end %>>
       <div class="card__banner secondary mb2 border-bottom flex items-center" style="gap: 8px">
           <% if expense.report.initial_draft? %>
             <code class="bg-white click_to_mention">
