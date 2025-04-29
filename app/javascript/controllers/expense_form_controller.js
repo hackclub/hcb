@@ -77,7 +77,7 @@ export default class extends Controller {
     }
 
     if (e) {
-      e.target?.focus()
+      // e.target?.focus()
     }
   }
 
@@ -102,13 +102,13 @@ export default class extends Controller {
     }
 
     if (e) {
-      e.target?.focus()
+      // e.target?.focus()
     }
   }
 
   #memoInput() {
     if (this.enabledValue) {
-      this.memoFieldTarget.focus()
+      // this.memoFieldTarget.focus()
     }
   }
 
