@@ -43,5 +43,4 @@ Note that this will only create an authorization, which is not the actual transa
 TransactionEngine::NightlyJob.perform_now
 ```
 
-
 For more information on how card transactions work, see [the card transactions guide](./guides/card_transactions.md).
