@@ -455,12 +455,7 @@ input:where([data-behavior='otp_input']) {
   color: inherit !important;
 }
 
-.dropdown-button {
-  position: relative;
-  width: fit-content;
-}
-
-.dropdown-button-menu {
+.dropdown-button__menu {
   width: 100%;
 
   position: absolute;
@@ -479,16 +474,16 @@ input:where([data-behavior='otp_input']) {
   z-index: 10;
 }
 
-.dropdown-button-menu-hidden {
-  animation: dropdown-button-menu-close 0.1s ease-out forwards;
+.dropdown-button__menu--hidden {
+  animation: dropdown-button__menu--close 0.1s ease-out forwards;
 }
 
-.dropdown-button-menu-show {
-  animation: dropdown-button-menu-open 0.1s ease-out forwards;
+.dropdown-button__menu--show {
+  animation: dropdown-button__menu--open 0.1s ease-out forwards;
   display: flex;
 }
 
-@keyframes dropdown-button-menu-open {
+@keyframes dropdown-button__menu--open {
   from {
     opacity: 0;
     display: none;
@@ -500,7 +495,7 @@ input:where([data-behavior='otp_input']) {
   }
 }
 
-@keyframes dropdown-button-menu-close {
+@keyframes dropdown-button__menu--close {
   from {
     opacity: 1;
     display: flex;
@@ -512,7 +507,7 @@ input:where([data-behavior='otp_input']) {
   }
 }
 
-.dropdown-button-menu div {
+.dropdown-button__menu div {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -521,43 +516,27 @@ input:where([data-behavior='otp_input']) {
   border-radius: 0.3rem;
 }
 
-.dropdown-button-menu input {
+.dropdown-button__menu input {
   display: none;
 }
 
-.dropdown-button-menu label {
+.dropdown-button__menu label {
   padding: 0.5rem 1rem;
   border-radius: inherit;
 }
 
-.dropdown-button-menu label p {
+.dropdown-button__menu label p {
   margin: 3px 0px;
 }
 
-.dropdown-button-menu label:hover {
+.dropdown-button__menu label:hover {
   background-color: color-mix(in srgb, $slate 20%, transparent);
 }
-.dropdown-button-menu input:checked+label {
+.dropdown-button__menu input:checked+label {
   background-color: color-mix(in srgb, $green-dark 20%, transparent);
 }
 
-.btn-dropdown {
-  border-radius: 0.75rem 0px 0px 0.75rem;
-  transform: unset !important;
-}
-
-.btn-dropdown-toggle {
-  border-radius: 0px 0.75rem 0.75rem 0px;
-  width: 3rem;
-  margin-left: 2px;
-  transform: unset !important;
-}
-
-.btn-dropdown-toggle svg {
-  margin-right: 0px;
-}
-
-.dropdown-button-container {
+.dropdown-button__container {
   display: flex;
   border-radius: 0.75rem;
 
