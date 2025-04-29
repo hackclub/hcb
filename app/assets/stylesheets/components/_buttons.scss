@@ -68,6 +68,7 @@ input[type='submit'],
 
   &.bg-warning {
     @include gradient(warning);
+    color: darken(map-get($palette, warning), 33.3%) !important;
   }
 
   &.bg-purple {
