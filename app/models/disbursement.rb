@@ -309,7 +309,7 @@ class Disbursement < ApplicationRecord
   end
 
   def transaction_memo
-    "HCB-#{local_hcb_code.short_code}"
+    "HCB DISBURSE #{id}"
   end
 
   def special_appearance_name
