@@ -58,22 +58,28 @@ class Export
       end
 
       def header
-        ::CSV::Row.new(headers, ["name", "url", "balance"], true)
+        ::CSV::Row.new(headers, ["id", "name", "postal_code", "contact email", "organizers", "revenue fee", "url", "balance", "omitted?"], true)
       end
 
       def row(event)
         ::CSV::Row.new(
           headers,
           [
+            event.id,
             event.name,
+            event.postal_code,
+            event.config.contact_email,
+            event.users.pluck(:email).join(", "),
+            event.plan.revenue_fee_label,
             Rails.application.routes.url_helpers.url_for(event),
-            event.balance
+            event.balance,
+            event.omit_stats?
           ]
         )
       end
 
       def headers
-        [:name, :url, :balance]
+        [:id, :name, :postal_code, :contact_email, :organizers, :url, :balance]
       end
 
     end
