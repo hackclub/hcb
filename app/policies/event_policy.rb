@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class EventPolicy < ApplicationPolicy
-  def index?
-    user.present?
-  end
-
   # Event homepage
   def show?
     is_public || auditor_or_reader?
@@ -25,6 +21,10 @@ class EventPolicy < ApplicationPolicy
 
   def toggle_hidden?
     user&.admin?
+  end
+
+  def index?
+    is_public || admin_or_user?
   end
 
   def new?
@@ -190,6 +190,10 @@ class EventPolicy < ApplicationPolicy
   end
 
   private
+
+  def admin_or_user?
+    admin? || record.users.include?(user)
+  end
 
   def admin_or_member?
     admin? || member?
