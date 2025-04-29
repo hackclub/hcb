@@ -1,7 +1,7 @@
 <%# locals: (hcb_code: nil, canonical_pending_transaction: nil, include_troubleshooting: false, include_external: true, is_email: false) %>
 
 <% pt = local_assigns[:canonical_pending_transaction] || hcb_code.pt %>
-<% hcb_code ||= pt&.local_hcb_code %>
+<% hcb_code ||= pt.local_hcb_code %>
 
 <% hcb_decline_reason = pt&.hcb_decline_reason %>
 <% stripe_decline_reason = pt&.stripe_decline_reason %>
