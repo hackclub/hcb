@@ -25,8 +25,9 @@ class Login < ApplicationRecord
   belongs_to :user
   belongs_to :user_session, optional: true
 
-  has_encrypted :browser_token, migrating: true
-  has_secure_token :browser_token
+  has_encrypted :browser_token
+  self.ignored_columns += ["browser_token"]
+  before_validation :ensure_browser_token
 
   store :authentication_factors, accessors: [:sms, :email, :webauthn, :totp], prefix: :authenticated_with
 
@@ -70,6 +71,12 @@ class Login < ApplicationRecord
 
   def authentication_factors_count
     authentication_factors.values.count(true)
+  end
+
+  def ensure_browser_token
+    # Avoid generating a new token if one is already encrypted
+    return if self[:browser_token_ciphertext].present?
+    self.browser_token ||= SecureRandom.base58(24)
   end
 
 end
