@@ -80,13 +80,13 @@
           <p class="bold mb0 mt0">Transactions more than...</p>
           <div class="flex mb1">
             <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
-            <%= form.text_field :minimum_amount, placeholder: "50.00", value: @minimum_amount, step: 0.01, data: { "behavior": "money" } %>
+            <%= form.number_field :minimum_amount, placeholder: "50.00", value: @minimum_amount, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
           </div>
 
           <p class="bold mb0 mt0">Transactions less than...</p>
           <div class="flex mb1">
             <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
-            <%= form.text_field :maximum_amount, placeholder: "50.00", value: @maximum_amount, step: 0.01, data: { "behavior": "money" } %>
+            <%= form.number_field :maximum_amount, placeholder: "500.00", value: @maximum_amount, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
           </div>
 
           <% request.query_parameters.except(:minimum_amount, :maximum_amount).each do |key, value| %>

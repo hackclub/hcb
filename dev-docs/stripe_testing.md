@@ -38,4 +38,10 @@ Stripe also lets you simulate charges on an issued card! First, issue a virtual 
 
 From here, you can fill out any data you wish - most is optional. If you'd like to simulate a charge from a specific merchant, check out the [`yellow_pages` merchants file](https://github.com/hackclub/yellow_pages/blob/main/lib/yellow_pages/merchants.yaml) - this contains network IDs for a ton of common merchants.
 
+Note that this will only create an authorization, which is not the actual transaction. It will show up as a pending transaction on the transactions page. Stripe will let you capture the authorization by pressing the "Capture" button in the top-right after creating the authorization. Once you capture, you must run `TransactionEngine::NightlyJob` for HCB to mark the transaction as settled - you can do this in the Rails console:
+
+```ruby
+TransactionEngine::NightlyJob.perform_now
+```
+
 For more information on how card transactions work, see [the card transactions guide](./guides/card_transactions.md).

@@ -62,10 +62,12 @@
             <%= inline_icon :info, size: 20 %>
           </span>
         <% elsif @hcb_code.pt.declined? %>
-          <span class="badge h4 md-right bg-accent">
-            Declined
-            <%= inline_icon :info, size: 20 %>
-          </span>
+          <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
+            <span class="badge h4 md-right bg-accent">
+              Declined
+              <%= inline_icon :info, size: 20 %>
+            </span>
+          </action>
         <% else %>
           <span class="badge h4 md-right bg-muted">
             Pending
@@ -116,29 +118,18 @@
 
     <section class="details details--wide pt2 pb2 details--tall">
       <% if @hcb_code.pt&.declined? %>
-        <% reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]&.[]("reason") %>
+        <% reason = @hcb_code.pt.decline_reason %>
         <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
         <p>
-        <strong>Declined</strong>
-        <span>
-          <% if reason == "card_inactive" && !@hcb_code.stripe_card.initially_activated? %>
-            <em>This transaction was declined by HCB as this card isn't activated.</em>
-          <% elsif reason == "card_inactive" %>
-            <em>This transaction was declined by HCB as this card is frozen.</em>
-          <% elsif reason == "suspected_fraud" || reason == "verification_failed" %>
-            <em>This transaction was declined by HCB due to failed suspected fraud / failed checks.</em>
-          <% elsif reason == "webhook_declined" && webhook_declined_reason == "merchant_not_allowed" %>
-            <em>This transaction was declined by HCB because this merchant is not allowed.</em>
-          <% elsif reason == "webhook_declined" && webhook_declined_reason == "cash_withdrawals_not_allowed" %>
-            <em>This transaction was declined by HCB because cash withdrawals were not enabled on the card.</em>
-          <% elsif reason == "webhook_declined" %>
-            <em>This transaction was declined by HCB due to insufficient funds.</em>
-          <% elsif @hcb_code.stripe_reversed_by_merchant? %>
-            <em>This transaction was reversed by the merchant.</em>
-          <% else %>
-            <em>This transaction was declined.</em>
-          <% end %>
-        </span>
+          <strong>Declined</strong>
+          <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
+
+            <%= render partial: "hcb_codes/decline_reason", locals: {
+                  hcb_code: @hcb_code,
+                  include_troubleshooting: false,
+                  include_external: true
+                } %>
+          </action>
         </p>
       <% end %>
       <% if @hcb_code.pt&.unsettled? %>
@@ -370,6 +361,16 @@
           Details are provided by the merchant and not guaranteed to be correct.
         </p>
       </article>
+    </section>
+
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
+      <%= modal_header "Transaction declined" %>
+
+      <%= render partial: "hcb_codes/decline_reason", locals: {
+            hcb_code: @hcb_code,
+            include_troubleshooting: true,
+            include_external: true
+          } %>
     </section>
   <% end %>
 

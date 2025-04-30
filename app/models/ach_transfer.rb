@@ -173,7 +173,7 @@ class AchTransfer < ApplicationRecord
   before_validation { self.recipient_name = recipient_name.presence&.strip }
 
   before_validation do
-    self.company_name = "HCB (Hack Club)" # https://hackclub.slack.com/archives/C065957QPC7/p1745005224201699
+    self.company_name = "HCB (Hack Club)" # Column requires "Hack Club" to be included in the company_name for all outgoing ACHs
   end
 
   # Eagerly create HcbCode object
@@ -192,8 +192,7 @@ class AchTransfer < ApplicationRecord
   def send_ach_transfer!
     return unless may_mark_in_transit?
 
-    account_number_id = event.column_account_number&.column_id ||
-                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,
@@ -202,6 +201,7 @@ class AchTransfer < ApplicationRecord
       type: "CREDIT",
       entry_class_code: "PPD",
       counterparty: {
+        name: recipient_name,
         account_number:,
         routing_number:,
       },
