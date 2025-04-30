@@ -15,7 +15,7 @@ module EventMappingEngine
             hcb_code = ::HcbCode.find_by(short_code:)
             next unless hcb_code
 
-            next unless guess_event_id(hcb_code)
+            next unless guess_event_id(hcb_code, ct)
 
             ActiveRecord::Base.transaction do
               ct.update_column(:hcb_code, hcb_code.hcb_code)
