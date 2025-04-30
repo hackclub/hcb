@@ -78,8 +78,8 @@ class GSuite < ApplicationRecord
 
     event :mark_verified do
       after do
-        if g_suite.revocation.present?
-          g_suite.revocation.destroy!
+        if revocation.present?
+          revocation.destroy!
         end
       end
       transitions from: [:verifying], to: :verified
