@@ -23,7 +23,7 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def new?
-    can_send? && can_receive?
+    user.present?
   end
 
   def create?
