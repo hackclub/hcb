@@ -6,7 +6,7 @@
       <% if @g_suite.revocation.pending? %>
         Pending Revocation (scheduled for <%= format_datetime @g_suite.revocation.scheduled_at %>)
       <% else %>
-        Revoked at <%= format_datetime @g_suite.revocation.revoked_at %>
+        Revoked at <%= format_datetime @g_suite.revocation.scheduled_at %>
       <% end %>
     <% else %>
       <%= @g_suite.aasm_state %>
