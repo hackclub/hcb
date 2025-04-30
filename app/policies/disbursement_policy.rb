@@ -8,7 +8,7 @@ class DisbursementPolicy < ApplicationPolicy
   def can_send?
     return true if user&.admin?
     return true if record.source_event.nil?
-    return true if record.source_event.users.include?(user)
+    return true if OrganizerPosition.role_at_least?(user, record.source_event, :manager)
 
     false
   end
@@ -17,7 +17,7 @@ class DisbursementPolicy < ApplicationPolicy
     return true if user&.admin?
     return true if record.source_event&.plan&.unrestricted_disbursements_allowed?
     return true if record.destination_event.nil?
-    return true if record.destination_event.users.include?(user)
+    return true if OrganizerPosition.role_at_least?(user, record.destination_event, :manager)
 
     false
   end
