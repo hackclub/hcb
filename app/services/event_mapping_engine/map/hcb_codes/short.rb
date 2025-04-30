@@ -22,8 +22,8 @@ module EventMappingEngine
 
               attrs = {
                 canonical_transaction_id: ct.id,
-                event_id: guessed_event_id,
-                subledger_id: guessed_subledger_id
+                event_id: guess_event_id(hcb_code),
+                subledger_id: guess_subledger_id(hcb_code)
               }
               ::CanonicalEventMapping.create!(attrs)
             end
@@ -36,7 +36,7 @@ module EventMappingEngine
           ::CanonicalTransaction.unmapped.with_short_code.order("date asc")
         end
 
-        def guessed_event_id
+        def guess_event_id(hcb_code)
           return hcb_code.event.try(:id) if hcb_code.events.length == 1
 
           if hcb_code.disbursement?
@@ -50,7 +50,7 @@ module EventMappingEngine
           raise ArgumentError, "attempted to map a transaction with HCB short codes to a multi-event HCB code"
         end
 
-        def guessed_subledger_id
+        def guess_subledger_id(hcb_code)
           return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
 
           if hcb_code.disbursement?
