@@ -2,6 +2,7 @@
 
 <% pt = local_assigns[:canonical_pending_transaction] || hcb_code.pt %>
 <% hcb_code ||= pt.local_hcb_code %>
+<% card = hcb_code.stripe_card %>
 
 <% hcb_decline_reason = pt&.hcb_decline_reason %>
 <% stripe_decline_reason = pt&.stripe_decline_reason %>
@@ -83,8 +84,8 @@
                 Activate your new card <%= link_to "here", stripe_card_url(hcb_code.stripe_card) %> before using it.
             <% end %>
         <% elsif stripe_decline_reason == :card_canceled %>
-            <% if @card.replacement %>
-                Try using its <%= link_to "replacement card", stripe_card_url(@card.replacement) %> ending in <%= @card.replacement.last4 %>.
+            <% if card.replacement %>
+                Try using its <%= link_to "replacement card", stripe_card_url(card.replacement) %> ending in <%= card.replacement.last4 %>.
             <% else %>
                 Try using another card.
             <% end %>
