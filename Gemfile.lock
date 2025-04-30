@@ -788,7 +788,7 @@ GEM
     statsd-instrument (3.9.9)
     statsd-ruby (1.5.0)
     stringio (3.1.6)
-    stripe (11.7.0)
+    stripe (15.0.0)
     strong_migrations (1.8.0)
       activerecord (>= 5.2)
     terser (1.2.5)
@@ -972,7 +972,7 @@ DEPENDENCIES
   sprockets-rails (~> 3.5)
   stackprof
   statsd-instrument (~> 3.9)
-  stripe (= 11.7.0)
+  stripe (= 15.0.0)
   strong_migrations (~> 1)
   terser (~> 1.2)
   turbo-rails (~> 2.0.13)
