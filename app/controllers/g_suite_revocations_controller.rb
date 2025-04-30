@@ -23,10 +23,10 @@ class GSuiteRevocationsController < ApplicationController
 
     if @g_suite_revocation.destroy
       flash[:success] = "Revocation was successfully canceled."
-      redirect_to google_workspace_process_admin_path(@g_suite)
     else
-      render :index, status: :unprocessable_entity
+      flash[:error] = "Revocation could not be canceled."
     end
+    redirect_to google_workspace_process_admin_path(@g_suite)
   end
 
   private
