@@ -65,6 +65,11 @@ class User < ApplicationRecord
     monthly: 2,
   }, prefix: :receipt_report, default: :weekly
 
+  enum :donation_summary_option, {
+    off: 0,
+    on: 1
+  }, default: :on
+
   enum :access_level, { user: 0, admin: 1, superadmin: 2, auditor: 3 }, scopes: false, default: :user
 
   enum :creation_method, {
