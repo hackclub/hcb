@@ -26,6 +26,7 @@ class Login < ApplicationRecord
   belongs_to :user_session, optional: true
 
   has_encrypted :browser_token, migrating: true
+  has_secure_token :browser_token
 
   store :authentication_factors, accessors: [:sms, :email, :webauthn, :totp], prefix: :authenticated_with
 
