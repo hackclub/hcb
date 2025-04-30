@@ -984,6 +984,20 @@ class AdminController < ApplicationController
     redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
   end
 
+  def google_workspace_toggle_revocation_immunity
+    @g_suite = GSuite.find(params[:id])
+
+    if @g_suite.update(immune_to_revocation: !@g_suite.immune_to_revocation)
+      if @g_suite.revocation.present?
+        @g_suite.revocation.destroy!
+      end
+      flash[:success] = "Revocation immunity was successfully updated."
+    else
+      flash[:error] = "Revocation immunity could not be updated."
+    end
+    redirect_to google_workspace_process_admin_path(@g_suite)
+  end
+
   def set_event
     @canonical_transaction = ::CanonicalTransactionService::SetEvent.new(canonical_transaction_id: params[:id], event_id: params[:event_id], user: current_user).run
 

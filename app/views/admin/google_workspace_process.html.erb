@@ -138,7 +138,12 @@
   <% end %>
   <%= dkim_key_form.submit "Update DKIM key" %>
 <% end %>
-
+<hr>
+<h3>Google Workspace Revocation Immunity</h3>
+<p>This Google Workspace is<%= @g_suite.immune_to_revocation? ? nil : " not" %> immune to revocation.<%= !@g_suite.immune_to_revocation? && @g_suite.revocation.present? ? " Turning this on will immediately cancel the current revocation for this Google Workspace." : nil %> </p>
+<%= form_with(model: nil, local: true, url: google_workspace_toggle_revocation_immunity_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form.submit "Toggle" %>
+<% end %>
 <hr>
 <% if @g_suite.revocation.present? && @g_suite.revocation.revoked? %>
   <h3>Delete</h3>
@@ -154,6 +159,9 @@
   <h3>Delete</h3>
   <p>This Google Workspace has a <b>pending revocation</b> and <b>should NOT be deleted yet</b>. If, for some reason, you need to delete this record immediately, the following button will destroy the Google Workspace record and <b>permanently</b> delete the domain from GW along with all associated accounts and groups.</p>
   <%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "THIS MOST LIKELY ISN'T THE RIGHT BUTTON. Are you sure you want to delete this Google Workspace with a pending revocation?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+<% elsif @g_suite.immune_to_revocation? %>
+  <h3>This Google Workspace is immune to revocation</h3>
+  <p>Toggle their immunity above before opening a revocation.</p>
 <% else %>
   <h3>Begin Revocation</h3>
   <p>This will begin the revocation of the organization's Google Workspace access and send an email to the users on the organization notifying them of the upcoming revocation. The users will have 2 weeks to wrap up their activities before access is revoked.</p>
