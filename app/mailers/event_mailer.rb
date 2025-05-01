@@ -5,7 +5,7 @@ class EventMailer < ApplicationMailer
   before_action :set_emails
 
   def monthly_donation_summary
-    @event = params[:event]
+    @correction = params[:correction]
 
     @donations = @event.donations.where(aasm_state: [:in_transit, :deposited], created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
 
