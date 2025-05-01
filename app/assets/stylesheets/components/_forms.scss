@@ -462,6 +462,8 @@ input:where([data-behavior='otp_input']) {
   top: 110%;
   left: 0px;
 
+  border-radius: 0.75rem;
+
   background-color: $smoke;
 
   [data-dark='true'] & {
@@ -513,7 +515,7 @@ input:where([data-behavior='otp_input']) {
   width: 100%;
   height: 100%;
 
-  border-radius: 0.3rem;
+  border-radius: inherit;
 }
 
 .dropdown-button__menu input {
