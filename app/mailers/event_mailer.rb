@@ -7,7 +7,7 @@ class EventMailer < ApplicationMailer
   def monthly_donation_summary
     @event = params[:event]
 
-    @donations = @event.donations.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
+    @donations = @event.donations.where(aasm_state: [:in_transit, :deposited], created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
 
     return if @donations.none?
 
