@@ -223,6 +223,22 @@ class IncreaseCheck < ApplicationRecord
 
     mark_approved!
   end
+  
+  def reissue!
+    return unless column_id.present? && column_issued?
+
+    ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
+    
+    update!(
+      column_id: nil,
+      column_object: nil,
+      check_number: nil,
+      column_status: nil,
+      column_delivery_status: nil,
+    )
+
+    send_column!
+  end
 
   private
 
