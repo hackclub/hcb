@@ -8,6 +8,12 @@
   <% admin_tool override_pretend: true do %>
     <section>
       Updating <%= user_mention @user %>'s profile that was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
+      <p>
+        <strong>User ID:</strong> <%= @user.id %> (<%= @user.public_id %>)
+      </p>
+      <p>
+        <strong>Email:</strong> <%= mail_to @user.email %>
+      </p>
       <h2 id="admin">Admin configurations</h2>
 
       <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
