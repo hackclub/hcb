@@ -1,17 +1,8 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
-<% if @correction %>
-  <p>
-    Earlier today, we sent out an inaccurate donation summary email.
-    We’d like to apologize for any confusion this email may have caused.
-    The list of donations in the original email accidentally included donors who began the donation process, but never completed their donation.
-    This issue has been fixed, and we can confirm that your current balance and list of donations on HCB is correct. For a corrected donation list, please see below:
-  </p>
-<% else %>
-  <p>
-    Here's your monthly donation summary for <%= @event.name %>:
-  </p>
-<% end %>
+<p>
+  Here's your monthly donation summary for <%= @event.name %>:
+</p>
 
 <ul>
   <% @donations.each do |donation| %>
