@@ -1,0 +1,48 @@
+<%= turbo_frame_tag :tags_settings do %>
+  <div class="card event_settings__content">
+    <% @event.tags.each do |tag| %>
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+          <p class="bold"><%= tag.label %></p>
+        </div>
+        <div>
+          <%= pop_icon_to "edit",
+            nil,
+            class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this tag",
+            data: { turbo: true } %>
+          <%= pop_icon_to "delete",
+            nil,
+            method: :delete,
+            icon_size: 26,
+            class: "tooltipped tooltipped--w h-8 w-8",
+            style: "background: #ec375020; color: #ec3750",
+            'aria-label': "Delete this tag" %>
+        </div>
+      </div>
+    <% end %>
+    <h3 class="mb1">Create a new tag</h3>
+    <%= form_with(url: event_tags_path(@event)) do |form| %>
+      <div class="flex gap-5 justify-between items-end">
+        <div>
+          <%= form.label :label, "Tag name" %>
+          <%= form.text_field :label %>
+        </div>
+
+        <div>
+          <%= form.label :tag_name, "Tag color" %>
+      
+          <% Tag::COLORS.each do |color| %>
+            <label class="tags__radio w-8 mt-[2px] mx-1">
+              <%# Default color: Muted %>
+              <%= form.radio_button :color, color, checked: color == "muted" %>
+              <div class="radio__control tag-darker tag-<%= color %>"></div>
+            </label>
+          <% end %>
+        </div>
+
+        <%= form.submit "Create tag", class: "h-10 m-1" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
