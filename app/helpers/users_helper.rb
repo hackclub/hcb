@@ -111,7 +111,7 @@ module UsersHelper
 
     link = content_tag :a, (inline_icon "link", size: 16), href: admin_user_path(user), target: "_blank"
 
-    content = content + link if viewer&.auditor?
+    content += link if viewer&.auditor?
 
     content_tag :span, content, class: klass, 'aria-label': aria_label
   end
