@@ -988,9 +988,6 @@ class AdminController < ApplicationController
     @g_suite = GSuite.find(params[:id])
 
     if @g_suite.update(immune_to_revocation: !@g_suite.immune_to_revocation)
-      if @g_suite.revocation.present?
-        @g_suite.revocation.destroy!
-      end
       flash[:success] = "Revocation immunity was successfully updated."
     else
       flash[:error] = "Revocation immunity could not be updated."

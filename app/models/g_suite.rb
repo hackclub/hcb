@@ -105,6 +105,12 @@ class GSuite < ApplicationRecord
     true
   end
 
+  after_commit do
+    if immune_to_revocation?
+      revocation&.destroy!
+    end
+  end
+
   def needs_ops_review?
     @needs_ops_review ||= creating? || verifying?
   end
