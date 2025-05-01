@@ -71,6 +71,7 @@ class ColumnService
       type: "bank_account_summary",
       from_date: from_date.to_date.iso8601,
       to_date: to_date.to_date.iso8601,
+      idempotency_key: "#{from_date.to_s}_to_#{to_date.to_s}"
     )
   end
 
