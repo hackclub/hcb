@@ -41,9 +41,9 @@ module EventMappingEngine
 
           if hcb_code.disbursement?
             if ct.amount_cents.positive?
-              return hcb_code.disbursement.source_event_id
-            else
               return hcb_code.disbursement.event_id
+            else
+              return hcb_code.disbursement.source_event_id
             end
           end
 
@@ -55,9 +55,9 @@ module EventMappingEngine
 
           if hcb_code.disbursement?
             if ct.amount_cents.positive?
-              return hcb_code.disbursement.source_subledger_id
-            else
               return hcb_code.disbursement.destination_subledger_id
+            else
+              return hcb_code.disbursement.source_subledger_id
             end
           end
         end
