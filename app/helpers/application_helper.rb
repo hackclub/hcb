@@ -389,7 +389,7 @@ module ApplicationHelper
     capture { link_to(name, uri.to_s, *options) }
   end
 
-  def dropdown_button(button_class: "bg-success", template: ->(value) {value}, **options)
+  def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
     return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
       (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
         (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}" do
