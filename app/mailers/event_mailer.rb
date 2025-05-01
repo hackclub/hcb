@@ -10,6 +10,7 @@ class EventMailer < ApplicationMailer
     @donations = @event.donations.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
 
     return if @donations.none?
+    return if @emails.none?
 
     @total = @donations.sum(:amount)
 
