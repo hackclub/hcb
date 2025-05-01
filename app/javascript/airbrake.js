@@ -22,7 +22,7 @@ airbrake?.addFilter(notice => {
   if (
     notice.errors
       .flatMap(e => e['messagePattern'])
-      .some(e => e == 'Failed to fetch')
+      .some(e => e.includes('Failed to fetch'))
   )
     return null
   return notice
