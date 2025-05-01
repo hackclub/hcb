@@ -34,7 +34,7 @@ module Reimbursement
   class Expense
     class Mileage < ::Reimbursement::Expense
       def rate
-        event.plan.mileage_rate(created_at || Date.today)
+        event.plan.mileage_rate(created_at || Date.today) # rate may be used on creation, however, created_at isn't set at that point.
       end
 
       def value_label
