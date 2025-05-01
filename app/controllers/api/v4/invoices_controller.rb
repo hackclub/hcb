@@ -4,10 +4,8 @@ module Api
   module V4
     class InvoicesController < ApplicationController
       def index
-        if params[:event_id].present?
-          @event = authorize(Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id]), :index?)
-          @invoices = @event.invoices.includes(:user, :event).order(created_at: :desc)
-        end
+        @event = authorize(Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id]), :index?)
+        @invoices = @event.invoices.includes(:user, :event).order(created_at: :desc)
       end
 
       def show
