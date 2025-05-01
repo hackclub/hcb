@@ -19,16 +19,13 @@ export default class extends Controller {
   }
 
   change(event) {
-    const newType = event.target.value
-    this.updateText(newType)
+    const newButtonText = event.target.dataset.label
+    this.updateText(newButtonText)
     this.toggle()
   }
 
   updateText(value) {
-    this.textTarget.innerText = this.textTarget.dataset.template.replaceAll(
-      '[VALUE]',
-      value
-    )
+    this.textTarget.innerText = value
   }
 
   updateMenu() {

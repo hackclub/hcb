@@ -474,6 +474,8 @@ input:where([data-behavior='otp_input']) {
   opacity: 0;
 
   z-index: 10;
+  
+  margin-top: 8px;
 }
 
 .dropdown-button__menu--hidden {

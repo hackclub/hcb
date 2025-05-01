@@ -15,16 +15,15 @@
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
             <div class="add-expense-dropzone">
-              <%= dropdown_button
-                  form:,
+              <%= dropdown_button form:,
                   options: [
-                    ["Standard expense", "standard", "Generic expense with a specified amount."],
+                    ["Standard expense", "standard", "Expense with a monetary amount."],
                     ["Mileage expense", "mileage", "Expense for miles traveled based on the standard mileage rate."]
                   ],
                   button_icon: "plus",
                   name: "type",
                   button_container_options: { data: { "file-drop-target": "dropzone", action: "dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave" } },
-                  template: "Add #{report.expenses.count > 0 ? "another" : "an"} [VALUE] expense" %>
+                  template: ->(value) {"Add #{report.expenses.count > 0 ? "another" : "an"} #{value} expense"} %>
               <%= form.file_field :file,
                   multiple: true,
                   include_hidden: false,
