@@ -61,7 +61,7 @@
   <p>
     Processed by:
     <span>
-      <%= avatar_for @ach_transfer.processor, 24, { style: "margin: 0; vertical-align: bottom" } %>
+      <%= avatar_for @ach_transfer.processor, style: "margin: 0; vertical-align: bottom" %>
       <%= inline_icon "admin-badge", size: 20, style: "vertical-align: middle; margin: -0.2rem -0.3rem 0 -0.3rem;" if @ach_transfer.processor.auditor? %>
       <span><%= @ach_transfer.processor.initial_name %></span>
     </span>

@@ -2,7 +2,7 @@
 
 class CardGrantPolicy < ApplicationPolicy
   def new?
-    admin_or_manager?
+    admin_or_user?
   end
 
   def create?
@@ -22,7 +22,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def cancel?
-    admin_or_user || record.user == user
+    admin_or_user? || record.user == user
   end
 
   def topup?
@@ -33,7 +33,7 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
-  def admin_or_user
+  def admin_or_user?
     user&.admin? || record.event.users.include?(user)
   end
 

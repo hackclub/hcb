@@ -14,17 +14,24 @@
       <div class="flex justify-start">
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
-            <button class="btn bg-success add-expense-dropzone" data-file-drop-target="dropzone" data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave">
-                <%= inline_icon "plus" %>
-                Add <%= report.expenses.count > 0 ? "another" : "an" %> expense
-            </button>
-            <%= form.file_field :file,
-                multiple: true,
-                include_hidden: false,
-                required: false,
-                accept: "image/*,image/heic,.pdf",
-                class: "display-none",
-                data: { "file-drop-target" => "fileInput" } %>
+            <div class="add-expense-dropzone">
+              <%= dropdown_button form:,
+                                  options: [
+                                    ["Standard expense", "standard", "Expense with a monetary amount."],
+                                    ["Mileage expense", "mileage", "Expense for miles traveled based on the standard mileage rate."]
+                                  ],
+                                  button_icon: "plus",
+                                  name: "type",
+                                  button_container_options: { data: { "file-drop-target": "dropzone", action: "dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave" } },
+                                  template: ->(value) { "Add #{report.expenses.count > 0 ? "another" : "an"} #{value} expense" } %>
+              <%= form.file_field :file,
+                  multiple: true,
+                  include_hidden: false,
+                  required: false,
+                  accept: "image/*,image/heic,.pdf",
+                  class: "display-none",
+                  data: { "file-drop-target" => "fileInput" } %>
+            </div>
           <% end %>
         <% elsif current_user == report.user && !admin_signed_in? %>
           <div class="btn bg-success disabled" class="tooltipped tooltipped--n" aria-label="Expenses can't be added to locked reports">

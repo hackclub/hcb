@@ -42,6 +42,9 @@ class HcbCodesController < ApplicationController
 
     if params[:frame]
       @frame = true
+      @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
+      @transaction_show_author_img = params[:transaction_show_author_img].nil? ? false : params[:transaction_show_author_img]
+
       render :show, layout: false
     else
       @frame = false
@@ -167,7 +170,7 @@ class HcbCodesController < ApplicationController
     cpt = @hcb_code.canonical_pending_transactions.first
 
     if cpt
-      CanonicalPendingTransactionJob::SendTwilioReceiptMessage.perform_now(cpt_id: cpt.id, user_id: current_user.id)
+      CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_now(cpt_id: cpt.id, user_id: current_user.id)
       flash[:success] = "SMS queued for delivery!"
     else
       flash[:error] = "This transaction doesn't support SMS notifications."

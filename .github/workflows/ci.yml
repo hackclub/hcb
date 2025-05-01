@@ -22,8 +22,8 @@ jobs:
           bundler-cache: true
       - name: Run Rubocop
         run: bundle exec rubocop
-  rubocop_suggest_changes:
-    name: Rubocop (Suggest changes)
+  suggest_lint_changes:
+    name: 'Suggest lint changes'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -36,8 +36,14 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Run Rubocop
-        run: bundle exec rubocop -a
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+      - name: Install Yarn
+        run: yarn install
+      - name: Run Lint
+        run: bin/lint -c
       - name: Comment suggested changes
         uses: parkerbxyz/suggest-changes@v2.0.0
         if: ${{ github.event.pull_request }}

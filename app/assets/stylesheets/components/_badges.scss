@@ -243,6 +243,18 @@ summary.pop::-webkit-details-marker {
   svg:first-child {
     vertical-align: bottom;
   }
+  &:hover {
+    a {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  a {
+    display: none;
+    margin-left: 4px;
+    text-decoration: none;
+  }
 }
 
 .mention.badge {

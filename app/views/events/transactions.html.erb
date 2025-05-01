@@ -112,7 +112,7 @@
           <div class="flex items-center">
             <% @organizers.limit(5).each do |position| %>
               <div class="avatar-grow line-height-0 tooltipped tooltipped--s mr1" aria-label="<%= position.user == current_user ? current_user_flavor_text.sample : position.user.name %>">
-                <%= avatar_for position.user, 36 %>
+                <%= avatar_for position.user, size: 36 %>
               </div>
             <% end %>
           </div>

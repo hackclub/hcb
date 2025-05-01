@@ -41,7 +41,7 @@
                 <% end %>
               </div>
             <% end %>
-            <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :desc).includes(file_attachment: [blob: [variant_records: { image_attachment: :blob }]]), as: :receipt, locals: { hide_info: false, delete_on_hover: !expense.report.locked?, style: "margin: 0px; min-width: 150px; max-width: 300px; height: 100%; object-fit: cover;" } %>
+            <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :desc), as: :receipt, locals: { hide_info: false, delete_on_hover: !expense.report.locked?, style: "margin: 0px; min-width: 150px; max-width: 300px; height: 100%; object-fit: cover;" } %>
           </div>
         </div>
       <% elsif policy(expense).update? %>

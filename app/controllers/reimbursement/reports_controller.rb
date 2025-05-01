@@ -172,7 +172,7 @@ module Reimbursement
         flash[:error] = e.message
       end
 
-      # ReimbursementJob::Nightly.perform_later
+      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end
@@ -189,7 +189,7 @@ module Reimbursement
         flash[:error] = e.message
       end
 
-      # ReimbursementJob::Nightly.perform_later
+      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end

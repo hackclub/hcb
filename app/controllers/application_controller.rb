@@ -53,7 +53,10 @@ class ApplicationController < ActionController::Base
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   rescue_from Rack::Timeout::RequestTimeoutException do
-    redirect_to timeout_path
+    respond_to do |format|
+      format.html { render "errors/timeout" }
+      format.all { render text: "This request timed out, sorry." }
+    end
   end
 
   def hide_footer

@@ -71,6 +71,7 @@ class ColumnService
       type: "bank_account_summary",
       from_date: from_date.to_date.iso8601,
       to_date: to_date.to_date.iso8601,
+      idempotency_key: "#{from_date}_to_#{to_date}"
     )
   end
 
@@ -110,7 +111,7 @@ class ColumnService
   end
 
   def self.return_ach(id, with:)
-    post("/transfers/ach/#{id}/return", return_code: with)
+    post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
   end
 
 end

@@ -1,6 +1,6 @@
 <% content_for(:nav) do %>
   <h1 class="flex items-center xs-hide border-none h1 mt0 mb0 pt2">
-    <%= avatar_for current_user, 36, { class: "mr1" } %>
+    <%= avatar_for current_user, size: 36, class: "mr1" %>
     <%= current_user.initial_name %>
   </h1>
 
@@ -10,8 +10,8 @@
       style="border-radius: 8px"
       data-behavior="command_bar_trigger">
       <span class="flex-grow text-left font-medium">Jump to...</span>
-      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md mr-2 text-sm">
-        ⌘
+      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-2 text-sm">
+        <%= request.user_agent.to_s.upcase.include?("MAC") ? "⌘" : "Ctrl" %>
       </span>
       <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md text-sm">
         K

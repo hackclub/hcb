@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_07_060157) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_30_082411) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -1295,6 +1295,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_07_060157) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "browser_token"
+    t.text "browser_token_ciphertext"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -1477,6 +1478,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_07_060157) do
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_paypal_transfers_on_event_id"
     t.index ["user_id"], name: "index_paypal_transfers_on_user_id"
+  end
+
+  create_table "raffles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "program", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_raffles_on_user_id"
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -2317,6 +2326,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_07_060157) do
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"
+  add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
