@@ -110,8 +110,9 @@ module UsersHelper
               end
 
     link = content_tag :a, (inline_icon "link", size: 16), href: admin_user_path(user), target: "_blank"
+    email = content_tag :a, (inline_icon "email", size: 16), href: "mailto:#{user.email}", target: "_blank"
 
-    content = content + link if viewer&.auditor?
+    content = content + email + link if viewer&.auditor?
 
     content_tag :span, content, class: klass, 'aria-label': aria_label
   end
