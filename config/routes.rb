@@ -726,7 +726,7 @@ Rails.application.routes.draw do
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
     get "verification_letter", to: "documents#verification_letter"
     resources :invoices, only: [:new, :create, :index]
-    resources :tags, only: [:create, :destroy]
+    resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
 
     namespace :donation do

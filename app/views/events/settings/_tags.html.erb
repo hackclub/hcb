@@ -6,13 +6,32 @@
           <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
           <p class="bold"><%= tag.label %></p>
         </div>
-        <div>
-          <%= pop_icon_to "edit",
-            nil,
-            class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this tag",
-            data: { turbo: true } %>
+        <div class="flex">
+          <div>
+            <%= pop_icon_to "edit",
+              "#",
+              class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this tag",
+              data: { behavior: "modal_trigger", modal: "edit_tag_#{tag.id}" } %>
+            <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_tag_<%= tag.id %>">
+              <%= modal_header("Edit tag") %>
+              <%= form_with url: event_tag_path(@event, tag.id), method: "patch", id: "edit_tag_form" do |form| %>
+                <div class="flex flex-col gap-3 mb-2">
+                  <%= form.text_field :label, autofocus: true, placeholder: "Tag name", value: tag.label, style: "max-width: 100%", autocomplete: "off", required: true %>
+                  <div class="flex gap-3">
+                    <% Tag::COLORS.each do |color| %>
+                      <label class="tags__radio">
+                        <%= form.radio_button :color, color, checked: color == tag.color %>
+                        <div class="radio__control tag-darker tag-<%= color %>"></div>
+                      </label>
+                    <% end %>
+                  </div>
+                </div>
+                <%= form.submit "Edit", class: "btn bg-info mt-2 float-right" %>
+              <% end %>
+            </section>
+          </div>
           <%= pop_icon_to "delete",
-            nil,
+            event_tag_path(@event, tag.id),
             method: :delete,
             icon_size: 26,
             class: "tooltipped tooltipped--w h-8 w-8",
