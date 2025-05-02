@@ -94,9 +94,9 @@ class StaticPagesController < ApplicationController
           "View the organization's account & routing numbers": :manager
         },
         "HCB Transfers": {
-          "Create an HCB Transfer": :manager,
-          "Cancel an HCB Transfer": :manager,
-          "View an HCB Transfer": :member
+          "Create a HCB Transfer": :manager,
+          "Cancel a HCB Transfer": :manager,
+          "View a HCB Transfer": :member
         },
         _preface: "As a general rule, only managers can create/modify financial transfers"
       },
