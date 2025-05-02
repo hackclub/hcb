@@ -28,6 +28,24 @@
       <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled: %>
     </div>
 
+    <details>
+      <summary class="mb-5">Personal Card Locks (optional)</summary>
+      <div class="field">
+        <%= form.label :merchant_lock, "Merchant Locks" %>
+        <%= form.text_field :merchant_lock, placeholder: "123456789" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :category_lock, "Category Locks" %>
+        <%= form.text_field :category_lock, placeholder: "fast_food_restaurants" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :keyword_lock, "Keyword Lock" %>
+        <%= form.text_field :keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z" %>
+      </div>  
+    </details>
+
     <div class="actions">
       <%= form.submit "Send grant", disabled: %>
     </div>
