@@ -227,7 +227,9 @@ class IncreaseCheck < ApplicationRecord
   def reissue!
     return unless column_id.present? && column_issued?
 
-    ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
+    stopped_id = column_id
+
+    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}")
 
     update!(
       column_id: nil,
@@ -237,16 +239,16 @@ class IncreaseCheck < ApplicationRecord
       column_delivery_status: nil,
     )
 
-    send_column!
+    send_column!("reissue_#{stopped_id}")
   end
 
   private
 
-  def send_column!
+  def send_column!(idempotency_key = self.id.to_s)
     account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
     column_check = ColumnService.post "/transfers/checks/issue",
-                                      idempotency_key: self.id.to_s,
+                                      idempotency_key:,
                                       account_number_id:,
                                       positive_pay_amount: amount,
                                       currency_code: "USD",
