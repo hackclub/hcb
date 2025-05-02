@@ -228,7 +228,7 @@ class IncreaseCheck < ApplicationRecord
     return unless column_id.present? && column_issued?
 
     ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
-    
+
     update!(
       column_id: nil,
       column_object: nil,
