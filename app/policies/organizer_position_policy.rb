@@ -27,10 +27,7 @@ class OrganizerPositionPolicy < ApplicationPolicy
   end
 
   def can_request_removal?
-    return true if record.user == user
-    return true if user&.admin?
-    return true if OrganizerPosition.find_by(user:, event: record.event)&.manager? && !OrganizerPosition.find_by(user: record.user, event: record.event)&.manager?
-    return true if OrganizerPosition.find_by(user:, event: record.event)&.is_signee && !OrganizerPosition.find_by(user: record.user, event: record.event)&.is_signee
+    admin_or_manager? || record.user == user
   end
 
   def view_allowances?
