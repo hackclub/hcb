@@ -15,7 +15,7 @@ g_suite_initiate_revocations_job:
   class: "GSuiteJob::InitiateRevocations"
 
 g_suite_send_one_week_revocation_warning_job:
-  cron: "0 */4 * * *" # run every 4 hours
+  cron: "0 */4 * * *" # run every 4 hour
   class: "GSuiteJob::SendOneWeekRevocationWarning"
 
 g_suite_close_remedied_revocations_job:
@@ -23,7 +23,7 @@ g_suite_close_remedied_revocations_job:
   class: "GSuiteJob::CloseRemediedRevocations"
 
 g_suite_transition_expired_revocations_job:
-  cron: "0 1 * * *" # run every 1 day
+  cron: "0 */4 * * *" # run every 4 hour
   class: "GSuiteJob::TransitionExpiredRevocations"
 
 pending_transaction_engine_nightly_job:
