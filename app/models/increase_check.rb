@@ -223,7 +223,7 @@ class IncreaseCheck < ApplicationRecord
 
     mark_approved!
   end
-  
+
   def reissue!
     return unless column_id.present? && column_issued?
 
