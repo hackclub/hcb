@@ -110,8 +110,8 @@ module UsersHelper
               end
 
     unless user.nil?
-      link = content_tag :a, (inline_icon "link", size: 16), href: admin_user_path(user), target: "_blank"
-      email = content_tag :a, (inline_icon "email", size: 16), href: "mailto:#{user.email}", target: "_blank"
+      link = content_tag :span, (inline_icon "link", size: 16), onclick: "window.open(`#{admin_user_url(user)}`, '_blank').focus()", class: "mention__link"
+      email = content_tag :span, (inline_icon "email", size: 16), onclick: "window.open(`mailto:#{user.email}`, '_blank').focus()", class: "mention__link"
 
       content = content + email + link if viewer&.auditor?
     end

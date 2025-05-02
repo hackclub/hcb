@@ -244,16 +244,17 @@ summary.pop::-webkit-details-marker {
     vertical-align: bottom;
   }
   &:hover {
-    a {
+    .mention__link {
       display: flex;
       align-items: center;
     }
   }
 
-  a {
+  .mention__link {
     display: none;
     margin-left: 4px;
     text-decoration: none;
+    cursor: pointer;
   }
 }
 
