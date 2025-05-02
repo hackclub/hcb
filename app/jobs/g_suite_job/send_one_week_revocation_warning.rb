@@ -5,7 +5,7 @@ module GSuiteJob
     queue_as :low
 
     def perform
-      GSuite::Revocation.where("scheduled_at < ?", 1.week.from_now).where(one_week_notice_sent: false).find_each(batch_size: 100) do |revocation|
+      GSuite::Revocation.where("scheduled_at < ?", 1.week.from_now).where(one_week_notice_sent: false).pending.find_each(batch_size: 100) do |revocation|
         if revocation.g_suite.immune_to_revocation?
           revocation.destroy!
           next
