@@ -44,7 +44,7 @@
         <template x-if="event_id == 'other'">
           <div class="mt2">
             <%= form.label :destination_event_id_select, "Destination event's slug" %>
-            <%= form.text_field :event_id, placeholder: "hack_the_seas", required: true, disabled: %>
+            <%= form.text_field :event_id, placeholder: "hack_the_seas", required: true, disabled:, data: { behavior: "extract_slug"} %>
           </div>
         </template>
       <% else %>
