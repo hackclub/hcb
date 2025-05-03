@@ -26,7 +26,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader) || (record.stripe_cardholder.present? && record.stripe_cardholder.user == user)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader) || cardholder?
   end
 
   def edit?
