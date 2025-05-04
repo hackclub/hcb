@@ -23,7 +23,7 @@ export function RenderResults() {
               item.id?.startsWith('results:')
                 ? {
                     padding: '8px 16px',
-                    color: 'rgba(0, 0, 0, 0.5)'
+                    color: 'rgba(0, 0, 0, 0.5)',
                   }
                 : {
                     padding: '8px 16px',
@@ -97,13 +97,15 @@ const ResultItem = React.forwardRef(
           }}
         >
           {action.icon && (
-            <div style={{ 
-              opacity: active ? 1 : 0.6,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: 'scale(1.2)',
-            }}>
+            <div
+              style={{
+                opacity: active ? 1 : 0.6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: 'scale(1.2)',
+              }}
+            >
               {action.icon}
             </div>
           )}

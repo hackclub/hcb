@@ -28,7 +28,9 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
       >
         <ButtonTrigger />
         <KBarPortal>
-          <KBarPositioner style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}>
+          <KBarPositioner
+            style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}
+          >
             <SearchAndResults />
           </KBarPositioner>
         </KBarPortal>
