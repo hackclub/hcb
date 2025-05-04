@@ -29,6 +29,10 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager? && record.active?
   end
 
+  def withdrawl?
+    admin_or_manager? && record.active?
+  end
+
   def update?
     admin_or_manager?
   end
