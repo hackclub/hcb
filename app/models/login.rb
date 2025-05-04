@@ -28,7 +28,7 @@ class Login < ApplicationRecord
   has_encrypted :browser_token, migrating: true
   has_secure_token :browser_token
 
-  store :authentication_factors, accessors: [:sms, :email, :webauthn, :totp], prefix: :authenticated_with
+  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, prefix: :authenticated_with
 
   EXPIRATION = 15.minutes
 

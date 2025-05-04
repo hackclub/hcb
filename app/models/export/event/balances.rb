@@ -22,7 +22,7 @@
 class Export
   module Event
     class Balances < Export
-      store :parameters, accessors: %w[], coder: JSON
+      store_accessor :parameters
       def async?
         true
       end
