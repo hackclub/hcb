@@ -69,6 +69,8 @@ class Login < ApplicationRecord
   end
 
   def authentication_factors_count
+    return 0 if authentication_factors.nil?
+
     authentication_factors.values.count(true)
   end
 
