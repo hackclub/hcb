@@ -156,7 +156,7 @@ export const initalActions = [
     id: 'reimbursements',
     name: 'Reimbursements',
     keywords: 'reimbursements report',
-    perform: navigate('/my/Reimbursements'),
+    perform: navigate('/my/reimbursements'),
     section: 'Pages',
     icon: <Icon glyph="attachment" size={16} />,
     priority: Priority.HIGH,
@@ -172,7 +172,7 @@ export const initalActions = [
   {
     id: 'settings-account',
     name: 'Account',
-    keywords: 'account profile personal name birthday pfp email sign',
+    keywords: 'account profile personal name birthday picture email sign',
     perform: navigate('/my/settings'),
     parent: 'settings',
     icon: <Icon glyph="profile" size={16} />,
@@ -189,7 +189,7 @@ export const initalActions = [
   },
   {
     id: 'settings-payouts',
-    name: 'Reimbursement Payouts',
+    name: 'Payout settings',
     keywords: 'reimbursement payouts payment bank direct deposit',
     perform: navigate('/my/settings/payouts'),
     parent: 'settings',
@@ -207,7 +207,7 @@ export const initalActions = [
   },
   {
     id: 'settings-previews',
-    name: 'Feature Previews',
+    name: 'Feature previews',
     keywords: 'feature previews beta experimental',
     perform: navigate('/my/settings/previews'),
     parent: 'settings',
