@@ -9,7 +9,7 @@
   <% end %>
 
   <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="withdrawl">
-    <%= modal_header "Withdrawl from grant" %>
+    <%= modal_header "Withdraw from grant" %>
     <%= form_with(url: withdrawl_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug), class: "w-full") do |form| %>
       <div class="field">
         <%= form.label :amount %>
