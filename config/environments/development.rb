@@ -100,7 +100,6 @@ Rails.application.configure do
 
   # SMTP config
   config.action_mailer.delivery_method = Credentials.fetch(:SMTP, :ENABLED) == "true" ? :smtp : :letter_opener_web
-  
   # Bullet for finding N+1s
   config.after_initialize do
     Bullet.enable        = true
