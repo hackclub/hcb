@@ -76,7 +76,7 @@ class StaticPagesController < ApplicationController
       Transfers: {
         Checks: {
           "Send a mailed check": :manager,
-          "View a mailed check": :member,
+          "View a mailed check": :reader,
         },
         "Check Deposit": {
           "Deposit a check": :member,
@@ -87,7 +87,7 @@ class StaticPagesController < ApplicationController
         "ACH Transfers": {
           "Send an ACH Transfer": :manager,
           "Cancel an ACH Transfer": :manager,
-          "View an ACH Transfer": :member,
+          "View an ACH Transfer": :reader,
           "View recipient's payment details": :manager,
         },
         "Account & Routing numbers": {
@@ -96,7 +96,7 @@ class StaticPagesController < ApplicationController
         "HCB Transfers": {
           "Create a HCB Transfer": :manager,
           "Cancel a HCB Transfer": :manager,
-          "View a HCB Transfer": :member
+          "View a HCB Transfer": :reader
         },
         _preface: "As a general rule, only managers can create/modify financial transfers"
       },
@@ -107,8 +107,8 @@ class StaticPagesController < ApplicationController
         "Rename your own card": :member,
         "Rename another user's card": :manager,
         "View another user's card number": :manager,
-        "View card expiration date": :member,
-        "View card billing address": :member,
+        "View card expiration date": :reader,
+        "View card billing address": :reader,
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,
