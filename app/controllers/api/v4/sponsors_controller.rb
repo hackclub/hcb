@@ -13,8 +13,29 @@ module Api
       end
     
       def create
-        @sponsor = Sponsor.new(params[:sponsor])
-        @sponsor.event_id = params[:sponsor][:organization_id]
+        sponsor = params.require(:sponsor).permit(
+          :address_city,
+          :address_country,
+          :address_line1,
+          :address_line2,
+          :address_postal_code,
+          :address_state,
+          :contact_email,
+          :name,
+          :organization_id
+        )
+
+        @sponsor = Sponsor.new(
+          address_city: sponsor[:address_city],
+          address_country: sponsor[:address_country],
+          address_line1: sponsor[:address_line1],
+          address_line2: sponsor[:address_line2],
+          address_postal_code: sponsor[:address_postal_code],
+          address_state: sponsor[:address_state],
+          contact_email: sponsor[:contact_email],
+          name: sponsor[:name],
+          event_id: sponsor[:organization_id]
+        )
         authorize @sponsor
       
         if @sponsor.save
