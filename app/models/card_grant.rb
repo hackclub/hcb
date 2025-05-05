@@ -141,7 +141,7 @@ class CardGrant < ApplicationRecord
 
   def withdraw!(amount_cents:, withdrew_from_by: User.find(sent_by_id))
     raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
-    raise ArgumentError, "card grant should have more money than being withdrawln" if amount_cents > balance.amount * 100
+    raise ArgumentError, "card grant should have more money than being withdrawn" if amount_cents > balance.amount * 100
 
     custom_memo = "Withdrawl from grant to #{user.name}"
 
