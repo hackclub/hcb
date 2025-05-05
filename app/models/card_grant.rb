@@ -139,7 +139,7 @@ class CardGrant < ApplicationRecord
     end
   end
 
-  def withdraw!(amount_cents:, withdrew_from_by: User.find(sent_by_id))
+  def withdraw!(amount_cents:, withdrawn_by: User.find(sent_by_id))
     raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
     raise ArgumentError, "card grant should have more money than being withdrawn" if amount_cents > balance.amount * 100
 
@@ -153,7 +153,7 @@ class CardGrant < ApplicationRecord
         name: custom_memo,
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
-        requested_by_id: withdrew_from_by.id,
+        requested_by_id: withdrawn_by.id,
       ).run
 
       disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
