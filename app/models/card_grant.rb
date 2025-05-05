@@ -118,7 +118,7 @@ class CardGrant < ApplicationRecord
     stripe_card.nil?
   end
 
-  def topup!(amount_cents:, topped_up_by: User.find(sent_by_id))
+  def topup!(amount_cents:, topped_up_by: sent_by)
     raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
 
     custom_memo = "Topup of grant to #{user.name}"
@@ -139,7 +139,7 @@ class CardGrant < ApplicationRecord
     end
   end
 
-  def withdraw!(amount_cents:, withdrawn_by: User.find(sent_by_id))
+  def withdraw!(amount_cents:, withdrawn_by: sent_by)
     raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
     raise ArgumentError, "card grant should have more money than being withdrawn" if amount_cents > balance.amount * 100
 
