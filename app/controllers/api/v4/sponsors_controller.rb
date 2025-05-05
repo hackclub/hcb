@@ -9,7 +9,7 @@ module Api
       end
     
       def show
-        @sponsor = authorize Sponsor.friendly.find(params[:id])
+        @sponsor = authorize Sponsor.find_by_public_id(params[:id]) || Sponsor.friendly.find(params[:id])
       end
     
       def create

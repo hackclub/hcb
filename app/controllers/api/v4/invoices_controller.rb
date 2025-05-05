@@ -9,7 +9,7 @@ module Api
       end
 
       def show
-        @invoice = authorize Invoice.friendly.find(params[:id])
+        @invoice = authorize Invoice.find_by_public_id(params[:id]) || Invoice.friendly.find(params[:id])
       end
 
       def create
