@@ -41,7 +41,7 @@ module Api
         if @sponsor.save
           render :show
         else
-          return render json: { error: e.message }, status: :internal_server_error
+          return render json: { error: e.message }, status: :bad_request
         end
       end
     end
