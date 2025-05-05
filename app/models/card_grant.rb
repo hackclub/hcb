@@ -143,7 +143,7 @@ class CardGrant < ApplicationRecord
     raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
     raise ArgumentError, "card grant should have more money than being withdrawn" if amount_cents > balance.amount * 100
 
-    custom_memo = "Withdrawl from grant to #{user.name}"
+    custom_memo = "Withdrawal from grant to #{user.name}"
 
     ActiveRecord::Base.transaction do
       update!(amount_cents: self.amount_cents - amount_cents)
