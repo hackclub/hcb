@@ -750,7 +750,7 @@ Rails.application.routes.draw do
     resources :card_grants, only: [:new, :create], path: "card-grants" do
       member do
         post "topup"
-        post "withdrawl"
+        post "withdraw"
         post "cancel"
       end
     end
