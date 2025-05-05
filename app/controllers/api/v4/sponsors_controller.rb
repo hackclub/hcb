@@ -4,8 +4,8 @@ module Api
   module V4
     class SponsorsController < ApplicationController
       def index
-        @event = authorize(Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id]), :index?)
-        @sponsors = @event.sponsors.includes(:user, :event).order(created_at: :desc)
+        @event = authorize(Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]), :index?)
+        @sponsors = @event.sponsors.order(created_at: :desc)
       end
     
       def show
