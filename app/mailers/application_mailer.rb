@@ -21,7 +21,6 @@ class ApplicationMailer < ActionMailer::Base
     else
       name = "HCB"
     end
-    
     email_address_with_name("#{USERNAME}@#{DOMAIN}", name)
   end
 
