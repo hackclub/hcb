@@ -130,7 +130,7 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
   end
 
-  def withdrawl
+  def withdraw
     authorize @card_grant
 
     @card_grant.withdrawl!(amount_cents: Monetize.parse(params[:amount]).cents, withdrew_from_by: current_user)
