@@ -40,28 +40,29 @@
         </div>
       </div>
     <% end %>
-    <h3 class="mb1">Create a new tag</h3>
+  </div>
+
+  <h3 class="mb1" id="cards_heading">Create a new tag</h3>
+  <div class="card mt-4">
     <%= form_with(url: event_tags_path(@event)) do |form| %>
-      <div class="flex gap-5 justify-between items-end">
-        <div>
-          <%= form.label :label, "Tag name" %>
-          <%= form.text_field :label %>
-        </div>
-
-        <div>
-          <%= form.label :tag_name, "Tag color" %>
-
-          <% Tag::COLORS.each do |color| %>
-            <label class="tags__radio w-8 mt-[2px] mx-1">
-              <%# Default color: Muted %>
-              <%= form.radio_button :color, color, checked: color == "muted" %>
-              <div class="radio__control tag-darker tag-<%= color %>"></div>
-            </label>
-          <% end %>
-        </div>
-
-        <%= form.submit "Create tag", class: "h-10 m-1" %>
+      <div class="field">
+        <%= form.label :label, "Tag name" %>
+        <%= form.text_field :label, placeholder: "Food" %>
       </div>
+
+      <div class="field">
+        <%= form.label :tag_name, "Tag color" %>
+
+        <% Tag::COLORS.each do |color| %>
+          <label class="tags__radio w-8 mt-[2px] mx-1">
+            <%# Default color: Muted %>
+            <%= form.radio_button :color, color, checked: color == "muted" %>
+            <div class="radio__control tag-darker tag-<%= color %>"></div>
+          </label>
+        <% end %>
+      </div>
+
+      <%= form.submit "Create tag" %>
     <% end %>
   </div>
 <% end %>
