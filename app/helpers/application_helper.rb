@@ -396,7 +396,7 @@ module ApplicationHelper
           (inline_icon options[:button_icon]) +
           (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
         end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none w-12 ml-1 #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +
