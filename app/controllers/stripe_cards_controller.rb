@@ -27,7 +27,8 @@ class StripeCardsController < ApplicationController
       flash[:success] = "Card frozen"
       redirect_back_or_to @card
     else
-      render :show, status: :unprocessable_entity
+      flash[:error] = "Card could not be frozen"
+      redirect_back_or_to @card
     end
   end
 
@@ -39,8 +40,8 @@ class StripeCardsController < ApplicationController
     flash[:success] = "Card cancelled"
     redirect_back_or_to @card
   rescue => e
-    flash[:error] = e.message
-    render :show, status: :unprocessable_entity
+    flash[:error] = "Card could not be canceled"
+    redirect_back_or_to @card
   end
 
   def defrost
