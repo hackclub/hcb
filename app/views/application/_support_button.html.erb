@@ -9,13 +9,13 @@
        rescue
          {}
        end %>
-  
+
     <% url_params = {
          url: "#{request.base_url}#{request.original_fullpath}",
          location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
          user_id: current_user&.id
        } %>
-  
+
     <button
       type="button"
       class="support-menu__button fixed bottom-0 right-0 m-5 pop tooltipped tooltipped--w embedded-display-none cursor-pointer"
