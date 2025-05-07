@@ -25,22 +25,22 @@ class StripeCardsController < ApplicationController
 
     if @card.freeze!
       flash[:success] = "Card frozen"
-      redirect_back_or_to @card
     else
       flash[:error] = "Card could not be frozen"
-      redirect_back_or_to @card
     end
+
+    redirect_back_or_to @card
   end
 
   def cancel
     @card = StripeCard.find(params[:id])
     authorize @card
-
-    @card.cancel!
-    flash[:success] = "Card cancelled"
-    redirect_back_or_to @card
-  rescue => e
-    flash[:error] = "Card could not be canceled"
+    begin
+      @card.cancel!
+      flash[:success] = "Card cancelled"
+    rescue => e
+      flash[:error] = "Card could not be canceled"
+    end
     redirect_back_or_to @card
   end
 
