@@ -35,7 +35,7 @@
     "clsx": "^2.1.1",
     "cssnano": "^7.0.6",
     "fuzzysort": "^3.1.0",
-    "gsap": "^3.12.7",
+    "gsap": "^3.13.0",
     "html-to-image": "^1.11.13",
     "intl": "^1.2.5",
     "js-confetti": "^0.12.0",
