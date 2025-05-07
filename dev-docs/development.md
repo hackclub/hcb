@@ -200,7 +200,7 @@ We've transitioned to using development keys and seed data in development, but h
 
 There is two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference.
 
-1. Go to [http://localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing and the redirect URI to `http://localhost:3000/`. Press "Submit" and then save the info on the new page that appears and press "Authorize."
+1. Go to [http://localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing, the redirect URI to `http://localhost:3000/`, and scopes to `read write`. For the purposes of this guide, you should leave confidential checked. Press "Submit" and then save the info on the new page that appears and press "Authorize."
 
 2. Open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "http://localhost:3000/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://localhost:3000/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=http://localhost:3000/&response_type=code&scope=read write`.
 
