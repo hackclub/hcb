@@ -376,7 +376,7 @@ class EventsController < ApplicationController
                        when "active"
                          all_stripe_cards.active
                        when "frozen"
-                         all_stripe_cards.deactivated
+                         all_stripe_cards.frozen
                        when "canceled"
                          all_stripe_cards.canceled
                        else
