@@ -149,6 +149,10 @@ class EventPolicy < ApplicationPolicy
     auditor_or_reader? && record.plan.reimbursements_enabled?
   end
 
+  def create_reimbursement?
+    !record.demo_mode? && admin_or_member?
+  end
+
   def employees?
     auditor_or_reader?
   end

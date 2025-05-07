@@ -112,7 +112,7 @@ class StaticPagesController < ApplicationController
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,
-        "View reimbursement reports": :member,
+        "View reimbursement reports": :reader,
         "Review, approve, and reject reports": :manager,
       },
       "Google Workspace": {
