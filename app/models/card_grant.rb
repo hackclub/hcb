@@ -166,7 +166,7 @@ class CardGrant < ApplicationRecord
   end
 
   def withdrawal_disbursements
-    Disbursement.where(source_subledger_id: subledger.id).where.not(id: disbursement_id)
+    Disbursement.where(source_subledger_id: subledger.id)
   end
 
   def visible_hcb_codes
