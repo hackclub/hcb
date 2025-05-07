@@ -1,6 +1,7 @@
 <% instance = ct.__id__ %>
 <% tagged_with = ct.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
 <% subscription = local_assigns[:subscription] || nil %>
+<% @event ||= local_assigns[:event] %>
 <tr
   class="transaction <%= unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user)
                            ct.amount.negative? ? "transaction--negative" : ct.amount.positive? ? "transaction--positive" : "transaction--zero"
@@ -60,7 +61,7 @@
         <div class="flex items-center justify-start" style="gap: 1ch;">
           <%= turbo_frame_tag "#{ct.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span class="inline-flex g-2 items-center" title="<%= transaction_memo(ct) %>" style="flex-grow: 1;">
-              <%= ct.local_hcb_code.card_grant? && !organizer_signed_in? ? link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) : content_tag(:span, class: "inline-flex gap-2 items-center") do %>
+              <%= ct.local_hcb_code.card_grant? && !organizer_signed_in? ? link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) : content_tag(:span) do %>
                 <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
               <% end %>
             </span>
