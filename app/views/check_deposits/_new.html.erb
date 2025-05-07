@@ -1,9 +1,11 @@
+<% disabled = !policy(@event).create_check_deposit? %>
+
 <%= form_with model: [@event, @event.check_deposits.build], class: "pt-2" do |form| %>
   <div class="field">
     <%= form.label :front, "Front of check" %>
     <div class="field--image-upload" data-controller="image-upload-preview">
       <%= form.label :front, "Click to upload front image", data: { image_upload_preview_target: "preview" } %>
-      <%= form.file_field :front, accept: "image/png,image/jpeg", required: true, disabled: @event.demo_mode?, direct_upload: true, data: { action: "image-upload-preview#set" } %>
+      <%= form.file_field :front, accept: "image/png,image/jpeg", required: true, disabled:, direct_upload: true, data: { action: "image-upload-preview#set" } %>
     </div>
   </div>
 
@@ -11,7 +13,7 @@
     <%= form.label :back, "Back of check" %>
     <div class="field--image-upload" data-controller="image-upload-preview">
       <%= form.label :back, "Click to upload back image", data: { image_upload_preview_target: "preview" } %>
-      <%= form.file_field :back, accept: "image/png,image/jpeg", required: true, disabled: @event.demo_mode?, direct_upload: true, data: { action: "image-upload-preview#set" } %>
+      <%= form.file_field :back, accept: "image/png,image/jpeg", required: true, disabled:, direct_upload: true, data: { action: "image-upload-preview#set" } %>
     </div>
   </div>
 
@@ -19,7 +21,7 @@
     <%= form.label :amount_cents, "Amount on check" %>
     <div class="flex items-center">
       <span class="bold muted shrink-none" style="width: 1rem;">$</span>
-      <%= form.number_field :amount_cents, placeholder: "10.00", required: true, min: 0.01, step: 0.01, disabled: @event.demo_mode? %>
+      <%= form.number_field :amount_cents, placeholder: "10.00", required: true, min: 0.01, step: 0.01, disabled: %>
     </div>
   </div>
 
@@ -27,7 +29,7 @@
     <% if @event.demo_mode? %>
       <%= form.submit "Unavailable in Playground Mode", disabled: true %>
     <% else %>
-      <%= form.submit "Submit deposit", class: "shrink-0", data: { disable_with: "Uploading..." } %>
+      <%= form.submit "Submit deposit", disabled:, class: "shrink-0", data: { disable_with: "Uploading..." } %>
     <% end %>
   </div>
 <% end %>
