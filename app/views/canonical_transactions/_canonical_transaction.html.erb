@@ -1,7 +1,6 @@
 <% instance = ct.__id__ %>
 <% tagged_with = ct.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
 <% subscription = local_assigns[:subscription] || nil %>
-<% @event ||= local_assigns[:event] %>
 <tr
   class="transaction <%= unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user)
                            ct.amount.negative? ? "transaction--negative" : ct.amount.positive? ? "transaction--positive" : "transaction--zero"
