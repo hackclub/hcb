@@ -3,7 +3,7 @@
     <%= form.label :front, "Front of check" %>
     <div class="field--image-upload" data-controller="image-upload-preview">
       <%= form.label :front, "Click to upload front image", data: { image_upload_preview_target: "preview" } %>
-      <%= form.file_field :front, accept: "image/*", required: true, disabled: @event.demo_mode?, direct_upload: true, data: { action: "image-upload-preview#set" } %>
+      <%= form.file_field :front, accept: "image/png,image/jpeg", required: true, disabled: @event.demo_mode?, direct_upload: true, data: { action: "image-upload-preview#set" } %>
     </div>
   </div>
 
@@ -11,7 +11,7 @@
     <%= form.label :back, "Back of check" %>
     <div class="field--image-upload" data-controller="image-upload-preview">
       <%= form.label :back, "Click to upload back image", data: { image_upload_preview_target: "preview" } %>
-      <%= form.file_field :back, accept: "image/*", required: true, disabled: @event.demo_mode?, direct_upload: true, data: { action: "image-upload-preview#set" } %>
+      <%= form.file_field :back, accept: "image/png,image/jpeg", required: true, disabled: @event.demo_mode?, direct_upload: true, data: { action: "image-upload-preview#set" } %>
     </div>
   </div>
 
