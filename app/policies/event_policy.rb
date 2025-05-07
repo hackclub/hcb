@@ -158,7 +158,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    auditor_or_reader? && record.plan.account_number_enabled?
+    (auditor? || member?) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
