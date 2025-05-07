@@ -34,7 +34,7 @@
   <div class="table-container">
     <table>
       <thead>
-        <% if @check_deposits.any? { |cd| policy(cd).view_image? } %>
+        <% if @check_deposits.any? { |cd| policy(cd).view? } %>
           <th></th>
         <% end %>
         <th>Status</th>

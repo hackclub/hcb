@@ -80,7 +80,7 @@ class StaticPagesController < ApplicationController
         },
         "Check Deposit": {
           "Deposit a check": :member,
-          "View a check deposit": :member,
+          "View a check deposit": :reader,
           "View images of a check deposit": :manager,
           _preface: "For depositing a check by taking a picture of it"
         },
