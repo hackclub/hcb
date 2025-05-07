@@ -1290,10 +1290,10 @@
   resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.27.8.tgz#6667fac16c436b5434a387a34dedb013198f6e6e"
   integrity sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==
 
-"@stripe/stripe-js@^7.2.0":
-  version "7.2.0"
-  resolved "https://registry.yarnpkg.com/@stripe/stripe-js/-/stripe-js-7.2.0.tgz#f5a256f27f946ccf9cc8c2cc4b34fc40079dbfca"
-  integrity sha512-BXlt6BsFE599yOATuz78FiW9z4SyipCH3j1SDyKWe/3OUBdhcOr/BWnBi1xrtcC2kfqrTJjgvfH2PTfMPRmbTw==
+"@stripe/stripe-js@^7.3.0":
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/@stripe/stripe-js/-/stripe-js-7.3.0.tgz#7b295ff9ca5bccfd56c1291b78079ae2f14836cc"
+  integrity sha512-xnCyFIEI5SQnQrKkCxVj7nS5fWTZap+zuIGzmmxLMdlmgahFJaihK4zogqE8YyKKTLtrp/EldkEijSgtXsRVDg==
 
 "@trysound/sax@0.2.0":
   version "0.2.0"
