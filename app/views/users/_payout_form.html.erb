@@ -25,13 +25,6 @@
           <small>(1-5 biz. days)</small>
         <% end %>
       <% end %>
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::PaypalTransfer", disabled: true %>
-      <%= form.label :payout_method_type, value: "User::PayoutMethod::PaypalTransfer" do %>
-        <%= inline_icon "paypal", size: 28 %>
-        <strong>PayPal</strong>
-        <div class="badge badge--corner bg-warning m1 mt0" style="width: fit-content;">Unavailable</div>
-        <small class="xs-hide">Due to integration issues, transfers via PayPal are currently unavailable.</small>
-      <% end %>
     </div>
   </fieldset>
   <% if user.payout_method&.errors&.any? %>
