@@ -22,15 +22,10 @@
         <div data-tabs-target="tab" id="tags">
           <% @event.tags.order(label: :asc).each do |tag| %>
             <div class="flex items-center" data-tag="<%= tag.id %>">
-              <%= link_to upsert_query_params(tag: tag.label), class: "flex-auto menu__action", data: { turbo_prefetch: "false" } do %>
+              <%= link_to(upsert_query_params(tag: tag.label), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_prefetch: "false" }) do %>
 
                 <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
                 <%= tag.label %>
-              <% end %>
-              <% if organizer_signed_in? %>
-                <%= button_to event_tag_path(@event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
-                  <%= inline_icon "delete", size: 20, style: "margin: 0" %>
-                <% end %>
               <% end %>
             </div>
           <% end %>

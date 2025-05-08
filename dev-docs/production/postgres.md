@@ -118,7 +118,7 @@ Create postgres role (user)
 ```bash
 su - postgres
 psql
-# CREATE ROLE rails WITH INHERIT LOGIN CONNECTION LIMIT 500 PASSWORD 'password here';
+# Create rails user
 CREATE USER rails WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
 
 # Create the database so that we can test connecting to it in the next step.
@@ -208,9 +208,7 @@ repo1-cipher-pass=REPLACE_ME
 repo1-cipher-type=aes-256-cbc
 repo1-bundle=y
 repo1-block=y4
-start
--fast=
-compress-type=zsty
+start-fast=compress-type=zsty
 ```
 
 You'll want to create an object storage on Hetzner and add credentials.
@@ -294,9 +292,11 @@ SELECT *
 from events
 order by id desc
 limit 1;
+
 UPDATE users
 SET full_name = 'testingsadflkjsdf'
 WHERE id = 1803;
+
 # verify write worked
 SELECT full_name
 from users
@@ -322,6 +322,7 @@ After traffic has been shutdown, perform the last write to the DB.
 UPDATE users
 SET full_name = 'last update lkasdjf'
 WHERE id = 1803;
+
 # verify write worked
 SELECT full_name
 from users
@@ -388,6 +389,7 @@ Update env var
 
 ```
 DATABASE_URL=postgres://rails:password@INTERNAL_IP_OF_PRIMARY_SERVER:5432/hcb_production
+# and update BLAZER_DATABASE_URL
 ```
 
 1. Enable all processes (e.g. Sidekiq, etc.)
