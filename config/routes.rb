@@ -257,6 +257,7 @@ Rails.application.routes.draw do
       post "google_workspace_approve", to: "admin#google_workspace_approve"
       post "google_workspace_verify", to: "admin#google_workspace_verify"
       post "google_workspace_update", to: "admin#google_workspace_update"
+      post "google_workspace_toggle_revocation_immunity", to: "admin#google_workspace_toggle_revocation_immunity"
       get "invoice_process", to: "admin#invoice_process"
       post "invoice_mark_paid", to: "admin#invoice_mark_paid"
     end
@@ -326,6 +327,7 @@ Rails.application.routes.draw do
 
   resources :g_suites, except: [:new, :create, :edit, :update] do
     resources :g_suite_accounts, only: [:create]
+    resources :revocations, only: [:create, :destroy], controller: "g_suite/revocations"
   end
 
   resources :sponsors
