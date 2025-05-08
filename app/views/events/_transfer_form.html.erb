@@ -29,16 +29,25 @@
             <small>(between HCB organizations)</small>
           <% end %>
           <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
-            <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
+            <a class="text-decoration-none btn--form-option" href="javascript:void(0)" data-action="click->transfer-form#showCardGrantForm">
               <%= inline_icon "card", size: 28 %>
               <strong>Card grant</strong>
               <small>A grant sent through an HCB card.</small>
-            <% end %>
+            </a>
           <% end %>
         </div>
       </fieldset>
       <a class="w-full text-center block no-underline -mb-2" href="javascript:void(0)" data-action="click->transfer-form#showWizard">Which method should I use? <strong>Help me decide &rarr;</a>
     </div>
+
+    <div data-transfer-form-target="cardGrant" hidden>
+      <a class="no-underline text-xs inline-flex items-center" href="javascript:void(0)" data-action="click->transfer-form#hideCardGrantForm">
+        <%= inline_icon "view-back" %>
+        Exit
+      </a>
+      <%= render "card_grants/new_form", card_grant: @event.card_grants.build %>
+    </div>
+
     <div data-transfer-form-target="wizard" hidden>
       <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
         <%= inline_icon "view-back" %>

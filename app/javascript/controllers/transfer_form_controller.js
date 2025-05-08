@@ -4,6 +4,7 @@ export default class extends Controller {
   static targets = [
     // Slides
     'home',
+    'cardGrant',
     'wizard',
     'answer',
     // Wizard slide question targets
@@ -46,6 +47,16 @@ export default class extends Controller {
       },
     },
   ]
+
+  showCardGrantForm = () => {
+    this.homeTarget.hidden = true
+    this.cardGrantTarget.hidden = false
+  }
+
+  hideCardGrantForm = () => {
+    this.homeTarget.hidden = false
+    this.cardGrantTarget.hidden = true
+  }
 
   showWizard = () => {
     this.homeTarget.hidden = true
