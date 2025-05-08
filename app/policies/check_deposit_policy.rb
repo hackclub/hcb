@@ -13,10 +13,6 @@ class CheckDepositPolicy < ApplicationPolicy
     auditor_or_manager?
   end
 
-  def view?
-    auditor_or_user?
-  end
-
   def toggle_fronted?
     admin?
   end
