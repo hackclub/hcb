@@ -75,6 +75,7 @@ class Login < ApplicationRecord
   def ensure_browser_token
     # Avoid generating a new token if one is already encrypted
     return if self[:browser_token_ciphertext].present?
+
     self.browser_token ||= SecureRandom.base58(24)
   end
 
