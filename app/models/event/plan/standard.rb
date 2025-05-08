@@ -67,6 +67,10 @@ class Event
         70
       end
 
+      def unrestricted_disbursements_allowed?
+        false
+      end
+
     end
 
   end

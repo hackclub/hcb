@@ -535,7 +535,7 @@ Rails.application.routes.draw do
 
   resources :emburse_transactions, only: [:index, :edit, :update, :show]
 
-  resources :donations, only: [:show] do
+  resources :donations, only: [:show, :update] do
     collection do
       get "start/:event_name", to: "donations#start_donation", as: "start_donation"
       post "start/:event_name", to: "donations#make_donation", as: "make_donation"
@@ -606,6 +606,7 @@ Rails.application.routes.draw do
         resources :card_grants, only: [:show, :update] do
           member do
             post "topup"
+            post "withdraw"
             post "cancel"
           end
         end
@@ -728,7 +729,7 @@ Rails.application.routes.draw do
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
     get "verification_letter", to: "documents#verification_letter"
     resources :invoices, only: [:new, :create, :index]
-    resources :tags, only: [:create, :destroy]
+    resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
 
     namespace :donation do
@@ -750,8 +751,9 @@ Rails.application.routes.draw do
 
     resources :card_grants, only: [:new, :create], path: "card-grants" do
       member do
-        post "cancel"
         post "topup"
+        post "withdraw"
+        post "cancel"
       end
     end
 

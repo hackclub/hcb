@@ -35,6 +35,10 @@ class Event
         true
       end
 
+      def unrestricted_disbursements_allowed?
+        true
+      end
+
     end
 
   end

@@ -38,7 +38,8 @@ non_transparent_event = Event.create_with(
   slug: "expensicon23",
   can_front_balance: true,
   point_of_contact: user,
-  created_at: 10.days.ago
+  created_at: 10.days.ago,
+  is_public: false
 ).find_or_create_by!(slug: "expensicon23")
 
 OrganizerPositionInvite.create!(
@@ -52,7 +53,8 @@ transparent_event = Event.create_with(
   slug: "hack_the_seas",
   can_front_balance: true,
   point_of_contact: user,
-  created_at: 14.days.ago
+  created_at: 14.days.ago,
+  is_public: true
 ).find_or_create_by!(slug: "hack_the_seas")
 
 OrganizerPositionInvite.create!(
