@@ -46,7 +46,7 @@ class GSuite
         transitions from: :pending, to: :revoked
 
         after do
-          GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_revocation.deliver_later
+          GSuite::RevocationMailer.with(g_suite_revocation_id: self.id).notify_of_revocation.deliver_later
         end
       end
     end
@@ -54,7 +54,7 @@ class GSuite
     after_create_commit do
       return unless pending?
 
-      GSuiteMailer.with(g_suite_id: g_suite.id, g_suite_revocation_id: self.id).revocation_warning.deliver_later
+      GSuite::RevocationMailer.with(g_suite_id: g_suite.id, g_suite_revocation_id: self.id).revocation_warning.deliver_later
     end
 
     before_validation on: :create do
@@ -63,7 +63,7 @@ class GSuite
 
     after_destroy_commit do
       unless destroyed_by_association.present?
-        GSuiteMailer.with(g_suite_id: g_suite.id).revocation_canceled.deliver_later
+        GSuite::RevocationMailer.with(g_suite_id: g_suite.id).revocation_canceled.deliver_later
       end
     end
 
