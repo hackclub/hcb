@@ -138,6 +138,8 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant, flash: { success: "Successfully withdrew from grant." }
 
   rescue => e
+    Rails.error.report(e) unless e.is_a?(ArgumentError)
+
     redirect_to @card_grant, flash: { error: e.message }
   end
 
