@@ -140,8 +140,8 @@ class CardGrant < ApplicationRecord
   end
 
   def withdraw!(amount_cents:, withdrawn_by: sent_by)
-    raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
-    raise ArgumentError, "card grant should have more money than being withdrawn" if amount_cents > balance.amount * 100
+    raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
+    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents > balance.amount * 100
 
     custom_memo = "Withdrawal from grant to #{user.name}"
 
@@ -179,8 +179,8 @@ class CardGrant < ApplicationRecord
   end
 
   def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"), allow_topups: false)
-    raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
-    raise ArgumentError, "card grant should have a positive balance" unless balance.positive? || allow_topups
+    raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
+    raise ArgumentError, "Card grant should have a positive balance." unless balance.positive? || allow_topups
 
     return topup!(amount_cents: balance.cents * -1, topped_up_by: requested_by) if balance.negative?
 

@@ -136,6 +136,11 @@ class CardGrantsController < ApplicationController
     @card_grant.withdraw!(amount_cents: Monetize.parse(params[:amount]).cents, withdrawn_by: current_user)
 
     redirect_to @card_grant, flash: { success: "Successfully withdrew from grant." }
+
+  rescue => e
+    Rails.error.report(e)
+
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def edit
