@@ -52,7 +52,7 @@
         You can still access, configure, and manage accounts, but you may be unable to send or receive emails until after you've fixed <%= @g_suite.domain %>'s DNS records.
       <% end %>
     <% end %>
-    <% if !(@g_suite.revocation.present? && @g_suite.revocation.revoked?) %>
+    <% if !@g_suite.revocation&.revoked? %>
       <% if @g_suite.verified? %>
         <article class="card mb3">
           <%= render "g_suite_accounts/panel" %>
