@@ -21,7 +21,6 @@ module Partners
               directory_client.delete_user(user.id)
             end
           rescue => e
-            puts "abcdefg #{e}"
             if e.message.include?("Domain not found")
               return
             end
