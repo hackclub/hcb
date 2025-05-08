@@ -370,7 +370,7 @@ class EventsController < ApplicationController
     all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
                              .order("stripe_status asc, created_at desc")
 
-    all_stripe_cards = all_stripe_cards.where(user: { id: @user_id }) if @user_id
+    all_stripe_cards = all_stripe_cards.where(user: { id: User.friendly.find_by_friendly_id(@user_id).id }) if @user_id
 
     all_stripe_cards = case @status
                        when "active"
