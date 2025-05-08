@@ -118,7 +118,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_check_deposit?
-    OrganizerPosition.role_at_least?(user, record, :member) && !record.event.demo_mode?
+    OrganizerPosition.role_at_least?(user, record, :member) && !record.demo_mode?
   end
 
   def g_suite_overview?
