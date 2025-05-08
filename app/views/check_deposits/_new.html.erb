@@ -1,4 +1,4 @@
-<% disabled = !policy(@event).create_check_deposit? %>
+<% disabled = !policy(@event.check_deposits.build).create? %>
 
 <%= form_with model: [@event, @event.check_deposits.build], class: "pt-2" do |form| %>
   <div class="field">

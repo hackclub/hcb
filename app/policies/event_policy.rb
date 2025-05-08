@@ -117,10 +117,6 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager? && !record.demo_mode?
   end
 
-  def create_check_deposit?
-    OrganizerPosition.role_at_least?(user, record, :member) && !record.demo_mode?
-  end
-
   def g_suite_overview?
     auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
