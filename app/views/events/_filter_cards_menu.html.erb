@@ -2,7 +2,7 @@
   <button
     type="button"
     class="pop my-2 cursor-pointer tooltipped tooltipped--s"
-    aria-label="Add filters..."
+    aria-label="Add filter..."
     data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
   </button>
@@ -16,7 +16,7 @@
         <% unless show_mock_data? %>
           <div class="menu__divider"></div>
           <% %w[virtual physical].each do |type| %>
-            <%= link_to type.humanize, upsert_query_params(type:), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" } %>
+            <%= link_to type.humanize, upsert_query_params(type:, page: 1), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" } %>
           <% end %>
         <% end %>
       </div>
@@ -25,7 +25,7 @@
         <% unless show_mock_data? %>
           <div class="menu__divider"></div>
           <% %w[active frozen canceled].each do |status| %>
-            <%= link_to status.humanize, upsert_query_params(status:), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @status == status}", data: { turbo_prefetch: "false" } %>
+            <%= link_to status.humanize, upsert_query_params(status:, page: 1), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @status == status}", data: { turbo_prefetch: "false" } %>
           <% end %>
         <% end %>
       </div>
@@ -33,7 +33,7 @@
       <div data-tabs-target="tab" id="users">
         <div class="menu__divider"></div>
         <% @all_unique_cardholders.each do |cardholder| %>
-          <%= link_to upsert_query_params(user: cardholder.user), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @user_id.to_i == cardholder.user.id}", data: { turbo_prefetch: "false" } do %>
+          <%= link_to upsert_query_params(user: cardholder.user, page: 1), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @user_id.to_i == cardholder.user.id}", data: { turbo_prefetch: "false" } do %>
             <div class="avatar-grow line-height-0 mr1">
               <%= avatar_for cardholder.user, size: 18 %>
             </div>
