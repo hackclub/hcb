@@ -90,7 +90,7 @@ export default class extends Controller {
           receiptable_type: receiptableType,
           receiptable_id: receiptableId,
           show_link: true,
-          show_receipt_button: true
+          show_receipt_button: true,
         })
       }
     }
