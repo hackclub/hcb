@@ -52,7 +52,6 @@ class GSuitesController < ApplicationController
     @g_suite.destroy!
     flash[:success] = "Google Workspace was successfully destroyed."
     redirect_to google_workspaces_admin_index_path
-    end
   rescue => e
     flash[:error] = "An error occurred: #{e.message}"
     redirect_to google_workspaces_admin_index_path
