@@ -29,7 +29,7 @@ class Login < ApplicationRecord
   self.ignored_columns += ["browser_token"]
   before_validation :ensure_browser_token
 
-  store :authentication_factors, accessors: [:sms, :email, :webauthn, :totp], prefix: :authenticated_with
+  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, prefix: :authenticated_with
 
   EXPIRATION = 15.minutes
 
@@ -70,6 +70,8 @@ class Login < ApplicationRecord
   end
 
   def authentication_factors_count
+    return 0 if authentication_factors.nil?
+
     authentication_factors.values.count(true)
   end
 
