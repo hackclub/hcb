@@ -28,7 +28,7 @@ class Login < ApplicationRecord
   has_encrypted :browser_token, migrating: true
   has_secure_token :browser_token
 
-  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, prefix: :authenticated_with
+  store :authentication_factors, accessors: [:sms, :email, :webauthn, :totp], prefix: :authenticated_with
 
   EXPIRATION = 15.minutes
 
@@ -69,8 +69,6 @@ class Login < ApplicationRecord
   end
 
   def authentication_factors_count
-    return 0 if authentication_factors.nil?
-
     authentication_factors.values.count(true)
   end
 
