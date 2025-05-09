@@ -259,6 +259,22 @@ class CardGrant < ApplicationRecord
     versions.where_object_changes_to(...).last&.created_at
   end
 
+  def convert_to_reimbursement_report!
+    raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
+    raise ArgumentError, "card grant should have a positive balance" unless balance.positive?
+
+    maximum_amount_cents = balance.cents
+
+    cancel!
+
+    event.reimbursement_reports.create!(
+      user:,
+      report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
+      maximum_amount_cents:,
+      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}."
+    )
+  end
+
   private
 
   def create_card_grant_setting
