@@ -1,4 +1,4 @@
-<% disabled = !policy(event).update? %>
+<% disabled = !policy(local_assigns[:event]).update? %>
 
 <% if !defined?(unlisted) || !defined?(@shown_private_feature_previews) || @shown_private_feature_previews&.include?(local_assigns[:id]) || Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || current_user) %>
   <div class="card pb0 mb3" id="<%= local_assigns[:id] %>">
