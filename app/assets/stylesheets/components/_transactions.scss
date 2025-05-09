@@ -88,10 +88,6 @@ html[data-dark='true'] {
       display: inline-block;
       vertical-align: top;
       text-overflow: ellipsis;
-
-      &:hover {
-        text-decoration-line: underline;
-      }
     }
   }
 
