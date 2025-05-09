@@ -6,9 +6,10 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string
+#  deleted_at           :datetime
 #  one_week_notice_sent :boolean          default(FALSE), not null
 #  other_reason         :text
-#  reason               :integer          default(NULL), not null
+#  reason               :integer          default("invalid_dns"), not null
 #  scheduled_at         :datetime         not null
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
