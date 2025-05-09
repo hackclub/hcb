@@ -40,11 +40,10 @@ class GSuiteAccountPolicy < ApplicationPolicy
   private
 
   def admin_or_manager?
-    user&.admin? || (
-      OrganizerPosition.find_by(user:, event: record.event)&.manager? && !(
-        record.is_a?(GSuite) ? (record&.revocation.present? && record&.revocation.revoked?) : (record&.g_suite&.revocation.present? && record&.g_suite&.revocation.revoked?)
-      )
-    )
+    return true if user&.admin?
+
+    revocation = record.is_a?(GSuite) ? record.revocation : record&.g_suite&.revocation
+    OrganizerPosition.find_by(user:, event: record.event)&.manager? && !revocation&.revoked?
   end
 
 end
