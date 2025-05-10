@@ -148,7 +148,7 @@ class CardGrantsController < ApplicationController
 
     report = @card_grant.convert_to_reimbursement_report!
 
-    redirect_to @card_grant, flash: { success: "Successfully converted grant into a reimbursement report." }
+    redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
   end
 
   def edit
