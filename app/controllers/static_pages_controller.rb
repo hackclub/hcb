@@ -121,7 +121,7 @@ class StaticPagesController < ApplicationController
         "Reset an account's password": :manager,
       },
       "Settings": {
-        "View settings": :member,
+        "View settings": :reader,
         "Edit settings": :manager,
       }
     }
