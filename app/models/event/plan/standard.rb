@@ -71,6 +71,10 @@ class Event
         false
       end
 
+      def requires_contract_signature?
+        true
+      end
+
     end
 
   end
