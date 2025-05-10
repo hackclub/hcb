@@ -38,7 +38,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
   
   def convert_to_reimbursement_report?
-    admin_or_manager?
+    user&.admin?
   end
 
   def admin_or_user?
