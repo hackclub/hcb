@@ -82,11 +82,11 @@
           <p class="h5 muted m0">
             Your logo is displayed on the
             <%= link_to "donation page",
-              @event.donation_page_available? ? start_donation_donations_path(@event) : { anchor: "donations" },
+              @event.donation_page_available? ? start_donation_donations_path(@event) : { tab: "donations" },
               target: @event.donation_page_available? ? "_blank" : nil %>
             and your
             <%= link_to "public reimbursement page",
-              @event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(@event) : { anchor: "public-reimbursements" },
+              @event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(@event) : { tab: "reimbursements" },
               target: @event.public_reimbursement_page_available? ? "_blank" : nil %>. Organization banners are visible on the homepage only.
           </p>
         </div>
