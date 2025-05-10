@@ -8,7 +8,7 @@
     <% end %>
   <% elsif hcb_code.pt&.declined? %>
     <%= render layout: "/public_activity/common", locals: { possessive: true, current_user:, activity:, url: hcb_code_path(hcb_code) } do %>
-      <%= link_to hcb_code.event&.name, hcb_code.event %> card was declined for <%= render_money activity.trackable.amount_cents.abs %> at <i><%= hcb_code.memo %></i> 
+      <%= link_to hcb_code.event&.name, hcb_code.event %> card was declined for <%= render_money activity.trackable.amount_cents.abs %> at <i><%= hcb_code.memo %></i>
     <% end %>
   <% elsif hcb_code.stripe_cash_withdrawal? %>
     <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
