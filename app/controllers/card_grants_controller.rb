@@ -142,7 +142,7 @@ class CardGrantsController < ApplicationController
 
     redirect_to @card_grant, flash: { error: e.message }
   end
-  
+
   def convert_to_reimbursement_report
     authorize @card_grant
 
