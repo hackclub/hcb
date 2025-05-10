@@ -754,6 +754,7 @@ Rails.application.routes.draw do
         post "topup"
         post "withdraw"
         post "cancel"
+        post "convert_to_reimbursement_report"
       end
     end
 

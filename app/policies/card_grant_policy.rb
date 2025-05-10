@@ -37,6 +37,10 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def convert_to_reimbursement_report?
+    user&.admin?
+  end
+
   def admin_or_user?
     user&.admin? || record.event.users.include?(user)
   end
