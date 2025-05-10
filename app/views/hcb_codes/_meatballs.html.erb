@@ -4,7 +4,7 @@
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
 
-<% if disputable || flagable || pinnable || open_invoice %>
+<% if (disputable || flagable || pinnable || open_invoice) && organizer_signed_in?(as: :member) %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",

@@ -35,7 +35,7 @@
                       icon_size: 26,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px; background: #ec375020; color: #ec3750",
-                      'aria-label': "Delete this report." %>
+                      'aria-label': "Delete this report." if organizer_signed_in?(as: :member) %>
     <% end %>
     <% unless @report.closed? %>
       <%= pop_icon_to "settings",
@@ -44,7 +44,7 @@
                       icon_size: 28,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px;",
-                      'aria-label': "Edit this report's properties." %>
+                      'aria-label': "Edit this report's properties." if organizer_signed_in?(as: :member) %>
     <% end %>
   </h3>
   <h2 class="heading mt0 mb1 flex justify-start flex-row" style="gap: 0px">
