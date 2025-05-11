@@ -4,7 +4,7 @@ module Api
   module V4
     class InvoicesController < ApplicationController
       def index
-        @event = authorize(Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]), :index?)
+        @event = authorize(Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]), :invoice_list?)
         @invoices = @event.invoices.order(created_at: :desc)
       end
 
