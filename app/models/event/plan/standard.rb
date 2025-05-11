@@ -70,6 +70,10 @@ class Event
       def unrestricted_disbursements_allowed?
         false
       end
+      
+      def front_disbursements?
+        false
+      end
 
     end
 

@@ -55,6 +55,10 @@ class Event
         true
       end
 
+      def front_disbursements?
+        true
+      end
+
     end
 
   end
