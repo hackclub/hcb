@@ -19,7 +19,7 @@ class EventTagsController < ApplicationController
       end
     end
 
-    redirect_back fallback_location: edit_event_path(@event, anchor: "admin_organization_tags")
+    redirect_back fallback_location: edit_event_path(@event, tab: "admin")
   end
 
   def destroy
@@ -28,7 +28,7 @@ class EventTagsController < ApplicationController
 
     @event_tag.destroy!
 
-    redirect_back fallback_location: edit_event_path(@event, anchor: "admin_organization_tags")
+    redirect_back fallback_location: edit_event_path(@event, tab: "admin")
   end
 
 end

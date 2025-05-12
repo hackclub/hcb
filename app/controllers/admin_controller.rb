@@ -277,7 +277,7 @@ class AdminController < ApplicationController
       transactions << {
         date_posted: Date.strptime(date_posted, "%m/%d/%Y"),
         memo:,
-        amount_cents: amount.to_i * 100
+        amount_cents: (amount.to_f * 100).to_i
       }
     end
 

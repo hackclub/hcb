@@ -239,7 +239,7 @@ module HasWireRecipient
     end
 
 
-    store :recipient_information, accessors: self.recipient_information_accessors
+    store_accessor :recipient_information, *self.recipient_information_accessors
   end
 
   # IBAN & postal code formats sourced from https://column.com/docs/international-wires/country-specific-details

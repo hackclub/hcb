@@ -74,8 +74,8 @@ installed**, as well as a PostgreSQL database running.
 
 #### [Step 1] Prerequisite: Install Ruby and Node
 
-See [`.ruby-version`](.ruby-version)
-and [`.node-version`](.node-version) for which versions you need installed. I
+See [`.ruby-version`](/.ruby-version)
+and [`.node-version`](/.node-version) for which versions you need installed. I
 personally recommend using a version manager
 like [rbenv](https://rbenv.org/) for ruby, [nvm](https://github.com/nvm-sh/nvm) for node,
 or [asdf](https://asdf-vm.com/) for both.
@@ -174,7 +174,7 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 ## Credentials
 
-External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
+External contributors should provide credentials via a `.env.development` file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
 
 HCB relies on two services for the majority of it's financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
@@ -200,7 +200,7 @@ We've transitioned to using development keys and seed data in development, but h
 
 There is two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference.
 
-1. Go to [http://localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing and the redirect URI to `http://localhost:3000/`. Press "Submit" and then save the info on the new page that appears and press "Authorize."
+1. Go to [http://localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing, the redirect URI to `http://localhost:3000/`, and scopes to `read write`. For the purposes of this guide, you should leave confidential checked (see more context [here](oauth.net/2/client-types)). Press "Submit" and then save the info on the new page that appears and press "Authorize."
 
 2. Open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "http://localhost:3000/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://localhost:3000/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=http://localhost:3000/&response_type=code&scope=read write`.
 
