@@ -1,8 +1,8 @@
 # Authentication on HCB
-HCB’s authentication system is an awkward hodgepodge of systems, built one on top of the other. I’m going to start by off by listing off the models and their purpose:
+HCB’s authentication system is an awkward hodgepodge of systems, built one on top of the other. I’m going to start off by listing the models and their purposes:
 
 * `Login`: stores information about an attempt to login, whether successful or not. It’s created when someone enters their email address and either expires or ends after they’ve provided one or two factors of authentication, which creates a `UserSession`.
-* `LoginCode`: is a temporary code sent via email to users, they can use this code as authentication factor.
+* `LoginCode`: a temporary code sent via email to users. They can use this code as authentication factor.
   * `LoginCodeService::Request` confusingly can also send SMS login codes, however, these don’t have an associated `LoginCode` record and are done through Twilio. 
 * `User::Totp`: a TOTP credential that users can use to login. One-per-user.
 * `WebauthnCredential`: a WebAuthn credential that users can use to login, eg. a fingerprint or a Yubikey. Users can have multiple.
@@ -26,8 +26,8 @@ The forms on both `login_code_login_path` and `totp_login_path` submit to `compl
 
 The complete method does two things:
 
-1) It verifies whether what the user inputted is valid. Is it a valid login code / one time password etc.? Once verified it will mark that method as completed on the login record as follows: `@login.update(authenticated_with_webauthn: true)`. This is done so that we can keep track of unique factors used for two factor authentication.
-2) It transitions the `Login` record to complete, if possible. This is done when the user has authenticated with the required amount of factors (1 or 2, depending on if 2FA is enabled). That is determined in an AASM state guard clause on the `Login` model.
+1) It verifies whether what the user inputted is valid. Is it a valid login code, one time password, etc? Once verified, it will mark that method as completed on the login record as follows: `@login.update(authenticated_with_webauthn: true)`. This is done so that we can keep track of unique factors used for two factor authentication.
+2) If possible, it transitions the `Login` record to complete. This is done when the user has authenticated with the required amount of factors (1 or 2, depending on if 2FA is enabled). That is determined in an AASM state guard clause on the `Login` model.
 
 Lastly, if the login is complete, this line signs the user in:
 
