@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class EventPolicy < ApplicationPolicy
+  def index?
+    user.present?
+  end
+
   # Event homepage
   def show?
     is_public || auditor_or_reader?
