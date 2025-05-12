@@ -1,4 +1,4 @@
-i gave us on this since Coolify has many bugs. Docker swarm on Coolify is not
+I gave up on this since Coolify has many bugs. Docker swarm on Coolify is not
 Production ready... See `production.md` instead.
 
 # Coolify /w Docker Swarm
