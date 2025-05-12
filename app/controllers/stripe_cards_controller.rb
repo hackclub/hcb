@@ -29,7 +29,7 @@ class StripeCardsController < ApplicationController
       flash[:error] = "Card could not be frozen"
     end
 
-    redirect_back_or_to @card
+    redirect_back_or_to stripe_card_path(@card)
   end
 
   def cancel
@@ -41,7 +41,7 @@ class StripeCardsController < ApplicationController
     rescue => e
       flash[:error] = "Card could not be canceled"
     end
-    redirect_back_or_to @card
+    redirect_back_or_to stripe_card_path(@card)
   end
 
   def defrost
