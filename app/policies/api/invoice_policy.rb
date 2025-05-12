@@ -2,8 +2,12 @@
 
 module Api
   class InvoicePolicy < ApplicationPolicy
+    def index?
+      OrganizerPosition.role_at_least?(user, record, :reader)
+    end
+    
     def show?
-      record.event.is_public? || OrganizerPosition.role_at_least?(user, record, :reader)
+      OrganizerPosition.role_at_least?(user, record, :reader)
     end
 
     def create?
