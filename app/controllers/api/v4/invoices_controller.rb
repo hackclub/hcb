@@ -9,7 +9,7 @@ module Api
       end
 
       def show
-        @invoice = authorize Invoice.find_by_public_id(params[:id]) || Invoice.friendly.find(params[:id])
+        @invoice = authorize Invoice.find_by_public_id(params[:id])
       end
 
       def create
@@ -24,7 +24,7 @@ module Api
     
         due_date = filtered_params["due_date"].to_datetime
 
-        sponsor = authorize Sponsor.find_by_public_id(params[:sponsor_id]) || Sponsor.friendly.find(params[:sponsor_id])
+        sponsor = authorize Sponsor.find_by_public_id(params[:sponsor_id])
     
         @invoice = ::InvoiceService::Create.new(
           event_id: event.id,
