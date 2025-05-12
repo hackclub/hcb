@@ -10,7 +10,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def show?
-    user.auditor? || record.event.users.include?(user)
+    user.auditor? || (record.event.users.include?(user) && !record.g_suite.revocation.present?)
   end
 
   def reset_password?
@@ -40,7 +40,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   private
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    user&.admin? || (OrganizerPosition.find_by(user:, event: record.event)&.manager? && !record.g_suite.revocation.present?)
   end
 
 end

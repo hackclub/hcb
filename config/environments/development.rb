@@ -101,8 +101,6 @@ Rails.application.configure do
   # SMTP config
   config.action_mailer.delivery_method = :letter_opener_web
 
-  config.active_job.queue_adapter = :sidekiq
-
   # Bullet for finding N+1s
   config.after_initialize do
     Bullet.enable        = true

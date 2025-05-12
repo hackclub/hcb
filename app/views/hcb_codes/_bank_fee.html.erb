@@ -25,7 +25,7 @@
       <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>
     </h2>
 
-    <section class="card__banner card__darker details-horiz border-top <%= "border-bottom" if Flipper.enabled?(:transaction_tags_2022_07_29, (@event || @hcb_code.event)) %>">
+    <section class="card__banner card__darker details-horiz border-top <%= "border-bottom" if Flipper.enabled?(:transaction_tags_2022_07_29, @event || @hcb_code.event) %>">
       <p>
         <strong>Date</strong>
         <%= format_date @hcb_code.date %>

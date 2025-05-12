@@ -61,7 +61,7 @@ class DisbursementsController < ApplicationController
 
   def create
     @source_event = Event.find(disbursement_params[:source_event_id])
-    @destination_event = Event.find(disbursement_params[:event_id])
+    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement

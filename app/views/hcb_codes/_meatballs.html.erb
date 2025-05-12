@@ -29,6 +29,12 @@
           Manually mark as paid
         <% end %>
       <% end %>
+      <% if hcb_code.donation? %>
+        <%= link_to "#", data: { behavior: "modal_trigger", modal: "update" }, class: "flex items-center" do %>
+          <%= inline_icon "person", size: 24 %>
+          Edit donor
+        <% end %>
+      <% end %>
       <% if disputable %>
         <%= link_to dispute_hcb_code_path(hcb_code), target: "_blank" do %>
           <%= inline_icon "flag-fill", size: 24 %>

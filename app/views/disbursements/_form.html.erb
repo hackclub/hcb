@@ -1,6 +1,6 @@
 <% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null}" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{ fee: null, event_id: null }" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div class="field event-select-target">
@@ -15,21 +15,41 @@
   </div>
 
   <div class="field event-select-target">
-    <%= form.label :event_id, "To" %>
+    <%= form.label :destination_event_id_select, "To" %>
     <%= form.select(:event_id,
-                    @allowed_destination_events.map do |event|
-                      [
-                        current_user.admin? ? event.admin_dropdown_description : event.disbursement_dropdown_description,
-                        event.id,
-                        { "data-fee" => event.revenue_fee.to_s },
-                      ]
-                    end,
-                    { prompt: "Select one…" },
-                    required: true,
-                    disabled:,
-                    "x-on:input" => "fee = $event.target.options[$event.target.selectedIndex].dataset.fee") %>
+                  (@allowed_destination_events.map do |event|
+                    [
+                      current_user.admin? ? event.admin_dropdown_description : event.disbursement_dropdown_description,
+                      event.id,
+                      {
+                        "data-fee": event.revenue_fee.to_s,
+                        "data-event_id": event.id
+                      },
+                    ]
+                  end) +
+                  (@source_event&.plan&.unrestricted_disbursements_allowed? && !admin_signed_in? ? [[
+                    "Other",
+                    "other",
+                    {
+                      "data-fee": "null",
+                      "data-event_id": "other"
+                    },
+                  ]] : []),
+                  { prompt: "Select one…" },
+                  required: true,
+                  disabled:,
+                  "x-on:input" => "fee = $event.target.options[$event.target.selectedIndex].dataset.fee; event_id = $event.target.options[$event.target.selectedIndex].dataset.event_id; console.log(event_id)") %>
     <% unless admin_signed_in? %>
-      <span class="muted">You can transfer to any organization you're a part of.</span>
+      <% if @source_event&.plan&.unrestricted_disbursements_allowed? %>
+        <template x-if="event_id == 'other'">
+          <div class="mt2">
+            <%= form.label :destination_event_id_select, "Destination event's slug" %>
+            <%= form.text_field :event_id, placeholder: "hack_the_seas", required: true, disabled:, data: { behavior: "extract_slug" } %>
+          </div>
+        </template>
+      <% else %>
+        <span class="muted">You can transfer to any organization you're a part of.</span>
+      <% end %>
     <% end %>
   </div>
 
