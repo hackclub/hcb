@@ -81,10 +81,6 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
-  def invoice_list?
-    is_public || admin_or_user?
-  end
-
   def emburse_card_overview?
     is_public || auditor_or_reader?
   end
