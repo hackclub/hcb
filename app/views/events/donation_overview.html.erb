@@ -125,7 +125,7 @@
     <%= modal_header "Embed donor graph" %>
     <p class="mt0">Use this image URL to show a donor graph on your website, GitHub repo, or anywhere in between.</p>
     <pre>https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
-    
+
     <p class="mt0">You can also use this HTML to easily embed the graph. Feel free to change the styling.</p>
     <pre><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
 
