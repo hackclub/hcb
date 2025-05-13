@@ -339,8 +339,8 @@ class Donation < ApplicationRecord
     "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
   end
 
-  def avatar
-    gravatar_url(email, name, email.to_i, 128) unless anonymous?
+  def avatar(size = 128)
+    gravatar_url(email, name, email.to_i, size) unless anonymous?
   end
 
   private
