@@ -23,7 +23,7 @@ module Api
         }
         expose :recurring?, as: :recurring, documentation: { type: "boolean" }
         expose :avatar do |donation, _options|
-          donation.local_hcb_code&.fallback_avatar
+          gravatar_url(donation.email, donation.name, donation.email.to_i, 48) unless donation.anonymous?
         end
       end
 
