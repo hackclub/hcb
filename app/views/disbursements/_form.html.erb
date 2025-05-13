@@ -4,7 +4,7 @@
   <%= form_errors(disbursement, "Disbursements") %>
 
   <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: @allowed_source_events, default_event: @source_event, sending: true } %>
-  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: @allowed_destination_events, default_event: nil, hide_balances: @source_event&.plan&.unrestricted_disbursements_allowed?, receiving: true } %>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: @allowed_destination_events, default_event: nil, hide_balances: @source_event&.plan&.unrestricted_disbursements_enabled?, receiving: true } %>
 
   <% if admin_signed_in? %>
     <div class="admin-tools field field--checkbox" x-show="fee > 0" x-cloak x-transition.duration.500ms>
