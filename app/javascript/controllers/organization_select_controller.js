@@ -17,15 +17,6 @@ export default class extends Controller {
   connect() {
     const organizations = {}
 
-    const ensure = async callback => {
-      try {
-        await scheduler.yield()
-        return callback()
-      } catch {
-        return callback()
-      }
-    }
-
     const open = () => {
       // eslint-disable-next-line no-undef
       $(this.menuTarget).slideDown()
@@ -51,8 +42,9 @@ export default class extends Controller {
         orgValues,
         {
           keys: ['name', 'id'],
-          all: true,
+          all: false,
           threshold: -500000,
+          limit: 50,
         }
       )
       const end = performance.now()
@@ -62,26 +54,26 @@ export default class extends Controller {
       firstOrganization = result[0]?.obj
 
 
-      const shown = this.searchTarget.value.length < 5 ? [] : result.map(r => r.obj.organization)
-      const hidden = this.searchTarget.value.length < 5 ? this.organizationTargets : this.organizationTargets.filter(el => !shown.includes(el))
+      const shown = result.length > 0 ? result.map(r => r.obj.organization) : orgValues.sort((a, b) => a.index - b.index).map(o => o.organization).slice(0, 50)
+      const hidden = this.organizationTargets.filter(el => !shown.includes(el))
       console.log('Search took', end - start, 'ms')
       const renderStart = performance.now()
 
-      if (!ensure(() => text == this.searchTarget.value)) return
+
 
       for (const element of shown) {
         (async () => {
         element.parentElement.appendChild(element)
         element.style.display = 'block'
         })();
-        if (!ensure(() => text == this.searchTarget.value)) return
+
       }
 
       for (const element of hidden) {
         (async () => {
         element.style.display = 'none'
         })();
-        if (!ensure(() => text == this.searchTarget.value)) return
+
       }
 
       const renderEnd = performance.now()
@@ -90,7 +82,7 @@ export default class extends Controller {
     }
 
     for (const organization of this.organizationTargets) {
-      const { name, id, fee } = organization.dataset
+      const { name, id, fee, index } = organization.dataset
       const button = organization.children[0]
       const select = () => {
         const oldFieldValue =
@@ -122,6 +114,7 @@ export default class extends Controller {
       organizations[id] = {
         name,
         id,
+        index,
         organization,
         button,
         select,
@@ -185,6 +178,6 @@ export default class extends Controller {
     }
 
     // Filter organizations when searching
-    this.searchTarget.oninput = debounce(filter, 150)
+    this.searchTarget.oninput = debounce(filter, 100)
   }
 }
