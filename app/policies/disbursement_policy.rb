@@ -15,7 +15,7 @@ class DisbursementPolicy < ApplicationPolicy
 
   def can_receive?(role: :manager)
     return true if user&.admin?
-    return true if record.source_event&.plan&.unrestricted_disbursements_allowed?
+    return true if record.source_event&.plan&.unrestricted_disbursements_enabled?
     return true if record.destination_event.nil?
     return true if OrganizerPosition.role_at_least?(user, record.destination_event, :manager)
 
