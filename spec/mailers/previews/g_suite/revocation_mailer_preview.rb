@@ -4,7 +4,7 @@ class GSuite
   class RevocationMailerPreview < ActionMailer::Preview
     def revocation_warning
       revocation = GSuite::Revocation.pending.last
-      GSuiteMailer.with(g_suite_revocation_id: revocation.id).revocation_warning
+      GSuite::RevocationMailer.with(g_suite_revocation_id: revocation.id).revocation_warning
     end
 
     def revocation_one_week_warning
