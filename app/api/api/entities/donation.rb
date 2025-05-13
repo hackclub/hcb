@@ -8,6 +8,7 @@ module Api
         expose :donor do
           expose :name
           expose :anonymous, documentation: { type: "boolean" }
+          expose :avatar
         end
         format_as_date do
           expose :created_at, as: :date
@@ -22,9 +23,6 @@ module Api
           ]
         }
         expose :recurring?, as: :recurring, documentation: { type: "boolean" }
-        expose :avatar do |donation, _options|
-          gravatar_url(donation.email, donation.name, donation.email.to_i, 48) unless donation.anonymous?
-        end
       end
 
     end
