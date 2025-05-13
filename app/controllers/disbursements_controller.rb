@@ -47,13 +47,15 @@ class DisbursementsController < ApplicationController
 
     # @event = current_user.events.select("id").not_hidden.filter_demo_mode(false)
 
+    user_event_ids = current_user.events.reorder("organizer_positions.sort_index ASC").includes(organizer_positions: :user).select("events.id").map(&:id)
+
     @allowed_source_events = if current_user.admin?
-                               Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                               Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan).sort_by { |e| user_event_ids.index(e.id) || Float::INFINITY }
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end
     @allowed_destination_events = if current_user.admin?
-                                    Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                                    Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan).sort_by { |e| user_event_ids.index(e.id) || Float::INFINITY }
                                   else
                                     current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
                                   end
