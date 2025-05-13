@@ -22,7 +22,7 @@ module Api
           ]
         }
         expose :recurring?, as: :recurring, documentation: { type: "boolean" }
-        expose :avatar_url do |donation, _options|
+        expose :avatar do |donation, _options|
           donation.local_hcb_code&.fallback_avatar
         end
       end
