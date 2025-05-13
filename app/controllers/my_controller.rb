@@ -21,12 +21,31 @@ class MyController < ApplicationController
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
-    @status = params[:status].presence_in(%w[active inactive canceled]) || nil
+    @status = params[:status].presence_in(%w[active inactive frozen canceled]) || nil
     @type = params[:type].presence_in(%w[virtual physical]) || nil
     @filter_applied = @status || @type
 
-    @stripe_cards = @stripe_cards.where(stripe_status: @status) if @status
-    @stripe_cards = @stripe_cards.where(card_type: @type) if @type
+    @stripe_cards = case @status
+                    when "active"
+                      @stripe_cards.active
+                    when "inactive"
+                      @stripe_cards.inactive
+                    when "frozen"
+                      @stripe_cards.frozen
+                    when "canceled"
+                      @stripe_cards.canceled
+                    else
+                      @stripe_cards
+                    end
+
+    @stripe_cards = case @type
+                    when "virtual"
+                      @stripe_cards.virtual
+                    when "physical"
+                      @stripe_cards.physical
+                    else
+                      @stripe_cards
+                    end
 
     @stripe_cards = @stripe_cards.order(
       Arel.sql("stripe_status = 'active' DESC"),
