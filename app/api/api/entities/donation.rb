@@ -8,6 +8,7 @@ module Api
         expose :donor do
           expose :name
           expose :anonymous, documentation: { type: "boolean" }
+          expose :avatar
         end
         format_as_date do
           expose :created_at, as: :date
@@ -22,9 +23,7 @@ module Api
           ]
         }
         expose :recurring?, as: :recurring, documentation: { type: "boolean" }
-        expose :avatar_url do |donation, _options|
-          donation.local_hcb_code&.fallback_avatar
-        end
+
       end
 
     end
