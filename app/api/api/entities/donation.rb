@@ -23,7 +23,7 @@ module Api
           ]
         }
         expose :recurring?, as: :recurring, documentation: { type: "boolean" }
- 
+
       end
 
     end
