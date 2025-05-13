@@ -36,7 +36,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features
+        Event::Plan.available_features - %w[card_grants unrestricted_disbursements]
       end
 
       def exempt_from_wire_minimum?
@@ -65,10 +65,6 @@ class Event
         return 14 if date < Date.new(2025, 4, 11) # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743055747682219
 
         70
-      end
-
-      def unrestricted_disbursements_allowed?
-        false
       end
 
     end
