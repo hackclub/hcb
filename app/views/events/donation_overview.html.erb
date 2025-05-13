@@ -129,7 +129,11 @@
     <p class="mt0">You can also use this HTML to easily embed the graph. Feel free to change the styling.</p>
     <pre><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
 
-    <p>To use additional styling and image options, <a href="https://graph.hcb.hackclub.com">check out the docs</a> for more info.</p>
+    <p class="muted text-sm">
+      To use additional styling and image options,
+      <%= link_to "check out the docs", "https://graph.hcb.hackclub.com", target: "_blank" %>
+      for more info.
+    </p>
   </section>
 
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="prefilled_link">
