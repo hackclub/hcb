@@ -3,89 +3,9 @@
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null}", "data-turbo" => "false" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <div class="field" data-controller="organization-select">
-    <%= form.label :source_event_id, "From" %>
-    <select name="disbursement[source_event_id]" id="disbursement_source_event_id" <%= "disabled" if disabled %> class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer disabled:cursor-default" data-organization-select-target="dropdown">
-      <option value>Select one...</option>
-      <option <%= "default" if @source_event.present? %> value="<%= @source_event.id if @source_event.present? %>"><%= @source_event.name if @source_event.present? %></option>
-    </select>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: @allowed_source_events, default_event: @source_event } %>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: @allowed_destination_events, default_event: nil } %>
 
-    <script type="application/ld+json" id="source_events">
-      <%= @allowed_source_events.map { |event, i|
-            {
-              id: event.id,
-              name: event.name,
-              fee: event.revenue_fee,
-            }
-          }.to_json.html_safe %>
-    </script>
-
-    <div data-organization-select-target="wrapper" style="max-width: 384px;">
-      <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
-
-      <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
-        <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px; content-visibility: auto;">
-            <% @allowed_source_events.map do |event, i| %>
-              <% disabled_message = nil %>
-              <% disabled_message = "Insufficient balance" if !current_user.admin? && event.balance_available <= 0 %>
-              <% disabled_message = "HCB transfers disabled" if event != @source_event && !policy(event).create_transfer? %>
-              <div data-id="<%= event.id %>" data-name="<%= event.name %>" data-organization-select-target="organization">
-                <button <%= "disabled" if disabled_message %> aria-label="<%= disabled_message %>" class="<%= "tooltipped tooltipped--i" if disabled_message %> text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer disabled:cursor-default hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
-                  <div class="text-left"><%= event.name %></div>
-                  <div class="text-muted"><%= current_user.admin? ? event.id : render_money(event.balance_available) %></div>
-                </button>
-                <hr class="my-0">
-              </div>
-            <% end %>
-
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="field" data-controller="organization-select">
-    <%= form.label :event_id, "To" %>
-    <select name="disbursement[event_id]" id="disbursement_event_id" <%= "disabled" if disabled %> class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer" data-organization-select-target="dropdown" x-on:feechange="fee = $event.target.options[$event.target.selectedIndex].dataset.fee;">
-      <option value>Select one...</option>
-      <option value="">Organization</option>
-    </select>
-
-    <script type="application/ld+json" id="destination_events">
-      <%= @allowed_destination_events.map { |event, i|
-            {
-              id: event.id,
-              name: event.name,
-              fee: event.revenue_fee,
-            }
-          }.to_json.html_safe %>
-    </script>
-
-    <div data-organization-select-target="wrapper" style="max-width: 384px;">
-      <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
-
-      <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
-        <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px;">
-
-            <% @allowed_destination_events.map do |event, i| %>
-              <div data-id="<%= event.id %>" data-name="<%= event.name %>" data-fee="<%= event.revenue_fee.to_s %>" data-organization-select-target="organization">
-                <button class="text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
-                  <div class="text-left"><%= event.name %></div>
-                  <div class="text-muted"><%= current_user.admin? ? event.id : render_money(event.balance_available) %></div>
-                </button>
-                <hr class="my-0">
-              </div>
-            <% end %>
-
-        </div>
-      </div>
-    </div>
-
-    <% unless admin_signed_in? %>
-      <span class="muted">You can transfer to any organization you're a part of.</span>
-    <% end %>
-
-  </div>
 
   <% if admin_signed_in? %>
     <div class="admin-tools field field--checkbox" x-show="fee > 0" x-cloak x-transition.duration.500ms>
