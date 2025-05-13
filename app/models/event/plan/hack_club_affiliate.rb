@@ -51,6 +51,10 @@ class Event
         35 # custom rate for HQ events
       end
 
+      def unrestricted_disbursements_allowed?
+        true
+      end
+
     end
 
   end

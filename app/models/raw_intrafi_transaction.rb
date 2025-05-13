@@ -16,6 +16,8 @@ class RawIntrafiTransaction < ApplicationRecord
 
   after_create :canonize, if: -> { canonical_transaction.nil? }
 
+  validates_uniqueness_of :date_posted, scope: [:memo, :amount_cents]
+
   def canonize
     create_canonical_transaction!(
       amount_cents:,

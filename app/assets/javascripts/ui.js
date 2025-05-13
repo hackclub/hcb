@@ -242,6 +242,12 @@ $(document).on('turbo:load', function () {
     },
   })
 
+  $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
+    try {
+      event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
+    } catch {}
+  })
+
   $('textarea:not([data-behavior~=no_autosize])')
     .each(function () {
       $(this).css({

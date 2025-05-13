@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_30_082411) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -1028,6 +1028,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.index ["g_suite_account_id"], name: "index_g_suite_aliases_on_g_suite_account_id"
   end
 
+  create_table "g_suite_revocations", force: :cascade do |t|
+    t.integer "reason", default: 0, null: false
+    t.text "other_reason"
+    t.bigint "g_suite_id", null: false
+    t.string "aasm_state"
+    t.datetime "scheduled_at", null: false
+    t.datetime "deleted_at"
+    t.boolean "one_week_notice_sent", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["g_suite_id"], name: "index_g_suite_revocations_on_g_suite_id"
+  end
+
   create_table "g_suites", force: :cascade do |t|
     t.citext "domain"
     t.bigint "event_id"
@@ -1040,6 +1053,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.bigint "created_by_id"
     t.text "remote_org_unit_id"
     t.text "remote_org_unit_path"
+    t.boolean "immune_to_revocation", default: false, null: false
     t.index ["created_by_id"], name: "index_g_suites_on_created_by_id"
     t.index ["event_id"], name: "index_g_suites_on_event_id"
   end
@@ -1295,6 +1309,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "browser_token"
+    t.text "browser_token_ciphertext"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -2287,6 +2302,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
   add_foreign_key "g_suite_accounts", "g_suites"
   add_foreign_key "g_suite_accounts", "users", column: "creator_id"
   add_foreign_key "g_suite_aliases", "g_suite_accounts"
+  add_foreign_key "g_suite_revocations", "g_suites"
   add_foreign_key "g_suites", "events"
   add_foreign_key "g_suites", "users", column: "created_by_id"
   add_foreign_key "hashed_transactions", "raw_plaid_transactions"

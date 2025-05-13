@@ -21,6 +21,14 @@ class WirePolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
+  def edit?
+    user&.admin?
+  end
+
+  def update?
+    user&.admin?
+  end
+
   private
 
   def admin_or_user?

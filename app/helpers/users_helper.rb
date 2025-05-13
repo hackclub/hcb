@@ -78,12 +78,12 @@ module UsersHelper
 
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
-    current_user = defined?(current_user) ? current_user : nil
+    viewer = defined?(current_user) ? current_user : nil
     avi = avatar_for(user, click_to_mention:, default_image:, **options[:avatar])
 
     klasses = ["mention"]
     klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
-    klasses << %w[mention--current-user tooltipped tooltipped--n] if current_user && (user&.id == current_user.id) && !options[:disable_tooltip]
+    klasses << %w[mention--current-user tooltipped tooltipped--n] if viewer && (user&.id == viewer.id) && !options[:disable_tooltip]
     klasses << %w[badge bg-muted ml0] if comment_mention
     klasses << options[:class] if options[:class]
     klass = klasses.uniq.join(" ")
@@ -92,7 +92,7 @@ module UsersHelper
                    options[:aria_label]
                  elsif user.nil?
                    "No user found"
-                 elsif user.id == current_user&.id
+                 elsif user.id == viewer&.id
                    current_user_flavor_text.sample
                  elsif user.admin?
                    "#{user.name} is an admin"
@@ -108,6 +108,13 @@ module UsersHelper
               else
                 avi + name
               end
+
+    unless user.nil?
+      link = content_tag :span, (inline_icon "link", size: 16), onclick: "window.open(`#{admin_user_url(user)}`, '_blank').focus()", class: "mention__link"
+      email = content_tag :span, (inline_icon "email", size: 16), onclick: "window.open(`mailto:#{user.email}`, '_blank').focus()", class: "mention__link"
+
+      content = content + email + link if viewer&.auditor?
+    end
 
     content_tag :span, content, class: klass, 'aria-label': aria_label
   end

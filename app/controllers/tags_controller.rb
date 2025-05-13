@@ -23,6 +23,16 @@ class TagsController < ApplicationController
     redirect_back fallback_location: @event
   end
 
+  def update
+    tag = Tag.find(params[:id])
+
+    authorize tag
+
+    tag.update(label: params[:label].strip, color: params[:color])
+
+    redirect_back fallback_location: @event
+  end
+
   def destroy
     tag = Tag.find(params[:id])
 

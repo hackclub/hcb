@@ -6,7 +6,9 @@ module Reimbursement
 
     def create
       @report = Reimbursement::Report.find(params[:report_id])
-      @expense = @report.expenses.build(amount_cents: 0)
+
+      type = params[:type] == "mileage" ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
+      @expense = @report.expenses.build(amount_cents: 0, type:)
 
       authorize @expense
 

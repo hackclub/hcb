@@ -4,7 +4,7 @@
   <div class="flex flex-row items-center">
     <div style="flex-grow: 1;">
       <%= form.label :memo, "Memo", class: "bold" %>
-      <%= form.text_field :memo, placeholder: "Lunch during layover at SFO", required: true, data: { "expense-form-target": "field memoField", "action": "dblclick->expense-form#edit", "behavior": "ctrl_enter_submit" } %>
+      <%= form.text_field :memo, placeholder: "Lunch during layover at SFO", required: true, data: { "expense-form-target": "field memoField", "action": "dblclick->expense-form#edit", "behavior": "ctrl_enter_submit" }, id: "reimbursement_expense_memo_#{expense.id}" %>
     </div>
 
     <% if expense.is_standard? %>
