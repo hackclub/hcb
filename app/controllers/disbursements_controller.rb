@@ -50,21 +50,23 @@ class DisbursementsController < ApplicationController
     user_event_ids = current_user.events.reorder("organizer_positions.sort_index ASC").includes(organizer_positions: :user).select("events.id").map(&:id)
 
     @allowed_source_events = if current_user.admin?
-                               Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan).sort_by { |e| user_event_ids.index(e.id) || Float::INFINITY }
+                               Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
-                             end
+                             end.sort_by { |e| user_event_ids.index(e.id) || Float::INFINITY }
     @allowed_destination_events = if current_user.admin?
-                                    Event.select("name, id, demo_mode").all.reorder(Event::CUSTOM_SORT).includes(:plan).sort_by { |e| user_event_ids.index(e.id) || Float::INFINITY }
+                                    Event.select("name, id, demo_mode, can_front_balance, slug").all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                                  elsif @source_event&.plan&.unrestricted_disbursements_allowed?
+                                    Event.select("name, id, demo_mode, can_front_balance, slug").transparent.indexable.includes(:plan)
                                   else
                                     current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
-                                  end
+                                  end.sort_by { |e| user_event_ids.index(e.id) || Float::INFINITY }
 
     authorize @disbursement
   end
 
   def create
-    @source_event = Event.find(disbursement_params[:source_event_id])
+    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
     @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 

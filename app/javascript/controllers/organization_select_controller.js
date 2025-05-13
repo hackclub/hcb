@@ -177,6 +177,13 @@ export default class extends Controller {
       }
     }
 
+    if (this.dropdownTarget.children[1].value) {
+      const selected = organizations[this.dropdownTarget.children[1].value]
+      if (selected) {
+        selected.select()
+      }
+    }
+
     // Filter organizations when searching
     this.searchTarget.oninput = debounce(filter, 100)
   }
