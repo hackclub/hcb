@@ -10,7 +10,7 @@ module GSuiteJob
           revocation.destroy!
           next
         end
-        GSuiteMailer.with(revocation: revocation).revocation_one_week_warning.deliver_later
+        GSuite::RevocationMailer.with(g_suite_revocation_id: revocation.id).revocation_one_week_warning.deliver_later
         revocation.update!(one_week_notice_sent: true)
       end
     end

@@ -3,6 +3,40 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "08d274ff8bd37fcb62a8ce353dd9ee735aeb857a33bd09b45999a9ee8d41d029",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/stripe_cards/show.html.erb",
+      "line": 6,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"View card on Stripe\", StripeCard.find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "StripeCardsController",
+          "method": "defrost",
+          "line": 55,
+          "file": "app/controllers/stripe_cards_controller.rb",
+          "rendered": {
+            "name": "stripe_cards/show",
+            "file": "app/views/stripe_cards/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "stripe_cards/show"
+      },
+      "user_input": "StripeCard.find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "331898aa15adc3446b48aada00d2cc1f56eb60f26b56ff486da0c5d596773837",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -130,7 +164,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 855,
+          "line": 942,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -198,7 +232,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 789,
+          "line": 876,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -232,7 +266,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 789,
+          "line": 876,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -300,7 +334,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 855,
+          "line": 942,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -354,6 +388,6 @@
       "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
     }
   ],
-  "updated": "2025-03-14 17:10:20 -0700",
+  "updated": "2025-05-13 00:24:42 +0000",
   "brakeman_version": "6.2.2"
 }
