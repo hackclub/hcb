@@ -377,12 +377,12 @@ class User < ApplicationRecord
   end
 
   def generate_backup_codes
-    backup_codes.each &:mark_invalidated!
+    backup_codes.where.not.used.each &:mark_invalidated!
 
-    @codes = []
-    while @codes.size < 10
+    codes = []
+    while codes.size < 10
       code = SecureRandom.alphanumeric(10)
-      next if @codes.include?(code)
+      next if codes.include?(code)
 
       salt = SecureRandom.random_bytes(64)
       begin
@@ -392,8 +392,10 @@ class User < ApplicationRecord
         # if the code is already in use, skip it
         next
       end
-      @codes << code
+      codes << code
     end
+
+    codes
   end
 
 

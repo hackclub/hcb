@@ -48,6 +48,8 @@ class User
       end
     end
 
+    scope :used, -> { where(aasm_state: :used) }
+
   end
 
 end
