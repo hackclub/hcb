@@ -24,7 +24,7 @@ common use cases of this includes:
 
 ## Policy regarding access to HCB's servers
 
-- To provision access, you must get explicit approval from [@garyhtou](https://github.com/garyhtou)
+- To provision access, you must get explicit approval from [@garyhtou](https://garytou.com)
 - **Defense in Depth**.
   By default, just gaining access to the Bastion host will not provide you
   access to HCB's resources. There is _at least_ one additional level of
@@ -44,7 +44,7 @@ common use cases of this includes:
   and scope of access when credentials are compromised.
 - Must use SSH key authentication for Bastion host. Passwords are too weak. If
   there are situations where SSH key authentication is infeasible, please chat
-  with [@garyhtou](https://github.com/garyhtou).
+  with [@garyhtou](https://garytou.com).
 - Ideally, the bastion host username should be the same the user configured
   within the resource. For example, if the bastion host username is `orpehus`,
   then the Postgres user should be `oprheus`.
@@ -125,4 +125,4 @@ In this example, we'll be creating an account for a user named `orpheus`.
           The process for accessing the Rails console process may change, so I'm
           leaving it intentionally vague here.
 
-- [@garyhtou](https://github.com/garyhtou)
+- [@garyhtou](https://garytou.com)

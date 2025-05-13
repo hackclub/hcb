@@ -50,11 +50,31 @@ Here's a runbook for how the connection and Postgresql user was setup.
     - `public.disbursements`
         - Transactions raised
     - `public.organizer_positions`
+    - `public.organizer_position_invites`
+        - User funnel to determine users who were invited and later accepted
     - `public.event_tags`
     - `public.event_tags_events`
         - Organizations with teenagers
     - `public.user_seen_at_histories`
         - Active users
+    - `public.stripe_cards`
+      - User funnel
+   - `public.stripe_cardholders`
+      - User funnel
+   - `public.card_grants`
+      - User funnel
+   - `public.reimbursement_reports`
+      - User funnel
+   - `public.raw_stripe_transactions`
+      - User funnel
+   - `public.donations`
+      - User funnel
+   - `public.invoices`
+      - User funnel
+   - `public.check_deposits`
+      - User funnel
+   - `public.versions`
+      - User funnel
 
    Easy copy & paste list derived from above.
    ```sql
@@ -66,9 +86,19 @@ Here's a runbook for how the connection and Postgresql user was setup.
    GRANT SELECT ON TABLE public.event_plans TO metabase;
    GRANT SELECT ON TABLE public.disbursements TO metabase;
    GRANT SELECT ON TABLE public.organizer_positions TO metabase;
+   GRANT SELECT ON TABLE public.organizer_position_invites TO metabase;
    GRANT SELECT ON TABLE public.event_tags TO metabase;
    GRANT SELECT ON TABLE public.event_tags_events TO metabase;
    GRANT SELECT ON TABLE public.user_seen_at_histories TO metabase;
+   GRANT SELECT ON TABLE public.stripe_cards TO metabase;
+   GRANT SELECT ON TABLE public.stripe_cardholders TO metabase;
+   GRANT SELECT ON TABLE public.card_grants TO metabase;
+   GRANT SELECT ON TABLE public.reimbursement_reports TO metabase;
+   GRANT SELECT ON TABLE public.raw_stripe_transactions TO metabase;
+   GRANT SELECT ON TABLE public.donations TO metabase;
+   GRANT SELECT ON TABLE public.invoices TO metabase;
+   GRANT SELECT ON TABLE public.check_deposits TO metabase;
+   GRANT SELECT ON TABLE public.versions TO metabase;
    ```
 
 4. Grant access to Zach's Google Sheets integration for expense reporting.
@@ -106,6 +136,11 @@ CREATE USER fivetran WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
    ```sql
    GRANT ALL PRIVILEGES ON SCHEMA google_sheets TO fivetran;
    GRANT all on all tables in schema google_sheets to fivetran;
+   ALTER DEFAULT PRIVILEGES IN SCHEMA google_sheets GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fivetran;
+
+   GRANT CREATE ON DATABASE hcb_production TO fivetran;
+   -- Fivetran needs access to create schemas to run it's connection tests. Ex:
+   -- /*Fivetran*/CREATE SCHEMA fivetran_testing_schema_d2fd9a9160be4b1ab714d1b4cd9c48a2
    ```
 
 3. Follow the instructions in [bastion.md](bastion.md) to create a bastion user
@@ -113,4 +148,4 @@ CREATE USER fivetran WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
     - Fivetran will provide an SSH public key when you configure a Fivetran
       destination using "Connect via an SSH Tunnel".
 
-- [@garyhtou](https://github.com/garyhtou)
+- [@garyhtou](https://garytou.com)
