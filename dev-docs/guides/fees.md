@@ -104,6 +104,6 @@ At times, we may want to waive fees on revenue. For example, if the transaction 
 
 There are two ways of waiving fees, set `fee_waived` on the `CanonicalPendingTransaction` or set `reason` on the `Fee` to “TBD”.
 
-Occasionally, we make this waiver after charging a fee. This results in a fee credit which is essentially a fee where we (HCB) pay the organisation instead of them paying us.
+Occasionally, we make this waiver after charging a fee. This results in a fee credit which is essentially a fee where we (HCB) pay the organization instead of them paying us.
 
 \- [@sampoder](https://github.com/sampoder)
