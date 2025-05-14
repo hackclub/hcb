@@ -11,7 +11,7 @@ class EventTagsController < ApplicationController
     @event_tag.save!
 
     if params[:event_id]
-      @event = Event.find(params[:event_id])
+      @event = Event.find_by(slug: params[:event_id])
       authorize @event, :toggle_event_tag?
 
       suppress ActiveRecord::RecordNotUnique do
