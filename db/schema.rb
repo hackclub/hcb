@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_30_082411) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_14_174905) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -410,6 +410,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_30_082411) do
     t.string "invite_message"
     t.integer "expiration_preference", default: 365, null: false
     t.string "keyword_lock"
+    t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
   end
 
