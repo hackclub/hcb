@@ -1,6 +1,6 @@
 # What does it mean to front a transaction on HCB?
 
-Money takes time to move and HCB only imports transactions from our bank account once a day.  To make money movement feel instant, we do a lot of transaction fronting.
+Money takes time to move and HCB only imports transactions from our bank account once per day.  To make money movement feel instant, we do a lot of transaction fronting.
 
 **What is a `CanonicalPendingTransaction`?**
 
@@ -20,11 +20,13 @@ When a transaction settling is guaranteed. The best example of this is book tran
 
 By fronting these, you can get people their money faster. This is how we cut reimbursements’ time-to-bank down to a couple of hours from a couple of days:
 
+Disbursements coming from organizations on the "Hack Club affiliated project" plan or "HCB internal organization" plan are always fronted.
+
 **When should we avoid fronting transactions?**
 
-Sometimes we know a transaction will likely hit our accounts but it isn’t guaranteed. In these cases we should still make a `CanonicalPendingTransaction` but not front it. For example, check deposits because they can bounce. 
+Sometimes we know a transaction will likely hit our accounts but it isn’t guaranteed. In these cases we should still make a `CanonicalPendingTransaction` but not front it. For example, check deposits, because they can bounce. 
 
-If needs be, you can always manually front transactions:
+If needed, you can always manually front transactions:
 
 ```ruby
 CanonicalPendingTransaction.find(XX).update(fronted: true)
@@ -32,6 +34,6 @@ CanonicalPendingTransaction.find(XX).update(fronted: true)
 
 **⚠️ Never leave a fronted `CanonicalPendingTransaction` unsettled for too long**
 
-If the transaction doesn’t happen, we should decline it. And, don’t forget, setting a `CanonicalTransaction`’s HCB code isn’t the same as settling it.
+If the transaction doesn’t happen, we should decline it. Don’t forget, setting a `CanonicalTransaction`’s HCB code isn’t the same as settling it.
 
 \- [@sampoder](https://github.com/sampoder)
