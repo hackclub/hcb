@@ -42,7 +42,7 @@ module DisbursementService
       o_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::OutgoingDisbursement.new(raw_pending_outgoing_disbursement_transaction: rpodt).run
       # 3. Map to event
       ::PendingEventMappingEngine::Map::Single::OutgoingDisbursement.new(canonical_pending_transaction: o_cpt).run
-      #4. Front if required
+      # 4. Front if required
       o_cpt.update(fronted: @fronted)
 
       if disbursement.scheduled_on.nil?
