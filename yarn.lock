@@ -1252,10 +1252,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@oddbird/popover-polyfill@^0.5.2":
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/@oddbird/popover-polyfill/-/popover-polyfill-0.5.2.tgz#9a142cae54b6e48824bec61e94e39541c9746b69"
-  integrity sha512-iFrvar5SOMtKFOSjYvs4z9UlLqDdJbMx0mgISLcPedv+g0ac5sgeETLGtipHCVIae6HJPclNEH5aCyD1RZaEHw==
+"@oddbird/popover-polyfill@^0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@oddbird/popover-polyfill/-/popover-polyfill-0.6.0.tgz#e183064e1cb6d4ccd20c9bc4f289869027e25d49"
+  integrity sha512-pbuLPpoGnAp2W0RIt5Wbinq0CHTAMm6qpYj4n/QfamFtmkgNS3R1hr58CikfBGuqSzeUkKxVtKuPnPD/4s7QXQ==
 
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"

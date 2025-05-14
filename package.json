@@ -24,7 +24,7 @@
     "@hotwired/stimulus-webpack-helpers": "^1.0.1",
     "@hotwired/turbo-rails": "^8.0.13",
     "@hugocxl/react-to-image": "^0.0.9",
-    "@oddbird/popover-polyfill": "^0.5.2",
+    "@oddbird/popover-polyfill": "^0.6.0",
     "@shopify/draggable": "^1.1.4",
     "@stripe/stripe-js": "^7.3.0",
     "ahoy.js": "^0.4.4",
