@@ -226,8 +226,8 @@ class StripeCard < ApplicationRecord
     stripe_status == "active"
   end
 
-  def deactivated?
-    stripe_status != "active"
+  def inactive?
+    !initially_activated? && stripe_status == "inactive"
   end
 
   def canceled?
