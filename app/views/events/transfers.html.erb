@@ -132,7 +132,11 @@
             <% if d.is_a?(Disbursement) %>
               <%= d.name %>
             <% elsif d.is_a?(CardGrant) %>
-              <%= d.purpose %>
+              <% if !d.purpose || d.purpose == "" %>
+                <%= d.disbursement.local_hcb_code.memo %>
+              <% else %>
+                <%= d.purpose %>
+              <% end %>
             <% else %>
               <%= d.try(:payment_for) %>
             <% end %>
