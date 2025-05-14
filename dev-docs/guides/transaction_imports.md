@@ -14,7 +14,7 @@ If this is an account number transaction of some other “unknown” transfer ty
 
 The final step in this process is for the transaction to be mapped to an event. This can either be through the Column account numbers or through some transfer type-specific logic. 
 
-Transfers, both inbound and outbound, can be received / sent to the account numbers specific to an organization. Transfers with this will be mapped by `EventMappingEngine::Nightly#map_column_account_number_transactions!`. 
+Transfers, both inbound and outbound, can be received / sent to the account numbers specific to an organisation. Transfers with this will be mapped by `EventMappingEngine::Nightly#map_column_account_number_transactions!`. 
 
 The transfer type-specific logic can also be found in `EventMappingEngine::Nightly`; for example, `EventMappingEngine::Nightly#map_achs!`.
 
@@ -24,9 +24,9 @@ If a transfer can’t be mapped through any of these methods, it’ll appear on 
 
 Disbursements are Column book transfers (https://column.com/docs/book-transfers-and-holds) between “FS Main” and “FS Operating”. There are two book transfers for every disbursement:
 
-FS Main -> FS Operating: this will be a negative transaction on FS Main (the only Column account we import from) and should be mapped to the organization that sent the disbursement.
+FS Main -> FS Operating: this will be a negative transaction on FS Main (the only Column account we import from) and should be mapped to the organisation that sent the disbursement.
 
-FS Operating -> FS Main: this will be a positive transaction on FS Main and should be mapped to the organization that is receiving the disbursement.
+FS Operating -> FS Main: this will be a positive transaction on FS Main and should be mapped to the organisation that is receiving the disbursement.
 
 HCB operates under the assumption that FS Operating has a balance of $0. Any money that goes in must come out.
 
@@ -40,7 +40,7 @@ Based on the ID, `EventMappingEngine::Map::Disbursements` will map the transacti
 
 Every time we issue a card, we need to pay Stripe for printing / shipping etc. They automatically subtract this from our balance. We top-up our balance from our bank account.
 
-Each of these top-up transactions are mapped to the Bank organization on HCB: hcb.hackclub.com/bank. This is done based on the `CanonicalTransaction`’s memo meeting the following criteria:
+Each of these top-up transactions are mapped to the Bank organisation on HCB: hcb.hackclub.com/bank. This is done based on the `CanonicalTransaction`’s memo meeting the following criteria:
 
 ```sql
 memo ilike 'Hack Club Bank Issued car%' or memo ilike 'HCKCLB Issued car%' or memo ilike 'STRIPE Issued car%'
@@ -68,9 +68,9 @@ That’s how invoices and donations can be imported once they leave Stripe. But 
 
 #### Reimbursements
 
-We use a clearinghouse organization for reimbursements. This means that the ACHs, checks, etc. we send to reimburse people are standard ACHs / checks, just like the ones any organization would send! See `Reimbursement::PayoutHoldingService::Nightly` for how this is done.
+We use a clearinghouse organisation for reimbursements. This means that the ACHs, checks, etc. we send to reimburse people are standard ACHs / checks, just like the ones any organisation would send! See `Reimbursement::PayoutHoldingService::Nightly` for how this is done.
 
-The transactions that are imported by HCB short code are the `ExpensePayout` and the `PayoutHolding`. These are internal book transfers that move money from the organization that is reimbursing someone to the clearinghouse organization.
+The transactions that are imported by HCB short code are the `ExpensePayout` and the `PayoutHolding`. These are internal book transfers that move money from the organisation that is reimbursing someone to the clearinghouse organisation.
 
 An `ExpensePayout` is a book transfer from “FS Main” to “FS Operating”. It comes in as a negative `CanonicalTransaction`. A `Reimbursement::Report` can have multiple of these `ExpensePayout`s, one for every `Reimbursement::Expense` that was approved. 
 
