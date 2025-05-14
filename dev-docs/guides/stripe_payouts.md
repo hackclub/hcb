@@ -29,7 +29,7 @@ We then import them in as CPTs, that’s the second service in the list. We use 
 
 Next, we map these pending transactions and front them. This gives organizations instant access to the money, even though it isn’t technically in our bank account.
 
-But now we need to get that money into our account and canonise this transaction.
+But now we need to get that money into our account and canonize this transaction.
 
 The moment an invoice or donation is paid, Stripe will have created something called a balance transaction. It will have added money to our Stripe balance. We need to extract that money from our Stripe balance and into our bank balance (Column, at the time of writing).
 

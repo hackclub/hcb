@@ -86,7 +86,7 @@ This begins in `TransactionEngine::Nightly` by importing a list of transactions 
 
 Afterwards, `TransactionEngine::Nightly` continues by calling `TransactionEngine::HashedTransactionService::RawStripeTransaction::Import`, which loops through each of these `RawStripeTransaction`s to create a “hashed transaction”.
 
-Still inside of `TransactionEngine::Nightly`, after these transactions are hashed, they are “canonised” by `TransactionEngine::CanonicalTransactionService::Import::All`. That is to say that a `CanonicalTransaction` was created.
+Still inside of `TransactionEngine::Nightly`, after these transactions are hashed, they are “canonized” by `TransactionEngine::CanonicalTransactionService::Import::All`. That is to say that a `CanonicalTransaction` was created.
 
 This `CanonicalTransaction` is mapped to a HCB code using the aforementioned `CanonicalTransaction#write_hcb_code`. See above for a description of that method.
 
@@ -102,7 +102,7 @@ We fetch these transactions through Plaid inside of `::TransactionEngine::RawPla
 
 A `RawPlaidTransaction`’s journey is a lot like a `RawStripeTransaction`’s journey. In `TransactionEngine::Nightly`, it is hashed by `TransactionEngine::HashedTransactionService::RawPlaidTransaction::Import`.
 
-It is then “canonised” by `TransactionEngine::CanonicalTransactionService::Import::All`. 
+It is then “canonized” by `TransactionEngine::CanonicalTransactionService::Import::All`. 
 
 Most `CanonicalTransaction`s then show up on https://hcb.hackclub.com/admin/ledger to be mapped manually. Though it might be automatically mapped by short code.
 
