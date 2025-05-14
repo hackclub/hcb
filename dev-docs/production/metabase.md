@@ -148,4 +148,4 @@ CREATE USER fivetran WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
     - Fivetran will provide an SSH public key when you configure a Fivetran
       destination using "Connect via an SSH Tunnel".
 
-- [@garyhtou](https://garytou.com)
+\- [@garyhtou](https://garytou.com)

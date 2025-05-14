@@ -18,4 +18,4 @@
 8. Copy remaining WAL from old box
 9. `systemctl start postgres`
 
-- [@garyhtou](https://garytou.com)
+\- [@garyhtou](https://garytou.com)
