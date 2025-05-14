@@ -6,7 +6,7 @@
   <%= modal_header "Send a grant" %>
 
   <% if @event.card_grant_setting.present? %>
-    <p class="muted">See your <%= link_to "card grant settings", edit_event_path(@event, anchor: "card-grants"), data: { turbo_frame: "_top" } %>.</p>
+    <p class="muted">See your <%= link_to "card grant settings", edit_event_path(@event, tab: "card_grants"), data: { turbo_frame: "_top" } %>.</p>
   <% end %>
 
   <%= form_with model: [@event, @card_grant], data: { turbo_frame: "_top" } do |form| %>

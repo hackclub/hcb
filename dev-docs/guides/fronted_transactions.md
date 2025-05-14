@@ -16,7 +16,7 @@ By fronting a positive `CanonicalPendingTransaction`, we allow that transaction 
 
 **When should we front transactions?**
 
-When a transaction settling as guaranteed. The best example of this is book transfers on Column. In a couple of pieces of documentation, I’ve described how we use book transfers for disbursements, fees, reimbursements and other features. Book transfers, if they don’t error when created on Column, are guaranteed to show up our bank statement.
+When a transaction settling is guaranteed. The best example of this is book transfers on Column. In a couple of pieces of documentation, I’ve described how we use book transfers for disbursements, fees, reimbursements and other features. Book transfers, if they don’t error when created on Column, are guaranteed to show up our bank statement.
 
 By fronting these, you can get people their money faster. This is how we cut reimbursements’ time-to-bank down to a couple of hours from a couple of days:
 

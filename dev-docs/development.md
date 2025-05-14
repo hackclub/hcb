@@ -74,8 +74,8 @@ installed**, as well as a PostgreSQL database running.
 
 #### [Step 1] Prerequisite: Install Ruby and Node
 
-See [`.ruby-version`](.ruby-version)
-and [`.node-version`](.node-version) for which versions you need installed. I
+See [`.ruby-version`](/.ruby-version)
+and [`.node-version`](/.node-version) for which versions you need installed. I
 personally recommend using a version manager
 like [rbenv](https://rbenv.org/) for ruby, [nvm](https://github.com/nvm-sh/nvm) for node,
 or [asdf](https://asdf-vm.com/) for both.
@@ -174,7 +174,7 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 ## Credentials
 
-External contributors should provide credentials via a `.env.development` file [(view example)](.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
+External contributors should provide credentials via a `.env.development` file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
 
 HCB relies on two services for the majority of it's financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
