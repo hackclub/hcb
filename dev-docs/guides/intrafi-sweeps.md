@@ -50,7 +50,7 @@ imported as a `RawIntrafiTransaction`:
 RawIntrafiTransaction.create(date_posted: tx[:Date], memo: tx[:"Account Activity"], amount_cents: tx[:Amount] * 100)
 ```
 
-All IntraFi transactions should be mapped to the HCB Sweeps organization; *
+All IntraFi transactions should be mapped to the HCB Sweeps organisation; *
 *except** for Interest Capitalization transactions. These are auto-mapped to
 **Hack Foundation Interest Earnings**.
 

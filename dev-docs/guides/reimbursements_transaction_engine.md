@@ -2,13 +2,13 @@
 
 Reimbursements are one of the more complicated parts of HCB! This isn’t a comprehensive guide to how they work, instead, this describes how money flows through the system. 
 
-To send the person being reimbursed money, we use standard HCB transfers such as an `AchTransfer`. However, we send these transfers from the “HCB Reimbursements Clearinghouse” organization. On the organization that is sending the reimbursement we have one transaction on the ledger per reimbursed expense (these are called `ExpensePayout`s). We took this approach to increase transparency and make it easier to understand what a reimbursement is for.
+To send the person being reimbursed money, we use standard HCB transfers such as an `AchTransfer`. However, we send these transfers from the “HCB Reimbursements Clearinghouse” organisation. On the organisation that is sending the reimbursement we have one transaction on the ledger per reimbursed expense (these are called `ExpensePayout`s). We took this approach to increase transparency and make it easier to understand what a reimbursement is for.
 
 A `Reimbursement::Report` is a collection of `Reimbursement::Expenses`. No money moves until a report is approved by an admin and if needed, an organiser. 
 
 When a `Reimbursement::Report` is marked as `reimbursement_approved` by an admin, we run `Reimbursement::Report#reimburse!` which creates one `ExpensePayout` per approved expense and one `PayoutHolding` for the report.
 
-These transactions' internal book transfers move money from the organization that is reimbursing someone to the clearinghouse organization.
+These transactions' internal book transfers move money from the organisation that is reimbursing someone to the clearinghouse organisation.
 
 An `ExpensePayout` is a book transfer from “FS Main” to “FS Operating”. It comes in as a negative `CanonicalTransaction`.
 
@@ -16,7 +16,7 @@ A `PayoutHolding` is a book transfer from “FS Operating” to “FS Main”. I
 
 These are both created in `Reimbursement::Report#reimburse!` 
 
-After they are both created, they have `after_create` callbacks that create a `CanonicalPendingTransaction`. That means there will immediately be a transaction on the ledgers of both the reimbursing organization and HCB Reimbursements Clearinghouse.
+After they are both created, they have `after_create` callbacks that create a `CanonicalPendingTransaction`. That means there will immediately be a transaction on the ledgers of both the reimbursing organisation and HCB Reimbursements Clearinghouse.
 
 `Reimbursement::ExpensePayoutService::Nightly` is ran every five minutes and creates Column book transfers for each of these. 
 
@@ -38,7 +38,7 @@ Once a user updates their payout information, we mark all of their failed `Payou
 
 ### Reversed `PayoutHolding`s
 
-In a very rare set of circumstances, we “reverse” a `PayoutHolding`. That means that the money leaves the HCB Reimbursements Clearinghouse organization and goes back to the organization which the report was on. This has to be manually triggered by an engineer by calling `PayoutHolding#reverse!` in the production console.
+In a very rare set of circumstances, we “reverse” a `PayoutHolding`. That means that the money leaves the HCB Reimbursements Clearinghouse organisation and goes back to the organisation which the report was on. This has to be manually triggered by an engineer by calling `PayoutHolding#reverse!` in the production console.
 
 We perform the following sanity checks:
 

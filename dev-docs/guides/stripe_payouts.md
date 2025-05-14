@@ -1,5 +1,5 @@
 # Payouts & Fee Reimbursements: why are invoices and donations so damm complicated?
-Good question. I guess I’ll do my best to explain them. There are two ways organizations can raise money through Stripe: invoices and donations. Invoices are created by an organization and then sent, via Stripe, to the donor / sponsor. Meanwhile, to make a donation, donors head to HCB directly and enter their card details (a Stripe Elements form).
+Good question. I guess I’ll do my best to explain them. There are two ways organisations can raise money through Stripe: invoices and donations. Invoices are created by an organisation and then sent, via Stripe, to the donor / sponsor. Meanwhile, to make a donation, donors head to HCB directly and enter their card details (a Stripe Elements form).
 
 `Invoice`s are created inside of `InvoiceService::Create` which also creates the invoice on Stripe’s end. Learn more about [Stripe Invoicing](https://stripe.com/invoicing). Donations are created in `DonationsController` and a `before_create` callback creates a Stripe payment intent for them. Once created in Stripe, they both can be found on https://dashboard.stripe.com/payments. 
 
@@ -27,9 +27,9 @@ As you can see, it’s pretty similar for both donations and invoices. `RawPendi
 
 We then import them in as CPTs, that’s the second service in the list. We use the details in `RawPendingInvoiceTransaction` or `RawPendingDonationTransaction` to the set the `amount_cents` etc.
 
-Next, we map these pending transactions and front them. This gives organizations instant access to the money, even though it isn’t technically in our bank account.
+Next, we map these pending transactions and front them. This gives organisations instant access to the money, even though it isn’t technically in our bank account.
 
-But now we need to get that money into our account and canonize this transaction.
+But now we need to get that money into our account and canonise this transaction.
 
 The moment an invoice or donation is paid, Stripe will have created something called a balance transaction. It will have added money to our Stripe balance. We need to extract that money from our Stripe balance and into our bank balance (Column, at the time of writing).
 
@@ -51,7 +51,7 @@ and they’ll be mapped to the invoice or donation’s HCB code using HCB short 
 
 So how does HCB ensure that our balance doesn’t go negative? We then perform a top-up of our Stripe balance through a `FeeReimbursement`.
 
-> Funny name for that model? Yeah. In the past we’d make a book transfer to the organization to cover the fee but switched to this model to reduce the complexity.
+> Funny name for that model? Yeah. In the past we’d make a book transfer to the organisation to cover the fee but switched to this model to reduce the complexity.
 
 These `FeeReimbursement`s are created in `PayoutService::Donation::Create` and `PayoutService::Invoice::Create`. Their amount is simply `payout_creation_balance_stripe_fee`.
 

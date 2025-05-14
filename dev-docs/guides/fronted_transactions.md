@@ -8,11 +8,11 @@ We create a `CanonicalPendingTransaction` when we expect a transaction to happen
 
 `CanonicalPendingTransaction`s are temporary - they should either settle as a `CanonicalTransaction` or be declined (when we no longer expect the transaction to happen).
 
-By default, negative `CanonicalPendingTransaction`s affect an organization’s balance but positive `CanonicalPendingTransaction`s don’t. That’s a liability thing, if we give an organization access to funds that never end up hitting our account, we have to cover the difference if they choose to spend it.
+By default, negative `CanonicalPendingTransaction`s affect an organisation’s balance but positive `CanonicalPendingTransaction`s don’t. That’s a liability thing, if we give an organisation access to funds that never end up hitting our account, we have to cover the difference if they choose to spend it.
 
 **So what does it mean to front a transaction?**
 
-By fronting a positive `CanonicalPendingTransaction`, we allow that transaction to change an organization’s balance. For example, the moment an organization receives a donation, we create a `CanonicalPendingTransaction` and set it’s `fronted` to `true`.
+By fronting a positive `CanonicalPendingTransaction`, we allow that transaction to change an organisation’s balance. For example, the moment an organisation receives a donation, we create a `CanonicalPendingTransaction` and set it’s `fronted` to `true`.
 
 **When should we front transactions?**
 
@@ -20,7 +20,7 @@ When a transaction settling is guaranteed. The best example of this is book tran
 
 By fronting these, you can get people their money faster. This is how we cut reimbursements’ time-to-bank down to a couple of hours from a couple of days:
 
-Disbursements coming from organizations on the "Hack Club affiliated project" plan or "HCB internal organization" plan are always fronted.
+Disbursements coming from organisations on the "Hack Club affiliated project" plan or "HCB internal organization" plan are always fronted.
 
 **When should we avoid fronting transactions?**
 

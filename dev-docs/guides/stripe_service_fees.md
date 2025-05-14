@@ -4,6 +4,6 @@ Stripe charges us all sorts of fees to use their platform, especially when it co
 
 Now, we run `StripeServiceFeeJob` every week to list out those fees we’re charged (they are all negative balance transactions on our Stripe account) and top up our Stripe account to cover that fee.
 
-These top ups are auto-mapped to the “Hack Club Bank” organization on HCB and they're associated with an HCB code via a short code.
+These top ups are auto-mapped to the “Hack Club Bank” organisation on HCB and they're associated with an HCB code via a short code.
 
 \- [@sampoder](https://github.com/sampoder)

@@ -37,11 +37,11 @@ Capturing has a couple of edge cases:
 
 * Partial capture: merchants only capture part of the authorisation’s amount. In this case the `CanonicalTransaction` will have a lower amount than the `CanonicalPendingTransaction`. Stripe may continue to hold onto that additional amount, in case of multi capture.
 
-* Over capture: merchants capture more than the authorisation’s amount. The most common example of this is a tip at a restaurant. In this case the `CanonicalTransaction` will have a higher amount than the `CanonicalPendingTransaction`. We can’t reject an over capture so this can cause organizations to go negative. If we don’t agree with an over capture, we need to dispute it.
+* Over capture: merchants capture more than the authorisation’s amount. The most common example of this is a tip at a restaurant. In this case the `CanonicalTransaction` will have a higher amount than the `CanonicalPendingTransaction`. We can’t reject an over capture so this can cause organisations to go negative. If we don’t agree with an over capture, we need to dispute it.
 
 * Multi capture: merchants can capture from an authorised amount multiple times. This will lead to multiple `CanonicalTransaction`s which will all be mapped to the same HCB code (Stripe card transactions are bundled into HCB codes based on their authorisation).
 
-* Force capture: merchants can essentially brute force through a declined authorisation by performing a “force capture”. They can also use this to capture money without an authorisation. We’ll create a `CanonicalTransaction` and map it to an event as usual. If this was fraudulent, it’s on us to dispute it. This is the cause of negative organizations. We aren’t able to block them. An example of a legitimate forced capture is a food purchase on an aircraft without internet. These terminals aren’t connected to the internet and can’t do a real-time authorisation. 
+* Force capture: merchants can essentially brute force through a declined authorisation by performing a “force capture”. They can also use this to capture money without an authorisation. We’ll create a `CanonicalTransaction` and map it to an event as usual. If this was fraudulent, it’s on us to dispute it. This is the cause of negative organisations. We aren’t able to block them. An example of a legitimate forced capture is a food purchase on an aircraft without internet. These terminals aren’t connected to the internet and can’t do a real-time authorisation. 
 
 For more information, I recommend reading:
 

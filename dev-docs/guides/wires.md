@@ -1,9 +1,9 @@
 # Wires on HCB
-Wires are our most complex outbound transfer type. That’s largely due to requirements varying from country to country. Before reading this, I’d recommend [Column’s documentation on wires](https://column.com/docs/international-wires/). Specifically the section on “Country-specific Details” and “Outgoing Transfers”. Our system is largely modeled on theirs.
+Wires are our most complex outbound transfer type. That’s largely due to requirements varying from country to country. Before reading this, I’d recommend [Column’s documentation on wires](https://column.com/docs/international-wires/). Specifically the section on “Country-specific Details” and “Outgoing Transfers”. Our system is largely modelled on theirs.
 
 ## The basics
 
-Wires are sent via Column, just like ACH transfers and checks. They use HCB code “HCB-310”. They’re sent from each organization’s Column-issued account number and that is used to map them to their organization.
+Wires are sent via Column, just like ACH transfers and checks. They use HCB code “HCB-310”. They’re sent from each organisation’s Column-issued account number and that is used to map them to their organisation.
 
 ## How we handle currency
 
