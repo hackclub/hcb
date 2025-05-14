@@ -23,7 +23,7 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def new?
-    can_send?(role: :reader) && can_receive?(role: :reader)
+    auditor_or_user?
   end
 
   def create?
