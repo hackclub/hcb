@@ -54,7 +54,7 @@ module DisbursementService
         i_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::IncomingDisbursement.new(raw_pending_incoming_disbursement_transaction: rpidt).run
         # 3. Map to event
         ::PendingEventMappingEngine::Map::Single::IncomingDisbursement.new(canonical_pending_transaction: i_cpt).run
-        #4. Front if required
+        # 4. Front if required
         i_cpt.update(fronted: @fronted)
       end
 
