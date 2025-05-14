@@ -80,4 +80,4 @@
    ![AppSignal sidebar](https://hc-cdn.hel1.your-objectstorage.com/s/v3/f8d29276865f37c091d9f8d7e46d3586877b2970_image.png)
    ![AppSignal automatically PostgreSQL dashbaord](https://hc-cdn.hel1.your-objectstorage.com/s/v3/43730e54bc305ea2bce6b7e6d82c200889bc3b90_image.png)
 
-- [@garyhtou](https://github.com/garyhtou) & [@albertchae](https://github.com/albertchae)
+- [@garyhtou](https://garytou.com) & [@albertchae](https://github.com/albertchae)

@@ -4,13 +4,14 @@
 #
 # Table name: card_grant_settings
 #
-#  id                    :bigint           not null, primary key
-#  category_lock         :string
-#  expiration_preference :integer          default("1 year"), not null
-#  invite_message        :string
-#  keyword_lock          :string
-#  merchant_lock         :string
-#  event_id              :bigint           not null
+#  id                                :bigint           not null, primary key
+#  category_lock                     :string
+#  expiration_preference             :integer          default("1 year"), not null
+#  invite_message                    :string
+#  keyword_lock                      :string
+#  merchant_lock                     :string
+#  reimbursement_conversions_enabled :boolean          default(TRUE), not null
+#  event_id                          :bigint           not null
 #
 # Indexes
 #

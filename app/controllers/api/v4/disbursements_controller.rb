@@ -18,6 +18,7 @@ module Api
             amount: Money.from_cents(params[:amount_cents]),
             requested_by_id: current_user.id,
             skip_auto_approve: true,
+            fronted: @source_event.plan.front_disbursements_enabled?
           ).run
         rescue ArgumentError => e
           return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
