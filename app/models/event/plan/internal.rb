@@ -27,15 +27,15 @@ class Event
         "HCB internal organization"
       end
 
+      def features
+        Event::Plan.available_features
+      end
+
       def requires_reimbursement_expense_categorization?
         true
       end
 
       def omit_stats
-        true
-      end
-
-      def unrestricted_disbursements_allowed?
         true
       end
 

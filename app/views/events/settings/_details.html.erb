@@ -44,11 +44,11 @@
             <div class="menu__content menu__content--left h5" data-behavior="menu_content">
               <div class="field--fileupload">
                 <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
-                <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field" %>
+                <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", disabled: %>
               </div>
               <% if @event.logo.attached? %>
                 <div class="menu__divider"></div>
-                <%= link_to "Remove logo", event_remove_logo_path(@event), method: :post, style: "padding: 0.25rem 0.5rem" %>
+                <%= link_to "Remove logo", event_remove_logo_path(@event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
               <% end %>
             </div>
           </button>

@@ -29,7 +29,9 @@
 
     <% if @user_id && user = User.friendly.find_by_friendly_id(@user_id) %>
       <div class="badge badge-large bg-muted">
-        User: <%= user.name %>
+        <%= avatar_for user, size: 18 %>
+        <%= user.name %>
+
         <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
           <%= inline_icon "view-close", size: 20 %>
         <% end %>

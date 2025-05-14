@@ -89,12 +89,13 @@ GEM
     acts_as_paranoid (0.10.3)
       activerecord (>= 6.1, < 8.1)
       activesupport (>= 6.1, < 8.1)
-    actual_db_schema (0.8.3)
+    actual_db_schema (0.8.5)
       activerecord
       activesupport
       ast
       csv
       parser
+      prism
     addressable (2.8.7)
       public_suffix (>= 2.0.2, < 7.0)
     ahoy_email (2.4.0)
@@ -228,7 +229,7 @@ GEM
       addressable
     cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
-    csv (3.3.2)
+    csv (3.3.4)
     date (3.4.1)
     declarative (0.0.20)
     device_detector (1.1.3)

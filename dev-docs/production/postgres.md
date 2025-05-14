@@ -395,6 +395,20 @@ DATABASE_URL=postgres://rails:password@INTERNAL_IP_OF_PRIMARY_SERVER:5432/hcb_pr
 1. Enable all processes (e.g. Sidekiq, etc.)
 2. Turn off maintenance mode on Hatchbox
 
+## Configure pgbackrest backup cron
+
+```bash
+su - postgres
+crontab -e
+```
+
+Add:
+```
+# m h  dom mon dow   command
+30 06  *   *   0     pgbackrest --type=full --stanza=hcb_production backup
+30 06  *   *   1-6   pgbackrest --type=diff --stanza=hcb_production backup
+```
+
 ----
 
 ## Replication
@@ -488,4 +502,4 @@ apt-install fd-find
 /etc/postgresql/15/main/pg_hba.conf
 ```
 
-- [@garyhtou](https://github.com/garyhtou) & [@albertchae](https://github.com/albertchae)
+- [@garyhtou](https://garytou.com) & [@albertchae](https://github.com/albertchae)
