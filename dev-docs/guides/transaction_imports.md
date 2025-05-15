@@ -131,7 +131,7 @@ We have `CanonicalPendingTransaction`s on HCB. I haven’t dived into these as m
 
 ### Examples
 
-Below are a couple of PRs, that were made to transition wires from being manual to being sent through Column.
+Below are a couple of PRs, that were made to transition wires from being manual (like PayPal transfers) to being sent through Column.
 
 * Creating a `send_wire` method: https://github.com/hackclub/hcb/pull/8336 and https://github.com/hackclub/hcb/pull/8366
 * Adding Column wires to `SyntaxSugarService`: https://github.com/hackclub/hcb/pull/8416 and https://github.com/hackclub/hcb/pull/8417
