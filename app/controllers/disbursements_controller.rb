@@ -108,6 +108,10 @@ class DisbursementsController < ApplicationController
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
     flash[:error] = e.message
     redirect_to new_disbursement_path(source_event_id: @source_event)
+  rescue ActiveRecord::RecordNotFound => e
+    skip_authorization
+    flash[:error] = "Organization not found: #{e.id}"
+    redirect_to new_disbursement_path(source_event_id: @source_event)
   end
 
   def edit

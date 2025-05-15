@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import fuzzysort from 'fuzzysort'
+import { first } from 'lodash'
 
 export default class extends Controller {
   static targets = [
@@ -9,6 +10,7 @@ export default class extends Controller {
     'organization',
     'wrapper',
     'field',
+    'other'
   ]
   static values = {
     state: Boolean,
@@ -16,6 +18,7 @@ export default class extends Controller {
 
   connect() {
     const organizations = {}
+    let currentOtherOrganization = null
 
     const open = () => {
       // eslint-disable-next-line no-undef
@@ -30,6 +33,7 @@ export default class extends Controller {
       $(this.menuTarget).slideUp()
       this.searchTarget.style.display = 'none'
       this.dropdownTarget.style.display = 'flex'
+    
     }
 
     const filter = async () => {
@@ -37,35 +41,56 @@ export default class extends Controller {
 
       const start = performance.now()
       const result = fuzzysort.go(this.searchTarget.value, orgValues, {
-        keys: ['name', 'id'],
+        keys: ['name', 'id', 'slug'],
         all: false,
         threshold: -500000,
         limit: 50,
       })
       const end = performance.now()
 
-      firstOrganization = result[0]?.obj
-
-      const shown =
+      const visible =
         result.length > 0
-          ? result.map(r => r.obj.organization)
-          : orgValues
-              .sort((a, b) => a.index - b.index)
-              .map(o => o.organization)
-              .slice(0, 50)
-      const hidden = this.organizationTargets.filter(el => !shown.includes(el))
+          ? result.map(r => r.obj)
+          : this.searchTarget.value.length > 0 ? [] : orgValues
+            .sort((a, b) => a.index - b.index)
+
+            .slice(0, 50);
+
+      firstOrganization = visible[0];
+
+      const shown = visible.map(o => o.organization)
+
+      if (this.hasOtherTarget && this.searchTarget.value.length > 0) {
+        shown.push(this.otherTarget);
+        if (shown.length == 1) firstOrganization = organizations["other"];
+        const { button } = organizations["other"];
+        if (this.searchTarget.value !== currentOtherOrganization) {
+          Object.assign(button.style, {
+            backgroundColor: 'unset',
+            color: 'unset',
+          })
+        } else {
+          Object.assign(button.style, {
+          backgroundColor: 'var(--info)',
+          color: 'white',
+        })
+        }
+        console.log('First organization', firstOrganization)
+        this.otherTarget.querySelector('.other-name').innerText = `Other (${this.searchTarget.value})`
+      }
+      const hidden = this.allOrganizations({ includeOther: true }).filter(el => !shown.includes(el))
       console.log('Search took', end - start, 'ms')
       const renderStart = performance.now()
 
       for (const element of shown) {
-        ;(async () => {
+        ; (async () => {
           element.parentElement.appendChild(element)
           element.style.display = 'block'
         })()
       }
 
       for (const element of hidden) {
-        ;(async () => {
+        ; (async () => {
           element.style.display = 'none'
         })()
       }
@@ -75,8 +100,8 @@ export default class extends Controller {
       console.log('Render took', renderEnd - renderStart, 'ms')
     }
 
-    for (const organization of this.organizationTargets) {
-      const { name, id, fee, index } = organization.dataset
+    for (const organization of this.allOrganizations({ includeOther: true })) {
+      const { name, id, fee, index, slug } = organization.dataset
       const button = organization.children[0]
       const select = () => {
         const oldFieldValue =
@@ -96,12 +121,16 @@ export default class extends Controller {
         button.children[1].style.color = 'white'
 
         const fieldValue = this.dropdownTarget.children[1]
-        fieldValue.innerText = name
-        fieldValue.value = id
-        fieldValue.dataset.fee = fee
+        fieldValue.innerText = button.children[0].innerText || "A";
 
-        this.dropdownTarget.value = id
+        if (id == "other") currentOtherOrganization = this.searchTarget.value;
+        const newValue = id == "other" ? this.searchTarget.value : id;
+        fieldValue.value = newValue
+        fieldValue.dataset.fee = fee
+        this.dropdownTarget.value = newValue
         this.dropdownTarget.dispatchEvent(new CustomEvent('feechange'))
+
+
         close()
       }
 
@@ -113,6 +142,7 @@ export default class extends Controller {
         button,
         select,
         fee,
+        slug,
         visible: true,
       }
 
@@ -173,6 +203,7 @@ export default class extends Controller {
 
     if (this.dropdownTarget.children[1].value) {
       const selected = organizations[this.dropdownTarget.children[1].value]
+      console.log({selected});
       if (selected) {
         selected.select()
       }
@@ -180,5 +211,13 @@ export default class extends Controller {
 
     // Filter organizations when searching
     this.searchTarget.oninput = debounce(filter, 100)
+  }
+
+  allOrganizations ({ includeOther }) {
+    if (includeOther && this.hasOtherTarget) {
+      return [...this.organizationTargets, this.otherTarget]
+    }
+
+    return this.organizationTargets
   }
 }
