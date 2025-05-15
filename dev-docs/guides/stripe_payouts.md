@@ -47,7 +47,7 @@ The amount on these payments will both be:
 payout_creation_balance_net + payout_creation_balance_stripe_fee
 ```
 
-and they’ll be mapped to the invoice or donation’s HCB code using HCB short code mapping.
+And they’ll be mapped to the invoice or donation’s HCB code using HCB short code mapping.
 
 So how does HCB ensure that our balance doesn’t go negative? We then perform a top-up of our Stripe balance through a `FeeReimbursement`.
 
