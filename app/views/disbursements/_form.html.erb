@@ -1,6 +1,6 @@
 <% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}", "data-turbo" => "false" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: @allowed_source_events, default_event: @source_event, sending: true } %>
