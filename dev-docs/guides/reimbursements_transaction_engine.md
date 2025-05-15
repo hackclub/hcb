@@ -54,7 +54,7 @@ raise ArgumentError, "PayPal transfer must have been rejected" unless paypal_tra
 raise ArgumentError, "a check is present" if increase_check.present?
 ```
 
-and if it passes, we create a set of Column book transfers that are essentially the reverse of what we created above. 
+And if it passes, we create a set of Column book transfers that are essentially the reverse of what we created above. 
 
 After this, the report will never be reimbursed.
 

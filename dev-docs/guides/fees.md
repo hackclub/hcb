@@ -48,7 +48,7 @@ The reason for this line:
 and f.reason = 'HACK CLUB FEE'
 ```
 
-is that we create `Fee` records even for transactions that shouldn’t be charged a fee:
+Is that we create `Fee` records even for transactions that shouldn’t be charged a fee:
 
 ```ruby
 enum :reason, {
