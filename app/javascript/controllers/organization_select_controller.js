@@ -92,14 +92,14 @@ export default class extends Controller {
       const button = organization.children[0]
 
       const select = () => {
-        const oldFieldValue =
+        const previouslySelected =
           organizations[this.dropdownTarget.children[1].value]
-        if (oldFieldValue) {
-          Object.assign(oldFieldValue.button.style, {
+        if (previouslySelected) {
+          Object.assign(previouslySelected.button.style, {
             backgroundColor: 'unset',
             color: 'unset',
           })
-          oldFieldValue.button.children[1].style.color = ''
+          previouslySelected.button.children[1].style.color = ''
         }
 
         Object.assign(button.style, {
