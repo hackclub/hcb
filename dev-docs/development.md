@@ -144,13 +144,6 @@ HCB-specific setup instructions.
 
 **Additional installs for local development:**
 
-Install [wkhtmltopdf](https://wkhtmltopdf.org/)
-
-```bash
-# Mac specific instruction:
-brew install wkhtmltopdf
-```
-
 Install [ImageMagick](https://imagemagick.org/)
 
 ```bash
