@@ -78,7 +78,7 @@ A `PayoutHolding` is a book transfer from “FS Operating” to “FS Main”. I
 
 ### Subledgers
 
-Events can have subledgers. For example, a card grant. When mapping these transactions to an event, we map them to the event as usual but add an additional `subledger_id` to the `CanonicalEventMapping`. Not all transaction importing mechanisms support this at the moment. However, they are supported by HCB short code mapping, disbursements (based on the `Disbursement`’s `source_subledger_id` and `destination_subledger_id`), and Stripe card transactions (based on the `StripeCard`’s `subledger_id`).
+Events can have subledgers. For example, a card grant. When mapping these transactions to an event, we map them to the event as usual but add an additional `subledger_id` to the `CanonicalEventMapping`. Not all transaction importing mechanisms support this at the moment. However, they are supported by HCB short code mapping (“guessed” based on the HCB code’s other transactions), disbursements (based on the `Disbursement`’s `source_subledger_id` and `destination_subledger_id`), and Stripe card transactions (based on the `StripeCard`’s `subledger_id`).
 
 ### Stripe Card Transactions
 
