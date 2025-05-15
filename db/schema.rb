@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_14_174905) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_15_084915) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -1712,6 +1712,22 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_14_174905) do
     t.index ["url_hash"], name: "index_recurring_donations_on_url_hash", unique: true
   end
 
+  create_table "referral_attributions", force: :cascade do |t|
+    t.bigint "referral_program_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
+    t.index ["user_id"], name: "index_referral_attributions_on_user_id"
+  end
+
+  create_table "referral_programs", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "show_explore_hack_club", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "hcb_code"
@@ -2347,6 +2363,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_14_174905) do
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
+  add_foreign_key "referral_attributions", "referral_programs"
+  add_foreign_key "referral_attributions", "users"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"
