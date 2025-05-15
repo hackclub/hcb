@@ -9,7 +9,7 @@ export default class extends Controller {
     'organization',
     'wrapper',
     'field',
-    'other'
+    'other',
   ]
   static values = {
     state: Boolean,
@@ -31,7 +31,6 @@ export default class extends Controller {
       $(this.menuTarget).slideUp()
       this.searchTarget.style.display = 'none'
       this.dropdownTarget.style.display = 'flex'
-
     }
 
     const filter = async () => {
@@ -47,35 +46,47 @@ export default class extends Controller {
       const visible =
         result.length > 0
           ? result.map(r => r.obj)
-          : this.searchTarget.value.length > 0 ? [] : orgValues
-            .sort((a, b) => a.index - b.index)
+          : this.searchTarget.value.length > 0
+            ? []
+            : orgValues
+                .sort((a, b) => a.index - b.index)
 
-            .slice(0, 50);
+                .slice(0, 50)
 
-      firstOrganization = visible[0];
+      firstOrganization = visible[0]
 
       const shownElements = visible.map(o => o.organization)
 
       if (this.hasOtherTarget && this.searchTarget.value.length > 0) {
-        shownElements.push(this.otherTarget);
+        shownElements.push(this.otherTarget)
 
-        if (shownElements.length == 1) firstOrganization = organizations["other"];
-        const { button } = organizations["other"];
-        
-        const searchMatchesSelected = this.searchTarget.value == this.dropdownTarget.value;
+        if (shownElements.length == 1)
+          firstOrganization = organizations['other']
+        const { button } = organizations['other']
 
-        Object.assign(button.style, searchMatchesSelected ? {
-          backgroundColor: 'var(--info)',
-          color: 'white',
-        } : {
-          backgroundColor: 'unset',
-          color: 'unset',
-        })
+        const searchMatchesSelected =
+          this.searchTarget.value == this.dropdownTarget.value
 
-        this.otherTarget.querySelector('.other-name').innerText = `Other (${this.searchTarget.value})`
+        Object.assign(
+          button.style,
+          searchMatchesSelected
+            ? {
+                backgroundColor: 'var(--info)',
+                color: 'white',
+              }
+            : {
+                backgroundColor: 'unset',
+                color: 'unset',
+              }
+        )
+
+        this.otherTarget.querySelector('.other-name').innerText =
+          `Other (${this.searchTarget.value})`
       }
 
-      const hiddenElements = this.allOrganizations.filter(el => !shownElements.includes(el))
+      const hiddenElements = this.allOrganizations.filter(
+        el => !shownElements.includes(el)
+      )
 
       for (const element of shownElements) {
         element.parentElement.appendChild(element)
@@ -109,14 +120,13 @@ export default class extends Controller {
         button.children[1].style.color = 'white'
 
         const fieldValue = this.dropdownTarget.children[1]
-        fieldValue.innerText = button.children[0].innerText || "A";
+        fieldValue.innerText = button.children[0].innerText || 'A'
 
-        const newValue = id == "other" ? this.searchTarget.value : id;
+        const newValue = id == 'other' ? this.searchTarget.value : id
         fieldValue.value = newValue
         fieldValue.dataset.fee = fee
         this.dropdownTarget.value = newValue
         this.dropdownTarget.dispatchEvent(new CustomEvent('feechange'))
-
 
         close()
       }
