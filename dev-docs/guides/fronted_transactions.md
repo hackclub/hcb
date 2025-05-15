@@ -34,6 +34,6 @@ CanonicalPendingTransaction.find(XX).update(fronted: true)
 
 **⚠️ Never leave a fronted `CanonicalPendingTransaction` unsettled for too long**
 
-If the transaction doesn’t happen, we should decline it. Don’t forget, setting a `CanonicalTransaction`’s HCB code isn’t the same as settling it.
+If the transaction doesn’t happen, we should decline it. And don't forget, setting a `CanonicalTransaction`’s HCB code isn’t the same as settling it.
 
 \- [@sampoder](https://github.com/sampoder)
