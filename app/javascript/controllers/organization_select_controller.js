@@ -120,7 +120,7 @@ export default class extends Controller {
         button.children[1].style.color = 'white'
 
         const fieldValue = this.dropdownTarget.children[1]
-        fieldValue.innerText = button.children[0].innerText || 'A'
+        fieldValue.innerText = button.children[0].innerText
 
         const newValue = id == 'other' ? this.searchTarget.value : id
         fieldValue.value = newValue
