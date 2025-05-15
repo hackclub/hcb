@@ -44,7 +44,7 @@ module StripeAuthorizationService
             AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
           end
         else
-          unless cpt&.stripe_card&.frozen?
+          unless cpt&.stripe_card&.frozen? || cpt&.stripe_card&.inactive?
             CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_declined.deliver_later
             CanonicalPendingTransaction::SendTwilioDeclinedMessageJob.perform_later(cpt_id: cpt.id, user_id: user.id)
           end
