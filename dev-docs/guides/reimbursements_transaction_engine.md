@@ -8,7 +8,7 @@ A `Reimbursement::Report` is a collection of `Reimbursement::Expenses`. No money
 
 When a `Reimbursement::Report` is marked as `reimbursement_approved` by an admin, we run `Reimbursement::Report#reimburse!` which creates one `ExpensePayout` per approved expense and one `PayoutHolding` for the report.
 
-These transactions' internal book transfers move money from the organisation that is reimbursing someone to the clearinghouse organisation.
+These transactions are internal book transfers that move money from the organisation that is reimbursing someone to the clearinghouse organisation.
 
 An `ExpensePayout` is a book transfer from “FS Main” to “FS Operating”. It comes in as a negative `CanonicalTransaction`.
 
