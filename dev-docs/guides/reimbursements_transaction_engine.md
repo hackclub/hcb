@@ -30,7 +30,7 @@ But for that 1%…
 
 ### Failed `PayoutHolding`s
 
-If we attempt to send an `AchTransfer` and it fails (this means it errors), we mark the `PayoutHolding` as `failed`.
+If we attempt to send an `AchTransfer` and Column errors or it is returned, we mark the `PayoutHolding` as `failed`.
 
 Users receive an email asking them to update their payout information. In the meantime, the `PayoutHolding` just sits in a holding state with the money staying in the HCB Reimbursements Clearinghouse.
 
