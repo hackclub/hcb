@@ -106,6 +106,23 @@ It is then “canonized” by `TransactionEngine::CanonicalTransactionService::I
 
 Most `CanonicalTransaction`s then show up on https://hcb.hackclub.com/admin/ledger to be mapped manually. Though it might be automatically mapped by short code.
 
+### PayPal Transfers
+
+> [!WARNING]
+> PayPal transfers have been deprecated and are no longer a standard way of making transfers on HCB.
+
+PayPal transfers are a unique type of transfer. It may look like HCB automatically sends PayPal transfers but it doesn’t. Instead an operations staff member manually logs into PayPal and sends it using funds from our Column account (linked as a bank account on PayPal). This means they come through as a `RawColumnTransaction`. Refer to the above section on Column transfers for the flow from `RawColumnTransaction` -> `CanonicalTransaction`. However, there is no code to automatically map these PayPal transfers so these transactions land on https://hcb.hackclub.com/admin/ledger. 
+
+An admin then fills in this form:
+
+<img src="https://cloud-18ao7zohk-hack-club-bot.vercel.app/0image.png" width="291px" />
+
+A request is made to `AdminController#set_paypal_transfer` which uses `CanonicalTransactionService::SetEvent`, `CanonicalPendingTransactionService::Settle.new` to map it to an event and settle it’s associated pending transaction. Lastly, there’s this line:
+
+```ruby
+canonical_transaction.update!(hcb_code: paypal_transfer.hcb_code, transaction_source_type: "PaypalTransfer", transaction_source_id: paypal_transfer.id)
+```
+
 ### Settled Mappings
 
 We have `CanonicalPendingTransaction`s on HCB. I haven’t dived into these as much in this guide as they come before this stage. Essentially, they’re created when we expect a certain transaction to happen but it hasn’t shown up on our bank statement yet. When that transaction does show up on our bank statement, we want to map this `CanonicalTransaction` to a `CanonicalPendingTransaction`. This takes place in `PendingEventMappingEngine::Nightly`. 
