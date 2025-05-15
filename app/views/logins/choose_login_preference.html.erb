@@ -18,7 +18,8 @@
          @email_available.presence,
          @sms_available.presence,
          @totp_available.presence,
-         @webauthn_available.presence
+         @webauthn_available.presence,
+         @backup_code_available.presence
        ].compact %>
 
     <div class="field field--options max-w-full w-full mt-3 <%= "trio" if methods.length == 3 %>">
@@ -61,6 +62,9 @@
       <%= link_to "Cancel", logout_users_path, method: :delete, class: "no-underline block" %>
       <%= form.submit "Continue", data: { "webauthn-auth-target" => "continueButton", "form-disable-target" => "submitButton" } %>
     </div>
+    <% if @backup_code_available %>
+      <%= link_to "Don't have access to any of these? Use a Backup Code", backup_code_login_path(@login) %>
+    <% end %>
   <% end %>
 </div>
 <%= render partial: "environment_banner" %>
