@@ -53,7 +53,7 @@ class DisbursementsController < ApplicationController
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end.sort_by { |e| user_event_ids.index(e.id) || Float::INFINITY }
     @allowed_destination_events = if current_user.admin?
-                                    Event.select("name, id, demo_mode, can_front_balance, slug").all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   elsif @source_event&.plan&.unrestricted_disbursements_enabled?
                                     Event.select("name, id, demo_mode, can_front_balance, slug").transparent.indexable.includes(:plan)
                                   else
