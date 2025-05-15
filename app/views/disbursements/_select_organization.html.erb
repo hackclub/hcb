@@ -1,4 +1,4 @@
-<%# locals: (form:, field_name:, disabled:, events:, default_event:, hide_balances: false, sending: false, receiving: false, allow_custom_events: false) %>
+<%# locals: (form:, field_name:, disabled:, events:, default_event:, lazy_load_balances: false, sending: false, receiving: false, allow_custom_events: false) %>
 
 <div class="field" data-controller="organization-select">
     <%= form.label field_name, sending ? "From" : "To" %>
@@ -22,13 +22,13 @@
                             <div class="text-left"><%= event.name %></div>
                             <div class="text-muted">
                                 <% if current_user.admin? %>
-                                <%= event.id %>
-                                <% elsif hide_balances %>
-                                <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
-                                <strong>-</strong>
-                                <% end %>
+                                    <%= event.id %>
+                                <% elsif lazy_load_balances %>
+                                    <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
+                                        <strong>-</strong>
+                                    <% end %>
                                 <% else %>
-                                <%= render_money(event.balance_available) %>
+                                    <%= render_money(event.balance_available) %>
                                 <% end %>
                             </div>
                         </button>
