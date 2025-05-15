@@ -41,10 +41,10 @@ WebAuthn credentials are done slightly differently to login codes and TOTPs. Ins
 
 If WebAuthn is available and the security key works in the browser, we make a request to `complete_login_path` or `complete_logins_path`. The reason for  `complete_logins_path` is that if this is the form where you input your email, a `Login` record won’t have been created.
 
-We use GitHub’s [@github/webauthn-json](https://github.com/github/webauthn-json) package and most of this logic is contained in `webauthn_auth_controller.js`.
+We use GitHub’s [`@github/webauthn-json`](https://github.com/github/webauthn-json) package and most of this logic is contained in `webauthn_auth_controller.js`.
 
 ## Fingerprinting
 
-We fingerprint every user session using [@fingerprintjs/fingerprintjs](https://github.com/fingerprintjs/fingerprintjs). This is passed into the `UserSession` created inside of `complete_login_path`.
+We fingerprint every user session using [`@fingerprintjs/fingerprintjs`](https://github.com/fingerprintjs/fingerprintjs). This is passed into the `UserSession` created inside of `complete_login_path`.
 
 \- [@sampoder](https://github.com/sampoder)
