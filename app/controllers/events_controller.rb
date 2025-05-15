@@ -964,7 +964,8 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
-        :expiration_preference
+        :expiration_preference,
+        :reimbursement_conversions_enabled
       ],
       config_attributes: [
         :id,
@@ -1010,7 +1011,8 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
-        :expiration_preference
+        :expiration_preference,
+        :reimbursement_conversions_enabled
       ],
       config_attributes: [
         :id,

@@ -6,6 +6,7 @@ AllCops:
     - 'db/**/*'
     - 'lib/tasks/**/*'
     - 'vendor/**/*'
+    - 'tmp/**/*'
 
 # The "offical" rubocop style guide is indeed quite strict. So intead, we use
 # the Relaxed Ruby Style guide. https://relaxed.ruby.style/

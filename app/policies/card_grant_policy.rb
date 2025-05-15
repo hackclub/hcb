@@ -38,7 +38,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def convert_to_reimbursement_report?
-    admin_or_manager? || record.user == user
+    (admin_or_manager? || record.user == user) && record.card_grant_setting.reimbursement_conversions_enabled?
   end
 
   def admin_or_user?

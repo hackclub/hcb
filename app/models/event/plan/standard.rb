@@ -36,7 +36,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features - %w[card_grants unrestricted_disbursements]
+        Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
       def exempt_from_wire_minimum?
