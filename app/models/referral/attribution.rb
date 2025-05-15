@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: referral_attributions
@@ -18,8 +20,10 @@
 #  fk_rails_...  (referral_program_id => referral_programs.id)
 #  fk_rails_...  (user_id => users.id)
 #
-class Referral::Attribution < ApplicationRecord
-  belongs_to :program, class_name: "Referral::Program", foreign_key: "referral_program_id"
-  belongs_to :user # Referee (person being referred)
+module Referral
+  class Attribution < ApplicationRecord
+    belongs_to :program, class_name: "Referral::Program", foreign_key: "referral_program_id", inverse_of: :attributions
+    belongs_to :user # Referee (person being referred)
 
+  end
 end

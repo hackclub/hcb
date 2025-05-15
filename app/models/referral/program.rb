@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: referral_programs
@@ -14,6 +16,9 @@ module Referral
 
     validates :name, presence: true
     validates :show_explore_hack_club, inclusion: { in: [true, false] }
+
+    has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :referral_program
+    has_many :users, -> { distinct }, through: :attributions, source: :user
 
   end
 end

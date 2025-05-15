@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Referral
   class ProgramsController < ApplicationController
     before_action :set_program, only: :show
