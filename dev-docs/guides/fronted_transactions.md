@@ -26,7 +26,7 @@ Disbursements coming from organisations on the "Hack Club affiliated project" pl
 
 Sometimes we know a transaction will likely hit our accounts but it isn’t guaranteed. In these cases we should still make a `CanonicalPendingTransaction` but not front it. For example, check deposits, because they can bounce. 
 
-If needed, you can always manually front transactions:
+If needs be, you can always manually front transactions:
 
 ```ruby
 CanonicalPendingTransaction.find(XX).update(fronted: true)
