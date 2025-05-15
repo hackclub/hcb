@@ -16,7 +16,7 @@
         <strong>Mailed check</strong>
         <small>(10-12 biz. days)</small>
       <% end %>
-      <% if Flipper.enabled?(:wire_reimbursements_2025_02_05, current_user) %>
+      <% if Flipper.enabled?(:wire_reimbursements_2025_02_05, user) %>
         <%= form.radio_button :payout_method_type, "User::PayoutMethod::Wire" %>
         <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
           <%= inline_icon "web", size: 28 %>
