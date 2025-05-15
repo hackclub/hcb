@@ -1,6 +1,6 @@
 # What does it mean to front a transaction on HCB?
 
-Money takes time to move and HCB only imports transactions from our bank account once per day.  To make money movement feel instant, we do a lot of transaction fronting.
+Money takes time to move and HCB only imports transactions from our bank account once a day.  To make money movement feel instant, we do a lot of transaction fronting.
 
 **What is a `CanonicalPendingTransaction`?**
 
