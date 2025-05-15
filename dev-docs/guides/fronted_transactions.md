@@ -20,7 +20,7 @@ When a transaction settling is guaranteed. The best example of this is book tran
 
 By fronting these, you can get people their money faster. This is how we cut reimbursements’ time-to-bank down to a couple of hours from a couple of days:
 
-Disbursements coming from organisations on the "Hack Club affiliated project" plan or "HCB internal organization" plan are always fronted.
+Disbursements coming from organisations on the "Hack Club affiliated project" plan or "HCB internal organization" plan are always fronted. This is determined by a feature on the `Event::Plan`.
 
 **When should we avoid fronting transactions?**
 
