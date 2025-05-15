@@ -20,7 +20,9 @@ After they are both created, they have `after_create` callbacks that create a `C
 
 `Reimbursement::ExpensePayoutService::Nightly` is ran every five minutes and creates Column book transfers for each of these. 
 
-It also marks any `ExpensePayout`s with a `CanonicalTransaction` and any `PayoutHolding`s with either a `CanonicalTransaction` or a `CanonicalPendingTransaction` as settled. You’ll notice that every `PayoutHolding` should meet this condition. This is true. It used to wait for a `CanonicalTransaction` but we started fronting the `CanonicalPendingTransaction` so it would immediately increase HCB Reimbursement Clearinghouse’s balance. That’s because these transactions are guaranteed to end up on our bank statement. 
+It also marks any `ExpensePayout` with a `CanonicalTransaction` as settled.
+
+And a `PayoutHolding` with either a `CanonicalTransaction` or a `CanonicalPendingTransaction` as settled. You’ll notice that every `PayoutHolding` should meet this condition. This is true. It used to wait for a `CanonicalTransaction` but we started fronting the `CanonicalPendingTransaction` so it would immediately increase HCB Reimbursement Clearinghouse’s balance. That’s because these transactions are guaranteed to end up on our bank statement. 
 
 `Reimbursement::PayoutHoldingService::Nightly` goes through each settled `PayoutHolding` and sends the money to the user based on their `User::PayoutMethod` which is a polymorphic relationship on the `User` model.
 
