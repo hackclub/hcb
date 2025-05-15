@@ -23,12 +23,10 @@
                             <div class="text-muted">
                                 <% if current_user.admin? %>
                                     <%= event.id %>
-                                <% elsif lazy_load_balances %>
+                                <% else %>
                                     <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
                                         <strong>-</strong>
                                     <% end %>
-                                <% else %>
-                                    <%= render_money(event.balance_available) %>
                                 <% end %>
                             </div>
                         </button>
