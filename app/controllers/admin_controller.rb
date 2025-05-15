@@ -939,7 +939,7 @@ class AdminController < ApplicationController
     relation = relation.joins(:revocation).where(revocation: { aasm_state: "revoked" }) if @pending_deletion
 
     @count = relation.count
-    @g_suites = relation.page(@page).per(@per).order("created_at desc")
+    @g_suites = relation.page(@page).per(@per).order("g_suites.created_at desc")
 
   end
 
