@@ -51,7 +51,7 @@ Card transactions as well as ACHs, reimbursements, checks, and PayPal transfers 
 
 #### Fees
 
-We collect a 7% fee on all revenue collected by organizations. This process is handled by a set of cron jobs and we make book transfers on our Column account to represent money moving from an organization's account to our operating fund.
+We collect fees on all revenue collected by organizations, typically 7%. This process is handled by a set of cron jobs and we make book transfers on our Column account to represent money moving from an organization's account to our operating fund.
 
 ### Transaction Engine
 
