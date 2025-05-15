@@ -17,7 +17,7 @@ The most up to date amount for a wire (in USD) is accessible using `Wire#usd_amo
 
 Column lists out the specific details needed for a wire in each country: [column.com/docs/international-wires/country-specific-details](https://column.com/docs/international-wires/country-specific-details).
 
-We’ve translated this into the `Wire#information_required_for` method in which you pass a country code and are returned an array of details that need to be collected. This information is stored in the `recipient_information` JSONB column of the database. We use [`ActiveRecord::Store`](https://api.rubyonrails.org/classes/ActiveRecord/Store.html) for this. On the frontend, we conditionally render these fields using Alpine based on the recipient’s country. 
+We’ve translated this into the `Wire#information_required_for` method; you can pass it a country code and it will return an array of details that need to be collected. This information is stored in the `recipient_information` JSONB column of the database. We use [`ActiveRecord::Store`](https://api.rubyonrails.org/classes/ActiveRecord/Store.html) for this. On the frontend, we conditionally render these fields using Alpine based on the recipient’s country. 
 
 We then pass this information to Column, but directly reference the fields because they have to go in specific spots in the request body. When adding a new field, we have to add it to the calls to Column.
 
