@@ -45,8 +45,6 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
-    # @event = current_user.events.select("id").not_hidden.filter_demo_mode(false)
-
     user_event_ids = current_user.events.reorder("organizer_positions.sort_index ASC").includes(organizer_positions: :user).select("events.id").map(&:id)
 
     @allowed_source_events = if current_user.admin?
