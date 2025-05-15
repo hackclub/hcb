@@ -6,6 +6,7 @@
 #
 #  id         :bigint           not null, primary key
 #  aasm_state :string
+#  deleted_at :datetime
 #  hash       :text             not null
 #  salt       :text             not null
 #  created_at :datetime         not null
@@ -42,13 +43,21 @@ class User
       end
       event :mark_used do
         transitions from: :unused, to: :used
+
+        after do
+          case user.backup_codes.where(aasm_state: :unused).count
+          when 0
+            User::BackupCodeMailer.with(user_id: user.id).no_codes_remaining.deliver_now
+          when 1..2
+            User::BackupCodeMailer.with(user_id: user.id).two_or_fewer_codes_left.deliver_now
+          end
+          User::BackupCodeMailer.with(user_id: user.id).code_used.deliver_now
+        end
       end
       event :mark_invalidated do
         transitions from: [:unused, :unsaved], to: :invalidated
       end
     end
-
-    scope :used, -> { where(aasm_state: :used) }
 
   end
 
