@@ -41,7 +41,7 @@ Capturing has a couple of edge cases:
 
 * Multi capture: merchants can capture from an authorised amount multiple times. This will lead to multiple `CanonicalTransaction`s which will all be mapped to the same HCB code (Stripe card transactions are bundled into HCB codes based on their authorisation).
 
-* Force capture: merchants can essentially brute force through a declined authorisation by performing a “force capture”. They can also use this to capture money without an authorisation. We’ll create a `CanonicalTransaction` and map it to an event as usual. If this was fraudulent, it’s on us to dispute it. This is the cause of negative organisations. We aren’t able to block them. An example of a legitimate forced capture is a food purchase on an aircraft without internet. These terminals aren’t connected to the internet and can’t do a real-time authorisation. 
+* Force capture: merchants can essentially brute force through a declined authorisation by performing a “force capture”. They can also use this to capture money without an authorisation. We’ll create a `CanonicalTransaction` and map it to an event as usual. And, if this was fraudulent, it’s on us to dispute it. This is the cause of negative organisations. We aren’t able to block them. An example of a legitimate forced capture is a food purchase on an aircraft without internet. These terminals aren’t connected to the internet and can’t do a real-time authorisation. 
 
 For more information, I recommend reading:
 
