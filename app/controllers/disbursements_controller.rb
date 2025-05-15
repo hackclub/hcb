@@ -45,7 +45,7 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
-    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id) 
+    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
 
     @allowed_source_events = if current_user.admin?
                                Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
