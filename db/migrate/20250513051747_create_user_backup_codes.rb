@@ -5,6 +5,7 @@ class CreateUserBackupCodes < ActiveRecord::Migration[7.2]
       t.string :aasm_state
       t.text :hash, null: false
       t.text :salt, null: false
+      t.datetime :deleted_at
 
       t.timestamps
     end
