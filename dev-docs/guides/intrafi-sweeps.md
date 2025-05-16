@@ -29,7 +29,7 @@ What's "Interest Capitalization" you ask? well, read on 📖
 
 IntraFi's interest rate fluctuates. As of time of writing (2025-01-14), our APY
 is 3.35%; down from 3.55% in 2024-12-18. Interest is accrued based on our
-**IntraFi Principal Balance**. This is amount of money that's currently in our
+**IntraFi Principal Balance**. This is the amount of money that's currently in our
 IntraFi account; which excludes any interest that's been accrued but not yet
 paid out.
 
@@ -40,7 +40,7 @@ interest from that month and adds it to our **IntraFi Principal Balance**.
 ## Transaction Syncing to HCB
 
 Usually, we sync all of Hack Club's active bank account into HCB. However,
-IntraFi is the one exception. IntraFi unfortunately does play well with Plaid.
+IntraFi is the one exception. IntraFi unfortunately doesn't play well with Plaid.
 Therefore, we sync IntraFi's transactions into this HCB manually. IntraFi
 provides a CSV export with the following headings: `Date`, `Account Activity`,
 `Amount`, and `Balance`. Each row represents a transaction and should be
@@ -50,13 +50,13 @@ imported as a `RawIntrafiTransaction`:
 RawIntrafiTransaction.create(date_posted: tx[:Date], memo: tx[:"Account Activity"], amount_cents: tx[:Amount] * 100)
 ```
 
-All IntraFi transactions should be mapped to the HCB Sweeps organization; *
+All IntraFi transactions should be mapped to the HCB Sweeps organisation; *
 *except** for Interest Capitalization transactions. These are auto-mapped to
 **Hack Foundation Interest Earnings**.
 
 After a batch of transactions has imported, HCB Sweep's balance should be
 exactly zero since all deposits and withdrawals are paired (and cancel each
-other out). In practice, a delay/time difference in syncing transactions between
+other out). In practice, a delay / time difference in syncing transactions between
 banks could cause the balance to be non-zero. However _in theory_, it should be
 zero.
 

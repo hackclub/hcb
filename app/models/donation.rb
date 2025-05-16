@@ -64,6 +64,7 @@ class Donation < ApplicationRecord
 
   include AASM
   include Freezable
+  include UsersHelper
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -336,6 +337,10 @@ class Donation < ApplicationRecord
     return unless referrer_domain
 
     "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
+  end
+
+  def avatar(size = 128)
+    gravatar_url(email, name, email.sum, size) unless anonymous?
   end
 
   private

@@ -63,4 +63,4 @@ To see logs, run:
 journalctl -u appsignal-agent
 ```
 
-~ @garyhtou & @albertchae
+\- [@garyhtou](https://garytou.com) & [@albertchae](https://github.com/albertchae)

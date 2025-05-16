@@ -41,13 +41,13 @@
               style="color: inherit; text-decoration: none;"
               aria-label="Shift+click to rename this transaction">
               <%= prepended_to_memo %>
-              <span data-memo-for="<%= dom_id(hcb_code) %>">
+              <span data-memo-for="<%= dom_id(hcb_code) %>" class="<%= "hover:underline" if ledger_instance %>">
                 <%= hcb_code.memo %>
               </span>
             </span>
         </span>
       <% end %>
-      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit", class: "no-underline hover:underline", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
+      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
       <% if renamed %>
         <%= render "hcb_codes/memo_stream", hcb_code: %>
       <% end %>
