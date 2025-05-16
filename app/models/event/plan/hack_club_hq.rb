@@ -28,7 +28,7 @@ class Event
       end
 
       def description
-        "Has access to all standard features with no fees and or contract required."
+        "Has access to all standard features with no fees and no contract required."
       end
 
       def contract_required?
