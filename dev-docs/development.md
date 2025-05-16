@@ -18,7 +18,7 @@ Once HCB is running locally, log in into your local instance using the email `ad
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=135250235&skip_quickstart=true&machine=premiumLinux&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=UsWest)
 
-[GitHub Codespaces](https://docs.github.com/en/codespaces) allows you to run a development environment without installing anything on your computer, allows for multiple instances, creates an overall streamlined and reproducible environment, and enables anyone with browser or VS Code access to contribute.
+[GitHub Codespaces](https://docs.github.com/en/codespaces) allows you to run a development environment without installing anything on your computer, allows for multiple instances, creates an overall streamlined and reproducible environment, and enables anyone with VS Code to contribute.
 
 To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces.
 
@@ -169,7 +169,7 @@ All PRs are deployed in a staging enviroment using Heroku. Login using the email
 
 External contributors should provide credentials via a `.env.development` file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
 
-HCB relies on two services for the majority of it's financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+HCB relies on two services for the majority of its financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
 We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
 

@@ -16,7 +16,7 @@
     <% end %>
   <% else %>
     <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
-      spent <%= render_money hcb_code.amount_cents.abs %> on <i><%= hcb_code.memo %></i> for <%= link_to hcb_code.event&.name, hcb_code.event %>
+      spent <%= render_money hcb_code.amount_cents.abs %> on <%= link_to hcb_code.memo, hcb_code_path(hcb_code) %> for <%= link_to hcb_code.event&.name, hcb_code.event %>
     <% end %>
   <% end %>
 <% else %>

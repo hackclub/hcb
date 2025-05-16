@@ -53,4 +53,4 @@ Leftover tasks:
 - After a week or two (once we're sure 6.1 is running and stable), switch the non-reversible framework defaults [here](https://github.com/hackclub/hcb/blob/5312e0dc3886da0144a3024f72c4e18976c33b6f/config/initializers/new_framework_defaults_6_1.rb#L22-L32)
 - This PR bumped rubocop, which changed a lot of it's checks. Formatting debt was dumped in here: https://github.com/hackclub/hcb/blob/5312e0dc3886da0144a3024f72c4e18976c33b6f/.rubocop_todo.yml
 
-- [@maxwofford](https://github.com/maxwofford)
+\- [@maxwofford](https://github.com/maxwofford)

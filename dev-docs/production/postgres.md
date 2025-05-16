@@ -502,4 +502,4 @@ apt-install fd-find
 /etc/postgresql/15/main/pg_hba.conf
 ```
 
-- [@garyhtou](https://garytou.com) & [@albertchae](https://github.com/albertchae)
+\- [@garyhtou](https://garytou.com) & [@albertchae](https://github.com/albertchae)
