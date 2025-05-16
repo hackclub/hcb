@@ -370,7 +370,7 @@ class EventsController < ApplicationController
     all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
                              .order("stripe_status asc, created_at desc")
 
-    all_stripe_cards = all_stripe_cards.where(user: { id: @user_id }) if @user_id
+    all_stripe_cards = all_stripe_cards.where(user: { id: User.friendly.find_by_friendly_id(@user_id).id }) if @user_id
 
     all_stripe_cards = case @status
                        when "active"
@@ -609,7 +609,7 @@ class EventsController < ApplicationController
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
     @card_grants = @event.card_grants.includes(:user, :subledger, :stripe_card)
 
-    @disbursements = @disbursements.not_card_grant_related if Flipper.enabled?(:card_grants_2023_05_25, @event)
+    @disbursements = @disbursements.not_card_grant_related if @event.plan.card_grants_enabled?
 
     @stats = {
       deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents),
@@ -776,7 +776,7 @@ class EventsController < ApplicationController
       @event.event_tags << @event_tag
     end
 
-    redirect_back fallback_location: edit_event_path(@event, anchor: "admin_organization_tags")
+    redirect_back fallback_location: edit_event_path(@event, tab: "admin")
   end
 
   def audit_log
@@ -964,7 +964,8 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
-        :expiration_preference
+        :expiration_preference,
+        :reimbursement_conversions_enabled
       ],
       config_attributes: [
         :id,
@@ -1010,7 +1011,8 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
-        :expiration_preference
+        :expiration_preference,
+        :reimbursement_conversions_enabled
       ],
       config_attributes: [
         :id,

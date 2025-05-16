@@ -28,7 +28,7 @@
             <strong>HCB transfer</strong>
             <small>(between HCB organizations)</small>
           <% end %>
-          <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
+          <% if @event.plan.card_grants_enabled? %>
             <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
               <%= inline_icon "card", size: 28 %>
               <strong>Card grant</strong>

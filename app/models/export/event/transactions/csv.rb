@@ -23,7 +23,7 @@ class Export
   module Event
     module Transactions
       class Csv < Export
-        store :parameters, accessors: %w[event_id start_date end_date public_only], coder: JSON
+        store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
         def async?
           event.canonical_transactions.size > 300
         end
