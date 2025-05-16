@@ -39,7 +39,7 @@ class Event
         true
       end
 
-      def requires_contract_signature?
+      def contract_required?
         false
       end
 
