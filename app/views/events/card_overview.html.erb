@@ -49,7 +49,7 @@
   <% if organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
       <%= modal_header "Order a card" %>
-      <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
+      <%= render "stripe_cards/form", event: @event, stripe_card: StripeCard.new %>
     </section>
   <% end %>
 
@@ -57,7 +57,7 @@
     <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
   <% else %>
     <article class="mixed-grid grid--spacious">
-      <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards %>
+      <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { event: @event } %>
     </article>
 
     <% if @paginated_stripe_cards.blank? %>

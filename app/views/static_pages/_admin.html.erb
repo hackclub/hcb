@@ -1,3 +1,4 @@
+<%# locals: (transaction_volume:) %>
 <% admin_tool("w-100 center mt3") do %>
   <div x-data="{
     pinned_cards: $persist([]),
@@ -28,7 +29,7 @@
     }
     }">
     <p>
-      <%= content_tag :strong, render_money(@transaction_volume) %>
+      <%= content_tag :strong, render_money(transaction_volume) %>
       in transactions & counting…
     </p>
     <div x-show="pinned_cards.length > 0" x-transition>
@@ -80,14 +81,14 @@
     <ul class="grid left-align w-100 mt0" id="accounting-grid">
       <%= card_to "Bank Fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
       <%= card_to "Ledger audits", admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count %>
-      <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization Balances" } %>
-      <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "BI tool" } %>
+      <%= render "card", task_path: balances_admin_index_path, human_name: "Organization Balances" %>
+      <%= render "card", task_path: blazer_path, human_name: "BI tool" %>
       <%= card_to "Column Statements", admin_column_statements_path %>
     </ul>
     <h2>Other</h2>
     <ul class="grid left-align w-100 mt0" id="other-grid">
-      <%= render partial: "static_pages/card", locals: { task_path: common_documents_path, human_name: "Common docs" } %>
-      <%= render partial: "static_pages/card", locals: { task_path: flipper_path, human_name: "Flipper" } %>
+      <%= render "card", task_path: common_documents_path, human_name: "Common docs" %>
+      <%= render "card", task_path: flipper_path, human_name: "Flipper" %>
       <%= card_to "Pending Ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
       <%= card_to "Account Numbers", account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true %>
       <%= card_to "Recurring donations", recurring_donations_admin_index_path, badge: RecurringDonation.active.count %>
@@ -95,19 +96,19 @@
     <details>
       <summary>Old cards</summary>
       <ul class="grid left-align w-100 mt0" id="old-card-grid">
-        <%= render partial: "static_pages/card", locals: { task_path: events_path, human_name: "Organizations" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: negative_events_path, human_name: "Negative organizations" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: sponsors_path, human_name: "Sponsors" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: g_suite_accounts_path, human_name: "Google Workspace accounts" } %>
+        <%= render "card", task_path: events_path, human_name: "Organizations" %>
+        <%= render "card", task_path: negative_events_path, human_name: "Negative organizations" %>
+        <%= render "card", task_path: sponsors_path, human_name: "Sponsors" %>
+        <%= render "card", task_path: g_suite_accounts_path, human_name: "Google Workspace accounts" %>
         <%= card_to "Bookkeeping", bookkeeping_path %>
         <%= card_to "Emburse cards", emburse_cards_path %>
         <%= card_to "Emburse card requests", emburse_card_requests_path %>
         <%= card_to "Emburse transfers", emburse_transfers_path %>
         <%= card_to "Emburse transactions", emburse_transactions_path %>
-        <%= render partial: "static_pages/card", locals: { task_path: admin_search_path, human_name: "Search by user" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: "https://hack.af/hcb-knowledgebase", human_name: "Knowledgebase" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: bank_accounts_path, human_name: "Bank accounts" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: new_bank_account_path, human_name: "Setup HCB" } %>
+        <%= render "card", task_path: admin_search_path, human_name: "Search by user" %>
+        <%= render "card", task_path: "https://hack.af/hcb-knowledgebase", human_name: "Knowledgebase" %>
+        <%= render "card", task_path: bank_accounts_path, human_name: "Bank accounts" %>
+        <%= render "card", task_path: new_bank_account_path, human_name: "Setup HCB" %>
         <%= card_to "Bank Accounts", bank_accounts_admin_index_path, badge: BankAccount.failing.count %>
         <%= card_to "HCB Codes", hcb_codes_admin_index_path %>
         <%= card_to "Raw Transactions", raw_transactions_admin_index_path, badge: RawCsvTransaction.unhashed.count %>

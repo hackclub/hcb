@@ -1,10 +1,12 @@
-<%= form_with(model: @card, id: "stripe_card_name_form") do |form| %>
+<%# locals: (stripe_card:) %>
+
+<%= form_with(model: stripe_card, id: "stripe_card_name_form") do |form| %>
   <div class="field">
     <%= form.label :name %>
 
     <div class="flex gap-3 items-stretch">
       <%= form.text_field :name, placeholder: "Online Retailers" %>
-      <% if @card.name.present? %>
+      <% if stripe_card.name.present? %>
         <button class="btn bg-error px-3 tooltipped tooltipped--s overflow-visible" aria-label="Clear name" id="clear_name_btn" onclick="clearName();" type="button">
           <%= inline_icon "delete", class: "!m-0" %>
         </button>

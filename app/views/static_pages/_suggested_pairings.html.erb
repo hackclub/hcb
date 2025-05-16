@@ -1,5 +1,7 @@
+<%# locals: (pairings: nil, current_slide: nil) %>
+
 <%= turbo_frame_tag "suggested_pairings" do %>
-  <% if local_assigns[:pairings].any? %>
+  <% if pairings.any? %>
     <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);">
       <div style="margin: -16px; padding: 16px; margin-bottom: 0px; border-radius: 0.5rem 0.5rem 0rem 0rem;" class="bg-snow dark:bg-dark">
         <span tabindex="0" onclick="this.parentElement.parentElement.remove();" class="pointer">
@@ -10,19 +12,19 @@
           <span style="flex-grow: 1;"></span>
           <span style="line-height: 0px; display: flex; align-items: center;">
             <span>
-              <span class="carousel__number"><%= local_assigns[:current_slide] + 1 %></span>&nbsp;of&nbsp<%= local_assigns[:pairings].length %>
+              <span class="carousel__number"><%= current_slide + 1 %></span>&nbsp;of&nbsp<%= pairings.length %>
             </span>
           </span>
 
         </div>
       </div>
 
-      <%= carousel(local_assigns[:pairings], local_assigns[:current_slide]) do |pairing, i| %>
+      <%= carousel(pairings, current_slide) do |pairing, i| %>
         <p>HCB thinks that one of your receipts, <strong><%= pairing.receipt.file.blob.filename %></strong>, belongs to a transaction in <strong><%= pairing.hcb_code.event.name %></strong>.</p>
         <div class="flex justify-center">
 
           <div class="xs-hide sm-hide flex flex-col justify-center pt1" style="user-drag: none; -webkit-user-drag: none; -moz-user-drag: none; min-width: 50px; max-width: max(10vw, 50px)">
-            <%= render partial: "receipts/receipt", locals: { receipt: pairing.receipt, show_delete_button: true, link_to_file: true, hide_info: true, size: 200 } %>
+            <%= render "receipts/receipt", receipt: pairing.receipt, show_delete_button: true, link_to_file: true, hide_info: true, size: 200 %>
           </div>
 
           <div class="flex flex-col justify-center xs-hide sm-hide" style="margin-left: 16px; margin-right: 16px; flex-grow: 0.5; max-width: 36px;">
@@ -45,11 +47,11 @@
                   <tbody data-behavior="transactions">
                     <% if pairing.hcb_code.canonical_transactions.any? %>
                       <% pairing.hcb_code.canonical_transactions.each do |ct| %>
-                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, hide_tags: true, show_event_name: true } %>
+                        <%= render "canonical_transactions/canonical_transaction", ct:, force_display_details: true, hide_tags: true, show_event_name: true %>
                       <% end %>
                     <% else %>
                       <% pairing.hcb_code.canonical_pending_transactions.each do |pt| %>
-                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, hide_tags: true, show_event_name: true } %>
+                        <%= render "canonical_pending_transactions/canonical_pending_transaction", pt:, force_display_details: true, hide_tags: true, show_event_name: true %>
                       <% end %>
                     <% end %>
                   </tbody>

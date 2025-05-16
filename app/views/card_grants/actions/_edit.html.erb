@@ -1,3 +1,5 @@
+<%# locals: (card_grant:) %>
+
 <% if card_grant.active? && policy(card_grant).update? %>
   <div class="tooltipped tooltipped--n" aria-label="Set this grant's purpose">
     <%= link_to edit_card_grant_path(card_grant),

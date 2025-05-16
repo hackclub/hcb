@@ -1,4 +1,6 @@
-<% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
+<%# locals: (disbursement:, source_event: nil, allowed_source_events:, allowed_destination_events:, event: nil) %>
+
+<% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{ fee: null, event_id: null }" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
@@ -6,10 +8,10 @@
   <div class="field event-select-target">
     <%= form.label :source_event_id, "From" %>
     <%= form.collection_select(:source_event_id,
-                                @allowed_source_events,
+                                allowed_source_events,
                                 :id,
                                 current_user.admin? ? :admin_dropdown_description : :disbursement_dropdown_description,
-                                { prompt: "Select one…", disabled: ->(e) { e != @source_event && !policy(e).create_transfer? || (!current_user.admin? && e.balance_available <= 0) } },
+                                { prompt: "Select one…", disabled: ->(e) { e != source_event && !policy(e).create_transfer? || (!current_user.admin? && e.balance_available <= 0) } },
                                 required: true,
                                 disabled: ) %>
   </div>
@@ -17,7 +19,7 @@
   <div class="field event-select-target">
     <%= form.label :destination_event_id_select, "To" %>
     <%= form.select(:event_id,
-                  (@allowed_destination_events.map do |event|
+                  (allowed_destination_events.map do |event|
                     [
                       current_user.admin? ? event.admin_dropdown_description : event.disbursement_dropdown_description,
                       event.id,
@@ -27,7 +29,7 @@
                       },
                     ]
                   end) +
-                  (@source_event&.plan&.unrestricted_disbursements_enabled? && !admin_signed_in? ? [[
+                  (source_event&.plan&.unrestricted_disbursements_enabled? && !admin_signed_in? ? [[
                     "Other",
                     "other",
                     {
@@ -40,7 +42,7 @@
                   disabled:,
                   "x-on:input" => "fee = $event.target.options[$event.target.selectedIndex].dataset.fee; event_id = $event.target.options[$event.target.selectedIndex].dataset.event_id; console.log(event_id)") %>
     <% unless admin_signed_in? %>
-      <% if @source_event&.plan&.unrestricted_disbursements_enabled? %>
+      <% if source_event&.plan&.unrestricted_disbursements_enabled? %>
         <template x-if="event_id == 'other'">
           <div class="mt2">
             <%= form.label :destination_event_id_select, "Destination event's slug" %>
@@ -66,7 +68,7 @@
   <div class="field">
     <div class="flex items-center">
       <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount, value: (@disbursement&.amount.nil? ? nil : (@disbursement.amount.to_f / 100)),
+      <%= form.number_field :amount, value: (disbursement&.amount.nil? ? nil : (disbursement.amount.to_f / 100)),
                                      placeholder: "500.00",
                                      step: 0.01,
                                      min: 0.01,
@@ -116,7 +118,7 @@
 
   <div
       class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"
-      aria-label="<%= @event&.demo_mode? ? "Transfers are disabled in Playground mode" : disabled ? "Only managers can make transfers!" : nil %>">
+      aria-label="<%= event&.demo_mode? ? "Transfers are disabled in Playground mode" : disabled ? "Only managers can make transfers!" : nil %>">
     <%= form.submit "Make transfer", class: "btn", disabled: %>
   </div>
 <% end %>
