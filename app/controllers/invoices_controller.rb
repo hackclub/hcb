@@ -128,10 +128,6 @@ class InvoicesController < ApplicationController
 
     flash[:success] = "Invoice successfully created and emailed to #{@invoice.sponsor.contact_email}."
 
-    unless OrganizerPosition.find_by(user: @invoice.creator, event: @event)&.manager?
-      InvoiceMailer.with(invoice: @invoice).notify_organizers_sent.deliver_later
-    end
-
     redirect_to @invoice
   rescue Pundit::NotAuthorizedError
     raise
