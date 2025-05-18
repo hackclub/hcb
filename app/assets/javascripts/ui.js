@@ -17,7 +17,6 @@ const loadModals = element => {
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
-      closeExisting: false,
     })
     return this.blur()
   })
