@@ -37,7 +37,9 @@
       <tr style="border-bottom-width: 3px">
         <th></th>
         <% OrganizerPosition.roles.keys.each do |role| %>
-          <th><%= role.pluralize.titleize %></th>
+          <% unless rganizer_position.event.plan.supervisor_required? %>
+            <th><%= role.pluralize.titleize %></th>
+          <% end %>
         <% end %>
       </tr>
       <%= render_permissions(@perms) %>

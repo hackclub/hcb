@@ -71,7 +71,7 @@
             <% OrganizerPositionInvite.roles.keys.each do |role| %>
               <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: "post", turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
                 <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
-              <% end %>
+              <% end unless role == "supervisor" && !organizer_position_invite.event.plan.supervisor_required? %>
             <% end %>
             <div class="menu__divider"></div>
             <%= link_to "What do these mean?", roles_path %>
