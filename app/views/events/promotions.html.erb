@@ -186,7 +186,7 @@
   <div class="card__banner card__banner--top flex justify-between items-center promo-pvsa">
     <%= image_tag "https://cloud-q7i8htyv7-hack-club-bot.vercel.app/0pvsa-logo-2x.png", width: 60 %>
     <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
-      @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
+      @perks_available ? fillout_form("i9mcHGZGoFus", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
       class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
       target: :_blank %>
   </div>
