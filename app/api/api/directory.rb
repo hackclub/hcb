@@ -12,7 +12,7 @@ module Api
         use :pagination, per_page: 50, max_per_page: 100
       end
       get :organizations do
-        orgs = Event.indexable.includes(:event_tags).where(event_tags: { name: [EventTag::Tags::HACKATHON, EventTag::Tags::ROBOTICS_TEAM] })
+        orgs = Event.indexable.includes(:event_tags).where(event_tags: { name: [EventTag::Tags::HACKATHON, EventTag::Tags::ROBOTICS_TEAM, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS, EventTag::Tags::ORGANIZED_BY_TEENAGERS] })
                     .or(
                       # Tagged as okay to list in the Climate Directory
                       Event.includes(:event_tags).where({ event_tags: { name: EventTag::Tags::CLIMATE, purpose: :directory } }),

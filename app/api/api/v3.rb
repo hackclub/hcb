@@ -693,7 +693,7 @@ module Api
       error!({ message: "Not authorized." }, 403)
     end
     rescue_from :all do |e|
-      Rails.error.report(e, handled: false, severity: "error", context: "api")
+      Rails.error.report(e, handled: false, severity: :error, context: "api")
 
       # Provide error message in api response ONLY in development mode
       msg = if Rails.env.development?

@@ -40,9 +40,9 @@ order by fee_balance desc
 
 Essentially, we calculate the total amount of fees we should have charged all-time and then the total amount of fees we’ve ever charged them all-time. If the difference is zero, we need to charge them fees (or give them a credit if we overcharged). 
 
-A couple of things to note about this SQL query. Every time we create a `CanonicalEventMapping` we create a `Fee` record for that transaction that stores the fee that needs to be charged for that transaction.
+A couple of things to note about this SQL query. Every time we create a `CanonicalEventMapping`, we create a `Fee` record for that transaction that stores the fee that needs to be charged for that transaction.
 
-These reason for this line:
+The reason for this line:
 
 ```sql
 and f.reason = 'HACK CLUB FEE'
@@ -104,6 +104,6 @@ At times, we may want to waive fees on revenue. For example, if the transaction 
 
 There are two ways of waiving fees, set `fee_waived` on the `CanonicalPendingTransaction` or set `reason` on the `Fee` to “TBD”.
 
-Occasionally, we make this waiver after charging a fee. This results in a fee credit. Which is essentially a fee where we (HCB) pay the organisation instead of them paying us.
+Occasionally, we make this waiver after charging a fee. This results in a fee credit. A fee credit is essentially a fee where we (HCB) pay the organisation instead of them paying us.
 
 \- [@sampoder](https://github.com/sampoder)

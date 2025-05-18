@@ -28,7 +28,11 @@ class Event
       end
 
       def description
-        "Has access to all standard features with no fees."
+        "Has access to all standard and restricted features with no fees."
+      end
+
+      def features
+        Event::Plan.available_features
       end
 
       def exempt_from_wire_minimum?

@@ -47,7 +47,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def edit?
-    admin_or_member?
+    admin_or_reader?
   end
 
   # pinning a transaction to an event
@@ -154,7 +154,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    auditor_or_reader? && record.plan.account_number_enabled?
+    (auditor? || member?) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -221,6 +221,10 @@ class EventPolicy < ApplicationPolicy
 
   def admin_or_manager?
     admin? || manager?
+  end
+
+  def admin_or_reader?
+    admin? || reader?
   end
 
   def is_not_demo_mode?
