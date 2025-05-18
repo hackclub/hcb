@@ -8,6 +8,10 @@ class ApiController < ApplicationController
 
   rescue_from(ActiveRecord::RecordNotFound) { render json: { error: "Record not found" }, status: :not_found }
 
+  before_save do
+    self.country_alpha2 = ISO3166::Country[params[:country]]&.alpha2
+  end
+
   def the_current_user
     return head :not_found unless signed_in?
 
