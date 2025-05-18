@@ -222,7 +222,7 @@ module Reimbursement
           flash[:error] = e.message
         end
       end
-    
+
       redirect_to @report
     end
 
