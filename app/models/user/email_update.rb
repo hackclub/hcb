@@ -40,6 +40,8 @@ class User
 
     belongs_to :user
     belongs_to :updated_by, class_name: "User"
+    has_secure_token :authorization_token
+    has_secure_token :verification_token
     has_encrypted :authorization_token, migrating: true
     has_encrypted :verification_token, migrating: true
 
