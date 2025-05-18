@@ -2053,6 +2053,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_15_161504) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_backup_codes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "aasm_state"
+    t.text "hash", null: false
+    t.text "salt", null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_backup_codes_on_user_id"
+  end
+
   create_table "user_email_updates", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "aasm_state", null: false

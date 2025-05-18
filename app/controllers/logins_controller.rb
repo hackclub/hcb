@@ -135,6 +135,12 @@ class LoginsController < ApplicationController
       else
         return redirect_to totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." }
       end
+    when "backup_code"
+      if @user.redeem_backup_code(params[:backup_code])
+        @login.update(authenticated_with_backup_code: true)
+      else
+        return redirect_to backup_code_login_path(@login), flash: { error: "Invalid backup code, please try again." }
+      end
     end
 
     # Clear the flash - this prevents the error message showing up after an unsuccessful -> successful login
@@ -204,6 +210,7 @@ class LoginsController < ApplicationController
     @sms_available = @user&.phone_number_verified && !@login.authenticated_with_sms
     @webauthn_available = @user&.webauthn_credentials&.any? && !@login.authenticated_with_webauthn
     @totp_available = @user&.totp.present? && !@login.authenticated_with_totp
+    @backup_code_available = @user&.unused_backup_codes&.any? && !@login.authenticated_with_backup_code
   end
 
   def set_return_to

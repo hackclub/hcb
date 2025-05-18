@@ -77,6 +77,8 @@ class User < ApplicationRecord
 
   has_many :logins
   has_many :login_codes
+  has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
+  has_many :unused_backup_codes, -> { where(aasm_state: :unused) }, class_name: "User::BackupCode", inverse_of: :user
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
@@ -368,6 +370,61 @@ class User < ApplicationRecord
 
   def only_card_grant_user?
     card_grants.size >= 1 && events.size == 0
+  end
+
+  def backup_codes_enabled?
+    unused_backup_codes.any?
+  end
+
+  def generate_backup_codes
+    # this is different from unused_backup_codes - it includes unsaved codes
+    backup_codes.where.not(aasm_state: [:used, :invalidated]).find_each &:mark_invalidated!
+
+    codes = []
+    pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
+    while codes.size < 10
+      code = SecureRandom.alphanumeric(10)
+      next if codes.include?(code)
+
+      salt = SecureRandom.random_bytes(64)
+      begin
+        # backup code pepper must be at least 32 bytes
+        backup_codes.create!(hash: OpenSSL::KDF.pbkdf2_hmac(code + pepper, hash: "sha512", salt:, iterations: 20_000, length: 64).unpack1("H*"), salt: Base64.strict_encode64(salt))
+      rescue ActiveRecord::RecordInvalid
+        # if the code is already in use, skip it
+        next
+      end
+      codes << code
+    end
+
+    codes
+  end
+
+  def redeem_backup_code(code)
+    found = nil
+    pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
+    # make sure we do not short circuit
+    unused_backup_codes.each do |backup_code|
+      hash = OpenSSL::KDF.pbkdf2_hmac(code + pepper, hash: "sha512", salt: Base64.decode64(backup_code.salt), iterations: 20_000, length: 64).unpack1("H*")
+      if ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.hash)
+        found = backup_code
+      end
+    end
+
+    if found.present?
+      found.transaction do
+        found.mark_used!
+      end
+      BackupCodeMailer.with(user_id: id).code_used.deliver_now
+
+      return true
+    end
+    false
+  end
+
+  def disable_backup_codes
+    backup_codes.where.not(aasm_state: [:used, :invalidated]).find_each &:mark_invalidated!
+    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
   private
