@@ -2059,7 +2059,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_15_084915) do
     t.string "aasm_state"
     t.text "hash", null: false
     t.text "salt", null: false
-    t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_user_backup_codes_on_user_id"

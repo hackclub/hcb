@@ -6,7 +6,6 @@
 #
 #  id         :bigint           not null, primary key
 #  aasm_state :string
-#  deleted_at :datetime
 #  hash       :text             not null
 #  salt       :text             not null
 #  created_at :datetime         not null
@@ -24,7 +23,6 @@
 class User
   class BackupCode < ApplicationRecord
     has_paper_trail
-    acts_as_paranoid
 
     include AASM
 
