@@ -45,10 +45,10 @@ class User
         transitions from: :unused, to: :used
 
         after do
-          case user.backup_codes.where(aasm_state: :unused).count
+          case user.backup_codes.unused.size
           when 0
             User::BackupCodeMailer.with(user_id: user.id).no_codes_remaining.deliver_now
-          when 1..2
+          when 1..3
             User::BackupCodeMailer.with(user_id: user.id).two_or_fewer_codes_left.deliver_now
           end
           User::BackupCodeMailer.with(user_id: user.id).code_used.deliver_now

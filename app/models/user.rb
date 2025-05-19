@@ -412,9 +412,7 @@ class User < ApplicationRecord
     end
 
     if found.present?
-      found.transaction do
-        found.mark_used!
-      end
+      found.mark_used!
       BackupCodeMailer.with(user_id: id).code_used.deliver_now
 
       return true
