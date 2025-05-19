@@ -4,9 +4,7 @@ class User
   class BackupCodeMailer < ApplicationMailer
     before_action :set_user
 
-    default to: -> {
-      emails = @user.email_address_with_name
-    }
+    default to: -> { @user.email_address_with_name }
 
     def new_codes_generated
       mail subject: "You've generated new backup codes for HCB"
