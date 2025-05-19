@@ -18,7 +18,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  MarkVerifieds = GSuite::MarkVerifiedsJob
-end

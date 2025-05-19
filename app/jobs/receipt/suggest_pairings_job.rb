@@ -10,7 +10,3 @@ class Receipt
   end
 
 end
-
-module ReceiptJob
-  SuggestPairings = Receipt::SuggestPairingsJob
-end

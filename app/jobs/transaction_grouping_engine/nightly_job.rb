@@ -12,7 +12,3 @@ module TransactionGroupingEngine
   end
 
 end
-
-module TransactionGroupingEngineJob
-  Nightly = TransactionGroupingEngine::NightlyJob
-end

@@ -10,7 +10,3 @@ module Reimbursement
 
   end
 end
-
-module ReimbursementJob
-  Nightly = Reimbursement::NightlyJob
-end

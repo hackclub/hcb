@@ -10,7 +10,3 @@ class StripeCard
   end
 
 end
-
-module StripeCardJob
-  Nightly = StripeCard::NightlyJob
-end

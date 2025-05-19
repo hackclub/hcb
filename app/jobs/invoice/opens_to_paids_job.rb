@@ -10,7 +10,3 @@ class Invoice
   end
 
 end
-
-module InvoiceJob
-  OpenToPaids = Invoice::OpensToPaidsJob
-end

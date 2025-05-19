@@ -10,7 +10,3 @@ class StripeAuthorization
   end
 
 end
-
-module StripeAuthorizationJob
-  CreateFromWebhook = StripeAuthorization::CreateFromWebhookJob
-end
