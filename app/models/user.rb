@@ -386,10 +386,10 @@ class User < ApplicationRecord
       code = SecureRandom.alphanumeric(10)
       next if codes.include?(code)
 
-      salt = SecureRandom.random_bytes(64)
+      salt = Base64.strict_encode64(SecureRandom.random_bytes(64))
       begin
         # backup code pepper must be at least 32 bytes
-        backup_codes.create!(hash: OpenSSL::KDF.pbkdf2_hmac(code + pepper, hash: "sha512", salt:, iterations: 20_000, length: 64).unpack1("H*"), salt: Base64.strict_encode64(salt))
+        backup_codes.create!(hash: User::BackupCode.gen_hash(code:, salt:, pepper:), salt: salt)
       rescue ActiveRecord::RecordInvalid
         # if the code is already in use, skip it
         next
@@ -405,7 +405,7 @@ class User < ApplicationRecord
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
     # make sure we do not short circuit
     unused_backup_codes.each do |backup_code|
-      hash = OpenSSL::KDF.pbkdf2_hmac(code + pepper, hash: "sha512", salt: Base64.decode64(backup_code.salt), iterations: 20_000, length: 64).unpack1("H*")
+      hash = User::BackupCode.gen_hash(code:, salt: backup_code.salt, pepper:)
       if ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.hash)
         found = backup_code
       end

@@ -57,6 +57,10 @@ class User
       end
     end
 
+    def self.gen_hash(code:, salt:, pepper:)
+      OpenSSL::KDF.pbkdf2_hmac(code + pepper, hash: "sha512", salt: Base64.decode64(salt), iterations: 20_000, length: 64).unpack1("H*")
+    end
+
   end
 
 end
