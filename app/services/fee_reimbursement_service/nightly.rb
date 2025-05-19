@@ -44,7 +44,7 @@ module FeeReimbursementService
       ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
     end
 
-    def local_hcb_code(date)
+    def local_hcb_code
       HcbCode.find_or_create_by(hcb_code:)
     end
 
