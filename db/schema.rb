@@ -13,6 +13,7 @@
 ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
+  enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
 
   create_table "ach_transfers", force: :cascade do |t|
@@ -27,9 +28,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.string "recipient_tel"
     t.datetime "rejected_at", precision: nil
     t.text "payment_for"
-    t.datetime "scheduled_arrival_date", precision: nil
     t.string "aasm_state"
     t.text "confirmation_number"
+    t.datetime "scheduled_arrival_date", precision: nil
     t.text "account_number_ciphertext"
     t.bigint "processor_id"
     t.text "increase_id"
@@ -699,8 +700,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.inet "ip_address"
     t.datetime "in_transit_at"
     t.boolean "anonymous", default: false, null: false
-    t.boolean "tax_deductible", default: true, null: false
     t.boolean "fee_covered", default: false, null: false
+    t.boolean "tax_deductible", default: true, null: false
     t.boolean "in_person", default: false
     t.bigint "collected_by_id"
     t.text "referrer"
@@ -909,12 +910,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.string "increase_account_id", null: false
     t.string "website"
     t.text "description"
+    t.integer "stripe_card_shipping_type", default: 0, null: false
     t.text "donation_thank_you_message"
     t.text "donation_reply_to_email"
-    t.integer "stripe_card_shipping_type", default: 0, null: false
-    t.string "postal_code"
     t.boolean "public_reimbursement_page_enabled", default: false, null: false
     t.text "public_reimbursement_page_message"
+    t.string "postal_code"
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.string "short_name"
     t.integer "risk_level"
@@ -1070,7 +1071,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.text "unique_bank_identifier"
     t.date "date"
     t.bigint "raw_increase_transaction_id"
-    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"
     t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"
@@ -1156,12 +1157,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.string "increase_status"
     t.string "check_number"
     t.jsonb "increase_object"
-    t.string "recipient_email"
-    t.boolean "send_email_notification", default: false
     t.string "column_id"
     t.string "column_status"
     t.jsonb "column_object"
     t.string "column_delivery_status"
+    t.string "recipient_email"
+    t.boolean "send_email_notification", default: false
     t.index "(((increase_object -> 'deposit'::text) ->> 'transaction_id'::text))", name: "index_increase_checks_on_transaction_id"
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
@@ -1666,7 +1667,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.bigint "receiptable_id"
     t.integer "upload_method"
     t.text "textual_content_ciphertext"
-    t.integer "textual_content_source", default: 0
     t.string "suggested_memo"
     t.text "extracted_card_last4_ciphertext"
     t.integer "extracted_subtotal_amount_cents"
@@ -1676,6 +1676,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.string "extracted_merchant_url"
     t.string "extracted_merchant_zip_code"
     t.boolean "data_extracted", default: false, null: false
+    t.integer "textual_content_source", default: 0
     t.string "textual_content_bidx"
     t.index ["receiptable_type", "receiptable_id"], name: "index_receipts_on_receiptable_type_and_receiptable_id"
     t.index ["textual_content_bidx"], name: "index_receipts_on_textual_content_bidx"
@@ -1751,8 +1752,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.integer "expense_number", null: false
     t.datetime "deleted_at", precision: nil
     t.string "type"
-    t.decimal "value", default: "0.0", null: false
     t.integer "category"
+    t.decimal "value", default: "0.0", null: false
     t.index ["approved_by_id"], name: "index_reimbursement_expenses_on_approved_by_id"
     t.index ["reimbursement_report_id"], name: "index_reimbursement_expenses_on_reimbursement_report_id"
   end
@@ -1893,8 +1894,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.boolean "is_platinum_april_fools_2023"
     t.bigint "subledger_id"
     t.boolean "lost_in_shipping", default: false
-    t.boolean "initially_activated", default: false, null: false
     t.integer "stripe_card_personalization_design_id"
+    t.boolean "initially_activated", default: false, null: false
     t.boolean "cash_withdrawal_enabled", default: false
     t.datetime "canceled_at"
     t.index ["event_id"], name: "index_stripe_cards_on_event_id"
