@@ -136,7 +136,7 @@ class LoginsController < ApplicationController
         return redirect_to totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." }
       end
     when "backup_code"
-      if @user.redeem_backup_code(params[:backup_code])
+      if @user.redeem_backup_code!(params[:backup_code])
         @login.update(authenticated_with_backup_code: true)
       else
         return redirect_to backup_code_login_path(@login), flash: { error: "Invalid backup code, please try again." }

@@ -376,9 +376,8 @@ class User < ApplicationRecord
     unused_backup_codes.any?
   end
 
-  def generate_backup_codes
-    # this is different from unused_backup_codes - it includes unsaved codes
-    backup_codes.where.not(aasm_state: [:used, :invalidated]).find_each &:mark_invalidated!
+  def generate_backup_codes!
+    invalidate_backup_codes!
 
     codes = []
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
@@ -400,7 +399,7 @@ class User < ApplicationRecord
     codes
   end
 
-  def redeem_backup_code(code)
+  def redeem_backup_code!(code)
     found = nil
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
     unused_backup_codes.each do |backup_code|
@@ -414,9 +413,14 @@ class User < ApplicationRecord
     false
   end
 
-  def disable_backup_codes
-    backup_codes.where.not(aasm_state: [:used, :invalidated]).find_each &:mark_invalidated!
+  def disable_backup_codes!
+    invalidate_backup_codes!
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
+  end
+
+  def invalidate_backup_codes!
+    backup_codes.where(aasm_state: :unsaved).destroy_all
+    backup_codes.where(aasm_state: :unused).find_each &:mark_invalidated!
   end
 
   private
