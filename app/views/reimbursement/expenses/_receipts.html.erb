@@ -35,7 +35,7 @@
                   </label>
                 <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
                   <%= link_to my_receipts_upload_path(current_user), class: "w-full flex-grow h-full flash flex items-center justify-center", style: "transform: scale(1)!important; color: #c44355; background-color: rgba(236, 55, 80, 0.13); box-shadow: none;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
-                    <%= inline_icon "attachment" %>
+                    <%= inline_icon "receipt" %>
                     <span>Receipt Bin</span>
                   <% end %>
                 <% end %>
@@ -54,7 +54,7 @@
           </span>
           <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
               <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
-                <%= inline_icon "attachment" %>
+                <%= inline_icon "receipt" %>
                 <span>Select from Receipt Bin</span>
               <% end %>
             <% end %>

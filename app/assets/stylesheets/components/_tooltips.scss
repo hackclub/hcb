@@ -6,21 +6,19 @@
   .tooltipped {
     &:after {
       background-color: rgba(map-get($palette, black), 0.875);
-      border-radius: 0.5rem;
-      box-shadow:
-        0 0 2px 0 rgba(0, 0, 0, 0.0625),
-        0 4px 8px 0 rgba(0, 0, 0, 0.125);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-tooltip);
       color: map-get($palette, white);
       content: attr(aria-label);
-      font-family: $font-family;
       font-size: 0.875rem;
       font-weight: 500;
       height: min-content;
-      letter-spacing: 0;
+      letter-spacing: -0.02em;
       line-height: 1.375;
       max-width: 16rem;
       min-height: 1.25rem;
       opacity: 0;
+      outline: none;
       padding: 0.25rem 0.75rem;
       pointer-events: none;
       position: absolute;
@@ -29,7 +27,7 @@
       transform: translateY(50%);
       transition: 0.125s all ease-in-out;
       width: max-content;
-      z-index: 1;
+      z-index: 99;
 
       &.tooltipped--lg {
         max-width: 24rem;
@@ -40,7 +38,7 @@
     &:active:after,
     &:focus:after {
       opacity: 1;
-      z-index: 9;
+      z-index: 99;
       backdrop-filter: blur(2px);
     }
   }

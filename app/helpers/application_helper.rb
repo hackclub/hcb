@@ -60,7 +60,7 @@ module ApplicationHelper
 
   def blankslate(text, **options)
     other_options = options.except(:class)
-    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
+    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 muted font-medium h3 w-full rounded-lg border #{options[:class]}", **other_options)
   end
 
   def list_badge_for(count, item, glyph, optional: false, required: false, **options)
@@ -178,6 +178,9 @@ module ApplicationHelper
       options[:width] ||= options[:size]
       options[:height] ||= options[:size]
       options.delete :size
+    end
+    unless options["aria-label"]
+      options["aria-hidden"] = true
     end
     options.each { |key, value| svg[key.to_s] = value }
     doc.to_html.html_safe

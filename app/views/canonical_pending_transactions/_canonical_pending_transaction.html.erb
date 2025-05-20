@@ -109,7 +109,7 @@
       <% end %>
       <% if pt.local_hcb_code %>
         <%= list_badge_for auditor_signed_in? ? pt.local_hcb_code.comments.size : pt.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
-        <%= list_badge_for pt.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: pt.local_hcb_code.receipt_optional?, required: pt.local_hcb_code.missing_receipt? %>
+        <%= list_badge_for pt.local_hcb_code.receipts.size, "receipt", "receipt", optional: pt.local_hcb_code.receipt_optional?, required: pt.local_hcb_code.missing_receipt? %>
       <% end %>
     </div>
   </td>
@@ -156,7 +156,7 @@
 
             <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
               <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
-                <%= inline_icon "payment-docs" %>
+                <%= inline_icon "receipt" %>
                 <span>Select</span>
               <% end %>
             <% end %>
@@ -164,7 +164,7 @@
         <% end %>
       <% else %>
         <div class="btn bg-success disabled" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem; width: 100%">
-          <%= inline_icon "attachment", size: 14 %>
+          <%= inline_icon "receipt", size: 14 %>
           <span>Uploaded!</span>
         </div>
       <% end %>

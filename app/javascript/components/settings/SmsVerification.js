@@ -156,9 +156,9 @@ const SmsVerification = ({ phoneNumber, enrollSmsAuth = false }) => {
               </p>
               <button
                 onClick={handleClick}
-                className={loading ? 'bg-muted wait btn' : 'pointer btn'}
+                className={loading ? 'bg-muted wait btn' : 'bg-info btn'}
               >
-                Send Verification Code
+                Send verification code
               </button>
             </>
           )}

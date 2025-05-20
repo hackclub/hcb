@@ -1,22 +1,32 @@
-<div data-controller="menu" class="flex-1 min-w-0 w-full">
-  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-inherit flex block hover:text-primary focus:text-primary items-center w-full gap-1 -ml-1 p-2 rounded-lg text-decoration-none text-lg font-bold", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
-    <span class="truncate min-w-0"><%= @event.name %></span>
-    <%= inline_icon "down-caret", size: 24 if show_org_switcher? %>
-
+<header data-controller="menu" class="flex-1 min-w-0 w-full">
+  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none -mx-2 pl-2 flex items-center", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
+    <span class="font-bold black line-height-2 line-clamp-1 text-balance tracking-tight truncate max-w-full">
+      <%= @event.short_name || @event.name %>
+    </span>
+    <%= inline_icon "sort-vertical", size: 28, class: "fill-muted" if show_org_switcher? %>
   <% end %>
   <% if show_org_switcher? %>
-    <div class="menu__content menu__content--switcher w-[90vw] lg:w-[275px] z-10 ml-10 lg:-ml-2" data-menu-target="content" style="bottom:auto;border-radius: 10px;padding-bottom: 10px">
-      <p class="muted font-[800] text-sm mb-0 uppercase m-1">Organizations</p>
-      <% current_user.events.not_hidden.excluding(@event).with_attached_logo.map do |event| %>
+    <div class="menu__content menu__content--switcher sm:w-[275px] z-[11]" data-menu-target="content">
+      <% admin_tool("p0 mb1") do %>
+        <button class="menu__action" data-controller="clipboard" data-clipboard-text-value="<%= @event.name %>" data-action="click->clipboard#copy">
+          <%= inline_icon "copy", size: 24 %>
+          Copy org name
+        </button>
+      <% end %>
+      <p class="muted font-medium h5 pl-2 p-1 m0">Switch organizations</p>
+      <% events = current_user.events.not_hidden.excluding(@event).with_attached_logo %>
+      <% events.map do |event| %>
         <%= link_to event, title: event.name, class: "gap-2" do %>
           <% if event.logo.attached? %>
             <%= image_tag event.logo, height: 24, width: 24, class: "rounded" %>
+          <% elsif events.all? { |e| !e.logo.attached? } %>
+            <%# Show no placeholder %>
           <% else %>
-            <div style="height: 24px; width: 24px;" class="bg-neutral-500/30 rounded shrink-none"></div>
+            <div style="height: 24px; width: 24px;" class="bg-neutral-500/20 rounded shrink-none"></div>
           <% end %>
           <span class="truncate"><%= event.name %></span>
         <% end %>
       <% end %>
     </div>
   <% end %>
-</div>
+</header>

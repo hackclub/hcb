@@ -1,15 +1,29 @@
-<div class="lg:w-72 px-3 py-2 gap-2 flex flex-col">
-  <div class="border border-b-0 -mx-3 hidden lg:block" style="margin-top: -8px"></div>
-  <div class="flex flex-row-reverse lg:flex-row items-center gap-2">
+<div class="lg:w-72 p-3 pb-4 lg:border-t lg:[border-top-style:solid] border-color">
+  <% if signed_in? %>
+    <button
+      class="btn h-[36px] bg-none bg-smoke text-sm font-medium shadow-none w-100 justify-start px-2 hover:shadow-none display-none-not-important md:flex mb-3"
+      style="border-radius: 8px"
+      data-behavior="command_bar_trigger">
+      <span class="text-left">Jump to...</span>
+      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-[20px] inline-block rounded-md mr-1 ml-auto" aria-hidden="true">
+        ⌘
+      </span>
+      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-[20px] inline-block rounded-md" aria-hidden="true">
+        K
+      </span>
+    </button>
+  <% end %>
+  <div class="flex flex-row-reverse lg:flex-row items-center gap-2 lg:-mr-2">
     <div data-controller="menu" class="flex flex-1 min-w-1" data-menu-placement-value="bottom-end">
+      <% if signed_in? %>
       <button
         data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
         data-menu-target="toggle"
         class="user-menu-trigger max-w-full">
-        <%= avatar_for current_user, 32 %>
+        <%= avatar_for(current_user, size: 32) %>
         <div class="text-left flex-1 truncate hidden lg:block" style="flex:1;overflow: hidden;">
           <span class="truncate"><%= @current_user.name %></span>
-          <span class="text-xs -mt-0.5 block opacity-60 truncate" style="font-weight: 400"><%= @current_user.email %></span>
+          <span class="text-xs -mt-0.5 block text-muted truncate" style="font-weight: 400"><%= @current_user.email %></span>
         </div>
       </button>
       <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
@@ -18,17 +32,17 @@
           data-behavior="toggle_theme"
           tabindex="0">
           <%= inline_icon "moon", size: 23 %>
-          <%= inline_icon "moon-fill", size: 23, style: "display: none;margin-left:-2px" %>
-          <span style="font-weight: 400">Toggle theme</span>
+          <%= inline_icon "moon-fill", size: 23, style: "display: none" %>
+          Toggle theme
         </a>
         <% if signed_in? %>
           <%= link_to my_inbox_path do %>
-            <%= inline_icon "attachment", style: "margin-left: -2px;margin-right:8px;", size: 23 %>
-            <span style="font-weight: 400">Receipts</span>
+            <%= inline_icon "receipt", size: 23 %>
+            My receipts
           <% end %>
           <%= link_to logout_users_path, method: :delete do %>
             <%= inline_icon "door-leave", size: 23 %>
-            <span style="font-weight: 400">Sign out</span>
+            Sign out
           <% end %>
         <% else %>
           <%= link_to auth_users_path,
@@ -38,6 +52,7 @@
           <% end %>
         <% end %>
       </div>
+      <% end %>
     </div>
     <% if signed_in? %>
       <a
@@ -52,6 +67,6 @@
     <% end %>
     <%= render "application/support_button" unless @no_app_shell %>
   </div>
-
 </div>
+
 <%= render "application/command_bar" %>

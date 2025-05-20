@@ -82,7 +82,7 @@
               <% if defined?(enable_linking) %>
 
                 <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
-                  <%= inline_icon "attachment" %>
+                  <%= inline_icon "receipt" %>
                   <span>Select from Receipt Bin</span>
                 <% end %>
               <% end %>

@@ -12,7 +12,7 @@
     <% label = "Mailed check" %>
     <% icon = inline_icon "email" %>
   <% elsif tx.local_hcb_code.paypal_transfer? %>
-    <% label = "Paypal transfer" %>
+    <% label = "PayPal transfer" %>
     <% icon = inline_icon "paypal" %>
   <% elsif tx.local_hcb_code.wire? %>
     <% label = "Wire" %>
@@ -25,7 +25,7 @@
     <% icon = inline_icon "payment-transfer" %>
   <% elsif user = tx.local_hcb_code.reimbursement_expense_payout? %>
     <% label = "Reimbursement" %>
-    <% icon = inline_icon "attachment" %>
+    <% icon = inline_icon "reimbursement" %>
   <% elsif tx.try(:stripe_refund?) || tx.local_hcb_code.stripe_refund? %>
     <% label = "Card transaction refund" %>
     <% icon = inline_icon "view-reload" %>
