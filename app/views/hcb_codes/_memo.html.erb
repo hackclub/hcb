@@ -41,7 +41,7 @@
               style="color: inherit; text-decoration: none;"
               aria-label="Shift+click to rename this transaction">
               <%= prepended_to_memo %>
-              <span data-memo-for="<%= dom_id(hcb_code) %>" class="<%= "hover:underline" if ledger_instance %>">
+              <span data-memo-for="<%= dom_id(hcb_code) %>">
                 <%= hcb_code.memo %>
               </span>
             </span>
