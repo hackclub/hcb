@@ -389,7 +389,7 @@ class User < ApplicationRecord
       salt = Base64.strict_encode64(SecureRandom.random_bytes(64))
       begin
         # backup code pepper must be at least 32 bytes
-        backup_codes.create!(hash: User::BackupCode.gen_hash(code:, salt:, pepper:), salt: salt)
+        backup_codes.create!(code_hash: User::BackupCode.gen_hash(code:, salt:, pepper:), salt: salt)
       rescue ActiveRecord::RecordInvalid
         # if the code is already in use, skip it
         next
@@ -403,20 +403,14 @@ class User < ApplicationRecord
   def redeem_backup_code(code)
     found = nil
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
-    # make sure we do not short circuit
     unused_backup_codes.each do |backup_code|
       hash = User::BackupCode.gen_hash(code:, salt: backup_code.salt, pepper:)
-      if ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.hash)
-        found = backup_code
+      if ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.code_hash)
+        backup_code.mark_used!
+        return true
       end
     end
 
-    if found.present?
-      found.mark_used!
-      BackupCodeMailer.with(user_id: id).code_used.deliver_now
-
-      return true
-    end
     false
   end
 
