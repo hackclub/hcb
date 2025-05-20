@@ -230,6 +230,7 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+  has_many :all_organizer_positions, -> { with_deleted }, class_name: "OrganizerPosition"
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
@@ -366,6 +367,14 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
+
+  # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
+  # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
+  after_destroy_commit do
+    all_organizer_positions.each do |position|
+      position.organizer_position_deletion_requests.destroy_all
+    end
+  end
 
   comma do
     id
