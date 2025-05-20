@@ -2397,6 +2397,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_15_084915) do
   add_foreign_key "transactions", "fee_reimbursements"
   add_foreign_key "transactions", "fee_relationships"
   add_foreign_key "transactions", "invoice_payouts"
+  add_foreign_key "user_backup_codes", "users"
   add_foreign_key "user_email_updates", "users"
   add_foreign_key "user_email_updates", "users", column: "updated_by_id"
   add_foreign_key "user_seen_at_histories", "users"

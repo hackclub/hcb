@@ -6,7 +6,7 @@
 #
 #  id         :bigint           not null, primary key
 #  aasm_state :string
-#  hash       :text             not null
+#  code_hash  :text             not null
 #  salt       :text             not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_user_backup_codes_on_user_id  (user_id)
+#  index_user_backup_codes_on_code_hash  (code_hash) UNIQUE
+#  index_user_backup_codes_on_user_id    (user_id)
 #
 # Foreign Keys
 #
@@ -28,7 +29,7 @@ class User
 
     belongs_to :user
 
-    validates :hash, presence: true, uniqueness: true
+    validates :code_hash, presence: true, uniqueness: true
 
     aasm do
       state :unsaved, initial: true
