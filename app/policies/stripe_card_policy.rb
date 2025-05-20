@@ -10,11 +10,11 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def freeze?
-    admin_or_manager? || organizer_and_cardholder?
+    admin_or_manager? || organizer_and_cardholder? || (cardholder? && record.card_grant)
   end
 
   def defrost?
-    freeze? && !record.event.financially_frozen?
+    !(record.card_grant && record.last_frozen_by != record.user && !organizer?) && freeze? && !record.event.financially_frozen?
   end
 
   def cancel?
@@ -56,7 +56,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def organizer?
-    OrganizerPosition.role_at_least?(user, record&.event, :member)
+    OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def cardholder?
