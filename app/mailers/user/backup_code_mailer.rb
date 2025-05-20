@@ -22,7 +22,7 @@ class User
       mail subject: "HCB backup codes are disabled"
     end
 
-    def two_or_fewer_codes_left
+    def three_or_fewer_codes_left
       mail subject: "[Action Requested] You've almost used all your backup codes for HCB"
     end
 
