@@ -15,4 +15,4 @@
 - [ ] Tested by reviewer before merging <!-- leave this unchecked until right before merging -->
 - [ ] After merging: Close related issues
 - [ ] After merging: Notify the requestor of the issue. Post in `#hcb-team` if the feature impacts HCB's operations team
-- [ ] After merging: Write and approve `#ship` message
+- [ ] After merging: Write and approve [`#ship`](https://hackclub.slack.com/archives/C0M8PUPU6) message
