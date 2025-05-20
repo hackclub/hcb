@@ -4,7 +4,7 @@
       Save the following codes in a safe place. You can use these codes to log in if you lose access to your other 2FA methods. <span class="font-bold">You will not be able to see these codes again.</span>
     </p>
     <%= copy_to_clipboard(@unsaved_backup_codes.join("\n")) do %>
-      <pre class="text-lg m-1 p-4 text-center bg-gray-100 rounded mx-auto"><% left_column, right_column = @unsaved_backup_codes.each_slice((@unsaved_backup_codes.size / 2.0).ceil).to_a %><%= (left_column.zip(right_column).map { |left, right| "#{left.to_s.ljust(15)}#{right}" }.join("\n")).rstrip %></pre>
+      <pre class="text-lg m-1 p-4 text-center bg-gray-100 rounded mx-auto"><% left_column, right_column = @unsaved_backup_codes.each_slice((@unsaved_backup_codes.size / 2.0).ceil).to_a %><%= left_column.zip(right_column).map { |left, right| "#{left.to_s.ljust(15)}#{right}" }.join("\n").rstrip %></pre>
     <% end %>
     <p class="font-bold">These codes have not been activated yet. You must click the below button to confirm you have saved your codes and to activate them.</p>
     <%= button_to "I have saved my codes", user_activate_backup_codes_path(@user), method: :post, class: "btn px2 h4", data: { turbo: false } %>
