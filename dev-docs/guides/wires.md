@@ -7,7 +7,7 @@ Wires are sent via Column, just like ACH transfers and checks. They use HCB code
 
 ## How we handle currency
 
-Column provides us with currency exchange, we choose not to take a quote and instead accept whatever rate they currently have. The 	[`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) produced from sending a wire represents us using USD to purchase the currency we need to send the wire.
+Column provides us with currency exchange, we choose not to take a quote and instead accept whatever rate they currently have. The [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) produced from sending a wire represents us using USD to purchase the currency we need to send the wire.
 
 Wires also have an associated [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb), the `amount_cents` for that transaction is in USD and is based on exchange rates from the EU central bank at the time of creation.
 
