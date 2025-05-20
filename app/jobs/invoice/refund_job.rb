@@ -17,7 +17,3 @@ class Invoice
   end
 
 end
-
-module InvoiceJob
-  Refund = Invoice::RefundJob
-end

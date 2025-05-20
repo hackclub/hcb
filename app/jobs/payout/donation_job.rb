@@ -9,7 +9,3 @@ module Payout
 
   end
 end
-
-module PayoutJob
-  Donation = Payout::DonationJob
-end

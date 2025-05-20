@@ -11,7 +11,7 @@ connections.
 All of HCB's servers are on the same private network. This means that each
 server within the private network is able to communicate with other servers
 using private IP addresses (generally in `10.0.0.0/16`). This is how the Rails
-application is able to connect to the Postgres server **_without_ ** need to use
+application is able to connect to the Postgres server **_without_** need to use
 a Bastion host/SSH Tunneling.
 
 However, if you are attempting to connect to HCB's Postgres or any HCB server
@@ -125,4 +125,4 @@ In this example, we'll be creating an account for a user named `orpheus`.
           The process for accessing the Rails console process may change, so I'm
           leaving it intentionally vague here.
 
-- [@garyhtou](https://garytou.com)
+\- [@garyhtou](https://garytou.com)

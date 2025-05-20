@@ -34,4 +34,4 @@ environment is configured.
 If you'd like more details, [deployment.md](deployment.md) provide more of a
 runbook style guide for how our production deployment is setup.
 
-- [@garyhtou](https://garytou.com)
+\- [@garyhtou](https://garytou.com)

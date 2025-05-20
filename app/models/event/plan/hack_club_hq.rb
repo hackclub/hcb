@@ -22,21 +22,13 @@
 #
 class Event
   class Plan
-    class Internal < FeeWaived
+    class HackClubHQ < HackClubAffiliate
       def label
-        "HCB internal organization"
+        "Hack Club HQ project"
       end
 
-      def features
-        Event::Plan.available_features
-      end
-
-      def requires_reimbursement_expense_categorization?
-        true
-      end
-
-      def omit_stats
-        true
+      def description
+        "Has access to all standard features with no fees and no contract required."
       end
 
       def contract_required?

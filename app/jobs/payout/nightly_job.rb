@@ -9,7 +9,3 @@ module Payout
 
   end
 end
-
-module PayoutJob
-  Nightly = Payout::NightlyJob
-end

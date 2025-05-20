@@ -1,23 +1,23 @@
 # What happens when I swipe / tap / dip my HCB card?
 
-Our cards are issued by Stripe so the process starts with them. They have a socket connection with Visa’s card network which receives a message when you attempt to buy something with your card, they do their preliminary checks (including the $40k daily maximum on each card configured in Stripe) and, if the authorisation passes, then pass information about the authorisation to us via a webhook. At this point, it’s up to us to approve or reject the “authorisation”. An authorisation is different from a transaction:
+Our cards are issued by Stripe so the process starts with them. They have a socket connection with Visa’s card network which receives a message when you attempt to buy something with your card. They do their preliminary checks (including the $40k daily maximum on each card configured in Stripe) and, if the authorisation passes, they pass information about the authorisation to us via a webhook. At this point, it’s up to us to approve or reject the “authorisation”. An authorisation is different from a transaction:
 
 > Card authorisation is the process in which the financial institution that issued a credit or debit card that’s been submitted for payment verifies that the card can be used for a given transaction.
 
-Authorisations aren’t guaranteed to become transactions but they often do. When Stripe sends us this webhook it has handled by `StripeController#handle_issuing_authorization_request` which calls `StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest`. That service checks that the card has the balance available for the authorisation (based on the card’s event / subledger balance, the cardholder’s spending controls) and that this type of purchase is allowed (card grants have category / merchant locks and all cards have a cash withdrawal lock). 
+Authorisations aren’t guaranteed to become transactions but they often do. When Stripe sends us this webhook it is handled by `StripeController#handle_issuing_authorization_request` which calls `StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest`. That service checks that the card has the balance available for the authorisation (based on the card’s event / subledger balance and the cardholder’s spending controls) and that this type of purchase is allowed (card grants have category / merchant locks and all cards have a cash withdrawal lock).
 
 We then respond to the webhook with an approved / not approved message. We are required to respond within two seconds otherwise the authorisation will be declined.
 
-No matter whether we approve or decline the transaction, Stripe will send us another webhook which will be handled by `StripeController#handle_issuing_authorization_created` . `StripeAuthorizationService::CreateFromWebhook` is called, this service does the following:
+No matter whether we approve or decline the transaction, Stripe will send us another webhook which will be handled by `StripeController#handle_issuing_authorization_created` . `StripeAuthorizationService::CreateFromWebhook` is called and this service does the following:
 
 * Creates a `RawPendingStripeTransaction`
 * Creates a `CanonicalPendingTransaction`
-* Map that `CanonicalPendingTransaction` to the event based on the Stripe Card’s event
+* Maps that `CanonicalPendingTransaction` to the event based on the Stripe Card’s event
 * If we declined the webhook, it will then:
   * Decline the `CanonicalPendingTransaction`
   * Send a text message / email to the card owner
-* If we approved the webhook, it will email and text the card owner to let them know.
-  * We’ll also email the admin notification email if it was a cash withdrawal.
+* If we approved the webhook, it will email and text the card owner to let them know
+  * We’ll also email the admin notification email if it was a cash withdrawal
 
 At the same time, Stripe deducts the authorisation’s amount from our Issuing balance and holds it until the authorisation is either captured, voided, or expired without capture (we’ll go through these soon!).
 

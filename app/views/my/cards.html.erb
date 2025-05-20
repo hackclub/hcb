@@ -24,7 +24,7 @@
       <div class="filter-menu__chips">
         <% if @status %>
           <div class="badge badge-large bg-muted">
-            <%= @status.gsub("inactive", "frozen").humanize %> cards
+            <%= @status.humanize %>
             <%= link_to upsert_query_params("status" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
               <%= inline_icon "view-close", size: 20 %>
             <% end %>
@@ -32,7 +32,7 @@
         <% end %>
         <% if @type %>
           <div class="badge badge-large bg-muted">
-            <%= @type.humanize %> cards
+            <%= @type.humanize %>
             <%= link_to upsert_query_params("type" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
               <%= inline_icon "view-close", size: 20 %>
             <% end %>
@@ -47,7 +47,7 @@
   </section>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
   <% if @stripe_cards.any? %>
-    <article class="grid grid--wide">
+    <article class="mixed-grid grid--spacious">
       <%= render @stripe_cards, headless: true, show_purpose: true %>
     </article>
   <% else %>

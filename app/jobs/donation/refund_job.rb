@@ -17,7 +17,3 @@ class Donation
   end
 
 end
-
-module DonationJob
-  Refund = Donation::RefundJob
-end

@@ -13,7 +13,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  ScanVerifiedDns = GSuite::ScanVerifiedDnsJob
-end

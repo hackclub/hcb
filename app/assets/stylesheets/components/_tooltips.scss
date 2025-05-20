@@ -74,6 +74,13 @@
     transform: translateX(50%);
   }
 
+  .tooltipped--i:after {
+    bottom: 50%;
+    right: 0.5rem;
+    margin-top: 0.5rem;
+    transform: translateY(50%);
+  }
+
   .tooltipped--xl {
     &:after {
       max-width: none;

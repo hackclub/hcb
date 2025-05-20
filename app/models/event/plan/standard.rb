@@ -67,6 +67,10 @@ class Event
         70
       end
 
+      def contract_required?
+        true
+      end
+
     end
 
   end

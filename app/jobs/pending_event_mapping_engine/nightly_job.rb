@@ -14,7 +14,3 @@ module PendingEventMappingEngine
 
   end
 end
-
-module PendingEventMappingEngineJob
-  Nightly = PendingEventMappingEngine::NightlyJob
-end

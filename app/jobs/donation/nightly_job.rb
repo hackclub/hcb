@@ -10,7 +10,3 @@ class Donation
   end
 
 end
-
-module DonationJob
-  Nightly = Donation::NightlyJob
-end

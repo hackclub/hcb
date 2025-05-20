@@ -357,7 +357,7 @@ class EventsController < ApplicationController
   end
 
   def card_overview
-    @status = %w[active frozen canceled].include?(params[:status]) ? params[:status] : nil
+    @status = %w[active inactive frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
 
     cookies[:card_overview_view] = params[:view] if params[:view]
@@ -375,6 +375,8 @@ class EventsController < ApplicationController
     all_stripe_cards = case @status
                        when "active"
                          all_stripe_cards.active
+                       when "inactive"
+                         all_stripe_cards.inactive
                        when "frozen"
                          all_stripe_cards.frozen
                        when "canceled"
