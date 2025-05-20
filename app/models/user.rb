@@ -377,7 +377,7 @@ class User < ApplicationRecord
   end
 
   def generate_backup_codes!
-    invalidate_backup_codes!
+    backup_codes.where(aasm_state: :unsaved).destroy_all
 
     codes = []
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
@@ -414,13 +414,9 @@ class User < ApplicationRecord
   end
 
   def disable_backup_codes!
-    invalidate_backup_codes!
-    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
-  end
-
-  def invalidate_backup_codes!
     backup_codes.where(aasm_state: :unsaved).destroy_all
-    backup_codes.where(aasm_state: :unused).find_each &:mark_invalidated!
+    backup_codes.unused.map(&:mark_invalidated!)
+    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
   private
