@@ -17,7 +17,6 @@
     <%= hidden_field_tag :os_info %>
     <%= hidden_field_tag :timezone %>
     <%= hidden_field_tag :return_to, @return_to if @return_to %>
-    <% end %>
     <div class="flex flex-row justify-between items-center mt-4 gap-2">
       <% if @webauthn_available || @totp_available || @email_available || @sms_available %>
         <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt-0 no-underline" %>
