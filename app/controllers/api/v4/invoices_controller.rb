@@ -21,18 +21,17 @@ module Api
           :item_description,
           :item_amount
         )
-    
+
         due_date = filtered_params["due_date"].to_datetime
 
         sponsor = authorize Sponsor.find_by_public_id(params[:sponsor_id])
-    
+
         @invoice = ::InvoiceService::Create.new(
           event_id: event.id,
           due_date:,
           item_description: filtered_params[:item_description],
           item_amount: filtered_params[:item_amount],
           current_user:,
-    
           sponsor_id: sponsor.id,
           sponsor_name: sponsor.name,
           sponsor_email: sponsor.contact_email,
@@ -43,7 +42,7 @@ module Api
           sponsor_address_postal_code: sponsor.address_postal_code,
           sponsor_address_country: sponsor.address_country
         ).run
-        
+
         render :show
       rescue Pundit::NotAuthorizedError
         raise
@@ -54,4 +53,5 @@ module Api
       end
     end
   end
+
 end

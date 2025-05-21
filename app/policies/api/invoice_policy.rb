@@ -5,7 +5,7 @@ module Api
     def index?
       OrganizerPosition.role_at_least?(user, record, :reader)
     end
-    
+
     def show?
       OrganizerPosition.role_at_least?(user, record, :reader)
     end

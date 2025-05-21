@@ -7,11 +7,11 @@ module Api
         @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
         @sponsors = authorize(@event.sponsors.order(created_at: :desc))
       end
-    
+
       def show
         @sponsor = authorize Sponsor.find_by_public_id(params[:id])
       end
-    
+
       def create
         sponsor = params.require(:sponsor).permit(
           :address_city,
@@ -37,7 +37,7 @@ module Api
           event_id: sponsor[:organization_id]
         )
         authorize @sponsor
-      
+
         if @sponsor.save
           render :show
         else
@@ -46,4 +46,5 @@ module Api
       end
     end
   end
+
 end
