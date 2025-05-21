@@ -2,19 +2,19 @@
 
 Reimbursements are one of the more complicated parts of HCB! This isn’t a comprehensive guide to how they work, instead, this describes how money flows through the system. 
 
-To send the person being reimbursed money, we use standard HCB transfers such as an `AchTransfer` and a `PaypalTransfer`. However, we send these transfers from the “HCB Reimbursements Clearinghouse” organisation. On the organisation that is sending the reimbursement we have one transaction on the ledger per reimbursed expense (these are called `ExpensePayout`s). We took this approach to increase transparency and make it to understand what a reimbursement is for.
+To send the person being reimbursed money, we use standard HCB transfers such as an `AchTransfer`. However, we send these transfers from the “HCB Reimbursements Clearinghouse” organisation. On the organisation that is sending the reimbursement we have one transaction on the ledger per reimbursed expense (these are called `ExpensePayout`s). We took this approach to increase transparency and make it easier to understand what a reimbursement is for.
 
-A `Reimbursement::Report` is a collection of `Reimbursement::Expenses`. No money moves until a report is approved by an admin and, if needed, an organiser. 
+A `Reimbursement::Report` is a collection of `Reimbursement::Expenses`. No money moves until a report is approved by an admin and if needed, an organiser. 
 
 When a `Reimbursement::Report` is marked as `reimbursement_approved` by an admin, we run `Reimbursement::Report#reimburse!` which creates one `ExpensePayout` per approved expense and one `PayoutHolding` for the report.
 
-These transactions internal book transfers that move money from the organisation that is reimbursing someone to the clearinghouse organisation.
+These transactions are internal book transfers that move money from the organisation that is reimbursing someone to the clearinghouse organisation.
 
 An `ExpensePayout` is a book transfer from “FS Main” to “FS Operating”. It comes in as a negative `CanonicalTransaction`.
 
-An `PayoutHolding` is a book transfer from “FS Operating” to “FS Main”. It comes in as a positive `CanonicalTransaction`. A `Reimbursement::Report` can only have one `PayoutHolding`. It’s `amount_cents` will be the sum of the `Reimbursement::Report`’s `ExpensePayout`s’ `amount_cents`.
+A `PayoutHolding` is a book transfer from “FS Operating” to “FS Main”. It comes in as a positive `CanonicalTransaction`. A `Reimbursement::Report` can only have one `PayoutHolding`. Its `amount_cents` will be the sum of the `Reimbursement::Report`’s `ExpensePayout`s’ `amount_cents`.
 
-They are both created in `Reimbursement::Report#reimburse!` 
+These are both created in `Reimbursement::Report#reimburse!` 
 
 After they are both created, they have `after_create` callbacks that create a `CanonicalPendingTransaction`. That means there will immediately be a transaction on the ledgers of both the reimbursing organisation and HCB Reimbursements Clearinghouse.
 
@@ -32,7 +32,7 @@ But for that 1%…
 
 ### Failed `PayoutHolding`s
 
-If we attempt to send an `AchTransfer` or a `PaypalTransfer` and it fails (for ACHs, this means it errors and for PayPal transfers, this means a human tried to send it but something didn’t work), we mark the `PayoutHolding` as `failed`.
+If we attempt to send an `AchTransfer` and Column errors or it is returned, we mark the `PayoutHolding` as `failed`.
 
 Users receive an email asking them to update their payout information. In the meantime, the `PayoutHolding` just sits in a holding state with the money staying in the HCB Reimbursements Clearinghouse.
 
@@ -58,6 +58,6 @@ raise ArgumentError, "a check is present" if increase_check.present?
 
 And if it passes, we create a set of Column book transfers that are essentially the reverse of what we created above. 
 
-After this the report will never be reimbursed.
+After this, the report will never be reimbursed.
 
 \- [@sampoder](https://github.com/sampoder)

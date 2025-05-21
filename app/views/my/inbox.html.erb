@@ -77,7 +77,7 @@
 <% @cards.each do |card| %>
   <section class="mb3 card p0 receipt-card">
     <h2 class="heading line-height-4 p1 pl2 mt0 ml0 flex justify-between items-center">
-      <%= card.event.name %>
+      <%= link_to card.event.name, event_path(card.event), class: "no-underline" %>
 
       <%= link_to card, class: "regular h3 mention flex items-center" do %>
         <%= inline_icon "card", class: "mr1", size: 25 %>

@@ -1,7 +1,7 @@
-i gave us on this since Coolify has many bugs. Docker swarm on Coolify is not
-Production ready... See `production.md` instead.
+I gave up on this since Coolify has many bugs. Docker swarm on Coolify is not
+production ready... See `production.md` instead.
 
-# Coolify /w Docker Swarm
+# Coolify w/ Docker Swarm
 
 Hetzner running Coolify
 
@@ -158,7 +158,7 @@ Docker swarm behind a Hetzner Load Balance
 12. ~~fight coolify~~Delete and re-add all server to get Coolify to generate
     the right Destination and `coolify-overlay` network.
 
-    First "disconnect" apps from servers. You'll likely need to leave one server
+    First, "disconnect" apps from servers. You'll likely need to leave one server
     connected. If so, perform the following steps on the N-1 servers, then switch
     apps over the the new servers and repeat the steps on the last server.
 
@@ -175,7 +175,7 @@ Docker swarm behind a Hetzner Load Balance
 
 13. Deploy `gary@hcb` again to Docker Swarm cluster.
 
-    It should actually successfully deploy this time.
+    It should successfully deploy this time.
 
 14. Set up Hetzner load balancer
     - private network

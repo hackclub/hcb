@@ -50,6 +50,10 @@ module Reimbursement
       admin && open
     end
 
+    def reverse?
+      admin
+    end
+
     def destroy?
       ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
     end

@@ -3,6 +3,8 @@
   --kbar-foreground: #252429;
   --kbar-overlay: rgba(0 0 0 / 0.05);
   --kbar-admin-overlay: rgba(241, 196, 15, 0.125);
+  --kbar-border: rgba(0, 0, 0, 0.1);
+  --kbar-dim: rgba(255, 255, 255, 0.3);
   --command-bar-organization: #fc9fab;
   --command-bar-transaction: #f7c6a1;
   --command-bar-user: #f797f1;
@@ -15,6 +17,8 @@ html[data-dark='true'] {
   --kbar-foreground: #e0e6ed;
   --kbar-overlay: rgba(255 255 255 / 0.05);
   --kbar-admin-overlay: rgba(255, 140, 55, 0.0625);
+  --kbar-border: rgba(255, 255, 255, 0.1);
+  --kbar-dim: rgba(0, 0, 0, 0.2);
   --command-bar-organization: #ec3750;
   --command-bar-transaction: #ff8c37;
   --command-bar-user: #a633d6;

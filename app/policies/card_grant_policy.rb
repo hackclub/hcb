@@ -2,11 +2,11 @@
 
 class CardGrantPolicy < ApplicationPolicy
   def new?
-    admin_or_manager?
+    admin_or_user?
   end
 
   def create?
-    admin_or_manager? && Flipper.enabled?(:card_grants_2023_05_25, record.event)
+    admin_or_manager? && record.event.plan.card_grants_enabled?
   end
 
   def show?
@@ -22,10 +22,14 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def cancel?
-    admin_or_user || record.user == user
+    admin_or_user? || record.user == user
   end
 
   def topup?
+    admin_or_manager? && record.active?
+  end
+
+  def withdraw?
     admin_or_manager? && record.active?
   end
 
@@ -33,7 +37,11 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
-  def admin_or_user
+  def convert_to_reimbursement_report?
+    (admin_or_manager? || record.user == user) && record.card_grant_setting.reimbursement_conversions_enabled?
+  end
+
+  def admin_or_user?
     user&.admin? || record.event.users.include?(user)
   end
 

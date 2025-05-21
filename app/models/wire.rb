@@ -84,7 +84,7 @@ class Wire < ApplicationRecord
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
-    if !user.admin? && usd_amount_cents < (Event.find(event.id).minimum_wire_amount_cents)
+    if !user.admin? && usd_amount_cents < Event.find(event.id).minimum_wire_amount_cents
       errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
     end
   end

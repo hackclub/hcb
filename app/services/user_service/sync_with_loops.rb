@@ -21,6 +21,7 @@ module UserService
         hcbLastSeenAt: format_unix(@user.last_seen_at),
         hcbLastLoginAt: format_unix(@user.last_login_at),
         hcbHasActiveOrg: @user.events.active.any?,
+        hcbHasCardGrant: @user.card_grants.any?,
         mailingLists: {
           # https://loops.so/docs/contacts/mailing-lists#api
           Credentials.fetch(:LOOPS, :MAILING_LIST) => true

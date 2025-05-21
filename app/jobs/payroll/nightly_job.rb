@@ -9,7 +9,3 @@ module Payroll
 
   end
 end
-
-module PayrollJob
-  Nightly = Payroll::NightlyJob
-end

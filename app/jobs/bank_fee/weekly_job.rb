@@ -10,7 +10,3 @@ class BankFee
   end
 
 end
-
-module BankFeeJob
-  Weekly = BankFee::WeeklyJob
-end

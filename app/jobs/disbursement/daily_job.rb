@@ -23,7 +23,3 @@ class Disbursement
   end
 
 end
-
-module DisbursementJob
-  Daily = Disbursement::DailyJob
-end

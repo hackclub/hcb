@@ -41,7 +41,3 @@ class CanonicalPendingTransaction
   end
 
 end
-
-module CanonicalPendingTransactionJob
-  SendTwilioReceiptMessage = CanonicalPendingTransaction::SendTwilioReceiptMessageJob
-end

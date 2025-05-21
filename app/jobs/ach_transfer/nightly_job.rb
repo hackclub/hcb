@@ -10,7 +10,3 @@ class AchTransfer
   end
 
 end
-
-module AchTransferJob
-  Nightly = AchTransfer::NightlyJob
-end

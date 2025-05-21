@@ -130,6 +130,27 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
   end
 
+  def withdraw
+    authorize @card_grant
+
+    @card_grant.withdraw!(amount_cents: Monetize.parse(params[:amount]).cents, withdrawn_by: current_user)
+
+    redirect_to @card_grant, flash: { success: "Successfully withdrew from grant." }
+
+  rescue => e
+    Rails.error.report(e) unless e.is_a?(ArgumentError)
+
+    redirect_to @card_grant, flash: { error: e.message }
+  end
+
+  def convert_to_reimbursement_report
+    authorize @card_grant
+
+    report = @card_grant.convert_to_reimbursement_report!
+
+    redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
+  end
+
   def edit
     authorize @card_grant
   end

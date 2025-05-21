@@ -220,8 +220,8 @@ class UsersController < ApplicationController
         end
       end
 
-      if params[:user][:locked].present?
-        locked = params[:user][:locked] == "1"
+      locked = params[:user][:locked] == "1"
+      if @user.locked? != locked
         if @user == current_user
           flash[:error] = "As much as you might desire to, you cannot lock yourself out."
           return redirect_to admin_user_path(@user)

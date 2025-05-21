@@ -31,7 +31,3 @@ class Metric
   end
 
 end
-
-module MetricJobs
-  CalculateSubjects = Metric::CalculateSubjectsJob
-end

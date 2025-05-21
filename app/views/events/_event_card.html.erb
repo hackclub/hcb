@@ -50,7 +50,7 @@
       <% else %>
         <span class="flex items-center gap-1 tabular-nums">
           <%= inline_icon "card", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
-          <%= event.stripe_cards.active.count %>
+          <%= event.stripe_cards.active.on_main_ledger.count %>
         </span>
       <% end %>
     </div>

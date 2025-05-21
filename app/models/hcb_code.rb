@@ -63,8 +63,10 @@ class HcbCode < ApplicationRecord
     receipts "Has receipt?" do |receipts| receipts.exists? end
   end
 
-  def popover_path
-    "/hcb/#{hashid}?frame=true"
+  def popover_path(**params)
+    author_img_param = "&transaction_show_author_img=#{params[:transaction_show_author_img]}" if params[:transaction_show_author_img]
+    receipt_button_param = "&transaction_show_receipt_button=#{params[:transaction_show_receipt_button]}" if params[:transaction_show_receipt_button]
+    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}"
   end
 
   def receipt_upload_email
@@ -185,7 +187,7 @@ class HcbCode < ApplicationRecord
         ].compact.uniq)
 
         ids << EventMappingEngine::EventIds::INCOMING_FEES if incoming_bank_fee?
-        ids << EventMappingEngine::EventIds::HACK_CLUB_BANK if fee_revenue? || stripe_service_fee?
+        ids << EventMappingEngine::EventIds::HACK_CLUB_BANK if fee_revenue? || stripe_service_fee? || outgoing_fee_reimbursement?
         ids << EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING if reimbursement_payout_holding?
 
         Event.where(id: ids)
