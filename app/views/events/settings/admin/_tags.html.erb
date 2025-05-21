@@ -38,7 +38,6 @@
             <div class="menu__divider"></div>
           <% end %>
           <%= form_with url: event_event_tags_path(@event), data: { turbo: true } do |form| %>
-            <%= form.hidden_field :event_id, value: @event.id %>
             <%= form.text_field :name, data: { "behavior" => @event.event_tags.none? ? "autofocus" : "" }, class: "menu__input", placeholder: "+ Create tag", autocomplete: "off", required: true %>
           <% end %>
         </div>

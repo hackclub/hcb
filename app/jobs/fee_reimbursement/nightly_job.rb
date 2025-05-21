@@ -10,7 +10,3 @@ class FeeReimbursement
   end
 
 end
-
-module FeeReimbursementJob
-  Nightly = FeeReimbursement::NightlyJob
-end

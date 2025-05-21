@@ -12,7 +12,3 @@ class Receipt
   end
 
 end
-
-module ReceiptJob
-  ExtractTextualContent = Receipt::ExtractTextualContentJob
-end

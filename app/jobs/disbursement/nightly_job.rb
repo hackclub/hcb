@@ -10,7 +10,3 @@ class Disbursement
   end
 
 end
-
-module DisbursementJob
-  Nightly = Disbursement::NightlyJob
-end

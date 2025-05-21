@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GSuiteJob
-  class InitiateRevocations < ApplicationJob
+class GSuite
+  class InitiateRevocationsJob < ApplicationJob
     queue_as :low
 
     def perform
@@ -18,4 +18,9 @@ module GSuiteJob
     end
 
   end
+
+end
+
+module GSuiteJob
+  InitiateRevocations = GSuite::InitiateRevocationsJob
 end

@@ -93,7 +93,7 @@ class CardGrant < ApplicationRecord
       "muted"
     elsif pending_invite?
       "info"
-    elsif stripe_card.frozen?
+    elsif stripe_card.frozen? || stripe_card.inactive?
       "info"
     else
       "success"
@@ -107,7 +107,7 @@ class CardGrant < ApplicationRecord
       "Expired"
     elsif pending_invite?
       "Invitation sent"
-    elsif stripe_card.frozen?
+    elsif stripe_card.frozen? || stripe_card.inactive?
       "Frozen"
     else
       "Active"

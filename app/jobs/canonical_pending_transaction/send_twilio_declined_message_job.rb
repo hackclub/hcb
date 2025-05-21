@@ -59,7 +59,3 @@ class CanonicalPendingTransaction
   end
 
 end
-
-module CanonicalPendingTransactionJob
-  SendTwilioDeclinedMessage = CanonicalPendingTransaction::SendTwilioDeclinedMessageJob
-end

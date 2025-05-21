@@ -12,7 +12,3 @@ class AchTransfer
   end
 
 end
-
-module AchTransferJob
-  Daily = AchTransfer::DailyJob
-end

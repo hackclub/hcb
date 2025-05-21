@@ -11,7 +11,3 @@ module ReceiptReport
 
   end
 end
-
-module ReceiptReportJob
-  Monthly = ReceiptReport::MonthlyJob
-end

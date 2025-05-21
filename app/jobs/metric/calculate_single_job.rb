@@ -11,7 +11,3 @@ class Metric
   end
 
 end
-
-module MetricJobs
-  CalculateSingle = Metric::CalculateSingleJob
-end

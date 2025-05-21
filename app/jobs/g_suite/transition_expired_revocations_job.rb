@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GSuiteJob
-  class TransitionExpiredRevocations < ApplicationJob
+class GSuite
+  class TransitionExpiredRevocationsJob < ApplicationJob
     queue_as :low
 
     def perform
@@ -15,4 +15,9 @@ module GSuiteJob
     end
 
   end
+
+end
+
+module GSuiteJob
+  TransitionExpiredRevocations = GSuite::TransitionExpiredRevocationsJob
 end

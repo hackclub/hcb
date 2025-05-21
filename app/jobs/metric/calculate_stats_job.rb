@@ -11,7 +11,3 @@ class Metric
   end
 
 end
-
-module MetricJobs
-  CalculateStats = Metric::CalculateStatsJob
-end

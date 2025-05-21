@@ -3,6 +3,7 @@
 - Use the PR template
 - Preferably, prefix your branch names with your name. e.g. `garyhtou/branch-name`
 - Update your branch by merging `main` into your feature branch rather than rebasing. Rebasing will create new commits causing review comments to shift out of order.
+- Run `bin/lint -c`
 - When merging PRs into main, squash and rebase
 
 ## Per-merge Checklist

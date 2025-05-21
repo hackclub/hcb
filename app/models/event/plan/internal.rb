@@ -39,6 +39,10 @@ class Event
         true
       end
 
+      def contract_required?
+        false
+      end
+
     end
 
   end
