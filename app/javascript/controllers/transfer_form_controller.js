@@ -83,10 +83,10 @@ export default class extends Controller {
 
   showAnswer = event => {
     const answer = event.target.dataset.answer
-    let value = ""
-    if (answer == "ACH transfer") value = "ach"
-    if (answer == "Mailed check") value = "check"
-    if (answer == "International wire") value = "wire"
+    let value = ''
+    if (answer == 'ACH transfer') value = 'ach'
+    if (answer == 'Mailed check') value = 'check'
+    if (answer == 'International wire') value = 'wire'
     window.Turbo.visit(this[`${value}Value`])
   }
 }
