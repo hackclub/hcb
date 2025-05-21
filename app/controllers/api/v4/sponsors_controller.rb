@@ -44,7 +44,7 @@ module Api
           return render json: { error: e.message }, status: :bad_request
         end
       end
+
     end
   end
-
 end
