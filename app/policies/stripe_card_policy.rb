@@ -14,8 +14,8 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def defrost?
-    if grantee? && !organizer?
-      return false if record.last_frozen_by != current_user
+    if grantee? && !organizer? && (record.last_frozen_by != current_user)
+      return false
     end
 
     freeze? && !record.event.financially_frozen?
