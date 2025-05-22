@@ -32,6 +32,10 @@ HCB operates under the assumption that FS Operating has a balance of $0. Any mon
 
 Each of these book transfers has a memo in this format: `HCB DISBURSE [ID]`.
 
+
+> [!WARNING]
+> This section is outdated. HCB short code mapping is now used for Disbursements.
+
 Based on the ID, `EventMappingEngine::Map::Disbursements` will map the transactions to their associated event and subledger. The logic for determining whether it should be mapped to the receiving event or the source event is based on `amount_cents` and is located in `EventMappingEngine::GuessEventId::Disbursement`. If it’s a positive transaction, we map it to the receiving event. If it’s a negative transaction, we map it to the source event.
 
 [`TransactionGroupingEngine::Calculate::HcbCode`](https://github.com/hackclub/hcb/blob/main/app/services/transaction_grouping_engine/calculate/hcb_code.rb) handles calculating the HCB code, as described above.
