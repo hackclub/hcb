@@ -59,7 +59,7 @@ These `FeeReimbursement`s are created in `PayoutService::Donation::Create` and `
 
 These are bank transfers from our bank account to Stripe’s bank account.
 
-They will be mapped under a `HCB-900` which has all of the fee reimbursements from a certain week: https://hcb.hackclub.com/hcb/HCB-900-2024_50. Yes, that’s a lot of transactions. This is handled in `EventMappingEngine::Nightly#map_outgoing_fee_reimbursements!`
+They will be mapped under a `HCB-900` which has all of the fee reimbursements from a certain week: https://hcb.hackclub.com/hcb/HCB-900-2024_50. Yes, that’s a lot of transactions. This is handled using HCB short codes.
 
 This is one of the older parts of our codebase, so it’s a little clunky. Feel free to reach out ([@sampoder](https://github.com/sampoder)) with any questions.
 

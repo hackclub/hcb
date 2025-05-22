@@ -242,7 +242,7 @@ GEM
     dotenv-rails (3.1.7)
       dotenv (= 3.1.7)
       railties (>= 6.1)
-    drb (2.2.1)
+    drb (2.2.3)
     dry-configurable (0.16.1)
       dry-core (~> 0.6)
       zeitwerk (~> 2.6)
@@ -396,7 +396,7 @@ GEM
     grape-swagger (2.1.2)
       grape (>= 1.7, < 3.0)
       rack-test (~> 2)
-    grape-swagger-entity (0.5.5)
+    grape-swagger-entity (0.6.2)
       grape-entity (~> 1)
       grape-swagger (~> 2)
     hashid-rails (1.4.1)
@@ -589,7 +589,7 @@ GEM
       railties (>= 4.2)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (2.2.14)
+    rack (2.2.15)
     rack-attack (6.7.0)
       rack (>= 1.0, < 4)
     rack-cors (2.0.2)
@@ -853,7 +853,7 @@ GEM
     yard (0.9.37)
     yard-solargraph (0.1.0)
       yard (~> 0.9)
-    zeitwerk (2.7.2)
+    zeitwerk (2.7.3)
 
 PLATFORMS
   ruby
@@ -911,7 +911,7 @@ DEPENDENCIES
   grape-kaminari
   grape-route-helpers
   grape-swagger
-  grape-swagger-entity (~> 0.5)
+  grape-swagger-entity (~> 0.6)
   hashid-rails (~> 1.0)
   htmlbeautifier
   image_processing (~> 1.2)

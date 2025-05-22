@@ -34,7 +34,7 @@ class OrganizerPosition
       private
 
       def current_user_manager?
-        OrganizerPosition.find_by(user:, event: record.organizer_position.event).manager?
+        OrganizerPosition.find_by(user:, event: record.organizer_position.event)&.manager?
       end
 
       def own_control?

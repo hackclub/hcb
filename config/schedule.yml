@@ -12,19 +12,19 @@ g_suite_scan_verified_dns_job:
 
 #g_suite_initiate_revocations_job:
 #  cron: "0 12 * * *" # run every 1 day
-#  class: "GSuiteJob::InitiateRevocations"
+#  class: "GSuite::InitiateRevocationsJob"
 
 g_suite_send_one_week_revocation_warning_job:
   cron: "0 */4 * * *" # run every 4 hour
-  class: "GSuiteJob::SendOneWeekRevocationWarning"
+  class: "GSuite::SendOneWeekRevocationWarningJob"
 
 g_suite_close_remedied_revocations_job:
   cron: "0 */12 * * *" # run every 12 hour
-  class: "GSuiteJob::CloseRemediedRevocations"
+  class: "GSuite::CloseRemediedRevocationsJob"
 
 g_suite_transition_expired_revocations_job:
   cron: "0 */4 * * *" # run every 4 hour
-  class: "GSuiteJob::TransitionExpiredRevocations"
+  class: "GSuite::TransitionExpiredRevocationsJob"
 
 pending_transaction_engine_nightly_job:
   cron: "0 */3 * * *" # run every 3 hour

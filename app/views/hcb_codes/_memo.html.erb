@@ -37,11 +37,11 @@
               data-navigation-location-param="<%= edit_hcb_code_path(hcb_code, inline: true, prepended_to_memo:, location:, ledger_instance:) %>"
               data-navigation-frame-param="<%= "#{location}:#{ActionView::RecordIdentifier.dom_id(hcb_code)}:memo" %>">
             <span
-              class="mr2 tooltipped tooltipped--s"
+              class="mr2 tooltipped tooltipped--s <%= "memo-underline" if ledger_instance %>"
               style="color: inherit; text-decoration: none;"
               aria-label="Shift+click to rename this transaction">
               <%= prepended_to_memo %>
-              <span data-memo-for="<%= dom_id(hcb_code) %>" class="<%= "hover:underline" if ledger_instance %>">
+              <span data-memo-for="<%= dom_id(hcb_code) %>">
                 <%= hcb_code.memo %>
               </span>
             </span>
