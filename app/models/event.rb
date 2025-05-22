@@ -371,7 +371,7 @@ class Event < ApplicationRecord
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
   after_destroy_commit do
-    all_organizer_positions.each do |position|
+    organizer_positions.with_deleted.each do |position|
       position.organizer_position_deletion_requests.destroy_all
     end
   end
