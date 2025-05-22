@@ -43,6 +43,17 @@ module StripeAuthorizationService
           if cpt.local_hcb_code&.stripe_cash_withdrawal?
             AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
           end
+
+          spending_control = cpt.stripe_card.active_spending_control
+          if spending_control.present?
+            historic_max_balance_cents = (spending_control.balance_cents - cpt.amount_cents) / 10
+            threshold = [historic_max_balance_cents, 25_00].max
+
+            if spending_control.balance_cents <= threshold
+              OrganizerPosition::Spending::ControlsMailer.with(control: spending_control).warning.deliver_later
+            end
+
+          end
         else
           unless cpt&.stripe_card&.frozen? || cpt&.stripe_card&.inactive?
             CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_declined.deliver_later
