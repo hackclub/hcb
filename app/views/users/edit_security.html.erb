@@ -110,7 +110,7 @@
     </div>
   </div>
   <%= turbo_frame_tag :backup_codes_card do %>
-    <div class="card border b--info mt1 mb3">
+    <div class="card border b--info mb3">
       <% if @user.backup_codes_enabled? %>
         <p>
           You last generated a set of 10 backup codes, of which <span class="font-bold"><%= @user.unused_backup_codes.size %></span> are still valid, on <span class="font-bold"><%= @user.backup_codes.where(aasm_state: [:unused, :used]).maximum(:created_at).strftime("%B %e, %Y") %></span>. If you'd like to regenerate your backup codes, click the button above to do so. Generating a new set of codes will invalidate your current codes.
