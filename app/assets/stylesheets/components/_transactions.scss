@@ -89,6 +89,10 @@ html[data-dark='true'] {
       vertical-align: top;
       text-overflow: ellipsis;
     }
+
+    &.memo-underline > span:hover {
+      text-decoration: underline;
+    }
   }
 
   .add-tag-badge {

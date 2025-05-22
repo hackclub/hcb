@@ -48,6 +48,7 @@
           <%= form.hidden_field :upload_method, value: upload_method, data: { "file-drop-target" => "uploadMethod" } %>
           <%= (form.hidden_field :show_receipt_button, value: local_assigns[:show_receipt_button]) %>
           <%= (form.hidden_field :show_author_img, value: local_assigns[:show_author_img]) %>
+          <%= (form.hidden_field :s, value: local_assigns[:secret]) %>
 
           <%= form.file_field :file,
                               multiple: true,
