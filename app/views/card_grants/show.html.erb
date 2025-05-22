@@ -25,9 +25,9 @@
       <%= render partial: "details", locals: { card_grant: @card_grant } %>
 
       <% if @card_grant.active? && @card_grant.stripe_card %>
-          <% admin_tool_if @card_grant.user != current_user do %>
-            <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
-          <% end %>
+        <% admin_tool_if @card_grant.user != current_user do %>
+          <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
+        <% end %>
       <% end %>
       <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
     </div>
