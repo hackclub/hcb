@@ -45,14 +45,14 @@
                       style: "height: 32px; width: 32px; background: #ec375020; color: #ec3750",
                       'aria-label': "Delete this report." %>
     <% end %>
-    <% unless @report.closed? %>
+    <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "settings",
                       "#",
                       data: { behavior: "modal_trigger", modal: "edit" },
                       icon_size: 28,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px;",
-                      'aria-label': "Edit this report's properties." if organizer_signed_in?(as: :member) %>
+                      'aria-label': "Edit this report's properties." %>
     <% end %>
   </h3>
   <h2 class="heading mt0 mb1 flex justify-start flex-row" style="gap: 0px">
