@@ -9,7 +9,3 @@ module EventMappingEngine
 
   end
 end
-
-module EventMappingEngineJob
-  Nightly = EventMappingEngine::NightlyJob
-end

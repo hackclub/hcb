@@ -17,7 +17,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  SetVerificationKey = GSuite::SetVerificationKeyJob
-end
