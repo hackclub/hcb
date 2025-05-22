@@ -10,7 +10,7 @@
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
   <%# Organizers and admins' view %>
-  <% elsif @card_grant.user.admin? || organizer_signed_in? %>
+  <% elsif @card_grant.user.admin? || policy(@card_grant).update? %>
     <% if @card_grant.stripe_card %>
       <div>
         <%= render @card_grant.stripe_card %>
