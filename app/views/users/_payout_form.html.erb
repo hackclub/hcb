@@ -43,24 +43,24 @@
         <%= form.text_field :address_line2, placeholder: "(Building / Apartment / Room)" %>
       </div>
 
-      <div class="flex">
-        <div class="field flex-auto mr1">
+      <div class="grid grid--split">
+        <div class="field flex-auto">
           <%= form.label :address_city, "City" %>
           <%= form.text_field :address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city] %>
         </div>
-        <div class="field flex-auto ml1">
+        <div class="field flex-auto">
           <%= form.label :address_state, "State / Province" %>
           <%= form.select :address_state, ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }, { prompt: "Select a state" } %>
         </div>
       </div>
 
-      <div class="flex">
-        <div class="field flex-auto mr1">
+      <div class="grid grid--split">
+        <div class="field flex-auto">
           <%= form.label :postal_code %>
           <%= form.text_field :address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code] %>
         </div>
 
-        <div class="field flex-auto ml1">
+        <div class="field flex-auto">
           <%= form.label :address_country, "Country" %>
           <%= form.text_field :address_country, value: "United States", disabled: true %>
         </div>

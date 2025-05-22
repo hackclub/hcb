@@ -68,7 +68,7 @@
         </div>
 
         <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && !@event&.demo_mode? %>
-          <div class="flex flex-wrap tags" style="gap: 0.25rem" id="hcb_code_<%= ct.local_hcb_code.hashid %>_tags">
+          <div class="flex flex-wrap tags hcb_code_<%= ct.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
             <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: ct.local_hcb_code } %>
           </div>
         <% end %>

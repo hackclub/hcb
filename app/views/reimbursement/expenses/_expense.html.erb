@@ -63,7 +63,7 @@
                   "aria-label": "More Options",
                   color: "muted",
                   data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
-              <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
+              <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
                 <% unless expense.is_standard? %>
                   <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense", value: 0 }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
                     <%= inline_icon "payment-docs", size: 24 %>

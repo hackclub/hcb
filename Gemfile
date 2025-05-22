@@ -94,7 +94,7 @@ gem "grape-entity" # For Grape::Entity ( https://github.com/ruby-grape/grape-ent
 gem "grape-kaminari"
 gem "grape-route-helpers"
 gem "grape-swagger"
-gem "grape-swagger-entity", "~> 0.5"
+gem "grape-swagger-entity", "~> 0.6"
 
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
@@ -171,6 +171,8 @@ gem "query_count"
 gem "rack-mini-profiler", "~> 3.3"
 gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 
+gem "wkhtmltopdf-binary", "0.12.6.8"
+
 group :development do
   gem "annotate" # comment models with database schema
   gem "actual_db_schema" # rolls back phantom migrations
@@ -180,8 +182,6 @@ group :development do
   gem "web-console", ">= 3.3.0"
 
   gem "letter_opener_web" # preview emails
-
-  gem "wkhtmltopdf-binary", "0.12.6.8" # version must match the wkhtmltopdf Heroku buildpack version (0.12.3 by default)
 
   # Ruby language server
   gem "solargraph", require: false
