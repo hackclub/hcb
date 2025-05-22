@@ -189,6 +189,30 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(@user)
   end
 
+  def generate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @unsaved_backup_codes = @user.generate_backup_codes!
+  end
+
+  def activate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    previously_enabled = @user.unused_backup_codes&.any?
+    @user.backup_codes&.unused&.map(&:mark_invalidated!) if previously_enabled
+    @user.backup_codes&.unsaved&.map(&:mark_unused!)
+    User::BackupCodeMailer.with(user_id: @user.id).new_codes_generated.deliver_now
+    User::BackupCodeMailer.with(user_id: @user.id).backup_codes_enabled.deliver_now unless previously_enabled
+    redirect_back_or_to security_user_path(@user)
+  end
+
+  def disable_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.disable_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_15_161504) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -2053,6 +2053,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_15_161504) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_backup_codes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "aasm_state"
+    t.text "code_hash", null: false
+    t.text "salt", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code_hash"], name: "index_user_backup_codes_on_code_hash", unique: true
+    t.index ["user_id"], name: "index_user_backup_codes_on_user_id"
+  end
+
   create_table "user_email_updates", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "aasm_state", null: false
@@ -2386,6 +2397,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_15_161504) do
   add_foreign_key "transactions", "fee_reimbursements"
   add_foreign_key "transactions", "fee_relationships"
   add_foreign_key "transactions", "invoice_payouts"
+  add_foreign_key "user_backup_codes", "users"
   add_foreign_key "user_email_updates", "users"
   add_foreign_key "user_email_updates", "users", column: "updated_by_id"
   add_foreign_key "user_seen_at_histories", "users"
