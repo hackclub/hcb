@@ -363,14 +363,14 @@ class EventsController < ApplicationController
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
-    @user_id = params[:user].presence
+    @user = User.friendly.find_by_friendly_id(params[:user]) if params[:user]
 
-    @has_filter = @status.present? || @type.present? || @user_id.present?
+    @has_filter = @status.present? || @type.present? || @user.present?
 
     all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
                              .order("stripe_status asc, created_at desc")
 
-    all_stripe_cards = all_stripe_cards.where(user: { id: User.friendly.find_by_friendly_id(@user_id).id }) if @user_id
+    all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
 
     all_stripe_cards = case @status
                        when "active"
@@ -457,7 +457,6 @@ class EventsController < ApplicationController
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
-
   end
 
   def documentation
@@ -1039,7 +1038,7 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = @event.users.find_by(id: params[:user]) if params[:user]
+    @user = @event.users.friendly.find_by_friendly_id(params[:user]) if params[:user]
 
     @type = params[:type]
     @start_date = params[:start].presence

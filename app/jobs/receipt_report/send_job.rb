@@ -27,7 +27,3 @@ module ReceiptReport
 
   end
 end
-
-module ReceiptReportJob
-  Send = ReceiptReport::SendJob
-end

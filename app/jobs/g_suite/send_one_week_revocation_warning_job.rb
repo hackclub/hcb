@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GSuiteJob
-  class SendOneWeekRevocationWarning < ApplicationJob
+class GSuite
+  class SendOneWeekRevocationWarningJob < ApplicationJob
     queue_as :low
 
     def perform
@@ -16,4 +16,9 @@ module GSuiteJob
     end
 
   end
+
+end
+
+module GSuiteJob
+  SendOneWeekRevocationWarning = GSuite::SendOneWeekRevocationWarningJob
 end

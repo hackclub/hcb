@@ -26,9 +26,7 @@ RUN apt-get update -qq && \
       libgirepository-1.0-1 \
       libpoppler-glib-dev \
       # OCR
-      tesseract-ocr \
-      # PDF generation
-      wkhtmltopdf && \
+      tesseract-ocr && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment

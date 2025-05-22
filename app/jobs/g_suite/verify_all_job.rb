@@ -14,7 +14,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  VerifyAll = GSuite::VerifyAllJob
-end

@@ -16,7 +16,3 @@ module Reimbursement
 
   end
 end
-
-module ReimbursementJob
-  OneDayReminder = Reimbursement::OneDayReminderJob
-end

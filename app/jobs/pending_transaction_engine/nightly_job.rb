@@ -14,7 +14,3 @@ module PendingTransactionEngine
 
   end
 end
-
-module PendingTransactionEngineJob
-  Nightly = PendingTransactionEngine::NightlyJob
-end

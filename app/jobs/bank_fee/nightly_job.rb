@@ -10,7 +10,3 @@ class BankFee
   end
 
 end
-
-module BankFeeJob
-  Nightly = BankFee::NightlyJob
-end

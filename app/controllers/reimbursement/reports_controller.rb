@@ -208,6 +208,24 @@ module Reimbursement
       redirect_to @report
     end
 
+    def reverse
+
+      authorize @report
+
+      if @report.payout_holding.nil?
+        flash[:error] = "This report can't be reversed yet."
+      else
+        begin
+          @report.payout_holding.reverse!
+          flash[:success] = "Reversed the report."
+        rescue => e
+          flash[:error] = e.message
+        end
+      end
+
+      redirect_to @report
+    end
+
     # this is a custom method for creating a comment
     # that also makes the report as a draft.
     # - @sampoder
