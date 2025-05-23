@@ -173,7 +173,7 @@ update_teenager_column_job:
   class: "User::UpdateTeenagerColumnJob"
 
 card_grant_expiration_job:
-  cron: "0 */6 * * *" # run every 6 hours
+  cron: "0 5 * * *" # 5am UTC each morning
   class: "CardGrant::ExpirationJob"
 
 card_grant_zero_job:
