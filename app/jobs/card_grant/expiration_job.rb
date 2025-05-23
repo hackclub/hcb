@@ -25,5 +25,7 @@ class CardGrant
         end
       end
     end
+
   end
+
 end
