@@ -46,7 +46,7 @@ module StripeAuthorizationService
 
           spending_control = cpt.stripe_card.active_spending_control
           if spending_control.present?
-            SpendingControlService.check_low_balance(spending_control, cpt.amount_cents)
+            SpendingControlService.check_low_balance(spending_control, cpt.local_hcb_code)
           end
         else
           unless cpt&.stripe_card&.frozen? || cpt&.stripe_card&.inactive?

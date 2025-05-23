@@ -28,7 +28,7 @@ module CanonicalPendingTransactionService
 
         spending_control = @canonical_transaction.stripe_card.active_spending_control
         if spending_control.present?
-          SpendingControlService.check_low_balance(spending_control, -@canonical_pending_transaction.amount_cents + @canonical_transaction.amount_cents)
+          SpendingControlService.check_low_balance(spending_control, hcb_code)
         end
       end
 
