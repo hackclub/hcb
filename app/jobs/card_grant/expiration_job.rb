@@ -3,22 +3,26 @@
 class CardGrant
   class ExpirationJob < ApplicationJob
     queue_as :low
+
+    NOTIFICATION_WINDOWS = {
+      "24 hours" => 24.hours,
+      "3 days"   => 3.days,
+      "1 month"  => 1.month
+    }.freeze
+
     def perform
-      # Expire grants that have passed their expiration date
       CardGrant.active.expired_before(Time.now).find_each do |card_grant|
         card_grant.expire!
       end
 
-      CardGrant.active.expires_between(Time.now, 24.hours.from_now).find_each do |card_grant|
-        CardGrantMailer.with(card_grant:, expiry_time: "24 hours").card_grant_expiry_notification.deliver_later
-      end
-
-      CardGrant.active.expires_between(Time.now, 3.days.from_now).find_each do |card_grant|
-        CardGrantMailer.with(card_grant:, expiry_time: "3 days").card_grant_expiry_notification.deliver_later
-      end
-
-      CardGrant.active.expires_between(Time.now, 1.month.from_now).find_each do |card_grant|
-        CardGrantMailer.with(card_grant:, expiry_time: "1 month").card_grant_expiry_notification.deliver_later
+      NOTIFICATION_WINDOWS.each do |notification_text, window|
+        CardGrant.active
+                .expires_between(Time.now, window.from_now)
+                .where("last_expiry_notification_sent_at IS NULL OR last_expiry_notification_sent_at < ?", (window/2).ago)
+                .find_each do |card_grant|
+          CardGrantMailer.with(card_grant:, expiry_time: notification_text).card_grant_expiry_notification.deliver_later
+          card_grant.update!(last_expiry_notification_sent_at: Time.current)
+        end
       end
     end
   end
