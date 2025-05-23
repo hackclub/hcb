@@ -17,9 +17,9 @@ class CardGrant
 
       NOTIFICATION_WINDOWS.each do |notification_text, window|
         CardGrant.active
-                .expires_between(Time.now, window.from_now)
-                .where("last_expiry_notification_sent_at IS NULL OR last_expiry_notification_sent_at < ?", (window/2).ago)
-                .find_each do |card_grant|
+                 .expires_between(Time.now, window.from_now)
+                 .where("last_expiry_notification_sent_at IS NULL OR last_expiry_notification_sent_at < ?", (window / 2).ago)
+                 .find_each do |card_grant|
           CardGrantMailer.with(card_grant:, expiry_time: notification_text).card_grant_expiry_notification.deliver_later
           card_grant.update!(last_expiry_notification_sent_at: Time.current)
         end
