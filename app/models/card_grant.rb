@@ -4,22 +4,23 @@
 #
 # Table name: card_grants
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer
-#  category_lock   :string
-#  email           :string           not null
-#  keyword_lock    :string
-#  merchant_lock   :string
-#  purpose         :string
-#  status          :integer          default("active"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint
-#  event_id        :bigint           not null
-#  sent_by_id      :bigint           not null
-#  stripe_card_id  :bigint
-#  subledger_id    :bigint
-#  user_id         :bigint           not null
+#  id                               :bigint           not null, primary key
+#  amount_cents                     :integer
+#  category_lock                    :string
+#  email                            :string           not null
+#  keyword_lock                     :string
+#  last_expiry_notification_sent_at :datetime
+#  merchant_lock                    :string
+#  purpose                          :string
+#  status                           :integer          default("active"), not null
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
+#  disbursement_id                  :bigint
+#  event_id                         :bigint           not null
+#  sent_by_id                       :bigint           not null
+#  stripe_card_id                   :bigint
+#  subledger_id                     :bigint
+#  user_id                          :bigint           not null
 #
 # Indexes
 #
