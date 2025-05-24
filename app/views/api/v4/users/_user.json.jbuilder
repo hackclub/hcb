@@ -4,6 +4,7 @@ json.id user.public_id
 json.name user.name
 json.email user.email
 json.avatar profile_picture_for(user, params[:avatar_size].presence&.to_i || 24)
+json.birthday user.birthday
 json.shipping_address do
   json.address_line1 user&.stripe_cards&.physical&.last&.stripe_shipping_address_line1
   json.address_line2 user&.stripe_cards&.physical&.last&.stripe_shipping_address_line2
