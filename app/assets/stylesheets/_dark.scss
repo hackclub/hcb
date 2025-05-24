@@ -360,6 +360,10 @@ html[data-dark='true'] {
     background-color: rgba(map-get($palette, error), 0.125);
   }
 
+  .pop.ai {
+    background-color: rgba(map-get($palette, ai), 0.125);
+  }
+
   .banner--archived {
     background-color: rgba(map-get($palette, pending), 0.125);
     border-color: rgba(map-get($palette, pending), 0.625);

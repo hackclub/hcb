@@ -6,9 +6,9 @@ class ReceiptsController < ApplicationController
   before_action :set_paper_trail_whodunnit, only: :create
   before_action :find_receiptable, only: [:create, :link, :link_modal]
   before_action :set_event, only: [:create, :link]
+  before_action :set_receipt, only: [:destroy, :reverse]
 
   def destroy
-    @receipt = Receipt.find(params[:id])
     @receiptable = @receipt.receiptable
     authorize @receipt
 
@@ -209,6 +209,30 @@ class ReceiptsController < ApplicationController
     end
   end
 
+  def reverse
+    authorize @receipt
+
+    pairing = @receipt.suggested_pairings.accepted.first
+    success = pairing.mark_reversed!
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: generate_streams }
+      format.html         {
+        if params[:popover]&.starts_with?("HcbCode:")
+          flash[:popover] = params[:popover].gsub("HcbCode:", "")
+        end
+
+        if success
+          flash[:success] = "Sent receipt to receipt bin"
+          redirect_back fallback_location: @receiptable || my_inbox_path
+        else
+          flash[:error] = "Failed to send receipt to receipt bin"
+          redirect_back fallback_location: @receiptable || my_inbox_path
+        end
+      }
+    end
+  end
+
   private
 
   RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
@@ -325,6 +349,10 @@ class ReceiptsController < ApplicationController
     return unless route[:controller].classify == "Event"
 
     @event = Event.friendly.find(route[:id]) rescue nil
+  end
+
+  def set_receipt
+    @receipt = Receipt.find(params[:id])
   end
 
   def on_transaction_page?
