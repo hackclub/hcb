@@ -1,0 +1,57 @@
+<div class="lg:w-72 px-3 py-2 gap-2 flex flex-col">
+  <div class="border border-b-0 -mx-3 hidden lg:block" style="margin-top: -8px"></div>
+  <div class="flex flex-row-reverse lg:flex-row items-center gap-2">
+    <div data-controller="menu" class="flex flex-1 min-w-1" data-menu-placement-value="bottom-end">
+      <button
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle"
+        class="user-menu-trigger max-w-full">
+        <%= avatar_for current_user, 32 %>
+        <div class="text-left flex-1 truncate hidden lg:block" style="flex:1;overflow: hidden;">
+          <span class="truncate"><%= @current_user.name %></span>
+          <span class="text-xs -mt-0.5 block opacity-60 truncate" style="font-weight: 400"><%= @current_user.email %></span>
+        </div>
+      </button>
+      <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
+        <a
+          href="#!"
+          data-behavior="toggle_theme"
+          tabindex="0">
+          <%= inline_icon "moon", size: 23 %>
+          <%= inline_icon "moon-fill", size: 23, style: "display: none;margin-left:-2px" %>
+          <span style="font-weight: 400">Toggle theme</span>
+        </a>
+        <% if signed_in? %>
+          <%= link_to my_inbox_path do %>
+            <%= inline_icon "attachment", style: "margin-left: -2px;margin-right:8px;", size: 23 %>
+            <span style="font-weight: 400">Receipts</span>
+          <% end %>
+          <%= link_to logout_users_path, method: :delete do %>
+            <%= inline_icon "door-leave", size: 23 %>
+            <span style="font-weight: 400">Sign out</span>
+          <% end %>
+        <% else %>
+          <%= link_to auth_users_path,
+                      class: "muted tooltipped tooltipped--s",
+                      'aria-label': "Sign in" do %>
+            <%= inline_icon "door-enter", size: 23 %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+    <% if signed_in? %>
+      <a
+        href="https://changelog.hcb.hackclub.com"
+        target="_blank"
+        class="pop muted w-8 h-8 bg-transparent sm:-mr-2 tooltipped tooltipped--n"
+        aria-label="See what’s new with HCB"
+        style="box-shadow: none"
+        id="changelog-icon">
+        <%= inline_icon "rep", size: 23 %>
+      </a>
+    <% end %>
+    <%= render "application/support_button" unless @no_app_shell %>
+  </div>
+
+</div>
+<%= render "application/command_bar" %>

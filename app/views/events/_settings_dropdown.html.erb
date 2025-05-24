@@ -1,0 +1,57 @@
+<details class="dock" <%= "open" if @settings_tab.present? || local_assigns[:selected] == :settings %>>
+  <summary class="dock__item bg-none tooltipped tooltipped--e" aria-label="Edit organization settings">
+    <%= inline_icon "switches-mixed", class: "settings-icon" %>
+    Settings
+    <%= inline_icon "up-caret", class: "drawer-chevron" %>
+  </summary>
+  <%= dock_item "Organization details",
+                edit_event_path(@event, tab: "details"),
+                tooltip: "Manage your team",
+                selected: @settings_tab == "details" || (@settings_tab.nil? && local_assigns[:selected] == :settings),
+                data: { turbo: true, turbo_action: "advance" } %>
+  <%= dock_item "Team",
+                event_team_path(event_id: @event.slug),
+                tooltip: "Manage your team",
+                selected: local_assigns[:selected] == :team,
+                data: { turbo: true, turbo_action: "advance" } %>
+  <% unless @event.unapproved? %>
+    <%= dock_item "Donations",
+                  edit_event_path(@event, tab: "donations"),
+                  tooltip: "Manage your team",
+                  selected: @settings_tab == "donations",
+                  data: { turbo: true, turbo_action: "advance" } %>
+    <%= dock_item "Reimbursements",
+                  edit_event_path(@event, tab: "reimbursements"),
+                  tooltip: "Manage your team",
+                  selected: @settings_tab == "reimbursements",
+                  data: { turbo: true, turbo_action: "advance" } %>
+    <% if @event.card_grant_setting.present? %>
+      <%= dock_item "Card grants",
+                    edit_event_path(@event, tab: "card_grants"),
+                    tooltip: "Manage card grants",
+                    selected: @settings_tab == "card_grants",
+                    data: { turbo: true, turbo_action: "advance" } %>
+    <% end %>
+  <% end %>
+  <%= dock_item "Google Workspace",
+                event_g_suite_overview_path(event_id: @event.slug),
+                tooltip: "Manage your team",
+                selected: local_assigns[:selected] == :google_workspace,
+                data: { turbo: true, turbo_action: "advance" } %>
+  <%= dock_item "Feature previews",
+                edit_event_path(@event, tab: "features"),
+                tooltip: "Manage your team",
+                selected: @settings_tab == "features",
+                data: { turbo: true, turbo_action: "advance" } %>
+  <%= dock_item "Audit log",
+                edit_event_path(@event, tab: "audit_log"),
+                tooltip: "See how your org has changed",
+                selected: @settings_tab == "audit_log",
+                data: { turbo: true, turbo_action: "advance" } %>
+  <%= dock_item "Admin",
+                edit_event_path(@event, tab: "admin"),
+                admin: true,
+                tooltip: "See how your org has changed",
+                selected: @settings_tab == "admin",
+                data: { turbo: true, turbo_action: "advance" } %>
+</details>

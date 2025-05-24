@@ -147,6 +147,19 @@ $(document).keydown(function (e) {
 })
 
 $(document).on('turbo:load', function () {
+  // Persist sidebar scroll position while navigating between pages
+  document.addEventListener("turbo:before-cache", () => {
+    const sidebar = document.getElementById("sidebar-scroll-container");
+    if (sidebar) sessionStorage.setItem("sidebarScrollPosition", sidebar.scrollTop)
+  });
+
+  document.addEventListener("turbo:load", () => {
+    const sidebar = document.getElementById("sidebar-scroll-container");
+    if (!sidebar) return;
+    const scrollPosition = sessionStorage.getItem("sidebarScrollPosition");
+    if (scrollPosition) sidebar.scrollTop = scrollPosition;
+  });
+
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }

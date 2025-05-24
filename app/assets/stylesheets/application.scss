@@ -46,7 +46,6 @@ body {
   -webkit-font-smoothing: antialiased;
   color: $black;
   margin: 0;
-  padding-bottom: 2rem;
   min-height: 100vh;
 }
 
@@ -267,8 +266,8 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 
 #HW_badge_cont {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -5px;
+  right: -5px;
 
   width: auto;
   height: auto;
@@ -279,7 +278,13 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 }
 
 #HW_frame_cont {
-  transform: translateY(35px) translateX(0.75rem);
+  transform: translateX(0.75rem);
+}
+
+@media (max-width: 768px) {
+  #HW_frame_cont {
+    transform: translateY(35px) translateX(0.75rem);
+  }
 }
 
 .admin-tools {
