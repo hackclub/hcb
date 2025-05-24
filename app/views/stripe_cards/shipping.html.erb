@@ -2,7 +2,7 @@
   <% if @stripe_cards.any? %>
     <div class="grid grid--split mb3">
       <% @stripe_cards.each do |card| %>
-        <%= render partial: "stripe_cards/shipping", locals: { stripe_card: card } %>
+        <%= render "stripe_cards/shipping", stripe_card: card, event: @event %>
       <% end %>
     </div>
   <% end %>
