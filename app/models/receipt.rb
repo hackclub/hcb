@@ -124,7 +124,7 @@ class Receipt < ApplicationRecord
 
   def preview(resize: "1024x1024", only_path: true)
     if file.previewable?
-      Rails.application.routes.url_helpers.rails_representation_url(file.preview(resize:).processed, only_path:)
+      Rails.application.routes.url_helpers.rails_representation_url(file.preview(resize:), only_path:)
     elsif file.variable?
       Rails.application.routes.url_helpers.rails_representation_url(
         (resize.in?(PREPROCESSED_SIZES) ? file.variant(resize.to_sym) : file.variant(resize:)).processed, only_path:
