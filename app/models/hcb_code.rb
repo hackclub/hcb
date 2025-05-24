@@ -137,7 +137,7 @@ class HcbCode < ApplicationRecord
     if canonical_transactions.any?
       return canonical_transactions
              .includes(:canonical_event_mapping)
-             .where(canonical_event_mapping: { event_id: event.id })
+             .where(canonical_event_mapping: { event_id: event.id, subledger_id: nil })
              .sum(:amount_cents)
     end
 
@@ -146,7 +146,7 @@ class HcbCode < ApplicationRecord
 
     canonical_pending_transactions
       .includes(:canonical_pending_event_mapping)
-      .where(canonical_pending_event_mapping: { event_id: event.id })
+      .where(canonical_pending_event_mapping: { event_id: event.id, subledger_id: nil })
       .sum(:amount_cents)
   end
 
@@ -201,7 +201,7 @@ class HcbCode < ApplicationRecord
     amount_preposition = "refunded" if stripe_refund?
 
     title = [humanized_type]
-    title << amount_preposition << ApplicationController.helpers.render_money(stripe_card? ? amount_cents.abs : amount_cents) if show_amount
+    title << amount_preposition << ApplicationController.helpers.render_money(amount_cents.abs) if show_amount
     title << event_preposition << event_name if show_event_name && event_name
 
     title.join(" ")
@@ -353,6 +353,10 @@ class HcbCode < ApplicationRecord
 
   def disbursement
     @disbursement ||= Disbursement.find_by(id: hcb_i2) if disbursement?
+  end
+
+  def card_grant
+    @card_grant ||= CardGrant.find_by(disbursement_id: hcb_i2) if card_grant?
   end
 
   def bank_fee
