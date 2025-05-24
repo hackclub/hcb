@@ -50,6 +50,8 @@ class Wire < ApplicationRecord
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
+  before_save :set_country_alpha2
+
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
 
   validates_length_of :payment_for, maximum: 140
@@ -227,6 +229,13 @@ class Wire < ApplicationRecord
     user_id = versions.where_object_changes_to(...).last&.whodunnit
 
     user_id && User.find(user_id)
+  end
+
+  private
+
+  def set_country_alpha2
+    reverse_enum = CountryEnumable.country_enum_list.invert
+    self.country_alpha2 = reverse_enum[recipient_country]&.to_s
   end
 
 end
