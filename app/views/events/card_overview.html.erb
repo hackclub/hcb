@@ -22,7 +22,7 @@
     <%= render "filter_cards_menu" unless @has_filter %>
     <%= pop_icon_to @view == "list" ? "grid" : "list",
                     "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
-    <% if organizer_signed_in? %>
+    <% if organizer_signed_in?(as: :member) %>
       <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
         <%= inline_icon "card-add" %>
         Order a card

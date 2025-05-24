@@ -36,7 +36,7 @@
       <% end %>
     <% end %>
 
-    <% if @report.draft? %>
+    <% if @report.draft? && organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "delete",
                       reimbursement_report_path(@report),
                       method: :delete,
@@ -45,7 +45,7 @@
                       style: "height: 32px; width: 32px; background: #ec375020; color: #ec3750",
                       'aria-label': "Delete this report." %>
     <% end %>
-    <% unless @report.closed? %>
+    <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "settings",
                       "#",
                       data: { behavior: "modal_trigger", modal: "edit" },
