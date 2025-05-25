@@ -5,7 +5,7 @@
     </p>
     <%= copy_to_clipboard(@previewed_backup_codes.join("\n")) do %>
         <pre class="text-lg m-1 p-4 text-center bg-gray-100 rounded mx-auto fs-mask grid grid-cols-2">
-        <% @previewed_backup_codes.each do |code|%>
+        <% @previewed_backup_codes.each do |code| %>
           <div class="px-6"><%= code %></div>
         <% end %>
       </pre>
