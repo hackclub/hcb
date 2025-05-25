@@ -2076,6 +2076,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_19_235132) do
     t.bigint "updated_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "authorization_token_ciphertext"
+    t.text "verification_token_ciphertext"
     t.index ["updated_by_id"], name: "index_user_email_updates_on_updated_by_id"
     t.index ["user_id"], name: "index_user_email_updates_on_user_id"
   end
