@@ -210,7 +210,7 @@ class LoginsController < ApplicationController
     @sms_available = @user&.phone_number_verified && !@login.authenticated_with_sms
     @webauthn_available = @user&.webauthn_credentials&.any? && !@login.authenticated_with_webauthn
     @totp_available = @user&.totp.present? && !@login.authenticated_with_totp
-    @backup_code_available = @user&.unused_backup_codes&.any? && !@login.authenticated_with_backup_code
+    @backup_code_available = @user&.active_backup_codes&.any? && !@login.authenticated_with_backup_code
   end
 
   def set_return_to

@@ -32,19 +32,19 @@ class User
     validates :code_hash, presence: true, uniqueness: true
 
     aasm do
-      state :unsaved, initial: true
-      state :unused
+      state :previewed, initial: true
+      state :active
       state :used
-      state :invalidated
+      state :discarded
 
-      event :mark_unused do
-        transitions from: :unsaved, to: :unused
+      event :mark_active do
+        transitions from: :previewed, to: :active
       end
       event :mark_used do
-        transitions from: :unused, to: :used
+        transitions from: :active, to: :used
 
         after do
-          case user.backup_codes.unused.size
+          case user.backup_codes.active.size
           when 0
             User::BackupCodeMailer.with(user_id: user.id).no_codes_remaining.deliver_now
           when 1..3
@@ -53,8 +53,8 @@ class User
           User::BackupCodeMailer.with(user_id: user.id).code_used.deliver_now
         end
       end
-      event :mark_invalidated do
-        transitions from: [:unused, :unsaved], to: :invalidated
+      event :mark_discarded do
+        transitions from: [:active, :previewed], to: :discarded
       end
     end
 

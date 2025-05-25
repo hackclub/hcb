@@ -78,7 +78,7 @@ class User < ApplicationRecord
   has_many :logins
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
-  has_many :unused_backup_codes, -> { where(aasm_state: :unused) }, class_name: "User::BackupCode", inverse_of: :user
+  has_many :active_backup_codes, -> { where(aasm_state: :active) }, class_name: "User::BackupCode", inverse_of: :user
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
@@ -373,11 +373,11 @@ class User < ApplicationRecord
   end
 
   def backup_codes_enabled?
-    unused_backup_codes.any?
+    active_backup_codes.any?
   end
 
   def generate_backup_codes!
-    backup_codes.where(aasm_state: :unsaved).destroy_all
+    backup_codes.previewed.destroy_all
 
     codes = []
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
@@ -402,7 +402,7 @@ class User < ApplicationRecord
   def redeem_backup_code!(code)
     found = nil
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
-    unused_backup_codes.each do |backup_code|
+    active_backup_codes.each do |backup_code|
       hash = User::BackupCode.gen_hash(code:, salt: backup_code.salt, pepper:)
       if ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.code_hash)
         backup_code.mark_used!
@@ -414,8 +414,8 @@ class User < ApplicationRecord
   end
 
   def disable_backup_codes!
-    backup_codes.where(aasm_state: :unsaved).destroy_all
-    backup_codes.unused.map(&:mark_invalidated!)
+    backup_codes.previewed.destroy_all
+    backup_codes.active.map(&:mark_discarded!)
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
