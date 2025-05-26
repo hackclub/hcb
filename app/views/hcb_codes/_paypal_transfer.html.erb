@@ -1,5 +1,5 @@
 <article class="card pb0 mt3 mb1">
-  <% content_for :heading do %>
+  <%= render partial: "heading", locals: { hcb_code: @hcb_code } do %>
     <span style="flex-grow: 1">
       <span class="regular muted"><%= @hcb_code.paypal_transfer.deposited? ? "Transferred " : "Transferring " %> </span>
       <%= @hcb_code.paypal_transfer.recipient_name %>
@@ -10,7 +10,6 @@
       <%= @hcb_code.paypal_transfer.state_text %>
     </span>
   <% end %>
-  <%= render partial: "heading", locals: { hcb_code: @hcb_code } %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>

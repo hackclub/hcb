@@ -43,7 +43,7 @@
 <% end %>
 
 <article class="card pb0 mt3 mb1">
-  <% content_for :heading do %>
+  <%= render partial: "heading", locals: { hcb_code: @hcb_code } do %>
     <span style="flex-grow: 1">
       <%= @sponsor.name %>
       <span class="regular muted"> invoiced for </span>
@@ -64,7 +64,6 @@
       </span>
     </span>
   <% end %>
-  <%= render partial: "heading", locals: { hcb_code: @hcb_code } %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>

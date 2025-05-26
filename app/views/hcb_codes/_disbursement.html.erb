@@ -3,7 +3,7 @@
 <% @subledger = @hcb_code.disbursement.destination_subledger || @hcb_code.disbursement.source_subledger %>
 
 <article class="card pb0 mt3 mb1">
-  <% content_for :heading do %>
+  <%= render partial: "heading", locals: { hcb_code: @hcb_code } do %>
     <span style="flex-grow: 1">
       <%= @source.name %>
       <span class="regular muted">
@@ -23,9 +23,7 @@
       <%= @hcb_code.disbursement.state_text.humanize %>
       <%= inline_icon @hcb_code.disbursement.state_icon, size: 20 if @hcb_code.disbursement.state_icon %>
     </span>
-
   <% end %>
-  <%= render partial: "heading", locals: { hcb_code: @hcb_code } %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <% unless @hcb_code.disbursement.requested_by.nil? %>

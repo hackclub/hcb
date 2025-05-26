@@ -24,7 +24,7 @@
 <% end %>
 
 <article class="card pb0 mt3 mb1">
-  <% content_for :heading do %>
+  <%= render partial: "heading", locals: { hcb_code: @hcb_code } do %>
     <span class="grow">
       Check deposit
       <span class="regular muted">
@@ -34,7 +34,6 @@
     </span>
     <%= render "check_deposits/status", check_deposit: @hcb_code.check_deposit %>
   <% end %>
-  <%= render partial: "heading", locals: { hcb_code: @hcb_code } %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>

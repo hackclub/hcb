@@ -49,7 +49,7 @@
 </section>
 
 <article class="card pb0 mt3 mb1">
-  <% content_for :heading do %>
+  <%= render partial: "heading", locals: { hcb_code: @hcb_code } do %>
     <span style="flex-grow: 1">
       <%= @donation.name(show_anonymous: organizer_signed_in?) %>
       <% if @donation.anonymous? %>
@@ -69,9 +69,7 @@
       <%= @donation.state_text %>
       <%= inline_icon @donation.state_icon, size: 20 if @donation.state_icon %>
     </span>
-
   <% end %>
-  <%= render partial: "heading", locals: { hcb_code: @hcb_code } %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <% if @donation.payment_method_type == 'card' %>

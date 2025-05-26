@@ -17,7 +17,7 @@
 
 <div class="mt2 mb3">
 <article class="card pb0 mt3 mb1">
-  <% content_for :heading do %>
+  <%= render partial: "heading", locals: { hcb_code: @hcb_code } do %>
     <span class="flex-auto">
       <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
         <span class="regular muted">
@@ -59,7 +59,6 @@
       <% end %>
     </span>
   <% end %>
-  <%= render partial: "heading", locals: { hcb_code: @hcb_code } %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
