@@ -10,15 +10,22 @@
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
   <%# Organizers and admins' view %>
-  <% elsif @card_grant.user.admin? || policy(@card_grant).update? %>
+  <% elsif @card_grant.user.admin? || organizer_signed_in? %>
     <% if @card_grant.stripe_card %>
       <div>
         <%= render @card_grant.stripe_card %>
         <%= render partial: "balance", locals: { card_grant: @card_grant } %>
 
         <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
-        <%= render partial: "actions", locals: { card_grant: @card_grant } %>
+        <% if policy(@card_grant).update? %>
+          <%= render partial: "actions", locals: { card_grant: @card_grant } %>
 
+        <% elsif @card_grant.user == current_user %>
+          <div class="flex items-center mt3 justify-center flex-wrap g1">
+            <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant: @card_grant, label: "Get reimbursed" %>
+            <%= render "card_grants/actions/return", card_grant: @card_grant %>
+          </div>
+        <% end %>
       </div>
     <% end %>
     <div class="flex flex-col g2">
