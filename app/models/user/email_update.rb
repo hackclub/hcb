@@ -4,18 +4,20 @@
 #
 # Table name: user_email_updates
 #
-#  id                  :bigint           not null, primary key
-#  aasm_state          :string           not null
-#  authorization_token :string           not null
-#  authorized          :boolean          default(FALSE), not null
-#  original            :string           not null
-#  replacement         :string           not null
-#  verification_token  :string           not null
-#  verified            :boolean          default(FALSE), not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  updated_by_id       :bigint
-#  user_id             :bigint           not null
+#  id                             :bigint           not null, primary key
+#  aasm_state                     :string           not null
+#  authorization_token            :string           not null
+#  authorization_token_ciphertext :text
+#  authorized                     :boolean          default(FALSE), not null
+#  original                       :string           not null
+#  replacement                    :string           not null
+#  verification_token             :string           not null
+#  verification_token_ciphertext  :text
+#  verified                       :boolean          default(FALSE), not null
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  updated_by_id                  :bigint
+#  user_id                        :bigint           not null
 #
 # Indexes
 #
@@ -40,6 +42,8 @@ class User
     belongs_to :updated_by, class_name: "User"
     has_secure_token :authorization_token
     has_secure_token :verification_token
+    has_encrypted :authorization_token, migrating: true
+    has_encrypted :verification_token, migrating: true
 
     validate :non_hcb_email
     validate :non_existing_email
