@@ -129,7 +129,7 @@ module Api
 
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 
-        render json: { ephemeralKeySecret: @ephemeral_key.secret, stripe_id: @stripe_card.stripe_id }
+        render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, stripe_id: @stripe_card.stripe_id }
 
       rescue Stripe::InvalidRequestError
         return render json: { error: "internal_server_error" }, status: :internal_server_error

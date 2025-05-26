@@ -54,7 +54,7 @@ memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or m
 
 ### Outgoing Stripe Fee Reimbursements
 
-Incoming fee reimbursements (refunding people for the credit card fees Stripe deducts etc.) are mapped by the short codes system described below. These are book transfers so they need an outgoing transaction as well. These outgoing transactions all have this memo: `Stripe fee reimbursement`. And are mapped to hcb.hackclub.com/bank in `EventMappingEngine::Nightly#map_outgoing_fee_reimbursements!`
+Incoming fee reimbursements (refunding people for the credit card fees Stripe deducts etc.) are mapped by the short codes system described below. These are book transfers so they need an outgoing transaction as well. These outgoing transactions all have are all mapped to hcb.hackclub.com/bank using HCB short codes.
 
 ### HCB Short Codes (Reimbursements, Invoices, Fees, Stripe Fee Reimbursements and Donations)
 
