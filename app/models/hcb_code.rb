@@ -196,15 +196,15 @@ class HcbCode < ApplicationRecord
       end
   end
 
-  def pretty_title(show_event_name: true, show_amount: false, event_name: event.name, amount_cents: self.amount_cents)
+  def pretty_title(show_event_name: true, show_amount: false, event: self.event)
     event_preposition = [:unknown, :invoice, :ach, :check, :card_charge, :bank_fee, :card_grant].include?(type || :unknown) ? "in" : "to"
     amount_preposition = [:transaction, :donation, :disbursement, :card_charge, :bank_fee, :card_grant].include?(type || :unknown) ? "of" : "for"
 
     amount_preposition = "refunded" if stripe_refund?
 
     title = [humanized_type]
-    title << amount_preposition << ApplicationController.helpers.render_money(amount_cents.abs) if show_amount
-    title << event_preposition << event_name if show_event_name && event_name
+    title << amount_preposition << ApplicationController.helpers.render_money(amount_cents_by_event(event).abs) if show_amount
+    title << event_preposition << event.name if show_event_name && event
 
     title.join(" ")
   end

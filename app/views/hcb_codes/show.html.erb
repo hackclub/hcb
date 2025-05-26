@@ -2,7 +2,7 @@
 
 <%= render "events/nav" if @event %>
 
-<% title @hcb_code.pretty_title(show_event_name: false, show_amount: true, event_name: @event.name, amount_cents: @hcb_code.amount) unless content_for :title %>
+<% title @hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event) unless content_for :title %>
 
 <%= turbo_frame_tag @hcb_code.public_id, target: "_top" do %>
   <%= render partial: "hcb_codes/admin_tools" %>
