@@ -107,16 +107,6 @@
           </action>
         </p>
       <% end %>
-      <% if @hcb_code.pt&.unsettled? %>
-      <p>
-        <strong>Transaction memo</strong>
-        <%= @hcb_code.memo %>
-      </p>
-      <p>
-        <strong>Pending</strong>
-        <span><em>This transaction is still pending, the amount may be more or less than shown here.</em></span>
-      </p>
-      <% end %>
       <div>
         <span style="height: 100%;">
           <strong>Merchant</strong>

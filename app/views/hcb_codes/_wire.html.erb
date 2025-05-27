@@ -57,11 +57,6 @@
         <%= @hcb_code.wire.payment_for %>
       </p>
 
-      <p>
-        <strong>Transaction memo</strong>
-        <%= @hcb_code.memo %>
-      </p>
-
       <% if @hcb_code.wire.return_reason.present? %>
         <p>
           <strong>Return reason</strong>

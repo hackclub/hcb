@@ -98,11 +98,6 @@
       <%= @hcb_code.disbursement.name %>
     </p>
 
-    <p>
-      <strong>Transaction memo</strong>
-      <%= @hcb_code.memo %>
-    </p>
-
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
 
     <% if @hcb_code.disbursement.fulfilled? %>

@@ -59,11 +59,6 @@
       </p>
 
       <p>
-        <strong>Transaction memo</strong>
-        <%= @hcb_code.memo %>
-      </p>
-
-      <p>
         <strong>Bank name</strong>
         <%= organizer_signed_in? ? @hcb_code.ach_transfer.bank_name : "Sign in to view" %>
       </p>
