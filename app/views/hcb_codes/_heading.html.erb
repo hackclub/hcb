@@ -13,7 +13,7 @@
       <span class="flex-auto">
         <span data-memo-for="<%= dom_id(hcb_code) %>"><%= hcb_code.memo %></span>
         <span class="regular muted"> for </span>
-        <span class="regular"><%= render_money hcb_code.amount_cents_by_event(hcb_code.event) %></span>
+        <span class="regular"><%= render_money hcb_code.amount_cents_by_event(hcb_code.event).abs %></span>
       </span>
     <% end %>
 
