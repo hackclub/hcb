@@ -36,8 +36,8 @@ export default class extends Controller {
       document.getElementById('invoice').disabled = false
       document.getElementById('invoice').click()
     } else {
-      this.showNewSponsorCard()
-      ;[...inputs].reverse().forEach(input => input.reportValidity())
+      this.showNewSponsorCard(false);
+      [...inputs].reverse().forEach(input => input.reportValidity())
     }
   }
 
@@ -75,12 +75,12 @@ export default class extends Controller {
     })
   }
 
-  showNewSponsorCard() {
+  showNewSponsorCard(clear = true) {
     this.sponsorCollapsibleTarget.open = true
     this.sponsorCollapsibleTarget.setAttribute('class', '')
     this.sponsorPreviewTarget.classList.add('!hidden')
     this.sponsorFormTarget.setAttribute('class', '')
-    this.clearValues()
+    if (clear) this.clearValues()
   }
 
   showSponsorCard() {
