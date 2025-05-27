@@ -9,7 +9,7 @@ export default class extends Controller {
     'sponsorPreviewName',
     'sponsorPreviewEmail',
     'continueButton',
-    'secondTab'
+    'secondTab',
   ]
 
   static fields = [
@@ -34,7 +34,7 @@ export default class extends Controller {
       input.addEventListener('input', this.validateForm.bind(this))
     })
 
-    this.validateForm();
+    this.validateForm()
   }
 
   validateForm() {
@@ -42,9 +42,8 @@ export default class extends Controller {
     const isValid = [...inputs].every(input => input.checkValidity())
     this.continueButtonTarget.disabled = !isValid
     this.secondTabTarget.disabled = !isValid
-    console.log("checking", isValid)
+    console.log('checking', isValid)
   }
-
 
   continue() {
     const inputs = this.sponsorFormTarget.querySelectorAll('input')
@@ -52,8 +51,8 @@ export default class extends Controller {
       document.getElementById('invoice').disabled = false
       document.getElementById('invoice').click()
     } else {
-      this.showNewSponsorCard(false);
-      [...inputs].reverse().forEach(input => input.reportValidity())
+      this.showNewSponsorCard(false)
+      ;[...inputs].reverse().forEach(input => input.reportValidity())
     }
   }
 
