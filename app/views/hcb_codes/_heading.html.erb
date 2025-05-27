@@ -7,7 +7,15 @@
         class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
         data: { turbo: true } %>
 
-    <%= yield %>
+    <% if hcb_code.custom_memo.nil? %>
+      <%= yield %>
+    <% else %>
+      <span class="flex-auto">
+        <span data-memo-for="<%= dom_id(hcb_code) %>"><%= hcb_code.memo %></span>
+        <span class="regular muted"> for </span>
+        <span class="regular"><%= render_money hcb_code.amount_cents_by_event(hcb_code.event) %></span>
+      </span>
+    <% end %>
 
     <%= render "hcb_codes/memo_stream", hcb_code: %>
     <span style="flex-grow: 1;"></span>
