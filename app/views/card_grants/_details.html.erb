@@ -2,7 +2,7 @@
 <% hcb_code ||= card_grant.disbursement.local_hcb_code %>
 
 <div class="card mt2">
-  <%= render partial: "hcb_codes/heading", locals: { hcb_code: } do %>
+  <%= render "hcb_codes/heading", hcb_code: do %>
     <span class="flex-auto">
       <span class="regular muted">
         Grant to

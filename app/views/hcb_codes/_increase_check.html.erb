@@ -19,7 +19,7 @@
       account_details: @account_details %>
 
 <article class="card pb0 mt3 mb1">
-  <%= render partial: "heading", locals: { hcb_code: @hcb_code } do %>
+  <%= render "heading", hcb_code: @hcb_code do %>
     <div class="flex items-center justify-between" style="gap: 8px">
       <span class="flex-auto mr1">
         <span class="regular muted">Check to</span>
