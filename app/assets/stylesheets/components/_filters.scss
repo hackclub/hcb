@@ -1,15 +1,6 @@
-.pagination {
-}
-
-.pagination,
 .filterbar {
-  padding: 0.75rem 0;
-  align-self: center;
-}
-
-.filterbar__filters {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  box-shadow: var(--shadow-border);
+  border-radius: var(--radius-md);
 
   @media (max-width: 32em) {
     margin-left: -1rem;
@@ -20,51 +11,42 @@
 
 .pagination a,
 .filterbar__item {
-  border-radius: 1rem;
+  border-radius: var(--radius-md);
   cursor: pointer;
   display: inline-block;
   flex-shrink: 0;
   font-family: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.75;
-  outline: 0;
   padding: 0.25rem 0.75rem;
   position: relative;
   text-decoration: none;
+  outline-color: map-get($palette, info);
   transition:
     color 0.125s ease-in-out,
-    background-image 0.125s ease-in-out,
-    box-shadow 0.125s ease-in-out,
-    transform 0.125s ease-in-out;
+    background-color 0.125s ease-in-out,
+    box-shadow 0.125s ease-in-out;
 
+  &:hover,
   &:focus {
-    color: map-get($palette, info);
-  }
-}
-
-.filterbar__item {
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    pointer-events: none;
-    @include gradient(info);
-    border-radius: 1rem;
-    transform: scale(0);
-    transition: transform 250ms ease-in-out;
+    color: map-get($palette, slate);
+    background-color: map-get($palette, white);
+    box-shadow: var(--shadow-border-xs);
   }
 
-  &:active,
-  &.active,
+  &[aria-current='page'],
   &[aria-selected='true'] {
-    color: $white;
-    &:before {
-      transform: scale(1);
+    color: map-get($palette, slate);
+    background-color: map-get($palette, white);
+    box-shadow: var(--shadow-border-md);
+    z-index: 1;
+
+    &:hover,
+    &:focus {
+      box-shadow:
+        var(--shadow-border-lg),
+        inset 0 0 0px 0.5px rgba(0, 0, 0, 0.1);
     }
   }
 }

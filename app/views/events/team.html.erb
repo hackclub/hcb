@@ -32,10 +32,17 @@
   <% end %>
 </h1>
 
-<div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
-    <div class="input input-group max-w-none" tabindex="0">
-    <%= inline_icon "search" %>
+<% if policy(@event).can_invite_user? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
+    <%= modal_header "Invite a team member" %>
+    <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
+  </section>
+<% end %>
+
+<div class="flex flex-row justify-between items-center width-100 gap-4 mb2">
+  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
+    <div class="input input-group input--sm max-w-none" tabindex="0">
+    <%= inline_icon "search", size: 24 %>
       <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
     <% if params[:q] && params[:q] != "" %>
       <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">

@@ -41,7 +41,7 @@
     <%= render partial: "features/preview", locals: {
           id: "minimalistic-ledger",
           feature_flag: :transactions_background_2024_06_05,
-          name: "Minimalistic Ledger",
+          name: "Minimal ledger",
           description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions."
         } if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
 

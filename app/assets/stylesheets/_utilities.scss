@@ -29,8 +29,9 @@
 .border-top,
 .border-right,
 .border-bottom,
-.border-left {
-  border-color: map-get($palette, smoke);
+.border-left,
+.border-color {
+  border-color: map-get($palette, divider);
 }
 
 .px0 {

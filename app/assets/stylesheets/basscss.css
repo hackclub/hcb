@@ -1,7 +1,4 @@
 /*! Basscss | http://basscss.com | MIT License */
-.h0 {
-  font-size: 3rem;
-}
 .h1 {
   font-size: 2rem;
 }
@@ -221,22 +218,23 @@
 .border {
   border-style: solid;
   border-width: 1px;
+  border-width: 0.5px;
 }
 .border-top {
   border-top-style: solid;
-  border-top-width: 1px;
+  border-top-width: 0.5px;
 }
 .border-right {
   border-right-style: solid;
-  border-right-width: 1px;
+  border-right-width: 0.5px;
 }
 .border-bottom {
   border-bottom-style: solid;
-  border-bottom-width: 1px;
+  border-bottom-width: 0.5px;
 }
 .border-left {
   border-left-style: solid;
-  border-left-width: 1px;
+  border-left-width: 0.5px;
 }
 .border-none {
   border: 0;

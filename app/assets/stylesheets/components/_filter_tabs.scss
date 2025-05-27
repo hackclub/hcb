@@ -1,21 +1,26 @@
 [data-tabs-target='btn'] {
   background: transparent;
   border: none;
-  padding: 0.2rem;
+  padding: 0.5rem 0.375rem;
+  margin-top: -0.125rem;
+  margin-right: 0.25rem;
   cursor: pointer;
+  font-size: inherit;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
 
   &.active {
-    color: $blue;
-    font-weight: 600;
+    color: map-get($palette, primary);
+    border-color: map-get($palette, primary);
   }
 
   &:first-child {
-    margin-left: 0.2rem;
+    margin-left: 0.125rem;
   }
 }
 
 .menu__divider--filter-tab {
   @extend .menu__divider;
-  margin-bottom: 0.2rem !important;
-  margin-top: 0.3rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 0.5rem !important;
 }
