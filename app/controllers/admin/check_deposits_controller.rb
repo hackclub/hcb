@@ -23,7 +23,16 @@ module Admin
 
     def submit
       @check_deposit = CheckDeposit.find(params[:id])
+
+      if params[:column_id].blank?
+        # This guard clause is necessary because `ColumnService.get` won't
+        # error, but rather return a string (301 status code), when given an
+        # empty string.
+        flash.now[:error] = "Column ID is required."
+        return render :show, status: :unprocessable_entity
+      end
       ColumnService.get "/transfers/checks/#{params[:column_id]}"
+
       @check_deposit.update!(column_id: params[:column_id], status: :submitted)
       redirect_to admin_check_deposits_path, flash: { success: "Check deposit processed!" }
     rescue ActiveRecord::RecordInvalid
