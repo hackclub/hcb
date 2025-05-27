@@ -100,7 +100,7 @@
   <% if card_grant.pending_invite? %>
     <%# Once the user has accepted the invite, these action buttons are shown elsewhere %>
     <section>
-      <%= render partial: "actions", locals: { card_grant: } %>
+      <%= render partial: "card_grants/actions", locals: { card_grant: } %>
     </section>
   <% end %>
 </div>
