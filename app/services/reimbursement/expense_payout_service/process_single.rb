@@ -17,7 +17,7 @@ module Reimbursement
           receiver_bank_account_id = ColumnService::Accounts.id_of expense_payout.book_transfer_receiving_account
 
           ColumnService.post "/transfers/book",
-                             idempotency_key: expense_payout.id.to_s,
+                             idempotency_key: expense_payout.public_id,
                              amount: amount_cents.abs,
                              currency_code: "USD",
                              sender_bank_account_id:,

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_18_005427) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -410,6 +410,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.string "invite_message"
     t.integer "expiration_preference", default: 365, null: false
     t.string "keyword_lock"
+    t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
   end
 
@@ -1028,6 +1029,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.index ["g_suite_account_id"], name: "index_g_suite_aliases_on_g_suite_account_id"
   end
 
+  create_table "g_suite_revocations", force: :cascade do |t|
+    t.integer "reason", default: 0, null: false
+    t.text "other_reason"
+    t.bigint "g_suite_id", null: false
+    t.string "aasm_state"
+    t.datetime "scheduled_at", null: false
+    t.datetime "deleted_at"
+    t.boolean "one_week_notice_sent", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["g_suite_id"], name: "index_g_suite_revocations_on_g_suite_id"
+  end
+
   create_table "g_suites", force: :cascade do |t|
     t.citext "domain"
     t.bigint "event_id"
@@ -1040,6 +1054,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.bigint "created_by_id"
     t.text "remote_org_unit_id"
     t.text "remote_org_unit_path"
+    t.boolean "immune_to_revocation", default: false, null: false
     t.index ["created_by_id"], name: "index_g_suites_on_created_by_id"
     t.index ["event_id"], name: "index_g_suites_on_event_id"
   end
@@ -1294,7 +1309,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.jsonb "authentication_factors"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "browser_token"
+    t.text "browser_token_ciphertext"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -1696,6 +1711,22 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.index ["url_hash"], name: "index_recurring_donations_on_url_hash", unique: true
   end
 
+  create_table "referral_attributions", force: :cascade do |t|
+    t.bigint "referral_program_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
+    t.index ["user_id"], name: "index_referral_attributions_on_user_id"
+  end
+
+  create_table "referral_programs", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "show_explore_hack_club", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "hcb_code"
@@ -2034,6 +2065,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
     t.bigint "updated_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "authorization_token_ciphertext"
+    t.text "verification_token_ciphertext"
     t.index ["updated_by_id"], name: "index_user_email_updates_on_updated_by_id"
     t.index ["user_id"], name: "index_user_email_updates_on_user_id"
   end
@@ -2287,6 +2320,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
   add_foreign_key "g_suite_accounts", "g_suites"
   add_foreign_key "g_suite_accounts", "users", column: "creator_id"
   add_foreign_key "g_suite_aliases", "g_suite_accounts"
+  add_foreign_key "g_suite_revocations", "g_suites"
   add_foreign_key "g_suites", "events"
   add_foreign_key "g_suites", "users", column: "created_by_id"
   add_foreign_key "hashed_transactions", "raw_plaid_transactions"
@@ -2330,6 +2364,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_16_150425) do
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
+  add_foreign_key "referral_attributions", "referral_programs"
+  add_foreign_key "referral_attributions", "users"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"

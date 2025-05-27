@@ -23,4 +23,5 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libgirepository1.0-dev \
     libpoppler-glib-dev \
     libcairo-gobject2 \
-    yarn
+    yarn \
+    imagemagick

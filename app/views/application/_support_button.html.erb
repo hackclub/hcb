@@ -1,25 +1,27 @@
-<div data-controller="menu" data-menu-placement-value="top-end">
-  <button data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle" type="button" class="support-menu__button fixed bottom-0 right-0 m-5 pop tooltipped tooltipped--w embedded-display-none cursor-pointer" style="z-index: 2" aria-label="Need help?" data-action="class#toggle focus#focus">
-    <%= inline_icon "question-mark", size: 18 %>
-  </button>
+<% if signed_in? %>
   <div data-controller="menu" data-menu-placement-value="top-end">
-  <% routing = begin
-       Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
-     rescue
-       {}
-     end %>
+    <button data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle" type="button" class="support-menu__button fixed bottom-0 right-0 m-5 pop tooltipped tooltipped--w embedded-display-none cursor-pointer" style="z-index: 2" aria-label="Need help?" data-action="class#toggle focus#focus">
+      <%= inline_icon "question-mark", size: 18 %>
+    </button>
+    <div data-controller="menu" data-menu-placement-value="top-end">
+    <% routing = begin
+         Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
+       rescue
+         {}
+       end %>
 
-  <% url_params = {
-       url: "#{request.base_url}#{request.original_fullpath}",
-       location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
-       user_id: current_user&.id
-     } %>
+    <% url_params = {
+         url: "#{request.base_url}#{request.original_fullpath}",
+         location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
+         user_id: current_user&.id
+       } %>
 
-  <button
-    type="button"
-    class="support-menu__button fixed bottom-0 right-0 m-5 pop tooltipped tooltipped--w embedded-display-none cursor-pointer"
-    style="z-index: 2" aria-label="Get help"
-    onclick="window.Beacon && (window.Beacon('identify', { name: <%= current_user&.name.to_json %>, email: <%= current_user&.email.to_json %> }), window.Beacon('session-data', { url: <%= url_params[:url].to_json %>, location: <%= url_params[:location].to_json %>, user_id: <%= url_params[:user_id].to_json %> }), window.Beacon('toggle'))">
-    <%= inline_icon "question-mark", size: 18 %>
-  </button>
-</div>
+    <button
+      type="button"
+      class="support-menu__button fixed bottom-0 right-0 m-5 pop tooltipped tooltipped--w embedded-display-none cursor-pointer"
+      style="z-index: 2" aria-label="Get help"
+      onclick="window.Beacon && (window.Beacon('identify', { name: <%= current_user&.name.to_json %>, email: <%= current_user&.email.to_json %> }), window.Beacon('session-data', { url: <%= url_params[:url].to_json %>, location: <%= url_params[:location].to_json %>, user_id: <%= url_params[:user_id].to_json %> }), window.Beacon('toggle'))">
+      <%= inline_icon "question-mark", size: 18 %>
+    </button>
+  </div>
+<% end %>

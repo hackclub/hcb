@@ -31,6 +31,12 @@
           data: { behavior: "modal_trigger", modal: "prefilled_link" } do %>
           Prefilled amount
         <% end %>
+        <% if @event.is_public? %>
+          <%= link_to "#",
+            data: { behavior: "modal_trigger", modal: "donor_graph" } do %>
+            Donor graph
+          <% end %>
+        <% end %>
       </div>
     </action>
   <% end %>
@@ -115,12 +121,27 @@
     <iframe src='<%= start_donation_donations_url @event %>' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='256px' width='512px' allowfullscreen style="width: 100%; max-width: 100%; max-height: 40vh;"></iframe>
   </section>
 
+  <section class="modal" data-behavior="modal" role="dialog" id="donor_graph">
+    <%= modal_header "Embed donor graph" %>
+    <p class="mt0">Use this image URL to show a donor graph on your website, GitHub repo, or anywhere in between.</p>
+    <pre>https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
+
+    <p class="mt0">You can also use this HTML to easily embed the graph. Feel free to change the styling.</p>
+    <pre><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
+
+    <p class="muted text-sm">
+      To use additional styling and image options,
+      <%= link_to "check out the docs", "https://graph.hcb.hackclub.com", target: "_blank" %>
+      for more info.
+    </p>
+  </section>
+
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="prefilled_link">
     <%= modal_header "Prefilled link" %>
     <%= react_component "donation_overview/PreviewLink", path: start_donation_donations_url(@event) %>
   </section>
 <% else %>
-  <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, anchor: "donations") %>.</p>
+  <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
 <% end %>
 
 <div class="mt3 mb2 statset">

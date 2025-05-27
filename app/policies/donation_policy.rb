@@ -29,6 +29,10 @@ class DonationPolicy < ApplicationPolicy
     record.event.users.include?(user) || user&.auditor?
   end
 
+  def update?
+    OrganizerPosition.find_by(user:, event: record.event)&.manager? || user&.admin?
+  end
+
   def refund?
     user&.admin?
   end

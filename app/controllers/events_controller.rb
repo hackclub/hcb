@@ -357,26 +357,28 @@ class EventsController < ApplicationController
   end
 
   def card_overview
-    @status = %w[active frozen canceled].include?(params[:status]) ? params[:status] : nil
+    @status = %w[active inactive frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
 
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
-    @user_id = params[:user].presence
+    @user = User.friendly.find_by_friendly_id(params[:user]) if params[:user]
 
-    @has_filter = @status.present? || @type.present? || @user_id.present?
+    @has_filter = @status.present? || @type.present? || @user.present?
 
     all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
                              .order("stripe_status asc, created_at desc")
 
-    all_stripe_cards = all_stripe_cards.where(user: { id: @user_id }) if @user_id
+    all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
 
     all_stripe_cards = case @status
                        when "active"
                          all_stripe_cards.active
+                       when "inactive"
+                         all_stripe_cards.inactive
                        when "frozen"
-                         all_stripe_cards.deactivated
+                         all_stripe_cards.frozen
                        when "canceled"
                          all_stripe_cards.canceled
                        else
@@ -455,7 +457,6 @@ class EventsController < ApplicationController
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
-
   end
 
   def documentation
@@ -609,7 +610,7 @@ class EventsController < ApplicationController
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
     @card_grants = @event.card_grants.includes(:user, :subledger, :stripe_card)
 
-    @disbursements = @disbursements.not_card_grant_related if Flipper.enabled?(:card_grants_2023_05_25, @event)
+    @disbursements = @disbursements.not_card_grant_related if @event.plan.card_grants_enabled?
 
     @stats = {
       deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents),
@@ -776,7 +777,7 @@ class EventsController < ApplicationController
       @event.event_tags << @event_tag
     end
 
-    redirect_back fallback_location: edit_event_path(@event, anchor: "admin_organization_tags")
+    redirect_back fallback_location: edit_event_path(@event, tab: "admin")
   end
 
   def audit_log
@@ -964,7 +965,8 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
-        :expiration_preference
+        :expiration_preference,
+        :reimbursement_conversions_enabled
       ],
       config_attributes: [
         :id,
@@ -1010,7 +1012,8 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
-        :expiration_preference
+        :expiration_preference,
+        :reimbursement_conversions_enabled
       ],
       config_attributes: [
         :id,
@@ -1035,7 +1038,7 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = @event.users.find_by(id: params[:user]) if params[:user]
+    @user = @event.users.friendly.find_by_friendly_id(params[:user]) if params[:user]
 
     @type = params[:type]
     @start_date = params[:start].presence

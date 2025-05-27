@@ -23,11 +23,11 @@ Once this is done, we create canonical pending transactions for either the invoi
 ::PendingEventMappingEngine::Map::Single::Donation.new(canonical_pending_transaction: cpt).run
 ```
 
-As you can see, it’s pretty similar for both donations and invoices. `RawPendingInvoiceTransactionService` and `RawPendingDonationTransactionService` create one `RawPendingInvoiceTransaction` or one `RawPendingDonationTransaction`. These models will serve as the source for our Canonical Pending Transaction. For invoices, the `amount_cents` on `RawPendingInvoiceTransaction` is `invoice.amount_paid`. This is because sponsors can underpay invoices if they pay via bank transfer.
+As you can see, it’s pretty similar for both donations and invoices. `RawPendingInvoiceTransactionService` and `RawPendingDonationTransactionService` create one `RawPendingInvoiceTransaction` or one `RawPendingDonationTransaction`. These models will serve as the source for our `CanonicalPendingTransaction`. For invoices, the `amount_cents` on `RawPendingInvoiceTransaction` is `invoice.amount_paid`. This is because sponsors can underpay invoices if they pay via bank transfer.
 
 We then import them in as CPTs, that’s the second service in the list. We use the details in `RawPendingInvoiceTransaction` or `RawPendingDonationTransaction` to the set the `amount_cents` etc.
 
-We then map these pending transactions and front them. This gives organisations instant access to this money, even though it isn’t technically in our bank account.
+Next, we map these pending transactions and front them. This gives organisations instant access to the money, even though it isn’t technically in our bank account.
 
 But now we need to get that money into our account and canonise this transaction.
 
@@ -37,7 +37,7 @@ For invoices, this takes starts in the `InvoiceService::OpenToPaid` service. Thi
 
 The equivalent logic for donations is handled in `Donation#set_fields_from_stripe_payment_intent!`. Donations at this time are marked as  `in_transit`. 
 
-Next, we will create payouts from our Stripe balance. This payouts are a bank transfer from Stripe to Column. For both donations and invoices, this starts in `PayoutService::Nightly`. This service queues `Payout::DonationJob` and `Payout::InvoiceJob` which each call `PayoutService::Donation::Create` and `PayoutService::Invoice::Create` respectively.
+Next, we will create payouts from our Stripe balance. These payouts are a bank transfer from Stripe to Column. For both donations and invoices, this starts in `PayoutService::Nightly`. This service queues `Payout::DonationJob` and `Payout::InvoiceJob` which each call `PayoutService::Donation::Create` and `PayoutService::Invoice::Create` respectively.
 
 These create `DonationPayout`s and `InvoicePayout`s. Both models have a `before_create` callback called `create_stripe_payout` that creates the payout from Stripe’s end.
 
@@ -59,12 +59,12 @@ These `FeeReimbursement`s are created in `PayoutService::Donation::Create` and `
 
 These are bank transfers from our bank account to Stripe’s bank account.
 
-They will be mapped under a `HCB-900` which has all of the fee reimbursements from a certain week: https://hcb.hackclub.com/hcb/HCB-900-2024_50. Yes, that’s a lot of transactions. This is handled in `EventMappingEngine::Nightly#map_outgoing_fee_reimbursements!`
+They will be mapped under a `HCB-900` which has all of the fee reimbursements from a certain week: https://hcb.hackclub.com/hcb/HCB-900-2024_50. Yes, that’s a lot of transactions. This is handled using HCB short codes.
 
-This is one of the older parts of our codebase, so it’s a little clunky. Feel free to reach out (@sampoder) with any questions.
+This is one of the older parts of our codebase, so it’s a little clunky. Feel free to reach out ([@sampoder](https://github.com/sampoder)) with any questions.
 
 ## Recurring Donations
 
-The weird child of invoices and donations. Recurring donations are Stripe invoices that get paid by customers every month, `RecurringDonationService::HandleInvoicePaid` creates a `Donation` from each invoice paid, which then is processed like a normal donation. As Stripe invoices also have payment intents.
+The weird child of invoices and donations. Recurring donations are Stripe invoices that get paid by customers every month, `RecurringDonationService::HandleInvoicePaid` creates a `Donation` from each invoice paid, which then is processed like a normal donation, as Stripe invoices also have payment intents.
 
 \- [@sampoder](https://github.com/sampoder)

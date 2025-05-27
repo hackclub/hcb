@@ -68,8 +68,9 @@ class StripeCard < ApplicationRecord
 
   scope :deactivated, -> { where.not(stripe_status: "active") }
   scope :canceled, -> { where(stripe_status: "canceled") }
-  scope :frozen, -> { where(stripe_status: "inactive") }
+  scope :frozen, -> { where(stripe_status: "inactive", initially_activated: true) }
   scope :active, -> { where(stripe_status: "active") }
+  scope :inactive, -> { where(stripe_status: "inactive", initially_activated: false) }
   scope :physical_shipping, -> { physical.includes(:user, :event).reject { |c| c.stripe_obj[:shipping][:status] == "delivered" } }
   scope :platinum, -> { where(is_platinum_april_fools_2023: true) }
 
@@ -225,8 +226,8 @@ class StripeCard < ApplicationRecord
     stripe_status == "active"
   end
 
-  def deactivated?
-    stripe_status != "active"
+  def inactive?
+    !initially_activated? && stripe_status == "inactive"
   end
 
   def canceled?

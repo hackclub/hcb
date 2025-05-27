@@ -83,7 +83,7 @@
       <td>Balance available:</td>
       <td><%= render_money @wire.event.balance_available_v2_cents %></td>
     </tr>
-    <% @wire.recipient_information.keys.each do |key| %>
+    <% @wire.recipient_information&.keys&.each do |key| %>
       <% if @wire.recipient_information[key].presence != nil %>
         <tr>
           <td><%= key.humanize %></td>

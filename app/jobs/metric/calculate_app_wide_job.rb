@@ -25,7 +25,3 @@ class Metric
   end
 
 end
-
-module MetricJobs
-  CalculateAppWide = Metric::CalculateAppWideJob
-end

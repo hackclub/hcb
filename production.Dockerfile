@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-ARG RUBY_VERSION=3.4.2
+ARG RUBY_VERSION=3.4.3
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -26,9 +26,7 @@ RUN apt-get update -qq && \
       libgirepository-1.0-1 \
       libpoppler-glib-dev \
       # OCR
-      tesseract-ocr \
-      # PDF generation
-      wkhtmltopdf && \
+      tesseract-ocr && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment

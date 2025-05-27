@@ -4,11 +4,11 @@ Or at least my attempt to describe this. Some transaction types have been deprec
 
 Column transactions start off as being imported from a daily Column report (https://column.com/docs/guides/reporting). This code is in `TransactionEngine::Nightly`. Each line item in that report has an associated `RawColumnTransaction`.
 
-After a `RawColumnTransaction` is created an `after_create` callback creates a `CanonicalTransaction` for this transaction. And here’s where our paths diverge for different transaction types. 
+After a `RawColumnTransaction` is created, an `after_create` callback creates a `CanonicalTransaction` for this transaction. Here’s where our paths diverge for different transaction types. 
 
-Each type of transfer has a different HCB code. HCB “calculates” the correct HCB Code for a transfer in `TransactionGroupingEngine::Calculate::HcbCode` and then writes that HCB Code to the `CanonicalTransaction`’s `hcb_code` column inside of `CanonicalTransaction#write_hcb_code`.
+Each type of transfer has a different HCB code. HCB “calculates” the correct HCB code for a transfer in `TransactionGroupingEngine::Calculate::HcbCode` and then writes that HCB code to the `CanonicalTransaction`’s `hcb_code` column inside of `CanonicalTransaction#write_hcb_code`.
 
-If this is an account number transaction of some other “unknown” transfer type that has came from Column. It will be give a HCB code starting with “HCB-000”. There won’t be a linked object in these cases.
+If this is an account number transaction of some other “unknown” transfer type that has came from Column, it will be give a HCB code starting with “HCB-000”. There won’t be a linked object in these cases.
 
 `TransactionGroupingEngine::Calculate::HcbCode` depends on `CanonicalTransaction#linked_object`, which is determined in `TransactionEngine::SyntaxSugarService::LinkedObject`.
 
@@ -46,7 +46,7 @@ Each of these top-up transactions are mapped to the Bank organisation on HCB: hc
 memo ilike 'Hack Club Bank Issued car%' or memo ilike 'HCKCLB Issued car%' or memo ilike 'STRIPE Issued car%'
 ``` 
 
-We map all over Stripe top-ups to hcb.hackclub.com/noevent. They are also identified based on `CanonicalTransaction`’s memo:
+We map all of our Stripe top-ups to hcb.hackclub.com/noevent. They are also identified based on `CanonicalTransaction`’s memo:
 
 ```sql
 memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or memo ilike '%HCKCLB Stripe Top%' or memo ilike '%STRIPE Stripe Top%'
@@ -54,39 +54,39 @@ memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or m
 
 ### Outgoing Stripe Fee Reimbursements
 
-Incoming fee reimbursements (refunding people for the credit card fees Stripe deducts etc.) are mapped by the short codes system described below. These are book transfers so they need an outgoing transaction as well. These outgoing transactions all have this memo: `Stripe fee reimbursement`. And are mapped to hcb.hackclub.com/bank in `EventMappingEngine::Nightly#map_outgoing_fee_reimbursements!`
+Incoming fee reimbursements (refunding people for the credit card fees Stripe deducts etc.) are mapped by the short codes system described below. These are book transfers so they need an outgoing transaction as well. These outgoing transactions all have are all mapped to hcb.hackclub.com/bank using HCB short codes.
 
 ### HCB Short Codes (Reimbursements, Invoices, Fees, Stripe Fee Reimbursements and Donations)
 
-HCB short codes are a bit like dark magic. Essentially if a `CanonicalTransaction`’s `memo` contains a “short code” (`/HCB-\w{5}/`, eg `HCB-ABCDE`), we can use that to uniquely map it to a HCB code. Critically, this is different from a HCB code’s hash ID which you see in URLs. A HCB code’s short code is generated before create in `HcbCode#generate_and_set_short_code`.
+HCB short codes are a bit like dark magic. Essentially, if a `CanonicalTransaction`’s `memo` contains a “short code” (`/HCB-\w{5}/`, eg `HCB-ABCDE`), we can use that to uniquely map it to a HCB code. Critically, this is different from a HCB code’s hash ID which you see in URLs. A HCB code’s short code is generated before create in `HcbCode#generate_and_set_short_code`.
 
 The logic for this mapping is in `EventMappingEngine::Map::HcbCodes::Short`. It handles setting the `CanonicalTransaction`’s `hcb_code` and mapping it to an event (as well as a subledger, if needed). The event and subledger are determined by the HCB code’s pre-linked `CanonicalTransaction`s and/or `CanonicalPendingTransaction`s.
 
 #### Invoices and Donations
 
-That’s how invoices and donations can imported once they leave Stripe. But how do we tell them to leave Stripe? To do this we create Stripe payouts from our balance when an invoice or donation is paid. This logic can be found in `InvoicePayout` and `DonationPayout`.
+That’s how invoices and donations can be imported once they leave Stripe. But how do we tell them to leave Stripe? To do this, we create Stripe payouts from our balance when an invoice or donation is paid. This logic can be found in `InvoicePayout` and `DonationPayout`.
 
 #### Reimbursements
 
-We use a clearinghouse organisation for reimbursements. This means that the ACHs / checks etc. we send to reimburse people are standard ACHs / checks. Just like the one any organisation would send! See `Reimbursement::PayoutHoldingService::Nightly` for how this is done.
+We use a clearinghouse organisation for reimbursements. This means that the ACHs, checks, etc. we send to reimburse people are standard ACHs / checks, just like the ones any organisation would send! See `Reimbursement::PayoutHoldingService::Nightly` for how this is done.
 
 The transactions that are imported by HCB short code are the `ExpensePayout` and the `PayoutHolding`. These are internal book transfers that move money from the organisation that is reimbursing someone to the clearinghouse organisation.
 
 An `ExpensePayout` is a book transfer from “FS Main” to “FS Operating”. It comes in as a negative `CanonicalTransaction`. A `Reimbursement::Report` can have multiple of these `ExpensePayout`s, one for every `Reimbursement::Expense` that was approved. 
 
-An `PayoutHolding` is a book transfer from “FS Operating” to “FS Main”. It comes in as a positive `CanonicalTransaction`. A `Reimbursement::Report` can only have one `PayoutHolding`. It’s `amount_cents` will be the sum of the `Reimbursement::Report`’s `ExpensePayout`s’ `amount_cents`.
+A `PayoutHolding` is a book transfer from “FS Operating” to “FS Main”. It comes in as a positive `CanonicalTransaction`. A `Reimbursement::Report` can only have one `PayoutHolding`. Its `amount_cents` will be the sum of the `Reimbursement::Report`’s `ExpensePayout`s’ `amount_cents`.
 
 ### Subledgers
 
-Events can have subledgers. For example, a card grant. When mapping these transactions to an event, we map them to the event as usual but add an additional `subledger_id` to the `CanonicalEventMapping`. Not all transaction importing mechanisms support this at the moment. However, they are supported by HCB short code mapping (“guessed” based on the HCB code’s other transactions), disbursements (based on the `Disbursement`’s `source_subledger_id` and `destination_subledger_id`) and Stripe card transactions (based on the `StripeCard`’s `subledger_id`).
+Events can have subledgers. For example, a card grant. When mapping these transactions to an event, we map them to the event as usual but add an additional `subledger_id` to the `CanonicalEventMapping`. Not all transaction importing mechanisms support this at the moment. However, they are supported by HCB short code mapping (“guessed” based on the HCB code’s other transactions), disbursements (based on the `Disbursement`’s `source_subledger_id` and `destination_subledger_id`), and Stripe card transactions (based on the `StripeCard`’s `subledger_id`).
 
 ### Stripe Card Transactions
 
 This begins in `TransactionEngine::Nightly` by importing a list of transactions from Stripe: `::Partners::Stripe::Issuing::Transactions::List` (view https://docs.stripe.com/api/issuing/transactions/list). For each transaction returned by Stripe, we create a `RawStripeTransaction` if it doesn’t already exist. 
 
-Afterwards, `TransactionEngine::Nightly` continues by calling`TransactionEngine::HashedTransactionService::RawStripeTransaction::Import`, which loops through each of these `RawStripeTransaction`s to create a “hashed transaction”.
+Afterwards, `TransactionEngine::Nightly` continues by calling `TransactionEngine::HashedTransactionService::RawStripeTransaction::Import`, which loops through each of these `RawStripeTransaction`s to create a “hashed transaction”.
 
-Still inside of `TransactionEngine::Nightly`, after these transactions are hashed, they are “canonized” by `TransactionEngine::CanonicalTransactionService::Import::All`. That is to say that a `CanonicalTransaction` is created.
+Still inside of `TransactionEngine::Nightly`, after these transactions are hashed, they are “canonized” by `TransactionEngine::CanonicalTransactionService::Import::All`. That is to say that a `CanonicalTransaction` was created.
 
 This `CanonicalTransaction` is mapped to a HCB code using the aforementioned `CanonicalTransaction#write_hcb_code`. See above for a description of that method.
 
@@ -107,6 +107,9 @@ It is then “canonized” by `TransactionEngine::CanonicalTransactionService::I
 Most `CanonicalTransaction`s then show up on https://hcb.hackclub.com/admin/ledger to be mapped manually. Though it might be automatically mapped by short code.
 
 ### PayPal Transfers
+
+> [!WARNING]
+> PayPal transfers have been deprecated and are no longer a standard way of making transfers on HCB.
 
 PayPal transfers are a unique type of transfer. It may look like HCB automatically sends PayPal transfers but it doesn’t. Instead an operations staff member manually logs into PayPal and sends it using funds from our Column account (linked as a bank account on PayPal). This means they come through as a `RawColumnTransaction`. Refer to the above section on Column transfers for the flow from `RawColumnTransaction` -> `CanonicalTransaction`. However, there is no code to automatically map these PayPal transfers so these transactions land on https://hcb.hackclub.com/admin/ledger. 
 
@@ -138,6 +141,6 @@ Event mapping was handled by the Column account numbers.
 
 I would also recommend referencing this PR that created the `PaypalTransfer` system: https://github.com/hackclub/hcb/pull/6261 (eek! it’s large).
 
-*This guide is new and I’m still working on it! ping me (@sampoder) if there’s a transaction type missing, something is wrong or confusing etc. But thank you for reading to the end!*
+*This guide is new and I’m still working on it! ping me ([@sampoder](https://github.com/sampoder)) if there’s a transaction type missing, something is wrong or confusing etc. But thank you for reading to the end!*
 
 \- [@sampoder](https://github.com/sampoder)

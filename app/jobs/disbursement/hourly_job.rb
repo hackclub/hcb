@@ -10,7 +10,3 @@ class Disbursement
   end
 
 end
-
-module DisbursementJob
-  Hourly = Disbursement::HourlyJob
-end

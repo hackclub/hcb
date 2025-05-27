@@ -5,6 +5,10 @@ class TagPolicy < ApplicationPolicy
     OrganizerPosition.role_at_least?(user, record, :member)
   end
 
+  def update?
+    OrganizerPosition.role_at_least?(user, record.event, :member)
+  end
+
   def destroy?
     OrganizerPosition.role_at_least?(user, record.event, :member)
   end

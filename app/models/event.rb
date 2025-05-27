@@ -764,7 +764,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none?
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end

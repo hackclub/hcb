@@ -3,8 +3,7 @@
     data-controller="transfer-form"
     data-transfer-form-ach-value="<%= new_event_ach_transfer_path(@event) %>"
     data-transfer-form-check-value="<%= new_event_increase_check_path(@event) %>"
-    data-transfer-form-wire-value="<%= new_event_wire_path(@event) %>"
-    data-transfer-form-disbursement-value="<%= new_disbursement_path(source_event_id: @event) %>">
+    data-transfer-form-wire-value="<%= new_event_wire_path(@event) %>">
     <div data-transfer-form-target="home">
       <fieldset>
         <legend class="heading h2 pt2 pb2">What type of transfer?</legend>
@@ -28,7 +27,7 @@
             <strong>HCB transfer</strong>
             <small>(between HCB organizations)</small>
           <% end %>
-          <% if Flipper.enabled?(:card_grants_2023_05_25, @event) %>
+          <% if @event.plan.card_grants_enabled? %>
             <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo: true } do %>
               <%= inline_icon "card", size: 28 %>
               <strong>Card grant</strong>

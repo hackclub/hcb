@@ -23,7 +23,7 @@ class Export
   module Event
     module Transactions
       class Ledger < Export
-        store :parameters, accessors: %w[event_id public_only], coder: JSON
+        store_accessor :parameters, :event_id, :public_only
         def async?
           event.canonical_transactions.size > 300
         end

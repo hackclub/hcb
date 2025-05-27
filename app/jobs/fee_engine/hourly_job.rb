@@ -9,7 +9,3 @@ module FeeEngine
 
   end
 end
-
-module FeeEngineJob
-  Hourly = FeeEngine::HourlyJob
-end

@@ -1,7 +1,5 @@
 # 2022-05-25 Post-mortem for Rails 6 -> 6.1 upgrade & deploy
 
-_Written by @maxwofford_
-
 I upgraded our Rails version in this PR: https://github.com/hackclub/hcb/pull/2588
 
 What I did to test that everything worked before merge:
@@ -54,3 +52,5 @@ Leftover tasks:
 - I removed heroku-deflater in the moment while trying to restore production, but didn’t search for a replacement. It’d be nice to get something else for serving gz assets.
 - After a week or two (once we're sure 6.1 is running and stable), switch the non-reversible framework defaults [here](https://github.com/hackclub/hcb/blob/5312e0dc3886da0144a3024f72c4e18976c33b6f/config/initializers/new_framework_defaults_6_1.rb#L22-L32)
 - This PR bumped rubocop, which changed a lot of it's checks. Formatting debt was dumped in here: https://github.com/hackclub/hcb/blob/5312e0dc3886da0144a3024f72c4e18976c33b6f/.rubocop_todo.yml
+
+\- [@maxwofford](https://github.com/maxwofford)

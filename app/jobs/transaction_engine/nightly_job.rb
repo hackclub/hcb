@@ -11,7 +11,3 @@ module TransactionEngine
 
   end
 end
-
-module TransactionEngineJob
-  Nightly = TransactionEngine::NightlyJob
-end

@@ -45,23 +45,27 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
+    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
+
     @allowed_source_events = if current_user.admin?
-                               Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                               Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
-                             end
+                             end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
     @allowed_destination_events = if current_user.admin?
-                                    Event.all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                                  elsif @source_event&.plan&.unrestricted_disbursements_enabled?
+                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).indexable.includes(:plan)
                                   else
-                                    current_user.events.not_hidden.without(@source_event).filter_demo_mode(false)
-                                  end
+                                    current_user.events.not_hidden.filter_demo_mode(false)
+                                  end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
 
     authorize @disbursement
   end
 
   def create
-    @source_event = Event.find(disbursement_params[:source_event_id])
-    @destination_event = Event.find(disbursement_params[:event_id])
+    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
+    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
@@ -80,6 +84,7 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
+      fronted: @source_event.plan.front_disbursements_enabled?
     ).run
 
     if disbursement_params[:file]
@@ -101,6 +106,10 @@ class DisbursementsController < ApplicationController
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
     flash[:error] = e.message
+    redirect_to new_disbursement_path(source_event_id: @source_event)
+  rescue ActiveRecord::RecordNotFound => e
+    skip_authorization
+    flash[:error] = "Organization not found: #{e.id}"
     redirect_to new_disbursement_path(source_event_id: @source_event)
   end
 

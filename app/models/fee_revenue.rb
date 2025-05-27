@@ -16,6 +16,9 @@ class FeeRevenue < ApplicationRecord
   include AASM
   include HasBookTransfer
 
+  include PublicIdentifiable
+  set_public_id_prefix :frv
+
   has_many :bank_fees
 
   # Eagerly create HcbCode object

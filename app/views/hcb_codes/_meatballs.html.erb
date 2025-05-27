@@ -10,7 +10,7 @@
         "#",
         class: "align-middle", "aria-label": "More Options",
         data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
-    <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
+    <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
       <% if pinnable %>
         <%= link_to pin_hcb_code_path(hcb_code, event: @event), method: :post, class: "flex items-center", data: { confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
           <%= inline_icon "pin-fill", size: 24 %>
@@ -27,6 +27,12 @@
         <%= link_to "#", data: { behavior: "modal_trigger", modal: "manually_mark_as_paid" }, class: "flex items-center" do %>
           <%= inline_icon "checkmark", size: 24 %>
           Manually mark as paid
+        <% end %>
+      <% end %>
+      <% if hcb_code.donation? %>
+        <%= link_to "#", data: { behavior: "modal_trigger", modal: "update" }, class: "flex items-center" do %>
+          <%= inline_icon "person", size: 24 %>
+          Edit donor
         <% end %>
       <% end %>
       <% if disputable %>

@@ -4,14 +4,14 @@
 #
 # Table name: logins
 #
-#  id                     :bigint           not null, primary key
-#  aasm_state             :string
-#  browser_token          :string
-#  authentication_factors :jsonb
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  user_id                :bigint           not null
-#  user_session_id        :bigint
+#  id                       :bigint           not null, primary key
+#  aasm_state               :string
+#  authentication_factors   :jsonb
+#  browser_token_ciphertext :text
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  user_id                  :bigint           not null
+#  user_session_id          :bigint
 #
 # Indexes
 #
@@ -25,15 +25,16 @@ class Login < ApplicationRecord
   belongs_to :user
   belongs_to :user_session, optional: true
 
-  has_secure_token :browser_token
+  has_encrypted :browser_token
+  before_validation :ensure_browser_token
 
-  store :authentication_factors, accessors: [:sms, :email, :webauthn, :totp], prefix: :authenticated_with
+  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, prefix: :authenticated_with
 
   EXPIRATION = 15.minutes
 
   scope :active, -> { where(created_at: EXPIRATION.ago..) }
 
-  has_paper_trail
+  has_paper_trail skip: [:browser_token]
 
   validate do
     if user_session.present? && !complete?
@@ -68,7 +69,16 @@ class Login < ApplicationRecord
   end
 
   def authentication_factors_count
+    return 0 if authentication_factors.nil?
+
     authentication_factors.values.count(true)
+  end
+
+  def ensure_browser_token
+    # Avoid generating a new token if one is already encrypted
+    return if self[:browser_token_ciphertext].present?
+
+    self.browser_token ||= SecureRandom.base58(24)
   end
 
 end
