@@ -140,7 +140,7 @@
           </td>
           <td style="text-align: right;">
             <% if d.is_a? CardGrant %>
-              <span class="<%= "muted line-through" if d.balance.zero? %>"><%= d.balance.format %></span>
+              <%= render_money d.amount_cents %>
             <% elsif d.is_a? Wire %>
               <%= render_money(d.local_hcb_code.amount_cents.abs) %>
             <% else %>
