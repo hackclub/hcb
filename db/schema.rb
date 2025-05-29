@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -920,7 +922,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_18_005427) do
     t.string "short_name"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
-    t.string "country_alpha2"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
@@ -2245,7 +2246,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_18_005427) do
     t.string "address_postal_code"
     t.text "column_id"
     t.text "return_reason"
-    t.string "country_alpha2"
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
     t.index ["event_id"], name: "index_wires_on_event_id"
     t.index ["user_id"], name: "index_wires_on_user_id"
