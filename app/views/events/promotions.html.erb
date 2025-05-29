@@ -340,7 +340,7 @@
       <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
         @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
         class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
-        target: :_blank
+        target: :_blank,
         disabled: true %>
     </div>
   
