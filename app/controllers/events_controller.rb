@@ -16,6 +16,7 @@ class EventsController < ApplicationController
   before_action :set_mock_data
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
+  before_action :set_timeframe, only: [:merchants, :categories]
 
   # GET /events
   def index
@@ -79,12 +80,22 @@ class EventsController < ApplicationController
     render partial: "events/home/heatmap", locals: { heatmap: @heatmap, event: @event }
   end
 
-  def merchants_categories
+  def merchants
     authorize @event
-    @merchants = BreakdownEngine::Merchants.new(@event).run
-    @categories = BreakdownEngine::Categories.new(@event).run
 
-    render partial: "events/home/merchants_categories", locals: { merchants: @merchants, categories: @categories, event: @event }
+    @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
+    @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
+
+    render partial: "events/home/merchants", locals: { timeframe: params[:timeframe] || "All time" }
+  end
+
+  def categories
+    authorize @event
+
+    @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
+    @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
+
+    render partial: "events/home/categories", locals: { timeframe: params[:timeframe] || "All time" }
   end
 
   def balance_transactions
@@ -1099,6 +1110,10 @@ class EventsController < ApplicationController
     if params[:show_mock_data].present?
       helpers.set_mock_data!(params[:show_mock_data] == "true")
     end
+  end
+
+  def set_timeframe
+    @timeframe = Event::BREAKDOWN_TIMEFRAMES[params[:timeframe]]
   end
 
 end

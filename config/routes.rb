@@ -678,7 +678,8 @@ Rails.application.routes.draw do
     get :recent_activity
     get :balance_transactions
     get :money_movement
-    get :merchants_categories
+    get :merchants
+    get :categories
     get :top_categories
     get :tags_users
     get :transaction_heatmap

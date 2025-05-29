@@ -1,0 +1,34 @@
+<%= turbo_frame_tag "categories" do %>
+  <% if !@categories.empty? %>
+    <div id="categories-chart" style="flex: 1">
+      <div class="flex flex-row justify-between mb2 mt2 items-center">
+        <h3 class="mt0 mb0">Top categories</h3>
+        <div data-controller="menu" data-menu-append-to-value="#categories-chart">
+          <button
+            class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
+            data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+            data-menu-target="toggle">
+            <%= local_assigns[:timeframe] %>
+            <%= inline_icon "down-caret" %>
+          </button>
+          <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+            <%= link_to "All time", event_categories_path(@event) %>
+            <%= link_to "Past week", event_categories_path(@event, timeframe: "Past week") %>
+            <%= link_to "Past month", event_categories_path(@event, timeframe: "Past month") %>
+          </div>
+        </div>
+      </div>
+      <%= react_component "home/Categories", { data: @categories }, { camelize_props: false } %>
+    </div>
+    <%# Only shown if merchants chart is visible to prevent awkward gap %>
+  <% elsif !@merchants.empty? %>
+    <div class="flex flex-1 items-center justify-center flex-col text-center">
+      <h3 class="text-2xl font-bold mb-0">
+        It's quiet here...
+      </h3>
+      <p class="text-gray-500 my-1">
+        Categories will appear here as you spend more money
+      </p>
+    </div>
+  <% end %>
+<% end %>
