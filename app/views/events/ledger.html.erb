@@ -37,7 +37,7 @@
       manually doing it here.
     %>
     <script>
-      window.history.pushState(null, '', <%= event_transactions_url(@event, **params.to_unsafe_h).to_json.html_safe %>);
+      window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
     </script>
   <% end %>
 <% end %>
