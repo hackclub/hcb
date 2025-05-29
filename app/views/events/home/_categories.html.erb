@@ -1,6 +1,6 @@
 <%= turbo_frame_tag "categories" do %>
   <% if !@categories.empty? %>
-    <div id="categories-chart" style="flex: 1">
+    <div id="categories-chart">
       <div class="flex flex-row justify-between mb2 mt2 items-center">
         <h3 class="mt0 mb0">Top categories</h3>
         <div data-controller="menu" data-menu-append-to-value="#categories-chart">
