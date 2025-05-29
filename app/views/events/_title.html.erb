@@ -1,10 +1,11 @@
-<div data-controller="menu" class="pt2">
-  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none gap-2 text-inherit leading-9 event-title -m-2 my-2 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-size:2em; font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
-    <%= @event.name %>
-    <%= inline_icon "down-caret", class: "event-title-dropdown-icon" if show_org_switcher? %>
+<div data-controller="menu" class="flex-1 min-w-0 w-full">
+  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-inherit flex block hover:text-primary focus:text-primary items-center w-full gap-1 -ml-1 p-2 rounded-lg text-decoration-none text-lg font-bold", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
+    <span class="truncate min-w-0"><%= @event.name %></span>
+    <%= inline_icon "down-caret", size: 24 if show_org_switcher? %>
+
   <% end %>
   <% if show_org_switcher? %>
-    <div class="menu__content menu__content--switcher sm:w-[275px]" data-menu-target="content">
+    <div class="menu__content menu__content--switcher w-[90vw] lg:w-[275px] z-10 ml-10 lg:-ml-2" data-menu-target="content" style="bottom:auto;border-radius: 10px;padding-bottom: 10px">
       <p class="muted font-[800] text-sm mb-0 uppercase m-1">Organizations</p>
       <% current_user.events.not_hidden.excluding(@event).with_attached_logo.map do |event| %>
         <%= link_to event, title: event.name, class: "gap-2" do %>

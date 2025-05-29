@@ -1,10 +1,9 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
+<%= render "users/nav", selected: :settings_admin %>
 
-<h1>Settings</h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "admin" %>
+  <%= render "settings_header", active: "admin" %>
   <% admin_tool override_pretend: true do %>
     <section>
       Updating <%= user_mention @user %>'s profile that was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
