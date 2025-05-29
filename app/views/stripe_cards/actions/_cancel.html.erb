@@ -1,3 +1,5 @@
+<%# locals: (stripe_card:) %>
+
 <% unless stripe_card.canceled? %>
   <% cancel_tooltip = if policy(stripe_card).cancel?
                         "Permanently cancel this card."

@@ -1,7 +1,8 @@
+<%# locals: (task_path:, human_name:, task_name: nil, count: 0) %>
 <%= link_to task_path, target: "_blank" do %>
   <li class="card card--hover flex justify-between overflow-visible line-height-3">
     <strong><%= human_name %></strong>
-    <% if defined? task_name %>
+    <% if task_name.present? %>
       <span class="badge <%= count > 0 ? "bg-accent" : "bg-muted" %>"><%= count %></span>
     <% end %>
   </li>

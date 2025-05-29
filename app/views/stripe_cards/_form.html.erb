@@ -1,6 +1,8 @@
+<%# locals: (stripe_card: nil, event: nil) %>
+
 <%= form_with(model: StripeCard.new, local: true) do |form| %>
-  <% if @event || params[:event_id] %>
-    <%= form.hidden_field :event_id, value: @event&.id || params[:event_id] %>
+  <% if event || params[:event_id] %>
+    <%= form.hidden_field :event_id, value: event&.id || params[:event_id] %>
   <% else %>
     <fieldset>
       <legend class="heading h2 pt2 pb2">Which organization?</legend>
@@ -49,37 +51,37 @@
     <h2 class="grid__fill">Shipping info</h2>
     <div class="field">
       <%= form.label :stripe_shipping_name, "Shipping name" %>
-      <%= form.text_field :stripe_shipping_name, value: current_user&.full_name, disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_name, value: current_user&.full_name, disabled: event&.demo_mode? %>
     </div>
     <div class="field">
       <%= form.label :stripe_shipping_address_line1, "Address (line 1)" %>
-      <%= form.text_field :stripe_shipping_address_line1, value: prefill(:line1), placeholder: suggested(:line1), disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_line1, value: prefill(:line1), placeholder: suggested(:line1), disabled: event&.demo_mode? %>
     </div>
     <div class="field">
       <%= form.label :stripe_shipping_address_line2, "Address (line 2)" %>
-      <%= form.text_field :stripe_shipping_address_line2, value: prefill(:line2), placeholder: suggested(:line2), disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_line2, value: prefill(:line2), placeholder: suggested(:line2), disabled: event&.demo_mode? %>
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_city, "City" %>
-      <%= form.text_field :stripe_shipping_address_city, value: prefill(:city), placeholder: suggested(:city), disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_city, value: prefill(:city), placeholder: suggested(:city), disabled: event&.demo_mode? %>
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_state, "State / province" %>
-      <%= form.text_field :stripe_shipping_address_state, value: prefill(:state), placeholder: suggested(:state), disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_state, value: prefill(:state), placeholder: suggested(:state), disabled: event&.demo_mode? %>
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_postal_code, "ZIP code" %>
-      <%= form.text_field :stripe_shipping_address_postal_code, value: prefill(:postal_code), placeholder: suggested(:postal_code), disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_postal_code, value: prefill(:postal_code), placeholder: suggested(:postal_code), disabled: event&.demo_mode? %>
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_country, "Country" %>
-      <%= form.country_select :stripe_shipping_address_country, only: ["US"], sort_provided: false, selected: "US", disabled: @event&.demo_mode? %>
+      <%= form.country_select :stripe_shipping_address_country, only: ["US"], sort_provided: false, selected: "US", disabled: event&.demo_mode? %>
     </div>
 
-    <% designs = [@event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
+    <% designs = [event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
     <% designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.admin? %>
     <% if designs.any? %>
-      <% if Flipper.enabled?(:stripe_card_personalization_designs_2024_08_19, current_user) || (@event && Flipper.enabled?(:card_logos_2024_08_27, @event)) %>
+      <% if Flipper.enabled?(:stripe_card_personalization_designs_2024_08_19, current_user) || (event && Flipper.enabled?(:card_logos_2024_08_27, event)) %>
         <h2 class="grid__fill">Card design</h2>
         <div class="field field--options" style="max-width: unset;">
           <% designs.each do |design| %>
@@ -112,6 +114,6 @@
     Your name, birthday, and contact information is shared with them and their banking partners.
   </p>
   <div class="actions">
-    <%= form.submit "Issue my card", disabled: @event&.demo_mode? %>
+    <%= form.submit "Issue my card", disabled: event&.demo_mode? %>
   </div>
 <% end %>

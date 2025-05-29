@@ -2,7 +2,7 @@
 
 <% if card_grant.active? %>
 
-  <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+  <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: card_grant.event.slug),
               method: :post,
               data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },
               class: "btn bg-error" do %>
