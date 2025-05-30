@@ -86,7 +86,7 @@ class EventsController < ApplicationController
     @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
     @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
 
-    render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] }
   end
 
   def categories_chart
@@ -95,7 +95,7 @@ class EventsController < ApplicationController
     @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
     @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
 
-    render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] }
   end
 
   def balance_transactions
@@ -147,7 +147,7 @@ class EventsController < ApplicationController
     @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
-    render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe] || "All time", event: @event }
+    render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe], event: @event }
   end
 
   def users_chart
@@ -158,7 +158,7 @@ class EventsController < ApplicationController
     @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
-    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe] || "All time", event: @event }
+    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
   def transactions

@@ -9,7 +9,7 @@
               class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
               data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
               data-menu-target="toggle">
-              <%= local_assigns[:timeframe] %>
+              <%= local_assigns[:timeframe] || "All time" %>
               <%= inline_icon "down-caret" %>
             </button>
             <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
