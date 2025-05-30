@@ -8,27 +8,6 @@
   Promotions &amp; perks
 </h1>
 
-<% if @event.robotics_team? %>
-  <div class="card pb0 mb3 promo-onboard" id="bin">
-    <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 p2 my0 flex items-start smoke justify-center">
-        <img src="https://cloud-iuly89sfb-hack-club-bot.vercel.app/0surfin_orpheus.png" height="36px" class="mr2">
-        OnBoard Grant for PCB Fabrication
-      </h3>
-      <%= link_to "Jump Onboard",
-        @perks_available ? "https://hackclub.com/onboard/" : root_path,
-        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
-        target: :_blank %>
-    </div>
-    <p>
-      Use the OnBoard grant to master PCB design with free  resources, community support, and manufacturing grants.
-    </p>
-    <p>
-      Get up to $100 to cover the  costs of creating your custom circuit boards. Enhance your off-season R&D with hands-on experience and collaborate with fellow high schoolers in the Hack Club Slack community.
-    </p>
-  </div>
-<% end %>
-
 <div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="event-helper">
   <div class="card__banner card__banner--top flex justify-between items-center promo-event-helper">
     <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
