@@ -147,7 +147,7 @@ class EventsController < ApplicationController
     @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
-    render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe] || "All time", event: @event }
   end
 
   def users_chart
@@ -158,7 +158,7 @@ class EventsController < ApplicationController
     @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
-    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe] || "All time", event: @event }
   end
 
   def transactions
