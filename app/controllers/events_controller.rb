@@ -16,7 +16,7 @@ class EventsController < ApplicationController
   before_action :set_mock_data
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
-  before_action :set_timeframe, only: [:merchants, :categories, :tags, :users]
+  before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
   # GET /events
   def index
