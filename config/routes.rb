@@ -678,11 +678,11 @@ Rails.application.routes.draw do
     get :recent_activity
     get :balance_transactions
     get :money_movement
-    get :merchants
-    get :categories
+    get :merchants_chart
+    get :categories_chart
     get :top_categories
-    get :tags
-    get :users
+    get :tags_chart
+    get :users_chart
     get :transaction_heatmap
 
     get "edit", to: redirect("/%{event_id}/settings")

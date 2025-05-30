@@ -1,9 +1,9 @@
-<%= turbo_frame_tag "merchants" do %>
-  <% if !@merchants.empty? %>
-    <div id="merchants-chart">
+<%= turbo_frame_tag "categories" do %>
+  <% if !@categories.empty? %>
+    <div id="categories-chart">
       <div class="flex flex-row justify-between mb2 mt2 items-center">
-        <h3 class="mt0 mb0">Top merchants</h3>
-        <div data-controller="menu" data-menu-append-to-value="#merchants-chart">
+        <h3 class="mt0 mb0">Top categories</h3>
+        <div data-controller="menu" data-menu-append-to-value="#categories-chart">
           <button
             class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
             data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
@@ -12,23 +12,22 @@
             <%= inline_icon "down-caret" %>
           </button>
           <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
-            <%= link_to "All time", event_merchants_path(@event) %>
-            <%= link_to "Past week", event_merchants_path(@event, timeframe: "Past week") %>
-            <%= link_to "Past month", event_merchants_path(@event, timeframe: "Past month") %>
+            <%= link_to "All time", event_categories_chart_path(@event) %>
+            <%= link_to "Past week", event_categories_chart_path(@event, timeframe: "Past week") %>
+            <%= link_to "Past month", event_categories_chart_path(@event, timeframe: "Past month") %>
           </div>
         </div>
       </div>
-      <div style="width: calc(100% + 20px)">
-        <%= react_component "home/Merchants", { data: @merchants }, { camelize_props: false } %>
-      </div>
+      <%= react_component "home/Categories", { data: @categories }, { camelize_props: false } %>
     </div>
-   <% elsif !@categories.empty? %>
+    <%# Only shown if merchants chart is visible to prevent awkward gap %>
+  <% elsif !@merchants.empty? %>
     <div class="flex flex-1 items-center justify-center flex-col text-center">
       <h3 class="text-2xl font-bold mb-0">
         It's quiet here...
       </h3>
       <p class="text-gray-500 my-1">
-        Merchants will appear here as you spend more money
+        Categories will appear here as you spend more money
       </p>
     </div>
   <% end %>

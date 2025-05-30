@@ -15,11 +15,11 @@ class EventPolicy < ApplicationPolicy
   alias_method :recent_activity?, :show?
   alias_method :money_movement?, :show?
   alias_method :balance_transactions?, :show?
-  alias_method :merchants?, :show?
-  alias_method :categories?, :show?
+  alias_method :merchants_chart?, :show?
+  alias_method :categories_chart?, :show?
   alias_method :top_categories?, :show?
-  alias_method :tags?, :show?
-  alias_method :users?, :show?
+  alias_method :tags_chart?, :show?
+  alias_method :users_chart?, :show?
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?

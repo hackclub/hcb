@@ -26,9 +26,9 @@
               <%= inline_icon "down-caret" %>
             </button>
             <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
-              <%= link_to "All time", event_users_path(@event) %>
-              <%= link_to "Past week", event_users_path(@event, timeframe: "Past week") %>
-              <%= link_to "Past month", event_users_path(@event, timeframe: "Past month") %>
+              <%= link_to "All time", event_users_chart_path(@event) %>
+              <%= link_to "Past week", event_users_chart_path(@event, timeframe: "Past week") %>
+              <%= link_to "Past month", event_users_chart_path(@event, timeframe: "Past month") %>
             </div>
           </div>
         </div>

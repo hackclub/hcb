@@ -80,22 +80,22 @@ class EventsController < ApplicationController
     render partial: "events/home/heatmap", locals: { heatmap: @heatmap, event: @event }
   end
 
-  def merchants
+  def merchants_chart
     authorize @event
 
     @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
     @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
 
-    render partial: "events/home/merchants", locals: { timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] || "All time" }
   end
 
-  def categories
+  def categories_chart
     authorize @event
 
     @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
     @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
 
-    render partial: "events/home/categories", locals: { timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] || "All time" }
   end
 
   def balance_transactions
@@ -139,7 +139,7 @@ class EventsController < ApplicationController
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
 
-  def tags
+  def tags_chart
     authorize @event
     @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
     @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
@@ -147,10 +147,10 @@ class EventsController < ApplicationController
     @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
-    render partial: "events/home/tags", locals: { tags: @tags, timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe] || "All time" }
   end
 
-  def users
+  def users_chart
     authorize @event
     @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
     @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
@@ -158,7 +158,7 @@ class EventsController < ApplicationController
     @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
-    render partial: "events/home/users", locals: { users: @users, timeframe: params[:timeframe] || "All time" }
+    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe] || "All time" }
   end
 
   def transactions
