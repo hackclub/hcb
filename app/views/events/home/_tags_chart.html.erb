@@ -19,20 +19,25 @@
       <% else %>
         <div class="flex flex-row justify-between items-center w-full mb2 mt2">
           <h3 class="mt0 mb0">Top tags</h3>
-          <div data-controller="menu" data-menu-append-to-value="#tags-chart">
-            <button
-              class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
-              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-              data-menu-target="toggle">
-              <%= local_assigns[:timeframe] %>
-              <%= inline_icon "down-caret" %>
-            </button>
-            <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
-              <%= link_to "All time", event_tags_chart_path(@event) %>
-              <%= link_to "Past month", event_tags_chart_path(@event, timeframe: "Past month") %>
-              <%= link_to "Past week", event_tags_chart_path(@event, timeframe: "Past week") %>
+          <% if event.created_at < 1.week.ago %>
+            <div data-controller="menu" data-menu-append-to-value="#tags-chart">
+              <button
+                class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
+                data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+                data-menu-target="toggle">
+                <%= local_assigns[:timeframe] %>
+                <%= inline_icon "down-caret" %>
+              </button>
+              <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+                <%= link_to "All time", event_tags_chart_path(event) %>
+                <%= link_to "Past year", event_tags_chart_path(event, timeframe: "Past year") if event.created_at < 1.year.ago %>
+                <%= link_to "Past month", event_tags_chart_path(event, timeframe: "Past month") if event.created_at < 1.month.ago %>
+                <%= link_to "Past week", event_tags_chart_path(event, timeframe: "Past week") %>
+              </div>
             </div>
-          </div>
+          <% else %>
+            <h5 class="homepage-eyebrow mt0 mb0">All&nbsp;time</h5>
+          <% end %>
         </div>
         <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
       <% end %>

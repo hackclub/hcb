@@ -52,8 +52,9 @@
 class Event < ApplicationRecord
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
   BREAKDOWN_TIMEFRAMES = {
-    "Past week"  => 1.week,
-    "Past month" => 1.month
+    "Past year"  => 1.year,
+    "Past month" => 1.month,
+    "Past week"  => 1.week
   }.freeze
 
   include Hashid::Rails
