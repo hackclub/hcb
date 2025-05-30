@@ -15,7 +15,7 @@
             <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
               <%= link_to "All time", event_merchants_chart_path(@event) %>
               <%= link_to "Past year", event_merchants_chart_path(@event, timeframe: "Past year") if @event.created_at < 1.year.ago %>
-              <%= link_to "Past month", event_merchants_chart_path(@event, timeframe: "Past month") if @event.created_at < 1.month.ago  %>
+              <%= link_to "Past month", event_merchants_chart_path(@event, timeframe: "Past month") if @event.created_at < 1.month.ago %>
               <%= link_to "Past week", event_merchants_chart_path(@event, timeframe: "Past week") %>
             </div>
           </div>
