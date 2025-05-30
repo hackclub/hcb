@@ -29,8 +29,8 @@
             </button>
             <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
               <%= link_to "All time", event_tags_chart_path(@event) %>
-              <%= link_to "Past week", event_tags_chart_path(@event, timeframe: "Past week") %>
               <%= link_to "Past month", event_tags_chart_path(@event, timeframe: "Past month") %>
+              <%= link_to "Past week", event_tags_chart_path(@event, timeframe: "Past week") %>
             </div>
           </div>
         </div>
