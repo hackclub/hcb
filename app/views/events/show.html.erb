@@ -110,26 +110,26 @@
     <% end %>
   </div>
 
-  <div class="homepage-row mb-4">
-    <%= turbo_frame_tag "merchants", src: event_merchants_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100" do %>
+  <div class="homepage-row">
+    <%= turbo_frame_tag "merchants", src: event_merchants_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100 mb-4" do %>
       <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>
     <% end %>
-    <%= turbo_frame_tag "categories", src: event_categories_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100" do %>
+    <%= turbo_frame_tag "categories", src: event_categories_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100 mb-4" do %>
       <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>
     <% end %>
   </div>
 
-  <div class="homepage-row mb-4">
-    <%= turbo_frame_tag "tags", src: event_tags_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100" do %>
+  <div class="homepage-row">
+    <%= turbo_frame_tag "tags", src: event_tags_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100 mb-4" do %>
       <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>
     <% end %>
-    <%= turbo_frame_tag "users", src: event_users_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100" do %>
+    <%= turbo_frame_tag "users", src: event_users_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100 mb-4" do %>
       <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>
