@@ -1,0 +1,39 @@
+<%= turbo_frame_tag "users" do %>
+  <% if !@empty_tags || !@empty_users %>
+    <div id="users-chart">
+      <% if @empty_users %>
+        <div class="flex flex-1 flex-col items-center justify-center">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold mb-0">
+              Not enough data
+            </h3>
+            <p class="text-gray-500 my-1">
+              To see users here, make sure they have at least one transaction. If not, invite team members to get
+              started!
+            </p>
+            <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
+          </div>
+        </div>
+      <% else %>
+        <div class="flex flex-row justify-between items-center w-full mb-2 mt2">
+          <h3 class="mt0 mb0">Top users</h3>
+          <div data-controller="menu" data-menu-append-to-value="#users-chart">
+            <button
+              class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
+              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+              data-menu-target="toggle">
+              <%= local_assigns[:timeframe] %>
+              <%= inline_icon "down-caret" %>
+            </button>
+            <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+              <%= link_to "All time", event_users_path(@event) %>
+              <%= link_to "Past week", event_users_path(@event, timeframe: "Past week") %>
+              <%= link_to "Past month", event_users_path(@event, timeframe: "Past month") %>
+            </div>
+          </div>
+        </div>
+        <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

@@ -18,7 +18,8 @@ class EventPolicy < ApplicationPolicy
   alias_method :merchants?, :show?
   alias_method :categories?, :show?
   alias_method :top_categories?, :show?
-  alias_method :tags_users?, :show?
+  alias_method :tags?, :show?
+  alias_method :users?, :show?
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?

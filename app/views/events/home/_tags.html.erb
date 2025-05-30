@@ -1,0 +1,41 @@
+<%= turbo_frame_tag "tags" do %>
+  <% if !@empty_tags || !@empty_users %>
+    <div id="tags-chart">
+      <% if @empty_tags %>
+        <div class="flex flex-1 flex-col items-center justify-center">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold mb-0">
+              <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "It's quiet here..." : "Tags aren't enabled for this event" %>
+            </h3>
+            <p class="text-gray-500 my-1 max-w-sm">
+              <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "Either you don't have any tags, or you haven't categorized any transactions yet." : "With tags, you can neatly categorize your transactions." %>
+            </p>
+
+            <% unless Flipper.enabled?(:transaction_tags_2022_07_29, event) %>
+              <%= link_to "Take me to the settings!", edit_event_path(event, tab: "features"), data: { turbo_frame: :_top }, class: "btn btn-primary mt-4" %>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="flex flex-row justify-between items-center w-full mb2 mt2">
+          <h3 class="mt0 mb0">Top tags</h3>
+          <div data-controller="menu" data-menu-append-to-value="#tags-chart">
+            <button
+              class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
+              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+              data-menu-target="toggle">
+              <%= local_assigns[:timeframe] %>
+              <%= inline_icon "down-caret" %>
+            </button>
+            <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+              <%= link_to "All time", event_tags_path(@event) %>
+              <%= link_to "Past week", event_tags_path(@event, timeframe: "Past week") %>
+              <%= link_to "Past month", event_tags_path(@event, timeframe: "Past month") %>
+            </div>
+          </div>
+        </div>
+        <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

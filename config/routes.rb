@@ -681,7 +681,8 @@ Rails.application.routes.draw do
     get :merchants
     get :categories
     get :top_categories
-    get :tags_users
+    get :tags
+    get :users
     get :transaction_heatmap
 
     get "edit", to: redirect("/%{event_id}/settings")

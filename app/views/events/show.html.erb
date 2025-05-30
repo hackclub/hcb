@@ -123,14 +123,18 @@
     <% end %>
   </div>
 
-  <%= turbo_frame_tag "tags_users", src: event_tags_users_path(@event), class: "homepage-row empty:hidden mb-4", loading: "lazy", target: "_top" do %>
-    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-      <%= render partial: "application/loading_container" %>
-    </div>
-    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-      <%= render partial: "application/loading_container" %>
-    </div>
-  <% end %>
+  <div class="homepage-row mb-4">
+    <%= turbo_frame_tag "tags", src: event_tags_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100" do %>
+      <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+        <%= render partial: "application/loading_container" %>
+      </div>
+    <% end %>
+    <%= turbo_frame_tag "users", src: event_users_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100" do %>
+      <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+        <%= render partial: "application/loading_container" %>
+      </div>
+    <% end %>
+  </div>
 
   <%= turbo_frame_tag "transaction_heatmap", src: event_transaction_heatmap_path(@event), class: "homepage-row mb-4", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown shadow-none p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height:223px">

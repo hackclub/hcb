@@ -16,7 +16,7 @@ class EventsController < ApplicationController
   before_action :set_mock_data
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
-  before_action :set_timeframe, only: [:merchants, :categories]
+  before_action :set_timeframe, only: [:merchants, :categories, :tags, :users]
 
   # GET /events
   def index
@@ -139,15 +139,26 @@ class EventsController < ApplicationController
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
 
-  def tags_users
+  def tags
     authorize @event
-    @users = BreakdownEngine::Users.new(@event).run
-    @tags = BreakdownEngine::Tags.new(@event).run
+    @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
+    @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
 
     @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
     @empty_users = @users.empty?
 
-    render partial: "events/home/tags_users", locals: { users: @users, tags: @tags, event: @event }
+    render partial: "events/home/tags", locals: { tags: @tags, timeframe: params[:timeframe] || "All time" }
+  end
+
+  def users
+    authorize @event
+    @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
+    @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
+
+    @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+    @empty_users = @users.empty?
+
+    render partial: "events/home/users", locals: { users: @users, timeframe: params[:timeframe] || "All time" }
   end
 
   def transactions
