@@ -308,6 +308,7 @@ class AdminController < ApplicationController
     @page = params[:page] || 1
     @per = params[:per] || 100
     @q = params[:q].present? ? params[:q] : nil
+    @amount = params[:amount].present? ? params[:amount] : nil
     @unmapped = params[:unmapped] != "0"
     @exclude_top_ups = params[:exclude_top_ups] == "1" ? true : nil
     @exclude_spending = params[:exclude_spending] == "1" ? true : nil
@@ -324,17 +325,35 @@ class AdminController < ApplicationController
     end
 
     if @q
-      if @q.match /\A\d+(\.\d{1,2})?\z/
-        @q = Monetize.parse(@q).cents
-        relation = relation.where("amount_cents = ? or amount_cents = ?", @q, -@q)
+      if @amount.present?
+        relation = relation.search_memo(@q)
       else
-        case @q.delete(" ")
+        if @q.match /\A\d+(\.\d{1,2})?\z/
+          @q = Monetize.parse(@q).cents
+          relation = relation.where("amount_cents = ? or amount_cents = ?", @q, -@q)
+        else
+          case @q.delete(" ")
+          when ">0", ">=0"
+            relation = relation.where("amount_cents >= 0")
+          when "<0", "<=0"
+            relation = relation.where("amount_cents <= 0")
+          else
+            relation = relation.search_memo(@q)
+          end
+        end
+      end
+    end
+
+    if @amount
+      if @amount.match /\A\d+(\.\d{1,2})?\z/
+        amount_cents = Monetize.parse(@amount).cents
+        relation = relation.where("amount_cents = ? or amount_cents = ?", amount_cents, -amount_cents)
+      else
+        case @amount.delete(" ")
         when ">0", ">=0"
           relation = relation.where("amount_cents >= 0")
         when "<0", "<=0"
           relation = relation.where("amount_cents <= 0")
-        else
-          relation = relation.search_memo(@q)
         end
       end
     end
