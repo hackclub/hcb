@@ -9,7 +9,7 @@ class TagsController < ApplicationController
     authorize @event, policy_class: TagPolicy
 
     tag = Tag.where(label: params[:label].strip, event: @event)
-    tag = tag.create_with(color: params[:color]).first_or_create
+    tag = tag.create_with(color: params[:color], emoji: params[:emoji]).first_or_create
 
     if params[:hcb_code_id]
       hcb_code = HcbCode.find(params[:hcb_code_id])
@@ -28,7 +28,7 @@ class TagsController < ApplicationController
 
     authorize tag
 
-    tag.update(label: params[:label].strip, color: params[:color])
+    tag.update(label: params[:label].strip, color: params[:color], emoji: params[:emoji])
 
     redirect_back fallback_location: @event
   end
