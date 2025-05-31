@@ -325,23 +325,7 @@ class AdminController < ApplicationController
     end
 
     if @q
-      if @amount.present?
-        relation = relation.search_memo(@q)
-      else
-        if @q.match /\A\d+(\.\d{1,2})?\z/
-          @q = Monetize.parse(@q).cents
-          relation = relation.where("amount_cents = ? or amount_cents = ?", @q, -@q)
-        else
-          case @q.delete(" ")
-          when ">0", ">=0"
-            relation = relation.where("amount_cents >= 0")
-          when "<0", "<=0"
-            relation = relation.where("amount_cents <= 0")
-          else
-            relation = relation.search_memo(@q)
-          end
-        end
-      end
+      relation = relation.search_memo(@q)
     end
 
     if @amount
