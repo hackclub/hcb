@@ -3,7 +3,12 @@
     <%= organizer_position.created_at.strftime("%b %d, %Y") %>
     <% admin_tool("badge") do %>
       <div class="text-muted ml0">
-        last active: <%= format_date "last active: #{ organizer_position.user.last_seen_at}" %>
+        Last active:
+        <% if organizer_position.user.last_seen_at.present? %>
+          <%= format_date(organizer_position.user.last_seen_at) %>
+        <% else %>
+          unknown
+        <% end %>
       </div>
     <% end %>
   </td>
