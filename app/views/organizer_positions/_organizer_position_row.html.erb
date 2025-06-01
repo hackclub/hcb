@@ -1,5 +1,12 @@
 <tr>
-  <td><%= organizer_position.created_at.strftime("%b %d, %Y") %></td>
+  <td>
+    <%= organizer_position.created_at.strftime("%b %d, %Y") %>
+    <% admin_tool("badge") do %>
+      <div class="text-muted ml0">
+        last active: <%= format_date "last active: #{ organizer_position.user.last_seen_at}" %>
+      </div>
+    <% end %>
+  </td>
   <td>
     <%= user_mention organizer_position.user %>
   </td>
