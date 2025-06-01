@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_18_005427) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -2058,8 +2058,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_18_005427) do
     t.string "aasm_state", null: false
     t.string "original", null: false
     t.string "replacement", null: false
-    t.string "authorization_token", null: false
-    t.string "verification_token", null: false
     t.boolean "verified", default: false, null: false
     t.boolean "authorized", default: false, null: false
     t.bigint "updated_by_id"

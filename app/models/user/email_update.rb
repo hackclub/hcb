@@ -6,12 +6,10 @@
 #
 #  id                             :bigint           not null, primary key
 #  aasm_state                     :string           not null
-#  authorization_token            :string           not null
 #  authorization_token_ciphertext :text
 #  authorized                     :boolean          default(FALSE), not null
 #  original                       :string           not null
 #  replacement                    :string           not null
-#  verification_token             :string           not null
 #  verification_token_ciphertext  :text
 #  verified                       :boolean          default(FALSE), not null
 #  created_at                     :datetime         not null
