@@ -2,13 +2,14 @@
 
 module BreakdownEngine
   class Tags
-    def initialize(event)
+    def initialize(event, **options)
       @event = event
+      @timeframe = options[:timeframe]
     end
 
     def run
       tags = @event.tags.includes(hcb_codes: [:canonical_transactions, :canonical_pending_transactions]).each_with_object([]) do |tag, array|
-        amount_cents_sum = tag.hcb_codes.sum do |hcb_code|
+        amount_cents_sum = tag.hcb_codes.where(@timeframe.present? ? { created_at: (Time.now - @timeframe)..Time.now } : {}).sum do |hcb_code|
           hcb_code.amount_cents.abs
         end
         next if amount_cents_sum == 0
