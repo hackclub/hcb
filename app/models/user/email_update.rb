@@ -6,12 +6,10 @@
 #
 #  id                             :bigint           not null, primary key
 #  aasm_state                     :string           not null
-#  authorization_token            :string           not null
 #  authorization_token_ciphertext :text
 #  authorized                     :boolean          default(FALSE), not null
 #  original                       :string           not null
 #  replacement                    :string           not null
-#  verification_token             :string           not null
 #  verification_token_ciphertext  :text
 #  verified                       :boolean          default(FALSE), not null
 #  created_at                     :datetime         not null
@@ -40,10 +38,11 @@ class User
 
     belongs_to :user
     belongs_to :updated_by, class_name: "User"
-    has_secure_token :authorization_token
-    has_secure_token :verification_token
-    has_encrypted :authorization_token, migrating: true
-    has_encrypted :verification_token, migrating: true
+
+    has_encrypted :authorization_token
+    has_encrypted :verification_token
+    self.ignored_columns += ["authorization_token", "verification_token"]
+    before_validation :ensure_tokens
 
     validate :non_hcb_email
     validate :non_existing_email
@@ -91,6 +90,11 @@ class User
     end
 
     private
+
+    def ensure_tokens
+      self.authorization_token ||= SecureRandom.base58(24)
+      self.verification_token  ||= SecureRandom.base58(24)
+    end
 
     def non_hcb_email
       if GSuiteAccount.where(address: replacement).any?
