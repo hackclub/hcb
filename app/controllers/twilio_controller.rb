@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class TwilioController < ActionController::Base
-  protect_from_forgery except: :webhook
-  before_action :set_attachments, :set_user, :set_receiptable, :set_reimbursement_report
+  protect_from_forgery
+  before_action :validate_webhook_authenticity, :set_attachments, :set_user, :set_receiptable, :set_reimbursement_report
 
   def webhook
     return reply_with(<<~MSG.squish) if @user.nil?
@@ -50,6 +50,14 @@ class TwilioController < ActionController::Base
 
   private
 
+  def validate_webhook_authenticity
+    secret_token = ENV['WEBHOOK_SECRET_TOKEN']
+    provided_token = request.headers['X-Webhook-Token']
+
+    unless ActiveSupport::SecurityUtils.secure_compare(provided_token.to_s, secret_token.to_s)
+      render plain: "Invalid webhook token", status: :unauthorized
+    end
+  end
   def reply_with(message)
     respond_to do |format|
       format.xml { render xml: "<Response><Message> #{message} </Message></Response>" }
