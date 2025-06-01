@@ -48,9 +48,10 @@
           <%= form.hidden_field :upload_method, value: upload_method, data: { "file-drop-target" => "uploadMethod" } %>
           <%= (form.hidden_field :show_receipt_button, value: local_assigns[:show_receipt_button]) %>
           <%= (form.hidden_field :show_author_img, value: local_assigns[:show_author_img]) %>
+          <%= (form.hidden_field :ledger_instance, value: @ledger_instance) %>
           <%= (form.hidden_field :s, value: local_assigns[:secret]) %>
 
-          <%= form.file_field :file,
+          <%= form.file_field "file_#{@ledger_instance}",
                               multiple: true,
                               include_hidden: false,
                               required: true,
@@ -62,7 +63,7 @@
                                 "action"           => "change->form#submit"
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
-            <%= form.label :file, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-receipt-button" do %>
+            <%= form.label "file_#{@ledger_instance}", class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-receipt-button" do %>
               <%= inline_icon "cloud-upload" %>
               <% if local_assigns[:success] || local_assigns[:error] %>
                 <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>

@@ -66,7 +66,8 @@ class HcbCode < ApplicationRecord
   def popover_path(**params)
     author_img_param = "&transaction_show_author_img=#{params[:transaction_show_author_img]}" if params[:transaction_show_author_img]
     receipt_button_param = "&transaction_show_receipt_button=#{params[:transaction_show_receipt_button]}" if params[:transaction_show_receipt_button]
-    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}"
+    ledger_instance_param = "&ledger_instance=#{params[:ledger_instance]}" if params[:ledger_instance]
+    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}#{ledger_instance_param}"
   end
 
   def receipt_upload_email
