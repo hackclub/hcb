@@ -68,16 +68,6 @@
                           disabled: !policy(organizer_position).can_request_removal? %>
           </div>
         <% end %>
-        <% admin_tool("badge") do %>
-          <div class="text-muted ml0">
-            Last active:
-            <% if organizer_position.user.last_seen_at.present? %>
-              <%= format_date(organizer_position.user.last_seen_at) %>
-            <% else %>
-              unknown
-            <% end %>
-          </div>
-        <% end %>
       </div>
     <% end %>
   </div>
@@ -97,6 +87,16 @@
             <%= organizer_position.user.phone_number %>
           <% end %>
         </p>
+      <% end %>
+    </div>
+  <% end %>
+  <% if auditor_signed_in? %>
+    <div class="warning m0">
+      Last active:
+      <% if organizer_position.user.last_seen_at.present? %>
+        <%= format_date(organizer_position.user.last_seen_at) %>
+      <% else %>
+        unknown
       <% end %>
     </div>
   <% end %>
