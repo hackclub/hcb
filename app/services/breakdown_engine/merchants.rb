@@ -34,6 +34,5 @@ module BreakdownEngine
       merchants.sort_by! { |merchant| -merchant[:value] }
       merchants.first(7)
     end
-
   end
 end
