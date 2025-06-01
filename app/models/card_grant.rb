@@ -4,22 +4,23 @@
 #
 # Table name: card_grants
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer
-#  category_lock   :string
-#  email           :string           not null
-#  keyword_lock    :string
-#  merchant_lock   :string
-#  purpose         :string
-#  status          :integer          default("active"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint
-#  event_id        :bigint           not null
-#  sent_by_id      :bigint           not null
-#  stripe_card_id  :bigint
-#  subledger_id    :bigint
-#  user_id         :bigint           not null
+#  id                               :bigint           not null, primary key
+#  amount_cents                     :integer
+#  category_lock                    :string
+#  email                            :string           not null
+#  keyword_lock                     :string
+#  last_expiry_notification_sent_at :datetime
+#  merchant_lock                    :string
+#  purpose                          :string
+#  status                           :integer          default("active"), not null
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
+#  disbursement_id                  :bigint
+#  event_id                         :bigint           not null
+#  sent_by_id                       :bigint           not null
+#  stripe_card_id                   :bigint
+#  subledger_id                     :bigint
+#  user_id                          :bigint           not null
 #
 # Indexes
 #
@@ -81,8 +82,9 @@ class CardGrant < ApplicationRecord
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
   scope :search_recipient, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
-  scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
   scope :expires_on, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') = ?", date) }
+  scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
+  scope :expires_between, ->(start_date, end_date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') BETWEEN ? AND ?", start_date, end_date) }
 
   monetize :amount_cents
 
