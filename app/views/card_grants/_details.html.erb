@@ -89,7 +89,7 @@
       </p>
     <% end %>
   </section>
-  <% if card_grant.pending_invite? %>
+  <% if (card_grant.pending_invite? || @frame) && policy(@card_grant).update? %>
     <%# Once the user has accepted the invite, these action buttons are shown elsewhere %>
     <section>
       <%= render partial: "actions", locals: { card_grant: @card_grant } %>
