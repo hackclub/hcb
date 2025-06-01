@@ -408,6 +408,7 @@ Rails.application.routes.draw do
     post "mark_fulfilled"
     post "reject"
     post "cancel"
+    post "manager_approve"
     get "confirmation", to: "disbursements#transfer_confirmation_letter"
   end
 
