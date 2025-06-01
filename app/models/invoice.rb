@@ -186,6 +186,12 @@ class Invoice < ApplicationRecord
 
   before_create :set_defaults
 
+  after_create_commit -> {
+    unless OrganizerPosition.find_by(user: self.creator, event: event)&.manager?
+      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
+    end
+  }
+
   # Stripe syncing…
   before_destroy :close_stripe_invoice
 
