@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_18_005427) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_23_134852) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -430,6 +430,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_18_005427) do
     t.integer "status", default: 0, null: false
     t.string "keyword_lock"
     t.string "purpose"
+    t.datetime "last_expiry_notification_sent_at"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
