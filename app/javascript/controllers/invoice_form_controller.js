@@ -42,7 +42,6 @@ export default class extends Controller {
     const isValid = [...inputs].every(input => input.checkValidity())
     this.continueButtonTarget.disabled = !isValid
     this.secondTabTarget.disabled = !isValid
-    console.log('checking', isValid)
   }
 
   continue() {
