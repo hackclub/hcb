@@ -168,11 +168,11 @@ GEM
     bigdecimal (3.1.9)
     bindata (2.5.0)
     bindex (0.8.1)
-    blazer (3.2.0)
-      activerecord (>= 6.1)
+    blazer (3.3.0)
+      activerecord (>= 7.1)
       chartkick (>= 5)
       csv
-      railties (>= 7)
+      railties (>= 7.1)
       safely_block (>= 0.4)
     blind_index (2.6.2)
       activesupport (>= 7)
@@ -198,7 +198,7 @@ GEM
       cairo (>= 1.16.2)
       glib2 (= 4.2.4)
     cbor (0.5.9.8)
-    chartkick (5.1.4)
+    chartkick (5.1.5)
     childprocess (5.1.0)
       logger (~> 1.5)
     chronic (0.10.2)
@@ -278,6 +278,7 @@ GEM
       dry-initializer (~> 3.0)
       dry-schema (~> 1.9, >= 1.9.1)
     email_reply_parser (0.5.11)
+    erb (5.0.1)
     erb_lint (0.9.0)
       activesupport
       better_html (>= 2.0.1)
@@ -491,7 +492,7 @@ GEM
       benchmark
       logger
     mini_mime (1.1.5)
-    mini_portile2 (2.8.8)
+    mini_portile2 (2.8.9)
     minitest (5.25.5)
     monetize (1.13.0)
       money (~> 6.12)
@@ -571,7 +572,7 @@ GEM
       pry (>= 0.13, < 0.15)
     pry-rails (0.3.11)
       pry (>= 0.13.0)
-    psych (5.2.3)
+    psych (5.2.6)
       date
       stringio
     public_activity (3.0.1)
@@ -589,7 +590,7 @@ GEM
       railties (>= 4.2)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (2.2.15)
+    rack (2.2.16)
     rack-attack (6.7.0)
       rack (>= 1.0, < 4)
     rack-cors (2.0.2)
@@ -620,7 +621,7 @@ GEM
       activesupport (= 7.2.2.1)
       bundler (>= 1.15.0)
       railties (= 7.2.2.1)
-    rails-dom-testing (2.2.0)
+    rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
       nokogiri (>= 1.6)
@@ -643,7 +644,8 @@ GEM
     rbs (3.9.2)
       logger
     rbtree3 (0.7.1)
-    rdoc (6.13.1)
+    rdoc (6.14.0)
+      erb
       psych (>= 4.0.0)
     react-rails (3.2.1)
       babel-transpiler (>= 0.7.0)
@@ -788,7 +790,7 @@ GEM
     stackprof (0.2.26)
     statsd-instrument (3.9.9)
     statsd-ruby (1.5.0)
-    stringio (3.1.6)
+    stringio (3.1.7)
     stripe (11.7.0)
     strong_migrations (1.8.0)
       activerecord (>= 5.2)
