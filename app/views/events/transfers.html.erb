@@ -139,9 +139,7 @@
             <% end %>
           </td>
           <td style="text-align: right;">
-            <% if d.is_a? CardGrant %>
-              <%= render_money d.amount_cents %>
-            <% elsif d.is_a? Wire %>
+            <% if d.is_a? Wire %>
               <%= render_money(d.local_hcb_code.amount_cents.abs) %>
             <% else %>
               <%= render_money(d.amount) %>
