@@ -51,7 +51,7 @@ export default class extends Controller {
       document.getElementById('invoice').click()
     } else {
       this.showNewSponsorCard(false)
-      ;[...inputs].reverse().forEach(input => input.reportValidity())
+        ;[...inputs].reverse().forEach(input => input.reportValidity())
     }
   }
 
@@ -62,6 +62,7 @@ export default class extends Controller {
     const { value } = this.selectSponsorTarget
     if (parseInt(value)) this.showSponsorCard()
     else this.showNewSponsorCard()
+    this.validateForm()
   }
 
   setValues() {
