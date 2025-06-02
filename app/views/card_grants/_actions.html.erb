@@ -6,6 +6,7 @@
       <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card %>
     <% end %>
 
+    <%= render "card_grants/actions/toggle_one_time_use", card_grant: %>
     <%= render "card_grants/actions/topup", card_grant: %>
     <%= render "card_grants/actions/withdraw", card_grant: %>
     <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant: %>

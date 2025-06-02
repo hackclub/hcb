@@ -756,6 +756,7 @@ Rails.application.routes.draw do
         post "withdraw"
         post "cancel"
         post "convert_to_reimbursement_report"
+        post "toggle_one_time_use"
       end
     end
 
