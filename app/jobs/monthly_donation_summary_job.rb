@@ -6,14 +6,14 @@ class MonthlyDonationSummaryJob < ApplicationJob
     Event.includes(:donations).where("donations.created_at > ?", 1.month.ago).references(:donations).find_each do |event|
       mailer = EventMailer.with(event: event)
 
-      attempt = 1
+      attempt = 0
       mail = nil
       while mail.nil?
         begin
           mail = mailer.monthly_donation_summary.deliver_now
         rescue Net::SMTPServerBusy
           # Rate limited by SES
-          sleep 0.5 * attempt
+          sleep [2**attempt, 32].min
           attempt += 1
         end
       end
