@@ -71,6 +71,10 @@ class Event
         true
       end
 
+      def supervisor_required?
+        false
+      end
+
     end
 
   end
