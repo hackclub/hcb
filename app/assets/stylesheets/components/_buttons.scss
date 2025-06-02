@@ -79,7 +79,7 @@ input[type='submit'],
   }
 
   &.bg-slate {
-    @include gradient(slate)
+    @include gradient(slate);
   }
 
   &.bg-ai {
