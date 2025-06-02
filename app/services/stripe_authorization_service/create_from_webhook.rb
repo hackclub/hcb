@@ -44,7 +44,7 @@ module StripeAuthorizationService
             AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
           end
 
-          if cpt.stripe_card.card_grant.one_time_use
+          if cpt&.stripe_card&.card_grant&.one_time_use
             cpt.stripe_card.freeze!
           end
         else
