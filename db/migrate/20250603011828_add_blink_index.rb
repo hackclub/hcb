@@ -1,4 +1,4 @@
-class AddBlinkIndex < ActiveRecord::Migration[7.2]
+class AddBlindIndex < ActiveRecord::Migration[7.2]
   disable_ddl_transaction!
   def change
     add_column :user_email_updates, :authorization_token_bidx, :string
