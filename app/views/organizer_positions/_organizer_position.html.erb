@@ -9,31 +9,27 @@
       </div>
       <div class="flex flex-col justify-center">
         <p class="h2 bold m0"><%= organizer_position.user.name %></p>
-        <% if Flipper.enabled?(:user_permissions_2024_03_09, @event) && organizer_signed_in? %>
-          <div class="g0 line-height-0">
-            <% if policy(organizer_position).change_position_role? %>
-              <div data-controller="menu" data-menu-placement-value="bottom-start">
-                <div class="flex items-center cursor-pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
-                  <p class="h4 medium info"><%= organizer_position.role.capitalize %></p>
-                  <%= inline_icon "down-caret", class: "info menu__toggle" %>
-                </div>
-                <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-                  <% OrganizerPosition.roles.keys.each do |role| %>
-                    <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: "post", turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
-                      <%= role.humanize %><%= " ✔" if organizer_position.role == role %>
-                    <% end %>
-                  <% end %>
-                  <div class="menu__divider"></div>
-                  <%= link_to "What do these mean?", roles_path %>
-                </div>
+        <div class="g0 line-height-0">
+          <% if policy(organizer_position).change_position_role? %>
+            <div data-controller="menu" data-menu-placement-value="bottom-start">
+              <div class="flex items-center cursor-pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                <p class="h4 medium info"><%= organizer_position.role.capitalize %></p>
+                <%= inline_icon "down-caret", class: "info menu__toggle" %>
               </div>
-            <% else %>
-              <p class="h4 medium info"><%= organizer_position.role.capitalize %></p>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="h4 medium info"><%= organizer_position.role.capitalize %></p>
-        <% end %>
+              <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+                <% OrganizerPosition.roles.keys.each do |role| %>
+                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: "post", turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
+                    <%= role.humanize %><%= " ✔" if organizer_position.role == role %>
+                  <% end %>
+                <% end %>
+                <div class="menu__divider"></div>
+                <%= link_to "What do these mean?", roles_path %>
+              </div>
+            </div>
+          <% else %>
+            <p class="h4 medium info"><%= organizer_position.role.capitalize %></p>
+          <% end %>
+        </div>
       </div>
     </div>
     <% if organizer_signed_in? %>
