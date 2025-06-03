@@ -186,7 +186,7 @@
         </div>
         <div class="field">
           <%= form.label :email %>
-          <%= form.email_field :email, disabled: !Flipper.enabled?(:email_updates_2024_05_24, current_user) %>
+          <%= form.email_field :email %>
           <% if @user.email_updates.active.any? %>
             <p style="max-width: 420px;">
               <small>
