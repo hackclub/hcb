@@ -24,7 +24,7 @@
     <% [:amount_less_than, :amount_greater_than].each do |amount_filter| %>
       <% if params[amount_filter].present? %>
         <div class="badge badge-large bg-muted">
-          <%= amount_filter.to_s.humanize %> 
+          <%= amount_filter.to_s.humanize %>
           <%= render_money params[amount_filter].to_i %>
           <%= link_to upsert_query_params(amount_filter => nil),
                       class: "flex items-center",

@@ -694,11 +694,19 @@ class EventsController < ApplicationController
   def reimbursements
     authorize @event
     @reports = @event.reimbursement_reports.visible
-    @reports = @reports.pending if params[:filter] == "pending"
-    @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:filter] == "reimbursed"
-    @reports = @reports.rejected if params[:filter] == "rejected"
+    @reports = @reports.pending if params[:status] == "pending"
+    @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:status] == "reimbursed"
+    @reports = @reports.rejected if params[:status] == "rejected"
     @reports = @reports.search(params[:q]) if params[:q].present?
+    @reports = @reports.where("created_at <= ?", params[:date_before]) if params[:date_before].present?
+    @reports = @reports.where("created_at >= ?", params[:date_after]) if params[:date_after].present?
     @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
+
+    @has_filter = params[:status].present? || params[:date_before].present? || params[:date_after].present?
+    @filter_options = [
+      { label: "Status", type: "select", options: %w[pending reimbursed rejected] },
+      { label: "Date", type: "date_range" }
+    ]
   end
 
   def reimbursements_pending_review_icon
