@@ -102,7 +102,7 @@ class MyController < ApplicationController
     @mailbox_address = current_user.active_mailbox_address
     @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
     @pairings = current_user.receipt_bin.suggested_receipt_pairings
-    
+
 
     if flash[:popover]
       @popover = flash[:popover]
