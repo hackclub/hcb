@@ -31,7 +31,7 @@ class CardGrantPolicy < ApplicationPolicy
 
   def edit?
     admin_or_manager? && record.active?
-  end  
+  end
 
   def toggle_one_time_use?
     admin_or_manager? && record.active?
