@@ -1,8 +1,8 @@
 <% if current_user.teenager? %>
   <% current_month = Date.current.strftime('%B') %>
 
-  <%= link_to new_raffle_path(program: "teen-raffle"), class: "w-full no-underline" do %>
-    <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/a2daad374a6801ab8e6cffed1eb7dcc63732a43e_image.png')">
+  <%= link_to new_raffle_path(program: "teen-raffle"), class: "w-full no-underline text-inherit" do %>
+    <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/38be05dd4accefb1708c06ba6f99401b4265e7a1_image.png')">
       <div class="flex gap-2 items-center mb-4">
         <span>🎟️</span>
         <strong class="text-xl leading-tight">
