@@ -1,7 +1,7 @@
-<% raffle_program = "teen-raffle-#{Date.current.strftime("%m-%Y")}" %>
-<% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
+<% if current_user.teenager? %>
+  <% raffle_program = "teen-raffle-#{Date.current.strftime("%m-%Y")}" %>
+  <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
 
-<% if current_user.teenager? || already_joined %>
   <% current_month = Date.current.strftime("%B") %>
   <% next_month = Date.current.next_month.strftime("%B") %>
 
