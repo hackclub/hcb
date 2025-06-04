@@ -1,5 +1,19 @@
 <tr>
-  <td><%= organizer_position.created_at.strftime("%b %d, %Y") %></td>
+  <td>
+    <div class="flex flex-wrap">
+      <%= format_date(organizer_position.created_at) %>
+      <% if auditor_signed_in? %>
+        <div class="warning m0">
+          Last active:
+          <% if organizer_position.user.last_seen_at.present? %>
+            <%= format_date(organizer_position.user.last_seen_at) %>
+          <% else %>
+            unknown
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </td>
   <td>
     <%= user_mention organizer_position.user %>
   </td>

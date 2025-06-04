@@ -41,6 +41,10 @@ class CardGrantPolicy < ApplicationPolicy
     (admin_or_manager? || record.user == user) && record.card_grant_setting.reimbursement_conversions_enabled?
   end
 
+  def toggle_one_time_use?
+    admin_or_manager? && record.active?
+  end
+
   def admin_or_user?
     user&.admin? || record.event.users.include?(user)
   end

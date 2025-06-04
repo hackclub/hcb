@@ -8,6 +8,7 @@
     <% end %>
 
     <% if policy(card_grant).update? %>
+      <%= render "card_grants/actions/toggle_one_time_use", card_grant: %>
       <%= render "card_grants/actions/topup", card_grant: %>
       <%= render "card_grants/actions/withdraw", card_grant: %>
       <%= render "card_grants/actions/edit", card_grant: %>
