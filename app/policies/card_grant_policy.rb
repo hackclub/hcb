@@ -25,6 +25,18 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_user? || record.user == user
   end
 
+  def convert_to_reimbursement_report?
+    (admin_or_manager? || record.user == user) && record.card_grant_setting.reimbursement_conversions_enabled?
+  end
+
+  def edit?
+    admin_or_manager? && record.active?
+  end  
+
+  def toggle_one_time_use?
+    admin_or_manager? && record.active?
+  end
+
   def topup?
     admin_or_manager? && record.active?
   end
@@ -34,14 +46,6 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def update?
-    admin_or_manager?
-  end
-
-  def convert_to_reimbursement_report?
-    (admin_or_manager? || record.user == user) && record.card_grant_setting.reimbursement_conversions_enabled?
-  end
-
-  def toggle_one_time_use?
     admin_or_manager? && record.active?
   end
 

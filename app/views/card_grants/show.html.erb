@@ -16,7 +16,7 @@
         <%= render @card_grant.stripe_card %>
         <%= render partial: "balance", locals: { card_grant: @card_grant } %>
         <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
-        <%= render partial: "actions", locals: { card_grant: @card_grant } %>
+        <%= render "actions", card_grant: @card_grant %>
       </div>
     <% end %>
     <div class="flex flex-col g2">
