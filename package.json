@@ -8,7 +8,7 @@
     "@1password/save-button": "^1.3.0",
     "@airbrake/browser": "^2.1.9",
     "@alpinejs/persist": "^3.14.9",
-    "@babel/core": "^7.27.3",
+    "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
     "@csstools/postcss-sass": "^5.1.1",
