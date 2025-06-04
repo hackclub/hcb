@@ -2066,8 +2066,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_201214) do
     t.datetime "updated_at", null: false
     t.text "authorization_token_ciphertext"
     t.text "verification_token_ciphertext"
+    t.string "authorization_token_bidx"
+    t.string "verification_token_bidx"
+    t.index ["authorization_token_bidx"], name: "index_user_email_updates_on_authorization_token_bidx"
     t.index ["updated_by_id"], name: "index_user_email_updates_on_updated_by_id"
     t.index ["user_id"], name: "index_user_email_updates_on_user_id"
+    t.index ["verification_token_bidx"], name: "index_user_email_updates_on_verification_token_bidx"
   end
 
   create_table "user_payout_method_ach_transfers", force: :cascade do |t|
