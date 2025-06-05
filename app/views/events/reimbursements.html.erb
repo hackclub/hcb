@@ -1,6 +1,7 @@
 <% title "Reimbursements for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements %>
+
 <h1 class="heading flex gap-2 md:gap-4 text-3xl md:text-5xl border-0 md:border">
   <span class="flex-grow">Reimbursements</span>
   <%= pop_icon_to "download",
@@ -27,7 +28,9 @@
     <% end %>
   <% end %>
 </h1>
+
 <%= render partial: "reimbursement/reports/create_form" %>
+
 <div class="statset mt3 mb3 xs-hide">
   <div class="stat">
     <span class="stat__label">Total</span>
@@ -42,6 +45,7 @@
     <span class="stat__value"><%= render_money_amount(@event.reimbursement_reports.pending.reimbursed.sum(&:amount_cents)) %></span>
   </div>
 </div>
+
 <div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb2">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <div class="input input-group max-w-none" tabindex="0">
@@ -56,19 +60,21 @@
   <% end %>
   <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
+
 <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
+
 <% if @reports.blank? %>
   <%= blankslate "No reports found!" %>
 <% else %>
   <article class="table-container">
     <table>
       <thead>
-        <tr>
-          <th>Status</th>
-          <th>Report</th>
-          <th>From</th>
-          <th class="right-align">Amount</th>
-        </tr>
+      <tr>
+        <th>Status</th>
+        <th>Report</th>
+        <th>From</th>
+        <th class="right-align">Amount</th>
+      </tr>
       </thead>
       <tbody>
         <% @reports.order(created_at: :desc).each do |report| %>
@@ -87,21 +93,24 @@
               <span class="muted">(<%= report.created_at.strftime("%m/%d/%Y") %>)</span>
             </td>
             <td>
-              <%= user_mention report.user %>
+               <%= user_mention report.user %>
             </td>
             <td class="right-align">
-              <%= render_money report.amount_cents %>
+               <%= render_money report.amount_cents %>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </article>
+
   <%= paginate @reports %>
+
   <p class="italic muted text-center">
     <%= page_entries_info @reports, entry_name: "reports" %>.
   </p>
 <% end %>
+
 <%= form_with(model: Reimbursement::Report, class: "display-none", method: :post, url: quick_expense_reimbursement_reports_path, data: { controller: "file-drop form", "file-drop-title-value": "Drop to start a report." }) do |form| %>
   <%= form.hidden_field :event_id, value: @event.id %>
   <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
@@ -121,8 +130,9 @@
         "file-drop-target" => "fileInput",
         "action"           => "change->form#submit"
       } %>
-</div>
+  </div>
 <% end %>
+
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="reimbursement_settings">
   <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "reimbursements")) %>
   <%= turbo_frame_tag :reimbursements_settings, src: edit_event_path(@event, tab: "reimbursements", params: { frame: true }), loading: "lazy" do %>
