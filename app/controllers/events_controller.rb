@@ -705,7 +705,7 @@ class EventsController < ApplicationController
     @has_filter = params[:status].present? || params[:date_before].present? || params[:date_after].present?
     @filter_options = [
       { label: "Status", type: "select", options: %w[pending reimbursed rejected] },
-      { label: "Date", type: "date_range" }
+      { label: "Date created", type: "date_range" }
     ]
   end
 
