@@ -1,0 +1,11 @@
+<%# locals: (card_grant:) %>
+
+<% if policy(card_grant).toggle_one_time_use? %>
+
+  <%= link_to toggle_one_time_use_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+              method: :post,
+              class: "btn bg-slate" do %>
+    <%= inline_icon "private", size: 20 %> <%= card_grant.one_time_use ? "Disable" : "Enable" %> one time use
+  <% end %>
+
+<% end %>

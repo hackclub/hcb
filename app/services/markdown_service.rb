@@ -144,7 +144,7 @@ class MarkdownService
       hosts << Credentials.fetch(:LIVE_URL_HOST)
       hosts << Credentials.fetch(:TEST_URL_HOST) if Rails.env.development?
 
-      hosts.map { |h| Regexp.escape h }
+      hosts.compact_blank.map { |h| Regexp.escape h }
     end
 
   end

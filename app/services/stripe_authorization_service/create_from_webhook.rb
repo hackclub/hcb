@@ -43,6 +43,10 @@ module StripeAuthorizationService
           if cpt.local_hcb_code&.stripe_cash_withdrawal?
             AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
           end
+
+          if cpt&.stripe_card&.card_grant&.one_time_use
+            cpt.stripe_card.freeze!
+          end
         else
           unless cpt&.stripe_card&.frozen? || cpt&.stripe_card&.inactive?
             CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_declined.deliver_later

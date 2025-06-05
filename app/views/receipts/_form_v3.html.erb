@@ -79,13 +79,10 @@
                 <span>Upload receipt</span>
               <% end %>
             <% end %>
-            <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-              <% if defined?(enable_linking) %>
-
-                <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
-                  <%= inline_icon "payment-docs" %>
-                  <span>Select from Receipt Bin</span>
-                <% end %>
+            <% if defined?(enable_linking) %>
+              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
+                <%= inline_icon "payment-docs" %>
+                <span>Select from Receipt Bin</span>
               <% end %>
             <% end %>
           </span>
@@ -120,14 +117,12 @@
     <% end %>
   </div>
 
-  <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-    <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>
-      <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
-        <%= modal_header "Select receipt" %>
-        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false") do %>
-          <strong>Loading...</strong>
-        <% end %>
-      </section>
-    <% end %>
+  <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>
+    <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
+      <%= modal_header "Select receipt" %>
+      <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false") do %>
+        <strong>Loading...</strong>
+      <% end %>
+    </section>
   <% end %>
 </div>

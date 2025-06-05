@@ -128,6 +128,17 @@
   }
 }
 
+.promo-robotics {
+  .card__banner--top {
+    background-color: #ff0000;
+    background-image:
+      linear-gradient(to right, rgba(0, 38, 255, 0.25), rgba(255, 0, 0, 0.05)),
+      url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/3f1f414fcaec2dc9b09025d1b571b6434a47d3bc_event-experience.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
 html[data-dark='true'] {
   .promo-bin {
     .card__banner--top {
