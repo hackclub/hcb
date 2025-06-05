@@ -8,6 +8,25 @@
   Promotions &amp; perks
 </h1>
 
+<% if @event.robotics_team? %>
+  <div class="card pb0 mb3 promo-robotics" id="bin">
+    <div class="card__banner card__banner--top flex justify-between items-center">
+      <h3 class="h1 p2 my0 flex items-start smoke justify-center">
+        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
+        Fee Waiver
+      </h3>
+      <%= link_to "Apply",
+        @perks_available ? fillout_form("8NZy8a2ui9us") : root_path,
+        class: "btn mr1",
+        target: :_blank %>
+    </div>
+    <h3 class="mb0 mt0">Raise some money this off-season with zero fees on HCB!</h3>
+    <p>
+      Are you a teen-led robotics team? We’d love to waive all of your HCB fees till July 4th! Spend 5 minutes inviting teens to your HCB account, and we’ll waive fees!
+    </p>
+  </div>
+<% end %>
+
 <div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="event-helper">
   <div class="card__banner card__banner--top flex justify-between items-center promo-event-helper">
     <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
