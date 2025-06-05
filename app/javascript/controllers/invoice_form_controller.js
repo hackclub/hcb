@@ -38,14 +38,14 @@ export default class extends Controller {
   }
 
   validateForm() {
-    const inputs = this.sponsorFormTarget.querySelectorAll('input')
+    const inputs = this.sponsorFormTarget.querySelectorAll('input, select')
     const isValid = [...inputs].every(input => input.checkValidity())
     this.continueButtonTarget.disabled = !isValid
     this.secondTabTarget.disabled = !isValid
   }
 
   continue() {
-    const inputs = this.sponsorFormTarget.querySelectorAll('input')
+    const inputs = this.sponsorFormTarget.querySelectorAll('input, select')
     if ([...inputs].every(input => input.checkValidity())) {
       document.getElementById('invoice').disabled = false
       document.getElementById('invoice').click()
