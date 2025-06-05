@@ -22,11 +22,11 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def cancel?
-    admin_or_user? || record.user == user
+    (admin_or_manager? || record.user == user) && record.active?
   end
 
   def convert_to_reimbursement_report?
-    (admin_or_manager? || record.user == user) && record.card_grant_setting.reimbursement_conversions_enabled?
+    (admin_or_manager? || record.user == user) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
   end
 
   def edit?
