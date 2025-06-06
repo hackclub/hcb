@@ -23,6 +23,13 @@
     <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled: %>
   </div>
 
+  <div class="field">
+    <%= form.label :one_time_use do %>
+      <%= form.check_box :one_time_use, disabled: %>
+      One time use? (freezes after first charge)
+    <% end %>
+  </div>
+
   <div class="actions">
     <%= form.submit "Send grant", disabled: %>
   </div>

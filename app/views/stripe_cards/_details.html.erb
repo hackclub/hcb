@@ -101,22 +101,37 @@
     </div>
 
     <div class="fs-mask">
-      <strong>ZIP/Postal code</strong>
-      <%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, class: "w-fit", tooltip_direction: "e") %>
-    </div>
-
-    <div>
       <strong class="inline-flex items-center" style="gap: 4px">
-        Billing address
+        Address line 1
         <% if stripe_card.user == current_user && stripe_card.cardholder.default_billing_address? %>
           <%= link_to settings_address_path, class: "info tooltipped tooltipped--e", "aria-label": "You're using HCB's default billing address, not your home address. You can change it in your user settings if you'd like.", style: "display: flex;", data: { turbo: false } do %>
             <%= inline_icon "info", size: 18, style: "position: unset;" %>
           <% end %>
         <% end %>
       </strong>
-      <div class="flex justify-between">
-        <%= render_address stripe_card.cardholder %>
+      <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_line1, class: "w-fit", tooltip_direction: "e") %>
+    </div>
+
+    <% if stripe_card.cardholder.stripe_billing_address_line2.presence %>
+      <div class="fs-mask">
+        <strong>Address line 2</strong>
+        <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_line2, class: "w-fit", tooltip_direction: "e") %>
       </div>
+    <% end %>
+
+    <div class="fs-mask">
+      <strong>City</strong>
+      <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_city, class: "w-fit", tooltip_direction: "e") %>
+    </div>
+
+    <div class="fs-mask">
+      <strong>State</strong>
+      <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_state, class: "w-fit", tooltip_direction: "e") %>
+    </div>
+
+    <div class="fs-mask">
+      <strong>ZIP/Postal code</strong>
+      <%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, class: "w-fit", tooltip_direction: "e") %>
     </div>
 
     <div>

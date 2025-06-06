@@ -99,11 +99,10 @@ class MyController < ApplicationController
                               # Order by cards with least transactions first
                               .sort_by { |card| @card_hcb_codes[card.to_global_id.to_s].count }
 
-    if Flipper.enabled?(:receipt_bin_2023_04_07, current_user)
-      @mailbox_address = current_user.active_mailbox_address
-      @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
-      @pairings = current_user.receipt_bin.suggested_receipt_pairings
-    end
+    @mailbox_address = current_user.active_mailbox_address
+    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
+    @pairings = current_user.receipt_bin.suggested_receipt_pairings
+
 
     if flash[:popover]
       @popover = flash[:popover]
