@@ -28,6 +28,10 @@
       <strong>Grant Status</strong>
       <span><%= card_grant.state_text %></span>
     </p>
+    <p>
+      <strong>One time use?</strong>
+      <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
+    </p>
     <% if (stripe_card = card_grant.stripe_card).present? %>
       <p>
         <strong>Card Status</strong>
@@ -89,8 +93,7 @@
       </p>
     <% end %>
   </section>
-  <% if card_grant.pending_invite? %>
-    <%# Once the user has accepted the invite, these action buttons are shown elsewhere %>
+  <% if card_grant.pending_invite? || @frame %>
     <section>
       <%= render partial: "actions", locals: { card_grant: @card_grant } %>
     </section>

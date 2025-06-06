@@ -78,6 +78,10 @@ input[type='submit'],
     @include gradient(purple);
   }
 
+  &.bg-slate {
+    @include gradient(slate);
+  }
+
   &.bg-ai {
     @include gradient(ai);
   }
