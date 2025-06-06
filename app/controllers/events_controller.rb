@@ -702,7 +702,6 @@ class EventsController < ApplicationController
     @reports = @reports.where("reimbursement_reports.created_at >= ?", params[:created_after]) if params[:created_after].present?
     @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
 
-    @has_filter = params[:status].present? || params[:created_before].present? || params[:created_after].present?
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[pending reimbursed rejected] },
       { key: "created_*", label: "Date created", type: "date_range" }
