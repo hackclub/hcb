@@ -9,10 +9,10 @@
 
   <div class="filter-menu__chips">
     <% filters.each do |filter| %>
-      <% if params[filter[:label].downcase] %>
+      <% if params[filter[:key]] %>
         <div class="badge badge-large bg-muted">
-          <%= params[filter[:label].downcase].humanize %>
-          <%= link_to upsert_query_params(filter[:label].downcase => nil),
+          <%= params[filter[:key]].humanize %>
+          <%= link_to upsert_query_params(filter[:key] => nil),
                       class: "flex items-center",
                       data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
@@ -35,17 +35,17 @@
       <% end %>
     <% end %>
 
-    <% [:date_after, :date_before].each do |date_filter| %>
-      <% if params[date_filter].present? %>
-        <div class="badge badge-large bg-muted">
-          <%= date_filter.to_s.humanize %>
-          <%= Date.parse(params[date_filter]).strftime("%B %-d, %Y") %>
-          <%= link_to upsert_query_params(date_filter => nil),
-                      class: "flex items-center",
-                      data: { turbo_prefetch: "false" } do %>
-            <%= inline_icon "view-close", size: 20 %>
-          <% end %>
-        </div>
+    <% filters.select { |f| f[:key].to_s.start_with?("created_") }.each do |date_filter| %>
+      <% if params[date_filter[:key]].present? %>
+      <div class="badge badge-large bg-muted">
+        <%= date_filter[:key].to_s.humanize %>
+        <%= Date.parse(params[date_filter[:key]]).strftime("%B %-d, %Y") %>
+        <%= link_to upsert_query_params(date_filter[:key] => nil),
+              class: "flex items-center",
+              data: { turbo_prefetch: "false" } do %>
+        <%= inline_icon "view-close", size: 20 %>
+        <% end %>
+      </div>
       <% end %>
     <% end %>
   </div>

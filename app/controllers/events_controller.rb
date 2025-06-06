@@ -698,14 +698,14 @@ class EventsController < ApplicationController
     @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:status] == "reimbursed"
     @reports = @reports.rejected if params[:status] == "rejected"
     @reports = @reports.search(params[:q]) if params[:q].present?
-    @reports = @reports.where("reimbursement_reports.created_at <= ?", params[:date_before]) if params[:date_before].present?
-    @reports = @reports.where("reimbursement_reports.created_at >= ?", params[:date_after]) if params[:date_after].present?
+    @reports = @reports.where("reimbursement_reports.created_at <= ?", params[:created_before]) if params[:created_before].present?
+    @reports = @reports.where("reimbursement_reports.created_at >= ?", params[:created_after]) if params[:created_after].present?
     @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
 
-    @has_filter = params[:status].present? || params[:date_before].present? || params[:date_after].present?
+    @has_filter = params[:status].present? || params[:created_before].present? || params[:created_after].present?
     @filter_options = [
-      { label: "Status", type: "select", options: %w[pending reimbursed rejected] },
-      { label: "Date created", type: "date_range" }
+      { key: "status", label: "Status", type: "select", options: %w[pending reimbursed rejected] },
+      { key: "created_*", label: "Date created", type: "date_range" }
     ]
   end
 
