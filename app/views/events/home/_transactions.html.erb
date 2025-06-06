@@ -20,8 +20,8 @@
       </a>
 
       <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount) %>">
-          <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event.name, amount_cents: transaction.amount), external_link: url_for(transaction.local_hcb_code)) %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event: @event) %>">
+          <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event: @event), external_link: url_for(transaction.local_hcb_code)) %>
           <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_path, loading: :lazy do %>
             <%= render partial: "application/loading_container" %>
           <% end %>
