@@ -35,17 +35,20 @@
       <% end %>
     <% end %>
 
-    <% filters.select { |f| f[:key].to_s.start_with?("created_") }.each do |date_filter| %>
-      <% if params[date_filter[:key]].present? %>
-      <div class="badge badge-large bg-muted">
-        <%= date_filter[:key].to_s.humanize %>
-        <%= Date.parse(params[date_filter[:key]]).strftime("%B %-d, %Y") %>
-        <%= link_to upsert_query_params(date_filter[:key] => nil),
+    <% filters.select { |f| f[:type] == "date_range" }.each do |filter| %>
+      <% ["after", "before"].each do |suffix| %>
+      <% param_key = "#{filter[:key].sub('_*', '')}_#{suffix}" %>
+      <% if params[param_key].present? %>
+        <div class="badge badge-large bg-muted">
+        <%= "#{filter[:label].humanize} #{suffix.humanize}" %>
+        <%= Date.parse(params[param_key]).strftime("%B %-d, %Y") %>
+        <%= link_to upsert_query_params(param_key => nil),
               class: "flex items-center",
               data: { turbo_prefetch: "false" } do %>
-        <%= inline_icon "view-close", size: 20 %>
+          <%= inline_icon "view-close", size: 20 %>
         <% end %>
-      </div>
+        </div>
+      <% end %>
       <% end %>
     <% end %>
   </div>

@@ -707,7 +707,7 @@ class EventsController < ApplicationController
       { key: "status", label: "Status", type: "select", options: %w[pending reimbursed rejected] },
       { key: "created_*", label: "Date created", type: "date_range" }
     ]
-    @has_filter = check_filters?(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def reimbursements_pending_review_icon
