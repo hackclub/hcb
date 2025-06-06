@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_03_011828) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_05_185230) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -603,6 +603,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_03_011828) do
     t.bigint "source_subledger_id"
     t.date "scheduled_on"
     t.boolean "should_charge_fee", default: false
+    t.boolean "is_v2", default: false, null: false
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
