@@ -2,7 +2,7 @@
 
 module ReceiptService
   class Create
-    def initialize(attachments:, uploader:, upload_method: nil, receiptable: nil)
+    def initialize(attachments: [], uploader:, upload_method: nil, receiptable: nil)
       @attachments = attachments
       @receiptable = receiptable
       @uploader = uploader
