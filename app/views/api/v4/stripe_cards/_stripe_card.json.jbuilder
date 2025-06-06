@@ -18,3 +18,10 @@ json.total_spent_cents stripe_card.total_spent if expand?(:total_spent_cents)
 
 json.organization stripe_card.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
 json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  if expand?(:user)
+
+if stripe_card.physical?
+  json.personalization do
+    json.color stripe_card.personalization_design.color
+    json.logo_url rails_blob_url(stripe_card.event.stripe_card_logo) if stripe_card.event.stripe_card_logo.attached?
+  end
+end
