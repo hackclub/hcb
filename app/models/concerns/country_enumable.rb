@@ -16,10 +16,9 @@ module CountryEnumable
     def has_country_enum(field: :country)
       enum field, self.country_enum_list, prefix: field
     end
+  end
 
-    private
-
-    def country_enum_list
+    def self.country_enum_list
       {
         AD: 6,
         AE: 235,
@@ -272,6 +271,5 @@ module CountryEnumable
         ZW: 249,
       }
     end
-  end
 
 end

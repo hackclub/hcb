@@ -923,6 +923,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_03_011828) do
     t.string "short_name"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
+    t.string "country_alpha2"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
@@ -2249,6 +2250,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_03_011828) do
     t.string "address_postal_code"
     t.text "column_id"
     t.text "return_reason"
+    t.string "country_alpha2"
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
     t.index ["event_id"], name: "index_wires_on_event_id"
     t.index ["user_id"], name: "index_wires_on_user_id"
