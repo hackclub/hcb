@@ -578,7 +578,7 @@ Rails.application.routes.draw do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
           resources :transactions, only: [:show, :update] do
-            resources :receipts, only: [:create, :index]
+            resources :receipts, only: [:create, :index, :destroy]
             resources :comments, only: [:index]
 
             member do
