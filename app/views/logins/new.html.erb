@@ -1,11 +1,10 @@
 <% turbo_page_requires_reload if params[:require_reload].present? %>
-<% sign_action = params[:signup] ? "up" : "in" %>
-<% title "Sign #{sign_action}" %>
+<% title "Sign #{params[:signup] ? "up" : "in"}" %>
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <div class="my-auto">
     <%= render "header", label: "Hack Club" do %>
-      Sign <%= sign_action %> to HCB
+      Sign <%= params[:signup] ? "up for" : "in to" %> HCB
     <% end %>
     <%= form_tag logins_path, class: "mt-1", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
       <div data-webauthn-auth-target="error" class="mb2 display-none">
