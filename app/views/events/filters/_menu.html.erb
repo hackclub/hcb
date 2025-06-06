@@ -27,23 +27,23 @@
             <% end %>
           <% elsif filter[:type] == "date_range" %>
             <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
-              <p class="bold mb0 mt0">After...</p>
-                <%= form.date_field "#{filter[:key].sub '_*', '' }_after", class: "border mb1" %>
+                <p class="bold mb0 mt0">After...</p>
+                <%= form.date_field "#{filter[:key].sub '_*', '' }_after", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_after"] %>
               <p class="bold mb0 mt0">Before...</p>
-              <%= form.date_field "#{filter[:key].sub '_*', '' }_before", class: "border mb1" %>
+                <%= form.date_field "#{filter[:key].sub '_*', '' }_before", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_before"] %>
               <% request.query_parameters.except(:start, :end).each do |key, value| %>
                 <%= hidden_field_tag key, value %>
               <% end %>
               <%= form.submit "Filter..." %>
             <% end %>
-          <% elsif filter[:type] == "amount_range" %>
+            <% elsif filter[:type] == "amount_range" %>
             <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
               <p class="bold mb0 mt0">Less than...</p>
-              <%= form.number_field :amount_less_than, class: "border mb1" %>
+              <%= form.number_field "#{filter[:key].sub('_*', '')}_less_than", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_less_than"] %>
               <p class="bold mb0 mt0">Greater than...</p>
-              <%= form.number_field :amount_greater_than, class: "border mb1" %>
+              <%= form.number_field "#{filter[:key].sub('_*', '')}_greater_than", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_greater_than"] %>
               <% request.query_parameters.except(:start, :end).each do |key, value| %>
-                <%= hidden_field_tag key, value %>
+              <%= hidden_field_tag key, value %>
               <% end %>
               <%= form.submit "Filter..." %>
             <% end %>
