@@ -8,6 +8,19 @@ module ApplicationHelper
     params.merge(new_params)
   end
 
+  def check_filters?(filter_options, params)
+    filter_options.any? { |key| params[key].present? }
+    filter_options.any? do |option|
+      key = option[:key]
+      if key.to_s.end_with?("*") && option[:type] == "date_range"
+      base = key.to_s.chomp("*")
+        params["#{base}_before"].present? || params["#{base}_after"].present?
+      else
+        params[key].present?
+      end
+    end
+  end
+
   def render_money(amount, opts = {})
     amount = amount.cents if amount.is_a?(Money)
 
