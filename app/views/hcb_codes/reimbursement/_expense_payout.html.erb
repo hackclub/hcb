@@ -10,7 +10,7 @@
     </p>
     <p>
       <strong>Type</strong>
-      Reimbursed Expense
+      Reimbursed expense
     </p>
   </section>
   <section class='details pt2 pb2'>
@@ -18,7 +18,7 @@
       <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
     <% end %>
     <p>
-      <strong>Associated Report</strong>
+      <strong>Associated report</strong>
       <%= link_to expense.report.name, expense.report, data: { turbo_frame: "_top" } %>
     </p>
     <% if expense.description.present? %>
