@@ -19,7 +19,15 @@ class DocusealController < ActionController::Base
           name: "Fiscal sponsorship contract with #{contract.organizer_position_invite.user.name}"
         )
 
-        response = Faraday.get(params[:data][:documents][0][:url]) do |req|
+        allowed_domains = ["docuseal.com", "trusted-domain.com"]
+        document_url = params[:data][:documents][0][:url]
+        uri = URI.parse(document_url)
+
+        unless allowed_domains.include?(uri.host)
+          raise "Invalid document URL: #{document_url}"
+        end
+
+        response = Faraday.get(document_url) do |req|
           req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
         end
 
