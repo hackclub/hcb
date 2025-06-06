@@ -21,17 +21,20 @@
       <% end %>
     <% end %>
 
-    <% [:amount_less_than, :amount_greater_than].each do |amount_filter| %>
-      <% if params[amount_filter].present? %>
+    <% filters.select { |f| f[:type] == "amount_range" }.each do |filter| %>
+      <% ["less_than", "greater_than"].each do |suffix| %>
+      <% param_key = "#{filter[:key].sub('_*', '')}_#{suffix}" %>
+      <% if params[param_key].present? %>
         <div class="badge badge-large bg-muted">
-          <%= amount_filter.to_s.humanize %>
-          <%= render_money params[amount_filter].to_i %>
-          <%= link_to upsert_query_params(amount_filter => nil),
-                      class: "flex items-center",
-                      data: { turbo_prefetch: "false" } do %>
-            <%= inline_icon "view-close", size: 20 %>
-          <% end %>
+        <%= "#{filter[:label].humanize} #{suffix.humanize}" %>
+        <%= Money.new(params[param_key].to_i, "USD").format %>
+        <%= link_to upsert_query_params(param_key => nil),
+              class: "flex items-center",
+              data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "view-close", size: 20 %>
+        <% end %>
         </div>
+      <% end %>
       <% end %>
     <% end %>
 
