@@ -58,13 +58,10 @@
       <% end %>
     </div>
   <% end %>
-  <div style="text-align: center;">
-    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["reimbursed", "pending", "rejected"].include?(params[:filter]), role: "tab" %>
-    <%= link_to "Pending", "?filter=pending", class: "filterbar__item", "aria-selected": params[:filter] == "pending", role: "tab" %>
-    <%= link_to "Reimbursed", "?filter=reimbursed", class: "filterbar__item", "aria-selected": params[:filter] == "reimbursed", role: "tab" %>
-    <%= link_to "Rejected", "?filter=rejected", class: "filterbar__item", "aria-selected": params[:filter] == "rejected", role: "tab" %>
-  </div>
+  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
+
+<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <% if @reports.blank? %>
   <%= blankslate "No reports found!" %>
