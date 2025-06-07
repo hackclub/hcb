@@ -1,8 +1,18 @@
 <div class="card pt1 pb1">
   <div class="flex g2 justify-between items-center">
-    <p class="h4 m0 overflow-auto" style="<%= "filter: blur(0.15em)" unless organizer_signed_in? %>">
-      <strong><%= organizer_signed_in? ? organizer_position_invite.user.email : "user@example.com" %></strong>
-    </p>
+    <% if organizer_signed_in? %>
+      <p class="h4 m0">
+        <strong>
+          <%= copy_to_clipboard(organizer_position_invite.user.email, tooltip_direction: "e") do %>
+            <%= organizer_position_invite.user.email %>
+          <% end %>
+        </strong>
+      </p>
+    <% else %>
+      <p class="h4 m0 overflow-auto" style="filter: blur(0.15em)">
+        <strong>user@example.com</strong>
+      </p>
+    <% end %>
 
     <div class="flex g1 items-center">
       <% if admin_signed_in? %>
