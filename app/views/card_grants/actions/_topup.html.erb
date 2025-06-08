@@ -1,11 +1,14 @@
 <%# locals: (card_grant:) %>
 
-<%= link_to "#",
-            data: { behavior: "modal_trigger", modal: "topup" },
-            class: "btn",
-            disabled: !policy(card_grant).topup? do %>
-  <%= inline_icon "plus", size: 20 %> Topup grant
-<% end %>
+<% topup_tooltip = policy(card_grant).topup? ? "Add funds to this grant" : "You don't have permission to perform this action" %>
+<div class="tooltipped tooltipped--n" aria-label="<%= topup_tooltip %>">
+  <%= link_to "#",
+              data: { behavior: "modal_trigger", modal: "topup" },
+              class: "btn",
+              disabled: !policy(card_grant).topup? do %>
+    <%= inline_icon "plus", size: 20 %> Topup grant
+  <% end %>
+</div>
 
 <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="topup">
   <%= modal_header "Topup grant" %>

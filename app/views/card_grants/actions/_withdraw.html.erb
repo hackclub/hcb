@@ -1,11 +1,14 @@
 <%# locals: (card_grant:) %>
 
-<%= link_to "#",
-            data: { behavior: "modal_trigger", modal: "withdrawl" },
-            class: "btn bg-warning",
-            disabled: !policy(card_grant).withdraw? do %>
-  <%= inline_icon "minus", size: 20 %> Withdraw from grant
-<% end %>
+<% withdraw_tooltip = policy(card_grant).withdraw? ? "Remove funds from this grant" : "You don't have permission to perform this action" %>
+<div class="tooltipped tooltipped--n" aria-label="<%= withdraw_tooltip %>">
+  <%= link_to "#",
+              data: { behavior: "modal_trigger", modal: "withdrawl" },
+              class: "btn bg-warning",
+              disabled: !policy(card_grant).withdraw? do %>
+    <%= inline_icon "minus", size: 20 %> Withdraw from grant
+  <% end %>
+</div>
 
 <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="withdrawl">
   <%= modal_header "Withdraw from grant" %>

@@ -1,8 +1,11 @@
 <%# locals: (card_grant:) %>
 
-<%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "btn" do %>
-  <%= inline_icon "support", size: 20 %> Return grant to <%= card_grant.event.name %>
-<% end %>
+<% return_tooltip = "Cancel this grant and return funds to the organization" %>
+<div class="tooltipped tooltipped--n" aria-label="<%= return_tooltip %>">
+  <%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "btn" do %>
+    <%= inline_icon "support", size: 20 %> Return grant to <%= card_grant.event.name %>
+  <% end %>
+</div>
 
 <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="return-grant">
   <%= modal_header "Return #{card_grant.balance.format} to #{card_grant.event.name}?" %>
