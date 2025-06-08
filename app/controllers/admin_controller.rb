@@ -1475,6 +1475,8 @@ class AdminController < ApplicationController
         airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
+      when :pending_identity_vault_verifications
+        Faraday.new { |c| c.response :json }.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions

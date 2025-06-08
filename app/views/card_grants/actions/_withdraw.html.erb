@@ -4,7 +4,8 @@
 
   <%= link_to "#",
               data: { behavior: "modal_trigger", modal: "withdrawl" },
-              class: "btn bg-warning" do %>
+              class: "btn bg-warning",
+              disabled: !policy(card_grant).withdraw? do %>
     <%= inline_icon "minus", size: 20 %> Withdraw from grant
   <% end %>
 
