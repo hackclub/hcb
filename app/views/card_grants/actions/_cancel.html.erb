@@ -1,13 +1,9 @@
 <%# locals: (card_grant:) %>
 
-<% if card_grant.active? %>
-
-  <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-              method: :post,
-              data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },
-              class: "btn bg-error",
-              disabled: !policy(card_grant).cancel? do %>
-    <%= inline_icon "reply", size: 20 %> Cancel grant
-  <% end %>
-
+<%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+            method: :post,
+            data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },
+            class: "btn bg-error",
+            disabled: !policy(card_grant).cancel? do %>
+  <%= inline_icon "reply", size: 20 %> Cancel grant
 <% end %>
