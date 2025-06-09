@@ -209,7 +209,6 @@ class StripeCard < ApplicationRecord
     StripeService::Issuing::Card.update(self.stripe_id, status: :canceled)
     sync_from_stripe!
     save!
-    card_grant.cancel! if card_grant&.active?
   end
 
   def frozen?
