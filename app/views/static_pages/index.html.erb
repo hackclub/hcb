@@ -111,7 +111,9 @@
       </ul>
     <% end %>
 
+    <%= render "static_pages/index/robotics_raffle" %>
     <%= render "static_pages/index/teen_raffle" %>
+
     <%= render "static_pages/index/explore" %>
 
     <% if current_user.organizer_position_contracts.sent.any? %>

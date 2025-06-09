@@ -87,18 +87,20 @@
     <%= render partial: "users/card_grant_conversion_callout" %>
   <% end %>
 
-  <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
-    <span class="flex items-center w-100">
-        <span class="flex-grow">Recent activity</span>
-        <% if auditor_signed_in? %>
-          <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :POST } do %>
-            <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
-              👤 <%= User.currently_online.count %>
+  <% if @activities %>
+    <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
+      <span class="flex items-center w-100">
+          <span class="flex-grow">Recent activity</span>
+          <% if auditor_signed_in? %>
+            <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :POST } do %>
+              <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
+                👤 <%= User.currently_online.count %>
+              <% end %>
             <% end %>
           <% end %>
-        <% end %>
-    </span>
-  </h4>
+      </span>
+    </h4>
+  <% end %>
 
   <%= render partial: "my/activities" if @activities %>
 <% end %>
