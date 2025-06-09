@@ -94,18 +94,18 @@
   <% end %>
   <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="backup-codes">
     <legend class="flex flex-row justify-start items-center">
-      <span class="h2 bold">Backup Codes</span>
+      <span class="h2 bold">Backup codes</span>
     </legend>
     <div class="flex flex-row gap-x-2">
       <% if @user.backup_codes_enabled? %>
         <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your currently active codes immediately." } do %>
           <%= inline_icon "minus", size: home_action_size %>
-          Disable Backup Codes
+          Disable backup codes
         <% end %>
       <% end %>
       <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :POST, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'" do %>
         <%= inline_icon "plus", size: home_action_size %>
-        <%= @user.backup_codes_enabled? ? "Regenerate Codes" : "Generate Codes" %>
+        <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
       <% end %>
     </div>
   </div>
