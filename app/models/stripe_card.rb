@@ -202,6 +202,7 @@ class StripeCard < ApplicationRecord
     StripeService::Issuing::Card.update(self.stripe_id, status: :active)
     sync_from_stripe!
     save!
+    card_grant.update(one_time_use: false) if card_grant&.one_time_use
   end
 
   def cancel!

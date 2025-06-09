@@ -40,6 +40,9 @@ class LoginsController < ApplicationController
       session[:auth_email] = login.user.email
       redirect_to choose_login_preference_login_path(login, return_to: params[:return_to])
     end
+  rescue => e
+    flash[:error] = e.message
+    return redirect_to auth_users_path
   end
 
   # get page to choose preference

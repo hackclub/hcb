@@ -15,10 +15,11 @@ module Column
         Airbrake.notify("Column available balance under #{MINIMUM_AVG_BALANCE}")
       end
 
-      if difference.abs > 200_000_00 && difference.negative? # if negative, it is a transfer from SVB (FS Main) to Column
-        Airbrake.notify("Column::SweepJob > $200,000. Requires human review / processing.")
+      if difference.abs > 200_000_00 && difference.negative? && !Flipper.enabled?(:bypass_next_column_sweep_manual_review) # if negative, it is a transfer from SVB (FS Main) to Column
+        Airbrake.notify("Column::SweepJob > $200,000. Requires human approval by enabling `bypass_next_column_sweep_manual_review` Flipper flag.")
         return
       end
+      Flipper.disable(:bypass_next_column_sweep_manual_review)
 
       idempotency_key = "floating_transfer_#{Time.now.to_i}"
 

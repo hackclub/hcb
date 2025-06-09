@@ -71,7 +71,7 @@ class ApplicationController < ActionController::Base
   rescue_from ArgumentError do |exception|
     if request.format.html? && exception.message == "invalid base64"
       request.reset_session # reset your old existing session.
-      redirect_to auth_users_path # your login page.
+      redirect_to auth_users_path(require_reload: true) # your login page.
     else
       raise(exception)
     end
@@ -106,7 +106,7 @@ class ApplicationController < ActionController::Base
     if current_user || !request.get?
       redirect_to root_path
     else
-      redirect_to auth_users_path(return_to: request.url)
+      redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end
   end
 
