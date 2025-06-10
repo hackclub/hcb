@@ -26,7 +26,7 @@
         <% param_key = "#{filter[:key].sub('_*', '')}_#{suffix}" %>
         <% if params[param_key].present? %>
           <div class="badge badge-large bg-muted">
-            <%= "#{filter[:label].humanize} #{suffix.humanize}" %>
+            <%= "#{filter[:label].gsub('Amount ', '').humanize} #{suffix.humanize}" %>
             <%= Money.new(params[param_key].to_i, "USD").format %>
             <%= link_to upsert_query_params(param_key => nil),
               class: "flex items-center",
@@ -43,7 +43,7 @@
         <% param_key = "#{filter[:key].sub('_*', '')}_#{suffix}" %>
         <% if params[param_key].present? %>
           <div class="badge badge-large bg-muted">
-            <%= "#{filter[:label].humanize} #{suffix.humanize}" %>
+            <%= "#{filter[:label].gsub('Date ', '').humanize} #{suffix}" %>
             <%= Date.parse(params[param_key]).strftime("%B %-d, %Y") %>
             <%= link_to upsert_query_params(param_key => nil),
               class: "flex items-center",
