@@ -50,10 +50,10 @@ class StripeCardsController < ApplicationController
 
     if @card.defrost!
       flash[:success] = "Card defrosted"
-      redirect_back_or_to @card
     else
-      render :show, status: :unprocessable_entity
+      flash[:error] = "Card could not be defrosted"
     end
+    redirect_back_or_to @card
   end
 
   def show
