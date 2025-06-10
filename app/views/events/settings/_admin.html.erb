@@ -140,6 +140,11 @@
   <% end %>
 
   <% admin_tool do %>
+    <h3 id="airtable" class="mb2 mt1">Airtable record</h3>
+    <%= link_to "Airtable application", "https://airtable.com/apppALh5FEOKkhjLR/tblctmRFEeluG4do7/viwDmqZrI6Swoq4Yr/#{@event.airtable_record.id}", class: "btn bg-info" %>
+  <% end %>
+
+  <% admin_tool do %>
     <%= render "events/settings/admin/tags" %>
   <% end %>
 
