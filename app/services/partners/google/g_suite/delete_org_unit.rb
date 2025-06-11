@@ -11,6 +11,8 @@ module Partners
         end
 
         def run
+          return unless @org_unit_path.present?
+
           directory_client.delete_org_unit(gsuite_customer_id, org_unit_path_without_leading_slash)
         end
 

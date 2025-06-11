@@ -17,7 +17,7 @@ module Partners
           end
           begin
             res = directory_client.list_users(customer: gsuite_customer_id, domain: @domain, max_results: 500)
-            res.users.each do |user|
+            res.users&.each do |user|
               directory_client.delete_user(user.id)
             end
           rescue => e
@@ -26,7 +26,7 @@ module Partners
             end
 
             Rails.error.report(e)
-            throw :abort
+            throw e
           end
         end
 
