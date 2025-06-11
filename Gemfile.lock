@@ -177,7 +177,7 @@ GEM
     blind_index (2.6.2)
       activesupport (>= 7)
       argon2-kdf (>= 0.2)
-    bootsnap (1.18.4)
+    bootsnap (1.18.6)
       msgpack (~> 1.2)
     brakeman (6.2.2)
       racc
@@ -505,7 +505,7 @@ GEM
       monetize (~> 1.9)
       money (~> 6.13)
       railties (>= 3.0)
-    msgpack (1.7.2)
+    msgpack (1.8.0)
     multi_json (1.15.0)
     multipart-post (2.4.1)
     mustermann (3.0.3)
