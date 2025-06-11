@@ -59,7 +59,7 @@
     "webpack-cli": "^6.0.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.27.0",
+    "@eslint/js": "^9.28.0",
     "concurrently": "^9.1.2",
     "eslint": "9.x",
     "eslint-plugin-react": "^7.37.5",
