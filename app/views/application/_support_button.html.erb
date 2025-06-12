@@ -1,6 +1,13 @@
 <% if signed_in? %>
   <div data-controller="menu" data-menu-placement-value="top-end">
-    <button data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle" type="button" class="support-menu__button fixed bottom-0 right-0 m-5 pop tooltipped tooltipped--w embedded-display-none cursor-pointer" style="z-index: 2" aria-label="Need help?" data-action="class#toggle focus#focus">
+    <button
+      data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+      data-menu-target="toggle"
+      type="button"
+      class="pop w-8 h-8 bg-transparent cursor-pointer muted tooltipped tooltipped--n -mr-2 sm:mr-0"
+      aria-label="Need help?"
+      style="box-shadow: none"
+      data-action="class#toggle focus#focus">
       <%= inline_icon "question-mark", size: 18 %>
     </button>
     <div data-controller="menu" data-menu-placement-value="top-end">
