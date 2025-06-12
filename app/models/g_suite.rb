@@ -160,7 +160,6 @@ class GSuite < ApplicationRecord
 
       inactive_accounts.count == res_count
     rescue => e
-      logger.info("Error in accounts_inactive? #{e}")
       if e.message.include?("Domain not found")
         return true
       end
