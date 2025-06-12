@@ -26,7 +26,7 @@ module Partners
             end
 
             Rails.error.report(e)
-            throw e
+            raise e
           end
         end
 
