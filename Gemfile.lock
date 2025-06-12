@@ -489,6 +489,7 @@ GEM
       net-smtp
     marcel (1.0.4)
     matrix (0.4.2)
+    memo_wise (1.13.0)
     method_source (1.1.0)
     mini_magick (5.2.0)
       benchmark
@@ -932,6 +933,7 @@ DEPENDENCIES
   lockbox
   lograge
   loofah
+  memo_wise
   mini_magick
   monetize
   money-rails
