@@ -202,7 +202,6 @@ class UsersController < ApplicationController
     @user.backup_codes&.active&.map(&:mark_discarded!)
     @user.backup_codes&.previewed&.map(&:mark_active!)
     User::BackupCodeMailer.with(user_id: @user.id).new_codes_generated.deliver_now
-    User::BackupCodeMailer.with(user_id: @user.id).backup_codes_enabled.deliver_now unless previously_enabled
     redirect_back_or_to security_user_path(@user)
   end
 

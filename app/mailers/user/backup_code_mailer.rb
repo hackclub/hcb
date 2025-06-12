@@ -6,16 +6,12 @@ class User
 
     default to: -> { @user.email_address_with_name }
 
-    def new_codes_generated
+    def new_codes_activated
       mail subject: "You've generated new backup codes for HCB"
     end
 
     def code_used
       mail subject: "You've used a backup code to login to HCB"
-    end
-
-    def backup_codes_enabled
-      mail subject: "HCB backup codes are enabled"
     end
 
     def backup_codes_disabled

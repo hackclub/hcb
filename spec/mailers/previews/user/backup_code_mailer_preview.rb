@@ -2,16 +2,12 @@
 
 class User
   class BackupCodeMailerPreview < ActionMailer::Preview
-    def new_codes_generated
-      User::BackupCodeMailer.with(user_id: User.first.id).new_codes_generated
+    def new_codes_activated
+      User::BackupCodeMailer.with(user_id: User.first.id).new_codes_activated
     end
 
     def code_used
       User::BackupCodeMailer.with(user_id: User.first.id).code_used
-    end
-
-    def backup_codes_enabled
-      User::BackupCodeMailer.with(user_id: User.first.id).backup_codes_enabled
     end
 
     def backup_codes_disabled
