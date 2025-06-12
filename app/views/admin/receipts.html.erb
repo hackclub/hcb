@@ -1,0 +1,11 @@
+<%= form_with url: receipts_admin_index_path, method: :get, local: true do |form| %>
+  <%= form.text_field :user_email, value: params[:user_email], placeholder: 'Enter user email' %>
+  <%= form.submit 'Search' %>
+<% end %>
+
+<% if @user %>
+  <h2>Missing receipts for <%= @user.name %> (<%= @user.email %>)</h2>
+<% end %>
+
+
+<%= (ap @results).html_safe %>

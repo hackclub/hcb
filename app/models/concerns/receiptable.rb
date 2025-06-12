@@ -41,11 +41,17 @@ module Receiptable
       raise e
     end
 
-    after_create_commit do
+    after_create_commit :create_task!
+
+    def ensure_task_exists!
+      create_task! unless tasks.any? || !receipt_required?
+    end
+
+    def create_task!
       safely do
         assignee = try(:author) || try(:user) || try(:event)
-        if missing_receipt? && assignee
-          Task::Receiptable::Upload.create!(taskable: self, assignee:)
+        if assignee
+          Task::Receiptable::Upload.create!(taskable: self, assignee:, complete: !missing_receipt?)
         end
       end
     end

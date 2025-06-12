@@ -23,8 +23,10 @@
 class Task
   module Receiptable
     class Upload < Task
+      scope :for_hcb_code, -> { where(taskable_type: "HcbCode") }
+
       def update_complete!
-        update(complete: !taskable.missing_receipt?)
+        update(complete: taskable.nil? || !taskable.missing_receipt? || !taskable.receipt_required?)
       end
 
       def text

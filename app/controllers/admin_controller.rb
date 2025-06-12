@@ -1292,6 +1292,25 @@ class AdminController < ApplicationController
     end
   end
 
+  def receipts
+    @user = User.find_by(email: params[:user_email]) if params[:user_email].present?
+    if @user
+      deprecated = @user.transactions_missing_receipt
+      current = @user.transactions_missing_receipt_v2
+      difference = deprecated - current
+
+      @results = {
+        counts: {
+          deprecated: deprecated.count,
+          current: current.count,
+        },
+        difference:
+      }
+    else
+      @results = "Select a user"
+    end
+  end
+
   def employees
     @page = params[:page] || 1
     @per = params[:per] || 20

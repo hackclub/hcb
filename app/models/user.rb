@@ -321,6 +321,10 @@ class User < ApplicationRecord
     end
   end
 
+  def transactions_missing_receipt_v2
+    HcbCode.where(id: tasks.where(type: "Task::Receiptable::Upload", taskable_type: "HcbCode").incomplete.select(:taskable_id)).of_type(600)
+  end
+
   def transactions_missing_receipt_count
     @transactions_missing_receipt_count ||= begin
       transactions_missing_receipt.size
