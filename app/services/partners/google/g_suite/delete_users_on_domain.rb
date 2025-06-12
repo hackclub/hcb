@@ -21,9 +21,7 @@ module Partners
               directory_client.delete_user(user.id)
             end
           rescue => e
-            if e.message.include?("Domain not found")
-              return
-            end
+            return if e.message.include?("Domain not found")
 
             Rails.error.report(e)
             raise e
