@@ -19,9 +19,7 @@ module Partners
           # groups and users must be deleted to be able to delete domain
           DeleteGroupsOnDomain.new(domain: @domain).run
           gsuite = ::GSuite.find_by(domain: @domain)
-          gsuite&.accounts&.each do |account|
-            account.destroy
-          end
+          gsuite&.accounts&.destroy_all
           # All jobs are queued one after another from within the delete domain users job
           # to ensure that the domain is deleted only after all users and org unit are deleted
           ::GSuite::DeleteDomainUsersJob.set(wait: 1.minute).perform_later(domain: @domain, remote_org_unit_path: gsuite.remote_org_unit_path)
