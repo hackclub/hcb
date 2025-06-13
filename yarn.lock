@@ -955,10 +955,15 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@eslint/js@9.27.0", "@eslint/js@^9.27.0":
+"@eslint/js@9.27.0":
   version "9.27.0"
   resolved "https://registry.yarnpkg.com/@eslint/js/-/js-9.27.0.tgz#181a23460877c484f6dd03890f4e3fa2fdeb8ff0"
   integrity sha512-G5JD9Tu5HJEu4z2Uo4aHY2sLV64B7CDMXxFzqzjl3NKd6RVzSXNoE80jk7Y0lJkTTkjiIhBAqmlYwjuBY3tvpA==
+
+"@eslint/js@^9.28.0":
+  version "9.28.0"
+  resolved "https://registry.yarnpkg.com/@eslint/js/-/js-9.28.0.tgz#7822ccc2f8cae7c3cd4f902377d520e9ae03f844"
+  integrity sha512-fnqSjGWd/CoIp4EXIxWVK/sHA6DOHN4+8Ix2cX5ycOY7LG0UY8nHCU5pIp2eaE1Mc7Qd8kHspYNzYXT2ojPLzg==
 
 "@eslint/object-schema@^2.1.6":
   version "2.1.6"
@@ -1017,13 +1022,13 @@
   resolved "https://registry.yarnpkg.com/@github/combobox-nav/-/combobox-nav-2.3.1.tgz#76da4c47f1e33af56392c5c9cf661a28d5b4168e"
   integrity sha512-gwxPzLw8XKecy1nP63i9lOBritS3bWmxl02UX6G0TwMQZbMem1BCS1tEZgYd3mkrkiDrUMWaX+DbFCuDFo3K+A==
 
-"@github/text-expander-element@^2.9.1":
-  version "2.9.1"
-  resolved "https://registry.yarnpkg.com/@github/text-expander-element/-/text-expander-element-2.9.1.tgz#4e765679829563fc701049aa8a35a865b9b5c0ff"
-  integrity sha512-T/pCDjB/diMaarmcdc01hP026v0b9lidluyZD5z/EPOExXRdNDqb11kOXevoMZY42WiI3Yhoqsj3nbM+HthLgQ==
+"@github/text-expander-element@^2.9.2":
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/@github/text-expander-element/-/text-expander-element-2.9.2.tgz#5c1c26b41225f76accceb831d07f41165e390329"
+  integrity sha512-XY8EUMqM4GAloNxXNA1Py1ny+engWwYntbgsnpstQN4piaTI9rIlfYldyd0nnPXhxjGCVqHPmP6yg17Q0/n9Vg==
   dependencies:
     "@github/combobox-nav" "^2.0.2"
-    dom-input-range "^1.2.0"
+    dom-input-range "^2.0.0"
 
 "@github/webauthn-json@^2.1.1":
   version "2.1.1"
@@ -1059,13 +1064,13 @@
   resolved "https://registry.yarnpkg.com/@hotwired/stimulus/-/stimulus-3.2.2.tgz#071aab59c600fed95b97939e605ff261a4251608"
   integrity sha512-eGeIqNOQpXoPAIP7tC1+1Yc1yl1xnwYqg+3mzqxyrbE5pg5YFBZcA6YoTiByJB6DKAEsiWtl6tjTJS4IYtbB7A==
 
-"@hotwired/turbo-rails@^8.0.13":
-  version "8.0.13"
-  resolved "https://registry.yarnpkg.com/@hotwired/turbo-rails/-/turbo-rails-8.0.13.tgz#7016651f7144053992ce5096bb95495f8faa5854"
-  integrity sha512-6SCnnOSzhtaJ0pNkAjncZxjtKsK3sP/vPEkCnTXBXSHkr+vF7DTZkOlwjhms1DbbQNTsjCsBoKvzSMbh/omSCQ==
+"@hotwired/turbo-rails@^8.0.16":
+  version "8.0.16"
+  resolved "https://registry.yarnpkg.com/@hotwired/turbo-rails/-/turbo-rails-8.0.16.tgz#096f3bec8c3c04d4aac4dd0f75305c67b3db3501"
+  integrity sha512-Yxiy2x+N3eOIEDokvLzSrd08aI5RDKnFYDQFl2J/LuMEWTtPdY7oNP0F/gv/sSe5AV23Lwz4FitG/uNFXNM5tA==
   dependencies:
     "@hotwired/turbo" "^8.0.13"
-    "@rails/actioncable" "^7.0"
+    "@rails/actioncable" ">=7.0"
 
 "@hotwired/turbo@^8.0.13":
   version "8.0.13"
@@ -1270,10 +1275,10 @@
     "@babel/runtime" "^7.13.10"
     "@radix-ui/react-compose-refs" "1.0.1"
 
-"@rails/actioncable@^7.0":
-  version "7.0.4"
-  resolved "https://registry.npmjs.org/@rails/actioncable/-/actioncable-7.0.4.tgz"
-  integrity sha512-tz4oM+Zn9CYsvtyicsa/AwzKZKL+ITHWkhiu7x+xF77clh2b4Rm+s6xnOgY/sGDWoFWZmtKsE95hxBPkgQQNnQ==
+"@rails/actioncable@>=7.0":
+  version "8.0.200"
+  resolved "https://registry.yarnpkg.com/@rails/actioncable/-/actioncable-8.0.200.tgz#1d27d9d55e45266e061190db045925e0b4d53d6b"
+  integrity sha512-EDqWyxck22BHmv1e+mD8Kl6GmtNkhEPdRfGFT7kvsv1yoXd9iYrqHDVAaR8bKmU/syC5eEZ2I5aWWxtB73ukMw==
 
 "@reach/observe-rect@^1.1.0":
   version "1.2.0"
@@ -2730,10 +2735,10 @@ dom-helpers@^5.0.1:
     "@babel/runtime" "^7.8.7"
     csstype "^3.0.2"
 
-dom-input-range@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/dom-input-range/-/dom-input-range-1.2.0.tgz#2551a4999d784f703f6ff65d7688e63c9ba083a7"
-  integrity sha512-8HVA5Oy5Vt872S7IXsjjp6/5Hqsm5YZLhurxwwQXp80T9qVsj8/mEUH3sQlFujLLUoWfxiaThHHuJ3/q1MHVuA==
+dom-input-range@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/dom-input-range/-/dom-input-range-2.0.1.tgz#054e16f3af2d6b866886d207e11caeb192d21ac2"
+  integrity sha512-UMGnuQlEepIPCju5NrPe+8y52B+pRvSjIaSPW92KpukoDGSEVkI2iaCR4HxK7K6C7zmVsWE8PEjCYZaJMr3vpg==
 
 dom-serializer@^2.0.0:
   version "2.0.0"

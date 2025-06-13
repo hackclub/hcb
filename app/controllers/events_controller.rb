@@ -363,7 +363,7 @@ class EventsController < ApplicationController
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
-    @user = User.friendly.find_by_friendly_id(params[:user]) if params[:user]
+    @user = User.friendly.find_by_friendly_id(params[:user], allow_nil: true) if params[:user]
 
     @has_filter = @status.present? || @type.present? || @user.present?
 
@@ -694,11 +694,19 @@ class EventsController < ApplicationController
   def reimbursements
     authorize @event
     @reports = @event.reimbursement_reports.visible
-    @reports = @reports.pending if params[:filter] == "pending"
-    @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:filter] == "reimbursed"
-    @reports = @reports.rejected if params[:filter] == "rejected"
+    @reports = @reports.pending if params[:status] == "pending"
+    @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:status] == "reimbursed"
+    @reports = @reports.rejected if params[:status] == "rejected"
     @reports = @reports.search(params[:q]) if params[:q].present?
+    @reports = @reports.where("reimbursement_reports.created_at <= ?", params[:created_before]) if params[:created_before].present?
+    @reports = @reports.where("reimbursement_reports.created_at >= ?", params[:created_after]) if params[:created_after].present?
     @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[pending reimbursed rejected] },
+      { key: "created_*", label: "Date created", type: "date_range" }
+    ]
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def reimbursements_pending_review_icon
@@ -1038,7 +1046,7 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = @event.users.friendly.find_by_friendly_id(params[:user]) if params[:user]
+    @user = @event.users.friendly.find_by_friendly_id(params[:user], allow_nil: true) if params[:user]
 
     @type = params[:type]
     @start_date = params[:start].presence

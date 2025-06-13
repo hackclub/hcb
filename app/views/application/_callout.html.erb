@@ -4,7 +4,10 @@
 <div class="<%= "card border b--#{color} #{"pb0" if local_assigns[:footer].present? } mt3 mb3 #{local_assigns[:class]}" %>">
   <div class="<%= "flex items-center #{color}" %>">
     <%= inline_icon icon, size: 32, class: "mr1" %>
-    <p class="bold mt0 mb0"><%= local_assigns[:title] %></p>
+    <p class="bold mt0 mb0">
+      <%= local_assigns[:title] %>
+      <%= local_assigns[:badge] if local_assigns[:badge].present? %>
+    </p>
   </div>
 
   <% unless (block = yield).empty? %>

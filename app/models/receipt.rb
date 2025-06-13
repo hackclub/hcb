@@ -59,6 +59,8 @@ class Receipt < ApplicationRecord
   # - @sampoder
   PREPROCESSED_SIZES = ["1024x1024"].freeze
 
+  CARD_LOCKING_START_DATE = Date.new(2025, 6, 13)
+
   has_one_attached :file do |attachable|
     PREPROCESSED_SIZES.each do |resize|
       attachable.variant(resize.to_sym, resize:, preprocessed: true)
@@ -85,6 +87,11 @@ class Receipt < ApplicationRecord
       Receipt::SuggestPairingsJob.perform_later(self)
     end
   end
+
+  after_commit do
+    User::UpdateCardLockingJob.perform_later(user:)
+  end
+
   validate :has_owner
 
   enum :upload_method, {
