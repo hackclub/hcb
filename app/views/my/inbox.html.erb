@@ -3,8 +3,18 @@
 <%= render "users/nav", selected: :receipts %>
 
 <h1 class="heading">
-  My receipts
+  <span>
+    My receipts
+  </span>
 </h1>
+
+<% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
+  <%= render "callout", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted"), footer: :questions do %>
+    <p>
+      Starting Tuesday, June 10th, 2025, HCB will beta test locking cards for users who have more than 10 missing receipts at any given time. Receipts before this beta period do not count towards the limit, though they still need to be submitted. <strong>Your cards are currently <%= current_user.cards_locked? ? "locked" : "active" %>.</strong>
+    </p>
+  <% end %>
+<% end %>
 
 <section class="grid grid--split grid--spacious">
   <div>
@@ -68,7 +78,12 @@
 
 <h2 class="flex items-center mb2">
   Transactions
-  <%= badge_for @count %>
+  <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
+    <%= badge_for("#{@count} missing receipts") %>
+    <%= badge_for("#{@locking_count} / 10") %>
+  <% else %>
+    <%= badge_for(@count) %>
+  <% end %>
 </h2>
 
 <% @cards.each do |card| %>

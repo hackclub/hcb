@@ -88,6 +88,8 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
+    @locking_count = current_user.transactions_missing_receipt(since: Receipt::CARD_LOCKING_START_DATE).count
+
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
     @hcb_codes = Kaminari.paginate_array(HcbCode.where(id: hcb_code_ids_missing_receipt)
                  .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
