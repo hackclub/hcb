@@ -700,6 +700,7 @@ Rails.application.routes.draw do
     get "cards", to: "events#card_overview", as: :cards_overview
     get "cards/new", to: "stripe_cards#new"
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
+    get "card_grants", to: "events#card_grant_overview", as: :card_grant_overview
 
     get "transfers/new", to: "events#new_transfer"
 
