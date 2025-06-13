@@ -363,7 +363,7 @@ class EventsController < ApplicationController
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
-    @user = User.friendly.find_by_friendly_id(params[:user]) if params[:user]
+    @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
 
     @has_filter = @status.present? || @type.present? || @user.present?
 
@@ -1046,7 +1046,7 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = @event.users.friendly.find_by_friendly_id(params[:user]) if params[:user]
+    @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
     @type = params[:type]
     @start_date = params[:start].presence
