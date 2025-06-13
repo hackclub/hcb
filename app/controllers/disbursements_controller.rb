@@ -4,10 +4,14 @@ class DisbursementsController < ApplicationController
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
   def show
-    authorize @disbursement
-
     # Comments
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.hcb_code)
+
+    authorize @hcb_code, :show?, policy_class: HcbCodePolicy
+
+    redirect_to @hcb_code unless current_user.auditor?
+
+    authorize @disbursement
   end
 
   def transfer_confirmation_letter
@@ -84,7 +88,7 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: @source_event.plan.front_disbursements_enabled?
+      fronted: @source_event.plan.front_disbursements_enabled? && OrganizerPosition.role_at_least?(current_user, @source_event, :manager)
     ).run
 
     if disbursement_params[:file]
@@ -101,7 +105,7 @@ class DisbursementsController < ApplicationController
     if current_user.admin?
       redirect_to disbursements_admin_index_path
     else
-      redirect_to event_transfers_path(@source_event)
+      redirect_to disbursement
     end
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
@@ -154,6 +158,19 @@ class DisbursementsController < ApplicationController
     end
 
     redirect_to disbursement_path(@disbursement)
+  end
+
+  def manager_approve
+    @disbursement = Disbursement.find(params[:disbursement_id])
+    authorize @disbursement
+
+    return redirect_to disbursement_path(@disbursement), flash: { error: "Already approved" } if @disbursement.approved_by_manager || !@disbursement.reviewing?
+
+    @disbursement.approve_by_manager(current_user)
+
+    flash[:success] = "Disbursement approved by manager"
+
+    redirect_back_or_to disbursement_path(@disbursement)
   end
 
   private

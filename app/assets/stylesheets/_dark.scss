@@ -212,7 +212,8 @@ html[data-dark='true'] {
     color: map-get($palette, muted) !important;
   }
 
-  .card.card--sunken {
+  .card.card--sunken,
+  .card.card--sunken--dark {
     box-shadow: none;
     background-color: rgba(map-get($palette, dark), 0.75);
   }
