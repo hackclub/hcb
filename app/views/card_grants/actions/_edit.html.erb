@@ -1,6 +1,7 @@
 <%# locals: (card_grant:) %>
 
-<div class="tooltipped tooltipped--n" aria-label="Set this grant's purpose">
+<% purpose_tooltip = policy(card_grant).edit? ? "Set this grant's purpose" : "You don't have permission to perform this action" %>
+<div class="tooltipped tooltipped--n" aria-label="<%= purpose_tooltip %>">
   <%= link_to edit_card_grant_path(card_grant),
               class: "btn bg-success",
               data: { behavior: "modal_trigger", modal: "edit_card_grant" },
