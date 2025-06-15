@@ -19,20 +19,20 @@
       account_details: @account_details %>
 
 <article class="card pb0 mt3 mb1">
-  <h2 class="h2 mt0 border-none">
+  <%= render "heading", hcb_code: @hcb_code do %>
     <div class="flex items-center justify-between" style="gap: 8px">
       <span class="flex-auto mr1">
-        <span class="regular muted"><%= @hcb_code.increase_check.sent? ? "Sent" : "Sending" %></span>
+        <span class="regular muted">Check to</span>
         <%= @hcb_code.increase_check.recipient_name %>
-        <span class="regular muted"> a&nbsp;check for </span>
+        <span class="regular muted">for</span>
         <span class="regular"><%= render_money @hcb_code.increase_check.amount %></span>
       </span>
-      <span class="badge h4 ml2 nowrap bg-<%= @hcb_code.increase_check.state %>">
+      <span class="badge h4 md-right nowrap bg-<%= @hcb_code.increase_check.state %>">
         <%= @hcb_code.increase_check.state_text %>
       </span>
-      <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>
     </div>
-  </h2>
+  <% end %>
+
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
       <% if @hcb_code.increase_check.sent? %>
@@ -80,11 +80,6 @@
     <p>
       <strong>Check memo</strong>
       <%= @hcb_code.increase_check.memo %>
-    </p>
-
-    <p>
-      <strong>Transaction memo</strong>
-      <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
     </p>
 
     <p>
