@@ -40,6 +40,8 @@ class HcbCodesController < ApplicationController
       @show_ach_details = true
     end
 
+    @reverse_receipt_id = params[:reverse]
+
     if params[:frame]
       @frame = true
       @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
