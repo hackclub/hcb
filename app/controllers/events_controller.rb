@@ -265,6 +265,8 @@ class EventsController < ApplicationController
       @filter = "manager"
     when "readers"
       @filter = "reader"
+    when "active_teens"
+      @filter = "active_teens"
     end
 
     @q = params[:q] || ""
@@ -274,7 +276,11 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-    @all_positions = @all_positions.where(role: @filter) if @filter
+    if @filter == "active_teens"
+      @all_positions = @all_positions.select { |op| op.user.teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
+    elsif @filter
+      @all_positions = @all_positions.where(role: @filter)
+    end
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
 
