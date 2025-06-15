@@ -10,6 +10,7 @@
 #  deposited_at             :datetime
 #  errored_at               :datetime
 #  in_transit_at            :datetime
+#  is_v2                    :boolean          default(FALSE), not null
 #  name                     :string
 #  pending_at               :datetime
 #  rejected_at              :datetime
@@ -191,7 +192,11 @@ class Disbursement < ApplicationRecord
   end
 
   # Eagerly create HcbCode object
-  after_create :local_hcb_code
+  after_create :create_local_hcb_code, if: -> { !is_v2 }
+
+  def create_local_hcb_code
+    HcbCode.create!(hcb_code: hcb_code)
+  end
 
   alias_attribute :approved_at, :pending_at
 
@@ -202,10 +207,45 @@ class Disbursement < ApplicationRecord
   end
 
   def hcb_code
+    if is_v2
+      ap ActiveSupport::BacktraceCleaner.new.clean(Thread.current.backtrace)
+      raise ArgumentError, "Disbursement is v2, use outgoing_hcb_code or incoming_hcb_code instead"
+    end
+
     "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}-#{id}"
   end
 
   def local_hcb_code
+    if is_v2
+      # binding.pry
+      debugger
+      raise ArgumentError, "Disbursement is v2, use outgoing_local_hcb_code or incoming_local_hcb_code instead"
+    end
+
+    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
+  end
+
+  def outgoing_hcb_code
+    raise ArgumentError, "Disbursement is v2, use outgoing_local_hcb_code instead" unless is_v2
+
+    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}-#{id}"
+  end
+
+  def outgoing_local_hcb_code
+    raise ArgumentError, "Disbursement is v2, use outgoing_local_hcb_code instead" unless is_v2
+
+    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
+  end
+
+  def incoming_hcb_code
+    raise ArgumentError, "Disbursement is v2, use local_hcb_code instead" unless is_v2
+
+    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
+  end
+
+  def incoming_local_hcb_code
+    raise ArgumentError, "Disbursement is v2, use local_hcb_code instead" unless is_v2
+
     @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
@@ -214,7 +254,11 @@ class Disbursement < ApplicationRecord
   end
 
   def canonical_pending_transactions
-    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
+    if is_v2
+      @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [incoming_hcb_code, outgoing_hcb_code])
+    else
+      @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
+    end
   end
 
   def processed?
@@ -309,6 +353,7 @@ class Disbursement < ApplicationRecord
   end
 
   def transaction_memo
+    # TODO: update this
     "HCB-#{local_hcb_code.short_code}"
   end
 
