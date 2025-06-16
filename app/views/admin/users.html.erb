@@ -30,6 +30,7 @@
       <th class="w-32">Created</th>
       <th>Name</th>
       <th>Email</th>
+      <th>Phone</th>
       <th>Org Positions</th>
       <th class="w-48">Card Grants</th>
       <th># Receipts Missing</th>
@@ -50,6 +51,12 @@
           <%= user.email %>
           <% user.email_updates.confirmed.order(created_at: :desc).pluck(:original).excluding(user.email).each do | email | %>
             <br><small><i><%= email %></i></small>
+          <% end %>
+        </td>
+        <td>
+          <%= user.phone_number %>
+          <% unless user.phone_number_verified %>
+            <br><small><i>⚠️ Unverified</i></small>
           <% end %>
         </td>
         <td>
