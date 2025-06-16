@@ -1,6 +1,8 @@
 <%= form_with(model: @report, local: true) do |form| %>
   <%= form.label :report_name, "Report name" %>
   <%= form.text_field :report_name, placeholder: "Chicago Trip Expenses", required: true %>
+  <%= form.label :report_to, "Report to", class: "mt2" %>
+  <%= form.text_field :report_to, value: @report.user.email, readonly: true %>
   <% if organizer_signed_in? && (@report.submitted? || @report.draft?) %>
     <%= form.label :maximum_amount, "Maximum reimbursable value (optional)", class: "mt2" %>
     <div class="field">
