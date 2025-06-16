@@ -102,7 +102,8 @@
 
     <div class="fs-mask">
       <strong class="inline-flex items-center" style="gap: 4px">
-        Address line 1
+        Address
+        <% if stripe_card.cardholder.stripe_billing_address_line2.presence %> line 1<% end %>
         <% if stripe_card.user == current_user && stripe_card.cardholder.default_billing_address? %>
           <%= link_to settings_address_path, class: "info tooltipped tooltipped--e", "aria-label": "You're using HCB's default billing address, not your home address. You can change it in your user settings if you'd like.", style: "display: flex;", data: { turbo: false } do %>
             <%= inline_icon "info", size: 18, style: "position: unset;" %>
