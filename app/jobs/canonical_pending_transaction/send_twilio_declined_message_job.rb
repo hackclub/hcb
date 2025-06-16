@@ -35,6 +35,8 @@ class CanonicalPendingTransaction
                              "because this card isn't allowed to make purchases at #{@merchant}"
                            when "cash_withdrawals_not_allowed"
                              "because cash withdrawals are not enabled on it"
+                           when "user_cards_locked"
+                             "because your cards are locked (you need to upload receipts)"
                            else
                              "at #{@merchant} due to insufficient funds"
                            end

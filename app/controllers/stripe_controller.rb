@@ -33,7 +33,14 @@ class StripeController < ActionController::Base
     # fire-and-forget update to grafana dashboard
     StatsD.increment("stripe_webhook_authorization", 1)
 
-    approved = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event).run
+    service = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event)
+    approved = service.run
+
+    if approved
+      user = service.card.user
+      ::User::UpdateCardLockingJob.perform_later(user:)
+      ::User::SendCardLockingNotificationJob.perform_later(user:)
+    end
 
     response.set_header "Stripe-Version", "2022-08-01"
 

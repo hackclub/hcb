@@ -7,6 +7,7 @@
 #  id                            :bigint           not null, primary key
 #  access_level                  :integer          default("user"), not null
 #  birthday_ciphertext           :text
+#  cards_locked                  :boolean          default(FALSE), not null
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
 #  creation_method               :integer
@@ -49,6 +50,7 @@ class User < ApplicationRecord
   include Turbo::Broadcastable
 
   include ApplicationHelper
+  prepend MemoWise
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
@@ -313,18 +315,16 @@ class User < ApplicationRecord
     end
   end
 
-  def transactions_missing_receipt
-    @transactions_missing_receipt ||= begin
-      return HcbCode.none unless hcb_code_ids_missing_receipt.any?
+  memo_wise def transactions_missing_receipt(since: nil)
+    return HcbCode.none unless hcb_code_ids_missing_receipt.any?
 
-      user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt).order(created_at: :desc)
-    end
+    user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt)
+    user_hcb_codes = user_hcb_codes.where("created_at >= ?", since) if since
+    user_hcb_codes.order(created_at: :desc)
   end
 
-  def transactions_missing_receipt_count
-    @transactions_missing_receipt_count ||= begin
-      transactions_missing_receipt.size
-    end
+  memo_wise def transactions_missing_receipt_count(since: nil)
+    transactions_missing_receipt(since:).size
   end
 
   def build_payout_method(params)
