@@ -8,6 +8,8 @@ class DocusealController < ActionController::Base
       contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
       return render json: { success: true } unless contract # sometimes contracts are sent using Docuseal that aren't in HCB
 
+      return render json: { success: false } unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
+
       signee = contract.docuseal_document["submitters"].select { |r| r["role"] == "Contract Signee" }&.first
       cosigner = contract.docuseal_document["submitters"].select { |r| r["role"] == "Cosigner" }&.first
 
