@@ -109,7 +109,8 @@ input[type='number'] {
   }
 
   &:has([disabled]) {
-    .field--fileupload__label, .field--fileupload__field {
+    .field--fileupload__label,
+    .field--fileupload__field {
       color: map-get($palette, slate);
       cursor: no-drop;
     }
