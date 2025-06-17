@@ -1,6 +1,6 @@
 <% title "Home" %>
 <% page_md %>
-
+<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) %>
 <%= render "users/nav", selected: :home if signed_in? %>
 
 <h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0">
