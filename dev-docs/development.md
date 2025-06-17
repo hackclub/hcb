@@ -121,6 +121,10 @@ HCB-specific setup instructions.
    ```bash
    bundle install
    ```
+    If you're on a Mac you may need to install a few Homebrew dependencies to get `bundle install` to succeed:
+   ```bash
+   brew install pkg-config cairo libpq
+   ```
 
 4. Install node packages
    ```bash
