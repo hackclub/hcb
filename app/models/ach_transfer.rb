@@ -252,7 +252,7 @@ class AchTransfer < ApplicationRecord
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
 
-    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: self.id.to_s
+    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: "reverse_#{self.id}"
   end
 
   def pending_expired?
