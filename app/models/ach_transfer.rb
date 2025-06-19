@@ -105,8 +105,8 @@ class AchTransfer < ApplicationRecord
   validates :company_name, length: { maximum: 16 }, allow_blank: true
   # validates :invoiced_at, presence: true, on: :create
   validates(
-    :invoiced_at, 
-    comparison: { 
+    :invoiced_at,
+    comparison: {
       less_than_or_equal_to: :created_at,
       message: "cannot be after the transfer creation date"
     },
