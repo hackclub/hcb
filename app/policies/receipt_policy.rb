@@ -4,7 +4,7 @@ class ReceiptPolicy < ApplicationPolicy
   def destroy?
     user&.admin? ||
       (record&.receiptable&.event &&
-        OrganizerPosition.role_at_least?(user, record&.receiptable&.event, :member) &&
+        OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) &&
         unlocked?
       ) ||
       # Checking if receiptable is nil prevents unauthorized
