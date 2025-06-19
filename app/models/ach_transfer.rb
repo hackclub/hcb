@@ -104,7 +104,15 @@ class AchTransfer < ApplicationRecord
   validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
   validates :company_name, length: { maximum: 16 }, allow_blank: true
   # validates :invoiced_at, presence: true, on: :create
-  validate :invoiced_at_must_be_before_or_on_creation_date, on: :create
+  validates(
+    :invoiced_at, 
+    comparison: { 
+      less_than_or_equal_to: :created_at,
+      message: "cannot be after the transfer creation date"
+    },
+    allow_nil: true,
+    on: :create
+  )
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
