@@ -55,7 +55,8 @@ class DisbursementsController < ApplicationController
     @allowed_destination_events = if current_user.admin?
                                     Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).indexable.includes(:plan)
+                                    allowed_destination_event_ids = current_user.events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
+                                    Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
                                   else
                                     current_user.events.not_hidden.filter_demo_mode(false)
                                   end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
