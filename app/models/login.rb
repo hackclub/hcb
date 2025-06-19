@@ -10,6 +10,7 @@
 #  browser_token_ciphertext :text
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
+#  initial_login_id         :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
@@ -17,6 +18,10 @@
 #
 #  index_logins_on_user_id          (user_id)
 #  index_logins_on_user_session_id  (user_session_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (initial_login_id => logins.id)
 #
 class Login < ApplicationRecord
   include AASM
