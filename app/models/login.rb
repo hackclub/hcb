@@ -29,6 +29,14 @@ class Login < ApplicationRecord
 
   belongs_to :user
   belongs_to :user_session, optional: true
+  belongs_to(
+    :initial_login,
+    optional: true,
+    class_name: "Login",
+    inverse_of: nil
+  )
+
+  scope(:initial, -> { where(initial_login_id: nil) })
 
   has_encrypted :browser_token
   before_validation :ensure_browser_token
