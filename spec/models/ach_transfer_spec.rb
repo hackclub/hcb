@@ -75,7 +75,7 @@ RSpec.describe AchTransfer, type: :model do
     it "rejects invoiced_at when it's after the creation date" do
       future_date = 1.day.from_now.to_date
       ach_transfer = build(:ach_transfer, event:, invoiced_at: future_date)
-      
+
       expect(ach_transfer).not_to be_valid
       expect(ach_transfer.errors[:invoiced_at]).to include("cannot be after the transfer creation date")
     end
