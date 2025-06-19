@@ -77,6 +77,8 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
 
+    @show_card_details = params[:show_details] == "true"
+
     @frame = params[:frame].present?
     @force_no_popover = @frame
 
