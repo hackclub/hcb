@@ -33,10 +33,5 @@
   "files.associations": {
     "apple-app-site-association": "json"
   },
-  "css.validate": false,
-  "workbench.colorCustomizations": {
-    "activityBar.background": "#501447",
-    "titleBar.activeBackground": "#701C64",
-    "titleBar.activeForeground": "#FDF8FC"
-  }
+  "css.validate": false
 }
