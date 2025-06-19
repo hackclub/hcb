@@ -117,7 +117,7 @@ class AchTransfersController < ApplicationController
   end
 
   def ach_transfer_params
-    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id]
+    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id, :invoiced_at]
 
     if admin_signed_in?
       permitted_params << :scheduled_on
