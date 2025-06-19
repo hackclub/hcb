@@ -88,6 +88,18 @@ class UserSession < ApplicationRecord
     expiration_at <= Time.now
   end
 
+  SUDO_MODE_TTL = 2.hours
+
+  # Determines whether the user can perform a sensitive action without
+  # reauthenticating.
+  #
+  # @return [Boolean]
+  def sudo_mode?
+    return false if last_authenticated_at.nil?
+
+    last_authenticated_at >= SUDO_MODE_TTL.ago
+  end
+
   private
 
   def user_is_unlocked
@@ -96,4 +108,15 @@ class UserSession < ApplicationRecord
     end
   end
 
+  # The last time the user went through a login flow. Used to determine whether
+  # sensitive actions can be performed.
+  #
+  # @return [ActiveSupport::TimeWithZone, nil]
+  def last_authenticated_at
+    return @last_authenticated_at if defined?(@last_authenticated_at)
+
+    @last_authenticated_at = logins.max_by(&:created_at)&.created_at
+
+    @last_authenticated_at
+  end
 end
