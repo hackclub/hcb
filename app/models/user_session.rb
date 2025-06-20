@@ -113,10 +113,6 @@ class UserSession < ApplicationRecord
   #
   # @return [ActiveSupport::TimeWithZone, nil]
   def last_authenticated_at
-    return @last_authenticated_at if defined?(@last_authenticated_at)
-
-    @last_authenticated_at = logins.max_by(&:created_at)&.created_at
-
-    @last_authenticated_at
+    logins.max_by(&:created_at)&.created_at
   end
 end
