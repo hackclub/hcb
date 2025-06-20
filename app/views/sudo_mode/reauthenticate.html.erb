@@ -1,0 +1,21 @@
+<h1>Confirm Access</h1>
+
+<p>Signed in as <%= current_user.email %></p>
+
+<%= form_tag(request.path, method: request.request_method_symbol) do %>
+  <%
+    Rack::Utils
+      .parse_query(request.request_parameters.to_query)
+      .except("authenticity_token", "_method")
+      .each do |name, value|
+  %>
+    <%= hidden_field_tag(name, value) %>
+  <% end %>
+
+  <%= hidden_field_tag("_sudo[login_id]", @login.hashid) %>
+
+  <%= label_tag("_sudo[login_code]", "Login code") %>
+  <%= text_field_tag("_sudo[login_code]") %>
+
+  <%= submit_tag("Continue") %>
+<% end %>
