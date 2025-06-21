@@ -94,8 +94,8 @@ class MyController < ApplicationController
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
-                 .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
-                 .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
+                                       .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
+                                       .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
     if @time_based_sorting
       hcb_codes_missing_receipt = hcb_codes_missing_receipt.sort_by(&:created_at).reverse
