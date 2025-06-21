@@ -38,10 +38,14 @@
             <% end %>
             <% elsif filter[:type] == "amount_range" %>
             <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
-              <p class="bold mb0 mt0">Less than...</p>
-              <%= form.number_field "#{filter[:key].sub('_*', '')}_less_than", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_less_than"] %>
-              <p class="bold mb0 mt0">Greater than...</p>
-              <%= form.number_field "#{filter[:key].sub('_*', '')}_greater_than", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_greater_than"] %>
+              <% ["less_than", "greater_than"].each do |suffix| %>
+                <p class="bold mb0 mt0"><%= suffix.humanize %>...</p>
+                <div class="mb-3 flex border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3 items-center">
+                  <span class="bold muted text-md" style="width: 1rem;">$</span>
+                  <%= form.number_field "#{filter[:key].sub('_*', '')}_#{suffix}", class: "bg-transparent !border-none", value: params["#{filter[:key].sub('_*', '')}_#{suffix}"] %>
+                </div>
+              <% end %>
+
               <% request.query_parameters.except(:start, :end).each do |key, value| %>
               <%= hidden_field_tag key, value %>
               <% end %>
