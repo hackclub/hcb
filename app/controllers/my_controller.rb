@@ -121,26 +121,6 @@ class MyController < ApplicationController
     end
   end
 
-  def inbox_v2
-    @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.transactions_missing_receipt(since: Receipt::CARD_LOCKING_START_DATE).count
-
-    hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
-    @hcb_codes = Kaminari.paginate_array(HcbCode.where(id: hcb_code_ids_missing_receipt)
-                 .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
-                 .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values)
-                         .page(params[:page]).per(params[:per] || 15)
-
-    @mailbox_address = current_user.active_mailbox_address
-    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
-    @pairings = current_user.receipt_bin.suggested_receipt_pairings
-
-    if flash[:popover]
-      @popover = flash[:popover]
-      flash.delete(:popover)
-    end
-  end
-
   def reimbursements
     @my_reports = current_user.reimbursement_reports
     @my_reports = @my_reports.search(params[:q]) if params[:q].present?
