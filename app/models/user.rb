@@ -79,6 +79,8 @@ class User < ApplicationRecord
 
   has_many :logins
   has_many :login_codes
+  has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
+  has_many :active_backup_codes, -> { where(aasm_state: :active) }, class_name: "User::BackupCode", inverse_of: :user
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
@@ -370,6 +372,53 @@ class User < ApplicationRecord
 
   def only_card_grant_user?
     card_grants.size >= 1 && events.size == 0
+  end
+
+  def backup_codes_enabled?
+    active_backup_codes.any?
+  end
+
+  def generate_backup_codes!
+    backup_codes.previewed.destroy_all
+
+    codes = []
+    pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
+    while codes.size < 10
+      code = SecureRandom.alphanumeric(10)
+      next if codes.include?(code)
+
+      salt = Base64.strict_encode64(SecureRandom.random_bytes(64))
+      begin
+        # backup code pepper must be at least 32 bytes
+        backup_codes.create!(code_hash: User::BackupCode.gen_hash(code:, salt:, pepper:), salt: salt)
+      rescue ActiveRecord::RecordInvalid
+        # if the code is already in use, skip it
+        next
+      end
+      codes << code
+    end
+
+    codes
+  end
+
+  def redeem_backup_code!(code)
+    found = nil
+    pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
+    active_backup_codes.each do |backup_code|
+      hash = User::BackupCode.gen_hash(code:, salt: backup_code.salt, pepper:)
+      if ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.code_hash)
+        backup_code.mark_used!
+        return true
+      end
+    end
+
+    false
+  end
+
+  def disable_backup_codes!
+    backup_codes.previewed.destroy_all
+    backup_codes.active.map(&:mark_discarded!)
+    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
   private

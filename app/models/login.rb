@@ -28,7 +28,7 @@ class Login < ApplicationRecord
   has_encrypted :browser_token
   before_validation :ensure_browser_token
 
-  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, prefix: :authenticated_with
+  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, :backup_code, prefix: :authenticated_with
 
   EXPIRATION = 15.minutes
 
@@ -58,7 +58,7 @@ class Login < ApplicationRecord
     event :mark_complete do
       transitions from: :incomplete, to: :complete do
         guard do
-          authentication_factors_count == (user.use_two_factor_authentication? ? 2 : 1)
+          authentication_factors_count == (user.use_two_factor_authentication? ? 2 : 1) || authenticated_with_backup_code
         end
       end
     end
