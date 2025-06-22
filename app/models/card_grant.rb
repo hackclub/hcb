@@ -11,6 +11,7 @@
 #  keyword_lock    :string
 #  merchant_lock   :string
 #  purpose         :string
+#  sort_index      :float
 #  status          :integer          default("active"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
