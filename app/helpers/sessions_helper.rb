@@ -148,4 +148,39 @@ module SessionsHelper
       &.where&.not(id: current_session.id)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
   end
+
+  def sudo_mode?
+    current_session&.sudo_mode?
+  end
+
+  def enforce_sudo_mode
+    return if sudo_mode?
+
+    if params[:_sudo]
+      @login = Login.incomplete.active.find_by_hashid!(params[:_sudo][:login_id])
+
+      UserService::ExchangeLoginCodeForUser.new(
+        user_id: current_user.id,
+        login_code: params[:_sudo][:login_code],
+        sms: false,
+        ).run
+
+      @login.update!(authenticated_with_email: true)
+      @login.update!(user_session: current_session)
+
+      current_session.reload
+    else
+      @login = Login.create!(
+        user: current_user,
+        initial_login: current_session.initial_login
+      )
+
+      LoginCodeService::Request.new(email: current_user.email, sms: false, ip_address: request.remote_ip, user_agent: request.user_agent).run
+
+      render(
+        template: "sudo_mode/reauthenticate",
+        status: :unprocessable_entity
+      )
+    end
+  end
 end
