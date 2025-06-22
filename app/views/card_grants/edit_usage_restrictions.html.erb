@@ -1,0 +1,41 @@
+<turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
+  <%= render "edit_nav", active: "usage" %>
+
+<div class="flex gap-3">
+  <div>
+    <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
+
+        <div class="field">
+          <%= form.label :merchant_lock, "Update approved merchants" %>
+          <%= form.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: @event.card_grant_setting.merchant_lock.join(", ") %>
+          <p class="h5 muted mt0 mb1">
+            Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
+          </p>
+        </div>
+
+        <div class="field">
+          <%= form.label :category_lock, "Update category lock" %>
+          <%= form.text_field :category_lock, placeholder: "fast_food_restaurants", value: @event.card_grant_setting.category_lock.join(", ") %>
+          <p class="h5 muted mt0 mb1">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to lock all card grants issued from this event to.</p>
+        </div>
+
+        <div class="field">
+          <%= form.label :keyword_lock, "Update merchant name lock" %>
+          <%= form.text_field :keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z", value: @event.card_grant_setting.keyword_lock %>
+          <p class="h5 muted mt0 mb1">Provide a <a href="https://rubular.com">Ruby regular expression</a> string for us to match the merchant name to.</p>
+        </div>
+        <p class="h4 mb-0 muted">These locks work in tandem:</p>
+        <ul class="mt-0 h5 muted">
+          <li>If you have no locks set, all transactions will be allowed.</li>
+          <li>If you have one lock set, only transactions matching that lock will be allowed.</li>
+          <li>If you have multiple locks set, transactions that match any of those locks will be allowed.</li>
+        </ul>
+
+      <div class="actions">
+        <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }) %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+</turbo-frame>

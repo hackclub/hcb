@@ -46,6 +46,62 @@ class CardGrantsController < ApplicationController
     redirect_to event_transfers_path(@event)
   end
 
+  def edit_overview
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_purpose
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_actions
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_balance
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_usage_restrictions
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_topup
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_withdraw
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
   def update
     authorize @card_grant
 

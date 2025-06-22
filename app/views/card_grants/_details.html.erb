@@ -1,67 +1,19 @@
 <%# locals: (card_grant:) %>
 
 <div class="card mt2">
-  <h2 class="border-none mx0 mt0 inline-flex items-center">
-    <%= pop_icon_to "edit",
-        [:edit, card_grant.disbursement.local_hcb_code],
-        class: "mr2 align-middle", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
-    Grant to &nbsp; <%= user_mention card_grant.user %>
-  </h2>
-  <section class="card__banner card__darker details-horiz border-top border-bottom">
-    <p>
-      <strong>Sent by</strong>
-      <%= user_mention card_grant.sent_by %>
-    </p>
-    <p>
-      <strong>Funded by</strong>
-      <%= link_to card_grant.event.name, card_grant.event %>
-    </p>
-    <p>
-      <strong>Sent</strong>
-      <span class="tooltipped" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
-        <%= time_ago_in_words card_grant.created_at %> ago
-      </span>
-    </p>
-  </section>
-  <section class="details details--wide pt2 pb2 details--tall">
-    <p>
-      <strong>Grant Status</strong>
-      <span><%= card_grant.state_text %></span>
-    </p>
-    <p>
-      <strong>One time use?</strong>
-      <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
-    </p>
-    <% if (stripe_card = card_grant.stripe_card).present? %>
-      <p>
-        <strong>Card Status</strong>
-        <span>
-          <%= stripe_card.state_text %>
+      <h3 class="mt-1">Grant details</h3>
+  <hr class="my-0 mx-[-16px]">
 
-          <% if stripe_card.frozen? %>
-            <%# The condition above is written this way because `frozen?` is a method on `nil` %>
-            by <%= user_mention card_grant.stripe_card.last_frozen_by %>
-          <% end %>
-        </span>
-      </p>
-    <% end %>
-    <p>
-      <strong>Grant amount</strong>
-      <span><%= render_money card_grant.amount %></span>
-    </p>
-    <p>
-      <strong>Balance remaining</strong>
-      <span><%= render_money card_grant.balance %></span>
-    </p>
+<section class="details details--wide pt2 pb2 details--tall">
     <p>
       <strong>Expires on</strong>
       <span><%= format_date card_grant.expires_on %></span>
     </p>
-    <p>
-      <strong>Grant sent to</strong>
-      <span><%= mail_to card_grant.user.email %></span>
-    </p>
 
+    <p>
+      <strong>One time use?</strong>
+      <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
+    </p>
     <p>
       <strong>Allowed merchants</strong>
       <% if card_grant.allowed_merchants.any? %>
@@ -80,12 +32,6 @@
         <span>All categories allowed</span>
       <% end %>
     </p>
-    <% if @card_grant.purpose.present? %>
-      <p>
-        <strong>Purpose</strong>
-        <span><%= @card_grant.purpose %></span>
-      </p>
-    <% end %>
     <% if card_grant.keyword_lock.present? %>
       <p>
         <strong>Merchant keyword lock</strong>
