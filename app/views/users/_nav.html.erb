@@ -1,10 +1,12 @@
-<% content_for(:nav) do %>
-  <h1 class="flex items-center xs-hide border-none h1 mt0 mb0 pt2">
-    <%= avatar_for current_user, size: 36, class: "mr1" %>
-    <%= current_user.initial_name %>
-  </h1>
+<%= render "users/mobile_nav", selected: local_assigns[:selected] %>
+<% content_for(:header) do %>
+  <div class="mt-1">
+    <%= render partial: "logo" %>
+  </div>
+<% end %>
 
-  <div>
+<% content_for(:nav) do %>
+  <div class="mt-5 mb-3">
     <button
       class="btn h-10 bg-none bg-smoke shadow-none w-100 justify-start mt1 px-3 hover:shadow-none display-none-not-important md:flex"
       style="border-radius: 8px"
@@ -20,38 +22,18 @@
   </div>
 
   <nav class="dock font-medium mt1">
-    <%= dock_item "Home",
-      root_path,
-      tooltip: "See all your organizations",
-      icon: "home",
-      selected: local_assigns[:selected] == :home %>
-    <%= dock_item "Cards",
-      my_cards_path,
-      tooltip: "See all your cards",
-      icon: "card",
-      selected: local_assigns[:selected] == :cards %>
-    <%= dock_item "Receipts",
-      my_inbox_path,
-      tooltip: "See transactions awaiting receipts",
-      icon: "payment-docs",
-      async_badge: my_missing_receipts_icon_path,
-      selected: local_assigns[:selected] == :receipts %>
-    <%= dock_item "Reimbursements",
-      my_reimbursements_path,
-      tooltip: "See expense reimbursements",
-      icon: "attachment",
-      async_badge: my_reimbursements_icon_path,
-      selected: local_assigns[:selected] == :reimbursements %>
-    <%= dock_item "Pay",
-      my_payroll_path,
-      tooltip: "Submit invoices & get paid",
-      icon: "person-badge",
-      selected: local_assigns[:selected] == :payroll if current_user.jobs.any? %>
-    <%= dock_item "Settings",
-      my_settings_path,
-      tooltip: "Edit account settings",
-      icon: "settings",
-      selected: local_assigns[:selected] == :settings %>
+    <% users_mobile_nav(selected: local_assigns[:selected]).each do |item| %>
+      <div>
+        <%= dock_item item[:name],
+          item[:path],
+          tooltip: item[:tooltip],
+          icon: item[:icon],
+          selected: item[:selected] %>
+      </div>
+    <% end %>
+    <div>
+      <%= render "users/settings_dropdown", local_assigns: %>
+    </div>
     <% if @first_visit %>
       <div class="pwa__prompt" style="position: relative">
         <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">

@@ -1,6 +1,9 @@
-<div data-controller="menu" data-menu-placement-value="<%= content_for?(:nav) || request.path.include?("auth") || request.path.include?("logins") ? "bottom-start" : "bottom-center" %>">
+<div
+  style="height: <%= @home_size || 36 %>px;"
+  data-controller="menu"
+  data-menu-placement-value="bottom-start">
   <%= link_to root_path,
-    class: "header-center text-decoration-none flex items-center #{'tooltipped tooltipped--s' if tooltipped_logo?}",
+    class: "header-center text-decoration-none flex inline-flex items-center #{'tooltipped tooltipped--e' if tooltipped_logo?}",
     'aria-label': tooltipped_logo? ?
       (user_birthday? ? "Happy birthday! #{['🎂', '🎈', '🎉', '🥳'].sample}" : "You’re in #{Rails.env} mode. #{development_mode_flavor}") :
       "",
@@ -17,7 +20,7 @@
         alt: "HCB logo" %>
   <% end %>
 
-  <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+  <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact z-50">
     <% if fall? %>
       <a href="https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png" download class="flex">
         <%= image_tag "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png", class: "mr1", height: 24 %>

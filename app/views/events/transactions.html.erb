@@ -28,12 +28,17 @@
 
 <%# Demo mode callout thing %>
 <% if organizer_signed_in? && @event.demo_mode && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-  <div class="card border b--info pb0 mb-4" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
+  <div class="mt-4 card border b--info pb0 mb-4" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
     <p class="mt0">
       <strong>Welcome to Playground Mode</strong>
       <br>
       While in Playground mode, explore the dashboard with mock data, and invite your team.
     </p>
+
+    <%= link_to({ show_mock_data: !show_mock_data? }, class: "btn btn-small mb-4 w-fit shrink-none nowrap") do %>
+      <%= inline_icon "view" %>
+      <%= show_mock_data? ? "Hide" : "Show" %> mock data
+    <% end %>
   </div>
 <% end %>
 

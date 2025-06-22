@@ -4,6 +4,41 @@ require "digest/md5"
 require "cgi"
 
 module UsersHelper
+  def users_mobile_nav(selected: nil)
+    [
+      {
+        name: "Home",
+        path: root_path,
+        icon: "home",
+        tooltip: "See all your organizations",
+        selected: selected == :home
+      },
+      {
+        name: "Cards",
+        path: my_cards_path,
+        icon: "card",
+        tooltip: "See all your cards",
+        selected: selected == :cards,
+      },
+      {
+        name: "Receipts",
+        path: my_inbox_path,
+        icon: "attachment",
+        tooltip: "See transactions awaiting receipts",
+        selected: selected == :receipts,
+        async_badge: my_missing_receipts_icon_path,
+      },
+      {
+        name: "Reimbursements",
+        path: my_reimbursements_path,
+        icon: "reimbursement",
+        tooltip: "See expense reimbursements",
+        async_badge: my_reimbursements_icon_path,
+        selected: selected == :reimbursements
+      }
+    ]
+  end
+
   def gravatar_url(email, name, id, size)
     name ||= begin
       temp = email.split("@").first.split(/[^a-z\d]/i).compact_blank
