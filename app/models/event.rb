@@ -10,6 +10,7 @@
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
 #  country                                      :integer
+#  country_alpha2                               :string
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
 #  demo_mode_request_meeting_at                 :datetime
@@ -59,7 +60,8 @@ class Event < ApplicationRecord
   set_public_id_prefix :org
 
   include CountryEnumable
-  has_country_enum
+  # has_country_enum
+  before_save :set_country_alpha2
 
   include Commentable
 
@@ -742,6 +744,12 @@ class Event < ApplicationRecord
   end
 
   private
+
+  def set_country_alpha2
+    reverse_enum = CountryEnumable.country_enum_list.invert
+    self.country_alpha2 = reverse_enum[country]&.to_s
+  end
+
 
   def point_of_contact_is_admin
     return unless point_of_contact_changed?

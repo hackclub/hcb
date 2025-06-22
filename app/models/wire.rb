@@ -17,6 +17,7 @@
 #  approved_at               :datetime
 #  bic_code_bidx             :string           not null
 #  bic_code_ciphertext       :string           not null
+#  address_country_alpha2    :string
 #  currency                  :string           default("USD"), not null
 #  memo                      :string           not null
 #  payment_for               :string           not null
@@ -49,6 +50,8 @@ class Wire < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
+
+  before_save :set_address_country_alpha2
 
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
 
@@ -227,6 +230,13 @@ class Wire < ApplicationRecord
     user_id = versions.where_object_changes_to(...).last&.whodunnit
 
     user_id && User.find(user_id)
+  end
+
+  private
+
+  def set_address_country_alpha2
+    reverse_enum = CountryEnumable.country_enum_list.invert
+    self.address_country_alpha2 = reverse_enum[recipient_country]&.to_s
   end
 
 end
