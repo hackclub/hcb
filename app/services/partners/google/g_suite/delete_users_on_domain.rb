@@ -17,16 +17,14 @@ module Partners
           end
           begin
             res = directory_client.list_users(customer: gsuite_customer_id, domain: @domain, max_results: 500)
-            res.users.each do |user|
+            res.users&.each do |user|
               directory_client.delete_user(user.id)
             end
           rescue => e
-            if e.message.include?("Domain not found")
-              return
-            end
+            return if e.message.include?("Domain not found")
 
             Rails.error.report(e)
-            throw :abort
+            raise e
           end
         end
 
