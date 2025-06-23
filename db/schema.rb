@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_23_035907) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -676,6 +676,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
     t.index ["stripe_payout_id"], name: "index_donation_payouts_on_stripe_payout_id", unique: true
   end
 
+  create_table "donation_tiers", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.integer "amount_cents", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.string "image_url"
+    t.integer "position", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_donation_tiers_on_event_id"
+  end
+
   create_table "donations", force: :cascade do |t|
     t.text "email"
     t.text "name"
@@ -924,6 +937,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
     t.string "short_name"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
+    t.boolean "donation_tiers_enabled", default: false, null: false
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
@@ -2299,6 +2313,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
   add_foreign_key "documents", "users"
   add_foreign_key "documents", "users", column: "archived_by_id"
   add_foreign_key "donation_goals", "events"
+  add_foreign_key "donation_tiers", "events"
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"
