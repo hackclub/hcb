@@ -950,6 +950,7 @@ class EventsController < ApplicationController
       :slug,
       :hidden,
       :donation_page_enabled,
+      :donation_tiers_enabled,
       :donation_page_message,
       :reimbursements_require_organizer_peer_review,
       :public_reimbursement_page_enabled,
