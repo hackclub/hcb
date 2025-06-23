@@ -17,8 +17,8 @@ class ReceiptablePolicy < ApplicationPolicy
 
   def present_in_events?
     # Assumption: Receiptable has an association to Event
-    events = record.try(:events) || [record.event]
-    events.select { |e| e.try(:users).try(:include?, user) }.present?
+    events = (record.try(:events) || [record.event]).compact
+    events.any? { |event| OrganizerPosition.role_at_least?(user, event, :member) }
   end
 
 end

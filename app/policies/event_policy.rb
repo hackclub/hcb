@@ -16,7 +16,6 @@ class EventPolicy < ApplicationPolicy
   alias_method :money_movement?, :show?
   alias_method :balance_transactions?, :show?
   alias_method :merchants_categories?, :show?
-  alias_method :top_categories?, :show?
   alias_method :tags_users?, :show?
   alias_method :transaction_heatmap?, :show?
 

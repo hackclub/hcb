@@ -6,10 +6,12 @@
 #
 #  id                             :bigint           not null, primary key
 #  aasm_state                     :string           not null
+#  authorization_token_bidx       :string
 #  authorization_token_ciphertext :text
 #  authorized                     :boolean          default(FALSE), not null
 #  original                       :string           not null
 #  replacement                    :string           not null
+#  verification_token_bidx        :string
 #  verification_token_ciphertext  :text
 #  verified                       :boolean          default(FALSE), not null
 #  created_at                     :datetime         not null
@@ -19,8 +21,10 @@
 #
 # Indexes
 #
-#  index_user_email_updates_on_updated_by_id  (updated_by_id)
-#  index_user_email_updates_on_user_id        (user_id)
+#  index_user_email_updates_on_authorization_token_bidx  (authorization_token_bidx)
+#  index_user_email_updates_on_updated_by_id             (updated_by_id)
+#  index_user_email_updates_on_user_id                   (user_id)
+#  index_user_email_updates_on_verification_token_bidx   (verification_token_bidx)
 #
 # Foreign Keys
 #
@@ -40,8 +44,10 @@ class User
     belongs_to :updated_by, class_name: "User"
 
     has_encrypted :authorization_token
+    blind_index :authorization_token
     has_encrypted :verification_token
-    self.ignored_columns += ["authorization_token", "verification_token"]
+    blind_index :verification_token
+
     before_validation :ensure_tokens
 
     validate :non_hcb_email

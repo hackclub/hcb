@@ -141,26 +141,24 @@
     <%= form.submit "Update", disabled: %>
   </div>
 
-  <% if Flipper.enabled?(:card_logos_2024_08_27, @event) %>
-    <h3 class="mb1" id="cards_heading">HCB card</h3>
-    <div class="card mb3">
-      <div class="field">
-        <%= form.label :stripe_card_logo, "Card logo" %>
-        <p class="h5 muted mt0 mb2">
-          Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
-          The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
-        </p>
-        <% if @event.stripe_card_logo.attached? %>
-          <%= image_tag @event.stripe_card_logo, width: 48 %>
-        <% end %>
-        <div class="field--fileupload mt2">
-          <%= form.label :stripe_card_logo, "Choose File", class: "field--fileupload__label" %>
-          <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true %>
-        </div>
+  <h3 class="mb1" id="cards_heading">HCB card</h3>
+  <div class="card mb3">
+    <div class="field">
+      <%= form.label :stripe_card_logo, "Card logo" %>
+      <p class="h5 muted mt0 mb2">
+        Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
+        The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
+      </p>
+      <% if @event.stripe_card_logo.attached? %>
+        <%= image_tag @event.stripe_card_logo, width: 48 %>
+      <% end %>
+      <div class="field--fileupload mt2">
+        <%= form.label :stripe_card_logo, "Choose file", class: "field--fileupload__label" %>
+        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
       </div>
-      <%= form.submit "Update", disabled: %>
     </div>
-  <% end %>
+    <%= form.submit "Update", disabled: %>
+  </div>
 
   <h3 class="mb1" id="cards_heading">Contact information</h3>
   <div class="card mb3">

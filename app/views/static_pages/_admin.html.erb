@@ -53,6 +53,7 @@
       <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>
       <%= card_to "YSWS Verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
       <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
+      <%= card_to "Identity Verifications", link_to("https://identity.hackclub.com/backend/verifications/pending", target: "_blank", data: { turbo: false }), async_badge: :pending_identity_vault_verifications %>
     </ul>
     <h2>Info</h2>
     <ul class="grid left-align w-100 mt0" id="info-grid">

@@ -43,7 +43,7 @@ gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
 gem "twilio-ruby" # SMS notifications
 
-gem "google-apis-admin_directory_v1", "~> 0.60.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.66.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -106,6 +106,7 @@ gem "strong_migrations", "~> 1" # protects against risky migrations
 # [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
 #               2.x is incompatible with Postgres 11.
 gem "xxhash" # fast hashing
+gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 

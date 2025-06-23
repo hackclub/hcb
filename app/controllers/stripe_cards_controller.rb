@@ -23,9 +23,10 @@ class StripeCardsController < ApplicationController
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    if @card.freeze!
+    begin
+      @card.freeze!
       flash[:success] = "Card frozen"
-    else
+    rescue => e
       flash[:error] = "Card could not be frozen"
     end
 
@@ -35,12 +36,14 @@ class StripeCardsController < ApplicationController
   def cancel
     @card = StripeCard.find(params[:id])
     authorize @card
+
     begin
       @card.cancel!
-      flash[:success] = "Card cancelled"
+      flash[:success] = "Card canceled"
     rescue => e
       flash[:error] = "Card could not be canceled"
     end
+
     redirect_back_or_to stripe_card_path(@card)
   end
 
@@ -48,12 +51,14 @@ class StripeCardsController < ApplicationController
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    if @card.defrost!
+    begin
+      @card.defrost!
       flash[:success] = "Card defrosted"
-      redirect_back_or_to @card
-    else
-      render :show, status: :unprocessable_entity
+    rescue => e
+      flash[:error] = "Card could not be defrosted"
     end
+
+    redirect_back_or_to @card
   end
 
   def show
