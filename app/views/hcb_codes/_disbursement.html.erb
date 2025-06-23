@@ -98,8 +98,6 @@
       <%= @hcb_code.disbursement.name %>
     </p>
 
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
-
     <% if @hcb_code.disbursement.fulfilled? %>
       <p>
         <strong>Confirmation letter</strong>
@@ -110,6 +108,8 @@
           </span>
       </p>
     <% end %>
+
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
 
   </section>
 

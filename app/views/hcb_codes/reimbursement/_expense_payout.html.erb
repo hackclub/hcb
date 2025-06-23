@@ -24,6 +24,7 @@
         <%= expense.description %>
       </p>
     <% end %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 </article>
 

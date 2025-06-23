@@ -12,11 +12,9 @@
     </p>
   </section>
 
-  <% if Flipper.enabled?(:transaction_tags_2022_07_29, (@event || @hcb_code.event)) %>
-    <section class='details pt2 pb2'>
-      <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
-    </section>
-  <% end %>
+  <section class='details pt2 pb2'>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  </section>
 
   <section class="card__banner secondary border-top">
     <p class="my0 italic">
