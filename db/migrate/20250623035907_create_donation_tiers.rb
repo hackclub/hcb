@@ -11,5 +11,7 @@ class CreateDonationTiers < ActiveRecord::Migration[7.2]
       t.datetime :deleted_at
       t.timestamps
     end
+
+    add_column :events, :donation_tiers_enabled, :boolean, default: false, null: false
   end
 end

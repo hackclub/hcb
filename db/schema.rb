@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_23_035907) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -674,19 +674,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_23_035907) do
     t.index ["failure_stripe_balance_transaction_id"], name: "index_donation_payouts_on_failure_stripe_balance_transaction_id", unique: true
     t.index ["stripe_balance_transaction_id"], name: "index_donation_payouts_on_stripe_balance_transaction_id", unique: true
     t.index ["stripe_payout_id"], name: "index_donation_payouts_on_stripe_payout_id", unique: true
-  end
-
-  create_table "donation_tiers", force: :cascade do |t|
-    t.bigint "event_id", null: false
-    t.integer "amount_cents", null: false
-    t.string "name", null: false
-    t.text "description"
-    t.string "image_url"
-    t.integer "position", default: 0, null: false
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_donation_tiers_on_event_id"
   end
 
   create_table "donations", force: :cascade do |t|
