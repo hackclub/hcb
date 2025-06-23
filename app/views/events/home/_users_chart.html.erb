@@ -1,44 +1,21 @@
 <%= turbo_frame_tag "users" do %>
-  <% if !@empty_tags || !@empty_users %>
-    <div id="users-chart">
-      <% if @empty_users %>
-        <div class="flex flex-1 flex-col items-center justify-center">
-          <div class="text-center">
-            <h3 class="text-2xl font-bold mb-0">
-              Not enough data
-            </h3>
-            <p class="text-gray-500 my-1">
-              To see users here, make sure they have at least one transaction. If not, invite team members to get
-              started!
-            </p>
-            <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
-          </div>
+  <div id="users-chart">
+    <% if users.empty? %>
+      <div class="flex flex-1 flex-col items-center justify-center">
+        <div class="text-center">
+          <h3 class="text-2xl font-bold mb-0">
+            Not enough data
+          </h3>
+          <p class="text-gray-500 my-1">
+            To see users here, make sure they have at least one transaction. If not, invite team members to get
+            started!
+          </p>
+          <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
         </div>
-      <% else %>
-        <div class="flex flex-row justify-between items-center w-full mb-2 mt2">
-          <h3 class="mt0 mb0">Top users</h3>
-          <% if event.created_at < 1.week.ago %>
-            <div data-controller="menu" data-menu-append-to-value="#users-chart">
-              <button
-                class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
-                data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-                data-menu-target="toggle">
-                <%= local_assigns[:timeframe] || "All time" %>
-                <%= inline_icon "down-caret" %>
-              </button>
-              <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
-                <%= link_to "All time", event_users_chart_path(event) %>
-                <%= link_to "Past year", event_users_chart_path(event, timeframe: "Past year") if event.created_at < 1.year.ago %>
-                <%= link_to "Past month", event_users_chart_path(event, timeframe: "Past month") if event.created_at < 1.month.ago %>
-                <%= link_to "Past week", event_users_chart_path(event, timeframe: "Past week") %>
-              </div>
-            </div>
-          <% else %>
-            <h5 class="homepage-eyebrow mt0 mb0">All&nbsp;time</h5>
-          <% end %>
-        </div>
-        <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
-      <% end %>
-    </div>
-  <% end %>
+      </div>
+    <% else %>
+      <h3 class="mt2 mb2">Top users</h3>
+      <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
+    <% end %>
+  </div>
 <% end %>

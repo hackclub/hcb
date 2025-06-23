@@ -1,33 +1,12 @@
 <%= turbo_frame_tag "merchants" do %>
   <% if !@merchants.empty? %>
     <div id="merchants-chart">
-      <div class="flex flex-row justify-between mb2 mt2 items-center">
-        <h3 class="mt0 mb0">Top merchants</h3>
-        <% if @event.created_at < 1.week.ago %>
-          <div data-controller="menu" data-menu-append-to-value="#merchants-chart">
-            <button
-              class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-darkless flex items-center cursor-pointer"
-              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-              data-menu-target="toggle">
-              <%= local_assigns[:timeframe] || "All time" %>
-              <%= inline_icon "down-caret" %>
-            </button>
-            <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
-              <%= link_to "All time", event_merchants_chart_path(@event) %>
-              <%= link_to "Past year", event_merchants_chart_path(@event, timeframe: "Past year") if @event.created_at < 1.year.ago %>
-              <%= link_to "Past month", event_merchants_chart_path(@event, timeframe: "Past month") if @event.created_at < 1.month.ago %>
-              <%= link_to "Past week", event_merchants_chart_path(@event, timeframe: "Past week") %>
-            </div>
-          </div>
-        <% else %>
-          <h5 class="homepage-eyebrow mt0 mb0">All&nbsp;time</h5>
-        <% end %>
-      </div>
+      <h3 class="mt2 mb2">Top merchants</h3>
       <div style="width: calc(100% + 20px)">
         <%= react_component "home/Merchants", { data: @merchants }, { camelize_props: false } %>
       </div>
     </div>
-   <% elsif !@categories.empty? %>
+   <% else %>
     <div class="flex flex-1 items-center justify-center flex-col text-center">
       <h3 class="text-2xl font-bold mb-0">
         It's quiet here...
