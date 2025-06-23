@@ -2,10 +2,10 @@
 
 module BreakdownEngine
   class Users
-    def initialize(event, show_all: false, **options)
+    def initialize(event, show_all: false, timeframe: nil)
       @event = event
       @show_all = show_all
-      @timeframe = options[:timeframe]
+      @timeframe = timeframe
     end
 
     def run

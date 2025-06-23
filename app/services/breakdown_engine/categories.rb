@@ -2,9 +2,9 @@
 
 module BreakdownEngine
   class Categories
-    def initialize(event, **options)
+    def initialize(event, timeframe: nil)
       @event = event
-      @timeframe = options[:timeframe]
+      @timeframe = timeframe
     end
 
     def run
