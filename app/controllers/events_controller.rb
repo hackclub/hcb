@@ -1124,7 +1124,7 @@ class EventsController < ApplicationController
   end
 
   def set_timeframe
-    @timeframe = Event::BREAKDOWN_TIMEFRAMES[params[:timeframe]]
+    @timeframe = BreakdownEngine::TIMEFRAMES[params[:timeframe]]
   end
 
 end
