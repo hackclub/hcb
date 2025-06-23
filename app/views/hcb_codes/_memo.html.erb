@@ -58,4 +58,7 @@
   <% end %>
 <% else %>
   <%= prepended_to_memo %> <%= hcb_code.memo %>
+  <div class="inline-flex gap-1 overflow-x-scroll hcb_code_<%= hcb_code.hashid %>_tags">
+    <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: } %>
+  </div>
 <% end %>
