@@ -3,20 +3,11 @@
 class MonthlyDonationSummaryJob < ApplicationJob
   queue_as :bulk_email
   def perform
+    # Rate limit is 14/s, but putting 12 here to be safe and allow for other emails to be sent
+    queue = Limiter::RateQueue.new(12, interval: 1)
     Event.includes(:donations).where("donations.created_at > ?", 1.month.ago).references(:donations).find_each do |event|
-      mailer = EventMailer.with(event: event)
-
-      attempt = 0
-      mail = nil
-      while mail.nil?
-        begin
-          mail = mailer.monthly_donation_summary.deliver_now
-        rescue Net::SMTPServerBusy
-          # Rate limited by SES
-          sleep [2**attempt, 32].min
-          attempt += 1
-        end
-      end
+      queue.shift
+      EventMailer.with(event: event).monthly_donation_summary.deliver_now
     end
   end
 
