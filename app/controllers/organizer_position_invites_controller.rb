@@ -49,7 +49,7 @@ class OrganizerPositionInvitesController < ApplicationController
 
     authorize @invite
     @organizers = @invite.event.organizer_positions.includes(:user)
-    if @invite.cancelled?
+    if @invite.canceled?
       flash[:error] = "This invitation has been canceled."
       redirect_to root_path
     elsif @invite.accepted?
