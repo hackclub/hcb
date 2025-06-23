@@ -31,7 +31,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -76,6 +76,8 @@ class CardGrantsController < ApplicationController
     @event = @card_grant.event
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
+
+    @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
     @force_no_popover = @frame
@@ -149,6 +151,14 @@ class CardGrantsController < ApplicationController
     report = @card_grant.convert_to_reimbursement_report!
 
     redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
+  end
+
+  def toggle_one_time_use
+    authorize @card_grant
+
+    @card_grant.update(one_time_use: !@card_grant.one_time_use)
+
+    redirect_to @card_grant, flash: { success: "#{@card_grant.one_time_use ? "Enabled" : "Disabled"} one time use for this card grant." }
   end
 
   def edit

@@ -4,7 +4,7 @@
   <h2 class="border-none mx0 mt0 inline-flex items-center">
     <%= pop_icon_to "edit",
         [:edit, card_grant.disbursement.local_hcb_code],
-        class: "mr2 align-middle", "aria-label": "Rename transaction" %>
+        class: "mr2 align-middle", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
     Grant to &nbsp; <%= user_mention card_grant.user %>
   </h2>
   <section class="card__banner card__darker details-horiz border-top border-bottom">
@@ -27,6 +27,10 @@
     <p>
       <strong>Grant Status</strong>
       <span><%= card_grant.state_text %></span>
+    </p>
+    <p>
+      <strong>One time use?</strong>
+      <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
     </p>
     <% if (stripe_card = card_grant.stripe_card).present? %>
       <p>
@@ -89,8 +93,7 @@
       </p>
     <% end %>
   </section>
-  <% if card_grant.pending_invite? %>
-    <%# Once the user has accepted the invite, these action buttons are shown elsewhere %>
+  <% if card_grant.pending_invite? || @frame %>
     <section>
       <%= render partial: "actions", locals: { card_grant: @card_grant } %>
     </section>

@@ -109,6 +109,13 @@
         </p>
       </div>
     <% end %>
+    <% if current_user&.cards_locked? %>
+      <div class="w-100 px4 bg-white transparency-banner">
+        <p class="h5 medium center mt1 mb1">
+          Your cards are currently locked because you have 10 or more missing receipts. <%= link_to "Manage your receipts", my_inbox_path %>
+        </p>
+      </div>
+    <% end %>
     <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
       <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
         <p class="h5 font-medium text-center text-balance mt1 mb1">

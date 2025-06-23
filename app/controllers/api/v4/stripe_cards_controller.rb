@@ -76,33 +76,39 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if params[:status] == "frozen"
+          return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).freeze?
+
           if @stripe_card.canceled?
-            return render json: { error: "Card has been cancelled, it can't be frozen" }, status: :unprocessable_entity
+            return render json: { error: "Card is canceled." }, status: :unprocessable_entity
           end
 
           @stripe_card.freeze!
         elsif params[:status] == "active"
           if @stripe_card.initially_activated?
+            return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).defrost?
+
             if @stripe_card.stripe_status == "active"
-              return render json: { error: "Card is already active" }, status: :unprocessable_entity
+              return render json: { error: "Card is already active." }, status: :unprocessable_entity
             end
 
             @stripe_card.defrost!
-            return render json: { success: "Card activated!" }
+            return render json: { success: "Card defrosted!" }
           end
 
+          return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).activate?
+
           if params[:last4].blank?
-            return render json: { error: "Last four digits are required" }, status: :unprocessable_entity
+            return render json: { error: "Last four digits are required." }, status: :unprocessable_entity
           end
 
           # Find the correct card based on it's last4
           card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
           if card.nil? || card.id != @stripe_card.id
-            return render json: { error: "Last four digits are incorrect" }, status: :unprocessable_entity
+            return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_entity
           end
 
           if @stripe_card.canceled?
-            return render json: { error: "Card has been cancelled, it can't be activated." }, status: :unprocessable_entity
+            return render json: { error: "Card is canceled." }, status: :unprocessable_entity
           end
 
           # If this replaces another card, attempt to cancel the old card.
@@ -129,7 +135,7 @@ module Api
 
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 
-        render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, stripe_id: @stripe_card.stripe_id }
+        render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, ephemeralKeyCreated: @ephemeral_key.created, ephemeralKeyExpires: @ephemeral_key.expires, stripe_id: @stripe_card.stripe_id }
 
       rescue Stripe::InvalidRequestError
         return render json: { error: "internal_server_error" }, status: :internal_server_error

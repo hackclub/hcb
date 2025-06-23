@@ -63,11 +63,15 @@ module PendingEventMappingEngine
             Airbrake.notify("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
             ct = cts.first
 
+            # this code is dangerous: https://hackclub.slack.com/archives/C047Y01MHJQ/p1748710247626659
+
+            Airbrake.notify("#{cpt.id} potentially should be mapped to #{ct.id}")
+
             # 3. mark no longer pending
-            CanonicalPendingTransactionService::Settle.new(
-              canonical_transaction: ct,
-              canonical_pending_transaction: cpt
-            ).run!
+            # CanonicalPendingTransactionService::Settle.new(
+            #  canonical_transaction: ct,
+            #  canonical_pending_transaction: cpt
+            # ).run!
           end
         end
       end

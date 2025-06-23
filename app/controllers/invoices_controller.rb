@@ -104,9 +104,7 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.civil(filtered_params["due_date(1i)"].to_i,
-                          filtered_params["due_date(2i)"].to_i,
-                          filtered_params["due_date(3i)"].to_i)
+    due_date = Date.parse(filtered_params["due_date"])
 
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,

@@ -118,16 +118,16 @@ module SessionsHelper
   def signed_in_user
     unless signed_in?
       if request.fullpath == "/"
-        redirect_to auth_users_path
+        redirect_to auth_users_path(require_reload: true)
       else
-        redirect_to auth_users_path(return_to: request.original_url)
+        redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
       end
     end
   end
 
   def signed_in_admin
     unless auditor_signed_in?
-      redirect_to auth_users_path, flash: { error: "You’ll need to sign in as an admin." }
+      redirect_to auth_users_path(require_reload: true), flash: { error: "You’ll need to sign in as an admin." }
     end
   end
 

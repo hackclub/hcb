@@ -49,7 +49,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def edit?
-    admin_or_reader?
+    admin_or_member?
   end
 
   # pinning a transaction to an event
