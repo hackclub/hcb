@@ -106,7 +106,7 @@ class MyController < ApplicationController
                          .page(params[:page]).per(params[:per] || 15)
 
     unless @time_based_sorting
-      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.map { |k, v| [k, v.sort_by(&:created_at).reverse] }.to_h
+      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
       @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
                                 # Order cards by created_at, newest first
                                 .sort_by(&:created_at).reverse!
