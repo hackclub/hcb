@@ -165,6 +165,8 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
 
+  validates(:session_duration_seconds, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
+
   validate :profile_picture_format
 
   validate on: :update do

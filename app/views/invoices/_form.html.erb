@@ -118,25 +118,23 @@
       <div data-tabs-target="tab" id="invoice">
         <%= form.label :item_amount, "Amount" %>
         <div class="field">
-          <div class="flex border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3">
-            <span class="bold muted mt-2" style="width: 1rem;">$</span>
-            <div>
-              <%= form.number_field :item_amount,
-                                    value: (invoice.item_amount.nil? ? nil : (invoice.item_amount.to_f / 100)), placeholder: "500.00",
-                                    step: 0.01,
-                                    style: "max-width:100%!important",
-                                    class: "!border-none bg-transparent",
-                                    min: 1.00, required: true, disabled: @event.demo_mode?,
-                                    data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" },
-                                    "x-model.fill.number" => "amount" %>
-              <div>
-                <% if invoice.event.revenue_fee != 0 %>
-                  <span class="text-xs muted block ml-2.5 mb-1 empty:hidden" data-behavior="amount-preview" data-fee="<%= sponsor.event.revenue_fee %>"></span>
-                <% end %>
-                <div class="text-xs info block gap-2 ml-2.5 mb-1" x-cloak x-show="amount >= <%= Invoice::MAX_CARD_AMOUNT / 100.0 %>">
-                  Invoices <%= render_money Invoice::MAX_CARD_AMOUNT %> or more can only be paid by a bank transfer.
-                </div>
-              </div>
+          <div class="flex items-center border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3">
+            <span class="bold muted" style="width: 1rem;">$</span>
+            <%= form.number_field :item_amount,
+                                  value: (invoice.item_amount.nil? ? nil : (invoice.item_amount.to_f / 100)), placeholder: "500.00",
+                                  step: 0.01,
+                                  style: "max-width:100%!important",
+                                  class: "!border-none bg-transparent",
+                                  min: 1.00, required: true, disabled: @event.demo_mode?,
+                                  data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" },
+                                  "x-model.fill.number" => "amount" %>
+          </div>
+          <div class="mt-2">
+            <% if invoice.event.revenue_fee != 0 %>
+              <span class="text-xs muted block ml-2 mb-1 empty:hidden" data-behavior="amount-preview" data-fee="<%= sponsor.event.revenue_fee %>"></span>
+            <% end %>
+            <div class="text-xs info block gap-2 ml-2 mb-1" x-cloak x-show="amount >= <%= Invoice::MAX_CARD_AMOUNT / 100.0 %>">
+              Invoices <%= render_money Invoice::MAX_CARD_AMOUNT %> or more can only be paid by a bank transfer.
             </div>
           </div>
         </div>
