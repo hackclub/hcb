@@ -109,7 +109,7 @@ class MyController < ApplicationController
       @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.map { |k, v| [k, v.sort_by(&:created_at).reverse] }.to_h
       @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
                                 # Order cards by created_at, newest first
-                                .sort_by { |card| card.created_at }.reverse!
+                                .sort_by(&:created_at).reverse!
     end
 
     @mailbox_address = current_user.active_mailbox_address
