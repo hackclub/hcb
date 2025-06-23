@@ -21,7 +21,7 @@ module BreakdownEngine
                                         event_mapping: {
                                           event_id: @event.id
                                         },
-                                        raw_stripe_transactions: @timeframe.present? ? { created_at: (Time.now - @timeframe)..Time.now } : nil
+                                        raw_stripe_transactions: @timeframe.present? ? { created_at: @timeframe.ago..Time.now } : nil
                                       }.compact)
                                       .group("merchant")
                                       .order(Arel.sql("SUM(raw_stripe_transactions.amount_cents) * -1 DESC"))

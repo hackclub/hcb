@@ -18,7 +18,7 @@ module BreakdownEngine
                          stripe_cardholders: {
                            user_id: position.user.id
                          },
-                         raw_stripe_transactions: @timeframe.present? ? { created_at: (Time.now - @timeframe)..Time.now } : nil
+                         raw_stripe_transactions: @timeframe.present? ? { created_at: @timeframe.ago..Time.now } : nil
                        }.compact)
                        .sum(:amount_cents).to_f / 100 * -1
 
