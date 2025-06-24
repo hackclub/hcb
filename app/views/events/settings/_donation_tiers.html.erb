@@ -33,14 +33,14 @@
             </div>
             <div class="flex-1">
               <div class="flex gap-2 w-full">
-                <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tier_name" value="<%= tier.name %>" required>
+                <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tiers[<%= tier.id %>][name]" value="<%= tier.name %>" required>
                 <div class="flex items-center gap-2 border rounded-md px-3">
                   $
-                  <input type="text" class="!border-none !px-0" style="max-width: 95px" placeholder="Monthly cost" name="tier_cost" value="<%= tier.amount_cents / 100 %>" required>
+                  <input type="text" class="!border-none !px-0" style="max-width: 95px" placeholder="Monthly cost" name="tiers[<%= tier.id %>][amount_cents]" value="<%= tier.amount_cents / 100 %>" required>
                   /month
                 </div>
               </div>
-              <textarea class="w-100 max-w-full mt-1" placeholder="Description" name="tier_description"><%= tier.description %></textarea>
+              <textarea class="w-100 max-w-full mt-1" placeholder="Description" name="tiers[<%= tier.id %>][description]"><%= tier.description %></textarea>
             </div>
 
             <div class="flex flex-col gap-1">
@@ -51,7 +51,7 @@
         <% end %>
 
         <div class="flex gap-3 mt-4">
-          <button type="button" class="btn bg-muted flex-1 gap-2">
+          <button type="button" class="btn bg-muted flex-1 gap-2" onclick="document.getElementById('createTier').requestSubmit();">
             Create tier
             <%= inline_icon "plus" %>
           </button>

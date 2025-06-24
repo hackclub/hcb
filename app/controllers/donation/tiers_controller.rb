@@ -23,12 +23,20 @@ class Donation::TiersController < ApplicationController
   end
 
   def update
-    @tier = @event.donation_tiers.find(params[:id])
-    if @tier.update(tier_params)
-      render json: @tier
-    else
-      render json: { errors: @tier.errors.full_messages }, status: :unprocessable_entity
+    authorize @event, :update?
+    params[:tiers]&.each do |id, tier_data|
+      tier = @event.donation_tiers.find_by(id: id)
+      next unless tier
+
+      amount_cents = (tier_data[:amount_cents].to_f * 100).to_i
+      tier.update(
+        name: tier_data[:name],
+        description: tier_data[:description],
+        amount_cents: amount_cents
+      )
     end
+
+    redirect_to event_path(@event), notice: "Donation tiers updated successfully."
   end
 
   def destroy
