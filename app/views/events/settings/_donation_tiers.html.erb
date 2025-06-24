@@ -34,7 +34,7 @@
             <div class="flex-1">
               <div class="flex gap-2 w-full">
                 <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tiers[<%= tier.id %>][name]" value="<%= tier.name %>" required>
-                <div class="flex items-center gap-2 border rounded-md px-3">
+                <div class="flex items-center gap-2 border rounded-md px-3 input min-w-0 p-0 max-w-[200px]">
                   $
                   <input type="text" class="!border-none !px-0" style="max-width: 95px" placeholder="Monthly cost" name="tiers[<%= tier.id %>][amount_cents]" value="<%= tier.amount_cents / 100 %>" required>
                   /month
