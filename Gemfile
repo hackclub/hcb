@@ -225,6 +225,4 @@ gem "whitesimilarity"
 
 gem "rack-timeout", require: "rack/timeout/base"
 
-# IRB is pinned to 1.14.3 because Console1984 is incompatible with >=1.15.0.
-# https://github.com/basecamp/console1984/issues/127
-gem "irb", "~> 1.14.3"
+gem "irb"
