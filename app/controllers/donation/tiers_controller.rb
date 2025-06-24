@@ -60,4 +60,5 @@ class Donation
     end
 
   end
+
 end
