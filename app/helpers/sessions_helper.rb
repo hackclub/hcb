@@ -10,10 +10,6 @@ module SessionsHelper
     "30 days" => 30.days.to_i
   }.freeze
 
-  # For security reasons we severely restrict the duration of impersonated
-  # sessions
-  IMPERSONATED_SESSION_DURATION = SESSION_DURATION_OPTIONS.fetch("1 hour")
-
   def impersonate_user(user)
     sign_out
     sign_in(user:, impersonate: true)
@@ -28,13 +24,7 @@ module SessionsHelper
   # DEPRECATED - begin to start deprecating and ultimately replace with sign_in_and_set_cookie
   def sign_in(user:, fingerprint_info: {}, impersonate: false, webauthn_credential: nil)
     session_token = SecureRandom.urlsafe_base64
-    session_duration =
-      if impersonate
-        IMPERSONATED_SESSION_DURATION
-      else
-        user.session_duration_seconds
-      end
-    expiration_at = Time.now + session_duration
+    expiration_at = Time.now + user.session_duration_seconds
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
