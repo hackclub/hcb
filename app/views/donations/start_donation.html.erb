@@ -1,5 +1,5 @@
 <% title "Give to " + @event.name %>
-<% page_sm %>
+<% content_for(:container_class) { "max-w-full " } %>
 <% no_app_shell %>
 
 <% content_for :head do %>
@@ -25,6 +25,7 @@
 <% end %>
 
 <%= render "donations/donation_goal", donation: @donation %>
+<%= render "donations/donation_tiers", donation: @donation %>
 <%= render "donations/donation_form", donation: @donation %>
 
 <% if @event.demo_mode? %>
