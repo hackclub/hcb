@@ -90,9 +90,10 @@ class MyController < ApplicationController
     @count = current_user.transactions_missing_receipt.count
     @locking_count = current_user.transactions_missing_receipt(since: Receipt::CARD_LOCKING_START_DATE).count
 
-    @time_based_sorting = ActiveModel::Type::Boolean.new.cast(params[:sort_by_time])
-
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
+
+    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15)
+
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
@@ -105,10 +106,10 @@ class MyController < ApplicationController
                          .page(params[:page]).per(params[:per] || 15)
 
     unless @time_based_sorting
-      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }
+      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
       @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
-                                # Order by cards with least transactions first
-                                .sort_by { |card| @card_hcb_codes[card.to_global_id.to_s].count }
+                                # Order cards by created_at, newest first
+                                .sort_by(&:created_at).reverse!
     end
 
     @mailbox_address = current_user.active_mailbox_address
