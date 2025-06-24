@@ -21,7 +21,6 @@
 
 <ul class="grid">
   <%= render partial: "document", collection: @active_documents %>
-  <%= render partial: "document", collection: @active_common_documents %>
 
   <% if @event.approved? && !@event.demo_mode? %>
     <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
@@ -48,7 +47,7 @@
   <% end %>
 </ul>
 
-<% if @archived_documents.any? || @archived_common_documents.any? %>
+<% if @archived_documents.any? %>
   <ul class="list-reset">
     <li class="mb3">
       <details>
@@ -58,7 +57,6 @@
         <article>
           <ul class="grid">
             <%= render partial: "document", collection: @archived_documents %>
-            <%= render partial: "document", collection: @archived_common_documents %>
           </ul>
         </article>
       </details>
