@@ -45,7 +45,7 @@
 
             <div class="flex flex-col gap-1">
               <%= pop_icon_to "drag-indicator", "#" %>
-              <%= pop_icon_to "delete", "#" %>
+              <%= pop_icon_to "delete", event_donation_tiers_path(event, tier), method: :delete, data: { turbo_confirm: "Are you sure?" } %>
             </div>
           </div>
         <% end %>

@@ -15,11 +15,10 @@ class Donation::TiersController < ApplicationController
       image_url: nil,
       position: @event.donation_tiers.count + 1
     )
-    if @tier.save
-      render json: @tier, status: :created
-    else
-      render json: { errors: @tier.errors.full_messages }, status: :unprocessable_entity
-    end
+    @tier.save!
+    redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
   end
 
   def update
@@ -36,13 +35,18 @@ class Donation::TiersController < ApplicationController
       )
     end
 
-    redirect_to event_path(@event), notice: "Donation tiers updated successfully."
+    redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
   end
 
   def destroy
-    @tier = @event.donation_tiers.find(params[:id])
+    authorize @event, :update?
+    @tier = @event.donation_tiers.find(params[:format])
     @tier.destroy
-    head :no_content
+    redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
   end
 
   private
