@@ -258,6 +258,7 @@ class Event < ApplicationRecord
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
   has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
+  has_many :donation_tiers, -> { order(position: :asc) }, dependent: :destroy
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
