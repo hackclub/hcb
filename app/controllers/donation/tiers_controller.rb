@@ -1,4 +1,4 @@
-class DonationTiersController < ApplicationController
+class Donation::TiersController < ApplicationController
   before_action :set_event
 
   def index
@@ -32,7 +32,7 @@ class DonationTiersController < ApplicationController
   private
 
   def set_event
-    @event = Event.find(params[:event_id])
+    @event = Event.find_by_public_id(params[:event_id])
   end
 
   def tier_params
