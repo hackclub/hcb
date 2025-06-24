@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Donation
+class Donation
   class TiersController < ApplicationController
     before_action :set_event
 
