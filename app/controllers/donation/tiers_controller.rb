@@ -6,7 +6,15 @@ class Donation::TiersController < ApplicationController
   end
 
   def create
-    @tier = @event.donation_tiers.new(tier_params)
+    authorize @event, :update?
+
+    @tier = @event.donation_tiers.new(
+      name: "Untitled tier",
+      amount_cents: 1000,
+      description: "",
+      image_url: nil,
+      position: @event.donation_tiers.count + 1
+    )
     if @tier.save
       render json: @tier, status: :created
     else
@@ -32,10 +40,8 @@ class Donation::TiersController < ApplicationController
   private
 
   def set_event
-    @event = Event.find_by_public_id(params[:event_id])
+    @event = Event.where(slug: params[:event_id]).first
+    render json: { error: "Event not found" }, status: :not_found unless @event
   end
 
-  def tier_params
-    params.require(:donation_tier).permit(:name, :amount_cents, :description, :image_url, :position)
-  end
 end

@@ -25,23 +25,30 @@
   </div>
   <div data-accordion-target="content" class="rounded-xl">
     <div class="field mt-5">
-      <div class="card shadow-none border bg-gray-50 flex items-start gap-2">
-        <div class="border rounded-xl p-4 py-10 text-center bg-gray-100 text-gray-300 text-sm">
-          Upload image
-        </div>
-        <div class="flex-1">
-          <div class="flex gap-2 w-full">
-            <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tier_name" required>
-            <input type="text" style="max-width: 150px" placeholder="Monthly cost" name="tier_cost" required>
-          </div>
-          <textarea class="w-100 max-w-full mt-1" placeholder="Description" name="tier_description"></textarea>
-        </div>
 
-        <div class="flex flex-col gap-1">
-          <%= pop_icon_to "drag-indicator", "#" %>
-          <%= pop_icon_to "delete", "#" %>
+      <% event.donation_tiers.each do |tier| %>
+        <div class="card shadow-none border bg-gray-50 flex items-start gap-2">
+          <div class="border rounded-xl p-4 py-10 text-center bg-gray-100 text-gray-300 text-sm">
+            Upload image
+          </div>
+          <div class="flex-1">
+            <div class="flex gap-2 w-full">
+              <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tier_name" value="<%= tier.name %>" required>
+              <div class="flex items-center gap-2 border rounded-md px-3">
+                $
+                <input type="text" class="!border-none !px-0" style="max-width: 95px" placeholder="Monthly cost" name="tier_cost" value="<%= tier.amount_cents / 100 %>" required>
+                /month
+              </div>
+            </div>
+            <textarea class="w-100 max-w-full mt-1" placeholder="Description" name="tier_description"><%= tier.description %></textarea>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <%= pop_icon_to "drag-indicator", "#" %>
+            <%= pop_icon_to "delete", "#" %>
+          </div>
         </div>
-      </div>
+      <% end %>
 
       <div class="flex mt-4 gap-2 justify-end">
         <%= form_with(url: event_donation_tiers_path(event), local: true, method: :post) do |form| %>
