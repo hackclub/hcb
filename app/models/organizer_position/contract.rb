@@ -137,7 +137,7 @@ class OrganizerPosition
                 readonly: false
               },
               {
-                name: "Organization Name",
+                name: "Organization",
                 default_value: organizer_position_invite.event.name,
                 readonly: true
               }
