@@ -13,8 +13,10 @@ class DocumentsController < ApplicationController
   end
 
   def index
-    @active_documents = @event.documents.active.includes(:user).order(created_at: :desc)
-    @archived_documents = @event.documents.archived.includes(:user).order(created_at: :desc)
+    @active_documents = @event.documents.includes(:user).active.order(created_at: :desc)
+    @active_common_documents = Document.common.active.order(created_at: :desc)
+    @archived_documents = @event.documents.includes(:user).archived.order(created_at: :desc)
+    @archived_common_documents = Document.common.archived.order(created_at: :desc)
   end
 
   def new
