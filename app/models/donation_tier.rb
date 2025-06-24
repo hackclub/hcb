@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DonationTier < ApplicationRecord
   belongs_to :event
 

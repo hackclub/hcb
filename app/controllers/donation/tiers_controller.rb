@@ -1,59 +1,63 @@
-class Donation::TiersController < ApplicationController
-  before_action :set_event
+# frozen_string_literal: true
 
-  def index
-    @tiers = @event.donation_tiers
-  end
+module Donation
+  class TiersController < ApplicationController
+    before_action :set_event
 
-  def create
-    authorize @event, :update?
-
-    @tier = @event.donation_tiers.new(
-      name: "Untitled tier",
-      amount_cents: 1000,
-      description: "",
-      image_url: nil,
-      position: @event.donation_tiers.count + 1
-    )
-    @tier.save!
-    redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
-  rescue ActiveRecord::RecordInvalid => e
-    redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
-  end
-
-  def update
-    authorize @event, :update?
-    params[:tiers]&.each do |id, tier_data|
-      tier = @event.donation_tiers.find_by(id: id)
-      next unless tier
-
-      amount_cents = (tier_data[:amount_cents].to_f * 100).to_i
-      tier.update(
-        name: tier_data[:name],
-        description: tier_data[:description],
-        amount_cents: amount_cents
-      )
+    def index
+      @tiers = @event.donation_tiers
     end
 
-    redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
-  rescue ActiveRecord::RecordInvalid => e
-    redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+    def create
+      authorize @event, :update?
+
+      @tier = @event.donation_tiers.new(
+        name: "Untitled tier",
+        amount_cents: 1000,
+        description: "",
+        image_url: nil,
+        position: @event.donation_tiers.count + 1
+      )
+      @tier.save!
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+    end
+
+    def update
+      authorize @event, :update?
+      params[:tiers]&.each do |id, tier_data|
+        tier = @event.donation_tiers.find_by(id: id)
+        next unless tier
+
+        amount_cents = (tier_data[:amount_cents].to_f * 100).to_i
+        tier.update(
+          name: tier_data[:name],
+          description: tier_data[:description],
+          amount_cents: amount_cents
+        )
+      end
+
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+    end
+
+    def destroy
+      authorize @event, :update?
+      @tier = @event.donation_tiers.find(params[:format])
+      @tier.destroy
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+    end
+
+    private
+
+    def set_event
+      @event = Event.where(slug: params[:event_id]).first
+      render json: { error: "Event not found" }, status: :not_found unless @event
+    end
+
   end
-
-  def destroy
-    authorize @event, :update?
-    @tier = @event.donation_tiers.find(params[:format])
-    @tier.destroy
-    redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
-  rescue ActiveRecord::RecordInvalid => e
-    redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
-  end
-
-  private
-
-  def set_event
-    @event = Event.where(slug: params[:event_id]).first
-    render json: { error: "Event not found" }, status: :not_found unless @event
-  end
-
 end
