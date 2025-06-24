@@ -8,7 +8,7 @@ RSpec.describe OrganizerPositionInvite, type: :model do
     expect(organizer_position_invite).to be_valid
     expect(organizer_position_invite).to_not be_accepted
     expect(organizer_position_invite).to_not be_rejected
-    expect(organizer_position_invite).to_not be_cancelled
+    expect(organizer_position_invite).to_not be_canceled
   end
 
   context "missing sender" do
