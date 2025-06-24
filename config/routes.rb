@@ -734,6 +734,11 @@ Rails.application.routes.draw do
 
     namespace :donation do
       resource :goals, only: [:create, :update]
+      resource :tiers, only: [:create, :update] do
+        member do
+          post "reorder"
+        end
+      end
     end
 
     resources :recurring_donations, only: [:create], path: "recurring" do
