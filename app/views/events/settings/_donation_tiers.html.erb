@@ -50,20 +50,19 @@
           </div>
         <% end %>
 
-        <button type="submit" class="btn btn--primary mt-2 w-full">
-          Save changes
-          <%= inline_icon "check-thin" %>
-        </button>
-      <% end %>
-
-      <div class="flex mt-4 gap-2 justify-end">
-        <%= form_with(url: event_donation_tiers_path(event), local: true, method: :post) do |form| %>
-          <% form.button class: "gap-3 btn bg-muted" do %>
+        <div class="flex gap-3 mt-4">
+          <button type="button" class="btn bg-muted flex-1 gap-2">
             Create tier
             <%= inline_icon "plus" %>
-          <% end %>
-        <% end %>
-      </div>
+          </button>
+          <button type="submit" class="btn btn--primary flex-1 gap-2">
+            Save changes
+            <%= inline_icon "check-thin" %>
+          </button>
+        </div>
+      <% end %>
+      <%= form_with(url: event_donation_tiers_path(event), local: true, method: :post, id: "createTier") do |form| %>
+      <% end %>
     </div>
   </div>
 </div>
