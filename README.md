@@ -44,11 +44,6 @@ Details:
 Access the complete development documentation via the following link:
 - [Development Documentation](https://github.com/hackclub/hcb/dev-docs/development.md)
 
-### Visual Examples
-Screenshots and visuals help clarify functionality:
-![HCB Dashboard](dashboard_screenshot.png)
-*Screenshot of the HCB dashboard showing real-time financial data.*
-
 ---
 
 ## Table of Contents
@@ -61,7 +56,6 @@ Screenshots and visuals help clarify functionality:
    - Reporting Security Issues
 4. **Documentation**
    - Development Documentation
-   - Visual Examples
 5. **API Documentation** *(coming soon)*
 
 ---
@@ -70,11 +64,7 @@ Screenshots and visuals help clarify functionality:
 
 ### System Architecture
 Hack Club Bank's system architecture ensures efficient operations and scalability. The following diagram illustrates the project's structure:
-![System Architecture](architecture_diagram.png)
 *Diagram outlining the system architecture of Hack Club Bank.*
-
-### Additional Screenshots
-Include more screenshots to provide better context for users and contributors.
 
 ---
 
