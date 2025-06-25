@@ -44,13 +44,13 @@ class User
         transitions from: :active, to: :used
 
         after do
-          case user.backup_codes.active.size
+          User::BackupCodeMailer.with(user_id: user.id).code_used.deliver_now
+          case user.active_backup_codes.size
           when 0
             User::BackupCodeMailer.with(user_id: user.id).no_codes_remaining.deliver_now
           when 1..3
             User::BackupCodeMailer.with(user_id: user.id).three_or_fewer_codes_remaining.deliver_now
           end
-          User::BackupCodeMailer.with(user_id: user.id).code_used.deliver_now
         end
       end
       event :mark_discarded do
