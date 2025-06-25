@@ -4,6 +4,26 @@ GIT
   specs:
     yellow_pages (0.4.0)
 
+GIT
+  remote: https://github.com/rails/rails.git
+  revision: 21ef9d1554eb1fa8f3ecf997fdf165add8df0917
+  branch: 7-2-stable
+  specs:
+    rails (7.2.2.1)
+      actioncable (= 7.2.2.1)
+      actionmailbox (= 7.2.2.1)
+      actionmailer (= 7.2.2.1)
+      actionpack (= 7.2.2.1)
+      actiontext (= 7.2.2.1)
+      actionview (= 7.2.2.1)
+      activejob (= 7.2.2.1)
+      activemodel (= 7.2.2.1)
+      activerecord (= 7.2.2.1)
+      activestorage (= 7.2.2.1)
+      activesupport (= 7.2.2.1)
+      bundler (>= 1.15.0)
+      railties (= 7.2.2.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -610,20 +630,6 @@ GEM
     rackup (1.0.1)
       rack (< 3)
       webrick
-    rails (7.2.2.1)
-      actioncable (= 7.2.2.1)
-      actionmailbox (= 7.2.2.1)
-      actionmailer (= 7.2.2.1)
-      actionpack (= 7.2.2.1)
-      actiontext (= 7.2.2.1)
-      actionview (= 7.2.2.1)
-      activejob (= 7.2.2.1)
-      activemodel (= 7.2.2.1)
-      activerecord (= 7.2.2.1)
-      activestorage (= 7.2.2.1)
-      activesupport (= 7.2.2.1)
-      bundler (>= 1.15.0)
-      railties (= 7.2.2.1)
     rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
@@ -955,7 +961,7 @@ DEPENDENCIES
   rack-cors
   rack-mini-profiler (~> 3.3)
   rack-timeout
-  rails (~> 7.2)
+  rails!
   react-rails
   recursive-open-struct
   redcarpet
