@@ -1,10 +1,11 @@
 <% if @event.donation_tiers.size > 0 %>
-  <div class="-mx-4 px-4 flex gap-4 overflow-x-auto whitespace-nowrap pb-2 justify-center mx-auto">
+  <h2 class="mt-8">Financial contributions</h2>
+  <div class="mt-4 px-2 -mx-2 flex gap-4 overflow-x-auto whitespace-nowrap pb-2 mx-auto">
     <div class="card w-[250px] shrink-0 mb-8 flex flex-col">
       <h3 class="mb-0 mt-0">
         Custom
       </h3>
-      <p class="text-sm opacity-60 mb-2 flex-1 max-w-full break-words whitespace-normal">
+      <p class="text opacity-60 mb-2 flex-1 max-w-full break-words whitespace-normal">
         Pay a custom amount, one-time or recurring, to support <%= @event.name %>
       </p>
       <div class="flex-1"></div>
@@ -17,7 +18,7 @@
         <h3 class="mb-0 mt-0">
           <%= donation_tier.name %>
         </h3>
-        <p class="text-sm opacity-60 mb-3 flex-1 max-w-full break-words whitespace-normal">
+        <p class="text opacity-60 mb-3 flex-1 max-w-full break-words whitespace-normal">
           <%= donation_tier.description %>
         </p>
         <div class="flex-1"></div>
