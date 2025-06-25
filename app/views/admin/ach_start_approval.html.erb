@@ -115,6 +115,12 @@
         <td style="text-align: right;">Payment for:</td>
         <td><%= @ach_transfer.payment_for %></td>
       </tr>
+      <% if @ach_transfer.invoiced_at.present? %>
+        <tr>
+          <td style="text-align: right;">Invoice date:</td>
+          <td><%= @ach_transfer.invoiced_at.strftime("%B %-d, %Y") %></td>
+        </tr>
+      <% end %>
       <tr>
         <td style="text-align: right;">Bank Name:</td>
         <td><%= @ach_transfer.bank_name %></td>

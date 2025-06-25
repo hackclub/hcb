@@ -14,6 +14,7 @@
 #  company_entry_description :string
 #  company_name              :string
 #  confirmation_number       :text
+#  invoiced_at               :date
 #  payment_for               :text
 #  recipient_email           :string
 #  recipient_name            :string
@@ -102,6 +103,16 @@ class AchTransfer < ApplicationRecord
   end
   validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
   validates :company_name, length: { maximum: 16 }, allow_blank: true
+  # validates :invoiced_at, presence: true, on: :create
+  validates(
+    :invoiced_at,
+    comparison: {
+      less_than_or_equal_to: ->(ach_transfer) { ach_transfer.created_at || Date.today },
+      message: "cannot be after the transfer creation date"
+    },
+    allow_nil: true,
+    on: :create
+  )
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
