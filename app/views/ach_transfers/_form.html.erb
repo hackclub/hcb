@@ -125,6 +125,12 @@
     </div>
   </div>
 
+  <div class="field">
+    <%= form.label :invoiced_at, "Invoice date" %>
+    <%= form.date_field :invoiced_at, disabled:, max: Date.current %>
+    <span class="muted">When were you invoiced for this payment?</span>
+  </div>
+
   <div class="field field--checkbox">
     <%= form.check_box :send_email_notification, disabled: %>
     <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
