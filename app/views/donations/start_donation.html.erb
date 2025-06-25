@@ -1,6 +1,7 @@
 <% title "Give to " + @event.name %>
 <% page_sm %>
 <% no_app_shell %>
+<% @tier = @event.donation_tiers.find(params[:tier_id]) if params[:tier_id] %>
 
 <% content_for :head do %>
   <meta name="twitter:card" content="summary_large_image">
@@ -31,7 +32,9 @@
 <% end %>
 
 <%= render "donations/donation_tiers", donation: @donation %>
-<%= render "donations/donation_form", donation: @donation %>
+<% if @event.donation_tiers.empty? || @tier || params[:custom_amount] %>
+  <%= render "donations/donation_form", donation: @donation %>
+<% end %>
 
 <% if @event.demo_mode? %>
   <div class="container container--sm">
