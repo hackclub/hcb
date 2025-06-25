@@ -1,6 +1,6 @@
 <% if @event.donation_tiers.size > 0 %>
   <% if params[:tier_id] || params[:custom_amount] %>
-   <%= link_to upsert_query_params(tier_id: nil, custom_amount: nil), class: "mt-10 flex items-center no-underline gap-2" do %>
+   <%= link_to upsert_query_params(tier_id: nil, custom_amount: nil), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
       <%= inline_icon "view-back" %>
       Back
     <% end %>
@@ -30,7 +30,7 @@
       <% end %>
     </div>
   <% else %>
-    <h2 class="mt-8">Financial contributions</h2>
+    <h2 class="mt-8">Dontate</h2>
     <div class="mt-4 px-2 -mx-2 flex gap-4 overflow-x-auto whitespace-nowrap pb-2 mx-auto">
       <div class="card w-[250px] shrink-0 mb-8 flex flex-col">
         <h3 class="mb-0 mt-0">

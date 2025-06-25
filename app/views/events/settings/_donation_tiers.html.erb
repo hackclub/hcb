@@ -28,9 +28,6 @@
       <%= form_with(url: event_donation_tiers_path(event), local: true, method: :patch) do |form| %>
         <% event.donation_tiers.each do |tier| %>
           <div class="card shadow-none border bg-gray-50 flex items-start gap-2 mb-2">
-            <div class="border rounded-xl p-4 py-10 text-center bg-gray-100 text-gray-300 text-sm dark:bg-neutral-700 dark:text-neutral-400">
-              Upload image
-            </div>
             <div class="flex-1">
               <div class="flex gap-2 w-full">
                 <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tiers[<%= tier.id %>][name]" value="<%= tier.name %>" required>
