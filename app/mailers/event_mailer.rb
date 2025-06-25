@@ -15,11 +15,11 @@ class EventMailer < ApplicationMailer
     mail to: @emails, subject: "#{@event.name} received #{@donations.length} #{"donation".pluralize(@donations.length)} this past month"
   end
 
-  def donation_goal_hit
+  def donation_goal_reached
     @goal = @event.donation_goal
     @donations = @event.donations.succeeded.where(created_at: @goal.tracking_since..)
 
-    mail to: @emails, subject: "#{@event.name} has hit its donation goal!"
+    mail to: @emails, subject: "#{@event.name} has reached its donation goal!"
   end
 
   private

@@ -1,6 +1,6 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
-<p>Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been hit after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now  %>!</p>
+<p>Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been reached after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now  %>!</p>
 <p>Here are all the donations that helped to contribute to this goal:</p>
 <ul>
 <% @donations.map do |donation| %>
