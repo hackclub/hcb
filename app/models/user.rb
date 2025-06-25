@@ -187,6 +187,12 @@ class User < ApplicationRecord
     transactions_missing_receipt_count "Missing Receipts"
   end
 
+  SYSTEM_USER_EMAIL = "bank@hackclub.com"
+
+  def self.system_user
+    User.find_by!(email: SYSTEM_USER_EMAIL)
+  end
+
   after_save do
     if use_sms_auth_previously_changed?
       if use_sms_auth
