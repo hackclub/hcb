@@ -98,7 +98,7 @@
     </legend>
     <div class="flex flex-row gap-x-2">
       <% if @user.backup_codes_enabled? %>
-        <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your currently active codes immediately." } do %>
+        <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your current codes immediately." } do %>
           <%= inline_icon "minus", size: home_action_size %>
           Disable backup codes
         <% end %>

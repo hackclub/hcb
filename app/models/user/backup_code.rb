@@ -54,7 +54,7 @@ class User
         end
       end
       event :mark_discarded do
-        transitions from: [:active, :previewed], to: :discarded
+        transitions from: :active, to: :discarded
       end
     end
 

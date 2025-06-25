@@ -15,7 +15,7 @@ class User
     end
 
     def backup_codes_disabled
-      mail subject: "HCB backup codes are disabled"
+      mail subject: "You've disabled your HCB backup codes"
     end
 
     def three_or_fewer_codes_remaining
