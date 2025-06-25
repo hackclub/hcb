@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
-    "concurrently": "^9.1.2",
+    "concurrently": "^9.2.0",
     "eslint": "9.x",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.2.0",
