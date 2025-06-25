@@ -11,6 +11,12 @@ module Column
       type = params[:type]
       if type == "ach.incoming_transfer.scheduled"
         handle_ach_incoming_transfer_scheduled
+      elsif type == "ach.incoming_transfer.settled"
+        handle_ach_incoming_transfer_settled
+      elsif type == "wire.incoming_transfer.completed"
+        handle_wire_incoming_transfer_completed
+      elsif type == "swift.incoming_transfer.completed"
+        handle_swift_incoming_transfer_completed
       elsif type == "ach.outgoing_transfer.returned"
         handle_ach_outgoing_transfer_returned
       elsif type == "check.outgoing_debit.settled"
@@ -48,6 +54,33 @@ module Column
       end
 
       # at this point, the ACH is approved!
+    end
+    
+    def handle_ach_incoming_transfer_settled
+      RawPendingColumnTransaction.create!(
+        amount_cents: @object["available_amount"],
+        date_posted: @object["effective_at_utc"],
+        column_transaction: @object,
+        column_event_type: "ach.incoming_transfer.settled"
+      )
+    end
+    
+    def handle_wire_incoming_transfer_completed
+      RawPendingColumnTransaction.create!(
+        amount_cents: @object["available_amount"],
+        date_posted: @object["effective_at_utc"],
+        column_transaction: @object,
+        column_event_type: "wire.incoming_transfer.completed"
+      )
+    end
+    
+    def handle_swift_incoming_transfer_completed
+      RawPendingColumnTransaction.create!(
+        amount_cents: @object["available_amount"],
+        date_posted: @object["effective_at_utc"],
+        column_transaction: @object,
+        column_event_type: "swift.incoming_transfer.completed"
+      )
     end
 
     def handle_ach_outgoing_transfer_returned

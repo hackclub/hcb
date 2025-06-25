@@ -18,6 +18,7 @@
 #  increase_check_id                                :bigint
 #  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
+#  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -66,6 +67,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_donation_transaction, optional: true
   belongs_to :raw_pending_invoice_transaction, optional: true
   belongs_to :raw_pending_bank_fee_transaction, optional: true
+  belongs_to :raw_pending_column_transaction, optional: true
   belongs_to :raw_pending_incoming_disbursement_transaction, optional: true
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :increase_check, optional: true
@@ -361,6 +363,10 @@ class CanonicalPendingTransaction < ApplicationRecord
 
       ::StripeCard.find_by(stripe_id: raw_pending_stripe_transaction.stripe_transaction["card"]["id"])
     end
+  end
+
+  def column_transaction_id
+    raw_pending_column_transaction&.column_id
   end
 
   private
