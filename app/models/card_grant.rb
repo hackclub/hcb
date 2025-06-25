@@ -10,6 +10,7 @@
 #  email           :string           not null
 #  keyword_lock    :string
 #  merchant_lock   :string
+#  one_time_use    :boolean
 #  purpose         :string
 #  status          :integer          default("active"), not null
 #  created_at      :datetime         not null
