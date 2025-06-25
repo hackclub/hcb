@@ -33,7 +33,7 @@
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
              "draft_created"           => ["plus", "success", "created this draft report"],
              "reimbursed"              => ["payment-transfer", "purple", reimbursed_change_text],
-             "reversed"                => ["sad", "warning", "cancelled this reimbursement"],
+             "reversed"                => ["sad", "warning", "canceled this reimbursement"],
            } %>
         <% state_change = item.changeset["aasm_state"]&.second %>
         <% if state_change %>
