@@ -35,7 +35,7 @@
   <div class="donations-header-image py-20"
        <% if @has_header_image %> style="background: linear-gradient(rgba(23, 23, 29, 0.3), rgba(23, 23, 29, 0.9)),  url('<%= url_for @event.donation_header_image %>'); background-position: center; background-size: cover; background-repeat: no-repeat;"
        <% end %>>
-    <div class="container flex items-center <%= yield.present? ? '' : 'justify-center' %>">
+    <div class="container flex flex-col sm:flex-row items-center <%= yield.present? ? "" : "justify-center" %>">
       <div>
         <h1 class="mt-0 mb0 border-none <%= yield.present? ? "" : "center" %> <%= "smoke drop-shadow-lg" if @has_header_image %>">
           <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
