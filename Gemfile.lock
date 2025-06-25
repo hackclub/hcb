@@ -921,7 +921,7 @@ DEPENDENCIES
   htmlbeautifier
   image_processing (~> 1.2)
   invisible_captcha
-  irb (~> 1.14.3)
+  irb
   jbuilder (~> 2.13)
   jquery-rails
   jsbundling-rails (~> 1.3)
