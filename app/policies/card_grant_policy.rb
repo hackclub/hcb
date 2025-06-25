@@ -17,6 +17,34 @@ class CardGrantPolicy < ApplicationPolicy
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
+  def edit_actions?
+    record.event.is_public? || user&.auditor? || user_in_event?
+  end
+
+  def edit_usage_restrictions?
+    record.event.is_public? || user&.auditor? || user_in_event?
+  end
+
+  def edit_overview?
+    record.event.is_public? || user&.auditor? || user_in_event?
+  end
+
+  def edit_balance?
+    record.event.is_public? || user&.auditor? || user_in_event?
+  end
+
+  def edit_purpose?
+    record.event.is_public? || user&.auditor? || user_in_event?
+  end
+
+  def edit_topup?
+    record.event.is_public? || user&.auditor? || user_in_event?
+  end
+
+  def edit_withdraw?
+    record.event.is_public? || user&.auditor? || user_in_event?
+  end
+
   def activate?
     user&.admin? || record.user == user
   end
