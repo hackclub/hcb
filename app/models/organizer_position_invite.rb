@@ -105,7 +105,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def accept(show_onboarding: true)
-    if canceled?
+    if cancelled?
       self.errors.add(:base, "was canceled!")
       return false
     end
@@ -150,7 +150,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def reject
-    if canceled?
+    if cancelled?
       self.errors.add(:base, "was canceled!")
       return false
     end
@@ -185,7 +185,7 @@ class OrganizerPositionInvite < ApplicationRecord
     self.save
   end
 
-  def canceled?
+  def cancelled?
     cancelled_at.present?
   end
 

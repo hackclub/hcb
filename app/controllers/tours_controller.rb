@@ -8,7 +8,7 @@ class ToursController < ApplicationController
     authorize @tour
     @tour.update(active: false)
 
-    if params[:canceled] == true
+    if params[:cancelled] == true
       ahoy.track "Tour canceled", tour_id: @tour.id, tour_options: @tour.tourable.tourable_options, step: @tour.step
     else
       ahoy.track "Tour finished", tour_id: @tour.id, tour_options: @tour.tourable.tourable_options, step: @tour.step
