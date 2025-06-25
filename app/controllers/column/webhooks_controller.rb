@@ -55,7 +55,7 @@ module Column
 
       # at this point, the ACH is approved!
     end
-    
+
     def handle_ach_incoming_transfer_settled
       RawPendingColumnTransaction.create!(
         amount_cents: @object["available_amount"],
@@ -64,7 +64,7 @@ module Column
         column_event_type: "ach.incoming_transfer.settled"
       )
     end
-    
+
     def handle_wire_incoming_transfer_completed
       RawPendingColumnTransaction.create!(
         amount_cents: @object["available_amount"],
@@ -73,7 +73,7 @@ module Column
         column_event_type: "wire.incoming_transfer.completed"
       )
     end
-    
+
     def handle_swift_incoming_transfer_completed
       RawPendingColumnTransaction.create!(
         amount_cents: @object["available_amount"],

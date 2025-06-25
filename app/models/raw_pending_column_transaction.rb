@@ -18,7 +18,7 @@ class RawPendingColumnTransaction < ApplicationRecord
   has_one :canonical_pending_transaction
 
   after_create :create_canonical_pending_transaction, if: -> { canonical_pending_transaction.nil? }
-  
+
   enum :column_event_type, {
     "swift.incoming_transfer.completed": 0,
     "wire.incoming_transfer.completed": 1,
