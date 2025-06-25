@@ -44,7 +44,7 @@
     <%= form.hidden_field :commentable_type, value: commentable&.class %>
     <%= form.hidden_field :commentable_id, value: commentable&.id %>
 
-    <% admin_tool("inline-flex", "span") do %>
+    <% admin_tool_if(!in_admin_tool, "inline-flex span") do %>
       <% if defined?(admin_only) %>
         <%= form.hidden_field :admin_only, value: true %>
         This comment will only be shown to admins.
