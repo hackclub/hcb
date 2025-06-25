@@ -18,7 +18,7 @@
 
 <p>
   In total, you raised <strong><%= render_money @total %></strong> last month - great job!
-  <% if @goal.present? && @percentage < 1  %>
+  <% if @goal.present? && @percentage < 1 %>
     You're now <%= number_with_precision(@percentage * 100, precision: 1) %>% of the way to your goal of <strong><%= render_money @goal.amount_cents %></strong>.
   <% end %>
 </p>
