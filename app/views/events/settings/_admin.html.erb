@@ -159,7 +159,7 @@
 
   <% admin_tool do %>
     <%= render "comments/list", comments: @event.comments %>
-    <%= render "comments/form", commentable: @event, admin_only: true, in_admin_tool: true %>
+    <%= render "comments/form", commentable: @event, admin_only: true %>
   <% end %>
 
 </div>
