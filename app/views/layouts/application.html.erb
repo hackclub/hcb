@@ -53,7 +53,7 @@
     *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
           Come hack on HCB with us!
-  <%= Rails.configuration.constants.github_url.to_json %>
+  <%= Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
   `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
       </script>
     <% end %>
