@@ -28,11 +28,11 @@
       <%= form_with(url: event_donation_tiers_path(event), local: true, method: :patch) do |form| %>
         <ul
           class="list-none p-0 m-0 flex flex-col gap-2"
-          data-controller="sortable event-sort"
+          data-controller="sortable donation-tier-sort"
           data-sortable-append-to-value="body"
           data-sortable-handle-value=".draggable-handle"
-          data-event-sort-organizer-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
-          data-action="sortable:stop->event-sort#sort">
+          data-donation-tier-sort-organizer-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
+          data-action="sortable:stop->donation-tier-sort#sort">
           <% event.donation_tiers.each do |tier| %>
             <div class="draggable card shadow-none border bg-gray-50 flex items-start gap-2 mb-2 transition-none">
               <div class="flex-1">

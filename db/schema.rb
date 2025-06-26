@@ -681,7 +681,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_23_035907) do
     t.integer "amount_cents", null: false
     t.string "name", null: false
     t.text "description"
-    t.integer "position", default: 0, null: false
+    t.integer "sort_index"
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

@@ -5,7 +5,7 @@ class CreateDonationTiers < ActiveRecord::Migration[7.2]
       t.integer :amount_cents, null: false
       t.string :name, null: false
       t.text :description
-      t.integer :position, null: false, default: 0
+      t.integer :sort_index
 
       t.datetime :deleted_at
       t.timestamps
