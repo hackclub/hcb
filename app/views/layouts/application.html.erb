@@ -24,20 +24,6 @@
       <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
     <% end %>
 
-    <% if signed_in? %>
-      <script>
-        document.addEventListener("turbo:load", () => {
-          try {
-            Headway.init({
-              selector: "#changelog-icon",
-              account:  "7z8ovy",
-              trigger: "#changelog-icon"
-            })
-          } catch {}
-        })
-      </script>
-    <% end %>
-
     <%= render "application/helpscout_beacon" %>
 
     <% unless Rails.env.production? %>

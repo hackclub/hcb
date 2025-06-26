@@ -20,20 +20,6 @@
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 
-    <% if signed_in? %>
-      <script>
-        document.addEventListener("turbo:load", () => {
-          try {
-            Headway.init({
-              selector: "#changelog-icon",
-              account:  "7z8ovy",
-              trigger: "#changelog-icon"
-            })
-          } catch {}
-        })
-      </script>
-    <% end %>
-
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
     <% end %>
