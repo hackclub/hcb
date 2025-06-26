@@ -12,8 +12,6 @@ class Donation
       tier = DonationTier.find_by(id: params[:event_id])
       authorize tier.event, :update?
 
-      puts tier.inspect
-
       index = params[:index]
 
       # get all the organizer positions as an array
@@ -47,6 +45,7 @@ class Donation
       @tier.save!
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
     rescue ActiveRecord::RecordInvalid => e
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
 
     def update
@@ -54,8 +53,6 @@ class Donation
       params[:tiers]&.each do |id, tier_data|
         tier = @event.donation_tiers.find_by(id: id)
         next unless tier
-
-        puts tier_data.inspect
 
         tier.update(
           name: tier_data[:name],
@@ -66,6 +63,7 @@ class Donation
 
       render json: { success: true, message: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
 
     def destroy
@@ -74,12 +72,14 @@ class Donation
       @tier.destroy
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
 
     private
 
     def set_event
       @event = Event.where(slug: params[:event_id]).first
+      puts @event.inspect
       render json: { error: "Event not found" }, status: :not_found unless @event
     end
 
