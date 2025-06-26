@@ -46,6 +46,7 @@ Rails.application.routes.draw do
   get "project_stats", to: "stats#project_stats"
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
+  get "blog_widget", to: "static_pages#blog_widget"
 
   resources :raffles, only: [:new, :create]
 
@@ -628,6 +629,7 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+  post "vercel/webhook", to: "vercel#webhook"
 
   post "extract/invoice", to: "extraction#invoice"
 

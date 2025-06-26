@@ -17,7 +17,7 @@
             <span class="badge bg-red hidden absolute top-[-2px] right-[-2px] block m-0 py-[2px] px-1" data-blog-notification-target="badge"></span>
           <% end %>
         </a>
-        <%= render partial: "application/blog_widget" %>
+        <%= turbo_frame_tag :blog_widget, src: blog_widget_path %>
       </div>
     <% end %>
   </div>
