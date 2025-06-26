@@ -31,7 +31,7 @@
           data-controller="sortable donation-tier-sort"
           data-sortable-append-to-value="body"
           data-sortable-handle-value=".draggable-handle"
-          data-donation-tier-sort-organizer-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
+          data-donation-tier-sort-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
           data-action="sortable:stop->donation-tier-sort#sort">
           <% event.donation_tiers.each do |tier| %>
             <div class="draggable card shadow-none border bg-gray-50 flex items-start gap-2 mb-2 transition-none">

@@ -3,20 +3,20 @@ import csrf from '../common/csrf'
 
 export default class extends Controller {
   static values = {
-    organizerPositions: Array,
+    positions: Array,
   }
 
   async sort({ detail: { oldIndex, newIndex } }) {
     if (oldIndex == newIndex) return
 
-    const copy = this.organizerPositionsValue
+    const copy = this.positionsValue
 
     const id = copy[oldIndex]
 
     copy.splice(oldIndex, 1)
     copy.splice(newIndex, 0, id)
 
-    this.organizerPositionsValue = copy
+    this.positionsValue = copy
 
     await fetch(`/donation_tiers/${id}/set_index`, {
       method: 'POST',
