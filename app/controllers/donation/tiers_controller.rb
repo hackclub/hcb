@@ -42,8 +42,7 @@ class Donation
         name: "Untitled tier",
         amount_cents: 1000,
         description: "",
-        image_url: nil,
-        sort_index: @event.donation_tiers.count + 1
+        sort_index: @event.donation_tiers.count
       )
       @tier.save!
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }

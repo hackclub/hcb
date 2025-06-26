@@ -37,14 +37,14 @@
             <div class="draggable card shadow-none border bg-gray-50 flex items-start gap-2 mb-2 transition-none">
               <div class="flex-1">
                 <div class="flex gap-2 w-full">
-                  <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tiers[<%= tier.id %>][name]" value="<%= tier.name %>" required onblur="this.form.requestSubmit();">
+                  <%= form.text_field "tiers[#{tier.id}][name]", value: tier.name, class: "flex-1 !max-w-full", placeholder: "Tier name", required: true, onblur: "this.form.requestSubmit();" %>
                   <div class="flex items-center gap-2 border rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
                     $
-                    <input type="number" required class="!border-none !px-0" style="width: 50px" placeholder="Cost" name="tiers[<%= tier.id %>][amount_cents]" value="<%= tier.amount_cents / 100 %>" required onblur="this.form.requestSubmit();">
+                    <%= form.number_field "tiers[#{tier.id}][amount_cents]", value: tier.amount_cents / 100, required: true, class: "!border-none !px-0", style: "width: 50px", placeholder: "Cost", onblur: "this.form.requestSubmit();" %>
                     /month
                   </div>
                 </div>
-                <textarea onblur="this.form.requestSubmit();" class="w-100 max-w-full mt-1" placeholder="Description" name="tiers[<%= tier.id %>][description]"><%= tier.description %></textarea>
+                <%= form.text_area "tiers[#{tier.id}][description]", value: tier.description, class: "w-100 max-w-full mt-1", placeholder: "Description", onblur: "this.form.requestSubmit();" %>
               </div>
 
               <div class="flex flex-col gap-1">
@@ -56,9 +56,11 @@
         </ul>
       <% end %>
       <%= form_with(url: event_donation_tiers_path(event), local: true, method: :post) do |form| %>
-        <div class="flex justify-end px-1 my-3 items-center">
-          <span class="muted block text-sm flex-1">Changes will be saved automatically</span>
-          <button type="submit" class="btn gap-4 pr-2">
+        <div class="flex px-1 my-3 items-center">
+          <% unless event.donation_tiers.empty? %>
+            <span class="muted block text-sm flex-1">Changes will be saved automatically</span>
+          <% end %>
+          <button type="submit" class="btn gap-4 pr-2 <%= "w-full !transform-none" if event.donation_tiers.empty? %>">
             Create tier
             <%= inline_icon "plus" %>
           </button>
