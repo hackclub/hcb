@@ -8,9 +8,8 @@
 #  amount_cents :integer          not null
 #  deleted_at   :datetime
 #  description  :text
-#  image_url    :string
 #  name         :string           not null
-#  position     :integer          default(0), not null
+#  sort_index   :integer
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #  event_id     :bigint           not null
@@ -29,7 +28,7 @@ class DonationTier < ApplicationRecord
   validates :name, :amount_cents, presence: true
   validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
 
-  default_scope { order(position: :asc) }
+  default_scope { order(sort_index: :asc) }
 
   acts_as_paranoid
 

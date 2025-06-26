@@ -17,7 +17,7 @@ class Donation
       index = params[:index]
 
       # get all the organizer positions as an array
-      tiers =  tier.event.donation_tiers.order(:position).to_a
+      tiers =  tier.event.donation_tiers.order(:sort_index).to_a
 
       return head status: :bad_request if index < 0 || index >= tiers.size
 
@@ -43,7 +43,7 @@ class Donation
         amount_cents: 1000,
         description: "",
         image_url: nil,
-        position: @event.donation_tiers.count + 1
+        sort_index: @event.donation_tiers.count + 1
       )
       @tier.save!
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
