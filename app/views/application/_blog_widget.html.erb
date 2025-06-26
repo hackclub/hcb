@@ -1,0 +1,24 @@
+<%# locals: (show_left: false) %>
+
+<div
+  class="absolute top-10 <%= show_left ? "right-10" : "left-10" %> card py-3 px-0 min-w-max z-10 flex flex-col items-center justify-start leading-normal hidden"
+  data-blog-notification-target="widget"
+  data-action="keydown@document->blog-notification#keydown"
+>
+  <p class="font-bold text-lg dark:border-dark border-smoke border-0 border-b-2 border-solid my-0 pb-3 w-full text-center">✨ What's new?</p>
+
+  <div class="dark:hover:bg-dark hover:bg-smoke px-5 py-2 flex flex-col gap-1">
+    <div class="flex justify-between items-center">
+      <p class="font-bold my-0">Scheduled Maintenance — May 7th, 2025</p>
+      <a href="https://blog.hcb.hackclub.com/posts/7th-may-maintenance"><%= inline_icon "external-fill" %></a>
+    </div>
+    <div class="flex flex-wrap">
+      <p class="rounded-full text-red border-red border-[1px] border-solid px-2 text-sm my-0">Maintenance</p>
+    </div>
+    <p class="max-w-96 text-sm my-0">We will be performing a scheduled database migration on May 7th, 2025 at 1 am PT. It is expected for this maintenance to last half an hour.</p>
+  </div>
+    
+  <div class="px-5 pt-2 dark:border-dark border-smoke  border-0 border-t-2 border-solid w-full">
+    <a href="https://blog.hcb.hackclub.com" target="_blank" class="flex justify-center items-center"><%= inline_icon :external, size: 26 %> See all posts on the HCB blog</a>
+  </div>
+</div>

@@ -31,13 +31,13 @@ export default class extends Controller {
   updateMenu() {
     this.menuTarget.classList.remove(
       this.open
-        ? 'dropdown-button__menu--hidden'
-        : 'dropdown-button__menu--show'
+        ? 'fade-card-hide'
+        : 'fade-card-show'
     )
     this.menuTarget.classList.add(
       this.open
-        ? 'dropdown-button__menu--show'
-        : 'dropdown-button__menu--hidden'
+        ? 'fade-card-show'
+        : 'fade-card-hide'
     )
   }
 
