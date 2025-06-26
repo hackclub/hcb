@@ -30,15 +30,16 @@ class Donation
         tier = @event.donation_tiers.find_by(id: id)
         next unless tier
 
-        amount_cents = (tier_data[:amount_cents].to_f * 100).to_i
+        puts tier_data.inspect
+
         tier.update(
           name: tier_data[:name],
           description: tier_data[:description],
-          amount_cents: amount_cents
+          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i
         )
       end
 
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
+      render json: { success: true, message: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end

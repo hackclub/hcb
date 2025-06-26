@@ -37,14 +37,14 @@
             <div class="draggable card shadow-none border bg-gray-50 flex items-start gap-2 mb-2 transition-none">
               <div class="flex-1">
                 <div class="flex gap-2 w-full">
-                  <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tiers[<%= tier.id %>][name]" value="<%= tier.name %>" required>
-                  <div class="flex items-center gap-2 border rounded-md px-3 input min-w-0 p-0 max-w-[200px]">
+                  <input type="text" class="flex-1 !max-w-full" placeholder="Tier name" name="tiers[<%= tier.id %>][name]" value="<%= tier.name %>" required onblur="this.form.requestSubmit();">
+                  <div class="flex items-center gap-2 border rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
                     $
-                    <input type="text" class="!border-none !px-0" style="max-width: 95px" placeholder="Monthly cost" name="tiers[<%= tier.id %>][amount_cents]" value="<%= tier.amount_cents / 100 %>" required>
+                    <input type="number" required class="!border-none !px-0" style="width: 50px" placeholder="Cost" name="tiers[<%= tier.id %>][amount_cents]" value="<%= tier.amount_cents / 100 %>" required onblur="this.form.requestSubmit();">
                     /month
                   </div>
                 </div>
-                <textarea class="w-100 max-w-full mt-1" placeholder="Description" name="tiers[<%= tier.id %>][description]"><%= tier.description %></textarea>
+                <textarea onblur="this.form.requestSubmit();" class="w-100 max-w-full mt-1" placeholder="Description" name="tiers[<%= tier.id %>][description]"><%= tier.description %></textarea>
               </div>
 
               <div class="flex flex-col gap-1">
@@ -60,12 +60,6 @@
             Create tier
             <%= inline_icon "plus" %>
           </button>
-          <% unless event.donation_tiers.empty? %>
-            <button type="submit" class="btn btn--primary flex-1 gap-2">
-              Save changes
-              <%= inline_icon "check-thin" %>
-            </button>
-          <% end %>
         </div>
       <% end %>
       <%= form_with(url: event_donation_tiers_path(event), local: true, method: :post, id: "createTier") do |form| %>
