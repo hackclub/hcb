@@ -33,7 +33,7 @@
           data-sortable-handle-value=".draggable-handle"
           data-donation-tier-sort-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
           data-action="sortable:stop->donation-tier-sort#sort">
-          <% event.donation_tiers.each do |tier| %>
+          <% event.donation_tiers.each do |tier, i| %>
             <div class="draggable card shadow-none border bg-gray-50 flex items-start gap-2 mb-2 transition-none">
               <div class="flex-1">
                 <div class="flex gap-2 w-full">

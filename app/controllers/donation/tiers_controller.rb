@@ -47,7 +47,6 @@ class Donation
       @tier.save!
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
 
     def update
@@ -67,7 +66,6 @@ class Donation
 
       render json: { success: true, message: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
 
     def destroy
@@ -76,7 +74,6 @@ class Donation
       @tier.destroy
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
 
     private
