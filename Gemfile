@@ -6,7 +6,7 @@ ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", git: "https://github.com/rails/rails.git", branch: "7-2-stable"
 
 gem "puma", "~> 6.6" # app server
 
@@ -106,6 +106,7 @@ gem "strong_migrations", "~> 1" # protects against risky migrations
 # [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
 #               2.x is incompatible with Postgres 11.
 gem "xxhash" # fast hashing
+gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
@@ -224,6 +225,4 @@ gem "whitesimilarity"
 
 gem "rack-timeout", require: "rack/timeout/base"
 
-# IRB is pinned to 1.14.3 because Console1984 is incompatible with >=1.15.0.
-# https://github.com/basecamp/console1984/issues/127
-gem "irb", "~> 1.14.3"
+gem "irb"

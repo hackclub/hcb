@@ -154,7 +154,7 @@
       <% end %>
       <div class="field--fileupload mt2">
         <%= form.label :stripe_card_logo, "Choose file", class: "field--fileupload__label" %>
-        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true %>
+        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
       </div>
     </div>
     <%= form.submit "Update", disabled: %>
