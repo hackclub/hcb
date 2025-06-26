@@ -18,7 +18,7 @@ export default class extends Controller {
 
     this.positionsValue = copy
 
-    await fetch(`/donation_tiers/${id}/set_index`, {
+    await fetch(`/${id}/donation/tiers/set_index`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

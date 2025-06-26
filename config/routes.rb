@@ -735,7 +735,7 @@ Rails.application.routes.draw do
     namespace :donation do
       resource :goals, only: [:create, :update]
       resource :tiers, only: [:create, :update, :destroy] do
-        post :reorder, on: :member
+        post :set_index, on: :member
       end
     end
 

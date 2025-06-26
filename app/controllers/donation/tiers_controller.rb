@@ -2,10 +2,37 @@
 
 class Donation
   class TiersController < ApplicationController
-    before_action :set_event
+    before_action :set_event, except: [:set_index]
 
     def index
       @tiers = @event.donation_tiers
+    end
+
+    def set_index
+      tier = DonationTier.find_by(id: params[:event_id])
+      authorize tier.event, :update?
+
+      puts tier.inspect
+
+      index = params[:index]
+
+      # get all the organizer positions as an array
+      tiers =  tier.event.donation_tiers.order(:position).to_a
+
+      return head status: :bad_request if index < 0 || index >= tiers.size
+
+      # switch the position *in the in-memory array*
+      tiers.delete tier
+      tiers.insert index, tier
+
+      # persist the sort order
+      ActiveRecord::Base.transaction do
+        tiers.each_with_index do |op, idx|
+          op.update(sort_index: idx)
+        end
+      end
+
+      render json: organizer_positions.pluck(:id)
     end
 
     def create
