@@ -6,7 +6,41 @@
         [:edit, card_grant.disbursement.local_hcb_code],
         class: "mr2 align-middle", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
     Grant to &nbsp; <%= user_mention card_grant.user %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end" class="ml-auto">
+      <%= pop_icon_to "more",
+          "#",
+          class: "align-middle", "aria-label": "More Options",
+          data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+      <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+         <%= render "card_grants/actions/convert_to_reimbursement_report", as_menu: true, card_grant:, label: card_grant.user == current_user ? "Get reimbursed" : "Create reimbursement report" %>
+
+        <%= render "card_grants/actions/toggle_one_time_use", card_grant: %>
+        <% if card_grant.active? %>
+          <%= link_to "#",
+                      data: { behavior: "modal_trigger", modal: "topup", action: "menu#close" },
+                      class: "menu__action",
+                      disabled: !policy(card_grant).topup? do %>
+            <%= inline_icon "plus", size: 24 %> Topup
+          <% end %>
+          <%= link_to "#",
+                      data: { behavior: "modal_trigger", modal: "withdrawl", action: "menu#close" },
+                      class: "menu__action",
+                      disabled: !policy(card_grant).withdraw? do %>
+            <%= inline_icon "minus", size: 24 %> Withdraw
+          <% end %>
+        <% end %>
+
+        <% if card_grant.user != current_user %>
+          <%= render "card_grants/actions/cancel", card_grant: %>
+        <% end %>
+        <%= render "card_grants/actions/dejigamaflip", card_grant: %>
+      </div>
+    </div>
   </h2>
+
+  <%= render "card_grants/actions/topup", card_grant: %>
+  <%= render "card_grants/actions/withdraw", card_grant: %>
+
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
       <strong>Sent by</strong>

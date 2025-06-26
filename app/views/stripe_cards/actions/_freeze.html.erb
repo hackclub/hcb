@@ -6,7 +6,7 @@
                 method: :post,
                 class: "btn bg-accent",
                 disabled: !policy(stripe_card).defrost? do %>
-      <%= inline_icon "freeze" %> Defrost card
+      <%= inline_icon "freeze", size: 24 %> Defrost card
     <% end %>
   </div>
 <% elsif stripe_card.stripe_status == 'active' %>
@@ -16,7 +16,7 @@
                 method: :post,
                 class: "btn bg-accent",
                 disabled: !policy(stripe_card).freeze? do %>
-      <%= inline_icon "freeze" %> Freeze card
+      <%= inline_icon "freeze", size: 24 %> Freeze card
     <% end %>
   </div>
 <% end %>
