@@ -30,14 +30,10 @@ export default class extends Controller {
 
   updateMenu() {
     this.menuTarget.classList.remove(
-      this.open
-        ? 'dropdown-button__menu--hidden'
-        : 'dropdown-button__menu--show'
+      this.open ? 'fade-card-hide' : 'fade-card-show'
     )
     this.menuTarget.classList.add(
-      this.open
-        ? 'dropdown-button__menu--show'
-        : 'dropdown-button__menu--hidden'
+      this.open ? 'fade-card-show' : 'fade-card-hide'
     )
   }
 

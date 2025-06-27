@@ -400,7 +400,7 @@ module ApplicationHelper
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +
-      (content_tag :div, class: "dropdown-button__menu dropdown-button__menu--hidden", data: { "dropdown-button-target": "menu" } do
+      (content_tag :div, class: "dropdown-button__menu fade-card-hide", data: { "dropdown-button-target": "menu" } do
         content_tag :div do
           (options[:options].map do |option|
             (options[:form].radio_button options[:name], option[1], { data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +

@@ -8,15 +8,7 @@
         <%= render partial: "application/theme_toggle" %>
       </div>
       <% if signed_in? %>
-        <a
-          href="https://blog.hcb.hackclub.com"
-          target="_blank"
-          class="relative muted pointer tooltipped tooltipped--s"
-          aria-label="See what’s new with HCB"
-          id="changelog-icon"
-          style="height: 28px">
-          <%= inline_icon "rep", size: home_action_size %>
-        </a>
+        <%= render partial: "application/blog_widget" %>
       <% end %>
 
       <% if signed_in? %>
