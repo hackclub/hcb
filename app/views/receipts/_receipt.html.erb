@@ -63,7 +63,7 @@
       <iframe src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
     <% end %>
     <% end %>
-    <% if defined?(delete_on_hover) && delete_on_hover %>
+    <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
       <%= pop_icon_to "view-close",
               { controller: "/receipts", action: :destroy, id: receipt.id, popover: local_assigns[:popover] },
               method: :delete,
@@ -92,7 +92,7 @@
             class: "info tooltipped tooltipped--w mr1",
             'aria-label': "Get reimbursed for this" %>
       <% end %>
-      <% if defined?(show_delete_button) %>
+      <% if defined?(show_delete_button) && policy(receipt).destroy? %>
         <%= pop_icon_to "view-close",
             receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion]) }.compact),
             data: {
