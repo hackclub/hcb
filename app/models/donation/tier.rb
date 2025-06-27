@@ -24,13 +24,13 @@
 #
 class Donation
   class Tier < ApplicationRecord
-  belongs_to :event
+    belongs_to :event
 
-  validates :name, :amount_cents, presence: true
-  validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
+    validates :name, :amount_cents, presence: true
+    validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
 
-  default_scope { order(sort_index: :asc) }
+    default_scope { order(sort_index: :asc) }
 
-  acts_as_paranoid
-
+    acts_as_paranoid
+  end
 end
