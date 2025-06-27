@@ -15,7 +15,7 @@ class Donation
       index = params[:index]
 
       # get all the organizer positions as an array
-      tiers =  tier.event.donation_tiers.order(:sort_index).to_a
+      tiers = tier.event.donation_tiers.order(:sort_index).to_a
 
       return head status: :bad_request if index < 0 || index >= tiers.size
 
