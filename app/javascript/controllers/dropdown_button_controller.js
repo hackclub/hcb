@@ -30,14 +30,10 @@ export default class extends Controller {
 
   updateMenu() {
     this.menuTarget.classList.remove(
-      this.open
-        ? 'fade-card-hide'
-        : 'fade-card-show'
+      this.open ? 'fade-card-hide' : 'fade-card-show'
     )
     this.menuTarget.classList.add(
-      this.open
-        ? 'fade-card-show'
-        : 'fade-card-hide'
+      this.open ? 'fade-card-show' : 'fade-card-hide'
     )
   }
 
