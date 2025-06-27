@@ -22,7 +22,8 @@
 #
 #  fk_rails_...  (event_id => events.id)
 #
-class DonationTier < ApplicationRecord
+class Donation
+  class Tier < ApplicationRecord
   belongs_to :event
 
   validates :name, :amount_cents, presence: true
