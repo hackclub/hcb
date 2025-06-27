@@ -6,7 +6,7 @@ class WeeklyYswsEventSummaryJob < ApplicationJob
     events = Event.ysws.where("created_at > ?", 7.days.ago)
     return if events.none?
 
-    AdminMailer.with(events:).weekly_ysws_event_summary.deliver_later
+    AdminMailer.with(events:).weekly_ysws_event_summary.deliver_now
   end
 
 end
