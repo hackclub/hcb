@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_25_180046) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_24_191949) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -294,16 +294,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_25_180046) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_blazer_queries_on_creator_id"
-  end
-
-  create_table "blog_posts", force: :cascade do |t|
-    t.string "slug"
-    t.string "title"
-    t.string "tags"
-    t.string "preview"
-    t.datetime "published_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "canonical_event_mappings", force: :cascade do |t|
