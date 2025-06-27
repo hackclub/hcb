@@ -50,10 +50,17 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = relation.order(created_at: :desc)
+    allowed_sorts = %w[created_at status sponsors.name amount_due]
+    allowed_directions = %w[asc desc]
+
+    sort_column = allowed_sorts.include?(params[:sort]) ? params[:sort] : "created_at"
+    sort_direction = allowed_directions.include?(params[:direction]) ? params[:direction] : "desc"
+    relation = relation.order("#{sort_column} #{sort_direction}")
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
+
+    @invoices = relation
 
     # @ma1ted: I have no clue how to use the above methods here.
     # Reimplementing logic is okay if you apolgise to every
