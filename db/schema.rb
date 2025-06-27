@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -12,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_24_191949) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -438,25 +436,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
     t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id"
     t.index ["subledger_id"], name: "index_card_grants_on_subledger_id"
     t.index ["user_id"], name: "index_card_grants_on_user_id"
-  end
-
-  create_table "changelog_posts", force: :cascade do |t|
-    t.string "title"
-    t.integer "headway_id"
-    t.string "markdown"
-    t.datetime "published_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "changelog_posts_users", force: :cascade do |t|
-    t.bigint "changelog_post_id", null: false
-    t.bigint "user_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["changelog_post_id", "user_id"], name: "index_changelog_posts_users_on_changelog_post_id_and_user_id", unique: true
-    t.index ["changelog_post_id"], name: "index_changelog_posts_users_on_changelog_post_id"
-    t.index ["user_id"], name: "index_changelog_posts_users_on_user_id"
   end
 
   create_table "check_deposits", force: :cascade do |t|
@@ -1502,6 +1481,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
+    t.index ["user_id"], name: "index_raffles_on_user_id"
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -2282,8 +2262,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
   add_foreign_key "card_grants", "subledgers"
   add_foreign_key "card_grants", "users"
   add_foreign_key "card_grants", "users", column: "sent_by_id"
-  add_foreign_key "changelog_posts_users", "changelog_posts"
-  add_foreign_key "changelog_posts_users", "users"
   add_foreign_key "check_deposits", "events"
   add_foreign_key "checks", "lob_addresses"
   add_foreign_key "checks", "users", column: "creator_id"
