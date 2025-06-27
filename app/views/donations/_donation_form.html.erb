@@ -19,7 +19,7 @@
 
     <div class="field mb2">
       <%= form.label :name, "Your name" %>
-      <%= form.text_field :name, placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
+      <%= form.text_field :name, placeholder: "John Smith", required: true, autofocus: !@tier, autocomplete: "off" %>
     </div>
 
     <div class="field mb2">
