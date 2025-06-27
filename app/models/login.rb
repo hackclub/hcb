@@ -112,4 +112,5 @@ class Login < ApplicationRecord
       1
     end
   end
+
 end
