@@ -53,7 +53,7 @@
             <%= donation_tier.description %>
           </p>
           <div class="flex-1"></div>
-          <%= link_to upsert_query_params(tier_id: donation_tier.id, monthly: true), class: "w-full btn btn-primary mt-auto" do %>
+          <%= link_to start_donation_tier_donations_path(@event, donation_tier), class: "w-full btn btn-primary mt-auto" do %>
             <%= render_money_short donation_tier.amount_cents %><span class="font-bold text-base opacity-60">/month</span>
           <% end %>
         </div>
