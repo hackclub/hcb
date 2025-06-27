@@ -68,6 +68,12 @@
             </span>
           <% end %>
         </div>
+
+        <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && !@event&.demo_mode? %>
+          <div class="flex flex-wrap pending_transactions_tags tags hcb_code_<%= pt.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
+            <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: pt.local_hcb_code } %>
+          </div>
+        <% end %>
       </div>
 
       <% if !defined?(receipt_upload_button) && !defined?(hide_tags) && organizer_signed_in? && !pt.instance_of?(OpenStruct) && Flipper.enabled?(:transaction_tags_2022_07_29, @event || pt.local_hcb_code.event) %>
