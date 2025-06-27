@@ -5,7 +5,6 @@ class LoginsController < ApplicationController
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create]
   before_action :set_user, except: [:new, :create]
-  before_action :set_available_methods, except: [:new, :create]
   before_action :set_return_to
 
   layout "login"
@@ -153,11 +152,9 @@ class LoginsController < ApplicationController
         redirect_to(params[:return_to] || root_path)
       end
     else
-      set_available_methods
-
-      if @sms_available || @email_available
+      if @login.sms_available? || @login.email_available?
         redirect_to login_code_login_path(@login), status: :temporary_redirect
-      elsif @totp_available
+      elsif @login.totp_available?
         redirect_to totp_login_path(@login), status: :temporary_redirect
       else
         redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
@@ -200,13 +197,6 @@ class LoginsController < ApplicationController
   def set_user
     @user = @login.user
     @email = @login.user.email
-  end
-
-  def set_available_methods
-    @email_available = @login.email_available?
-    @sms_available = @login.sms_available?
-    @webauthn_available = @login.webauthn_available?
-    @totp_available = @login.totp_available?
   end
 
   def set_return_to
