@@ -169,7 +169,7 @@ module Reimbursement
       return "⚠️ Processing" if reimbursed? && payout_holding&.failed?
       return "In Transit" if reimbursement_approved?
       return "In Transit" if reimbursed? && !payout_holding.sent?
-      return "Cancelled" if reversed?
+      return "Canceled" if reversed?
 
       aasm_state.humanize.titleize
     end

@@ -65,7 +65,7 @@
     <% if auditor_signed_in? %>
       <section>
         <% if @user.transactions_missing_receipt.any? %>
-          <h2>Missing Receipts</h2>
+          <h2>Missing receipts</h2>
           <table>
             <% @user.transactions_missing_receipt.each do |tx| %>
               <%= render "canonical_transactions/canonical_transaction", ct: tx %>
@@ -93,7 +93,7 @@
           </ul>
         <% end %>
         <% if @user.stripe_cards.present? %>
-          <h2>Stripe Cards</h2>
+          <h2>Stripe cards</h2>
           <table>
             <tr>
               <th>Last 4</th>

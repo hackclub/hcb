@@ -140,7 +140,7 @@
       <% end %>
       <% if @missing_receipts %>
         <div class="badge badge-large bg-muted">
-          Missing Receipts
+          Missing receipts
           <%= link_to event_ledger_url(@event, upsert_query_params(missing_receipts: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
