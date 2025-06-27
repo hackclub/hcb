@@ -370,10 +370,4 @@ class AchTransfer < ApplicationRecord
     end
   end
 
-  def invoiced_at_must_be_before_or_on_creation_date
-    if invoiced_at.present? && invoiced_at.after?(created_at&.to_date || Date.current)
-      errors.add(:invoiced_at, "cannot be after the transfer creation date")
-    end
-  end
-
 end

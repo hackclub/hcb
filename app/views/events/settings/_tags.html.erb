@@ -6,7 +6,7 @@
     <%= form_with(url: event_tags_path(@event)) do |form| %>
       <div class="field">
         <%= form.label :label, "Tag name", class: "mb-1" %>
-        <%= form.text_field :label, placeholder: ["🧃 Food & drinks", "🧋 Bubble tea", "🚕 Transportation", "🛬 Flights", "🔨 Supplies"].sample, disabled: %>
+        <%= form.text_field :label, placeholder: ["🧃 Food & drinks", "🧋 Bubble tea", "🚕 Transportation", "🛬 Flights", "🔨 Supplies"].sample, disabled:, required: true %>
       </div>
 
       <div class="field">

@@ -1,11 +1,19 @@
 <%# locals: (card_grant:) %>
+<% hcb_code = card_grant.disbursement.local_hcb_code %>
 
 <div class="card mt2">
-  <h2 class="border-none mx0 mt0 inline-flex items-center">
-    <%= pop_icon_to "edit",
-        [:edit, card_grant.disbursement.local_hcb_code],
-        class: "mr2 align-middle", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
-    Grant to &nbsp; <%= user_mention card_grant.user %>
+  <%= render "hcb_codes/heading", hcb_code: do %>
+    <span class="flex-auto">
+      <span class="regular muted">
+        Grant to
+      </span>
+      <%= card_grant.user.initial_name %>
+      <span class="regular muted">
+        for
+      </span>
+      <span class="regular"><%= render_money hcb_code.amount_cents_by_event(card_grant.event).abs %></span>
+    </span>
+  <% end %>
   </h2>
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
@@ -25,7 +33,7 @@
   </section>
   <section class="details details--wide pt2 pb2 details--tall">
     <p>
-      <strong>Grant Status</strong>
+      <strong>Grant status</strong>
       <span><%= card_grant.state_text %></span>
     </p>
     <p>
@@ -34,7 +42,7 @@
     </p>
     <% if (stripe_card = card_grant.stripe_card).present? %>
       <p>
-        <strong>Card Status</strong>
+        <strong>Card status</strong>
         <span>
           <%= stripe_card.state_text %>
 
@@ -58,8 +66,8 @@
       <span><%= format_date card_grant.expires_on %></span>
     </p>
     <p>
-      <strong>Grant sent to</strong>
-      <span><%= mail_to card_grant.user.email %></span>
+      <strong>Sent to</strong>
+      <span><%= user_mention card_grant.user %></span>
     </p>
 
     <p>
@@ -80,10 +88,10 @@
         <span>All categories allowed</span>
       <% end %>
     </p>
-    <% if @card_grant.purpose.present? %>
+    <% if card_grant.purpose.present? %>
       <p>
         <strong>Purpose</strong>
-        <span><%= @card_grant.purpose %></span>
+        <span><%= card_grant.purpose %></span>
       </p>
     <% end %>
     <% if card_grant.keyword_lock.present? %>
@@ -95,7 +103,7 @@
   </section>
   <% if card_grant.pending_invite? || @frame %>
     <section>
-      <%= render partial: "actions", locals: { card_grant: @card_grant } %>
+      <%= render partial: "card_grants/actions", locals: { card_grant: } %>
     </section>
   <% end %>
 </div>
