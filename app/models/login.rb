@@ -81,4 +81,20 @@ class Login < ApplicationRecord
     self.browser_token ||= SecureRandom.base58(24)
   end
 
+  def email_available?
+    !authenticated_with_email
+  end
+
+  def sms_available?
+    !authenticated_with_sms && user.phone_number_verified
+  end
+
+  def webauthn_available?
+    !authenticated_with_webauthn && user.webauthn_credentials.any?
+  end
+
+  def totp_available?
+    !authenticated_with_totp && user.totp.present?
+  end
+
 end
