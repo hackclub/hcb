@@ -37,7 +37,7 @@
        <% end %>>
     <div class="container flex flex-col sm:flex-row items-center <%= yield.present? ? "" : "justify-center" %>">
       <div>
-        <h1 class="mt-0 mb0 border-none <%= yield.present? ? "" : "center" %> <%= "smoke drop-shadow-lg" if @has_header_image %>">
+        <h1 class="mt-0 mb0 border-none <%= yield.present? ? "text-center sm:text-left" : "text-center" %> <%= "smoke drop-shadow-lg" if @has_header_image %>">
           <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
           <div class="flex justify-center items-center mt1">
             <%= render "donations/logo" %>
