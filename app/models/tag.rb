@@ -53,7 +53,7 @@ class Tag < ApplicationRecord
   private
 
   def only_one_valid_emoji
-    if emoji.empty? || (emoji.grapheme_clusters.size > 1 || !emoji.match?(/\A(\p{Emoji})/))
+    if !emoji.present? || (emoji.grapheme_clusters.size > 1 || !emoji.match?(/\A(\p{Emoji})/))
       errors.add(:emoji, "must be a single emoji")
     end
   end
