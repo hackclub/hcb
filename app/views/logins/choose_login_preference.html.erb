@@ -14,14 +14,7 @@
       </div>
     </div>
 
-    <% methods = [
-         @email_available.presence,
-         @sms_available.presence,
-         @totp_available.presence,
-         @webauthn_available.presence
-       ].compact %>
-
-    <div class="field field--options max-w-full w-full mt-3 <%= "trio" if methods.length == 3 %>">
+    <div class="field field--options max-w-full w-full mt-3 <%= "trio" if @login.available_factors.length == 3 %>">
       <% if @webauthn_available %>
         <%= form.radio_button :login_preference, "webauthn", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
         <%= form.label :login_preference, value: "webauthn", class: "cursor-pointer" do %>
