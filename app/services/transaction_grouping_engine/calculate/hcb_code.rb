@@ -23,6 +23,8 @@ module TransactionGroupingEngine
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"
       DISBURSEMENT_CODE = "500"
+      OUTGOING_DISBURSEMENT_CODE = "501"
+      INCOMING_DISBURSEMENT_CODE = "502"
       STRIPE_CARD_CODE = "600"
       STRIPE_FORCE_CAPTURE_CODE = "601"
       STRIPE_SERVICE_FEE_CODE = "610"
@@ -178,11 +180,13 @@ module TransactionGroupingEngine
       end
 
       def disbursement_hcb_code
-        [
-          HCB_CODE,
-          DISBURSEMENT_CODE,
-          disbursement.id
-        ].join(SEPARATOR)
+        if !disbursement.is_v2?
+          disbursement.hcb_code
+        elsif @ct_or_cp.amount_cents.positive?
+          disbursement.incoming_hcb_code
+        else
+          disbursement.outgoing_hcb_code
+        end
       end
 
       def disbursement
