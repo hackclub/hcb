@@ -193,11 +193,4 @@ class StaticPagesController < ApplicationController
     }
   end
 
-  def blog_widget
-    show_left = params[:show_left] == "true"
-    latest_posts = BlogPost.last(3)
-
-    render "application/blog_widget", locals: { show_left:, latest_posts: }
-  end
-
 end
