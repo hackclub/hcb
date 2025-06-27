@@ -1,4 +1,4 @@
-<% if @event.donation_tiers.size > 0 %>
+<% if @show_tiers %>
   <% if params[:tier_id] || params[:custom_amount] %>
    <%= link_to upsert_query_params(tier_id: nil, custom_amount: nil), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
       <%= inline_icon "view-back" %>

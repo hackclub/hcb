@@ -53,6 +53,8 @@ class DonationsController < ApplicationController
 
     tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
+    @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
+
     @donation = Donation.new(
       name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
       email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),

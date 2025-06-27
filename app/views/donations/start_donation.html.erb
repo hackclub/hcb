@@ -32,7 +32,7 @@
 <% end %>
 
 <%= render "donations/donation_tiers", donation: @donation %>
-<% if @event.donation_tiers.empty? || @tier || params[:custom_amount] %>
+<% if !@show_tiers || @tier || params[:custom_amount] %>
   <%= render "donations/donation_form", donation: @donation %>
 <% end %>
 
