@@ -98,7 +98,7 @@
       </div>
 
       <div class="action">
-        <%= form.submit "Update", class: ("disabled" unless policy(@event).update?) %>
+        <%= form.submit "Update", disabled: !current_user.admin? %>
       </div>
     <% end %>
   <% end %>
@@ -115,7 +115,7 @@
         <%= form.number_field :amount, placeholder: 100, min: 1, step: 0.01, required: true %>
       </div>
       <div class="action">
-        <%= form.submit "Charge fee", class: ("disabled" unless policy(@event.fees.build).create?) %>
+        <%= form.submit "Charge fee", disabled: !policy(@event.fees.build).create? %>
       </div>
     <% end %>
     <details>
