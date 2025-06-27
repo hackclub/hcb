@@ -3,11 +3,6 @@
 <% end %>
 
 <%= turbo_stream.update_all tag_dom_class(hcb_code, tag, "_toggle") do %>
-  <div class="relative w-7 mr-2">
-    <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
-    <% if tag.emoji.present? %>
-      <p class="absolute top-0 left-0 my-[2px] mx-1 text-base"><%= tag.emoji %></p>
-    <% end %>
-  </div>
+  <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
   <%= tag.label %> ✓
 <% end %>

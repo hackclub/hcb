@@ -88,7 +88,7 @@
     <div class="filter-menu__chips">
       <% if @tag %>
         <div class="badge badge-large bg-muted">
-          <div class="tag__preview tag-<%= @tag.color || "muted" %>"></div>
+          <%= render partial: "canonical_transactions/tag_icon", locals: { tag: @tag } %>
           <%= @tag.label %>
 
           <%= link_to event_ledger_url(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>

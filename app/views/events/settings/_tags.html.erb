@@ -47,12 +47,7 @@
   <% @event.tags.each do |tag| %>
     <div class="card mb2 flex justify-between items-center">
       <div class="flex items-center">
-        <div class="relative w-7 mr-2">
-          <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
-          <% if tag.emoji.present? %>
-            <p class="absolute top-0 left-0 my-[2px] mx-1"><%= tag.emoji %></p>
-          <% end %>
-        </div>
+        <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
         <p class="bold mb0 mt0"><%= tag.label %></p>
       </div>
       <div class="flex items-center justify-center">

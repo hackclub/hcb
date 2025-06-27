@@ -12,12 +12,7 @@
           <% @event.tags.each do |tag| %>
             <div class="flex items-center" data-tag="<%= tag.id %>">
               <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                <div class="relative w-7 mr-2">
-                  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
-                  <% if tag.emoji.present? %>
-                    <p class="absolute top-0 left-0 my-[2px] mx-1 text-base"><%= tag.emoji %></p>
-                  <% end %>
-                </div>
+                <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                 <%= tag.label %>
                 <%= "✓" if hcb_code.tags.include?(tag) %>
               <% end %>
