@@ -10,6 +10,7 @@
 #  browser_token_ciphertext :text
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
+#  initial_login_id         :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
@@ -18,12 +19,24 @@
 #  index_logins_on_user_id          (user_id)
 #  index_logins_on_user_session_id  (user_session_id)
 #
+# Foreign Keys
+#
+#  fk_rails_...  (initial_login_id => logins.id)
+#
 class Login < ApplicationRecord
   include AASM
   include Hashid::Rails
 
   belongs_to :user
   belongs_to :user_session, optional: true
+  belongs_to(
+    :initial_login,
+    optional: true,
+    class_name: "Login",
+    inverse_of: nil
+  )
+
+  scope(:initial, -> { where(initial_login_id: nil) })
 
   has_encrypted :browser_token
   before_validation :ensure_browser_token
@@ -58,7 +71,7 @@ class Login < ApplicationRecord
     event :mark_complete do
       transitions from: :incomplete, to: :complete do
         guard do
-          authentication_factors_count == (user.use_two_factor_authentication? ? 2 : 1)
+          authentication_factors_count == required_authentication_factors_count
         end
       end
     end
@@ -79,6 +92,50 @@ class Login < ApplicationRecord
     return if self[:browser_token_ciphertext].present?
 
     self.browser_token ||= SecureRandom.base58(24)
+  end
+
+  def reauthentication?
+    initial_login_id.present?
+  end
+
+  def email_available?
+    !authenticated_with_email
+  end
+
+  def sms_available?
+    !authenticated_with_sms && user.phone_number_verified
+  end
+
+  def webauthn_available?
+    !authenticated_with_webauthn && user.webauthn_credentials.any?
+  end
+
+  def totp_available?
+    !authenticated_with_totp && user.totp.present?
+  end
+
+  def available_factors
+    factors = []
+    factors << :sms if sms_available?
+    factors << :email if email_available?
+    factors << :webauthn if webauthn_available?
+    factors << :totp if totp_available?
+    factors
+  end
+
+  private
+
+  # The number of authentication factors required to consider this login
+  # complete (based on the user's 2FA setting and whether this is a
+  # reauthentication)
+  #
+  # @return [Integer]
+  def required_authentication_factors_count
+    if user.use_two_factor_authentication? && !reauthentication?
+      2
+    else
+      1
+    end
   end
 
 end
