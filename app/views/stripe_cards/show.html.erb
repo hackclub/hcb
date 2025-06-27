@@ -8,7 +8,7 @@
     <% if @card.cash_withdrawal_enabled? %>
       <%= link_to "Disable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-error" %>
     <% elsif @card.physical? %>
-      <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-success" %>
+      <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-success m1" %>
     <% end %>
   <% end %>
 
