@@ -12,6 +12,7 @@
 #  merchant_lock   :string
 #  one_time_use    :boolean
 #  purpose         :string
+#  sort_index      :float
 #  status          :integer          default("active"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null

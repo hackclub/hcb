@@ -58,6 +58,31 @@ class CardGrantsController < ApplicationController
     redirect_to card_grant_url(@card_grant)
   end
 
+  def set_index
+    card_grant = CardGrant.find(params[:id])
+    authorize card_grant
+
+    index = params[:index]
+
+    # get all the card grants as an array
+    card_grants = StaticPageService::Index.new(current_user:).card_grants.not_hidden.to_a
+
+    return head status: :bad_request if index < 0 || index >= card_grants.size
+
+    # switch the position *in the in-memory array*
+    card_grants.delete card_grant
+    card_grants.insert index, card_grant
+
+    # persist the sort order
+    ActiveRecord::Base.transaction do
+      card_grants.each_with_index do |cg, idx|
+        cg.update(sort_index: idx)
+      end
+    end
+
+    render json: card_grants.pluck(:id)
+  end
+
   def clear_purpose
     authorize @card_grant, :update?
     @card_grant.update(purpose: nil)

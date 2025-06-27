@@ -32,9 +32,17 @@
 <% if current_user.card_grants.activated.size > 0 %>
   <h2 class="heading h2 line-height-4 mt-0 ml-0 py-2 px-4 border-none">Grants</h2>
 
-  <div class="grid grid--wide mb-12">
+  <div
+    class="grid grid--wide mb-12"
+    data-controller="sortable sort-card"
+    data-sortable-append-to-value="body"
+    data-sort-card-order-value='<%= current_user.card_grants.includes(:stripe_card).map(&:hashid).to_json %>'
+    data-action="sortable:stop->sort-card#sort"
+  >
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
-      <%= render grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
+      <div class="draggable">
+        <%= render grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
+      </div>
     <% end %>
   </div>
 <% end %>

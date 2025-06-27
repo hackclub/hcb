@@ -655,6 +655,7 @@ Rails.application.routes.draw do
       post "activate"
       get "spending"
       post "clear_purpose"
+      post "set_index"
     end
   end
 
