@@ -39,7 +39,7 @@ class Login < ApplicationRecord
   validate do
     if user_session.present? && !complete?
       # how did we create session when it's not complete?!
-      Airbrake.notify("An incomplete login #{id} has a session #{session.id} present.")
+      Airbrake.notify("An incomplete login #{id} has a session #{user_session.id} present.")
       errors.add(:base, "An incomplete login has a session present.")
     end
   end

@@ -48,6 +48,10 @@ module StripeAuthorizationService
           if spending_control.present?
             SpendingControlService.check_low_balance(spending_control, cpt.local_hcb_code)
           end
+
+          if cpt&.stripe_card&.card_grant&.one_time_use
+            cpt.stripe_card.freeze!
+          end
         else
           unless cpt&.stripe_card&.frozen? || cpt&.stripe_card&.inactive?
             CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_declined.deliver_later

@@ -47,7 +47,7 @@
     <% if @events.any? %>
       <% if @show_event_reorder_tip %>
         <% if @events.size > 1 %>
-          <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
+          <%= link_to "https://blog.hcb.hackclub.com/posts/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
             <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
           <% end %>
         <% end %>
@@ -110,6 +110,9 @@
         <% end %>
       </ul>
     <% end %>
+
+    <%= render "static_pages/index/robotics_raffle" %>
+    <%= render "static_pages/index/teen_raffle" %>
 
     <%= render "static_pages/index/explore" %>
 

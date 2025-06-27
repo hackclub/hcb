@@ -51,8 +51,9 @@
       <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable %>
       <%= card_to "Feedback", link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable %>
       <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>
-      <%= card_to "YSWS Verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
+      <%= card_to "YSWS verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
       <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
+      <%= card_to "Identity verifications", link_to("https://identity.hackclub.com/backend/verifications/pending", target: "_blank", data: { turbo: false }), async_badge: :pending_identity_vault_verifications %>
     </ul>
     <h2>Info</h2>
     <ul class="grid left-align w-100 mt0" id="info-grid">
@@ -74,22 +75,22 @@
       <%= card_to "Domains", link_to_airtable_task(:domains), async_badge: :pending_domains_airtable %>
       <%= card_to "PVSA", link_to_airtable_task(:pvsa), async_badge: :pending_pvsa_airtable %>
       <%= card_to "The Event Helper", link_to_airtable_task(:theeventhelper), async_badge: :pending_theeventhelper_airtable %>
-      <%= card_to "Google Workspace Waitlist", link_to_airtable_task(:google_workspace_waitlist), async_badge: :pending_google_workspace_waitlist_airtable %>
+      <%= card_to "Google Workspace waitlist", link_to_airtable_task(:google_workspace_waitlist), async_badge: :pending_google_workspace_waitlist_airtable %>
     </ul>
     <h2>Accounting</h2>
     <ul class="grid left-align w-100 mt0" id="accounting-grid">
-      <%= card_to "Bank Fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
+      <%= card_to "Bank fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
       <%= card_to "Ledger audits", admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count %>
-      <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization Balances" } %>
+      <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization balances" } %>
       <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "BI tool" } %>
-      <%= card_to "Column Statements", admin_column_statements_path %>
+      <%= card_to "Column statements", admin_column_statements_path %>
     </ul>
     <h2>Other</h2>
     <ul class="grid left-align w-100 mt0" id="other-grid">
       <%= render partial: "static_pages/card", locals: { task_path: common_documents_path, human_name: "Common docs" } %>
       <%= render partial: "static_pages/card", locals: { task_path: flipper_path, human_name: "Flipper" } %>
-      <%= card_to "Pending Ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
-      <%= card_to "Account Numbers", account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true %>
+      <%= card_to "Pending ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
+      <%= card_to "Account numbers", account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true %>
       <%= card_to "Recurring donations", recurring_donations_admin_index_path, badge: RecurringDonation.active.count %>
     </ul>
     <details>
@@ -108,9 +109,9 @@
         <%= render partial: "static_pages/card", locals: { task_path: "https://hack.af/hcb-knowledgebase", human_name: "Knowledgebase" } %>
         <%= render partial: "static_pages/card", locals: { task_path: bank_accounts_path, human_name: "Bank accounts" } %>
         <%= render partial: "static_pages/card", locals: { task_path: new_bank_account_path, human_name: "Setup HCB" } %>
-        <%= card_to "Bank Accounts", bank_accounts_admin_index_path, badge: BankAccount.failing.count %>
-        <%= card_to "HCB Codes", hcb_codes_admin_index_path %>
-        <%= card_to "Raw Transactions", raw_transactions_admin_index_path, badge: RawCsvTransaction.unhashed.count %>
+        <%= card_to "Bank accounts", bank_accounts_admin_index_path, badge: BankAccount.failing.count %>
+        <%= card_to "HCB codes", hcb_codes_admin_index_path %>
+        <%= card_to "Raw transactions", raw_transactions_admin_index_path, badge: RawCsvTransaction.unhashed.count %>
       </ul>
     </details>
   </div>

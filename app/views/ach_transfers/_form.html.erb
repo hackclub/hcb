@@ -125,6 +125,12 @@
     </div>
   </div>
 
+  <div class="field">
+    <%= form.label :invoiced_at, "Invoice date" %>
+    <%= form.date_field :invoiced_at, disabled:, max: Date.current %>
+    <span class="muted">When were you invoiced for this payment?</span>
+  </div>
+
   <div class="field field--checkbox">
     <%= form.check_box :send_email_notification, disabled: %>
     <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
@@ -166,7 +172,7 @@
     <p class="h5 muted mt0 mb1">See <%= link_to "this page", "https://column.com/docs/ach/timing", target: "_blank" %> for ACH timing details.</p>
   <% end %>
 
-  <div class="actions tooltipped tooltipped--n inline-block" aria-label="ACH transfers can't be cancelled">
+  <div class="actions tooltipped tooltipped--n inline-block" aria-label="ACH transfers can't be canceled">
     <%= form.submit "Transfer money now", class: "btn", disabled: %>
   </div>
 <% end %>

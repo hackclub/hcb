@@ -9,7 +9,26 @@
     <% else %>
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
+  <%# Organizers and admins' view %>
+  <% elsif @card_grant.user.admin? || organizer_signed_in? %>
+    <% if @card_grant.stripe_card %>
+      <div>
+        <%= render @card_grant.stripe_card %>
+        <%= render partial: "balance", locals: { card_grant: @card_grant } %>
+        <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
+        <%= render "actions", card_grant: @card_grant %>
+      </div>
+    <% end %>
+    <div class="flex flex-col g2">
+      <%= render partial: "details", locals: { card_grant: @card_grant } %>
 
+      <% if @card_grant.active? && @card_grant.stripe_card %>
+        <% admin_tool_if @card_grant.user != current_user do %>
+          <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
+        <% end %>
+      <% end %>
+      <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
+    </div>
   <%# Grantee view after accepting invite %>
   <% elsif @card_grant.user == current_user %>
     <div>
@@ -19,35 +38,9 @@
       <% end %>
       <%= render @card_grant.stripe_card, headless: true, show_card_number: true %>
       <%= render partial: "balance", locals: { card_grant: @card_grant } %>
-      <div class="flex items-center mt3 justify-center flex-wrap g1">
-        <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant: @card_grant, label: "Get reimbursed" %>
-        <%= render "card_grants/actions/return", card_grant: @card_grant %>
-      </div>
+      <%= render partial: "actions", locals: { card_grant: @card_grant } %>
     </div>
     <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
-  <%# Organizers and admins' view %>
-  <% else %>
-    <% if @card_grant.stripe_card %>
-      <div>
-        <%= render @card_grant.stripe_card %>
-        <%= render partial: "balance", locals: { card_grant: @card_grant } %>
-
-        <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
-        <%= render partial: "actions", locals: { card_grant: @card_grant } %>
-
-      </div>
-    <% end %>
-
-    <div class="flex flex-col g2">
-      <%= render partial: "details", locals: { card_grant: @card_grant } %>
-
-      <% if @card_grant.active? && @card_grant.stripe_card %>
-        <% admin_tool do %>
-          <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
-        <% end %>
-      <% end %>
-      <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
-    </div>
   <% end %>
 </div>
 
