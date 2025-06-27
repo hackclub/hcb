@@ -364,6 +364,10 @@ class Donation < ApplicationRecord
     else
       DonationMailer.with(donation: self).notification.deliver_later
     end
+
+    if event.donation_goal.present? && (event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents)
+      EventMailer.with(event:).donation_goal_reached.deliver_later
+    end
   end
 
   def first_donation?
