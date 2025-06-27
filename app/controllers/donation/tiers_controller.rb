@@ -14,7 +14,7 @@ class Donation
 
       index = params[:index]
 
-      # get all the organizer positions as an array
+      # get all the tiers as an array
       tiers = tier.event.donation_tiers.order(:sort_index).to_a
 
       return head status: :bad_request if index < 0 || index >= tiers.size
@@ -30,7 +30,7 @@ class Donation
         end
       end
 
-      render json: organizer_positions.pluck(:id)
+      render json: tiers.pluck(:id)
     end
 
     def create
