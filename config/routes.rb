@@ -601,6 +601,7 @@ Rails.application.routes.draw do
           member do
             get "transactions"
             get "ephemeral_keys"
+            post "cancel"
           end
         end
 
