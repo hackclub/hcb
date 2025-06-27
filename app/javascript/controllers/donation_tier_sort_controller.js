@@ -4,7 +4,6 @@ import csrf from '../common/csrf'
 export default class extends Controller {
   static values = {
     positions: Array,
-    slug: String,
   }
 
   async sort({ detail: { oldIndex, newIndex } }) {
