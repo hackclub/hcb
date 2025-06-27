@@ -98,6 +98,22 @@ class Login < ApplicationRecord
     initial_login_id.present?
   end
 
+  def email_available?
+    !authenticated_with_email
+  end
+
+  def sms_available?
+    !authenticated_with_sms && user.phone_number_verified
+  end
+
+  def webauthn_available?
+    !authenticated_with_webauthn && user.webauthn_credentials.any?
+  end
+
+  def totp_available?
+    !authenticated_with_totp && user.totp.present?
+  end
+
   private
 
   # The number of authentication factors required to consider this login

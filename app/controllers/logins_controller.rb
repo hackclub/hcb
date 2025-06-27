@@ -203,10 +203,10 @@ class LoginsController < ApplicationController
   end
 
   def set_available_methods
-    @email_available = !@login.authenticated_with_email
-    @sms_available = @user&.phone_number_verified && !@login.authenticated_with_sms
-    @webauthn_available = @user&.webauthn_credentials&.any? && !@login.authenticated_with_webauthn
-    @totp_available = @user&.totp.present? && !@login.authenticated_with_totp
+    @email_available = @login.email_available?
+    @sms_available = @login.sms_available?
+    @webauthn_available = @login.webauthn_available?
+    @totp_available = @login.totp_available?
   end
 
   def set_return_to
