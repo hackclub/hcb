@@ -115,4 +115,5 @@ class UserSession < ApplicationRecord
   def last_authenticated_at
     logins.max_by(&:created_at)&.created_at
   end
+
 end

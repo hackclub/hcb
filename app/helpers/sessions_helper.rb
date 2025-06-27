@@ -173,7 +173,7 @@ module SessionsHelper
         user_id: current_user.id,
         login_code: params[:_sudo][:login_code],
         sms: false,
-        ).run
+      ).run
 
       @login.update!(authenticated_with_email: true)
       @login.update!(user_session: current_session)
