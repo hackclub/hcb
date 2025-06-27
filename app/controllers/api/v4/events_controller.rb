@@ -17,10 +17,32 @@ module Api
         @event = Event.find_by_public_id(params[:id]) || Event.friendly.find(params[:id])
         authorize @event, :show?
 
-        @settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
+        filters = params[:filters] || {}
+
+        @settled_transactions = TransactionGroupingEngine::Transaction::All.new(
+          event_id: @event.id,
+          search: filters[:q] || filters[:search],
+          tag_id: filters[:tag] && Flipper.enabled?(:transaction_tags_2022_07_29, @event) ? Tag.find_by(event_id: @event.id, label: filters[:tag])&.id : nil,
+          minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
+          maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
+          user: filters[:user] ? @event.users.find_by(id: filters[:user]) : nil,
+          start_date: filters[:start].presence,
+          end_date: filters[:end].presence,
+          missing_receipts: filters[:missing_receipts].present?
+        ).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @settled_transactions, event: @event).run!
 
-        @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: @event.id).run
+        @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(
+          event_id: @event.id,
+          search: filters[:q] || filters[:search],
+          tag_id: filters[:tag] && Flipper.enabled?(:transaction_tags_2022_07_29, @event) ? Tag.find_by(event_id: @event.id, label: filters[:tag])&.id : nil,
+          minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
+          maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
+          user: filters[:user] ? @event.users.find_by(id: filters[:user]) : nil,
+          start_date: filters[:start].presence,
+          end_date: filters[:end].presence,
+          missing_receipts: filters[:missing_receipts].present?
+        ).run
         PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions: @pending_transactions, event: @event).run!
 
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
