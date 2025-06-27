@@ -104,6 +104,7 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
+  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
   scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
