@@ -10,7 +10,7 @@ class UserPolicy < ApplicationPolicy
   end
 
   def edit?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def generate_totp?
@@ -26,27 +26,27 @@ class UserPolicy < ApplicationPolicy
   end
 
   def edit_address?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def edit_payout?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def edit_featurepreviews?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def edit_security?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def edit_notifications?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def edit_admin?
-    user.admin? || (record == user && user.admin_override_pretend?)
+    user.auditor? || (record == user && user.admin_override_pretend?)
   end
 
   def update?
