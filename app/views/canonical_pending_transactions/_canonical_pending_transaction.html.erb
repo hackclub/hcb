@@ -80,7 +80,7 @@
           </div>
         <% end %>
         <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
-          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+</button>
+          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
           <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
             <% (@event || pt.local_hcb_code.event).tags.each do |tag| %>
               <div class="flex items-center" data-tag="<%= tag.id %>">
