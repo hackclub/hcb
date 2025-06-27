@@ -97,4 +97,13 @@ class Login < ApplicationRecord
     !authenticated_with_totp && user.totp.present?
   end
 
+  def available_factors
+    factors = []
+    factors << :sms if sms_available?
+    factors << :email if email_available?
+    factors << :webauthn if webauthn_available?
+    factors << :totp if totp_available?
+    factors
+  end
+
 end
