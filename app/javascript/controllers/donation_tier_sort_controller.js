@@ -4,6 +4,7 @@ import csrf from '../common/csrf'
 export default class extends Controller {
   static values = {
     positions: Array,
+    slug: String,
   }
 
   async sort({ detail: { oldIndex, newIndex } }) {
@@ -24,7 +25,7 @@ export default class extends Controller {
         'Content-Type': 'application/json',
         'X-CSRF-Token': csrf(),
       },
-      body: JSON.stringify({ index: newIndex }),
+      body: JSON.stringify({ id, index: newIndex }),
     })
   }
 }

@@ -9,7 +9,7 @@ class Donation
     end
 
     def set_index
-      tier = DonationTier.find_by(id: params[:event_id])
+      tier = DonationTier.find_by(id: params[:id])
       authorize tier.event, :update?
 
       index = params[:index]
