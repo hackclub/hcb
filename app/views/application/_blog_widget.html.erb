@@ -1,10 +1,8 @@
-<%# locals: (show_left: false) %>
-
 <div class="relative" data-controller="blog-notification menu">
   <a
     href="https://blog.hcb.hackclub.com"
     target="_blank"
-    class="ml2 relative muted pointer tooltipped tooltipped--s"
+    class="relative muted pointer tooltipped tooltipped--s"
     aria-label="See what’s new with HCB"
     id="changelog-icon"
     data-menu-target="toggle"
@@ -15,7 +13,7 @@
     <% end %>
   </a>
   <div
-    class="absolute top-10 <%= show_left ? "right-10" : "left-10" %> card py-3 px-0 w-80 z-10 flex flex-col items-center justify-start leading-normal hidden"
+    class="absolute top-10 card py-3 px-0 w-80 z-10 flex flex-col items-center justify-start leading-normal hidden"
     data-menu-target="content"
   >
     <p class="font-bold text-lg my-0 pb-3 w-full text-center">✨ What's new?</p>

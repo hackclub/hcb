@@ -4,7 +4,9 @@
       <%= render partial: "application/theme_toggle" %>
     <% end %>
     <% if signed_in? %>
-      <%= render partial: "application/blog_widget" %>
+      <div class="ml2">
+        <%= render partial: "application/blog_widget" %>
+      </div>
     <% end %>
   </div>
 
