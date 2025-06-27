@@ -3,12 +3,10 @@
 <p>Signed in as <%= current_user.email %></p>
 
 <%= form_tag(request.path, method: request.request_method_symbol) do %>
-  <%
-    Rack::Utils
-      .parse_query(request.request_parameters.to_query)
-      .except("authenticity_token", "_method")
-      .each do |name, value|
-  %>
+  <% Rack::Utils
+       .parse_query(request.request_parameters.to_query)
+       .except("authenticity_token", "_method")
+       .each do |name, value| %>
     <%= hidden_field_tag(name, value) %>
   <% end %>
 
