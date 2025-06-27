@@ -16,6 +16,7 @@ class EventsController < ApplicationController
   before_action :set_mock_data
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
+  before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
   # GET /events
   def index
@@ -79,12 +80,20 @@ class EventsController < ApplicationController
     render partial: "events/home/heatmap", locals: { heatmap: @heatmap, event: @event }
   end
 
-  def merchants_categories
+  def merchants_chart
     authorize @event
-    @merchants = BreakdownEngine::Merchants.new(@event).run
-    @categories = BreakdownEngine::Categories.new(@event).run
 
-    render partial: "events/home/merchants_categories", locals: { merchants: @merchants, categories: @categories, event: @event }
+    @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
+
+    render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] }
+  end
+
+  def categories_chart
+    authorize @event
+
+    @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
+
+    render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] }
   end
 
   def balance_transactions
@@ -128,15 +137,20 @@ class EventsController < ApplicationController
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
 
-  def tags_users
+  def tags_chart
     authorize @event
-    @users = BreakdownEngine::Users.new(@event).run
-    @tags = BreakdownEngine::Tags.new(@event).run
 
-    @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
-    @empty_users = @users.empty?
+    @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
 
-    render partial: "events/home/tags_users", locals: { users: @users, tags: @tags, event: @event }
+    render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe], event: @event }
+  end
+
+  def users_chart
+    authorize @event
+
+    @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
+
+    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
   def transactions
@@ -1107,6 +1121,10 @@ class EventsController < ApplicationController
     if params[:show_mock_data].present?
       helpers.set_mock_data!(params[:show_mock_data] == "true")
     end
+  end
+
+  def set_timeframe
+    @timeframe = BreakdownEngine::TIMEFRAMES[params[:timeframe]]
   end
 
 end
