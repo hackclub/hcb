@@ -12,6 +12,9 @@ class EventMailer < ApplicationMailer
 
     @total = @donations.sum(:amount)
 
+    @goal = @event.donation_goal
+    @percentage = (@goal.progress_amount_cents.to_f / @goal.amount_cents) if @goal.present?
+
     mail to: @emails, subject: "#{@event.name} received #{@donations.length} #{"donation".pluralize(@donations.length)} this past month"
   end
 
