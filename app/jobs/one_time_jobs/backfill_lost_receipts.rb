@@ -13,7 +13,7 @@ module OneTimeJobs
           txn.no_or_lost_receipt!
           txn.comments.build({
                                content: "The receipts for this transaction were marked as lost/missing automatically.",
-                               user: User.find_by(email: "bank@hackclub.com")
+                               user: User.system_user
                              }).save
         end
       end

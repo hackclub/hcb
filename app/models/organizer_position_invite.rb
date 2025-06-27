@@ -69,7 +69,7 @@ class OrganizerPositionInvite < ApplicationRecord
   friendly_id :slug_candidates, use: :slugged
 
   scope :pending, -> { where(accepted_at: nil, rejected_at: nil, cancelled_at: nil) }
-  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include cancelled invites so that we can assign users to them
+  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include canceled invites so that we can assign users to them
   scope :pending_assign, -> { where(accepted_at: nil, rejected_at: nil) }
 
   belongs_to :event

@@ -16,12 +16,12 @@ class OrganizerPositionsController < ApplicationController
     # also cancel all stripe cards from the organizer
     cards = @organizer_position.user.stripe_cards.where(event: @organizer_position.event)
     cards.each do |card|
-      card.cancel! unless card.stripe_status == "canceled"
+      card.cancel! unless card.stripe_status == "canceled" || card.card_grant.present?
     end
     # ...and auto-close all deletion requests
     @organizer_position.organizer_position_deletion_requests.under_review.each { |opdt| opdt.close(current_user) }
 
-    flash[:success] = "Removed #{@organizer_position.user.email} from the team and cancelled their cards."
+    flash[:success] = "Removed #{@organizer_position.user.email} from the team and canceled their cards."
     redirect_back(fallback_location: event_team_path(@organizer_position.event))
   end
 
