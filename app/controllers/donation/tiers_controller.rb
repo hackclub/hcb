@@ -79,7 +79,6 @@ class Donation
 
     def set_event
       @event = Event.where(slug: params[:event_id]).first
-      puts @event.inspect
       render json: { error: "Event not found" }, status: :not_found unless @event
     end
 
