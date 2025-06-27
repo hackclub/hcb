@@ -1,7 +1,12 @@
 <% title "Give to " + @event.name %>
 <% page_sm %>
 <% no_app_shell %>
-<% @tier = @event.donation_tiers.find(params[:tier_id]) if params[:tier_id] %>
+<% @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id] %>
+<% if params[:tier_id] && @tier.nil? %>
+  <div class="alert alert-warning">
+    The selected donation tier could not be found. Please choose a valid tier.
+  </div>
+<% end %>
 
 <% content_for :head do %>
   <meta name="twitter:card" content="summary_large_image">
