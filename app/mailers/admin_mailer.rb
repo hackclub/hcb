@@ -85,7 +85,7 @@ class AdminMailer < ApplicationMailer
     mail(
       to: ["zach@hackclub.com", "max@hackclub.com"],
       cc: "hcb@hackclub.com",
-      subject: "#{@events.length} new YSWS organization#{"s" if @events.length > 1} created this past week"
+      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
     )
   end
 
