@@ -6,6 +6,7 @@ class ReceiptsController < ApplicationController
   before_action :set_paper_trail_whodunnit, only: :create
   before_action :find_receiptable, only: [:create, :link, :link_modal]
   before_action :set_event, only: [:create, :link]
+  before_action :set_transaction_display_data
 
   def destroy
     @receipt = Receipt.find(params[:id])
@@ -13,6 +14,8 @@ class ReceiptsController < ApplicationController
     authorize @receipt
 
     success = @receipt.destroy
+
+    @destroyed = success
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
@@ -42,12 +45,7 @@ class ReceiptsController < ApplicationController
     authorize @receipt
     authorize @receiptable, policy_class: ReceiptablePolicy
 
-    @frame = params[:popover].present?
-
     @receipt.update!(receiptable: @receiptable)
-
-    @show_receipt_button = params[:show_receipt_button] == "true"
-    @show_author_img = params[:show_author_img] == "true"
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
@@ -83,9 +81,6 @@ class ReceiptsController < ApplicationController
       @popover = params[:popover]
     end
 
-    @show_author_img = params[:show_author_img]
-    @show_receipt_button = params[:show_receipt_button]
-
     if @receiptable.instance_of?(HcbCode)
       pairings_sql = <<~SQL
         LEFT JOIN (#{@receiptable.suggested_pairings.to_sql}) sp
@@ -102,7 +97,8 @@ class ReceiptsController < ApplicationController
   def create
     streams = []
 
-    params.require(:file)
+    file_param = params[:ledger_instance].present? ? "file_#{params[:ledger_instance]}" : "file"
+    params.require(file_param)
     params.require(:upload_method)
 
     begin
@@ -113,11 +109,11 @@ class ReceiptsController < ApplicationController
       raise unless @receiptable.is_a?(HcbCode) && HcbCode.find_signed(params[:s], purpose: :receipt_upload) == @receiptable
     end
 
-    return unless params[:file].present?
+    return unless params[file_param].present?
 
     streams = []
 
-    params[:file].map do |file|
+    params[file_param].map do |file|
       (receipt, ) = ::ReceiptService::Create.new(
         receiptable: @receiptable,
         uploader: current_user,
@@ -127,14 +123,11 @@ class ReceiptsController < ApplicationController
       next if @receiptable && !on_transaction_page?
 
       streams.append(turbo_stream.prepend(
-                       :receipts_list,
+                       "#{@ledger_instance}_receipts_list",
                        partial: "receipts/receipt",
                        locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true }
                      ))
     end
-
-    @show_receipt_button = params[:show_receipt_button] == "true"
-    @show_author_img = params[:show_author_img] == "true"
 
     if %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
       @frame = true
@@ -147,19 +140,21 @@ class ReceiptsController < ApplicationController
         upload_method: params[:upload_method].sub("_drag_and_drop", ""),
         restricted_dropzone: params[:upload_method] != :transaction_page,
         include_spacing: params[:upload_method] != :receipt_center,
-        success: "#{"Receipt".pluralize(params[:file].length)} added!",
+        success: "#{"Receipt".pluralize(params[file_param].length)} added!",
         global_paste: !@receiptable,
         turbo: true
       }
-      if @receiptable && !@frame
+      if @receiptable
         receipt_upload_form_config[:enable_linking] = true
         receipt_upload_form_config[:receiptable] = @receiptable
       end
-      if @receiptable && @frame && @event
+      if @receiptable && @frame && on_transaction_page?
         receipt_upload_form_config[:restricted_dropzone] = true
         receipt_upload_form_config[:inline_linking] = true
         receipt_upload_form_config[:upload_method] = "transaction_popover"
         receipt_upload_form_config[:popover] = "HcbCode:#{@receiptable.hashid}"
+        receipt_upload_form_config[:show_receipt_button] = @show_receipt_button
+        receipt_upload_form_config[:show_author_img] = @show_author_img
       end
       streams.append(
         turbo_stream.replace(:receipt_upload_form, partial: "receipts/form_v3", locals: receipt_upload_form_config)
@@ -168,9 +163,9 @@ class ReceiptsController < ApplicationController
 
     flash_type = :success
     if params[:show_link]
-      flash_message = { text: "#{"Receipt".pluralize(params[:file].length)} added!", link: (hcb_code_path(@receiptable) if @receiptable.instance_of?(HcbCode)), link_text: "View" }
+      flash_message = { text: "#{"Receipt".pluralize(params[file_param].length)} added!", link: (hcb_code_path(@receiptable) if @receiptable.instance_of?(HcbCode)), link_text: "View" }
     else
-      flash_message = "#{"Receipt".pluralize(params[:file].length)} added!"
+      flash_message = "#{"Receipt".pluralize(params[file_param].length)} added!"
     end
 
   rescue => e
@@ -246,13 +241,15 @@ class ReceiptsController < ApplicationController
     end
 
     if @receiptable.is_a?(HcbCode)
+      @hcb_code = @receiptable
+
       if @receiptable.canonical_transactions&.any?
         @receiptable.canonical_transactions.each do |ct|
           streams.append(turbo_stream.remove("transaction_details_#{ct.__id__}"))
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
                            partial: "canonical_transactions/canonical_transaction",
-                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { ct:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { ct:, event: @hcb_code.event, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
                          ))
         end
       else
@@ -261,7 +258,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
                            partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { pt:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { pt:, event: @hcb_code.event, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
                          ))
         end
       end
@@ -286,23 +283,20 @@ class ReceiptsController < ApplicationController
     end
 
     if @receiptable.is_a?(HcbCode) && on_transaction_page? && !@receiptable.stripe_refund?
-      @hcb_code = @receiptable
       streams.append(
         turbo_stream.replace(
-          :stripe_card_receipts,
-          partial: "hcb_codes/stripe_card_receipts"
+          "#{@ledger_instance}_stripe_card_receipts",
+          partial: "hcb_codes/stripe_card_receipts",
         )
       )
-    end
 
-    if @receipt && on_transaction_page?
-      streams.append(turbo_stream.append(
-                       :receipts_list,
-                       partial: "receipts/receipt",
-                       locals: { receipt: @receipt, show_delete_button: true, link_to_file: true }
-                     ))
-    elsif @receipt
-      streams.append(turbo_stream.remove("receipt_#{@receipt.id}"))
+      streams.append(
+        turbo_stream.replace(
+          "#{@ledger_instance}_receipts_list",
+          partial: "receipts/list_v2",
+          locals: { hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
+        )
+      )
     end
 
     if @receipt
@@ -330,6 +324,13 @@ class ReceiptsController < ApplicationController
   def on_transaction_page?
     route = Rails.application.routes.recognize_path(request.referrer)
     return route[:controller].classify == "HcbCode"
+  end
+
+  def set_transaction_display_data
+    @frame = params[:popover].present?
+    @show_receipt_button = params[:show_receipt_button] == "true"
+    @show_author_img = params[:show_author_img] == "true"
+    @ledger_instance = params[:ledger_instance]
   end
 
 end
