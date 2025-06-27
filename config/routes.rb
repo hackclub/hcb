@@ -628,7 +628,6 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
-  post "vercel/webhook", to: "vercel#webhook"
 
   post "extract/invoice", to: "extraction#invoice"
 
