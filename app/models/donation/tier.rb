@@ -32,5 +32,7 @@ class Donation
     default_scope { order(sort_index: :asc) }
 
     acts_as_paranoid
+
   end
+
 end
