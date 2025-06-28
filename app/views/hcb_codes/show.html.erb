@@ -2,6 +2,8 @@
 
 <%= render "events/nav" if @event %>
 
+<% title @hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event) unless content_for? :title %>
+
 <%= turbo_frame_tag @hcb_code.public_id, target: "_top" do %>
   <%= render partial: "hcb_codes/admin_tools" %>
   <div id="rich_metadata">
@@ -51,5 +53,3 @@
     <%= render partial: "hcb_codes/pending_transaction_history" %>
   <% end %>
 <% end %>
-
-<% title "Transaction for #{number_to_currency(@hcb_code.amount)}" unless content_for :title %>
