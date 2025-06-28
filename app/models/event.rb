@@ -18,6 +18,7 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
+#  donation_tiers_enabled                       :boolean          default(FALSE), not null
 #  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
@@ -258,6 +259,7 @@ class Event < ApplicationRecord
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
   has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
+  has_many :donation_tiers, -> { order(sort_index: :asc) }, dependent: :destroy, class_name: "Donation::Tier"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses

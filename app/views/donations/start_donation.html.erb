@@ -14,7 +14,13 @@
   <meta name="description" content="<%= description %>">
 <% end %>
 
-<%= render "events/landing/header" %>
+<%= render "events/landing/header" do %>
+  <% if @event.donation_goal.present? %>
+    <div class="shrink-0 w-full max-w-sm sm:ml-auto">
+      <%= render "donations/donation_goal", donation: @donation %>
+    </div>
+  <% end %>
+<% end %>
 
 <% if @event.donation_page_message.present? %>
   <div class="container container--sm">
@@ -24,8 +30,10 @@
   </div>
 <% end %>
 
-<%= render "donations/donation_goal", donation: @donation %>
-<%= render "donations/donation_form", donation: @donation %>
+<%= render "donations/donation_tiers", donation: @donation %>
+<% if !@show_tiers || @tier || params[:custom_amount] %>
+  <%= render "donations/donation_form", donation: @donation %>
+<% end %>
 
 <% if @event.demo_mode? %>
   <div class="container container--sm">

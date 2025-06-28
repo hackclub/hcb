@@ -58,7 +58,8 @@
   z-index: 999;
 }
 
-.draggable-source--is-dragging .card {
+.draggable-source--is-dragging .card,
+.draggable-source--is-dragging.card {
   opacity: 0.5;
 }
 

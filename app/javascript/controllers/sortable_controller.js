@@ -4,11 +4,13 @@ import { Sortable, Plugins, Draggable } from '@shopify/draggable'
 export default class extends Controller {
   static values = {
     appendTo: String,
+    handle: String,
   }
 
   connect() {
     this.sortable = new Sortable(this.element, {
       draggable: '.draggable',
+      handle: this.handleValue,
       mirror: {
         constrainDimensions: true,
         appendTo: this.appendToValue,
