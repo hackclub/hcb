@@ -571,6 +571,7 @@ Rails.application.routes.draw do
           end
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
+          get "receipt_bin", to: "receipts#receipt_bin"
           get :available_icons
         end
 
