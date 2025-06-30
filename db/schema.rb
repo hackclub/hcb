@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_30_174849) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -1958,7 +1958,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_19_045020) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "event_id", null: false
+    t.string "emoji"
     t.index ["event_id"], name: "index_tags_on_event_id"
+    t.check_constraint "emoji IS NOT NULL", name: "tags_emoji_null"
   end
 
   create_table "tasks", force: :cascade do |t|
