@@ -29,7 +29,7 @@
     </div>
   <% end %>
 
-  <% if organizer_signed_in? && Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
+  <% if organizer_signed_in? && @event.tags.size > 0 %>
     <div
       data-controller="menu"
       data-menu-append-to-value="turbo-frame#ledger"
