@@ -80,7 +80,7 @@ class User < ApplicationRecord
   has_many :logins
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
-  has_many :active_backup_codes, -> { backup_codes.active }, class_name: "User::BackupCode", inverse_of: :user
+  has_many :active_backup_codes, -> { active }, class_name: "User::BackupCode", inverse_of: :user
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
