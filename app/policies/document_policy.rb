@@ -35,7 +35,7 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.admin?
+    user.auditor?
   end
 
   def download?
@@ -43,11 +43,11 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def fiscal_sponsorship_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.admin?)
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?)
   end
 
   def verification_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.admin?) && record.account_number.present?
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?) && record.account_number.present?
   end
 
   def toggle_archive?
