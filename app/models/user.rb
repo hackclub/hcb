@@ -429,8 +429,10 @@ class User < ApplicationRecord
   end
 
   def disable_backup_codes!
-    backup_codes.previewed.destroy_all
-    active_backup_codes.map(&:mark_discarded!)
+    Base.transaction do
+      backup_codes.previewed.destroy_all
+      active_backup_codes.map(&:mark_discarded!)
+    end
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
