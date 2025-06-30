@@ -86,6 +86,8 @@ gem "flipper" # feature flags
 gem "flipper-active_record"
 gem "flipper-ui"
 
+gem "rails-pg-extras" # PostgreSQL insights
+
 gem "pundit" # implements authorization policies
 
 # API V3

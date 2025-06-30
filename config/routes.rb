@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount Blazer::Engine, at: "blazer"
+    mount RailsPgExtras::Web::Engine, at: "/pg_extras"
   end
   get "/sidekiq", to: redirect("users/auth") # fallback if adminconstraint fails, meaning user is not signed in
   if Rails.env.development?
