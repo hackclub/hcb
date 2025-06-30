@@ -61,14 +61,14 @@
           <%= turbo_frame_tag "#{ct.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span title="<%= transaction_memo(ct) %>" style="flex-grow: 1;">
               <%= ct.local_hcb_code.card_grant? && !organizer_signed_in? ? link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) : content_tag(:span) do %>
-                <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details), tagged_with: %>
               <% end %>
             </span>
           <% end %>
         </div>
 
         <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && !@event&.demo_mode? %>
-          <div class="flex flex-wrap tags hcb_code_<%= ct.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
+          <div class="flex flex-wrap pending_transactions_tags tags hcb_code_<%= ct.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
             <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: ct.local_hcb_code } %>
           </div>
         <% end %>
@@ -77,7 +77,7 @@
       <% if !defined?(receipt_upload_button) && !defined?(hide_tags) && organizer_signed_in? && !ct.instance_of?(OpenStruct) && Flipper.enabled?(:transaction_tags_2022_07_29, @event || ct.local_hcb_code.event) %>
         <% if suggestion = ct.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
-            <%= link_to suggestion.tag.label, tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :POST } %>
+            <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :POST } %>
             <%= button_to tag_suggestion_reject_path(suggestion), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
               <%= inline_icon "view-close", size: 16 %>
             <% end %>
@@ -85,16 +85,16 @@
         <% end %>
         <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
           <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
-          <div class="menu__content menu__content--2 menu__content--compact menu__content--left h6" data-menu-target="content">
+          <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
             <% (@event || ct.local_hcb_code.event).tags.each do |tag| %>
               <div class="flex items-center" data-tag="<%= tag.id %>">
                 <%= button_to toggle_tag_hcb_code_path(id: ct.local_hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(ct.local_hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+                  <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                   <%= tag.label %>
                   <%= "✓" if tagged_with.include?(tag) %>
                 <% end %>
                 <%= button_to event_tag_path(@event || ct.local_hcb_code.event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
-                  <%= inline_icon "delete", size: 16, style: "margin: 0" %>
+                  <%= inline_icon "delete", size: 18, style: "margin: 0" %>
                 <% end %>
               </div>
             <% end %>

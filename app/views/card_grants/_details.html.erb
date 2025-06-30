@@ -36,10 +36,6 @@
       <strong>Grant status</strong>
       <span><%= card_grant.state_text %></span>
     </p>
-    <p>
-      <strong>One time use?</strong>
-      <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
-    </p>
     <% if (stripe_card = card_grant.stripe_card).present? %>
       <p>
         <strong>Card status</strong>
@@ -53,6 +49,10 @@
         </span>
       </p>
     <% end %>
+    <p>
+      <strong>One time use?</strong>
+      <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
+    </p>
     <p>
       <strong>Grant amount</strong>
       <span><%= render_money card_grant.amount %></span>
