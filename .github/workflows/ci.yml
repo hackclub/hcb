@@ -195,6 +195,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
