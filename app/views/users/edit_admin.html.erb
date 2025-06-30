@@ -3,8 +3,8 @@
 <%= render "users/nav", selected: :settings %>
 
 <h1>Settings</h1>
-<%= render "settings_nav", active: "admin" %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth" class="flex flex-col gap-4">
+  <%= render "settings_nav", active: "admin" %>
   <% admin_tool override_pretend: true do %>
     <h3 class="mb2 mt1">User info</h3>
     <section>
