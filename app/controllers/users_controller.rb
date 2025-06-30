@@ -198,8 +198,8 @@ class UsersController < ApplicationController
   def activate_backup_codes
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
-    @user.active_backup_codes&.map(&:mark_discarded!)
-    @user.backup_codes&.previewed&.map(&:mark_active!)
+    @user.active_backup_codes.map(&:mark_discarded!)
+    @user.backup_codes.previewed.map(&:mark_active!)
     User::BackupCodeMailer.with(user_id: @user.id).new_codes_activated.deliver_now
     redirect_back_or_to security_user_path(@user)
   end
