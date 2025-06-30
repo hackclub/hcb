@@ -5,7 +5,7 @@
 <h1>Settings</h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth" class="flex flex-col gap-4">
   <%= render "settings_nav", active: "admin" %>
-  <% admin_tool override_pretend: true do %>
+  <% admin_tool do %>
     <h3 class="mb2 mt1">User info</h3>
     <section>
       Updating <%= user_mention @user %>'s profile that was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
@@ -69,7 +69,7 @@
   <% end %>
 
   <% if @user.transactions_missing_receipt.any? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Missing receipts</h3>
       <table>
         <% @user.transactions_missing_receipt.each do |tx| %>
@@ -80,7 +80,7 @@
   <% end %>
 
   <% if @user.events.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Organizations</h3>
       <ul>
         <% @user.events.each do |event| %>
@@ -91,7 +91,7 @@
   <% end %>
 
   <% if @user.email_updates.any? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Email updates</h3>
       <ul>
         <% @user.email_updates.confirmed.order(created_at: :desc).each do | update | %>
@@ -106,7 +106,7 @@
   <% end %>
 
   <% if @user.stripe_cards.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Stripe cards</h3>
       <table>
         <tr>
@@ -140,7 +140,7 @@
   <% end %>
 
   <% if @user.emburse_cards.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Emburse cards</h3>
       <table>
         <tr>
@@ -171,7 +171,7 @@
   <% end %>
 
   <% if @invoices.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Invoices</h3>
       <table>
         <tr>
@@ -193,7 +193,7 @@
   <% end %>
 
   <% if @user.reimbursement_reports.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Reimbursement reports</h3>
       <table>
         <thead>
@@ -231,7 +231,7 @@
   <% end %>
 
   <% if @checks_deposits.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Deposited checks</h3>
       <table>
         <tr>
@@ -253,7 +253,7 @@
   <% end %>
 
   <% if @increase_checks.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Increase checks</h3>
       <table>
         <tr>
@@ -279,7 +279,7 @@
   <% end %>
 
   <% if @lob_checks.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Lob checks</h3>
       <table>
         <tr>
@@ -305,7 +305,7 @@
   <% end %>
 
   <% if @ach_transfers.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">ACH transfers</h3>
       <table>
         <tr>
@@ -329,7 +329,7 @@
   <% end %>
 
   <% if @disbursements.present? %>
-    <% admin_tool override_pretend: true do %>
+    <% admin_tool do %>
       <h3 class="mb2 mt1">Disbursements</h3>
       <table>
         <tr>
