@@ -266,7 +266,7 @@ class EventsController < ApplicationController
     when "readers"
       @filter = "reader"
     when "active_teens"
-      @filter = "active_teens"
+      @filter = "active_teens" if auditor_signed_in?
     end
 
     @q = params[:q] || ""
