@@ -175,11 +175,11 @@ class CardGrant < ApplicationRecord
   end
 
   def expire!
-    hcb_user = User.find_by!(email: "bank@hackclub.com")
+    hcb_user = User.system_user
     cancel!(hcb_user, expired: true)
   end
 
-  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"), allow_topups: false)
+  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.system_user, allow_topups: false)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
     raise ArgumentError, "Card grant should have a positive balance." unless balance.positive? || allow_topups
 
@@ -197,7 +197,7 @@ class CardGrant < ApplicationRecord
     disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
   end
 
-  def cancel!(canceled_by = User.find_by!(email: "bank@hackclub.com"), expired: false)
+  def cancel!(canceled_by = User.system_user, expired: false)
     raise ArgumentError, "Grant is already #{status}" unless active?
 
     zero!(custom_memo: "Returning #{expired ? "expired" : "canceled"} grant to #{user.name}", requested_by: canceled_by) if balance > 0

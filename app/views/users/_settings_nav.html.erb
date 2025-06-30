@@ -25,7 +25,7 @@
       <span class="xs-capitalize">previews</span>
     <% end %>
   <% end %>
-  <% admin_tool("p0 overflow-hidden", override_pretend: true) do %>
+  <% admin_tool("py0 px2 overflow-hidden", override_pretend: true) do %>
     <%= settings_tab active: active == "admin" do %>
       <%= link_to "Admin", @user == current_user ? settings_admin_path : admin_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>

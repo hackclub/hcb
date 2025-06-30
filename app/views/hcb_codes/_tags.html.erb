@@ -8,11 +8,11 @@
 
       <div data-controller="menu">
         <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
-        <div class="menu__content menu__content--2 menu__content--compact menu__content--left h6" data-menu-target="content">
+        <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
           <% @event.tags.each do |tag| %>
             <div class="flex items-center" data-tag="<%= tag.id %>">
               <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+                <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                 <%= tag.label %>
                 <%= "✓" if hcb_code.tags.include?(tag) %>
               <% end %>

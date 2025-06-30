@@ -115,9 +115,10 @@ export default class extends Controller {
         flip({ padding: 5 }),
         size({
           padding: 5,
-          apply({ availableHeight, elements }) {
+          apply({ availableHeight, availableWidth, elements }) {
             Object.assign(elements.floating.style, {
               maxHeight: `${availableHeight}px`,
+              maxWidth: `${availableWidth}px`,
             })
           },
         }),
