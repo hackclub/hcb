@@ -35,11 +35,11 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.auditor?
+    user.admin?
   end
 
   def download?
-    user.admin? || record.event.nil? || record.event.users.include?(user)
+    user.auditor? || record.event.nil? || record.event.users.include?(user)
   end
 
   def fiscal_sponsorship_letter?
