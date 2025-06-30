@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['badge']
+  static targets = ['badge', 'embed']
 
   connect() {
     this.updateBadge()
