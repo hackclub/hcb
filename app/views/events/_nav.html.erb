@@ -58,7 +58,7 @@
       tooltip: "Deposit checks",
       icon: "cheque",
       selected: local_assigns[:selected] == :deposit_check if policy(@event.check_deposits.build).index? %>
-    <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? || Flipper.enabled?(:grants_2023_06_21, @event) %>
+    <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? %>
       <h4 class="mb0 h5 font-medium muted">Spend</h4>
       <hr>
     <% end %>
