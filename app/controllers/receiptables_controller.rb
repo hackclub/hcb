@@ -6,7 +6,7 @@ class ReceiptablesController < ApplicationController
 
   def mark_no_or_lost
     authorize @receiptable, policy_class: ReceiptablePolicy
-    
+
     if @receiptable.no_or_lost_receipt!
       flash[:success] = "Marked no/lost receipt on that transaction."
       redirect_to @receiptable
