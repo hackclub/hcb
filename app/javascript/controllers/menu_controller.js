@@ -118,7 +118,7 @@ export default class extends Controller {
           apply({ availableHeight, availableWidth, elements }) {
             Object.assign(elements.floating.style, {
               maxHeight: `${availableHeight}px`,
-              maxWidth: `${availableWidth}px`
+              maxWidth: `${availableWidth}px`,
             })
           },
         }),
