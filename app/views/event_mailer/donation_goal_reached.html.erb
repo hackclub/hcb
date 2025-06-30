@@ -3,7 +3,7 @@
 <p>Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been reached after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now %>!</p>
 <p>Here are all the donations that helped to contribute to this goal:</p>
 <ul>
-<% @donations.map do |donation| %>
+<% @donations.each do |donation| %>
   <li>
     <%= donation.name(show_anonymous: true) %> <%= "anonymously" if donation.anonymous %> donated <%= render_money donation.amount %>
   </li>
