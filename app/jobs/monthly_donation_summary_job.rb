@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MonthlyDonationSummaryJob < ApplicationJob
-  queue_as :bulk_email
+  queue_as :default
   def perform
     # Rate limit is 14/s, but putting 12 here to be safe and allow for other emails to be sent
     queue = Limiter::RateQueue.new(12, interval: 1)

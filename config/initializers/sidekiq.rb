@@ -19,7 +19,7 @@ Sidekiq.configure_server do |config|
   # Giving these long-running jobs it's own capsule guarantees the other queues
   # (like `critical`) are not blocked by long-running jobs.
   config.capsule("throttled") do |capsule|
-    capsule.queues = %w[metrics bulk_email]
+    capsule.queues = %w[metrics]
     # This "throttled" capsule's concurrency is a third of RAILS_MAX_THREADS,
     # but guarantee at least 1.
     # (RAILS_MAX_THREADS is the concurrency of the default Sidekiq capsule)
