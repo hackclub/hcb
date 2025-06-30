@@ -69,7 +69,7 @@
             </div>
           <% end %>
 
-          <% if current_user.admin? %>
+          <% if admin_signed_in? %>
             <% admin_tool "mb-3" do %>
               <%= button_to @event.column_account_number.deposit_only? ? "Enable debits" : "Make deposit-only",
                             event_column_account_number_path(@event),
