@@ -17,6 +17,15 @@ module Api
         render "show"
       end
 
+      def destroy
+        @receipt = Receipt.find(params[:id])
+        authorize @receipt
+
+        @receipt.destroy!
+        render json: { message: "Receipt successfully deleted" }, status: :ok
+      end
+
+
     end
   end
 end
