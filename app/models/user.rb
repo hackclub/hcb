@@ -412,18 +412,17 @@ class User < ApplicationRecord
     pepper = Credentials.fetch(:BACKUP_CODE_PEPPER)
     active_backup_codes.each do |backup_code|
       hash = User::BackupCode.gen_hash(code:, salt: backup_code.salt, pepper:)
-      if ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.code_hash)
-        ActiveRecord::Base.transaction do
-            backup_code = User::BackupCode
-              .lock # performs a SELECT ... FOR UPDATE https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
-              .active # makes sure that it hasn't already been used
-              .find(backup_code.id) # will raise `ActiveRecord::NotFound` and abort the transaction
+      next unless ActiveSupport::SecurityUtils.secure_compare(hash, backup_code.code_hash)
 
-            backup_code.mark_used!
-            return true
-          end
+      ActiveRecord::Base.transaction do
+        backup_code = User::BackupCode
+                      .lock # performs a SELECT ... FOR UPDATE https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
+                      .active # makes sure that it hasn't already been used
+                      .find(backup_code.id) # will raise `ActiveRecord::NotFound` and abort the transaction
+        backup_code.mark_used!
         return true
       end
+      return true
     end
 
     false
