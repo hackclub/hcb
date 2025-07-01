@@ -73,6 +73,10 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
+    if @card_grant.requires_pre_authorization? && !@card_grant.pre_authorization&.approved?
+      return redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
     @event = @card_grant.event
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
