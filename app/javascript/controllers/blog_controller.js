@@ -9,8 +9,9 @@ export default class extends Controller {
 
   async updateBadge() {
     try {
+      const url = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://blog.hcb.hackclub.com'
       const { count } = await fetch(
-        'https://blog.hcb.hackclub.com/api/unreads',
+        `${url}/api/unreads`,
         {
           credentials: 'include',
         }
