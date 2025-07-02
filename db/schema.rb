@@ -670,6 +670,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_01_183918) do
     t.index ["stripe_payout_id"], name: "index_donation_payouts_on_stripe_payout_id", unique: true
   end
 
+  create_table "donation_tiers", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.integer "amount_cents", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.integer "sort_index"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_donation_tiers_on_event_id"
+  end
+
   create_table "donations", force: :cascade do |t|
     t.text "email"
     t.text "name"
@@ -918,6 +930,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_01_183918) do
     t.string "short_name"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
+    t.boolean "donation_tiers_enabled", default: false, null: false
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
@@ -1496,6 +1509,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_01_183918) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
+    t.index ["user_id"], name: "index_raffles_on_user_id"
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -1952,7 +1966,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_01_183918) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "event_id", null: false
+    t.string "emoji"
     t.index ["event_id"], name: "index_tags_on_event_id"
+    t.check_constraint "emoji IS NOT NULL", name: "tags_emoji_null"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -2292,6 +2308,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_01_183918) do
   add_foreign_key "documents", "users"
   add_foreign_key "documents", "users", column: "archived_by_id"
   add_foreign_key "donation_goals", "events"
+  add_foreign_key "donation_tiers", "events"
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"

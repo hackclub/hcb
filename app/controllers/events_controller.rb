@@ -133,7 +133,7 @@ class EventsController < ApplicationController
     @users = BreakdownEngine::Users.new(@event).run
     @tags = BreakdownEngine::Tags.new(@event).run
 
-    @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+    @empty_tags = @tags.empty?
     @empty_users = @users.empty?
 
     render partial: "events/home/tags_users", locals: { users: @users, tags: @tags, event: @event }
@@ -956,6 +956,7 @@ class EventsController < ApplicationController
       :hidden,
       :donation_page_enabled,
       :donation_page_message,
+      :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
@@ -1006,6 +1007,7 @@ class EventsController < ApplicationController
       :end,
       :donation_page_enabled,
       :donation_page_message,
+      :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
@@ -1047,7 +1049,7 @@ class EventsController < ApplicationController
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
-    if params[:tag] && Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+    if params[:tag]
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 

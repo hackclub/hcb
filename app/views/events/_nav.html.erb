@@ -1,6 +1,6 @@
 <% content_for(:nav) do %>
   <%= render "events/title" %>
-  <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && !@event&.demo_mode? %>
+  <% if !@event&.demo_mode? %>
     <%= render partial: "hcb_codes/create_tag", locals: { button: false } %>
   <% end %>
 
