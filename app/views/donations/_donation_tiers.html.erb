@@ -24,7 +24,7 @@
           <span class="opacity-60">per month</span>
         </div>
 
-        <%= link_to start_donation_tier_donations_path(@event, @tier), class: "btn btn-primary mt-4 w-full", onclick: "try {navigator.share({ text: 'Donate to ' + #{@event.name.to_json}, url: window.location.href })} catch (e) { navigator.clipboard.writeText(window.location.href); alert('Copied URL to clipboard!'); }" do %>
+        <%= link_to start_donation_tier_donations_path(@event, @tier), class: "btn btn-primary mt-4 w-full", onclick: "event.preventDefault();try {navigator.share({ text: 'Donate to ' + #{@event.name.to_json}, url: window.location.href })} catch (e) { navigator.clipboard.writeText(window.location.href); alert('Copied URL to clipboard!'); }" do %>
           <%= inline_icon "share" %>
           Share link
         <% end %>
