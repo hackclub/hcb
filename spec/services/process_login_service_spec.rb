@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe ProcessLoginService do
+  include WebAuthnSupport
+
   def setup_context
     user = create(:user)
     login = create(:login, user:)
@@ -24,9 +26,74 @@ RSpec.describe ProcessLoginService do
       expect(service.errors.messages).to eq({ base: ["Invalid security key"] })
     end
 
-    it "errors if we can't find a matching credential in the db"
-    it "errors if we can't validate the provided credential"
-    it "succeeds when the provided credential is valid"
+    it "errors if we can't find a matching credential in the db" do
+      setup_context => { service:, login:, user: }
+      webauthn_credential = create_webauthn_credential(user:)
+
+      # Remove the record from the DB (but it still exists in the client)
+      webauthn_credential.destroy!
+
+      webauthn_challenge = generate_webauthn_challenge(user:)
+      credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+      ok = service.process_webauthn(
+        raw_credential: JSON.dump(credential),
+        challenge: webauthn_challenge
+      )
+
+      expect(ok).to be(false)
+      expect(service.errors.messages).to eq({ base: ["Invalid security key"] })
+      expect(login.reload.authenticated_with_webauthn).to be_nil
+    end
+
+    it "errors if we can't validate the provided credential" do
+      setup_context => { service:, user: }
+      create_webauthn_credential(user:)
+
+      webauthn_challenge = generate_webauthn_challenge(user:)
+      credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+      # Use the credential a first time
+      expect(
+        service.process_webauthn(
+          raw_credential: JSON.dump(credential),
+          challenge: webauthn_challenge
+        )
+      ).to eq(true)
+
+      # Set up a second login
+      login = create(:login, user:)
+      service = described_class.new(login:)
+
+      # Attempt to use the same credential again
+      ok = service.process_webauthn(
+        raw_credential: JSON.dump(credential),
+        challenge: webauthn_challenge
+      )
+
+      expect(ok).to be(false)
+      expect(service.errors.messages).to eq({ base: ["Failed to verify security key"] })
+      expect(login.reload.authenticated_with_webauthn).to be_nil
+    end
+
+    it "succeeds when the provided credential is valid" do
+      setup_context => { service:, login:, user: }
+      webauthn_credential = create_webauthn_credential(user:)
+      initial_sign_count = webauthn_credential.sign_count
+
+      webauthn_challenge = generate_webauthn_challenge(user:)
+      credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+      ok = service.process_webauthn(
+        raw_credential: JSON.dump(credential),
+        challenge: webauthn_challenge
+      )
+
+      expect(ok).to be(true)
+      expect(service.errors.messages).to be_empty
+      expect(login.reload.authenticated_with_webauthn).to eq(true)
+      expect(webauthn_credential.reload.sign_count).to eq(initial_sign_count + 1)
+    end
   end
 
   describe "#process_totp" do
