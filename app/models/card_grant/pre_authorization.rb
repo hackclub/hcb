@@ -89,8 +89,6 @@ class CardGrant
                            })
 
 
-      byebug
-
       mark_approved! if screenshots.attached? && product_url.present?
 
       broadcast_refresh_to self
