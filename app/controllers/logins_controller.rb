@@ -100,47 +100,43 @@ class LoginsController < ApplicationController
   end
 
   def complete
+    # Clear the flash - this prevents the error message showing up after an unsuccessful -> successful login
+    flash.clear
+
+    service = ProcessLoginService.new(login: @login)
 
     case params[:method]
     when "webauthn"
-      webauthn_credential = WebAuthn::Credential.from_get(JSON.parse(params[:credential]))
-      stored_credential = @user.webauthn_credentials.find_by!(webauthn_id: webauthn_credential.id)
-
-      webauthn_credential.verify(
-        session[:webauthn_challenge],
-        public_key: stored_credential.public_key,
-        sign_count: stored_credential.sign_count
+      ok = service.process_webauthn(
+        raw_credential: params[:credential],
+        challenge: session[:webauthn_challenge]
       )
 
-      stored_credential.update!(sign_count: webauthn_credential.sign_count)
-
-      session[:login_preference] = "webauthn" if params[:remember] == "true"
-
-      @login.update(authenticated_with_webauthn: true)
-
+      unless ok
+        redirect_to(auth_users_path, flash: { error: service.errors.full_messages.to_sentence })
+        return
+      end
     when "login_code"
-      UserService::ExchangeLoginCodeForUser.new(
-        user_id: @login.user.id,
-        login_code: params[:login_code],
-        sms: params[:sms],
-      ).run
+      ok = service.process_login_code(
+        code: params[:login_code],
+        sms: ActiveRecord::Type::Boolean.new.cast(params[:sms])
+      )
 
-      if params[:sms]
-        @login.update(authenticated_with_sms: true)
-      else
-        @login.update(authenticated_with_email: true)
+      unless ok
+        initialize_sms_params
+        flash.now[:error] = service.errors.full_messages.to_sentence
+        render(:login_code, status: :unprocessable_entity)
+        return
       end
     when "totp"
-      if @user.totp&.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
-        @user.totp.update!(last_used_at: DateTime.now)
-        @login.update(authenticated_with_totp: true)
-      else
-        return redirect_to totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." }
+      ok = service.process_totp(code: params[:code])
+
+      unless ok
+        redirect_to(totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." })
+        return
       end
     end
 
-    # Clear the flash - this prevents the error message showing up after an unsuccessful -> successful login
-    flash.clear
 
     # Only create a user session if authentication factors are met AND this login
     # has not created a user session before
@@ -160,14 +156,6 @@ class LoginsController < ApplicationController
         redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
       end
     end
-  rescue Errors::InvalidLoginCode => e
-    flash.now[:error] = "Invalid login code!"
-    initialize_sms_params
-    return render :login_code, status: :unprocessable_entity
-  rescue WebAuthn::SignCountVerificationError, WebAuthn::Error => e
-    redirect_to auth_users_path, flash: { error: "Something went wrong." }
-  rescue ActiveRecord::RecordInvalid => e
-    redirect_to auth_users_path, flash: { error: e.record.errors&.full_messages&.join(". ") }
   end
 
   private
