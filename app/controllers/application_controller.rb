@@ -104,7 +104,7 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
       redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end
