@@ -85,7 +85,7 @@
             <% end %>
           </div>
         <% end %>
-        <% if OrganizerPosition.role_at_least?(current_user, @event, :member) %>
+        <% if policy(pt.local_hcb_code).toggle_tag? %>
           <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
             <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
             <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
