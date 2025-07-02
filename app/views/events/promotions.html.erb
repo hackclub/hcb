@@ -27,8 +27,7 @@
   </div>
 <% end %>
 
-
-<div class="card pb0 mb3 <%= "muted" unless @perks_available %>" id="event-helper">
+<div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="event-helper">
   <div class="card__banner card__banner--top flex justify-between items-center promo-event-helper">
     <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
     <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
