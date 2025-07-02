@@ -42,6 +42,9 @@
     <% ["all", "readers", "members", "managers"].each do |filter| %>
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
     <% end %>
+    <% if admin_signed_in? %>
+      <%= link_to "Active Teens", "?filter=active_teens#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teens", role: "tab" %>
+    <% end %>
   </div>
 </div>
 <% if @view == "list" %>
@@ -93,7 +96,7 @@
 <% end %>
 
 <% admin_tool("mt2") do %>
-  <h2 class="flex items-center mt3 mb2">
+  <h2 class="flex items-center mt1 mb2">
     Previous members
     <%= badge_for @event.organizer_positions.with_deleted.where.not(deleted_at: nil).count, class: "bg-muted" %>
   </h2>
