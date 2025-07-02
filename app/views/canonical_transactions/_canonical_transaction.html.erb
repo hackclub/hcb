@@ -61,20 +61,20 @@
           <%= turbo_frame_tag "#{ct.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span title="<%= transaction_memo(ct) %>" style="flex-grow: 1;">
               <%= ct.local_hcb_code.card_grant? && !organizer_signed_in? ? link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) : content_tag(:span) do %>
-                <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details), tagged_with: %>
+                <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
               <% end %>
             </span>
           <% end %>
         </div>
 
-        <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && !@event&.demo_mode? %>
+        <% if !@event&.demo_mode? %>
           <div class="flex flex-wrap pending_transactions_tags tags hcb_code_<%= ct.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
             <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: ct.local_hcb_code } %>
           </div>
         <% end %>
       </div>
 
-      <% if !defined?(receipt_upload_button) && !defined?(hide_tags) && organizer_signed_in? && !ct.instance_of?(OpenStruct) && Flipper.enabled?(:transaction_tags_2022_07_29, @event || ct.local_hcb_code.event) %>
+      <% if !defined?(receipt_upload_button) && !defined?(hide_tags) && organizer_signed_in? && !ct.instance_of?(OpenStruct) %>
         <% if suggestion = ct.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :POST } %>

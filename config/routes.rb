@@ -12,6 +12,8 @@ Rails.application.routes.draw do
     mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
+  end
+  constraints AuditorConstraint do
     mount Blazer::Engine, at: "blazer"
   end
   get "/sidekiq", to: redirect("users/auth") # fallback if adminconstraint fails, meaning user is not signed in
@@ -571,6 +573,7 @@ Rails.application.routes.draw do
           end
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
+          get "receipt_bin", to: "receipts#receipt_bin"
           get :available_icons
         end
 
@@ -579,7 +582,7 @@ Rails.application.routes.draw do
           resources :card_grants, only: [:index, :create]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:create, :index, :destroy]
-            resources :comments, only: [:index]
+            resources :comments, only: [:index, :create]
 
             member do
               get "memo_suggestions"
@@ -601,6 +604,7 @@ Rails.application.routes.draw do
           member do
             get "transactions"
             get "ephemeral_keys"
+            post "cancel"
           end
         end
 

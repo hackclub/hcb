@@ -226,3 +226,5 @@ gem "whitesimilarity"
 gem "rack-timeout", require: "rack/timeout/base"
 
 gem "irb"
+
+gem "pstore"

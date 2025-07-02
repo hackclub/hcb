@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Used to restrict access of Sidekiq to admins. See routes.rb for more info.
-class AdminConstraint
+class AuditorConstraint
   include Rails.application.routes.url_helpers
 
   def self.matches?(request)
@@ -12,7 +12,7 @@ class AdminConstraint
 
     potential_session = UserSession.find_by(session_token:)
     if potential_session
-      return potential_session.user&.admin?
+      return potential_session.user&.auditor?
     end
 
     false
