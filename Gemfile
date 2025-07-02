@@ -175,7 +175,7 @@ gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 gem "wkhtmltopdf-binary", "0.12.6.8"
 
 group :development do
-  gem "annotate" # comment models with database schema
+  gem "annotaterb" # comment models with database schema
   gem "actual_db_schema" # rolls back phantom migrations
 
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
