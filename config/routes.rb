@@ -542,6 +542,7 @@ Rails.application.routes.draw do
     collection do
       get "start/:event_name", to: "donations#start_donation", as: "start_donation"
       post "start/:event_name", to: "donations#make_donation", as: "make_donation"
+      get "start/:event_name/tiers/:tier_id", to: "donations#start_donation", as: "start_donation_tier"
       get "qr/:event_name.png", to: "donations#qr_code", as: "qr_code"
       get ":event_name/:donation", to: "donations#finish_donation", as: "finish_donation"
       get ":event_name/:donation/finished", to: "donations#finished", as: "finished_donation"
@@ -738,6 +739,9 @@ Rails.application.routes.draw do
 
     namespace :donation do
       resource :goals, only: [:create, :update]
+      resource :tiers, only: [:create, :update, :destroy] do
+        post :set_index, on: :member
+      end
     end
 
     resources :recurring_donations, only: [:create], path: "recurring" do
