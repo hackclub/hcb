@@ -659,7 +659,7 @@ class Event < ApplicationRecord
   end
 
   def revenue_fee
-    plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
+    plan&.revenue_fee || (Rails.error.unexpected("#{id} is missing a plan!") && 0.07)
   end
 
   def generate_stripe_card_designs

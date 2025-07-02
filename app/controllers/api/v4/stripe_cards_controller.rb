@@ -68,7 +68,7 @@ module Api
         render :show
 
       rescue => e
-        notify_airbrake(e)
+        Rails.error.report e
         render json: { error: "internal_server_error" }, status: :internal_server_error
       end
 
