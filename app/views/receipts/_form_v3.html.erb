@@ -62,7 +62,12 @@
                                 "action"           => "change->form#submit"
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
-            <%= form.label :file, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]} #{"disabled" unless ReceiptablePolicy.new(current_user, receiptable).upload?}", id: "upload-receipt-button" do %>
+            <% additional_classes = [].tap do |array|
+                 array << "bg-success" if local_assigns[:success]
+                 array << "bg-error" if local_assigns[:error]
+                 array << "disabled" unless ReceiptablePolicy.new(current_user, receiptable).upload?
+               end.join(", ") %>
+            <%= form.label :file, class: "btn m1 #{additional_classes}", id: "upload-receipt-button" do %>
               <%= inline_icon "cloud-upload" %>
               <% if local_assigns[:success] || local_assigns[:error] %>
                 <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
