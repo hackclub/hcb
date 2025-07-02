@@ -3,13 +3,13 @@
 
 import { Application } from '@hotwired/stimulus'
 import { definitionsFromContext } from '@hotwired/stimulus-webpack-helpers'
-import { installErrorHandler } from "@appsignal/stimulus";
-import { appsignal } from "../appsignal";
+import { installErrorHandler } from '@appsignal/stimulus'
+import { appsignal } from '../appsignal'
 
 const application = Application.start()
 
 if (appsignal) {
-  installErrorHandler(appsignal, application);
+  installErrorHandler(appsignal, application)
 }
 
 const context = require.context('.', true, /_controller\.js$/)
