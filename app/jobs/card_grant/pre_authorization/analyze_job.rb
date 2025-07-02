@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CardGrant
   class PreAuthorization
     class AnalyzeJob < ApplicationJob
