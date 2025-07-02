@@ -658,7 +658,11 @@ Rails.application.routes.draw do
     end
 
     scope module: "card_grant" do
-      resource :pre_authorizations, only: [:show, :update]
+      resource :pre_authorizations, only: [:show, :update] do
+        member do
+          post "clear_screenshots"
+        end
+      end
     end
   end
 
