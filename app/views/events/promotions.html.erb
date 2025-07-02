@@ -112,7 +112,7 @@
       <% else %>
         <%= link_to "Apply",
           @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
-          class: "btn mr1 #{"disabled" unless @perks_available}",
+          class: "btn mr1",
           target: :_blank,
           disabled: !@perks_available %>
       <% end %>
