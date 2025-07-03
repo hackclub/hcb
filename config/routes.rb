@@ -661,6 +661,14 @@ Rails.application.routes.draw do
       get "spending"
       post "clear_purpose"
     end
+
+    scope module: "card_grant" do
+      resource :pre_authorizations, only: [:show, :update] do
+        member do
+          post "clear_screenshots"
+        end
+      end
+    end
   end
 
   match "/400", to: "errors#bad_request", via: :all

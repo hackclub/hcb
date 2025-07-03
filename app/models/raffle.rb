@@ -13,7 +13,6 @@
 # Indexes
 #
 #  index_raffles_on_program_and_user_id  (program,user_id) UNIQUE
-#  index_raffles_on_user_id              (user_id)
 #
 # Foreign Keys
 #
