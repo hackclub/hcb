@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_03_180740) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -188,6 +188,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.datetime "started_at", precision: nil
     t.index ["user_id"], name: "index_ahoy_visits_on_user_id"
     t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
+  end
+
+  create_table "announcements", force: :cascade do |t|
+    t.string "title"
+    t.bigint "user_id"
+    t.boolean "draft"
+    t.boolean "published_at"
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "content"
+    t.bigint "event_id", null: false
+    t.index ["event_id"], name: "index_announcements_on_event_id"
   end
 
   create_table "api_tokens", force: :cascade do |t|
@@ -866,6 +879,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.boolean "cover_donation_fees", default: false
     t.string "contact_email"
     t.index ["event_id"], name: "index_event_configurations_on_event_id"
+  end
+
+  create_table "event_follows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "event_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_follows_on_event_id"
+    t.index ["user_id", "event_id"], name: "index_event_follows_on_user_id_and_event_id", unique: true
+    t.index ["user_id"], name: "index_event_follows_on_user_id"
   end
 
   create_table "event_plans", force: :cascade do |t|
@@ -2272,6 +2295,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
+  add_foreign_key "announcements", "events"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
@@ -2326,6 +2350,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_configurations", "events"
+  add_foreign_key "event_follows", "events"
+  add_foreign_key "event_follows", "users"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"

@@ -1,0 +1,7 @@
+<%# locals: (event_follows:) %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_following">
+  <% event_follows.each do |event_follow| %>
+    <%= event_follow.event.name %>
+  <% end %>
+</section>

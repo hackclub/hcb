@@ -1,0 +1,12 @@
+<% title "My feed" %>
+<% page_md %>
+<%= render "users/nav", selected: :feed %>
+<%= render "my/following_modal", event_follows: Event::Follow.where(user_id: current_user.id) %>
+
+<h1 class="heading flex items-center">
+  <span class="flex-grow">Feed</span>
+  <%= link_to my_feed_path, class: "btn bg-blue flex", data: { behavior: "modal_trigger", modal: "edit_following" } do %>
+    <%= inline_icon "settings" %>
+    Manage
+  <% end %>
+</h1>

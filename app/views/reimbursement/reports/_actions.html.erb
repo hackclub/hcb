@@ -12,7 +12,7 @@
   <% unless (report.closed? && !report.payout_holding&.failed?) || member_viewing %>
     <div class="flex items-center justify-between mt2 mb3" style="gap: 1rem;" id="actions">
       <div class="flex justify-start">
-        <% if !report.locked? %>
+
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
             <div class="add-expense-dropzone">
               <%= dropdown_button form:,

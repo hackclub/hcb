@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
 
   def activities
     @before = params[:before] || Time.now
@@ -139,6 +139,9 @@ class MyController < ApplicationController
   def payroll
     @jobs = current_user.jobs
     @payout_method = current_user.payout_method
+  end
+
+  def feed
   end
 
 end

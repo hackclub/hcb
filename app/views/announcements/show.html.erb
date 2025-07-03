@@ -1,0 +1,26 @@
+<%# locals: (editing: false) %>
+
+<% title "#{"Editing" if editing} #{@announcement.title}" %>
+<% page_md %>
+<%= render "events/nav" %>
+
+<h1 class="heading">
+  <span class="flex flex-grow items-center"><%= "Editing" if editing %> <%= @announcement.title %></span>
+
+  <% if current_user == @announcement.user && !editing %>
+    <%= link_to edit_event_announcement_path(event_id: @event.slug), class: "btn flex items-center", target: "post_editor" do %>
+      <%= inline_icon "edit" %>
+      Edit
+    <% end %>
+  <% end %>
+</h1>
+
+<%= turbo_frame_tag :post_editor do %>
+  <% if editing %>
+    <%= render partial: "announcement_form", locals: { content: @announcement.content } %>
+  <% else %>
+    <div data-controller="tiptap" data-tiptap-content-value="<%= @announcement.content %>">
+      <div data-tiptap-target="editor" class="bg-darkless p-2 rounded-md"></div>
+    </div>
+  <% end %>
+<% end %>

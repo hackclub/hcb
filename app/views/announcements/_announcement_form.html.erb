@@ -1,0 +1,41 @@
+<%# locals: (content: nil) %>
+
+<%= form_with model: @announcement, url: content.present? ? event_announcement_path(@event, @announcement) : event_announcements_path(@event), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-editable-value": true, "turbo-frame": "_top" }.compact do |form| %>
+  <div class="field">
+    <%= form.label :title %>
+    <%= form.text_field :title, placeholder: "#{@event.name}' June Update" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :content %>
+    <%= form.hidden_field :content, data: { "tiptap-target": "contentInput" } %>
+    <div>
+      <div class="flex gap-2 card p-2 rounded-b-none border-b-dark border-b-2 border-solid border-0">
+        <%= render partial: "announcements/format_menu" %>
+      </div>
+      <div data-tiptap-target="editor" class="bg-darkless p-2 rounded-md rounded-t-none"></div>
+    </div>
+    <div data-tiptap-target="bubbleMenu" class="flex gap-2 card p-2 hidden">
+      <%= render partial: "announcements/format_menu" %>
+    </div>
+  </div>
+
+  <%= form.hidden_field :autosave, data: { "tiptap-target": "autosaveInput" } %>
+
+  <% if content.present? %>
+    <div>
+      <button class="btn bg-success" type="button" data-action="tiptap#submit">Save</button>
+      <p class="italic text-muted">Your changes automatically save</p>
+    </div>
+  <% else %>
+    <%= dropdown_button form:,
+      options: [
+        ["Send now", false, "Send this post instantly."],
+        ["Create draft", true, "Save as a draft to send later."]
+      ],
+      button_icon: "send",
+      name: "draft",
+      button_options: { data: { action: "tiptap#submit" }, type: "button" },
+      template: ->(value) { value ? "Create draft" : "Send now" } %>
+  <% end %>
+<% end %>
