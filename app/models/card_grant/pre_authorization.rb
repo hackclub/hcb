@@ -4,12 +4,20 @@
 #
 # Table name: card_grant_pre_authorizations
 #
-#  id            :bigint           not null, primary key
-#  aasm_state    :string           not null
-#  product_url   :string
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  card_grant_id :bigint           not null
+#  id                            :bigint           not null, primary key
+#  aasm_state                    :string           not null
+#  extracted_fraud_rating        :integer
+#  extracted_merchant_name       :string
+#  extracted_product_description :text
+#  extracted_product_name        :string
+#  extracted_product_price_cents :integer
+#  extracted_total_price_cents   :integer
+#  extracted_valid_purchase      :boolean
+#  extracted_validity_reasoning  :text
+#  product_url                   :string
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  card_grant_id                 :bigint           not null
 #
 # Indexes
 #
