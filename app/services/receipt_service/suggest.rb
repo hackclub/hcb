@@ -50,70 +50,34 @@ module ReceiptService
     end
 
     def distance(hcb_code)
-      return if @extracted.nil?
+      # Handle cases with bad data
+      return 1_000 if @extracted.nil? ||
+                      @extracted.extracted_total_amount_cents.nil? ||
+                      @extracted.extracted_date.nil? ||
+                      @extracted.extracted_card_last4.nil?
 
-      distances = {
-        amount_cents: {
-          value: @extracted.extracted_total_amount_cents && (hcb_code.amount_cents.abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
-          weight: 200,
-        },
-        card_last_four: {
-          value: @extracted.extracted_card_last4 == hcb_code.card&.last4 ? 0 : 1,
-          weight: 200,
-        },
-        date: {
-          value: begin
-            if @extracted.extracted_date.present?
-              distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
+      distance = 0
 
-              if distance <= 1
-                0
-              elsif distance <= 5
-                0.2 + 0.8 * (distance / 5)
-              else
-                1
-              end
-            else
-              1
-            end
-          end,
-          weight: 100,
-        },
-        merchant_zip_code: {
-          value: begin
-            stripe_zip = hcb_code.stripe_merchant["postal_code"]
-            if stripe_zip == "00000"
-              nil
-              # https://mapofzipcodes.com/blog/00000-zip-code
-              # many postal codes are reported as 000000, and we don't
-              # want a lack of information to hurt pairing suggestions
-            else
-              stripe_zip = stripe_zip.to_i
-              receipt_zip = @extracted.extracted_merchant_zip_code.to_i
-              distance = (stripe_zip - receipt_zip).abs
-              if distance.zero?
-                0
-              elsif distance < 75
-                0.5
-              else
-                1
-              end
-            end
-          end,
-          weight: 50,
-        },
-        merchant_name: {
-          value: @extracted.extracted_merchant_name&.downcase&.in?(hcb_code.stripe_merchant["name"]&.downcase) ? 0 : 1,
-          weight: 50,
-        }
-      }
+      unless (@extracted.extracted_total_amount_cents.abs - hcb_code.amount_cents.abs).abs == 0
+        distance += 200 # Automatically disqualify suggestion if not matching
+      end
 
-      features = distances.values.reject { |data| data[:value].nil? }
+      unless @extracted.extracted_card_last4 == hcb_code.card&.last4
+        distance += 200 # Automatically disqualify suggestion if not matching
+      end
 
-      value = features.map { |data| data[:value] * data[:weight] }.sum.to_f
-      weight = features.map { |data| data[:weight] }.sum.to_f
+      unless hcb_code.stripe_merchant["postal_code"] == @extracted.extracted_merchant_zip_code
+        distance += 10 # Weight suggestions towards those with matching zip codes
+      end
 
-      value / weight * 100
+      unless @extracted.extracted_merchant_name&.downcase&.in?(hcb_code.stripe_card_memo&.downcase)
+        distance += 10 # Weight suggestions towards those with matching merchant names
+      end
+
+      date = (hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date
+      distance += (date - @extracted.extracted_date.to_date).abs.to_i * 50 / 7 # Allow 1 week of leeway before crossing the distance threshold of 50
+
+      distance
     end
 
     def sorted_transactions

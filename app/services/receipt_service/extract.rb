@@ -23,8 +23,8 @@ module ReceiptService
       prompt = <<~PROMPT
         You are a helpful assistant that extracts important features from receipts. You must extract the following features in JSON format:
 
-        subtotal_amount_cents
-        total_amount_cents // the amount likely to be charged to a credit card
+        subtotal_amount_cents // the subtotal before taxes, fees, and discounts
+        total_amount_cents // the final total amount likely to be charged to a credit card
         card_last_four
         date // in the format of YYYY-MM-DD
         merchant_url // URL for merchant's primary website including https, if available
