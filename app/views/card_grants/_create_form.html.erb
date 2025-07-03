@@ -30,6 +30,13 @@
     <% end %>
   </div>
 
+  <div class="field">
+    <%= form.label :pre_authorization_required do %>
+      <%= form.check_box :pre_authorization_required, disabled: %>
+      Require pre-authorization? (documentation before activation)
+    <% end %>
+  </div>
+
   <div class="actions">
     <%= form.submit "Send grant", disabled: %>
   </div>

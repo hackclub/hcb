@@ -63,10 +63,12 @@
               <%= form.label :birthday %>
               <div class="flex gap-2 onboarding">
                 <%= form.date_select :birthday,
-                                     start_year: Date.today.year,
-                                     end_year: Date.today.year - 100,
-                                     order: [:month, :day, :year],
-                                     prompt: @user.birthday.nil? %>
+                                     { start_year: Date.today.year,
+                                       end_year: Date.today.year - 100,
+                                       order: [:month, :day, :year],
+                                       prompt: @user.birthday.nil?
+                                     },
+                                     { required: true } %>
               </div>
             </div>
           </div>

@@ -16,7 +16,26 @@
   <% end %>
 </ul>
 
-<p>In total, you raised <strong><%= render_money @total %></strong> last month - great job!</p>
+<p>
+  <% if @goal.present? && @percentage < 1 %>
+    In total, you raised <strong><%= render_money @total %></strong> last month -
+      <% if @percentage <= 0.25 %>
+        you're making great progress!
+      <% elsif @percentage <= 0.5 %>
+        that's awesome!
+      <% elsif @percentage <= 0.6 %>
+        you're more than halfway there!
+      <% elsif @percentage <= 0.9 %>
+        you're getting close!
+      <% else %>
+        your goal is right around the corner!
+      <% end %>
+      You're now <%= number_with_precision(@percentage * 100, precision: 1) %>% of the way to your goal of <strong><%= render_money @goal.amount_cents %></strong>.
+  <% else %>
+    In total, you raised <strong><%= render_money @total %></strong> last month - great job!
+  <% end %>
+  Take a look at your <%= link_to "donations page", event_donation_overview_url(@event) %> to share your organization with more donors.
+</p>
 
 <p>
   From,<br>

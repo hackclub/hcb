@@ -9,12 +9,13 @@ export default class extends Controller {
 
   async updateBadge() {
     try {
-      const { count } = await fetch(
-        'https://blog.hcb.hackclub.com/api/unreads',
-        {
-          credentials: 'include',
-        }
-      ).then(res => res.json())
+      const url =
+        window.location.hostname === 'localhost'
+          ? 'http://localhost:3001'
+          : 'https://blog.hcb.hackclub.com'
+      const { count } = await fetch(`${url}/api/unreads`, {
+        credentials: 'include',
+      }).then(res => res.json())
 
       if (count < 1) return
 
