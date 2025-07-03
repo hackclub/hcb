@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_03_194503) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -412,6 +412,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "extracted_product_name"
+    t.text "extracted_product_description"
+    t.integer "extracted_product_price_cents"
+    t.integer "extracted_total_price_cents"
+    t.string "extracted_merchant_name"
+    t.text "extracted_validity_reasoning"
+    t.boolean "extracted_valid_purchase"
+    t.integer "extracted_fraud_rating"
     t.index ["card_grant_id"], name: "index_card_grant_pre_authorizations_on_card_grant_id"
   end
 
