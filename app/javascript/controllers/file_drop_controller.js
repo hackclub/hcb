@@ -117,6 +117,7 @@ export default class extends Controller {
   }
 
   dragenter() {
+    console.log('event: dragenter')
     if (this.counter == 0) {
       this.showDropzone()
     }
@@ -124,6 +125,7 @@ export default class extends Controller {
   }
 
   dragleave() {
+    console.log('event: dragleave')
     this.counter--
     if (this.counter == 0) {
       this.hideDropzone()

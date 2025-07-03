@@ -78,6 +78,14 @@
   background-repeat: no-repeat;
 }
 
+.promo-hackathons-page {
+  background-image:
+    linear-gradient(to right, rgba(20, 20, 20, 0.3), rgba(248, 248, 248, 0.05)),
+    url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/8c401650b4f472f22eb9048d6b75b351ef562957_image.png');
+  background-size: cover;
+  background-position: 0% 55%;
+}
+
 .promo-event-helper {
   background-color: rgb(238, 188, 36);
   color: black;
