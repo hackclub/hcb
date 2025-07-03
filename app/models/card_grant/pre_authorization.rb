@@ -99,7 +99,7 @@ class CardGrant
                                    screenshots.map { |screenshot|
                                      {
                                        type: "input_image",
-                                       image_url: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/997501edba5caab2c47531337131a8247b636b80_image.png" || Rails.application.routes.url_helpers.url_for(screenshot),
+                                       image_url: Rails.application.routes.url_helpers.url_for(screenshot),
                                      }
                                    }
                                  ].flatten
