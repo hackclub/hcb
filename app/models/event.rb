@@ -18,6 +18,7 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
+#  donation_tiers_enabled                       :boolean          default(FALSE), not null
 #  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
@@ -104,6 +105,8 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
+  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
+  scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
   scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
@@ -257,6 +260,7 @@ class Event < ApplicationRecord
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
   has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
+  has_many :donation_tiers, -> { order(sort_index: :asc) }, dependent: :destroy, class_name: "Donation::Tier"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
@@ -764,7 +768,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required?
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end

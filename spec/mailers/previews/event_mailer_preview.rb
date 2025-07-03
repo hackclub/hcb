@@ -5,4 +5,8 @@ class EventMailerPreview < ActionMailer::Preview
     EventMailer.with(event: Donation.last.event).monthly_donation_summary
   end
 
+  def donation_goal_reached
+    EventMailer.with(event: Donation::Goal.last.event).donation_goal_reached
+  end
+
 end

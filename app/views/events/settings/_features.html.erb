@@ -25,6 +25,15 @@
       event: @event
     } %>
 
+<%= render partial: "features/preview", locals: {
+      id: "donation-tiers",
+      classes: ["feature-generic"],
+      feature_flag: :donation_tiers_2025_06_24,
+      name: "Donation Tiers",
+      description: "Offer preset monthly donation options with custom names, prices, and perks.",
+      event: @event
+    } %>
+
 <% active_spending_control_count = @event.organizer_positions.map(&:active_spending_control).compact.count %>
 <%= render partial: "features/preview", locals: {
       id: "spending-controls",
@@ -38,3 +47,17 @@
       disable_warning: active_spending_control_count > 0 ? "⚠️ #{active_spending_control_count} users have spending controls in place ⚠️\n\nAre you sure you want to disable this feature?" : nil
 
     } %>
+
+<details>
+  <summary class="mb2">Past feature previews</summary>
+
+  <%= render partial: "features/preview", locals: {
+        id: "transaction-tags",
+        classes: ["feature-transaction-tags"],
+        fully_shipped: true,
+        feature_flag: :transaction_tags_2022_07_29,
+        name: "Transaction Tags",
+        description: "Categorize and filter transactions using tags!",
+        event: @event
+      } %>
+</details>

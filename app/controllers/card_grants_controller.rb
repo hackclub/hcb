@@ -20,18 +20,12 @@ class CardGrantsController < ApplicationController
 
     last_card_grant = @event.card_grants.order(created_at: :desc).first
 
-    if last_card_grant.present?
-      @card_grant.amount_cents = last_card_grant.amount_cents
-      @card_grant.merchant_lock = last_card_grant.merchant_lock
-      @card_grant.category_lock = last_card_grant.category_lock
-    end
-
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -72,6 +66,10 @@ class CardGrantsController < ApplicationController
     end
 
     authorize @card_grant
+
+    if @card_grant.pre_authorization_required? && !@card_grant.pre_authorization&.approved?
+      return redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card

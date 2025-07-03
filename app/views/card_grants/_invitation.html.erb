@@ -2,25 +2,40 @@
 
 <% if card_grant.pending_invite? %>
   <%# Prompt user to create a Stripe Card %>
-
-  <div class="container--xs">
-    <div class="center">
-      <h3 class="mt0">Just one more step:</h3>
-      <p class="mb3">We just need one more thing before you can start spending your grant from <%= card_grant.event.name %>.</p>
+  <div class="flex flex-col w-100">
+    <div class="card mb3 pb0 w-100">
+      <div class="card__banner card__banner--top flex justify-between items-center border-bottom divide-secondary <%= "card--background-image" if @event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(@event.background_image).dump})" if @event.background_image.attached? %>">
+        <h3 class="h1 pt2 pb2 my0 color-black">
+          <%= @event.name %>
+          has granted you
+          <%= render_money @card_grant.amount %>
+          <% if @card_grant.purpose.present? %>
+            for <%= @card_grant.purpose %>
+          <% end %>
+        </h3>
+      </div>
+      <div class="flex flex-row items-end justify-start gap-2 mb2">
+        <h3 class="m-0">Card activation</h3>
+        <%= inline_icon "view-forward", class: "m-0 self-center", size: 20 %>
+        <p class="m-0">We just need one more thing before you can start spending your grant.</p>
+      </div>
     </div>
 
-    <div class="card border b--info center">
-      <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
-        <div class="field field--checkbox mb2 justify-center">
-          <%= form.check_box :terms, required: true %>
-          <%= form.label :terms do %>
-            I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms" %>
-          <% end %>
-        </div>
-        <div class="actions">
-          <%= form.submit "Start spending" %>
-        </div>
-      <% end %>
+    <div class="container--xs m-auto">
+
+      <div class="card border b--info center">
+        <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
+          <div class="field field--checkbox mb2 justify-center">
+            <%= form.check_box :terms, required: true %>
+            <%= form.label :terms do %>
+              I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms" %>
+            <% end %>
+          </div>
+          <div class="actions">
+            <%= form.submit "Start spending" %>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
 <% end %>

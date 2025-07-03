@@ -3,6 +3,40 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "18d9a7883755596ad9b083cfbd00e3fc19fdf296e396510648066dc43b432b27",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/stripe_cards/show.html.erb",
+      "line": 6,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent m1\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "StripeCardsController",
+          "method": "show",
+          "line": 88,
+          "file": "app/controllers/stripe_cards_controller.rb",
+          "rendered": {
+            "name": "stripe_cards/show",
+            "file": "app/views/stripe_cards/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "stripe_cards/show"
+      },
+      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "this is already validated"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "331898aa15adc3446b48aada00d2cc1f56eb60f26b56ff486da0c5d596773837",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -114,40 +148,6 @@
         89
       ],
       "note": "Event::Plan classes are manually created by engineers, so interpolating their class name is OK."
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "9a3e8e702dcf5f9a003e13e765d780b30f5f97f66b84e542c97e7157f090214c",
-      "check_name": "LinkToHref",
-      "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/stripe_cards/show.html.erb",
-      "line": 6,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent\")",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "StripeCardsController",
-          "method": "show",
-          "line": 83,
-          "file": "app/controllers/stripe_cards_controller.rb",
-          "rendered": {
-            "name": "stripe_cards/show",
-            "file": "app/views/stripe_cards/show.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "stripe_cards/show"
-      },
-      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -354,6 +354,6 @@
       "note": "Domain is validated to not have a javascript: url scheme & dns_check_url is injecting that domain in a https url"
     }
   ],
-  "updated": "2025-06-06 00:39:59 +0000",
+  "updated": "2025-06-26 14:33:31 +0000",
   "brakeman_version": "6.2.2"
 }

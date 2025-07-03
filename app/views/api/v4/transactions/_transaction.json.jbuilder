@@ -12,13 +12,9 @@ json.memo hcb_code.memo(event: @event)
 json.has_custom_memo hcb_code.custom_memo.present?
 json.pending (tx.is_a?(CanonicalPendingTransaction) && tx.unsettled?) || (tx.is_a?(HcbCode) && !tx.pt&.fronted? && tx.pt&.unsettled?)
 json.declined (tx.is_a?(CanonicalPendingTransaction) && tx.declined?) || (tx.is_a?(HcbCode) && tx.pt&.declined?)
-if Flipper.enabled?(:transaction_tags_2022_07_29, @event)
-  json.tags hcb_code.tags do |tag|
-    json.id tag.public_id
-    json.label tag.label
-  end
-else
-  json.tags []
+json.tags hcb_code.tags do |tag|
+  json.id tag.public_id
+  json.label tag.label
 end
 json.code hcb_code.hcb_i1
 json.missing_receipt hcb_code.missing_receipt?

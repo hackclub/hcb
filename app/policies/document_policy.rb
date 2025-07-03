@@ -39,15 +39,15 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def download?
-    user.admin? || record.event.nil? || record.event.users.include?(user)
+    user.auditor? || record.event.nil? || record.event.users.include?(user)
   end
 
   def fiscal_sponsorship_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.admin?)
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?)
   end
 
   def verification_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.admin?) && record.account_number.present?
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?) && record.account_number.present?
   end
 
   def toggle_archive?
