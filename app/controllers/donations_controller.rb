@@ -55,10 +55,9 @@ class DonationsController < ApplicationController
 
     @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
     @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
-    if params[:tier_id] && @tier.nil?
+    if params[:tier_id] && @tier.nil? && params[:tier_id] != "custom"
       redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." }
     end
-
 
     @donation = Donation.new(
       name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),

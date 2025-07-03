@@ -28,10 +28,22 @@ class Donation
 
     validates :name, :amount_cents, presence: true
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
+    validate :event_donation_tier_limit, on: :create
 
     default_scope { order(sort_index: :asc) }
 
     acts_as_paranoid
+
+    private
+
+    def event_donation_tier_limit
+      return if event.blank?
+
+      existing_tiers_count = event.donation_tiers.count
+      if existing_tiers_count >= 10
+        errors.add(:base, "Limit of 10 donation tiers per event exceeded")
+      end
+    end
 
   end
 
