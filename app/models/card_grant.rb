@@ -4,23 +4,24 @@
 #
 # Table name: card_grants
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer
-#  category_lock   :string
-#  email           :string           not null
-#  keyword_lock    :string
-#  merchant_lock   :string
-#  one_time_use    :boolean
-#  purpose         :string
-#  status          :integer          default("active"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint
-#  event_id        :bigint           not null
-#  sent_by_id      :bigint           not null
-#  stripe_card_id  :bigint
-#  subledger_id    :bigint
-#  user_id         :bigint           not null
+#  id                         :bigint           not null, primary key
+#  amount_cents               :integer
+#  category_lock              :string
+#  email                      :string           not null
+#  keyword_lock               :string
+#  merchant_lock              :string
+#  one_time_use               :boolean
+#  pre_authorization_required :boolean          default(FALSE), not null
+#  purpose                    :string
+#  status                     :integer          default("active"), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  disbursement_id            :bigint
+#  event_id                   :bigint           not null
+#  sent_by_id                 :bigint           not null
+#  stripe_card_id             :bigint
+#  subledger_id               :bigint
+#  user_id                    :bigint           not null
 #
 # Indexes
 #
@@ -60,6 +61,9 @@ class CardGrant < ApplicationRecord
   alias_method :setting, :card_grant_setting
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
+
+  has_one :pre_authorization
+  after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user

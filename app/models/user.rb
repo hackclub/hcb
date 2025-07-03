@@ -224,7 +224,7 @@ class User < ApplicationRecord
   # admin_override_pretend? ignores an admin user's
   # preference to pretend not to be an admin.
   def admin_override_pretend?
-    ["admin", "superadmin"].include?(self.access_level)
+    ["auditor", "admin", "superadmin"].include?(self.access_level)
   end
 
   def make_admin!
