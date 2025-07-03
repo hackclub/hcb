@@ -38,6 +38,7 @@ class CardGrant
 
       event :mark_submitted do
         transitions from: :draft, to: :submitted
+        after { ::CardGrant::PreAuthorization::AnalyzeJob.perform_later(pre_authorization: self) }
       end
 
       event :mark_approved do
@@ -77,8 +78,7 @@ class CardGrant
                                  screenshots.map { |screenshot|
                                    {
                                      type: "input_image",
-                                     image_url:
-                                                                         screenshot.service_url,
+                                     image_url: Rails.application.routes.url_helpers.url_for(screenshot),
                                    }
                                  }
                                ]
