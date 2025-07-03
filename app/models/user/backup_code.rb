@@ -4,18 +4,17 @@
 #
 # Table name: user_backup_codes
 #
-#  id         :bigint           not null, primary key
-#  aasm_state :string
-#  code_hash  :text             not null
-#  salt       :text             not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  user_id    :bigint           not null
+#  id          :bigint           not null, primary key
+#  aasm_state  :string           default("previewed"), not null
+#  code_digest :text             not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  user_id     :bigint           not null
 #
 # Indexes
 #
-#  index_user_backup_codes_on_code_hash  (code_hash) UNIQUE
-#  index_user_backup_codes_on_user_id    (user_id)
+#  index_user_backup_codes_on_code_digest  (code_digest) UNIQUE
+#  index_user_backup_codes_on_user_id      (user_id)
 #
 # Foreign Keys
 #
@@ -25,11 +24,13 @@ class User
   class BackupCode < ApplicationRecord
     has_paper_trail
 
+    has_secure_password :code
+
     include AASM
 
     belongs_to :user
 
-    validates :code_hash, presence: true, uniqueness: true
+    validates :code_digest, presence: true, uniqueness: true
 
     aasm do
       state :previewed, initial: true
@@ -56,10 +57,6 @@ class User
       event :mark_discarded do
         transitions from: :active, to: :discarded
       end
-    end
-
-    def self.gen_hash(code:, salt:, pepper:)
-      OpenSSL::KDF.pbkdf2_hmac(code + pepper, hash: "sha512", salt: Base64.decode64(salt), iterations: 20_000, length: 64).unpack1("H*")
     end
 
   end

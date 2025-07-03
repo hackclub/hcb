@@ -2066,12 +2066,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
 
   create_table "user_backup_codes", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.string "aasm_state"
-    t.text "code_hash", null: false
-    t.text "salt", null: false
+    t.string "aasm_state", default: "previewed", null: false
+    t.text "code_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["code_hash"], name: "index_user_backup_codes_on_code_hash", unique: true
+    t.index ["code_digest"], name: "index_user_backup_codes_on_code_digest", unique: true
     t.index ["user_id"], name: "index_user_backup_codes_on_user_id"
   end
 
