@@ -741,6 +741,14 @@ class Event < ApplicationRecord
     end
   end
 
+  def set_airtable_status(status)
+    app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
+
+    app["Status"] = status unless app["Status"] == "Onboarded"
+
+    app.save
+  end
+
   private
 
   def point_of_contact_is_admin
