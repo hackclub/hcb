@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_01_183918) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1509,7 +1509,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_01_183918) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
-    t.index ["user_id"], name: "index_raffles_on_user_id"
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
