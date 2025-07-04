@@ -10,7 +10,7 @@
     <%= hidden_field_tag(name, value) %>
   <% end %>
 
-  <%= hidden_field_tag("_sudo[login_id]", @login.hashid) %>
+  <%= hidden_field_tag("_sudo[login_id]", login.hashid) %>
 
   <%= label_tag("_sudo[login_code]", "Login code") %>
   <%= text_field_tag("_sudo[login_code]") %>

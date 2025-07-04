@@ -167,7 +167,7 @@ module SessionsHelper
     return if sudo_mode?
 
     if params[:_sudo]
-      @login = Login.incomplete.active.find_by_hashid!(params[:_sudo][:login_id])
+      login = Login.incomplete.active.find_by_hashid!(params[:_sudo][:login_id])
 
       UserService::ExchangeLoginCodeForUser.new(
         user_id: current_user.id,
@@ -175,12 +175,12 @@ module SessionsHelper
         sms: false,
       ).run
 
-      @login.update!(authenticated_with_email: true)
-      @login.update!(user_session: current_session)
+      login.update!(authenticated_with_email: true)
+      login.update!(user_session: current_session)
 
       current_session.reload
     else
-      @login = Login.create!(
+      login = Login.create!(
         user: current_user,
         initial_login: current_session.initial_login
       )
@@ -189,6 +189,7 @@ module SessionsHelper
 
       render(
         template: "sudo_mode/reauthenticate",
+        locals: { login: },
         status: :unprocessable_entity
       )
     end
