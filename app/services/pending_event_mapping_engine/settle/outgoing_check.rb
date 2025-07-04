@@ -7,7 +7,7 @@ module PendingEventMappingEngine
         unsettled.find_each(batch_size: 100) do |cpt|
           # 1. identify check
           check = cpt.check
-          Airbrake.notify("Check not found for canonical pending transaction #{cpt.id}") unless check
+          Rails.error.unexpected("Check not found for canonical pending transaction #{cpt.id}") unless check
           next unless check
 
           event = check.event
@@ -17,7 +17,7 @@ module PendingEventMappingEngine
 
           next if cts.count < 1 # no match found yet. not processed.
 
-          Airbrake.notify("matched more than 1 canonical transaction for check_number #{check.check_number}") if cts.count > 1
+          Rails.error.unexpected("matched more than 1 canonical transaction for check_number #{check.check_number}") if cts.count > 1
           ct = cts.first
 
           # 3. mark no longer pending

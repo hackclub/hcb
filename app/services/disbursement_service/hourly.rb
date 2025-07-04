@@ -7,7 +7,7 @@ module DisbursementService
         if disbursement.canonical_transactions.size == 2
           disbursement.mark_deposited!
         elsif disbursement.canonical_transactions.size > 2
-          Airbrake.notify("Disbursement #{disbursement.id} has more than 2 canonical transactions!")
+          Rails.error.unexpected "Disbursement #{disbursement.id} has more than 2 canonical transactions!"
         end
       end
     end
