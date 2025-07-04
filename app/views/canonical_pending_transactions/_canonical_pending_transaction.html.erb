@@ -85,27 +85,29 @@
             <% end %>
           </div>
         <% end %>
-        <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
-          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
-          <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
-            <% (@event || pt.local_hcb_code.event).tags.each do |tag| %>
-              <div class="flex items-center" data-tag="<%= tag.id %>">
-                <%= button_to toggle_tag_hcb_code_path(id: pt.local_hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(pt.local_hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                  <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
-                  <%= tag.label %>
-                  <%= "✓" if tagged_with.include?(tag) %>
-                <% end %>
-                <%= button_to event_tag_path(@event || pt.local_hcb_code.event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
-                  <%= inline_icon "delete", size: 18, style: "margin: 0" %>
-                <% end %>
-              </div>
-            <% end %>
-            <% if (@event || pt.local_hcb_code.event).tags.any? %>
-              <div class="menu__divider tags__divider"></div>
-            <% end %>
-            <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.hashid } %>
+        <% if policy(pt.local_hcb_code).toggle_tag? %>
+          <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
+            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
+              <% (@event || pt.local_hcb_code.event).tags.each do |tag| %>
+                <div class="flex items-center" data-tag="<%= tag.id %>">
+                  <%= button_to toggle_tag_hcb_code_path(id: pt.local_hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(pt.local_hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                    <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+                    <%= tag.label %>
+                    <%= "✓" if tagged_with.include?(tag) %>
+                  <% end %>
+                  <%= button_to event_tag_path(@event || pt.local_hcb_code.event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
+                    <%= inline_icon "delete", size: 18, style: "margin: 0" %>
+                  <% end %>
+                </div>
+              <% end %>
+              <% if (@event || pt.local_hcb_code.event).tags.any? %>
+                <div class="menu__divider tags__divider"></div>
+              <% end %>
+              <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.hashid } %>
+            </div>
           </div>
-        </div>
+        <% end %>
       <% end %>
       <% if pt.local_hcb_code %>
         <%= list_badge_for auditor_signed_in? ? pt.local_hcb_code.comments.size : pt.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
