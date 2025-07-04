@@ -79,6 +79,8 @@ class User < ApplicationRecord
 
   has_many :logins
   has_many :login_codes
+  has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
+  has_many :active_backup_codes, -> { active }, class_name: "User::BackupCode", inverse_of: :user
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
@@ -376,6 +378,56 @@ class User < ApplicationRecord
 
   def only_card_grant_user?
     card_grants.size >= 1 && events.size == 0
+  end
+
+  def backup_codes_enabled?
+    active_backup_codes.any?
+  end
+
+  def generate_backup_codes!
+    backup_codes.previewed.destroy_all
+
+    codes = []
+    while codes.size < 10
+      code = SecureRandom.alphanumeric(10)
+      next if codes.include?(code)
+
+      begin
+        backup_codes.create!(code: code)
+      rescue ActiveRecord::RecordInvalid
+        # if the code is already in use, skip it
+        next
+      end
+      codes << code
+    end
+
+    codes
+  end
+
+  def redeem_backup_code!(code)
+    active_backup_codes.each do |backup_code|
+      return unless backup_code.authenticate_code(code)
+
+      ActiveRecord::Base.transaction do
+        backup_code = User::BackupCode
+                      .lock # performs a SELECT ... FOR UPDATE https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
+                      .active # makes sure that it hasn't already been used
+                      .find(backup_code.id) # will raise `ActiveRecord::NotFound` and abort the transaction
+        backup_code.mark_used!
+        return true
+      end
+      return true
+    end
+
+    false
+  end
+
+  def disable_backup_codes!
+    Base.transaction do
+      backup_codes.previewed.destroy_all
+      active_backup_codes.map(&:mark_discarded!)
+    end
+    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
   private
