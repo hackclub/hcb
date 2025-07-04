@@ -801,4 +801,8 @@ class Event < ApplicationRecord
     end
   end
 
+  def create_card_grant_setting
+    CardGrantSetting.find_or_create_by!(event_id:)
+  end
+
 end
