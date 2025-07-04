@@ -66,4 +66,8 @@ class Employee < ApplicationRecord
     end
   end
 
+  def popover_path
+    "/employees/#{hashid}?frame=true"
+  end
+
 end
