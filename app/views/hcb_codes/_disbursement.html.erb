@@ -37,6 +37,13 @@
       </p>
     <% end %>
 
+    <% unless @hcb_code.disbursement.authorized_by.nil? %>
+      <p>
+        <strong>Authorized by</strong>
+        <%= user_mention @hcb_code.disbursement.authorized_by %>
+      </p>
+    <% end %>
+
     <% unless @hcb_code.disbursement.fulfilled_by.nil? %>
       <% admin_tool("", "p") do %>
         <strong>Fulfilled by</strong>
@@ -112,6 +119,51 @@
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
 
   </section>
+
+    <% is_manager = OrganizerPosition.role_at_least?(current_user, @hcb_code.disbursement.source_event, :manager) %>
+    <% is_requester = current_user == @hcb_code.disbursement.requested_by %>
+
+    <% if @hcb_code.disbursement.authorizing? && (is_manager || is_requester) %>
+      <article class="border <%= is_manager ? "b--info" : "b--warning" %> card card--sunken--dark mb-4 flex flex-col gap-3 lg:flex-row justify-between items-center">
+        <% if is_manager %>
+          <div>
+            <div class="flex items-center info">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="info" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="mr1" style=""><g><path fill-rule="evenodd" d="M26 16c0 5.523-4.477 10-10 10S6 21.523 6 16 10.477 6 16 6s10 4.477 10 10zm2 0c0 6.627-5.373 12-12 12S4 22.627 4 16 9.373 4 16 4s12 5.373 12 12z" clip-rule="evenodd"></path><path d="M16 12.75a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16 22.25c-.552 0-1-.392-1-.875v-6.25c0-.483.448-.875 1-.875s1 .392 1 .875v6.25c0 .483-.448.875-1 .875z"></path></g></svg>
+              <p class="bold mt0 mb0">This transfer requires manager review</p>
+            </div>
+
+            <p>This transfer requires your authorization because <%= @hcb_code.disbursement.requested_by.name %> is a member. Authorize <%= render_money @hcb_code.disbursement.amount %> to <%= @hcb_code.disbursement.destination_event.name %>?</p>
+            <div class="flex items-center gap-2">
+              <%= button_to "Authorize", disbursement_manager_authorize_path(@hcb_code.disbursement), method: :post, class: "btn bg-success" %>
+              <%= button_to "Reject", disbursement_manager_reject_path(@hcb_code.disbursement), method: :post, class: "btn bg-error" %>
+            </div>
+          </div>
+        <% else %>
+          <div>
+            <div class="flex items-center warning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="info" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="mr1" style=""><g><path fill-rule="evenodd" d="M26 16c0 5.523-4.477 10-10 10S6 21.523 6 16 10.477 6 16 6s10 4.477 10 10zm2 0c0 6.627-5.373 12-12 12S4 22.627 4 16 9.373 4 16 4s12 5.373 12 12z" clip-rule="evenodd"></path><path d="M16 12.75a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16 22.25c-.552 0-1-.392-1-.875v-6.25c0-.483.448-.875 1-.875s1 .392 1 .875v6.25c0 .483-.448.875-1 .875z"></path></g></svg>
+              <p class="bold mt0 mb0">This transfer requires manager review</p>
+            </div>
+
+            <p>Because you're a member of <%= @hcb_code.disbursement.source_event.name %>, you'll need to get a <%= link_to "manager", event_team_path(@hcb_code.disbursement.source_event, filter: :managers) %> to authorize this transfer.</p>
+
+            <div class="relative block max-w-[400px]" data-controller="clipboard" data-clipboard-text-value="<%= hcb_code_url(@hcb_code) %>">
+              <input id="transfer_link" type="text" value="<%= hcb_code_url(@hcb_code) %>" readonly style="cursor: text;" class="fit border dark:[&:not(:focus)]:!border-darkless border-1">
+              <button
+                type="button"
+                class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+                style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+                aria-label="Copy transfer link"
+                data-action="clipboard#copy:prevent">
+                <%= inline_icon "copy", size: 28 %>
+              </button>
+            </div>
+
+          </div>
+
+        <% end %>
+      </article>
+    <% end %>
 
   <% if @event.can_front_balance? %>
     <section class="card__banner card__darker secondary border-top flex items-center g2">

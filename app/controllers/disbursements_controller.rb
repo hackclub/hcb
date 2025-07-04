@@ -4,10 +4,14 @@ class DisbursementsController < ApplicationController
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
   def show
-    authorize @disbursement
-
     # Comments
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.hcb_code)
+
+    authorize @hcb_code, :show?, policy_class: HcbCodePolicy
+
+    return redirect_to @hcb_code unless current_user.auditor?
+
+    authorize @disbursement
   end
 
   def transfer_confirmation_letter
@@ -77,6 +81,8 @@ class DisbursementsController < ApplicationController
                               disbursement_params["scheduled_on(3i)"].to_i)
     end
 
+    needs_manager_authorization = !OrganizerPosition.role_at_least?(current_user, @source_event, :manager)
+
     disbursement = DisbursementService::Create.new(
       name: disbursement_params[:name],
       destination_event_id: @destination_event.id,
@@ -85,7 +91,8 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: @source_event.plan.front_disbursements_enabled?
+      fronted: !needs_manager_authorization && @source_event.plan.front_disbursements_enabled?,
+      create_cpts: !needs_manager_authorization
     ).run
 
     if disbursement_params[:file]
@@ -102,7 +109,7 @@ class DisbursementsController < ApplicationController
     if current_user.admin?
       redirect_to disbursements_admin_index_path
     else
-      redirect_to event_transfers_path(@source_event)
+      redirect_to disbursement
     end
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
@@ -155,6 +162,32 @@ class DisbursementsController < ApplicationController
     end
 
     redirect_to disbursement_path(@disbursement)
+  end
+
+  def manager_authorize
+    @disbursement = Disbursement.find(params[:disbursement_id])
+    authorize @disbursement
+
+    return redirect_to disbursement_path(@disbursement), flash: { error: "Already authorized / rejected" } unless @disbursement.authorizing?
+
+    @disbursement.authorize_by_manager(current_user)
+
+    flash[:success] = "Disbursement authorized"
+
+    redirect_back_or_to disbursement_path(@disbursement)
+  end
+
+  def manager_reject
+    @disbursement = Disbursement.find(params[:disbursement_id])
+    authorize @disbursement
+
+    return redirect_to disbursement_path(@disbursement), flash: { error: "Already authorized / rejected" } unless @disbursement.authorizing?
+
+    @disbursement.mark_rejected!(current_user)
+
+    flash[:success] = "Disbursement rejected"
+
+    redirect_back_or_to disbursement_path(@disbursement)
   end
 
   private
