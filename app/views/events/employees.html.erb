@@ -67,10 +67,7 @@
 <% else %>
   <div class="grid grid-cols-1 lg:grid-cols-2">
     <% @employees.each do |employee| %>
-      <% link_data = if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) %>
-        { turbo_frame: "_top", behavior: "modal_trigger", modal: "employee_#{employee.hashid}" }
-      <% end %>
-      <%= link_to employee_path(employee), class: "card card--hover", data: link_data do %>
+      <%= link_to employee_path(employee), class: "card card--hover", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "employee_#{employee.hashid}" } do %>
         <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
           <strong class="h4 flex-grow"><%= employee.user.name %></strong>
           <span class="block"><%= employee.aasm_state.humanize %></span>
@@ -91,7 +88,7 @@
           <% end %>
         </section>
       <% end %>
-      
+
     <% end %>
   </div>
 <% end %>
