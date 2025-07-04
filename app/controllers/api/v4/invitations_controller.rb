@@ -12,6 +12,36 @@ module Api
 
       def show; end
 
+      def create
+        @event = Event.find_by_public_id(params[:event_id])
+        authorize @event
+
+        unless policy(@event).can_invite_user?
+          return render json: { error: "You are not authorized to invite users" }, status: :forbidden
+        end
+
+        if @event.organizer_positions.exists?(user: User.find_by(email: params[:email]))
+          return render json: { error: "User is already an organizer" }, status: :unprocessable_entity
+        end
+
+        if @event.organizer_position_invites.pending.exists?(email: params[:email])
+          return render json: { error: "User already has a pending invitation" }, status: :unprocessable_entity
+        end
+
+        @invitation = OrganizerPositionInvite.new(
+          event: @event,
+          email: params[:email],
+          position_role: params[:role],
+          invited_by: current_user
+        )
+
+        if @invitation.save
+          render :show, status: :created
+        else
+          render json: { errors: @invitation.errors }, status: :unprocessable_entity
+        end
+      end
+
       def accept
         unless @invitation.accept(show_onboarding: false)
           raise ActiveRecord::RecordInvalid.new(@invitation)
