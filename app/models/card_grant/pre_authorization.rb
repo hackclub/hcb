@@ -4,12 +4,20 @@
 #
 # Table name: card_grant_pre_authorizations
 #
-#  id            :bigint           not null, primary key
-#  aasm_state    :string           not null
-#  product_url   :string
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  card_grant_id :bigint           not null
+#  id                            :bigint           not null, primary key
+#  aasm_state                    :string           not null
+#  extracted_fraud_rating        :integer
+#  extracted_merchant_name       :string
+#  extracted_product_description :text
+#  extracted_product_name        :string
+#  extracted_product_price_cents :integer
+#  extracted_total_price_cents   :integer
+#  extracted_valid_purchase      :boolean
+#  extracted_validity_reasoning  :text
+#  product_url                   :string
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  card_grant_id                 :bigint           not null
 #
 # Indexes
 #
@@ -38,6 +46,9 @@ class CardGrant
 
       event :mark_submitted do
         transitions from: :draft, to: :submitted
+        after do
+          ::CardGrant::PreAuthorization::AnalyzeJob.perform_later(pre_authorization: self)
+        end
       end
 
       event :mark_approved do
@@ -57,9 +68,22 @@ class CardGrant
       conn = Faraday.new url: "https://api.openai.com" do |f|
         f.request :json
         f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
-        f.response :raise_error
         f.response :json
       end
+
+      prompt = <<~PROMPT
+        You are a helpful assistant that extracts information from a provided product URL and shopping cart screenshots. Once you've extracted the necessary information, you must decide whether the purchase is a valid use of funds based on a given purpose. You must respond in the following JSON format:
+
+        product_name // the name of the product, if available
+        product_description // a short description of the product, if available
+        product_price_cents // the price of the product, if available, in cents (e.g., 1500 for $15.00)
+        total_price_cents // the total price, in cents, including any surcharges or fees added at checkout. this is potentially different from the product price.
+        merchant_name // the name of the merchant, if available
+
+        validity_reasoning // a short explanation of why the purchase is valid or not, based on the purpose provided. This should be a concise sentence explaining the reasoning behind the decision.
+        valid_purchase // a boolean value indicating whether the purchase is a valid use of funds based on the purpose provided. This should be true or false.
+        fraud_rating // a number between 1 and 10, where 1 is very likely to be valid and 10 is very likely to be fraudulent.
+      PROMPT
 
       response = conn.post("/v1/responses", {
                              model: "gpt-4.1",
@@ -67,27 +91,51 @@ class CardGrant
                                {
                                  role: "system",
                                  content: [
-                                   { type: "input_text",
-                                     text: "You are an AI tool that receives a product URL and screenshots of a product / shopping cart, as well as a purpose for the purchase. Your task is to analyze the product and return a JSON object with the following keys: `product_name`, `product_description`, `product_price`, and `valid_purchase`. Valid purchase is the most important: it helps us determine if a purchase is an acceptable use of these funds. Make sure not to include backticks in the JSON response."
-                 }
-                                 ],
-                               }, { role: "user", content: [
-
-                                 { type: "input_text", text: "Product URL: #{product_url}" },
-                                 screenshots.map { |screenshot|
                                    {
-                                     type: "input_image",
-                                     image_url:
-                                                                         screenshot.service_url,
+                                     type: "input_text",
+                                     text: prompt
                                    }
-                                 }
-                               ]
-},
+                                 ],
+                               },
+                               {
+                                 role: "user",
+                                 content: [
+                                   {
+                                     type: "input_text",
+                                     text: "Product URL: #{product_url}"
+                                   },
+                                   screenshots.map { |screenshot|
+                                     {
+                                       type: "input_image",
+                                       image_url: Rails.application.routes.url_helpers.url_for(screenshot),
+                                     }
+                                   }
+                                 ].flatten
+                               },
 
                              ],
 
                            })
 
+      raw_response = response.body.dig("output", 0, "content", 0, "text")
+      json_response = begin
+        JSON.parse(raw_response)
+      rescue JSON::ParserError
+        {}
+      end
+
+      params = ActionController::Parameters.new(json_response.transform_keys { |key| "extracted_#{key}".to_sym }).permit(
+        :extracted_product_name,
+        :extracted_product_description,
+        :extracted_product_price_cents,
+        :extracted_total_price_cents,
+        :extracted_merchant_name,
+        :extracted_validity_reasoning,
+        :extracted_valid_purchase,
+        :extracted_fraud_rating
+      )
+
+      update(**params)
 
       mark_approved! if screenshots.attached? && product_url.present?
 
