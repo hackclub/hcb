@@ -745,6 +745,10 @@ class Event < ApplicationRecord
     end
   end
 
+  def active_teenagers
+    organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
+  end
+
   private
 
   def point_of_contact_is_admin
