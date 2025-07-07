@@ -166,7 +166,7 @@ module SessionsHelper
   def enforce_sudo_mode
     return if sudo_mode?
 
-    if params[:_sudo]
+    if params[:_sudo] && params[:_sudo][:method]
       login = Login.incomplete.active.find_by_hashid!(params[:_sudo][:login_id])
 
       UserService::ExchangeLoginCodeForUser.new(
@@ -185,11 +185,42 @@ module SessionsHelper
         initial_login: current_session.initial_login
       )
 
-      LoginCodeService::Request.new(email: current_user.email, sms: false, ip_address: request.remote_ip, user_agent: request.user_agent).run
+      # Default preference
+      factor_preference = {
+        totp: 1,
+        webauthn: 2,
+        sms: 3,
+        email: 4,
+      }
+
+      # Put the user's preference first
+      user_preference = params.dig(:_sudo, :switch_method).presence || session[:login_preference].presence
+      if user_preference.present? && factor_preference.key?(user_preference.to_sym)
+        factor_preference[user_preference.to_sym] = 0
+      end
+
+      default_factor, *additional_factors = login.available_factors.sort_by { |factor| factor_preference.fetch(factor) }
+
+      # In the case where we know we're going to ask for an SMS or email code,
+      # send it ahead of time so the user doesn't have to perform an additional
+      # step
+      if [:sms, :email].include?(default_factor)
+        LoginCodeService::Request.new(
+          email: current_user.email,
+          sms: default_factor == :sms,
+          ip_address: request.remote_ip,
+          user_agent: request.user_agent
+        ).run
+      end
+
+      # Remove extra content from the layout so we only have the
+      # reauthentication form on the page.
+      @no_app_shell = true
 
       render(
         template: "sudo_mode/reauthenticate",
-        locals: { login: },
+        layout: "application",
+        locals: { login:, additional_factors:, default_factor: },
         status: :unprocessable_entity
       )
     end

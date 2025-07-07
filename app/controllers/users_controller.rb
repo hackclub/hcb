@@ -20,7 +20,7 @@ class UsersController < ApplicationController
                                                :complete_sms_auth_verification,
                                                :start_sms_auth_verification]
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
-  before_action :enforce_sudo_mode, only: [:update]
+  before_action :enforce_sudo_mode, only: [:update, :edit]
 
   wrap_parameters format: :url_encoded_form
 
