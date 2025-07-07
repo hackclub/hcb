@@ -67,7 +67,7 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
-    if @card_grant.pre_authorization_required? && !@card_grant.pre_authorization&.approved?
+    if @card_grant.pre_authorization_required? && @card_grant.pre_authorization&.draft? && !organizer_signed_in?
       return redirect_to card_grant_pre_authorizations_path(@card_grant)
     end
 

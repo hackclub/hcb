@@ -31,6 +31,7 @@ class CardGrant
   class PreAuthorization < ApplicationRecord
     has_many_attached :screenshots, dependent: :destroy
     belongs_to :card_grant
+    has_one :event, through: :card_grant
 
     include Turbo::Broadcastable
 
@@ -43,6 +44,8 @@ class CardGrant
       state :draft, initial: true
       state :submitted
       state :approved
+      state :fraudulent
+      state :rejected
 
       event :mark_submitted do
         transitions from: :draft, to: :submitted
@@ -52,16 +55,40 @@ class CardGrant
       end
 
       event :mark_approved do
-        transitions from: :submitted, to: :approved
+        transitions from: [:submitted, :fraudulent], to: :approved do
+          guard do
+            screenshots.attached? && product_url.present?
+          end
+        end
+      end
+
+      event :mark_fraudulent do
+        transitions from: :submitted, to: :fraudulent
+      end
+
+      event :mark_rejected do
+        transitions from: :fraudulent, to: :rejected
       end
     end
 
-    def status_badge_type
+    def status_badge_type(organizer: false)
       return :muted if draft?
       return :pending if submitted?
-      return :success if approved?
+      return :success if approved? || (fraudulent? && !organizer)
+      return :error if fraudulent? && organizer
+      return :error if rejected?
 
       :muted
+    end
+
+    def status_text(organizer: false)
+      return "Draft" if draft?
+      return "Under review" if submitted?
+      return "Approved" if approved? || (fraudulent? && !organizer)
+      return "Flagged as fraudulent" if fraudulent? && organizer
+      return "Rejected" if rejected?
+
+      aasm_state.humanize
     end
 
     def analyze!
@@ -118,13 +145,13 @@ class CardGrant
                            })
 
       raw_response = response.body.dig("output", 0, "content", 0, "text")
-      json_response = begin
-        JSON.parse(raw_response)
+      raw_params = begin
+        JSON.parse(raw_response).transform_keys { |key| "extracted_#{key}".to_sym }
       rescue JSON::ParserError
         {}
       end
 
-      params = ActionController::Parameters.new(json_response.transform_keys { |key| "extracted_#{key}".to_sym }).permit(
+      params = ActionController::Parameters.new(raw_params).permit(
         :extracted_product_name,
         :extracted_product_description,
         :extracted_product_price_cents,
@@ -137,7 +164,11 @@ class CardGrant
 
       update(**params)
 
-      mark_approved! if screenshots.attached? && product_url.present?
+      if params[:extracted_valid_purchase] == "true"
+        mark_approved!
+      else
+        mark_fraudulent!
+      end
 
       broadcast_refresh_to self
     end
