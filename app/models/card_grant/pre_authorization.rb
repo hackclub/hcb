@@ -165,7 +165,7 @@ class CardGrant
 
       update(**params)
 
-      if params[:extracted_valid_purchase] == "true"
+      if params[:extracted_valid_purchase]
         mark_approved!
       else
         mark_fraudulent!
