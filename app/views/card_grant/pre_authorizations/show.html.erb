@@ -25,7 +25,7 @@
   </div>
 </div>
 
-<% if @pre_authorization.approved? %>
+<% if @pre_authorization.approved? || @pre_authorization.fraudulent? %>
   <div class="card flex flex-row gap-2 justify-between align-center mb3">
     <h3 class="flex flex-row items-center m-0">
       <%= inline_icon "checkmark", size: 24, class: "mr2 text-green" %>
