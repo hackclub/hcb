@@ -666,6 +666,8 @@ Rails.application.routes.draw do
       resource :pre_authorizations, only: [:show, :update] do
         member do
           post "clear_screenshots"
+          post "organizer_approve"
+          post "organizer_reject"
         end
       end
     end
