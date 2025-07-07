@@ -69,6 +69,9 @@ class CardGrant
 
       event :mark_rejected do
         transitions from: :fraudulent, to: :rejected
+        after do |rejected_by|
+          card_grant.cancel!(rejected_by)
+        end
       end
     end
 
