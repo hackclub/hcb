@@ -1,6 +1,6 @@
 <div id="screenshot_upload_form" class="flex-shrink-0 h-[200px]">
   <div class="<%= "mb3" if defined?(include_spacing) %> h-100" style="position: relative;">
-    <%= form_with model: nil, url: card_grant_pre_authorizations_path, method: :patch, remote: true, class: "flex flex-col justify-center h-100", data: {
+    <%= form_with model: false, url: card_grant_pre_authorizations_path, method: :patch, remote: true, class: "flex flex-col justify-center h-100", data: {
           turbo: defined?(turbo) ? turbo : "false",
           controller: "file-drop form",
           action: defined?(disabled) && disabled ? "" : "
