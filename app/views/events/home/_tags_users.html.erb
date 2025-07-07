@@ -5,15 +5,11 @@
         <div class="flex flex-1 flex-col items-center justify-center">
           <div class="text-center">
             <h3 class="text-2xl font-bold mb-0">
-              <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "It's quiet here..." : "Tags aren't enabled for this event" %>
+              It's quiet here...
             </h3>
             <p class="text-gray-500 my-1 max-w-sm">
-              <%= Flipper.enabled?(:transaction_tags_2022_07_29, event) ? "Either you don't have any tags, or you haven't categorized any transactions yet." : "With tags, you can neatly categorize your transactions." %>
+              Either you don't have any tags, or you haven't categorized any transactions yet.
             </p>
-
-            <% unless Flipper.enabled?(:transaction_tags_2022_07_29, event) %>
-              <%= link_to "Take me to the settings!", edit_event_path(event, tab: "features"), data: { turbo_frame: :_top }, class: "btn btn-primary mt-4" %>
-            <% end %>
           </div>
         </div>
       <% else %>

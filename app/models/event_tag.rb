@@ -47,6 +47,7 @@ class EventTag < ApplicationRecord
     ROBOTICS_TEAM = "Robotics Team"
     HACKATHON = "Hackathon"
     HACK_CLUB = "Hack Club"
+    YSWS = "YSWS"
   end
 
 end

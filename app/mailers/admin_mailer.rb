@@ -80,4 +80,13 @@ class AdminMailer < ApplicationMailer
     mail subject: "24 Hour Reminders for the Operations Team"
   end
 
+  def weekly_ysws_event_summary
+    @events = params[:events]
+    mail(
+      to: ["zach@hackclub.com", "max@hackclub.com"],
+      cc: "hcb@hackclub.com",
+      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
+    )
+  end
+
 end

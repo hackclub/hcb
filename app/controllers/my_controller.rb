@@ -92,7 +92,7 @@ class MyController < ApplicationController
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
-    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15)
+    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15).to_i
 
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
