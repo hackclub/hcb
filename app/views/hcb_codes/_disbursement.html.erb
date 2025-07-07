@@ -74,7 +74,7 @@
       </p>
       <p>
         <strong>Grant</strong>
-        <%= link_to_if @subledger.card_grant.stripe_card.present?, "Grant to #{@subledger.card_grant.user.name}", @subledger.card_grant.stripe_card %>
+        <%= link_to card_grant_path(@subledger.card_grant), "Grant to #{@subledger.card_grant.user.name}" %>
       </p>
     <% else %>
       <p>
