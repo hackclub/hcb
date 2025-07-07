@@ -12,6 +12,9 @@ Rails.application.configure do
   # Code is not reloaded between requests.
   config.cache_classes = true
 
+  # Code is not reloaded between requests.
+  config.enable_reloading = false
+
   # Eager load code on boot. This eager loads most of Rails and
   # your application in memory, allowing both threaded web servers
   # and those relying on copy on write to perform better.
@@ -29,6 +32,23 @@ Rails.application.configure do
   # Disable serving static files from the `/public` folder by default since
   # Apache or NGINX already handles this.
   config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
+
+  # Cache digest stamped assets for far-future expiry.
+  # Short cache for others: robots.txt, sitemap.xml, 404.html, etc.
+  config.public_file_server.headers = {
+    "cache-control" => lambda do |path, _|
+      if path.start_with?("/assets/")
+        # Files in /assets/ are expected to be fully immutable.
+        # If the content change the URL too.
+        "public, immutable, max-age=#{1.year.to_i}"
+      else
+        # For anything else we cache for 1 minute.
+        "public, max-age=#{1.minute.to_i}, stale-while-revalidate=#{5.minutes.to_i}"
+      end
+    end
+  }
+
+
 
   # Compress CSS using a preprocessor.
   # config.assets.css_compressor = :sass
@@ -52,9 +72,11 @@ Rails.application.configure do
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
 
-  # Include generic and useful information about system operation, but avoid logging too much
-  # information to avoid inadvertent exposure of personally identifiable information (PII).
-  config.log_level = :debug
+  # Change to "debug" to log everything (including potentially personally-identifiable information!)
+  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug")
+
+  # Don't log any deprecations.
+  config.active_support.report_deprecations = false
 
   # Prepend all log lines with the following tags.
   config.log_tags = [:request_id]
@@ -73,6 +95,15 @@ Rails.application.configure do
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
+
+  # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
+  # config.action_mailer.smtp_settings = {
+  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
+  #   password: Rails.application.credentials.dig(:smtp, :password),
+  #   address: "smtp.example.com",
+  #   port: 587,
+  #   authentication: :plain
+  # }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -97,9 +128,7 @@ Rails.application.configure do
   # config.logger = ActiveSupport::TaggedLogging.new(Syslog::Logger.new 'app-name')
 
   if ENV["RAILS_LOG_TO_STDOUT"].present?
-    logger           = ActiveSupport::Logger.new($stdout)
-    logger.formatter = config.log_formatter
-    config.logger    = ActiveSupport::TaggedLogging.new(logger)
+    config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
   end
 
   # Do not dump schema after migrations.
@@ -109,6 +138,9 @@ Rails.application.configure do
     host: Credentials.fetch(:LIVE_URL_HOST)
   }
   Rails.application.routes.default_url_options[:host] = Credentials.fetch(:LIVE_URL_HOST)
+
+  # Only use :id for inspections in production.
+  config.active_record.attributes_for_inspect = :all
 
   # Inserts middleware to perform automatic connection switching.
   # The `database_selector` hash is used to pass options to the DatabaseSelector
