@@ -24,6 +24,11 @@
   </div>
 
   <div class="field">
+    <%= form.label :instructions, "Instructions", class: "bold" %>
+    <%= form.text_area :instructions, placeholder: "Please only purchase a soldering iron…" %>
+  </div>
+
+  <div class="field">
     <%= form.label :one_time_use do %>
       <%= form.check_box :one_time_use, disabled: %>
       One time use? (freezes after first charge)
