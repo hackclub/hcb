@@ -32,6 +32,7 @@ class CardGrant
     has_many_attached :screenshots, dependent: :destroy
     belongs_to :card_grant
     has_one :event, through: :card_grant
+    has_one :user, through: :card_grant
 
     include Turbo::Broadcastable
 
