@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :promotions %>
 
-<% @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && organizer_signed_in? && !@event.demo_mode? %>
+<% @perks_available = organizer_signed_in? && !@event.demo_mode? %>
 
 <h1>
   Promotions &amp; perks
@@ -32,12 +32,12 @@
     <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
     <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
       @perks_available ? fillout_form("hDJYyLd7qNus", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Name" => current_user.name, "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{"disabled" unless @perks_available && @event.country_US?}",
+      class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
       target: :_blank %>
   </div>
 
   <p>
-    <%= link_to "The Event Helper", "https://www.theeventhelper.com/", class: ("disabled" unless @perks_available).to_s, target: :_blank %>
+    <%= link_to "The Event Helper", "https://www.theeventhelper.com/", target: :_blank %>
     is partnering with HCB to create a simplified way for your team to
     purchase event insurance. Just apply with your event details to receive a quote from the HCB team.
     All costs are directly from The Event Helper, we don't charge a fee on top.
@@ -91,20 +91,20 @@
     <%= image_tag "1password.svg", width: 210, class: "p2" %>
     <%= link_to "Apply",
       @perks_available ? fillout_form("7jzG7ADmuLus", { "Project_Name" => @event.name, "Bank_URL" => event_url(@event), "Your_Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{"disabled" unless @perks_available}",
+      class: "btn mr1",
       target: :_blank %>
   </div>
 
   <% if @event.hackathon? %>
     <p class="mb0">
-      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %> is offering hackathons running on HCB
+      <%= link_to "1Password", "https://1password.com" %> is offering hackathons running on HCB
       a year-long 1Password plan for up to 5 people. This can handed out as a prize, however, it
       can only be claimed once per hackathon.
     </p>
   <% else %>
     <h3 class="mb0 mt0">Do you make open source software?</h3>
     <p class="mb0">
-      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %> is offering a lifetime 1Password Teams
+      <%= link_to "1Password", "https://1password.com" %> is offering a lifetime 1Password Teams
       license (up to 10 seats) to any open source project running on HCB.
     </p>
     <h3 class="mb0 mt2">Does your nonprofit do something else?</h3>
@@ -178,7 +178,7 @@
       </span>
     <%= link_to "Request",
       @perks_available ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => @event.name }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{"disabled" unless @perks_available}",
+      class: "btn mr1 #{'disabled' unless @perks_available}",
       target: :_blank %>
   </div>
 
@@ -223,8 +223,8 @@
       <h3 class="h1 p2 my0 color-black">Wallets</h3>
       <%= link_to @wallets_available ? "Request" : "Expired",
                   @perks_available && @wallets_available ? "https://hack.af/hcb-wallets?prefill_Organization%20Name=#{@event.name}&prefill_Recipient%20Name=#{current_user.name}&prefill_Login%20Email=#{current_user.email}" : root_path,
-                  class: "btn mr1 #{"disabled" unless @perks_available && @wallets_available}",
-                  target: :_blank %>
+                  class: "btn mr1 #{'disabled' unless @perks_available && @wallets_available}",
+                  target: :_blank, disabled: !(@perks_available && @wallets_available) %>
     </div>
 
     <p class="mb0">
@@ -255,8 +255,9 @@
       <%= image_tag "stickermule.svg", width: 240 %>
       <%= link_to "Expired",
                   @perks_available ? "https://hack.af/stickermule?prefill_Event%20Name=#{@event.name}&prefill_First%20Name=#{current_user.first_name}&prefill_Email=#{current_user.email}" : root_path,
-                  class: "btn mr1 disabled",
-                  target: :_blank %>
+                  class: "btn mr1 #{'disabled' unless @perks_available}",
+                  target: :_blank,
+                  disabled: true %>
     </div>
 
     <p class="muted">
@@ -321,7 +322,8 @@
       <%= image_tag "github.png", width: 170 %>
       <%= link_to "Expired",
         @perks_available ? "https://hack.af/grant?prefill_Event%20Name=#{@event.name}" : root_path,
-        class: "btn mr1 #{"disabled" unless @perks_available}" %>
+        class: "btn mr1 #{'disabled' unless @perks_available}",
+        disabled: true %>
     </div>
 
     <p class="muted">
@@ -371,8 +373,9 @@
       <%= image_tag "https://cloud-q7i8htyv7-hack-club-bot.vercel.app/0pvsa-logo-2x.png", width: 60 %>
       <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
         @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-        class: "btn mr1 disabled",
-        target: :_blank %>
+        class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
+        target: :_blank,
+        disabled: true %>
     </div>
 
     <p>
