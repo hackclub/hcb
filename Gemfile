@@ -6,7 +6,7 @@ ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", "~> 8.0"
 
 gem "puma", "~> 6.6" # app server
 
