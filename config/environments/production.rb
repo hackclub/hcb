@@ -158,7 +158,7 @@ Rails.application.configure do
   config.active_storage.routes_prefix = "/storage"
 
   if ENV["RAILS_LOG_TO_STDOUT"].present?
-    config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
+    config.logger = ActiveSupport::TaggedLogging.logger($stdout)
   end
 
   # Use lograge to tame log output to AppSignal.
