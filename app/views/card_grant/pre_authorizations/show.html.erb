@@ -21,11 +21,11 @@
     <%= inline_icon "view-forward", class: "m-0 self-center", size: 20 %>
     <p class="m-0">Before you can get spending, we need to know what you're planning to buy.</p>
     <div class="flex-grow"></div>
-    <%= render partial: "card_grant/pre_authorizations/status_badge", locals: { pre_authorization: @pre_authorization } %>
+    <%= render partial: "card_grant/pre_authorizations/status_badge", locals: { pre_authorization: @pre_authorization, organizer: false } %>
   </div>
 </div>
 
-<% if @pre_authorization.approved? %>
+<% if @pre_authorization.approved? || @pre_authorization.fraudulent? %>
   <div class="card flex flex-row gap-2 justify-between align-center mb3">
     <h3 class="flex flex-row items-center m-0">
       <%= inline_icon "checkmark", size: 24, class: "mr2 text-green" %>
@@ -34,6 +34,8 @@
     <%= link_to "View card details", card_grant_path(@card_grant), class: "btn bg-success" %>
   </div>
 <% end %>
+
+<%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @pre_authorization, link_to_pre_authorization: false } %>
 
 <%= form_with model: @pre_authorization, id: "pre_authorization_form", url: card_grant_pre_authorizations_path(@card_grant), method: :patch, class: "flex flex-col", data: { turbo: true } do |form| %>
 
