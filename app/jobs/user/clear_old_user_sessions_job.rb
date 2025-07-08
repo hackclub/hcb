@@ -3,7 +3,7 @@
 class User
   class ClearOldUserSessionsJob < ApplicationJob
     queue_as :low
-    
+
     def perform
       UserSession.where("created_at < ?", 1.year.ago).find_each do |session|
         session.update_columns(
