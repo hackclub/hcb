@@ -3,11 +3,13 @@
 class AnnouncementPublishedJob < ApplicationJob
   queue_as :default
   def perform(announcement:)
-    announcement.event.followers.find_each do |follower|
-      AnnouncementMailer.with(
-        announcement:,
-        email: follower.email_address_with_name
-      ).announcement_published.deliver_later
+    if announcement.published?
+      announcement.event.followers.find_each do |follower|
+        AnnouncementMailer.with(
+          announcement:,
+          email: follower.email_address_with_name
+        ).announcement_published.deliver_later
+      end
     end
   end
 

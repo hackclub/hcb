@@ -18,11 +18,11 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def edit?
-    (admin? || (record.user == user && user.reader?)) && record.draft
+    (admin? || (record.user == user && user.reader?)) && record.published_at.nil?
   end
 
   def update?
-    admin? || record.user == user && record.draft
+    admin? || record.user == user && record.published_at.nil?
   end
 
   def destroy?

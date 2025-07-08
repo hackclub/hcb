@@ -190,6 +190,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
     t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
   end
 
+  create_table "announcements", force: :cascade do |t|
+    t.string "title", null: false
+    t.bigint "author_id", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "content", null: false
+    t.bigint "event_id", null: false
+    t.datetime "published_at"
+    t.index ["author_id"], name: "index_announcements_on_author_id"
+    t.index ["event_id"], name: "index_announcements_on_event_id"
+  end
+
   create_table "api_tokens", force: :cascade do |t|
     t.text "token_ciphertext"
     t.string "token_bidx"
@@ -2260,6 +2273,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
+  add_foreign_key "announcements", "events"
+  add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"

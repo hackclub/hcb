@@ -17,24 +17,17 @@ class Event
         event: @event
       }
       follow = Event::Follow.new(attrs)
-      if authorize follow
-        follow.save!
-        redirect_to event_announcements_path(@event)
-      else
-        flash[:error] = "You aren't allowed to follow this event."
-      end
+      authorize follow
+      follow.save!
+      redirect_to event_announcements_path(@event)
     end
 
     def destroy
       @event_follow = Event::Follow.find(params[:id])
-      if authorize @event_follow
-        slug = @event_follow.event.slug
-        @event_follow.destroy!
-        redirect_to event_path(slug)
-      else
-        flash[:error] = "Failed to unfollow this event."
-      end
-
+      authorize @event_follow
+      slug = @event_follow.event.slug
+      @event_follow.destroy!
+      redirect_to event_path(slug)
     end
 
   end
