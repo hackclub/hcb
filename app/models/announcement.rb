@@ -31,7 +31,7 @@ class Announcement < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  def publish
+  def publish!
     AnnouncementPublishedJob.new.perform(announcement: self)
 
     self.published_at = Time.now
