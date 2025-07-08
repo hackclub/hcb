@@ -5,6 +5,7 @@
 <h1 class="heading">
   <span class="flex flex-grow items-center">Announcements</span>
 
+  <%= render "events/follow_button" %>
   <% if organizer_signed_in?(as: :manager) %>
     <%= link_to new_event_announcement_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_announcement" } do %>
       <%= inline_icon "plus" %>
