@@ -1,12 +1,29 @@
 <% title "Grant to #{@card_grant.user.name}" %>
 <%= render "events/nav", selected: :transfers if organizer_signed_in? %>
 
+<% footer = nil %>
+<% if @card_grant.user == current_user && @card_grant.pending_invite? %>
+  <% footer = capture do %>
+    <div class="flex flex-row items-center justify-start gap-2 lg:items-end">
+      <div class="flex items-start flex-col lg:flex-row lg:items-end justify-start gap-2">
+        <div class="flex flex-row items-end justify-start gap-2 w-min-content min-w-0 flex-shrink-0">
+          <h3 class="m-0 p-0">Card activation</h3>
+          <%= inline_icon "view-forward", class: "m-0 lg:self-center", size: 20 %>
+        </div>
+        <p class="m-0">We just need one more thing before you can start spending&nbsp;your&nbsp;grant.</p>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<%= render partial: "card_grants/header_banner", locals: { card_grant: @card_grant, footer: } %>
+
 <div class="mt4 mb4 check--form flex justify-center <%= "flex-wrap" if @frame %>" style="gap: 3rem">
   <%# Grantee has pending invite %>
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
     <% if @card_grant.canceled? %>
       <%= blankslate "Sorry, this grant was canceled!" %>
-    <% else %>
+  <% else %>
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
   <%# Grantee has accepted invite %>
@@ -16,7 +33,7 @@
         <%= render @card_grant.stripe_card %>
         <%= render partial: "balance", locals: { card_grant: @card_grant } %>
         <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
-        <%= render "actions", card_grant: @card_grant %>
+        <%= render partial: "actions", locals: { card_grant: @card_grant } %>
       </div>
     <% end %>
     <div class="flex flex-col g2">
@@ -29,6 +46,9 @@
           <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
         <% end %>
       <% end %>
+
+    </div>
+    <div class="flex flex-col g2">
       <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
     </div>
   <% end %>

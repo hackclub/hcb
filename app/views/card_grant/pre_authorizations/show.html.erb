@@ -16,12 +16,18 @@
       <% end %>
     </h3>
   </div>
-  <div class="flex flex-row items-end justify-start gap-2 mb2">
-    <h3 class="m-0">Pre-authorization</h3>
-    <%= inline_icon "view-forward", class: "m-0 self-center", size: 20 %>
-    <p class="m-0">Before you can get spending, we need to know what you're planning to buy.</p>
+  <div class="flex flex-row items-center justify-start gap-2 mb2 lg:items-end">
+    <div class="flex items-start flex-col lg:flex-row lg:items-end justify-start gap-2">
+      <div class="flex flex-row items-end justify-start gap-2 w-min-content min-w-0 flex-shrink-0">
+        <h3 class="m-0 p-0">Pre-authorization</h3>
+        <%= inline_icon "view-forward", class: "m-0 lg:self-center", size: 20 %>
+      </div>
+      <p class="m-0">Before you can get spending, we need to know what you're planning&nbsp;to&nbsp;buy.</p>
+    </div>
     <div class="flex-grow"></div>
-    <%= render partial: "card_grant/pre_authorizations/status_badge", locals: { pre_authorization: @pre_authorization, organizer: false } %>
+    <div class="flex flex-row items-center w-min-content flex-shrink-0">
+      <%= render partial: "card_grant/pre_authorizations/status_badge", locals: { pre_authorization: @pre_authorization, organizer: false } %>
+    </div>
   </div>
 </div>
 

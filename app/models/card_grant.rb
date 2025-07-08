@@ -100,7 +100,7 @@ class CardGrant < ApplicationRecord
     elsif pending_invite?
       "info"
     elsif stripe_card.frozen? || stripe_card.inactive?
-      "info"
+      "warning"
     else
       "success"
     end
@@ -118,6 +118,15 @@ class CardGrant < ApplicationRecord
     else
       "Active"
     end
+  end
+
+  def status_badge_type
+    s = state.to_sym
+    return :success if s == :success
+    return :error if s == :muted
+    return :warning if s == :info
+
+    :muted
   end
 
   def pending_invite?
