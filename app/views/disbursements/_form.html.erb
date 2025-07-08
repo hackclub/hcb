@@ -1,4 +1,4 @@
-<% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
+<% disabled = @source_event.present? && !policy(@source_event).create_disbursement? %>
 
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
@@ -70,6 +70,13 @@
   <div
       class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"
       aria-label="<%= @event&.demo_mode? ? "Transfers are disabled in Playground mode" : disabled ? "Only managers can make transfers!" : nil %>">
-    <%= form.submit "Make transfer", class: "btn", disabled: %>
+    <% if @event.organizer_positions.find_by(user: current_user).member? %>
+      <%= form.submit "Request transfer", class: "btn", disabled: %>
+      <p class="small muted mt-2 mb-1">
+        Because you are a member, disbursements you request will need to be authorized by a manager.
+      </p>
+    <% else %>
+      <%= form.submit "Make transfer", class: "btn", disabled: %>
+    <% end %>
   </div>
 <% end %>

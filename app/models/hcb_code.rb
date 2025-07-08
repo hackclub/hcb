@@ -183,7 +183,8 @@ class HcbCode < ApplicationRecord
           ach_transfer.try(:event).try(:id),
           check.try(:event).try(:id),
           increase_check.try(:event).try(:id),
-          disbursement.try(:event).try(:id),
+          disbursement.try(:source_event).try(:id),
+          disbursement.try(:destination_event).try(:id),
           check_deposit.try(:event).try(:id),
           bank_fee.try(:event).try(:id),
         ].compact.uniq)

@@ -605,8 +605,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
     t.datetime "deposited_at", precision: nil
     t.bigint "destination_subledger_id"
     t.bigint "source_subledger_id"
-    t.date "scheduled_on"
     t.boolean "should_charge_fee", default: false
+    t.date "scheduled_on"
+    t.bigint "authorized_by_id"
+    t.index ["authorized_by_id"], name: "index_disbursements_on_authorized_by_id"
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
@@ -2308,6 +2310,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
   add_foreign_key "comment_reactions", "users", column: "reactor_id"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
+  add_foreign_key "disbursements", "users", column: "authorized_by_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
   add_foreign_key "disbursements", "users", column: "requested_by_id"
   add_foreign_key "document_downloads", "documents"

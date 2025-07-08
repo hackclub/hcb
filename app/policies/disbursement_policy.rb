@@ -5,7 +5,7 @@ class DisbursementPolicy < ApplicationPolicy
     user.auditor?
   end
 
-  def can_send?(role: :manager)
+  def can_send?(role: :member)
     return true if user&.admin?
     return true if record.source_event.nil?
     return true if OrganizerPosition.role_at_least?(user, record.source_event, role)
@@ -13,13 +13,21 @@ class DisbursementPolicy < ApplicationPolicy
     false
   end
 
-  def can_receive?(role: :manager)
+  def can_receive?(role: :member)
     return true if user&.admin?
     return true if record.source_event&.plan&.unrestricted_disbursements_enabled?
     return true if record.destination_event.nil?
     return true if OrganizerPosition.role_at_least?(user, record.destination_event, role)
 
     false
+  end
+
+  def manager_authorize?
+    OrganizerPosition.role_at_least?(user, record.source_event, :manager)
+  end
+
+  def manager_reject?
+    OrganizerPosition.role_at_least?(user, record.source_event, :manager)
   end
 
   def new?

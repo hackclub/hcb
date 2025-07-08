@@ -1,4 +1,7 @@
 <%= form_with(local: true) do |form| %>
+  <% manager = OrganizerPosition.role_at_least?(current_user, @event, :manager) %>
+  <% member = OrganizerPosition.role_at_least?(current_user, @event, :member) %>
+
   <div
     data-controller="transfer-form"
     data-transfer-form-ach-value="<%= new_event_ach_transfer_path(@event) %>"
@@ -8,25 +11,25 @@
       <fieldset>
         <legend class="heading h2 pt2 pb2">What type of transfer?</legend>
         <div class="field field--options fit">
-          <%= link_to new_event_ach_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+          <%= link_to new_event_ach_transfer_path(@event), class: "text-decoration-none btn--form-option #{"btn--form-option--disabled" unless manager}", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "payment-transfer", size: 28 %>
             <strong>ACH transfer</strong>
           <% end %>
-          <%= link_to new_event_increase_check_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+          <%= link_to new_event_increase_check_path(@event), class: "text-decoration-none btn--form-option #{"btn--form-option--disabled" unless manager}", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "email", size: 28 %>
             <strong>Mailed check</strong>
           <% end %>
-          <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+          <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option #{"btn--form-option--disabled" unless manager}", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "web", size: 28 %>
             <strong>International wire</strong>
           <% end %>
-          <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+          <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option #{"btn--form-option--disabled" unless member}", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "bank-account", size: 28 %>
             <strong>HCB transfer</strong>
             <small>(between HCB organizations)</small>
           <% end %>
           <% if @event.plan.card_grants_enabled? %>
-            <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "create_card_grant" } do %>
+            <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option #{"btn--form-option--disabled" unless manager}", data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "create_card_grant" } do %>
               <%= inline_icon "card", size: 28 %>
               <strong>Card grant</strong>
               <small>A grant sent through an HCB card.</small>
