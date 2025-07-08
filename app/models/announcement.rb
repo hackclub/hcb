@@ -31,7 +31,7 @@ class Announcement < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  scope :draft, -> { where.not(published_at: nil) }
+  scope :published, -> { where.not(published_at: nil) }
 
   def publish!
     AnnouncementPublishedJob.new.perform_later(announcement: self)
