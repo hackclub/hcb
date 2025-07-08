@@ -27,10 +27,8 @@
         <% end %>
       <% end %>
     <% end %>
-    <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) %>
-      <%= settings_tab active: @settings_tab == "tags" do %>
-        <%= link_to "Tags", edit_event_path(@event, tab: "tags"), data: { turbo: true, turbo_action: "advance" } %>
-      <% end %>
+    <%= settings_tab active: @settings_tab == "tags" do %>
+      <%= link_to "Tags", edit_event_path(@event, tab: "tags"), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
     <%= settings_tab active: @settings_tab == "features" do %>
       <%= link_to "Feature previews", edit_event_path(@event, tab: "features"), data: { turbo: true, turbo_action: "advance" } %>

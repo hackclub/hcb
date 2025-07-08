@@ -46,7 +46,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def edit?
-    admin_or_member?
+    auditor_or_member?
   end
 
   # pinning a transaction to an event
@@ -196,6 +196,10 @@ class EventPolicy < ApplicationPolicy
 
   def auditor_or_reader?
     auditor? || reader?
+  end
+
+  def auditor_or_member?
+    auditor? || member?
   end
 
   def admin?

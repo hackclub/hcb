@@ -10,6 +10,7 @@
 #  invite_message                    :string
 #  keyword_lock                      :string
 #  merchant_lock                     :string
+#  pre_authorization_required        :boolean          default(FALSE), not null
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
 #  event_id                          :bigint           not null
 #

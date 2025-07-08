@@ -45,7 +45,9 @@ module StripeAuthorizationService
           end
 
           if cpt&.stripe_card&.card_grant&.one_time_use
-            cpt.stripe_card.freeze!
+            PaperTrail.request(whodunnit: User.system_user.id) do
+              cpt.stripe_card.freeze!
+            end
           end
         else
           unless cpt&.stripe_card&.frozen? || cpt&.stripe_card&.inactive?

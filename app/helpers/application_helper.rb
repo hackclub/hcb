@@ -396,11 +396,11 @@ module ApplicationHelper
           (inline_icon options[:button_icon]) +
           (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
         end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +
-      (content_tag :div, class: "dropdown-button__menu dropdown-button__menu--hidden", data: { "dropdown-button-target": "menu" } do
+      (content_tag :div, class: "dropdown-button__menu fade-card-hide", data: { "dropdown-button-target": "menu" } do
         content_tag :div do
           (options[:options].map do |option|
             (options[:form].radio_button options[:name], option[1], { data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +

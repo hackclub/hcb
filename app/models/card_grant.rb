@@ -4,22 +4,25 @@
 #
 # Table name: card_grants
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer
-#  category_lock   :string
-#  email           :string           not null
-#  keyword_lock    :string
-#  merchant_lock   :string
-#  purpose         :string
-#  status          :integer          default("active"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint
-#  event_id        :bigint           not null
-#  sent_by_id      :bigint           not null
-#  stripe_card_id  :bigint
-#  subledger_id    :bigint
-#  user_id         :bigint           not null
+#  id                         :bigint           not null, primary key
+#  amount_cents               :integer
+#  category_lock              :string
+#  email                      :string           not null
+#  instructions               :text
+#  keyword_lock               :string
+#  merchant_lock              :string
+#  one_time_use               :boolean
+#  pre_authorization_required :boolean          default(FALSE), not null
+#  purpose                    :string
+#  status                     :integer          default("active"), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  disbursement_id            :bigint
+#  event_id                   :bigint           not null
+#  sent_by_id                 :bigint           not null
+#  stripe_card_id             :bigint
+#  subledger_id               :bigint
+#  user_id                    :bigint           not null
 #
 # Indexes
 #
@@ -59,6 +62,9 @@ class CardGrant < ApplicationRecord
   alias_method :setting, :card_grant_setting
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
+
+  has_one :pre_authorization
+  after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
@@ -183,11 +189,11 @@ class CardGrant < ApplicationRecord
   end
 
   def expire!
-    hcb_user = User.find_by!(email: "bank@hackclub.com")
+    hcb_user = User.system_user
     cancel!(hcb_user, expired: true)
   end
 
-  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"), allow_topups: false)
+  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.system_user, allow_topups: false)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
     raise ArgumentError, "Card grant should have a positive balance." unless balance.positive? || allow_topups
 
@@ -205,7 +211,7 @@ class CardGrant < ApplicationRecord
     disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
   end
 
-  def cancel!(canceled_by = User.find_by!(email: "bank@hackclub.com"), expired: false)
+  def cancel!(canceled_by = User.system_user, expired: false)
     raise ArgumentError, "Grant is already #{status}" unless active?
 
     zero!(custom_memo: "Returning #{expired ? "expired" : "canceled"} grant to #{user.name}", requested_by: canceled_by) if balance > 0

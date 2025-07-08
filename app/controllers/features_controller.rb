@@ -8,7 +8,6 @@ class FeaturesController < ApplicationController
     transactions_background_2024_06_05: %w[🌈 🔴 🟢],
     rename_on_homepage_2023_12_06: %w[🖊️ ⚡ ⌨️],
     command_bar_2024_02_05: %w[🔍 🔎 ✨ 💸],
-    transaction_tags_2022_07_29: %w[🏷️],
     user_permissions_2024_03_09: %w[📛 🧑‍💼 🪪 🎉],
     recently_on_hcb_2024_05_23: %w[👀 🤑 🙈],
     spending_controls_2024_06_03: %w[✅ ❌ 💷],
@@ -16,6 +15,7 @@ class FeaturesController < ApplicationController
     totp_2024_06_13: %w[🔒 ⏰],
     event_home_page_redesign_2024_09_21: %w[🏠 📊 📉 💸],
     card_logos_2024_08_27: %w[🌈 💳 📸],
+    donation_tiers_2025_06_24: %w[💖 🥇 🥈 🥉]
   }.freeze
 
   def enable_feature

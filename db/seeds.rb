@@ -13,8 +13,8 @@ puts "Continuing with #{user.email}..."
 
 user.make_admin! unless user.admin?
 
-if User.find_by(email: "bank@hackclub.com").nil?
-  admin = User.create!(email: "bank@hackclub.com")
+if User.find_by(email: User::SYSTEM_USER_EMAIL).nil?
+  admin = User.create!(email: User::SYSTEM_USER_EMAIL)
   admin.make_admin!
 end
 

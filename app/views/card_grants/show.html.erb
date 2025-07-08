@@ -48,8 +48,8 @@
   <% else %>
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
-  <%# Organizers and admins' view %>
-  <% elsif @card_grant.user.admin? || organizer_signed_in? %>
+  <%# Grantee has accepted invite %>
+  <% elsif @card_grant.user.admin? || organizer_signed_in? || @card_grant.user == current_user %>
     <% if @card_grant.stripe_card %>
       <div>
         <%= render @card_grant.stripe_card %>
@@ -61,6 +61,8 @@
     <div class="flex flex-col g2">
       <%= render partial: "details", locals: { card_grant: @card_grant } %>
 
+      <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
+
       <% if @card_grant.active? && @card_grant.stripe_card %>
         <% admin_tool_if @card_grant.user != current_user do %>
           <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
@@ -71,18 +73,6 @@
     <div class="flex flex-col g2">
       <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
     </div>
-  <%# Grantee view after accepting invite %>
-  <% elsif @card_grant.user == current_user %>
-    <div>
-      <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
-      <% if @card_grant.purpose.present? %>
-        <h2><%= @card_grant.purpose %></h2>
-      <% end %>
-      <%= render @card_grant.stripe_card, headless: true, show_card_number: true %>
-      <%= render partial: "balance", locals: { card_grant: @card_grant } %>
-      <%= render partial: "actions", locals: { card_grant: @card_grant } %>
-    </div>
-    <%= render partial: "spending_instructions", locals: { card_grant: @card_grant } %>
   <% end %>
 </div>
 

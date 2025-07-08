@@ -46,7 +46,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def activate?
-    user&.admin? || record.user == user
+    user&.admin? || (record.user == user && authorized_to_activate?)
   end
 
   def cancel?
@@ -89,6 +89,10 @@ class CardGrantPolicy < ApplicationPolicy
 
   def user_in_event?
     record.event.users.include?(user)
+  end
+
+  def authorized_to_activate?
+    record.pre_authorization.nil? || record.pre_authorization.approved? || record.pre_authorization.fraudulent?
   end
 
 end
