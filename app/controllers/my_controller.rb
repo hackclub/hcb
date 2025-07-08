@@ -22,6 +22,11 @@ class MyController < ApplicationController
     redirect_back_or_to root_path
   end
 
+  def toggle_three_teens_banner
+    cookies.permanent[:hide_three_teens_banner] = 1
+    redirect_back_or_to root_path
+  end
+
   def cards
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
