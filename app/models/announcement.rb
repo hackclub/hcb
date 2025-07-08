@@ -28,15 +28,12 @@ class Announcement < ApplicationRecord
   has_paper_trail
   acts_as_paranoid
 
-  belongs_to :user
+  belongs_to :author, class_name: "User"
   belongs_to :event
-
-  alias_method :author, :user
 
   def publish
     AnnouncementPublishedJob.new.perform(announcement: self)
 
-    self.draft = false
     self.published_at = Time.now
 
     save!

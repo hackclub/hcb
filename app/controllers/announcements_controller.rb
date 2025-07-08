@@ -6,7 +6,7 @@ class AnnouncementsController < ApplicationController
   def index
     authorize @announcement
 
-    @all_announcements = Announcement.where(event: @event).order(draft: :desc, published_at: :desc, created_at: :desc)
+    @all_announcements = Announcement.where(event: @event).order(published_at: :desc, created_at: :desc)
     @announcements = @all_announcements.page(params[:page]).per(10)
 
     raise ActionController::RoutingError.new("Not Found") if !@event.is_public && @all_announcements.empty? && !organizer_signed_in?
@@ -17,19 +17,20 @@ class AnnouncementsController < ApplicationController
   end
 
   def create
-    @announcement = @event.announcements.build(params.require(:announcement).permit(:title, :content, :draft).merge(user: current_user))
+    @announcement = @event.announcements.build(params.require(:announcement).permit(:title, :content).merge(author: current_user))
 
     authorize @announcement
 
     @announcement.save!
 
-    unless @announcement.draft
+    unless params[:announcement][:draft] == "true"
       @announcement.publish
     end
 
-    flash[:success] = "Announcement successfully #{@announcement.draft ? "drafted" : "published"}!"
+    flash[:success] = "Announcement successfully #{params[:announcement][:draft] == "true" ? "drafted" : "published"}!"
 
   rescue => e
+    puts e.message
     flash[:error] = "Something went wrong. #{e.message}"
     Rails.error.report(e)
   ensure
@@ -49,7 +50,7 @@ class AnnouncementsController < ApplicationController
   def update
     authorize @announcement
 
-    @announcement.update!(params.require(:announcement).permit(:title, :content, :draft))
+    @announcement.update!(params.require(:announcement).permit(:title, :content))
 
     if params[:announcement][:autosave] != "true"
       flash[:success] = "Updated announcement"
