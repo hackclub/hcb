@@ -5,22 +5,23 @@
 # Table name: announcements
 #
 #  id           :bigint           not null, primary key
-#  content      :text
+#  content      :text             not null
 #  deleted_at   :datetime
-#  draft        :boolean
 #  published_at :datetime
-#  title        :string
+#  title        :string           not null
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
+#  author_id    :bigint           not null
 #  event_id     :bigint           not null
-#  user_id      :bigint
 #
 # Indexes
 #
-#  index_announcements_on_event_id  (event_id)
+#  index_announcements_on_author_id  (author_id)
+#  index_announcements_on_event_id   (event_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (author_id => users.id)
 #  fk_rails_...  (event_id => events.id)
 #
 class Announcement < ApplicationRecord

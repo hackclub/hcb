@@ -191,15 +191,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
   end
 
   create_table "announcements", force: :cascade do |t|
-    t.string "title"
-    t.bigint "user_id"
-    t.boolean "draft"
+    t.string "title", null: false
+    t.bigint "author_id", null: false
     t.datetime "deleted_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "content"
+    t.text "content", null: false
     t.bigint "event_id", null: false
     t.datetime "published_at"
+    t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
   end
 
@@ -2305,6 +2305,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
   add_foreign_key "announcements", "events"
+  add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
