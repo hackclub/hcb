@@ -133,7 +133,7 @@ class EventsController < ApplicationController
     @users = BreakdownEngine::Users.new(@event).run
     @tags = BreakdownEngine::Tags.new(@event).run
 
-    @empty_tags = @tags.empty? || !Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+    @empty_tags = @tags.empty?
     @empty_users = @users.empty?
 
     render partial: "events/home/tags_users", locals: { users: @users, tags: @tags, event: @event }
@@ -265,6 +265,8 @@ class EventsController < ApplicationController
       @filter = "manager"
     when "readers"
       @filter = "reader"
+    when "active_teens"
+      @filter = "active_teens" if auditor_signed_in?
     end
 
     @q = params[:q] || ""
@@ -274,10 +276,13 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-    @all_positions = @all_positions.where(role: @filter) if @filter
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
-
+    if @filter == "active_teens"
+      @all_positions = @all_positions.select { |op| op.user.teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
+    elsif @filter
+      @all_positions = @all_positions.where(role: @filter)
+    end
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
 
     @pending = @event.organizer_position_invites.pending.includes(:sender)
@@ -486,7 +491,7 @@ class EventsController < ApplicationController
     authorize @event
 
     @g_suite = @event.g_suites.first
-    @waitlist_form_submitted = GWaitlistTable.all(filter: "{OrgID} = '#{@event.id}'").any? unless Flipper.enabled?(:google_workspace, @event)
+    @waitlist_form_submitted = GWaitlistTable.all(filter: "{OrgID} = '#{@event.id}'").any? unless Flipper.enabled?(:google_workspace, @event) || Rails.env.development?
 
     if @g_suite.present?
       @results = GSuiteService::Verify.new(g_suite_id: @g_suite.id).results(skip_g_verify: true)
@@ -951,6 +956,7 @@ class EventsController < ApplicationController
       :hidden,
       :donation_page_enabled,
       :donation_page_message,
+      :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
@@ -1001,6 +1007,7 @@ class EventsController < ApplicationController
       :end,
       :donation_page_enabled,
       :donation_page_message,
+      :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
@@ -1042,7 +1049,7 @@ class EventsController < ApplicationController
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
-    if params[:tag] && Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+    if params[:tag]
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 

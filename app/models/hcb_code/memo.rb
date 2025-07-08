@@ -25,6 +25,7 @@ class HcbCode
         return fee_revenue_memo if fee_revenue?
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
         return stripe_card_memo if stripe_card? && stripe_card_memo
+        return wire_memo if wire?
 
         ct.try(:smart_memo) || pt.try(:smart_memo) || ""
       end
@@ -106,6 +107,10 @@ class HcbCode
 
       def stripe_card_memo
         YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
+      end
+
+      def wire_memo
+        "Wire to #{wire.recipient_name}"
       end
 
     end
