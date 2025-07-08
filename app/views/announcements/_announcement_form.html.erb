@@ -27,9 +27,10 @@
   <% if content.present? %>
     <div>
       <p class="italic text-muted">Your changes automatically save</p>
-      <%= link_to event_announcement_path(@event, @announcement), method: :get, class: "btn" do %>
+        
+      <button type="button" class="btn" data-action="tiptap#submit">
         <%= inline_icon "reply" %> Back
-      <% end %>
+      </button>
     </div>
   <% else %>
     <%= dropdown_button form:,

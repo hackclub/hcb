@@ -52,7 +52,7 @@ export default class extends Controller {
   }
 
   submit(autosave) {
-    this.autosaveInputTarget.value = autosave ? 'true' : 'false'
+    this.autosaveInputTarget.value = autosave === true ? 'true' : 'false'
     this.contentInputTarget.value = JSON.stringify(this.editor.getJSON())
     this.formTarget.requestSubmit()
   }
