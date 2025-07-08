@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -419,6 +419,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
     t.index ["transaction_source_type", "transaction_source_id"], name: "index_canonical_transactions_on_transaction_source"
   end
 
+  create_table "card_grant_pre_authorizations", force: :cascade do |t|
+    t.bigint "card_grant_id", null: false
+    t.string "product_url"
+    t.string "aasm_state", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "extracted_product_name"
+    t.text "extracted_product_description"
+    t.integer "extracted_product_price_cents"
+    t.integer "extracted_total_price_cents"
+    t.string "extracted_merchant_name"
+    t.text "extracted_validity_reasoning"
+    t.boolean "extracted_valid_purchase"
+    t.integer "extracted_fraud_rating"
+    t.index ["card_grant_id"], name: "index_card_grant_pre_authorizations_on_card_grant_id"
+  end
+
   create_table "card_grant_settings", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "merchant_lock"
@@ -427,6 +444,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
     t.integer "expiration_preference", default: 365, null: false
     t.string "keyword_lock"
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
+    t.boolean "pre_authorization_required", default: false, null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
   end
 
@@ -447,6 +465,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
     t.string "keyword_lock"
     t.string "purpose"
     t.boolean "one_time_use"
+    t.boolean "pre_authorization_required", default: false, null: false
+    t.text "instructions"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
@@ -868,6 +888,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
     t.boolean "cover_donation_fees", default: false
     t.string "contact_email"
     t.index ["event_id"], name: "index_event_configurations_on_event_id"
+  end
+
+  create_table "event_follows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "event_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_follows_on_event_id"
+    t.index ["user_id", "event_id"], name: "index_event_follows_on_user_id_and_event_id", unique: true
+    t.index ["user_id"], name: "index_event_follows_on_user_id"
   end
 
   create_table "event_plans", force: :cascade do |t|
@@ -1510,7 +1540,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
     t.string "program", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_raffles_on_user_id"
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -1969,6 +1998,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
     t.bigint "event_id", null: false
     t.string "emoji"
     t.index ["event_id"], name: "index_tags_on_event_id"
+    t.check_constraint "emoji IS NOT NULL", name: "tags_emoji_null"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -2287,6 +2317,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
   add_foreign_key "canonical_pending_settled_mappings", "canonical_pending_transactions"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_transactions"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
+  add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
   add_foreign_key "card_grants", "stripe_cards"
@@ -2328,6 +2359,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_24_191054) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_configurations", "events"
+  add_foreign_key "event_follows", "events"
+  add_foreign_key "event_follows", "users"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"
