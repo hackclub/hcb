@@ -87,7 +87,7 @@ class AnnouncementsController < ApplicationController
     end
 
     if params[:event_id].present?
-      @event = Event.find_by(slug: params[:event_id])
+      @event = Event.find_by!(slug: params[:event_id])
       @announcement.event = @event
     end
   end
