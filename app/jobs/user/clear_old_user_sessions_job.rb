@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class User
+class UserSession
   class ClearOldUserSessionsJob < ApplicationJob
     queue_as :low
 
