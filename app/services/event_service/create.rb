@@ -34,9 +34,9 @@ module EventService
         @emails.each do |email|
           OrganizerPositionInviteService::Create.new(event:, sender: point_of_contact, user_email: email, is_signee: @is_signee).run!
         end
-        
-        
-        event.update!(risk_level: @risk_level) if !@risk_level.blank?  
+
+
+        event.update!(risk_level: @risk_level) if @risk_level.present?
         event
       end
     end
