@@ -5,7 +5,7 @@ class AnnouncementPublishedJob < ApplicationJob
   def perform(announcement:)
     announcement.event.followers.find_each do |follower|
       AnnouncementMailer.with(
-        announcement:, 
+        announcement:,
         email: follower.email_address_with_name
       ).announcement_published.deliver_later
     end
