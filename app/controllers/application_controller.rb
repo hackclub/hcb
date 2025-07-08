@@ -29,6 +29,13 @@ class ApplicationController < ActionController::Base
     cookies.permanent[:first_visit] = 1
   end
 
+  # This cookie is used for Safari PWA prompts
+  before_action do
+    next if current_user.nil?
+  
+    @hide_three_teens_banner = cookies[:hide_three_teens_banner] == "1"
+  end
+
   before_action do
     # Disallow indexing
     response.set_header("X-Robots-Tag", "noindex")
