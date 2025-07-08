@@ -137,7 +137,7 @@ class CardGrant
                                  content: [
                                    {
                                      type: "input_text",
-                                     text: "The user was given the following instructions:\n\n#{instructions}\n\nThe user provided the following URL: #{product_url}"
+                                     text: "The user was given the following instructions:\n\n#{card_grant.instructions}\n\nThe user provided the following URL: #{product_url}"
                                    },
                                    screenshots.map { |screenshot|
                                      {
