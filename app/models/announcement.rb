@@ -45,8 +45,8 @@ class Announcement < ApplicationRecord
     renderer = ProsemirrorToHtml::Renderer.new
 
     # rubocop:disable Rails/OutputSafety
-    # The output of the render function should be safe as the prosemirror_to_html gem escapes content
     renderer.render(JSON.parse(self.content)).html_safe
+    # rubocop:enable Rails/OutputSafety
   end
 
 end
