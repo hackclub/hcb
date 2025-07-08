@@ -1,13 +1,6 @@
 <% title "Grant to #{@card_grant.user.name}" %>
 <%= render "events/nav", selected: :transfers if organizer_signed_in? %>
 
-<% if @card_grant.pre_authorization_required? && @card_grant.pre_authorization&.draft? && organizer_signed_in? %>
-  <div class="card">
-    <p class="mt-0">You were not auto redirected to the pre-authorization form because you are an organizer.</p>
-    <%= button_to "Open pre-authorization form", card_grant_pre_authorizations_path(@card_grant), class: "btn" %>
-  </div>
-<% end %>
-
 <div class="mt4 mb4 check--form flex justify-center <%= "flex-wrap" if @frame %>" style="gap: 3rem">
   <%# Grantee has pending invite %>
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
