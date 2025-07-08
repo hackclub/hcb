@@ -108,19 +108,19 @@ export default class extends Controller {
     this.editor.chain().focus().toggleCode().run()
   }
 
-  codeblock() {
+  codeBlock() {
     this.editor.chain().focus().toggleCodeBlock().run()
   }
 
-  bulletlist() {
+  bulletList() {
     this.editor.chain().focus().toggleBulletList().run()
   }
 
-  orderedlist() {
+  orderedList() {
     this.editor.chain().focus().toggleOrderedList().run()
   }
 
-  blockquote() {
+  blockQuote() {
     this.editor.chain().focus().toggleBlockquote().run()
   }
 
