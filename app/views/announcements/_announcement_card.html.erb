@@ -1,6 +1,6 @@
 <%# locals: (announcement: nil, show_event: false) %>
 
-<div class="card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft %>">
+<div class="card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft %> pb-0">
   <% if show_event %>
     <%= link_to announcement.event.name, announcement.event %>
   <% end %>
@@ -24,7 +24,7 @@
   <p class="italic my-0">
     <%= announcement.draft ? "Drafted" : "Published" %> by <%= user_mention announcement.author %> on <%= (announcement.draft ? announcement.created_at : announcement.published_at.presence || announcement.created_at).strftime("%B %e, %Y") %>
   </p>
-  <hr class="my-1 dark:!border-slate border-smoke">
+  <hr class="mt-1 mb-0 dark:!border-slate border-smoke">
 
   <%= announcement.render_html %>
 </div>

@@ -29,7 +29,7 @@
   <% if editing %>
     <%= render partial: "announcement_form", locals: { content: @announcement.content } %>
   <% else %>
-    <div class="card">
+    <div class="card py-0">
       <%= @announcement.render_html %>
     </div>
   <% end %>
