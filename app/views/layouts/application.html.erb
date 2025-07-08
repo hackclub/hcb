@@ -109,16 +109,20 @@
         </p>
       </div>
     <% end %>
-
-    <% if organizer_signed_in? && @event && (@event.activated_at || @event.created_at) >= "2025-07-03" && !@event.demo_mode? && @event.organized_by_teenagers? && @event.active_teenagers <= 3 %>
+    <% if organizer_signed_in? && @event && (@event.activated_at || @event.created_at) >= "2025-07-03" && !@event.demo_mode? && @event.organized_by_teenagers? && @event.active_teenagers <= 3 && !@hide_three_teens_banner %>
       <div class="w-100s px3 bg-red card--hover" data-behavior="hide_iframe">
         <%= link_to fillout_form("o5bgWXhPgfus", { "email" => current_user.email, "name" => current_user.name, "organization_name" => @event.name, "organization_link" => event_url(@event) }), class: "no-underline hover:underline hover:decoration-white hover:decoration-2" do %>
           <p class="h3 font-medium text-center text-balance mt2 mb0 white">
             Add three teens, get $5 each!
           </p>
         <% end %>
+        <p class="h4 text-center text-balance mt0 mb1 white">
+          For a limited time, you will recieve $5 for every new teen you invite to your organization! This is valid for up to 3 teenagers.
+        </p>
         <p class="h4 text-center text-balance mt0 mb2 white">
-          For a limited time, you will receive $5 for every new teen you invite to your organization! This is valid for up to 3 teenagers.
+          <%= link_to toggle_three_teens_banner_path, data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" }, class: "white" do %>
+            <i>Maybe later - thanks!</i>
+          <% end %>
         </p>
       </div>
     <% end %>
