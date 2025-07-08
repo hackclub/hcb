@@ -1,4 +1,4 @@
 <h1><%= @announcement.title %></h1>
-<%= @announcement.render_html.html_safe %>
+<%= @announcement.render_html %>
 <br>
 <i><%= link_to "This email was sent on behalf of #{@event.name}. If you would like to unsubscribe please click here.", event_url(@event) %></i>

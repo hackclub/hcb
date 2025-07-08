@@ -28,7 +28,7 @@
     <%= render partial: "announcement_form", locals: { content: @announcement.content } %>
   <% else %>
     <div class="card">
-      <%= @announcement.render_html.html_safe %>
+      <%= @announcement.render_html %>
     </div>
   <% end %>
 <% end %>
