@@ -16,7 +16,7 @@ class MyController < ApplicationController
     cookies[:admin_activities] = cookies[:admin_activities] == "everyone" ? "myself" : "everyone"
     redirect_to my_activities_url
   end
-  
+
   def toggle_three_teens_banner
     cookies.permanent[:hide_three_teens_banner] = 1
     redirect_back_or_to root_path
