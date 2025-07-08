@@ -49,4 +49,8 @@ class Announcement < ApplicationRecord
     # rubocop:enable Rails/OutputSafety
   end
 
+  def published?
+    published_at.nil?
+  end
+
 end
