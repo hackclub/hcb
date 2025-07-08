@@ -24,7 +24,7 @@
   <p class="italic my-0">
     <%= announcement.published_at.nil? ? "Drafted" : "Published" %> by <%= user_mention announcement.author %> on <%= (announcement.published_at.nil? ? announcement.created_at : announcement.published_at).strftime("%B %e, %Y") %>
   </p>
-  <hr class="mt-1 mb-0 dark:!border-slate border-smoke">
+  <hr class="my-1 dark:!border-slate border-smoke">
 
-  <%= announcement.render_html %>
+  <%= render partial: "announcement_body", locals: { announcement: @announcement } %>
 </div>
