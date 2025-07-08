@@ -9,17 +9,17 @@
   <div class="field">
     <%= form.label :content %>
     <%= form.hidden_field :content, data: { "tiptap-target": "contentInput" } %>
-    <div>
-      <div class="flex gap-2 card p-2 rounded-b-none dark:border-b-dark border-b-snow border-b-2 border-solid border-0">
+    <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md">
+      <div class="flex gap-2 bg-snow dark:bg-darkless p-2 rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
         <%= render partial: "announcements/format_menu" %>
       </div>
-      <div data-tiptap-target="editor" class="dark:bg-darkless bg-white p-2 rounded-md rounded-t-none"></div>
-      <p class="h5 muted mt0 mb1">
-        <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
-          <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
-        <% end %>
-      </p>
+      <div data-tiptap-target="editor" class="dark:bg-darkless bg-snow p-2 rounded-md rounded-t-none"></div>
     </div>
+    <p class="h5 muted mt0 mb1">
+      <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+        <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+      <% end %>
+    </p>
   </div>
 
   <%= form.hidden_field :autosave, data: { "tiptap-target": "autosaveInput" } %>
