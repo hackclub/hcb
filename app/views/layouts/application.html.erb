@@ -120,7 +120,7 @@
           For a limited time, you will recieve $5 for every new teen you invite to your organization! This is valid for up to 3 teenagers.
         </p>
         <p class="h4 text-center text-balance mt0 mb2 white">
-          <%= link_to toggle_three_teens_banner_path, data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" }, class: "white" do %>
+          <%= link_to toggle_three_teens_banner_path, data: { turbo: false }, method: :post, class: "white" do %>
             <i>Maybe later - thanks!</i>
           <% end %>
         </p>
