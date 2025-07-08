@@ -25,6 +25,11 @@ export default class extends Controller {
           heading: {
             levels: [1, 2, 3],
           },
+          paragraph: {
+            HTMLAttributes: {
+              class: "my-0"
+            }
+          }
         }),
         Underline,
         Placeholder.configure({
