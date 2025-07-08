@@ -103,7 +103,7 @@ class CardGrant
       end
 
       prompt = <<~PROMPT
-        You are a helpful assistant that extracts information from a provided product URL and shopping cart screenshots. Once you've extracted the necessary information, you must decide whether the purchase is a valid use of funds based on a given purpose. You must respond in the following JSON format:
+        You are a helpful assistant that extracts information from a provided product URL and shopping cart screenshots. Once you've extracted the necessary information, you must decide whether the purchase is a valid use of funds based on a set of user-facing instructions. You must respond in the following JSON format:
 
         product_name // the name of the product, if available
         product_description // a short description of the product, if available
@@ -114,6 +114,10 @@ class CardGrant
         validity_reasoning // a short explanation of why the purchase is valid or not, based on the purpose provided. This should be a concise sentence explaining the reasoning behind the decision.
         valid_purchase // a boolean value indicating whether the purchase is a valid use of funds based on the purpose provided. This should be true or false.
         fraud_rating // a number between 1 and 10, where 1 is very likely to be valid and 10 is very likely to be fraudulent.
+
+        Please make sure that both the product URL and screenshots are in line with the instructions provided to the user. If there isn't enough information, or these 3 fields are not all aligned, you should reject the purchase as fraudulent. Here are the instructions provided to the user:
+
+        #{card_grant.instructions}
       PROMPT
 
       response = conn.post("/v1/responses", {

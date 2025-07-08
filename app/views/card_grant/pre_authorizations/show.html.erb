@@ -35,6 +35,14 @@
   </div>
 <% end %>
 
+<% if @card_grant.instructions.present? %>
+  <%= render "callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
+    <p class="m-0">
+      <%= @card_grant.instructions %>
+    </p>
+  <% end %>
+<% end %>
+
 <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @pre_authorization, link_to_pre_authorization: false } %>
 
 <%= form_with model: @pre_authorization, id: "pre_authorization_form", url: card_grant_pre_authorizations_path(@card_grant), method: :patch, class: "flex flex-col", data: { turbo: true } do |form| %>

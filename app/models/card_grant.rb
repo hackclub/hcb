@@ -8,6 +8,7 @@
 #  amount_cents               :integer
 #  category_lock              :string
 #  email                      :string           not null
+#  instructions               :text
 #  keyword_lock               :string
 #  merchant_lock              :string
 #  one_time_use               :boolean
