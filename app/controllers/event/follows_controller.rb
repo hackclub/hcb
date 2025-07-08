@@ -7,7 +7,7 @@ class Event
     before_action :set_event, only: :create
 
     def create
-      if !signed_in?
+      unless signed_in?
         skip_authorization
         return redirect_to auth_users_path(return_to: event_url(@event), require_reload: true)
       end
