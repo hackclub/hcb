@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :promotions %>
 
-<% @perks_available = organizer_signed_in? && !@event.demo_mode? %>
+<% @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && organizer_signed_in? && !@event.demo_mode? %>
 
 <h1>
   Promotions &amp; perks
@@ -86,7 +86,7 @@
   </div>
 
   <p>
-    <%= link_to "The Event Helper", "https://www.theeventhelper.com/", target: :_blank %>
+    <%= link_to "The Event Helper", "https://www.theeventhelper.com/", class: ("disabled" unless @perks_available).to_s, target: :_blank %>
     is partnering with HCB to create a simplified way for your team to
     purchase event insurance. Just apply with your event details to receive a quote from the HCB team.
     All costs are directly from The Event Helper, we don't charge a fee on top.
@@ -146,14 +146,14 @@
 
   <% if @event.hackathon? %>
     <p class="mb0">
-      <%= link_to "1Password", "https://1password.com" %> is offering hackathons running on HCB
+      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %> is offering hackathons running on HCB
       a year-long 1Password plan for up to 5 people. This can handed out as a prize, however, it
       can only be claimed once per hackathon.
     </p>
   <% else %>
     <h3 class="mb0 mt0">Do you make open source software?</h3>
     <p class="mb0">
-      <%= link_to "1Password", "https://1password.com" %> is offering a lifetime 1Password Teams
+      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %> is offering a lifetime 1Password Teams
       license (up to 10 seats) to any open source project running on HCB.
     </p>
     <h3 class="mb0 mt2">Does your nonprofit do something else?</h3>
