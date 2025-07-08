@@ -5,13 +5,7 @@ class UserSession
     queue_as :low
 
     def perform
-      UserSession.where("created_at < ?", 1.year.ago).find_each do |session|
-        session.update_columns(
-          device_info: nil,
-          latitude: nil,
-          longitude: nil
-        )
-      end
+      UserSession.where("created_at < ?", 1.year.ago).find_each(&:clear_metadata!)
     end
 
   end
