@@ -11,7 +11,7 @@
       <% end %>
       <%= link_to announcement.title, event_announcement_path(announcement.event, announcement) %>
     </h2>
-    <% if announcement.user == current_user && !show_event %>
+    <% if organizer_signed_in?(as: :manager) && !show_event %>
       <div class="flex gap-2">
         <% if announcement.draft %>
           <%= pop_icon_to "send", publish_event_announcement_path(announcement.event, announcement), data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post }, class: "tooltipped success", "aria-label": "Publish draft" %>
