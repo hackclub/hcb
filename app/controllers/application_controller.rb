@@ -31,8 +31,6 @@ class ApplicationController < ActionController::Base
 
   # This cookie is used for Safari PWA prompts
   before_action do
-    next if current_user.nil?
-  
     @hide_three_teens_banner = cookies[:hide_three_teens_banner] == "1"
   end
 
