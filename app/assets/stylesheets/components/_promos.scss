@@ -147,6 +147,64 @@
   }
 }
 
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.promo-premium-border {
+  position: relative;
+  background-clip: padding-box;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    margin: -6px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--gradient-angle),
+      #ec4899,
+      #f59e0b,
+      #ef4444,
+      #ec4899
+    );
+    animation: premium-rotate-gradient linear;
+    animation-timeline: view();
+  }
+}
+
+@keyframes premium-rotate-gradient {
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+
+.promo-premium-card-bg {
+  // background: linear-gradient(160deg, #2d3748, #ec4899, #2d3748);
+  // background-size: 100% 150%;
+  // animation: scroll-gradient linear;
+  // animation-timeline: view();
+  // animation-range: entry 0% cover 100%;
+  background-color: black;
+
+  &::before {
+    content: '';
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
+    opacity: 0.20;
+    top: 0;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+}
+
 html[data-dark='true'] {
   .promo-bin {
     .card__banner--top {
