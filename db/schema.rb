@@ -43,9 +43,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
     t.bigint "payment_recipient_id"
     t.string "recipient_email"
     t.boolean "send_email_notification", default: false
+    t.boolean "same_day", default: false, null: false
     t.string "company_name"
     t.string "company_entry_description"
-    t.boolean "same_day", default: false, null: false
     t.text "routing_number_ciphertext"
     t.string "account_number_bidx"
     t.string "routing_number_bidx"
@@ -1540,7 +1540,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
     t.string "program", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
