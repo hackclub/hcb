@@ -86,6 +86,20 @@
   </div>
 <% end %>
 
+<% if !@event.demo_mode? && @event.organized_by_teenagers? %>
+  <div class="card pb0 mb3 <%= "muted" unless @perks_available %>" id="raffle">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-raffle-page">
+      <%= image_tag "https://hc-cdn.hel1.your-objectstorage.com/s/v3/24a608bb6816c14b6893ef670a1ab6c37f7447dc_raffle.svg", height: 140, class: "p-1" %>
+      <h2 class="ml-4 pt-5 pb-5 mt-2 text-center bg-black bg-opacity-75 rounded-2xl max-w-sm w-full px-4 text-balance" >
+        Teenager Organization Raffle!
+      </h2>
+    </div>
+    <p>
+      If you've got 8 or more teenagers on your account that have been active in the last 30 days, and have completed their profile, your organization automatically holds a mini-raffle, and one of your members will win an AWESOME $10 Amazon gift card!
+    </p>
+  </div>
+<% end %>
+
 <div class="card mb3" id="1password">
   <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
     <%= image_tag "1password.svg", width: 210, class: "p2" %>
