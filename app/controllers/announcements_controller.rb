@@ -44,7 +44,7 @@ class AnnouncementsController < ApplicationController
   rescue => e
     flash[:error] = "Something went wrong. #{e.message}"
     Rails.error.report(e)
-    authorize @event
+    authorize @event, :announcements?, policy_class: EventPolicy
     redirect_to event_announcements_path(@event)
   end
 
