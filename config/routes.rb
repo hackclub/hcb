@@ -575,7 +575,6 @@ Rails.application.routes.draw do
           end
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
-          get "receipt_bin", to: "receipts#receipt_bin"
           get :available_icons
         end
 
@@ -583,7 +582,7 @@ Rails.application.routes.draw do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
           resources :transactions, only: [:show, :update] do
-            resources :receipts, only: [:create, :index, :destroy]
+            resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
 
             member do
@@ -601,6 +600,7 @@ Rails.application.routes.draw do
         end
 
         resources :transactions, only: [:show]
+        resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           member do
