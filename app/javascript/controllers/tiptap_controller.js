@@ -1,11 +1,59 @@
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
-import { Editor } from '@tiptap/core'
+import { Editor, Node, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+
+const MissionStatementNode = Node.create({
+  name: 'missionStatement',
+  group: "block",
+  priority: 2000,
+  renderHTML({ HTMLAttributes }) {
+    return ['p', mergeAttributes(HTMLAttributes, { class: "missionStatement p-1 bg-white dark:bg-black rounded-md italic" }), "Your organization's mission statement will display here."]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'p',
+        getAttrs: node => node.classList.contains("missionStatement") && null
+      }
+    ]
+  },
+  addCommands() {
+    return {
+      addMissionStatement: () => ({ commands }) => {
+        return commands.insertContent({ type: this.name })
+      }
+    }
+  }
+});
+
+const DonationGoalNode = Node.create({
+  name: 'donationGoal',
+  group: "block",
+  priority: 2000,
+  renderHTML({ HTMLAttributes }) {
+    return ['div', mergeAttributes(HTMLAttributes, { class: "donationGoal flex flex-col" }), ['p', 'Your progress towards your goal will display here'], ['div', { class: 'bg-black rounded-full w-full' }]]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'div',
+        getAttrs: node => node.classList.contains("donationGoal") && null
+      }
+    ]
+  },
+  addCommands() {
+    return {
+      addDonationGoal: () => ({ commands }) => {
+        return commands.insertContent({ type: this.name })
+      }
+    }
+  }
+});
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
@@ -32,13 +80,22 @@ export default class extends Controller {
         }),
         Link,
         Image,
+        MissionStatementNode,
+        DonationGoalNode
       ],
       editorProps: {
         attributes: {
           class: 'outline-none',
         },
       },
-      content: this.hasContentValue ? JSON.parse(this.contentValue) : null,
+      content: this.hasContentValue ? this.contentValue : {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph"
+          }
+        ]
+      },
       onUpdate: () => {
         if (this.hasContentValue) {
           debouncedSubmit(true)
@@ -132,5 +189,13 @@ export default class extends Controller {
     }
 
     this.editor.chain().focus().setImage({ src: url }).run()
+  }
+
+  missionstatement() {
+    this.editor.chain().focus().addMissionStatement().run()
+  }
+
+  donationgoal() {
+    this.editor.chain().focus().addDonationGoal().run()
   }
 }

@@ -42,14 +42,6 @@ class Announcement < ApplicationRecord
     update!(published_at: Time.now)
   end
 
-  def render_html
-    renderer = ProsemirrorToHtml::Renderer.new
-
-    # rubocop:disable Rails/OutputSafety
-    renderer.render(JSON.parse(self.content)).html_safe
-    # rubocop:enable Rails/OutputSafety
-  end
-
   def draft?
     published_at.nil?
   end
