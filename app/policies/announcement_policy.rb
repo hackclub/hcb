@@ -18,7 +18,7 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def edit?
-    admin? || (record.author == user && user.reader?)
+    admin? || record.author == user
   end
 
   def update?
@@ -26,11 +26,11 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def destroy?
-    admin? || record.author == user
+    admin_or_manager?
   end
 
   def publish?
-    admin? || record.author == user
+    admin_or_manager?
   end
 
   private
