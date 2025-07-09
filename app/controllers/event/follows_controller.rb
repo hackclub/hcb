@@ -19,7 +19,7 @@ class Event
       follow = Event::Follow.new(attrs)
       authorize follow
       follow.save!
-      redirect_to event_announcements_path(@event)
+      redirect_to event_announcement_overview_path(@event)
     end
 
     def destroy
