@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 class SudoModeHandler
+  # The default preference order for authentication factors (lower is better)
+  # 0 is deliberately left available so we can use it for the user's preference
+  FACTOR_PREFERENCES = {
+    totp: 1,
+    webauthn: 2,
+    sms: 3,
+    email: 4,
+  }.freeze
+
   # @param controller_instance [ApplicationController]
   def initialize(controller_instance:)
     @controller_instance = controller_instance
@@ -26,21 +35,7 @@ class SudoModeHandler
         initial_login: current_session.initial_login
       )
 
-      # Default preference
-      factor_preference = {
-        totp: 1,
-        webauthn: 2,
-        sms: 3,
-        email: 4,
-      }
-
-      # Put the user's preference first
-      user_preference = params.dig(:_sudo, :switch_method).presence || session[:login_preference].presence
-      if user_preference.present? && factor_preference.key?(user_preference.to_sym)
-        factor_preference[user_preference.to_sym] = 0
-      end
-
-      default_factor, *additional_factors = login.available_factors.sort_by { |factor| factor_preference.fetch(factor) }
+      default_factor, *additional_factors = sorted_factors(login)
 
       # In the case where we know we're going to ask for an SMS or email code,
       # send it ahead of time so the user doesn't have to perform an additional
@@ -80,5 +75,17 @@ class SudoModeHandler
     to: :controller_instance,
     private: true
   )
+
+  def sorted_factors(login)
+    factor_preference = FACTOR_PREFERENCES
+
+    # Put the user's preference first
+    user_preference = params.dig(:_sudo, :switch_method).presence || session[:login_preference].presence
+    if user_preference.present? && factor_preference.key?(user_preference.to_sym)
+      factor_preference = factor_preference.merge(user_preference.to_sym => 0)
+    end
+
+    login.available_factors.sort_by { |factor| factor_preference.fetch(factor) }
+  end
 
 end
