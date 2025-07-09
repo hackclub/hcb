@@ -20,9 +20,15 @@
       <h3 class="text-2xl font-bold mb-0">
         It's quiet here...
       </h3>
-      <p class="text-gray-500 my-1 max-w-sm">
-        Create a new announcement to keep your followers up to date!
-      </p>
+      <% if organizer_signed_in?(as: :manager) %>
+        <p class="text-gray-500 my-1 max-w-sm">
+          Create a new announcement to keep your followers up to date!
+        </p>
+      <% else %>
+        <p class="text-gray-500 my-1 max-w-sm">
+          No announcements are posted yet.
+        </p>
+      <% end %>
     </div>
   </div>
 <% else %>
