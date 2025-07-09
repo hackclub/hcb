@@ -7,38 +7,6 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
-const MissionStatementNode = Node.create({
-  name: 'missionStatement',
-  group: 'block',
-  priority: 2000,
-  renderHTML({ HTMLAttributes }) {
-    return [
-      'p',
-      mergeAttributes(HTMLAttributes, {
-        class: 'missionStatement p-1 bg-white dark:bg-black rounded-md italic',
-      }),
-      "Your organization's mission statement will display here.",
-    ]
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'p',
-        getAttrs: node => node.classList.contains('missionStatement') && null,
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      addMissionStatement:
-        () =>
-        ({ commands }) => {
-          return commands.insertContent({ type: this.name })
-        },
-    }
-  },
-})
-
 const DonationGoalNode = Node.create({
   name: 'donationGoal',
   group: 'block',
@@ -149,7 +117,6 @@ export default class extends Controller {
             class: "max-w-full"
           }
         }),
-        MissionStatementNode,
         DonationGoalNode,
         HcbCodeNode
       ],
@@ -261,10 +228,6 @@ export default class extends Controller {
     }
 
     this.editor.chain().focus().setImage({ src: url }).run()
-  }
-
-  missionStatement() {
-    this.editor.chain().focus().addMissionStatement().run()
   }
 
   donationGoal() {
