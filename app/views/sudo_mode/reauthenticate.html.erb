@@ -73,7 +73,13 @@
     <ul>
       <% additional_factors.each do |factor| %>
         <li>
-          <%= button_tag(type: "submit", name: "_sudo[switch_method]", value: factor.to_s, class: "link-button") do %>
+          <%= button_tag(
+                type: "submit",
+                formnovalidate: true,
+                name: "_sudo[switch_method]",
+                value: factor.to_s,
+                class: "link-button"
+              ) do %>
             <% case factor %>
             <% when :email %>
               Get a login code by email
