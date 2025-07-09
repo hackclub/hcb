@@ -1,6 +1,6 @@
 <%# locals: (announcement: nil, show_event: false) %>
 
-<div class="card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft? %> pb-0">
+<div class="card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft? %>">
   <% if show_event %>
     <%= link_to announcement.event.name, announcement.event %>
   <% end %>
@@ -26,5 +26,5 @@
   </p>
   <hr class="my-1 dark:!border-slate border-smoke">
 
-  <%= render partial: "announcement_body", locals: { announcement: @announcement } %>
+  <%= render partial: "announcements/announcement_body", locals: { announcement: } %>
 </div>
