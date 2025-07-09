@@ -4,6 +4,6 @@
 
     <%= render partial: "events/unauthorized_callout", locals: { action: "create announcements" } unless policy(@announcement).new? %>
 
-    <%= render "announcement_form" %>
+    <%= render "announcements/announcement_form" %>
   <% end %>
 </section>

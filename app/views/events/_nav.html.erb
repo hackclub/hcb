@@ -26,7 +26,7 @@
       event_announcements_path(event_id: @event.slug),
       tooltip: "View your announcements",
       icon: "announcement",
-      selected: local_assigns[:selected] == :announcements if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) %>
+      selected: local_assigns[:selected] == :announcements if policy(@event).announcement_overview? %>
     <% if policy(@event).activation_flow? %>
       <% admin_tool("m0 p0 overflow-visible w-fit") do %>
         <%= dock_item "Activate",
@@ -145,7 +145,7 @@
       event_announcements_path(event_id: @event.slug),
       tooltip: "View your announcements",
       icon: "announcement",
-      selected: local_assigns[:selected] == :announcements if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) %>
+      selected: local_assigns[:selected] == :announcements if policy(@event).announcement_overview? %>
     <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
       <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="receive">
         <div class="line-height-0 relative"><%= inline_icon "support", size: 32, class: "primary" %></div>

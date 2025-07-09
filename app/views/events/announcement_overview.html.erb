@@ -28,7 +28,7 @@
 <% else %>
   <div class="flex flex-col gap-2">
     <% @announcements.each do |announcement| %>
-      <%= render partial: "announcement_card", locals: { announcement: } %>
+      <%= render partial: "announcements/announcement_card", locals: { announcement: } %>
     <% end %>
   </div>
 <% end %>
@@ -36,5 +36,5 @@
 <%= paginate @announcements %>
 
 <% if organizer_signed_in? %>
-  <%= render "announcement_modal" %>
+  <%= render "announcements/announcement_modal" %>
 <% end %>
