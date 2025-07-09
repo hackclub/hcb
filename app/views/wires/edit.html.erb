@@ -5,7 +5,7 @@
 <% page_sm %>
 
  <% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render "events/unauthorized_callout" %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: "edit a wire" } %>
 <% end %>
 
 <h2 class="mt5">Edit wire to <%= @wire.recipient_name %> (#<%= @wire.id %>)</h2>
