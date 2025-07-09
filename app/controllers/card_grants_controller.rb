@@ -25,7 +25,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -38,6 +38,62 @@ class CardGrantsController < ApplicationController
     Rails.error.report(e)
   ensure
     redirect_to event_transfers_path(@event)
+  end
+
+  def edit_overview
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_purpose
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_actions
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_balance
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_usage_restrictions
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_topup
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+  end
+
+  def edit_withdraw
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def update
@@ -67,7 +123,7 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
-    if @card_grant.pre_authorization_required? && !@card_grant.pre_authorization&.approved?
+    if @card_grant.pre_authorization_required? && (@card_grant.pre_authorization&.draft? || @card_grant.pre_authorization&.submitted? || @card_grant.pre_authorization&.rejected?) && !organizer_signed_in?
       return redirect_to card_grant_pre_authorizations_path(@card_grant)
     end
 

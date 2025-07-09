@@ -1,6 +1,6 @@
 <% disabled = !policy(@event).create_transfer? %>
 
-<% title "Send a Check" %>
+<% title "Send a check" %>
 <%= render "events/nav", selected: :transfers %>
 
 <article class="flex align-start justify-center mt2 flex-col lg:flex-row gap-8">
@@ -31,7 +31,7 @@
     <% end %>
 
     <% if @event.present? && !policy(@event).create_transfer? %>
-      <%= render "events/transfers/unauthorized_callout" %>
+      <%= render partial: "events/unauthorized_callout", locals: { action: "send a check" } %>
     <% end %>
   </aside>
 
