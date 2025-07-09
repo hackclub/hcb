@@ -191,11 +191,11 @@ export default class extends Controller {
     this.editor.chain().focus().setImage({ src: url }).run()
   }
 
-  missionstatement() {
+  missionStatement() {
     this.editor.chain().focus().addMissionStatement().run()
   }
 
-  donationgoal() {
+  donationGoal() {
     this.editor.chain().focus().addDonationGoal().run()
   }
 }
