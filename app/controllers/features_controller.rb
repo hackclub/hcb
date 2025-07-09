@@ -16,7 +16,7 @@ class FeaturesController < ApplicationController
     event_home_page_redesign_2024_09_21: %w[🏠 📊 📉 💸],
     card_logos_2024_08_27: %w[🌈 💳 📸],
     donation_tiers_2025_06_24: %w[💖 🥇 🥈 🥉],
-    organization_announcements_tier_1_2025_07_07: %w[📢📣🔔📰⚠️❗🚨🎉🥳]
+    organization_announcements_tier_1_2025_07_07: %w[📢 📣 🔔 📰 ⚠️ ❗ 🚨 🎉 🥳]
   }.freeze
 
   def enable_feature
