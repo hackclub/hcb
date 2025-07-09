@@ -38,9 +38,7 @@ class Announcement < ApplicationRecord
   def publish!
     AnnouncementPublishedJob.perform_later(announcement: self)
 
-    self.published_at = Time.now
-
-    save!
+    update!(published_at: Time.now)
   end
 
   def render_html
