@@ -18,7 +18,7 @@ class GSuite
       end
 
       begin
-        Partners::Google::GSuite::DeleteOrgUnit.new(org_unit_path: remote_org_unit_path).run
+        Partners::Google::GSuite::DeleteOrgUnit.new(org_unit_path: remote_org_unit_path).run if remote_org_unit_path.present?
         DeleteDomainJob.set(wait: 1.minute).perform_later(domain:)
       rescue => e
         # If the org unit is not found, we can ignore it
