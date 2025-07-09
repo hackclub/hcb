@@ -1,8 +1,6 @@
 @import 'basscss';
 @import 'space';
 
-@import 'components/prosemirror';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -68,4 +66,13 @@ blockquote {
 
 .info {
   color: #338eda;
+}
+
+.card {
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.border {
+  border-color: #e0e6ed;
 }
