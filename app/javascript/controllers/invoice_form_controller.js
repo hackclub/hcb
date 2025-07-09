@@ -30,9 +30,7 @@ export default class extends Controller {
       this.showNewSponsorCard()
     }
 
-    this.sponsorFormTarget.querySelectorAll('input').forEach(input => {
-      input.addEventListener('input', this.validateForm.bind(this))
-    })
+    this.sponsorFormTarget.addEventListener("change", this.validateForm.bind(this))
 
     this.validateForm()
   }
@@ -51,7 +49,7 @@ export default class extends Controller {
       document.getElementById('invoice').click()
     } else {
       this.showNewSponsorCard(false)
-      ;[...inputs].reverse().forEach(input => input.reportValidity())
+        ;[...inputs].reverse().forEach(input => input.reportValidity())
     }
   }
 
