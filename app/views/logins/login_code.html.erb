@@ -17,7 +17,7 @@
   </p>
   <%= form_tag complete_login_path(@login) do %>
     <% if Flipper.enabled?(:otp_single_input, @login.user) %>
-      <%= text_field(
+      <%= text_field_tag(
             :login_code,
             "",
             class: "otp_code",
@@ -29,11 +29,10 @@
             data: { behavior: "otp_input" }
           ) %>
     <% else %>
-      <%= text_field(
+      <%= text_field_tag(
             :login_code,
             "",
             placeholder: "Enter your login code",
-            name: "login_code",
             class: "!max-w-full w-max",
             required: true,
             autofocus: true
