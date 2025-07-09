@@ -20,6 +20,7 @@ class Event
       authorize follow
       follow.save!
       redirect_to event_announcement_overview_path(@event)
+    rescue ActiveRecord::RecordNotUnique
     end
 
     def destroy
