@@ -1,11 +1,14 @@
 <% content_for(:container_class, "container--sm py-20") %>
 
-<%= render(partial: "application/logo") %>
+<div class="flex">
+  <%= render(partial: "application/logo") %>
+</div>
+
 <%= render("logins/header", label: "Hack Club") do %>
   Confirm Access
 <% end %>
 
-<%= user_mention(current_user, class: "badge bg-muted pl-1 m-0 tooltipped tooltipped--e") %>
+<%= user_mention(current_user, class: "badge bg-muted pl-1 m-0 tooltipped") %>
 
 <%= form_tag(request.path, method: request.request_method_symbol) do %>
   <% Rack::Utils
