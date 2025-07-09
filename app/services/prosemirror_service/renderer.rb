@@ -9,7 +9,13 @@ module ProsemirrorService
         @renderer ||= create_renderer
         @event = event
 
-        @renderer.render JSON.parse(json)
+        content = @renderer.render JSON.parse(json)
+
+        <<-HTML.chomp
+          <div class="pm-content">
+            #{content}
+          </div>
+        HTML
       end
 
       def create_renderer
