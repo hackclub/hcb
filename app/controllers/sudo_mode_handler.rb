@@ -26,7 +26,7 @@ class SudoModeHandler
       ).run
 
       login.update!(authenticated_with_email: true)
-      login.update!(current_session:)
+      login.update!(user_session: current_session)
 
       current_session.reload
     else
