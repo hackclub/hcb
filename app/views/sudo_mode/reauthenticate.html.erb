@@ -20,13 +20,24 @@
 
   <%= hidden_field_tag("_sudo[login_id]", login.hashid) %>
 
+  <% code_field = ->(placeholder:) {
+       text_field_tag(
+         "_sudo[login_code]",
+         nil,
+         placeholder:,
+         required: true,
+         autofocus: true,
+         autocomplete: "one-time-code",
+       )
+     } %>
+
   <% case default_factor %>
   <% when :email %>
     <p>
       For additional security, we've just sent a login code to <%= mail_to(current_user.email, target: "_blank") %>
     </p>
 
-    <%= text_field_tag("_sudo[login_code]", nil, placeholder: "Enter your login code") %>
+    <%= code_field.call(placeholder: "Enter your login code") %>
 
     <p class="h5 muted"><em>Make sure to check your spam folder</em></p>
   <% when :sms %>
@@ -34,13 +45,13 @@
       For additional security, we've just sent a login code to your phone number ending in <%= current_user.phone_number.last(4) %>
     </p>
 
-    <%= text_field_tag("_sudo[login_code]", nil, placeholder: "Enter your login code") %>
+    <%= code_field.call(placeholder: "Enter your login code") %>
   <% when :totp %>
     <p>
       For additional security, please enter the code from your authenticator app.
     </p>
 
-    <%= text_field_tag("_sudo[login_code]", nil, placeholder: "Enter your one-time password") %>
+    <%= code_field.call(placeholder: "Enter your one-time password") %>
   <% when :webauthn %>
     <p>
       For additional security, please authenticate with your security key.
