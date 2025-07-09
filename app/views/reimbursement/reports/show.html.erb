@@ -39,7 +39,7 @@
     <% if @report.draft? && organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "delete",
                       reimbursement_report_path(@report),
-                      method: :delete,
+                      data: { turbo_confirm: "Are you sure?", turbo_method: :delete },
                       icon_size: 26,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px; background: #ec375020; color: #ec3750",
