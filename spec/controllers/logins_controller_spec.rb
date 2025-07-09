@@ -323,7 +323,7 @@ describe LoginsController do
           }
         )
 
-        expect(response).to redirect_to(totp_login_path(login))
+        expect(response).to redirect_to(backup_code_login_path(login))
         expect(flash[:error]).to include("Invalid backup code")
       end
 
