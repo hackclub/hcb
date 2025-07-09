@@ -33,7 +33,6 @@ class AnnouncementsController < ApplicationController
 
     unless params[:announcement][:draft] == "true"
       @announcement.publish!
-      confetti!
     end
 
     flash[:success] = "Announcement successfully #{params[:announcement][:draft] == "true" ? "drafted" : "published"}!"

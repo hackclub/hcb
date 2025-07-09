@@ -222,7 +222,7 @@
     <% if flash[:confetti] %>
       <script src="/brand/js-confetti.browser.js"></script>
       <script>
-        const triggerConfetti = () => {
+        document.addEventListener('DOMContentLoaded', (event) => {
           const jsConfetti = new JSConfetti()
           const emojis = <%= flash[:confetti_emojis].to_json.html_safe %>
 
@@ -235,9 +235,7 @@
               })
             }
           }, 100);
-        };
-        document.addEventListener('turbo:load', triggerConfetti)
-        document.addEventListener('DOMContentLoaded', triggerConfetti)
+        });
       </script>
     <% end %>
     <% if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
