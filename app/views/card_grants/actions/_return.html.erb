@@ -3,7 +3,7 @@
 <% return_tooltip = "Cancel this grant and return funds to the organization" %>
 <div class="tooltipped tooltipped--n" aria-label="<%= return_tooltip %>">
   <%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "btn" do %>
-    <%= inline_icon "support", size: 20 %> Return grant to <%= card_grant.event.name %>
+    <%= inline_icon "support", size: 20 %> Return grant
   <% end %>
 </div>
 

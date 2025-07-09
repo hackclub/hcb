@@ -2,7 +2,7 @@
 
 module EventService
   class Create
-    def initialize(name:, point_of_contact_id:, emails: [], is_signee: true, country: [], is_public: true, is_indexable: true, approved: false, plan: Event::Plan::Standard, organized_by_hack_clubbers: false, organized_by_teenagers: false, can_front_balance: true, demo_mode: false)
+    def initialize(name:, point_of_contact_id:, emails: [], is_signee: true, country: [], is_public: true, is_indexable: true, approved: false, plan: Event::Plan::Standard, organized_by_hack_clubbers: false, organized_by_teenagers: false, can_front_balance: true, demo_mode: false, risk_level: 0)
       @name = name
       @emails = emails
       @is_signee = is_signee
@@ -16,6 +16,7 @@ module EventService
       @organized_by_teenagers = organized_by_teenagers
       @can_front_balance = can_front_balance
       @demo_mode = demo_mode
+      @risk_level = risk_level
     end
 
     def run
@@ -51,7 +52,9 @@ module EventService
         point_of_contact_id: @point_of_contact_id,
         demo_mode: @demo_mode,
         plan: Event::Plan.new(type: @plan)
-      }
+      }.tap do |hash|
+        hash[:risk_level] = @risk_level if @risk_level.present?
+      end
     end
 
     def point_of_contact

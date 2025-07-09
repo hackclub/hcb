@@ -12,23 +12,26 @@
     <% end %>
   </div>
   <nav class="dock dock--desktop mt2 font-medium">
-    <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-      <%= dock_item "Home",
-                    event_path(id: @event.slug),
-                    tooltip: "See everything at-a-glance",
-                    icon: "home",
-                    selected: local_assigns[:selected] == :home %>
-    <% end %>
+    <%= dock_item "Home",
+                  event_path(id: @event.slug),
+                  tooltip: "See everything at-a-glance",
+                  icon: "home",
+                  selected: local_assigns[:selected] == :home if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && policy(@event).show? %>
     <%= dock_item "Transactions",
       event_transactions_path(event_id: @event.slug),
       tooltip: "View your transactions",
       icon: "transactions",
-      selected: local_assigns[:selected] == :transactions %>
+      selected: local_assigns[:selected] == :transactions if policy(@event).transactions? %>
+    <%= dock_item "Announcements",
+      event_announcements_path(event_id: @event.slug),
+      tooltip: "View your announcements",
+      icon: "announcement",
+      selected: local_assigns[:selected] == :announcements if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) %>
     <% if policy(@event).activation_flow? %>
       <% admin_tool("m0 p0 overflow-visible w-fit") do %>
         <%= dock_item "Activate",
           event_activation_flow_path(event_id: @event.slug),
-          tooltip: "Activate This Organization",
+          tooltip: "Activate this organization",
           icon: "checkmark",
           selected: local_assigns[:selected] == :activation_flow %>
         <% end %>
@@ -37,12 +40,21 @@
       <h4 class="mb0 h5 font-medium muted">Receive</h4>
       <hr>
     <% end %>
-    <%= dock_item "Donations",
-      event_donation_overview_path(event_id: @event.slug),
-      tooltip: "Receive donations online",
-      icon: "support",
-      data: { tour_step: "donations" },
-      selected: local_assigns[:selected] == :donations if policy(@event).donation_overview? %>
+    <% if policy(@event).donation_overview? %>
+      <%= dock_item "Donations",
+        event_donation_overview_path(event_id: @event.slug),
+        tooltip: "Receive donations online",
+        icon: "support",
+        data: { tour_step: "donations" },
+        selected: local_assigns[:selected] == :donations %>
+    <% elsif @event.plan.donations_enabled? %>
+      <%= dock_item "Donate",
+        start_donation_donations_path(event_name: @event.slug),
+        tooltip: "Support this organization",
+        icon: "support",
+        data: { tour_step: "donations" },
+        selected: local_assigns[:selected] == :donations %>
+    <% end %>
     <%= dock_item "Invoices",
       event_invoices_path(event_id: @event.slug),
       tooltip: "Collect sponsor payments",
@@ -89,7 +101,7 @@
       event_team_path(event_id: @event.slug),
       tooltip: "Manage your team",
       icon: "leader",
-      selected: local_assigns[:selected] == :team %>
+      selected: local_assigns[:selected] == :team if policy(@event).show? %>
     <%= if organizer_signed_in? && @event.approved?
           dock_item "Perks",
                 event_promotions_path(event_id: @event.slug),
@@ -118,7 +130,7 @@
       selected: local_assigns[:selected] == :settings if organizer_signed_in?(as: :member) %>
   </nav>
   <nav class="dock dock--mobile">
-    <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !@event.demo_mode? %>
+    <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !@event.demo_mode? && policy(@event).show? %>
       <%= dock_item "Home",
           event_path(id: @event.slug),
           tooltip: "See everything at-a-glance",
@@ -128,7 +140,12 @@
     <%= dock_item "Transactions",
       event_transactions_path(event_id: @event.slug),
       icon: "transactions",
-      selected: local_assigns[:selected] == :transactions %>
+      selected: local_assigns[:selected] == :transactions if policy(@event).transactions? %>
+    <%= dock_item "Announcements",
+      event_announcements_path(event_id: @event.slug),
+      tooltip: "View your announcements",
+      icon: "announcement",
+      selected: local_assigns[:selected] == :announcements if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) %>
     <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
       <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="receive">
         <div class="line-height-0 relative"><%= inline_icon "support", size: 32, class: "primary" %></div>
@@ -137,7 +154,11 @@
         <div class="menu__content" data-behavior="menu_content">
           <h4 class="mb0 h5 muted left-align pl1 mt1">Receive</h4>
           <div class="menu__divider"></div>
-          <%= link_to "Donations", event_donation_overview_path(@event) if policy(@event).donation_overview? %>
+          <% if policy(@event).donation_overview? %>
+            <%= link_to "Donations", event_donation_overview_path(@event) %>
+          <% elsif @event.plan.donations_enabled? %>
+            <%= link_to "Donate", start_donation_donations_path(event_name: @event.slug) %>
+          <% end %>
           <%= link_to "Invoices", event_invoices_path(@event) if @event.approved? && @event.plan.invoices_enabled? %>
           <%= link_to "Account numbers", account_number_event_path(@event) if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
           <%= link_to "Check deposits", event_check_deposits_path(@event) if policy(@event.check_deposits.build).index? %>
@@ -165,7 +186,7 @@
       <div class="menu__content" data-behavior="menu_content">
         <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
         <div class="menu__divider"></div>
-        <%= link_to "Team", event_team_path(event_id: @event.slug) %>
+        <%= link_to "Team", event_team_path(event_id: @event.slug) if policy(@event).show? %>
         <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
         <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
         <%= link_to "Documents", event_documents_path(event_id: @event.slug) if policy(@event).documentation? %>
