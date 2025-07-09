@@ -854,6 +854,7 @@ class EventsController < ApplicationController
     if @event.update(event_params.except(:files, :plan).merge({ demo_mode: false }))
       flash[:success] = "Organization successfully activated."
       redirect_to event_path(@event)
+      @event.set_airtable_status("Onboarded")
     else
       render :activation_flow, status: :unprocessable_entity
     end
