@@ -31,7 +31,7 @@
     <% end %>
 
     <% if @event.present? && !policy(@event).create_transfer? %>
-      <%= render "events/unauthorized_callout" %>
+      <%= render partial: "events/unauthorized_callout" %>
     <% end %>
   </aside>
 
