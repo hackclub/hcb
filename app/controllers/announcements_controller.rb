@@ -2,6 +2,7 @@
 
 class AnnouncementsController < ApplicationController
   before_action :set_announcement
+  before_action :set_event_follow
 
   def index
     authorize @announcement
@@ -92,6 +93,10 @@ class AnnouncementsController < ApplicationController
       @event = Event.find_by!(slug: params[:event_id])
       @announcement.event = @event
     end
+  end
+
+  def set_event_follow
+    @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
   end
 
 end
