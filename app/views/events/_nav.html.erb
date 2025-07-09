@@ -26,7 +26,7 @@
       event_announcements_path(event_id: @event.slug),
       tooltip: "View your announcements",
       icon: "announcement",
-      selected: local_assigns[:selected] == :announcements if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) %>
+      selected: local_assigns[:selected] == :announcements if policy(@event).announcement_overview? %>
     <% if policy(@event).activation_flow? %>
       <% admin_tool("m0 p0 overflow-visible w-fit") do %>
         <%= dock_item "Activate",
@@ -181,7 +181,7 @@
       <div class="menu__content" data-behavior="menu_content">
         <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
         <div class="menu__divider"></div>
-        <% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && policy(@event).show? %>      
+        <% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && policy(@event).announcement_overview? %>      
           <%= link_to "Announcements", event_announcements_path(event_id: @event.slug) %>
         <% end %>
         <%= link_to "Team", event_team_path(event_id: @event.slug) if policy(@event).show? %>

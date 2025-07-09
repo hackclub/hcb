@@ -750,6 +750,14 @@ class Event < ApplicationRecord
     end
   end
 
+  def set_airtable_status(status)
+    app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
+
+    app["Status"] = status unless app["Status"] == "Onboarded"
+
+    app.save
+  end
+
   def active_teenagers
     organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
   end
