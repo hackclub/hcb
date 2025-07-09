@@ -17,7 +17,17 @@ module ProsemirrorService
 
     def text
       goal = ProsemirrorService::Renderer.event.donation_goal
-      "<p>#{render_money goal.progress_amount_cents} / #{render_money goal.amount_cents}</p><div class=\"bg-black rounded-full w-full\"></div>"
+      percentage = goal.progress_amount_cents.to_f / goal.amount_cents
+      <<-HTML.chomp
+        <div class="donationGoal flex flex-col">
+          <p class="text-center italic"><span class="font-bold">#{render_money goal.progress_amount_cents}</span> raised of <span class="font-bold">#{render_money goal.amount_cents}</span> goal </p>
+          <div class="bg-gray-200 dark:bg-neutral-700 rounded-full w-full h-4">
+            <div class="h-full bg-primary rounded flex items-center justify-center" style="width: #{percentage * 100}%">
+              <p class="text-sm text-black">#{number_with_precision(percentage * 100, precision: 1)}%</p>
+            </div>
+          </div>
+        </div>
+      HTML
     end
 
   end

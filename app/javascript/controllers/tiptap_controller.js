@@ -9,51 +9,81 @@ import Image from '@tiptap/extension-image'
 
 const MissionStatementNode = Node.create({
   name: 'missionStatement',
-  group: "block",
+  group: 'block',
   priority: 2000,
   renderHTML({ HTMLAttributes }) {
-    return ['p', mergeAttributes(HTMLAttributes, { class: "missionStatement p-1 bg-white dark:bg-black rounded-md italic" }), "Your organization's mission statement will display here."]
+    return [
+      'p',
+      mergeAttributes(HTMLAttributes, {
+        class: 'missionStatement p-1 bg-white dark:bg-black rounded-md italic',
+      }),
+      "Your organization's mission statement will display here.",
+    ]
   },
   parseHTML() {
     return [
       {
         tag: 'p',
-        getAttrs: node => node.classList.contains("missionStatement") && null
-      }
+        getAttrs: node => node.classList.contains('missionStatement') && null,
+      },
     ]
   },
   addCommands() {
     return {
-      addMissionStatement: () => ({ commands }) => {
-        return commands.insertContent({ type: this.name })
-      }
+      addMissionStatement:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name })
+        },
     }
-  }
-});
+  },
+})
 
 const DonationGoalNode = Node.create({
   name: 'donationGoal',
-  group: "block",
+  group: 'block',
   priority: 2000,
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { class: "donationGoal flex flex-col" }), ['p', 'Your progress towards your goal will display here'], ['div', { class: 'bg-black rounded-full w-full' }]]
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, { class: 'donationGoal flex flex-col' }),
+      [
+        'p',
+        { class: 'text-center italic' },
+        'Your progress towards your goal will display here',
+      ],
+      [
+        'div',
+        { class: 'bg-gray-200 dark:bg-neutral-700 rounded-full w-full h-4' },
+        [
+          'div',
+          {
+            class:
+              'h-full bg-primary rounded w-1/2 flex items-center justify-center',
+          },
+          ['p', { class: 'text-sm text-black' }, '50%'],
+        ],
+      ],
+    ]
   },
   parseHTML() {
     return [
       {
         tag: 'div',
-        getAttrs: node => node.classList.contains("donationGoal") && null
-      }
+        getAttrs: node => node.classList.contains('donationGoal') && null,
+      },
     ]
   },
   addCommands() {
     return {
-      addDonationGoal: () => ({ commands }) => {
-        return commands.insertContent({ type: this.name })
-      }
+      addDonationGoal:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name })
+        },
     }
-  }
-});
+  },
+})
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
@@ -81,21 +111,23 @@ export default class extends Controller {
         Link,
         Image,
         MissionStatementNode,
-        DonationGoalNode
+        DonationGoalNode,
       ],
       editorProps: {
         attributes: {
           class: 'outline-none',
         },
       },
-      content: this.hasContentValue ? this.contentValue : {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph"
-          }
-        ]
-      },
+      content: this.hasContentValue
+        ? this.contentValue
+        : {
+            type: 'doc',
+            content: [
+              {
+                type: 'paragraph',
+              },
+            ],
+          },
       onUpdate: () => {
         if (this.hasContentValue) {
           debouncedSubmit(true)
