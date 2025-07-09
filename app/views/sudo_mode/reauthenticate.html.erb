@@ -11,10 +11,7 @@
 <%= user_mention(current_user, class: "badge bg-muted pl-1 m-0 tooltipped") %>
 
 <%= form_tag(request.path, method: request.request_method_symbol) do %>
-  <% Rack::Utils
-       .parse_query(request.request_parameters.to_query)
-       .reject { |name, _value| ["authenticity_token", "_method"].include?(name) || name.start_with?("_sudo") }
-       .each do |name, value| %>
+  <% forwarded_params.each do |name, value| %>
     <%= hidden_field_tag(name, value) %>
   <% end %>
 
