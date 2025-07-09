@@ -45,7 +45,7 @@ class Announcement < ApplicationRecord
     renderer = ProsemirrorToHtml::Renderer.new
 
     # rubocop:disable Rails/OutputSafety
-    renderer.render(JSON.parse(self.content)).html_safe
+    renderer.render(JSON.parse(self.content.presence || "{}")).html_safe
     # rubocop:enable Rails/OutputSafety
   end
 
