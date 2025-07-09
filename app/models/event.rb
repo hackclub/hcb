@@ -757,7 +757,7 @@ class Event < ApplicationRecord
 
     app.save
   end
-    
+
   def active_teenagers
     organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
   end
