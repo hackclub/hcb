@@ -144,7 +144,11 @@ export default class extends Controller {
           placeholder: 'Write a message to your followers...',
         }),
         Link,
-        Image,
+        Image.configure({
+          HTMLAttributes: {
+            class: "max-w-full"
+          }
+        }),
         MissionStatementNode,
         DonationGoalNode,
         HcbCodeNode

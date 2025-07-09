@@ -1,6 +1,8 @@
 @import 'basscss';
 @import 'space';
 
+@import 'components/prosemirror';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
