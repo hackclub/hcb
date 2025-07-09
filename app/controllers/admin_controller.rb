@@ -88,6 +88,7 @@ class AdminController < ApplicationController
       plan: params[:plan],
       organized_by_hack_clubbers: params[:organized_by_hack_clubbers].to_i == 1,
       organized_by_teenagers: params[:organized_by_teenagers].to_i == 1,
+      risk_level: params[:risk_level],
       demo_mode: params[:demo_mode].to_i == 1
     ).run
 
