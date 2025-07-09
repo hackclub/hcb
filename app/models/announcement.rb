@@ -34,7 +34,7 @@ class Announcement < ApplicationRecord
   scope :published, -> { where.not(published_at: nil) }
 
   def publish!
-    AnnouncementPublishedJob.new.perform_later(announcement: self)
+    AnnouncementPublishedJob.perform_later(announcement: self)
 
     self.published_at = Time.now
 
