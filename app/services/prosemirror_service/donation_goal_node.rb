@@ -8,7 +8,7 @@ module ProsemirrorService
     @tag_name = "div"
 
     def tag
-      [{ tag: self.class.tag_name, attrs: (@node.attrs || {}).merge({ class: "donationGoal flex flex-col py-2" }) }]
+      [{ tag: self.class.tag_name, attrs: (@node.attrs || {}).merge({ class: "donationGoal relative card shadow-none border flex flex-col py-2 my-2" }) }]
     end
 
     def matching
