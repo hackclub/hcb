@@ -10,6 +10,10 @@
   <span class="flex flex-grow items-center"><%= heading %></span>
 </h1>
 
+<% unless @announcement.draft? || !editing %>
+  <p class="font-bold">This announcement has already been published, and any edits will not reflect in sent emails. Emails will not be resent.</p>
+<% end %>
+
 <div class="flex justify-between items-center pb-4">
   <p class="italic my-0">
     <%= @announcement.published_at.nil? ? "Drafted" : "Published" %> by <%= user_mention @announcement.author %> on <%= (@announcement.published_at.nil? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
@@ -22,10 +26,11 @@
           <%= inline_icon "send" %>
           Publish
         <% end %>
-        <%= link_to edit_event_announcement_path(event_id: @event.slug), class: "btn flex items-center", target: "post_editor" do %>
-          <%= inline_icon "edit" %>
-          Edit
-        <% end %>
+      <% end %>
+
+      <%= link_to edit_event_announcement_path(event_id: @event.slug), class: "btn flex items-center", target: "post_editor" do %>
+        <%= inline_icon "edit" %>
+        Edit
       <% end %>
 
       <%= link_to event_announcement_path(event_id: @event.slug), class: "btn flex items-center bg-error", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
