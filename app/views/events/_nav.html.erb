@@ -181,7 +181,7 @@
       <div class="menu__content" data-behavior="menu_content">
         <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
         <div class="menu__divider"></div>
-        <% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && policy(@event).announcement_overview? %>      
+        <% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && policy(@event).announcement_overview? %>
           <%= link_to "Announcements", event_announcements_path(event_id: @event.slug) %>
         <% end %>
         <%= link_to "Team", event_team_path(event_id: @event.slug) if policy(@event).show? %>
