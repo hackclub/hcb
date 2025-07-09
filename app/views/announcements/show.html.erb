@@ -8,29 +8,33 @@
 
 <h1 class="heading">
   <span class="flex flex-grow items-center"><%= heading %></span>
-
-  <% if current_user == @announcement.author && !editing %>
-    <% if @announcement.published_at.nil? %>
-      <%= link_to publish_event_announcement_path(event_id: @event.slug), class: "btn flex items-center bg-success", data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post } do %>
-        <%= inline_icon "send" %>
-        Publish
-      <% end %>
-      <%= link_to edit_event_announcement_path(event_id: @event.slug), class: "btn flex items-center", target: "post_editor" do %>
-        <%= inline_icon "edit" %>
-        Edit
-      <% end %>
-    <% end %>
-
-    <%= link_to event_announcement_path(event_id: @event.slug), class: "btn flex items-center bg-error", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
-      <%= inline_icon "delete" %>
-      Delete
-    <% end %>
-  <% end %>
 </h1>
 
-<p class="italic mt-0">
-  <%= @announcement.published_at.nil? ? "Drafted" : "Published" %> by <%= user_mention @announcement.author %> on <%= (@announcement.published_at.nil? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
-</p>
+<div class="flex justify-between items-center pb-4">
+  <p class="italic my-0">
+    <%= @announcement.published_at.nil? ? "Drafted" : "Published" %> by <%= user_mention @announcement.author %> on <%= (@announcement.published_at.nil? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
+  </p>
+
+  <div class="flex gap-2">
+    <% if current_user == @announcement.author && !editing %>
+      <% if @announcement.published_at.nil? %>
+        <%= link_to publish_event_announcement_path(event_id: @event.slug), class: "btn flex items-center bg-success", data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post } do %>
+          <%= inline_icon "send" %>
+          Publish
+        <% end %>
+        <%= link_to edit_event_announcement_path(event_id: @event.slug), class: "btn flex items-center", target: "post_editor" do %>
+          <%= inline_icon "edit" %>
+          Edit
+        <% end %>
+      <% end %>
+
+      <%= link_to event_announcement_path(event_id: @event.slug), class: "btn flex items-center bg-error", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
+        <%= inline_icon "delete" %>
+        Delete
+      <% end %>
+    <% end %>
+  </div>
+</div>
 
 <%= turbo_frame_tag :post_editor do %>
   <% if editing %>
