@@ -28,6 +28,8 @@ class Announcement < ApplicationRecord
   has_paper_trail
   acts_as_paranoid
 
+  validates :content, presence: true
+
   belongs_to :author, class_name: "User"
   belongs_to :event
 
