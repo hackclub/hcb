@@ -406,7 +406,7 @@ class User < ApplicationRecord
 
   def redeem_backup_code!(code)
     active_backup_codes.each do |backup_code|
-      return unless backup_code.authenticate_code(code)
+      next unless backup_code.authenticate_code(code)
 
       ActiveRecord::Base.transaction do
         backup_code = User::BackupCode
