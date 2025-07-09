@@ -689,6 +689,8 @@ Rails.application.routes.draw do
 
   resources :follows, only: [:destroy], controller: "event/follows"
 
+  resources :announcements, path: "/announcements", except: [:index, :new]
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
@@ -717,15 +719,10 @@ Rails.application.routes.draw do
     put "g_suite_verify"
     get "emburse_cards", to: "events#emburse_card_overview", as: :emburse_cards_overview
     get "cards", to: "events#card_overview", as: :cards_overview
-    get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "cards/new", to: "stripe_cards#new"
+    get "announcements", to: "events#announcement_overview", as: :announcement_overview
+    get "announcements/new", to: "announcements#new"
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
-
-    resources :announcements do
-      member do
-        post "publish"
-      end
-    end
 
     resources :follows, only: [:create], controller: "event/follows"
 
