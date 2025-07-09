@@ -14,7 +14,7 @@ const DonationGoalNode = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
-      mergeAttributes(HTMLAttributes, { class: 'donationGoal flex flex-col' }),
+      mergeAttributes(HTMLAttributes, { class: 'donationGoal relative card shadow-none border flex flex-col py-2 my-2' }),
       [
         'p',
         { class: 'text-center italic' },
