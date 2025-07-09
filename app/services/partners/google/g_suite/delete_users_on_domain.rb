@@ -17,6 +17,8 @@ module Partners
           end
           begin
             res = directory_client.list_users(customer: gsuite_customer_id, domain: @domain, max_results: 500)
+            # we use a safe navigation operator here because res.users could potentially still be nil
+            # despite the list_users call not returning an error
             res.users&.each do |user|
               directory_client.delete_user(user.id)
             end
