@@ -14,7 +14,7 @@ module ProsemirrorService
     end
 
     def text
-      ProsemirrorService::Renderer.event.description
+      CGI.escape_html(ProsemirrorService::Renderer.event.description)
     end
 
   end
