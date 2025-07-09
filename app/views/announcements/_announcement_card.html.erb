@@ -1,0 +1,30 @@
+<%# locals: (announcement: nil, show_event: false) %>
+
+<div class="card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft? %>">
+  <% if show_event %>
+    <%= link_to announcement.event.name, announcement.event %>
+  <% end %>
+  <div class="flex items-center justify-between">
+    <h2 class="font-bold text-2xl my-0 no-underline text-white">
+      <% if announcement.draft? %>
+        <span class="text-orange border-orange rounded-full border-solid border-[1px] text-sm p-[6px] mr-1 no-underline">Draft</span>
+      <% end %>
+      <%= link_to announcement.title, event_announcement_path(announcement.event, announcement) %>
+    </h2>
+    <% if organizer_signed_in?(as: :manager) && !show_event %>
+      <div class="flex gap-2">
+        <% if announcement.draft? %>
+          <%= pop_icon_to "send", publish_event_announcement_path(announcement.event, announcement), data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post }, class: "tooltipped success", "aria-label": "Publish draft" %>
+        <% end %>
+        <%= pop_icon_to "edit", edit_event_announcement_path(announcement.event, announcement), class: "tooltipped", "aria-label": "Edit announcement" %>
+        <%= pop_icon_to "delete", event_announcement_path(announcement.event, announcement), data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete }, class: "error tooltipped", "aria-label": "Delete announcement" %>
+      </div>
+    <% end %>
+  </div>
+  <p class="italic my-0">
+    <%= announcement.draft? ? "Drafted" : "Published" %> by <%= user_mention announcement.author %> on <%= (announcement.draft? ? announcement.created_at : announcement.published_at).strftime("%B %e, %Y") %>
+  </p>
+  <hr class="my-1 dark:!border-slate border-smoke">
+
+  <%= render partial: "announcements/announcement_body", locals: { announcement: } %>
+</div>

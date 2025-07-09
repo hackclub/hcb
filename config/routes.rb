@@ -70,6 +70,7 @@ Rails.application.routes.draw do
     get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
 
+    get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
     get "activities", to: "my#activities", as: :my_activities
     post "toggle_admin_activities", to: "my#toggle_admin_activities", as: :toggle_admin_activities
@@ -686,6 +687,8 @@ Rails.application.routes.draw do
 
   get "/search" => "search#index"
 
+  resources :follows, only: [:destroy], controller: "event/follows"
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
@@ -716,6 +719,14 @@ Rails.application.routes.draw do
     get "cards", to: "events#card_overview", as: :cards_overview
     get "cards/new", to: "stripe_cards#new"
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
+
+    resources :announcements do
+      member do
+        post "publish"
+      end
+    end
+
+    resources :follows, only: [:create], controller: "event/follows"
 
     get "transfers/new", to: "events#new_transfer"
 
