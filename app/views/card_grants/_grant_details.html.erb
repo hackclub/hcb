@@ -5,7 +5,10 @@
     <div class="card container--md">
       <section class="details">
         <p>
-          <strong>Expiration date</strong>
+          <strong>
+            Expiration date
+            <%= inline_icon "important", size: 18, class: "error tooltipped tooltipped--e", "aria-label": "This is not your card expiration date. Your card expiration date is #{render_short_exp_date(card_grant.stripe_card)}.", style: "position: unset; display: flex;" %>
+          </strong>
           <span><%= format_date card_grant.expires_on %></span>
         </p>
 
