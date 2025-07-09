@@ -37,7 +37,7 @@
     <div class="field mb2">
       <%= form.label :tags, "Organization Tags" %>
       <br>
-      <%= form.select(:tags, EventTag::Tags.constants.map { |tag| [tag.to_s.titleize, EventTag::Tags.const_get(tag)] }, selected: params[:tags], multiple: true) %>
+      <%= form.select(:tags, EventTag::Tags::ALL.map { |tag| [tag.to_s.titleize, tag] }, selected: params[:tags], multiple: true) %>
     </div>
 
     <div class="field">

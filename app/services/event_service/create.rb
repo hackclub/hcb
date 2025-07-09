@@ -24,10 +24,11 @@ module EventService
 
       ActiveRecord::Base.transaction do
         event = ::Event.create!(attrs)
-        # ensure blank tags are not parsed
-        @tags.reject(&:blank?).each do |tag|
-          event.event_tags << ::EventTag.find_or_create_by!(name: tag)
-        end
+        @tags
+          .filter { |tag| EventTag::Tags::ALL.include?(tag) }
+          .each do |tag|
+            event.event_tags << ::EventTag.find_or_create_by!(name: tag)
+          end
 
 
         # Event aasm_state is already approved by default.
