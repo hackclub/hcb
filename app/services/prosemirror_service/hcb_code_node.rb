@@ -8,7 +8,7 @@ module ProsemirrorService
     @tag_name = "div"
 
     def tag
-      [{ tag: self.class.tag_name, attrs: (@node.attrs.to_h || {}).merge({ class: "hcbCode relative card shadow-none border flex flex-col" }) }]
+      [{ tag: self.class.tag_name, attrs: (@node.attrs.to_h || {}).merge({ class: "hcbCode relative card shadow-none border flex flex-col py-2" }) }]
     end
 
     def matching
@@ -23,7 +23,7 @@ module ProsemirrorService
       end
 
       <<-HTML.chomp
-        <p class="block font-bold m0 flex items-center g2">
+        <p class="block font-bold flex items-center gap-2 my-0">
           #{hcb_code.date.strftime("%B %e, %Y")}
           #{(hcb_code.pt&.declined? ? (badge_for "Declined", class: "bg-error m0 mr1") : (badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1")) if hcb_code.canonical_transactions.none?}
         </p>
