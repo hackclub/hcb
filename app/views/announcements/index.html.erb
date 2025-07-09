@@ -1,0 +1,40 @@
+<% title "Announcements for #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :announcements %>
+
+<h1 class="heading">
+  <span class="flex flex-grow items-center">Announcements</span>
+
+  <%= render "events/follow_button" %>
+  <% if organizer_signed_in?(as: :manager) %>
+    <%= link_to new_event_announcement_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_announcement" } do %>
+      <%= inline_icon "plus" %>
+      Create
+    <% end %>
+  <% end %>
+</h1>
+
+<% if @announcements.empty? %>
+  <div class="flex flex-1 flex-col items-center justify-center">
+    <div class="text-center">
+      <h3 class="text-2xl font-bold mb-0">
+        It's quiet here...
+      </h3>
+      <p class="text-gray-500 my-1 max-w-sm">
+        Create a new announcement to keep your followers up to date!
+      </p>
+    </div>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-2">
+    <% @announcements.each do |announcement| %>
+      <%= render partial: "announcement_card", locals: { announcement: } %>
+    <% end %>
+  </div>
+<% end %>
+
+<%= paginate @announcements %>
+
+<% if organizer_signed_in? %>
+  <%= render "announcement_modal" %>
+<% end %>

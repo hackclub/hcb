@@ -1,0 +1,40 @@
+<%# locals: (card_grant:) %>
+
+<% if card_grant.active? && (stripe_card = card_grant.stripe_card).present? %>
+  <div>
+    <div class="card container--md">
+      <section class="details">
+        <p>
+          <strong>Expiration date</strong>
+          <span><%= format_date card_grant.expires_on %></span>
+        </p>
+
+        <p>
+          <strong>Allowed merchants</strong>
+          <% if card_grant.allowed_merchants.any? %>
+            <span><%= card_grant.allowed_merchant_names.join(", ") %><br>
+              (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
+          <% else %>
+            <span>All merchants allowed</span>
+          <% end %>
+        </p>
+
+        <p>
+          <strong>Allowed categories</strong>
+          <% if (allowed_categories = card_grant.allowed_category_names.join(", ").presence) %>
+            <span><%= allowed_categories %></span>
+          <% else %>
+            <span>All categories allowed</span>
+          <% end %>
+        </p>
+
+        <% if card_grant.keyword_lock.present? %>
+          <p>
+            <strong>Merchant keyword lock</strong>
+            <span><%= card_grant.keyword_lock %></span>
+          </p>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>

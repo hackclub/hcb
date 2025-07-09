@@ -8,6 +8,24 @@ class CardGrant
       authorize @pre_authorization
     end
 
+    def organizer_approve
+      authorize @pre_authorization
+
+      @pre_authorization.mark_approved!
+
+      flash[:success] = "Pre-authorization approved"
+      redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
+    def organizer_reject
+      authorize @pre_authorization
+
+      @pre_authorization.mark_rejected!(current_user)
+
+      flash[:success] = "Pre-authorization rejected, card grant canceled"
+      redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
     def update
       authorize @pre_authorization
 

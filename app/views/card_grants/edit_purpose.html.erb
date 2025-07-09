@@ -1,3 +1,6 @@
+<turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
+  <%= render "edit_nav", active: "purpose" %>
+
 <div class="flex gap-3">
   <div>
     <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
@@ -10,7 +13,7 @@
       </div>
 
       <div class="actions">
-        <%= form.submit "Save" %>
+        <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }) %>
       </div>
     <% end %>
   </div>
@@ -22,3 +25,5 @@
     <% end %>
   </div>
 </div>
+
+</turbo-frame>
