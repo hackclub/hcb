@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_09_020702) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -43,9 +43,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
     t.bigint "payment_recipient_id"
     t.string "recipient_email"
     t.boolean "send_email_notification", default: false
-    t.boolean "same_day", default: false, null: false
     t.string "company_name"
     t.string "company_entry_description"
+    t.boolean "same_day", default: false, null: false
     t.text "routing_number_ciphertext"
     t.string "account_number_bidx"
     t.string "routing_number_bidx"
@@ -897,7 +897,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_07_203932) do
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_follows_on_event_id"
     t.index ["user_id", "event_id"], name: "index_event_follows_on_user_id_and_event_id", unique: true
-    t.index ["user_id"], name: "index_event_follows_on_user_id"
   end
 
   create_table "event_plans", force: :cascade do |t|
