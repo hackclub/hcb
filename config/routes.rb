@@ -717,6 +717,7 @@ Rails.application.routes.draw do
     put "g_suite_verify"
     get "emburse_cards", to: "events#emburse_card_overview", as: :emburse_cards_overview
     get "cards", to: "events#card_overview", as: :cards_overview
+    get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "cards/new", to: "stripe_cards#new"
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
 

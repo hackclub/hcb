@@ -11,13 +11,13 @@
       <% end %>
       <%= link_to announcement.title, event_announcement_path(announcement.event, announcement) %>
     </h2>
-    <% if organizer_signed_in?(as: :manager) && !show_event %>
+    <% if organizer_signed_in?(as: :member) && !show_event %>
       <div class="flex gap-2">
         <% if announcement.draft? %>
-          <%= pop_icon_to "send", publish_event_announcement_path(announcement.event, announcement), data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post }, class: "tooltipped success", "aria-label": "Publish draft" %>
+          <%= pop_icon_to "send", publish_event_announcement_path(announcement.event, announcement), data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post }, class: "tooltipped success", "aria-label": "Publish draft", disabled: !policy(announcement).publish? %>
         <% end %>
-        <%= pop_icon_to "edit", edit_event_announcement_path(announcement.event, announcement), class: "tooltipped", "aria-label": "Edit announcement" %>
-        <%= pop_icon_to "delete", event_announcement_path(announcement.event, announcement), data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete }, class: "error tooltipped", "aria-label": "Delete announcement" %>
+        <%= pop_icon_to "edit", edit_event_announcement_path(announcement.event, announcement), class: "tooltipped", "aria-label": "Edit announcement", disabled: !policy(announcement).edit? %>
+        <%= pop_icon_to "delete", event_announcement_path(announcement.event, announcement), data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete }, class: "error tooltipped", "aria-label": "Delete announcement", disabled: !policy(announcement).destroy? %>
       </div>
     <% end %>
   </div>

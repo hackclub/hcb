@@ -2,20 +2,8 @@
 
 class AnnouncementsController < ApplicationController
   before_action :set_event
-  before_action :set_announcement, except: [:index, :new]
+  before_action :set_announcement, except: [:new]
   before_action :set_event_follow
-
-  def index
-    @announcement = Announcement.new
-    @announcement.event = @event
-
-    authorize @announcement
-
-    @all_announcements = Announcement.where(event: @event).order(published_at: :desc, created_at: :desc)
-    @announcements = @all_announcements.page(params[:page]).per(10)
-
-    raise ActionController::RoutingError.new("Not Found") if !@event.is_public && @all_announcements.empty? && !organizer_signed_in?
-  end
 
   def new
     @announcement = Announcement.new

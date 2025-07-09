@@ -80,7 +80,7 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
-  def announcements?
+  def announcement_overview?
     Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, record)
   end
 
