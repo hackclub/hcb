@@ -85,6 +85,41 @@ const DonationGoalNode = Node.create({
   },
 })
 
+const HcbCodeNode = Node.create({
+  name: "hcbCode",
+  group: "block",
+  priority: 2000,
+  addAttributes() {
+    return {
+      code: {}
+    }
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, { class: 'hcbCode relative card shadow-none border flex flex-col' }),
+      ['p', { class: "italic", }, `Your transaction (${HTMLAttributes.code}) will appear here.`]
+    ]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'div',
+        getAttrs: node => node.classList.contains('hcbCode') && null,
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      addHcbCode:
+        (code) =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name, attrs: { code } })
+        },
+    }
+  },
+})
+
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
   static values = { content: String }
@@ -112,6 +147,7 @@ export default class extends Controller {
         Image,
         MissionStatementNode,
         DonationGoalNode,
+        HcbCodeNode
       ],
       editorProps: {
         attributes: {
@@ -229,5 +265,17 @@ export default class extends Controller {
 
   donationGoal() {
     this.editor.chain().focus().addDonationGoal().run()
+  }
+
+  hcbCode() {
+    const url = window.prompt('Transaction URL')
+
+    if (url === null || url === '') {
+      return
+    }
+
+    const code = url.split("/").at(-1)
+
+    this.editor.chain().focus().addHcbCode(code).run()
   }
 }
