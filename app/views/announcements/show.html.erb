@@ -22,7 +22,7 @@
   <div class="flex gap-2">
     <% if current_user == @announcement.author && !editing %>
       <% if @announcement.published_at.nil? %>
-        <%= link_to publish_announcement_path(@announcement), class: "btn flex items-center bg-success", data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post } do %>
+        <%= link_to announcement_publish_path(@announcement), class: "btn flex items-center bg-success", data: { turbo_confirm: "Are you sure you would like to publish this announcement?", turbo_method: :post } do %>
           <%= inline_icon "send" %>
           Publish
         <% end %>
