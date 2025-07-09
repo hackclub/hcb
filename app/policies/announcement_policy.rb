@@ -18,7 +18,7 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def edit?
-    (admin? || (record.user == user && user.reader?))
+    admin? || (record.user == user && user.reader?)
   end
 
   def update?
