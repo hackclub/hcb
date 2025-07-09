@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
 class AnnouncementsController < ApplicationController
-  before_action :set_announcement
+  before_action :set_event
+  before_action :set_announcement, except: [:index, :new]
   before_action :set_event_follow
 
   def index
+    @announcement = Announcement.new
+    @announcement.event = @event
+
     authorize @announcement
 
     @all_announcements = Announcement.where(event: @event).order(published_at: :desc, created_at: :desc)
@@ -14,6 +18,9 @@ class AnnouncementsController < ApplicationController
   end
 
   def new
+    @announcement = Announcement.new
+    @announcement.event = @event
+
     authorize @announcement
   end
 
@@ -84,14 +91,13 @@ class AnnouncementsController < ApplicationController
 
   def set_announcement
     if params[:id].present?
-      @announcement = Announcement.find(params[:id])
-    else
-      @announcement = Announcement.new
+      @announcement = @event.announcements.find(params[:id])
     end
+  end
 
+  def set_event
     if params[:event_id].present?
       @event = Event.find_by!(slug: params[:event_id])
-      @announcement.event = @event
     end
   end
 
