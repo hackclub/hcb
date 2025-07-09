@@ -105,7 +105,7 @@ class AdminController < ApplicationController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      organized_by_teenagers: application["TEEN"] == "Teen",
+      tags: [EventTag::Tags::ALL.ORGANIZED_BY_TEENAGERS] if application['TEEN'],
       demo_mode: true
     ).run
 
