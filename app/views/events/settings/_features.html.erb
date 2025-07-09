@@ -1,4 +1,13 @@
 <%= render partial: "features/preview", locals: {
+      id: "announcements-tier-one",
+      classes: ["feature-generic"],
+      feature_flag: :organization_announcements_tier_1_2025_07_07,
+      name: "Announcements",
+      description: "Post announcements and allow people to follow your organization!",
+      event: @event
+    } %>
+
+<%= render partial: "features/preview", locals: {
       id: "home-page-redesign",
       classes: ["feature-home-page-redesign"],
       feature_flag: :event_home_page_redesign_2024_09_21,
@@ -11,8 +20,8 @@
       id: "card-logo",
       classes: ["feature-generic"],
       feature_flag: :card_logos_2024_08_27,
-      name: "HCB card logo",
-      description: "Add a custom logo to every HCB card printed for your organization",
+      name: "HCB Card Logo",
+      description: "Add a custom logo to every HCB card printed for your organization.",
       event: @event
     } %>
 

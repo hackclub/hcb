@@ -14,6 +14,7 @@ class EventsController < ApplicationController
   end
   skip_before_action :signed_in_user
   before_action :set_mock_data
+  before_action :set_event_follow, only: [:show, :transactions]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
 
@@ -1114,6 +1115,10 @@ class EventsController < ApplicationController
     if params[:show_mock_data].present?
       helpers.set_mock_data!(params[:show_mock_data] == "true")
     end
+  end
+
+  def set_event_follow
+    @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
   end
 
 end
