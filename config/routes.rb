@@ -721,7 +721,7 @@ Rails.application.routes.draw do
     get "cards/new", to: "stripe_cards#new"
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
 
-    resources :announcements do
+    resources :announcements, except: :index do
       member do
         post "publish"
       end
