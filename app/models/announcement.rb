@@ -25,6 +25,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class Announcement < ApplicationRecord
+  include Hashid::Rails
   has_paper_trail
   acts_as_paranoid
 
