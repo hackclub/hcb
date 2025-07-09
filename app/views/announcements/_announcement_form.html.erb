@@ -1,6 +1,6 @@
 <%# locals: (content: nil) %>
 
-<%= form_with model: @announcement, url: @announcement.persisted? ? event_announcement_path(@event, @announcement) : event_announcements_path(@event), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-editable-value": true, "turbo-frame": "_top" }.compact do |form| %>
+<%= form_with model: @announcement, url: @announcement.persisted? ? announcement_path(@announcement) : announcements_path, data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-editable-value": true, "turbo-frame": "_top" }.compact do |form| %>
   <div class="field">
     <%= form.label :title %>
     <%= form.text_field :title, required: true, placeholder: "#{@event.name}' June Update", class: "!max-w-none w-full" %>
@@ -23,6 +23,8 @@
   </div>
 
   <%= form.hidden_field :autosave, data: { "tiptap-target": "autosaveInput" } %>
+
+  <%= form.hidden_field :event_id, value: @event.slug %>
 
   <% if content.present? %>
     <div>
