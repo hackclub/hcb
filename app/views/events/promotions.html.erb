@@ -29,7 +29,7 @@
 
 <div class="mb3 rounded-xl promo-premium-border">
   <div class="card" id="domains">
-    <div class="card__banner card__banner--top flex justify-between items-center promo-premium-card-bg">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-premium">
       <h3 class="h1 p2 my0">Premium Domains</h3>
       <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) || @event.users.where(teenager: true).active.size < 5) && @event.event_tags.where(name: "Scrapyard").none? %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
@@ -49,11 +49,11 @@
       first year. After the first year, you'll be responsible for paying to
       renew. This can only be claimed once per organization.
     </p>
-  </div>  
+  </div>
 </div>
 <div class="mb3 rounded-xl promo-premium-border">
   <div class="card" id="domains">
-    <div class="card__banner card__banner--top flex justify-between items-center promo-premium-card-bg">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-premium">
       <h3 class="h1 p2 my0 color-black">Premium Domains</h3>
       <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) || @event.users.where(teenager: true).active.size < 5) && @event.event_tags.where(name: "Scrapyard").none? %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
@@ -73,7 +73,7 @@
       first year. After the first year, you'll be responsible for paying to
       renew. This can only be claimed once per organization.
     </p>
-  </div>  
+  </div>
 </div>
 
 <div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="event-helper">
