@@ -80,6 +80,10 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  def announcements?
+    Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, record)
+  end
+
   def emburse_card_overview?
     is_public || auditor_or_reader?
   end
@@ -210,16 +214,16 @@ class EventPolicy < ApplicationPolicy
     user&.auditor?
   end
 
-  def member?
-    OrganizerPosition.role_at_least?(user, record, :member)
-  end
-
   def reader?
     OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
+  def member?
+    OrganizerPosition.role_at_least?(user, record, :member)
+  end
+
   def manager?
-    OrganizerPosition.find_by(user:, event: record)&.manager?
+    OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
   def admin_or_manager?

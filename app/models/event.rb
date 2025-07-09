@@ -239,6 +239,9 @@ class Event < ApplicationRecord
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
+  has_many :event_follows, class_name: "Event::Follow"
+  has_many :followers, through: :event_follows, source: :user
+
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
 
@@ -286,6 +289,8 @@ class Event < ApplicationRecord
 
   has_many :canonical_event_mappings, -> { on_main_ledger }
   has_many :canonical_transactions, through: :canonical_event_mappings
+
+  has_many :announcements
 
   scope :engaged, -> {
     Event.where(id: Event.joins(:canonical_transactions)

@@ -14,7 +14,7 @@
 <% end %>
 
  <% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render "events/transfers/unauthorized_callout" %>
+  <%= render "events/unauthorized_callout" %>
 <% end %>
 
 <%= render "form", ach_transfer: @ach_transfer %>
