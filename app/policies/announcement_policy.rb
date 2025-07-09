@@ -14,7 +14,7 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def show?
-    Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, record)
+    Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, record.event)
   end
 
   def edit?

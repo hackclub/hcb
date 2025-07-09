@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 class AnnouncementsController < ApplicationController
-  before_action :set_event
   before_action :set_announcement, except: [:new]
-  before_action :set_event_follow
+  before_action :set_event, except: [:new, :create]
+  before_action :set_event_follow, except: [:new, :create]
 
   def new
     @announcement = Announcement.new
-    @announcement.event = @event
+    @announcement.event = Event.find(id:)
 
     authorize @announcement
   end
@@ -15,9 +15,7 @@ class AnnouncementsController < ApplicationController
   def create
     json_content = params[:announcement][:content]
     html_content = ProsemirrorService::Renderer.render_html(json_content, @event)
-    @announcement = @event.announcements.build(params.require(:announcement).permit(:title).merge(author: current_user, content: html_content))
-
-    authorize @announcement
+    @announcement = authorize Announcement.build(announcement_params.merge(author: current_user, event: Event.friendly.find(params[:announcement][:event_id]), content: html_content))
 
     @announcement.save!
 
@@ -27,13 +25,12 @@ class AnnouncementsController < ApplicationController
 
     flash[:success] = "Announcement successfully #{params[:announcement][:draft] == "true" ? "drafted" : "published"}!"
     confetti! if @announcement.published?
-
-    redirect_to event_announcement_path(@event, @announcement)
+    redirect_to announcement_path(@announcement)
   rescue => e
     flash[:error] = "Something went wrong. #{e.message}"
     Rails.error.report(e)
     authorize @event, :announcements?, policy_class: EventPolicy
-    redirect_to event_announcements_path(@event)
+    redirect_to event_announcement_overview_path(@announcement.event)
   end
 
   def show
@@ -52,11 +49,11 @@ class AnnouncementsController < ApplicationController
     json_content = params[:announcement][:content]
     html_content = ProsemirrorService::Renderer.render_html(json_content, @event)
 
-    @announcement.update!(params.require(:announcement).permit(:title).merge(content: html_content))
+    @announcement.update!(announcement_params.merge(content: html_content))
 
     if params[:announcement][:autosave] != "true"
       flash[:success] = "Updated announcement"
-      redirect_to event_announcement_path(@event, @announcement)
+      redirect_to announcement_path(@announcement)
     end
   end
 
@@ -67,7 +64,7 @@ class AnnouncementsController < ApplicationController
 
     flash[:success] = "Deleted announcement"
 
-    redirect_to event_announcements_path(@event)
+    redirect_to event_announcement_overview_path(@event)
   end
 
   def publish
@@ -77,25 +74,27 @@ class AnnouncementsController < ApplicationController
 
     flash[:success] = "Published announcement"
 
-    redirect_to event_announcement_path(@event, @announcement)
+    redirect_to announcement_path(@announcement)
   end
 
   private
 
   def set_announcement
     if params[:id].present?
-      @announcement = @event.announcements.find(params[:id])
+      @announcement = Announcement.find(params[:id])
     end
   end
 
   def set_event
-    if params[:event_id].present?
-      @event = Event.find_by!(slug: params[:event_id])
-    end
+    @event = @announcement.event
   end
 
   def set_event_follow
     @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
+  end
+
+  def announcement_params
+    params.require(:announcement).permit(:title)
   end
 
 end
