@@ -18,9 +18,13 @@ class Event
       }
       follow = Event::Follow.new(attrs)
       authorize follow
-      follow.save!
+      begin
+        follow.save!
+      rescue ActiveRecord::RecordNotUnique
+        # Do nothing. The user already follows this event.
+      end
+
       redirect_to event_announcement_overview_path(@event)
-    rescue ActiveRecord::RecordNotUnique
     end
 
     def destroy
