@@ -6,8 +6,8 @@
   <span class="flex flex-grow items-center">Announcements</span>
 
   <%= render "events/follow_button" %>
-  <% if organizer_signed_in?(as: :manager) %>
-    <%= link_to new_event_announcement_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_announcement" } do %>
+  <% if organizer_signed_in?(as: :member) %>
+    <%= link_to new_event_announcement_path(event_id: @event.slug), class: "btn bg-success #{"disabled" if !policy(@announcement).new?}", data: { behavior: "modal_trigger", modal: "create_announcement" } do %>
       <%= inline_icon "plus" %>
       Create
     <% end %>
@@ -28,7 +28,7 @@
 <% else %>
   <div class="flex flex-col gap-2">
     <% @announcements.each do |announcement| %>
-      <%= render partial: "announcement_card", locals: { announcement: } %>
+      <%= render partial: "announcements/announcement_card", locals: { announcement: } %>
     <% end %>
   </div>
 <% end %>
@@ -36,5 +36,5 @@
 <%= paginate @announcements %>
 
 <% if organizer_signed_in? %>
-  <%= render "announcement_modal" %>
+  <%= render "announcements/announcement_modal" %>
 <% end %>
