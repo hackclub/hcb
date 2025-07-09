@@ -2,7 +2,7 @@
 
 module EventService
   class Create
-    def initialize(name:, point_of_contact_id:, emails: [], is_signee: true, country: [], is_public: true, is_indexable: true, approved: false, plan: Event::Plan::Standard, organized_by_hack_clubbers: false, organized_by_teenagers: false, can_front_balance: true, demo_mode: false, risk_level: 0)
+    def initialize(name:, point_of_contact_id:, emails: [], is_signee: true, country: [], is_public: true, is_indexable: true, approved: false, plan: Event::Plan::Standard, tags: [], can_front_balance: true, demo_mode: false, risk_level: 0)
       @name = name
       @emails = emails
       @is_signee = is_signee
@@ -12,8 +12,7 @@ module EventService
       @is_indexable = is_indexable
       @approved = approved || false
       @plan = plan
-      @organized_by_hack_clubbers = organized_by_hack_clubbers
-      @organized_by_teenagers = organized_by_teenagers
+      @tags = tags
       @can_front_balance = can_front_balance
       @demo_mode = demo_mode
       @risk_level = risk_level
@@ -25,8 +24,12 @@ module EventService
 
       ActiveRecord::Base.transaction do
         event = ::Event.create!(attrs)
-        event.event_tags << ::EventTag.find_or_create_by!(name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS) if @organized_by_hack_clubbers
-        event.event_tags << ::EventTag.find_or_create_by!(name: EventTag::Tags::ORGANIZED_BY_TEENAGERS) if @organized_by_teenagers
+        @tags
+          .filter { |tag| EventTag::Tags::ALL.include?(tag) }
+          .each do |tag|
+            event.event_tags << ::EventTag.find_or_create_by!(name: tag)
+          end
+
 
         # Event aasm_state is already approved by default.
         # event.mark_approved! if @approved
