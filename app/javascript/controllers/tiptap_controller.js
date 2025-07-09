@@ -22,14 +22,14 @@ const DonationGoalNode = Node.create({
       ],
       [
         'div',
-        { class: 'bg-gray-200 dark:bg-neutral-700 rounded-full w-full h-4' },
+        { class: 'bg-gray-200 dark:bg-neutral-700 rounded-full w-full' },
         [
           'div',
           {
             class:
               'h-full bg-primary rounded w-1/2 flex items-center justify-center',
           },
-          ['p', { class: 'text-sm text-black' }, '50%'],
+          ['p', { class: 'text-sm text-black p-[1px] my-0' }, '50%'],
         ],
       ],
     ]
