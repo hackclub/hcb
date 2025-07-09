@@ -89,7 +89,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def card_overview?
-    (is_public || auditor_or_reader?) && record.approved? && record.plan.cards_enabled?
+    show? && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -105,11 +105,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def statements?
-    is_public || auditor_or_reader?
+    show?
   end
 
   def async_balance?
-    is_public || auditor_or_reader?
+    show?
   end
 
   def create_transfer?
@@ -133,7 +133,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def transfers?
-    (is_public || auditor_or_reader?) && record.plan.transfers_enabled?
+    show? && record.plan.transfers_enabled?
   end
 
   def promotions?
@@ -141,7 +141,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements_pending_review_icon?
-    is_public || auditor_or_reader?
+    show?
   end
 
   def reimbursements?
@@ -153,7 +153,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def donation_overview?
-    (is_public || auditor_or_reader?) && record.approved? && record.plan.donations_enabled?
+    show? && record.approved? && record.plan.donations_enabled?
   end
 
   def account_number?
