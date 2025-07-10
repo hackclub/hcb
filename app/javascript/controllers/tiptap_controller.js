@@ -128,7 +128,6 @@ export default class extends Controller {
         }),
         DonationGoalNode,
         HcbCodeNode,
-        DonationSummaryNode
       ],
       editorProps: {
         attributes: {
