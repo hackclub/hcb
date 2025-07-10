@@ -24,7 +24,7 @@ module ProsemirrorService
         <ul>
           #{donations.map do |donation|
             recurring_times = donation.recurring? ? (donation.recurring_donation.donations.find_index(donation) + 1) : 0
-            "<li>#{donation.name} donated #{render_money donation.amount} #{"- this is their #{recurring_times}#{recurring_times.ordinal} monthly donation" if donation.recurring?}</li>"
+            "<li>#{CGI.escape_html(donation.name)} donated #{render_money donation.amount} #{"- this is their #{recurring_times}#{recurring_times.ordinal} monthly donation" if donation.recurring?}</li>"
           end.join}
         </ul>
       HTML
