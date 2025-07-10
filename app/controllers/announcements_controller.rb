@@ -7,7 +7,8 @@ class AnnouncementsController < ApplicationController
 
   def new
     @announcement = Announcement.new
-    @announcement.event = Event.find(id:)
+    @event = Event.friendly.find(params[:event_id])
+    @announcement.event = @event
 
     authorize @announcement
   end
