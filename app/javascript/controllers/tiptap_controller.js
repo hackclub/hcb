@@ -9,7 +9,7 @@ import Image from '@tiptap/extension-image'
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
-  static values = { content: String }
+  static values = { content: String, template: String }
 
   editor = null
 

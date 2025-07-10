@@ -327,12 +327,25 @@ class EventsController < ApplicationController
     plan_param = fixed_event_params[:plan]
     fixed_event_params.delete(:plan)
 
+    old_description = @event.description
+
     begin
       if @event.update(current_user.admin? ? fixed_event_params : fixed_user_event_params)
         if plan_param && plan_param != @event.plan&.type
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
-        flash[:success] = "Organization successfully updated."
+
+
+        if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && old_description != event_params[:description]
+          flash[:success] = {
+            text: "Organization successfully updated.",
+            link: event_announcements_new_path(@event.slug, template: :mission),
+            link_text: "Create an announcement to let your followers know!"
+          }
+        else
+          flash[:success] = "Organization successfully updated."
+        end
+
         redirect_back fallback_location: edit_event_path(@event.slug)
       else
         render :edit, status: :unprocessable_entity

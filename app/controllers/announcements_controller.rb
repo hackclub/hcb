@@ -10,6 +10,8 @@ class AnnouncementsController < ApplicationController
     @event = Event.friendly.find(params[:event_id])
     @announcement.event = @event
 
+    @template = params[:template]
+
     authorize @announcement
   end
 
