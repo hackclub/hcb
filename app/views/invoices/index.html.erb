@@ -59,10 +59,18 @@
 <table>
   <thead>
     <tr>
-      <th>Status</th>
-      <th>Date</th>
-      <th>To</th>
-      <th class="text-right">Amount</th>
+      <th>
+        <%= render "events/sort_table_header", sort: "status" %>
+      </th>
+      <th>
+        <%= render "events/sort_table_header", sort: "date", default: true %>
+      </th>
+      <th>
+        <%= render "events/sort_table_header", sort: "sponsors.name", display: "To" %>
+      </th>
+      <th>
+        <%= render "events/sort_table_header", sort: "amount_due", right: true, display: "Amount" %>
+      </th>
       <th></th>
     </tr>
   </thead>
