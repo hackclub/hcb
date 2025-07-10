@@ -14,7 +14,10 @@ const DonationGoalNode = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
-      mergeAttributes(HTMLAttributes, { class: 'donationGoal relative card shadow-none border flex flex-col py-2 my-2' }),
+      mergeAttributes(HTMLAttributes, {
+        class:
+          'donationGoal relative card shadow-none border flex flex-col py-2 my-2',
+      }),
       [
         'p',
         { class: 'text-center italic' },
@@ -54,19 +57,25 @@ const DonationGoalNode = Node.create({
 })
 
 const HcbCodeNode = Node.create({
-  name: "hcbCode",
-  group: "block",
+  name: 'hcbCode',
+  group: 'block',
   priority: 2000,
   addAttributes() {
     return {
-      code: {}
+      code: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
-      mergeAttributes(HTMLAttributes, { class: 'hcbCode relative card shadow-none border flex flex-col' }),
-      ['p', { class: "italic", }, `Your transaction (${HTMLAttributes.code}) will appear here.`]
+      mergeAttributes(HTMLAttributes, {
+        class: 'hcbCode relative card shadow-none border flex flex-col',
+      }),
+      [
+        'p',
+        { class: 'italic' },
+        `Your transaction (${HTMLAttributes.code}) will appear here.`,
+      ],
     ]
   },
   parseHTML() {
@@ -80,7 +89,7 @@ const HcbCodeNode = Node.create({
   addCommands() {
     return {
       addHcbCode:
-        (code) =>
+        code =>
         ({ commands }) => {
           return commands.insertContent({ type: this.name, attrs: { code } })
         },
@@ -114,11 +123,12 @@ export default class extends Controller {
         Link,
         Image.configure({
           HTMLAttributes: {
-            class: "max-w-full"
-          }
+            class: 'max-w-full',
+          },
         }),
         DonationGoalNode,
-        HcbCodeNode
+        HcbCodeNode,
+        DonationSummaryNode
       ],
       editorProps: {
         attributes: {
@@ -241,7 +251,7 @@ export default class extends Controller {
       return
     }
 
-    const code = url.split("/").at(-1)
+    const code = url.split('/').at(-1)
 
     this.editor.chain().focus().addHcbCode(code).run()
   }
