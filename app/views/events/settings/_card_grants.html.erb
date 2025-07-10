@@ -51,6 +51,15 @@
           <%= card_grant_setting_fields.label :expiration_preference, "Expires after..." %>
           <%= card_grant_setting_fields.select :expiration_preference, CardGrantSetting.expiration_preferences.keys, { selected: event.card_grant_setting.expiration_preference }, { disabled: } %>
         </div>
+
+        <div class="field field--checkbox mb-0">
+          <%= card_grant_setting_fields.check_box :pre_authorization_required, disabled:, switch: false %>
+          <%= card_grant_setting_fields.label :pre_authorization_required, "Enable pre-authorization before activating grants" %>
+        </div>
+        <p class="h5 muted mt0 mb-4">
+          Pre-authorization requires grant recipients to submit screenshots and a product URL before activating their card for online purchases.
+        </p>
+
       <% end %>
 
       <%= form.submit "Update", disabled: %>

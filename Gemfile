@@ -227,3 +227,5 @@ gem "rack-timeout", require: "rack/timeout/base"
 gem "irb"
 
 gem "pstore"
+
+gem "prosemirror_to_html"

@@ -6,7 +6,7 @@ A range of HCB's features are built using Stripe; including donations, invoices 
 
 We recommend creating a US Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). Once you create a Stripe account, you'll be in the default sandbox.
 
-Now that you have a Stripe account, go to the Developers menu in the bottom-left corner and click on API keys. You'll need a publishable key and a secret key - create and copy both of these into the `.env.development` file, with the names `STRIPE__TEST__PUBLISHABLE_KEY` and `STRIPE__TEST__SECRET_KEY`, respectively. Remember that if you're using the devcontainer (such as with GitHub Codespaces), you must rebuild the container after modifying the `.env.development` file to pull in the new variables.
+Now that you have a Stripe account, go to the Developers menu in the bottom-left corner and click on API keys. You'll need a publishable key and a secret key - create and copy both of these into the [`.env.development`](/.env.development) file, with the names `STRIPE__TEST__PUBLISHABLE_KEY` and `STRIPE__TEST__SECRET_KEY`, respectively. Remember that if you're using the devcontainer (such as with GitHub Codespaces), you must rebuild the container after modifying the [`.env.development`](/.env.development) file to pull in the new variables.
 
 The last thing you'll need to do whenever you're testing with Stripe is configure webhooks. Every time an action happens on Stripe, like a card charge, a webhook is sent to HCB. Since your development instance of HCB isn't publicly available, you'll need to run the local listener. [Install the Stripe CLI](https://stripe.com/docs/stripe-cli#install) and start the listener with:
 
@@ -38,7 +38,7 @@ Stripe also lets you simulate charges on an issued card! First, issue a virtual 
 
 From here, you can fill out any data you wish - most is optional. If you'd like to simulate a charge from a specific merchant, check out the [`yellow_pages` merchants file](https://github.com/hackclub/yellow_pages/blob/main/lib/yellow_pages/merchants.yaml) - this contains network IDs for a ton of common merchants.
 
-Note that this will only create an authorization, which is not the actual transaction. It will show up as a pending transaction on the transactions page. Stripe will let you capture the authorization by pressing the "Capture" button in the top-right after creating the authorization. Once you capture, you must run `TransactionEngine::NightlyJob` for HCB to mark the transaction as settled - you can do this in the Rails console:
+Note that this will only create an authorization, which is not the actual transaction. It will show up as a pending transaction on the transactions page. Stripe will let you capture the authorization by pressing the "Capture" button in the top-right after creating the authorization. Once you capture, you must run [`TransactionEngine::NightlyJob`](https://github.com/hackclub/hcb/blob/main/app/jobs/transaction_engine/nightly_job.rb) for HCB to mark the transaction as settled - you can do this in the Rails console:
 
 ```ruby
 TransactionEngine::NightlyJob.perform_now
