@@ -753,6 +753,8 @@ class Event < ApplicationRecord
   def set_airtable_status(status)
     app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
 
+    return unless app.present?
+
     app["Status"] = status unless app["Status"] == "Onboarded"
 
     app.save
