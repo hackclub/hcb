@@ -5,7 +5,7 @@
 <h1 class="flex heading items-center">
   <span class="flex-grow flex items-center flex-1">
     Announcements
-    <%= badge_for "#{@event.followers.count} #{"follower".pluralize(@event.followers.count)}", class: "bg-muted" %>
+    <%= badge_for pluralize(@event.followers.count, "follower"), class: "bg-muted" %>
   </span>
 
   <%= render "events/follow_button" %>
