@@ -10,7 +10,7 @@ class CommentsController < ApplicationController
   end
 
   def create
-    if params[:comment][:file].present? && params[:comment][:file].size > 25.megabytes
+    if comment_params[:file].present? && comment_params[:file].size > 25.megabytes
       flash[:error] = "File size must be less than 25MB"
       redirect_back(fallback_location: @commentable) and return
     end
