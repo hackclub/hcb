@@ -14,8 +14,9 @@ class AnnouncementsController < ApplicationController
 
   def create
     json_content = params[:announcement][:content]
+    @event = Event.friendly.find(params[:announcement][:event_id])
     html_content = ProsemirrorService::Renderer.render_html(json_content, @event)
-    @announcement = authorize Announcement.build(announcement_params.merge(author: current_user, event: Event.friendly.find(params[:announcement][:event_id]), content: html_content))
+    @announcement = authorize Announcement.build(announcement_params.merge(author: current_user, event: @event, content: html_content))
 
     @announcement.save!
 
@@ -30,7 +31,7 @@ class AnnouncementsController < ApplicationController
     flash[:error] = "Something went wrong. #{e.message}"
     Rails.error.report(e)
     authorize @event, :announcement_overview?, policy_class: EventPolicy
-    redirect_to event_announcement_overview_path(@announcement.event)
+    redirect_to event_announcement_overview_path(@event)
   end
 
   def show
