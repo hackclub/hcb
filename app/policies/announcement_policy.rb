@@ -18,19 +18,19 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def edit?
-    admin? || (record.user == user && user.reader?)
+    admin? || record.author == user
   end
 
   def update?
-    admin? || record.user == user
+    admin? || record.author == user
   end
 
   def destroy?
-    admin? || record.user == user
+    admin_or_manager?
   end
 
   def publish?
-    admin? || record.user == user
+    admin_or_manager?
   end
 
   private

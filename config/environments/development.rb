@@ -108,4 +108,7 @@ Rails.application.configure do
     Bullet.rails_logger  = true
   end
 
+  if ENV["RAILS_LOG_TO_STDOUT"].present?
+    config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new($stdout))
+  end
 end
