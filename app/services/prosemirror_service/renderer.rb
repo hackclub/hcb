@@ -3,11 +3,8 @@
 module ProsemirrorService
   class Renderer
     class << self
-      attr_reader :event
-
-      def render_html(json, event)
+      def render_html(json)
         @renderer ||= create_renderer
-        @event = event
 
         content = @renderer.render JSON.parse(json)
 

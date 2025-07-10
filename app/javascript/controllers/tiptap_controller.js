@@ -11,6 +11,11 @@ const DonationGoalNode = Node.create({
   name: 'donationGoal',
   group: 'block',
   priority: 2000,
+  addAttributes() {
+    return {
+      event: {}
+    }
+  },
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
@@ -48,9 +53,9 @@ const DonationGoalNode = Node.create({
   addCommands() {
     return {
       addDonationGoal:
-        () =>
+        (event) =>
         ({ commands }) => {
-          return commands.insertContent({ type: this.name })
+          return commands.insertContent({ type: this.name, attrs: { event } })
         },
     }
   },
@@ -63,6 +68,7 @@ const HcbCodeNode = Node.create({
   addAttributes() {
     return {
       code: {},
+      event: {}
     }
   },
   renderHTML({ HTMLAttributes }) {
@@ -90,9 +96,9 @@ const HcbCodeNode = Node.create({
   addCommands() {
     return {
       addHcbCode:
-        code =>
+        (event, code) =>
         ({ commands }) => {
-          return commands.insertContent({ type: this.name, attrs: { code } })
+          return commands.insertContent({ type: this.name, attrs: { event, code } })
         },
     }
   },
@@ -102,6 +108,11 @@ const DonationSummaryNode = Node.create({
   name: 'donationSummary',
   group: 'block',
   priority: 2000,
+  addAttributes() {
+    return {
+      event: {}
+    }
+  },
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
@@ -127,9 +138,9 @@ const DonationSummaryNode = Node.create({
   addCommands() {
     return {
       addDonationSummary:
-        () =>
+        (event) =>
         ({ commands }) => {
-          return commands.insertContent({ type: this.name })
+          return commands.insertContent({ type: this.name, attrs: { event } })
         },
     }
   },
@@ -137,7 +148,7 @@ const DonationSummaryNode = Node.create({
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
-  static values = { content: String }
+  static values = { content: String, event: String }
 
   editor = null
 
@@ -279,7 +290,7 @@ export default class extends Controller {
   }
 
   donationGoal() {
-    this.editor.chain().focus().addDonationGoal().run()
+    this.editor.chain().focus().addDonationGoal(this.eventValue).run()
   }
 
   hcbCode() {
@@ -291,10 +302,10 @@ export default class extends Controller {
 
     const code = url.split('/').at(-1)
 
-    this.editor.chain().focus().addHcbCode(code).run()
+    this.editor.chain().focus().addHcbCode(this.eventValue, code).run()
   }
 
   donationSummary() {
-    this.editor.chain().focus().addDonationSummary().run()
+    this.editor.chain().focus().addDonationSummary(this.eventValue).run()
   }
 }

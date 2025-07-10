@@ -8,7 +8,7 @@ module ProsemirrorService
     @tag_name = "div"
 
     def tag
-      [{ tag: self.class.tag_name, attrs: (@node.attrs || {}).merge({ class: "donationSummary relative card shadow-none border flex flex-col py-2 my-2" }) }]
+      [{ tag: self.class.tag_name, attrs: (@node.attrs.to_h || {}).merge({ class: "donationSummary relative card shadow-none border flex flex-col py-2 my-2" }) }]
     end
 
     def matching
@@ -16,7 +16,8 @@ module ProsemirrorService
     end
 
     def text
-      event = ProsemirrorService::Renderer.event
+      event = Event.find(@node.attrs.event.to_i)
+
       donations = event.donations.where(aasm_state: [:in_transit, :deposited], created_at: 1.month.ago..).order(:created_at)
       total = donations.sum(:amount)
 

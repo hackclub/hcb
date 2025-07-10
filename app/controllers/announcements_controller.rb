@@ -15,7 +15,7 @@ class AnnouncementsController < ApplicationController
   def create
     json_content = params[:announcement][:content]
     @event = Event.friendly.find(params[:announcement][:event_id])
-    html_content = ProsemirrorService::Renderer.render_html(json_content, @event)
+    html_content = ProsemirrorService::Renderer.render_html(json_content)
     @announcement = authorize Announcement.build(announcement_params.merge(author: current_user, event: @event, content: html_content))
 
     @announcement.save!
@@ -48,7 +48,7 @@ class AnnouncementsController < ApplicationController
     authorize @announcement
 
     json_content = params[:announcement][:content]
-    html_content = ProsemirrorService::Renderer.render_html(json_content, @event)
+    html_content = ProsemirrorService::Renderer.render_html(json_content)
 
     @announcement.update!(announcement_params.merge(content: html_content))
 

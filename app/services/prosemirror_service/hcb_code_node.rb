@@ -16,9 +16,11 @@ module ProsemirrorService
     end
 
     def text
+      event = Event.find(@node.attrs.event.to_i)
+
       hcb_code = HcbCode.find_by_hashid(@node.attrs.code)
 
-      AnnouncementsController.renderer.render partial: "announcements/nodes/hcb_code", locals: { hcb_code:, event: ProsemirrorService::Renderer.event }
+      AnnouncementsController.renderer.render partial: "announcements/nodes/hcb_code", locals: { hcb_code:, event: }
     end
 
   end
