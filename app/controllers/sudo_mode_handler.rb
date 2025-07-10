@@ -10,61 +10,74 @@ class SudoModeHandler
     email: 4,
   }.freeze
 
+  Params = Struct.new(
+    # When the form is submitted, `submit_method` determines which
+    # authentication method the user selected, which in turn determines whether
+    # `login_code` or webauthn_response` is relevant
+    :submit_method,
+    :login_code,
+    :webauthn_response,
+    # When the user first sees the reauthentication page we create a login for
+    # them whose ID is passed around over subsequent operations. It is required
+    # when completing the form.
+    :login_id,
+    # When the user clicks on an alternate authentication method, the form will be
+    # submitted with this param indicating which method they chose.
+    :switch_method,
+    keyword_init: true
+  )
+
   # @param controller_instance [ApplicationController]
   def initialize(controller_instance:)
     @controller_instance = controller_instance
   end
 
   def call
-    if params[:_sudo] && params[:_sudo][:method]
-      login = Login.incomplete.active.find_by_hashid!(params[:_sudo][:login_id])
+    unless sudo_params.submit_method.present?
+      render_reauthentication_page
+      return
+    end
 
-      UserService::ExchangeLoginCodeForUser.new(
-        user_id: current_user.id,
-        login_code: params[:_sudo][:login_code],
-        sms: false,
-      ).run
+    login = Login.incomplete.active.find_by_hashid(sudo_params.login_id)
 
-      login.update!(authenticated_with_email: true)
-      login.update!(user_session: current_session)
+    # If the login doesn't exist, was completed, or has expired, treat this as a
+    # new request
+    unless login
+      flash.now[:error] = "Login has expired. Please try again."
+      render_reauthentication_page
+      return
+    end
 
-      current_session.reload
-    else
-      login = Login.create!(
-        user: current_user,
-        initial_login: current_session.initial_login
-      )
+    service = ProcessLoginService.new(login:)
 
-      default_factor, *additional_factors = sorted_factors(login)
-
-      # In the case where we know we're going to ask for an SMS or email code,
-      # send it ahead of time so the user doesn't have to perform an additional
-      # step
-      if [:sms, :email].include?(default_factor)
-        LoginCodeService::Request.new(
-          email: current_user.email,
-          sms: default_factor == :sms,
-          ip_address: request.remote_ip,
-          user_agent: request.user_agent
-        ).run
+    ok =
+      case sudo_params.submit_method
+      when "email", "sms"
+        service.process_login_code(
+          code: sudo_params.login_code,
+          sms: sudo_params.submit_method == "sms"
+        )
+      when "totp"
+        service.process_totp(
+          code: sudo_params.login_code
+        )
+      when "webauthn"
+        service.process_webauthn(
+          raw_credential: sudo_params.webauthn_response,
+          challenge: session[:webauthn_challenge]
+        )
+      else
+        raise ActionController::ParameterMissing(:submit_method)
       end
 
-      # Remove extra content from the layout so we only have the
-      # reauthentication form on the page.
-      controller_instance.instance_variable_set(:@no_app_shell, true)
-
-      controller_instance.render(
-        template: "sudo_mode/reauthenticate",
-        layout: "application",
-        locals: {
-          login:,
-          additional_factors:,
-          default_factor:,
-          forwarded_params:
-        },
-        status: :unprocessable_entity
-      )
+    unless ok
+      flash.now[:error] = service.errors.full_messages.to_sentence
+      render_reauthentication_page(login:)
+      return
     end
+
+    login.update!(user_session: current_session)
+    current_session.reload
   end
 
   private
@@ -77,15 +90,36 @@ class SudoModeHandler
     :params,
     :session,
     :request,
+    :flash,
     to: :controller_instance,
     private: true
   )
+
+  def sudo_params
+    @sudo_params ||= begin
+      nested = params[:_sudo]
+
+      if nested.is_a?(ActionController::Parameters)
+        Params.new(
+          **nested.permit(
+            :submit_method,
+            :switch_method,
+            :login_id,
+            :login_code,
+            :webauthn_response,
+          )
+        )
+      else
+        Params.new
+      end
+    end
+  end
 
   def sorted_factors(login)
     factor_preference = FACTOR_PREFERENCES
 
     # Put the user's preference first
-    user_preference = params.dig(:_sudo, :switch_method).presence || session[:login_preference].presence
+    user_preference = sudo_params.switch_method.presence || session[:login_preference].presence
     if user_preference.present? && factor_preference.key?(user_preference.to_sym)
       factor_preference = factor_preference.merge(user_preference.to_sym => 0)
     end
@@ -109,6 +143,52 @@ class SudoModeHandler
           name.start_with?("_sudo")
         end
       end
+  end
+
+  def find_or_create_login!
+    existing =
+      if sudo_params.login_id.present?
+        Login.incomplete.active.find_by_hashid(sudo_params.login_id)
+      end
+
+    return existing if existing
+
+    Login.create!(
+      user: current_user,
+      initial_login: current_session.initial_login
+    )
+  end
+
+  def render_reauthentication_page(login: find_or_create_login!)
+    default_factor, *additional_factors = sorted_factors(login)
+
+    # In the case where we know we're going to ask for an SMS or email code,
+    # send it ahead of time so the user doesn't have to perform an additional
+    # step
+    if [:sms, :email].include?(default_factor)
+      LoginCodeService::Request.new(
+        email: current_user.email,
+        sms: default_factor == :sms,
+        ip_address: request.remote_ip,
+        user_agent: request.user_agent
+      ).run
+    end
+
+    # Remove extra content from the layout so we only have the
+    # reauthentication form on the page.
+    controller_instance.instance_variable_set(:@no_app_shell, true)
+
+    controller_instance.render(
+      template: "sudo_mode/reauthenticate",
+      layout: "application",
+      locals: {
+        login:,
+        additional_factors:,
+        default_factor:,
+        forwarded_params:
+      },
+      status: :unprocessable_entity
+    )
   end
 
 end
