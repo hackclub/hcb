@@ -18,16 +18,9 @@ module ProsemirrorService
     def text
       event = ProsemirrorService::Renderer.event
       donations = event.donations.where(aasm_state: [:in_transit, :deposited], created_at: 1.month.ago..).order(:created_at)
+      total = donations.sum(:amount)
 
-      <<-HTML.chomp
-        <p class="font-bold">Donation summary for #{1.month.ago.strftime("%B %e, %Y")} - #{Time.now.strftime("%B %e, %Y")}</p>
-        <ul>
-          #{donations.map do |donation|
-            recurring_times = donation.recurring? ? (donation.recurring_donation.donations.find_index(donation) + 1) : 0
-            "<li>#{CGI.escape_html(donation.name)} donated #{render_money donation.amount} #{"- this is their #{recurring_times}#{recurring_times.ordinal} monthly donation" if donation.recurring?}</li>"
-          end.join}
-        </ul>
-      HTML
+      AnnouncementsController.renderer.render partial: "announcements/nodes/donation_summary", locals: { donations:, total: }
     end
 
   end
