@@ -426,7 +426,7 @@ class User < ApplicationRecord
   end
 
   def disable_backup_codes!
-    Base.transaction do
+    ActiveRecord::Base.transaction do
       backup_codes.previewed.destroy_all
       active_backup_codes.map(&:mark_discarded!)
     end
