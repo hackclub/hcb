@@ -30,7 +30,7 @@ class User
 
     belongs_to :user
 
-    validates :code_digest, presence: true, uniqueness: true
+    validates :code_digest, presence: true
 
     aasm do
       state :previewed, initial: true
