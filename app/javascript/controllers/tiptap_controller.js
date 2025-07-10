@@ -80,7 +80,7 @@ const HcbCodeNode = Node.create({
       }),
       [
         'p',
-        { class: 'italic' },
+        { class: 'italic text-center' },
         `Your transaction (${HTMLAttributes.code}) will appear here.`,
       ],
     ]
@@ -125,7 +125,7 @@ const DonationSummaryNode = Node.create({
       }),
       [
         'p',
-        { class: 'italic' },
+        { class: 'italic text-center' },
         'A donation summary for the last month will appear here.',
       ],
     ]
