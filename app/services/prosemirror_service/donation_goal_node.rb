@@ -19,7 +19,7 @@ module ProsemirrorService
       event = Event.find(@node.attrs.event.to_i)
 
       goal = event.donation_goal
-      percentage = goal.progress_amount_cents.to_f / goal.amount_cents
+      percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
 
       AnnouncementsController.renderer.render partial: "announcements/nodes/donation_goal", locals: { goal:, percentage: }
     end
