@@ -89,7 +89,7 @@ export default class extends Controller {
         this.errorTarget.classList.remove('display-none')
 
         console.error(e)
-        appsignal?.sendError(e)
+        appsignal.sendError(e)
       }
     }
   }

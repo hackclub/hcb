@@ -32,7 +32,7 @@ function extractId(dataTransfer) {
       receiptId = imageElement.getAttribute('data-receipt-id')
     } catch (err) {
       console.error(err)
-      appsignal?.sendError(err)
+      appsignal.sendError(err)
     }
   }
 
