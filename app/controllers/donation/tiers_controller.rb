@@ -43,7 +43,7 @@ class Donation
         sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1
       )
       @tier.save!
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: event_announcements_new_path(@event.slug, template: :new_tier), link_text: "Create an announcement to let your followers know!" } }
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
