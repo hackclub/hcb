@@ -13,7 +13,7 @@ const DonationGoalNode = Node.create({
   priority: 2000,
   addAttributes() {
     return {
-      event: {}
+      event: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
@@ -53,7 +53,7 @@ const DonationGoalNode = Node.create({
   addCommands() {
     return {
       addDonationGoal:
-        (event) =>
+        event =>
         ({ commands }) => {
           return commands.insertContent({ type: this.name, attrs: { event } })
         },
@@ -68,7 +68,7 @@ const HcbCodeNode = Node.create({
   addAttributes() {
     return {
       code: {},
-      event: {}
+      event: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
@@ -98,7 +98,10 @@ const HcbCodeNode = Node.create({
       addHcbCode:
         (event, code) =>
         ({ commands }) => {
-          return commands.insertContent({ type: this.name, attrs: { event, code } })
+          return commands.insertContent({
+            type: this.name,
+            attrs: { event, code },
+          })
         },
     }
   },
@@ -110,7 +113,7 @@ const DonationSummaryNode = Node.create({
   priority: 2000,
   addAttributes() {
     return {
-      event: {}
+      event: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
@@ -138,7 +141,7 @@ const DonationSummaryNode = Node.create({
   addCommands() {
     return {
       addDonationSummary:
-        (event) =>
+        event =>
         ({ commands }) => {
           return commands.insertContent({ type: this.name, attrs: { event } })
         },
