@@ -69,7 +69,8 @@ const HcbCodeNode = Node.create({
     return [
       'div',
       mergeAttributes(HTMLAttributes, {
-        class: 'hcbCode relative card shadow-none border flex flex-col py-2 my-2',
+        class:
+          'hcbCode relative card shadow-none border flex flex-col py-2 my-2',
       }),
       [
         'p',
@@ -105,13 +106,14 @@ const DonationSummaryNode = Node.create({
     return [
       'div',
       mergeAttributes(HTMLAttributes, {
-        class: 'donationSummary relative card shadow-none border flex flex-col py-2 my-2'
+        class:
+          'donationSummary relative card shadow-none border flex flex-col py-2 my-2',
       }),
       [
         'p',
         { class: 'italic' },
-        'A donation summary for the last month will appear here.'
-      ]
+        'A donation summary for the last month will appear here.',
+      ],
     ]
   },
   parseHTML() {
