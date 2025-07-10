@@ -1,0 +1,82 @@
+<% title "Card grants for #{@event.name}" %>
+<% page_md %>
+<%= render "nav", selected: :card_grants %>
+<%= render "card_grants/create_modal" %>
+
+<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
+<h1 class="flex heading items-center">
+  <span class="flex-grow flex items-center flex-1">
+    Card grants
+    <%= badge_for @event.card_grants.active.count, class: "bg-muted" %>
+  </span>
+
+  <% if organizer_signed_in?(as: :member) %>
+    <%= link_to new_event_card_grant_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_card_grant" }, disabled: !policy(@event).create_transfer? do %>
+      <%= inline_icon "card-add" %>
+      Send a grant
+    <% end %>
+  <% end %>
+</h1>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Date</th>
+        <th>To</th>
+        <th>Purpose</th>
+        <th>Amount</th>
+        <th class="text-right">Balance</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @paginated_card_grants.each do |card_grant| %>
+        <tr>
+          <td>
+            <span class="ml0 badge bg-<%= card_grant.state %>"><%= card_grant.state_text %></span>
+          </td>
+          <td>
+            <%= format_date card_grant.created_at %>
+          </td>
+          <td>
+            <%= mail_to card_grant.email %>
+          </td>
+          <td>
+            <%= card_grant.purpose %>
+          </td>
+          <td>
+            <%= render_money card_grant.amount_cents %>
+          </td>
+          <td class="text-right">
+            <%= render_money card_grant.balance %>
+          </td>
+          <td>
+            <%= link_to "View", card_grant_url(card_grant) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= paginate @paginated_card_grants %>
+</div>
+
+<h2 class="heading mt4 pb1">Card grant transactions</h2>
+
+<div class="table-container">
+  <table>
+    <tbody data-behavior="transactions">
+      <% @hcb_codes.each do |hcb_code| %>
+        <% if hcb_code.canonical_transactions.any? %>
+          <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, force_display_details: true } %>
+        <% else %>
+          <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions, as: :pt %>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= paginate @paginated_hcb_codes %>
+</div>

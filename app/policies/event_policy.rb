@@ -136,6 +136,10 @@ class EventPolicy < ApplicationPolicy
     show? && record.plan.transfers_enabled?
   end
 
+  def card_grant_overview?
+    (is_public || auditor_or_reader?) && record.plan.card_grants_enabled?
+  end
+
   def promotions?
     auditor_or_reader? && record.plan.promotions_enabled?
   end

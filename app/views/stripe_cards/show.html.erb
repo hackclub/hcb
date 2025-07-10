@@ -18,8 +18,9 @@
     <article class="check--form flex <%= "flex-col" if @frame %> items-start justify-center mt3 mb3 gap-4">
       <section class="center mt0 mx-auto" style="width: 400px; max-width: 100%;">
         <% if @card.card_grant.present? %>
-          <% admin_tool do %>
-            This card is linked to a <%= link_to "#{@card.card_grant.amount.format} grant", @card.card_grant, data: { turbo_frame: "_top" } %> to <%= mail_to @card.card_grant.user.email %>.
+          <% admin_tool("flex flex-wrap justify-center gap-1") do %>
+            <span>This card is linked to a <%= link_to "#{@card.card_grant.amount.format} grant", @card.card_grant, data: { turbo_frame: "_top" } %> to <%= mail_to @card.card_grant.user.email %>.</span>
+            <%= link_to "View grant", spending_card_grant_path(@card.card_grant), target: :_blank, class: "btn bg-accent" %>
           <% end %>
         <% end %>
 

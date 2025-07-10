@@ -96,6 +96,11 @@
       tooltip: "Manage payroll",
       icon: "person-badge",
       selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) %>
+    <%= dock_item "Card grants",
+      event_card_grant_overview_path(event_id: @event.slug),
+      tooltip: "Manage card grants",
+      icon: "bag",
+      selected: local_assigns[:selected] == :card_grants if policy(@event).card_grant_overview? %>
     <hr>
     <%= dock_item "Team",
       event_team_path(event_id: @event.slug),
@@ -171,6 +176,7 @@
           <%= link_to "Cards", event_cards_overview_path(@event) if policy(@event).card_overview? %>
           <%= link_to "Transfers", event_transfers_path(@event) if policy(@event).transfers? %>
           <%= link_to "Reimbursements", event_reimbursements_path(@event) if policy(@event).reimbursements? %>
+          <%= link_to "Card grants", event_card_grant_overview_path(event_id: @event.slug) if policy(@event).card_grant_overview? %>
         </div>
       </button>
     <% end %>
