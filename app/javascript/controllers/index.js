@@ -8,9 +8,7 @@ import { appsignal } from '../appsignal'
 
 const application = Application.start()
 
-if (appsignal) {
-  installErrorHandler(appsignal, application)
-}
+installErrorHandler(appsignal, application)
 
 const context = require.context('.', true, /_controller\.js$/)
 application.load(definitionsFromContext(context))
