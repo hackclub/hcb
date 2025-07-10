@@ -22,6 +22,7 @@ module ProsemirrorService
         renderer = ProsemirrorToHtml::Renderer.new
         renderer.add_node ProsemirrorService::DonationGoalNode
         renderer.add_node ProsemirrorService::HcbCodeNode
+        renderer.add_node ProsemirrorService::DonationSummaryNode
 
         renderer
       end

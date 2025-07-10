@@ -69,7 +69,7 @@ const HcbCodeNode = Node.create({
     return [
       'div',
       mergeAttributes(HTMLAttributes, {
-        class: 'hcbCode relative card shadow-none border flex flex-col',
+        class: 'hcbCode relative card shadow-none border flex flex-col py-2 my-2',
       }),
       [
         'p',
@@ -92,6 +92,42 @@ const HcbCodeNode = Node.create({
         code =>
         ({ commands }) => {
           return commands.insertContent({ type: this.name, attrs: { code } })
+        },
+    }
+  },
+})
+
+const DonationSummaryNode = Node.create({
+  name: 'donationSummary',
+  group: 'block',
+  priority: 2000,
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, {
+        class: 'donationSummary relative card shadow-none border flex flex-col py-2 my-2'
+      }),
+      [
+        'p',
+        { class: 'italic' },
+        'A donation summary for the last month will appear here.'
+      ]
+    ]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'div',
+        getAttrs: node => node.classList.contains('donationSummary') && null,
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      addDonationSummary:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name })
         },
     }
   },
@@ -128,6 +164,7 @@ export default class extends Controller {
         }),
         DonationGoalNode,
         HcbCodeNode,
+        DonationSummaryNode,
       ],
       editorProps: {
         attributes: {
@@ -253,5 +290,9 @@ export default class extends Controller {
     const code = url.split('/').at(-1)
 
     this.editor.chain().focus().addHcbCode(code).run()
+  }
+
+  donationSummary() {
+    this.editor.chain().focus().addDonationSummary().run()
   }
 }
