@@ -70,7 +70,7 @@ class Donation
       authorize @event, :update?
       @tier = @event.donation_tiers.find(params[:format])
       @tier.destroy
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tiers updated successfully.", link: event_announcements_new_path(@event.slug, template: :new_tier), link_text: "Create an announcement to let your followers know!" } }
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
