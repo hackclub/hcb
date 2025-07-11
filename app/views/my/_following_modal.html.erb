@@ -9,7 +9,7 @@
           <% if event_follow.event.logo.attached? %>
             <%= image_tag event_follow.event.logo, height: 24, width: 24, class: "rounded align-bottom" %>
           <% end %>
-          <strong class="flex-grow"><%= event_follow.event.name %></strong>
+          <strong class="flex-grow"><%= link_to event_follow.event.name, event_announcement_overview_path(event_follow.event) %></strong>
           <%= pop_icon_to "member-remove",
                           follow_path(id: event_follow.id),
                           class: "error",

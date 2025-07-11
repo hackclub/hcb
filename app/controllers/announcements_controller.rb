@@ -5,6 +5,8 @@ class AnnouncementsController < ApplicationController
   before_action :set_event, except: [:new, :create]
   before_action :set_event_follow, except: [:new, :create]
 
+  skip_before_action :signed_in_user, only: [:show]
+
   def new
     @announcement = Announcement.new
     @event = Event.friendly.find(params[:event_id])
