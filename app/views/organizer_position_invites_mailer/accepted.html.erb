@@ -1,0 +1,18 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  <%= @invite.user.name %> has accepted their invite to join <%= @invite.event.name %> as a <%= @invite.role %>!
+  <% if @invite.initial_control_allowance_amount_cents.present? %>
+    They have an initial spending allowance of <%= render_money @invite.initial_control_allowance_amount_cents %>.
+  <% end %>
+</p>
+
+<% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @invite.event) %>
+  If you wish, <%= link_to "create an announcement", event_announcements_new_url(@invite.event.slug, template: :new_team_member) %> to introduce your new team member to your followers!
+<% end %>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>
+

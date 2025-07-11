@@ -120,6 +120,8 @@ class OrganizerPositionInvite < ApplicationRecord
       return false
     end
 
+    OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+
     self.organizer_position = OrganizerPosition.new(
       event:,
       user:,

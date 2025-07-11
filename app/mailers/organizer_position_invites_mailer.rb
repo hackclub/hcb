@@ -1,10 +1,23 @@
 # frozen_string_literal: true
 
 class OrganizerPositionInvitesMailer < ApplicationMailer
-  def notify
-    @invite = params[:invite]
+  before_action :set_invite
 
+  def notify
     mail to: @invite.user.email_address_with_name, subject: @invite.initial? && @invite.event.demo_mode? ? "Thanks for applying for HCB 🚀" : "You've been invited to join #{@invite.event.name} on HCB 🚀"
+  end
+
+  def accepted
+    @emails = @invite.event.users.map(&:email_address_with_name)
+    @emails << @invite.event.config.contact_email if @invite.event.config.contact_email.present?
+
+    mail to: @emails, subject: "#{@invite.user.name} has accepted their invitation to join #{@invite.event.name}"
+  end
+
+  private
+
+  def set_invite
+    @invite = params[:invite]
   end
 
 end
