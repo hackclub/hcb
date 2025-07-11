@@ -16,6 +16,7 @@ window.getCookie = (name) => {
   return null;
 }
 
+// Your task is
 window.setCookie = (name, value, days) => {
   let expires = "";
   if (days) {
