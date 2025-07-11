@@ -668,7 +668,12 @@ class Event < ApplicationRecord
   end
 
   def revenue_fee
-    plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
+    configured = plan&.revenue_fee
+    return configured if configured.present?
+
+    Rails.error.unexpected("#{id} is missing a plan!")
+
+    Event::Plan::FALLBACK_REVENUE_FEE
   end
 
   def generate_stripe_card_designs

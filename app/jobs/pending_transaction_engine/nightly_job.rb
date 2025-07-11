@@ -5,7 +5,7 @@ module PendingTransactionEngine
     queue_as :low
     # Don't retry job, reattempt at next cron scheduled run
     discard_on Exception do |job, error|
-      Airbrake.notify(error)
+      Rails.error.report error
     end
 
     def perform

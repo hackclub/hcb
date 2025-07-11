@@ -135,7 +135,7 @@ class StripeCard < ApplicationRecord
   end
 
   def url
-    Airbrake.notify("StripeCard#url used")
+    Rails.error.unexpected "StripeCard#url used"
     "/stripe_cards/#{hashid}"
   end
 

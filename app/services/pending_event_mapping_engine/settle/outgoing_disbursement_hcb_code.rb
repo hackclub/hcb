@@ -7,7 +7,7 @@ module PendingEventMappingEngine
         unsettled.find_each(batch_size: 100) do |cpt|
           # 1. identify disbursement
           disbursement = cpt.disbursement
-          Airbrake.notify("Disbursement not found for canonical pending transaction #{cpt.id}") unless disbursement
+          Rails.error.unexpected("Disbursement not found for canonical pending transaction #{cpt.id}") unless disbursement
           next unless disbursement
 
           # 2. look up canonical transactions by hcb & amount
@@ -17,7 +17,7 @@ module PendingEventMappingEngine
           next unless ct
 
           if cts.size > 1
-            Airbrake.notify("Multiple settled transactions for canonical pending transaction #{cpt.id}")
+            Rails.error.unexpected "Multiple settled transactions for canonical pending transaction #{cpt.id}"
           end
 
           # 3. mark no longer pending

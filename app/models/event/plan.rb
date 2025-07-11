@@ -22,6 +22,8 @@
 #
 class Event
   class Plan < ApplicationRecord
+    FALLBACK_REVENUE_FEE = 0.07
+
     has_paper_trail
 
     belongs_to :event

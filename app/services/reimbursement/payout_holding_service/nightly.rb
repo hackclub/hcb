@@ -9,7 +9,7 @@ module Reimbursement
 
           case payout_holding.report.user.payout_method
           when User::PayoutMethod::Wire
-            begin
+            Rails.error.handle do
               wire = clearinghouse.wires.build(
                 memo: "Reimbursement for #{payout_holding.report.name}.",
                 payment_for: "Reimbursement for #{payout_holding.report.name}."[0...140],
@@ -47,8 +47,6 @@ module Reimbursement
                 payout_holding.save!
                 payout_holding.mark_sent!
               end
-            rescue => e
-              Airbrake.notify(e)
             end
           when User::PayoutMethod::Check
             Rails.error.handle do

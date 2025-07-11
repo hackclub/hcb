@@ -226,7 +226,7 @@ module ApplicationHelper
 
   def format_date(date)
     if date.nil?
-      Airbrake.notify("Hey! date is nil here")
+      Rails.error.unexpected "Hey! date is nil here"
       return nil
     end
 

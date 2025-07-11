@@ -56,10 +56,9 @@ module TransactionEngine
       transactions_by_report.each do |report_id, transactions|
         transactions.each_with_index do |transaction, transaction_index|
           if transaction["effective_at"] == transaction["effective_at_utc"] && transaction["effective_at_utc"] < "2024-10-07T04:00:00Z"
-            notice = "Skipping the import of the following transaction in #{report_id}"
-            puts notice
-            puts transaction
-            Airbrake.notify(notice, transaction)
+            notice = "Skipping the import of the following transaction in #{report_id}: #{transaction}"
+            Rails.logger.warn notice
+            Rails.error.unexpected notice
             next
           end
 
