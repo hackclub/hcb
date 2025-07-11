@@ -1,6 +1,12 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
-<p>Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been reached after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now %>!</p>
+<p>
+  Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been reached after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now %>!
+  <% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) %>
+    If you wish, <%= link_to "create an announcement", event_announcements_new_url(@event.slug, template: :donation_goal_reached) %> to let your followers know that you've reached your goal.
+  <% end %>
+</p>
+
 <p>Here are all the donations that helped to contribute to this goal:</p>
 <ul>
 <% @donations.each do |donation| %>
@@ -10,7 +16,7 @@
 <% end %>
 </ul>
 
-<p>If you wish, you can adjust your donation goal on the <%= link_to "organization settings page", edit_event_url(@event) %>.</p>
+<p>You can adjust your donation goal on the <%= link_to "organization settings page", edit_event_url(@event) %>.</p>
 
 <p>
   From,<br>
