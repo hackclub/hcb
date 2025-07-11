@@ -15,21 +15,48 @@
         disabled: @all_donations.not_pending.none? %>
     </div>
   <% end %>
-  <% if @event.donation_page_available? %>
-    <action type="button" class="pop menu__toggle" data-behavior="menu_toggle" aria-expanded="false" tabindex="0">
-      <%= inline_icon "share" %>
-      <div class="menu__content" data-behavior="menu_content">
+  <%= pop_icon_to "settings",
+      edit_event_path(@event, tab: "donations"),
+      data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "donation_settings" },
+      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" %>
+  <% if @event.donation_page_enabled %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end" class="line-height-0">
+      <button
+        type="button"
+        class="btn menu__toggle overflow-visible"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle">
+        Donate page
+      </button>
+      <div class="menu__content menu__content--2 h5" data-menu-target="content">
+        <%= link_to start_donation_donations_path(@event), target: "_blank" do %>
+          <%= inline_icon "external" %>
+          Open page
+        <% end %>
+        <button class="menu__action" type="button" tabIndex="0" data-controller="clipboard" data-clipboard-text-value="<%= start_donation_donations_url @event %>" data-action="click->clipboard#copy click->menu#close">
+          <%= inline_icon "link" %>
+          Copy link
+        </button>
         <%= link_to qr_code_donations_path(@event.slug),
           data: { behavior: "modal_trigger", modal: "qr_code" } do %>
-          QR code
-        <% end %>
-        <%= link_to start_donation_donations_url(@event),
-          data: { behavior: "modal_trigger", modal: "embed_code" } do %>
-          Embed code
+          <%= inline_icon "qr-code" %>
+          Get QR code
         <% end %>
         <%= link_to "#",
           data: { behavior: "modal_trigger", modal: "prefilled_link" } do %>
-          Prefilled amount
+          <%= inline_icon "payment" %>
+          Get link for prefilled amount
+        <% end %>
+        <%= link_to start_donation_donations_url(@event),
+          data: { behavior: "modal_trigger", modal: "embed_code" } do %>
+          <%= inline_icon "code" %>
+          Embed form
+        <% end %>
+        <% if @event.is_public? %>
+          <%= link_to "#",
+            data: { behavior: "modal_trigger", modal: "donor_graph" } do %>
+            Donor graph
+          <% end %>
         <% end %>
         <% if @event.is_public? %>
           <%= link_to "#",
@@ -40,16 +67,7 @@
       </div>
     </action>
   <% end %>
-  <%= pop_icon_to "settings",
-      edit_event_path(@event, tab: "donations"),
-      data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "donation_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" if organizer_signed_in?(as: :member) %>
-  <% if @event.donation_page_available? %>
-    <%= link_to start_donation_donations_path(@event), target: "_blank", class: "btn" do %>
-      <%= inline_icon "external" %>
-      Donate page
-    <% end %>
-  <% end %>
+  </div>
 </h1>
 
 <% if @event.donation_page_available? %>
@@ -114,10 +132,21 @@
   </section>
 
   <section class="modal" data-behavior="modal" role="dialog" id="embed_code">
-    <%= modal_header "Donations embed" %>
-    <p class="mt0">Paste this HTML code into your website to embed your donation page. Feel free to change the styling.</p>
-    <pre><%= html_escape "<iframe src='#{start_donation_donations_url @event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='512px' allowfullscreen></iframe>".gsub("'", '"') %></pre>
-    <h3 class="mb0">Preview</h3>
+    <%= modal_header "Embed donations form" %>
+    <div class="flex items-center gap-4 mb1">
+      <p class="mt0 mb0 text-balance">Copy and paste this HTML code into your website to embed your donation page. Feel free to change the sizing.</p>
+      <button
+        type="button"
+        class="pointer pop mr2 align-middle tooltipped tooltipped--n"
+        aria-label="Copy HTML code"
+        data-controller="clipboard"
+        data-clipboard-text-value="<%= donations_embed_html_code %>"
+        data-action="click->clipboard#copy">
+        <%= inline_icon "copy", size: 28 %>
+      </button>
+    </div>
+    <pre><%= donations_embed_html_code %></pre>
+    <h3 class="mb1">Preview</h3>
     <iframe src='<%= start_donation_donations_url @event %>' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='256px' width='512px' allowfullscreen style="width: 100%; max-width: 100%; max-height: 40vh;"></iframe>
   </section>
 
@@ -144,7 +173,7 @@
   <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
 <% end %>
 
-<div class="mt3 mb2 statset">
+<div class="statset">
   <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
@@ -198,13 +227,13 @@
   </div>
 <% end %>
 
-<h2 class="heading mt3 pb1 w-full inline-flex justify-between" style="margin-bottom: 16px;">
+<h2 class="heading mt3 justify-between" style="margin-bottom: 16px;">
   Past donations
 
     <div data-controller="menu" data-menu-placement-value="bottom-end">
       <button
         type="button"
-        class="btn bg-info menu__toggle menu__toggle--arrowless overflow-visible z1"
+        class="btn menu__toggle overflow-visible"
         data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
         data-menu-target="toggle">
           <%= inline_icon "download", size: 16 %>
@@ -223,7 +252,7 @@
   <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
-  <div>
+  <div class="filterbar">
     <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": !["refunded"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Refunded", "?filter=refunded", class: "filterbar__item", "aria-selected": params[:filter] == "refunded", role: "tab" %>
   </div>
@@ -244,7 +273,7 @@
 
     <tbody>
       <% @donations.each do |d| %>
-        <tr>
+        <tr class="clickable">
           <td>
             <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
           </td>
@@ -272,7 +301,7 @@
           </td>
           <td>
             <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-            <%= link_to "Details", hcb_code_url(d.hcb_code) if organizer_signed_in? %>
+            <%= link_to "Details", hcb_code_url(d.hcb_code), class: "stretched-link" if organizer_signed_in? %>
           </td>
         </tr>
       <% end %>

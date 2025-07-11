@@ -15,7 +15,7 @@
       </thead>
       <tbody>
       <% stripe_cards.each do |c| %>
-        <tr>
+        <tr class="clickable">
           <%# Cardholder %>
           <td>
             <%= c.user.name || c.stripe_name || c.user.full_name %>
@@ -44,7 +44,7 @@
 
           <td>
 
-            <%= link_to "Details", stripe_card_path(c), data: @show_card_popovers && { behavior: "modal_trigger", modal: "card_popover_#{c.id}" } if organizer_signed_in? && !@event.demo_mode %>
+            <%= link_to "Details", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && { behavior: "modal_trigger", modal: "card_popover_#{c.id}" } if organizer_signed_in? && !@event.demo_mode %>
           </td>
         </tr>
 

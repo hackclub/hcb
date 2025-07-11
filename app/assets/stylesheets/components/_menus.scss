@@ -2,34 +2,7 @@
   cursor: pointer;
   position: relative;
   font-family: $font-family;
-
-  &[aria-expanded='true'] {
-    outline: none;
-
-    &:not(.menu__toggle--arrowless):after {
-      bottom: -1px;
-      left: 50%;
-      transform: translateX(-50%);
-      border: solid transparent;
-      content: '';
-      position: absolute;
-      pointer-events: none;
-      z-index: 5;
-
-      @media (max-width: 32em) {
-        display: none;
-      }
-    }
-
-    &:not(.menu__toggle--arrowless):after {
-      border-bottom-color: map-get($palette, white);
-      border-width: 10px;
-    }
-
-    &.tooltipped:after {
-      content: initial;
-    }
-  }
+  outline: none;
 }
 
 .menu__content {
@@ -37,12 +10,11 @@
   cursor: initial;
   min-width: 14rem;
   position: absolute;
+  font-size: 0.875rem;
   top: 100%;
   background-color: map-get($palette, white);
-  border-radius: 0.5rem;
-  box-shadow:
-    0 -2px 4px rgba(0, 0, 0, 0.0625),
-    0 6px 12px rgba(0, 0, 0, 0.125);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-menu);
   overflow: auto;
   z-index: 301;
 
@@ -92,7 +64,7 @@
 
     @media screen and (max-width: 32em) {
       padding: 1rem 0.5rem 3rem;
-      border-radius: 0.75rem 0.75rem 0 0;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       position: fixed;
       top: auto;
       bottom: 0;
@@ -114,8 +86,8 @@
 
   hr {
     border: 0;
-    border-bottom: 1px solid map-get($palette, smoke);
-    margin: 0.5rem 0;
+    border-bottom: 0.5px solid map-get($palette, divider);
+    margin: 0.5rem -0.5rem;
   }
 
   &.menu__content--left {
@@ -164,34 +136,21 @@
   font-weight: 500;
   line-height: 1.5;
   padding: 0.75rem 0.5rem;
+  gap: 0.5rem;
+  height: 2rem;
   color: map-get($palette, black);
   position: relative;
   text-decoration: none;
   letter-spacing: 0;
   background-color: transparent;
-  transition:
-    0.125s ease-in-out background-color,
-    0.125s ease-in-out color;
+  transition: 0.125s ease background-color;
   cursor: pointer;
+  border-radius: var(--radius-sm);
 
   &.menu__action--active::after {
     content: '✔';
     position: absolute;
     right: 0.5rem;
-  }
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    @include gradient(info);
-    border-radius: 6px;
-    opacity: 0;
-    transition: opacity 125ms ease-in-out;
   }
 
   .muted {
@@ -200,23 +159,13 @@
 
   &:hover,
   &:focus {
-    color: $white;
-
-    &:before {
-      opacity: 1;
-    }
-
-    .muted {
-      color: $white;
-    }
+    background-color: map-get($palette, selection);
   }
 
   svg {
-    margin-right: 6px;
-  }
-
-  + .menu__action {
-    border-top: 1px solid map-get($palette, smoke);
+    fill: map-get($palette, muted);
+    width: 24px;
+    height: 24px;
   }
 }
 
@@ -235,11 +184,7 @@
   position: relative;
   height: 1px;
   background-color: $smoke;
-  margin: 0.5rem 0;
-
-  .menu__content--compact & {
-    margin: 0.25rem 0;
-  }
+  margin: 0.5rem -0.5rem;
 
   html[data-dark='true'] & {
     background-color: $slate;

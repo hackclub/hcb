@@ -1,8 +1,8 @@
 <% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts %>
 
-<div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
+<div class="flex flex-row justify-between items-center gap-4 width-100 mb2">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
-      <%= render "search", form: %>
+    <%= render "search", form: %>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
     <% end %>
@@ -56,10 +56,10 @@
   <% end %>
 
   <% admin_tool(@show_running_balance ? "" : "display-none") do %>
-    <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end">
+    <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end" class="line-height-0">
       <button
         type="button"
-        class="btn btn-small bg-info menu__toggle menu__toggle--arrowless overflow-visible z-10"
+        class="btn btn-small menu__toggle menu__toggle--arrowless overflow-visible"
         data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
         <%= inline_icon "list", size: 16, style: "margin: 0" %>
         <span class="xs-hide sm-hide md-hide nowrap">Count</span>
@@ -68,7 +68,7 @@
         <% [10, 25, 50, 100, 200].each do |amount| %>
           <div class="flex items-center">
             <%= link_to(upsert_query_params(per: amount), class: "flex-auto menu__action", data: { turbo_prefetch: "false" }) do %>
-              <%= amount %> Transactions Per Page
+              <%= amount %> transactions per page
             <% end %>
           </div>
         <% end %>

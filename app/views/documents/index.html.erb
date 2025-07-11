@@ -26,23 +26,17 @@
 
   <% if @event.approved? && !@event.demo_mode? %>
     <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
-      <li class="card card--hover h-100">
-        <div class="overflow-hidden" style="max-height: 250px;">
-          <%= image_tag event_verification_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
-        </div>
-
-        <strong class="h3 block mt1 line-height-2">Verification Letter</strong>
+      <li class="card card--hover h-100 max-w-fit">
+        <%= image_tag event_verification_letter_url(event_id: @event.slug, format: "png"), alt: "", width: 330, height: 250, class: "object-contain max-w-full" %>
+        <strong class="h3 block my-2 text-blance line-height-2">Verification Letter</strong>
         <%= user_mention @event.point_of_contact %>
       </li>
     <% end if @event.account_number %>
 
     <%= link_to event_fiscal_sponsorship_letter_path(event_id: @event.slug, format: "pdf") do %>
-      <li class="card card--hover h-100">
-        <div class="overflow-hidden" style="max-height: 250px;">
-          <%= image_tag event_fiscal_sponsorship_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
-        </div>
-
-        <strong class="h3 block mt1 line-height-2">Fiscal Sponsorship Confirmation</strong>
+      <li class="card card--hover h-100 max-w-fit">
+        <%= image_tag event_fiscal_sponsorship_letter_url(event_id: @event.slug, format: "png"), alt: "", width: 330, height: 250, class: "object-contain max-w-full" %>
+        <strong class="h3 block my-2 text-blance line-height-2">Fiscal Sponsorship Confirmation</strong>
         <%= user_mention @event.point_of_contact %>
       </li>
     <% end %>
@@ -53,8 +47,8 @@
   <ul class="list-reset">
     <li class="mb3">
       <details>
-        <summary class="cursor-pointer relative mb2">
-          <h3 class="inline mb1">Archived Documents</h3>
+        <summary class="relative mb2">
+          <h3 class="inline mb1">Archived documents</h3>
         </summary>
         <article>
           <ul class="grid">
