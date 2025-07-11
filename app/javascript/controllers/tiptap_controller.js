@@ -90,7 +90,7 @@ const HcbCodeNode = Node.create({
   addCommands() {
     return {
       addHcbCode:
-        (code) =>
+        code =>
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
