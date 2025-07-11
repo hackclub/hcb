@@ -28,7 +28,7 @@
   <% if organizer_signed_in? && (@report.submitted? || @report.draft?) && @report.event %>
    <div class="field">
       <%= form.label :reviewer_id, "Assigned reviewer", class: "mt2" %>
-      <%= form.collection_select :reviewer_id, @report.event.users, :id, :name, include_blank: "Anyone" %>
+      <%= form.collection_select :reviewer_id, @report.event.managers, :id, :name, include_blank: "Anyone" %>
     </div>
   <% end %>
   <%= form.submit "Update report", class: "left mt2" %>
