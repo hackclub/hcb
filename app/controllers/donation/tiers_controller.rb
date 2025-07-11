@@ -43,7 +43,12 @@ class Donation
         sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1
       )
       @tier.save!
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: event_announcements_new_path(@event.slug, template: :new_tier), link_text: "Create an announcement to let your followers know!" } }
+
+      if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event)
+        redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: event_announcements_new_path(@event.slug, template: :new_tier), link_text: "Create an announcement to let your followers know!" } }
+      else
+        redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
+      end
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end
