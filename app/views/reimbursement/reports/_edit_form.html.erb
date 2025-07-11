@@ -16,7 +16,7 @@
     <div class="field event-select-target">
       <%= form.label :event_id, "Organization", class: "mt2" %>
       <%= form.select(:event_id,
-          current_user.admin? ?
+          admin_signed_in? ?
             Event.not_demo_mode.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
             ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
           { prompt: "Select an event…", required: true }) %>
