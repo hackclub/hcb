@@ -336,7 +336,7 @@ class EventsController < ApplicationController
         end
 
 
-        if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && old_description != event_params[:description]
+        if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && old_description != event_params[:description] && event_params[:description].present?
           flash[:success] = {
             text: "Organization successfully updated.",
             link: event_announcements_new_path(@event.slug, template: :mission),
