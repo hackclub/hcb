@@ -10,15 +10,15 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def show?
-    record.published? || reader?
+    record.published? || auditor_or_reader?
   end
 
   def edit?
-    admin? || record.author == user
+    (manager? && record.author == user) || admin?
   end
 
   def update?
-    admin? || record.author == user
+    edit?
   end
 
   def destroy?
