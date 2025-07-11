@@ -1350,6 +1350,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_09_020702) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "browser_token_ciphertext"
+    t.bigint "initial_login_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -2391,6 +2392,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_09_020702) do
   add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_codes", "users"
+  add_foreign_key "logins", "logins", column: "initial_login_id"
   add_foreign_key "mailbox_addresses", "users"
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "closed_by_id"
