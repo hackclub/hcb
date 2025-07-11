@@ -72,17 +72,17 @@
 </div>
 
 <div class="mb3 rounded-xl promo-premium-border">
-  <div class="card promo-premium" id="domains">
+  <div class="card promo-premium-card" id="domains">
     <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 py-4 my0 text-[#ac89ff]">Premium Domains</h3>
+      <h3 class="h1 py-4 my0 text-transparent promo-premium-banner bg-clip-text">Premium Domains</h3>
       <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) || @event.users.where(teenager: true).active.size < 5) && @event.event_tags.where(name: "Scrapyard").none? %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
-          <span class="btn disabled">Ineligible</span>
+          <span class="btn disabled promo-premium-banner bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
         <%= link_to "Apply",
           @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
-          class: "btn #{"disabled" unless @perks_available}",
+          class: "btn promo-premium-banner bg-clip-padding #{"disabled" unless @perks_available}",
           target: :_blank %>
       <% end %>
     </div>

@@ -188,12 +188,35 @@
   }
 }
 
-.promo-premium {
+.promo-premium-card {
   background-image:
     linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
     url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/a6390946292318162ec1d01298d03c6eb6fd89e5_istockphoto-619260624-612x612.jpg');
   background-size: cover;
   background-position: center;
+}
+
+@property --scroll-progress {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: false;
+}
+
+.promo-premium-banner {
+  background: linear-gradient(-60deg, #94bbe9, #eeaeca, #94bbe9);
+  background-size: 200%;
+  animation: premium-scroll-gradient linear;
+  animation-timeline: scroll(root);
+  background-position: 0% center;
+}
+
+@keyframes premium-scroll-gradient {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 html[data-dark='true'] {
