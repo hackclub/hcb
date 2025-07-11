@@ -16,7 +16,7 @@ module ProsemirrorService
     end
 
     def text
-      event = Event.find(@node.attrs.event.to_i)
+      event = ProsemirrorService::Renderer.context.fetch(:event)
 
       hcb_code = HcbCode.find_by_hashid(@node.attrs.code)
 

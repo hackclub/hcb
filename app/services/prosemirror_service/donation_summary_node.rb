@@ -16,7 +16,7 @@ module ProsemirrorService
     end
 
     def text
-      event = Event.find(@node.attrs.event.to_i)
+      event = ProsemirrorService::Renderer.context.fetch(:event)
 
       donations = event.donations.where(aasm_state: [:in_transit, :deposited], created_at: 1.month.ago..).order(:created_at)
       total = donations.sum(:amount)

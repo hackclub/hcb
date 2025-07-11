@@ -16,7 +16,7 @@ module ProsemirrorService
     end
 
     def text
-      event = Event.find(@node.attrs.event.to_i)
+      event = ProsemirrorService::Renderer.context.fetch(:event)
 
       goal = event.donation_goal
       percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?

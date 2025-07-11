@@ -11,11 +11,6 @@ const DonationGoalNode = Node.create({
   name: 'donationGoal',
   group: 'block',
   priority: 2000,
-  addAttributes() {
-    return {
-      event: {},
-    }
-  },
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
@@ -53,9 +48,9 @@ const DonationGoalNode = Node.create({
   addCommands() {
     return {
       addDonationGoal:
-        event =>
+        () =>
         ({ commands }) => {
-          return commands.insertContent({ type: this.name, attrs: { event } })
+          return commands.insertContent({ type: this.name })
         },
     }
   },
@@ -68,7 +63,6 @@ const HcbCodeNode = Node.create({
   addAttributes() {
     return {
       code: {},
-      event: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
@@ -96,11 +90,11 @@ const HcbCodeNode = Node.create({
   addCommands() {
     return {
       addHcbCode:
-        (event, code) =>
+        (code) =>
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
-            attrs: { event, code },
+            attrs: { code },
           })
         },
     }
@@ -111,11 +105,6 @@ const DonationSummaryNode = Node.create({
   name: 'donationSummary',
   group: 'block',
   priority: 2000,
-  addAttributes() {
-    return {
-      event: {},
-    }
-  },
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
@@ -141,9 +130,9 @@ const DonationSummaryNode = Node.create({
   addCommands() {
     return {
       addDonationSummary:
-        event =>
+        () =>
         ({ commands }) => {
-          return commands.insertContent({ type: this.name, attrs: { event } })
+          return commands.insertContent({ type: this.name })
         },
     }
   },
@@ -293,7 +282,7 @@ export default class extends Controller {
   }
 
   donationGoal() {
-    this.editor.chain().focus().addDonationGoal(this.eventValue).run()
+    this.editor.chain().focus().addDonationGoal().run()
   }
 
   hcbCode() {
@@ -305,10 +294,10 @@ export default class extends Controller {
 
     const code = url.split('/').at(-1)
 
-    this.editor.chain().focus().addHcbCode(this.eventValue, code).run()
+    this.editor.chain().focus().addHcbCode(code).run()
   }
 
   donationSummary() {
-    this.editor.chain().focus().addDonationSummary(this.eventValue).run()
+    this.editor.chain().focus().addDonationSummary().run()
   }
 }
