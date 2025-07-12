@@ -2101,7 +2101,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_09_020702) do
     t.text "code_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["code_digest"], name: "index_user_backup_codes_on_code_digest", unique: true
     t.index ["user_id"], name: "index_user_backup_codes_on_user_id"
   end
 
