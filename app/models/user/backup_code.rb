@@ -13,7 +13,7 @@
 #
 # Indexes
 #
-#  index_user_backup_codes_on_user_id      (user_id)
+#  index_user_backup_codes_on_user_id  (user_id)
 #
 # Foreign Keys
 #
