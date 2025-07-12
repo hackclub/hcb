@@ -35,7 +35,7 @@ class InvoicesController < ApplicationController
       unpaid: relation.unpaid.sum(:item_amount) - archived_unpaid,
     }
 
-    case params[:filter]
+    case params[:status]
     when "paid"
       relation = relation.paid_v2
     when "unpaid"
@@ -47,6 +47,11 @@ class InvoicesController < ApplicationController
     else
       relation = relation.unarchived
     end
+
+    relation = relation.where("item_amount >= ?", params[:amount_greater_than].to_i * 100) if params[:amount_greater_than].present?
+    relation = relation.where("item_amount <= ?", params[:amount_less_than].to_i * 100) if params[:amount_less_than].present?
+    relation = relation.where("invoices.created_at >= ?", params[:created_after]) if params[:created_after].present?
+    relation = relation.where("invoices.created_at <= ?", params[:created_before]) if params[:created_before].present?
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
@@ -90,6 +95,14 @@ class InvoicesController < ApplicationController
         @stats[:pending] += @invoices[i].item_amount
       end
     end
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
+      { key: "created_*", label: "Date", type: "date_range" },
+      { key: "amount_*", label: "Amount", type: "amount_range" },
+    ]
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def new
