@@ -5,6 +5,7 @@ require "webauthn/fake_client"
 
 describe LoginsController do
   include SessionSupport
+  include WebAuthnSupport
   render_views
 
   describe "#new" do
@@ -88,49 +89,14 @@ describe LoginsController do
   describe "#complete" do
     context "webauthn" do
       it "signs the user in and redirects" do
-        user = create(:user, webauthn_id: WebAuthn.generate_user_id, phone_number: "+18556254225")
+        user = create(:user, phone_number: "+18556254225")
         login = create(:login, user:)
-        webauthn_client = WebAuthn::FakeClient.new(WebAuthn.configuration.origin)
+        webauthn_credential = create_webauthn_credential(user:)
 
-        # Simulate `WebauthnCredentialsController#register_options`
-        create_options = WebAuthn::Credential.options_for_create(
-          user: {
-            id: user.webauthn_id,
-            name: user.email,
-            display_name: user.name
-          },
-          authenticator_selection: {
-            authenticator_attachment: "platform",
-            user_verification: "discouraged"
-          }
-        )
+        webauthn_challenge = generate_webauthn_challenge(user:)
+        session[:webauthn_challenge] = webauthn_challenge
 
-        # Create a new credential (this logic is performed in the browser)
-        # See `app/javascript/controllers/webauthn_register_controller.js`
-        create_payload = webauthn_client.create(challenge: create_options.challenge)
-
-        # Simulate `WebauthnCredentialsController#create`
-        credential = WebAuthn::Credential.from_create(create_payload)
-        expect(credential.verify(create_options.challenge)).to eq(true)
-
-        webauthn_credential = user.webauthn_credentials.create!(
-          webauthn_id: credential.id,
-          public_key: credential.public_key,
-          sign_count: credential.sign_count,
-          name: "Test Credential",
-          authenticator_type: "platform",
-        )
-
-        # Simulate `UsersController#webauthn_options`
-        get_options = WebAuthn::Credential.options_for_get(
-          allow: user.webauthn_credentials.pluck(:webauthn_id),
-          user_verification: "discouraged"
-        )
-        session[:webauthn_challenge] = get_options.challenge
-
-        # Retrieve a credential (this logic is performed in the browser)
-        # See `app/javascript/controllers/webauthn_auth_controller.js`
-        get_payload = webauthn_client.get(challenge: get_options.challenge)
+        credential = get_webauthn_credential(challenge: webauthn_challenge)
 
         expect {
           post(
@@ -138,7 +104,7 @@ describe LoginsController do
             params: {
               id: login.hashid,
               method: "webauthn",
-              credential: JSON.dump(get_payload)
+              credential: JSON.dump(credential)
             }
           )
         }.to change { webauthn_credential.reload.sign_count }.by(1)
