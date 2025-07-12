@@ -97,7 +97,6 @@ class GSuite < ApplicationRecord
   before_destroy do
     begin
       Partners::Google::GSuite::DeleteDomain.new(domain: domain).run
-      Partners::Google::GSuite::Shared::DirectoryClient.directory_client.delete_org_unit(org_unit_path: remote_org_unit_path) if remote_org_unit_path.present?
     rescue => e
       Rails.error.report(e)
       throw :abort
@@ -161,7 +160,6 @@ class GSuite < ApplicationRecord
 
       inactive_accounts.count == res_count
     rescue => e
-      puts "Error in accounts_inactive? #{e}"
       if e.message.include?("Domain not found")
         return true
       end
