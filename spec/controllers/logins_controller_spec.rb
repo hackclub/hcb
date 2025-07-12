@@ -327,7 +327,7 @@ describe LoginsController do
         expect(flash[:error]).to include("Invalid backup code")
       end
 
-      it "signs the user in and redirects" do
+      it "signs the user in and redirects to home" do
         freeze_time do
           user = create(:user, phone_number: "+18556254225")
           codes = user.generate_backup_codes!
@@ -344,6 +344,37 @@ describe LoginsController do
           )
 
           expect(response).to redirect_to(root_path)
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_backup_code).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+
+          user.backup_codes.reload
+          expect(user.backup_codes.used.first.updated_at).to eq(Time.now)
+        end
+      end
+
+      it "signs the user in and redirects to security page if the user has no backup codes remaining" do
+        freeze_time do
+          user = create(:user, phone_number: "+18556254225")
+          codes = user.generate_backup_codes!
+          user.backup_codes.previewed.map(&:mark_active!)
+          # mark all except one code as discarded
+          user.backup_codes.active[0..-2].map(&:mark_discarded!)
+          login = create(:login, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "backup_code",
+              backup_code: codes.first
+            }
+          )
+
+          expect(response).to redirect_to(security_user_path(user))
 
           login.reload
           expect(login).to be_complete
