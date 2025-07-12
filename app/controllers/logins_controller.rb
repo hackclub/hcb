@@ -156,7 +156,7 @@ class LoginsController < ApplicationController
       if @user.full_name.blank? || @user.phone_number.blank?
         redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.size == 0
-        redirect_to security_user_path(@user), flash: { notice: "You just used your last backup code, and we recommend generating more." }
+        redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
         redirect_to(params[:return_to] || root_path)
       end
