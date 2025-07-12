@@ -11,19 +11,18 @@ class User
     end
 
     def code_used
-      mail subject: "You've used a backup code to login to HCB"
+      subject = "You've used a backup code to login to HCB"
+      case @user.backup_codes.active.size
+      when 0
+        subject = "[Action Required] You've used all your backup codes for HCB"
+      when 1..3
+        subject = "[Action Requested] You've almost used all your backup codes for HCB"
+      end
+      mail subject: subject
     end
 
     def backup_codes_disabled
       mail subject: "You've disabled your HCB backup codes"
-    end
-
-    def three_or_fewer_codes_remaining
-      mail subject: "[Action Requested] You've almost used all your backup codes for HCB"
-    end
-
-    def no_codes_remaining
-      mail subject: "[Action Required] You've used all your backup codes for HCB"
     end
 
     private

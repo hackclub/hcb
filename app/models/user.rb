@@ -80,7 +80,6 @@ class User < ApplicationRecord
   has_many :logins
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
-  has_many :active_backup_codes, -> { active }, class_name: "User::BackupCode", inverse_of: :user
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
@@ -384,31 +383,33 @@ class User < ApplicationRecord
   end
 
   def backup_codes_enabled?
-    active_backup_codes.any?
+    backup_codes.active.any?
   end
 
   def generate_backup_codes!
     backup_codes.previewed.destroy_all
 
     codes = []
-    while codes.size < 10
-      code = SecureRandom.alphanumeric(10)
-      next if codes.include?(code)
+    ActiveRecord::Base.transaction do
+      while codes.size < 10
+        code = SecureRandom.alphanumeric(10)
+        next if codes.include?(code)
 
-      begin
-        backup_codes.create!(code: code)
-      rescue ActiveRecord::RecordInvalid
-        # if the code is already in use, skip it
-        next
+        begin
+          backup_codes.create!(code: code)
+        rescue ActiveRecord::RecordInvalid
+          # if the code is already in use, skip it
+          next
+        end
+        codes << code
       end
-      codes << code
     end
 
     codes
   end
 
   def redeem_backup_code!(code)
-    active_backup_codes.each do |backup_code|
+    backup_codes.active.each do |backup_code|
       next unless backup_code.authenticate_code(code)
 
       ActiveRecord::Base.transaction do
@@ -428,7 +429,7 @@ class User < ApplicationRecord
   def disable_backup_codes!
     ActiveRecord::Base.transaction do
       backup_codes.previewed.destroy_all
-      active_backup_codes.map(&:mark_discarded!)
+      backup_codes.active.map(&:mark_discarded!)
     end
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
