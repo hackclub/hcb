@@ -69,10 +69,10 @@
   </section>
 <% end %>
 
-<% if @is_reports_to_review %> 
+<% if @is_reports_to_review %>
   <h3 class="mb1">Review requested on</h3>
   <%= form_with(model: nil, local: true, method: :get, class: "my-3") do |form| %>
-    <%= render "events/search", form: , param: :review_filter %>
+    <%= render "events/search", form:, param: :review_filter %>
   <% end %>
   <% if @reports_to_review.blank? %>
     <%= blankslate "No reports found!" %>
