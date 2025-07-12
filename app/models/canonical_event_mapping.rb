@@ -54,7 +54,7 @@ class CanonicalEventMapping < ApplicationRecord
 
   def transaction_belongs_to_correct_increase_account
     return if canonical_transaction.transaction_source_type != RawIncreaseTransaction.name
-    return if event.id == EventMappingEngine::EventIds::NOEVENT # hacky - allow all transactions to be mapped to 999 (NoEvent)
+    return if event.slug == EventMappingEngine::EventSlugs::NOEVENT # hacky - allow all transactions to be mapped to 999 (NoEvent)
     return if canonical_transaction.raw_increase_transaction&.category == "interest_payment"
 
     if canonical_transaction.raw_increase_transaction.increase_account_id != event.increase_account_id

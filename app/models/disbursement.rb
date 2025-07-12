@@ -100,28 +100,28 @@ class Disbursement < ApplicationRecord
       memo: "💰 Hackathon grant from Hack Club",
       css_class: "transaction--fancy",
       icon: "purse",
-      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::HACKATHON_GRANT_FUND }
+      qualifier: ->(d) { d.source_event_id == Event.friendly.find(EventMappingEngine::EventSlugs::HACKATHON_GRANT_FUND).id }
     },
     winter_hardware_wonderland: {
       title: "Winter Hardware Wonderland grant",
       memo: "❄️ Winter Hardware Wonderland Grant",
       css_class: "transaction--icy",
       icon: "freeze",
-      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND }
+      qualifier: ->(d) { d.source_event_id == Event.friendly.find(EventMappingEngine::EventSlugs::WINTER_HARDWARE_WONDERLAND_GRANT_FUND).id }
     },
     argosy_grant_2024: {
       title: "Grant from the Argosy Foundation",
       memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
       css_class: "transaction--fancy",
       icon: "sam",
-      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::ARGOSY_GRANT_FUND && d.created_at > Date.new(2024, 9, 1) }
+      qualifier: ->(d) { d.source_event_id == Event.friendly.find(EventMappingEngine::EventSlugs::ARGOSY_GRANT_FUND).id && d.created_at > Date.new(2024, 9, 1) }
     },
     first_transparency_grant: {
       title: "FIRST® Transparency grant",
       memo: "🤖 FIRST® Transparency Grant",
       css_class: "transaction--frc",
       icon: "sam",
-      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND }
+      qualifier: ->(d) { d.source_event_id == Event.friendly.find(EventMappingEngine::EventSlugs::FIRST_TRANSPARENCY_GRANT_FUND).id }
     }
   }.freeze
 

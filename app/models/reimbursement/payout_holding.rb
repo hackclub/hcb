@@ -47,7 +47,7 @@ module Reimbursement
     after_create do
       CanonicalPendingTransaction.create!(
         reimbursement_payout_holding: self,
-        event: Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING),
+        event: Event.friendly.find(EventMappingEngine::EventSlugs::REIMBURSEMENT_CLEARING),
         amount_cents:,
         memo: hcb_code,
         date: created_at,

@@ -47,7 +47,7 @@
         <% end %>
 
         <%= form_with url: set_event_path(@canonical_transaction), method: :post do |form| %>
-          <%= form.hidden_field :event_id, value: EventMappingEngine::EventIds::NOEVENT %>
+          <%= form.hidden_field :event_id, value: Event.friendly.find(EventMappingEngine::EventSlugs::NOEVENT).id %>
           <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" } %>
         <% end %>
       </td>

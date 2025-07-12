@@ -7,7 +7,7 @@ module EventMappingEngine
         svb_sweep_transactions.find_each(batch_size: 100) do |ct|
           attrs = {
             canonical_transaction_id: ct.id,
-            event_id: EventMappingEngine::EventIds::SVB_SWEEPS
+            event_id: Event.friendly.find(EventMappingEngine::EventSlugs::SVB_SWEEPS).id
           }
           ::CanonicalEventMapping.create!(attrs)
         end

@@ -18,7 +18,7 @@ module Api
           hackathon_grant: current_user
                 .events
                 .joins(:incoming_disbursements)
-                .where("disbursements.source_event_id = ? AND disbursements.aasm_state IN ('pending', 'in_transit', 'deposited')", EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
+                .where("disbursements.source_event_id = ? AND disbursements.aasm_state IN ('pending', 'in_transit', 'deposited')", Event.friendly.find(EventMappingEngine::EventSlugs::HACKATHON_GRANT_FUND).id)
                 .any?,
         }
 

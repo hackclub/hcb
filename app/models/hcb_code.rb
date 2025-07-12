@@ -191,9 +191,9 @@ class HcbCode < ApplicationRecord
           bank_fee.try(:event).try(:id),
         ].compact.uniq)
 
-        ids << EventMappingEngine::EventIds::INCOMING_FEES if incoming_bank_fee?
-        ids << EventMappingEngine::EventIds::HACK_CLUB_BANK if fee_revenue? || stripe_service_fee? || outgoing_fee_reimbursement?
-        ids << EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING if reimbursement_payout_holding?
+        ids << Event.friendly.find(EventMappingEngine::EventSlugs::INCOMING_FEES).id if incoming_bank_fee?
+        ids << Event.friendly.find(EventMappingEngine::EventSlugs::HACK_CLUB_BANK).id if fee_revenue? || stripe_service_fee? || outgoing_fee_reimbursement?
+        ids << Event.friendly.find(EventMappingEngine::EventSlugs::REIMBURSEMENT_CLEARING).id if reimbursement_payout_holding?
 
         Event.where(id: ids)
       end

@@ -58,15 +58,15 @@ module EventMappingEngine
       return unless Rails.env.production?
 
       CanonicalTransaction.unmapped.increase_interest.find_each(batch_size: 100) do |ct|
-        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: Event.friendly.find(EventMappingEngine::EventSlugs::HACK_FOUNDATION_INTEREST).id)
       end
 
       CanonicalTransaction.unmapped.likely_column_interest.find_each(batch_size: 100) do |ct|
-        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: Event.friendly.find(EventMappingEngine::EventSlugs::HACK_FOUNDATION_INTEREST).id)
       end
 
       CanonicalTransaction.unmapped.svb_sweep_interest.find_each(batch_size: 100) do |ct|
-        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+        CanonicalEventMapping.create!(canonical_transaction: ct, event_id: Event.friendly.find(EventMappingEngine::EventSlugs::HACK_FOUNDATION_INTEREST).id)
       end
     end
 

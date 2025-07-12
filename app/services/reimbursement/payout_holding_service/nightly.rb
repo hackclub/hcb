@@ -4,7 +4,7 @@ module Reimbursement
   module PayoutHoldingService
     class Nightly
       def run
-        clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+        clearinghouse = Event.friendly.find(EventMappingEngine::EventSlugs::REIMBURSEMENT_CLEARING)
         Reimbursement::PayoutHolding.settled.find_each(batch_size: 100) do |payout_holding|
 
           case payout_holding.report.user.payout_method
