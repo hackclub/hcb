@@ -1,7 +1,7 @@
 <% if @show_tiers %>
-  <% if params[:tier_id] || params[:custom_amount] %>
+  <% if params[:tier_id] %>
     <div class="max-w-sm mx-auto">
-      <%= link_to upsert_query_params(tier_id: nil, custom_amount: nil), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
+      <%= link_to upsert_query_params(tier_id: nil), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
         <%= inline_icon "view-back" %>
         Back
       <% end %>
@@ -41,7 +41,7 @@
           Pay a custom amount, one-time or recurring, to support <%= @event.name %>
         </p>
         <div class="flex-1"></div>
-        <%= link_to upsert_query_params(custom_amount: true), class: "w-full btn btn-primary mt-auto" do %>
+        <%= link_to start_donation_tier_donations_path(@event, "custom"), class: "w-full btn btn-primary mt-auto" do %>
           Continue
         <% end %>
       </div>

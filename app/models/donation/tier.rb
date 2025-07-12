@@ -29,6 +29,8 @@ class Donation
     validates :name, :amount_cents, presence: true
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
 
+    validates :event, length: { maximum: 10, message: "can only have 10 donation tiers" }, if: -> { event.present? }
+
     default_scope { order(sort_index: :asc) }
 
     acts_as_paranoid

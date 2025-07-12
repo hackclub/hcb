@@ -57,7 +57,8 @@ class Donation
         tier.update(
           name: tier_data[:name],
           description: tier_data[:description],
-          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i
+          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i,
+          published: tier_data[:published] == "1"
         )
       end
 
