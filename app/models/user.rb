@@ -403,6 +403,14 @@ class User < ApplicationRecord
     codes
   end
 
+  def activate_backup_codes!
+    ActiveRecord::Base.transaction do
+      backup_codes.active.map(&:mark_discarded!)
+      backup_codes.previewed.map(&:mark_active!)
+    end
+    User::BackupCodeMailer.with(user_id: id).new_codes_activated.deliver_now
+  end
+
   def redeem_backup_code!(code)
     backup_codes.active.each do |backup_code|
       next unless backup_code.authenticate_code(code)
