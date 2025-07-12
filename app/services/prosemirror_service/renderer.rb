@@ -18,11 +18,11 @@ module ProsemirrorService
         Fiber[CONTEXT_KEY]
       end
 
-      def render_html(json, event)
+      def render_html(json, event, is_email: false)
         @renderer ||= create_renderer
 
         content = ""
-        with_context({ event: }) do
+        with_context({ event:, is_email: }) do
           content = @renderer.render JSON.parse(json)
         end
 

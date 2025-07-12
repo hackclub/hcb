@@ -17,10 +17,11 @@ module ProsemirrorService
 
     def text
       event = ProsemirrorService::Renderer.context.fetch(:event)
+      is_email = ProsemirrorService::Renderer.context.fetch(:is_email)
 
       hcb_code = HcbCode.find_by_hashid(@node.attrs.code)
 
-      AnnouncementsController.renderer.render partial: "announcements/nodes/hcb_code", locals: { hcb_code:, event: }
+      AnnouncementsController.renderer.render partial: "announcements/nodes/hcb_code", locals: { hcb_code:, event:, is_email: }
     end
 
   end

@@ -1,6 +1,6 @@
 <%# locals: (donations: nil, total: 0) %>
 
-<p class="font-bold">Donation summary for <%= 1.month.ago.strftime("%B %e, %Y") %> - <%= Time.now.strftime("%B %e, %Y") %></p>
+<p><strong>Donation summary for <%= 1.month.ago.strftime("%B %e, %Y") %> - <%= Time.now.strftime("%B %e, %Y") %></strong></p>
 <ul>
   <% donations.each do |donation| %>
     <li>
