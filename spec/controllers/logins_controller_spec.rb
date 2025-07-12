@@ -359,10 +359,9 @@ describe LoginsController do
       it "signs the user in and redirects to security page if the user has no backup codes remaining" do
         freeze_time do
           user = create(:user, phone_number: "+18556254225")
-          codes = user.generate_backup_codes!
+          code = SecureRandom.alphanumeric(10)
+          user.backup_codes.create!(code:)
           user.backup_codes.previewed.map(&:mark_active!)
-          # mark all except one code as discarded
-          user.backup_codes.active[0..-2].map(&:mark_discarded!)
           login = create(:login, user:)
 
           post(
@@ -370,7 +369,7 @@ describe LoginsController do
             params: {
               id: login.hashid,
               method: "backup_code",
-              backup_code: codes.first
+              backup_code: code
             }
           )
 
