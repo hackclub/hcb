@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class AnnouncementPolicy < ApplicationPolicy
-  def index?
-    show?
-  end
-
   def new?
     admin_or_manager? && !record.event.demo_mode?
   end
@@ -14,15 +10,15 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def show?
-    Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, record.event)
+    record.published? || auditor_or_reader?
   end
 
   def edit?
-    admin? || record.author == user
+    (manager? && record.author == user) || admin?
   end
 
   def update?
-    admin? || record.author == user
+    edit?
   end
 
   def destroy?

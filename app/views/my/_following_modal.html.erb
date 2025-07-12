@@ -11,7 +11,7 @@
           <% end %>
           <strong class="flex-grow"><%= link_to event_follow.event.name, event_announcement_overview_path(event_follow.event) %></strong>
           <%= pop_icon_to "member-remove",
-                          follow_path(id: event_follow.id),
+                          follow_path(event_follow),
                           class: "error",
                           data: {
                             turbo_frame: "_top",

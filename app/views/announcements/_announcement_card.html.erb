@@ -2,7 +2,7 @@
 
 <div class="card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft? %> w-full">
   <% if show_event %>
-    <%= link_to announcement.event.name, announcement.event %>
+    <%= link_to announcement.event.name, event_announcement_overview_path(announcement.event) %>
   <% end %>
   <div class="flex items-center justify-between">
     <h2 class="font-bold text-2xl my-0 no-underline text-white">
