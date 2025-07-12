@@ -4,15 +4,16 @@
 #
 # Table name: announcements
 #
-#  id           :bigint           not null, primary key
-#  content      :text             not null
-#  deleted_at   :datetime
-#  published_at :datetime
-#  title        :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  author_id    :bigint           not null
-#  event_id     :bigint           not null
+#  id            :bigint           not null, primary key
+#  content       :text             not null
+#  deleted_at    :datetime
+#  email_content :text
+#  published_at  :datetime
+#  title         :string           not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  author_id     :bigint           not null
+#  event_id      :bigint           not null
 #
 # Indexes
 #
@@ -40,14 +41,6 @@ class Announcement < ApplicationRecord
     update!(published_at: Time.now)
 
     AnnouncementPublishedJob.perform_later(announcement: self)
-  end
-
-  def render_html
-    renderer = ProsemirrorToHtml::Renderer.new
-
-    # rubocop:disable Rails/OutputSafety
-    renderer.render(JSON.parse(self.content)).html_safe
-    # rubocop:enable Rails/OutputSafety
   end
 
   def draft?
