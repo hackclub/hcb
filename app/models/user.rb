@@ -395,12 +395,7 @@ class User < ApplicationRecord
         code = SecureRandom.alphanumeric(10)
         next if codes.include?(code)
 
-        begin
-          backup_codes.create!(code: code)
-        rescue ActiveRecord::RecordInvalid
-          # if the code is already in use, skip it
-          next
-        end
+        backup_codes.create!(code: code)
         codes << code
       end
     end
