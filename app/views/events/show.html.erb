@@ -28,9 +28,7 @@
 
 <h1 class="flex items-center">
   <span class="flex-grow">Home</span>
-  <%= render "events/follow_button" %>
-
-  <% admin_tool("p0 badge", "span") do %>
+  <% admin_tool("p0 m2 badge", "span") do %>
     <span class="m0 badge bg-muted">
       #<%= @event.id %>
     </span>
@@ -38,6 +36,8 @@
       SL<%= @event.service_level %>
     </span>
   <% end %>
+
+  <%= render "events/follow_button" %>
 </h1>
 
 <% if organizer_signed_in? && @event.demo_mode %>
