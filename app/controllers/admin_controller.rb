@@ -1317,6 +1317,35 @@ class AdminController < ApplicationController
     }
   end
 
+  def referral_programs
+    @referral_programs = Referral::Program.all.includes(:links).order(created_at: :desc)
+  end
+
+  def referral_program_create
+    @referral_program = Referral::Program.new(name: params[:name], show_explore_hack_club: params[:show_explore_hack_club])
+
+    if @referral_program.save
+      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
+    else
+      flash[:error] = @referral_program.errors.full_messages.to_sentence
+      redirect_to referral_programs_admin_index_path
+    end
+  end
+
+  def referral_link_create
+    @referral_link = Referral::Link.new(
+      referral_program_id: params[:referral_program_id],
+      name: params[:name]
+    )
+
+    if @referral_link.save
+      redirect_to referral_programs_admin_index_path, flash: { success: "Referral link created successfully." }
+    else
+      flash[:error] = @referral_link.errors.full_messages.to_sentence
+      redirect_to referral_programs_admin_index_path
+    end
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)

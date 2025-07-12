@@ -19,6 +19,6 @@ module Referral
 
     has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
     has_many :users, -> { distinct }, through: :attributions, source: :user
-
+    has_many :links, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
   end
 end
