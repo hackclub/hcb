@@ -13,7 +13,6 @@
 #
 # Indexes
 #
-#  index_user_backup_codes_on_code_digest  (code_digest) UNIQUE
 #  index_user_backup_codes_on_user_id      (user_id)
 #
 # Foreign Keys
@@ -46,12 +45,6 @@ class User
 
         after do
           User::BackupCodeMailer.with(user_id: user.id).code_used.deliver_now
-          case user.active_backup_codes.size
-          when 0
-            User::BackupCodeMailer.with(user_id: user.id).no_codes_remaining.deliver_now
-          when 1..3
-            User::BackupCodeMailer.with(user_id: user.id).three_or_fewer_codes_remaining.deliver_now
-          end
         end
       end
       event :mark_discarded do
