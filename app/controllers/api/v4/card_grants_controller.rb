@@ -40,6 +40,17 @@ module Api
         end
       end
 
+      def withdraw
+        @card_grant = CardGrant.find_by_public_id!(params[:id])
+
+        authorize @card_grant
+        begin
+          @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
+        rescue ArgumentError => e
+          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
+        end
+      end
+
       def update
         @card_grant = CardGrant.find_by_public_id!(params[:id])
 
