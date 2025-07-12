@@ -1,6 +1,6 @@
 <%# locals: (content: nil) %>
 
-<%= form_with model: @announcement, url: @announcement.persisted? ? announcement_path(@announcement) : announcements_path, data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-event-value": @event.id, "turbo-frame": "_top" }.compact do |form| %>
+<%= form_with model: @announcement, url: @announcement.persisted? ? announcement_path(@announcement) : announcements_path, data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "turbo-frame": "_top" }.compact do |form| %>
   <div class="field">
     <%= form.label :title %>
     <%= form.text_field :title, required: true, placeholder: "#{@event.name}' June Update", class: "!max-w-none w-full" %>
