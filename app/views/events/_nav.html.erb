@@ -181,9 +181,7 @@
       <div class="menu__content" data-behavior="menu_content">
         <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
         <div class="menu__divider"></div>
-        <% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && policy(@event).announcement_overview? %>
-          <%= link_to "Announcements", event_announcement_overview_path(event_id: @event.slug) if policy(@event).announcement_overview? %>
-        <% end %>
+        <%= link_to "Announcements", event_announcement_overview_path(event_id: @event.slug) if policy(@event).announcement_overview? %>
         <%= link_to "Team", event_team_path(event_id: @event.slug) if policy(@event).show? %>
         <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
         <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
