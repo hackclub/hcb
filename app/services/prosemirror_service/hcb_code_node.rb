@@ -21,6 +21,10 @@ module ProsemirrorService
 
       hcb_code = HcbCode.find_by_hashid(@node.attrs.code)
 
+      unless hcb_code.event == event
+        hcb_code = nil
+      end
+
       AnnouncementsController.renderer.render partial: "announcements/nodes/hcb_code", locals: { hcb_code:, event:, is_email: }
     end
 

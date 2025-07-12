@@ -1,6 +1,6 @@
 <%# locals: (hcb_code: nil, event: nil, is_email: false) %>
 
-<% if hcb_code.event != event %>
+<% if hcb_code.nil? %>
  <p>This transaction cannot be displayed</p>
 <% else %>
   <% if is_email %>
