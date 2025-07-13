@@ -108,6 +108,13 @@ export const generateEventActions = data => {
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-google-workspace`,
+      name: 'Google Workspace',
+      perform: navigate(`/${event.slug}/google_workspace`),
+      icon: <Icon glyph="google" size={16} />,
+      parent: event.slug,
+    })),
+    ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-documents`,
       name: 'Documents',
       perform: () =>
