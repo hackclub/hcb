@@ -515,6 +515,14 @@ export const adminActions = adminUrls => [
     icon: <Icon glyph="transactions" size={16} />,
     perform: navigate('/admin/recurring_donations'),
   },
+  {
+    id: 'admin_tool_36',
+    section: 'Admin Tools',
+    priority: Priority.HIGH,
+    name: 'Flipper',
+    icon: <Icon glyph="flag-fill" size={16} />,
+    perform: navigate('/flipper/features'),
+  },
 ]
 
 function navigate(to) {
