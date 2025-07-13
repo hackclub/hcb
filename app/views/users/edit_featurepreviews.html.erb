@@ -122,6 +122,7 @@
           <%= render partial: "features/preview", locals: {
                 id: "recently_on_hcb",
                 feature_flag: :recently_on_hcb_2024_05_23,
+                fully_shipped: true,
                 name: "Recently on HCB...",
                 description: "This feature preview adds a panel to your sidebar with things that have happened recently on your organizations, for example, when an invoice is paid or a new team member is invited."
               } %>
@@ -144,6 +145,7 @@
                 id: "sms-receipt-notification",
                 classes: ["feature-sms-receipt-notification"],
                 feature_flag: :sms_receipt_notifications_2022_11_23,
+                fully_shipped: true,
                 name: "SMS Charge Notifications",
                 description: "We're experimenting with new ways to alert people that they need to
             upload a receipt. After opting-in, you'll get a text whenever your
