@@ -5,7 +5,7 @@
 <%= render partial: "admin_viewer", locals: { record: @donation } %>
 <%= render partial: "admin_viewer", locals: { record: @donation.payout } unless @donation.payout.nil? %>
 
-<% admin_tool("mt3") do %>
+<% admin_tool("mt1") do %>
   <%= link_to "View on Stripe", @donation.stripe_dashboard_url, class: "btn bg-accent" %>
   <% unless @donation.refunded? %>
     <button class="btn bg-error" data-behavior="modal_trigger" data-modal="refund">Issue refund</button>
