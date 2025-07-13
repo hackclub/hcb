@@ -26,23 +26,23 @@
           <summary class="mb2">Past feature previews</summary>
 
           <%= render partial: "features/preview", locals: {
-              id: "two-factor-authentication",
-              feature_flag: :two_factor_authentication_2024_05_22,
-              fully_shipped: true,
-              name: "Two factor authentication",
-              classes: ["feature-two-factor-authentication"],
-              description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
-              footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
-            } %>
+                id: "two-factor-authentication",
+                feature_flag: :two_factor_authentication_2024_05_22,
+                fully_shipped: true,
+                name: "Two factor authentication",
+                classes: ["feature-two-factor-authentication"],
+                description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
+                footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
+              } %>
 
-        <%= render partial: "features/preview", locals: {
-              id: "totp",
-              feature_flag: :totp_2024_06_13,
-              fully_shipped: true,
-              name: "Time-based one time passwords",
-              classes: ["feature-totp"],
-              description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
-            } %>
+          <%= render partial: "features/preview", locals: {
+                id: "totp",
+                feature_flag: :totp_2024_06_13,
+                fully_shipped: true,
+                name: "Time-based one time passwords",
+                classes: ["feature-totp"],
+                description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
+              } %>
 
           <%= render partial: "features/preview", locals: {
                 id: "receipt-bin",
