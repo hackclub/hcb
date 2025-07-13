@@ -65,7 +65,7 @@ export const generateEventActions = data => {
     })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-check-deposit`,
-      name: 'Check deposit',
+      name: 'Check deposits',
       perform: () =>
         (window.location.pathname = `/${event.slug}/check-deposits`),
       icon: <Icon glyph="attachment" size={16} />,
