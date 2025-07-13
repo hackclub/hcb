@@ -130,10 +130,9 @@ class MyController < ApplicationController
   def reimbursements
     case params[:filter]
     when "created"
-      review_reports = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
-      @reports = current_user.created_reimbursement_reports.where.not(id: review_reports.select(:id))
+      @reports = current_user.created_reimbursement_reports.where.not(id: current_user.assigned_reimbursement_reports.submitted.select(:id))
     when "review"
-      @reports = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+      @reports = Reimbursement::Report.submitted.where(event: Event.joins(:managers).where(users: { id: current_user.id }), reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
     else
       @reports = current_user.reimbursement_reports.concat(current_user.created_reimbursement_reports).concat(current_user.assigned_reimbursement_reports)
     end
