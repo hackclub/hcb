@@ -82,7 +82,7 @@
   </div>
 </div>
 
-<% if @my_reports.blank? %>
+<% if @reports.blank? %>
   <%= blankslate "No reports found!" %>
 <% else %>
   <article class="table-container">
@@ -97,7 +97,7 @@
       </tr>
       </thead>
       <tbody>
-        <% @my_reports.order(created_at: :desc).each do |report| %>
+        <% @reports.order(created_at: :desc).each do |report| %>
           <tr>
             <td class="!pl-0">
               <% if report.status_description %>
