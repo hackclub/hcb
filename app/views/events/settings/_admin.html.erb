@@ -61,8 +61,9 @@
       <div class="field">
         <%= form.label :stripe_card_shipping_type, "Card shipping method" %>
         <%= form.collection_select :stripe_card_shipping_type, Event.stripe_card_shipping_types, :first, :first, {}, { disabled:, "x-on:input" => "ship_type = $event.target.value" } %>
-        <p class="italic mt1" x-show="ship_type == 'express'">Express shiping will cost $13 per card and arrive in 4-5 buisness days (normal shipping costs $0.63 per card)</p>
-        <p class="italic mt1" x-show="ship_type == 'priority'">Priority shipping will cost $27 per card and arrive in 2-3 buisness days (normal shipping costs $0.63 per card)</p>
+        <p class="italic mt1" x-show="ship_type == 'standard'">Standard shipping will cost $0.63 per card and arrive in 5-8 business days</p>
+        <p class="italic mt1" x-show="ship_type == 'express'">Express shipping will cost $13 per card and arrive in 4-5 business days</p>
+        <p class="italic mt1" x-show="ship_type == 'priority'">Priority shipping will cost $27 per card and arrive in 2-3 business days</p>
       </div>
 
       <div class="field">
