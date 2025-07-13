@@ -34,6 +34,14 @@ export const generateEventActions = data => {
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-announcements`,
+      name: 'Announcements',
+      perform: () =>
+        (window.location.pathname = `/${event.slug}/announcements`),
+      icon: <Icon glyph="announcement" size={16} />,
+      parent: event.slug,
+    })),
+    ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-donations`,
       name: 'Donations',
       perform: navigate(`/${event.slug}/donations`),
