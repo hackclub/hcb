@@ -120,7 +120,7 @@ module UsersHelper
   end
 
   def admin_tool(class_name = "", element = "div", override_pretend: false, **options, &block)
-    return unless current_user&.auditor? || (override_pretend && current_user&.admin_override_pretend?)
+    return unless auditor_signed_in? || (override_pretend && current_user&.admin_override_pretend?)
 
     concat content_tag(element, class: "admin-tools #{class_name}", **options, &block)
   end
