@@ -63,6 +63,21 @@ OrganizerPositionInvite.create!(
   sender: user,
 )
 
+bank_event = Event.create_with(
+  name: "Hack Club Bank",
+  slug: "bank",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(slug: "bank")
+
+OrganizerPositionInvite.create!(
+  event: bank_event,
+  user:,
+  sender: user,
+)
+
 # create incoming transactions for each org
 
 nte_non_pending_transaction = ::RawCsvTransactionService::Create.new(

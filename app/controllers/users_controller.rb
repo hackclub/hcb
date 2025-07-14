@@ -225,7 +225,7 @@ class UsersController < ApplicationController
         if @user == current_user
           flash[:error] = "As much as you might desire to, you cannot lock yourself out."
           return redirect_to admin_user_path(@user)
-        elsif @user.admin? && !current_user.superadmin?
+        elsif @user.admin? && !superadmin_signed_in?
           flash[:error] = "Only superadmins can lock or unlock admins."
           return redirect_to admin_user_path(@user)
         elsif locked && @user.superadmin?
