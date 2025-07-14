@@ -1,7 +1,7 @@
-/* global APPSIGNAL_API_KEY */
+/* global APPSIGNAL_FRONTEND */
 
 import Appsignal from '@appsignal/javascript'
 
 export const appsignal = new Appsignal({
-  key: APPSIGNAL_API_KEY,
+  key: APPSIGNAL_FRONTEND,
 })

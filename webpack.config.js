@@ -41,7 +41,7 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       // prettier-ignore
-      APPSIGNAL_API_KEY: JSON.stringify(process.env.APPSIGNAL_API_KEY || null)
+      APPSIGNAL_FRONTEND: JSON.stringify(process.env.APPSIGNAL_FRONTEND || null)
     }),
   ],
   externals: {
