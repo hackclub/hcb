@@ -207,3 +207,7 @@ monthly_donation_summary_job:
 weekly_ysws_event_summary_job:
   cron: "0 13 * * 5" # run 9am est friday
   class: "WeeklyYswsEventSummaryJob"
+
+monthly_follower_summary_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "MonthlyFollowerSummaryJob"
