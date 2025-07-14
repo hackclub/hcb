@@ -832,6 +832,7 @@ Rails.application.routes.draw do
 
   scope module: "referral" do
     resources :programs, only: [:show], path: "referrals"
+    resources :programs, only: [:show], path: "from/*slug"
   end
 
   # rewrite old event urls to the new ones not prefixed by /events/
