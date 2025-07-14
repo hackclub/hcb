@@ -27,7 +27,7 @@
     </details>
   <% end %>
 
-  <%= form_with(model: event, local: true) do |form| %>
+  <%= form_with(model: event, local: true, html: { "x-data" => "{ship_type: '#{event.stripe_card_shipping_type}'}" }) do |form| %>
     <%= form_errors event, "organization" %>
     <% admin_tool do %>
       <%= link_to (event.hidden? ? "Un-hide project" : "Hide project"),
@@ -60,7 +60,10 @@
 
       <div class="field">
         <%= form.label :stripe_card_shipping_type, "Card shipping method" %>
-        <%= form.collection_select :stripe_card_shipping_type, Event.stripe_card_shipping_types, :first, :first, {}, { disabled: } %>
+        <%= form.collection_select :stripe_card_shipping_type, Event.stripe_card_shipping_types, :first, :first, {}, { disabled:, "x-on:input" => "ship_type = $event.target.value" } %>
+        <p class="italic mt1" x-show="ship_type == 'standard'">Standard shipping will cost $0.63 per card and arrive in 5-8 business days</p>
+        <p class="italic mt1" x-show="ship_type == 'express'">Express shipping will cost $13 per card and arrive in 4-5 business days</p>
+        <p class="italic mt1" x-show="ship_type == 'priority'">Priority shipping will cost $27 per card and arrive in 2-3 business days</p>
       </div>
 
       <div class="field">
@@ -101,7 +104,7 @@
       </div>
 
       <div class="action">
-        <%= form.submit "Update", disabled: %>
+        <%= form.submit "Update", disabled:, data: { turbo: false } %>
       </div>
     <% end %>
   <% end %>
