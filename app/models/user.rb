@@ -95,6 +95,9 @@ class User < ApplicationRecord
 
   has_many :events, through: :organizer_positions
 
+  has_many :event_follows, class_name: "Event::Follow"
+  has_many :followed_events, through: :event_follows, source: :event
+
   has_many :managed_events, inverse_of: :point_of_contact
 
   has_many :g_suite_accounts, inverse_of: :fulfilled_by
@@ -187,6 +190,12 @@ class User < ApplicationRecord
     transactions_missing_receipt_count "Missing Receipts"
   end
 
+  SYSTEM_USER_EMAIL = "bank@hackclub.com"
+
+  def self.system_user
+    User.find_by!(email: SYSTEM_USER_EMAIL)
+  end
+
   after_save do
     if use_sms_auth_previously_changed?
       if use_sms_auth
@@ -218,7 +227,7 @@ class User < ApplicationRecord
   # admin_override_pretend? ignores an admin user's
   # preference to pretend not to be an admin.
   def admin_override_pretend?
-    ["admin", "superadmin"].include?(self.access_level)
+    ["auditor", "admin", "superadmin"].include?(self.access_level)
   end
 
   def make_admin!

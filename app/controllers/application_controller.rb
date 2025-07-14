@@ -29,6 +29,11 @@ class ApplicationController < ActionController::Base
     cookies.permanent[:first_visit] = 1
   end
 
+  # This cookie is used for Safari PWA prompts
+  before_action do
+    @hide_three_teens_banner = cookies[:hide_three_teens_banner] == "1"
+  end
+
   before_action do
     # Disallow indexing
     response.set_header("X-Robots-Tag", "noindex")
@@ -104,7 +109,7 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
       redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end

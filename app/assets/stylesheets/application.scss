@@ -252,6 +252,7 @@ summary {
 @import 'components/event_settings';
 @import 'components/reactions';
 @import 'components/tags';
+@import 'components/tiptap';
 @import 'components/filter_tabs';
 @import 'components/filter_menu';
 @import 'components/home_page';
@@ -538,4 +539,37 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 // Phone number input container
 .iti {
   width: 100%;
+}
+
+.fade-card-hide {
+  animation: fade-card-close 0.1s ease-out forwards;
+}
+
+.fade-card-show {
+  animation: fade-card-open 0.1s ease-out forwards;
+  display: flex;
+}
+
+@keyframes fade-card-open {
+  from {
+    opacity: 0;
+    display: none;
+  }
+
+  to {
+    opacity: 1;
+    display: flex;
+  }
+}
+
+@keyframes fade-card-close {
+  from {
+    opacity: 1;
+    display: flex;
+  }
+
+  to {
+    opacity: 0;
+    display: none;
+  }
 }

@@ -13,8 +13,8 @@ puts "Continuing with #{user.email}..."
 
 user.make_admin! unless user.admin?
 
-if User.find_by(email: "bank@hackclub.com").nil?
-  admin = User.create!(email: "bank@hackclub.com")
+if User.find_by(email: User::SYSTEM_USER_EMAIL).nil?
+  admin = User.create!(email: User::SYSTEM_USER_EMAIL)
   admin.make_admin!
 end
 
@@ -59,6 +59,21 @@ transparent_event = Event.create_with(
 
 OrganizerPositionInvite.create!(
   event: transparent_event,
+  user:,
+  sender: user,
+)
+
+bank_event = Event.create_with(
+  name: "Hack Club Bank",
+  slug: "bank",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(slug: "bank")
+
+OrganizerPositionInvite.create!(
+  event: bank_event,
   user:,
   sender: user,
 )
