@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_09_020702) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_14_200959) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -196,9 +196,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_09_020702) do
     t.datetime "deleted_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "content", null: false
+    t.jsonb "content", null: false
     t.bigint "event_id", null: false
     t.datetime "published_at"
+    t.text "rendered_email_html"
+    t.text "rendered_html"
     t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
   end
