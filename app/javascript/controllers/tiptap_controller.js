@@ -177,7 +177,7 @@ export default class extends Controller {
         },
       },
       content: this.hasContentValue
-        ? this.contentValue
+        ? JSON.parse(this.contentValue)
         : {
             type: 'doc',
             content: [

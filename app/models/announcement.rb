@@ -4,17 +4,17 @@
 #
 # Table name: announcements
 #
-#  id            :bigint           not null, primary key
-#  content       :text             not null
-#  deleted_at    :datetime
-#  email_content :text
-#  json_content  :jsonb            not null
-#  published_at  :datetime
-#  title         :string           not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  author_id     :bigint           not null
-#  event_id      :bigint           not null
+#  id                  :bigint           not null, primary key
+#  content             :text             not null
+#  deleted_at          :datetime
+#  published_at        :datetime
+#  rendered_email_html :text             not null
+#  rendered_html       :text             not null
+#  title               :string           not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  author_id           :bigint           not null
+#  event_id            :bigint           not null
 #
 # Indexes
 #
@@ -37,6 +37,13 @@ class Announcement < ApplicationRecord
   belongs_to :event
 
   scope :published, -> { where.not(published_at: nil) }
+
+  before_save do
+    if content_changed?
+      self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
+      self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+    end
+  end
 
   def publish!
     update!(published_at: Time.now)

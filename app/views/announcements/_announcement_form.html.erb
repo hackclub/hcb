@@ -8,7 +8,7 @@
 
   <div class="field">
     <%= form.label :content %>
-    <%= form.hidden_field :content, data: { "tiptap-target": "contentInput" } %>
+    <%= form.hidden_field :json_content, data: { "tiptap-target": "contentInput" } %>
     <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md">
       <div class="flex gap-2 bg-snow dark:bg-darkless p-2 rounded-md rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
         <%= render partial: "announcements/format_menu" %>

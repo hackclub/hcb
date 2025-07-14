@@ -9,7 +9,11 @@ module OneTimeJobs
         unless json.empty?
           begin
             html = ProsemirrorService::Renderer.render_html(json, announcement.event)
-            announcement.content = html
+            announcement.rendered_html = html
+
+            email_html = ProsemirrorService::Renderer.render_html(json, announcement.event, is_email: true)
+            announcement.rendered_email_html = email_html
+
             announcement.save!
           rescue
             puts "Failed to render announcement #{announcement.id}"

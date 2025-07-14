@@ -16,11 +16,10 @@ class AnnouncementsController < ApplicationController
   end
 
   def create
-    json_content = params[:announcement][:content]
+    json_content = params[:announcement][:json_content]
     @event = Event.friendly.find(params[:announcement][:event_id])
-    html_content = ProsemirrorService::Renderer.render_html(json_content, @event)
-    email_content = ProsemirrorService::Renderer.render_html(json_content, @event, is_email: true)
-    @announcement = authorize Announcement.build(announcement_params.merge(author: current_user, event: @event, content: html_content, email_content: ))
+
+    @announcement = authorize Announcement.build(announcement_params.merge(author: current_user, event: @event, content: json_content ))
 
     @announcement.save!
 
@@ -51,11 +50,9 @@ class AnnouncementsController < ApplicationController
   def update
     authorize @announcement
 
-    json_content = params[:announcement][:content]
-    html_content = ProsemirrorService::Renderer.render_html(json_content, @event)
-    email_content = ProsemirrorService::Renderer.render_html(json_content, @event, is_email: true)
+    json_content = params[:announcement][:json_content]
 
-    @announcement.update!(announcement_params.merge(content: html_content, email_content:))
+    @announcement.update!(announcement_params.merge(content: json_content))
 
     if params[:announcement][:autosave] != "true"
       flash[:success] = "Updated announcement"

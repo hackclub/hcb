@@ -1,9 +1,9 @@
 <h1><%= @announcement.title %></h1>
 
-<% if @announcement.email_content.present? %>
-  <%= @announcement.email_content.html_safe %> <%# erb_lint:disable ErbSafety %>
+<% if @announcement.rendered_email_html.present? %>
+  <%= @announcement.rendered_email_html.html_safe %> <%# erb_lint:disable ErbSafety %>
 <% else %>
-  <%= @announcement.content.html_safe %> <%# erb_lint:disable ErbSafety %>
+  <%= @announcement.rendered_html.html_safe %> <%# erb_lint:disable ErbSafety %>
 <% end %>
 <br>
 <i><%= link_to "View this announcement in your browser", @announcement %></i>
