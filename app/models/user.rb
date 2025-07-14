@@ -423,7 +423,6 @@ class User < ApplicationRecord
         backup_code.mark_used!
         return true
       end
-      return true
     end
 
     false
