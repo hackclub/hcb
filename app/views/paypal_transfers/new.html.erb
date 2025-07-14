@@ -1,11 +1,11 @@
 <% disabled = !policy(@event).create_transfer? || true %>
 
-<% title "Send a PayPal Transfer" %>
+<% title "Send a PayPal transfer" %>
 <%= render "events/nav", selected: :transfers %>
 <% page_sm %>
 
- <% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render "events/transfers/unauthorized_callout" %>
+<% if @event.present? && !policy(@event).create_transfer? %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: "send a PayPal transfer" } %>
 <% end %>
 
 <h1>Send a PayPal transfer</h1>

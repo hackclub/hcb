@@ -588,6 +588,8 @@ GEM
       net-smtp
       premailer (~> 1.7, >= 1.7.9)
     prism (1.4.0)
+    prosemirror_to_html (0.2.0)
+      nokogiri
     pry (0.15.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
@@ -953,6 +955,7 @@ DEPENDENCIES
   plaid (~> 34.0)
   poppler
   premailer-rails
+  prosemirror_to_html
   pry-byebug
   pry-rails
   pstore

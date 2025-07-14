@@ -37,18 +37,18 @@
   </div>
 <% end %>
 
-<h1 class="items-center hidden md:flex">
-  Financials
-  <% if auditor_signed_in? %>
-    <% admin_tool("p0 badge", "span") do %>
-      <span class="m0 badge bg-muted">
-        #<%= @event.id %>
-      </span>
-      <span class="m0 badge bg-muted ml1">
-        SL<%= @event.service_level %>
-      </span>
-    <% end %>
+<h1 class="flex items-center">
+  <span class="flex-grow">Transactions</span>
+  <% admin_tool("p0 m2 badge", "span") do %>
+    <span class="m0 badge bg-muted">
+      #<%= @event.id %>
+    </span>
+    <span class="m0 badge bg-muted ml1">
+      SL<%= @event.service_level %>
+    </span>
   <% end %>
+
+  <%= render "events/follow_button" %>
 </h1>
 
 <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
