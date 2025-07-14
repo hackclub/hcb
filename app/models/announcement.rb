@@ -41,7 +41,10 @@ class Announcement < ApplicationRecord
   before_save do
     if content_changed?
       self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
-      self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+
+      if draft?
+        self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+      end
     end
   end
 
