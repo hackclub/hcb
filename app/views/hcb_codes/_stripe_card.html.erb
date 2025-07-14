@@ -16,7 +16,7 @@
 <% end %>
 
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code do %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span class="flex-auto">
       <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
         <span class="regular muted">
