@@ -38,20 +38,16 @@
     <h2>Tasks</h2>
     <ul class="grid left-align w-100 mt0" id="task-grid">
       <%= card_to "Applications", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
-      <%= card_to "OnBoard ID", link_to_airtable_task(:onboard_id), async_badge: :pending_onboard_id_airtable %>
       <%= card_to "Ledger", ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count %>
       <%= card_to "ACH", ach_admin_index_path, badge: AchTransfer.pending.count %>
       <%= card_to "Check", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
       <%= card_to "Check deposits", admin_check_deposits_path, badge: CheckDeposit.unprocessed.count %>
-      <%= card_to "PayPal", paypal_transfers_admin_index_path, badge: PaypalTransfer.pending.count %>
       <%= card_to "Wires", wires_admin_index_path, badge: Wire.pending.count %>
       <%= card_to "Disbursements", disbursements_admin_index_path, badge: Disbursement.reviewing.count %>
       <%= card_to "Reimbursements", reimbursements_admin_index_path, badge: Reimbursement::Report.reimbursement_requested.count %>
       <%= card_to "Deletion requests", organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count %>
       <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable %>
       <%= card_to "Feedback", link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable %>
-      <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>
-      <%= card_to "YSWS verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
       <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
       <%= card_to "Identity verifications", link_to("https://identity.hackclub.com/backend/verifications/pending", target: "_blank", data: { turbo: false }), async_badge: :pending_identity_vault_verifications %>
     </ul>
@@ -73,7 +69,6 @@
       <%= card_to "Hackathons", "https://dash.hackathons.hackclub.com/sign_in", async_badge: :pending_hackathons_airtable %>
       <%= card_to "1Password", link_to_airtable_task(:onepassword), async_badge: :pending_onepassword_airtable %>
       <%= card_to "Domains", link_to_airtable_task(:domains), async_badge: :pending_domains_airtable %>
-      <%= card_to "PVSA", link_to_airtable_task(:pvsa), async_badge: :pending_pvsa_airtable %>
       <%= card_to "The Event Helper", link_to_airtable_task(:theeventhelper), async_badge: :pending_theeventhelper_airtable %>
       <%= card_to "Google Workspace waitlist", link_to_airtable_task(:google_workspace_waitlist), async_badge: :pending_google_workspace_waitlist_airtable %>
     </ul>
@@ -96,6 +91,11 @@
     <details>
       <summary>Old cards</summary>
       <ul class="grid left-align w-100 mt0" id="old-card-grid">
+        <%= card_to "OnBoard ID", link_to_airtable_task(:onboard_id), async_badge: :pending_onboard_id_airtable %>
+        <%= card_to "PayPal", paypal_transfers_admin_index_path, badge: PaypalTransfer.pending.count %>
+        <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>
+        <%= card_to "YSWS verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
+        <%= card_to "PVSA", link_to_airtable_task(:pvsa), async_badge: :pending_pvsa_airtable %>
         <%= render partial: "static_pages/card", locals: { task_path: events_path, human_name: "Organizations" } %>
         <%= render partial: "static_pages/card", locals: { task_path: negative_events_path, human_name: "Negative organizations" } %>
         <%= render partial: "static_pages/card", locals: { task_path: sponsors_path, human_name: "Sponsors" } %>
