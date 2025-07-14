@@ -8,6 +8,7 @@
 #  content       :text             not null
 #  deleted_at    :datetime
 #  email_content :text
+#  json_content  :jsonb            not null
 #  published_at  :datetime
 #  title         :string           not null
 #  created_at    :datetime         not null
