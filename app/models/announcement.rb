@@ -5,11 +5,11 @@
 # Table name: announcements
 #
 #  id                  :bigint           not null, primary key
-#  content             :text             not null
+#  content             :jsonb            not null
 #  deleted_at          :datetime
 #  published_at        :datetime
-#  rendered_email_html :text             not null
-#  rendered_html       :text             not null
+#  rendered_email_html :text
+#  rendered_html       :text
 #  title               :string           not null
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null

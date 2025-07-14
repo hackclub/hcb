@@ -196,11 +196,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_14_200959) do
     t.datetime "deleted_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "content", null: false
+    t.jsonb "content", null: false
     t.bigint "event_id", null: false
     t.datetime "published_at"
-    t.text "rendered_email_html", null: false
-    t.text "rendered_html", null: false
+    t.text "rendered_email_html"
+    t.text "rendered_html"
     t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
   end

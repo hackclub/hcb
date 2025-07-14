@@ -15,7 +15,8 @@ module OneTimeJobs
             announcement.rendered_email_html = email_html
 
             announcement.save!
-          rescue
+          rescue => e
+            puts e
             puts "Failed to render announcement #{announcement.id}"
           end
         end

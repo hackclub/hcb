@@ -23,7 +23,7 @@ module ProsemirrorService
 
         content = ""
         with_context({ event:, is_email: }) do
-          content = @renderer.render JSON.parse(json)
+          content = @renderer.render json
         end
 
         <<-HTML.chomp
