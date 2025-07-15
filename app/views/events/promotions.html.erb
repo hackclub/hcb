@@ -8,16 +8,41 @@
   Promotions &amp; perks
 </h1>
 
+<div class="mb3 rounded-xl promo-premium-border">
+  <div class="card promo-premium-card" id="domains">
+    <div class="card__banner card__banner--top flex justify-between items-center">
+      <h3 class="h1 py-4 my0 text-transparent promo-premium-banner bg-clip-text">Premium Domains</h3>
+      <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) || @event.users.where(teenager: true).active.size < 5) && @event.event_tags.where(name: "Scrapyard").none? %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
+          <span class="btn disabled promo-premium-banner bg-clip-padding">Ineligible</span>
+        </div>
+      <% else %>
+        <%= link_to "Apply",
+          @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
+          class: "btn promo-premium-banner bg-clip-padding #{"disabled" unless @perks_available}",
+          target: :_blank %>
+      <% end %>
+    </div>
+
+    <p class="mb0">
+      Running a high school student-led hackathon, nonprofit, or club? HCB
+      will purchase your domain for under $20 and cover the cost for the
+      first year. After the first year, you'll be responsible for paying to
+      renew. This can only be claimed once per organization.
+    </p>
+  </div>
+</div>
+
 <% if @event.robotics_team? %>
   <div class="card pb0 mb3 promo-robotics" id="bin">
     <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 py-4 p my0 flex items-start smoke justify-center">
+      <h3 class="h1 p2 my0 flex items-start smoke justify-center">
         <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
         Fee Waiver
       </h3>
       <%= link_to "Apply",
         @perks_available ? fillout_form("8NZy8a2ui9us") : root_path,
-        class: "btn",
+        class: "btn mr1",
         target: :_blank %>
     </div>
     <h3 class="mb0 mt0">Raise some money this off-season with zero fees on HCB!</h3>
@@ -32,7 +57,7 @@
     <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
     <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
       @perks_available ? fillout_form("hDJYyLd7qNus", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Name" => current_user.name, "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn #{"disabled" unless @perks_available && @event.country_US?}",
+      class: "btn mr1 #{"disabled" unless @perks_available && @event.country_US?}",
       target: :_blank %>
   </div>
 
@@ -71,38 +96,13 @@
   </section>
 </div>
 
-<div class="mb3 rounded-xl promo-premium-border">
-  <div class="card promo-premium-card" id="domains">
-    <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 py-4 my0 text-transparent promo-premium-banner bg-clip-text">Premium Domains</h3>
-      <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) || @event.users.where(teenager: true).active.size < 5) && @event.event_tags.where(name: "Scrapyard").none? %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
-          <span class="btn disabled promo-premium-banner bg-clip-padding">Ineligible</span>
-        </div>
-      <% else %>
-        <%= link_to "Apply",
-          @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
-          class: "btn promo-premium-banner bg-clip-padding #{"disabled" unless @perks_available}",
-          target: :_blank %>
-      <% end %>
-    </div>
-
-    <p class="mb0">
-      Running a high school student-led hackathon, nonprofit, or club? HCB
-      will purchase your domain for under $20 and cover the cost for the
-      first year. After the first year, you'll be responsible for paying to
-      renew. This can only be claimed once per organization.
-    </p>
-  </div>
-</div>
-
 <% if @event.hackathon? || @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
   <div class="card pb0 mb3 <%= "muted" unless @perks_available %>" id="hackathons-page">
     <div class="card__banner card__banner--top flex justify-between items-center promo-hackathons-page">
       <%= image_tag "https://assets.hackclub.com/flag-standalone.svg", height: 90, class: "p-4" %>
       <%= link_to @perks_available ? "Apply" : "Ineligible",
         "https://dash.hackathons.hackclub.com/hackathons/submissions/new",
-        class: "btn #{'disabled' unless @perks_available}",
+        class: "btn mr1 #{'disabled' unless @perks_available}",
         target: :_blank %>
     </div>
     <p>
@@ -113,10 +113,10 @@
 
 <div class="card mb3" id="1password">
   <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
-    <%= image_tag "1password.svg", width: 210, class: "py-4" %>
+    <%= image_tag "1password.svg", width: 210, class: "p2" %>
     <%= link_to "Apply",
       @perks_available ? fillout_form("7jzG7ADmuLus", { "Project_Name" => @event.name, "Bank_URL" => event_url(@event), "Your_Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn #{"disabled" unless @perks_available}",
+      class: "btn mr1 #{"disabled" unless @perks_available}",
       target: :_blank %>
   </div>
 
@@ -142,7 +142,7 @@
 <div class="card mb3" id="domains">
   <div
     class="card__banner card__banner--top flex justify-between items-center promo-domains">
-    <h3 class="h1 py-4 my0 color-black">Domains</h3>
+    <h3 class="h1 p2 my0 color-black">Domains</h3>
       <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?)) && @event.event_tags.where(name: "Scrapyard").none? %>
         <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
           <span class="btn disabled">Apply</span>
@@ -150,7 +150,7 @@
       <% else %>
         <%= link_to "Apply",
           @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
-          class: "btn #{"disabled" unless @perks_available}",
+          class: "btn mr1 #{"disabled" unless @perks_available}",
           target: :_blank %>
       <% end %>
   </div>
@@ -196,14 +196,14 @@
 <div class="card mb3 pb0" id="stickers">
   <div class="card__banner card__banner--top flex justify-between items-center promo-stickers">
       <span class="flex flex-row items-center">
-        <h3 class="h1 white py-4 my0 card-title z1">
+        <h3 class="h1 white p2 my0 card-title z1">
           <%= content_tag(:span, "HCB") %>
           Stickers
         </h3>
       </span>
     <%= link_to "Request",
       @perks_available ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => @event.name }, prefix: "prefill_") : root_path,
-      class: "btn #{"disabled" unless @perks_available}",
+      class: "btn mr1 #{"disabled" unless @perks_available}",
       target: :_blank %>
   </div>
 
@@ -225,13 +225,13 @@
   <% if @event.robotics_team? %>
     <div class="card pb0 mb3 promo-onboard" id="bin">
       <div class="card__banner card__banner--top flex justify-between items-center">
-        <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
+        <h3 class="h1 p2 my0 flex items-start smoke justify-center">
           <img src="https://cloud-iuly89sfb-hack-club-bot.vercel.app/0surfin_orpheus.png" height="36px" class="mr2">
           OnBoard Grant for PCB Fabrication
         </h3>
         <%= link_to "Expired",
           root_path,
-          class: "btn disabled",
+          class: "btn mr1 disabled",
           target: :_blank %>
       </div>
       <p>
@@ -245,10 +245,10 @@
 
   <div class="card mb3" id="wallets">
     <div class="card__banner card__banner--top flex justify-between items-center promo-wallets">
-      <h3 class="h1 py-4 my0 color-black">Wallets</h3>
+      <h3 class="h1 p2 my0 color-black">Wallets</h3>
       <%= link_to @wallets_available ? "Request" : "Expired",
                   @perks_available && @wallets_available ? "https://hack.af/hcb-wallets?prefill_Organization%20Name=#{@event.name}&prefill_Recipient%20Name=#{current_user.name}&prefill_Login%20Email=#{current_user.email}" : root_path,
-                  class: "btn #{"disabled" unless @perks_available && @wallets_available}",
+                  class: "btn mr1 #{"disabled" unless @perks_available && @wallets_available}",
                   target: :_blank %>
     </div>
 
@@ -263,10 +263,10 @@
 
   <div class="card mb3" id="sendy">
     <div class="card__banner card__banner--top flex justify-between items-center promo-sendy">
-      <h3 class="h1 white py-4 my0">Sendy</h3>
+      <h3 class="h1 white p2 my0">Sendy</h3>
       <%= link_to "Expired",
         root_path,
-        class: "btn disabled",
+        class: "btn mr1 disabled",
         target: :_blank %>
     </div>
 
@@ -280,7 +280,7 @@
       <%= image_tag "stickermule.svg", width: 240 %>
       <%= link_to "Expired",
                   @perks_available ? "https://hack.af/stickermule?prefill_Event%20Name=#{@event.name}&prefill_First%20Name=#{current_user.first_name}&prefill_Email=#{current_user.email}" : root_path,
-                  class: "btn disabled",
+                  class: "btn mr1 disabled",
                   target: :_blank %>
     </div>
 
@@ -346,7 +346,7 @@
       <%= image_tag "github.png", width: 170 %>
       <%= link_to "Expired",
         @perks_available ? "https://hack.af/grant?prefill_Event%20Name=#{@event.name}" : root_path,
-        class: "btn disabled" %>
+        class: "btn mr1 disabled" %>
     </div>
 
     <p class="muted">
@@ -380,7 +380,7 @@
       class="card__banner card__banner--top flex justify-between items-center"
       style="background-color: #0d101e; border: 1px solid #0068ad;">
       <%= image_tag "replit.png", width: 170 %>
-      <%= link_to "Expired", "#", class: "btn disabled" %>
+      <%= link_to "Expired", "#", class: "btn mr1 disabled" %>
     </div>
 
     <p class="mb0">
@@ -396,7 +396,7 @@
       <%= image_tag "https://cloud-q7i8htyv7-hack-club-bot.vercel.app/0pvsa-logo-2x.png", width: 60 %>
       <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
         @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-        class: "btn disabled",
+        class: "btn mr1 disabled",
         target: :_blank %>
     </div>
 
