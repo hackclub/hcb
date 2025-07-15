@@ -21,7 +21,7 @@ Doorkeeper.configure do
   # every time somebody will try to access the admin web interface.
   #
   admin_authenticator do
-    unless current_user&.admin?
+    unless admin_signed_in?
       redirect_to root_path
     end
   end
