@@ -126,7 +126,7 @@
       <% end %>
     </div>
     <div class="flex flex-col gap-2 items-start text-left w-full self-stretch">
-      <%= render partial: "announcements/announcement_card", collection: Event.friendly.find("bank").announcements.last(3).order(published_at: :desc), as: :announcement %>
+      <%= render partial: "announcements/announcement_card", collection: Event.friendly.find("bank").announcements.order(published_at: :desc).last(2), as: :announcement %>
     </div>
 
     <%= render "static_pages/index/explore" %>
