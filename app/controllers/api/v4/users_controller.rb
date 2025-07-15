@@ -23,6 +23,8 @@ module Api
         render :show
       end
 
+      require_oauth2_scope "user_lookup", :show, :by_email
+
       def available_icons
         icons = {
           frc: current_user.events.robotics_team.any?,
