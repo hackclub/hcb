@@ -54,6 +54,60 @@ const templates = {
       },
     }
   },
+  new_tier: ({ eventName, eventSlug, extra }) => {
+    return {
+      title: `New donation tier for ${eventName}`,
+      content: {
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: 'Hey all!' }] },
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: `We're excited to announce a new donation tier for ${eventName}: `,
+              },
+            ],
+          },
+          { type: 'donationTier', attrs: { id: extra } },
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: 'You can donate to this tier by going to ',
+              },
+              {
+                type: 'text',
+                marks: [
+                  {
+                    type: 'link',
+                    attrs: {
+                      href: `https://hcb.hackclub.com/donations/start/${eventSlug}`,
+                      target: '_blank',
+                      rel: 'noopener noreferrer nofollow',
+                      class: null,
+                    },
+                  },
+                ],
+                text: `https://hcb.hackclub.com/donations/start/${eventSlug}`,
+              },
+              { type: 'text', text: '.' },
+            ],
+          },
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', text: 'Best,' },
+              { type: 'hardBreak' },
+              { type: 'text', text: `The ${eventName} team` },
+            ],
+          },
+        ],
+      },
+    }
+  },
 }
 
 const DonationGoalNode = Node.create({
@@ -219,6 +273,51 @@ const MissionStatementNode = Node.create({
   },
 })
 
+const DonationTierNode = Node.create({
+  name: 'donationTier',
+  group: 'block',
+  priority: 2000,
+  addAttributes() {
+    return {
+      id: {},
+    }
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, {
+        class:
+          'donationTier relative card shadow-none border flex flex-col py-2 my-2',
+      }),
+      [
+        'p',
+        { class: 'italic text-center' },
+        `Your donation tier will appear here.`,
+      ],
+    ]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'div',
+        getAttrs: node => node.classList.contains('donationTier') && null,
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      addDonationTier:
+        id =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: { id },
+          })
+        },
+    }
+  },
+})
+
 export default class extends Controller {
   static targets = [
     'editor',
@@ -227,7 +326,13 @@ export default class extends Controller {
     'autosaveInput',
     'titleInput',
   ]
-  static values = { content: String, template: String, eventName: String }
+  static values = {
+    content: String,
+    template: String,
+    eventName: String,
+    eventSlug: String,
+    extra: String
+  }
 
   editor = null
 
@@ -236,12 +341,21 @@ export default class extends Controller {
       leading: true,
     })
 
-    const template = this.templateValue || 'blank'
-    const context = { eventName: this.eventNameValue }
-    const { title, content } = templates[template](context)
+    let content;
+    if (this.hasContentValue) {
+      content = JSON.parse(this.contentValue)
+    } else {
+      const template = this.templateValue || 'blank'
+      const context = {
+        eventName: this.eventNameValue,
+        eventSlug: this.eventSlugValue,
+        extra: this.extraValue
+      }
+      const { title, content: templateContent } = templates[template](context)
 
-    if (!this.hasContentValue) {
       this.titleInputTarget.value = title
+
+      content = templateContent
     }
 
     this.editor = new Editor({
@@ -266,13 +380,14 @@ export default class extends Controller {
         HcbCodeNode,
         DonationSummaryNode,
         MissionStatementNode,
+        DonationTierNode
       ],
       editorProps: {
         attributes: {
           class: 'outline-none',
         },
       },
-      content: this.hasContentValue ? JSON.parse(this.contentValue) : content,
+      content,
       onUpdate: () => {
         if (this.hasContentValue) {
           debouncedSubmit(true)

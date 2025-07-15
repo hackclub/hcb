@@ -45,7 +45,7 @@ class Donation
       @tier.save!
 
       if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event)
-        redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: event_announcements_new_path(@event.slug, template: :new_tier), link_text: "Create an announcement to let your followers know!" } }
+        redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: event_announcements_new_path(@event.slug, template: :new_tier, extra: @tier.id), link_text: "Create an announcement to let your followers know!" } }
       else
         redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tier created successfully." }
       end
@@ -75,7 +75,7 @@ class Donation
       authorize @event, :update?
       @tier = @event.donation_tiers.find(params[:format])
       @tier.destroy
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tiers updated successfully.", link: event_announcements_new_path(@event.slug, template: :new_tier), link_text: "Create an announcement to let your followers know!" } }
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end

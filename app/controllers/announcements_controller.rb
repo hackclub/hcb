@@ -13,6 +13,7 @@ class AnnouncementsController < ApplicationController
     @announcement.event = @event
 
     @template = params[:template]
+    @extra = params[:extra]
 
     authorize @announcement
   end
