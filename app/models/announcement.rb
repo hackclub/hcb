@@ -38,7 +38,7 @@ class Announcement < ApplicationRecord
     state :draft, initial: true
     state :published
 
-    event :publish do
+    event :mark_published do
       transitions from: :draft, to: :published
 
       after do
