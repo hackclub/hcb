@@ -1,15 +1,146 @@
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
-import { Editor } from '@tiptap/core'
+import { Editor, Node, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
+const DonationGoalNode = Node.create({
+  name: 'donationGoal',
+  group: 'block',
+  priority: 2000,
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, {
+        class:
+          'donationGoal relative card shadow-none border flex flex-col py-2 my-2',
+      }),
+      [
+        'p',
+        { class: 'text-center italic' },
+        'Your progress towards your goal will display here',
+      ],
+      [
+        'div',
+        { class: 'bg-gray-200 dark:bg-neutral-700 rounded-full w-full' },
+        [
+          'div',
+          {
+            class:
+              'h-full bg-primary rounded w-1/2 flex items-center justify-center',
+          },
+          ['p', { class: 'text-sm text-black p-[1px] my-0' }, '50%'],
+        ],
+      ],
+    ]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'div',
+        getAttrs: node => node.classList.contains('donationGoal') && null,
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      addDonationGoal:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name })
+        },
+    }
+  },
+})
+
+const HcbCodeNode = Node.create({
+  name: 'hcbCode',
+  group: 'block',
+  priority: 2000,
+  addAttributes() {
+    return {
+      code: {},
+    }
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, {
+        class:
+          'hcbCode relative card shadow-none border flex flex-col py-2 my-2',
+      }),
+      [
+        'p',
+        { class: 'italic text-center' },
+        `Your transaction (${HTMLAttributes.code}) will appear here.`,
+      ],
+    ]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'div',
+        getAttrs: node => node.classList.contains('hcbCode') && null,
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      addHcbCode:
+        code =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: { code },
+          })
+        },
+    }
+  },
+})
+
+const DonationSummaryNode = Node.create({
+  name: 'donationSummary',
+  group: 'block',
+  priority: 2000,
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, {
+        class:
+          'donationSummary relative card shadow-none border flex flex-col py-2 my-2',
+      }),
+      [
+        'p',
+        { class: 'italic text-center' },
+        'A donation summary for the last month will appear here.',
+      ],
+    ]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'div',
+        getAttrs: node => node.classList.contains('donationSummary') && null,
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      addDonationSummary:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name })
+        },
+    }
+  },
+})
+
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
-  static values = { content: String }
+  static values = { content: String, event: String }
 
   editor = null
 
@@ -31,14 +162,30 @@ export default class extends Controller {
           placeholder: 'Write a message to your followers...',
         }),
         Link,
-        Image,
+        Image.configure({
+          HTMLAttributes: {
+            class: 'max-w-full',
+          },
+        }),
+        DonationGoalNode,
+        HcbCodeNode,
+        DonationSummaryNode,
       ],
       editorProps: {
         attributes: {
           class: 'outline-none',
         },
       },
-      content: this.hasContentValue ? JSON.parse(this.contentValue) : null,
+      content: this.hasContentValue
+        ? JSON.parse(this.contentValue)
+        : {
+            type: 'doc',
+            content: [
+              {
+                type: 'paragraph',
+              },
+            ],
+          },
       onUpdate: () => {
         if (this.hasContentValue) {
           debouncedSubmit(true)
@@ -132,5 +279,25 @@ export default class extends Controller {
     }
 
     this.editor.chain().focus().setImage({ src: url }).run()
+  }
+
+  donationGoal() {
+    this.editor.chain().focus().addDonationGoal().run()
+  }
+
+  hcbCode() {
+    const url = window.prompt('Transaction URL')
+
+    if (url === null || url === '') {
+      return
+    }
+
+    const code = url.split('/').at(-1)
+
+    this.editor.chain().focus().addHcbCode(code).run()
+  }
+
+  donationSummary() {
+    this.editor.chain().focus().addDonationSummary().run()
   }
 }

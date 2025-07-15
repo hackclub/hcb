@@ -4,15 +4,17 @@
 #
 # Table name: announcements
 #
-#  id           :bigint           not null, primary key
-#  content      :text             not null
-#  deleted_at   :datetime
-#  published_at :datetime
-#  title        :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  author_id    :bigint           not null
-#  event_id     :bigint           not null
+#  id                  :bigint           not null, primary key
+#  content             :jsonb            not null
+#  deleted_at          :datetime
+#  published_at        :datetime
+#  rendered_email_html :text
+#  rendered_html       :text
+#  title               :string           not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  author_id           :bigint           not null
+#  event_id            :bigint           not null
 #
 # Indexes
 #
@@ -36,18 +38,20 @@ class Announcement < ApplicationRecord
 
   scope :published, -> { where.not(published_at: nil) }
 
+  before_save do
+    if content_changed?
+      self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
+
+      if draft?
+        self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+      end
+    end
+  end
+
   def publish!
     update!(published_at: Time.now)
 
     AnnouncementPublishedJob.perform_later(announcement: self)
-  end
-
-  def render_html
-    renderer = ProsemirrorToHtml::Renderer.new
-
-    # rubocop:disable Rails/OutputSafety
-    renderer.render(JSON.parse(self.content)).html_safe
-    # rubocop:enable Rails/OutputSafety
   end
 
   def draft?
