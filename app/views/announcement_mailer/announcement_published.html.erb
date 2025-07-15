@@ -1,4 +1,12 @@
 <h1><%= @announcement.title %></h1>
-<%= @announcement.render_html %>
+
+<% if @announcement.rendered_email_html.present? %>
+  <%= @announcement.rendered_email_html.html_safe %> <%# erb_lint:disable ErbSafety %>
+<% else %>
+  <%= @announcement.rendered_html.html_safe %> <%# erb_lint:disable ErbSafety %>
+<% end %>
+<br>
+<i><%= link_to "View this announcement in your browser", @announcement %></i>
+<br>
 <br>
 <i><%= link_to "This email was sent because you are following #{@event.name}. If you would like to unsubscribe, please click here.", event_url(@event) %></i>

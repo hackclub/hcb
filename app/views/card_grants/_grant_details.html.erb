@@ -1,6 +1,6 @@
 <%# locals: (card_grant:) %>
 
-<% if card_grant.active? && (stripe_card = card_grant.stripe_card).present? %>
+<% if (stripe_card = card_grant.stripe_card).present? %>
   <div>
     <div class="card container--md">
       <section class="details">

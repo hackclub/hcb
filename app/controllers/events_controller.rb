@@ -14,7 +14,7 @@ class EventsController < ApplicationController
   end
   skip_before_action :signed_in_user
   before_action :set_mock_data
-  before_action :set_event_follow, only: [:show, :transactions]
+  before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
 
@@ -35,12 +35,12 @@ class EventsController < ApplicationController
 
         if auditor_signed_in?
           events.concat(
-            Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.select([:slug, :name]).map { |e|
+            Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.map { |e|
               {
                 slug: e.slug,
                 name: e.name,
                 logo: e.logo.attached? ? Rails.application.routes.url_helpers.url_for(e.logo) : "none",
-                demo_mode: false,
+                demo_mode: e.demo_mode,
                 member: false
               }
             }
@@ -328,7 +328,7 @@ class EventsController < ApplicationController
     fixed_event_params.delete(:plan)
 
     begin
-      if @event.update(current_user.admin? ? fixed_event_params : fixed_user_event_params)
+      if @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params)
         if plan_param && plan_param != @event.plan&.type
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end

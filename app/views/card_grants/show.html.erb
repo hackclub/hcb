@@ -31,7 +31,7 @@
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
     <% if @card_grant.canceled? %>
       <%= blankslate "Sorry, this grant was canceled!" %>
-  <% else %>
+    <% else %>
       <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
     <% end %>
   <%# Grantee has accepted invite %>

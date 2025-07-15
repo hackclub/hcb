@@ -321,7 +321,7 @@
       <%= image_tag "github.png", width: 170 %>
       <%= link_to "Expired",
         @perks_available ? "https://hack.af/grant?prefill_Event%20Name=#{@event.name}" : root_path,
-        class: "btn mr1 #{"disabled" unless @perks_available}" %>
+        class: "btn mr1 disabled" %>
     </div>
 
     <p class="muted">
