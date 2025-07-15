@@ -2,8 +2,11 @@
 <% page_md %>
 <%= render "events/nav", selected: :announcements %>
 
-<h1 class="heading">
-  <span class="flex flex-grow items-center">Announcements</span>
+<h1 class="flex heading items-center">
+  <span class="flex-grow flex items-center flex-1">
+    Announcements
+    <%= badge_for pluralize(@event.followers.count, "follower"), class: "bg-muted" %>
+  </span>
 
   <%= render "events/follow_button" %>
   <% if organizer_signed_in?(as: :member) %>
