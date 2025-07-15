@@ -12,9 +12,6 @@ class AnnouncementsController < ApplicationController
     @event = Event.friendly.find(params[:event_id])
     @announcement.event = @event
 
-    @template = params[:template]
-    @extra = params[:extra]
-
     authorize @announcement
   end
 
@@ -56,6 +53,7 @@ class AnnouncementsController < ApplicationController
     json_content = params[:announcement][:json_content]
 
     @announcement.update!(announcement_params.merge(content: json_content))
+    @announcement.mark_draft! if @announcement.template_draft?
 
     if params[:announcement][:autosave] != "true"
       flash[:success] = "Updated announcement"

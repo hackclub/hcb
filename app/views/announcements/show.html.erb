@@ -10,13 +10,13 @@
   <span class="flex flex-grow items-center"><%= heading %></span>
 </h1>
 
-<% unless @announcement.draft? || !editing %>
+<% if @announcement.published? && editing %>
   <p class="font-bold">This announcement has already been published, and any edits will not reflect in sent emails. Emails will not be resent.</p>
 <% end %>
 
 <div class="flex justify-between items-center pb-4">
   <p class="italic my-0">
-    <%= @announcement.draft? ? "Drafted" : "Published" %> by <%= user_mention @announcement.author %> on <%= (@announcement.draft? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
+    <%= @announcement.published? ? "Published" : "Drafted" %> by <%= user_mention @announcement.author %> on <%= (@announcement.draft? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
   </p>
 
   <div class="flex gap-2">

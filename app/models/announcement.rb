@@ -36,6 +36,7 @@ class Announcement < ApplicationRecord
 
   aasm timestamps: true do
     state :draft, initial: true
+    state :template_draft
     state :published
 
     event :mark_published do
@@ -45,7 +46,13 @@ class Announcement < ApplicationRecord
         AnnouncementPublishedJob.perform_later(announcement: self)
       end
     end
+
+    event :mark_draft do
+      transitions from: :template_draft, to: :draft
+    end
   end
+
+  scope :saved, -> { where.not(aasm_state: :template_draft) }
 
   validates :content, presence: true
 

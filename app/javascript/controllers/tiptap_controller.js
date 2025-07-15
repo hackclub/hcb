@@ -7,109 +7,6 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
-const templates = {
-  blank: () => ({
-    title: '',
-    content: {
-      type: 'doc',
-      content: [
-        {
-          type: 'paragraph',
-        },
-      ],
-    },
-  }),
-  mission: ({ eventName }) => {
-    return {
-      title: `Update from ${eventName}`,
-      content: {
-        type: 'doc',
-        content: [
-          { type: 'paragraph', content: [{ type: 'text', text: 'Hey all!' }] },
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: "We're happy to announce our organization's updated mission:",
-              },
-            ],
-          },
-          { type: 'missionStatement' },
-          {
-            type: 'paragraph',
-            content: [
-              { type: 'text', text: 'Thank you so much for your support!' },
-            ],
-          },
-          {
-            type: 'paragraph',
-            content: [
-              { type: 'text', text: 'Best,' },
-              { type: 'hardBreak' },
-              { type: 'text', text: `The ${eventName} team` },
-            ],
-          },
-        ],
-      },
-    }
-  },
-  new_tier: ({ eventName, eventSlug, extra }) => {
-    return {
-      title: `New donation tier for ${eventName}`,
-      content: {
-        type: 'doc',
-        content: [
-          { type: 'paragraph', content: [{ type: 'text', text: 'Hey all!' }] },
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: `We're excited to announce a new donation tier for ${eventName}: `,
-              },
-            ],
-          },
-          { type: 'donationTier', attrs: { id: extra } },
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: 'You can donate to this tier by going to ',
-              },
-              {
-                type: 'text',
-                marks: [
-                  {
-                    type: 'link',
-                    attrs: {
-                      href: `https://hcb.hackclub.com/donations/start/${eventSlug}`,
-                      target: '_blank',
-                      rel: 'noopener noreferrer nofollow',
-                      class: null,
-                    },
-                  },
-                ],
-                text: `https://hcb.hackclub.com/donations/start/${eventSlug}`,
-              },
-              { type: 'text', text: '.' },
-            ],
-          },
-          {
-            type: 'paragraph',
-            content: [
-              { type: 'text', text: 'Best,' },
-              { type: 'hardBreak' },
-              { type: 'text', text: `The ${eventName} team` },
-            ],
-          },
-        ],
-      },
-    }
-  },
-}
-
 const DonationGoalNode = Node.create({
   name: 'donationGoal',
   group: 'block',
@@ -324,14 +221,9 @@ export default class extends Controller {
     'form',
     'contentInput',
     'autosaveInput',
-    'titleInput',
   ]
   static values = {
     content: String,
-    template: String,
-    eventName: String,
-    eventSlug: String,
-    extra: String,
   }
 
   editor = null
@@ -345,17 +237,14 @@ export default class extends Controller {
     if (this.hasContentValue) {
       content = JSON.parse(this.contentValue)
     } else {
-      const template = this.templateValue || 'blank'
-      const context = {
-        eventName: this.eventNameValue,
-        eventSlug: this.eventSlugValue,
-        extra: this.extraValue,
+      content = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+          },
+        ],
       }
-      const { title, content: templateContent } = templates[template](context)
-
-      this.titleInputTarget.value = title
-
-      content = templateContent
     }
 
     this.editor = new Editor({

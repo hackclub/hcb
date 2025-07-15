@@ -327,8 +327,6 @@ class EventsController < ApplicationController
     plan_param = fixed_event_params[:plan]
     fixed_event_params.delete(:plan)
 
-    old_description = @event.description
-
     begin
       if @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params)
         if plan_param && plan_param != @event.plan&.type
@@ -336,10 +334,15 @@ class EventsController < ApplicationController
         end
 
 
-        if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && old_description != event_params[:description] && event_params[:description].present?
+        if @event.description_previously_changed?
+          announcement = Announcement::Templates::NewMissionStatement.new(
+            event: @event,
+            author: current_user
+          ).create
+
           flash[:success] = {
             text: "Organization successfully updated.",
-            link: event_announcements_new_path(@event.slug, template: :mission),
+            link: edit_announcement_path(announcement),
             link_text: "Create an announcement to let your followers know!"
           }
         else
@@ -382,7 +385,7 @@ class EventsController < ApplicationController
     @announcement.event = @event
 
     if organizer_signed_in?
-      @all_announcements = Announcement.where(event: @event).order(published_at: :desc, created_at: :desc)
+      @all_announcements = Announcement.saved.where(event: @event).order(published_at: :desc, created_at: :desc)
     else
       @all_announcements = Announcement.published.where(event: @event).order(published_at: :desc, created_at: :desc)
     end
