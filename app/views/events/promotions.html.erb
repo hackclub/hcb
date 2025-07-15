@@ -114,12 +114,12 @@
   </div>
 
   <p class="mb0">
-    Want to give away stickers at your next event or rep your organization year round? We've got you covered. 
-    HCB has partnered with StickerNinja to offer fiscally sponsored organizations 15% off on all orders. Visit their website 
-    <%= link_to "here", "https://stickerninja.com/", target: :_blank %> 
+    Want to give away stickers at your next event or rep your organization year round? We've got you covered.
+    HCB has partnered with StickerNinja to offer fiscally sponsored organizations 15% off on all orders. Visit their website
+    <%= link_to "here", "https://stickerninja.com/", target: :_blank %>
     to place an order.
     <% if @perks_available %>
-      <br><br><strong>This discount code is reusable and exclusively for HCB users. 
+      <br><br><strong>This discount code is reusable and exclusively for HCB users.
         Sharing it outside of your organization may result in everyone using HCB losing the perk.
       </strong>
     <% end %>
@@ -137,8 +137,8 @@
 
   <% if @event.hackathon? %>
     <p class="mb0">
-      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %> 
-      is offering hackathons running on HCB a year-long 1Password plan for up to 5 people. This can 
+      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %>
+      is offering hackathons running on HCB a year-long 1Password plan for up to 5 people. This can
       handed out as a prize, however, it can only be claimed once per hackathon.
     </p>
   <% else %>
