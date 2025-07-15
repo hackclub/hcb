@@ -10,7 +10,7 @@
   <% end %>
 <% end %>
 
-<% if admin_signed_in? %>
+<% if current_user&.admin? %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
     <%= modal_header "Issue refund" %>
     <%= form_with url: refund_invoice_path(id: @invoice.id) do |form| %>
