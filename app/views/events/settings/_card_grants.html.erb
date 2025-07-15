@@ -3,6 +3,8 @@
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>
   <% if event.card_grant_setting.present? %>
+    <h3 class="mb1" id="transparency_mode_heading">Grant settings</h3>
+
     <div class="card">
       <%= form.fields_for :card_grant_setting, event.card_grant_setting do |card_grant_setting_fields| %>
         <%= card_grant_setting_fields.hidden_field :id, value: event.card_grant_setting.id %>
@@ -37,6 +39,15 @@
           <li>If you have one lock set, only transactions matching that lock will be allowed.</li>
           <li>If you have multiple locks set, transactions that match any of those locks will be allowed.</li>
         </ul>
+
+        <div class="field">
+          <%= card_grant_setting_fields.label :banned_merchants, "Update banned merchants" %>
+          <%= card_grant_setting_fields.text_field :banned_merchants, placeholder: "123456789", class: "w-100 fit", value: event.card_grant_setting.banned_merchants.join(", "), disabled: %>
+          <p class="h5 muted mt0 mb1">
+            Provide a comma-separated list of merchant network IDs to block across all grants issued from this event.
+          </p>
+        </div>
+
         <div class="field">
           <%= card_grant_setting_fields.label :invite_message, "Update invite message" %>
           <%= card_grant_setting_fields.text_area :invite_message, placeholder: "It's pizza time!", value: event.card_grant_setting.invite_message, disabled: %>
