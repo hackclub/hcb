@@ -4,9 +4,23 @@ module Api
   module V4
     class UsersController < ApplicationController
       skip_after_action :verify_authorized, only: [:available_icons]
+      before_action :require_admin!, only: [:show, :by_email]
+
+      def me
+        @user = authorize current_user, :show?
+        render :show
+      end
 
       def show
-        @user = authorize current_user
+        @user = User.find_by_public_id!(params[:id])
+        authorize @user
+      end
+
+      def by_email
+        puts params[:email]
+        @user = User.find_by!(email: params[:email])
+        authorize @user, :show?
+        render :show
       end
 
       def available_icons

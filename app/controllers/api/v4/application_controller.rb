@@ -43,6 +43,12 @@ module Api
         @current_user = current_token&.user
       end
 
+      def require_admin!
+        unless current_user&.admin?
+          render json: { error: "invalid_auth" }, status: :unauthorized
+        end
+      end
+
       def set_expand
         @expand = params[:expand].to_s.split(",").map { |e| e.strip.to_sym }
       end
