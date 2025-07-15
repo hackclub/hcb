@@ -27,7 +27,7 @@ class AnnouncementsController < ApplicationController
     @announcement.save!
 
     unless params[:announcement][:draft] == "true"
-      @announcement.publish!
+      @announcement.mark_published!
     end
 
     flash[:success] = "Announcement successfully #{params[:announcement][:draft] == "true" ? "drafted" : "published"}!"
@@ -76,7 +76,7 @@ class AnnouncementsController < ApplicationController
   def publish
     authorize @announcement
 
-    @announcement.publish!
+    @announcement.mark_published!
 
     flash[:success] = "Published announcement"
 
