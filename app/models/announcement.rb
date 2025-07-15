@@ -52,8 +52,7 @@ class Announcement < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  scope :published, -> { where(aasm_state: :published) }
-
+  before_save do
     if content_changed?
       self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
 
