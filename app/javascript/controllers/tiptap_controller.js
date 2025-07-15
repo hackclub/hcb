@@ -331,7 +331,7 @@ export default class extends Controller {
     template: String,
     eventName: String,
     eventSlug: String,
-    extra: String
+    extra: String,
   }
 
   editor = null
@@ -341,7 +341,7 @@ export default class extends Controller {
       leading: true,
     })
 
-    let content;
+    let content
     if (this.hasContentValue) {
       content = JSON.parse(this.contentValue)
     } else {
@@ -349,7 +349,7 @@ export default class extends Controller {
       const context = {
         eventName: this.eventNameValue,
         eventSlug: this.eventSlugValue,
-        extra: this.extraValue
+        extra: this.extraValue,
       }
       const { title, content: templateContent } = templates[template](context)
 
@@ -380,7 +380,7 @@ export default class extends Controller {
         HcbCodeNode,
         DonationSummaryNode,
         MissionStatementNode,
-        DonationTierNode
+        DonationTierNode,
       ],
       editorProps: {
         attributes: {
