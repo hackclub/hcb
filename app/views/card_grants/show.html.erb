@@ -36,16 +36,16 @@
     <% end %>
   <%# Grantee has accepted invite %>
   <% elsif @card_grant.user.admin? || organizer_signed_in? || @card_grant.user == current_user %>
-    <div class="justify-center grid grid-cols-2">
+    <div class="justify-center grid grid-cols-1 md:grid-cols-2">
       <% if @card_grant.stripe_card %>
-        <div class="m2">
-          <%= render @card_grant.stripe_card %>
+        <div>
+          <%= render @card_grant.stripe_card, headless: true %>
           <%= render partial: "balance", locals: { card_grant: @card_grant } %>
           <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
           <%= render partial: "actions", locals: { card_grant: @card_grant } %>
         </div>
       <% end %>
-      <div class="flex flex-col g2 m2">
+      <div class="flex flex-col g2">
         <% if @card_grant.stripe_card %>
           <% admin_tool_if @card_grant.user != current_user do %>
             <%= render partial: "card_details", locals: { card_grant: @card_grant } %>
