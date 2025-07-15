@@ -34,7 +34,7 @@ class Announcement < ApplicationRecord
   has_paper_trail
   acts_as_paranoid
 
-  aasm do
+  aasm timestamps: true do
     state :draft, initial: true
     state :published
 
@@ -42,8 +42,6 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
-        update!(published_at: Time.now)
-
         AnnouncementPublishedJob.perform_later(announcement: self)
       end
     end
