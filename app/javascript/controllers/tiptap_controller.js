@@ -7,6 +7,55 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
+const templates = {
+  blank: () => ({
+    title: '',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+        },
+      ],
+    },
+  }),
+  mission: ({ eventName }) => {
+    return {
+      title: `Update from ${eventName}`,
+      content: {
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: 'Hey all!' }] },
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: "We're happy to announce our organization's updated mission:",
+              },
+            ],
+          },
+          { type: 'missionStatement' },
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', text: 'Thank you so much for your support!' },
+            ],
+          },
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', text: 'Best,' },
+              { type: 'hardBreak' },
+              { type: 'text', text: `The ${eventName} team` },
+            ],
+          },
+        ],
+      },
+    }
+  },
+}
+
 const DonationGoalNode = Node.create({
   name: 'donationGoal',
   group: 'block',
@@ -138,9 +187,47 @@ const DonationSummaryNode = Node.create({
   },
 })
 
+const MissionStatementNode = Node.create({
+  name: 'missionStatement',
+  group: 'block',
+  priority: 2000,
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'blockquote',
+      mergeAttributes(HTMLAttributes, {
+        class: 'missionStatement py-2 my-2 italic',
+      }),
+      "Your organization's mission statement will appear here",
+    ]
+  },
+  parseHTML() {
+    return [
+      {
+        tag: 'blockquote',
+        getAttrs: node => node.classList.contains('missionStatement') && null,
+      },
+    ]
+  },
+  addCommands() {
+    return {
+      addMissionStatement:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name })
+        },
+    }
+  },
+})
+
 export default class extends Controller {
-  static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
-  static values = { content: String, template: String }
+  static targets = [
+    'editor',
+    'form',
+    'contentInput',
+    'autosaveInput',
+    'titleInput',
+  ]
+  static values = { content: String, template: String, eventName: String }
 
   editor = null
 
@@ -148,6 +235,14 @@ export default class extends Controller {
     const debouncedSubmit = debounce(this.submit.bind(this), 1000, {
       leading: true,
     })
+
+    const template = this.templateValue || 'blank'
+    const context = { eventName: this.eventNameValue }
+    const { title, content } = templates[template](context)
+
+    if (!this.hasContentValue) {
+      this.titleInputTarget.value = title
+    }
 
     this.editor = new Editor({
       element: this.editorTarget,
@@ -170,22 +265,14 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
+        MissionStatementNode,
       ],
       editorProps: {
         attributes: {
           class: 'outline-none',
         },
       },
-      content: this.hasContentValue
-        ? JSON.parse(this.contentValue)
-        : {
-            type: 'doc',
-            content: [
-              {
-                type: 'paragraph',
-              },
-            ],
-          },
+      content: this.hasContentValue ? JSON.parse(this.contentValue) : content,
       onUpdate: () => {
         if (this.hasContentValue) {
           debouncedSubmit(true)
@@ -299,5 +386,9 @@ export default class extends Controller {
 
   donationSummary() {
     this.editor.chain().focus().addDonationSummary().run()
+  }
+
+  missionStatement() {
+    this.editor.chain().focus().addMissionStatement().run()
   }
 }
