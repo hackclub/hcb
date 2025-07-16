@@ -63,6 +63,8 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include Freezable
+  include UsersHelper
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -268,7 +270,7 @@ class Donation < ApplicationRecord
   end
 
   def smart_memo
-    anonymous? ? "ANONYMOUS DONOR" : name.to_s.upcase
+    anonymous? ? "Anonymous Donor" : name.to_s
   end
 
   def hcb_code
@@ -337,6 +339,10 @@ class Donation < ApplicationRecord
     "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
   end
 
+  def avatar(size = 128)
+    gravatar_url(email, name, email.sum, size) unless anonymous?
+  end
+
   private
 
   def raw_pending_donation_transaction
@@ -357,6 +363,10 @@ class Donation < ApplicationRecord
       DonationMailer.with(donation: self).first_donation_notification.deliver_later
     else
       DonationMailer.with(donation: self).notification.deliver_later
+    end
+
+    if event.donation_goal.present? && (event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents)
+      EventMailer.with(event:).donation_goal_reached.deliver_later
     end
   end
 

@@ -16,12 +16,13 @@
 <% admin_tool "w-fit mx-auto" do %>
   <%= link_to "Upload a document",
   new_document_path(event_id: @event.slug),
-  class: "btn bg-success" %>
+  class: "btn bg-success",
+  disabled: !admin_signed_in? %>
 <% end %>
 
 <ul class="grid">
-  <%= render @active_documents %>
-  <%= render @active_common_documents %>
+  <%= render partial: "document", collection: @active_documents %>
+  <%= render partial: "document", collection: @active_common_documents %>
 
   <% if @event.approved? && !@event.demo_mode? %>
     <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
@@ -57,8 +58,8 @@
         </summary>
         <article>
           <ul class="grid">
-            <%= render @archived_documents %>
-            <%= render @archived_common_documents %>
+            <%= render partial: "document", collection: @archived_documents %>
+            <%= render partial: "document", collection: @archived_common_documents %>
           </ul>
         </article>
       </details>

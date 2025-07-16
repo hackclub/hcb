@@ -107,6 +107,24 @@ input[type='number'] {
 
     color: $muted;
   }
+
+  &:has([disabled]) {
+    .field--fileupload__label,
+    .field--fileupload__field {
+      color: map-get($palette, slate);
+      cursor: no-drop;
+    }
+
+    .field--fileupload__label {
+      transition: none;
+      color: $muted;
+      border-color: map-get($palette, smoke);
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
 }
 
 .field--image-upload {
@@ -287,7 +305,8 @@ label {
 
 $select: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="%238492a6" viewbox="0 0 32 32"><path d="M0 6 L32 6 L16 28 z"/></svg>');
 
-select {
+select,
+.input.input--select {
   background-image: #{$select};
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
@@ -453,4 +472,76 @@ input:where([data-behavior='otp_input']) {
   background-color: rgba(0, 0, 0, 0) !important;
   border: none !important;
   color: inherit !important;
+}
+
+.dropdown-button__menu {
+  width: 100%;
+
+  position: absolute;
+  top: 110%;
+  left: 0px;
+
+  border-radius: 0.75rem;
+
+  background-color: $smoke;
+
+  [data-dark='true'] & {
+    background-color: $darker;
+  }
+
+  display: none;
+  opacity: 0;
+
+  z-index: 10;
+
+  margin-top: 8px;
+}
+
+.dropdown-button__menu div {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+
+  border-radius: inherit;
+}
+
+.dropdown-button__menu input {
+  display: none;
+}
+
+.dropdown-button__menu label {
+  padding: 0.5rem 1rem;
+  border-radius: inherit;
+}
+
+.dropdown-button__menu label p {
+  margin: 3px 0px;
+}
+
+.dropdown-button__menu label:hover {
+  background-color: color-mix(in srgb, $slate 20%, transparent);
+}
+.dropdown-button__menu input:checked + label {
+  background-color: color-mix(in srgb, $green-dark 20%, transparent);
+}
+
+.dropdown-button__container {
+  display: flex;
+  border-radius: 0.75rem;
+
+  width: fit-content;
+
+  transform: scale(1);
+  transition:
+    transform 0.125s ease-in-out,
+    box-shadow 0.25s ease-in-out;
+
+  &:hover,
+  &:focus,
+  &[aria-expanded='true'] {
+    color: $white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
+    transform: scale(1.0625);
+  }
 }

@@ -10,17 +10,27 @@ class LoginsController < ApplicationController
 
   layout "login"
 
+  after_action only: [:new] do
+    # Allow indexing login page
+    response.delete_header("X-Robots-Tag")
+  end
+
   # view to log in
   def new
+    @return_to = url_from(params[:return_to])
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
+    @referral_program = Referral::Program.find_by_hashid(params[:referral]) if params[:referral].present?
   end
 
   # when you submit your email
   def create
     user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
-    login = user.logins.create
+
+    referral_program = Referral::Program.find_by_hashid(params[:referral_program_id]) if params[:referral_program_id].present?
+    login = user.logins.create(referral_program:)
+
     cookies.signed["browser_token_#{login.hashid}"] = { value: login.browser_token, expires: Login::EXPIRATION.from_now }
 
     has_webauthn_enabled = user&.webauthn_credentials&.any?
@@ -34,6 +44,9 @@ class LoginsController < ApplicationController
       session[:auth_email] = login.user.email
       redirect_to choose_login_preference_login_path(login, return_to: params[:return_to])
     end
+  rescue => e
+    flash[:error] = e.message
+    return redirect_to auth_users_path
   end
 
   # get page to choose preference
@@ -138,8 +151,10 @@ class LoginsController < ApplicationController
     # has not created a user session before
     if @login.complete? && @login.user_session.nil?
       @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
-      if @user.full_name.blank? || @user.phone_number.blank?
-        redirect_to edit_user_path(@user.slug)
+      if @referral_program.present?
+        redirect_to program_path(@referral_program)
+      elsif @user.full_name.blank? || @user.phone_number.blank?
+        redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       else
         redirect_to(params[:return_to] || root_path)
       end
@@ -167,22 +182,25 @@ class LoginsController < ApplicationController
   private
 
   def set_login
-    if params[:id]
-      begin
+    begin
+      if params[:id]
         @login = Login.incomplete.active.find_by_hashid!(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        return redirect_to auth_users_path, flash: { error: "Please start again." }
-      end
-      unless valid_browser_token?
-        # error! browser token doesn't match the cookie.
-        flash[:error] = "This doesn't seem to be the browser who began this login; please ensure cookies are enabled."
+        @referral_program = @login.referral_program
+        unless valid_browser_token?
+          # error! browser token doesn't match the cookie.
+          flash[:error] = "This doesn't seem to be the browser who began this login; please ensure cookies are enabled."
+          redirect_to auth_users_path
+        end
+      elsif session[:auth_email]
+        @login = User.find_by_email(session[:auth_email]).logins.create
+        cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
+      else
+        flash[:error] = "Please try again."
         redirect_to auth_users_path
       end
-    elsif session[:auth_email]
-      @login = User.find_by_email(session[:auth_email]).logins.create
-      cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
-    else
-      raise ActionController::ParameterMissing.new("Missing login.")
+    rescue ActiveRecord::RecordNotFound
+      flash[:error] = "Please start again."
+      redirect_to auth_users_path, flash: { error: "Please start again." }
     end
   end
 

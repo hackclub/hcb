@@ -2,7 +2,7 @@
 
 class OrganizerPositionInvitePolicy < ApplicationPolicy
   def index?
-    user&.admin? || record.event&.users&.include?(user)
+    user&.auditor? || record.event&.users&.include?(user)
   end
 
   def new?
@@ -14,7 +14,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def show?
-    user&.admin? || record.user == user
+    user&.auditor? || record.user == user
   end
 
   def accept?

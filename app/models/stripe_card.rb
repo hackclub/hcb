@@ -52,6 +52,7 @@
 class StripeCard < ApplicationRecord
   include Hashid::Rails
   include PublicIdentifiable
+  include Freezable
   set_public_id_prefix :crd
 
   include HasStripeDashboardUrl
@@ -59,14 +60,17 @@ class StripeCard < ApplicationRecord
 
   has_paper_trail
 
+  validate :within_card_limit, on: :create
+
   after_create_commit :notify_user, unless: :skip_notify_user
 
   attr_accessor :skip_notify_user
 
   scope :deactivated, -> { where.not(stripe_status: "active") }
   scope :canceled, -> { where(stripe_status: "canceled") }
-  scope :frozen, -> { where(stripe_status: "inactive") }
+  scope :frozen, -> { where(stripe_status: "inactive", initially_activated: true) }
   scope :active, -> { where(stripe_status: "active") }
+  scope :inactive, -> { where(stripe_status: "inactive", initially_activated: false) }
   scope :physical_shipping, -> { physical.includes(:user, :event).reject { |c| c.stripe_obj[:shipping][:status] == "delivered" } }
   scope :platinum, -> { where(is_platinum_april_fools_2023: true) }
 
@@ -198,6 +202,7 @@ class StripeCard < ApplicationRecord
     StripeService::Issuing::Card.update(self.stripe_id, status: :active)
     sync_from_stripe!
     save!
+    card_grant.update(one_time_use: false) if card_grant&.one_time_use
   end
 
   def cancel!
@@ -222,8 +227,8 @@ class StripeCard < ApplicationRecord
     stripe_status == "active"
   end
 
-  def deactivated?
-    stripe_status != "active"
+  def inactive?
+    !initially_activated? && stripe_status == "inactive"
   end
 
   def canceled?
@@ -332,11 +337,7 @@ class StripeCard < ApplicationRecord
 
   def hcb_codes
     all_hcb_codes = canonical_transaction_hcb_codes + canonical_pending_transaction_hcb_codes
-    if Flipper.enabled?(:transaction_tags_2022_07_29, self.event)
-      @hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
-    else
-      @hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes)
-    end
+    @hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
   end
 
   def remote_shipping_status
@@ -419,6 +420,22 @@ class StripeCard < ApplicationRecord
   def personalization_design_must_be_of_the_same_event
     if personalization_design&.event.present? && personalization_design.event != event
       errors.add(:personalization_design, "must be of the same event")
+    end
+  end
+
+  def within_card_limit
+    return if subledger.present?
+
+    # card grants don't count against the limit, hence the subledger_id: nil check
+    user_cards_today = user.stripe_cards.where(subledger_id: nil, created_at: 1.day.ago..).count
+    event_cards_today = event.stripe_cards.where(subledger_id: nil, created_at: 1.day.ago..).count
+
+    if user_cards_today > 20
+      errors.add(:base, "Your account has been rate-limited from creating new cards. Please try again tomorrow; for help, email hcb@hackclub.com.")
+    end
+
+    if event_cards_today > 20
+      errors.add(:base, "Your organization has been rate-limited from creating new cards. Please try again tomorrow; for help, email hcb@hackclub.com.")
     end
   end
 

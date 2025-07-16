@@ -141,10 +141,10 @@ class MarkdownService
 
     def app_hosts
       hosts = []
-      hosts << Rails.application.credentials.default_url_host[:live]
-      hosts << Rails.application.credentials.default_url_host[:test] if Rails.env.development?
+      hosts << Credentials.fetch(:LIVE_URL_HOST)
+      hosts << Credentials.fetch(:TEST_URL_HOST) if Rails.env.development?
 
-      hosts.map { |h| Regexp.escape h }
+      hosts.compact_blank.map { |h| Regexp.escape h }
     end
 
   end

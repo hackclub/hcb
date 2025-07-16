@@ -21,7 +21,7 @@ module PayrollService
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
               address_zip: payment.employee.user.payout_method.address_postal_code,
-              user: User.find_by(email: "bank@hackclub.com")
+              user: User.system_user
             )
 
             check.save!
@@ -49,8 +49,7 @@ module PayrollService
               routing_number: payment.employee.user.payout_method.routing_number,
               account_number: payment.employee.user.payout_method.account_number,
               bank_name: (ColumnService.get("/institutions/#{payment.employee.user.payout_method.routing_number}")["full_name"] rescue "Bank Account"),
-              creator: User.find_by(email: "bank@hackclub.com"),
-              company_name: payment.employee.event.name[0...16],
+              creator: User.system_user,
               company_entry_description: "SALARY",
             )
 
@@ -68,9 +67,9 @@ module PayrollService
 
             if payment.previously_paid?
               begin
-                ach_transfer.approve!(User.find_by(email: "bank@hackclub.com"))
+                ach_transfer.approve!(User.system_user)
               rescue
-                ach_transfer.mark_rejected!(User.find_by(email: "bank@hackclub.com"))
+                ach_transfer.mark_rejected!(User.system_user)
                 payment.mark_failed!
               end
             end
@@ -83,7 +82,7 @@ module PayrollService
               memo: "Payment for \"#{payment.title}\".",
               recipient_email: payment.employee.user.payout_method.recipient_email,
               recipient_name: payment.employee.user.name,
-              user: User.find_by(email: "bank@hackclub.com")
+              user: User.system_user
             )
             paypal_transfer.save!
             payment.payout = paypal_transfer

@@ -104,9 +104,7 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.civil(filtered_params["due_date(1i)"].to_i,
-                          filtered_params["due_date(2i)"].to_i,
-                          filtered_params["due_date(3i)"].to_i)
+    due_date = Date.parse(filtered_params["due_date"])
 
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,
@@ -133,6 +131,8 @@ class InvoicesController < ApplicationController
     end
 
     redirect_to @invoice
+  rescue Pundit::NotAuthorizedError
+    raise
   rescue => e
     Rails.error.report(e)
 
@@ -200,7 +200,7 @@ class InvoicesController < ApplicationController
     @invoice.sync_remote!
     @invoice.reload
 
-    redirect_to @invoice.hosted_invoice_url, allow_other_host: true
+    redirect_to URI.parse(@invoice.hosted_invoice_url).to_s, allow_other_host: true
   end
 
   def pdf
@@ -211,7 +211,7 @@ class InvoicesController < ApplicationController
     @invoice.sync_remote!
     @invoice.reload
 
-    redirect_to @invoice.invoice_pdf, allow_other_host: true
+    redirect_to URI.parse(@invoice.invoice_pdf).to_s, allow_other_host: true
   end
 
   def refund
@@ -224,7 +224,7 @@ class InvoicesController < ApplicationController
       ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
     else
-      InvoiceJob::Refund.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents, current_user)
+      Invoice::RefundJob.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents, current_user)
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
     end
   end

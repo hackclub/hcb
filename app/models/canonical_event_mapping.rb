@@ -26,6 +26,8 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CanonicalEventMapping < ApplicationRecord
+  include HasBalanceMonitoring
+
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
   belongs_to :canonical_transaction

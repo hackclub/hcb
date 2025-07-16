@@ -24,7 +24,7 @@ module FeeReimbursementService
         else
           topup = StripeTopup.create(
             amount_cents:,
-            statement_descriptor: "FEE REIMBURSE",
+            statement_descriptor: "HCB-#{local_hcb_code.short_code}",
             description: "Fee reimbursement ##{fee_reimbursement.id}",
             metadata: {
               fee_reimbursement_id: fee_reimbursement.id,
@@ -34,6 +34,18 @@ module FeeReimbursementService
           fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
         end
       end
+    end
+
+    def hcb_code
+      [
+        ::TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
+        ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
+        Time.now.strftime("%G_%V")
+      ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
+    end
+
+    def local_hcb_code
+      HcbCode.find_or_create_by(hcb_code:)
     end
 
   end

@@ -10,7 +10,7 @@ module TransactionGroupingEngine
       UNKNOWN_CODE = "000"
       # 001 — This type code exists in production to group transactions under
       # `000` while preventing from the TX Engine from trying to re-group them.
-      # For context, `TransactionGroupingEngineJob::Nightly` will try to group
+      # For context, `TransactionGroupingEngine::NightlyJob` will try to group
       # any CanonicalTransactions with a `000`. `001` was used to manually group
       # transactions together during an incident.
       INVOICE_CODE = "100"

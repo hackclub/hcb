@@ -1,0 +1,49 @@
+<% title "Unknown Merchants" %>
+
+<p class="mb-6">This page shows merchant IDs of popular merchants on HCB that don't exist in the <%= link_to "YellowPages database", "https://github.com/hackclub/yellow_pages" %>.</p>
+
+<table>
+  <thead>
+    <tr>
+        <th>Merchant ID</th>
+        <th>Memos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @merchants.each do |merchant| %>
+      <tr>
+        <td>
+          <%= merchant[:network_id] %>
+          <span class="h6 muted"><%= merchant[:total_transactions] %></span>
+        </td>
+        <td>
+          <ul>
+             <% merchant[:memos].reverse.first(10).each do |memo| %>
+              <li>
+                <% if memo[:authorization].present? %>
+                  <%= link_to memo[:memo], hcb_code_path("HCB-600-#{memo[:authorization]}") %>
+                <% else %>
+                  <%= memo[:memo] %>
+                <% end %>
+
+                <% if memo[:url].present? %>
+                  <%= link_to memo[:url], target: "_blank" do %>
+                    <%= inline_icon "external", size: 12, class: "scale-150" %>
+                  <% end %>
+                <% end %>
+
+                <%= "(#{memo[:occurrences]})" if memo[:occurrences] > 1 %>
+              </li>
+            <% end %>
+          </ul>
+
+          <% if merchant[:memos].count > 10 %>
+            <p class="indent-4">
+              + <%= merchant[:memos].count - 10 %> more...
+            </p>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

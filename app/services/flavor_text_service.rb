@@ -500,7 +500,7 @@ class FlavorTextService
       "I would rather check my Facebook than face my checkbook.",
       "The only part not outstanding is our balance",
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
-      "Wanna&nbsp;<a href='#{Rails.configuration.constants.hack_on_hcb_form_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
+      "Wanna&nbsp;<a href='#{Rails.configuration.constants.github_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
       "everyone's favorite money thing!",
       -> { "#{UserSession.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
       "We Column like we see 'em!",

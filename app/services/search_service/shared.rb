@@ -42,7 +42,9 @@ module SearchService
             reimbursement
           ],
           "subtypes"   => [],
-          "properties" => []
+          "properties" => [
+            "date"
+          ]
         },
         "card"          => {
           "children"   => [

@@ -25,7 +25,7 @@ class OrganizerPositionContractsController < ApplicationController
   end
 
   def opc_params
-    params.require(:organizer_position_contract).permit(:organizer_position_invite_id, :cosigner_email)
+    params.require(:organizer_position_contract).permit(:organizer_position_invite_id, :cosigner_email, :include_videos)
   end
 
 end

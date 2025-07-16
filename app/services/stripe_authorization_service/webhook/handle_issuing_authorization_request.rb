@@ -13,6 +13,10 @@ module StripeAuthorizationService
         approve?
       end
 
+      def card
+        @card ||= StripeCard.includes(:card_grant).find_by(stripe_id: stripe_card_id)
+      end
+
       private
 
       def auth
@@ -29,10 +33,6 @@ module StripeAuthorizationService
 
       def stripe_card_id
         auth[:card][:id]
-      end
-
-      def card
-        @card ||= StripeCard.includes(:card_grant).find_by(stripe_id: stripe_card_id)
       end
 
       def card_balance_available
@@ -55,11 +55,15 @@ module StripeAuthorizationService
       end
 
       def approve?
+        return decline_with_reason!("event_frozen") if event.financially_frozen?
+
         return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?
 
         return decline_with_reason!("inadequate_balance") if card_balance_available < amount_cents
 
         return decline_with_reason!("cash_withdrawals_not_allowed") if cash_withdrawal? && !card.cash_withdrawal_enabled?
+
+        return decline_with_reason!("user_cards_locked") if card.user.cards_locked?
 
         set_metadata!
 

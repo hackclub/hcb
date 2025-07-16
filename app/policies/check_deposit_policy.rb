@@ -2,15 +2,15 @@
 
 class CheckDepositPolicy < ApplicationPolicy
   def index?
-    admin_or_user? && check_deposits_enabled?
+    auditor_or_user? && check_deposits_enabled?
   end
 
   def create?
-    admin_or_user? && !record.event.demo_mode?
+    OrganizerPosition.role_at_least?(user, record.event, :member) && !record.event.demo_mode?
   end
 
   def view_image?
-    admin_or_manager?
+    auditor_or_manager?
   end
 
   def toggle_fronted?
@@ -23,6 +23,10 @@ class CheckDepositPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def auditor?
+    user&.auditor?
+  end
+
   def user?
     record.event.users.include?(user)
   end
@@ -31,11 +35,11 @@ class CheckDepositPolicy < ApplicationPolicy
     record.event.plan.check_deposits_enabled?
   end
 
-  def admin_or_user?
-    admin? || user?
+  def auditor_or_user?
+    auditor? || user?
   end
 
-  def admin_or_manager?
+  def auditor_or_manager?
     user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 

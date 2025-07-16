@@ -88,7 +88,7 @@ module GSuiteService
         res = Faraday.get do |req|
           req.url G_VERIFY_DOMAIN + domain
           req.options.timeout = 60 # it may take heroku up to 30 seconds to cold start
-          req.headers["Authorization"] = Rails.application.credentials.g_verify_api_key
+          req.headers["Authorization"] = Credentials.fetch(:GVERIFY)
         end
         return true if res.success?
       end

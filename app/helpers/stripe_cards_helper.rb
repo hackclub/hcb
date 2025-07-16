@@ -9,10 +9,10 @@ module StripeCardsHelper
     "#{stripe_card.stripe_exp_month.to_s.rjust(2, '0')}/#{stripe_card.stripe_exp_year.to_s[-2..]}"
   end
 
-  def stripe_card_mention(stripe_card, options = { size: 24 })
+  def stripe_card_mention(stripe_card, size: 24)
     icon = inline_icon "card",
-                       size: options[:size],
-                       class: "muted #{options[:size] <= 24 ? 'pr1' : ''}"
+                       size:,
+                       class: "muted #{size <= 24 ? 'pr1' : ''}"
     if organizer_signed_in? || stripe_card.user == current_user
       text = content_tag :span, stripe_card.last_four
       return link_to(stripe_card, class: "mention", data: { turbo_frame: "_top" }) { icon + text }
@@ -66,7 +66,7 @@ module StripeCardsHelper
     suggested(field)
   end
 
-  def card_shipping_map_url(card, options = {})
+  def card_shipping_map_url(card)
     address = "#{card.address_line1} #{card.address_line2}, #{card.address_city} #{card.address_state} #{card.address_country} #{card.address_postal_code}"
     geo = Geocoder.search(address)&.first
     return nil unless geo

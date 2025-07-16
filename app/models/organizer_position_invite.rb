@@ -69,7 +69,7 @@ class OrganizerPositionInvite < ApplicationRecord
   friendly_id :slug_candidates, use: :slugged
 
   scope :pending, -> { where(accepted_at: nil, rejected_at: nil, cancelled_at: nil) }
-  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include cancelled invites so that we can assign users to them
+  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include canceled invites so that we can assign users to them
   scope :pending_assign, -> { where(accepted_at: nil, rejected_at: nil) }
 
   belongs_to :event
@@ -97,7 +97,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def pending_signature?
-    is_signee && Flipper.enabled?(:organizer_position_contracts_2025_01_03, event) && organizer_position_contracts.where(aasm_state: :signed).none?
+    is_signee && organizer_position_contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -140,9 +140,11 @@ class OrganizerPositionInvite < ApplicationRecord
         # Create allowance
         organizer_position.active_spending_control.allowances.create!(authorized_by_id: sender_id, amount_cents: initial_control_allowance_amount_cents, memo: "Initial allowance") unless initial_control_allowance_amount_cents.zero?
       end
-
-      true
     end
+
+    OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+
+    true
   end
 
   def accepted?

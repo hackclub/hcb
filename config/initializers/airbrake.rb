@@ -73,7 +73,7 @@ end
 # Rails.logger = Airbrake::AirbrakeLogger.new(Rails.logger)
 #
 
-noisy_errors = [ActionController::RoutingError, ActiveRecord::RecordNotFound]
+noisy_errors = [ActionController::RoutingError, ActiveRecord::RecordNotFound, ActiveJob::DeserializationError, MiniMagick::Error]
 
 Airbrake.add_filter do |notice|
   next unless noisy_errors.include?(notice.stash[:exception].class)
@@ -84,7 +84,7 @@ end
 
 
 Rails.application.reloader.to_prepare do
-  ignorable_errors = [SignalException, Sidekiq::Shutdown, ActiveRecord::ConnectionTimeoutError]
+  ignorable_errors = [SignalException, Sidekiq::Shutdown, ActiveRecord::ConnectionTimeoutError, Sidekiq::JobRetry::Handled]
 
   Airbrake.add_filter do |notice|
     next unless ignorable_errors.include?(notice.stash[:exception].class)

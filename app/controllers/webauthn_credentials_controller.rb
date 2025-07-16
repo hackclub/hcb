@@ -43,6 +43,7 @@ class WebauthnCredentialsController < ApplicationController
 
       redirect_back fallback_location: edit_user_path(user), flash: { success: "Registered security key!" }
     rescue WebAuthn::Error => e
+      Airbrake.notify(e)
       redirect_back fallback_location: edit_user_path(user), flash: { error: "Something went wrong registering a security key." }
     end
   end

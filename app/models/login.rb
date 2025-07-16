@@ -4,19 +4,26 @@
 #
 # Table name: logins
 #
-#  id                     :bigint           not null, primary key
-#  aasm_state             :string
-#  browser_token          :string
-#  authentication_factors :jsonb
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  user_id                :bigint           not null
-#  user_session_id        :bigint
+#  id                       :bigint           not null, primary key
+#  aasm_state               :string
+#  authentication_factors   :jsonb
+#  browser_token_ciphertext :text
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  initial_login_id         :bigint
+#  referral_program_id      :bigint
+#  user_id                  :bigint           not null
+#  user_session_id          :bigint
 #
 # Indexes
 #
-#  index_logins_on_user_id          (user_id)
-#  index_logins_on_user_session_id  (user_session_id)
+#  index_logins_on_referral_program_id  (referral_program_id)
+#  index_logins_on_user_id              (user_id)
+#  index_logins_on_user_session_id      (user_session_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (initial_login_id => logins.id)
 #
 class Login < ApplicationRecord
   include AASM
@@ -24,21 +31,23 @@ class Login < ApplicationRecord
 
   belongs_to :user
   belongs_to :user_session, optional: true
+  belongs_to :referral_program, class_name: "Referral::Program", optional: true
 
-  has_secure_token :browser_token
+  has_encrypted :browser_token
+  before_validation :ensure_browser_token
 
-  store :authentication_factors, accessors: [:sms, :email, :webauthn, :totp], prefix: :authenticated_with
+  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, prefix: :authenticated_with
 
   EXPIRATION = 15.minutes
 
   scope :active, -> { where(created_at: EXPIRATION.ago..) }
 
-  has_paper_trail
+  has_paper_trail skip: [:browser_token]
 
   validate do
     if user_session.present? && !complete?
       # how did we create session when it's not complete?!
-      Airbrake.notify("An incomplete login #{id} has a session #{session.id} present.")
+      Airbrake.notify("An incomplete login #{id} has a session #{user_session.id} present.")
       errors.add(:base, "An incomplete login has a session present.")
     end
   end
@@ -68,7 +77,16 @@ class Login < ApplicationRecord
   end
 
   def authentication_factors_count
+    return 0 if authentication_factors.nil?
+
     authentication_factors.values.count(true)
+  end
+
+  def ensure_browser_token
+    # Avoid generating a new token if one is already encrypted
+    return if self[:browser_token_ciphertext].present?
+
+    self.browser_token ||= SecureRandom.base58(24)
   end
 
 end

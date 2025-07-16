@@ -12,12 +12,12 @@ module TwilioMessageService
       return if @user.phone_number.blank?
 
       client = Twilio::REST::Client.new(
-        Rails.application.credentials.twilio[:account_sid],
-        Rails.application.credentials.twilio[:auth_token]
+        Credentials.fetch(:TWILIO, :ACCOUNT_SID),
+        Credentials.fetch(:TWILIO, :AUTH_TOKEN)
       )
 
       twilio_response = client.messages.create(
-        from: Rails.application.credentials.twilio[:phone_number],
+        from: Credentials.fetch(:TWILIO, :PHONE_NUMBER),
         to: @user.phone_number,
         body: @body
       )
@@ -28,7 +28,7 @@ module TwilioMessageService
 
       sms_message = TwilioMessage.create!(
         to: @user.phone_number,
-        from: Rails.application.credentials.twilio[:phone_number],
+        from: Credentials.fetch(:TWILIO, :PHONE_NUMBER),
         body: @body,
         twilio_sid: twilio_response.sid,
         twilio_account_sid: twilio_response.account_sid,

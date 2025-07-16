@@ -23,7 +23,7 @@
         <td><%= employee.aasm_state.humanize %></td>
         <td>
           <%= link_to "View payments", employee %> <br>
-          <%= employee.user.w9s.any? ? link_to("View latest W9", employee.user.w9s.order(signed_at: :asc).last.url) : "No W9 in HCB" %> <br>
+          <%= employee.user.w9s.any? ? ugc_link_to("View latest W9", employee.user.w9s.order(signed_at: :asc).last.url) : "No W9 in HCB" %> <br>
           <% if employee.onboarding? %>
             <%= form_with model: nil, local: true, url: employee_onboard_path(employee), method: :post do |form| %>
               <%= form.text_field :gusto_id, style: "width: 300px;", placeholder: "Gusto ID" %>

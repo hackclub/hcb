@@ -3,7 +3,7 @@
 </h2>
 <article>
   <ul class="list-reset comments mb5">
-    <% versions = @report.versions.select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
+    <% versions = @report.versions.includes([:item]).select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
     <% comments = policy_scope(@report.comments) %>
     <% (versions + comments).sort_by(&:created_at).each do |item| %>
       <% if item.instance_of?(Comment) %>
@@ -33,7 +33,7 @@
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
              "draft_created"           => ["plus", "success", "created this draft report"],
              "reimbursed"              => ["payment-transfer", "purple", reimbursed_change_text],
-             "reversed"                => ["sad", "warning", "cancelled this reimbursement"],
+             "reversed"                => ["sad", "warning", "canceled this reimbursement"],
            } %>
         <% state_change = item.changeset["aasm_state"]&.second %>
         <% if state_change %>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="conversation_item_text">
                   <span class="muted" style="margin-right: -0.25em;">
-                    <%= user_mention whodunnit, { avatar: { style: "vertical-align: sub;" } }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                    <%= user_mention whodunnit, avatar: { style: "vertical-align: sub;" }, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
                   </span>
                   <% if state_change == "reimbursement_requested" %>
                     <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
@@ -87,7 +87,7 @@
               </div>
               <div style="display: flex; align-items: center; gap: 4px">
                 <span class="muted; margin-right: -0.25em;">
-                  <%= user_mention User.find_by(id: item.whodunnit), { hide_avatar: true }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                  <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
                 </span>
                 <span class="align-middle"><%= item.event %>d this report</span>
                 <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">

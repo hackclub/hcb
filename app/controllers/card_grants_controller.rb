@@ -20,18 +20,12 @@ class CardGrantsController < ApplicationController
 
     last_card_grant = @event.card_grants.order(created_at: :desc).first
 
-    if last_card_grant.present?
-      @card_grant.amount_cents = last_card_grant.amount_cents
-      @card_grant.merchant_lock = last_card_grant.merchant_lock
-      @card_grant.category_lock = last_card_grant.category_lock
-    end
-
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -44,6 +38,34 @@ class CardGrantsController < ApplicationController
     Rails.error.report(e)
   ensure
     redirect_to event_transfers_path(@event)
+  end
+
+  def edit_overview
+    authorize @card_grant
+  end
+
+  def edit_purpose
+    authorize @card_grant
+  end
+
+  def edit_actions
+    authorize @card_grant
+  end
+
+  def edit_balance
+    authorize @card_grant
+  end
+
+  def edit_usage_restrictions
+    authorize @card_grant
+  end
+
+  def edit_topup
+    authorize @card_grant
+  end
+
+  def edit_withdraw
+    authorize @card_grant
   end
 
   def update
@@ -73,9 +95,15 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
+    if @card_grant.pre_authorization&.unauthorized? && !organizer_signed_in?
+      return redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
     @event = @card_grant.event
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
+
+    @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
     @force_no_popover = @frame
@@ -130,6 +158,35 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
   end
 
+  def withdraw
+    authorize @card_grant
+
+    @card_grant.withdraw!(amount_cents: Monetize.parse(params[:amount]).cents, withdrawn_by: current_user)
+
+    redirect_to @card_grant, flash: { success: "Successfully withdrew from grant." }
+
+  rescue => e
+    Rails.error.report(e) unless e.is_a?(ArgumentError)
+
+    redirect_to @card_grant, flash: { error: e.message }
+  end
+
+  def convert_to_reimbursement_report
+    authorize @card_grant
+
+    report = @card_grant.convert_to_reimbursement_report!
+
+    redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
+  end
+
+  def toggle_one_time_use
+    authorize @card_grant
+
+    @card_grant.update(one_time_use: !@card_grant.one_time_use)
+
+    redirect_to @card_grant, flash: { success: "#{@card_grant.one_time_use ? "Enabled" : "Disabled"} one time use for this card grant." }
+  end
+
   def edit
     authorize @card_grant
   end
@@ -138,6 +195,7 @@ class CardGrantsController < ApplicationController
 
   def set_card_grant
     @card_grant = CardGrant.find_by_hashid!(params.require(:id))
+    @event = @card_grant.event
   end
 
 end

@@ -6,6 +6,11 @@
     for <%= organizer_position_contract.organizer_position_invite.event.name %>. <strong>If they are under 18, <%= organizer_position_contract.organizer_position_invite.user.name %> will need to have a parent sign on their behalf.</strong>
   <p>
 
+  <div class="field field--checkbox">
+    <%= form.check_box :include_videos %>
+    <%= form.label :include_videos, "Would you like us to include the onboarding videos?" %>
+  </div>
+
   <div class="field">
     <%= form.label :cosigner_email, "Cosigned by (email address)" %>
     <%= form.text_field :cosigner_email %>

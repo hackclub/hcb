@@ -25,7 +25,7 @@
     <% @w9s.each do |w9| %>
       <tr>
         <td><%= link_to w9.user.name, edit_user_path(w9.user) %> (<%= w9.user.email %>)</td>
-        <td><%= link_to w9.url, w9.url %></td>
+        <td><%= ugc_link_to w9.url, w9.url %></td>
         <td><%= w9.uploaded_by.name %></td>
         <td><%= format_date w9.signed_at %></td>
       </tr>

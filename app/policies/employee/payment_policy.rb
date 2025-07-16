@@ -15,13 +15,17 @@ class Employee
     end
 
     def stub?
-      employee || admin || manager
+      employee || admin || manager || auditor
     end
 
     private
 
     def admin
       user&.admin?
+    end
+
+    def auditor
+      user&.auditor?
     end
 
     def manager

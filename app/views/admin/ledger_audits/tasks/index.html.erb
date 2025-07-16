@@ -22,13 +22,13 @@
           <td><%= hcb_code.created_at.strftime("%Y-%m-%d") %></td>
           <td>
             <span style="display: flex; align-items: center; gap: 8px;">
-              <%= avatar_for task.reviewer, 24, { class: "avatar" } %>
+              <%= avatar_for task.reviewer, class: "avatar" %>
               <%= task.reviewer&.name %>
             </span>
           </td>
           <td>
             <span style="display: flex; align-items: center; gap: 8px;">
-              <%= avatar_for hcb_code.event.point_of_contact, 24, { class: "avatar" } %>
+              <%= avatar_for hcb_code.event.point_of_contact, class: "avatar" %>
               <%= hcb_code.event.point_of_contact&.name %>
             </span>
           </td>

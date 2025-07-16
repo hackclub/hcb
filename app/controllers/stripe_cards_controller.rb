@@ -23,42 +23,48 @@ class StripeCardsController < ApplicationController
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    if @card.freeze!
+    begin
+      @card.freeze!
       flash[:success] = "Card frozen"
-      redirect_back_or_to @card
-    else
-      render :show, status: :unprocessable_entity
+    rescue => e
+      flash[:error] = "Card could not be frozen"
     end
+
+    redirect_back_or_to stripe_card_path(@card)
   end
 
   def cancel
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    @card.cancel!
-    flash[:success] = "Card cancelled"
-    redirect_back_or_to @card
-  rescue => e
-    flash[:error] = e.message
-    render :show, status: :unprocessable_entity
+    begin
+      @card.cancel!
+      flash[:success] = "Card canceled"
+    rescue => e
+      flash[:error] = "Card could not be canceled"
+    end
+
+    redirect_back_or_to stripe_card_path(@card)
   end
 
   def defrost
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    if @card.defrost!
+    begin
+      @card.defrost!
       flash[:success] = "Card defrosted"
-      redirect_back_or_to @card
-    else
-      render :show, status: :unprocessable_entity
+    rescue => e
+      flash[:error] = "Card could not be defrosted"
     end
+
+    redirect_back_or_to @card
   end
 
   def show
     @card = StripeCard.includes(:event, :user).find(params[:id])
 
-    if @card.card_grant.present? && !current_user&.admin?
+    if @card.card_grant.present? && !current_user&.auditor?
       authorize @card.card_grant
       return redirect_to card_grant_path(@card.card_grant, frame: params[:frame])
     end

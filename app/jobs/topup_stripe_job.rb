@@ -79,7 +79,7 @@ class TopupStripeJob < ApplicationJob
     StatsD.gauge("stripe_issuing_pending_issuing_balance", pending, sample_rate: 1.0)
 
     puts "topup amount == #{topup_amount}"
-    return unless topup_amount > 0
+    return unless topup_amount >= 5_000 * 100
 
     # The maximum amount for a single top-up is $300k
     # ref: https://github.com/hackclub/hcb/issues/4462#issuecomment-1917940104

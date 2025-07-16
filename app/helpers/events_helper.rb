@@ -90,4 +90,17 @@ module EventsHelper
   def show_org_switcher?
     signed_in? && current_user.events.not_hidden.count > 1
   end
+
+  def check_filters?(filter_options, params)
+    filter_options.any? do |option|
+      key = option[:key]
+      if key.to_s.end_with?("_*") && option[:type] == "date_range"
+        base = key.to_s.chomp("_*")
+        params["#{base}_before"].present? || params["#{base}_after"].present?
+      else
+        params[key].present?
+      end
+    end
+  end
+
 end

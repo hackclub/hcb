@@ -10,7 +10,7 @@
     <div class="flex gap-3 w-full w-100 py-2 sm:pt-0 px-4 avatar-row avatar-row--no-transform" style="padding-left: 25px">
       <% @organizers.first(@organizers.length == 12 ? 12 : 11).each do |position| %>
         <div style="transform:none" class="avatar-grow line-height-0 tooltipped tooltipped--e" aria-label="<%= position.user == current_user ? current_user_flavor_text.sample : position.user.name %>">
-          <%= avatar_for position.user, 40, { style: "margin-left: -10px" } %>
+          <%= avatar_for position.user, size: 40, style: "margin-left: -10px" %>
         </div>
       <% end %>
       <% if @organizers.length > 12 %>

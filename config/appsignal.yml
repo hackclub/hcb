@@ -1,7 +1,7 @@
 default: &defaults
   name: "HCB"
 
-  push_api_key: <%= Rails.application.credentials.dig(:appsignal, :push_api_key) %>
+  push_api_key: <%= Credentials.fetch(:APPSIGNAL) %>
 
   ignore_errors:
     - ActionDispatch::Http::MimeNegotiation::InvalidType

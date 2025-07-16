@@ -105,10 +105,8 @@
 
 <h3 class="mb0">Reports created</h3>
 
-<%= form_with(model: nil, local: true, method: :get) do |form| %>
-  <div class="filterbar flex items-center width-100">
-    <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
-  </div>
+<%= form_with(model: nil, local: true, method: :get, class: "my-3") do |form| %>
+  <%= render "events/search", form: %>
 <% end %>
 
 <% if @my_reports.blank? %>

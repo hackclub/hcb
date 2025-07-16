@@ -4,22 +4,25 @@
 #
 # Table name: card_grants
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer
-#  category_lock   :string
-#  email           :string           not null
-#  keyword_lock    :string
-#  merchant_lock   :string
-#  purpose         :string
-#  status          :integer          default("active"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint
-#  event_id        :bigint           not null
-#  sent_by_id      :bigint           not null
-#  stripe_card_id  :bigint
-#  subledger_id    :bigint
-#  user_id         :bigint           not null
+#  id                         :bigint           not null, primary key
+#  amount_cents               :integer
+#  category_lock              :string
+#  email                      :string           not null
+#  instructions               :text
+#  keyword_lock               :string
+#  merchant_lock              :string
+#  one_time_use               :boolean
+#  pre_authorization_required :boolean          default(FALSE), not null
+#  purpose                    :string
+#  status                     :integer          default("active"), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  disbursement_id            :bigint
+#  event_id                   :bigint           not null
+#  sent_by_id                 :bigint           not null
+#  stripe_card_id             :bigint
+#  subledger_id               :bigint
+#  user_id                    :bigint           not null
 #
 # Indexes
 #
@@ -45,6 +48,9 @@ class CardGrant < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :cdg
 
+  include Freezable
+  include Commentable
+
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :stripe_card, optional: true
@@ -56,6 +62,9 @@ class CardGrant < ApplicationRecord
   alias_method :setting, :card_grant_setting
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
+
+  has_one :pre_authorization
+  after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
@@ -90,8 +99,8 @@ class CardGrant < ApplicationRecord
       "muted"
     elsif pending_invite?
       "info"
-    elsif stripe_card.frozen?
-      "info"
+    elsif stripe_card.frozen? || stripe_card.inactive?
+      "warning"
     else
       "success"
     end
@@ -104,18 +113,27 @@ class CardGrant < ApplicationRecord
       "Expired"
     elsif pending_invite?
       "Invitation sent"
-    elsif stripe_card.frozen?
+    elsif stripe_card.frozen? || stripe_card.inactive?
       "Frozen"
     else
       "Active"
     end
   end
 
+  def status_badge_type
+    s = state.to_sym
+    return :success if s == :success
+    return :error if s == :muted
+    return :warning if s == :info
+
+    :muted
+  end
+
   def pending_invite?
     stripe_card.nil?
   end
 
-  def topup!(amount_cents:, topped_up_by: User.find(sent_by_id))
+  def topup!(amount_cents:, topped_up_by: sent_by)
     raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
 
     custom_memo = "Topup of grant to #{user.name}"
@@ -136,22 +154,48 @@ class CardGrant < ApplicationRecord
     end
   end
 
+  def withdraw!(amount_cents:, withdrawn_by: sent_by)
+    raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
+    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents > balance.amount * 100
+
+    custom_memo = "Withdrawal from grant to #{user.name}"
+
+    ActiveRecord::Base.transaction do
+      update!(amount_cents: self.amount_cents - amount_cents)
+      disbursement = DisbursementService::Create.new(
+        source_event_id: event_id,
+        destination_event_id: event_id,
+        name: custom_memo,
+        amount: amount_cents / 100.0,
+        source_subledger_id: subledger_id,
+        requested_by_id: withdrawn_by.id,
+      ).run
+
+      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    end
+  end
+
   def topup_disbursements
     Disbursement.where(destination_subledger_id: subledger.id).where.not(id: disbursement_id)
   end
 
+  def withdrawal_disbursements
+    Disbursement.where(source_subledger_id: subledger.id)
+  end
+
   def visible_hcb_codes
-    ((stripe_card&.hcb_codes || []) + topup_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
   end
 
   def expire!
-    hcb_user = User.find_by!(email: "bank@hackclub.com")
+    hcb_user = User.system_user
     cancel!(hcb_user, expired: true)
   end
 
-  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"), allow_topups: false)
-    raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
-    raise ArgumentError, "card grant should have a positive balance" unless balance.positive? || allow_topups
+  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.system_user, allow_topups: false)
+    raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
+    raise ArgumentError, "Card grant should have a positive balance." unless balance.positive? || allow_topups
 
     return topup!(amount_cents: balance.cents * -1, topped_up_by: requested_by) if balance.negative?
 
@@ -167,10 +211,10 @@ class CardGrant < ApplicationRecord
     disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
   end
 
-  def cancel!(canceled_by = User.find_by!(email: "bank@hackclub.com"), expired: false)
+  def cancel!(canceled_by = User.system_user, expired: false)
     raise ArgumentError, "Grant is already #{status}" unless active?
 
-    zero!(custom_memo: "Return of funds from #{expired ? "expiration" : "cancellation"} of grant to #{user.name}", requested_by: canceled_by) if balance > 0
+    zero!(custom_memo: "Returning #{expired ? "expired" : "canceled"} grant to #{user.name}", requested_by: canceled_by) if balance > 0
 
     update!(status: :canceled) unless expired
     update!(status: :expired) if expired
@@ -228,6 +272,22 @@ class CardGrant < ApplicationRecord
 
   def last_time_change_to(...)
     versions.where_object_changes_to(...).last&.created_at
+  end
+
+  def convert_to_reimbursement_report!
+    raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
+    raise ArgumentError, "card grant should have a positive balance" unless balance.positive?
+
+    maximum_amount_cents = balance.cents
+
+    cancel!
+
+    event.reimbursement_reports.create!(
+      user:,
+      report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
+      maximum_amount_cents:,
+      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}."
+    )
   end
 
   private

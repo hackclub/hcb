@@ -18,6 +18,8 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
+#  donation_tiers_enabled                       :boolean          default(FALSE), not null
+#  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
 #  is_indexable                                 :boolean          default(TRUE)
@@ -29,6 +31,7 @@
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
+#  risk_level                                   :integer
 #  short_name                                   :string
 #  slug                                         :text
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
@@ -104,6 +107,8 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
+  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
+  scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
   scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
@@ -162,6 +167,8 @@ class Event < ApplicationRecord
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
+
+  before_validation :enforce_transparency_eligibility
 
   BADGES = {
     # Qualifier must be a method on Event. If the method returns true, the badge
@@ -234,8 +241,12 @@ class Event < ApplicationRecord
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
+  has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
+
+  has_many :event_follows, class_name: "Event::Follow"
+  has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
@@ -257,6 +268,8 @@ class Event < ApplicationRecord
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
+  has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
+  has_many :donation_tiers, -> { order(sort_index: :asc) }, dependent: :destroy, class_name: "Donation::Tier"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
@@ -283,6 +296,8 @@ class Event < ApplicationRecord
   has_many :canonical_event_mappings, -> { on_main_ledger }
   has_many :canonical_transactions, through: :canonical_event_mappings
 
+  has_many :announcements
+
   scope :engaged, -> {
     Event.where(id: Event.joins(:canonical_transactions)
         .where("canonical_transactions.date >= ?", 6.months.ago)
@@ -291,8 +306,7 @@ class Event < ApplicationRecord
 
   scope :dormant, -> { where.not(id: Event.engaged) }
 
-  has_many :fees, through: :canonical_event_mappings
-  # must transition to has_many :fees
+  has_many :fees
   has_many :bank_fees
 
   has_many :tags, -> { includes(:hcb_codes) }
@@ -316,16 +330,16 @@ class Event < ApplicationRecord
   has_many :grants
 
   has_one_attached :donation_header_image
-  validates :donation_header_image, content_type: [:png, :jpg, :jpeg]
+  validates :donation_header_image, content_type: [:png, :jpeg]
 
   has_one_attached :background_image
-  validates :background_image, content_type: [:png, :jpg, :jpeg]
+  validates :background_image, content_type: [:png, :jpeg, :gif]
 
   has_one_attached :logo
-  validates :logo, content_type: [:png, :jpg, :jpeg]
+  validates :logo, content_type: [:png, :jpeg]
 
   has_one_attached :stripe_card_logo
-  validates :stripe_card_logo, content_type: [:png, :jpg, :jpeg]
+  validates :stripe_card_logo, content_type: [:png, :jpeg]
 
   include HasMetrics
 
@@ -352,7 +366,7 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
-  before_create { self.increase_account_id ||= IncreaseService::AccountIds::FS_MAIN }
+  before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
@@ -391,6 +405,13 @@ class Event < ApplicationRecord
     express: 1,
     priority: 2,
   }
+
+  enum :risk_level, {
+    zero: 0,
+    slight: 1,
+    moderate: 2,
+    high: 3,
+  }, suffix: :risk_level
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.id }, only: [:create]
@@ -444,6 +465,10 @@ class Event < ApplicationRecord
       balance += fronted_incoming_balance_v2_cents
     end
     balance
+  end
+
+  def total_spent_cents
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil)
@@ -643,6 +668,10 @@ class Event < ApplicationRecord
     !engaged?
   end
 
+  def frozen?
+    Flipper.enabled?(:frozen, self)
+  end
+
   def revenue_fee
     plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
   end
@@ -677,11 +706,11 @@ class Event < ApplicationRecord
   end
 
   def donation_page_available?
-    donation_page_enabled && plan.donations_enabled?
+    donation_page_enabled && plan.donations_enabled? && !financially_frozen?
   end
 
   def public_reimbursement_page_available?
-    public_reimbursement_page_enabled && plan.reimbursements_enabled?
+    public_reimbursement_page_enabled && plan.reimbursements_enabled? && !financially_frozen?
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)
@@ -695,6 +724,7 @@ class Event < ApplicationRecord
   def minimum_wire_amount_cents
     return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
     return 100 if plan.exempt_from_wire_minimum?
+    return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
 
     return 500_00
   end
@@ -717,6 +747,43 @@ class Event < ApplicationRecord
   
   def plan
     parent&.plan || super
+  end
+
+  def eligible_for_transparency?
+    !plan.is_a?(Event::Plan::SalaryAccount)
+  end
+
+  def eligible_for_indexing?
+    eligible_for_transparency? && !risk_level.in?(%w[moderate high])
+  end
+
+  def sync_to_airtable
+    # Sync stats to application's airtable record
+    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
+      app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
+
+      # For Anish's TUB
+      app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
+      app["Referral Raised 25"] = total_raised > 25_00
+      app["Referral Transparent"] = is_public
+      app["Referral 2 Teen Members"] = organizer_positions.includes(:user).where(user: { teenager: true }).count > 2
+
+      app.save
+    end
+  end
+
+  def set_airtable_status(status)
+    app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
+
+    return unless app.present?
+
+    app["Status"] = status unless app["Status"] == "Onboarded"
+
+    app.save
+  end
+
+  def active_teenagers
+    organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
   end
 
   private
@@ -742,7 +809,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none?
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
@@ -762,6 +829,17 @@ class Event < ApplicationRecord
 
   def move_friendly_id_error_to_slug
     errors.add :slug, *errors.delete(:friendly_id) if errors[:friendly_id].present?
+  end
+
+  def enforce_transparency_eligibility
+    unless eligible_for_transparency?
+      self.is_public = false
+      self.is_indexable = false
+    end
+
+    unless eligible_for_indexing?
+      self.is_indexable = false
+    end
   end
 
 end

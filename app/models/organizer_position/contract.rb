@@ -9,6 +9,7 @@
 #  cosigner_email               :string
 #  deleted_at                   :datetime
 #  external_service             :integer
+#  include_videos               :boolean          default(FALSE), not null
 #  purpose                      :integer          default("fiscal_sponsorship_agreement")
 #  signed_at                    :datetime
 #  void_at                      :datetime
@@ -35,11 +36,18 @@ class OrganizerPosition
 
     validate :one_non_void_contract
 
+    # this does not run unless placed before the following callback idk why
+    after_create_commit do
+      organizer_position_invite.event.set_airtable_status("Documents sent")
+    end
+
     after_create_commit :send_using_docuseal!, unless: :sent_with_manual?
 
     validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
     normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
 
+    # does not run when placed after the send_using_docuseal callback, aka here
+    # dont think this is needed anyways bc is_signee is alr set to true by the creation form but will leave here bc idk
     after_create_commit do
       organizer_position_invite.update(is_signee: true)
       organizer_position_invite.organizer_position&.update(is_signee: true)
@@ -136,7 +144,7 @@ class OrganizerPosition
                 readonly: false
               },
               {
-                name: "Organization Name",
+                name: "Organization",
                 default_value: organizer_position_invite.event.name,
                 readonly: true
               }
@@ -204,7 +212,7 @@ class OrganizerPosition
         Faraday.new(url: "https://api.docuseal.co/") do |faraday|
           faraday.response :json
           faraday.adapter Faraday.default_adapter
-          faraday.headers["X-Auth-Token"] = Rails.application.credentials.docuseal_key
+          faraday.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
           faraday.headers["Content-Type"] = "application/json"
         end
       end

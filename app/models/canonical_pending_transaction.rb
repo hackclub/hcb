@@ -15,7 +15,6 @@
 #  created_at                                       :datetime         not null
 #  updated_at                                       :datetime         not null
 #  check_deposit_id                                 :bigint
-#  grant_id                                         :bigint
 #  increase_check_id                                :bigint
 #  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
@@ -33,7 +32,6 @@
 # Indexes
 #
 #  index_canonical_pending_transactions_on_check_deposit_id         (check_deposit_id)
-#  index_canonical_pending_transactions_on_grant_id                 (grant_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
 #  index_canonical_pending_transactions_on_paypal_transfer_id       (paypal_transfer_id)
@@ -74,7 +72,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
   belongs_to :check_deposit, optional: true
-  belongs_to :grant, optional: true
   belongs_to :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", optional: true
   belongs_to :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", optional: true
 
@@ -171,6 +168,22 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def declined?
     @declined ||= canonical_pending_declined_mapping.present?
+  end
+
+  def stripe_decline_reason
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history", 0, "reason")&.to_sym
+  end
+
+  def hcb_decline_reason
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("metadata", "declined_reason")&.to_sym
+  end
+
+  def decline_reason
+    hcb_decline_reason || stripe_decline_reason
+  end
+
+  def declined_by
+    hcb_decline_reason ? "HCB" : "Stripe"
   end
 
   def unsettled?

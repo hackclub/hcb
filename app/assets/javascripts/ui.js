@@ -17,7 +17,6 @@ const loadModals = element => {
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
-      closeExisting: false,
     })
     return this.blur()
   })
@@ -61,35 +60,6 @@ $(document).on('keyup', 'action', function (e) {
 $(document).on('submit', '[data-behavior~=login]', function () {
   const val = $('input[name=email]').val()
   return localStorage.setItem('login_email', val)
-})
-
-$(document).on('change', '[name="invoice[sponsor]"]', function (e) {
-  let sponsor = $(e.target).children('option:selected').data('json')
-  if (!sponsor) {
-    sponsor = {}
-  }
-
-  if (sponsor.id) {
-    $('[data-behavior~=sponsor_update_warning]').slideDown('fast')
-  } else {
-    $('[data-behavior~=sponsor_update_warning]').slideUp('fast')
-  }
-
-  const fields = [
-    'name',
-    'contact_email',
-    'address_line1',
-    'address_line2',
-    'address_city',
-    'address_state',
-    'address_postal_code',
-    'address_country',
-    'id',
-  ]
-
-  return fields.forEach(field =>
-    $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
-  )
 })
 
 const updateAmountPreview = function () {
@@ -216,12 +186,12 @@ $(document).on('turbo:load', function () {
         .replace(/,/g, '') // remove all commas
         .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
         .replace(/\B(?=(\d{3})+(?!\d))/g, ','); // add commas for thousands
-  
+
       if (value.includes('.')) {
         let parts = value.split('.');
         value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '');
       }
-  
+
       $(this).val(value);
     });
   }
@@ -240,6 +210,12 @@ $(document).on('turbo:load', function () {
     change: function () {
       this.value = this.value.replace(/\s/g, '')
     },
+  })
+
+  $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
+    try {
+      event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
+    } catch {}
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
@@ -463,7 +439,8 @@ $(document).on('turbo:frame-load', function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
-    BK.thereIs('paypal_transfer_payout_method_inputs')
+    BK.thereIs('paypal_transfer_payout_method_inputs') &&
+    BK.thereIs('wire_payout_method_inputs')
   ) {
     const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
     const achTransferPayoutMethodInputs = BK.s(
@@ -472,6 +449,7 @@ $(document).on('turbo:frame-load', function () {
     const paypalTransferPayoutMethodInputs = BK.s(
       'paypal_transfer_payout_method_inputs'
     )
+    const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
     $(document).on(
       'change',
       '#user_payout_method_type_userpayoutmethodcheck',
@@ -479,7 +457,8 @@ $(document).on('turbo:frame-load', function () {
         if (e.target.checked)
           checkPayoutMethodInputs.slideDown() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp()
+            paypalTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -489,7 +468,8 @@ $(document).on('turbo:frame-load', function () {
         if (e.target.checked)
           achTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp()
+            paypalTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -499,7 +479,19 @@ $(document).on('turbo:frame-load', function () {
         if (e.target.checked)
           paypalTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp()
+            achTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp()
+      }
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodwire',
+      e => {
+        if (e.target.checked)
+          paypalTransferPayoutMethodInputs.slideUp() &&
+            checkPayoutMethodInputs.slideUp() &&
+            achTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideDown()
       }
     )
   }
@@ -614,9 +606,9 @@ $(document).on('wheel', 'input[type=number]', e => {
 // this allows for popovers to change the URL in the browser when opened.
 // it also handles using the back button, to reopen or close a popover.
 
-$(document).on($.modal.BEFORE_OPEN, function(event, modal) {
-  if(modal?.elm[0]?.dataset?.stateUrl) {
-    if(!document.documentElement.dataset.returnToStateUrl) {
+$(document).on($.modal.BEFORE_OPEN, function (event, modal) {
+  if (modal?.elm[0]?.dataset?.stateUrl) {
+    if (!document.documentElement.dataset.returnToStateUrl) {
       document.documentElement.dataset.returnToStateUrl = window.location.href;
       document.documentElement.dataset.returnToStateTitle = document.title;
     }
@@ -625,15 +617,15 @@ $(document).on($.modal.BEFORE_OPEN, function(event, modal) {
   }
 });
 
-$(document).on($.modal.BEFORE_CLOSE, function(event, modal) {
-  if(document.documentElement.dataset.returnToStateUrl) {
+$(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
+  if (document.documentElement.dataset.returnToStateUrl) {
     window.history.pushState(null, '', document.documentElement.dataset.returnToStateUrl);
     document.title = document.documentElement.dataset.returnToStateTitle;
   }
 });
 
 window.addEventListener("popstate", (e) => {
-  if(e.state?.modal) {
+  if (e.state?.modal) {
     $(`#${e.state.modal}`).modal();
   } else {
     $.modal.close();
@@ -643,7 +635,7 @@ window.addEventListener("popstate", (e) => {
 if (navigator.setAppBadge) {
   window.addEventListener("load", async () => {
     const response = await fetch("/my/tasks.json")
-    if(!response.redirected) { // redirected == the user isn't signed in.
+    if (!response.redirected) { // redirected == the user isn't signed in.
       const { count } = await response.json()
       navigator.setAppBadge(count)
     }

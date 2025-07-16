@@ -40,15 +40,15 @@ order by fee_balance desc
 
 Essentially, we calculate the total amount of fees we should have charged all-time and then the total amount of fees we’ve ever charged them all-time. If the difference is zero, we need to charge them fees (or give them a credit if we overcharged). 
 
-A couple of things to note about this SQL query. Every time we create a `CanonicalEventMapping` we create a `Fee` record for that transaction that stores the fee that needs to be charged for that transaction.
+A couple of things to note about this SQL query. Every time we create a [`CanonicalEventMapping`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_event_mapping.rb), we create a [`Fee`](https://github.com/hackclub/hcb/blob/main/app/models/fee.rb) record for that transaction that stores the fee that needs to be charged for that transaction.
 
-These reason for this line:
+The reason for this line:
 
 ```sql
 and f.reason = 'HACK CLUB FEE'
 ```
 
-Is that we create `Fee` records even for transactions that shouldn’t be charged a fee:
+Is that we create [`Fee`](https://github.com/hackclub/hcb/blob/main/app/models/fee.rb) records even for transactions that shouldn’t be charged a fee:
 
 ```ruby
 enum :reason, {
@@ -69,26 +69,26 @@ You can use the `pending_fees_v2` scope to get a list of events that need to be 
 
 ### When do we charge them?
 
-`BankFeeJob::Weekly` runs every week. It just calls `BankFeeService::Weekly`.
+[`BankFee::WeeklyJob`](https://github.com/hackclub/hcb/blob/main/app/jobs/bank_fee/weekly_job.rb) runs every week. It just calls [`BankFeeService::Weekly`](https://github.com/hackclub/hcb/blob/main/app/services/bank_fee_service/weekly.rb).
 
-It runs through every event with pending fees, and creates one `BankFee` record per event. So this is this event’s “fee” for this week. It then creates one `FeeRevenue` that is HCB’s revenue for that week.
+It runs through every event with pending fees, and creates one [`BankFee`](https://github.com/hackclub/hcb/blob/main/app/models/bank_fee.rb) record per event. So this is this event’s “fee” for this week. It then creates one [`FeeRevenue`](https://github.com/hackclub/hcb/blob/main/app/models/fee_revenue.rb) that is HCB’s revenue for that week.
 
 But these are just records in a database, they don’t appear on our bank statement. And that’s the number one rule of HCB, every transaction must appear on our bank statement. 
 
-That’s the job of `BankFeeJob::Nightly` / `BankFeeService::Nightly`. 
+That’s the job of [`BankFee::NightlyJob`](https://github.com/hackclub/hcb/blob/main/app/jobs/bank_fee/nightly_job.rb) / [`BankFeeService::Nightly`](https://github.com/hackclub/hcb/blob/main/app/services/bank_fee_service/nightly.rb). 
 
-It loops through the pending `BankFee`s and `FeeRevenue`s and creates Column transfers for them. It 99% of cases the flow looks like this:
+It loops through the pending [`BankFee`](https://github.com/hackclub/hcb/blob/main/app/models/bank_fee.rb)s and [`FeeRevenue`](https://github.com/hackclub/hcb/blob/main/app/models/fee_revenue.rb)s and creates Column transfers for them. It 99% of cases the flow looks like this:
 
 ```
 (multiple) BankFee w/ a book transfer from FS Main to FS Operating
 (single) FeeRevenue w/ a book transfer from FS Operating to FS Main
 ```
 
-Because FS Operating sits at $0, all transfers to it must happen before money is withdrawn back into FS Main. However, as we’ll talk about later positive `BankFee`s exist (when someone is receiving a credit from us because we overcharged them). 
+Because FS Operating sits at $0, all transfers to it must happen before money is withdrawn back into FS Main. However, as we’ll talk about later positive [`BankFee`](https://github.com/hackclub/hcb/blob/main/app/models/bank_fee.rb)s exist (when someone is receiving a credit from us because we overcharged them). 
 
-For these `BankFee`s, we’ll be doing a transfer from FS Operating to FS Main. That means they have to come after any transfers to FS Operating.
+For these [`BankFee`](https://github.com/hackclub/hcb/blob/main/app/models/bank_fee.rb)s, we’ll be doing a transfer from FS Operating to FS Main. That means they have to come after any transfers to FS Operating.
 
-Similarly, that means there can technically be a negative `FeeRevenue` (when we are giving more credits than we earn). This is a FS Main to FS Operating transfer and must come before any transfers to FS Main.
+Similarly, that means there can technically be a negative [`FeeRevenue`](https://github.com/hackclub/hcb/blob/main/app/models/fee_revenue.rb) (when we are giving more credits than we earn). This is a FS Main to FS Operating transfer and must come before any transfers to FS Main.
 
 This is the reason for the `bank_fees_to_main` and `fee_revenues_to_main` arrays in this service. All transfers into FS Operating come before transfers back into FS Main.
 
@@ -102,8 +102,8 @@ Ok but… if we only charges fees every week, someone could theoretically oversp
 
 At times, we may want to waive fees on revenue. For example, if the transaction is a refund or if it’s the initial transfer of money into their account.
 
-There are two ways of waiving fees, set `fee_waived` on the `CanonicalPendingTransaction` or set `reason` on the `Fee` to “TBD”.
+There are two ways of waiving fees, set `fee_waived` on the [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) or set `reason` on the [`Fee`](https://github.com/hackclub/hcb/blob/main/app/models/fee.rb) to “TBD”.
 
-Occasionally, we make this waiver after charging a fee. This results in a fee credit. Which is essentially a fee where we (HCB) pay the organisation instead of them paying us.
+Occasionally, we make this waiver after charging a fee. This results in a fee credit. A fee credit is essentially a fee where we (HCB) pay the organisation instead of them paying us.
 
 \- [@sampoder](https://github.com/sampoder)

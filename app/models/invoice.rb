@@ -109,6 +109,8 @@ class Invoice < ApplicationRecord
   extend FriendlyId
   include AASM
 
+  include Freezable
+
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
@@ -343,7 +345,7 @@ class Invoice < ApplicationRecord
   end
 
   def smart_memo
-    sponsor.name.upcase
+    sponsor.name
   end
 
   def hcb_code

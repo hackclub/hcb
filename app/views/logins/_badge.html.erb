@@ -1,7 +1,7 @@
 <%# locals: (user:) %>
 <% if cookies.encrypted[:signed_user] && User.find_signed(cookies.encrypted[:signed_user], purpose: :signin_avatar) == user %>
   <% mention = capture do %>
-    <%= user_mention user, { class: "badge bg-muted pl-1 m-0 tooltipped tooltipped--e", aria_label: "Switch account" } %>
+    <%= user_mention user, class: "badge bg-muted pl-1 m-0 tooltipped tooltipped--e", aria_label: "Switch account" %>
   <% end %>
   <% if signed_in? %>
     <%= link_to(logout_users_path, method: :delete) { mention } %>

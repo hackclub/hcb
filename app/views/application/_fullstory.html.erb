@@ -26,7 +26,8 @@
     FS.identify(<%= current_user&.id&.to_s.to_json.html_safe %>, {
       displayName: <%= current_user&.full_name.to_json.html_safe %>,
       email: <%= current_user&.email.to_json.html_safe %>,
-      admin_bool: <%= current_user&.admin?.to_json.html_safe %>
+      admin_bool: <%= current_user&.admin?.to_json.html_safe %>,
+      auditor_bool: <%= current_user&.auditor?.to_json.html_safe %>
     });
   </script>
 <% end %>

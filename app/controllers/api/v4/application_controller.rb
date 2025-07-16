@@ -13,6 +13,7 @@ module Api
 
       before_action :authenticate!
       before_action :set_expand
+      before_action :set_paper_trail_whodunnit
 
       rescue_from Pundit::NotAuthorizedError do |e|
         render json: { error: "not_authorized" }, status: :forbidden

@@ -36,7 +36,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features
+        Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
       def exempt_from_wire_minimum?
@@ -49,6 +49,26 @@ class Event
 
       def omit_stats
         false
+      end
+
+      def writeable?
+        true # false if an organization should be read-only
+      end
+
+      def hidden?
+        false
+      end
+
+      def mileage_rate(date)
+        return 67 if date < Date.new(2025, 1, 1)
+        return 70 if date < Date.new(2025, 3, 27)
+        return 14 if date < Date.new(2025, 4, 11) # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743055747682219
+
+        70
+      end
+
+      def contract_required?
+        true
       end
 
     end

@@ -2,29 +2,27 @@
 <% page_md %>
 <%= render "events/nav", selected: :promotions %>
 
-<% @perks_available = organizer_signed_in? && !@event.demo_mode? %>
+<% @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && organizer_signed_in? && !@event.demo_mode? %>
 
 <h1>
   Promotions &amp; perks
 </h1>
 
 <% if @event.robotics_team? %>
-  <div class="card pb0 mb3 promo-onboard" id="bin">
+  <div class="card pb0 mb3 promo-robotics" id="bin">
     <div class="card__banner card__banner--top flex justify-between items-center">
       <h3 class="h1 p2 my0 flex items-start smoke justify-center">
-        <img src="https://cloud-iuly89sfb-hack-club-bot.vercel.app/0surfin_orpheus.png" height="36px" class="mr2">
-        OnBoard Grant for PCB Fabrication
+        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
+        Fee Waiver
       </h3>
-      <%= link_to "Jump Onboard",
-        @perks_available ? "https://hackclub.com/onboard/" : root_path,
-        class: "btn mr1 #{'disabled' unless @perks_available} tooltipped tooltipped--w",
+      <%= link_to "Apply",
+        @perks_available ? fillout_form("8NZy8a2ui9us") : root_path,
+        class: "btn mr1",
         target: :_blank %>
     </div>
+    <h3 class="mb0 mt0">Raise some money this off-season with zero fees on HCB!</h3>
     <p>
-      Use the OnBoard grant to master PCB design with free  resources, community support, and manufacturing grants.
-    </p>
-    <p>
-      Get up to $100 to cover the  costs of creating your custom circuit boards. Enhance your off-season R&D with hands-on experience and collaborate with fellow high schoolers in the Hack Club Slack community.
+      Are you a teen-led robotics team? We’d love to waive all of your HCB fees till July 31st! Spend 5 minutes inviting teens to your HCB account, and we’ll waive fees!
     </p>
   </div>
 <% end %>
@@ -34,12 +32,12 @@
     <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
     <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
       @perks_available ? fillout_form("hDJYyLd7qNus", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Name" => current_user.name, "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
+      class: "btn mr1 #{"disabled" unless @perks_available && @event.country_US?}",
       target: :_blank %>
   </div>
 
   <p>
-    <%= link_to "The Event Helper", "https://www.theeventhelper.com/", target: :_blank %>
+    <%= link_to "The Event Helper", "https://www.theeventhelper.com/", class: ("disabled" unless @perks_available).to_s, target: :_blank %>
     is partnering with HCB to create a simplified way for your team to
     purchase event insurance. Just apply with your event details to receive a quote from the HCB team.
     All costs are directly from The Event Helper, we don't charge a fee on top.
@@ -73,25 +71,40 @@
   </section>
 </div>
 
+<% if @event.hackathon? || @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
+  <div class="card pb0 mb3 <%= "muted" unless @perks_available %>" id="hackathons-page">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-hackathons-page">
+      <%= image_tag "https://assets.hackclub.com/flag-standalone.svg", height: 90, class: "p-4" %>
+      <%= link_to @perks_available ? "Apply" : "Ineligible",
+        "https://dash.hackathons.hackclub.com/hackathons/submissions/new",
+        class: "btn mr1 #{'disabled' unless @perks_available}",
+        target: :_blank %>
+    </div>
+    <p>
+      Are you running a high school student-led hackathon? If you would like to get <%= @event.name %> listed on <%= link_to "hackathons.hackclub.com", "https://hackathons.hackclub.com/" %>, apply here!
+    </p>
+  </div>
+<% end %>
+
 <div class="card mb3" id="1password">
   <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
     <%= image_tag "1password.svg", width: 210, class: "p2" %>
     <%= link_to "Apply",
       @perks_available ? fillout_form("7jzG7ADmuLus", { "Project_Name" => @event.name, "Bank_URL" => event_url(@event), "Your_Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1",
+      class: "btn mr1 #{"disabled" unless @perks_available}",
       target: :_blank %>
   </div>
 
   <% if @event.hackathon? %>
     <p class="mb0">
-      <%= link_to "1Password", "https://1password.com" %> is offering hackathons running on HCB
+      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %> is offering hackathons running on HCB
       a year-long 1Password plan for up to 5 people. This can handed out as a prize, however, it
       can only be claimed once per hackathon.
     </p>
   <% else %>
     <h3 class="mb0 mt0">Do you make open source software?</h3>
     <p class="mb0">
-      <%= link_to "1Password", "https://1password.com" %> is offering a lifetime 1Password Teams
+      <%= link_to "1Password", "https://1password.com", class: ("disabled" unless @perks_available) %> is offering a lifetime 1Password Teams
       license (up to 10 seats) to any open source project running on HCB.
     </p>
     <h3 class="mb0 mt2">Does your nonprofit do something else?</h3>
@@ -165,7 +178,7 @@
       </span>
     <%= link_to "Request",
       @perks_available ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => @event.name }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{'disabled' unless @perks_available}",
+      class: "btn mr1 #{"disabled" unless @perks_available}",
       target: :_blank %>
   </div>
 
@@ -182,66 +195,36 @@
   </section>
 </div>
 
-<div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="pvsa">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-pvsa">
-    <%= image_tag "https://cloud-q7i8htyv7-hack-club-bot.vercel.app/0pvsa-logo-2x.png", width: 60 %>
-    <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
-      @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
-      class: "btn mr1 #{'disabled' unless @perks_available && @event.country_US?}",
-      target: :_blank %>
-  </div>
-
-  <p>
-    Since you run on HCB, you can issue <a href="https://presidentialserviceawards.gov" target="_blank">Presidential Volunteer Service Awards</a> to volunteers (including to yourself and team members).
-    While applying you'll be asked to provide evidence for the submitted volunteer hours (instructions and examples are provided on the application form).
-  </p>
-
-  <p>
-    While HCB is registered with PVSA as a certifying organization and will submit rewards on your behalf, the costs charged by PVSA for certificates and medals will come from your own budget.
-    Certificates and medals are shipped to one address and you'll distribute them from there.
-  </p>
-
-  <h3 class="mb0 mt0">PVSA Cost Summary</h3>
-  <p class="italic muted mt0 mb0">All costs are from PVSA directly—we don't charge you a fee on top.</p>
-  <table class="mb2">
-    <tr>
-      <td>Certificate only</td>
-      <td>$6.25</td>
-    </tr>
-    <tr>
-      <td>Certificate + Pin</td>
-      <td>$10.00</td>
-    </tr>
-    <tr>
-      <td>Certificate + Coin</td>
-      <td>$11.75</td>
-    </tr>
-    <tr>
-      <td>Certificate + Medallion</td>
-      <td>$12.25</td>
-    </tr>
-    <tr>
-      <td>Shipping (per order)</td>
-      <td>Varies (up to $23.00)</td>
-    </tr>
-  </table>
-
-  <section class="card__banner card__darker secondary border-top">
-  <p class="my0">
-    Only 🇺🇸 US citizens and LPRs who currently reside within the US are eligible to receive the award. You can see all the <a href="https://presidentialserviceawards.gov/eligibility#volunteers" target="_blank">volunteer eligibility details</a> if you have any questions.
-  </p>
-  </section>
-</div>
-
 <details class="w-100 left-align">
   <summary><h3 class="inline-block pb0 border-none">Expired promotions</h3></summary>
+  <% if @event.robotics_team? %>
+    <div class="card pb0 mb3 promo-onboard" id="bin">
+      <div class="card__banner card__banner--top flex justify-between items-center">
+        <h3 class="h1 p2 my0 flex items-start smoke justify-center">
+          <img src="https://cloud-iuly89sfb-hack-club-bot.vercel.app/0surfin_orpheus.png" height="36px" class="mr2">
+          OnBoard Grant for PCB Fabrication
+        </h3>
+        <%= link_to "Expired",
+          root_path,
+          class: "btn mr1 disabled",
+          target: :_blank %>
+      </div>
+      <p>
+        Use the OnBoard grant to master PCB design with free  resources, community support, and manufacturing grants.
+      </p>
+      <p>
+        Get up to $100 to cover the  costs of creating your custom circuit boards. Enhance your off-season R&D with hands-on experience and collaborate with fellow high schoolers in the Hack Club Slack community.
+      </p>
+    </div>
+  <% end %>
+
   <div class="card mb3" id="wallets">
     <div class="card__banner card__banner--top flex justify-between items-center promo-wallets">
       <h3 class="h1 p2 my0 color-black">Wallets</h3>
       <%= link_to @wallets_available ? "Request" : "Expired",
                   @perks_available && @wallets_available ? "https://hack.af/hcb-wallets?prefill_Organization%20Name=#{@event.name}&prefill_Recipient%20Name=#{current_user.name}&prefill_Login%20Email=#{current_user.email}" : root_path,
-                  class: "btn mr1 #{'disabled' unless @perks_available && @wallets_available}",
-                  target: :_blank, disabled: !(@perks_available && @wallets_available) %>
+                  class: "btn mr1 #{"disabled" unless @perks_available && @wallets_available}",
+                  target: :_blank %>
     </div>
 
     <p class="mb0">
@@ -272,9 +255,8 @@
       <%= image_tag "stickermule.svg", width: 240 %>
       <%= link_to "Expired",
                   @perks_available ? "https://hack.af/stickermule?prefill_Event%20Name=#{@event.name}&prefill_First%20Name=#{current_user.first_name}&prefill_Email=#{current_user.email}" : root_path,
-                  class: "btn mr1 #{'disabled' unless @perks_available}",
-                  target: :_blank,
-                  disabled: true %>
+                  class: "btn mr1 disabled",
+                  target: :_blank %>
     </div>
 
     <p class="muted">
@@ -339,8 +321,7 @@
       <%= image_tag "github.png", width: 170 %>
       <%= link_to "Expired",
         @perks_available ? "https://hack.af/grant?prefill_Event%20Name=#{@event.name}" : root_path,
-        class: "btn mr1 #{'disabled' unless @perks_available}",
-        disabled: true %>
+        class: "btn mr1 disabled" %>
     </div>
 
     <p class="muted">
@@ -385,4 +366,54 @@
     </p>
   </div>
 
+  <div class="card pb0 mb3 <%= "muted" unless @event.country_US? && @perks_available %>" id="pvsa">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-pvsa">
+      <%= image_tag "https://cloud-q7i8htyv7-hack-club-bot.vercel.app/0pvsa-logo-2x.png", width: 60 %>
+      <%= link_to @perks_available ? (@event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
+        @perks_available ? fillout_form("dyHShKvTL1us", { "Event Name" => @event.name, "Bank URL" => event_url(@event), "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
+        class: "btn mr1 disabled",
+        target: :_blank %>
+    </div>
+
+    <p>
+      Since you run on HCB, you can issue <a href="https://presidentialserviceawards.gov" target="_blank">Presidential Volunteer Service Awards</a> to volunteers (including to yourself and team members).
+      While applying you'll be asked to provide evidence for the submitted volunteer hours (instructions and examples are provided on the application form).
+    </p>
+
+    <p>
+      While HCB is registered with PVSA as a certifying organization and will submit rewards on your behalf, the costs charged by PVSA for certificates and medals will come from your own budget.
+      Certificates and medals are shipped to one address and you'll distribute them from there.
+    </p>
+
+    <h3 class="mb0 mt0">PVSA Cost Summary</h3>
+    <p class="italic muted mt0 mb0">All costs are from PVSA directly—we don't charge you a fee on top.</p>
+    <table class="mb2">
+      <tr>
+        <td>Certificate only</td>
+        <td>$6.25</td>
+      </tr>
+      <tr>
+        <td>Certificate + Pin</td>
+        <td>$10.00</td>
+      </tr>
+      <tr>
+        <td>Certificate + Coin</td>
+        <td>$11.75</td>
+      </tr>
+      <tr>
+        <td>Certificate + Medallion</td>
+        <td>$12.25</td>
+      </tr>
+      <tr>
+        <td>Shipping (per order)</td>
+        <td>Varies (up to $23.00)</td>
+      </tr>
+    </table>
+
+    <section class="card__banner card__darker secondary border-top">
+    <p class="my0">
+      Only 🇺🇸 US citizens and LPRs who currently reside within the US are eligible to receive the award. You can see all the <a href="https://presidentialserviceawards.gov/eligibility#volunteers" target="_blank">volunteer eligibility details</a> if you have any questions.
+    </p>
+    </section>
+  </div>
 </details>

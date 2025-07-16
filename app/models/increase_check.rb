@@ -52,6 +52,7 @@ class IncreaseCheck < ApplicationRecord
 
   include AASM
   include Payoutable
+  include Freezable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -63,7 +64,6 @@ class IncreaseCheck < ApplicationRecord
   belongs_to :user, optional: true
 
   has_one :canonical_pending_transaction
-  has_one :grant, required: false
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
 
@@ -83,8 +83,8 @@ class IncreaseCheck < ApplicationRecord
     event :mark_approved do
       after do
         if self.send_email_notification
-          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: 30.days).perform_later(self)
-          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: (180 - 30).days).perform_later(self)
+          IncreaseCheck::RemindUndepositedRecipientJob.set(wait: 30.days).perform_later(self)
+          IncreaseCheck::RemindUndepositedRecipientJob.set(wait: (180 - 30).days).perform_later(self)
         end
 
         canonical_pending_transaction.update(fronted: true)
@@ -219,52 +219,36 @@ class IncreaseCheck < ApplicationRecord
   def send_check!
     return unless may_mark_approved?
 
-    if Flipper.enabled?(:column_check_transfers, event)
-      send_column!
-    else
-      send_increase!
-    end
+    send_column!
 
     mark_approved!
+  end
 
-    if grant.present?
-      grant.mark_fulfilled!
-    end
+  def reissue!
+    return unless column_id.present? && column_issued?
+
+    stopped_id = column_id
+
+    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}")
+
+    update!(
+      column_id: nil,
+      column_object: nil,
+      check_number: nil,
+      column_status: nil,
+      column_delivery_status: nil,
+    )
+
+    send_column!("reissue_#{stopped_id}")
   end
 
   private
 
-  def send_increase!
-    increase_check = Increase::CheckTransfers.create(
-      account_id: IncreaseService::AccountIds::FS_MAIN,
-      source_account_number_id: event.increase_account_number_id,
-      # Increase will print and mail the physical check for us
-      fulfillment_method: "physical_check",
-      physical_check: {
-        memo:,
-        note: "Check from #{event.name}",
-        recipient_name:,
-        mailing_address: {
-          line1: address_line1,
-          line2: address_line2.presence,
-          city: address_city,
-          state: address_state,
-          postal_code: address_zip,
-        }
-      },
-      unique_identifier: self.id.to_s,
-      amount:,
-    )
-
-    update!(increase_id: increase_check["id"], increase_status: increase_check["status"])
-  end
-
-  def send_column!
-    account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+  def send_column!(idempotency_key = self.id.to_s)
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
     column_check = ColumnService.post "/transfers/checks/issue",
-                                      idempotency_key: self.id.to_s,
+                                      idempotency_key:,
                                       account_number_id:,
                                       positive_pay_amount: amount,
                                       currency_code: "USD",

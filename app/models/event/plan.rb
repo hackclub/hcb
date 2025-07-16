@@ -36,6 +36,15 @@ class Event
         after do |new_type|
           event.reload
           event.create_plan!(type: new_type)
+          unless event.plan.writeable?
+            event.update(financially_frozen: true)
+            event.stripe_cards.active.each do |card|
+              card.freeze!
+            end
+          end
+          if event.plan.hidden?
+            event.update(hidden_at: Time.now)
+          end
         end
       end
     end
@@ -54,7 +63,7 @@ class Event
 
     def self.available_features
       # this must contain every HCB feature that we want enable / disable with plans.
-      %w[cards invoices donations account_number check_deposits transfers promotions google_workspace documentation reimbursements]
+      %w[cards invoices donations account_number check_deposits transfers promotions google_workspace documentation reimbursements card_grants unrestricted_disbursements front_disbursements]
     end
 
     self.available_features.each do |feature|

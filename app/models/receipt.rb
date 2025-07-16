@@ -59,6 +59,8 @@ class Receipt < ApplicationRecord
   # - @sampoder
   PREPROCESSED_SIZES = ["1024x1024"].freeze
 
+  CARD_LOCKING_START_DATE = Date.new(2025, 6, 13)
+
   has_one_attached :file do |attachable|
     PREPROCESSED_SIZES.each do |resize|
       attachable.variant(resize.to_sym, resize:, preprocessed: true)
@@ -80,11 +82,16 @@ class Receipt < ApplicationRecord
     # and to suggest pairings
     unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
       # certain interfaces run suggestions synchronously
-      # ReceiptJob::ExtractTextualContent.perform_later(self)
+      # Receipt::ExtractTextualContentJob.perform_later(self)
       # see https://github.com/hackclub/hcb/issues/7123
-      ReceiptJob::SuggestPairings.perform_later(self)
+      Receipt::SuggestPairingsJob.perform_later(self)
     end
   end
+
+  after_commit do
+    User::UpdateCardLockingJob.perform_later(user:)
+  end
+
   validate :has_owner
 
   enum :upload_method, {

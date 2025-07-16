@@ -29,10 +29,40 @@ class ApplicationController < ActionController::Base
     cookies.permanent[:first_visit] = 1
   end
 
+  # This cookie is used for Safari PWA prompts
+  before_action do
+    @hide_three_teens_banner = cookies[:hide_three_teens_banner] == "1"
+  end
+
+  before_action do
+    # Disallow indexing
+    response.set_header("X-Robots-Tag", "noindex")
+  end
+
+  before_action do
+    # Disallow all external redirects
+    # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
+    params[:return_to] = url_from(params[:return_to])
+  end
+
+  # Enable Rack::MiniProfiler for admins
+  before_action do
+    if current_user&.admin?
+      Rack::MiniProfiler.authorize_request
+    end
+  end
+
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  rescue_from Rack::Timeout::RequestTimeoutException do
+    respond_to do |format|
+      format.html { render "errors/timeout" }
+      format.all { render text: "This request timed out, sorry." }
+    end
+  end
 
   def hide_footer
     @hide_footer = true
@@ -46,7 +76,7 @@ class ApplicationController < ActionController::Base
   rescue_from ArgumentError do |exception|
     if request.format.html? && exception.message == "invalid base64"
       request.reset_session # reset your old existing session.
-      redirect_to auth_users_path # your login page.
+      redirect_to auth_users_path(require_reload: true) # your login page.
     else
       raise(exception)
     end
@@ -64,7 +94,7 @@ class ApplicationController < ActionController::Base
   end
 
   def find_current_auditor
-    current_user if admin_signed_in?
+    current_user if auditor_signed_in?
   end
 
   private
@@ -79,9 +109,9 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
-      redirect_to auth_users_path(return_to: request.url)
+      redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end
   end
 

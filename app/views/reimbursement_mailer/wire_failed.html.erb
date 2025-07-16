@@ -1,0 +1,5 @@
+We're writing to let you know your payout for "<%= link_to @report.name, @report %>" was rejected and failed to send. Here's the explanation given by the receiving bank / country:
+
+<pre><%= @reason %></pre>
+
+Please update your payout details <%= link_to "here", settings_payouts_url %>; afterwards, we'll reattempt the transfer.

@@ -23,6 +23,10 @@ module Api
         @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: @event.id).run
         PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions: @pending_transactions, event: @event).run!
 
+        type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
+        @settled_transactions = type_results[:settled_transactions]
+        @pending_transactions = type_results[:pending_transactions]
+
         @total_count = @pending_transactions.count + @settled_transactions.count
         @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
       end
