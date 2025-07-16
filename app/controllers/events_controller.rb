@@ -1014,7 +1014,8 @@ class EventsController < ApplicationController
         :keyword_lock,
         :invite_message,
         :expiration_preference,
-        :reimbursement_conversions_enabled
+        :reimbursement_conversions_enabled,
+        :pre_authorization_required
       ],
       config_attributes: [
         :id,
