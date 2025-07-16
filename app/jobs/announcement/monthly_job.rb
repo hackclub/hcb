@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Announcement
-  class DonationSummaryJob < ApplicationJob
+  class MonthlyJob < ApplicationJob
     queue_as :default
     def perform_later
       Announcement.monthly.where("announcements.created_at >= ?", Date.today.prev_month.beginning_of_month).each do |announcement|
