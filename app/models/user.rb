@@ -95,6 +95,9 @@ class User < ApplicationRecord
 
   has_many :events, through: :organizer_positions
 
+  has_many :event_follows, class_name: "Event::Follow"
+  has_many :followed_events, through: :event_follows, source: :event
+
   has_many :managed_events, inverse_of: :point_of_contact
 
   has_many :g_suite_accounts, inverse_of: :fulfilled_by
