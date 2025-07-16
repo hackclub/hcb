@@ -75,6 +75,8 @@ RSpec.describe InvoiceService::Create, type: :model do
     expect do
       service.run
     end.to change(Invoice, :count).by(1)
+
+    expect(Invoice.last.finalized_at).to be_present
   end
 
   it "creates a stripe invoice item" do
