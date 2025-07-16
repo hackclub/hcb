@@ -49,7 +49,7 @@ class Donation
         author: current_user
       ).create
 
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: edit_announcement_path(announcement), link_text: "Create an announcement to let your followers know!" } }
+      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: edit_announcement_path(announcement), link_text: "Create an announcement!" } }
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
     end

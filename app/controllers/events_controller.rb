@@ -343,7 +343,7 @@ class EventsController < ApplicationController
           flash[:success] = {
             text: "Organization successfully updated.",
             link: edit_announcement_path(announcement),
-            link_text: "Create an announcement to let your followers know!"
+            link_text: "Create an announcement for your new mission!"
           }
         else
           flash[:success] = "Organization successfully updated."

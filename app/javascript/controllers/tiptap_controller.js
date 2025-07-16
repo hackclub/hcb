@@ -193,7 +193,7 @@ export default class extends Controller {
         }),
         Underline,
         Placeholder.configure({
-          placeholder: 'Write a message to your followers...',
+          placeholder: 'Write a message...',
         }),
         Link,
         Image.configure({
