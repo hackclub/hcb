@@ -5,4 +5,8 @@ Rails.application.configure do
   # aren't running many betas at the time of writing. If Flipper is used
   # extensively in the future, this can be changed
   config.flipper.preload = false
+
+  # Setting to `true` or `:raise` will raise error when a feature doesn't exist.
+  # Use `:warn` to log a warning instead.
+  config.flipper.strict = :warn
 end
