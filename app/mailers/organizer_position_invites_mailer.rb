@@ -11,7 +11,7 @@ class OrganizerPositionInvitesMailer < ApplicationMailer
     @emails = @invite.event.users.map(&:email_address_with_name)
     @emails << @invite.event.config.contact_email if @invite.event.config.contact_email.present?
 
-    @announcement = Announcement::Templates::MissionStatement.new(
+    @announcement = Announcement::Templates::NewTeamMember.new(
       invite: @invite,
       author: User.system_user
     ).create
