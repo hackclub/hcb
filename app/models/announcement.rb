@@ -35,6 +35,10 @@ class Announcement < ApplicationRecord
   acts_as_paranoid
 
   aasm timestamps: true do
+    # When we create a template and prompt it to users, it's in this
+    # `template_draft` so that it's "unlisted" on the index page.
+    state :template_draft
+
     state :draft, initial: true
     state :published
 
@@ -45,7 +49,13 @@ class Announcement < ApplicationRecord
         AnnouncementPublishedJob.perform_later(announcement: self)
       end
     end
+
+    event :mark_draft do
+      transitions from: :template_draft, to: :draft
+    end
   end
+
+  scope :saved, -> { where.not(aasm_state: :template_draft) }
 
   validates :content, presence: true
 

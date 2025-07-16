@@ -95,7 +95,7 @@ class User
              end
 
       if user.nil?
-        Rails.error.report("[HQ Subordinate Summary Job] User not found for key: #{key}")
+        Rails.error.unexpected "[HQ Subordinate Summary Job] User not found for key: #{key}"
       end
 
       user

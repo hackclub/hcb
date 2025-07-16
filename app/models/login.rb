@@ -11,13 +11,15 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  initial_login_id         :bigint
+#  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
 # Indexes
 #
-#  index_logins_on_user_id          (user_id)
-#  index_logins_on_user_session_id  (user_session_id)
+#  index_logins_on_referral_program_id  (referral_program_id)
+#  index_logins_on_user_id              (user_id)
+#  index_logins_on_user_session_id      (user_session_id)
 #
 # Foreign Keys
 #
@@ -29,6 +31,7 @@ class Login < ApplicationRecord
 
   belongs_to :user
   belongs_to :user_session, optional: true
+  belongs_to :referral_program, class_name: "Referral::Program", optional: true
 
   has_encrypted :browser_token
   before_validation :ensure_browser_token
@@ -44,14 +47,14 @@ class Login < ApplicationRecord
   validate do
     if user_session.present? && !complete?
       # how did we create session when it's not complete?!
-      Airbrake.notify("An incomplete login #{id} has a session #{user_session.id} present.")
+      Rails.error.unexpected "An incomplete login #{id} has a session #{user_session.id} present."
       errors.add(:base, "An incomplete login has a session present.")
     end
   end
 
   validate do
     if user_session.present? && user_session.user != user
-      Airbrake.notify("A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch.")
+      Rails.error.unexpected "A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch."
       errors.add(:base, "A login with a session present has a session.user / user mismatch.")
     end
   end

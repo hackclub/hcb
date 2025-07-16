@@ -18,10 +18,11 @@ module ProsemirrorService
     def text
       event = ProsemirrorService::Renderer.context.fetch(:event)
 
-      donations = event.donations.where(aasm_state: [:in_transit, :deposited], created_at: 1.month.ago..).order(:created_at)
+      start_date = @node.attrs.startDate.present? ? Date.parse(@node.attrs.startDate) : 1.month.ago
+      donations = event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..).order(:created_at)
       total = donations.sum(:amount)
 
-      AnnouncementsController.renderer.render partial: "announcements/nodes/donation_summary", locals: { donations:, total: }
+      AnnouncementsController.renderer.render partial: "announcements/nodes/donation_summary", locals: { donations:, total:, start_date: }
     end
 
   end
