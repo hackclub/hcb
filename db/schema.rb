@@ -201,6 +201,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.datetime "published_at"
     t.text "rendered_email_html"
     t.text "rendered_html"
+    t.string "aasm_state"
     t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
   end
