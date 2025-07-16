@@ -22,7 +22,7 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: "We're excited to introduce #{@invite.user.name}, who is joining our team on HCB as a #{@invite.role}!",
+                  text: "We're excited to introduce #{@invite.user.name}, who is joining our team!",
                 },
               ],
             },
