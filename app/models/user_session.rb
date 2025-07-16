@@ -82,7 +82,7 @@ class UserSession < ApplicationRecord
   end
 
   def clear_metadata!
-    update_columns(
+    update!(
       device_info: nil,
       latitude: nil,
       longitude: nil,
