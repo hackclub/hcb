@@ -134,7 +134,7 @@
               <%= link_to "Learn more", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=learnmore", class: "border-2 border-solid border-white px-4 py-2 rounded-xl !text-white no-underline hover:bg-[rgba(255,255,255,.1)] active:bg-[rgba(255,255,255,.2)] flex", target: "_blank" unless @referral_program&.login_body_text.present? %>
             </div>
             <div class="absolute bottom-0 left-0 m-0 p-5 w-full opacity-75 text-center">
-              <% unless @referral_program&.login_body_text.present? %>
+              <% unless @referral_program&.background_image_url.present? %>
                 <p class="text-xs mb-0 mt-1"><%= link_to "#{hackathon[:name]} • #{hackathon[:time]}", hackathon[:url] || "#", class: "!text-white no-underline", target: "_blank" %></p>
               <% end %>
             </div>
