@@ -11,6 +11,7 @@
 #  published_at        :datetime
 #  rendered_email_html :text
 #  rendered_html       :text
+#  template            :string
 #  title               :string           not null
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null

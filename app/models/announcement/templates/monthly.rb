@@ -2,14 +2,16 @@
 
 class Announcement
   module Templates
-    class NewTeamMember
-      def initialize(invite:, author:)
-        @invite = invite
+    class Monthly
+      include ApplicationHelper
+
+      def initialize(event:, author:)
+        @event = event
         @author = author
       end
 
       def title
-        "Introducing #{@invite.user.name}"
+        "Monthly announcement for #{Date.current.month}"
       end
 
       def json_content
@@ -22,7 +24,7 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: "We're excited to introduce #{@invite.user.name}, who is joining our team!",
+                  text: "Thank you for your support and generosity! With this funding, we'll be able to better work towards our mission.",
                 },
               ],
             },
@@ -31,16 +33,17 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: "They'll be working on...",
+                  text: "We'd like to thank all of the donors from the past month that contributed towards our organization:",
                 },
               ],
             },
+            { type: "donationSummary", attrs: { startDate: Time.now.last_month.beginning_of_month.. } },
             {
               type: "paragraph",
               content: [
                 { type: "text", text: "Best," },
                 { type: "hardBreak" },
-                { type: "text", text: "The #{@invite.event.name} team" },
+                { type: "text", text: "The #{@event.name} team" },
               ],
             },
           ],
@@ -48,7 +51,7 @@ class Announcement
       end
 
       def create
-        Announcement.create!(event: @invite.event, title:, content: json_content, aasm_state: :template_draft, author: @author, template: "NewTeamMember")
+        Announcement.create!(event: @event, title:, content: json_content, aasm_state: :template_draft, author: @author, template: "Monthly")
       end
 
     end
