@@ -12,7 +12,7 @@
 
 <% if editing %>
   <% if @announcement.published? %>
-    <p class="font-bold">This announcement has already been published, and any edits will not reflect in sent emails. Emails will not be resent.</p>
+    <p class="font-bold">This announcement has already been published and delivered to followers' emails. New edits will not reflect in the emails.</p>
   <% end %>
 
   <% if @announcement.template_draft? %>
