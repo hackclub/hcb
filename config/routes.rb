@@ -296,7 +296,6 @@ Rails.application.routes.draw do
     post "cancel"
     post "resend"
     member do
-      post "toggle_signee_status"
       post "change_position_role"
     end
   end
@@ -311,7 +310,6 @@ Rails.application.routes.draw do
     member do
       post "set_index"
       post "mark_visited"
-      post "toggle_signee_status"
       post "change_position_role"
     end
 
