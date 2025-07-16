@@ -1,3 +1,5 @@
+<%# locals: (event:, event_follow: nil) %>
+
 <% if !@event_follow.present? || !signed_in? %>
   <%= button_to event_follows_path(@event), method: :post, class: "btn bg-blue flex items-center" do %>
     <%= inline_icon "event-check" %>
