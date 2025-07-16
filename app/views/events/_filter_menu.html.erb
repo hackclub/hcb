@@ -72,7 +72,7 @@
           <% ["in", "out"].each do |direction| %>
             <div class="flex items-center">
               <%= link_to(upsert_query_params(direction:), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
-                <%= direction.humanize.gsub("In", "Incoming transactions").gsub("Out", "Outgoing transactions") %>
+                <%= direction.humanize.gsub("In", "Incoming").gsub("Out", "Outgoing") %>
               <% end %>
             </div>
           <% end %>
