@@ -62,12 +62,35 @@ class Announcement < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :event
 
+  before_save :autofollow_organizers
   before_save do
     if content_changed?
       self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
 
       if draft?
         self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+      end
+    end
+  end
+
+  private
+
+  def autofollow_organizers
+    # is this the first announcement to be published?
+    if published? && event.announcements.published.none?
+      event.users.find_each do |user|
+        unless event.followers.where({ id: user.id }).any?
+          attrs = {
+            user_id: user.id,
+            event:
+          }
+          follow = Event::Follow.new(attrs)
+          begin
+            follow.save!
+          rescue ActiveRecord::RecordNotUnique
+            # Do nothing. The user already follows this event.
+          end
+        end
       end
     end
   end
