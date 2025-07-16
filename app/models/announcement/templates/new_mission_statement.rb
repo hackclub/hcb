@@ -24,7 +24,7 @@ class Announcement
                 },
               ],
             },
-            { type: "missionStatement" },
+            { type: "blockquote", content: [{ type: "text", text: @event.description }] },
             {
               type: "paragraph",
               content: [

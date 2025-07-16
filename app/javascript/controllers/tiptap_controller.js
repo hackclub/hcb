@@ -156,38 +156,6 @@ const DonationSummaryNode = Node.create({
   },
 })
 
-const MissionStatementNode = Node.create({
-  name: 'missionStatement',
-  group: 'block',
-  priority: 2000,
-  renderHTML({ HTMLAttributes }) {
-    return [
-      'blockquote',
-      mergeAttributes(HTMLAttributes, {
-        class: 'missionStatement py-2 my-2 italic',
-      }),
-      "Your organization's mission statement will appear here",
-    ]
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'blockquote',
-        getAttrs: node => node.classList.contains('missionStatement') && null,
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      addMissionStatement:
-        () =>
-        ({ commands }) => {
-          return commands.insertContent({ type: this.name })
-        },
-    }
-  },
-})
-
 const DonationTierNode = Node.create({
   name: 'donationTier',
   group: 'block',
@@ -281,7 +249,6 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
-        MissionStatementNode,
         DonationTierNode,
       ],
       editorProps: {
@@ -403,9 +370,5 @@ export default class extends Controller {
 
   donationSummary() {
     this.editor.chain().focus().addDonationSummary().run()
-  }
-
-  missionStatement() {
-    this.editor.chain().focus().addMissionStatement().run()
   }
 }

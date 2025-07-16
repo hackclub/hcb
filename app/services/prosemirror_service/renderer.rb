@@ -38,7 +38,6 @@ module ProsemirrorService
         renderer.add_node ProsemirrorService::DonationGoalNode
         renderer.add_node ProsemirrorService::HcbCodeNode
         renderer.add_node ProsemirrorService::DonationSummaryNode
-        renderer.add_node ProsemirrorService::MissionStatementNode
         renderer.add_node ProsemirrorService::DonationTierNode
 
         renderer
