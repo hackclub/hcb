@@ -5,13 +5,25 @@
   <% if event.card_grant_setting.present? %>
     <h3 class="mb1" id="transparency_mode_heading">Grant settings</h3>
 
-    <div class="card">
+    <div class="card" data-controller="accordion">
       <%= form.fields_for :card_grant_setting, event.card_grant_setting do |card_grant_setting_fields| %>
         <%= card_grant_setting_fields.hidden_field :id, value: event.card_grant_setting.id %>
 
-        <div class="field field--checkbox">
-          <%= card_grant_setting_fields.check_box :reimbursement_conversions_enabled, disabled:, switch: true %>
-          <%= card_grant_setting_fields.label :reimbursement_conversions_enabled, "Enable converting card grants to reimbursement reports" %>
+        <div class="field field--checkbox mt1 flex flex-row items-center justify-between">
+          <div>
+            <span style="font-weight: 700">Enable conversion to reimbursement reports</span>
+            <p class="h5 muted m-0">
+              Allow recipients to convert their card grants into reimbursement reports with a set limit
+            </p>
+          </div>
+          <div class="field--checkbox--switch" style="flex-shrink:0">
+            <%= card_grant_setting_fields.label :reimbursement_conversions_enabled do %>
+              <%= card_grant_setting_fields.check_box :reimbursement_conversions_enabled,
+                data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+                switch: true %>
+              <span class="slider"></span>
+            <% end %>
+          </div>
         </div>
 
         <div class="field">
