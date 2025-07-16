@@ -105,7 +105,25 @@ const DonationSummaryNode = Node.create({
   name: 'donationSummary',
   group: 'block',
   priority: 2000,
+  addAttributes() {
+    return {
+      startDate: {},
+    }
+  },
   renderHTML({ HTMLAttributes }) {
+    let start
+    if (HTMLAttributes.startDate) {
+      start = new Date(HTMLAttributes.startDate)
+    } else {
+      const date = new Date()
+      const currentMonth = date.getMonth()
+      date.setMonth(currentMonth - 1)
+      if (date.getMonth() == currentMonth) date.setDate(0)
+      date.setHours(0, 0, 0, 0)
+
+      start = date
+    }
+
     return [
       'div',
       mergeAttributes(HTMLAttributes, {
@@ -115,7 +133,7 @@ const DonationSummaryNode = Node.create({
       [
         'p',
         { class: 'italic text-center' },
-        'A donation summary for the last month will appear here.',
+        `A donation summary starting on ${start.toDateString()} will appear here.`,
       ],
     ]
   },
@@ -140,7 +158,9 @@ const DonationSummaryNode = Node.create({
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
-  static values = { content: String, event: String }
+  static values = {
+    content: String,
+  }
 
   editor = null
 
@@ -148,6 +168,20 @@ export default class extends Controller {
     const debouncedSubmit = debounce(this.submit.bind(this), 1000, {
       leading: true,
     })
+
+    let content
+    if (this.hasContentValue) {
+      content = JSON.parse(this.contentValue)
+    } else {
+      content = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+          },
+        ],
+      }
+    }
 
     this.editor = new Editor({
       element: this.editorTarget,
@@ -159,7 +193,7 @@ export default class extends Controller {
         }),
         Underline,
         Placeholder.configure({
-          placeholder: 'Write a message to your followers...',
+          placeholder: 'Write a message...',
         }),
         Link,
         Image.configure({
@@ -176,16 +210,7 @@ export default class extends Controller {
           class: 'outline-none',
         },
       },
-      content: this.hasContentValue
-        ? JSON.parse(this.contentValue)
-        : {
-            type: 'doc',
-            content: [
-              {
-                type: 'paragraph',
-              },
-            ],
-          },
+      content,
       onUpdate: () => {
         if (this.hasContentValue) {
           debouncedSubmit(true)

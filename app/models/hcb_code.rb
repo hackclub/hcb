@@ -136,6 +136,7 @@ class HcbCode < ApplicationRecord
   end
 
   def amount_cents_by_event(event)
+    return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
     return invoice.item_amount if invoice?
 

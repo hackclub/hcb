@@ -332,7 +332,23 @@ class EventsController < ApplicationController
         if plan_param && plan_param != @event.plan&.type
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
-        flash[:success] = "Organization successfully updated."
+
+
+        if @event.description_previously_changed?
+          announcement = Announcement::Templates::NewMissionStatement.new(
+            event: @event,
+            author: current_user
+          ).create
+
+          flash[:success] = {
+            text: "Organization successfully updated.",
+            link: edit_announcement_path(announcement),
+            link_text: "Create an announcement for your new mission!"
+          }
+        else
+          flash[:success] = "Organization successfully updated."
+        end
+
         redirect_back fallback_location: edit_event_path(@event.slug)
       else
         render :edit, status: :unprocessable_entity
@@ -369,7 +385,7 @@ class EventsController < ApplicationController
     @announcement.event = @event
 
     if organizer_signed_in?
-      @all_announcements = Announcement.where(event: @event).order(published_at: :desc, created_at: :desc)
+      @all_announcements = Announcement.saved.where(event: @event).order(published_at: :desc, created_at: :desc)
     else
       @all_announcements = Announcement.published.where(event: @event).order(published_at: :desc, created_at: :desc)
     end
