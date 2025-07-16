@@ -216,3 +216,7 @@ weekly_ysws_event_summary_job:
 monthly_follower_summary_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "MonthlyFollowerSummaryJob"
+
+announcement_monthly_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "Announcement::MonthlyJob"

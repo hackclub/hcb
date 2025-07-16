@@ -57,6 +57,7 @@ class Announcement < ApplicationRecord
   end
 
   scope :saved, -> { where.not(aasm_state: :template_draft) }
+  scope :monthly, -> { where(template: "Monthly") }
 
   validates :content, presence: true
 
