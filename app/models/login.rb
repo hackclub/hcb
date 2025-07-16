@@ -11,13 +11,15 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  initial_login_id         :bigint
+#  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
 # Indexes
 #
-#  index_logins_on_user_id          (user_id)
-#  index_logins_on_user_session_id  (user_session_id)
+#  index_logins_on_referral_program_id  (referral_program_id)
+#  index_logins_on_user_id              (user_id)
+#  index_logins_on_user_session_id      (user_session_id)
 #
 # Foreign Keys
 #
@@ -29,6 +31,7 @@ class Login < ApplicationRecord
 
   belongs_to :user
   belongs_to :user_session, optional: true
+  belongs_to :referral_program, class_name: "Referral::Program", optional: true
 
   has_encrypted :browser_token
   before_validation :ensure_browser_token

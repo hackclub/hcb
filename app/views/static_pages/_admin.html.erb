@@ -49,7 +49,7 @@
       <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable %>
       <%= card_to "Feedback", link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable %>
       <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
-      <%= card_to "Identity verifications", link_to("https://identity.hackclub.com/backend/verifications/pending", target: "_blank", data: { turbo: false }), async_badge: :pending_identity_vault_verifications %>
+      <%= card_to "Identity verifications", "https://identity.hackclub.com/backend/verifications/pending", async_badge: :pending_identity_vault_verifications %>
     </ul>
     <h2>Info</h2>
     <ul class="grid left-align w-100 mt0" id="info-grid">
@@ -77,7 +77,7 @@
       <%= card_to "Bank fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
       <%= card_to "Ledger audits", admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count %>
       <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization balances" } %>
-      <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "BI tool" } %>
+      <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "Blazer" } %>
       <%= card_to "Column statements", admin_column_statements_path %>
     </ul>
     <h2>Other</h2>

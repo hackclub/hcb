@@ -4,15 +4,18 @@
 #
 # Table name: announcements
 #
-#  id           :bigint           not null, primary key
-#  content      :text             not null
-#  deleted_at   :datetime
-#  published_at :datetime
-#  title        :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  author_id    :bigint           not null
-#  event_id     :bigint           not null
+#  id                  :bigint           not null, primary key
+#  aasm_state          :string
+#  content             :jsonb            not null
+#  deleted_at          :datetime
+#  published_at        :datetime
+#  rendered_email_html :text
+#  rendered_html       :text
+#  title               :string           not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  author_id           :bigint           not null
+#  event_id            :bigint           not null
 #
 # Indexes
 #
@@ -26,36 +29,37 @@
 #
 class Announcement < ApplicationRecord
   include Hashid::Rails
+  include AASM
+
   has_paper_trail
   acts_as_paranoid
+
+  aasm timestamps: true do
+    state :draft, initial: true
+    state :published
+
+    event :mark_published do
+      transitions from: :draft, to: :published
+
+      after do
+        AnnouncementPublishedJob.perform_later(announcement: self)
+      end
+    end
+  end
 
   validates :content, presence: true
 
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  scope :published, -> { where.not(published_at: nil) }
+  before_save do
+    if content_changed?
+      self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
 
-  def publish!
-    update!(published_at: Time.now)
-
-    AnnouncementPublishedJob.perform_later(announcement: self)
-  end
-
-  def render_html
-    renderer = ProsemirrorToHtml::Renderer.new
-
-    # rubocop:disable Rails/OutputSafety
-    renderer.render(JSON.parse(self.content)).html_safe
-    # rubocop:enable Rails/OutputSafety
-  end
-
-  def draft?
-    published_at.nil?
-  end
-
-  def published?
-    !draft?
+      if draft?
+        self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+      end
+    end
   end
 
 end
