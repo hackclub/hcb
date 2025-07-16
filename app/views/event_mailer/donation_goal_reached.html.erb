@@ -2,7 +2,7 @@
 
 <p>
   Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been reached after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now %>!
-  If you wish, <%= link_to "create an announcement", edit_announcement_path(@announcement) %> to celebrate having reached your goal.
+  If you wish, <%= link_to "create an announcement", edit_announcement_url(@announcement) %> to celebrate having reached your goal.
 </p>
 
 <p>Here are all the donations that helped to contribute to this goal:</p>
