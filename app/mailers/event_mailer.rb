@@ -33,6 +33,11 @@ class EventMailer < ApplicationMailer
     @goal = @event.donation_goal
     @donations = @event.donations.succeeded.where(created_at: @goal.tracking_since..)
 
+    @announcement = Announcement::Templates::DonationGoalReached.new(
+      event: @event,
+      author: User.system_user
+    ).create
+
     mail to: @emails, subject: "#{@event.name} has reached its donation goal!"
   end
 

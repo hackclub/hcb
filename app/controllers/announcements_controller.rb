@@ -52,7 +52,7 @@ class AnnouncementsController < ApplicationController
 
     json_content = params[:announcement][:json_content]
 
-    @announcement.update!(announcement_params.merge(content: json_content))
+    @announcement.update!(announcement_params.merge(content: json_content, author: current_user))
     @announcement.mark_draft! if @announcement.template_draft?
 
     if params[:announcement][:autosave] != "true"
