@@ -69,7 +69,13 @@
       </div>
       <div data-tabs-target="tab" id="amount">
         <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
-
+          <% ["in", "out"].each do |direction| %>
+            <div class="flex items-center mb-1">
+              <%= link_to(upsert_query_params(direction:), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
+                <%= direction.humanize.gsub("In", "Incoming tranctions").gsub("Out", "Outgoing tranctions") %>
+              <% end %>
+            </div>
+          <% end %>
           <p class="bold mb0 mt0">Transactions more than...</p>
           <div class="flex mb1">
             <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
