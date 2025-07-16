@@ -120,6 +120,9 @@ class StaticPagesController < ApplicationController
         "Suspend an account": :manager,
         "Reset an account's password": :manager,
       },
+      Documents: {
+        "View documents": :reader
+      }
       "Settings": {
         "View settings": :reader,
         "Edit settings": :manager,
