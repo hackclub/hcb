@@ -4,7 +4,7 @@ class Announcement
   class MonthlyJob < ApplicationJob
     queue_as :default
     def perform_later
-      Announcement.monthly.where("announcements.created_at >= ?", Date.today.prev_month.beginning_of_month).each do |announcement|
+      Announcement.monthly.where("announcements.created_at >= ?", Date.today.prev_month.beginning_of_month).find_each do |announcement|
         announcement.publish!
       end
 
