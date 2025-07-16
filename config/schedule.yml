@@ -220,3 +220,7 @@ monthly_follower_summary_job:
 announcement_monthly_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "Announcement::MonthlyJob"
+
+announcement_monthly_warning_job:
+  cron: "0 9 21 * *" # run 21st day of each month
+  class: "Announcement::MonthlyWarningJob"
