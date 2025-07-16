@@ -128,9 +128,19 @@ class MyController < ApplicationController
   end
 
   def reimbursements
-    @my_reports = current_user.reimbursement_reports
-    @my_reports = @my_reports.search(params[:q]) if params[:q].present?
-    @reports_to_review = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    created_reports = current_user.created_reimbursement_reports.where.not(id: current_user.assigned_reimbursement_reports.submitted.select(:id))
+    review_reports = Reimbursement::Report.submitted.where(event: Event.joins(:managers).where(users: { id: current_user.id }), reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    case params[:filter]
+    when "created"
+      @reports = created_reports
+    when "review"
+      @reports = review_reports
+    else
+      @reports = current_user.reimbursement_reports.or(created_reports).or(review_reports)
+    end
+
+    @reports = @reports.search(params[:q]) if params[:q].present?
+
     @payout_method = current_user.payout_method
   end
 
