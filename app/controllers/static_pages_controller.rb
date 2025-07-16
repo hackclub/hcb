@@ -122,7 +122,7 @@ class StaticPagesController < ApplicationController
       },
       Documents: {
         "View documents": :reader
-      }
+      },
       "Settings": {
         "View settings": :reader,
         "Edit settings": :manager,
