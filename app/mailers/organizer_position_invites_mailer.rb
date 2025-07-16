@@ -8,8 +8,7 @@ class OrganizerPositionInvitesMailer < ApplicationMailer
   end
 
   def accepted
-    @emails = @invite.event.users.map(&:email_address_with_name)
-    @emails << @invite.event.config.contact_email if @invite.event.config.contact_email.present?
+    @emails = (@invite.event.users.exclude(@invite.user).map(&:email_address_with_name) + @invite.event.config.contact_email).compact
 
     @announcement = Announcement::Templates::NewTeamMember.new(
       invite: @invite,
