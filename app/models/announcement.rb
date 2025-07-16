@@ -5,6 +5,7 @@
 # Table name: announcements
 #
 #  id                  :bigint           not null, primary key
+#  aasm_state          :string
 #  content             :jsonb            not null
 #  deleted_at          :datetime
 #  published_at        :datetime
@@ -28,15 +29,38 @@
 #
 class Announcement < ApplicationRecord
   include Hashid::Rails
+  include AASM
+
   has_paper_trail
   acts_as_paranoid
+
+  aasm timestamps: true do
+    # When we create a template and prompt it to users, it's in this
+    # `template_draft` so that it's "unlisted" on the index page.
+    state :template_draft
+
+    state :draft, initial: true
+    state :published
+
+    event :mark_published do
+      transitions from: :draft, to: :published
+
+      after do
+        AnnouncementPublishedJob.perform_later(announcement: self)
+      end
+    end
+
+    event :mark_draft do
+      transitions from: :template_draft, to: :draft
+    end
+  end
+
+  scope :saved, -> { where.not(aasm_state: :template_draft) }
 
   validates :content, presence: true
 
   belongs_to :author, class_name: "User"
   belongs_to :event
-
-  scope :published, -> { where.not(published_at: nil) }
 
   before_save do
     if content_changed?
@@ -46,20 +70,6 @@ class Announcement < ApplicationRecord
         self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
       end
     end
-  end
-
-  def publish!
-    update!(published_at: Time.now)
-
-    AnnouncementPublishedJob.perform_later(announcement: self)
-  end
-
-  def draft?
-    published_at.nil?
-  end
-
-  def published?
-    !draft?
   end
 
 end
