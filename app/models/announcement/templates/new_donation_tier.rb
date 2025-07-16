@@ -1,6 +1,8 @@
 class Announcement
   module Templates
     class NewDonationTier
+      include ApplicationHelper
+
       def initialize(donation_tier:, author:)
         @donation_tier = donation_tier
         @author = author
@@ -24,7 +26,16 @@ class Announcement
                 },
               ],
             },
-            { type: "donationTier", attrs: { id: extra } },
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", marks: [{ type: "bold" }], text: @donation_tier.name },
+                { type: "text", text: " for " },
+                { type: "text", marks: [{ type: "bold" }], text: render_money(@donation_tier.amount_cents) },
+                { type: "hardBreak" },
+                { type: "text", marks: [{ type: "italic" }], text: @donation_tier.description.presence || "Description" },
+              ],
+            },
             {
               type: "paragraph",
               content: [
@@ -41,7 +52,6 @@ class Announcement
                         href: "https://hcb.hackclub.com/donations/start/#{@donation_tier.event.slug}",
                         target: "_blank",
                         rel: "noopener noreferrer nofollow",
-                        class: null,
                       },
                     },
                   ],
@@ -57,8 +67,8 @@ class Announcement
                 { type: "hardBreak" },
                 { type: "text", text: "The #{@donation_tier.event.name} team" },
               ],
-            },
-          ],
+            }
+          ]
         }.to_json
       end
 

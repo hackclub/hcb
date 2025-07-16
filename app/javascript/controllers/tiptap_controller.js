@@ -111,14 +111,14 @@ const DonationSummaryNode = Node.create({
     }
   },
   renderHTML({ HTMLAttributes }) {
-    let start;
-    if (HTMLAttributes.startDate)  {
+    let start
+    if (HTMLAttributes.startDate) {
       start = new Date(HTMLAttributes.startDate)
     } else {
       const date = new Date()
       const currentMonth = date.getMonth()
       date.setMonth(currentMonth - 1)
-      if (date.getMonth() == currentMonth) date.setDate(0);
+      if (date.getMonth() == currentMonth) date.setDate(0)
       date.setHours(0, 0, 0, 0)
 
       start = date
@@ -151,51 +151,6 @@ const DonationSummaryNode = Node.create({
         () =>
         ({ commands }) => {
           return commands.insertContent({ type: this.name })
-        },
-    }
-  },
-})
-
-const DonationTierNode = Node.create({
-  name: 'donationTier',
-  group: 'block',
-  priority: 2000,
-  addAttributes() {
-    return {
-      id: {},
-    }
-  },
-  renderHTML({ HTMLAttributes }) {
-    return [
-      'div',
-      mergeAttributes(HTMLAttributes, {
-        class:
-          'donationTier relative card shadow-none border flex flex-col py-2 my-2',
-      }),
-      [
-        'p',
-        { class: 'italic text-center' },
-        `Your donation tier will appear here.`,
-      ],
-    ]
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'div',
-        getAttrs: node => node.classList.contains('donationTier') && null,
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      addDonationTier:
-        id =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: { id },
-          })
         },
     }
   },
@@ -249,7 +204,6 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
-        DonationTierNode,
       ],
       editorProps: {
         attributes: {
