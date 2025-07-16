@@ -84,9 +84,4 @@
       </p>
     <% end %>
   </section>
-  <% if card_grant.pending_invite? || @frame %>
-    <section>
-      <%= render partial: "card_grants/actions", locals: { card_grant: } %>
-    </section>
-  <% end %>
 </div>

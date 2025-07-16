@@ -49,7 +49,7 @@
 </section>
 
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code do %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <%= @donation.name(show_anonymous: organizer_signed_in?) %>
       <% if @donation.anonymous? %>

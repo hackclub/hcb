@@ -14,6 +14,7 @@ class EventsController < ApplicationController
   end
   skip_before_action :signed_in_user
   before_action :set_mock_data
+  before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
 
@@ -34,12 +35,12 @@ class EventsController < ApplicationController
 
         if auditor_signed_in?
           events.concat(
-            Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.select([:slug, :name]).map { |e|
+            Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.map { |e|
               {
                 slug: e.slug,
                 name: e.name,
                 logo: e.logo.attached? ? Rails.application.routes.url_helpers.url_for(e.logo) : "none",
-                demo_mode: false,
+                demo_mode: e.demo_mode,
                 member: false
               }
             }
@@ -327,11 +328,27 @@ class EventsController < ApplicationController
     fixed_event_params.delete(:plan)
 
     begin
-      if @event.update(current_user.admin? ? fixed_event_params : fixed_user_event_params)
+      if @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params)
         if plan_param && plan_param != @event.plan&.type
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
-        flash[:success] = "Organization successfully updated."
+
+
+        if @event.description_previously_changed?
+          announcement = Announcement::Templates::NewMissionStatement.new(
+            event: @event,
+            author: current_user
+          ).create
+
+          flash[:success] = {
+            text: "Organization successfully updated.",
+            link: edit_announcement_path(announcement),
+            link_text: "Create an announcement for your new mission!"
+          }
+        else
+          flash[:success] = "Organization successfully updated."
+        end
+
         redirect_back fallback_location: edit_event_path(@event.slug)
       else
         render :edit, status: :unprocessable_entity
@@ -359,6 +376,22 @@ class EventsController < ApplicationController
     @emburse_transactions = @event.emburse_transactions.order(transaction_time: :desc).where.not(transaction_time: nil).includes(:emburse_card)
 
     @sum = @event.emburse_balance
+  end
+
+  def announcement_overview
+    authorize @event
+
+    @announcement = Announcement.new
+    @announcement.event = @event
+
+    if organizer_signed_in?
+      @all_announcements = Announcement.saved.where(event: @event).order(published_at: :desc, created_at: :desc)
+    else
+      @all_announcements = Announcement.published.where(event: @event).order(published_at: :desc, created_at: :desc)
+    end
+    @announcements = @all_announcements.page(params[:page]).per(10)
+
+    raise ActionController::RoutingError.new("Not Found") if !@event.is_public && @all_announcements.empty? && !organizer_signed_in?
   end
 
   def card_overview
@@ -853,6 +886,7 @@ class EventsController < ApplicationController
     if @event.update(event_params.except(:files, :plan).merge({ demo_mode: false }))
       flash[:success] = "Organization successfully activated."
       redirect_to event_path(@event)
+      @event.set_airtable_status("Onboarded")
     else
       render :activation_flow, status: :unprocessable_entity
     end
@@ -1114,6 +1148,10 @@ class EventsController < ApplicationController
     if params[:show_mock_data].present?
       helpers.set_mock_data!(params[:show_mock_data] == "true")
     end
+  end
+
+  def set_event_follow
+    @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
   end
 
 end
