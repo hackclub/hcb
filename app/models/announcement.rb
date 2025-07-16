@@ -35,8 +35,11 @@ class Announcement < ApplicationRecord
   acts_as_paranoid
 
   aasm timestamps: true do
-    state :draft, initial: true
+    # When we create a template and prompt it to users, it's in this
+    # `template_draft` so that it's "unlisted" on the index page.
     state :template_draft
+
+    state :draft, initial: true
     state :published
 
     event :mark_published do
