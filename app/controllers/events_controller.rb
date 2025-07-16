@@ -1097,6 +1097,8 @@ class EventsController < ApplicationController
       tag_id: @tag&.id,
       minimum_amount: @minimum_amount,
       maximum_amount: @maximum_amount,
+      revenue: @direction == "in",
+      expenses: @direction == "out",
       user: @user,
       start_date: @start_date,
       end_date: @end_date,
