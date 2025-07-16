@@ -24,7 +24,7 @@ class AnnouncementsController < ApplicationController
     @announcement.save!
 
     unless params[:announcement][:draft] == "true"
-      @announcement.publish!
+      @announcement.mark_published!
     end
 
     flash[:success] = "Announcement successfully #{params[:announcement][:draft] == "true" ? "drafted" : "published"}!"
@@ -52,7 +52,10 @@ class AnnouncementsController < ApplicationController
 
     json_content = params[:announcement][:json_content]
 
-    @announcement.update!(announcement_params.merge(content: json_content))
+    @announcement.transaction do
+      @announcement.update!(announcement_params.merge(content: json_content, author: current_user))
+      @announcement.mark_draft! if @announcement.template_draft?
+    end
 
     if params[:announcement][:autosave] != "true"
       flash[:success] = "Updated announcement"
@@ -73,7 +76,7 @@ class AnnouncementsController < ApplicationController
   def publish
     authorize @announcement
 
-    @announcement.publish!
+    @announcement.mark_published!
 
     flash[:success] = "Published announcement"
 

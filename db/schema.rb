@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_14_200959) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -201,6 +201,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_14_200959) do
     t.datetime "published_at"
     t.text "rendered_email_html"
     t.text "rendered_html"
+    t.string "aasm_state"
     t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
   end
@@ -1029,7 +1030,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_14_200959) do
   create_table "flipper_gates", force: :cascade do |t|
     t.string "feature_key", null: false
     t.string "key", null: false
-    t.string "value"
+    t.text "value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["feature_key", "key", "value"], name: "index_flipper_gates_on_feature_key_and_key_and_value", unique: true
@@ -1353,6 +1354,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_14_200959) do
     t.datetime "updated_at", null: false
     t.text "browser_token_ciphertext"
     t.bigint "initial_login_id"
+    t.bigint "referral_program_id"
+    t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -1767,6 +1770,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_14_200959) do
     t.boolean "show_explore_hack_club", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "background_image_url"
+    t.string "login_header_text"
+    t.text "login_body_text"
+    t.string "login_text_color", default: "#ffffff"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
