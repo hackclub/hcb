@@ -689,8 +689,10 @@ Rails.application.routes.draw do
 
   resources :follows, only: [:destroy], controller: "event/follows"
 
-  resources :announcements, path: "/announcements", except: [:index, :new] do
-    post "publish"
+  resources :announcements, except: [:index, :new] do
+    member do
+      post "publish"
+    end
   end
 
   get "/events" => "events#index"
