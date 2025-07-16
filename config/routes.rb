@@ -236,6 +236,9 @@ Rails.application.routes.draw do
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
+      get "referral_programs", to: "admin#referral_programs"
+      post "referral_program_create", to: "admin#referral_program_create"
+      post "referral_link_create", to: "admin#referral_link_create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
     end
@@ -832,6 +835,7 @@ Rails.application.routes.draw do
 
   scope module: "referral" do
     resources :programs, only: [:show], path: "referrals"
+    resources :links, only: [:show], path: "referral_links", as: "referral_link"
     resources :programs, only: [:show], path: "from/*slug"
   end
 
