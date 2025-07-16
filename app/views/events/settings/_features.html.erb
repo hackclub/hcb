@@ -1,13 +1,4 @@
 <%= render partial: "features/preview", locals: {
-      id: "announcements-tier-one",
-      classes: ["feature-generic"],
-      feature_flag: :organization_announcements_tier_1_2025_07_07,
-      name: "Announcements",
-      description: "Post announcements and allow people to follow your organization!",
-      event: @event
-    } %>
-
-<%= render partial: "features/preview", locals: {
       id: "home-page-redesign",
       classes: ["feature-home-page-redesign"],
       feature_flag: :event_home_page_redesign_2024_09_21,
@@ -34,15 +25,6 @@
       event: @event
     } %>
 
-<%= render partial: "features/preview", locals: {
-      id: "donation-tiers",
-      classes: ["feature-generic"],
-      feature_flag: :donation_tiers_2025_06_24,
-      name: "Donation Tiers",
-      description: "Offer preset monthly donation options with custom names, prices, and perks.",
-      event: @event
-    } %>
-
 <% active_spending_control_count = @event.organizer_positions.map(&:active_spending_control).compact.count %>
 <%= render partial: "features/preview", locals: {
       id: "spending-controls",
@@ -59,6 +41,15 @@
 
 <details>
   <summary class="mb2">Past feature previews</summary>
+  <%= render partial: "features/preview", locals: {
+        id: "donation-tiers",
+        classes: ["feature-generic"],
+        feature_flag: :donation_tiers_2025_06_24,
+        name: "Donation Tiers",
+        fully_shipped: true,
+        description: "Offer preset monthly donation options with custom names, prices, and perks.",
+        event: @event
+      } %>
 
   <%= render partial: "features/preview", locals: {
         id: "transaction-tags",

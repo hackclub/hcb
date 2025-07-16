@@ -172,6 +172,11 @@ update_teenager_column_job:
   cron: "0 7 * * *" # run every 1 day
   class: "User::UpdateTeenagerColumnJob"
 
+clear_old_user_sessions:
+  cron: "0 3 * * *" # every day at 3:00 AM
+  class: "UserSession::ClearOldUserSessionsJob"
+  queue: low
+
 card_grant_expiration_job:
   cron: "0 7 * * *" # run every 1 day
   class: "CardGrant::ExpirationJob"
@@ -207,3 +212,7 @@ monthly_donation_summary_job:
 weekly_ysws_event_summary_job:
   cron: "0 13 * * 5" # run 9am est friday
   class: "WeeklyYswsEventSummaryJob"
+
+monthly_follower_summary_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "MonthlyFollowerSummaryJob"

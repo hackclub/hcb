@@ -236,6 +236,7 @@ class Event < ApplicationRecord
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
+  has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 

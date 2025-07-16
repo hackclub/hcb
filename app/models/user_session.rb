@@ -81,6 +81,14 @@ class UserSession < ApplicationRecord
     expiration_at <= Time.now
   end
 
+  def clear_metadata!
+    update!(
+      device_info: nil,
+      latitude: nil,
+      longitude: nil,
+    )
+  end
+
   private
 
   def user_is_unlocked
