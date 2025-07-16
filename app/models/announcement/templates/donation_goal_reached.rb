@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Announcement
   module Templates
     class DonationGoalReached
