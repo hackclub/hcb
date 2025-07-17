@@ -84,14 +84,15 @@ module StripeAuthorizationService
       end
 
       def merchant_allowed?
-        allowed_categories = card&.card_grant&.allowed_categories
-        allowed_merchants = card&.card_grant&.allowed_merchants
-        keyword_lock = card&.card_grant&.keyword_lock
-        disallowed_categories = card&.card_grant&.banned_categories
-        disallowed_merchants = card&.card_grant&.banned_merchants
+        disallowed_categories = card&.card_grant&.disallowed_categories
+        disallowed_merchants = card&.card_grant&.disallowed_merchants
 
         return false if disallowed_categories&.include?(auth[:merchant_data][:category])
         return false if disallowed_merchants&.include?(auth[:merchant_data][:network_id])
+
+        allowed_categories = card&.card_grant&.allowed_categories
+        allowed_merchants = card&.card_grant&.allowed_merchants
+        keyword_lock = card&.card_grant&.keyword_lock
 
         has_restrictions = allowed_categories.present? || allowed_merchants.present? || keyword_lock.present?
         return true unless has_restrictions
