@@ -89,4 +89,34 @@ class Login < ApplicationRecord
     self.browser_token ||= SecureRandom.base58(24)
   end
 
+  def email_available?
+    !authenticated_with_email
+  end
+
+  def sms_available?
+    !authenticated_with_sms && user.phone_number_verified
+  end
+
+  def webauthn_available?
+    !authenticated_with_webauthn && user.webauthn_credentials.any?
+  end
+
+  def totp_available?
+    !authenticated_with_totp && user.totp.present?
+  end
+
+  def backup_code_available?
+    !authenticated_with_backup_code && user.backup_codes_enabled?
+  end
+
+  def available_factors
+    factors = []
+    factors << :sms if sms_available?
+    factors << :email if email_available?
+    factors << :webauthn if webauthn_available?
+    factors << :totp if totp_available?
+    factors << :backup_code if backup_code_available?
+    factors
+  end
+
 end
