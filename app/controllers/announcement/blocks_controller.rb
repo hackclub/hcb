@@ -27,7 +27,7 @@ class Announcement
 
       block.refresh!
 
-      render json: { id: block.id, html: block.rendered_html }
+      render html: block.render
     end
 
     private

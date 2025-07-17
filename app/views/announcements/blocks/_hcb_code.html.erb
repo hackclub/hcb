@@ -1,8 +1,11 @@
-<%# locals: (hcb_code: nil, event: nil, is_email: false) %>
+<%# locals: (hcb_code: nil, event: nil, is_email: false, block: nil) %>
 
-<div class="hcbCode relative card shadow-none border flex flex-col py-2 my-2">
+<%= turbo_frame_tag "block_#{block.id}", class: "hcbCode relative card shadow-none border flex flex-col py-2 my-2" do %>
   <% if hcb_code.nil? %>
-  <p>This transaction cannot be displayed</p>
+    <p>This transaction cannot be displayed</p>
+    <% unless is_email %>
+      <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
+    <% end %>
   <% else %>
     <% if is_email %>
       <p>
@@ -21,6 +24,7 @@
         </i>
       </p>
     <% else %>
+      <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
       <p class="font-bold m0 flex items-center g2">
         <%= format_date hcb_code.date %>
         <% if hcb_code.canonical_transactions.none? %>
@@ -41,4 +45,4 @@
       </footer>
     <% end %>
   <% end %>
-</div>
+<% end %>

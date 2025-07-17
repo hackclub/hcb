@@ -10,7 +10,7 @@ class Announcement
       admin_or_manager?
     end
 
-    def refresh
+    def refresh?
       admin_or_manager?
     end
 

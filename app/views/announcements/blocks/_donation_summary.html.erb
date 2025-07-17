@@ -1,6 +1,7 @@
-<%# locals: (donations: nil, total: 0, start_date:) %>
+<%# locals: (donations: nil, total: 0, start_date:, block: nil) %>
 
-<div class="donationSummary relative card shadow-none border flex flex-col py-2 my-2">
+<%= turbo_frame_tag "block_#{block.id}", class: "donationSummary relative card shadow-none border flex flex-col py-2 my-2" do %>
+  <%= render partial: "announcements/blocks/block_actions", locals: { block: } %>
   <p><strong>Donation summary for <%= start_date.strftime("%B %e, %Y") %> - <%= Time.now.strftime("%B %e, %Y") %></strong></p>
   <ul>
     <% donations.each do |donation| %>
@@ -14,4 +15,5 @@
     <% end %>
   </ul>
   <p>In total, <strong><%= render_money total %></strong> was raised!</p>
-</div>
+<% end %>
+
