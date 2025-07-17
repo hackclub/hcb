@@ -12,7 +12,7 @@ module DisbursementService
         memo = disbursement.transaction_memo
 
         if disbursement.destination_event.increase_account_id != disbursement.source_event.increase_account_id
-          Rails.error.report("DAF transfers not implemented yet")
+          Rails.error.unexpected "DAF transfers not implemented yet"
           next
         else
           # events are on the same Increase account
