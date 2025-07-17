@@ -17,7 +17,8 @@
                             turbo_frame: "_top",
                             turbo_method: :DELETE,
                             turbo_confirm: "Are you sure you want to unfollow this organization?",
-                          } %>
+                          },
+                          disabled: !organizer_signed_in(as: :manager) %>
         </span>
       </li>
     <% end %>
