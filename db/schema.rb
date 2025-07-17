@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -12,9 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
-  create_schema "google_sheets"
-
+ActiveRecord::Schema[7.2].define(version: 2025_07_16_205422) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -188,6 +184,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.datetime "started_at", precision: nil
     t.index ["user_id"], name: "index_ahoy_visits_on_user_id"
     t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
+  end
+
+  create_table "announcement_blocks", force: :cascade do |t|
+    t.text "rendered_html", null: false
+    t.text "rendered_email_html", null: false
+    t.jsonb "parameters"
+    t.bigint "announcement_id", null: false
+    t.string "type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
   end
 
   create_table "announcements", force: :cascade do |t|
@@ -1545,6 +1552,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.string "program", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -1773,7 +1781,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.string "background_image_url"
     t.string "login_header_text"
     t.text "login_body_text"
-    t.string "login_text_color", default: "#ffffff"
+    t.string "login_text_color"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -2312,6 +2320,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
+  add_foreign_key "announcement_blocks", "announcements"
   add_foreign_key "announcements", "events"
   add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"
