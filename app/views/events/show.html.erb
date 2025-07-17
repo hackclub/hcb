@@ -53,11 +53,11 @@
 <div class="flex flex-col gap-[20px]">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden">
-      <%= link_to "#", class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+      <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
         <%= inline_icon "payment-transfer", size: 20 %>
         Transfer money
       <% end %>
-      <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
+      <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
         <%= inline_icon "attachment", size: 20 %>
         Get reimbursed
       <% end %>
@@ -69,7 +69,7 @@
         <%= inline_icon "bank-account", size: 20 %>
         Account numbers
       <% end %>
-      <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+      <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
         <%= inline_icon "briefcase", size: 20 %>
         Send an invoice
       <% end %>
