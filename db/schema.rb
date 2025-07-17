@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_16_200152) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_17_141528) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -891,6 +891,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_16_200152) do
     t.datetime "updated_at", null: false
     t.boolean "cover_donation_fees", default: false
     t.string "contact_email"
+    t.boolean "generate_monthly_announcement", default: false, null: false
     t.index ["event_id"], name: "index_event_configurations_on_event_id"
   end
 
