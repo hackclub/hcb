@@ -173,6 +173,7 @@ GEM
       multi_json (~> 1)
       statsd-ruby (~> 1.1)
     base64 (0.3.0)
+    bcrypt (3.1.20)
     benchmark (0.4.1)
     better_html (2.1.1)
       actionview (>= 6.0)
@@ -884,6 +885,7 @@ DEPENDENCIES
   awesome_print
   aws-sdk-s3
   barnes
+  bcrypt (~> 3.1.7)
   blazer
   blind_index
   bootsnap (>= 1.4.4)

@@ -309,6 +309,84 @@ describe LoginsController do
       end
     end
 
+    context "backup_code" do
+      it "rejects invalid backup codes" do
+        user = create(:user)
+        login = create(:login, user:)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "backup_code",
+            code: "AAAAAAAA"
+          }
+        )
+
+        expect(response).to redirect_to(backup_code_login_path(login))
+        expect(flash[:error]).to include("Invalid backup code")
+      end
+
+      it "signs the user in and redirects to home" do
+        freeze_time do
+          user = create(:user, phone_number: "+18556254225")
+          codes = user.generate_backup_codes!
+          user.backup_codes.previewed.map(&:mark_active!)
+          login = create(:login, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "backup_code",
+              backup_code: codes.first
+            }
+          )
+
+          expect(response).to redirect_to(root_path)
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_backup_code).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+
+          user.backup_codes.reload
+          expect(user.backup_codes.used.first.updated_at).to eq(Time.now)
+        end
+      end
+
+      it "signs the user in and redirects to security page if the user has no backup codes remaining" do
+        freeze_time do
+          user = create(:user, phone_number: "+18556254225")
+          code = SecureRandom.alphanumeric(10)
+          user.backup_codes.create!(code:)
+          user.backup_codes.previewed.map(&:mark_active!)
+          login = create(:login, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "backup_code",
+              backup_code: code
+            }
+          )
+
+          expect(response).to redirect_to(security_user_path(user))
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_backup_code).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+
+          user.backup_codes.reload
+          expect(user.backup_codes.used.first.updated_at).to eq(Time.now)
+        end
+      end
+    end
+
     context "2fa" do
       it "requests a second factor if 2fa is enabled" do
         user = create(:user, phone_number: "+18556254225", use_two_factor_authentication: true)

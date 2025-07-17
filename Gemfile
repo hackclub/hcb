@@ -228,4 +228,6 @@ gem "irb"
 
 gem "pstore"
 
+gem "bcrypt", "~> 3.1.7"
+
 gem "prosemirror_to_html"
