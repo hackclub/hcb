@@ -113,7 +113,6 @@ gem "diffy" # rendering diffs (comments)
 gem "webauthn", "~> 3.2"
 
 gem "ahoy_matey" # analytics
-gem "airbrake" # exception tracking
 gem "blazer" # business intelligence tool/dashboard
 
 gem "geo_pattern" # create procedurally generated patterns for Cards

@@ -47,14 +47,14 @@ class Login < ApplicationRecord
   validate do
     if user_session.present? && !complete?
       # how did we create session when it's not complete?!
-      Airbrake.notify("An incomplete login #{id} has a session #{user_session.id} present.")
+      Rails.error.unexpected "An incomplete login #{id} has a session #{user_session.id} present."
       errors.add(:base, "An incomplete login has a session present.")
     end
   end
 
   validate do
     if user_session.present? && user_session.user != user
-      Airbrake.notify("A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch.")
+      Rails.error.unexpected "A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch."
       errors.add(:base, "A login with a session present has a session.user / user mismatch.")
     end
   end
