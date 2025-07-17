@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class SudoModeHandler
-  # The default preference order for authentication factors (lower is better)
-  # 0 is deliberately left available so we can use it for the user's preference
+  # The default rank for authentication factors (lower is better)
+  # - 0 is deliberately left available so we can use it for the user's preference
+  # - `:backup_code` is explicitly omitted as we don't want to use that for
+  #   reauthentication
   FACTOR_PREFERENCES = {
     totp: 1,
     webauthn: 2,
@@ -124,7 +126,10 @@ class SudoModeHandler
       factor_preference = factor_preference.merge(user_preference.to_sym => 0)
     end
 
-    login.available_factors.sort_by { |factor| factor_preference.fetch(factor) }
+    # Filter available factors down to only those present in
+    # `FACTOR_PREFERENCES` and sort based on their associated ranks.
+    (login.available_factors & FACTOR_PREFERENCES.keys)
+      .sort_by { |factor| factor_preference.fetch(factor) }
   end
 
   # Extracts the request parameters as a flat list of key-value pairs (instead
