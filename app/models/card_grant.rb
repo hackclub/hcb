@@ -244,12 +244,8 @@ class CardGrant < ApplicationRecord
     (merchant_lock + (setting&.merchant_lock || [])).uniq
   end
 
-  def banned_merchants
-    (super + (setting&.banned_merchants || [])).uniq
-  end
-
-  def banned_categories
-    (super + (setting&.banned_categories || [])).uniq
+  def disallowed_merchants
+    (banned_merchants + (setting&.banned_merchants || [])).uniq
   end
 
   def allowed_merchant_names
@@ -258,6 +254,10 @@ class CardGrant < ApplicationRecord
 
   def allowed_categories
     (category_lock + (setting&.category_lock || [])).uniq
+  end
+
+  def disallowed_categories
+    (banned_categories + (setting&.banned_categories || [])).uniq
   end
 
   def allowed_category_names
