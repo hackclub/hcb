@@ -181,6 +181,14 @@ class CardGrant
       broadcast_refresh_to self
     end
 
+    def unauthorized?
+      draft? || submitted? || rejected?
+    end
+
+    def authorized?
+      approved? || fraudulent?
+    end
+
   end
 
 end

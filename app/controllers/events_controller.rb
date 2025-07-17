@@ -1016,7 +1016,8 @@ class EventsController < ApplicationController
         :banned_merchants,
         :banned_categories,
         :expiration_preference,
-        :reimbursement_conversions_enabled
+        :reimbursement_conversions_enabled,
+        :pre_authorization_required
       ],
       config_attributes: [
         :id,
