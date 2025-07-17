@@ -11,7 +11,7 @@ class Announcement
       end
 
       def title
-        "Monthly announcement for #{Date.current.strftime("%B, %Y")}"
+        "#{Date.current.strftime("%B, %Y")} Update"
       end
 
       def json_content
