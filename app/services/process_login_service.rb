@@ -81,14 +81,12 @@ class ProcessLoginService
   # @return [Boolean]
   #   Whether the operation succeeded. If `false` check `errors` for details.
   def process_totp(code:)
-    totp_credential = user.totp
-
-    unless totp_credential
+    unless user.totp
       errors.add(:base, "Invalid one-time password")
       return false
     end
 
-    verified = totp_credential.verify(code, drift_behind: 15, after: totp_credential.last_used_at)
+    verified = user.totp.verify(code, drift_behind: 15, after: user.totp.last_used_at)
 
     unless verified
       errors.add(:base, "Invalid one-time password")
@@ -96,9 +94,23 @@ class ProcessLoginService
     end
 
     ActiveRecord::Base.transaction do
-      totp_credential.update!(last_used_at: DateTime.now)
+      user.totp.update!(last_used_at: DateTime.now)
       login.update!(authenticated_with_totp: true)
     end
+
+    true
+  end
+
+  # @param code [String]
+  # @return [Boolean]
+  #   Whether the operation succeeded. If `false` check `errors` for details.
+  def process_backup_code(code:)
+    unless user.redeem_backup_code!(code)
+      errors.add(:base, "Invalid backup code, please try again.")
+      return false
+    end
+
+    login.update!(authenticated_with_backup_code: true)
 
     true
   end

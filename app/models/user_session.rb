@@ -100,6 +100,14 @@ class UserSession < ApplicationRecord
     last_authenticated_at >= SUDO_MODE_TTL.ago
   end
 
+  def clear_metadata!
+    update!(
+      device_info: nil,
+      latitude: nil,
+      longitude: nil,
+    )
+  end
+
   private
 
   def user_is_unlocked

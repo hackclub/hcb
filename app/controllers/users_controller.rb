@@ -190,6 +190,26 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(@user)
   end
 
+  def generate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @previewed_backup_codes = @user.generate_backup_codes!
+  end
+
+  def activate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.activate_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
+  def disable_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.disable_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding
@@ -226,7 +246,7 @@ class UsersController < ApplicationController
         if @user == current_user
           flash[:error] = "As much as you might desire to, you cannot lock yourself out."
           return redirect_to admin_user_path(@user)
-        elsif @user.admin? && !current_user.superadmin?
+        elsif @user.admin? && !superadmin_signed_in?
           flash[:error] = "Only superadmins can lock or unlock admins."
           return redirect_to admin_user_path(@user)
         elsif locked && @user.superadmin?

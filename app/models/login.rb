@@ -11,13 +11,15 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  initial_login_id         :bigint
+#  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
 # Indexes
 #
-#  index_logins_on_user_id          (user_id)
-#  index_logins_on_user_session_id  (user_session_id)
+#  index_logins_on_referral_program_id  (referral_program_id)
+#  index_logins_on_user_id              (user_id)
+#  index_logins_on_user_session_id      (user_session_id)
 #
 # Foreign Keys
 #
@@ -37,11 +39,12 @@ class Login < ApplicationRecord
   )
 
   scope(:initial, -> { where(initial_login_id: nil) })
+  belongs_to :referral_program, class_name: "Referral::Program", optional: true
 
   has_encrypted :browser_token
   before_validation :ensure_browser_token
 
-  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, prefix: :authenticated_with
+  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, :backup_code, prefix: :authenticated_with
 
   EXPIRATION = 15.minutes
 
@@ -52,14 +55,14 @@ class Login < ApplicationRecord
   validate do
     if user_session.present? && !complete?
       # how did we create session when it's not complete?!
-      Airbrake.notify("An incomplete login #{id} has a session #{user_session.id} present.")
+      Rails.error.unexpected "An incomplete login #{id} has a session #{user_session.id} present."
       errors.add(:base, "An incomplete login has a session present.")
     end
   end
 
   validate do
     if user_session.present? && user_session.user != user
-      Airbrake.notify("A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch.")
+      Rails.error.unexpected "A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch."
       errors.add(:base, "A login with a session present has a session.user / user mismatch.")
     end
   end
@@ -110,12 +113,17 @@ class Login < ApplicationRecord
     !authenticated_with_totp && user.totp.present?
   end
 
+  def backup_code_available?
+    !authenticated_with_backup_code && user.backup_codes_enabled?
+  end
+
   def available_factors
     factors = []
     factors << :sms if sms_available?
     factors << :email if email_available?
     factors << :webauthn if webauthn_available?
     factors << :totp if totp_available?
+    factors << :backup_code if backup_code_available?
     factors
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -186,6 +186,22 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.datetime "started_at", precision: nil
     t.index ["user_id"], name: "index_ahoy_visits_on_user_id"
     t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
+  end
+
+  create_table "announcements", force: :cascade do |t|
+    t.string "title", null: false
+    t.bigint "author_id", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "content", null: false
+    t.bigint "event_id", null: false
+    t.datetime "published_at"
+    t.text "rendered_email_html"
+    t.text "rendered_html"
+    t.string "aasm_state"
+    t.index ["author_id"], name: "index_announcements_on_author_id"
+    t.index ["event_id"], name: "index_announcements_on_event_id"
   end
 
   create_table "api_tokens", force: :cascade do |t|
@@ -410,6 +426,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "extracted_product_name"
+    t.text "extracted_product_description"
+    t.integer "extracted_product_price_cents"
+    t.integer "extracted_total_price_cents"
+    t.string "extracted_merchant_name"
+    t.text "extracted_validity_reasoning"
+    t.boolean "extracted_valid_purchase"
+    t.integer "extracted_fraud_rating"
     t.index ["card_grant_id"], name: "index_card_grant_pre_authorizations_on_card_grant_id"
   end
 
@@ -443,6 +467,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.string "purpose"
     t.boolean "one_time_use"
     t.boolean "pre_authorization_required", default: false, null: false
+    t.text "instructions"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
@@ -866,6 +891,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.index ["event_id"], name: "index_event_configurations_on_event_id"
   end
 
+  create_table "event_follows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "event_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_follows_on_event_id"
+    t.index ["user_id", "event_id"], name: "index_event_follows_on_user_id_and_event_id", unique: true
+  end
+
   create_table "event_plans", force: :cascade do |t|
     t.string "aasm_state"
     t.bigint "event_id", null: false
@@ -994,7 +1028,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
   create_table "flipper_gates", force: :cascade do |t|
     t.string "feature_key", null: false
     t.string "key", null: false
-    t.string "value"
+    t.text "value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["feature_key", "key", "value"], name: "index_flipper_gates_on_feature_key_and_key_and_value", unique: true
@@ -1318,6 +1352,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.datetime "updated_at", null: false
     t.text "browser_token_ciphertext"
     t.bigint "initial_login_id"
+    t.bigint "referral_program_id"
+    t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -1507,7 +1543,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.string "program", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -1733,6 +1768,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.boolean "show_explore_hack_club", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "background_image_url"
+    t.string "login_header_text"
+    t.text "login_body_text"
+    t.string "login_text_color", default: "#ffffff"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -2063,6 +2102,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_backup_codes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "aasm_state", default: "previewed", null: false
+    t.text "code_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_backup_codes_on_user_id"
+  end
+
   create_table "user_email_updates", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "aasm_state", null: false
@@ -2271,6 +2319,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
+  add_foreign_key "announcements", "events"
+  add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
@@ -2325,6 +2375,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_configurations", "events"
+  add_foreign_key "event_follows", "events"
+  add_foreign_key "event_follows", "users"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"
@@ -2402,6 +2454,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_02_200740) do
   add_foreign_key "transactions", "fee_reimbursements"
   add_foreign_key "transactions", "fee_relationships"
   add_foreign_key "transactions", "invoice_payouts"
+  add_foreign_key "user_backup_codes", "users"
   add_foreign_key "user_email_updates", "users"
   add_foreign_key "user_email_updates", "users", column: "updated_by_id"
   add_foreign_key "user_seen_at_histories", "users"
