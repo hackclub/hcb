@@ -69,7 +69,7 @@ class SudoModeHandler
           challenge: session[:webauthn_challenge]
         )
       else
-        raise ActionController::ParameterMissing(:submit_method)
+        raise ActionController::ParameterMissing.new(:submit_method)
       end
 
     unless ok
