@@ -10,9 +10,8 @@ class Announcement
         end
       end
 
-      Event.transparent.each do |event|
-        announcement = Announcement::Templates::Monthly.new(event:, author: event.signees.first).create
-        announcement.create
+      Event.includes(:config).where(config: { generate_monthly_announcement: true }).find_each do |event|
+        Announcement::Templates::Monthly.new(event:, author: User.system_user).create
       end
     end
 
