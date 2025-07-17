@@ -79,11 +79,10 @@ class Announcement < ApplicationRecord
     # is this the first announcement to be published?
     if published? && event.announcements.published.none?
       event.users.excluding(event.followers).find_each do |user|
-        begin
-          event.event_follows.create!(user:)
-        rescue ActiveRecord::RecordNotUnique
-          # Do nothing. The user already follows this event.
-        end
+        event.event_follows.create!(user:)
+
+      rescue ActiveRecord::RecordNotUnique
+        # Do nothing. The user already follows this event.
       end
     end
   end
