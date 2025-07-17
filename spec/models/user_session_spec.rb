@@ -27,4 +27,41 @@ RSpec.describe UserSession, type: :model do
       expect(user_session).to be_valid
     end
   end
+
+  describe "#sudo_mode?" do
+    it "returns false if there are no associated logins" do
+      user_session = create(:user_session)
+
+      expect(user_session).not_to be_sudo_mode
+    end
+
+    it "returns true if the most recently created login is less than 2 hours old" do
+      freeze_time do
+        user = create(:user)
+        user_session = create(:user_session, user:)
+        initial_login = create(
+          :login,
+          user:,
+          user_session:,
+          aasm_state: "complete",
+          authenticated_with_email: true,
+          created_at: 2.hours.ago - 1.second,
+        )
+
+        expect(user_session).not_to be_sudo_mode
+
+        _login = create(
+          :login,
+          initial_login:,
+          user:,
+          user_session:,
+          aasm_state: "complete",
+          authenticated_with_email: true,
+          created_at: 2.hours.ago
+        )
+
+        expect(user_session).to be_sudo_mode
+      end
+    end
+  end
 end
