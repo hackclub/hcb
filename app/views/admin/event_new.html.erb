@@ -17,10 +17,7 @@
       <%= form.email_field :organizer_email, placeholder: "Email Address", value: params[:organizer_email], required: false %>
     </p>
 
-    <p>
-      <%= form.check_box :is_signee, { checked: true } %>
-      <%= form.label :is_signee, "Organizer signed contract?" %>
-    </p>
+    <%= render "organizer_position_invites/admin_signee_check", form: form %>
 
     <p>
       <%= form.label :country %>
