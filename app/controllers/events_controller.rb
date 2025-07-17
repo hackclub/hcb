@@ -1014,6 +1014,7 @@ class EventsController < ApplicationController
         :keyword_lock,
         :invite_message,
         :banned_merchants,
+        :banned_categories,
         :expiration_preference,
         :reimbursement_conversions_enabled
       ],
