@@ -101,4 +101,18 @@ class ProcessLoginService
     true
   end
 
+  # @param code [String]
+  # @return [Boolean]
+  #   Whether the operation succeeded. If `false` check `errors` for details.
+  def process_backup_code(code:)
+    unless user.redeem_backup_code!(code)
+      errors.add(:base, "Invalid backup code, please try again.")
+      return false
+    end
+
+    login.update!(authenticated_with_backup_code: true)
+
+    true
+  end
+
 end

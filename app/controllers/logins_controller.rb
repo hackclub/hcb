@@ -140,10 +140,11 @@ class LoginsController < ApplicationController
         return
       end
     when "backup_code"
-      if @user.redeem_backup_code!(params[:backup_code])
-        @login.update(authenticated_with_backup_code: true)
-      else
-        return redirect_to backup_code_login_path(@login), flash: { error: "Invalid backup code, please try again." }
+      ok = service.process_backup_code(code: params[:backup_code])
+
+      unless ok
+        redirect_to(backup_code_login_path(@login), flash: { error: service.errors.full_messages.to_sentence })
+        return
       end
     end
 
@@ -156,7 +157,7 @@ class LoginsController < ApplicationController
         redirect_to program_path(@referral_program)
       elsif @user.full_name.blank? || @user.phone_number.blank?
         redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
-      elsif @login.authenticated_with_backup_code && @user.backup_codes.active.size == 0
+      elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
         redirect_to(params[:return_to] || root_path)

@@ -197,4 +197,46 @@ RSpec.describe ProcessLoginService do
       end
     end
   end
+
+  describe "#process_backup_code" do
+    it "errors if the code is invalid" do
+      setup_context => { service:, login: }
+
+      ok = service.process_backup_code(code: "abc123")
+
+      expect(ok).to be(false)
+      expect(login.reload.authenticated_with_backup_code).to be_nil
+      expect(service.errors.messages).to eq({ base: ["Invalid backup code, please try again."] })
+    end
+
+    it "errors if the code has already been used" do
+      setup_context => { service:, user:, login: }
+
+      backup_code = user.generate_backup_codes!.first
+      user.activate_backup_codes!
+      expect(user.redeem_backup_code!(backup_code)).to be(true)
+
+      ok = service.process_backup_code(code: backup_code)
+      expect(ok).to be(false)
+      expect(login.reload.authenticated_with_backup_code).to be_nil
+      expect(service.errors.messages).to eq({ base: ["Invalid backup code, please try again."] })
+    end
+
+    it "succeeds when the provided code is valid" do
+      setup_context => { service:, user:, login: }
+
+      backup_code = user.generate_backup_codes!.first
+      user.activate_backup_codes!
+
+      ok = service.process_backup_code(code: backup_code)
+
+      expect(ok).to be(true)
+      expect(login.reload.authenticated_with_backup_code).to eq(true)
+      expect(service.errors).to be_empty
+
+      expect(user.backup_codes.active.count).to eq(9)
+      used = user.backup_codes.used.sole
+      expect(used.authenticate_code(backup_code)).to be_truthy
+    end
+  end
 end
