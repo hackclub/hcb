@@ -61,7 +61,7 @@
         <%= inline_icon "attachment", size: 20 %>
         Get reimbursed
       <% end %>
-      <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action" do %>
+      <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
         <%= inline_icon "cheque", size: 20 %>
         Deposit a check
       <% end %>
@@ -77,6 +77,11 @@
     <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
     <%= render "transfer_modal" %>
     <%= render "invoices/modal" %>
+
+    <section class="modal bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
+      <%= modal_header "Deposit a check" %>
+      <%= render "check_deposits/new", event: @event %>
+    </section>
   <% end %>
 
   <%= render "events/public_message" %>
