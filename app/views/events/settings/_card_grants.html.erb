@@ -10,7 +10,6 @@
 
         <%= card_grant_setting_fields.hidden_field :id, value: event.card_grant_setting.id %>
 
-
         <div class="field">
           <%= card_grant_setting_fields.label :invite_message, "Invitation message" %>
           <p class="h5 muted m-0">
@@ -79,7 +78,6 @@
               When any of these rules are set, only merchants matching one or more of these criteria will be authorized.
             </p>
 
-
             <div class="field">
               <%= card_grant_setting_fields.label :merchant_lock, "Approved merchant IDs" %>
               <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: event.card_grant_setting.merchant_lock.join(", "), disabled: %>
@@ -129,7 +127,6 @@
           </div>
         </div>
 
-
         <div class="border-top card__banner card__darker secondary mt2">
           <p class="h4 mt-0 mb-1 muted">These locks work in tandem:</p>
           <ul class="m-0 h5 muted">
@@ -140,10 +137,8 @@
           </ul>
         </div>
 
-
       </div>
     <% end %>
-
 
     <%= form.submit "Update", disabled: %>
 
