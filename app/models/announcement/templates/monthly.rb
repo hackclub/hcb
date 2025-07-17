@@ -2,7 +2,7 @@
 
 class Announcement
   module Templates
-    class DonationGoalReached
+    class Monthly
       include ApplicationHelper
 
       def initialize(event:, author:)
@@ -11,7 +11,7 @@ class Announcement
       end
 
       def title
-        "We've reached our donation goal!"
+        "#{Date.current.strftime("%B, %Y")} Update"
       end
 
       def json_content
@@ -24,7 +24,7 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: "Thank you for your support and generosity! After #{distance_of_time_in_words @event.donation_goal.tracking_since, DateTime.now}, we've reached our donation goal of #{render_money @event.donation_goal.amount_cents}. With this funding, we'll be able to better work towards our mission.",
+                  text: "Thank you for your support and generosity! With this funding, we'll be able to better work towards our mission.",
                 },
               ],
             },
@@ -33,11 +33,11 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: "We'd like to thank all of the donors that contributed towards our goal:",
+                  text: "We'd like to thank all of the donors from the past month that contributed towards our organization:",
                 },
               ],
             },
-            { type: "donationSummary", attrs: { startDate: @event.donation_goal.tracking_since } },
+            { type: "donationSummary", attrs: { startDate: Date.current.beginning_of_month.. } },
             {
               type: "paragraph",
               content: [

@@ -1,0 +1,7 @@
+<h1><%= @announcement.title %></h1>
+
+<% if @announcement.rendered_email_html.present? %>
+  <%= @announcement.rendered_email_html.html_safe %> <%# erb_lint:disable ErbSafety %>
+<% else %>
+  <%= @announcement.rendered_html.html_safe %> <%# erb_lint:disable ErbSafety %>
+<% end %>
