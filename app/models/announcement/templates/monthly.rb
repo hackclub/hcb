@@ -37,7 +37,7 @@ class Announcement
                 },
               ],
             },
-            { type: "donationSummary", attrs: { startDate: Time.now.last_month.beginning_of_month.. } },
+            { type: "donationSummary", attrs: { startDate: self.created_at.beginning_of_month.. } },
             {
               type: "paragraph",
               content: [
