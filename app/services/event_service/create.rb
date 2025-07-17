@@ -2,7 +2,21 @@
 
 module EventService
   class Create
-    def initialize(name:, point_of_contact_id:, emails: [], is_signee: true, country: [], is_public: true, is_indexable: true, approved: false, plan: Event::Plan::Standard, tags: [], can_front_balance: true, demo_mode: false, risk_level: 0)
+    def initialize(name:,
+                   point_of_contact_id:,
+                   cosigner_email:,
+                   include_onboarding_videos:,
+                   emails: [],
+                   is_signee: true,
+                   country: [],
+                   is_public: true,
+                   is_indexable: true,
+                   approved: false,
+                   plan: Event::Plan::Standard,
+                   tags: [],
+                   can_front_balance: true,
+                   demo_mode: false,
+                   risk_level: 0)
       @name = name
       @emails = emails
       @is_signee = is_signee
