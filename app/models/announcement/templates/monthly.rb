@@ -37,7 +37,7 @@ class Announcement
                 },
               ],
             },
-            { type: "donationSummary", attrs: { startDate: self.created_at.beginning_of_month.. } },
+            { type: "donationSummary", attrs: { startDate: Date.current.beginning_of_month.. } },
             {
               type: "paragraph",
               content: [
@@ -51,7 +51,7 @@ class Announcement
       end
 
       def create
-        Announcement.create!(event: @event, title:, content: json_content, aasm_state: :template_draft, author: @author, template_type: self.class.name)
+        Announcement.create!(event: @event, title:, content: json_content, aasm_state: :template_draft, author: @author, template_type: self.name)
       end
 
     end
