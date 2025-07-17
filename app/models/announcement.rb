@@ -55,7 +55,7 @@ class Announcement < ApplicationRecord
     end
   end
 
-  scope :saved, -> { where.not(aasm_state: :template_draft).or(where(content: {})) }
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
