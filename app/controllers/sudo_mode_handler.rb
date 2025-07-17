@@ -172,6 +172,8 @@ class SudoModeHandler
 
     return existing if existing
 
+    raise("Session does not have an initial login") unless current_session.initial_login
+
     Login.create!(
       user: current_user,
       initial_login: current_session.initial_login
