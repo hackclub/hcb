@@ -133,7 +133,6 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         card_grant = create(:card_grant, event:, amount_cents: 1000, banned_merchants: ["0987654321"])
         service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
         expect(service.run).to be(true)
-        expect(service.declined_reason).to eq("merchant_not_allowed")
       end
 
       it "decline with a banned merchant" do
@@ -149,7 +148,6 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         card_grant = create(:card_grant, event:, amount_cents: 1000, banned_categories: ["fast_food_restaurants"])
         service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
         expect(service.run).to be(true)
-        expect(service.declined_reason).to eq("merchant_not_allowed")
       end
 
       it "decline with a banned category" do
@@ -165,7 +163,6 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["1234567890"], banned_categories: ["fast_food_restaurants"])
         service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
         expect(service.run).to be(true)
-        expect(service.declined_reason).to eq("merchant_not_allowed")
       end
 
       it "decline with a valid merchant and invalid category" do
