@@ -78,7 +78,7 @@
     <%= render "transfer_modal" %>
     <%= render "invoices/modal" %>
 
-    <section class="modal bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
       <%= modal_header "Deposit a check" %>
       <%= render "check_deposits/new", event: @event %>
     </section>
