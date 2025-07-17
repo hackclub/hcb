@@ -6,6 +6,8 @@
 #
 #  id                         :bigint           not null, primary key
 #  amount_cents               :integer
+#  banned_categories          :string
+#  banned_merchants           :string
 #  category_lock              :string
 #  email                      :string           not null
 #  instructions               :text
@@ -79,6 +81,8 @@ class CardGrant < ApplicationRecord
 
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
+  serialize :banned_merchants, coder: CommaSeparatedCoder
+  serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
@@ -238,6 +242,14 @@ class CardGrant < ApplicationRecord
 
   def allowed_merchants
     (merchant_lock + (setting&.merchant_lock || [])).uniq
+  end
+
+  def banned_merchants
+    (super + (setting&.banned_merchants || [])).uniq
+  end
+
+  def banned_categories
+    (super + (setting&.banned_categories || [])).uniq
   end
 
   def allowed_merchant_names
