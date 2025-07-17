@@ -1,5 +1,5 @@
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code do %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <span class="regular muted"><%= @hcb_code.paypal_transfer.deposited? ? "Transferred " : "Transferring " %> </span>
       <%= @hcb_code.paypal_transfer.recipient_name %>
