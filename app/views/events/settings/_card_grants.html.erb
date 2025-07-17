@@ -63,10 +63,12 @@
           </div>
         </div>
 
+        <%= form.submit "Update", disabled:, class: "mt-4" %>
+
       </div>
 
       <h3 class="mb1" id="transparency_mode_heading">Spending restrictions</h3>
-      <div class="card mb-4 pb-0" data-controller="accordion">
+      <div class="card mb-4" data-controller="accordion">
         <div class="flex flex-col md:flex-row gap-4">
           <div class="w-full flex-grow">
 
@@ -127,7 +129,7 @@
           </div>
         </div>
 
-        <div class="border-top card__banner card__darker secondary mt2">
+        <div class="border-top border-bottom card__banner card__darker secondary my-4">
           <p class="h4 mt-0 mb-1 muted">These locks work in tandem:</p>
           <ul class="m-0 h5 muted">
             <li>If a transaction matches with any of the <strong class="text-primary">blocked merchants</strong>, it will be declined before any other checks are applied.</li>
@@ -137,10 +139,11 @@
           </ul>
         </div>
 
+        <%= form.submit "Update", disabled: %>
+
+
       </div>
     <% end %>
-
-    <%= form.submit "Update", disabled: %>
 
   <% end %>
 <% end %>
