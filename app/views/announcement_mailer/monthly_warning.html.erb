@@ -1,12 +1,12 @@
-<h1>WARNING: A scheduled announcement will go out in one week</h1>
-<h2><%= @announcement.title %></h2>
+<h1>A scheduled announcement will go out in one week</h1>
 
-<% if @announcement.rendered_email_html.present? %>
-  <%= @announcement.rendered_email_html.html_safe %> <%# erb_lint:disable ErbSafety %>
-<% else %>
-  <%= @announcement.rendered_html.html_safe %> <%# erb_lint:disable ErbSafety %>
-<% end %>
+<i><%= link_to "Review the announcement in your browser", @announcement %></i>
 
+<br/>
+
+<%= render "announcement_mailer/announcement" %>
+
+<br/>
 <i><%= link_to "Review the announcement in your browser", @announcement %></i>
 
 <p>

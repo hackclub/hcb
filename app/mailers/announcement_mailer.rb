@@ -9,13 +9,13 @@ class AnnouncementMailer < ApplicationMailer
   end
 
   def monthly_warning
-    @event = params[:event]
-    @announcement = Announcement.where(event: @event).monthly.last
+    @announcement = params[:announcement]
 
-    @emails = @event.users.map(&:email_address_with_name)
+    @emails = @event.managers.map(&:email_address_with_name)
     @emails << @event.config.contact_email if @event.config.contact_email.present?
 
-    mail to: @emails, subject: "WARNING: A scheduled announcement will go out in one week"
+    @scheduled_for = Date.today.next_month.beginning_of_month
+    mail to: @emails, subject: "[#{@announcement.event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-m")}"
   end
 
 end

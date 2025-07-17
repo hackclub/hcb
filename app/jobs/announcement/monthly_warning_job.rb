@@ -2,15 +2,11 @@
 
 class Announcement
   class MonthlyWarningJob < ApplicationJob
-    queue_as :default
+    queue_as :low
+
     def perform
-      if announcement.published?
-        announcement.event.followers.find_each do |follower|
-          AnnouncementMailer.with(
-            announcement:,
-            email: follower.email_address_with_name
-          ).announcement_published.deliver_later
-        end
+      Announcement.monthly_for(Date.today).where.not(aasm_state: :published).find_each do |announcement|
+        AnnouncementMailer.with(announcement:).monthly_warning.deliver_now
       end
     end
 

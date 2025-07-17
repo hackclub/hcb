@@ -222,5 +222,5 @@ announcement_monthly_job:
   class: "Announcement::MonthlyJob"
 
 announcement_monthly_warning_job:
-  cron: "0 9 21 * *" # run 21st day of each month
+  cron: "0 12 -7 * *" # run at 8am ET; 7 days before the end of the month
   class: "Announcement::MonthlyWarningJob"
