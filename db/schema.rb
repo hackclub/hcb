@@ -202,7 +202,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_16_200152) do
     t.text "rendered_email_html"
     t.text "rendered_html"
     t.string "aasm_state"
-    t.string "template"
+    t.string "template_type"
     t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
   end
