@@ -27,7 +27,7 @@ module HcbCodeService
       )
 
       unless res.success?
-        Rails.error.unexpected "Failed to contact OpenAI. #{res.status}: #{res.reason_phrase}\n#{res.body&.dig("error", "message")}"
+        Rails.error.report StandardError.new("Failed to contact OpenAI. #{res.status}: #{res.reason_phrase}\n#{res.body&.dig("error", "message")}")
         return nil
       end
 
