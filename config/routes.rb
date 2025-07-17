@@ -701,6 +701,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :blocks, only: [:create, :show], controller: "announcement/blocks" do
+    member do
+      post "refresh"
+    end
+  end
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 

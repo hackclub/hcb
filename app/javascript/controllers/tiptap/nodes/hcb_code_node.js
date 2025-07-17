@@ -1,44 +1,39 @@
-import { Node, mergeAttributes } from '@tiptap/core'
+import { Node } from '@tiptap/core'
 
 export const HcbCodeNode = Node.create({
   name: 'hcbCode',
+  atom: true,
   group: 'block',
   priority: 2000,
   addAttributes() {
     return {
       code: {},
+      id: {},
+      html: {}
     }
   },
   renderHTML({ HTMLAttributes }) {
     return [
-      'div',
-      mergeAttributes(HTMLAttributes, {
-        class:
-          'hcbCode relative card shadow-none border flex flex-col py-2 my-2',
-      }),
-      [
-        'p',
-        { class: 'italic text-center' },
-        `Your transaction (${HTMLAttributes.code}) will appear here.`,
-      ],
+      'node-view',
+      HTMLAttributes
     ]
   },
-  parseHTML() {
-    return [
-      {
-        tag: 'div',
-        getAttrs: node => node.classList.contains('hcbCode') && null,
-      },
-    ]
+  addNodeView() {
+    return ({ node }) => {
+      const dom = document.createElement('div')
+      dom.innerHTML = node.attrs.html
+
+      return { dom }
+    }
   },
   addCommands() {
     return {
       addHcbCode:
-        code =>
+        attrs =>
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
-            attrs: { code },
+            attrs,
           })
         },
     }

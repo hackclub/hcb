@@ -23,13 +23,12 @@
 #
 class Announcement
   class Block
-    class DonationSummary < ::Announcement::Block
+    class DonationGoal < ::Announcement::Block
       def render_html(is_email: false)
-        start_date = parameters["start_date"].present? ? Date.parse(parameters["start_date"]) : 1.month.ago
-        donations = announcement.event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..).order(:created_at)
-        total = donations.sum(:amount)
+        goal = announcement.event.donation_goal
+        percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
 
-        Announcement::BlocksController.renderer.render partial: "announcements/blocks/donation_summary", locals: { donations:, total:, start_date: }
+        Announcement::BlocksController.renderer.render partial: "announcements/blocks/donation_goal", locals: { goal:, percentage:, is_email: }
       end
 
     end

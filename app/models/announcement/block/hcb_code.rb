@@ -23,13 +23,15 @@
 #
 class Announcement
   class Block
-    class DonationSummary < ::Announcement::Block
+    class HcbCode < ::Announcement::Block
       def render_html(is_email: false)
-        start_date = parameters["start_date"].present? ? Date.parse(parameters["start_date"]) : 1.month.ago
-        donations = announcement.event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..).order(:created_at)
-        total = donations.sum(:amount)
+        hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
 
-        Announcement::BlocksController.renderer.render partial: "announcements/blocks/donation_summary", locals: { donations:, total:, start_date: }
+        unless hcb_code.event == announcement.event
+          hcb_code = nil
+        end
+
+        Announcement::BlocksController.renderer.render partial: "announcements/blocks/hcb_code", locals: { hcb_code:, event: announcement.event, is_email: }
       end
 
     end

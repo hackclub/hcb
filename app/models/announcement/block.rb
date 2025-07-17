@@ -25,6 +25,33 @@ class Announcement
   class Block < ApplicationRecord
     belongs_to :announcement
 
+    before_create :set_html
+
+    def refresh!
+      set_html
+      save!
+    end
+
+    def render(event: nil, is_email: false)
+      if event.present? && event != announcement.event
+        Announcement::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
+      else
+        render_html is_email:
+      end
+    end
+
+    def render_html(is_email: false)
+      Announcement::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
+    end
+
+    private
+
+    def set_html
+      self.parameters ||= {}
+      self.rendered_html = render
+      self.rendered_email_html = render(is_email: true)
+    end
+
   end
 
 end

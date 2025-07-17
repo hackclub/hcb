@@ -55,22 +55,19 @@ class Announcement < ApplicationRecord
     end
   end
 
-  scope :saved, -> { where.not(aasm_state: :template_draft) }
-
-  validates :content, presence: true
+  scope :saved, -> { where.not(aasm_state: :template_draft).or(where(content: {})) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
 
   before_save :autofollow_organizers
-  before_save do
-    if content_changed?
-      self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
 
-      if draft?
-        self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
-      end
-    end
+  def render
+    ProsemirrorService::Renderer.render_html(content, event)
+  end
+
+  def render_email
+    ProsemirrorService::Renderer.render_html(content, event, is_email: true)
   end
 
   private

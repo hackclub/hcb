@@ -7,6 +7,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
+import csrf from '../common/csrf'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
 import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
 import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
@@ -15,6 +16,7 @@ export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
   static values = {
     content: String,
+    announcementId: Number
   }
 
   editor = null
@@ -67,9 +69,7 @@ export default class extends Controller {
       },
       content,
       onUpdate: () => {
-        if (this.hasContentValue) {
-          debouncedSubmit(true)
-        }
+        debouncedSubmit(true)
       },
     })
   }
@@ -161,23 +161,44 @@ export default class extends Controller {
     this.editor.chain().focus().setImage({ src: url }).run()
   }
 
-  donationGoal() {
-    this.editor.chain().focus().addDonationGoal().run()
+  async donationGoal() {
+    const attrs = await this.createBlock("Announcement::Block::DonationGoal");
+    this.editor.chain().focus().addDonationGoal(attrs).run()
   }
 
-  hcbCode() {
+  async hcbCode() {
     const url = window.prompt('Transaction URL')
 
     if (url === null || url === '') {
       return
     }
 
-    const code = url.split('/').at(-1)
+    const hcbCode = url.split('/').at(-1)
 
-    this.editor.chain().focus().addHcbCode(code).run()
+    const attrs = await this.createBlock("Announcement::Block::HcbCode", { hcb_code: hcbCode });
+
+    this.editor.chain().focus().addHcbCode(attrs).run()
   }
 
-  donationSummary() {
-    this.editor.chain().focus().addDonationSummary().run()
+  async donationSummary() {
+    const attrs = await this.createBlock("Announcement::Block::DonationSummary");
+    this.editor.chain().focus().addDonationSummary(attrs).run()
+  }
+
+  async createBlock(type, parameters) {
+    const res = await fetch("/blocks", {
+      method: "POST",
+      body: JSON.stringify({
+        type,
+        announcement_id: this.announcementIdValue,
+        parameters: JSON.stringify(parameters || {})
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf(),
+      },
+    }).then(r => r.json());
+
+    return res;
   }
 }

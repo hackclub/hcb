@@ -8,11 +8,12 @@ class AnnouncementsController < ApplicationController
   skip_before_action :signed_in_user, only: [:show]
 
   def new
-    @announcement = Announcement.new
     @event = Event.friendly.find(params[:event_id])
-    @announcement.event = @event
+    @announcement = Announcement.build(content: {}, title: "", author: current_user, event: @event)
 
     authorize @announcement
+
+    @announcement.save!
   end
 
   def create
@@ -44,17 +45,25 @@ class AnnouncementsController < ApplicationController
   def edit
     authorize @announcement
 
+    @announcement.content = ProsemirrorService::Renderer.set_html(@announcement.content, source_event: @announcement.event)
+
     render "announcements/show", locals: { editing: true }
   end
 
   def update
     authorize @announcement
 
-    json_content = params[:announcement][:json_content]
-
+    content_hash = JSON.parse(params[:announcement][:json_content])
     @announcement.transaction do
-      @announcement.update!(announcement_params.merge(content: json_content, author: current_user))
+      @announcement.update!(announcement_params.merge(content: ProsemirrorService::Renderer.set_html(content_hash), author: current_user))
       @announcement.mark_draft! if @announcement.template_draft?
+    end
+
+    block_ids = ProsemirrorService::Renderer.block_ids(content_hash)
+    Announcement::Block.where(announcement: @announcement).find_each do |block|
+      unless block_ids.include? block.id
+        block.destroy
+      end
     end
 
     if params[:announcement][:autosave] != "true"
