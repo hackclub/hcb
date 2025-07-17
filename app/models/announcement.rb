@@ -78,18 +78,11 @@ class Announcement < ApplicationRecord
   def autofollow_organizers
     # is this the first announcement to be published?
     if published? && event.announcements.published.none?
-      event.users.find_each do |user|
-        unless event.followers.where({ id: user.id }).any?
-          attrs = {
-            user_id: user.id,
-            event:
-          }
-          follow = Event::Follow.new(attrs)
-          begin
-            follow.save!
-          rescue ActiveRecord::RecordNotUnique
-            # Do nothing. The user already follows this event.
-          end
+      event.users.excluding(event.followers).find_each do |user|
+        begin
+          event.event_follows.create!(user:)
+        rescue ActiveRecord::RecordNotUnique
+          # Do nothing. The user already follows this event.
         end
       end
     end
