@@ -189,8 +189,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
   end
 
   create_table "announcement_blocks", force: :cascade do |t|
-    t.text "rendered_html", null: false
-    t.text "rendered_email_html", null: false
+    t.text "rendered_html"
+    t.text "rendered_email_html"
     t.jsonb "parameters"
     t.bigint "announcement_id", null: false
     t.string "type", null: false

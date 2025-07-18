@@ -6,8 +6,8 @@
 #
 #  id                  :bigint           not null, primary key
 #  parameters          :jsonb
-#  rendered_email_html :text             not null
-#  rendered_html       :text             not null
+#  rendered_email_html :text
+#  rendered_html       :text
 #  type                :string           not null
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
