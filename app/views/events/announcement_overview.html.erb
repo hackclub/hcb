@@ -7,7 +7,7 @@
   <span class="flex-grow flex items-center flex-1">
     Announcements
     <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
-      <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
+      <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
         <%= inline_icon "person", size: 20 %>
         <%= pluralize(@event.followers.count, "follower") %>
       <% end %>
