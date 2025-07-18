@@ -6,4 +6,7 @@
       <%= inline_icon "view-close", size: 24 %>
     <% end %>
   <% end %>
+  <% params.except(:q, :controller, :action).each do |key, value| %>
+    <%= hidden_field_tag key, value %>
+  <% end %>
 </div>
