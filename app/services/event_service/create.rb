@@ -4,8 +4,8 @@ module EventService
   class Create
     def initialize(name:,
                    point_of_contact_id:,
-                   cosigner_email:,
-                   include_onboarding_videos:,
+                   cosigner_email: nil,
+                   include_onboarding_videos: false,
                    emails: [],
                    is_signee: true,
                    country: [],
