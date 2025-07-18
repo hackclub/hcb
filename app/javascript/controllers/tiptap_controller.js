@@ -17,7 +17,7 @@ export default class extends Controller {
   static values = {
     content: String,
     announcementId: Number,
-    autosave: Boolean
+    autosave: Boolean,
   }
 
   editor = null
