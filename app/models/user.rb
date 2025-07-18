@@ -79,6 +79,7 @@ class User < ApplicationRecord
 
   has_many :logins
   has_many :login_codes
+  has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
@@ -379,6 +380,60 @@ class User < ApplicationRecord
 
   def only_card_grant_user?
     card_grants.size >= 1 && events.size == 0
+  end
+
+  def backup_codes_enabled?
+    backup_codes.active.any?
+  end
+
+  def generate_backup_codes!
+    backup_codes.previewed.destroy_all
+
+    codes = []
+    ActiveRecord::Base.transaction do
+      while codes.size < 10
+        code = SecureRandom.alphanumeric(10)
+        next if codes.include?(code)
+
+        backup_codes.create!(code: code)
+        codes << code
+      end
+    end
+
+    codes
+  end
+
+  def activate_backup_codes!
+    ActiveRecord::Base.transaction do
+      backup_codes.active.map(&:mark_discarded!)
+      backup_codes.previewed.map(&:mark_active!)
+    end
+    User::BackupCodeMailer.with(user_id: id).new_codes_activated.deliver_now
+  end
+
+  def redeem_backup_code!(code)
+    backup_codes.active.each do |backup_code|
+      next unless backup_code.authenticate_code(code)
+
+      ActiveRecord::Base.transaction do
+        backup_code = User::BackupCode
+                      .lock # performs a SELECT ... FOR UPDATE https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
+                      .active # makes sure that it hasn't already been used
+                      .find(backup_code.id) # will raise `ActiveRecord::NotFound` and abort the transaction
+        backup_code.mark_used!
+        return true
+      end
+    end
+
+    false
+  end
+
+  def disable_backup_codes!
+    ActiveRecord::Base.transaction do
+      backup_codes.previewed.destroy_all
+      backup_codes.active.map(&:mark_discarded!)
+    end
+    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
   private
