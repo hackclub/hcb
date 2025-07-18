@@ -127,5 +127,57 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         expect(service.run).to be(false)
       end
     end
+
+    context "when restricted by merchant" do
+      it "approve with a valid merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_merchants: ["0987654321"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with a banned merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_merchants: ["1234567890"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+    end
+
+    context "when restricted by category" do
+      it "approve with a valid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_categories: ["fast_food_restaurants"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with a banned category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_categories: ["grocery_stores_supermarkets"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+    end
+
+    context "when merchant locked and restricted by category" do
+      it "approve with a valid merchant and valid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["1234567890"], banned_categories: ["fast_food_restaurants"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with a valid merchant and invalid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["1234567890"], banned_categories: ["grocery_stores_supermarkets"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+
+      it "decline with an invalid merchant and valid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["0987654321"], banned_categories: ["fast_food_restaurants"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+    end
   end
 end

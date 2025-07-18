@@ -1,9 +1,9 @@
-<%# locals: (content: nil) %>
+<%# locals: (content: nil, autosave: true) %>
 
-<%= form_with model: @announcement, url: @announcement.persisted? ? announcement_path(@announcement) : announcements_path, data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "turbo-frame": "_top" }.compact do |form| %>
+<%= form_with model: @announcement, url: announcement_path(@announcement), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-announcement-id-value": @announcement.id, "tiptap-autosave-value": autosave, "turbo-frame": "_top" }.compact do |form| %>
   <div class="field">
     <%= form.label :title %>
-    <%= form.text_field :title, required: true, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full" %>
+    <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full" %>
   </div>
 
   <div class="field">

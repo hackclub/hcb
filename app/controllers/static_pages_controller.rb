@@ -78,22 +78,22 @@ class StaticPagesController < ApplicationController
           "Send a mailed check": :manager,
           "View a mailed check": :reader,
         },
-        "Check Deposit": {
+        "Check deposits": {
           "Deposit a check": :member,
           "View a check deposit": :reader,
           "View images of a check deposit": :manager,
           _preface: "For depositing a check by taking a picture of it"
         },
-        "ACH Transfers": {
+        "ACH transfers": {
           "Send an ACH Transfer": :manager,
           "Cancel an ACH Transfer": :manager,
           "View an ACH Transfer": :reader,
           "View recipient's payment details": :manager,
         },
-        "Account & Routing numbers": {
+        "Account & routing numbers": {
           "View the organization's account & routing numbers": :manager
         },
-        "HCB Transfers": {
+        "HCB transfers": {
           "Create a HCB Transfer": :manager,
           "Cancel a HCB Transfer": :manager,
           "View a HCB Transfer": :reader
@@ -119,6 +119,9 @@ class StaticPagesController < ApplicationController
         "Create an account": :manager,
         "Suspend an account": :manager,
         "Reset an account's password": :manager,
+      },
+      Documents: {
+        "View documents": :reader
       },
       "Settings": {
         "View settings": :reader,

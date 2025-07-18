@@ -6,12 +6,8 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def index?
-    return true if user.auditor?
-    return true if record.blank?
-
-    event_ids = record.map(&:event).pluck(:id)
-    same_event = event_ids.uniq.size == 1
-    return true if same_event && user.events.pluck(:id).include?(event_ids.first)
+    # `record` in this context is an Event
+    user.auditor? || OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   def new?

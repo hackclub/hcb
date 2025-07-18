@@ -17,6 +17,8 @@ class DocumentsController < ApplicationController
     @active_common_documents = Document.common.active.order(created_at: :desc)
     @archived_documents = @event.documents.includes(:user).archived.order(created_at: :desc)
     @archived_common_documents = Document.common.archived.order(created_at: :desc)
+
+    authorize @event, policy_class: DocumentPolicy
   end
 
   def new
