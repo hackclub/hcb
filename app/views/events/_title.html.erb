@@ -1,4 +1,10 @@
-<div data-controller="menu" class="pt2">
+<div class="muted">
+  <% @event.ancestors.each do |ancestor| %>
+    <%= link_to ancestor.name, ancestor.parent, class: "no-underline hover:underline" %> /
+  <% end %>
+</div>
+
+<div data-controller="menu" class="<%= "pt2" unless @event.parent.present? %>">
   <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none gap-2 text-inherit leading-9 event-title -m-2 my-2 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-size:2em; font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
     <%= @event.name %>
     <%= inline_icon "down-caret", class: "event-title-dropdown-icon" if show_org_switcher? %>

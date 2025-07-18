@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -43,9 +41,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.bigint "payment_recipient_id"
     t.string "recipient_email"
     t.boolean "send_email_notification", default: false
+    t.boolean "same_day", default: false, null: false
     t.string "company_name"
     t.string "company_entry_description"
-    t.boolean "same_day", default: false, null: false
     t.text "routing_number_ciphertext"
     t.string "account_number_bidx"
     t.string "routing_number_bidx"
@@ -636,8 +634,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.datetime "deposited_at", precision: nil
     t.bigint "destination_subledger_id"
     t.bigint "source_subledger_id"
-    t.date "scheduled_on"
     t.boolean "should_charge_fee", default: false
+    t.date "scheduled_on"
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
@@ -665,10 +663,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.text "slug"
+    t.datetime "deleted_at", precision: nil
     t.datetime "archived_at"
     t.bigint "archived_by_id"
     t.string "aasm_state"
-    t.datetime "deleted_at", precision: nil
     t.index ["archived_by_id"], name: "index_documents_on_archived_by_id"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["slug"], name: "index_documents_on_slug", unique: true
@@ -977,6 +975,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.string "postal_code"
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.string "short_name"
+    t.bigint "parent_id"
+    t.index ["parent_id"], name: "index_events_on_parent_id"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
@@ -1031,7 +1031,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.datetime "updated_at", null: false
     t.bigint "event_id"
     t.string "memo"
-    t.index ["canonical_event_mapping_id"], name: "index_fees_on_canonical_event_mapping_id"
     t.index ["event_id"], name: "index_fees_on_event_id"
   end
 
@@ -1738,8 +1737,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.string "extracted_merchant_url"
     t.string "extracted_merchant_zip_code"
     t.boolean "data_extracted", default: false, null: false
-    t.integer "textual_content_source", default: 0
     t.string "textual_content_bidx"
+    t.integer "textual_content_source", default: 0
     t.index ["receiptable_type", "receiptable_id"], name: "index_receipts_on_receiptable_type_and_receiptable_id"
     t.index ["textual_content_bidx"], name: "index_receipts_on_textual_content_bidx"
     t.index ["user_id"], name: "index_receipts_on_user_id"
@@ -1764,8 +1763,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.boolean "migrated_from_legacy_stripe_account", default: false
     t.text "message"
     t.boolean "anonymous", default: false, null: false
-    t.boolean "tax_deductible", default: true, null: false
     t.boolean "fee_covered", default: false, null: false
+    t.boolean "tax_deductible", default: true, null: false
     t.index ["event_id"], name: "index_recurring_donations_on_event_id"
     t.index ["stripe_subscription_id"], name: "index_recurring_donations_on_stripe_subscription_id", unique: true
     t.index ["url_hash"], name: "index_recurring_donations_on_url_hash", unique: true
@@ -1818,8 +1817,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.integer "expense_number", null: false
     t.datetime "deleted_at", precision: nil
     t.string "type"
-    t.integer "category"
     t.decimal "value", default: "0.0", null: false
+    t.integer "category"
     t.index ["approved_by_id"], name: "index_reimbursement_expenses_on_approved_by_id"
     t.index ["reimbursement_report_id"], name: "index_reimbursement_expenses_on_reimbursement_report_id"
   end
@@ -1960,8 +1959,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.boolean "is_platinum_april_fools_2023"
     t.bigint "subledger_id"
     t.boolean "lost_in_shipping", default: false
-    t.integer "stripe_card_personalization_design_id"
     t.boolean "initially_activated", default: false, null: false
+    t.integer "stripe_card_personalization_design_id"
     t.boolean "cash_withdrawal_enabled", default: false
     t.datetime "canceled_at"
     t.index ["event_id"], name: "index_stripe_cards_on_event_id"

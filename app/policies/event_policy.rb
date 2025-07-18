@@ -152,6 +152,14 @@ class EventPolicy < ApplicationPolicy
     auditor_or_reader?
   end
 
+  def projects?
+    admin_or_user?
+  end
+  
+  def create_project?
+    admin_or_manager?
+  end
+
   def donation_overview?
     show? && record.approved? && record.plan.donations_enabled?
   end
