@@ -1,6 +1,6 @@
 <%# locals: (goal: nil, percentage: 0, is_email: false, block: nil) %>
 
-<%= turbo_frame_tag "block_#{block.id}", class: "donationGoal relative card shadow-none border flex flex-col py-2 my-2" do %>
+<%= render "announcements/blocks/block_shell", block:, type: "donationGoal", is_email: do %>
   <% if goal.nil? %>
     <p>This organization doesn't have a donation goal yet! Organizers can configure one in the organization settings.</p>
     <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
