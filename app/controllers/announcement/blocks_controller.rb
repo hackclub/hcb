@@ -2,6 +2,8 @@
 
 class Announcement
   class BlocksController < ApplicationController
+    before_action :set_block, except: :create
+
     def create
       block = Announcement::Block.new(block_params.merge(parameters: JSON.parse(params[:parameters])))
 
@@ -13,24 +15,24 @@ class Announcement
     end
 
     def show
-      block = Announcement::Block.find(params[:id])
+      authorize @block, policy_class: Announcement::BlockPolicy
 
-      authorize block, policy_class: Announcement::BlockPolicy
-
-      render json: { id: block.id, html: block.rendered_html }
+      render json: { id: @block.id, html: @block.rendered_html }
     end
 
     def refresh
-      block = Announcement::Block.find(params[:id])
+      authorize @block, policy_class: Announcement::BlockPolicy
 
-      authorize block, policy_class: Announcement::BlockPolicy
+      @block.refresh!
 
-      block.refresh!
-
-      render html: block.render
+      render html: @block.render
     end
 
     private
+
+    def set_block
+      @block = Announcement::Block.find(params[:id])
+    end
 
     def block_params
       params.permit(:type, :announcement_id)
