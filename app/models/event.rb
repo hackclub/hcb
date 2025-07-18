@@ -770,6 +770,13 @@ class Event < ApplicationRecord
     organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
   end
 
+  def organizer_contact_emails
+    emails = users.map(&:email_address_with_name)
+    emails << config.contact_email if config.contact_email.present?
+
+    emails
+  end
+
   private
 
   def point_of_contact_is_admin
