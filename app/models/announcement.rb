@@ -46,7 +46,7 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
-        AnnouncementPublishedJob.perform_later(announcement: self)
+        Announcement::PublishedJob.perform_later(announcement: self)
       end
     end
 
