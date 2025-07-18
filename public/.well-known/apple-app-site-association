@@ -35,6 +35,10 @@
             "exclude": true
           },
           {
+            "/": "/my/*",
+            "exclude": true
+          },
+          {
             "/": "/?*",
             "comment": "Organization homepages"
           }

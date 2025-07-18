@@ -28,7 +28,7 @@ demo_event = Event.create_with(
   created_at: 7.days.ago
 ).find_or_create_by!(slug: "devhacks")
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: demo_event,
   user:,
   sender: user,
@@ -44,7 +44,7 @@ non_transparent_event = Event.create_with(
   is_public: false
 ).find_or_create_by!(slug: "expensicon23")
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: non_transparent_event,
   user:,
   sender: user,
@@ -60,7 +60,7 @@ transparent_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(slug: "hack_the_seas")
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: transparent_event,
   user:,
   sender: user,
@@ -76,7 +76,7 @@ incoming_fees_event = Event.create_with(
   is_public: false
 ).find_or_create_by!(id: EventMappingEngine::EventIds::INCOMING_FEES)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: incoming_fees_event,
   user:,
   sender: user,
@@ -92,7 +92,7 @@ hack_club_bank_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: hack_club_bank_event,
   user:,
   sender: user,
@@ -108,7 +108,7 @@ noevent_event = Event.create_with(
   is_public: false
 ).find_or_create_by!(id: EventMappingEngine::EventIds::NOEVENT)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: noevent_event,
   user:,
   sender: user,
@@ -124,7 +124,7 @@ hackathon_grant_fund_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: hackathon_grant_fund_event,
   user:,
   sender: user,
@@ -140,7 +140,7 @@ winter_hardware_wonderland_grant_fund_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: winter_hardware_wonderland_grant_fund_event,
   user:,
   sender: user,
@@ -156,7 +156,7 @@ argosy_grant_fund_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: argosy_grant_fund_event,
   user:,
   sender: user,
@@ -172,7 +172,7 @@ first_transparency_grant_fund_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: first_transparency_grant_fund_event,
   user:,
   sender: user,
@@ -188,7 +188,7 @@ hack_foundation_interest_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: hack_foundation_interest_event,
   user:,
   sender: user,
@@ -204,7 +204,7 @@ reimbursement_clearing_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: reimbursement_clearing_event,
   user:,
   sender: user,
@@ -220,7 +220,7 @@ svb_sweeps_event = Event.create_with(
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::SVB_SWEEPS)
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: svb_sweeps_event,
   user:,
   sender: user,

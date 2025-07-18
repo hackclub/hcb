@@ -1,6 +1,6 @@
-<%# locals: (donations: nil, total: 0) %>
+<%# locals: (donations: nil, total: 0, start_date:) %>
 
-<p><strong>Donation summary for <%= 1.month.ago.strftime("%B %e, %Y") %> - <%= Time.now.strftime("%B %e, %Y") %></strong></p>
+<p><strong>Donation summary for <%= start_date.strftime("%B %e, %Y") %> - <%= Time.now.strftime("%B %e, %Y") %></strong></p>
 <ul>
   <% donations.each do |donation| %>
     <li>
@@ -12,4 +12,4 @@
     </li>
   <% end %>
 </ul>
-<p>In total, <strong><%= render_money total %></strong> was raised in the last month!</p>
+<p>In total, <strong><%= render_money total %></strong> was raised!</p>
