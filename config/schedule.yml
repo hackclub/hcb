@@ -216,3 +216,7 @@ weekly_ysws_event_summary_job:
 monthly_follower_summary_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "MonthlyFollowerSummaryJob"
+
+delete_old_template_drafts_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "DeleteOldTemplateDraftsJob"
