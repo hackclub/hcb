@@ -1,7 +1,7 @@
 <%# locals: (event_follows:) %>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_followers">
-  <h2>Followers</h2>
+  <%= modal_header "Followers" %>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% event_follows.each do |event_follow| %>
       <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
