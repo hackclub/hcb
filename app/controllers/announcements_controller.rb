@@ -57,6 +57,10 @@ class AnnouncementsController < ApplicationController
     @announcement.transaction do
       @announcement.update!(announcement_params.merge(content: ProsemirrorService::Renderer.set_html(content_hash), author: current_user))
       @announcement.mark_draft! if @announcement.template_draft?
+
+      if params[:announcement][:draft] == "false" && !@announcement.published?
+        @announcement.mark_published!
+      end
     end
 
     block_ids = ProsemirrorService::Renderer.block_ids(content_hash)

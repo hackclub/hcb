@@ -17,6 +17,7 @@ export default class extends Controller {
   static values = {
     content: String,
     announcementId: Number,
+    autosave: Boolean
   }
 
   editor = null
@@ -69,7 +70,9 @@ export default class extends Controller {
       },
       content,
       onUpdate: () => {
-        debouncedSubmit(true)
+        if (this.autosaveValue) {
+          debouncedSubmit(true)
+        }
       },
     })
   }
