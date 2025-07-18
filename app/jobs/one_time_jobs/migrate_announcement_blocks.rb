@@ -17,7 +17,7 @@ module OneTimeJobs
                   end
 
           if block.present?
-            node["attrs"] = { "id" => block.id }
+            node["attrs"] = { "id" => block.id, "type" => block.type }
           end
         end
 
