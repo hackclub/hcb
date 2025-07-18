@@ -741,6 +741,7 @@ Rails.application.routes.draw do
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
+    get "card_grants", to: "events#card_grant_overview", as: :card_grant_overview
 
     resources :follows, only: [:create], controller: "event/follows"
 
