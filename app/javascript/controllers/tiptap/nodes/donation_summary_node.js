@@ -7,7 +7,7 @@ export const DonationSummaryNode = Node.create({
   priority: 2000,
   addAttributes() {
     return {
-      startDate: {},
+      start_date: {},
       id: {},
       html: {}
     }
