@@ -1,3 +1,5 @@
+<%# locals: (form:, default_selected: "") %>
+
 <div class="field field--select w-100"
      data-controller="form-hide-field"
      data-form-hide-field-condition-value="false">
@@ -8,7 +10,7 @@
         ["❌ Won't sign the contract", "false"],
       ],
       { include_blank: "Select a contract signee status",
-        selected: "true"
+        selected: default_selected
       },
       { required: true, style: "width: 100%",
         data: {

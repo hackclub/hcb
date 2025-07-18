@@ -14,10 +14,6 @@ export default class extends Controller {
   toggle() {
     const selectedValue = this.selectTarget.value
 
-    if (selectedValue === this.conditionValue) {
-      this.fieldTarget.style.display = 'none'
-    } else {
-      this.fieldTarget.style.display = 'block'
-    }
+    this.fieldTarget.hidden = selectedValue === this.conditionValue
   }
 }

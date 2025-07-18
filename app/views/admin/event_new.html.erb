@@ -17,7 +17,7 @@
       <%= form.email_field :organizer_email, placeholder: "Email Address", value: params[:organizer_email], required: false %>
     </p>
 
-    <%= render "organizer_position_invites/admin_signee_check", form: form %>
+    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: true %>
 
     <p>
       <%= form.label :country %>
