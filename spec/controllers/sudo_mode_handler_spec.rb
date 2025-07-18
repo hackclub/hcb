@@ -244,11 +244,11 @@ RSpec.describe SudoModeHandler do
       logged_in_context => { user:, login: initial_login, user_session: }
       login = create(:login, user:, initial_login:)
 
-      stub_login_service do |instance, login|
+      stub_login_service do |instance, service_login|
         expect(instance).to(
           receive(:process_login_code)
             .with(code: "123-456", sms: false)
-            .and_invoke(->(**) { login.update!(authenticated_with_email: true) })
+            .and_invoke(->(**) { service_login.update!(authenticated_with_email: true) })
         )
       end
 
@@ -272,11 +272,11 @@ RSpec.describe SudoModeHandler do
       logged_in_context => { user:, login: initial_login, user_session: }
       login = create(:login, user:, initial_login:)
 
-      stub_login_service do |instance, login|
+      stub_login_service do |instance, service_login|
         expect(instance).to(
           receive(:process_login_code)
             .with(code: "123-456", sms: true)
-            .and_invoke(->(**) { login.update!(authenticated_with_sms: true) })
+            .and_invoke(->(**) { service_login.update!(authenticated_with_sms: true) })
         )
       end
 
@@ -300,11 +300,11 @@ RSpec.describe SudoModeHandler do
       logged_in_context => { user:, login: initial_login, user_session: }
       login = create(:login, user:, initial_login:)
 
-      stub_login_service do |instance, login|
+      stub_login_service do |instance, service_login|
         expect(instance).to(
           receive(:process_totp)
             .with(code: "123-456")
-            .and_invoke(->(**) { login.update!(authenticated_with_totp: true) })
+            .and_invoke(->(**) { service_login.update!(authenticated_with_totp: true) })
         )
       end
 
@@ -330,14 +330,14 @@ RSpec.describe SudoModeHandler do
 
       session[:webauthn_challenge] = "WEBAUTHN_CHALLENGE"
 
-      stub_login_service do |instance, login|
+      stub_login_service do |instance, service_login|
         expect(instance).to(
           receive(:process_webauthn)
             .with(
               raw_credential: "{\"test\": \"webauthn_response\"}",
               challenge: "WEBAUTHN_CHALLENGE",
             )
-            .and_invoke(->(**) { login.update!(authenticated_with_webauthn: true) })
+            .and_invoke(->(**) { service_login.update!(authenticated_with_webauthn: true) })
         )
       end
 
@@ -382,7 +382,7 @@ RSpec.describe SudoModeHandler do
       logged_in_context => { user:, login: initial_login, user_session: }
       login = create(:login, user:, initial_login:)
 
-      stub_login_service do |instance, login|
+      stub_login_service do |instance, _service_login|
         expect(instance).to(
           receive(:process_login_code)
             .with(code: "123-456", sms: false)
