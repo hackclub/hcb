@@ -24,6 +24,7 @@
 class Announcement
   class Block < ApplicationRecord
     belongs_to :announcement
+    has_one :event, through: :announcement
 
     after_create :refresh!
 
