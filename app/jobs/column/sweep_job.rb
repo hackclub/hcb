@@ -12,11 +12,11 @@ module Column
       difference = balance - FLOATING_BALANCE
 
       if balance < MINIMUM_AVG_BALANCE
-        Airbrake.notify("Column available balance under #{MINIMUM_AVG_BALANCE}")
+        Rails.error.unexpected "Column available balance under #{MINIMUM_AVG_BALANCE}"
       end
 
       if difference.abs > 200_000_00 && difference.negative? && !Flipper.enabled?(:bypass_next_column_sweep_manual_review) # if negative, it is a transfer from SVB (FS Main) to Column
-        Airbrake.notify("Column::SweepJob > $200,000. Requires human approval by enabling `bypass_next_column_sweep_manual_review` Flipper flag.")
+        Rails.error.unexpected "Column::SweepJob > $200,000. Requires human approval by enabling `bypass_next_column_sweep_manual_review` Flipper flag."
         return
       end
       Flipper.disable(:bypass_next_column_sweep_manual_review)

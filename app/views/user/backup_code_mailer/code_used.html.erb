@@ -1,0 +1,23 @@
+<p>
+  Hey <%= @user.first_name %>,
+</p>
+
+<p>
+  You've just used one of your backup codes to login to
+  <% if @user.backup_codes.active.size == 0 %>
+    HCB and have none left. We strongly urge you to regenerate more codes at your earliest convenience in your <%= link_to "user settings", security_user_url(@user) %> to ensure you can always access your account.
+  <% elsif @user.backup_codes.active.size <= 3 %>
+    HCB and only have <%= @user.backup_codes.active.size %> left. We strongly urge you to regenerate more codes at your earliest convenience in your <%= link_to "user settings", security_user_url(@user) %> to ensure you can always access your account.
+  <% else %>
+    HCB.
+  <% end %>
+</p>
+
+<p>
+  If this was you, great! If you didn't do this, please <%= mail_to "hcb@hackclub.com", "contact us", subject: "Unauthorized access with backup code" %> immediately.
+</p>
+
+<p>
+  Thanks,<br>
+  The HCB Team
+</p>

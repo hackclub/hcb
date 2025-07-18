@@ -35,7 +35,7 @@
 <% if @event.robotics_team? %>
   <div class="card pb0 mb3 promo-robotics" id="bin">
     <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 py-4 p my0 flex items-start smoke justify-center">
+      <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
         <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
         Fee Waiver
       </h3>
@@ -143,7 +143,9 @@
     <%= link_to "here", "https://stickerninja.com/", target: :_blank %>
     to place an order.
     <% if @perks_available %>
-      <br><br><strong>This discount code is reusable and exclusively for HCB users.
+      <br>
+      <br>
+      <strong>This discount code is reusable and exclusively for HCB users.
         Sharing it outside of your organization may result in everyone using HCB losing the perk.
       </strong>
     <% end %>
@@ -263,7 +265,7 @@
     <p class="mb0">
       The days of needing thick leather wallets are coming to an end. Have physical HCB cards, but not sure how
       to keep them?
-      We'll ship you a <a href="https://hack.af/minimalist-wallet" target="_blank">minimalist wallet</a>—durable with a
+      We'll ship you a <%= link_to "minimalist wallet", "https://hack.af/minimalist-wallet", target: :_blank %>—durable with a
       slim form factor designed to carry the basic necessities. Each wallet is individually printed and personally shipped
       out by the HCB team.
     </p>
@@ -343,8 +345,8 @@
     </div>
 
     <p class="muted">
-      *To qualify for these tiers, add the <a href="https://www.stickermule.com/press" target="_blank">Sticker Mule logo</a> to your website
-      that links back to <a href="https://www.stickermule.com" target="_blank">stickermule.com</a>,
+      *To qualify for these tiers, add the <%= link_to "Sticker Mule logo", "https://www.stickermule.com/press", target: :_blank %> to your website
+      that links back to <%= link_to "stickermule.com", "https://www.stickermule.com", target: :_blank %>,
       and to any other materials like hackathon T-shirts.
     </p>
   </div>
@@ -409,7 +411,11 @@
     </div>
 
     <p>
-      Since you run on HCB, you can issue <a href="https://presidentialserviceawards.gov" target="_blank">Presidential Volunteer Service Awards</a> to volunteers (including to yourself and team members).
+      Since you run on HCB, you can issue
+      <%= link_to "Presidential Volunteer Service Awards",
+        "https://presidentialserviceawards.gov",
+        target: :_blank %>
+      to volunteers (including to yourself and team members).
       While applying you'll be asked to provide evidence for the submitted volunteer hours (instructions and examples are provided on the application form).
     </p>
 
@@ -444,9 +450,13 @@
     </table>
 
     <section class="card__banner card__darker secondary border-top">
-    <p class="my0">
-      Only 🇺🇸 US citizens and LPRs who currently reside within the US are eligible to receive the award. You can see all the <a href="https://presidentialserviceawards.gov/eligibility#volunteers" target="_blank">volunteer eligibility details</a> if you have any questions.
-    </p>
+      <p class="my0">
+        Only 🇺🇸 US citizens and LPRs who currently reside within the US are eligible to receive the award. You can see all the
+        <%= link_to "volunteer eligibility details",
+          "https://presidentialserviceawards.gov/eligibility#volunteers",
+          target: :_blank %>
+        if you have any questions.
+      </p>
     </section>
   </div>
 </details>

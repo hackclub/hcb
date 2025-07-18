@@ -149,6 +149,9 @@ Rails.application.routes.draw do
     post "generate_totp"
     post "enable_totp"
     post "disable_totp"
+    post "generate_backup_codes"
+    post "activate_backup_codes"
+    post "disable_backup_codes"
     patch "stripe_cardholder_profile", to: "stripe_cardholders#update_profile"
 
     resources :webauthn_credentials, only: [:create, :destroy] do
@@ -186,6 +189,9 @@ Rails.application.routes.draw do
       # TOTP
       get "totp"
       post "totp"
+
+      get "backup_code"
+      post "backup_code"
 
       post "complete"
     end
@@ -689,8 +695,18 @@ Rails.application.routes.draw do
 
   resources :follows, only: [:destroy], controller: "event/follows"
 
-  resources :announcements, path: "/announcements", except: [:index, :new] do
-    post "publish"
+  resources :announcements, except: [:index, :new] do
+    member do
+      post "publish"
+    end
+  end
+
+  namespace "announcements" do
+    resources :blocks, only: [:create, :show] do
+      member do
+        post "refresh"
+      end
+    end
   end
 
   get "/events" => "events#index"
@@ -830,6 +846,7 @@ Rails.application.routes.draw do
 
   scope module: "referral" do
     resources :programs, only: [:show], path: "referrals"
+    resources :programs, only: [:show], path: "from/*slug"
   end
 
   # rewrite old event urls to the new ones not prefixed by /events/

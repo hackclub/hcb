@@ -7,9 +7,18 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
+import csrf from '../common/csrf'
+import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
+import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
+import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
+
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
-  static values = { content: String }
+  static values = {
+    content: String,
+    announcementId: Number,
+    autosave: Boolean,
+  }
 
   editor = null
 
@@ -17,6 +26,20 @@ export default class extends Controller {
     const debouncedSubmit = debounce(this.submit.bind(this), 1000, {
       leading: true,
     })
+
+    let content
+    if (this.hasContentValue) {
+      content = JSON.parse(this.contentValue)
+    } else {
+      content = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+          },
+        ],
+      }
+    }
 
     this.editor = new Editor({
       element: this.editorTarget,
@@ -28,19 +51,26 @@ export default class extends Controller {
         }),
         Underline,
         Placeholder.configure({
-          placeholder: 'Write a message to your followers...',
+          placeholder: 'Write a message...',
         }),
         Link,
-        Image,
+        Image.configure({
+          HTMLAttributes: {
+            class: 'max-w-full',
+          },
+        }),
+        DonationGoalNode,
+        HcbCodeNode,
+        DonationSummaryNode,
       ],
       editorProps: {
         attributes: {
           class: 'outline-none',
         },
       },
-      content: this.hasContentValue ? JSON.parse(this.contentValue) : null,
+      content,
       onUpdate: () => {
-        if (this.hasContentValue) {
+        if (this.autosaveValue) {
           debouncedSubmit(true)
         }
       },
@@ -132,5 +162,48 @@ export default class extends Controller {
     }
 
     this.editor.chain().focus().setImage({ src: url }).run()
+  }
+
+  async donationGoal() {
+    const attrs = await this.createBlock('Announcement::Block::DonationGoal')
+    this.editor.chain().focus().addDonationGoal(attrs).run()
+  }
+
+  async hcbCode() {
+    const url = window.prompt('Transaction URL')
+
+    if (url === null || url === '') {
+      return
+    }
+
+    const hcbCode = url.split('/').at(-1)
+
+    const attrs = await this.createBlock('Announcement::Block::HcbCode', {
+      hcb_code: hcbCode,
+    })
+
+    this.editor.chain().focus().addHcbCode(attrs).run()
+  }
+
+  async donationSummary() {
+    const attrs = await this.createBlock('Announcement::Block::DonationSummary')
+    this.editor.chain().focus().addDonationSummary(attrs).run()
+  }
+
+  async createBlock(type, parameters) {
+    const res = await fetch('/announcements/blocks', {
+      method: 'POST',
+      body: JSON.stringify({
+        type,
+        announcement_id: this.announcementIdValue,
+        parameters: JSON.stringify(parameters || {}),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf(),
+      },
+    }).then(r => r.json())
+
+    return res
   }
 }
