@@ -75,13 +75,13 @@ module ProsemirrorService
         ids
       end
 
-      private
-
       def map_nodes(document, &block)
         document["content"] = document["content"].map { |node| map_node(node) { |inner| block.call(inner) } }
 
         document
       end
+
+      private
 
       def map_node(node, &block)
         if node.is_a?(Hash)
