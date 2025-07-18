@@ -2,7 +2,21 @@
 
 module EventService
   class Create
-    def initialize(name:, point_of_contact_id:, emails: [], is_signee: true, country: [], is_public: true, is_indexable: true, approved: false, plan: Event::Plan::Standard, tags: [], can_front_balance: true, demo_mode: false, risk_level: 0)
+    def initialize(name:,
+                   point_of_contact_id:,
+                   cosigner_email:,
+                   include_onboarding_videos:,
+                   emails: [],
+                   is_signee: true,
+                   country: [],
+                   is_public: true,
+                   is_indexable: true,
+                   approved: false,
+                   plan: Event::Plan::Standard,
+                   tags: [],
+                   can_front_balance: true,
+                   demo_mode: false,
+                   risk_level: 0)
       @name = name
       @emails = emails
       @is_signee = is_signee
@@ -16,6 +30,8 @@ module EventService
       @can_front_balance = can_front_balance
       @demo_mode = demo_mode
       @risk_level = risk_level
+      @cosigner_email = cosigner_email
+      @include_onboarding_videos = include_onboarding_videos
     end
 
     def run
@@ -35,7 +51,12 @@ module EventService
         # event.mark_approved! if @approved
 
         @emails.each do |email|
-          OrganizerPositionInviteService::Create.new(event:, sender: point_of_contact, user_email: email, is_signee: @is_signee).run!
+          invite_service = OrganizerPositionInviteService::Create.new(event:, sender: point_of_contact, user_email: email, is_signee: @is_signee)
+          invite_service.run!
+
+          if @is_signee
+            OrganizerPosition::Contract.create(organizer_position_invite: invite_service.model, cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
+          end
         end
 
         event
