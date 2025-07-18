@@ -11,9 +11,9 @@ module OneTimeJobs
                   when "donationGoal"
                     Announcement::Block.create!(type: "Announcement::Block::DonationGoal", announcement:, parameters: {})
                   when "donationSummary"
-                    Announcement::Block.create!(type: "Announcement::Block::DonationSummary", announcement:, parameters: { "start_date" => node["attrs"]["startDate"] })
+                    Announcement::Block.create!(type: "Announcement::Block::DonationSummary", announcement:, parameters: { "start_date" => node["attrs"].present? ? node["attrs"]["startDate"] : nil })
                   when "hcbCode"
-                    Announcement::Block.create!(type: "Announcement::Block::HcbCode", announcement:, parameters: { "hcb_code" => node["attrs"]["code"] })
+                    Announcement::Block.create!(type: "Announcement::Block::HcbCode", announcement:, parameters: { "hcb_code" => node["attrs"].present? ? node["attrs"]["code"] : nil })
                   end
 
           if block.present?
