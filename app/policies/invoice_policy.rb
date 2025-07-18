@@ -3,7 +3,6 @@
 class InvoicePolicy < ApplicationPolicy
   def index?
     return true if user&.auditor?
-    return true if record.blank?
 
     event_ids = record.map(&:sponsor).map(&:event).pluck(:id)
     same_event = event_ids.uniq.size == 1 # same_event is a sanity check that all the records are from the same event
