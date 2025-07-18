@@ -34,7 +34,9 @@ export default class extends Controller {
   }
 
   updateBlogEmbed(theme) {
-    const resolvedTheme = theme === 'system' ? BK.resolveSystemTheme() : theme
-    this.blogOutlet.embedTarget.src = `${this.blogOutlet.embedTarget.src.split('?')[0]}?theme=${resolvedTheme}`
+    if (this.hasBlogOutlet) {
+      const resolvedTheme = theme === 'system' ? BK.resolveSystemTheme() : theme
+      this.blogOutlet.embedTarget.src = `${this.blogOutlet.embedTarget.src.split('?')[0]}?theme=${resolvedTheme}`
+    }
   }
 }

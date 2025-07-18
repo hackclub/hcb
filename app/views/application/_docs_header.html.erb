@@ -7,9 +7,7 @@
       <div style="height: 28px;">
         <%= render partial: "application/theme_toggle" %>
       </div>
-      <% if signed_in? %>
-        <%= render partial: "application/blog_widget" %>
-      <% end %>
+      <%= render partial: "application/blog_widget" %>
 
       <% if signed_in? %>
         <%= button_to logout_users_path,
