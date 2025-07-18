@@ -14,7 +14,7 @@ module Api
       end
 
       expose_associated User do |activity, options|
-        activity.user
+        activity.owner&.is_a?(User) ? activity.owner : activity.user
       end
 
       expose_associated Transaction do |activity, options|
