@@ -158,4 +158,14 @@ module SessionsHelper
       &.where&.not(id: current_session.id)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
   end
+
+  def sudo_mode?
+    current_session&.sudo_mode?
+  end
+
+  def enforce_sudo_mode
+    return if sudo_mode?
+
+    SudoModeHandler.new(controller_instance: self).call
+  end
 end
