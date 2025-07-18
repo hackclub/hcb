@@ -27,7 +27,7 @@ class Announcement
       def render_html(is_email: false)
         hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
 
-        unless hcb_code.event == announcement.event
+        unless hcb_code&.event == announcement.event
           hcb_code = nil
         end
 
