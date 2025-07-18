@@ -9,31 +9,6 @@
   <section>
 
     <%= render partial: "features/preview", locals: {
-          id: "two-factor-authentication",
-          feature_flag: :two_factor_authentication_2024_05_22,
-          name: "Two factor authentication",
-          classes: ["feature-two-factor-authentication"],
-          description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
-          footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
-        } %>
-
-    <%= render partial: "features/preview", locals: {
-          id: "totp",
-          feature_flag: :totp_2024_06_13,
-          name: "Time-based one time passwords",
-          classes: ["feature-totp"],
-          description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
-        } %>
-
-    <%= render partial: "features/preview", locals: {
-          id: "receipt-bin",
-          feature_flag: :receipt_bin_2023_04_07,
-          name: "Receipt Bin",
-          description: "Keeping track of receipts for every transaction can be tiring, and it's easy to forget to upload them. We're introducing a new way to manage receipts: Receipt Bin. After uploading receipts to the Receipt Bin, you can link receipts to transactions or save them for later.",
-          footer: "We also support uploading receipts to your Receipt Bin via emailing and texting!"
-        } %>
-
-    <%= render partial: "features/preview", locals: {
           id: "transaction-popovers",
           feature_flag: :hcb_code_popovers_2023_06_16,
           name: "Popovers",
@@ -49,6 +24,34 @@
 
         <details>
           <summary class="mb2">Past feature previews</summary>
+
+          <%= render partial: "features/preview", locals: {
+                id: "two-factor-authentication",
+                feature_flag: :two_factor_authentication_2024_05_22,
+                fully_shipped: true,
+                name: "Two factor authentication",
+                classes: ["feature-two-factor-authentication"],
+                description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
+                footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
+              } %>
+
+          <%= render partial: "features/preview", locals: {
+                id: "totp",
+                feature_flag: :totp_2024_06_13,
+                fully_shipped: true,
+                name: "Time-based one time passwords",
+                classes: ["feature-totp"],
+                description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
+              } %>
+
+          <%= render partial: "features/preview", locals: {
+                id: "receipt-bin",
+                feature_flag: :receipt_bin_2023_04_07,
+                fully_shipped: true,
+                name: "Receipt Bin",
+                description: "Keeping track of receipts for every transaction can be tiring, and it's easy to forget to upload them. We're introducing a new way to manage receipts: Receipt Bin. After uploading receipts to the Receipt Bin, you can link receipts to transactions or save them for later.",
+                footer: "We also support uploading receipts to your Receipt Bin via emailing and texting!"
+              } %>
 
           <%= render partial: "features/preview", locals: {
                 id: "turbo",
@@ -119,6 +122,7 @@
           <%= render partial: "features/preview", locals: {
                 id: "recently_on_hcb",
                 feature_flag: :recently_on_hcb_2024_05_23,
+                fully_shipped: true,
                 name: "Recently on HCB...",
                 description: "This feature preview adds a panel to your sidebar with things that have happened recently on your organizations, for example, when an invoice is paid or a new team member is invited."
               } %>
@@ -141,6 +145,7 @@
                 id: "sms-receipt-notification",
                 classes: ["feature-sms-receipt-notification"],
                 feature_flag: :sms_receipt_notifications_2022_11_23,
+                fully_shipped: true,
                 name: "SMS Charge Notifications",
                 description: "We're experimenting with new ways to alert people that they need to
             upload a receipt. After opting-in, you'll get a text whenever your

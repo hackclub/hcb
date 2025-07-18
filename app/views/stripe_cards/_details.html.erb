@@ -135,6 +135,18 @@
       <%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, class: "w-fit", tooltip_direction: "e") %>
     </div>
 
+    <% if stripe_card.user.phone_number %>
+      <div class="fs-mask">
+        <strong class="inline-flex items-center" style="gap: 4px">
+          Phone number
+          <%= link_to "#", class: "info tooltipped tooltipped--e", "aria-label": "Seem familiar? This is your number! Use this if asked during checkout :)", style: "display: flex;", data: { turbo: false } do %>
+            <%= inline_icon "info", size: 18, style: "position: unset;" %>
+          <% end %>
+        </strong>
+        <%= copy_to_clipboard(stripe_card.user.pretty_phone_number, class: "w-fit", tooltip_direction: "e") %>
+      </div>
+    <% end %>
+
     <div>
       <strong>Type</strong>
       <%= stripe_card.virtual? ? "Virtual" : "Physical" %>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -448,6 +448,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.string "keyword_lock"
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.boolean "pre_authorization_required", default: false, null: false
+    t.string "banned_merchants"
+    t.string "banned_categories"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
   end
 
@@ -470,6 +472,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.boolean "one_time_use"
     t.boolean "pre_authorization_required", default: false, null: false
     t.text "instructions"
+    t.string "banned_merchants"
+    t.string "banned_categories"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
