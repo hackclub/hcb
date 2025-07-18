@@ -60,6 +60,8 @@ class Announcement < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :event
 
+  validates :title, presence: true, if: :published?
+
   before_save :autofollow_organizers
 
   def render

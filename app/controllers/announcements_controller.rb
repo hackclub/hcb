@@ -85,9 +85,11 @@ class AnnouncementsController < ApplicationController
   def publish
     authorize @announcement
 
-    @announcement.mark_published!
-
-    flash[:success] = "Published announcement"
+    if @announcement.mark_published!
+      flash[:success] = "Published announcement"
+    else
+      flash[:error] = @announcement.errors.full_messages.to_sentence
+    end
 
     redirect_to announcement_path(@announcement)
   end
