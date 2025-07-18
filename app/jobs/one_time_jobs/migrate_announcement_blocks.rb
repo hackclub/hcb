@@ -4,7 +4,7 @@ module OneTimeJobs
   class MigrateAnnouncementBlocks
     def self.perform
       Announcement.find_each do |announcement|
-        document = JSON.parse(announcement.content)
+        document = announcement.content
 
         new_document = ProsemirrorService::Renderer.map_nodes document do |node|
           block = case node["type"]
