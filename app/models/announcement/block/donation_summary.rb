@@ -29,7 +29,7 @@ class Announcement
         donations = announcement.event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..).order(:created_at)
         total = donations.sum(:amount)
 
-        Announcement::BlocksController.renderer.render partial: "announcements/blocks/donation_summary", locals: { donations:, total:, start_date:, is_email:, block: self }
+        Announcements::BlocksController.renderer.render partial: "announcements/blocks/donation_summary", locals: { donations:, total:, start_date:, is_email:, block: self }
       end
 
     end

@@ -49,7 +49,7 @@ module ProsemirrorService
         begin
           Announcement::Block.find(node.attrs.id).render(event:, is_email:)
         rescue ActiveRecord::RecordNotFound
-          Announcement::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
+          Announcements::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
         end
       end
 

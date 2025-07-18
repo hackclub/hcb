@@ -31,7 +31,7 @@ class Announcement
           hcb_code = nil
         end
 
-        Announcement::BlocksController.renderer.render partial: "announcements/blocks/hcb_code", locals: { hcb_code:, event: announcement.event, is_email:, block: self }
+        Announcements::BlocksController.renderer.render partial: "announcements/blocks/hcb_code", locals: { hcb_code:, event: announcement.event, is_email:, block: self }
       end
 
     end

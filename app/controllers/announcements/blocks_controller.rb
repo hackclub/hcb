@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Announcement
+module Announcements
   class BlocksController < ApplicationController
     before_action :set_block, except: :create
 

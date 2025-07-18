@@ -701,9 +701,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :blocks, only: [:create, :show], controller: "announcement/blocks" do
-    member do
-      post "refresh"
+  namespace "announcements" do
+    resources :blocks, only: [:create, :show] do
+      member do
+        post "refresh"
+      end
     end
   end
 

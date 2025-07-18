@@ -28,7 +28,7 @@ class Announcement
         goal = announcement.event.donation_goal
         percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
 
-        Announcement::BlocksController.renderer.render partial: "announcements/blocks/donation_goal", locals: { goal:, percentage:, is_email:, block: self }
+        Announcements::BlocksController.renderer.render partial: "announcements/blocks/donation_goal", locals: { goal:, percentage:, is_email:, block: self }
       end
 
     end

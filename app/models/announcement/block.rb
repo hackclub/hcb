@@ -37,14 +37,14 @@ class Announcement
 
     def render(event: nil, is_email: false)
       if event.present? && event != announcement.event
-        Announcement::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
+        Announcements::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
       else
         render_html is_email:
       end
     end
 
     def render_html(is_email: false)
-      Announcement::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
+      Announcements::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
     end
 
   end

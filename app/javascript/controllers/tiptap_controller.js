@@ -188,7 +188,7 @@ export default class extends Controller {
   }
 
   async createBlock(type, parameters) {
-    const res = await fetch('/blocks', {
+    const res = await fetch('/announcements/blocks', {
       method: 'POST',
       body: JSON.stringify({
         type,
