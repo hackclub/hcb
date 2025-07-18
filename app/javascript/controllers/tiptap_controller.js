@@ -16,7 +16,7 @@ export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
   static values = {
     content: String,
-    announcementId: Number
+    announcementId: Number,
   }
 
   editor = null
@@ -162,7 +162,7 @@ export default class extends Controller {
   }
 
   async donationGoal() {
-    const attrs = await this.createBlock("Announcement::Block::DonationGoal");
+    const attrs = await this.createBlock('Announcement::Block::DonationGoal')
     this.editor.chain().focus().addDonationGoal(attrs).run()
   }
 
@@ -175,30 +175,32 @@ export default class extends Controller {
 
     const hcbCode = url.split('/').at(-1)
 
-    const attrs = await this.createBlock("Announcement::Block::HcbCode", { hcb_code: hcbCode });
+    const attrs = await this.createBlock('Announcement::Block::HcbCode', {
+      hcb_code: hcbCode,
+    })
 
     this.editor.chain().focus().addHcbCode(attrs).run()
   }
 
   async donationSummary() {
-    const attrs = await this.createBlock("Announcement::Block::DonationSummary");
+    const attrs = await this.createBlock('Announcement::Block::DonationSummary')
     this.editor.chain().focus().addDonationSummary(attrs).run()
   }
 
   async createBlock(type, parameters) {
-    const res = await fetch("/blocks", {
-      method: "POST",
+    const res = await fetch('/blocks', {
+      method: 'POST',
       body: JSON.stringify({
         type,
         announcement_id: this.announcementIdValue,
-        parameters: JSON.stringify(parameters || {})
+        parameters: JSON.stringify(parameters || {}),
       }),
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-Token': csrf(),
       },
-    }).then(r => r.json());
+    }).then(r => r.json())
 
-    return res;
+    return res
   }
 }

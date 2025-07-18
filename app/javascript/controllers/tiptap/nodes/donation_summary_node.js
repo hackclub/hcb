@@ -9,14 +9,11 @@ export const DonationSummaryNode = Node.create({
     return {
       start_date: {},
       id: {},
-      html: {}
+      html: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
-    return [
-      'node-view',
-      HTMLAttributes
-    ]
+    return ['node-view', HTMLAttributes]
   },
   addNodeView() {
     return ({ node }) => {
@@ -29,7 +26,7 @@ export const DonationSummaryNode = Node.create({
   addCommands() {
     return {
       addDonationSummary:
-        (attrs) =>
+        attrs =>
         ({ commands }) => {
           return commands.insertContent({ type: this.name, attrs })
         },

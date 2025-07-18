@@ -9,14 +9,11 @@ export const HcbCodeNode = Node.create({
     return {
       code: {},
       id: {},
-      html: {}
+      html: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
-    return [
-      'node-view',
-      HTMLAttributes
-    ]
+    return ['node-view', HTMLAttributes]
   },
   addNodeView() {
     return ({ node }) => {

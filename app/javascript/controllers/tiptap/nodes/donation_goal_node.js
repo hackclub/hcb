@@ -8,14 +8,11 @@ export const DonationGoalNode = Node.create({
   addAttributes() {
     return {
       id: {},
-      html: {}
+      html: {},
     }
   },
   renderHTML({ HTMLAttributes }) {
-    return [
-      'node-view',
-      HTMLAttributes
-    ]
+    return ['node-view', HTMLAttributes]
   },
   addNodeView() {
     return ({ node }) => {
