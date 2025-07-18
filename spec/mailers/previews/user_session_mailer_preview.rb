@@ -7,4 +7,10 @@ class UserSessionMailerPreview < ActionMailer::Preview
     UserSessionMailer.new_login(user_session:)
   end
 
+  def first_login
+    user = User.last
+
+    UserSessionMailer.first_login(user:)
+  end
+
 end
