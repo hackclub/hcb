@@ -3,7 +3,7 @@
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>
 
-  <div class="card flex flex-col items-start gap-2 p0">
+  <div class="card flex flex-col items-start gap-2 p0 pb2 mb3">
     <div class="event_settings__banner">
       <% if @event.background_image.attached? %>
         <%= image_tag @event.background_image, height: 200, class: "banner__image" %>
@@ -76,8 +76,8 @@
           <%= form.text_area :description, placeholder: "A short description of your organization’s goals.", disabled: %>
         </div>
       </div>
-      <div class="md:flex items-center">
-        <div class="float-left flex gap-3 items-center flex-1 max-w-2xl mr-auto">
+      <div class="md:flex items-end">
+        <div class="float-left flex gap-3 items-start flex-1 max-w-xl mr-auto">
           <%= inline_icon "info", size: 24, class: "muted" %>
           <p class="h5 muted m0">
             Your logo is displayed on the
@@ -107,7 +107,7 @@
         <% end %>
       </div>
     </div>
-    <ul class="mt0 pl2 mb2">
+    <ul class="mt0 pl4 mb2">
       <li>Unauthenticated users will be able to access a <strong>read-only</strong> version of your account.</li>
       <li>None of HCB’s pages will change for signed in team members.</li>
       <li>We’ll do our best to redact contact info, but we can’t guarantee it doesn't show up in these
@@ -164,9 +164,9 @@
   <div class="card mb3">
     <div class="field">
       <%= form.fields_for :config do |config| %>
-        <%= config.label :contact_email, "Your team's contact email" %>
+        <%= config.label :contact_email, "Organization contact email" %>
         <p class="h5 muted mt0 mb1">
-          If you'd prefer for the HCB operations team to reach out to a shared email, configure that here.
+          If you’d prefer for the HCB operations team to reach out to a shared email, configure that here.
         </p>
         <%= config.email_field :contact_email, placeholder: "team@lioncityhacks.com", disabled: %>
       <% end %>

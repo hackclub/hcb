@@ -1,6 +1,6 @@
 <% if page.current? %>
   <li class="active">
-    <%= content_tag :a, page, data: { remote: }, rel: page.rel %>
+    <%= content_tag :a, page, data: { remote: }, rel: page.rel, "aria-current": "page" %>
   </li>
 <% else %>
   <li>
