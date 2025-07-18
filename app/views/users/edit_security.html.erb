@@ -92,6 +92,36 @@
       Sign in to HCB using your fingerprint or a hardware security key.
     </div>
   <% end %>
+  <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="backup-codes">
+    <legend class="flex flex-row justify-start items-center">
+      <span class="h2 bold">Backup codes</span>
+    </legend>
+    <div class="flex flex-row gap-x-2">
+      <% if @user.backup_codes_enabled? %>
+        <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your current codes immediately." } do %>
+          <%= inline_icon "minus", size: home_action_size %>
+          Disable backup codes
+        <% end %>
+      <% end %>
+      <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :POST, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'" do %>
+        <%= inline_icon "plus", size: home_action_size %>
+        <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
+      <% end %>
+    </div>
+  </div>
+  <%= turbo_frame_tag :backup_codes_card do %>
+    <div class="card border b--info mb3">
+      <% if @user.backup_codes_enabled? %>
+        <p>
+          You last generated a set of 10 backup codes on <span class="font-bold"><%= @user.backup_codes.where(aasm_state: [:active, :used]).maximum(:created_at).strftime("%B %e, %Y") %></span>, of which <span class="font-bold"><%= @user.backup_codes.active.size %></span> are still valid. If you'd like to regenerate your backup codes, click the button above to do so. Generating a new set of codes will invalidate your current codes.
+        </p>
+      <% else %>
+        <p>
+          You haven't generated any backup codes yet. We highly recommend doing so in case you lose access to your other two-factor authentication methods. Click the button above to generate a set of 10 backup codes.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
   <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2">
     <legend class="flex flex-row justify-start items-center">
       <span class="h2 bold">Sessions</span>
