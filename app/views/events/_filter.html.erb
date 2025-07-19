@@ -1,4 +1,4 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
@@ -110,6 +110,14 @@
         <div class="badge badge-large bg-muted">
           <%= @type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
           <%= link_to event_ledger_url(@event, upsert_query_params(type: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @direction %>
+        <div class="badge badge-large bg-muted">
+          <%= @direction.humanize.gsub("In", "Incoming").gsub("Out", "Outgoing") %>
+          <%= link_to event_ledger_url(@event, upsert_query_params(direction: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
