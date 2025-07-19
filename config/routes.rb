@@ -570,7 +570,8 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v4 do
       defaults format: :json do
-        resource :user do
+        resource :user, only: [] do
+          get "/", to: "users#me", as: "user"
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
@@ -583,6 +584,12 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
+        end
+
+        resources :users, only: [:show] do
+          collection do
+            get "/by_email/:email", to: "users#by_email", as: "by_email", constraints: { email: /[^\/]+/ }
+          end
         end
 
         resources :events, path: "organizations", only: [:show] do
