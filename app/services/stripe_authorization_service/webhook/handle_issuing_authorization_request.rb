@@ -63,7 +63,7 @@ module StripeAuthorizationService
 
         return decline_with_reason!("cash_withdrawals_not_allowed") if cash_withdrawal? && !card.cash_withdrawal_enabled?
 
-        return decline_with_reason!("user_cards_locked") if card.user.cards_locked?
+        return decline_with_reason!("user_cards_locked") if card.user.cards_locked? && !event.plan.is_a?(Event::Plan::SalaryAccount)
 
         set_metadata!
 
