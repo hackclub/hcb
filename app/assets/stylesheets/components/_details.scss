@@ -8,7 +8,7 @@
 .details > div,
 .details__row {
   display: grid;
-  align-items: center;
+  align-items: baseline;
   margin: 0;
   padding-bottom: 0.25rem;
   padding-top: 0.25rem;
@@ -16,7 +16,7 @@
 
   strong {
     font-weight: 400;
-    color: map-get($palette, slate);
+    color: map-get($palette, muted);
   }
 
   @media (min-width: 32em) {

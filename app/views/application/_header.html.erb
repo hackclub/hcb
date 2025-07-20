@@ -3,11 +3,6 @@
     <% unless request.path.include?("auth") || request.path.include?("logins") %>
       <%= render partial: "application/theme_toggle" %>
     <% end %>
-    <% if signed_in? %>
-      <div class="ml2">
-        <%= render partial: "application/blog_widget" %>
-      </div>
-    <% end %>
   </div>
 
   <%= render partial: "application/logo" %>

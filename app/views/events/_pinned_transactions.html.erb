@@ -1,6 +1,6 @@
 <% @show_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
 <% if @event.pinned_hcb_codes.any? %>
-  <div class="flex gap-4 mt-4 pinned__container">
+  <div class="flex gap-4 my-4 pinned__container">
     <% @event.pinned_hcb_codes.each do |pin| %>
      <% if @show_popovers %>
         <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= pin.__id__ %>" data-state-url="<%= hcb_code_path(pin.hcb_code.local_hcb_code) %>" data-state-title="<%= pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false) %>">
@@ -11,14 +11,14 @@
         </section>
       <% end %>
 
-      <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
-        <%= form_with url: pin_hcb_code_path(pin.hcb_code, event: @event), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
+      <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card w-100 flex flex-col black" do %>
+        <%= form_with url: pin_hcb_code_path(pin.hcb_code), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
           <button type="submit" class="pinned__transaction__pin pointer pop tooltipped tooltipped--w" aria-label="Unpin" style="margin-left: auto" onclick="event.stopPropagation()">
             <%= inline_icon "pin-remove", size: 28 %>
           </button>
         <% end if organizer_signed_in? %>
 
-        <p class="block font-bold m0 flex items-center g2">
+        <p class="font-bold m0 flex items-center g2">
           <%= format_date pin.hcb_code.date %>
           <% if pin.hcb_code.canonical_transactions.none? %>
             <% if pin.hcb_code.pt&.declined? %>

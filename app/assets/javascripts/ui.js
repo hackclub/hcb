@@ -117,6 +117,19 @@ $(document).keydown(function (e) {
 })
 
 $(document).on('turbo:load', function () {
+  // Persist sidebar scroll position while navigating between pages
+  document.addEventListener("turbo:before-cache", () => {
+    const sidebar = document.getElementById("sidebar-scroll-container");
+    if (sidebar) sessionStorage.setItem("sidebarScrollPosition", sidebar.scrollTop)
+  });
+
+  document.addEventListener("turbo:load", () => {
+    const sidebar = document.getElementById("sidebar-scroll-container");
+    if (!sidebar) return;
+    const scrollPosition = sessionStorage.getItem("sidebarScrollPosition");
+    if (scrollPosition) sidebar.scrollTop = scrollPosition;
+  });
+
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }
@@ -215,7 +228,7 @@ $(document).on('turbo:load', function () {
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
       event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch {}
+    } catch { }
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
@@ -418,7 +431,6 @@ $(document).on('turbo:load', function () {
       perspective: 1500,
       glare: true,
       maxGlare: 0.25,
-      scale: 1.0625,
     })
   const disableTilt = () => tiltElement.tilt.destroy.call(tiltElement)
   const setTilt = function () {

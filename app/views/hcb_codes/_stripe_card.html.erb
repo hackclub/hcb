@@ -113,7 +113,7 @@
       <% if organizer_signed_in? %>
         <% if defined?(@frame) && @frame %>
           <details>
-            <summary class="inline-flex no-select">
+            <summary class="inline-flex select-none">
               <%= country_to_emoji @hcb_code.stripe_merchant["country"] %>
               <%= humanized_merchant_name @hcb_code.stripe_merchant %>
               <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
@@ -195,7 +195,7 @@
         <% if organizer_signed_in? %>
           <% if defined?(@frame) && @frame %>
             <details>
-              <summary class="inline-flex no-select">
+              <summary class="inline-flex select-none">
                 <%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
                 <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
               </summary>
