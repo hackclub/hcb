@@ -88,7 +88,7 @@ export default class extends Controller {
   }
 
   focus() {
-    this.editor.chain().focus().run();
+    this.editor.chain().focus().run()
   }
 
   bold() {
