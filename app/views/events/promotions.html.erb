@@ -12,7 +12,7 @@
   <div class="card promo-premium-card" id="jukebox">
     <div class="card__banner card__banner--top flex justify-between items-center">
       <h3 class="h1 py-4 my0 text-transparent promo-premium-banner bg-clip-text">Jukebox [Premium]</h3>
-      <% if (!@event.g_suites.none? || !@perks_available || !(@event.organized_by_teenagers?) || @event.users.where(teenager: true).active.size < 5) %>
+      <% if (!@perks_available || !@event.organized_by_teenagers? || @event.users.where(teenager: true).active.size < 5) %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
           <span class="btn disabled promo-premium-banner bg-clip-padding">Ineligible</span>
         </div>
