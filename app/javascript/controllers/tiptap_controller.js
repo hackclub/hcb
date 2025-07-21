@@ -1,165 +1,23 @@
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
-import { Editor, Node, mergeAttributes } from '@tiptap/core'
+import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 
-const DonationGoalNode = Node.create({
-  name: 'donationGoal',
-  group: 'block',
-  priority: 2000,
-  renderHTML({ HTMLAttributes }) {
-    return [
-      'div',
-      mergeAttributes(HTMLAttributes, {
-        class:
-          'donationGoal relative card shadow-none border flex flex-col py-2 my-2',
-      }),
-      [
-        'p',
-        { class: 'text-center italic' },
-        'Your progress towards your goal will display here',
-      ],
-      [
-        'div',
-        { class: 'bg-gray-200 dark:bg-neutral-700 rounded-full w-full' },
-        [
-          'div',
-          {
-            class:
-              'h-full bg-primary rounded w-1/2 flex items-center justify-center',
-          },
-          ['p', { class: 'text-sm text-black p-[1px] my-0' }, '50%'],
-        ],
-      ],
-    ]
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'div',
-        getAttrs: node => node.classList.contains('donationGoal') && null,
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      addDonationGoal:
-        () =>
-        ({ commands }) => {
-          return commands.insertContent({ type: this.name })
-        },
-    }
-  },
-})
-
-const HcbCodeNode = Node.create({
-  name: 'hcbCode',
-  group: 'block',
-  priority: 2000,
-  addAttributes() {
-    return {
-      code: {},
-    }
-  },
-  renderHTML({ HTMLAttributes }) {
-    return [
-      'div',
-      mergeAttributes(HTMLAttributes, {
-        class:
-          'hcbCode relative card shadow-none border flex flex-col py-2 my-2',
-      }),
-      [
-        'p',
-        { class: 'italic text-center' },
-        `Your transaction (${HTMLAttributes.code}) will appear here.`,
-      ],
-    ]
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'div',
-        getAttrs: node => node.classList.contains('hcbCode') && null,
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      addHcbCode:
-        code =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: { code },
-          })
-        },
-    }
-  },
-})
-
-const DonationSummaryNode = Node.create({
-  name: 'donationSummary',
-  group: 'block',
-  priority: 2000,
-  addAttributes() {
-    return {
-      startDate: {},
-    }
-  },
-  renderHTML({ HTMLAttributes }) {
-    let start
-    if (HTMLAttributes.startDate) {
-      start = new Date(HTMLAttributes.startDate)
-    } else {
-      const date = new Date()
-      const currentMonth = date.getMonth()
-      date.setMonth(currentMonth - 1)
-      if (date.getMonth() == currentMonth) date.setDate(0)
-      date.setHours(0, 0, 0, 0)
-
-      start = date
-    }
-
-    return [
-      'div',
-      mergeAttributes(HTMLAttributes, {
-        class:
-          'donationSummary relative card shadow-none border flex flex-col py-2 my-2',
-      }),
-      [
-        'p',
-        { class: 'italic text-center' },
-        `A donation summary starting on ${start.toDateString()} will appear here.`,
-      ],
-    ]
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'div',
-        getAttrs: node => node.classList.contains('donationSummary') && null,
-      },
-    ]
-  },
-  addCommands() {
-    return {
-      addDonationSummary:
-        () =>
-        ({ commands }) => {
-          return commands.insertContent({ type: this.name })
-        },
-    }
-  },
-})
+import csrf from '../common/csrf'
+import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
+import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
+import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
   static values = {
     content: String,
+    announcementId: Number,
+    autosave: Boolean,
   }
 
   editor = null
@@ -212,7 +70,7 @@ export default class extends Controller {
       },
       content,
       onUpdate: () => {
-        if (this.hasContentValue) {
+        if (this.autosaveValue) {
           debouncedSubmit(true)
         }
       },
@@ -306,23 +164,46 @@ export default class extends Controller {
     this.editor.chain().focus().setImage({ src: url }).run()
   }
 
-  donationGoal() {
-    this.editor.chain().focus().addDonationGoal().run()
+  async donationGoal() {
+    const attrs = await this.createBlock('Announcement::Block::DonationGoal')
+    this.editor.chain().focus().addDonationGoal(attrs).run()
   }
 
-  hcbCode() {
+  async hcbCode() {
     const url = window.prompt('Transaction URL')
 
     if (url === null || url === '') {
       return
     }
 
-    const code = url.split('/').at(-1)
+    const hcbCode = url.split('/').at(-1)
 
-    this.editor.chain().focus().addHcbCode(code).run()
+    const attrs = await this.createBlock('Announcement::Block::HcbCode', {
+      hcb_code: hcbCode,
+    })
+
+    this.editor.chain().focus().addHcbCode(attrs).run()
   }
 
-  donationSummary() {
-    this.editor.chain().focus().addDonationSummary().run()
+  async donationSummary() {
+    const attrs = await this.createBlock('Announcement::Block::DonationSummary')
+    this.editor.chain().focus().addDonationSummary(attrs).run()
+  }
+
+  async createBlock(type, parameters) {
+    const res = await fetch('/announcements/blocks', {
+      method: 'POST',
+      body: JSON.stringify({
+        type,
+        announcement_id: this.announcementIdValue,
+        parameters: JSON.stringify(parameters || {}),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf(),
+      },
+    }).then(r => r.json())
+
+    return res
   }
 }
