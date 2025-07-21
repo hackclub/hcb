@@ -212,12 +212,12 @@ export default class extends Controller {
       },
     }).then(r => r.json())
 
-    if ("errors" in res) {
-      const message = `Could not insert block: ${res.errors.join(", ")}`;
+    if ('errors' in res) {
+      const message = `Could not insert block: ${res.errors.join(', ')}`
 
       alert(message)
 
-      return null;
+      return null
     } else {
       return res
     }
