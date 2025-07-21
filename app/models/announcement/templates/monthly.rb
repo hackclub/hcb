@@ -14,7 +14,7 @@ class Announcement
         "#{Date.current.strftime("%B %Y")} Update"
       end
 
-      def json_content
+      def json_content(block)
         {
           type: "doc",
           content: [
@@ -37,7 +37,7 @@ class Announcement
                 },
               ],
             },
-            { type: "donationSummary", attrs: { startDate: Date.current.beginning_of_month.. } },
+            { type: "donationSummary", attrs: { id: block.id } },
             {
               type: "paragraph",
               content: [
@@ -51,7 +51,9 @@ class Announcement
       end
 
       def create
-        Announcement.create!(event: @event, title:, content: json_content, aasm_state: :template_draft, author: @author, template_type: self.class.name)
+        announcement = Announcement.create!(event: @event, title:, content: {}, aasm_state: :template_draft, author: @author, template_type: self.class.name)
+        block = Announcement::Block::DonationSummary.create!(announcement:, parameters: { start_date: Date.current.beginning_of_month })
+        announcement.update!(content: json_content(block))
       end
 
     end
