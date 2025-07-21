@@ -25,13 +25,8 @@ RSpec.describe SudoModeHandler do
       Flipper.enable(:sudo_mode_2015_07_21, user) if feature_enabled
 
       user_session = sign_in(user)
-      login = create(
-        :login,
-        user:,
-        aasm_state: "complete",
-        authenticated_with_email: true,
-        user_session:,
-      )
+      login = user_session.initial_login
+
       { user:, user_session:, login: }
     end
   end
