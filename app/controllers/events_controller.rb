@@ -1023,7 +1023,8 @@ class EventsController < ApplicationController
         :id,
         :anonymous_donations,
         :cover_donation_fees,
-        :contact_email
+        :contact_email,
+        :generate_monthly_announcement
       ]
     )
 
@@ -1071,7 +1072,8 @@ class EventsController < ApplicationController
         :id,
         :anonymous_donations,
         :cover_donation_fees,
-        :contact_email
+        :contact_email,
+        :generate_monthly_announcement
       ]
     )
 
