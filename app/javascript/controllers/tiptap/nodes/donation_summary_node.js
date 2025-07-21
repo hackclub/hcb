@@ -1,7 +1,7 @@
 import { Node } from '@tiptap/core'
 
 export const DonationSummaryNode = Node.create({
-  name: 'donationSummary',
+  name: 'Announcement::Block::DonationSummary',
   atom: true,
   group: 'block',
   priority: 2000,

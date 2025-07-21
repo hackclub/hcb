@@ -1,7 +1,7 @@
 import { Node } from '@tiptap/core'
 
 export const HcbCodeNode = Node.create({
-  name: 'hcbCode',
+  name: 'Announcement::Block::HcbCode',
   atom: true,
   group: 'block',
   priority: 2000,
