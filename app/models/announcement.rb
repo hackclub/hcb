@@ -46,7 +46,7 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
-        AnnouncementPublishedJob.perform_later(announcement: self)
+        Announcement::PublishedJob.perform_later(announcement: self)
       end
     end
 
@@ -55,22 +55,23 @@ class Announcement < ApplicationRecord
     end
   end
 
-  scope :saved, -> { where.not(aasm_state: :template_draft) }
+  validate :content_is_json
 
-  validates :content, presence: true
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  before_save :autofollow_organizers
-  before_save do
-    if content_changed?
-      self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
+  validates :title, presence: true, if: :published?
 
-      if draft?
-        self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
-      end
-    end
+  before_save :autofollow_organizers
+
+  def render
+    ProsemirrorService::Renderer.render_html(content, event)
+  end
+
+  def render_email
+    ProsemirrorService::Renderer.render_html(content, event, is_email: true)
   end
 
   private
@@ -84,6 +85,13 @@ class Announcement < ApplicationRecord
       rescue ActiveRecord::RecordNotUnique
         # Do nothing. The user already follows this event.
       end
+    end
+  end
+
+  def content_is_json
+    unless content.is_a?(Hash)
+      Rails.error.unexpected("Announcement #{id}'s content is not a Hash")
+      errors.add(:content, "is invalid")
     end
   end
 

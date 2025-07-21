@@ -8,10 +8,12 @@ RSpec.describe SudoModeHandler do
   render_views(true)
 
   controller(ApplicationController) do
-    before_action :enforce_sudo_mode, only: [:create]
-
     def create
       skip_authorization
+
+      unless enforce_sudo_mode
+        return
+      end
 
       render(status: :created, plain: "Created")
     end

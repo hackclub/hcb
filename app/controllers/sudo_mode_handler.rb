@@ -34,10 +34,11 @@ class SudoModeHandler
     @controller_instance = controller_instance
   end
 
+  # @return [Boolean] whether sudo mode was obtained and sensitive actions can proceed
   def call
     unless sudo_params.submit_method.present?
       render_reauthentication_page
-      return
+      return false
     end
 
     login = Login.incomplete.active.find_by_hashid(sudo_params.login_id)
@@ -47,7 +48,7 @@ class SudoModeHandler
     unless login
       flash.now[:error] = "Login has expired. Please try again."
       render_reauthentication_page
-      return
+      return false
     end
 
     service = ProcessLoginService.new(login:)
@@ -75,11 +76,13 @@ class SudoModeHandler
     unless ok
       flash.now[:error] = service.errors.full_messages.to_sentence
       render_reauthentication_page(login:)
-      return
+      return false
     end
 
     login.update!(user_session: current_session)
     current_session.reload
+
+    true
   end
 
   private

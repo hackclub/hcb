@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -188,6 +188,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.datetime "started_at", precision: nil
     t.index ["user_id"], name: "index_ahoy_visits_on_user_id"
     t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
+  end
+
+  create_table "announcement_blocks", force: :cascade do |t|
+    t.text "rendered_html"
+    t.text "rendered_email_html"
+    t.jsonb "parameters"
+    t.bigint "announcement_id", null: false
+    t.string "type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
   end
 
   create_table "announcements", force: :cascade do |t|
@@ -448,6 +459,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.string "keyword_lock"
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.boolean "pre_authorization_required", default: false, null: false
+    t.string "banned_merchants"
+    t.string "banned_categories"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
   end
 
@@ -470,6 +483,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
     t.boolean "one_time_use"
     t.boolean "pre_authorization_required", default: false, null: false
     t.text "instructions"
+    t.string "banned_merchants"
+    t.string "banned_categories"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
@@ -2321,6 +2336,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_15_203909) do
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
+  add_foreign_key "announcement_blocks", "announcements"
   add_foreign_key "announcements", "events"
   add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"

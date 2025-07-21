@@ -80,7 +80,9 @@ class AdminController < ApplicationController
     ::EventService::Create.new(
       name: params[:name],
       emails:,
-      is_signee: params[:is_signee].to_i == 1,
+      is_signee: params[:is_signee] == "true",
+      cosigner_email: params[:cosigner_email].presence,
+      include_onboarding_videos: params[:include_videos].to_i == 1,
       country: params[:country],
       point_of_contact_id: params[:point_of_contact_id],
       approved: params[:approved].to_i == 1,
