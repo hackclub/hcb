@@ -60,7 +60,7 @@
               <span class="truncate"><%= payment_recipient.name %></span>
               <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
             </button>
-            <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: "delete", turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
+            <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
               <%= inline_icon "view-close", size: 24, class: "align-middle" %>
             <% end %>
           </div>
