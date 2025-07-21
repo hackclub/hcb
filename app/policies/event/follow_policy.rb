@@ -3,7 +3,7 @@
 class Event
   class FollowPolicy < ApplicationPolicy
     def create?
-      (record.event.is_public || OrganizerPosition.role_at_least?(user, record.event, :reader)) && user == record.user
+      policy(record.event).announcement_overview? && user == record.user
     end
 
     def destroy?
