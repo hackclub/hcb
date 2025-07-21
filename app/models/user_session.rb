@@ -20,7 +20,7 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  impersonated_by_id       :bigint
-#  user_id                  :bigint
+#  user_id                  :bigint           not null
 #  webauthn_credential_id   :bigint
 #
 # Indexes
