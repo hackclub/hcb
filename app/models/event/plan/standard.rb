@@ -71,6 +71,10 @@ class Event
         true
       end
 
+      def card_lockable?
+        true
+      end
+
     end
 
   end

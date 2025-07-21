@@ -55,6 +55,8 @@ class Announcement < ApplicationRecord
     end
   end
 
+  validate :content_is_json
+
   scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}) }
 
   belongs_to :author, class_name: "User"
@@ -83,6 +85,13 @@ class Announcement < ApplicationRecord
       rescue ActiveRecord::RecordNotUnique
         # Do nothing. The user already follows this event.
       end
+    end
+  end
+
+  def content_is_json
+    unless content.is_a?(Hash)
+      Rails.error.unexpected("Announcement #{id}'s content is not a Hash")
+      errors.add(:content, "is invalid")
     end
   end
 
