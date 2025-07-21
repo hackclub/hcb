@@ -42,7 +42,7 @@ class Announcement
         hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
 
         unless hcb_code&.event == announcement.event
-          errors.add(:parameters, "links a transaction that is not included in this event")
+          errors.add(:base, "You are not authorized to insert this transaction")
         end
       end
 

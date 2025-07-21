@@ -9,7 +9,11 @@ module Announcements
 
       authorize block, policy_class: Announcement::BlockPolicy
 
-      block.save!
+      begin
+        block.save!
+      rescue ActiveRecord::RecordInvalid
+        return render json: { errors: block.errors.map { |error| error.full_message } }
+      end
 
       render json: { id: block.id, html: block.rendered_html }
     end

@@ -166,7 +166,10 @@ export default class extends Controller {
 
   async donationGoal() {
     const attrs = await this.createBlock('Announcement::Block::DonationGoal')
-    this.editor.chain().focus().addDonationGoal(attrs).run()
+
+    if (attrs !== null) {
+      this.editor.chain().focus().addDonationGoal(attrs).run()
+    }
   }
 
   async hcbCode() {
@@ -182,12 +185,17 @@ export default class extends Controller {
       hcb_code: hcbCode,
     })
 
-    this.editor.chain().focus().addHcbCode(attrs).run()
+    if (attrs !== null) {
+      this.editor.chain().focus().addHcbCode(attrs).run()
+    }
   }
 
   async donationSummary() {
     const attrs = await this.createBlock('Announcement::Block::DonationSummary')
-    this.editor.chain().focus().addDonationSummary(attrs).run()
+
+    if (attrs !== null) {
+      this.editor.chain().focus().addDonationSummary(attrs).run()
+    }
   }
 
   async createBlock(type, parameters) {
@@ -204,6 +212,14 @@ export default class extends Controller {
       },
     }).then(r => r.json())
 
-    return res
+    if ("errors" in res) {
+      const message = `Could not insert block: ${res.errors.join(", ")}`;
+
+      alert(message)
+
+      return null;
+    } else {
+      return res
+    }
   }
 }
