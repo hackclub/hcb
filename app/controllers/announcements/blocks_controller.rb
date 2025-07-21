@@ -12,7 +12,7 @@ module Announcements
       begin
         block.save!
       rescue ActiveRecord::RecordInvalid
-        return render json: { errors: block.errors.map { |error| error.full_message } }
+        return render json: { errors: block.errors.map { |error| error.full_message } }, status: :bad_request
       end
 
       render json: { id: block.id, html: block.rendered_html }
