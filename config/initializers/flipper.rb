@@ -42,7 +42,7 @@ Flipper::UI.configure do |config|
         end
       when "Event"
         Event.where(id: mapping.keys).pluck(:id, :name).each do |(id, name)|
-          actor_names[mapping.fetch(id)] = name if name.present?
+          actor_names[mapping.fetch(id)] = name
         end
       end
     end

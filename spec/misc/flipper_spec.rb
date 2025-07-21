@@ -12,15 +12,6 @@ RSpec.describe("Flipper configuration") do
       expect(actor_names).to eq({ event.flipper_id => "Hack the Planet" })
     end
 
-    it "ignores events that don't have names" do
-      event = create(:event)
-      event.update_columns(name: nil)
-
-      actor_names = Flipper::UI.configuration.actor_names_source.call([event.flipper_id])
-
-      expect(actor_names).to eq({})
-    end
-
     it "returns actor names for users" do
       user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
 
