@@ -4,18 +4,16 @@
 #
 # Table name: announcements
 #
-#  id                  :bigint           not null, primary key
-#  aasm_state          :string
-#  content             :jsonb            not null
-#  deleted_at          :datetime
-#  published_at        :datetime
-#  rendered_email_html :text
-#  rendered_html       :text
-#  title               :string           not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  author_id           :bigint           not null
-#  event_id            :bigint           not null
+#  id           :bigint           not null, primary key
+#  aasm_state   :string
+#  content      :jsonb            not null
+#  deleted_at   :datetime
+#  published_at :datetime
+#  title        :string           not null
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  author_id    :bigint           not null
+#  event_id     :bigint           not null
 #
 # Indexes
 #
@@ -28,6 +26,8 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class Announcement < ApplicationRecord
+  self.ignored_columns += ["rendered_html", "rendered_email_html"]
+
   include Hashid::Rails
   include AASM
 
