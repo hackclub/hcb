@@ -76,8 +76,8 @@
     <%= render "events/search", form: %>
   <% end %>
   <div>
-    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["created", "review"].include?(params[:filter]), role: "tab" %>
-    <%= link_to "Created", "?filter=created", class: "filterbar__item", "aria-selected": params[:filter] == "created", role: "tab" %>
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["mine", "review"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Mine", "?filter=mine", class: "filterbar__item", "aria-selected": params[:filter] == "mine", role: "tab" %>
     <%= link_to "To review", "?filter=review", class: "filterbar__item", "aria-selected": params[:filter] == "review", role: "tab" %>
   </div>
 </div>
