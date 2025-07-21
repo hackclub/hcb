@@ -102,7 +102,7 @@
       </h3>
     </span>
     <%= link_to "Request",
-      (@perks_available && @event.plan.eligible_for_perks?) ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => @event.name }, prefix: "prefill_") : root_path,
+      @perks_available && @event.plan.eligible_for_perks? ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => @event.name }, prefix: "prefill_") : root_path,
       class: "btn #{"disabled" unless @perks_available && @event.plan.eligible_for_perks?}",
       target: :_blank %>
   </div>
@@ -155,7 +155,7 @@
   <div class="card__banner card__banner--top flex justify-between items-center promo-1password">
     <%= image_tag "1password.svg", width: 210, class: "py-4" %>
     <%= link_to "Apply",
-      (@perks_available && @event.plan.eligible_for_perks?) ? fillout_form("7jzG7ADmuLus", { "Project_Name" => @event.name, "Bank_URL" => event_url(@event), "Your_Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
+      @perks_available && @event.plan.eligible_for_perks? ? fillout_form("7jzG7ADmuLus", { "Project_Name" => @event.name, "Bank_URL" => event_url(@event), "Your_Name" => current_user.name, "Email" => current_user.email }, prefix: "prefill_") : root_path,
       class: "btn #{"disabled" unless @perks_available && @event.plan.eligible_for_perks?}",
       target: :_blank %>
   </div>
