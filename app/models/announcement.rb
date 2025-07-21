@@ -46,7 +46,7 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
-        AnnouncementPublishedJob.perform_later(announcement: self)
+        Announcement::PublishedJob.perform_later(announcement: self)
       end
     end
 
@@ -55,19 +55,33 @@ class Announcement < ApplicationRecord
     end
   end
 
-  scope :saved, -> { where.not(aasm_state: :template_draft) }
-
-  validates :content, presence: true
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  before_save do
-    if content_changed?
-      self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
+  validates :title, presence: true, if: :published?
 
-      if draft?
-        self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+  before_save :autofollow_organizers
+
+  def render
+    ProsemirrorService::Renderer.render_html(content, event)
+  end
+
+  def render_email
+    ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+  end
+
+  private
+
+  def autofollow_organizers
+    # is this the first announcement to be published?
+    if published? && event.announcements.published.none?
+      event.users.excluding(event.followers).find_each do |user|
+        event.event_follows.create!(user:)
+
+      rescue ActiveRecord::RecordNotUnique
+        # Do nothing. The user already follows this event.
       end
     end
   end

@@ -42,58 +42,30 @@ class CardGrantsController < ApplicationController
 
   def edit_overview
     authorize @card_grant
-
-    @event = @card_grant.event
-    @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def edit_purpose
     authorize @card_grant
-
-    @event = @card_grant.event
-    @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def edit_actions
     authorize @card_grant
-
-    @event = @card_grant.event
-    @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def edit_balance
     authorize @card_grant
-
-    @event = @card_grant.event
-    @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def edit_usage_restrictions
     authorize @card_grant
-
-    @event = @card_grant.event
-    @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def edit_topup
     authorize @card_grant
-
-    @event = @card_grant.event
-    @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def edit_withdraw
     authorize @card_grant
-
-    @event = @card_grant.event
-    @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
   end
 
   def update
@@ -123,7 +95,7 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
-    if @card_grant.pre_authorization_required? && (@card_grant.pre_authorization&.draft? || @card_grant.pre_authorization&.submitted? || @card_grant.pre_authorization&.rejected?) && !organizer_signed_in?
+    if @card_grant.pre_authorization&.unauthorized? && !organizer_signed_in?
       return redirect_to card_grant_pre_authorizations_path(@card_grant)
     end
 
@@ -223,6 +195,7 @@ class CardGrantsController < ApplicationController
 
   def set_card_grant
     @card_grant = CardGrant.find_by_hashid!(params.require(:id))
+    @event = @card_grant.event
   end
 
 end

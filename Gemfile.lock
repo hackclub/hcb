@@ -127,10 +127,6 @@ GEM
       activesupport (>= 7)
       device_detector (>= 1)
       safely_block (>= 0.4)
-    airbrake (13.0.5)
-      airbrake-ruby (~> 6.0)
-    airbrake-ruby (6.2.2)
-      rbtree3 (~> 0.6)
     airrecord (1.0.12)
       faraday (>= 1.0, < 3.0)
       faraday-net_http_persistent
@@ -177,6 +173,7 @@ GEM
       multi_json (~> 1)
       statsd-ruby (~> 1.1)
     base64 (0.3.0)
+    bcrypt (3.1.20)
     benchmark (0.4.1)
     better_html (2.1.1)
       actionview (>= 6.0)
@@ -657,7 +654,6 @@ GEM
       ffi (~> 1.0)
     rbs (3.9.2)
       logger
-    rbtree3 (0.7.1)
     rdoc (6.14.0)
       erb
       psych (>= 4.0.0)
@@ -881,7 +877,6 @@ DEPENDENCIES
   actual_db_schema
   ahoy_email (~> 2.4)
   ahoy_matey
-  airbrake
   airrecord (~> 1.0)
   annotaterb
   api-pagination
@@ -890,6 +885,7 @@ DEPENDENCIES
   awesome_print
   aws-sdk-s3
   barnes
+  bcrypt (~> 3.1.7)
   blazer
   blind_index
   bootsnap (>= 1.4.4)
