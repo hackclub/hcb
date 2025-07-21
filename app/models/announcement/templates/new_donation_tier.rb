@@ -71,7 +71,7 @@ class Announcement
               ],
             }
           ]
-        }.to_json
+        }
       end
 
       def create

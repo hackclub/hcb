@@ -20,7 +20,7 @@ class Announcement
               type: "paragraph",
             },
           ],
-        }.to_json
+        }
       end
 
       def create

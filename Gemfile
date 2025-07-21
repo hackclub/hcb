@@ -102,7 +102,7 @@ gem "loofah" # html email parsing
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
 gem "safely_block"
-gem "strong_migrations", "~> 1" # protects against risky migrations
+gem "strong_migrations", "~> 2" # protects against risky migrations
 # [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
 #               2.x is incompatible with Postgres 11.
 gem "xxhash" # fast hashing
@@ -227,5 +227,7 @@ gem "rack-timeout", require: "rack/timeout/base"
 gem "irb"
 
 gem "pstore"
+
+gem "bcrypt", "~> 3.1.7"
 
 gem "prosemirror_to_html"
