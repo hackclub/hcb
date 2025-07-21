@@ -2,7 +2,7 @@
 
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
-  before_action :set_emails
+  before_action { @emails = @event.organizer_contact_emails }
 
   def monthly_donation_summary
     @donations = @event.donations.where(aasm_state: [:in_transit, :deposited], created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
@@ -33,14 +33,12 @@ class EventMailer < ApplicationMailer
     @goal = @event.donation_goal
     @donations = @event.donations.succeeded.where(created_at: @goal.tracking_since..)
 
+    @announcement = Announcement::Templates::DonationGoalReached.new(
+      event: @event,
+      author: User.system_user
+    ).create
+
     mail to: @emails, subject: "#{@event.name} has reached its donation goal!"
-  end
-
-  private
-
-  def set_emails
-    @emails = @event.users.map(&:email_address_with_name)
-    @emails << @event.config.contact_email if @event.config.contact_email.present?
   end
 
 end

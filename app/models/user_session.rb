@@ -20,7 +20,7 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  impersonated_by_id       :bigint
-#  user_id                  :bigint
+#  user_id                  :bigint           not null
 #  webauthn_credential_id   :bigint
 #
 # Indexes
@@ -54,7 +54,9 @@ class UserSession < ApplicationRecord
   scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
 
   after_create_commit do
-    if fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
+    if user.user_sessions.size == 1
+      UserSessionMailer.first_login(user:).deliver_later
+    elsif fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
       UserSessionMailer.new_login(user_session: self).deliver_later
     end
   end
@@ -79,6 +81,14 @@ class UserSession < ApplicationRecord
 
   def expired?
     expiration_at <= Time.now
+  end
+
+  def clear_metadata!
+    update!(
+      device_info: nil,
+      latitude: nil,
+      longitude: nil,
+    )
   end
 
   private
