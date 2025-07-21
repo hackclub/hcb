@@ -74,7 +74,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def announcement_overview?
-    is_public || !record.announcements.published.empty? || organizer_signed_in?
+    is_public || record.announcements.published.any? || organizer_signed_in?
   end
 
   def emburse_card_overview?
