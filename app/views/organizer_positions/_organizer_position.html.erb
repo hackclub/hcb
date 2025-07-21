@@ -18,7 +18,7 @@
               </div>
               <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
                 <% OrganizerPosition.roles.keys.each do |role| %>
-                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: "post", turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
+                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
                     <%= role.humanize %><%= " ✔" if organizer_position.role == role %>
                   <% end %>
                 <% end %>
@@ -40,7 +40,7 @@
           </div>
           <% unless organizer_position.user == current_user || current_session&.impersonated? %>
             <div class="tooltipped tooltipped--s" aria-label="Impersonate user">
-              <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
+              <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
             </div>
           <% end %>
         <% end %>
@@ -58,7 +58,7 @@
                           class: "error",
                           data: {
                             turbo_frame: "_top",
-                            turbo_method: policy(organizer_position).destroy? ? :DELETE : :GET,
+                            turbo_method: policy(organizer_position).destroy? ? :delete : :get,
                             turbo_confirm: policy(organizer_position).destroy? ? "This will revoke their access to this organization. Their cards will be permanently canceled." : nil,
                           },
                           disabled: !policy(organizer_position).can_request_removal? %>
@@ -116,7 +116,7 @@
               <%= inline_icon("docs-positive", size: 24) %>
             <% end %>
           <% elsif organizer_position.organizer_position_invite.organizer_position_contract&.present? %>
-            <%= link_to void_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), class: "primary", data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :POST } do %>
+            <%= link_to void_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), class: "primary", data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
               <%= inline_icon("clock", size: 24) %>
             <% end %>
           <% else %>
