@@ -129,7 +129,7 @@ class DocumentsController < ApplicationController
   private
 
   def document_params
-    params.require(:document).permit(:event_id, :name, :file)
+    params.require(:document).permit(:event_id, :name, :file, :category)
   end
 
   def set_document

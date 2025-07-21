@@ -7,6 +7,7 @@
 #  id             :bigint           not null, primary key
 #  aasm_state     :string
 #  archived_at    :datetime
+#  category       :integer          default("general"), not null
 #  deleted_at     :datetime
 #  name           :text
 #  slug           :text
@@ -47,6 +48,13 @@ class Document < ApplicationRecord
   validate :ensure_file_attached
 
   scope :common, -> { where(event_id: nil) }
+
+  enum :category, {
+    general: 0,
+    nonprofit_status: 1,
+    tax_exception: 2,
+    forms: 3
+  }
 
   aasm timestamps: true do
     state :active, initial: true
