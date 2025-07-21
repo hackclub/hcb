@@ -9,24 +9,6 @@ GIT
   revision: 21ef9d1554eb1fa8f3ecf997fdf165add8df0917
   branch: 7-2-stable
   specs:
-    activemodel (7.2.2.1)
-      activesupport (= 7.2.2.1)
-    activerecord (7.2.2.1)
-      activemodel (= 7.2.2.1)
-      activesupport (= 7.2.2.1)
-      timeout (>= 0.4.0)
-    activesupport (7.2.2.1)
-      base64
-      benchmark (>= 0.3)
-      bigdecimal
-      concurrent-ruby (~> 1.0, >= 1.3.1)
-      connection_pool (>= 2.2.5)
-      drb
-      i18n (>= 1.6, < 2)
-      logger (>= 1.4.2)
-      minitest (>= 5.1)
-      securerandom (>= 0.3)
-      tzinfo (~> 2.0, >= 2.0.5)
     rails (7.2.2.1)
       actioncable (= 7.2.2.1)
       actionmailbox (= 7.2.2.1)
@@ -100,12 +82,30 @@ GEM
     activejob (7.2.2.1)
       activesupport (= 7.2.2.1)
       globalid (>= 0.3.6)
+    activemodel (7.2.2.1)
+      activesupport (= 7.2.2.1)
+    activerecord (7.2.2.1)
+      activemodel (= 7.2.2.1)
+      activesupport (= 7.2.2.1)
+      timeout (>= 0.4.0)
     activestorage (7.2.2.1)
       actionpack (= 7.2.2.1)
       activejob (= 7.2.2.1)
       activerecord (= 7.2.2.1)
       activesupport (= 7.2.2.1)
       marcel (~> 1.0)
+    activesupport (7.2.2.1)
+      base64
+      benchmark (>= 0.3)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.3.1)
+      connection_pool (>= 2.2.5)
+      drb
+      i18n (>= 1.6, < 2)
+      logger (>= 1.4.2)
+      minitest (>= 5.1)
+      securerandom (>= 0.3)
+      tzinfo (~> 2.0, >= 2.0.5)
     acts_as_paranoid (0.10.3)
       activerecord (>= 6.1, < 8.1)
       activesupport (>= 6.1, < 8.1)
@@ -802,8 +802,8 @@ GEM
     statsd-ruby (1.5.0)
     stringio (3.1.7)
     stripe (11.7.0)
-    strong_migrations (2.4.0)
-      activerecord (>= 7.1)
+    strong_migrations (1.8.0)
+      activerecord (>= 5.2)
     terser (1.2.5)
       execjs (>= 0.3.0, < 3)
     thor (1.3.2)
@@ -989,7 +989,7 @@ DEPENDENCIES
   stackprof
   statsd-instrument (~> 3.9)
   stripe (= 11.7.0)
-  strong_migrations (~> 2)
+  strong_migrations (~> 1)
   terser (~> 1.2)
   turbo-rails (~> 2.0.13)
   twilio-ruby
