@@ -19,9 +19,11 @@ RSpec.describe SudoModeHandler do
     end
   end
 
-  def logged_in_context(user: nil, at: 1.day.ago)
+  def logged_in_context(user: nil, at: 1.day.ago, feature_enabled: true)
     travel_to(at) do
       user ||= create(:user)
+      Flipper.enable(:sudo_mode_2015_07_21, user) if feature_enabled
+
       user_session = sign_in(user)
       login = create(
         :login,
@@ -71,6 +73,14 @@ RSpec.describe SudoModeHandler do
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("Confirm Access")
+    end
+
+    it "allows the request to proceed if the user does not have the feature enabled" do
+      logged_in_context(feature_enabled: false)
+
+      post(:create)
+
+      expect(response).to have_http_status(:created)
     end
 
     it "sends an email code by default" do
