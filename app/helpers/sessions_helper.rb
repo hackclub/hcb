@@ -173,8 +173,6 @@ module SessionsHelper
   #
   # @return [Boolean] whether sudo mode was obtained and the controller action can proceed
   def enforce_sudo_mode
-    return true unless Flipper.enabled?(:sudo_mode_2015_07_21, current_user)
-
     return true if sudo_mode?
 
     SudoModeHandler.new(controller_instance: self).call

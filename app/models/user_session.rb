@@ -97,6 +97,8 @@ class UserSession < ApplicationRecord
   #
   # @return [Boolean]
   def sudo_mode?
+    return true unless Flipper.enabled?(:sudo_mode_2015_07_21, user)
+
     return false if last_authenticated_at.nil?
 
     last_authenticated_at >= SUDO_MODE_TTL.ago

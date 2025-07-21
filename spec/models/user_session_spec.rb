@@ -29,8 +29,15 @@ RSpec.describe UserSession, type: :model do
   end
 
   describe "#sudo_mode?" do
+    it "returns true unless the user has the feature flag enabled" do
+      user_session = create(:user_session)
+
+      expect(user_session).to be_sudo_mode
+    end
+
     it "returns false if there are no associated logins" do
       user_session = create(:user_session)
+      Flipper.enable(:sudo_mode_2015_07_21, user_session.user)
 
       expect(user_session).not_to be_sudo_mode
     end
@@ -38,6 +45,7 @@ RSpec.describe UserSession, type: :model do
     it "returns true if the most recently created login is less than 2 hours old" do
       freeze_time do
         user = create(:user)
+        Flipper.enable(:sudo_mode_2015_07_21, user)
         user_session = create(:user_session, user:)
         initial_login = create(
           :login,
