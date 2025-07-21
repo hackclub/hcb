@@ -24,8 +24,22 @@
 class Announcement
   class Block
     class DonationGoal < ::Announcement::Block
+      before_create do
+        if self.parameters["goal"].nil?
+          self.parameters["goal"] = announcement.event.donation_goal.id
+        end
+
+        self
+      end
+
       def render_html(is_email: false)
-        goal = announcement.event.donation_goal
+        goal = nil
+        begin
+          goal = Donation::Goal.find(parameters["goal"])
+        rescue ActiveRecord::RecordNotFound
+          goal = announcement.event.donation_goal
+        end
+
         percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
 
         Announcements::BlocksController.renderer.render partial: "announcements/blocks/donation_goal", locals: { goal:, percentage:, is_email:, block: self }
