@@ -22,6 +22,17 @@
           description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions."
         } if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
 
+    <%= render partial: "features/preview", locals: {
+          id: "sudo-mode",
+          feature_flag: :sudo_mode_2015_07_21,
+          name: "Sudo mode",
+          description: <<~TXT
+            This feature flag improves the security of your account by requiring
+            you to confirm access before performing a potentially sensitive
+            action.
+          TXT
+        } %>
+
     <details>
       <summary class="mb2">Past feature previews</summary>
 
