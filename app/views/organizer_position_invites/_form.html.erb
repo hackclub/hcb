@@ -65,9 +65,11 @@
     </div>
   <% end %>
 
-  <% admin_tool("mt2 mb2 flex g1") do %>
-    <%= render "organizer_position_invites/admin_signee_check", form: form %>
-  <% end %>
+  <div x-show="role == 'manager'" x-cloak x-transition.duration.500ms>
+    <% admin_tool("mt2 mb2 flex g1") do %>
+      <%= render "organizer_position_invites/admin_signee_check", form: form %>
+    <% end %>
+  </div>
 
   <%= form.submit "Submit" %>
 <% end %>
