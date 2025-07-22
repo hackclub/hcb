@@ -157,13 +157,13 @@ RSpec.describe SudoModeHandler do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("Confirm Access")
 
-      # If there isn't an explicit user preference we favor TOTP
-      expect(extract_submit_method(response)).to eq("totp")
+      # If there isn't an explicit user preference we favor WebAuthn
+      expect(extract_submit_method(response)).to eq("webauthn")
 
       additional_factor_buttons = response.parsed_body.css("[name='_sudo[switch_method]']")
       expect(additional_factor_buttons.map { |el| el.text.strip }).to eq(
         [
-          "Use your security key",
+          "Use a one-time password",
           "Get a login code by SMS",
           "Get a login code by email"
         ]

@@ -6,8 +6,8 @@ class SudoModeHandler
   # - `:backup_code` is explicitly omitted as we don't want to use that for
   #   reauthentication
   FACTOR_PREFERENCES = {
-    totp: 1,
-    webauthn: 2,
+    webauthn: 1,
+    totp: 2,
     sms: 3,
     email: 4,
   }.freeze
