@@ -1790,7 +1790,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_124328) do
     t.string "background_image_url"
     t.string "login_header_text"
     t.text "login_body_text"
-    t.string "login_text_color", default: "#ffffff"
+    t.string "login_text_color"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
