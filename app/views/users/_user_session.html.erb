@@ -53,6 +53,11 @@
       Expired <%= local_time_ago session.expiration_at %>
     <% else %>
       Logged in <%= local_time_ago session.created_at %>
+      <% if session.last_reauthenticated_at %>
+        <span class="tooltipped tooltipped--n" aria-label="The last time you confirmed access">
+          (last authenticated <%= local_time_ago(session.last_reauthenticated_at) %>)
+        </span>
+      <% end %>
     <% end %>
   </p>
 </div>
