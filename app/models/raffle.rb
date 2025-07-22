@@ -10,7 +10,7 @@
 #  updated_at :datetime         not null
 #  user_id    :bigint           not null
 #
-#  Indexes
+# Indexes
 #
 #  index_raffles_on_program_and_user_id  (program,user_id) UNIQUE
 #
