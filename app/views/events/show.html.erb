@@ -6,6 +6,7 @@
 
 <% title @event.name %>
 <% page_md %>
+<% auto_discover_feed_url(@event) %>
 <%= render "nav", selected: :home %>
 
 <% if @event&.is_public %>

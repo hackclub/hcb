@@ -1,5 +1,6 @@
 <% title "Announcements for #{@event.name}" %>
 <% page_md %>
+<% auto_discover_feed_url(@event) %>
 <%= render "events/nav", selected: :announcements %>
 <%= render "followers_modal", event_follows: @event.event_follows %>
 
