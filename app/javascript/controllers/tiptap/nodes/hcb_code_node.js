@@ -7,7 +7,6 @@ export const HcbCodeNode = Node.create({
   priority: 2000,
   addAttributes() {
     return {
-      code: {},
       id: {},
       html: {},
     }
