@@ -1,8 +1,8 @@
-<%# locals: (donations: nil, total: 0, start_date:, is_email: false, block: nil) %>
+<%# locals: (donations: nil, total: 0, start_date:, end_date:, is_email: false, block: nil) %>
 
 <%= render "announcements/blocks/block_shell", block:, type: "donationSummary", is_email: do %>
   <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
-  <p><strong>Donation summary for <%= start_date.strftime("%B %e, %Y") %> - <%= Time.now.strftime("%B %e, %Y") %></strong></p>
+  <p><strong>Donation summary for <%= start_date.strftime("%B %e, %Y") %> - <%= end_date.strftime("%B %e, %Y") %></strong></p>
   <ul>
     <% donations.each do |donation| %>
       <li>
