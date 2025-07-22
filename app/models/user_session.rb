@@ -112,6 +112,10 @@ class UserSession < ApplicationRecord
     )
   end
 
+  def last_reauthenticated_at
+    logins.complete.reauthentication.max_by(&:created_at)&.created_at
+  end
+
   private
 
   def user_is_unlocked

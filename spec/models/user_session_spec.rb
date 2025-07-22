@@ -72,4 +72,30 @@ RSpec.describe UserSession, type: :model do
       end
     end
   end
+
+  describe "#last_reauthenticated_at" do
+    it "returns nil if there was only an initial login" do
+      user_session = create(:user_session)
+      initial_login = create( :login, user: user_session.user, authenticated_with_email: true )
+      initial_login.update!(user_session:)
+
+      expect(user_session.last_reauthenticated_at).to be_nil
+    end
+
+    it "returns the latest reauthentication time" do
+      user_session = create(:user_session)
+      initial_login = create(:login, user: user_session.user, authenticated_with_email: true )
+      initial_login.update!(user_session:)
+
+      travel(1.hour)
+      reauth1 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth1.update!(user_session:)
+
+      travel(1.hour)
+      reauth2 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth2.update!(user_session:)
+
+      expect(user_session.last_reauthenticated_at).to eq(reauth2.created_at)
+    end
+  end
 end

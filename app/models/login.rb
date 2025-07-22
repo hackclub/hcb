@@ -39,6 +39,8 @@ class Login < ApplicationRecord
   )
 
   scope(:initial, -> { where(initial_login_id: nil) })
+  scope(:reauthentication, -> { where.not(initial_login_id: nil) })
+
   belongs_to :referral_program, class_name: "Referral::Program", optional: true
 
   has_encrypted :browser_token
