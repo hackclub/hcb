@@ -110,6 +110,38 @@
   <% end %>
 
   <% admin_tool do %>
+    <%= form_with(model: event, local: true, html: { "x-data" => "{ship_type: '#{event.stripe_card_shipping_type}'}" }) do |form| %>
+
+      <h3 id="sub_organizations" class="mb2 mt1">Sub-organizations</h3>
+
+      <ul>
+        <% @event.subevents.order(created_at: :desc).each do |subevent| %>
+          <li>
+            <%= link_to subevent.name, event_path(subevent) %>
+          </li>
+        <% end %>
+      </ul>
+
+      <div class="field">
+        <%= form.label :subevent_plan, "Sub-organization default plan" %>
+        <%= form.select :subevent_plan, { selected: @event.subevent_plan }, { disabled: } do %>
+          <optgroup label="🚫 Disabled">
+            <option value="">🚫 Turn off sub-organizations</option>
+          </optgroup>
+          <optgroup label="✅ Enabled">
+            <%= options_for_select(Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, @event.subevent_plan) %>
+          </optgroup>
+        <% end %>
+      </div>
+
+      <div class="action">
+        <%= form.submit "Update", disabled:, data: { turbo: false } %>
+      </div>
+
+    <% end %>
+  <% end %>
+
+  <% admin_tool do %>
     <h3 id="admin_fees" class="mb2 mt1">Custom fees</h3>
     <%= form_with(model: [@event, Fee], local: true, class: "mb3", data: { turbo_frame: "_top" }) do |form| %>
       <div class="field">

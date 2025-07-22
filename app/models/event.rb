@@ -35,6 +35,7 @@
 #  short_name                                   :string
 #  slug                                         :text
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
+#  subevent_plan                                :string
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
@@ -119,8 +120,47 @@ class Event < ApplicationRecord
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
+  def ancestor_ids
+    [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE parent_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN parent_events pe ON e.id = pe.parent_id
+      )
+      SELECT id FROM parent_events WHERE id != #{id};
+    SQL
+  end
+
+  def descendant_ids
+    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE child_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE parent_id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN child_events ce ON e.parent_id = ce.id
+      )
+      SELECT id FROM child_events;
+    SQL
+  end
+
+  def ancestors
+    Event.where(id: ancestor_ids)
+  end
+
+  def descendant_balance
+    descendants.to_a.sum(&:balance_available_v2_cents)
+  end
+
   belongs_to :parent, class_name: "Event", optional: true
-  has_many :subevents, class_name: "Event", foreign_key: 'parent_id'
+  has_many :subevents, class_name: "Event", foreign_key: "parent_id"
+  alias_method :descendants, :subevents
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
@@ -238,6 +278,15 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+
+  def ancestor_organizer_positions
+    OrganizerPosition.where(event_id: ancestor_ids)
+  end
+
+  def access_organizer_positions
+    organizer_positions.or(ancestor_organizer_positions)
+  end
+
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
@@ -737,19 +786,13 @@ class Event < ApplicationRecord
   def omit_stats?
     plan.omit_stats
   end
-  
+
   validate do
     if id && id == parent_id
       errors.add(:parent, "can't be self-referential.")
     end
   end
-  
-  def ancestors
-    return [] if parent.nil?
-    
-    parent.ancestors + [parent]
-  end
-  
+
   def plan
     parent&.plan || super
   end
@@ -789,6 +832,10 @@ class Event < ApplicationRecord
 
   def active_teenagers
     organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
+  end
+
+  def subevents_enabled?
+    subevent_plan.present? && !subevent_plan.empty?
   end
 
   private

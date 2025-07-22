@@ -286,6 +286,25 @@ class EventsController < ApplicationController
     end
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
 
+    if @event.parent
+      ancestor_ops = @event.ancestor_organizer_positions.includes(:user)
+      direct_ops = @event.organizer_positions.includes(:user)
+
+      direct_roles = {}
+      direct_ops.each do |op|
+        number = OrganizerPosition.roles[op.role]
+        direct_roles[op.user] = number if (direct_roles[op.user] || 0) < number
+      end
+
+      ancestor_roles = {}
+      ancestor_ops.each do |op|
+        number = OrganizerPosition.roles[op.role]
+        ancestor_roles[op.user] = number if (ancestor_roles[op.user] || 0) < number && (direct_roles[op.user] || 0) < number
+      end
+
+      @indirect_access = ancestor_roles.sort_by { |_, role| role }.reverse!.to_h.transform_values { |number| OrganizerPosition.roles.key(number) }
+    end
+
     @pending = @event.organizer_position_invites.pending.includes(:sender)
   end
 
@@ -768,16 +787,38 @@ class EventsController < ApplicationController
 
   def projects
     authorize @event
+
+    search = params[:q] || params[:search]
+
+    relation = @event.descendants
+    relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+    relation = relation.order(created_at: :desc)
+
+    @projects = relation
   end
 
   def create_project
     authorize @event
-  
-    if subevent = @event.subevents.create(name: params[:name])
-      redirect_to subevent
-    else
-      redirect_back fallback_location: projects_event_path(@event.slug)
+
+    if params[:email].blank?
+      flash[:error] = "Organizer email is required"
+      return redirect_back fallback_location: event_projects_path(@event)
     end
+
+    subevent = ::EventService::Create.new(
+      name: params[:name],
+      emails: [params[:email]],
+      is_signee: true,
+      country: params[:country],
+      point_of_contact_id: @event.point_of_contact_id,
+      invited_by: current_user,
+      is_public: @event.is_public,
+      plan: @event.subevent_plan,
+      risk_level: @event.risk_level,
+      parent_event: @event
+    ).run
+
+    redirect_to subevent
   end
 
   def toggle_hidden
@@ -1022,6 +1063,7 @@ class EventsController < ApplicationController
       :stripe_card_shipping_type,
       :plan,
       :financially_frozen,
+      :subevent_plan,
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,

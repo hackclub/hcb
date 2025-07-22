@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_21_195537) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -964,11 +964,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_152952) do
     t.string "postal_code"
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.string "short_name"
-    t.bigint "parent_id"
-    t.index ["parent_id"], name: "index_events_on_parent_id"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
+    t.bigint "parent_id"
+    t.string "subevent_plan"
+    t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
