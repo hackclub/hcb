@@ -24,12 +24,8 @@
 class Announcement
   class Block
     class DonationSummary < ::Announcement::Block
-      before_create do
-        start_date_param
-        end_date_param
-
-        self
-      end
+      before_create :start_date_param
+      before_create :end_date_param
 
       def render_html(is_email: false)
         start_date = start_date_param
@@ -43,19 +39,15 @@ class Announcement
       private
 
       def start_date_param
-        if self.parameters["start_date"].present?
-          Date.parse(self.parameters["start_date"])
-        else
-          self.parameters["start_date"] = 1.month.ago
-        end
+        self.parameters["start_date"] ||= 1.month.ago.to_s
+
+        Date.parse(self.parameters["start_date"])
       end
 
       def end_date_param
-        if self.parameters["end_date"].present?
-          Date.parse(self.parameters["end_date"])
-        else
-          self.parameters["end_date"] = Time.now
-        end
+        self.parameters["end_date"] ||= Time.now.to_s
+
+        Date.parse(self.parameters["end_date"])
       end
 
     end
