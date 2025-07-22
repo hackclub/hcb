@@ -32,19 +32,22 @@
   <% end %>
 </h1>
 
-<%= render "callout",
-  title: "The team behind #{@event.parent.name} also has access to #{@event.name}",
-  type: "info",
-  icon: "leader" do %>
-  <p>Because <%= @event.name %> is a subsidiary of <%= @event.parent.name %>, all team members of <%= @event.parent.name %> can access and view this organization.</p>
+<% if @event.parent.present? %>
+  <%= render "callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
+    <p>Because <%= @event.name %> is a subsidiary of <%= @event.parent.name %>, all team members of <%= @event.parent.name %> can access and view this organization.</p>
 
-  <div class="grid">
-    <% @indirect_access.each do |user, role| %>
-      <span class="flex">
-        <%= user_mention(user) %><%= role == "manager" ? "can manage" : "can view" %>
-      </span>
+    <% if @indirect_access.any? %>
+      <p>These team members can access this organization:</p>
+
+      <div class="grid">
+        <% @indirect_access.each do |user, role| %>
+          <span class="flex">
+            <%= user_mention(user) %><%= role == "manager" ? "can manage" : "can view" %>
+          </span>
+        <% end %>
+      </div>
     <% end %>
-  </div>
+  <% end %>
 <% end %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
