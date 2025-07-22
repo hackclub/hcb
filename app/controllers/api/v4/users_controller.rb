@@ -17,7 +17,6 @@ module Api
       end
 
       def by_email
-        puts params[:email]
         @user = User.find_by!(email: params[:email])
         authorize @user, :show?
         render :show
