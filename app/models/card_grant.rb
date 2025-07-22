@@ -88,6 +88,8 @@ class CardGrant < ApplicationRecord
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
   validates :purpose, length: { maximum: 30 }
 
+  validate :sufficient_event_balance, on: :create
+
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
   scope :search_recipient, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
@@ -139,6 +141,10 @@ class CardGrant < ApplicationRecord
 
   def topup!(amount_cents:, topped_up_by: sent_by)
     raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
+
+    if amount_cents > event.balance_available
+      raise ArgumentError.new("Insufficient event balance to top up this grant.")
+    end
 
     custom_memo = "Topup of grant to #{user.name}"
 
@@ -332,4 +338,9 @@ class CardGrant < ApplicationRecord
     CardGrantMailer.with(card_grant: self).card_grant_notification.deliver_later
   end
 
+  def sufficient_event_balance
+    if amount_cents > event.balance_available
+      errors.add(:amount_cents, "exceeds the event's available balance.")
+    end
+  end
 end
