@@ -6,10 +6,10 @@
 
 <% title @event.name %>
 <% page_md %>
-<% auto_discover_feed_url(@event) %>
 <%= render "nav", selected: :home %>
 
 <% if @event&.is_public %>
+  <% auto_discover_feed_url(@event) %>
   <% content_for :head do %>
     <% img = "https://hcb-og.hackclub.com/api/embeds/#{@event.slug}" %>
     <meta property="og:type" content="website">
