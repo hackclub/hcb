@@ -171,7 +171,7 @@
             <% end %>
           <% end %>
         <% elsif report.may_mark_reimbursement_requested? && policy(report).request_reimbursement? %>
-          <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: "post" } do %>
+          <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: :post } do %>
             <%= inline_icon "payment-transfer" %>
             Reimburse <%= render_money report.amount_to_reimburse %>
           <% end %>
