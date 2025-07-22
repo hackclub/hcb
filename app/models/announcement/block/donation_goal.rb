@@ -24,19 +24,11 @@
 class Announcement
   class Block
     class DonationGoal < ::Announcement::Block
-      before_create do
-        goal_param
-
-        self
-      end
+      before_create :goal_param
 
       def render_html(is_email: false)
-        goal = nil
-        begin
-          goal = Donation::Goal.find(goal_param)
-        rescue ActiveRecord::RecordNotFound
-          goal = announcement.event.donation_goal
-        end
+        goal = Donation::Goal.find_by(id: goal_param)
+        goal ||= announcement.event.donation_goal
 
         percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
 
@@ -46,7 +38,7 @@ class Announcement
       private
 
       def goal_param
-        self.parameters["goal"] || announcement.event.donation_goal.id
+        self.parameters["goal"] ||= announcement.event.donation_goal.id
       end
 
     end

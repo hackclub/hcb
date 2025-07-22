@@ -26,6 +26,7 @@ class Announcement
     belongs_to :announcement
     has_one :event, through: :announcement
 
+    before_save { self.parameters ||= {} }
     after_create :refresh!
 
     def refresh!
