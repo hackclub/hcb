@@ -76,7 +76,7 @@ RSpec.describe UserSession, type: :model do
   describe "#last_reauthenticated_at" do
     it "returns nil if there was only an initial login" do
       user_session = create(:user_session)
-      initial_login = create( :login, user: user_session.user, authenticated_with_email: true )
+      initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
       initial_login.update!(user_session:)
 
       expect(user_session.last_reauthenticated_at).to be_nil
@@ -84,7 +84,7 @@ RSpec.describe UserSession, type: :model do
 
     it "returns the latest reauthentication time" do
       user_session = create(:user_session)
-      initial_login = create(:login, user: user_session.user, authenticated_with_email: true )
+      initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
       initial_login.update!(user_session:)
 
       travel(1.hour)
