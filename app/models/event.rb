@@ -25,7 +25,7 @@
 #  is_indexable                                 :boolean          default(TRUE)
 #  is_public                                    :boolean          default(TRUE)
 #  last_fee_processed_at                        :datetime
-#  name                                         :text
+#  name                                         :text             not null
 #  postal_code                                  :string
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
@@ -74,6 +74,7 @@ class Event < ApplicationRecord
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
+  validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
@@ -429,6 +430,7 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
+  before_save :enable_monthly_announcements
 
   comma do
     id
@@ -838,6 +840,13 @@ class Event < ApplicationRecord
     subevent_plan.present? && !subevent_plan.empty?
   end
 
+  def organizer_contact_emails
+    emails = users.map(&:email_address_with_name)
+    emails << config.contact_email if config.contact_email.present?
+
+    emails
+  end
+
   private
 
   def point_of_contact_is_admin
@@ -891,6 +900,13 @@ class Event < ApplicationRecord
 
     unless eligible_for_indexing?
       self.is_indexable = false
+    end
+  end
+
+  def enable_monthly_announcements
+    # We'll enable monthly announcements when transparency mode is turned on
+    if is_public_changed?(to: true)
+      config.update(generate_monthly_announcement: true)
     end
   end
 
