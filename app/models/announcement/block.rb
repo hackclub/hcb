@@ -30,7 +30,6 @@ class Announcement
     after_create :refresh!
 
     def refresh!
-      self.parameters ||= {}
       self.rendered_html = render
       self.rendered_email_html = render(is_email: true)
 
