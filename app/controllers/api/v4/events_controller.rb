@@ -31,6 +31,13 @@ module Api
         @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
       end
 
+      def followers
+        authorize @event, :show?
+        @followers = @event.followers
+      end
+
+      require_oauth2_scope "event_followers", :followers
+
       private
 
       def set_event
