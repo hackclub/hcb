@@ -525,7 +525,7 @@ class FlavorTextService
       "Live fast, settle faster",
       "I'm a SWIFTie",
       "IBAN there, done that",
-      "KYC, I hardly know her",
+      "KYC? I hardly know her",
       "Wire me up before you go-go",
       "Gone SEPA-rate ways",
       "I like my fiscal sponsors like I like my relationships: regulated and auditable",
