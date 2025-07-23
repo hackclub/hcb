@@ -14,7 +14,6 @@ class OrganizerPosition
       }
 
       roles.each do |role_name, role_value|
-        scope role_name, -> { where(role: role_name) }
         scope "#{role_name}_access", -> { where("role >= ?", role_value) }
       end
 
