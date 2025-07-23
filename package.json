@@ -35,7 +35,7 @@
     "@tiptap/extension-image": "^2.25.0",
     "@tiptap/extension-link": "^2.25.0",
     "@tiptap/extension-placeholder": "^2.24.0",
-    "@tiptap/extension-underline": "^2.24.0",
+    "@tiptap/extension-underline": "^2.26.1",
     "@tiptap/pm": "^2.24.0",
     "@tiptap/starter-kit": "^2.24.0",
     "ahoy.js": "^0.4.4",
