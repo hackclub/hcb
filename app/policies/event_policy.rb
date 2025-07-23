@@ -85,7 +85,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def feed?
-    is_public
+    announcement_overview?
   end
 
   def emburse_card_overview?
