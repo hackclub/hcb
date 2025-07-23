@@ -48,6 +48,10 @@ class Document < ApplicationRecord
   validate :ensure_file_attached
 
   scope :common, -> { where(event_id: nil) }
+  scope :general, -> { where(category: :general) }
+  scope :nonprofit_status, -> { where(category: :nonprofit_status) }
+  scope :tax_exception, -> { where(category: :tax_exception) }
+  scope :forms, -> { where(category: :forms) }
 
   enum :category, {
     general: 0,
