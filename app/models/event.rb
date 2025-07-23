@@ -832,7 +832,7 @@ class Event < ApplicationRecord
   end
 
   def subevents_enabled?
-    config.subevent_plan.present? && !config.subevent_plan.empty?
+    config.subevent_plan.present?
   end
 
   def organizer_contact_emails
