@@ -122,17 +122,19 @@
         <% end %>
       </ul>
 
-      <div class="field">
-        <%= form.label :subevent_plan, "Sub-organization default plan" %>
-        <%= form.select :subevent_plan, { selected: @event.subevent_plan }, { disabled: } do %>
-          <optgroup label="🚫 Disabled">
-            <option value="">🚫 Turn off sub-organizations</option>
-          </optgroup>
-          <optgroup label="✅ Enabled">
-            <%= options_for_select(Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, @event.subevent_plan) %>
-          </optgroup>
-        <% end %>
-      </div>
+      <%= form.fields_for :config do |config| %>
+        <div class="field">
+          <%= config.label :subevent_plan, "Sub-organization default plan" %>
+          <%= config.select :subevent_plan, { selected: @event.subevent_plan }, { disabled: } do %>
+            <optgroup label="🚫 Disabled">
+              <option value="">🚫 Turn off sub-organizations</option>
+            </optgroup>
+            <optgroup label="✅ Enabled">
+              <%= options_for_select(Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, @event.config.subevent_plan) %>
+            </optgroup>
+          <% end %>
+        </div>
+      <% end %>
 
       <div class="action">
         <%= form.submit "Update", disabled:, data: { turbo: false } %>

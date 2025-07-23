@@ -35,7 +35,6 @@
 #  short_name                                   :string
 #  slug                                         :text
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
-#  subevent_plan                                :string
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
@@ -833,7 +832,7 @@ class Event < ApplicationRecord
   end
 
   def subevents_enabled?
-    subevent_plan.present? && !subevent_plan.empty?
+    config.subevent_plan.present? && !config.subevent_plan.empty?
   end
 
   def organizer_contact_emails
