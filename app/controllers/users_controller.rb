@@ -232,6 +232,12 @@ class UsersController < ApplicationController
     @user = User.friendly.find(params[:id])
     authorize @user
 
+    @user.assign_attributes(user_params)
+
+    if @user.use_two_factor_authentication_changed?
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
+
     if admin_signed_in?
       if @user.auditor? && params[:user][:running_balance_enabled].present?
         enable_running_balance = params[:user][:running_balance_enabled] == "1"
@@ -276,7 +282,7 @@ class UsersController < ApplicationController
       end
     end
 
-    if @user.update(user_params)
+    if @user.save
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
 
       if @user.full_name_before_last_save.blank?

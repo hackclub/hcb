@@ -2,17 +2,19 @@
 
 class Announcement
   module Templates
-    class NewMissionStatement
+    class Monthly
+      include ApplicationHelper
+
       def initialize(event:, author:)
         @event = event
         @author = author
       end
 
       def title
-        "Update from #{@event.name}"
+        "#{Date.current.strftime("%B %Y")} Update"
       end
 
-      def json_content
+      def json_content(block)
         {
           type: "doc",
           content: [
@@ -22,17 +24,20 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: "We're happy to announce our organization's updated mission:",
+                  text: "Thank you for your support and generosity! With this funding, we'll be able to better work towards our mission.",
                 },
               ],
             },
-            { type: "blockquote", content: [{ type: "text", text: @event.description }] },
             {
               type: "paragraph",
               content: [
-                { type: "text", text: "Thank you so much for your support!" },
+                {
+                  type: "text",
+                  text: "We'd like to thank all of the donors from the past month that contributed towards our organization:",
+                },
               ],
             },
+            { type: "donationSummary", attrs: { id: block.id } },
             {
               type: "paragraph",
               content: [
@@ -46,7 +51,9 @@ class Announcement
       end
 
       def create
-        Announcement.create!(event: @event, title:, content: json_content, aasm_state: :template_draft, author: @author, template_type: self.class.name)
+        announcement = Announcement.create!(event: @event, title:, content: {}, aasm_state: :template_draft, author: @author, template_type: self.class.name)
+        block = Announcement::Block::DonationSummary.create!(announcement:, parameters: { start_date: Date.current.beginning_of_month })
+        announcement.update!(content: json_content(block))
       end
 
     end
