@@ -790,10 +790,6 @@ class Event < ApplicationRecord
     end
   end
 
-  def plan
-    parent&.plan || super
-  end
-
   def eligible_for_transparency?
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
