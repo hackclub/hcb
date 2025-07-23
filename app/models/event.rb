@@ -284,10 +284,6 @@ class Event < ApplicationRecord
     OrganizerPosition.where(event_id: ancestor_ids)
   end
 
-  def access_organizer_positions
-    organizer_positions.or(ancestor_organizer_positions)
-  end
-
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
