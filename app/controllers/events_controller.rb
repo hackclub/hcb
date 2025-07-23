@@ -394,6 +394,8 @@ class EventsController < ApplicationController
     raise ActionController::RoutingError.new("Not Found") if !@event.is_public && @all_announcements.empty? && !organizer_signed_in?
   end
 
+  before_action(only: :feed) { request.format = :atom }
+
   def feed
     authorize @event
     @announcements = Announcement.published.where(event: @event).includes(:author).order(published_at: :desc, created_at: :desc)
