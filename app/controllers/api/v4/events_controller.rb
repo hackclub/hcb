@@ -3,6 +3,7 @@
 module Api
   module V4
     class EventsController < ApplicationController
+      before_action :set_event, except: [:index]
       skip_after_action :verify_authorized, only: [:index]
 
       def index
@@ -10,12 +11,11 @@ module Api
       end
 
       def show
-        @event = authorize Event.find_by_public_id(params[:id]) || Event.friendly.find(params[:id])
+        authorize @event, :show_in_v4?
       end
 
       def transactions
-        @event = Event.find_by_public_id(params[:id]) || Event.friendly.find(params[:id])
-        authorize @event, :show?
+        authorize @event, :show_in_v4?
 
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @settled_transactions, event: @event).run!
@@ -32,6 +32,10 @@ module Api
       end
 
       private
+
+      def set_event
+        @event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:event_id])
+      end
 
       def paginate_transactions(transactions)
         limit = params[:limit]&.to_i || 25

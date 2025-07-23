@@ -10,6 +10,10 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  def show_in_v4?
+    auditor_or_reader?
+  end
+
   # Turbo frames for the event homepage (show)
   alias_method :team_stats?, :show?
   alias_method :recent_activity?, :show?
