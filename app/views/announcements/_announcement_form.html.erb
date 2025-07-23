@@ -2,14 +2,14 @@
 
 <%= form_with model: @announcement, url: announcement_path(@announcement), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-announcement-id-value": @announcement.id, "tiptap-autosave-value": autosave, "turbo-frame": "_top" }.compact do |form| %>
   <div class="field">
-    <%= form.label :title %>
-    <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full" %>
+    <%= form.label :title, class: "text-lg" %>
+    <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full mt-1" %>
   </div>
 
   <div class="field">
-    <%= form.label :content %>
+    <%= form.label :content, class: "text-lg" %>
     <%= form.hidden_field :json_content, data: { "tiptap-target": "contentInput" } %>
-    <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md">
+    <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md mt-1">
       <div class="flex gap-2 bg-snow dark:bg-darkless p-2 rounded-md rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
         <%= render partial: "announcements/format_menu" %>
       </div>
