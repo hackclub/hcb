@@ -8,7 +8,7 @@ json.auditor user.auditor?
 json.name user.initial_name
 
 # those which we'd like to expose less of:
-expand_sensitive do
+expand_pii do
   json.email user.email
   json.birthday user.birthday
   if expand?(:shipping_address)

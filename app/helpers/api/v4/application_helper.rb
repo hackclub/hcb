@@ -41,7 +41,7 @@ module Api
         @expand = before
       end
 
-      def expand_sensitive
+      def expand_pii
         yield if current_token&.scopes&.include?("pii") && current_user&.admin?
       end
 
