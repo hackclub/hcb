@@ -9,7 +9,19 @@ module SessionSupport
   def sign_in(user)
     expiration_at = user.session_duration_seconds.seconds.from_now
 
+    required_factor_count = user.use_two_factor_authentication ? 2 : 1
+    login = build(:login, user:)
+    factors = login.available_factors.take(required_factor_count)
+
+    if factors.size < required_factor_count
+      raise(ArgumentError, "user #{user.id} has 2fa enabled despite having only a single available factor")
+    end
+
+    login.assign_attributes(factors.to_h { |factor| [:"authenticated_with_#{factor}", true] })
+    login.save!
+
     user_session = create(:user_session, user:, expiration_at:)
+    login.update!(user_session:)
 
     cookies.encrypted[:session_token] = {
       value: user_session.session_token,
