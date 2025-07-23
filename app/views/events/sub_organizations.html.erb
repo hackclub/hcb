@@ -1,12 +1,12 @@
-<% title "Projects for #{@event.name}" %>
+<% title "Subsidiaries of #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :projects %>
+<%= render "events/nav", selected: :sub_organizations %>
 
 <h1 class="heading flex">
-  <span class="flex-grow">Projects</span>
-  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_project? do %>
+  <span class="flex-grow">Sub-organizations</span>
+  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
     <%= inline_icon "plus" %>
-    Create a project
+    Create a subsidiary
   <% end %>
 </h1>
 
@@ -28,11 +28,11 @@
 </div>
 
 <ul class="grid grid--medium-narrow left-align w-100 mt0">
-  <%= render partial: "events/event_card", collection: @projects, as: :event %>
+  <%= render partial: "events/event_card", collection: @sub_organizations, as: :event %>
 </ul>
 
 <section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
-  <%= form_with(url: event_create_project_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
+  <%= form_with(url: event_create_sub_organization_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
     <%= modal_header "Create a sub-organization" %>
     <div class="card border b--info mt2 mb2 container--sm mx-auto">
       <p class="mt0 mb0">

@@ -780,7 +780,7 @@ class EventsController < ApplicationController
     @employees = @employees.search(params[:q]) if params[:q].present?
   end
 
-  def projects
+  def sub_organizations
     authorize @event
 
     search = params[:q] || params[:search]
@@ -789,15 +789,15 @@ class EventsController < ApplicationController
     relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
     relation = relation.order(created_at: :desc)
 
-    @projects = relation
+    @sub_organizations = relation
   end
 
-  def create_project
+  def create_sub_organization
     authorize @event
 
     if params[:email].blank?
       flash[:error] = "Organizer email is required"
-      return redirect_back fallback_location: event_projects_path(@event)
+      return redirect_back fallback_location: event_sub_organizations_path(@event)
     end
 
     subevent = ::EventService::Create.new(
@@ -808,7 +808,7 @@ class EventsController < ApplicationController
       point_of_contact_id: @event.point_of_contact_id,
       invited_by: current_user,
       is_public: @event.is_public,
-      plan: @event.subevent_plan,
+      plan: @event.config.subevent_plan,
       risk_level: @event.risk_level,
       parent_event: @event
     ).run
@@ -1058,7 +1058,6 @@ class EventsController < ApplicationController
       :stripe_card_shipping_type,
       :plan,
       :financially_frozen,
-      :subevent_plan,
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,
@@ -1075,7 +1074,8 @@ class EventsController < ApplicationController
         :anonymous_donations,
         :cover_donation_fees,
         :contact_email,
-        :generate_monthly_announcement
+        :generate_monthly_announcement,
+        :subevent_plan
       ]
     )
 

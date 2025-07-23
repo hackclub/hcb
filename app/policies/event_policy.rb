@@ -152,11 +152,11 @@ class EventPolicy < ApplicationPolicy
     auditor_or_reader?
   end
 
-  def projects?
+  def sub_organizations?
     admin_or_reader? && (record.subevents_enabled? || record.descendants.any?)
   end
 
-  def create_project?
+  def create_sub_organization?
     admin_or_manager? && record.subevents_enabled?
   end
 
