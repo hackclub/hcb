@@ -785,7 +785,7 @@ class EventsController < ApplicationController
 
     search = params[:q] || params[:search]
 
-    relation = @event.descendants
+    relation = @event.subevents
     relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
     relation = relation.order(created_at: :desc)
 

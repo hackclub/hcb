@@ -153,7 +153,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def sub_organizations?
-    admin_or_reader? && (record.subevents_enabled? || record.descendants.any?)
+    admin_or_reader? && (record.subevents_enabled? || record.subevents.any?)
   end
 
   def create_sub_organization?

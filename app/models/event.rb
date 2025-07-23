@@ -155,12 +155,11 @@ class Event < ApplicationRecord
   end
 
   def descendant_total_balance_cents
-    descendants.to_a.sum(&:balance_available_v2_cents)
+    subevents.to_a.sum(&:balance_available_v2_cents)
   end
 
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
-  alias_method :descendants, :subevents
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
