@@ -87,6 +87,10 @@ export default class extends Controller {
     this.formTarget.requestSubmit()
   }
 
+  focus() {
+    this.editor.chain().focus().run()
+  }
+
   bold() {
     this.editor.chain().focus().toggleBold().run()
   }

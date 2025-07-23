@@ -43,6 +43,13 @@ class UserSession < ApplicationRecord
   belongs_to :user
   belongs_to :impersonated_by, class_name: "User", optional: true
   belongs_to :webauthn_credential, optional: true
+  has_many(:logins)
+  has_one(
+    :initial_login,
+    -> { initial },
+    class_name: "Login",
+    inverse_of: :user_session,
+  )
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record.impersonated_by || record.user }, recipient: proc { |controller, record| record.impersonated_by || record.user }, only: [:create]
@@ -83,6 +90,20 @@ class UserSession < ApplicationRecord
     expiration_at <= Time.now
   end
 
+  SUDO_MODE_TTL = 2.hours
+
+  # Determines whether the user can perform a sensitive action without
+  # reauthenticating.
+  #
+  # @return [Boolean]
+  def sudo_mode?
+    return true unless Flipper.enabled?(:sudo_mode_2015_07_21, user)
+
+    return false if last_authenticated_at.nil?
+
+    last_authenticated_at >= SUDO_MODE_TTL.ago
+  end
+
   def clear_metadata!
     update!(
       device_info: nil,
@@ -91,12 +112,24 @@ class UserSession < ApplicationRecord
     )
   end
 
+  def last_reauthenticated_at
+    logins.complete.reauthentication.max_by(&:created_at)&.created_at
+  end
+
   private
 
   def user_is_unlocked
     if user.locked? && !impersonated?
       errors.add(:user, "Your HCB account has been locked.")
     end
+  end
+
+  # The last time the user went through a login flow. Used to determine whether
+  # sensitive actions can be performed.
+  #
+  # @return [ActiveSupport::TimeWithZone, nil]
+  def last_authenticated_at
+    logins.complete.max_by(&:created_at)&.created_at
   end
 
 end
