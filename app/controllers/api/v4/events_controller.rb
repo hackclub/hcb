@@ -32,7 +32,7 @@ module Api
       end
 
       def followers
-        authorize @event, :show?
+        authorize @event, :show_in_v4?
         @followers = @event.followers
       end
 
