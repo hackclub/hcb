@@ -41,7 +41,7 @@ class Announcement
       def hcb_code_in_event
         hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
 
-        unless hcb_code&.event == announcement.event
+        if hcb_code.nil? || hcb_code.event != announcement.event
           errors.add(:base, "You are not authorized to insert this transaction")
         end
       end
