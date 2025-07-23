@@ -287,22 +287,17 @@ class EventsController < ApplicationController
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
 
     if @event.parent
-      ancestor_ops = @event.ancestor_organizer_positions.includes(:user)
-      direct_ops = @event.organizer_positions.includes(:user)
+      ops = @event.ancestor_organizer_positions.includes(:user)
+      users = ops.map(&:user).uniq
 
-      direct_roles = {}
-      direct_ops.each do |op|
-        number = OrganizerPosition.roles[op.role]
-        direct_roles[op.user] = number if (direct_roles[op.user] || 0) < number
-      end
+      access_levels = users.map do |user|
+        access_level = user.access_level_for(@event, ops)
+        next nil if access_level[:access_level] == :direct
 
-      ancestor_roles = {}
-      ancestor_ops.each do |op|
-        number = OrganizerPosition.roles[op.role]
-        ancestor_roles[op.user] = number if (ancestor_roles[op.user] || 0) < number && (direct_roles[op.user] || 0) < number
-      end
+        [user, access_level[:role]]
+      end.compact!.sort_by { |_, role| role }.to_h
 
-      @indirect_access = ancestor_roles.sort_by { |_, role| role }.reverse!.to_h.transform_values { |number| OrganizerPosition.roles.key(number) }
+      @indirect_access = access_levels
     end
 
     @pending = @event.organizer_position_invites.pending.includes(:sender)
