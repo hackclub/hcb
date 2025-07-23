@@ -11,11 +11,11 @@ module Api
       end
 
       def show
-        authorize @event
+        authorize @event, :show_in_v4?
       end
 
       def transactions
-        authorize @event, :show?
+        authorize @event, :show_in_v4?
 
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @settled_transactions, event: @event).run!
@@ -41,7 +41,7 @@ module Api
       private
 
       def set_event
-        @event = Event.find_by_public_id(params[:id]) || Event.friendly.find(params[:id])
+        @event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
       end
 
       def paginate_transactions(transactions)

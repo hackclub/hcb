@@ -188,12 +188,12 @@
   }
 }
 
-.promo-premium-card {
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-    url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/a6390946292318162ec1d01298d03c6eb6fd89e5_istockphoto-619260624-612x612.jpg');
+.promo-premium-banner {
   background-size: cover;
   background-position: center;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)),
+    url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/a6390946292318162ec1d01298d03c6eb6fd89e5_istockphoto-619260624-612x612.jpg');
 }
 
 @property --scroll-progress {
@@ -202,7 +202,7 @@
   inherits: false;
 }
 
-.promo-premium-banner {
+.promo-premium-header {
   background: linear-gradient(-60deg, #94bbe9, #eeaeca, #94bbe9);
   background-size: 200%;
   animation: premium-scroll-gradient linear;
@@ -220,6 +220,12 @@
 }
 
 html[data-dark='true'] {
+  .promo-premium-banner {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+      url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/a6390946292318162ec1d01298d03c6eb6fd89e5_istockphoto-619260624-612x612.jpg');
+  }
+
   .promo-bin {
     .card__banner--top {
       h3 {
