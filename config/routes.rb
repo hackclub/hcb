@@ -124,6 +124,7 @@ Rails.application.routes.draw do
       delete "logout", to: "users#logout"
       delete "logout_session", to: "users#logout_session"
       delete "revoke/:id", to: "users#revoke_oauth_application", as: "revoke_oauth_application"
+      post "make_oauth_authorization_eternal/:id", to: "users#make_oauth_authorization_eternal", as: "make_authorization_eternal"
 
       # sometimes users refresh the login code page and get 404'd
       get "exchange_login_code", to: redirect("/users/auth", status: 301)
@@ -610,6 +611,7 @@ Rails.application.routes.draw do
 
           member do
             get "transactions"
+            get :followers
           end
         end
 
@@ -748,6 +750,7 @@ Rails.application.routes.draw do
     get "cards/new", to: "stripe_cards#new"
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
+    get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
 
     resources :follows, only: [:create], controller: "event/follows"
