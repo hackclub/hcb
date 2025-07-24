@@ -35,7 +35,7 @@ class EventsController < ApplicationController
 
         if auditor_signed_in?
           events.concat(
-            Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.map { |e|
+            Event.excluding(@current_user.events).with_attached_logo.map { |e|
               {
                 slug: e.slug,
                 name: e.name,
@@ -1124,8 +1124,11 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
+        :banned_merchants,
+        :banned_categories,
         :expiration_preference,
-        :reimbursement_conversions_enabled
+        :reimbursement_conversions_enabled,
+        :pre_authorization_required
       ],
       config_attributes: [
         :id,
