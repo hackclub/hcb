@@ -11,11 +11,11 @@ class AnnouncementMailer < ApplicationMailer
   end
 
   def seven_day_warning
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-m")}"
+    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-d")}"
   end
 
   def two_day_warning
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-m")}"
+    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-d")}"
   end
 
   def set_warning_variables
