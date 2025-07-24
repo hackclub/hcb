@@ -127,7 +127,7 @@
           <%= config.label :subevent_plan, "Sub-organization default plan" %>
           <%= config.select :subevent_plan, { selected: @event.config.subevent_plan }, { disabled: } do %>
             <optgroup label="🚫 Disabled">
-              <option value="">🚫 Turn off sub-organizations</option>
+              <option value="">🚫 Disable creating sub-organizations</option>
             </optgroup>
             <optgroup label="✅ Enabled">
               <%= options_for_select(Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, @event.config.subevent_plan) %>
