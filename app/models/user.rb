@@ -439,8 +439,10 @@ class User < ApplicationRecord
   def access_level_for(event, organizer_positions)
     role = nil
     access_level = nil
+    user_ops = organizer_positions.select { |op| op.user == self }
+    return nil if user_ops.empty?
 
-    organizer_positions.select { |op| op.user == self }.each do |op|
+    user_ops.each do |op|
       if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
         role = op.role
         access_level = op.event == event ? :direct : :indirect
