@@ -290,12 +290,12 @@ class EventsController < ApplicationController
       ops = @event.ancestor_organizer_positions.includes(:user)
       users = ops.map(&:user).uniq
 
-      access_levels = users.map do |user|
+      access_levels = users.filter_map do |user|
         access_level = user.access_level_for(@event, ops)
-        next nil if access_level[:access_level] == :direct
+        next if access_level[:access_level] == :direct
 
         [user, access_level[:role]]
-      end.compact!.sort_by { |_, role| role }.to_h
+      end.sort_by { |_, role| role }.to_h
 
       @indirect_access = access_levels
     end
