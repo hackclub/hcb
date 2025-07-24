@@ -88,6 +88,10 @@ class EventPolicy < ApplicationPolicy
     true
   end
 
+  def feed?
+    announcement_overview?
+  end
+
   def emburse_card_overview?
     is_public || auditor_or_reader?
   end

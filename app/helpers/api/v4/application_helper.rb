@@ -41,8 +41,8 @@ module Api
         @expand = before
       end
 
-      def expand_pii
-        yield if current_token&.scopes&.include?("pii") && current_user&.admin?
+      def expand_pii(override_if: false)
+        yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
       end
 
     end
