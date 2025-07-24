@@ -391,6 +391,10 @@ class EventsController < ApplicationController
     end
     @announcements = @all_announcements.page(params[:page]).per(10)
 
+    if @event.config.generate_monthly_announcement
+      @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
+    end
+
     raise ActionController::RoutingError.new("Not Found") if !@event.is_public && @all_announcements.empty? && !organizer_signed_in?
   end
 
