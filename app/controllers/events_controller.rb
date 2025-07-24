@@ -35,7 +35,7 @@ class EventsController < ApplicationController
 
         if auditor_signed_in?
           events.concat(
-            Event.not_demo_mode.excluding(@current_user.events).with_attached_logo.map { |e|
+            Event.excluding(@current_user.events).with_attached_logo.map { |e|
               {
                 slug: e.slug,
                 name: e.name,
