@@ -1073,8 +1073,11 @@ class EventsController < ApplicationController
         :category_lock,
         :keyword_lock,
         :invite_message,
+        :banned_merchants,
+        :banned_categories,
         :expiration_preference,
-        :reimbursement_conversions_enabled
+        :reimbursement_conversions_enabled,
+        :pre_authorization_required
       ],
       config_attributes: [
         :id,
