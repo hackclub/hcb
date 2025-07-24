@@ -11,7 +11,10 @@
 <div class="mb3 rounded-xl promo-premium-border">
   <div class="card" id="jukebox">
     <div class="card__banner card__banner--top flex justify-between items-center promo-premium-banner">
-      <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text">[Premium] Jukebox</h3>
+      <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
+        <span class="flex-grow">Jukebox</span>
+        <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
+      </h3>
       <% if (!@perks_available || !@event.organized_by_teenagers? || @event.users.where(teenager: true).active.size < 10) %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 10 active teenagers">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
@@ -25,7 +28,7 @@
     </div>
 
     <p class="mb0">
-      Does your HCB org have 10 or more active teens? Add a link to
+      Does your HCB organization have 10 or more active teens? Add a link to
       <%= link_to "Jukebox Print", "https://www.jukeboxprint.com/custom-stickers" %>
       to your website for a $500 coupon to spend on custom stickers, cards, marketing materials, and more!
     </p>
