@@ -27,4 +27,75 @@ RSpec.describe UserSession, type: :model do
       expect(user_session).to be_valid
     end
   end
+
+  describe "#sudo_mode?" do
+    it "returns true unless the user has the feature flag enabled" do
+      user_session = create(:user_session)
+
+      expect(user_session).to be_sudo_mode
+    end
+
+    it "returns false if there are no associated logins" do
+      user_session = create(:user_session)
+      Flipper.enable(:sudo_mode_2015_07_21, user_session.user)
+
+      expect(user_session).not_to be_sudo_mode
+    end
+
+    it "returns true if the most recently created login is less than 2 hours old" do
+      freeze_time do
+        user = create(:user)
+        Flipper.enable(:sudo_mode_2015_07_21, user)
+        user_session = create(:user_session, user:)
+        initial_login = create(
+          :login,
+          user:,
+          user_session:,
+          aasm_state: "complete",
+          authenticated_with_email: true,
+          created_at: 2.hours.ago - 1.second,
+        )
+
+        expect(user_session).not_to be_sudo_mode
+
+        _login = create(
+          :login,
+          initial_login:,
+          user:,
+          user_session:,
+          aasm_state: "complete",
+          authenticated_with_email: true,
+          created_at: 2.hours.ago
+        )
+
+        expect(user_session).to be_sudo_mode
+      end
+    end
+  end
+
+  describe "#last_reauthenticated_at" do
+    it "returns nil if there was only an initial login" do
+      user_session = create(:user_session)
+      initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
+      initial_login.update!(user_session:)
+
+      expect(user_session.last_reauthenticated_at).to be_nil
+    end
+
+    it "returns the latest reauthentication time" do
+      user_session = create(:user_session)
+      initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
+      initial_login.update!(user_session:)
+
+      travel(1.hour)
+      reauth1 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth1.update!(user_session:)
+
+      travel(1.hour)
+      reauth2 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth2.update!(user_session:)
+
+      expect(user_session.last_reauthenticated_at).to eq(reauth2.created_at)
+    end
+  end
 end

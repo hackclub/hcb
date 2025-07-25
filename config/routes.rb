@@ -124,6 +124,7 @@ Rails.application.routes.draw do
       delete "logout", to: "users#logout"
       delete "logout_session", to: "users#logout_session"
       delete "revoke/:id", to: "users#revoke_oauth_application", as: "revoke_oauth_application"
+      post "make_oauth_authorization_eternal/:id", to: "users#make_oauth_authorization_eternal", as: "make_authorization_eternal"
 
       # sometimes users refresh the login code page and get 404'd
       get "exchange_login_code", to: redirect("/users/auth", status: 301)
@@ -149,6 +150,9 @@ Rails.application.routes.draw do
     post "generate_totp"
     post "enable_totp"
     post "disable_totp"
+    post "generate_backup_codes"
+    post "activate_backup_codes"
+    post "disable_backup_codes"
     patch "stripe_cardholder_profile", to: "stripe_cardholders#update_profile"
 
     resources :webauthn_credentials, only: [:create, :destroy] do
@@ -186,6 +190,9 @@ Rails.application.routes.draw do
       # TOTP
       get "totp"
       post "totp"
+
+      get "backup_code"
+      post "backup_code"
 
       post "complete"
     end
@@ -564,7 +571,8 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v4 do
       defaults format: :json do
-        resource :user do
+        resource :user, only: [] do
+          get "/", to: "users#me", as: "user"
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
@@ -577,6 +585,12 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
+        end
+
+        resources :users, only: [:show] do
+          collection do
+            get "/by_email/:email", to: "users#by_email", as: "by_email", constraints: { email: /[^\/]+/ }
+          end
         end
 
         resources :events, path: "organizations", only: [:show] do
@@ -597,6 +611,7 @@ Rails.application.routes.draw do
 
           member do
             get "transactions"
+            get :followers
           end
         end
 
@@ -689,8 +704,18 @@ Rails.application.routes.draw do
 
   resources :follows, only: [:destroy], controller: "event/follows"
 
-  resources :announcements, path: "/announcements", except: [:index, :new] do
-    post "publish"
+  resources :announcements, except: [:index, :new] do
+    member do
+      post "publish"
+    end
+  end
+
+  namespace "announcements" do
+    resources :blocks, only: [:create, :show] do
+      member do
+        post "refresh"
+      end
+    end
   end
 
   get "/events" => "events#index"
@@ -713,6 +738,7 @@ Rails.application.routes.draw do
     get "ledger"
     put "toggle_hidden"
     post "claim_point_of_contact"
+    post "create_sub_organization"
 
     post "remove_header_image"
     post "remove_background_image"
@@ -727,6 +753,7 @@ Rails.application.routes.draw do
     get "cards/new", to: "stripe_cards#new"
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
+    get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
 
     resources :follows, only: [:create], controller: "event/follows"
@@ -742,6 +769,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "sub_organizations"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
@@ -833,6 +861,7 @@ Rails.application.routes.draw do
 
   scope module: "referral" do
     resources :programs, only: [:show], path: "referrals"
+    resources :programs, only: [:show], path: "from/*slug"
   end
 
   # rewrite old event urls to the new ones not prefixed by /events/

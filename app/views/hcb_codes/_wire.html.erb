@@ -5,7 +5,7 @@
 <% end %>
 
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code do %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <% if @hcb_code.wire.failed? %>
         <span class="regular muted">Attempted to wire transfer to</span>

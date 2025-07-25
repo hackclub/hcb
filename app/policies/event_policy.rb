@@ -10,6 +10,10 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  def show_in_v4?
+    auditor_or_reader?
+  end
+
   # Turbo frames for the event homepage (show)
   alias_method :team_stats?, :show?
   alias_method :recent_activity?, :show?
@@ -87,6 +91,10 @@ class EventPolicy < ApplicationPolicy
     true
   end
 
+  def feed?
+    announcement_overview?
+  end
+
   def emburse_card_overview?
     is_public || auditor_or_reader?
   end
@@ -153,6 +161,14 @@ class EventPolicy < ApplicationPolicy
 
   def employees?
     auditor_or_reader?
+  end
+
+  def sub_organizations?
+    admin_or_reader? && (record.subevents_enabled? || record.subevents.any?)
+  end
+
+  def create_sub_organization?
+    admin_or_manager? && record.subevents_enabled?
   end
 
   def donation_overview?
