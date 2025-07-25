@@ -1,0 +1,14 @@
+<%# locals: (block:, is_email: false, merchants:) %>
+
+<%= render "announcements/blocks/block_shell", block:, type: "topMerchants", is_email: do %>
+  <% if is_email %>
+    <p><%= block.announcement.event.name %> has spent:</p>
+    <ul>
+      <% merchants.each do |merchant| %>
+        <li><%= render_money merchant[:value] * 100 %> at <%= merchant[:name] %></p>
+      <% end %>
+    </ul>
+  <% else %>
+    <%= react_component "home/Merchants", { data: merchants }, { camelize_props: false } %>
+  <% end %>
+<% end %>

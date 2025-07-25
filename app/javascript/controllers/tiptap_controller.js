@@ -11,6 +11,7 @@ import csrf from '../common/csrf'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
 import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
 import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
+import { TopMerchantsNode } from './tiptap/nodes/top_merchants_node'
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
@@ -62,6 +63,7 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
+        TopMerchantsNode
       ],
       editorProps: {
         attributes: {
@@ -191,6 +193,11 @@ export default class extends Controller {
 
   async donationSummary() {
     const attrs = await this.createBlock('Announcement::Block::DonationSummary')
+    this.editor.chain().focus().addDonationSummary(attrs).run()
+  }
+
+  async topMerchants() {
+    const attrs = await this.createBlock('Announcement::Block::TopMerchants')
     this.editor.chain().focus().addDonationSummary(attrs).run()
   }
 
