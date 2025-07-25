@@ -825,6 +825,7 @@ class EventsController < ApplicationController
     subevent = ::EventService::Create.new(
       name: params[:name],
       emails: [params[:email]],
+      cosigner_email: params[:cosigner_email],
       is_signee: true,
       country: params[:country],
       point_of_contact_id: @event.point_of_contact_id,
