@@ -10,6 +10,7 @@ export default class extends Controller {
     'wrapper',
     'field',
     'other',
+    'balance',
   ]
   static values = {
     state: Boolean,
@@ -127,6 +128,19 @@ export default class extends Controller {
         fieldValue.dataset.fee = fee
         this.dropdownTarget.value = newValue
         this.dropdownTarget.dispatchEvent(new CustomEvent('feechange'))
+
+        if (this.hasBalanceTarget) {
+          let usdFormatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+          })
+
+          let formattedAmount = usdFormatter.format(
+            Number(organization.dataset['balance']) / 100
+          )
+
+          this.balanceTarget.innerText = formattedAmount
+        }
 
         close()
       }

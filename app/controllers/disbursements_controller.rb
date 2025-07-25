@@ -48,7 +48,7 @@ class DisbursementsController < ApplicationController
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
 
     @allowed_source_events = if admin_signed_in?
-                               Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
+                               Event.select(:name, :id, :demo_mode, :slug, :can_front_balance).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
