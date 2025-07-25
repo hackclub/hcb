@@ -5,7 +5,7 @@
 </div>
 
 <div data-controller="menu" class="<%= "pt2" unless @event.parent.present? %>">
-  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} #{"mt-0" if @event.ancestors.any?} text-decoration-none gap-2 text-inherit leading-9 event-title -m-2 my-2 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-size:2em; font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
+  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} #{"mt-0" if @event.parent_id.present?} text-decoration-none gap-2 text-inherit leading-9 event-title -m-2 my-2 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-size:2em; font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
     <%= @event.name %>
     <%= inline_icon "down-caret", class: "event-title-dropdown-icon" if show_org_switcher? %>
   <% end %>
@@ -13,7 +13,7 @@
     <div class="menu__content menu__content--switcher sm:w-[275px]" data-menu-target="content">
       <p class="muted font-[800] text-sm mb-0 uppercase m-1">Organizations</p>
       <% current_user.events.not_hidden.excluding(@event).with_attached_logo.map do |event| %>
-        <%= link_to event, title: event.name, class: "gap-2 #{"mt-0" if @event.ancestors.any?}" do %>
+        <%= link_to event, title: event.name, class: "gap-2" do %>
           <% if event.logo.attached? %>
             <%= image_tag event.logo, height: 24, width: 24, class: "rounded" %>
           <% else %>
