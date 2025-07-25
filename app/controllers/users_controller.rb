@@ -3,7 +3,8 @@
 class UsersController < ApplicationController
   skip_before_action :signed_in_user, only: [:webauthn_options]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
-  skip_after_action :verify_authorized, only: [:revoke_oauth_application,
+  skip_after_action :verify_authorized, only: [:show,
+                                               :revoke_oauth_application,
                                                :edit_address,
                                                :edit_payout,
                                                :impersonate,
@@ -22,6 +23,11 @@ class UsersController < ApplicationController
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
 
   wrap_parameters format: :url_encoded_form
+
+  def show
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    redirect_to admin_user_path(@user)
+  end
 
   def impersonate
     authorize current_user
