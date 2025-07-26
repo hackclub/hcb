@@ -8,7 +8,7 @@
       <%= link_to params.to_unsafe_h.merge(format: :csv) do %>
         <button type="button" class="bg-muted ml2" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
       <% end %>
-      <%= link_to request_balance_export_admin_index_path, method: :POST do %>
+      <%= link_to request_balance_export_admin_index_path, method: :post do %>
         <button type="button" class="bg-muted ml2">Export balances (all events)</button>
       <% end %>
     <% end %>

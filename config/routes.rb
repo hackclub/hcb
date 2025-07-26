@@ -110,7 +110,7 @@ Rails.application.routes.draw do
   post "enable_feature", to: "features#enable_feature"
   post "disable_feature", to: "features#disable_feature"
 
-  resources :users, only: [:edit, :update] do
+  resources :users, only: [:show, :edit, :update], concerns: :commentable do
     collection do
       get "auth", to: "logins#new"
       get "webauthn/auth_options", to: "users#webauthn_options"
@@ -124,6 +124,7 @@ Rails.application.routes.draw do
       delete "logout", to: "users#logout"
       delete "logout_session", to: "users#logout_session"
       delete "revoke/:id", to: "users#revoke_oauth_application", as: "revoke_oauth_application"
+      post "make_oauth_authorization_eternal/:id", to: "users#make_oauth_authorization_eternal", as: "make_authorization_eternal"
 
       # sometimes users refresh the login code page and get 404'd
       get "exchange_login_code", to: redirect("/users/auth", status: 301)
@@ -570,7 +571,8 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v4 do
       defaults format: :json do
-        resource :user do
+        resource :user, only: [] do
+          get "/", to: "users#me", as: "user"
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
@@ -583,6 +585,12 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
+        end
+
+        resources :users, only: [:show] do
+          collection do
+            get "/by_email/:email", to: "users#by_email", as: "by_email", constraints: { email: /[^\/]+/ }
+          end
         end
 
         resources :events, path: "organizations", only: [:show] do
@@ -603,6 +611,7 @@ Rails.application.routes.draw do
 
           member do
             get "transactions"
+            get :followers
           end
         end
 
@@ -717,8 +726,11 @@ Rails.application.routes.draw do
     get :recent_activity
     get :balance_transactions
     get :money_movement
-    get :merchants_categories
-    get :tags_users
+    get :merchants_chart
+    get :categories_chart
+    get :top_categories
+    get :tags_chart
+    get :users_chart
     get :transaction_heatmap
 
     get "edit", to: redirect("/%{event_id}/settings")
@@ -726,6 +738,7 @@ Rails.application.routes.draw do
     get "ledger"
     put "toggle_hidden"
     post "claim_point_of_contact"
+    post "create_sub_organization"
 
     post "remove_header_image"
     post "remove_background_image"
@@ -740,6 +753,7 @@ Rails.application.routes.draw do
     get "cards/new", to: "stripe_cards#new"
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
+    get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
 
     resources :follows, only: [:create], controller: "event/follows"
@@ -755,6 +769,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "sub_organizations"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate

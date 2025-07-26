@@ -75,6 +75,10 @@ class Event
         true
       end
 
+      def eligible_for_perks?
+        true
+      end
+
     end
 
   end

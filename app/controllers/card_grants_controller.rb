@@ -71,7 +71,7 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose))
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
       flash[:success] = "Grant's purpose has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence

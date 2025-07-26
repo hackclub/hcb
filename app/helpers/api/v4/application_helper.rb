@@ -6,7 +6,7 @@ module Api
       include UsersHelper # for `profile_picture_for`
       include StripeAuthorizationsHelper
 
-      attr_reader :current_user
+      attr_reader :current_user, :current_token
 
       def pagination_metadata(json)
         json.total_count @total_count
@@ -39,6 +39,10 @@ module Api
         yield
       ensure
         @expand = before
+      end
+
+      def expand_pii(override_if: false)
+        yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
       end
 
     end

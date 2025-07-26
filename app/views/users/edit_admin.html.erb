@@ -32,7 +32,7 @@
 
         <% if admin_signed_in? %>
           <p>
-            <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: "post" } unless current_session&.impersonated? %>
+            <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
           </p>
 
           <div class="field field--checkbox">
@@ -347,4 +347,8 @@
       </table>
     <% end %>
   <% end %>
+
+  <h2>Comments</h2>
+  <%= render "comments/list", comments: @user.comments %>
+  <%= render "comments/form", commentable: @user %>
 </turbo-frame>

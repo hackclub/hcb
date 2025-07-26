@@ -36,6 +36,7 @@
           selected: local_assigns[:selected] == :activation_flow %>
         <% end %>
     <% end %>
+
     <% if policy(@event).donation_overview? || policy(@event).invoices? || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
       <h4 class="mb0 h5 font-medium muted">Receive</h4>
       <hr>
@@ -95,7 +96,7 @@
       event_employees_path(event_id: @event.slug),
       tooltip: "Manage payroll",
       icon: "person-badge",
-      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) %>
+      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) && policy(@event).employees? %>
     <hr>
     <%= dock_item "Team",
       event_team_path(event_id: @event.slug),
@@ -122,6 +123,11 @@
       tooltip: "View legal documents and financial statements",
       icon: "docs",
       selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
+    <%= dock_item "Sub-organizations",
+      event_sub_organizations_path(event_id: @event.slug),
+      tooltip: "Create & manage subsidiary organisations",
+      icon: "channels",
+      selected: local_assigns[:selected] == :sub_organizations if policy(@event).sub_organizations? %>
     <%= dock_item "Settings",
       edit_event_path(@event),
       tooltip: "Edit organization settings",

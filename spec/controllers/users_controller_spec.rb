@@ -33,4 +33,73 @@ RSpec.describe UsersController do
       end
     end
   end
+
+  describe "#update" do
+    render_views
+
+    it "requires sudo mode in order to change 2fa settings" do
+      user = create(
+        :user,
+        use_two_factor_authentication: true,
+        phone_number: "+18556254225",
+      )
+      user.update!(phone_number_verified: true)
+      Flipper.enable(:sudo_mode_2015_07_21, user)
+      sign_in(user)
+
+      travel_to(3.hours.from_now)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: { use_two_factor_authentication: false }
+        }
+      )
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Confirm Access")
+      expect(user.reload.use_two_factor_authentication).to eq(true)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: { use_two_factor_authentication: false },
+          _sudo: {
+            submit_method: "email",
+            login_code: user.login_codes.last.code,
+            login_id: user.logins.last.hashid,
+          }
+        }
+      )
+
+      expect(response).to have_http_status(:found)
+      expect(user.reload.use_two_factor_authentication).to eq(false)
+    end
+
+    it "does not require sudo mode unless the feature flag is enabled" do
+      user = create(
+        :user,
+        use_two_factor_authentication: true,
+        phone_number: "+18556254225",
+      )
+      user.update!(phone_number_verified: true)
+      Flipper.disable(:sudo_mode_2015_07_21, user)
+      sign_in(user)
+
+      travel_to(3.hours.from_now)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: { use_two_factor_authentication: false }
+        }
+      )
+
+      expect(response).to have_http_status(:found)
+      expect(user.reload.use_two_factor_authentication).to eq(false)
+    end
+  end
 end
