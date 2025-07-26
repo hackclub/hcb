@@ -25,6 +25,11 @@ module CanonicalPendingTransactionService
           canonical_pending_transaction_id: @canonical_pending_transaction.id,
           canonical_transaction_id: @canonical_transaction.id,
         ).notify_settled.deliver_later
+
+        spending_control = @canonical_transaction.stripe_card.active_spending_control
+        if spending_control.present?
+          SpendingControlService.check_low_balance(spending_control, @canonical_transaction.local_hcb_code)
+        end
       end
 
     end
