@@ -74,7 +74,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def announcement_overview?
-    is_public || record.announcements.published.any? || organizer_signed_in?
+    is_public || record.announcements.published.any? || auditor_or_reader?
   end
 
   def emburse_card_overview?
@@ -147,6 +147,10 @@ class EventPolicy < ApplicationPolicy
 
   def donation_overview?
     show? && record.approved? && record.plan.donations_enabled?
+  end
+
+  def invoices?
+    show? && record.plan.invoices_enabled?
   end
 
   def account_number?
