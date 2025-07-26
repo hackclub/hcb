@@ -1,11 +1,40 @@
+.receipt__header {
+  padding: 0.75rem;
+}
+
+.receipt__footer {
+  padding: 0.75rem;
+}
+
 .receipt {
   max-width: var(--receipt-size);
+  --card-bg: #ffffff;
+  background-color: $white;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.125);
+  border-radius: 0.5rem;
+  transition: 0.125s ease-in-out;
+  transition-property: transform, box-shadow;
+  cursor: pointer;
+  dipslay: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  transform: rotate(0deg);
+
+  receipt__primary-action::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
 
   .receipt--image {
     max-height: calc(var(--receipt-size) * 1.5);
     object-fit: contain;
     width: auto;
     height: auto;
+    -webkit-user-drag: none;
     max-width: 100%;
   }
 
