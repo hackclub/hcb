@@ -2,13 +2,11 @@
 
 module ProsemirrorService
   class DonationSummaryNode < ProsemirrorToHtml::Nodes::Node
-    include ApplicationHelper
-
-    @node_type = "donationSummary"
+    @node_type = "Announcement::Block::DonationSummary"
     @tag_name = "div"
 
     def tag
-      [{ tag: self.class.tag_name, attrs: (@node.attrs.to_h || {}).merge({ class: "donationSummary relative card shadow-none border flex flex-col py-2 my-2" }) }]
+      [{ tag: self.class.tag_name, attrs: @node.attrs.to_h || {} }]
     end
 
     def matching
@@ -16,13 +14,7 @@ module ProsemirrorService
     end
 
     def text
-      event = ProsemirrorService::Renderer.context.fetch(:event)
-
-      start_date = @node.attrs.startDate.present? ? Date.parse(@node.attrs.startDate) : 1.month.ago
-      donations = event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..).order(:created_at)
-      total = donations.sum(:amount)
-
-      AnnouncementsController.renderer.render partial: "announcements/nodes/donation_summary", locals: { donations:, total:, start_date: }
+      ProsemirrorService::Renderer.render_node @node
     end
 
   end

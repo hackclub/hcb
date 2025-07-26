@@ -1,5 +1,7 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-dark="<%= @is_dark %>">
   <head>
     <title>
       <%= "#{yield(:title)} –" if content_for?(:title) %>

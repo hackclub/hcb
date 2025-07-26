@@ -30,7 +30,7 @@
     <% end %>
     <% if @report.payout_holding&.failed? %>
       <% admin_tool "w-fit p0 tooltipped tooltipped--w overflow-visible", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;", 'aria-label': "Cancel this reimbursement" do %>
-        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", method: :POST, data: { confirm: "After cancelling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them." } do %>
+        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", method: :post, data: { confirm: "After cancelling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them." } do %>
           <%= inline_icon "forbidden", size: 28, color: "#ff8c37" %>
         <% end %>
       <% end %>
@@ -167,9 +167,7 @@
 
 <%= render partial: "actions", locals: { report: @report, user: @user } %>
 
-<% unless @report.initial_draft? %>
-  <%= render partial: "conversation" %>
-<% end %>
+<%= render partial: "conversation" %>
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
   <%= modal_header "Add Payout Information" %>
