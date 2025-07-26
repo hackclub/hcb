@@ -35,6 +35,7 @@ module Api
                 .joins(:incoming_disbursements)
                 .where("disbursements.source_event_id = ? AND disbursements.aasm_state IN ('pending', 'in_transit', 'deposited')", EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
                 .any?,
+          premium: current_user.events.any? { |e| e.users.where(teenager: true).active.size >= 10 }
         }
 
 

@@ -2,7 +2,7 @@
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_followers">
   <%= modal_header "Followers" %>
-  <ul class="grid grid-cols-1 text-left w-full mt-2">
+  <ul class="grid grid-cols-<%= event_follows.size == 1 ? "1" : "2" %> text-left w-full mt-2">
     <% event_follows.each do |event_follow| %>
       <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">

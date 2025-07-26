@@ -3,7 +3,8 @@
 class UsersController < ApplicationController
   skip_before_action :signed_in_user, only: [:webauthn_options]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
-  skip_after_action :verify_authorized, only: [:revoke_oauth_application,
+  skip_after_action :verify_authorized, only: [:show,
+                                               :revoke_oauth_application,
                                                :edit_address,
                                                :edit_payout,
                                                :impersonate,
@@ -22,6 +23,11 @@ class UsersController < ApplicationController
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
 
   wrap_parameters format: :url_encoded_form
+
+  def show
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    redirect_to admin_user_path(@user)
+  end
 
   def impersonate
     authorize current_user
@@ -94,6 +100,18 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(current_user)
   end
 
+  def make_oauth_authorization_eternal
+    token = ApiToken.find(params[:id])
+    authorize token, :make_eternal?
+
+    if token.update(expires_in: nil)
+      flash[:success] = "Authorization made eternal."
+    else
+      flash[:error] = "Failed to make authorization eternal."
+    end
+    redirect_back_or_to security_user_path(token.user)
+  end
+
   def receipt_report
     ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
@@ -138,12 +156,21 @@ class UsersController < ApplicationController
     show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     @sessions = @sessions.not_expired
-    @oauth_authorizations = @user.api_tokens
-                                 .where.not(application_id: nil)
-                                 .select("application_id, MAX(api_tokens.created_at) AS created_at, MIN(api_tokens.created_at) AS first_authorized_at, COUNT(*) AS authorization_count")
-                                 .accessible
-                                 .group(:application_id)
-                                 .includes(:application)
+    @oauth_tokens_by_app = @user.api_tokens
+                                .where.not(application_id: nil)
+                                .accessible
+                                .includes(:application)
+                                .order(created_at: :desc)
+                                .group_by(&:application)
+    @oauth_authorizations = @oauth_tokens_by_app.map do |app, tokens|
+      OpenStruct.new(
+        application: app,
+        created_at: tokens.max_by(&:created_at).created_at,
+        first_authorized_at: tokens.min_by(&:created_at).created_at,
+        authorization_count: tokens.size,
+        tokens: tokens,
+      )
+    end
     @all_sessions = (@sessions + @oauth_authorizations).sort_by { |s| s.created_at }.reverse!
 
     @expired_sessions = @user

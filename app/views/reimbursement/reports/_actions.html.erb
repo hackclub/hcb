@@ -194,14 +194,16 @@
           </div>
         <% elsif report.reimbursement_requested? %>
           <% admin_tool("overflow-visible") do %>
-            <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post do %>
-              <%= inline_icon "thumbsup" %>
-              Approve <%= report.user.payout_method.title_kind %> Reimbursement
-            <% end %>
+            <% turbo_confirm = nil %>
             <% unless ::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) %>
               <% button_hint = capture do %>
                 <span class="bold warning">⚠️ Warning</span>: this organization does not have the balance to fulfil this report.
               <% end %>
+              <% turbo_confirm = "⚠️ WARNING: Approving this reimbursement will make the event balance negative. This organization does not have sufficient funds to fulfill this request. Are you sure you want to proceed?" %>
+            <% end %>
+            <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post, data: { turbo_confirm: } do %>
+              <%= inline_icon "thumbsup" %>
+              Approve <%= report.user.payout_method.title_kind %> Reimbursement
             <% end %>
           <% end %>
         <% end %>
