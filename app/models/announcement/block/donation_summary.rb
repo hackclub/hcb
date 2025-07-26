@@ -24,12 +24,16 @@
 class Announcement
   class Block
     class DonationSummary < ::Announcement::Block
-      def render_html(is_email: false)
+      def custom_locals
         start_date = parameters["start_date"].present? ? Date.parse(parameters["start_date"]) : 1.month.ago
         donations = announcement.event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..).order(:created_at)
         total = donations.sum(:amount)
 
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/donation_summary", locals: { donations:, total:, start_date:, is_email:, block: self }
+        { donations:, total:, start_date: }
+      end
+
+      def editable
+        true
       end
 
     end

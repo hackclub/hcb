@@ -14,6 +14,14 @@ class Announcement
       admin_or_manager?
     end
 
+    def edit?
+      admin_or_manager?
+    end
+
+    def update?
+      admin_or_manager?
+    end
+
     private
 
     def admin_or_manager?

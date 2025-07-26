@@ -1,3 +1,5 @@
+/* global Turbo, $ */
+
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
 import { Editor } from '@tiptap/core'
@@ -173,25 +175,34 @@ export default class extends Controller {
     this.editor.chain().focus().addDonationGoal(attrs).run()
   }
 
-  async hcbCode() {
-    const url = window.prompt('Transaction URL')
+  async hcbCode(parameters, blockId) {
+    if (blockId) {
+      await this.editBlock(blockId, parameters)
+    } else {
+      const attrs = await this.createBlock(
+        'Announcement::Block::HcbCode',
+        parameters
+      )
 
-    if (url === null || url === '') {
-      return
+      this.editor.chain().focus().addHcbCode(attrs).run()
     }
 
-    const hcbCode = url.split('/').at(-1)
-
-    const attrs = await this.createBlock('Announcement::Block::HcbCode', {
-      hcb_code: hcbCode,
-    })
-
-    this.editor.chain().focus().addHcbCode(attrs).run()
+    $.modal.close()
   }
 
-  async donationSummary() {
-    const attrs = await this.createBlock('Announcement::Block::DonationSummary')
-    this.editor.chain().focus().addDonationSummary(attrs).run()
+  async donationSummary(parameters, blockId) {
+    if (blockId) {
+      await this.editBlock(blockId, parameters)
+    } else {
+      const attrs = await this.createBlock(
+        'Announcement::Block::DonationSummary',
+        parameters
+      )
+
+      this.editor.chain().focus().addDonationSummary(attrs).run()
+    }
+
+    $.modal.close()
   }
 
   async createBlock(type, parameters) {
@@ -207,6 +218,23 @@ export default class extends Controller {
         'X-CSRF-Token': csrf(),
       },
     }).then(r => r.json())
+
+    return res
+  }
+
+  async editBlock(id, parameters) {
+    const res = await fetch(`/announcements/blocks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        parameters: JSON.stringify(parameters || {}),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf(),
+      },
+    })
+      .then(res => res.text())
+      .then(html => Turbo.renderStreamMessage(html))
 
     return res
   }
