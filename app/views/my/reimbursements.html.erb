@@ -89,7 +89,8 @@
     <table>
       <thead>
       <tr>
-        <th class="!pl-0">Status</th>
+        <th></th>
+        <th>Status</th>
         <th>Report</th>
         <th>Organization</th>
         <th>Amount</th>
@@ -99,7 +100,10 @@
       <tbody>
         <% @reports.order(created_at: :desc).each do |report| %>
           <tr>
-            <td class="!pl-0">
+            <td class="!pl-0 flex items-center justify-center" style="margin-top: 1px;">
+              <%= avatar_for report.user, size: 24 %>
+            </td>
+            <td>
               <% if report.status_description %>
                 <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
                   <%= report.status_text %>

@@ -128,15 +128,15 @@ class MyController < ApplicationController
   end
 
   def reimbursements
-    created_reports = current_user.reimbursement_reports.where.not(id: current_user.assigned_reimbursement_reports.submitted.select(:id))
-    review_reports = Reimbursement::Report.submitted.where(event: Event.joins(:managers).where(users: { id: current_user.id }), reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    my_reports = current_user.reimbursement_reports
+    reports_to_review = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
     case params[:filter]
     when "mine"
-      @reports = created_reports
+      @reports = my_reports
     when "review"
-      @reports = review_reports
+      @reports = reports_to_review
     else
-      @reports = current_user.reimbursement_reports.or(created_reports).or(review_reports)
+      @reports = my_reports.or(reports_to_review)
     end
 
     @reports = @reports.search(params[:q]) if params[:q].present?
