@@ -18,13 +18,14 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
+#  donation_tiers_enabled                       :boolean          default(FALSE), not null
 #  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
 #  is_indexable                                 :boolean          default(TRUE)
 #  is_public                                    :boolean          default(TRUE)
 #  last_fee_processed_at                        :datetime
-#  name                                         :text
+#  name                                         :text             not null
 #  postal_code                                  :string
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
@@ -39,10 +40,12 @@
 #  updated_at                                   :datetime         not null
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
+#  parent_id                                    :bigint
 #  point_of_contact_id                          :bigint
 #
 # Indexes
 #
+#  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
 # Foreign Keys
@@ -70,6 +73,7 @@ class Event < ApplicationRecord
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
+  validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
@@ -104,6 +108,8 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
+  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
+  scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
   scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
@@ -113,6 +119,47 @@ class Event < ApplicationRecord
     joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
+
+  def ancestor_ids
+    [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE parent_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN parent_events pe ON e.id = pe.parent_id
+      )
+      SELECT id FROM parent_events WHERE id != #{id};
+    SQL
+  end
+
+  def descendant_ids
+    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE child_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE parent_id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN child_events ce ON e.parent_id = ce.id
+      )
+      SELECT id FROM child_events;
+    SQL
+  end
+
+  def ancestors
+    Event.where(id: ancestor_ids)
+  end
+
+  def descendant_total_balance_cents
+    subevents.to_a.sum(&:balance_available_v2_cents)
+  end
+
+  belongs_to :parent, class_name: "Event", optional: true
+  has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
@@ -230,11 +277,20 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+
+  def ancestor_organizer_positions
+    OrganizerPosition.where(event_id: ancestor_ids)
+  end
+
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
+  has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
+
+  has_many :event_follows, class_name: "Event::Follow"
+  has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
@@ -257,6 +313,7 @@ class Event < ApplicationRecord
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
   has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
+  has_many :donation_tiers, -> { order(sort_index: :asc) }, dependent: :destroy, class_name: "Donation::Tier"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
@@ -282,6 +339,8 @@ class Event < ApplicationRecord
 
   has_many :canonical_event_mappings, -> { on_main_ledger }
   has_many :canonical_transactions, through: :canonical_event_mappings
+
+  has_many :announcements
 
   scope :engaged, -> {
     Event.where(id: Event.joins(:canonical_transactions)
@@ -358,13 +417,14 @@ class Event < ApplicationRecord
   end
 
   before_validation do
-    build_plan(type: Event::Plan::Standard) if plan.nil?
+    build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
+  before_save :enable_monthly_announcements
 
   comma do
     id
@@ -658,7 +718,12 @@ class Event < ApplicationRecord
   end
 
   def revenue_fee
-    plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
+    configured = plan&.revenue_fee
+    return configured if configured.present?
+
+    Rails.error.unexpected("#{id} is missing a plan!")
+
+    Event::Plan::FALLBACK_REVENUE_FEE
   end
 
   def generate_stripe_card_designs
@@ -718,6 +783,12 @@ class Event < ApplicationRecord
     plan.omit_stats
   end
 
+  validate do
+    if id && id == parent_id
+      errors.add(:parent, "can't be self-referential.")
+    end
+  end
+
   def eligible_for_transparency?
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
@@ -739,6 +810,31 @@ class Event < ApplicationRecord
 
       app.save
     end
+  end
+
+  def set_airtable_status(status)
+    app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
+
+    return unless app.present?
+
+    app["Status"] = status unless app["Status"] == "Onboarded"
+
+    app.save
+  end
+
+  def active_teenagers
+    organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
+  end
+
+  def subevents_enabled?
+    config.subevent_plan.present?
+  end
+
+  def organizer_contact_emails
+    emails = users.map(&:email_address_with_name)
+    emails << config.contact_email if config.contact_email.present?
+
+    emails
   end
 
   private
@@ -764,7 +860,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required?
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
@@ -794,6 +890,13 @@ class Event < ApplicationRecord
 
     unless eligible_for_indexing?
       self.is_indexable = false
+    end
+  end
+
+  def enable_monthly_announcements
+    # We'll enable monthly announcements when transparency mode is turned on
+    if is_public_changed?(to: true)
+      config.update(generate_monthly_announcement: true)
     end
   end
 

@@ -25,6 +25,7 @@ jobs:
   suggest_lint_changes:
     name: 'Suggest lint changes'
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,7 +47,6 @@ jobs:
         run: bin/lint -c
       - name: Comment suggested changes
         uses: parkerbxyz/suggest-changes@v2.0.0
-        if: ${{ github.event.pull_request }}
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
@@ -195,6 +195,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:

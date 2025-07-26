@@ -58,7 +58,7 @@ class Export
       end
 
       def header
-        ::CSV::Row.new(headers, ["id", "name", "postal_code", "contact email", "organizers", "revenue fee", "url", "balance", "omitted?"], true)
+        ::CSV::Row.new(headers, ["id", "name", "postal_code", "contact email", "organizers", "revenue fee", "url", "balance", "total raised", "omitted?"], true)
       end
 
       def row(event)
@@ -73,6 +73,7 @@ class Export
             event.plan.revenue_fee_label,
             Rails.application.routes.url_helpers.url_for(event),
             event.balance,
+            event.total_raised,
             event.omit_stats?
           ]
         )

@@ -18,8 +18,9 @@ module TransactionEngine
 
             if plaid_transaction.date <= "2024-10-09".to_date
               "[Plaid import] Skipping #{plaid_transaction.transaction_id}".tap do |msg|
-                puts msg, plaid_transaction
-                Airbrake.notify(msg, plaid_transaction)
+                notice = "#{msg} #{plaid_transaction}"
+                puts notice
+                Rails.error.unexpected notice
               end
 
               next

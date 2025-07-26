@@ -29,7 +29,7 @@
     </div>
   <% end %>
 
-  <% if organizer_signed_in? && Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
+  <% if organizer_signed_in? && @event.tags.size > 0 %>
     <div
       data-controller="menu"
       data-menu-append-to-value="turbo-frame#ledger"
@@ -88,7 +88,7 @@
     <div class="filter-menu__chips">
       <% if @tag %>
         <div class="badge badge-large bg-muted">
-          <div class="tag__preview tag-<%= @tag.color || "muted" %>"></div>
+          <%= render partial: "canonical_transactions/tag_icon", locals: { tag: @tag } %>
           <%= @tag.label %>
 
           <%= link_to event_ledger_url(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
@@ -140,7 +140,7 @@
       <% end %>
       <% if @missing_receipts %>
         <div class="badge badge-large bg-muted">
-          Missing Receipts
+          Missing receipts
           <%= link_to event_ledger_url(@event, upsert_query_params(missing_receipts: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
