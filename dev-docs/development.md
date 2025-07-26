@@ -22,6 +22,8 @@ Once HCB is running locally, log in into your local instance using the email `ad
 
 To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces.
 
+After creating your codespace, run `./init_db.sh`. This will finish preparing HCB for development.
+
 You can then run `bin/dev` to launch HCB. If you can't open the link that is printed in the terminal, navigate to the `PORTS` tab in your terminal and set port `3000` to public and then back to private.
 
 ### Automated setup with Docker
@@ -224,3 +226,29 @@ client_secret=<SECRET>
 redirect_uri=http://localhost:3000/
 ```
 This request will return your OAuth access token. It can then be passed into future API requests in the Authorization header. Ex. `Authorization: Bearer <ACCESS TOKEN>`
+
+## Migrating Postgres in development
+
+HCB recently upgraded the version of PostgreSQL it uses in development from 11 to 15 to match what we use in production. If you set up your development instance of HCB before July 21st, 2025, you probably are using Postgres 11.
+
+### If you are running HCB natively
+Use [pg_upgrade](https://www.postgresql.org/docs/current/pgupgrade.html) to upgrade to Postgres 15
+
+### If you are using Docker
+First, make sure you are on the latest commit on the main branch. Then, run `./upgrade_docker_postgres_11_to_15.sh` --codespace`, or just `./upgrade_docker_postgres_11_to_15.sh` if using Docker.`
+
+Then, update your .env.development with the new database URL:
+```
+DATABASE_URL=postgres://postgres:postgres@db15:5432
+```
+
+### If you are using a Codespace
+Rebuild your Codespace (NOT "Full Rebuild"), then run `./upgrade_docker_postgres_11_to_15.sh --codespace`.
+
+Then, update your .env.development with the new database URL:
+```
+DATABASE_URL=postgres://postgres:postgres@db15:5432
+```
+
+All data should be copied over to the new database, which HCB will now use.
+

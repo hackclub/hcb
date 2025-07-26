@@ -36,4 +36,13 @@ else
   echo "To enable Solargraph, run docker_start.sh with the --with-solargraph flag."
 fi
 
-docker compose run --service-ports web "${@/--with-solargraph/''}"
+if [[ $* == *--pg15* ]]
+then
+  export COMPOSE_FILE=docker-compose.yml:docker-compose.postgres-15.yml
+fi
+
+params=${@/--with-solargraph/''}
+params=${params/--pg15/''}
+
+
+docker compose run --service-ports web $params
