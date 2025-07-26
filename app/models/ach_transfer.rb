@@ -349,6 +349,7 @@ class AchTransfer < ApplicationRecord
 
     now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
 
+    return scheduled_on if scheduled_on.present?
     return now if realtime?
 
     if same_day? && now.workday?

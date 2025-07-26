@@ -1,7 +1,7 @@
 <%# locals: (event_follows:) %>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_following">
-  <h2>Following</h2>
+  <%= modal_header "Following" %>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% event_follows.each do |event_follow| %>
       <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
@@ -15,7 +15,7 @@
                           class: "error",
                           data: {
                             turbo_frame: "_top",
-                            turbo_method: :DELETE,
+                            turbo_method: :delete,
                             turbo_confirm: "Are you sure you want to unfollow this organization?",
                           } %>
         </span>

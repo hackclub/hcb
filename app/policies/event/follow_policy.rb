@@ -3,11 +3,11 @@
 class Event
   class FollowPolicy < ApplicationPolicy
     def create?
-      user == record.user
+      Pundit.policy(record.event).announcement_overview? && user == record.user
     end
 
     def destroy?
-      user == record.user
+      user == record.user || OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
   end
