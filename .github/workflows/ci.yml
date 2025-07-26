@@ -183,18 +183,16 @@ jobs:
           bundler-cache: true
       - name: Install postgres client
         run: sudo apt-get install libpq-dev
-      - name: Install Gems
-        run: bundle install
       - name: Build App
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
         run: bundler exec rails db:create db:schema:load RAILS_ENV=test
-      - name: Run annotate
+      - name: Run annotaterb
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
-        run: bundle exec annotate --models --frozen
+        run: bundle exec annotaterb --models --frozen
   zeitwerk:
     name: Zeitwerk
     runs-on: ubuntu-latest
