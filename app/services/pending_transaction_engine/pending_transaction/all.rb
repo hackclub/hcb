@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: nil, expenses: nil, user: nil, missing_receipts: false)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i

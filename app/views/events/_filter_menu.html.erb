@@ -69,13 +69,6 @@
       </div>
       <div data-tabs-target="tab" id="amount">
         <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
-          <% ["in", "out"].each do |direction| %>
-            <div class="flex items-center">
-              <%= link_to(upsert_query_params(direction:), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
-                <%= direction.humanize.gsub("In", "Incoming").gsub("Out", "Outgoing") %>
-              <% end %>
-            </div>
-          <% end %>
           <div class="m-2">
             <p class="bold mb-0 mt-2">Transactions more than...</p>
             <div class="flex mb1">
@@ -96,6 +89,23 @@
 
           <div class="flex justify-start m-1">
             <%= form.submit "Filter transactions" %>
+          </div>
+
+          <hr class="!border-muted !my-3" />
+          <div class="m-2">
+            <p class="bold mb-0 mt-2">Revenue or expenses?</p>
+          </div>
+          <% ["expenses", "revenue"].each do |direction| %>
+            <div class="flex items-center">
+              <%= link_to(upsert_query_params(direction:), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
+                <%= direction.humanize %>
+              <% end %>
+            </div>
+          <% end %>
+          <div class="flex items-center">
+            <%= link_to(upsert_query_params(direction: nil), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
+             Both
+            <% end %>
           </div>
         <% end %>
       </div>
