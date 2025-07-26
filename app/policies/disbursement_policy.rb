@@ -2,25 +2,36 @@
 
 class DisbursementPolicy < ApplicationPolicy
   def show?
-    user.admin?
+    user.auditor?
+  end
+
+  def can_send?(role: :manager)
+    return true if user&.admin?
+    return true if record.source_event.nil?
+    return true if OrganizerPosition.role_at_least?(user, record.source_event, role)
+
+    false
+  end
+
+  def can_receive?(role: :manager)
+    return true if user&.admin?
+    return true if record.source_event&.plan&.unrestricted_disbursements_enabled?
+    return true if record.destination_event.nil?
+    return true if OrganizerPosition.role_at_least?(user, record.destination_event, role)
+
+    false
   end
 
   def new?
-    user&.admin? || (
-      (record.destination_event.nil? || record.destination_event.users.include?(user)) &&
-      (record.source_event.nil?      || record.source_event.users.include?(user))
-    )
+    can_send?(role: :reader) && can_receive?(role: :reader)
   end
 
   def create?
-    user&.admin? || (
-      record.destination_event.users.include?(user) &&
-      Pundit.policy(user, record.source_event).create_transfer?
-    )
+    can_send? && can_receive?
   end
 
   def transfer_confirmation_letter?
-    admin_or_user?
+    auditor_or_user?
   end
 
   def edit?
@@ -49,8 +60,8 @@ class DisbursementPolicy < ApplicationPolicy
 
   private
 
-  def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+  def auditor_or_user?
+    user&.auditor? || record.event.users.include?(user)
   end
 
 end

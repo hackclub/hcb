@@ -77,7 +77,7 @@ module StripeCardService
         cardholder: stripe_cardholder.stripe_id,
         type: @card_type,
         # https://heroku-app97991095.airbrake.io/projects/288439/groups/3892032265003954513 for context behind regex.
-        second_line: event.short_name(length: 24).gsub(/[^a-zA-Z0-9\/\-&:().'\s]/, "").strip,
+        second_line: event.short_name(length: 24).gsub(/\s/, " ").gsub(/[^a-zA-Z0-9\/\-&:().' ]/, "").strip,
         currency: "usd",
         status: "active",
         spending_controls: {

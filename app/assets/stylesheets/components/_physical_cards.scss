@@ -64,7 +64,8 @@
 .emburse-card {
   background-color: #54d;
   background-image: radial-gradient(ellipse at top right, #867ae7, transparent);
-  background-image: url('emburse-swoosh-plastic.svg'),
+  background-image:
+    url('emburse-swoosh-plastic.svg'),
     radial-gradient(ellipse at top right, #867ae7, transparent);
   &:before {
     content: '';
@@ -78,7 +79,8 @@
   }
 
   &.virtual {
-    background-image: url('emburse-swoosh-digital.svg'),
+    background-image:
+      url('emburse-swoosh-digital.svg'),
       radial-gradient(ellipse at top right, #867ae7, transparent);
     &:before {
       background: url('emburse-logo-digital.svg');
@@ -114,7 +116,23 @@
     content: '❄️';
   }
 
-  &.frozen,
+  &.frozen > .stripe-card__overlay:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('card-frost.png');
+    opacity: 0.32;
+    background-size: cover;
+    z-index: 1;
+  }
+
+  &.frozen {
+    filter: grayscale(0.23);
+  }
+
   &.canceled {
     filter: grayscale(1);
   }
@@ -230,8 +248,33 @@
       transparent
     );
   }
+  .stripe-card__personalization_inner_image_wrapper {
+    filter: drop-shadow(1em 0 0px #fff);
+  }
 }
 
 .stripe-card__personalization-image {
   height: 40px;
+  width: 100px;
+  object-position: center right;
+  object-fit: contain;
+  position: absolute;
+  right: 0;
+}
+
+.stripe-card__personalization_image_wrapper {
+  font-size: 100px;
+  height: 1em;
+  width: 1em;
+  overflow: hidden;
+  display: inline-flex;
+}
+
+.stripe-card__personalization_inner_image_wrapper {
+  display: flex;
+  height: 1em;
+  width: 1em;
+  position: relative;
+  left: -1em;
+  filter: drop-shadow(1em 0 0px #000);
 }

@@ -3,12 +3,6 @@
 
 <%= render "events/nav" if @event %>
 
-<% unless using_transaction_engine_v2? %>
-<% admin_tool("mt3 mb0") do %>
-  <%= link_to "All transactions", transactions_path, class: "breadcrumb" %>
-<% end %>
-<% end %>
-
 <article class="card mt2">
   <h1 class="heading h1 mt0 mb0">
     <span class="flex-auto">

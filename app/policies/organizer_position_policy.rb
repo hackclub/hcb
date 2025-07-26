@@ -13,10 +13,6 @@ class OrganizerPositionPolicy < ApplicationPolicy
     record.user == user
   end
 
-  def toggle_signee_status?
-    user.admin?
-  end
-
   def change_position_role?
     return false unless user
     return false if record.user == user
@@ -29,7 +25,7 @@ class OrganizerPositionPolicy < ApplicationPolicy
   end
 
   def view_allowances?
-    admin_or_manager? || record.user == user
+    admin_or_manager? || record.user == user || user&.auditor?
   end
 
   private

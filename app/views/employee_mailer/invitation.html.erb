@@ -1,0 +1,21 @@
+<p>
+  Hi <%= @employee.user.name %>,
+</p>
+
+<p>
+  <%= @employee.event.name %> has invited you to get paid as a 1099 contractor through HCB.
+  To be paid, please visit your <%= link_to "payroll page", my_payroll_url %> on HCB.
+</p>
+
+<p>
+  As a 1099 contractor, taxes will not be withheld from your pay. At the end of the year
+  HCB will provide you a 1099 form to allow you to file your taxes.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @employee.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

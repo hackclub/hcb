@@ -45,6 +45,12 @@ class RawColumnTransaction < ApplicationRecord
       wire = ColumnService.get "/transfers/international-wire/#{transaction_id}"
 
       return wire["originator_name"]
+    elsif transaction_id.start_with? "ipay_"
+      return "INTEREST"
+    elsif transaction_id.start_with? "rttr_"
+      realtime = ColumnService.get "/transfers/realtime/#{transaction_id}"
+
+      return realtime["description"]
     end
     raise
   rescue
@@ -61,6 +67,25 @@ class RawColumnTransaction < ApplicationRecord
 
   def transaction_id
     column_transaction["transaction_id"]
+  end
+
+  def remote_object
+    transaction_id = column_transaction["transaction_id"]
+    if transaction_id.start_with? "acht"
+      ColumnService.ach_transfer(transaction_id)
+    elsif transaction_id.start_with? "book"
+      ColumnService.get "/transfers/book/#{transaction_id}"
+    elsif transaction_id.start_with? "wire"
+      ColumnService.get "/transfers/wire/#{transaction_id}"
+    elsif transaction_id.start_with? "swft_"
+      ColumnService.get "/transfers/international-wire/#{transaction_id}"
+    elsif transaction_id.start_with? "rttr_"
+      ColumnService.get "/transfers/realtime/#{transaction_id}"
+    else
+      nil
+    end
+  rescue
+    nil
   end
 
 end

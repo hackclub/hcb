@@ -1,0 +1,8 @@
+We're writing to let you know your payout for "<%= @payment.title %>" was rejected and failed to send.
+
+<% if @reason %>
+  Here's the provided explanation:
+  <pre><%= @reason %></pre>
+<% end %>
+
+Please update your payout details <%= link_to "here", settings_payouts_url %>; afterwards, we'll reattempt the transfer.

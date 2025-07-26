@@ -28,4 +28,9 @@ class ReceiptBinMailer < ApplicationMailer
     mail subject: @inbound_mail&.mail&.subject || "An unknown error occured"
   end
 
+  def paired
+    @suggested_pairing = params[:suggested_pairing]
+    mail subject: "We've paired your receipt with a transaction", to: @suggested_pairing.receipt.user.email, reply_to: @suggested_pairing.hcb_code.receipt_upload_email
+  end
+
 end

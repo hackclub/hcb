@@ -2,7 +2,7 @@
   <% is_pinned = local_assigns[:hcb_code].pin.present? %>
   <div class="flex muted justify-end items-center">
     <%= inline_icon "pin-fill", size: 24 %>
-    <%= link_to pin_hcb_code_path(local_assigns[:hcb_code]), data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
+    <%= link_to pin_hcb_code_path(local_assigns[:hcb_code], event: @event), data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
       <small class="mt0 mb0">
         <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
       </small>

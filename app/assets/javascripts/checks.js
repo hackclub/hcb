@@ -13,7 +13,7 @@ const amountToCheckWords = amount => {
   return words
 }
 
-$(document).on('change paste keyup input', '*[id^="increase_check_"]', event => {
+$('[id^="increase_check_"]').on('change paste keyup input', event => {
   const fieldName = event.currentTarget.id.replace('increase_check_', '')
 
   if (fieldName == 'memo') {

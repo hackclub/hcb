@@ -32,7 +32,7 @@ module GSuiteService
     private
 
     def notify_operations
-      OperationsMailer.with(g_suite_id: g_suite.id).g_suite_entering_created_state.deliver_now
+      GSuiteMailer.with(g_suite_id: g_suite.id).notify_operations_of_entering_created_state.deliver_now
     end
 
     def attrs

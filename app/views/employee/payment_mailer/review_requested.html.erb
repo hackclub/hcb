@@ -1,0 +1,13 @@
+<p>
+  Hey team,
+</p>
+
+<p>
+  <%= @employee.user.name %> has submitted a payment for your review: <%= link_to @payment.title, event_employees_url(@employee.event) %>.
+</p>
+
+<p>
+  Thanks,
+  <br><br>
+  The HCB Team
+</p>

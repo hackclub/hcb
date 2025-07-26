@@ -49,4 +49,4 @@ LocalTime.start()
 
 import '@github/text-expander-element'
 import '@oddbird/popover-polyfill'
-import 'chartkick/chart.js'
+import 'emoji-picker-element'

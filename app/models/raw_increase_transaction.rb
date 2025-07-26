@@ -31,8 +31,6 @@ class RawIncreaseTransaction < ApplicationRecord
 
   has_one :event, through: :increase_account_number
 
-  after_create_commit :notify_deprecated_account_number, if: -> { category.start_with?("inbound_") && event.present? }
-
   def memo
     if category == "inbound_ach_transfer"
       originator_company_name = increase_transaction.dig("source", "inbound_ach_transfer", "originator_company_name")
@@ -50,12 +48,6 @@ class RawIncreaseTransaction < ApplicationRecord
 
   def unique_bank_identifier
     "INCREASE-#{increase_account_id.upcase}"
-  end
-
-  private
-
-  def notify_deprecated_account_number
-    RawIncreaseTransactionMailer.with(transaction: self).deprecated_account_number.deliver_later
   end
 
 end

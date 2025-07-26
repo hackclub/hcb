@@ -64,6 +64,8 @@ class RecurringDonation < ApplicationRecord
                           conditions: -> { where(stripe_status: "active") },
                           message: ->(recurring_donation, data) { "You're already donating to #{recurring_donation.event.name}." }
 
+  normalizes :email, with: ->(email) { email.strip.downcase }
+
   enum :stripe_status, {
     active: "active",
     past_due: "past_due",
@@ -154,7 +156,7 @@ class RecurringDonation < ApplicationRecord
       currency: "usd",
       unit_amount: amount,
       recurring: { interval: "month" },
-      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.name) }
+      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.short_name) }
     )
 
     subscription = StripeService::Subscription.create(

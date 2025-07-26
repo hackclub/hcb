@@ -17,7 +17,7 @@ module StripeCards
       redirect_back fallback_location: stripe_card_personalization_designs_admin_index_path
     end
 
-    def make_private
+    def make_unlisted
       authorize @design
 
       @design.update!(common: false)

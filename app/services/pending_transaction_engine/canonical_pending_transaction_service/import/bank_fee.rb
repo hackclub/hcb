@@ -13,7 +13,8 @@ module PendingTransactionEngine
                 memo: rpit.memo,
                 amount_cents: rpit.amount_cents,
                 raw_pending_bank_fee_transaction_id: rpit.id,
-                fronted: rpit.amount_cents.positive?
+                fronted: rpit.amount_cents.positive?,
+                fee_waived: true
               }
               ct = ::CanonicalPendingTransaction.create!(attrs)
             end

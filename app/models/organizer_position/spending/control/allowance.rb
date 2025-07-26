@@ -35,6 +35,7 @@ class OrganizerPosition
 
         validate :balance_is_positive, on: :create
         validate :balance_is_non_zero, on: :create
+        validates :amount_cents, numericality: { less_than_or_equal_to: 999_999_99 }
 
         private
 

@@ -9,6 +9,8 @@ module PendingEventMappingEngine
 
       settle_canonical_pending_increase_check!
 
+      settle_canonical_pending_wire!
+
       settle_canonical_pending_check_deposit!
       decline_canonical_pending_check_deposit!
 
@@ -88,6 +90,15 @@ module PendingEventMappingEngine
       CanonicalPendingTransaction.unsettled.increase_check.find_each(batch_size: 100) do |cpt|
         if cpt.local_hcb_code.ct
           CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+        end
+      end
+    end
+
+    def settle_canonical_pending_wire!
+      CanonicalPendingTransaction.unsettled.wire.find_each(batch_size: 100) do |cpt|
+        if cpt.local_hcb_code.ct
+          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+          cpt.wire.mark_deposited!
         end
       end
     end

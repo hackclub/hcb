@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import submitForm from '../common/submitForm'
-import airbrake from '../airbrake'
+import { appsignal } from '../appsignal'
 
 let dropzone
 
@@ -17,7 +17,6 @@ function extractId(dataTransfer) {
     receiptId = imgTag.getAttribute('data-receipt-id')
   } catch (err) {
     console.error(err)
-    // airbrake?.notify(err)
   }
 
   if (!receiptId) {
@@ -33,7 +32,7 @@ function extractId(dataTransfer) {
       receiptId = imageElement.getAttribute('data-receipt-id')
     } catch (err) {
       console.error(err)
-      airbrake?.notify(err)
+      appsignal.sendError(err)
     }
   }
 
@@ -90,11 +89,13 @@ export default class extends Controller {
           receiptable_type: receiptableType,
           receiptable_id: receiptableId,
           show_link: true,
+          show_receipt_button: true,
         })
       }
     }
 
     this.fileInputTarget.files = e.dataTransfer.files
+    this.fileInputTarget.dispatchEvent(new Event('change'))
     if (!this.fileInputTarget.files.length) return
 
     if (this.hasUploadMethodTarget && !this.submitting) {

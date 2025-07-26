@@ -10,7 +10,7 @@ module TransactionGroupingEngine
       UNKNOWN_CODE = "000"
       # 001 — This type code exists in production to group transactions under
       # `000` while preventing from the TX Engine from trying to re-group them.
-      # For context, `TransactionGroupingEngineJob::Nightly` will try to group
+      # For context, `TransactionGroupingEngine::NightlyJob` will try to group
       # any CanonicalTransactions with a `000`. `001` was used to manually group
       # transactions together during an incident.
       INVOICE_CODE = "100"
@@ -25,12 +25,12 @@ module TransactionGroupingEngine
       DISBURSEMENT_CODE = "500"
       STRIPE_CARD_CODE = "600"
       STRIPE_FORCE_CAPTURE_CODE = "601"
+      STRIPE_SERVICE_FEE_CODE = "610"
       BANK_FEE_CODE = "700"
       INCOMING_BANK_FEE_CODE = "701" # short-lived and deprecated
       FEE_REVENUE_CODE = "702"
       EXPENSE_PAYOUT_CODE = "710"
       PAYOUT_HOLDING_CODE = "712"
-      ACH_PAYMENT_CODE = "800" # ALSO short-lived and deprecated
       OUTGOING_FEE_REIMBURSEMENT_CODE = "900" # Note: many old fee reimbursements are still grouped under HCB-000
 
       def initialize(canonical_transaction_or_canonical_pending_transaction:)
@@ -52,7 +52,6 @@ module TransactionGroupingEngine
         return disbursement_hcb_code if disbursement
         return stripe_card_hcb_code if raw_stripe_transaction
         return stripe_card_hcb_code_pending if raw_pending_stripe_transaction
-        return ach_payment_hcb_code if ach_payment
         return reimbursement_expense_payout_hcb_code if reimbursement_expense_payout
         return reimbursement_payout_holding_hcb_code if reimbursement_payout_holding
         return outgoing_fee_reimbursement_hcb_code if outgoing_fee_reimbursement?
@@ -250,18 +249,6 @@ module TransactionGroupingEngine
         @raw_pending_stripe_transaction ||= @ct_or_cp.raw_pending_stripe_transaction
       end
 
-      def ach_payment_hcb_code
-        [
-          HCB_CODE,
-          ACH_PAYMENT_CODE,
-          ach_payment.id
-        ].join(SEPARATOR)
-      end
-
-      def ach_payment
-        @ct_or_cp.try :ach_payment
-      end
-
       def outgoing_fee_reimbursement_hcb_code
         [
           HCB_CODE,
@@ -271,7 +258,7 @@ module TransactionGroupingEngine
       end
 
       def outgoing_fee_reimbursement?
-        @ct_or_cp.memo.downcase.include?("stripe fee reimbursement")
+        @ct_or_cp.memo.downcase.include?("stripe fee reimbursement") || @ct_or_cp.memo.downcase.include?("fee reimburse") || @ct_or_cp.memo.downcase.include?("stripe fee reimbu") || @ct_or_cp.memo.downcase.include?("hckclb fee reimbu")
       end
 
       def unknown_hcb_code

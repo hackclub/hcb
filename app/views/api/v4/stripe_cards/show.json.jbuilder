@@ -1,3 +1,5 @@
 # frozen_string_literal: true
 
-json.partial! @stripe_card, expand: [:user, :organization, :total_spent_cents]
+expand :user, :organization, :total_spent_cents do
+  json.partial! @stripe_card
+end

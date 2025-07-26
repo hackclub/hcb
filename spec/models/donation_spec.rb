@@ -23,14 +23,14 @@ RSpec.describe Donation, type: :modal do
       donation2 = create(:donation, event:)
       donation2.status = "succeeded"
       donation2.save
-    end.to have_enqueued_mail(DonationMailer, :donation_notification).once
+    end.to have_enqueued_mail(DonationMailer, :notification).once
 
     expect do
       donation3 = create(:donation, event:)
       donation3.message = "Happy hacking!"
       donation3.status = "succeeded"
       donation3.save
-    end.to have_enqueued_mail(DonationMailer, :donation_with_message_notification).once
+    end.to have_enqueued_mail(DonationMailer, :notification).once
   end
 
   it "does not send multiple email notifications" do

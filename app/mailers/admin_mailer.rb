@@ -2,13 +2,7 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
-  default to: -> { Rails.application.credentials.admin_email[:slack] }
-
-  def opdr_notification
-    @opdr = params[:opdr]
-
-    mail subject: "[OPDR] #{@opdr.event.name} / #{@opdr.organizer_position.user.name}"
-  end
+  default to: -> { Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL) }
 
   def cash_withdrawal_notification
     @hcb_code = params[:hcb_code]
@@ -84,6 +78,15 @@ class AdminMailer < ApplicationMailer
     return if @tasks.none?
 
     mail subject: "24 Hour Reminders for the Operations Team"
+  end
+
+  def weekly_ysws_event_summary
+    @events = params[:events]
+    mail(
+      to: ["zach@hackclub.com", "max@hackclub.com"],
+      cc: "hcb@hackclub.com",
+      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
+    )
   end
 
 end

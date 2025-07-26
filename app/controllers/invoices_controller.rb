@@ -7,8 +7,8 @@ class InvoicesController < ApplicationController
   skip_before_action :signed_in_user
 
   def index
+    authorize @event, :invoices?
     relation = @event.invoices
-    authorize relation
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
@@ -104,9 +104,7 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.civil(filtered_params["due_date(1i)"].to_i,
-                          filtered_params["due_date(2i)"].to_i,
-                          filtered_params["due_date(3i)"].to_i)
+    due_date = Date.parse(filtered_params["due_date"])
 
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,
@@ -133,8 +131,10 @@ class InvoicesController < ApplicationController
     end
 
     redirect_to @invoice
+  rescue Pundit::NotAuthorizedError
+    raise
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor)
@@ -200,7 +200,7 @@ class InvoicesController < ApplicationController
     @invoice.sync_remote!
     @invoice.reload
 
-    redirect_to @invoice.hosted_invoice_url, allow_other_host: true
+    redirect_to URI.parse(@invoice.hosted_invoice_url).to_s, allow_other_host: true
   end
 
   def pdf
@@ -211,7 +211,7 @@ class InvoicesController < ApplicationController
     @invoice.sync_remote!
     @invoice.reload
 
-    redirect_to @invoice.invoice_pdf, allow_other_host: true
+    redirect_to URI.parse(@invoice.invoice_pdf).to_s, allow_other_host: true
   end
 
   def refund
@@ -224,8 +224,22 @@ class InvoicesController < ApplicationController
       ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
     else
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "This invoice hasn't settled, only settled invoices can be refunded." }
+      Invoice::RefundJob.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents, current_user)
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
     end
+  end
+
+  def manually_mark_as_paid
+    @invoice = Invoice.friendly.find(params[:invoice_id])
+    @hcb_code = @invoice.local_hcb_code
+
+    authorize @invoice
+
+    ::InvoiceService::MarkVoid.new(invoice_id: @invoice.id, user: current_user).run
+
+    @invoice.update(manually_marked_as_paid_at: Time.now, manually_marked_as_paid_user: current_user, manually_marked_as_paid_reason: params[:manually_marked_as_paid_reason])
+
+    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Manually marked this invoice as paid." }
   end
 
   private

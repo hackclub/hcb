@@ -30,7 +30,6 @@
     <span>
       <div class="receipt__icon"></div>
       <span style="display: inline-grid; border-radius: 0.5rem;">
-        <div class="receipt__icon--check">✓</div>
         <div class="receipt__icon--star tooltipped tooltipped--n" aria-label="Suggested receipt">
           <%= inline_icon "rep", size: "36", style: "margin: -5px;" %>
         </div>
@@ -82,7 +81,7 @@
 
       <span style="flex-grow: 1;"></span>
 
-      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user %>
+      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user&.events&.any? %>
         <%= pop_icon_to "attachment",
             "#",
             data: {

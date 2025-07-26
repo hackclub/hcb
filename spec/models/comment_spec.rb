@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe Comment, type: :model, versioning: true do
-  let(:transaction) { create(:transaction) }
-  let(:comment) { create(:comment, commentable: transaction) }
+  let(:event) { create(:event) }
+  let(:comment) { create(:comment, commentable: event) }
 
   it "is valid" do
     expect(comment).to be_valid

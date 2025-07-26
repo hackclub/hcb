@@ -27,6 +27,9 @@
         <% end %>
       <% end %>
     <% end %>
+    <%= settings_tab active: @settings_tab == "tags" do %>
+      <%= link_to "Tags", edit_event_path(@event, tab: "tags"), data: { turbo: true, turbo_action: "advance" } %>
+    <% end %>
     <%= settings_tab active: @settings_tab == "features" do %>
       <%= link_to "Feature previews", edit_event_path(@event, tab: "features"), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
@@ -45,13 +48,15 @@
   <%= render "events/settings/features", event: @event %>
 <% elsif @settings_tab == "donations" %>
   <%= render "events/settings/donations", event: @event %>
+<% elsif @settings_tab == "tags" %>
+  <%= render "events/settings/tags", event: @event %>
 <% elsif @settings_tab == "reimbursements" %>
   <%= render "events/settings/reimbursements", event: @event %>
 <% elsif @settings_tab == "card_grants" %>
   <%= render "events/settings/card_grants", event: @event %>
 <% elsif @settings_tab == "audit_log" %>
   <%= render "events/settings/audit_log", event: @event %>
-<% elsif @settings_tab == "admin" && admin_signed_in? %>
+<% elsif @settings_tab == "admin" && auditor_signed_in? %>
   <%= render "events/settings/admin", event: @event %>
 <% else %>
   <%= render "events/settings/details", event: @event %>

@@ -1,0 +1,70 @@
+<% if show_stats %>
+  <div class="statset mt3 mb3">
+    <div class="stat stat--small">
+      <span class="stat__label">Total earned</span>
+      <span class="stat__value">
+        <%= render_money_amount(
+              payments.sum(&:amount_cents) -
+              payments.rejected.sum(&:amount_cents) -
+              payments.submitted.sum(&:amount_cents)
+            ) %>
+      </span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">Pending review</span>
+      <span class="stat__value">
+        <%= render_money_amount(payments.submitted.sum(&:amount_cents)) %>
+      </span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">Rejected</span>
+      <span class="stat__value">
+        <%= render_money_amount(payments.rejected.sum(&:amount_cents)) %>
+      </span>
+    </div>
+  </div>
+<% end %>
+
+<% if payments.blank? %>
+  <%= blankslate "No payments found!" %>
+<% else %>
+  <article class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <% unless @event %>
+            <th>Event</th>
+          <% end %>
+          <th>Title</th>
+          <th>Amount</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% payments.order(created_at: :desc).each do |payment| %>
+          <tr>
+            <td>
+               <span class="ml0 badge bg-<%= payment.state_color %>">
+                <%= payment.aasm_state.humanize %>
+               </span>
+            </td>
+            <% unless @event %>
+              <td><%= payment.employee.event.name %></td>
+            <% end %>
+            <td>
+              <%= link_to payment.title, "#", data: { behavior: "modal_trigger", modal: "employee_payment_#{payment.id}" } %>
+              <%= render "employee/payments/modal", payment: %>
+            </td>
+            <td>
+              <%= render_money payment.amount_cents %>
+            </td>
+            <td>
+              <%= format_date payment.created_at %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% end %>

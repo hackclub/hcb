@@ -1,7 +1,9 @@
-<% if @balance.zero? %>
-  <span class="muted">
-    <%= render_money 0 %>
-  </span>
-<% else %>
-  <%= render_money @balance %>
+<%= turbo_frame_tag :balance do %>
+  <% if @balance.zero? %>
+    <span class="muted">
+      <%= render_money 0 %>
+    </span>
+  <% else %>
+    <%= render_money @balance %>
+  <% end %>
 <% end %>

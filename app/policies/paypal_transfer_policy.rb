@@ -2,7 +2,7 @@
 
 class PaypalTransferPolicy < ApplicationPolicy
   def new?
-    admin_or_user?
+    OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
   def create?
@@ -17,11 +17,11 @@ class PaypalTransferPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
-  private
-
-  def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+  def mark_failed?
+    user&.admin?
   end
+
+  private
 
   def user_who_can_transfer?
     EventPolicy.new(user, record.event).create_transfer?

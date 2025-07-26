@@ -29,7 +29,7 @@
   <div style="text-align: center;">
     <% unless @design.event&.present? %>
       <% if @design.common? %>
-        <%= link_to "Make Private", make_private_stripe_cards_personalization_design_path(@design), data: { turbo_confirm: "Are you sure you want to make this design (#{@design.name}) private? It will hide it from the card creation menu for all users.", turbo_method: :post, turbo_frame: :_top } %>
+        <%= link_to "Make Unlisted", make_unlisted_stripe_cards_personalization_design_path(@design), data: { turbo_confirm: "Are you sure you want to make this design (#{@design.name}) unlisted? It will hide it from the card creation menu for all users.", turbo_method: :post, turbo_frame: :_top } %>
       <% else %>
         <%= link_to "Make Public", make_common_stripe_cards_personalization_design_path(@design), data: { turbo_confirm: "Are you sure you want to make this design (#{@design.name}) public? It will show it in the card creation menu for all users.", turbo_method: :post, turbo_frame: :_top } %>
       <% end %>

@@ -13,12 +13,6 @@ RSpec.describe Event, type: :model do
     expect(event).to be_approved
   end
 
-  describe "#transaction_engine_v2_at" do
-    it "has a value" do
-      expect(event.transaction_engine_v2_at).not_to be_nil
-    end
-  end
-
   describe "#balance_v2_cents" do
     before do
       tx1 = create(:canonical_transaction, amount_cents: 100)

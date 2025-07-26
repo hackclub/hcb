@@ -2,8 +2,16 @@
 
 ## I found a security vulnerability! What should I do?
 
-Please email hcb-security@hackclub.com to report the vulnerability.
+Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to
+responsibly report the vulnerability.
 
-We currently don't have a bug bounty program but, as a token of appreciation, we'd love to mail you a t-shirt and give you a shoutout on our GitHub.
+Upon finding a notable vulnerability, we'd be happy to send you a t-shirt in the
+mail a token of our appreciation.
 
-We kindly as that you keep the vulnerability between yourself and HCB until we've gotten the proper chance to resolve it.
+We kindly ask that you keep the vulnerability between yourself and HCB until
+we've gotten the proper chance to resolve it.
+
+---
+
+Please see [hcb.hackclub.com/security](https://hcb.hackclub.com/security) for
+our full Vulnerability Disclosure Policy.

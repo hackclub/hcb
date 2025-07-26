@@ -1,9 +1,12 @@
-User-agent: Twitterbot
-Disallow:
+# To disallow indexing of pages, use the `noindex` <meta/> tag or the
+# `X-Robots-Tag` header. Disallowing in Robots.txt does not guarantee no
+# indexing and may actually prevent the crawler from seeing the `noindex` meta
+# tag/header.
+#
+# https://support.google.com/webmasters/answer/7440203#indexed_though_blocked_by_robots_txt
+
+User-agent: YandexBot
+Disallow: /
 
 User-agent: *
-Disallow: /
-Allow: /$
-Allow: /auth
-Allow: /faq
-Allow: /branding
+Allow: /

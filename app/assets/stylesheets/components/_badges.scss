@@ -6,6 +6,7 @@
   background-color: map-get($palette, primary);
   color: $white;
   border-radius: 9999px;
+  gap: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -13,6 +14,22 @@
   line-height: 1.125;
   margin-left: 1rem;
   padding: 0.25rem 0.625rem;
+
+  &.badge--corner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0.75rem;
+    margin: 0px;
+
+    label:has(&) {
+      position: relative;
+      overflow: hidden;
+    }
+  }
 
   &.success {
     background-color: rgba(map-get($palette, success), 0.2);
@@ -65,8 +82,9 @@
     color: $white;
   }
 
-  svg:last-child {
-    margin-left: 0.25rem;
+  &.badge-large {
+    padding: 0.3rem 1rem;
+    gap: 0.5rem;
   }
 
   &.tx-tag {
@@ -224,6 +242,19 @@ summary.pop::-webkit-details-marker {
 
   svg:first-child {
     vertical-align: bottom;
+  }
+  &:hover {
+    .mention__link {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .mention__link {
+    display: none;
+    margin-left: 4px;
+    text-decoration: none;
+    cursor: pointer;
   }
 }
 

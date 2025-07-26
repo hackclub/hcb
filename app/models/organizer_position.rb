@@ -50,9 +50,28 @@ class OrganizerPosition < ApplicationRecord
   def tourable_options
     {
       demo: event.demo_mode?,
-      category: event.category,
       initial: initial?
     }
+  end
+
+  def self.role_at_least?(user, event, role)
+    return false unless event.present? && role.present?
+    return true if user&.admin?
+
+    if role.to_s == "reader"
+      return event.ancestor_organizer_positions.reader_access.where(user:).exists?
+    end
+
+    if role.to_s == "member"
+      # Only check direct organizer positions, unless the user is a manager of an ancestor
+      return event.organizer_positions.member_access.where(user:).exists? || event.ancestor_organizer_positions.manager_access.where(user:).exists?
+    end
+
+    if role.to_s == "manager"
+      return event.ancestor_organizer_positions.manager_access.where(user:).exists?
+    end
+
+    false
   end
 
   private

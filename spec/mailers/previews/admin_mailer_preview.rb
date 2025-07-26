@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 class AdminMailerPreview < ActionMailer::Preview
-  def opdr_notification
-    AdminMailer.with(opdr: OrganizerPositionDeletionRequest.last).opdr_notification
-  end
+  delegate :reminders, to: :AdminMailer
 
-  def reminders
-    AdminMailer.reminders
+  def weekly_ysws_event_summary
+    @events = Event.last(3)
+    AdminMailer.with(events: @events).weekly_ysws_event_summary
   end
 
 end

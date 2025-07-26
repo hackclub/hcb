@@ -10,6 +10,15 @@ class CanonicalPendingTransactionMailerPreview < ActionMailer::Preview
     ).notify_approved
   end
 
+  def notify_declined
+    # @cpt = CanonicalPendingTransaction.stripe.last
+    @cpt = CanonicalPendingTransaction.stripe.where("amount_cents < ?", -1_000_00).last
+
+    CanonicalPendingTransactionMailer.with(
+      canonical_pending_transaction_id: @cpt.id,
+    ).notify_declined
+  end
+
   def notify_settled
     # @cpt = CanonicalPendingTransaction.stripe.last
     @cpt = CanonicalPendingTransaction.stripe.where("amount_cents < ?", -1_000_00).first

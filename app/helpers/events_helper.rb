@@ -54,16 +54,9 @@ module EventsHelper
   end
 
   def humanize_audit_log_value(field, value)
-    if field == "sponsorship_fee"
-      return number_to_percentage(value.to_f * 100, significant: true, strip_insignificant_zeros: true)
-    end
 
     if field == "point_of_contact_id"
       return User.find(value).email
-    end
-
-    if field == "category" && value.is_a?(Integer) || value.try(:match?, /\A\d+\z/)
-      return Event.categories.key(value.to_i)
     end
 
     if field == "maximum_amount_cents"
@@ -98,24 +91,23 @@ module EventsHelper
     signed_in? && current_user.events.not_hidden.count > 1
   end
 
-  def pie_chart_config
-    {
-      elements: {
-        arc: {
-          borderWidth: 0
-        }
-      },
-      plugins: {
-        legend: {
-          position: "right",
-          align: "start",
-          labels: {
-            boxWidth: 10,
-            boxHeight: 10,
-            usePointStyle: "circle"
-          }
-        }
-      }
-    }
+  def check_filters?(filter_options, params)
+    filter_options.any? do |option|
+      key = option[:key]
+      if key.to_s.end_with?("_*") && option[:type] == "date_range"
+        base = key.to_s.chomp("_*")
+        params["#{base}_before"].present? || params["#{base}_after"].present?
+      else
+        params[key].present?
+      end
+    end
+  end
+
+  def auto_discover_feed(event)
+    if event.announcements.any?
+      content_for :head do
+        auto_discovery_link_tag :atom, event_feed_url(event, format: :atom), title: "Announcements for #{event.name}"
+      end
+    end
   end
 end

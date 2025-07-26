@@ -2,7 +2,7 @@
 
 <% if activity.trackable.present? %>
   <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: reimbursement_report_path(activity.trackable) } do %>
-    was reimbursed for <i><%= link_to activity.trackable.name, activity.trackable %></i>
+    <%= current_user == activity.owner ? "were" : "was" %> reimbursed for <i><%= link_to activity.trackable.name, activity.trackable %></i>
     <% if activity.trackable.event %>
       on <%= link_to activity.trackable.event.name, activity.trackable.event %>
     <% end %>

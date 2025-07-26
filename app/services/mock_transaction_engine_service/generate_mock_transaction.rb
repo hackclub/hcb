@@ -41,7 +41,7 @@ module MockTransactionEngineService
     def run
       generate_mock_transaction_list.map do |trans|
         OpenStruct.new(
-          amount: trans[:amount].round(2),
+          amount: Money.new(trans[:amount].round(2) * 100),
           amount_cents: (trans[:amount].round(2) * 100).to_i,
           fee_payment?: trans[:desc].include?("💰 Fiscal sponsorship fee"),
           date: trans[:date],

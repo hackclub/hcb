@@ -1,0 +1,5 @@
+<p>
+  Your <%= @card_grant.amount.format %> grant from <%= @card_grant.event.name %> will expire in <%= @expiry_time %>.
+</p>
+
+<%= link_to "View your grant", card_grant_url(@card_grant, email: @card_grant.user.email), style: "background-color: #ec3750; color: white; padding: 1rem; border-radius: 0.75rem; margin: 0 auto 2rem 0; text-decoration: none" %>

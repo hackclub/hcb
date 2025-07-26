@@ -6,7 +6,6 @@ RSpec.describe OrganizerPositionInviteService::Create do
   def create_event
     Event.create!({
                     name: "test-event",
-                    organization_identifier: SecureRandom.hex(30)
                   })
   end
 

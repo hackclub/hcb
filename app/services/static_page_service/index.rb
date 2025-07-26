@@ -7,7 +7,7 @@ module StaticPageService
     end
 
     def redirect_to_first_event?
-      !admin? && events.count == 1 && invites.count == 0
+      !auditor? && events.count == 1 && invites.count == 0
     end
 
     def events
@@ -54,8 +54,8 @@ module StaticPageService
 
     private
 
-    def admin?
-      @current_user.admin?
+    def auditor?
+      @current_user.auditor?
     end
 
   end

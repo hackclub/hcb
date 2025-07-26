@@ -28,7 +28,7 @@ class IncreaseChecksController < ApplicationController
           receiptable: @check.local_hcb_code
         ).run!
       end
-      redirect_to @check.local_hcb_code.url, flash: { success: "Your check has been sent!" }
+      redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
       render "new", status: :unprocessable_entity
     end
@@ -49,6 +49,8 @@ class IncreaseChecksController < ApplicationController
 
   def reject
     authorize @check
+
+    @check.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     @check.mark_rejected!
 

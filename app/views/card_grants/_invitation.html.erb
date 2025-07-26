@@ -2,25 +2,23 @@
 
 <% if card_grant.pending_invite? %>
   <%# Prompt user to create a Stripe Card %>
+  <div class="flex flex-col w-100">
 
-  <div class="container--xs">
-    <div class="center">
-      <h3 class="mt0">Just one more step:</h3>
-      <p class="mb3">We just need one more thing before you can start spending your grant from <%= card_grant.event.name %>.</p>
-    </div>
+    <div class="container--xs m-auto">
 
-    <div class="card border b--info center">
-      <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
-        <div class="field field--checkbox mb2 justify-center">
-          <%= form.check_box :terms, required: true %>
-          <%= form.label :terms do %>
-            I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms" %>
-          <% end %>
-        </div>
-        <div class="actions">
-          <%= form.submit "Start spending" %>
-        </div>
-      <% end %>
+      <div class="card border b--info center">
+        <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
+          <div class="field field--checkbox mb2 justify-center">
+            <%= form.check_box :terms, required: true %>
+            <%= form.label :terms do %>
+              I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms" %>
+            <% end %>
+          </div>
+          <div class="actions">
+            <%= form.submit "Start spending" %>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
 <% end %>

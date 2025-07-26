@@ -56,9 +56,9 @@ Rails.application.configure do
   config.active_support.disallowed_deprecation_warnings = []
 
   config.action_mailer.default_url_options = {
-    host: Rails.application.credentials.default_url_host[:test]
+    host: Credentials.fetch(:TEST_URL_HOST)
   }
-  Rails.application.routes.default_url_options[:host] = Rails.application.credentials.default_url_host[:test]
+  Rails.application.routes.default_url_options[:host] = Credentials.fetch(:TEST_URL_HOST)
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
@@ -66,5 +66,4 @@ Rails.application.configure do
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true
 
-  Credentials::Doppler.load if ENV["DOPPLER_TOKEN"]
 end

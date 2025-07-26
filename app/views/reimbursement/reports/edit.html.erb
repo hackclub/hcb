@@ -6,7 +6,7 @@
 <div class="mt4">
     <h3 class="mt2 mb1 muted flex" style="font-weight: 400; gap: 4px;">
       <span style="flex-grow: 1;">
-        <%= user_mention @user, { class: "tooltipped--s align-top" } %>is requesting <%= render_money @report.amount_cents %> for
+        <%= user_mention @user, class: "tooltipped--s align-top" %>is requesting <%= render_money @report.amount_cents %> for
       </span>
       <span class="ml0 badge bg-<%= @report.aasm_state %>"><%= @report.aasm_state&.capitalize %></span>
     </h3>

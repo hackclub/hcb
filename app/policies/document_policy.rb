@@ -2,16 +2,12 @@
 
 class DocumentPolicy < ApplicationPolicy
   def common_index?
-    user.admin?
+    user.auditor?
   end
 
   def index?
-    return true if user.admin?
-    return true if record.blank?
-
-    event_ids = record.map(&:event).pluck(:id)
-    same_event = event_ids.uniq.size == 1
-    return true if same_event && user.events.pluck(:id).include?(event_ids.first)
+    # `record` in this context is an Event
+    user.auditor? || OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   def new?
@@ -23,7 +19,7 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin?
+    user.auditor?
   end
 
   def edit?
@@ -39,15 +35,15 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def download?
-    user.admin? || record.event.nil? || record.event.users.include?(user)
+    user.auditor? || record.event.nil? || record.event.users.include?(user)
   end
 
   def fiscal_sponsorship_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.admin?)
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?)
   end
 
   def verification_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.admin?) && record.account_number.present?
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?) && record.account_number.present?
   end
 
   def toggle_archive?

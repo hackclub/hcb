@@ -6,8 +6,8 @@
   <% else %>
     <%= render "stripe_cards/actions/freeze", stripe_card: %>
     <%= render "stripe_cards/actions/rename", stripe_card: %>
-    <%= render "stripe_cards/actions/cancel", stripe_card: %>
   <% end %>
+  <%= render "stripe_cards/actions/cancel", stripe_card: %>
 
   <% if stripe_card.virtual? && Flipper.enabled?(:onepass_cc_save_2024_04_29, current_user) && params["show_details"] == "true" %>
     <onepassword-save-button

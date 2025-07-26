@@ -46,6 +46,9 @@ class ReceiptsController < ApplicationController
 
     @receipt.update!(receiptable: @receiptable)
 
+    @show_receipt_button = params[:show_receipt_button] == "true"
+    @show_author_img = params[:show_author_img] == "true"
+
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
@@ -79,6 +82,9 @@ class ReceiptsController < ApplicationController
     if params[:popover].present?
       @popover = params[:popover]
     end
+
+    @show_author_img = params[:show_author_img]
+    @show_receipt_button = params[:show_receipt_button]
 
     if @receiptable.instance_of?(HcbCode)
       pairings_sql = <<~SQL
@@ -127,6 +133,8 @@ class ReceiptsController < ApplicationController
                      ))
     end
 
+    @show_receipt_button = params[:show_receipt_button] == "true"
+    @show_author_img = params[:show_author_img] == "true"
 
     if %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
       @frame = true
@@ -134,7 +142,7 @@ class ReceiptsController < ApplicationController
 
     streams += generate_streams
 
-    unless @receiptable && (params[:upload_method] == :receipts_page || params[:upload_method] == "receipts_page_drag_and_drop")
+    unless @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
       receipt_upload_form_config = {
         upload_method: params[:upload_method].sub("_drag_and_drop", ""),
         restricted_dropzone: params[:upload_method] != :transaction_page,
@@ -166,7 +174,7 @@ class ReceiptsController < ApplicationController
     end
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
@@ -203,11 +211,17 @@ class ReceiptsController < ApplicationController
 
   private
 
+  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+                          EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
+                          Api::Models::CardCharge].index_by(&:to_s).freeze
+
   def find_receiptable
-    if params[:receiptable_type].present? && params[:receiptable_id].present?
-      @klass = params[:receiptable_type].constantize
-      @receiptable = @klass.find(params[:receiptable_id])
-    end
+    return unless params[:receiptable_type].present?
+    return unless params[:receiptable_id].present?
+    return unless RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+
+    @klass = RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+    @receiptable = @klass.find(params[:receiptable_id])
   end
 
   def generate_streams
@@ -238,7 +252,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
                            partial: "canonical_transactions/canonical_transaction",
-                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true } : { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { ct:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
                          ))
         end
       else
@@ -247,7 +261,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
                            partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true } : { pt:, force_display_details: true, receipt_upload_button: !@frame, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { pt:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
                          ))
         end
       end
@@ -295,10 +309,9 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.remove("modal_receipt_#{@receipt.id}"))
     end
 
-    if @frame
-      streams.append(turbo_stream.load_new_async_frames)
-      streams.append(turbo_stream.close_modal)
-    end
+    # if @frame
+    #   streams.append(turbo_stream.close_modal)
+    # end
 
     unless params[:upload_method] == :transaction_page
       streams.append(turbo_stream.refresh_link_modals)

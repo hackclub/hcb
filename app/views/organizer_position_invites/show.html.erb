@@ -10,7 +10,7 @@
   <div class="flex justify-center flex-wrap">
     <% @organizers.each do |position| %>
       <div class="tooltipped tooltipped--s mr1" aria-label="<%= position.user.name %>">
-        <%= avatar_for position.user, 64 %>
+        <%= avatar_for position.user, size: 64 %>
       </div>
     <% end %>
   </div>

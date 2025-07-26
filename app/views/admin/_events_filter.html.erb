@@ -4,11 +4,11 @@
 <div class="events-filter-select">
   <%= form.label :transparent do %>
     Transparent
-    <%= form.select :transparent, [["Both", "both"], ["Not Transparent", "not_transparent"], ["Transparent", "transparent"]], selected: @transparent %>
+    <%= form.select :transparent, [["Both", "both"], ["Not transparent", "not_transparent"], ["Transparent", "transparent"]], selected: @transparent %>
   <% end %>
   <%= form.label :omitted do %>
     Omitted
-    <%= form.select :omitted, [["Both", "both"], ["Not Omitted", "not_omitted"], ["Omitted", "omitted"]], selected: @omitted %>
+    <%= form.select :omitted, [["Both", "both"], ["Not omitted", "not_omitted"], ["Omitted", "omitted"]], selected: @omitted %>
   <% end %>
   <%= form.label :demo_mode do %>
     Demo
@@ -22,12 +22,12 @@
 
   <%= form.label :hidden do %>
     Hidden
-    <%= form.select :hidden, [["Both", "both"], ["Not Hidden", "not_hidden"], ["Hidden", "hidden"]], selected: @hidden %>
+    <%= form.select :hidden, [["Both", "both"], ["Not hidden", "not_hidden"], ["Hidden", "hidden"]], selected: @hidden %>
   <% end %>
 
   <%= form.label :funded do %>
     Funded
-    <%= form.select :funded, [["Both", "both"], ["Not Funded", "not_funded"], ["Funded", "funded"]], selected: @funded %>
+    <%= form.select :funded, [["Both", "both"], ["Not funded", "not_funded"], ["Funded", "funded"]], selected: @funded %>
   <% end %>
 
   <%= form.label :organized_by do %>
@@ -40,34 +40,34 @@
     <%= form.select :country, { 'Outside US': 9999 }.merge(Event.countries), { include_blank: "all", selected: @country } %>
   <% end %>
 
-  <%= form.label :category do %>
-     Category
-    <%= form.select :category, { 'uncategorized': "none" }.merge(Event.categories), { include_blank: "all", selected: @category } %>
-  <% end %>
-
   <%= form.label :point_of_contact_id do %>
     <span style="text-wrap: nowrap;">POC</span>
     <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @point_of_contact_id, include_blank: "all" %>
   <% end %>
 
   <%= form.label :activity_since do %>
-    Activity Since
+    Activity since
     <%= form.date_field :activity_since, value: @activity_since_date %>
   <% end %>
 
-  <%= form.label :plan_type do %>
-    Current Plan
-    <%= form.select :plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan_type } %>
+  <%= form.label :plan do %>
+    Current plan
+    <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan } %>
   <% end %>
 
   <%= form.label :sort_by do %>
-    Sort By
-    <%= form.select :sort_by, [["Balance Ascending", "balance_asc"], ["Balance Descending", "balance_desc"], ["Date Descending", "date_desc"]], selected: @sort_by %>
+    Sort by
+    <%= form.select :sort_by, [["Balance ascending", "balance_asc"], ["Balance descending", "balance_desc"], ["Date descending", "date_desc"]], selected: @sort_by %>
   <% end %>
 
   <%= form.label :tagged_with do %>
     <span style="text-wrap: nowrap;">Tagged with</span>
     <%= form.select :tagged_with, EventTag.all.map { |t| [t.full_name, t.id] }, { include_blank: "anything", selected: @tagged_with } %>
+  <% end %>
+
+  <%= form.label :risk_level do %>
+    <span style="text-wrap: nowrap;">Risk level</span>
+    <%= form.select :risk_level, Event.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]), { include_blank: "any", selected: @risk_level } %>
   <% end %>
 
 </div>

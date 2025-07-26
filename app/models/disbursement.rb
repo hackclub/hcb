@@ -47,6 +47,14 @@ class Disbursement < ApplicationRecord
   include AASM
   include Commentable
 
+  include Freezable
+
+  validate on: :create do
+    if source_event.financially_frozen?
+      errors.add(:base, "This transfer can't be created, #{source_event.name} is currently frozen.")
+    end
+  end
+
   has_paper_trail
 
   include PublicIdentifiable
@@ -235,18 +243,18 @@ class Disbursement < ApplicationRecord
       if destination_event.can_front_balance?
         :success
       else
-        :info
+        :muted
       end
     elsif rejected?
       :error
     elsif scheduled?
-      :scheduled
+      :info
     elsif errored?
       :error
     elsif reviewing?
-      :reviewing
+      :muted
     else
-      :pending
+      :info
     end
   end
 
@@ -286,7 +294,7 @@ class Disbursement < ApplicationRecord
     elsif errored?
       "errored"
     elsif reviewing?
-      "under review"
+      "pending"
     else
       "pending"
     end
@@ -301,7 +309,7 @@ class Disbursement < ApplicationRecord
   end
 
   def transaction_memo
-    "HCB DISBURSE #{id}"
+    "HCB-#{local_hcb_code.short_code}"
   end
 
   def special_appearance_name

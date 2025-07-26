@@ -23,7 +23,7 @@
                               min: 1, # Limitations placed by Stripe
                               max: 999_999.99, # Limitations placed by Stripe
                               required: true,
-                              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+                              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
         <span class="muted nowrap ml1">/ month</span>
       </div>
     </div>

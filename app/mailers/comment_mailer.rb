@@ -11,7 +11,7 @@ class CommentMailer < ApplicationMailer
     # for now, these automated comments won't notify users.
     # see OneTimeJobs::BackfillLostReceipts for an example
     # - @sampoder
-    return if @comment.user == User.find_by(email: "bank@hackclub.com")
+    return if @comment.user == User.system_user
 
     return unless @comment.content || @comment.file
 
@@ -24,6 +24,10 @@ class CommentMailer < ApplicationMailer
     }.merge(headers)
 
     mail(mail_settings)
+  end
+
+  def bounce_missing_comment
+    mail subject: @inbound_mail&.mail&.subject || "Unknown comment", to: @inbound_mail&.mail&.from&.first
   end
 
   private

@@ -15,22 +15,35 @@ module Admin
 
     def show
       @check_deposit = CheckDeposit.find(params[:id])
+
+      unless @check_deposit.manual_submission_required?
+        redirect_to @check_deposit.local_hcb_code.url
+      end
     end
 
     def submit
       @check_deposit = CheckDeposit.find(params[:id])
+
+      if params[:column_id].blank?
+        # This guard clause is necessary because `ColumnService.get` won't
+        # error, but rather return a string (301 status code), when given an
+        # empty string.
+        flash.now[:error] = "Column ID is required."
+        return render :show, status: :unprocessable_entity
+      end
       ColumnService.get "/transfers/checks/#{params[:column_id]}"
+
       @check_deposit.update!(column_id: params[:column_id], status: :submitted)
       redirect_to admin_check_deposits_path, flash: { success: "Check deposit processed!" }
     rescue ActiveRecord::RecordInvalid
       flash.now[:error] = "Another check deposit has already been processed with this ID."
       render :show, status: :unprocessable_entity
     rescue Faraday::Error => e
-      notify_airbrake(e)
+      Rails.error.report(e)
       flash.now[:error] = "Something went wrong: #{e.response_body["message"]}"
       render :show, status: :unprocessable_entity
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
       flash.now[:error] = "Something went wrong :("
       render :show, status: :unprocessable_entity
     end

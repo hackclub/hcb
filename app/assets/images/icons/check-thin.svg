@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor"
+    fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="checkmark"
+    clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="3 -2.5 32 32">
+    <g>
+        <path
+            d="M10.707,14.293c-0.39,0.39 -0.39,1.024 0,1.414l4.586,4.586c0.39,0.39 1.024,0.39 1.414,0l11.586,-11.586c0.39,-0.39 0.39,-1.024 0,-1.414l-0.336,-0.336c-0.39,-0.39 -1.024,-0.39 -1.414,0l-10.543,10.543l-3.543,-3.543c-0.39,-0.39 -1.024,-0.39 -1.414,0l-0.336,0.336Z" />
+    </g>
+</svg>

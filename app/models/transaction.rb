@@ -72,7 +72,6 @@
 #
 class Transaction < ApplicationRecord
   include Receiptable
-  include Commentable
   extend FriendlyId
 
   paginates_per 250
@@ -137,46 +136,6 @@ class Transaction < ApplicationRecord
     "#{plaid_id[0...4]}…#{plaid_id[-4..]}"
   end
 
-  def self.total_volume
-    self.includes(fee_relationship: :event).where(events: { omit_stats: false }).sum("abs(amount)").to_i
-  end
-
-  def self.during(start_time, end_time)
-    self.includes(fee_relationship: :event).where(events: { omit_stats: false })
-        .where(["transactions.date > ? and transactions.date < ?", start_time, end_time])
-  end
-
-  def self.volume_during(start_time, end_time)
-    self.during(start_time, end_time).sum("abs(amount)").to_i
-  end
-
-  def self.raised_during(start_time, end_time)
-    raised_during = self.during(start_time, end_time)
-                        .includes(:fee_relationship)
-                        .where(
-                          is_event_related: true,
-                          fee_relationships: {
-                            fee_applies: true,
-                          },
-                        )
-
-    raised_during.sum(:amount).to_i
-  end
-
-  def self.revenue_during(start_time, end_time)
-    fees_during = self.during(start_time, end_time)
-                      .includes(:fee_relationship)
-                      .where(
-                        is_event_related: true,
-                        fee_relationships: {
-                          is_fee_payment: true,
-                        },
-                      )
-
-    # revenue for Bank is expense for Events
-    -fees_during.sum(:amount).to_i
-  end
-
   delegate :url_helpers, to: "Rails.application.routes"
   def link
     host = Rails.application.config.action_mailer.default_url_options[:host]
@@ -193,14 +152,10 @@ class Transaction < ApplicationRecord
     self.display_name ||= self.name
   end
 
-  def notify_user_invoice
-    MoneyReceivedMailer.with(transaction: self).money_received.deliver_later
-  end
-
   # Utility method for getting the fee on the transaction if there is one. Used
   # in CSV export.
   def fee
-    is_event_related && fee_relationship&.fee_applies && fee_relationship&.fee_amount
+    is_event_related && fee_relationship&.fee_applies && fee_relationship.fee_amount
   end
 
   def fee_payment?
@@ -340,7 +295,7 @@ class Transaction < ApplicationRecord
     end
     # NOTE: we cannot curently auto-pair Expensify txs
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
   end
 
   # Tries to recover transaction data from a previously paired / modified

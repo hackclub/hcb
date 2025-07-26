@@ -20,7 +20,12 @@ class CheckDepositsController < ApplicationController
 
     check_deposit.save!
 
-    redirect_to check_deposit.local_hcb_code.url, flash: { success: "Your check deposit is on the way!" }
+    redirect_to url_for(check_deposit.local_hcb_code), flash: { success: "Your check deposit is on the way!" }
+
+  rescue => e
+    Rails.error.report(e)
+
+    redirect_to event_check_deposits_path(@event), flash: { error: e.message }
   end
 
   def toggle_fronted
@@ -30,7 +35,7 @@ class CheckDepositsController < ApplicationController
 
     check_deposit.canonical_pending_transaction.update(fronted: !check_deposit.canonical_pending_transaction.fronted)
 
-    redirect_to check_deposit.local_hcb_code.url, flash: { success: "This check deposit is fronted!" }
+    redirect_to url_for(check_deposit.local_hcb_code), flash: { success: "This check deposit is fronted!" }
   end
 
   private

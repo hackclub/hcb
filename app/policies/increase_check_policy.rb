@@ -6,7 +6,7 @@ class IncreaseCheckPolicy < ApplicationPolicy
   end
 
   def create?
-    user_who_can_transfer? && !record.event.outernet_guild?
+    user_who_can_transfer?
   end
 
   def approve?

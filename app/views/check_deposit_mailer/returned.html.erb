@@ -1,0 +1,1 @@
+<%= link_to "Your #{render_money @check_deposit.amount_cents} check deposit", hcb_code_url(@check_deposit.local_hcb_code) %> to <strong><%= link_to @check_deposit.event.name, @check_deposit.event %></strong> was returned by it's issuing bank.

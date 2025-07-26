@@ -8,13 +8,13 @@ module Reimbursement
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
-    invisible_captcha only: [:create], on_spam: :on_spam
+    invisible_captcha only: [:create], honeypot: :subtitle
 
     # POST /reimbursement_reports
     def create
       @event = Event.find(report_params[:event_id])
-      user = User.find_or_create_by!(email: report_params[:email])
-      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: current_user))
+      user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
+      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil))
 
       authorize @report
 
@@ -32,7 +32,7 @@ module Reimbursement
           redirect_to finished_reimbursement_reports_path(@event)
         end
       else
-        redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
+        redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
       end
     end
 
@@ -50,7 +50,7 @@ module Reimbursement
           attachments: params[:reimbursement_report][:file],
           upload_method: :quick_expense
         ).run!
-        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt.first.suggested_memo
+        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt&.first&.suggested_memo
         redirect_to reimbursement_report_path(@report, edit: @expense.id)
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
@@ -68,7 +68,7 @@ module Reimbursement
       authorize @report
       @commentable = @report
       @comments = @commentable.comments
-      @use_user_nav = @event.nil? || current_user == @user && !@event.users.include?(@user) && !admin_signed_in?
+      @use_user_nav = @event.nil? || current_user == @user && !@event.users.include?(@user) && !auditor_signed_in?
       @editing = params[:edit].to_i
 
     end
@@ -164,13 +164,15 @@ module Reimbursement
       authorize @report
 
       begin
-        @report.mark_reimbursement_approved!
+        @report.with_lock do
+          @report.mark_reimbursement_approved!
+        end
         flash[:success] = "Reimbursement has been approved; the team & report creator will be notified."
       rescue => e
         flash[:error] = e.message
       end
 
-      # ReimbursementJob::Nightly.perform_later
+      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end
@@ -187,7 +189,7 @@ module Reimbursement
         flash[:error] = e.message
       end
 
-      # ReimbursementJob::Nightly.perform_later
+      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end
@@ -201,6 +203,24 @@ module Reimbursement
         flash[:success] = "Rejected & closed the report; no further changes can be made."
       rescue => e
         flash[:error] = e.message
+      end
+
+      redirect_to @report
+    end
+
+    def reverse
+
+      authorize @report
+
+      if @report.payout_holding.nil?
+        flash[:error] = "This report can't be reversed yet."
+      else
+        begin
+          @report.payout_holding.reverse!
+          flash[:success] = "Reversed the report."
+        rescue => e
+          flash[:error] = e.message
+        end
       end
 
       redirect_to @report
@@ -268,13 +288,9 @@ module Reimbursement
 
     def update_reimbursement_report_params
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
-      reimbursement_report_params.delete(:maximum_amount) unless current_user.admin? || @event.users.include?(current_user)
+      reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || @event&.users&.include?(current_user)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
       reimbursement_report_params
-    end
-
-    def on_spam
-      raise ActionController::RoutingError.new("Not Found") unless current_user.present?
     end
 
   end

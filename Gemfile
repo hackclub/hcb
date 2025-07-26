@@ -6,14 +6,14 @@ ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", git: "https://github.com/rails/rails.git", branch: "7-2-stable"
 
-gem "puma", "~> 6.4" # app server
+gem "puma", "~> 6.6" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
-gem "redis", "~> 5.3" # for caching, jobs, etc.
-gem "sidekiq", "~> 7.3.2" # background jobs
-gem "sidekiq-cron", "~> 1.12" # run Sidekiq jobs at scheduled intervals
+gem "redis", "~> 5.4" # for caching, jobs, etc.
+gem "sidekiq", "~> 7.3.8" # background jobs
+gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -23,7 +23,7 @@ gem "jsbundling-rails", "~> 1.3"
 gem "terser", "~> 1.2" # JS compressor
 gem "jquery-rails"
 gem "react-rails"
-gem "turbo-rails", "~> 2.0.10"
+gem "turbo-rails", "~> 2.0.13"
 
 gem "invisible_captcha"
 gem "local_time" # client-side timestamp converter for cache-safe rendering
@@ -32,10 +32,10 @@ gem "country_select", "~> 8.0"
 
 gem "faraday" # web requests
 
-gem "increase", "~> 0.3.3"
 gem "stripe", "11.7.0"
-gem "plaid", "~> 29.0"
-gem "yellow_pages", github: "hackclub/yellow_pages", ref: "4711379"
+gem "plaid", "~> 34.0"
+gem "yellow_pages", github: "hackclub/yellow_pages"
+gem "recursive-open-struct" # for stubbing stripe api objects
 
 gem "aws-sdk-s3", require: false
 
@@ -43,9 +43,7 @@ gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
 gem "twilio-ruby" # SMS notifications
 
-gem "lob"
-
-gem "google-apis-admin_directory_v1", "~> 0.58.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.66.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -54,13 +52,13 @@ gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fi
 
 gem "aasm" # state machine
 
-gem "paper_trail", "~> 15.2.0" # track changes to models
-gem "acts_as_paranoid", "~> 0.10.2" # enables soft deletions
+gem "paper_trail", "~> 16.0.0" # track changes to models
+gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
-gem "active_storage_validations", "1.1.4" # file validations
+gem "active_storage_validations", "2.0.2" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
@@ -77,7 +75,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
-gem "browser", "~> 6.0" # browser detection
+gem "browser", "~> 6.2" # browser detection
 
 # Pagination
 gem "kaminari"
@@ -88,11 +86,6 @@ gem "flipper" # feature flags
 gem "flipper-active_record"
 gem "flipper-ui"
 
-gem "scientist" # helps refactor code for critical paths with confidence
-# gem "lab_tech" # collects data from scientist experiments
-gem "table_print" # pretty prints tables in console (used with lab_tech)
-
-
 gem "pundit" # implements authorization policies
 
 # API V3
@@ -101,24 +94,25 @@ gem "grape-entity" # For Grape::Entity ( https://github.com/ruby-grape/grape-ent
 gem "grape-kaminari"
 gem "grape-route-helpers"
 gem "grape-swagger"
-gem "grape-swagger-entity", "~> 0.5"
+gem "grape-swagger-entity", "~> 0.6"
 
-gem "maildown" # markdown for views
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
 
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
 gem "safely_block"
-gem "strong_migrations" # protects against risky migrations
+gem "strong_migrations", "~> 1" # protects against risky migrations
+# [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
+#               2.x is incompatible with Postgres 11.
 gem "xxhash" # fast hashing
+gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
-gem "webauthn", "~> 3.1"
+gem "webauthn", "~> 3.2"
 
 gem "ahoy_matey" # analytics
-gem "airbrake" # exception tracking
 gem "blazer" # business intelligence tool/dashboard
 
 gem "geo_pattern" # create procedurally generated patterns for Cards
@@ -143,7 +137,7 @@ gem "bootsnap", ">= 1.4.4", require: false # reduces boot times through caching;
 
 gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
-gem "statsd-instrument", "~> 3.8" # For reporting to HC Grafana
+gem "statsd-instrument", "~> 3.9" # For reporting to HC Grafana
 
 group :production do
 
@@ -162,33 +156,32 @@ end
 group :development, :test do
   gem "erb_lint", require: false
   gem "rubocop"
-  gem "rubocop-rails", "~> 2.26"
+  gem "rubocop-rails", "~> 2.30"
   gem "relaxed-rubocop"
 
-  gem "rspec-rails", "~> 6.1.4"
+  gem "rspec-rails", "~> 7.1.1"
 
   # Lets you set a breakpoint with a REPL using binding.pry
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"
   gem "pry-rails", require: ENV["EXCLUDE_PRY"] != "true"
 end
 
-group :development, :staging do
-  gem "query_count"
+gem "query_count"
 
-  gem "rack-mini-profiler", "~> 3.3"
-  gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
-end
+gem "rack-mini-profiler", "~> 3.3"
+gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
+
+gem "wkhtmltopdf-binary", "0.12.6.8"
 
 group :development do
-  gem "annotate" # comment models with database schema
+  gem "annotaterb" # comment models with database schema
+  gem "actual_db_schema" # rolls back phantom migrations
 
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
   gem "listen", "~> 3.9"
   gem "web-console", ">= 3.3.0"
 
   gem "letter_opener_web" # preview emails
-
-  gem "wkhtmltopdf-binary", "0.12.6.8" # version must match the wkhtmltopdf Heroku buildpack version (0.12.3 by default)
 
   # Ruby language server
   gem "solargraph", require: false
@@ -204,9 +197,8 @@ end
 gem "jbuilder", "~> 2.13"
 
 gem "ledgerjournal"
-gem "doorkeeper", "~> 5.7"
+gem "doorkeeper", "~> 5.8"
 
-gem "chartkick"
 gem "cssbundling-rails", "~> 1.4"
 
 gem "rtesseract"
@@ -222,10 +214,20 @@ gem "rotp"
 
 gem "ruby-limiter"
 
-gem "ahoy_email", "~> 2.3"
+gem "ahoy_email", "~> 2.4"
 
 gem "email_reply_parser"
 
 gem "eu_central_bank"
 
 gem "whitesimilarity"
+
+gem "rack-timeout", require: "rack/timeout/base"
+
+gem "irb"
+
+gem "pstore"
+
+gem "bcrypt", "~> 3.1.7"
+
+gem "prosemirror_to_html"

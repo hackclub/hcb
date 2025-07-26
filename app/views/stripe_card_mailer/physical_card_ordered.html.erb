@@ -1,4 +1,9 @@
 <p>Hey! Your new card from HCB is on the way 💳💸.</p>
-<p><strong>It will probably arrive around <%= Time.at(@eta).strftime("%A") %> (<%= Time.at(@eta).strftime("%d").to_i.ordinalize %>).</strong></p>
+<% if @eta %>
+  <p><strong>
+    It will probably arrive around <%= @eta.strftime("%A") %>
+    (<%= @eta.strftime("%d").to_i.ordinalize %>).
+  </strong></p>
+<% end %>
 <p>Enjoy! &amp; let us know if you have any questions.</p>
 <p>—HCB team</p>

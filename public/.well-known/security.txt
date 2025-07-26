@@ -1,4 +1,5 @@
 Contact: mailto:hcb-security@hackclub.com
 Expires: 2026-01-01T11:27:00.000Z
 Preferred-Languages: en
+Policy: https://hcb.hackclub.com/security
 Canonical: https://hcb.hackclub.com/.well-known/security.txt

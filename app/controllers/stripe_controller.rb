@@ -14,11 +14,11 @@ class StripeController < ActionController::Base
       StatsD.measure("StripeController.#{method}") { self.send method, event }
     rescue JSON::ParserError => e
       head :bad_request
-      notify_airbrake(e)
+      Rails.error.report(e)
       return
     rescue NoMethodError => e
       puts e
-      notify_airbrake(e)
+      Rails.error.report(e)
       head :ok # success so that stripe doesn't retry (method is unsupported by HCB)
       return
     rescue Stripe::SignatureVerificationError
@@ -33,7 +33,14 @@ class StripeController < ActionController::Base
     # fire-and-forget update to grafana dashboard
     StatsD.increment("stripe_webhook_authorization", 1)
 
-    approved = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event).run
+    service = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event)
+    approved = service.run
+
+    if approved
+      user = service.card.user
+      ::User::UpdateCardLockingJob.perform_later(user:)
+      ::User::SendCardLockingNotificationJob.perform_later(user:)
+    end
 
     response.set_header "Stripe-Version", "2022-08-01"
 
@@ -46,7 +53,7 @@ class StripeController < ActionController::Base
     auth_id = event[:data][:object][:id]
 
     # put the transaction on the pending ledger in almost realtime
-    ::StripeAuthorizationJob::CreateFromWebhook.perform_later(auth_id)
+    ::StripeAuthorization::CreateFromWebhookJob.perform_later(auth_id)
 
     head :ok
   end
@@ -58,7 +65,9 @@ class StripeController < ActionController::Base
     StatsD.increment("stripe_webhook_timeout", 1) if is_closed && has_timeout
 
     rpst = PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction: event[:data][:object]).run
-    PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
+
+    # this has been commented out due to a suspected race condition
+    # PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
 
     head :ok
   end
@@ -67,8 +76,6 @@ class StripeController < ActionController::Base
     tx = event[:data][:object]
     amount = tx[:amount]
     return unless amount < 0
-
-    TopupStripeJob.perform_later
 
     head :ok
   end
@@ -162,7 +169,7 @@ class StripeController < ActionController::Base
 
       donation = Donation.find_by(stripe_payment_intent_id: dispute[:payment_intent])
 
-      return notify_airbrake("Received charge dispute on nonexistent donation") if donation.nil?
+      return Rails.error.unexpected("Received charge dispute on nonexistent donation") if donation.nil?
 
       # Let's un-front the transaction.
       donation.canonical_pending_transactions.update_all(fronted: false)
@@ -171,7 +178,7 @@ class StripeController < ActionController::Base
 
       invoice = Invoice.find_by(stripe_charge_id: dispute[:charge])
 
-      return notify_airbrake("Received charge dispute on nonexistent invoice") if invoice.nil?
+      return Rails.error.unexpected("Received charge dispute on nonexistent invoice") if invoice.nil?
 
       invoice.canonical_pending_transactions.update_all(fronted: false)
     end
@@ -247,31 +254,6 @@ class StripeController < ActionController::Base
     donation.save!
   end
 
-  def handle_source_transaction_created(event)
-    stripe_source_transaction = event.data.object
-    source = StripeAchPaymentSource.find_by(stripe_source_id: stripe_source_transaction.source)
-
-    return unless source
-
-    charge = source.charge!(stripe_source_transaction.amount)
-
-    ach_payment = source.ach_payments.create(
-      stripe_source_transaction_id: stripe_source_transaction.id,
-      stripe_charge_id: charge.id,
-    )
-
-    ach_payment.create_stripe_payout!
-    ach_payment.create_fee_reimbursement!
-
-    CanonicalPendingTransaction.create(
-      date: Time.at(stripe_source_transaction.created).to_date,
-      event: source.event,
-      amount_cents: stripe_source_transaction.amount,
-      memo: "Bank transfer",
-      ach_payment:
-    )
-  end
-
   def handle_payout_updated(event)
     payout = DonationPayout.find_by(stripe_payout_id: event.data.object.id) || InvoicePayout.find_by(stripe_payout_id: event.data.object.id)
     return unless payout
@@ -307,11 +289,11 @@ class StripeController < ActionController::Base
   alias_method :handle_issuing_personalization_design_activated, :handle_issuing_personalization_design_updated
   alias_method :handle_issuing_personalization_design_deactivated, :handle_issuing_personalization_design_updated
 
-  def handle_issuing_dispute_funds_reinstated
+  def handle_issuing_dispute_funds_reinstated(event)
     dispute = event.data.object
     transaction = Stripe::Issuing::Transaction.retrieve(dispute["transaction"])
     hcb_code = RawPendingStripeTransaction.find_by!(stripe_transaction_id: transaction["authorization"]).canonical_pending_transaction.local_hcb_code
-    if dispute["status"] == "won" && dispute["currency"] == "USD"
+    if dispute["status"] == "won" && dispute["currency"] == "usd"
       StripeService::Payout.create(
         amount: dispute["amount"],
         currency: dispute["currency"],
@@ -324,10 +306,14 @@ class StripeController < ActionController::Base
         }
       )
     elsif dispute["status"] != "won"
-      Airbrake.notify("Dispute with funds reinstated but without a win: #{dispute["id"]}")
-    elsif dispute["status"] != "USD"
-      Airbrake.notify("Dispute with funds reinstated but non-USD currency. Must be manually handled.")
+      Rails.error.unexpected "Dispute with funds reinstated but without a win: #{dispute["id"]}"
+    elsif dispute["currency"] != "usd"
+      Rails.error.unexpected "Dispute with funds reinstated but non-USD currency. Must be manually handled."
     end
+  end
+
+  def handle_refund_failed(event)
+    Rails.error.unexpected "Refund failed on Stripe: #{event}."
   end
 
 end

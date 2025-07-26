@@ -1,2 +1,9 @@
-<% title("🎁 Wrapped 2023") %>
-<%= react_component "holiday/Wrapped", { data: @data }, { camelize_props: false } %>
+<% title("🎁 Wrapped 2024") %>
+
+<% content_for :head do %>
+    <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
+<% end %>
+
+<% if Flipper.enabled?(:bank_wrapped, current_user) %>
+    <%= react_component "holiday/Wrapped", { data: @data }, { camelize_props: false } %>
+<% end %>

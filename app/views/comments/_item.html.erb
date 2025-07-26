@@ -28,7 +28,7 @@
         <% if comment.content.blank? %>
           <div class="muted mb1"><em>Comment left blank.</em></div>
         <% else %>
-          <%== MarkdownService.instance.renderer(current_user:, record: comment).render comment.content %>
+          <%= sanitize(MarkdownService.instance.renderer(current_user:, record: comment).render(comment.content), scrubber: MarkdownScrubber.new) %>
         <% end %>
         <%= render partial: "comments/reactions", locals: { comment: } %>
       </div>

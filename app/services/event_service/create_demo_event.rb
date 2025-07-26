@@ -4,18 +4,15 @@ module EventService
   class CreateDemoEvent
     # include ::UserService::CanOpenDemoMode
 
-    def initialize(email:, name:, country:, category: nil, point_of_contact_id: nil, is_public: true, postal_code: nil)
+    def initialize(email:, name:, country:, point_of_contact_id: nil, is_public: true, postal_code: nil)
       @email = email
-      @point_of_contact = point_of_contact_id ? User.find(point_of_contact_id) : User.find_by_email("bank@hackclub.com")
+      @point_of_contact = point_of_contact_id ? User.find(point_of_contact_id) : User.system_user
       @event = ::Event.new(
         name:,
         country:,
-        category:,
         postal_code:,
         point_of_contact_id: @point_of_contact.id,
         is_public:,
-        organization_identifier:,
-        omit_stats: false,
         can_front_balance: true,
         demo_mode: true
       )
@@ -31,12 +28,6 @@ module EventService
 
         @event
       end
-    end
-
-    private
-
-    def organization_identifier
-      @organization_identifier ||= "bank_#{SecureRandom.hex}"
     end
 
   end

@@ -58,11 +58,6 @@
   <%= render partial: "hcb_codes/fee_revenue", locals: {} %>
 <% end %>
 
-<%# ach payment %>
-<% if @hcb_code.ach_payment? && @hcb_code.ach_payment.present? %>
-  <%= render "ach_payment" %>
-<% end %>
-
 <%# paypal transfer %>
 <% if @hcb_code.paypal_transfer? && @hcb_code.paypal_transfer.present? %>
   <%= render "paypal_transfer" %>

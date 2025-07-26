@@ -10,22 +10,22 @@ module StripeService
   end
 
   def self.publishable_key
-    Rails.application.credentials.stripe[self.mode][:publishable_key]
+    Credentials.fetch(:STRIPE, self.mode, :PUBLISHABLE_KEY)
   end
 
   def self.secret_key
-    Rails.application.credentials.stripe[self.mode][:secret_key]
+    Credentials.fetch(:STRIPE, self.mode, :SECRET_KEY)
   end
 
   def self.physical_bundle_ids
     {
-      white: Rails.application.credentials.dig(:stripe, self.mode, :physical_bundle_ids, :us_visa_credit_white),
-      black: Rails.application.credentials.dig(:stripe, self.mode, :physical_bundle_ids, :us_visa_credit_black)
+      white: Credentials.fetch(:STRIPE, self.mode, :PHYSICAL_BUNDLE_IDS, :US_VISA_CREDIT_WHITE),
+      black: Credentials.fetch(:STRIPE, self.mode, :PHYSICAL_BUNDLE_IDS, :US_VISA_CREDIT_BLACK)
     }
   end
 
   def self.construct_webhook_event(payload, sig_header, signing_secret_key = :primary)
-    signing_secret = Rails.application.credentials.dig(:stripe, self.mode, :webhook_signing_secrets, signing_secret_key)
+    signing_secret = Credentials.fetch(:STRIPE, self.mode, :WEBHOOK_SIGNING_SECRETS, signing_secret_key)
 
     # Don't check signatures if a signing secret wasn't provided
     # TODO: don't allow a blank signing secret in production

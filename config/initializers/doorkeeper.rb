@@ -13,7 +13,7 @@ Doorkeeper.configure do
   access_token_class "::ApiToken"
   access_token_generator "::ApiToken"
 
-  access_token_expires_in nil
+  access_token_expires_in 2.hours
 
   # If you didn't skip applications controller from Doorkeeper routes in your application routes.rb
   # file then you need to declare this block in order to restrict access to the web interface for
@@ -166,8 +166,8 @@ Doorkeeper.configure do
   # `client` - the OAuth client application (see Doorkeeper::OAuth::Client)
   # `grant_type` - the grant type of the request (see Doorkeeper::OAuth)
   # `scopes` - the requested scopes (see Doorkeeper::OAuth::Scopes)
-  #
-  # use_refresh_token
+
+  use_refresh_token
 
   # Provide support for an owner to be assigned to each registered application (disabled by default)
   # Optional parameter confirmation: true (default: false) if you want to enforce ownership of

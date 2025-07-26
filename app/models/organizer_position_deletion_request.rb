@@ -42,7 +42,7 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
 
   scope :under_review, -> { where(closed_at: nil) }
 
-  after_create_commit { AdminMailer.with(opdr: self).opdr_notification.deliver_later }
+  after_create_commit { OrganizerPositionDeletionRequestMailer.with(opdr: self).notify_operations.deliver_later }
 
   validates_presence_of :reason
 

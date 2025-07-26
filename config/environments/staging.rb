@@ -37,10 +37,6 @@ Rails.application.configure do
   # Do not fallback to assets pipeline if a precompiled asset is missed.
   config.assets.compile = false
 
-  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
-  #   config.asset_host = "https://d19o3k50vack1b.cloudfront.net"
-  # config.asset_host = 'http://assets.example.com'
-
   # Specifies the header that your server uses for sending files.
   # config.action_dispatch.x_sendfile_header = 'X-Sendfile' # for Apache
   # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for NGINX
@@ -110,9 +106,9 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   config.action_mailer.default_url_options = {
-    host: Rails.application.credentials.default_url_host[:live]
+    host: Credentials.fetch(:LIVE_URL_HOST)
   }
-  Rails.application.routes.default_url_options[:host] = Rails.application.credentials.default_url_host[:live]
+  Rails.application.routes.default_url_options[:host] = Credentials.fetch(:LIVE_URL_HOST)
 
   # Inserts middleware to perform automatic connection switching.
   # The `database_selector` hash is used to pass options to the DatabaseSelector
@@ -135,5 +131,4 @@ Rails.application.configure do
   # config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
   # config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
 
-  Credentials::Doppler.load if ENV["DOPPLER_TOKEN"]
 end

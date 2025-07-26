@@ -13,6 +13,10 @@ module StripeAuthorizationService
         approve?
       end
 
+      def card
+        @card ||= StripeCard.includes(:card_grant).find_by(stripe_id: stripe_card_id)
+      end
+
       private
 
       def auth
@@ -29,10 +33,6 @@ module StripeAuthorizationService
 
       def stripe_card_id
         auth[:card][:id]
-      end
-
-      def card
-        @card ||= StripeCard.includes(:card_grant).find_by(stripe_id: stripe_card_id)
       end
 
       def card_balance_available
@@ -55,17 +55,15 @@ module StripeAuthorizationService
       end
 
       def approve?
+        return decline_with_reason!("event_frozen") if event.financially_frozen?
+
+        return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?
+
         return decline_with_reason!("inadequate_balance") if card_balance_available < amount_cents
 
-        if card&.card_grant&.allowed_categories.present? && card.card_grant.allowed_categories.exclude?(auth[:merchant_data][:category])
-          return decline_with_reason!("merchant_not_allowed")
-        end
-
-        if card&.card_grant&.allowed_merchants.present? && card.card_grant.allowed_merchants.exclude?(auth[:merchant_data][:network_id])
-          return decline_with_reason!("merchant_not_allowed")
-        end
-
         return decline_with_reason!("cash_withdrawals_not_allowed") if cash_withdrawal? && !card.cash_withdrawal_enabled?
+
+        return decline_with_reason!("user_cards_locked") if card.user.cards_locked? && event.plan.card_lockable?
 
         set_metadata!
 
@@ -83,6 +81,27 @@ module StripeAuthorizationService
           auth_id,
           { metadata: default_metadata.deep_merge(additional) }
         )
+      end
+
+      def merchant_allowed?
+        disallowed_categories = card&.card_grant&.disallowed_categories
+        disallowed_merchants = card&.card_grant&.disallowed_merchants
+
+        return false if disallowed_categories&.include?(auth[:merchant_data][:category])
+        return false if disallowed_merchants&.include?(auth[:merchant_data][:network_id])
+
+        allowed_categories = card&.card_grant&.allowed_categories
+        allowed_merchants = card&.card_grant&.allowed_merchants
+        keyword_lock = card&.card_grant&.keyword_lock
+
+        has_restrictions = allowed_categories.present? || allowed_merchants.present? || keyword_lock.present?
+        return true unless has_restrictions
+
+        return true if allowed_categories&.include?(auth[:merchant_data][:category])
+        return true if allowed_merchants&.include?(auth[:merchant_data][:network_id])
+        return true if keyword_lock.present? && Regexp.new(keyword_lock).match?(auth[:merchant_data][:name])
+
+        false # decline transaction if none of the above match
       end
 
     end

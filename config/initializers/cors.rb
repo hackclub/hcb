@@ -11,7 +11,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
   domains = %w{https://hackclub.com localhost}.freeze
 
   allow do
-    origins "https://hackclub.com"
+    origins "https://hackclub.com", "https://bank.engineering", "https://hcb-engr.hackclub.dev"
 
     resource "/api/current_user",
              credentials: true

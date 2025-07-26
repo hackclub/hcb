@@ -9,6 +9,7 @@ module InvoiceService
 
     def run
       raise ArgumentError, "the invoice must have settled" unless invoice.canonical_transactions.any?
+      raise ArgumentError, "the invoice has already been refunded" if invoice.refunded_v2?
 
       ActiveRecord::Base.transaction do
 

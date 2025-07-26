@@ -3,9 +3,13 @@
 require "rails_helper"
 
 RSpec.describe CanonicalTransactionService::Stats::During do
-  let(:event_1) { create(:event, omit_stats: false) }
-  let(:event_2) { create(:event, omit_stats: false) }
-  let(:event_3) { create(:event, omit_stats: true) }
+  let(:event_1) { create(:event) }
+  let(:event_2) { create(:event) }
+  let(:event_3) {
+    event = create(:event)
+    event.plan.update(type: Event::Plan::HackClubAffiliate)
+    event.reload
+  }
 
   it "returns stats related to events transactions" do
     # Omitted because event is omitting stats

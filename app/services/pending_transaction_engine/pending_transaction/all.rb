@@ -6,11 +6,11 @@ module PendingTransactionEngine
       def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false)
         @event_id = event_id
         @search = search
-        @tag_id = tag_id
+        @tag_id = tag_id&.to_i
         @minimum_amount = minimum_amount
         @maximum_amount = maximum_amount
-        @start_date = start_date
-        @end_date = end_date
+        @start_date = start_date&.to_datetime
+        @end_date = end_date&.to_datetime
         @user = user
         @missing_receipts = missing_receipts
       end
@@ -33,7 +33,7 @@ module PendingTransactionEngine
         @canonical_pending_transactions ||=
           begin
             included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
-            included_local_hcb_code_associations << :tags if Flipper.enabled?(:transaction_tags_2022_07_29, event)
+            included_local_hcb_code_associations << :tags
             cpts = CanonicalPendingTransaction.includes(:raw_pending_stripe_transaction,
                                                         local_hcb_code: included_local_hcb_code_associations)
                                               .unsettled
@@ -57,23 +57,23 @@ module PendingTransactionEngine
             if @user
               cpts =
                 cpts.joins("LEFT JOIN raw_pending_stripe_transactions on raw_pending_stripe_transactions.id = canonical_pending_transactions.raw_pending_stripe_transaction_id")
-                    .where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' = '#{@user&.stripe_cardholder&.stripe_id}'")
+                    .where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user&.stripe_cardholder&.stripe_id)
             end
 
             if @minimum_amount
-              cpts = cpts.where("ABS(canonical_pending_transactions.amount_cents) >= #{@minimum_amount.cents}")
+              cpts = cpts.where("ABS(canonical_pending_transactions.amount_cents) >= ?", @minimum_amount.cents)
             end
 
             if @maximum_amount
-              cpts = cpts.where("ABS(canonical_pending_transactions.amount_cents) <= #{@maximum_amount.cents}")
+              cpts = cpts.where("ABS(canonical_pending_transactions.amount_cents) <= ?", @maximum_amount.cents)
             end
 
             if @start_date
-              cpts = cpts.where("canonical_pending_transactions.date >= cast('#{@start_date}' as date)")
+              cpts = cpts.where("canonical_pending_transactions.date >= cast(? as date)", @start_date)
             end
 
             if @end_date
-              cpts = cpts.where("canonical_pending_transactions.date <= cast('#{@end_date}' as date)")
+              cpts = cpts.where("canonical_pending_transactions.date <= cast(? as date)", @end_date)
             end
 
             if event.can_front_balance?

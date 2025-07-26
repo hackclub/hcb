@@ -10,4 +10,7 @@ module Errors
   class InvalidStripeCardLogoError < StandardError
   end
 
+  class StripeIssuingBalanceAnomaly < StandardError
+  end
+
 end
