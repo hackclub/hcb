@@ -22,7 +22,7 @@
 
 <ul class="grid">
   <div class="grid-row text">
-    <h3> General documents </h3>
+    <h3>General documents</h3>
     <div class="grid grid-cols-3 gap-4">
       <%= render partial: "document", collection: @active_common_documents.general %>
       <%= link_to event_fiscal_sponsorship_letter_path(event_id: @event.slug, format: "pdf") do %>
@@ -41,12 +41,12 @@
       <%= render partial: "document", collection: @active_common_documents.nonprofit_status %>
     </div>
 
-    <h3> Tax exception documents </h3>
+    <h3>Tax-exemption documents</h3>
     <div class="grid grid-cols-3 gap-4">
-      <%= render partial: "document", collection: @active_common_documents.tax_exception %>
+      <%= render partial: "document", collection: @active_common_documents.tax_exemption %>
     </div>
 
-    <h3> Forms </h3>
+    <h3>Forms</h3>
     <div class="grid grid-cols-3 gap-4">
       <%= render partial: "document", collection: @active_common_documents.forms %>
     </div>
