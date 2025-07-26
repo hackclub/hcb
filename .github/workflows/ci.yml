@@ -183,6 +183,8 @@ jobs:
           bundler-cache: true
       - name: Install postgres client
         run: sudo apt-get install libpq-dev
+      - name: Install Gems
+        run: bundle install
       - name: Build App
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
