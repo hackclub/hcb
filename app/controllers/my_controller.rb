@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :toggle_three_teens_banner] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :toggle_three_teens_banner, :feed] # do not force pundit
 
   def activities
     @before = params[:before] || Time.now
@@ -144,6 +144,12 @@ class MyController < ApplicationController
   def payroll
     @jobs = current_user.jobs
     @payout_method = current_user.payout_method
+  end
+
+  def feed
+    @event_follows = current_user.event_follows
+    @all_announcements = Announcement.published.where(event: @event_follows.map(&:event)).order(published_at: :desc, created_at: :desc)
+    @announcements = @all_announcements.page(params[:page]).per(10)
   end
 
 end

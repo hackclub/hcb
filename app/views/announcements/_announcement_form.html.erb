@@ -1,0 +1,49 @@
+<%# locals: (content: nil, autosave: true) %>
+
+<%= form_with model: @announcement, url: announcement_path(@announcement), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-announcement-id-value": @announcement.id, "tiptap-autosave-value": autosave, "turbo-frame": "_top" }.compact do |form| %>
+  <div class="field">
+    <%= form.label :title %>
+    <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :content %>
+    <%= form.hidden_field :json_content, data: { "tiptap-target": "contentInput" } %>
+    <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md">
+      <div class="flex gap-2 bg-snow dark:bg-darkless p-2 rounded-md rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
+        <%= render partial: "announcements/format_menu" %>
+      </div>
+      <div data-tiptap-target="editor" data-action="click->tiptap#focus" class="dark:bg-darkless bg-snow p-2 rounded-md rounded-t-none py-1 min-h-16"></div>
+    </div>
+    <p class="h5 muted mt0 mb1">
+      <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+        <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+      <% end %>
+    </p>
+  </div>
+
+  <%= form.hidden_field :autosave, data: { "tiptap-target": "autosaveInput" } %>
+
+  <%= form.hidden_field :event_id, value: @event.slug %>
+
+  <% if content.present? %>
+    <div>
+      <p class="italic text-muted">Your changes automatically save</p>
+
+      <button type="button" class="btn" data-action="tiptap#submit">
+        <%= inline_icon "reply" %> Back
+      </button>
+    </div>
+  <% else %>
+    <%= dropdown_button form:,
+                        options: [
+                          ["Publish now", false, "Publish this post instantly."],
+                          ["Create draft", true, "Save as a draft to publish later."]
+                        ],
+                        button_icon: "send",
+                        name: "draft",
+                        button_options: { data: { action: "tiptap#submit" }, type: "button" },
+                        menu_class: "relative",
+                        template: ->(value) { value ? "Create draft" : "Publish now" } %>
+  <% end %>
+<% end %>
