@@ -55,6 +55,9 @@ class OrganizerPosition < ApplicationRecord
   end
 
   def self.role_at_least?(user, event, role)
+    return false unless event.present? && role.present?
+    return true if user&.admin?
+
     if role.to_s == "reader"
       return event.ancestor_organizer_positions.reader_access.where(user:).exists?
     end
