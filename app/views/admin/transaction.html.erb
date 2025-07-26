@@ -41,7 +41,7 @@
   <tbody>
     <tr class="<%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
       <td class="flex" style="gap: 8px">
-        <%= form_with model: nil, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
+        <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
           <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.event.try(:id) }, { style: "width: 300px;" }) %>
           <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>
@@ -52,7 +52,7 @@
         <% end %>
       </td>
       <td>
-        <%= form_with model: nil, local: true, url: set_wire_path(@canonical_transaction), method: :post do |form| %>
+        <%= form_with mode: false, local: true, url: set_wire_path(@canonical_transaction), method: :post do |form| %>
           <%= form.collection_select(:wire_id, Wire.approved + [@canonical_transaction.wire].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wire&.id }, { style: "width: 300px;" }) %>
           <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>

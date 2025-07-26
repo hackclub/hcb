@@ -105,7 +105,7 @@
 
 <h3 class="mb0">Reports created</h3>
 
-<%= form_with(model: nil, local: true, method: :get, class: "my-3") do |form| %>
+<%= form_with(mode: false, local: true, method: :get, class: "my-3") do |form| %>
   <%= render "events/search", form: %>
 <% end %>
 
