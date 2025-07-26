@@ -9,6 +9,7 @@
 #  contact_email                 :string
 #  cover_donation_fees           :boolean          default(FALSE)
 #  generate_monthly_announcement :boolean          default(FALSE), not null
+#  subevent_plan                 :string
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  event_id                      :bigint           not null
@@ -26,6 +27,7 @@ class Event
     belongs_to :event
     validates_email_format_of :contact_email, allow_nil: true, allow_blank: true
     normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
+    validates :subevent_plan, inclusion: { in: -> { Event::Plan.available_plans.map(&:name) } }, allow_blank: true
 
     after_create :set_defaults
 
