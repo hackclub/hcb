@@ -169,7 +169,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def invoices?
-    show? && record.approved? record.plan.invoices_enabled?
+    show? && record.approved? && record.plan.invoices_enabled?
   end
 
   def account_number?
