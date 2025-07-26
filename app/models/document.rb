@@ -52,7 +52,7 @@ class Document < ApplicationRecord
   enum :category, {
     general: 0,
     nonprofit_status: 1,
-    tax_exception: 2,
+    tax_exemption: 2,
     forms: 3
   }
 
