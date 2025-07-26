@@ -4,7 +4,7 @@ xml.instruct! :xml, version: "1.0"
 
 xml.feed xmlns: "http://www.w3.org/2005/Atom" do
   xml.title "#{@event.name} – Announcements"
-  xml.updated @updated_at.xmlschema
+  xml.updated @updated_at.present? ? @updated_at.xmlschema : @event.created_at.xmlschema
   xml.link rel: "self", href: event_feed_url(@event)
   xml.link rel: "alternate", href: event_announcement_overview_url(@event)
   xml.id "urn:hcb:announcements_feed_#{@event.public_id}"
