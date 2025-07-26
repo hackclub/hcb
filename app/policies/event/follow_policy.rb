@@ -3,7 +3,7 @@
 class Event
   class FollowPolicy < ApplicationPolicy
     def create?
-      policy(record.event).announcement_overview? && user == record.user
+      Pundit.policy(record.event).announcement_overview? && user == record.user
     end
 
     def destroy?
