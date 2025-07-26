@@ -36,7 +36,7 @@
     <% end %>
   <%# Grantee has accepted invite %>
   <% elsif @card_grant.user.admin? || organizer_signed_in? || @card_grant.user == current_user %>
-    <div class="justify-center grid grid-cols-1 md:grid-cols-2">
+    <div class="justify-center grid grid-cols-1 <%= "md:grid-cols-2" if @card_grant.stripe_card.present? %>">
       <% if @card_grant.stripe_card %>
         <div>
           <%= render @card_grant.stripe_card, headless: true %>
