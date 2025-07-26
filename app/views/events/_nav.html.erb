@@ -36,7 +36,7 @@
           selected: local_assigns[:selected] == :activation_flow %>
         <% end %>
     <% end %>
-    <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
+    <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? && policy(@event.invoices).index?) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
       <h4 class="mb0 h5 font-medium muted">Receive</h4>
       <hr>
     <% end %>
@@ -59,7 +59,7 @@
       event_invoices_path(event_id: @event.slug),
       tooltip: "Collect sponsor payments",
       icon: "briefcase",
-      selected: local_assigns[:selected] == :invoices if @event.approved? && @event.plan.invoices_enabled? %>
+      selected: local_assigns[:selected] == :invoices if @event.approved? && @event.plan.invoices_enabled? && policy(@event.invoices).index? %>
     <%= dock_item "Account numbers",
       account_number_event_path(@event),
       tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
@@ -95,7 +95,7 @@
       event_employees_path(event_id: @event.slug),
       tooltip: "Manage payroll",
       icon: "person-badge",
-      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) %>
+      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) && policy(@event).employees? %>
     <hr>
     <%= dock_item "Team",
       event_team_path(event_id: @event.slug),
