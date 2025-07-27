@@ -17,6 +17,7 @@ gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
+gem "imgkit" # CSV image previewer
 
 
 gem "jsbundling-rails", "~> 1.3"
