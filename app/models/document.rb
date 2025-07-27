@@ -78,14 +78,9 @@ class Document < ApplicationRecord
 
   def preview_url(resize: "500x500")
     return nil unless file
+    return nil unless file.previewable?
 
-    case file.content_type
-    when "application/pdf"
-      return nil unless file.previewable?
-
-      file.preview(resize:)
-    else
-    end
+    file.preview(resize:)
   end
 
   def common?
