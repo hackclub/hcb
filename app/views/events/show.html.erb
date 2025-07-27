@@ -54,15 +54,15 @@
 <div class="flex flex-col gap-[20px]" data-controller="event-home">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden">
-      <%= link_to "#", class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+      <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
         <%= inline_icon "payment-transfer", size: 20 %>
         Transfer money
       <% end %>
-      <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
+      <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
         <%= inline_icon "attachment", size: 20 %>
         Get reimbursed
       <% end %>
-      <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action" do %>
+      <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
         <%= inline_icon "cheque", size: 20 %>
         Deposit a check
       <% end %>
@@ -70,7 +70,7 @@
         <%= inline_icon "bank-account", size: 20 %>
         Account numbers
       <% end %>
-      <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+      <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
         <%= inline_icon "briefcase", size: 20 %>
         Send an invoice
       <% end %>
@@ -78,6 +78,11 @@
     <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
     <%= render "transfer_modal" %>
     <%= render "invoices/modal" %>
+
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
+      <%= modal_header "Deposit a check" %>
+      <%= render "check_deposits/new", event: @event %>
+    </section>
   <% end %>
 
   <%= render "events/public_message" %>
