@@ -238,9 +238,12 @@ class UsersController < ApplicationController
 
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    set_onboarding
-    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+
+    authorize @user
+  end
+
+  def admin_details
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
 
     # User Information
     @invoices = Invoice.where(creator: @user)
