@@ -94,6 +94,8 @@ GEM
       activerecord (= 7.2.2.1)
       activesupport (= 7.2.2.1)
       marcel (~> 1.0)
+    activestorage-office-previewer (0.1.2)
+      activestorage (>= 6.0.0)
     activesupport (7.2.2.1)
       base64
       benchmark (>= 0.3)
@@ -873,6 +875,7 @@ PLATFORMS
 DEPENDENCIES
   aasm
   active_storage_validations (= 2.0.2)
+  activestorage-office-previewer
   acts_as_paranoid (~> 0.10.3)
   actual_db_schema
   ahoy_email (~> 2.4)
