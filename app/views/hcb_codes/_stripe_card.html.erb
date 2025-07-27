@@ -187,6 +187,16 @@
         <span><strong>Sign in to view</strong></span>
       <% end %>
     </div>
+    <% if @hcb_code.raw_stripe_transaction.local_amount %>
+      <div>
+        <strong>Local amount</strong>
+        <% if organizer_signed_in? %>
+          <span><%= @hcb_code.raw_stripe_transaction.local_amount %></span>
+        <% else %>
+          <span><strong>Sign in to view</strong></span>
+        <% end %>
+      </div>
+    <% end %>
     <% if @hcb_code.pt.present? %>
       <div>
         <span style="height: 100%;">
