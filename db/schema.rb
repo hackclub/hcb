@@ -670,6 +670,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_195537) do
     t.bigint "archived_by_id"
     t.string "aasm_state"
     t.datetime "deleted_at", precision: nil
+    t.integer "category", default: 0, null: false
     t.index ["archived_by_id"], name: "index_documents_on_archived_by_id"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["slug"], name: "index_documents_on_slug", unique: true
