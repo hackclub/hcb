@@ -18,14 +18,30 @@ class AnnouncementMailer < ApplicationMailer
     mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-m")}"
   end
 
+  def notice
+    @event = params[:event]
+    set_manager_emails
+
+    @monthly_announcement = params[:monthly_announcement]
+    if @monthly_announcement.present?
+      @scheduled_for = Date.today.next_month.beginning_of_month
+    end
+
+    mail to: @emails, subject: "[#{@event.name}] Announcing organization announcements!"
+  end
+
   def set_warning_variables
     @announcement = params[:announcement]
     @event = @announcement.event
 
-    @emails = @event.managers.map(&:email_address_with_name)
-    @emails << @event.config.contact_email if @event.config.contact_email.present?
+    set_manager_emails
 
     @scheduled_for = Date.today.next_month.beginning_of_month
+  end
+
+  def set_manager_emails
+    @emails = @event.managers.map(&:email_address_with_name)
+    @emails << @event.config.contact_email if @event.config.contact_email.present?
   end
 
 end

@@ -54,6 +54,8 @@ class Announcement
         announcement = Announcement.create!(event: @event, title:, content: {}, aasm_state: :template_draft, author: @author, template_type: self.class.name)
         block = Announcement::Block::DonationSummary.create!(announcement:, parameters: { start_date: Date.current.beginning_of_month, end_date: Date.current.end_of_month })
         announcement.update!(content: json_content(block))
+
+        announcement
       end
 
     end
