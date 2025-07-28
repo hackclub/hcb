@@ -5,6 +5,7 @@ class WiresController < ApplicationController
 
   before_action :set_event, only: %i[new create]
   before_action :set_wire, only: %i[approve reject send_wire edit update]
+  before_action :enforce_sudo_mode, only: %i[create]
 
   def new
     @wire = @event.wires.build
