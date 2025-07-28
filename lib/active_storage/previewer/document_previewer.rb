@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# this is a custom version of https://github.com/basecamp/activestorage-office-previewer
+# that also supports CSV files.
+
 require "active_storage/previewer"
 
 module ActiveStorage
