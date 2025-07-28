@@ -11,7 +11,7 @@
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
 #  creation_method               :integer
-#  email                         :text
+#  email                         :text             not null
 #  full_name                     :string
 #  locked_at                     :datetime
 #  payout_method_type            :string

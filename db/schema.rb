@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_21_195537) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_28_132814) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2242,7 +2242,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_195537) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.text "email"
+    t.text "email", null: false
     t.string "full_name"
     t.text "phone_number"
     t.string "slug"
