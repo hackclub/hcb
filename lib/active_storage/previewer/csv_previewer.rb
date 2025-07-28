@@ -3,7 +3,7 @@
 require "active_storage/previewer"
 
 module ActiveStorage
-  module Previewer
+  class Previewer
     class CsvPreviewer < ActiveStorage::Previewer
       ACCEPTABLE_CONTENT_TYPES = [
         "text/csv", # .csv
