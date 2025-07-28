@@ -38,7 +38,7 @@ Flipper::UI.configure do |config|
       case model
       when "User"
         User.where(id: mapping.keys).pluck(:id, :email, :full_name).each do |(id, email, full_name)|
-          actor_names[mapping.fetch(id)] = ActionMailer::Base.email_address_with_name(email, full_name)
+          actor_names[mapping.fetch(id)] = CGI.escape_html(ActionMailer::Base.email_address_with_name(email, full_name))
         end
       when "Event"
         Event.where(id: mapping.keys).pluck(:id, :name).each do |(id, name)|
