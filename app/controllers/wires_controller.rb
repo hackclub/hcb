@@ -5,7 +5,6 @@ class WiresController < ApplicationController
 
   before_action :set_event, only: %i[new create]
   before_action :set_wire, only: %i[approve reject send_wire edit update]
-  before_action :enforce_sudo_mode, only: %i[create]
 
   def new
     @wire = @event.wires.build
@@ -17,6 +16,10 @@ class WiresController < ApplicationController
     @wire = @event.wires.build(wire_params.except(:file).merge(user: current_user))
 
     authorize @wire
+
+    if @wire.amount_cents > 500_00
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
     if @wire.save
       if wire_params[:file]

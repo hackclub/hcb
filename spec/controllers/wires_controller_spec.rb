@@ -73,7 +73,10 @@ RSpec.describe WiresController do
         :create,
         params: {
           event_id: event.friendly_id,
-          wire: wire_params,
+          wire: {
+            **wire_params,
+            amount: "500.01",
+          }
         }
       )
 
@@ -85,7 +88,10 @@ RSpec.describe WiresController do
         :create,
         params: {
           event_id: event.friendly_id,
-          wire: wire_params,
+          wire: {
+            **wire_params,
+            amount: "500.01",
+          },
           _sudo: {
             submit_method: "email",
             login_code: user.login_codes.last.code,
@@ -97,6 +103,7 @@ RSpec.describe WiresController do
       wire = event.wires.sole
       expect(response).to redirect_to(hcb_code_path(wire.local_hcb_code))
       expect(wire.memo).to eq("Test Wire")
+      expect(wire.amount_cents).to eq(500_01)
     end
   end
 end
