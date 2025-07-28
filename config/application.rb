@@ -4,6 +4,7 @@ require_relative "boot"
 
 require "rails/all"
 require_relative "../app/lib/credentials"
+require_relative "../lib/active_storage/previewer/csv_previewer.rb"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
