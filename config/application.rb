@@ -93,5 +93,8 @@ module Bank
     config.active_record.encryption.deterministic_key = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :DETERMINISTIC_KEY)
     config.active_record.encryption.key_derivation_salt = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :KEY_DERIVATION_SALT)
 
+    # CSV previews
+    config.active_storage.previewers << ActiveStorage::Previewer::CsvPreviewer
+
   end
 end
