@@ -138,6 +138,8 @@ class SudoModeHandler
   # Extracts the request parameters as a flat list of key-value pairs (instead
   # of following Rack's nesting conventions) so that we can re-submit them along
   # with the sudo credentials.
+  #
+  # @return [Hash<String, Array<String>>]
   def forwarded_params
     # Mimic the behaviour of `ActionDispatch::Http::Parameters#parameters` to
     # obtain a single hash of both request and query parameters.
@@ -158,16 +160,15 @@ class SudoModeHandler
           name.start_with?("_sudo")
         end
       end
-      .each_with_object([]) do |(name, value_or_values), array|
+      .transform_values do |value_or_values|
         # `Rack::Utils.parse_query` returns a hash of param names to values but
         # returns an array of values for repeated params (as is the convention
-        # params like `tags[]`)
+        # params like `tags[]`). Rather than dealing with both cases we just
+        # make everything an array.
         if value_or_values.is_a?(Array)
-          value_or_values.each do |value|
-            array << [name, value]
-          end
+          value_or_values
         else
-          array << [name, value_or_values]
+          [value_or_values]
         end
       end
   end

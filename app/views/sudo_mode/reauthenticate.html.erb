@@ -28,8 +28,10 @@
         webauthn_reauth_options_url_value: webauthn_auth_options_users_path(email: current_user.email),
       }
     ) do %>
-  <% forwarded_params.each do |name, value| %>
-    <%= hidden_field_tag(name, value) %>
+  <% forwarded_params.each do |name, values| %>
+    <% values.each do |value| %>
+      <%= hidden_field_tag(name, value) %>
+    <% end %>
   <% end %>
 
   <%= hidden_field_tag("_sudo[login_id]", login.hashid) %>
