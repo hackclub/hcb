@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class LoginsController < ApplicationController
-  skip_before_action :signed_in_user
+  skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
-  before_action :set_login, except: [:new, :create]
-  before_action :set_user, except: [:new, :create]
+  before_action :set_login, except: [:new, :create, :reauthenticate]
+  before_action :set_user, except: [:new, :create, :reauthenticate]
   before_action :set_return_to
 
   layout "login"
@@ -171,6 +171,12 @@ class LoginsController < ApplicationController
         redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
       end
     end
+  end
+
+  def reauthenticate
+    return unless enforce_sudo_mode
+
+    redirect_to(@return_to || root_path)
   end
 
   private

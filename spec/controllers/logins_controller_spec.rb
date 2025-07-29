@@ -414,4 +414,38 @@ describe LoginsController do
     end
   end
 
+  describe "#reauthenticate" do
+    it "checks for sudo mode and redirects" do
+      user = create(:user)
+      Flipper.enable(:sudo_mode_2015_07_21, user)
+      sign_in(user)
+
+      travel(3.hours)
+
+      post(:reauthenticate, params: { return_to: "/test" })
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Confirm Access")
+
+      post(
+        :reauthenticate,
+        params: {
+          return_to: "/test",
+          _sudo: {
+            submit_method: "email",
+            login_code: user.login_codes.last.code,
+            login_id: user.logins.last.hashid,
+          }
+        }
+      )
+
+      expect(response).to redirect_to("/test")
+    end
+
+    it "requires an active session" do
+      post(:reauthenticate, params: { return_to: "/test" })
+
+      expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: reauthenticate_logins_url))
+    end
+  end
 end
