@@ -110,8 +110,7 @@
       <span style="height: 100%;">
         <strong>Merchant</strong>
       </span>
-      <%# @event is not always defined when this page is rendered %>
-      <% if organizer_signed_in?(@event || @hcb_code.event) %>
+      <% if organizer_signed_in? %>
         <% if defined?(@frame) && @frame %>
           <details>
             <summary class="inline-flex no-select">
@@ -193,8 +192,7 @@
         <span style="height: 100%;">
           <strong>Charge method</strong>
         </span>
-        <%# @event is not always defined when this page is rendered %>
-        <% if organizer_signed_in?(@event || @hcb_code.event) %>
+        <% if organizer_signed_in? %>
           <% if defined?(@frame) && @frame %>
             <details>
               <summary class="inline-flex no-select">
