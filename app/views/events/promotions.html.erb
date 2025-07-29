@@ -33,7 +33,7 @@
       to your website for a $500 coupon to spend on custom stickers, cards, marketing materials, and more!
     </p>
     <section class="card__banner card__darker secondary border-top italic">
-      You currently have <%= number_to_human @event.users.count { |user| user.teenager? && user.active? } %> active teenagers in your organization!
+      You currently have <%= number_to_human(@event.users.count { |user| user.teenager? && user.active? }) %> active teenagers in your organization!
     </section>
   </div>
 </div>
