@@ -395,22 +395,23 @@ describe LoginsController do
         expect(current_session!).to eq(login.user_session)
       end
     end
+
+    it "redirects to the user's settings page if they don't have a name or phone number" do
+      user = create(:user, full_name: nil, phone_number: nil)
+      login = create(:login, user:)
+      login_code = create(:login_code, user:)
+
+      post(
+        :complete,
+        params: {
+          id: login.hashid,
+          method: "login_code",
+          login_code: login_code.code
+        }
+      )
+
+      expect(response).to redirect_to(edit_user_path(user.slug))
+    end
   end
 
-  it "redirects to the user's settings page if they don't have a name or phone number" do
-    user = create(:user, full_name: nil, phone_number: nil)
-    login = create(:login, user:)
-    login_code = create(:login_code, user:)
-
-    post(
-      :complete,
-      params: {
-        id: login.hashid,
-        method: "login_code",
-        login_code: login_code.code
-      }
-    )
-
-    expect(response).to redirect_to(edit_user_path(user.slug))
-  end
 end
