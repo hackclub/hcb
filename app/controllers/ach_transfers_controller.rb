@@ -51,7 +51,7 @@ class AchTransfersController < ApplicationController
 
     authorize @ach_transfer
 
-    if @ach_transfer.amount > 500_00
+    if @ach_transfer.amount > SudoModeHandler::CENTS_THRESHOLD
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
 
