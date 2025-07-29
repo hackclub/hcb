@@ -189,6 +189,13 @@ class SudoModeHandler
     )
   end
 
+  def form_locals
+    {
+      form_action: request.path,
+      form_method: request.request_method_symbol
+    }
+  end
+
   def render_reauthentication_page(login: find_or_create_login!)
     default_factor, *additional_factors = sorted_factors(login)
 
@@ -215,7 +222,8 @@ class SudoModeHandler
         login:,
         additional_factors:,
         default_factor:,
-        forwarded_params:
+        forwarded_params:,
+        **form_locals,
       },
       status: :unprocessable_entity
     )
