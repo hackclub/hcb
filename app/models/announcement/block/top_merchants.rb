@@ -28,10 +28,11 @@ class Announcement
 
       def render_html(is_email: false)
         start_date = parameters["start_date"].present? ? Date.parse(parameters["start_date"]) : 1.month.ago
+        end_date = parameters["end_date"].present? ? Date.parse(parameters["end_date"]) : Time.now
 
         event = announcement.event
 
-        merchants = BreakdownEngine::Merchants.new(event).run
+        merchants = BreakdownEngine::Merchants.new(event, start_date:, end_date:).run
 
         Announcements::BlocksController.renderer.render partial: "announcements/blocks/top_merchants", locals: { is_email:, block: self, merchants: }
       end
