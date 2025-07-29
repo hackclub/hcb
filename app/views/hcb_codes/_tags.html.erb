@@ -1,4 +1,4 @@
-<% if hcb_code.tags.any? %>
+<% if hcb_code.tags.any? || TagPolicy.new(current_user, @event).create? %>
   <div>
     <strong>Tags</strong>
     <div class="flex items-center flex-wrap" style="gap: 0.25rem">

@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -11,6 +11,8 @@ module PendingTransactionEngine
         @maximum_amount = maximum_amount
         @start_date = start_date&.to_datetime
         @end_date = end_date&.to_datetime
+        @revenue = revenue
+        @expenses = expenses
         @user = user
         @missing_receipts = missing_receipts
       end
@@ -45,6 +47,15 @@ module PendingTransactionEngine
                 cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
                     .joins("LEFT JOIN hcb_codes_tags ON hcb_codes_tags.hcb_code_id = hcb_codes.id")
                     .where("hcb_codes_tags.tag_id = ?", @tag_id)
+            end
+
+
+            if @expenses
+              cpts = cpts.where("canonical_pending_transactions.amount_cents < 0")
+            end
+
+            if @revenue
+              cpts = cpts.where("canonical_pending_transactions.amount_cents >= 0")
             end
 
             if @missing_receipts

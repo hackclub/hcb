@@ -50,6 +50,11 @@
       <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}" %>
     </div>
 
+    <div class="field">
+      <%= form.label :cosigner_email, "Co-signer email", class: "bold" %>
+      <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18" %>
+    </div>
+
     <small class="muted mt-0 mb-4">This project will be created on the <strong><%= @event.plan.label %></strong> plan</small>
 
     <div class="inline-block">

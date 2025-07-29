@@ -154,6 +154,45 @@ jobs:
         with:
           name: simplecov-report
           path: coverage/coverage.json
+  annotate:
+    name: Annotate
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Install postgres client
+        run: sudo apt-get install libpq-dev
+      - name: Build App
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: bundler exec rails db:create db:schema:load RAILS_ENV=test
+      - name: Run annotaterb
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: bundle exec annotaterb --frozen
   zeitwerk:
     name: Zeitwerk
     runs-on: ubuntu-latest

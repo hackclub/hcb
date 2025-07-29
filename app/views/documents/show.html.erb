@@ -40,6 +40,10 @@
     <strong>Added by</strong> <%= user_mention @document.user %>
   </p>
 
+  <p>
+    <strong>Category</strong> <%= @document.category.humanize %>
+  </p>
+
 </section>
 
 <% if @downloads.any? %>

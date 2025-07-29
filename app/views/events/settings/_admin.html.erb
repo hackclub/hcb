@@ -21,7 +21,7 @@
     <details>
       <summary>Available plans</summary>
 
-      <% Event::Plan.available_plans.each do | plan | %>
+      <% Event::Plan.available_plans_by_popularity.each do | plan | %>
         <p><strong><%= plan.new.label %></strong>: <%= plan.new.description %></p>
       <% end %>
     </details>

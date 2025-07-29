@@ -194,6 +194,8 @@ class EventsController < ApplicationController
       event_id: @event.id,
       search: params[:q],
       tag_id: @tag&.id,
+      revenue: @direction == "revenue",
+      expenses: @direction == "expenses",
       minimum_amount: @minimum_amount,
       maximum_amount: @maximum_amount,
       user: @user,
@@ -418,8 +420,6 @@ class EventsController < ApplicationController
       @all_announcements = Announcement.published.where(event: @event).order(published_at: :desc, created_at: :desc)
     end
     @announcements = @all_announcements.page(params[:page]).per(10)
-
-    raise ActionController::RoutingError.new("Not Found") if !@event.is_public && @all_announcements.empty? && !organizer_signed_in?
   end
 
   before_action(only: :feed) { request.format = :atom }
@@ -825,6 +825,7 @@ class EventsController < ApplicationController
     subevent = ::EventService::Create.new(
       name: params[:name],
       emails: [params[:email]],
+      cosigner_email: params[:cosigner_email],
       is_signee: true,
       country: params[:country],
       point_of_contact_id: @event.point_of_contact_id,
@@ -1176,6 +1177,7 @@ class EventsController < ApplicationController
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
+    @direction = params[:direction]
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
@@ -1183,6 +1185,7 @@ class EventsController < ApplicationController
 
   def _show_pending_transactions
     return [] if params[:page] && params[:page] != "1"
+    return [] if params[:direction]
 
     pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(
       event_id: @event.id,
@@ -1190,6 +1193,8 @@ class EventsController < ApplicationController
       tag_id: @tag&.id,
       minimum_amount: @minimum_amount,
       maximum_amount: @maximum_amount,
+      revenue: @direction == "revenue",
+      expenses: @direction == "expenses",
       user: @user,
       start_date: @start_date,
       end_date: @end_date,

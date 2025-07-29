@@ -17,6 +17,10 @@ class WiresController < ApplicationController
 
     authorize @wire
 
+    if @wire.amount_cents > 500_00
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
+
     if @wire.save
       if wire_params[:file]
         ::ReceiptService::Create.new(

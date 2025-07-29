@@ -45,13 +45,6 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
-  # NOTE(@lachlanjc): this is bad, I’m sorry.
-  # This is the StripeCardsController#shipping method when rendered on the event
-  # card overview page. This should be moved out of here.
-  def shipping?
-    auditor_or_reader?
-  end
-
   def edit?
     auditor_or_member?
   end
@@ -88,7 +81,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def announcement_overview?
-    true
+    is_public || record.announcements.published.any? || auditor_or_reader?
   end
 
   def feed?
@@ -173,6 +166,10 @@ class EventPolicy < ApplicationPolicy
 
   def donation_overview?
     show? && record.approved? && record.plan.donations_enabled?
+  end
+
+  def invoices?
+    show? && record.approved? && record.plan.invoices_enabled?
   end
 
   def account_number?

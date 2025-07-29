@@ -22,5 +22,24 @@ FactoryBot.define do
     trait :card_grant_event do
       association :card_grant_setting
     end
+
+    trait :with_positive_balance do
+      after :create do |event|
+        raw_csv_transaction = RawCsvTransactionService::Create.new(
+          unique_bank_identifier: "FSMAIN",
+          date: 3.days.ago.iso8601(3),
+          memo: "🏦 Test Donation",
+          amount: 1_000
+        ).run
+
+        TransactionEngine::HashedTransactionService::RawCsvTransaction::Import.new.run
+        TransactionEngine::CanonicalTransactionService::Import::All.new.run
+
+        CanonicalEventMapping.create!(
+          canonical_transaction_id: CanonicalTransaction.find_by!(memo: raw_csv_transaction.memo).id,
+          event_id: event.id,
+        )
+      end
+    end
   end
 end

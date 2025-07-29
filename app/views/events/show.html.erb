@@ -38,7 +38,7 @@
     </span>
   <% end %>
 
-  <%= render "events/follow_button" %>
+  <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
 </h1>
 
 <% if organizer_signed_in? && @event.demo_mode %>
