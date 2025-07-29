@@ -84,7 +84,7 @@ class EventsController < ApplicationController
   def merchants_chart
     authorize @event
 
-    @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
+    @merchants = BreakdownEngine::Merchants.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] }
   end
@@ -92,7 +92,7 @@ class EventsController < ApplicationController
   def categories_chart
     authorize @event
 
-    @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
+    @categories = BreakdownEngine::Categories.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] }
   end
@@ -141,7 +141,7 @@ class EventsController < ApplicationController
   def tags_chart
     authorize @event
 
-    @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
+    @tags = BreakdownEngine::Tags.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe], event: @event }
   end
@@ -149,7 +149,7 @@ class EventsController < ApplicationController
   def users_chart
     authorize @event
 
-    @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
+    @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
