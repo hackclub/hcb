@@ -152,7 +152,7 @@ class User < ApplicationRecord
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
-  after_update :sync_with_loops
+  after_update :queue_sync_with_loops_job
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
@@ -373,9 +373,9 @@ class User < ApplicationRecord
     charge_notifications_sms? || charge_notifications_email_and_sms?
   end
 
-  def sync_with_loops
+  def queue_sync_with_loops_job
     new_user = full_name_before_last_save.blank? && !onboarding?
-    UserService::SyncWithLoops.new(user_id: id, new_user:).run
+    User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 
   def only_card_grant_user?
