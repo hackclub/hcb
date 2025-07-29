@@ -63,7 +63,7 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
-        TopMerchantsNode
+        TopMerchantsNode,
       ],
       editorProps: {
         attributes: {
@@ -198,7 +198,7 @@ export default class extends Controller {
 
   async topMerchants() {
     const attrs = await this.createBlock('Announcement::Block::TopMerchants')
-    this.editor.chain().focus().addDonationSummary(attrs).run()
+    this.editor.chain().focus().addTopMerchants(attrs).run()
   }
 
   async createBlock(type, parameters) {

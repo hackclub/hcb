@@ -1,4 +1,5 @@
 import { Node } from '@tiptap/core'
+import ReactRailsUJS from 'react_ujs'
 
 export const TopMerchantsNode = Node.create({
   name: 'topMerchants',
@@ -19,6 +20,21 @@ export const TopMerchantsNode = Node.create({
     return ({ node }) => {
       const dom = document.createElement('div')
       dom.innerHTML = node.attrs.html
+
+      const observer = new MutationObserver((mutationsList, observer) => {
+        for (const mutation of mutationsList) {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            mutation.addedNodes.forEach(node => {
+              if (node == dom) {
+                ReactRailsUJS.mountComponents()
+                observer.disconnect()
+              }
+            })
+          }
+        }
+      })
+
+      observer.observe(document, { attributes: true, childList: true, subtree: true })
 
       return { dom }
     }
