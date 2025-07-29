@@ -40,6 +40,7 @@ module ProsemirrorService
         renderer.add_node ProsemirrorService::DonationSummaryNode
         renderer.add_node ProsemirrorService::TopMerchantsNode
         renderer.add_node ProsemirrorService::TopCategoriesNode
+        renderer.add_node ProsemirrorService::TopTagsNode
 
         renderer
       end
