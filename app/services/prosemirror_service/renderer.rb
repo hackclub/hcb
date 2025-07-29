@@ -39,6 +39,7 @@ module ProsemirrorService
         renderer.add_node ProsemirrorService::HcbCodeNode
         renderer.add_node ProsemirrorService::DonationSummaryNode
         renderer.add_node ProsemirrorService::TopMerchantsNode
+        renderer.add_node ProsemirrorService::TopCategoriesNode
 
         renderer
       end

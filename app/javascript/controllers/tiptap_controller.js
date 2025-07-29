@@ -12,6 +12,7 @@ import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
 import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
 import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
 import { TopMerchantsNode } from './tiptap/nodes/top_merchants_node'
+import { TopCategoriesNode } from './tiptap/nodes/top_categories_node'
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
@@ -64,6 +65,7 @@ export default class extends Controller {
         HcbCodeNode,
         DonationSummaryNode,
         TopMerchantsNode,
+        TopCategoriesNode
       ],
       editorProps: {
         attributes: {
@@ -207,6 +209,11 @@ export default class extends Controller {
   async topMerchants() {
     const attrs = await this.createBlock('Announcement::Block::TopMerchants')
     this.editor.chain().focus().addTopMerchants(attrs).run()
+  }
+
+  async topCategories() {
+    const attrs = await this.createBlock('Announcement::Block::TopCategories')
+    this.editor.chain().focus().addTopCategories(attrs).run()
   }
 
   async createBlock(type, parameters) {
