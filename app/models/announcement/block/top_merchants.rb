@@ -24,17 +24,29 @@
 class Announcement
   class Block
     class TopMerchants < ::Announcement::Block
-      has_one_attached :chart
+      before_create :start_date_param
+      before_create :end_date_param
 
       def render_html(is_email: false)
-        start_date = parameters["start_date"].present? ? Date.parse(parameters["start_date"]) : 1.month.ago
-        end_date = parameters["end_date"].present? ? Date.parse(parameters["end_date"]) : Time.now
-
+        start_date = start_date_param
+        end_date = end_date_param
         event = announcement.event
 
         merchants = BreakdownEngine::Merchants.new(event, start_date:, end_date:).run
 
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/top_merchants", locals: { is_email:, block: self, merchants: }
+        Announcements::BlocksController.renderer.render partial: "announcements/blocks/top_merchants", locals: { is_email:, block: self, merchants:, start_date:, end_date: }
+      end
+
+      private
+
+      def start_date_param
+        self.parameters["start_date"].present? ? DateTime.parse(self.parameters["start_date"]) : nil
+      end
+
+      def end_date_param
+        self.parameters["end_date"] ||= Time.now.to_s
+
+        DateTime.parse(self.parameters["end_date"])
       end
 
     end

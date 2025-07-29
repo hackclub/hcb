@@ -41,13 +41,13 @@ class Announcement
       def start_date_param
         self.parameters["start_date"] ||= 1.month.ago.to_s
 
-        Date.parse(self.parameters["start_date"])
+        DateTime.parse(self.parameters["start_date"])
       end
 
       def end_date_param
         self.parameters["end_date"] ||= Time.now.to_s
 
-        Date.parse(self.parameters["end_date"])
+        DateTime.parse(self.parameters["end_date"])
       end
 
     end

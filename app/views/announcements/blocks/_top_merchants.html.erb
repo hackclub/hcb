@@ -1,13 +1,14 @@
-<%# locals: (block:, is_email: false, merchants:) %>
+<%# locals: (block:, is_email: false, merchants:, start_date:, end_date:) %>
 
 <%= render "announcements/blocks/block_shell", block:, type: "topMerchants", is_email: do %>
+  <p><strong>Top merchants for <%= block.announcement.event.name %> <%= "from #{start_date.strftime("%B %e, %Y")}" if  start_date.present? %> until <%= end_date.strftime("%B %e, %Y") %>:</strong></p>
+
   <% if is_email %>
-    <p><%= block.announcement.event.name %> has spent:</p>
-    <ul>
+    <ol>
       <% merchants.each do |merchant| %>
         <li><%= render_money merchant[:value] * 100 %> at <%= merchant[:name] %></p>
       <% end %>
-    </ul>
+    </ol>
   <% else %>
     <%= react_component "home/Merchants", { data: merchants }, { camelize_props: false } %>
   <% end %>
