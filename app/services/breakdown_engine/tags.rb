@@ -17,7 +17,7 @@ module BreakdownEngine
         next if amount_cents_sum == 0
 
         array << {
-          name: tag.label,
+          name: "#{tag.emoji} #{tag.label}",
           truncated: tag.label,
           value: Money.from_cents(amount_cents_sum).to_f
         }
