@@ -190,10 +190,29 @@ class SudoModeHandler
   end
 
   def form_locals
-    {
-      form_action: request.path,
-      form_method: request.request_method_symbol
-    }
+    if request.request_method_symbol == :get
+      {
+        # In the case where we get a GET request, we want to avoid submitting the
+        # reauthentication form to the same endpoint as
+        # 1. We'd end up with sudo params in the query string
+        # 2. We would be altering server state on a safe request, which breaks HTTP
+        #    semantics (https://developer.mozilla.org/en-US/docs/Glossary/Safe/HTTP)
+        # Instead, we submit the request to a different endpoint and redirect back to
+        # where we were going.
+        form_action: Rails.application.routes.url_helpers.reauthenticate_logins_path,
+        form_method: :post,
+        # All necessary params should already be contained in `request.fullpath`
+        # (path + query string), so the only thing we need to set and
+        # subsequently preserve is `return_to`.
+        forwarded_params: { return_to: [params[:return_to].presence || request.fullpath], },
+      }
+    else
+      {
+        form_action: request.path,
+        form_method: request.request_method_symbol,
+        forwarded_params:,
+      }
+    end
   end
 
   def render_reauthentication_page(login: find_or_create_login!)
@@ -222,7 +241,6 @@ class SudoModeHandler
         login:,
         additional_factors:,
         default_factor:,
-        forwarded_params:,
         **form_locals,
       },
       status: :unprocessable_entity
