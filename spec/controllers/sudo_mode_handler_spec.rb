@@ -68,6 +68,10 @@ RSpec.describe SudoModeHandler do
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("Confirm Access")
+
+      form = response.parsed_body.css("form").sole
+      expect(form.attr("action")).to eq("/anonymous")
+      expect(form.attr("method")).to eq("post")
     end
 
     it "allows the request to proceed if the user does not have the feature enabled" do
