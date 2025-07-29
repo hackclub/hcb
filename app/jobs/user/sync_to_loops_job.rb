@@ -6,7 +6,7 @@ class User
 
     def perform
       User.all.find_each(batch_size: 100) do |user|
-        User::SyncUserToLoopsJob.perform_later(user_id: user.id)
+        UserService::SyncWithLoops.new(user_id: user.id)
       end
     end
 
