@@ -2,7 +2,7 @@ import { Node } from '@tiptap/core'
 import ReactRailsUJS from 'react_ujs'
 
 export const TopCategoriesNode = Node.create({
-  name: 'topCategories',
+  name: 'Announcement::Block::TopCategories',
   atom: true,
   group: 'block',
   priority: 2000,

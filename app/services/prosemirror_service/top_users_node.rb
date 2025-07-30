@@ -2,7 +2,7 @@
 
 module ProsemirrorService
   class TopUsersNode < ProsemirrorToHtml::Nodes::Node
-    @node_type = "topUsers"
+    @node_type = "Announcement::Block::TopUsers"
     @tag_name = "div"
 
     def tag
