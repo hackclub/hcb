@@ -33,13 +33,20 @@
     "@appsignal/types" "=3.0.1"
     tslib "^2.3.0"
 
-"@appsignal/javascript@=1.5.0", "@appsignal/javascript@^1.5.0":
+"@appsignal/javascript@=1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@appsignal/javascript/-/javascript-1.5.0.tgz#9304731d202f0804a27a4056c8cb740d5bf8d21d"
   integrity sha512-Wbf7pzUtksK70ci8kTOhVjd3zgeGFSwXqsGH8Pa/D9b3opJwUwDjbDLhdH7dFSE/lIKWKPoynzOIG+nRHND3vQ==
   dependencies:
     "@appsignal/core" "=1.1.24"
     "@appsignal/types" "=3.0.1"
+    tslib "^2.3.0"
+
+"@appsignal/javascript@=1.6.0", "@appsignal/javascript@^1.5.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@appsignal/javascript/-/javascript-1.6.0.tgz#cce05f14f8a5b950c10b6fdf60e3abf55b402111"
+  integrity sha512-QQjPTU9dJ22NfHo/MVgZ88DLTQTCiR8sFZ/nMBUJhki2IdXWgwH38/cjqLf/Clv0o/zLh7swDGjBYw2d8pUfow==
+  dependencies:
     tslib "^2.3.0"
 
 "@appsignal/plugin-breadcrumbs-console@^1.1.35":
@@ -49,12 +56,12 @@
   dependencies:
     "@appsignal/javascript" "=1.5.0"
 
-"@appsignal/plugin-path-decorator@^1.0.16":
-  version "1.0.16"
-  resolved "https://registry.yarnpkg.com/@appsignal/plugin-path-decorator/-/plugin-path-decorator-1.0.16.tgz#2c079ea6ebd9dba8f4a2ad378fabcd9b88904c79"
-  integrity sha512-hyRyWs0L2WdFdI8h05jh2DOBqNZLSAhVJWu5EPWtNSjX4DygDnfzX7mzYhAb+gliNj1zlKeGSvsTutqKUULNOg==
+"@appsignal/plugin-path-decorator@^1.0.17":
+  version "1.0.17"
+  resolved "https://registry.yarnpkg.com/@appsignal/plugin-path-decorator/-/plugin-path-decorator-1.0.17.tgz#1791635396e99b7840b115175a6985cfc7b9b465"
+  integrity sha512-i5U+J5i0mjR2u410d4pSr03TMcvgJMt0Mokkmkr61fGw/hkMYfuqineAYBBynt4WNOoTOMue9VRX26DbtJ0ADA==
   dependencies:
-    "@appsignal/types" "=3.0.1"
+    "@appsignal/javascript" "=1.6.0"
 
 "@appsignal/stimulus@^1.0.19":
   version "1.0.19"

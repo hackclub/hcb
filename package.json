@@ -9,7 +9,7 @@
     "@alpinejs/persist": "^3.14.9",
     "@appsignal/javascript": "^1.5.0",
     "@appsignal/plugin-breadcrumbs-console": "^1.1.35",
-    "@appsignal/plugin-path-decorator": "^1.0.16",
+    "@appsignal/plugin-path-decorator": "^1.0.17",
     "@appsignal/stimulus": "^1.0.19",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.28.0",
