@@ -32,6 +32,7 @@
 #
 # Indexes
 #
+#  idx_on_raw_pending_column_transaction_id_ceea9a99e1              (raw_pending_column_transaction_id) UNIQUE
 #  index_canonical_pending_transactions_on_check_deposit_id         (check_deposit_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)

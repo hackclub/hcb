@@ -28,10 +28,12 @@ class RawColumnTransaction < ApplicationRecord
 
     raw_pending_column_transaction = RawPendingColumnTransaction.find_by(column_id: column_transaction["transaction_id"])
 
-    CanonicalPendingTransactionService::Settle.new(
-      canonical_transaction: ct,
-      canonical_pending_transaction: raw_pending_column_transaction.canonical_pending_transaction
-    ).run!
+    if raw_pending_column_transaction&.canonical_pending_transaction
+      CanonicalPendingTransactionService::Settle.new(
+        canonical_transaction: ct,
+        canonical_pending_transaction: raw_pending_column_transaction.canonical_pending_transaction
+      ).run!
+    end
   end
 
   def memo

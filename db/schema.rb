@@ -376,6 +376,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_25_004725) do
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"
     t.index ["paypal_transfer_id"], name: "index_canonical_pending_transactions_on_paypal_transfer_id"
     t.index ["raw_pending_bank_fee_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id"
+    t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
     t.index ["raw_pending_column_transaction_id"], name: "index_canonical_pending_txs_on_rpct_id"
     t.index ["raw_pending_donation_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_donation_tx_id"
     t.index ["raw_pending_incoming_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_incoming_disbursement_transaction_id"
@@ -1572,14 +1573,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_25_004725) do
   end
 
   create_table "raw_pending_column_transactions", force: :cascade do |t|
-    t.string "column_id"
-    t.integer "column_event_type"
-    t.jsonb "column_transaction"
-    t.text "description"
-    t.date "date_posted"
-    t.integer "amount_cents"
+    t.string "column_id", null: false
+    t.integer "column_event_type", null: false
+    t.jsonb "column_transaction", null: false
+    t.text "description", null: false
+    t.date "date_posted", null: false
+    t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["column_id"], name: "index_raw_pending_column_transactions_on_column_id", unique: true
   end
 
   create_table "raw_pending_donation_transactions", force: :cascade do |t|

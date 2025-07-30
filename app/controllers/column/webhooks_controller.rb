@@ -12,11 +12,11 @@ module Column
       if type == "ach.incoming_transfer.scheduled"
         handle_ach_incoming_transfer_scheduled
       elsif type == "ach.incoming_transfer.settled"
-        handle_ach_incoming_transfer_settled
+        handle_as_raw_pending_column_transaction
       elsif type == "wire.incoming_transfer.completed"
-        handle_wire_incoming_transfer_completed
+        handle_as_raw_pending_column_transaction
       elsif type == "swift.incoming_transfer.completed"
-        handle_swift_incoming_transfer_completed
+        handle_as_raw_pending_column_transaction
       elsif type == "ach.outgoing_transfer.returned"
         handle_ach_outgoing_transfer_returned
       elsif type == "check.outgoing_debit.settled"
@@ -56,30 +56,17 @@ module Column
       # at this point, the ACH is approved!
     end
 
-    def handle_ach_incoming_transfer_settled
-      RawPendingColumnTransaction.create!(
-        amount_cents: @object["available_amount"],
-        date_posted: @object["effective_at_utc"],
-        column_transaction: @object,
-        column_event_type: "ach.incoming_transfer.settled"
-      )
-    end
+    def handle_as_raw_pending_column_transaction(column_event_type:)
+      account_number = AccountNumber.find_by(column_id: @object[:account_number_id])
+      # we only create RawPendingColumnTransaction for transactions to
+      # event-specific account numbers.
+      return if account_number.nil? 
 
-    def handle_wire_incoming_transfer_completed
       RawPendingColumnTransaction.create!(
         amount_cents: @object["available_amount"],
         date_posted: @object["effective_at_utc"],
         column_transaction: @object,
-        column_event_type: "wire.incoming_transfer.completed"
-      )
-    end
-
-    def handle_swift_incoming_transfer_completed
-      RawPendingColumnTransaction.create!(
-        amount_cents: @object["available_amount"],
-        date_posted: @object["effective_at_utc"],
-        column_transaction: @object,
-        column_event_type: "swift.incoming_transfer.completed"
+        column_event_type:
       )
     end
 
