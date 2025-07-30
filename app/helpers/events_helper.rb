@@ -103,4 +103,11 @@ module EventsHelper
     end
   end
 
+  def auto_discover_feed(event)
+    if event.announcements.any?
+      content_for :head do
+        auto_discovery_link_tag :atom, event_feed_url(event, format: :atom), title: "Announcements for #{event.name}"
+      end
+    end
+  end
 end

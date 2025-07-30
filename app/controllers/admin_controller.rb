@@ -80,14 +80,16 @@ class AdminController < ApplicationController
     ::EventService::Create.new(
       name: params[:name],
       emails:,
-      is_signee: params[:is_signee].to_i == 1,
+      is_signee: params[:is_signee] == "true",
+      cosigner_email: params[:cosigner_email].presence,
+      include_onboarding_videos: params[:include_videos].to_i == 1,
       country: params[:country],
       point_of_contact_id: params[:point_of_contact_id],
       approved: params[:approved].to_i == 1,
       is_public: params[:is_public].to_i == 1,
       plan: params[:plan],
-      organized_by_hack_clubbers: params[:organized_by_hack_clubbers].to_i == 1,
-      organized_by_teenagers: params[:organized_by_teenagers].to_i == 1,
+      tags: params[:tags],
+      risk_level: params[:risk_level],
       demo_mode: params[:demo_mode].to_i == 1
     ).run
 
@@ -105,7 +107,7 @@ class AdminController < ApplicationController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      organized_by_teenagers: application["TEEN"] == "Teen",
+      tags: application["TEEN"] ? [EventTag::Tags::ORGANIZED_BY_TEENAGERS] : [],
       demo_mode: true
     ).run
 
@@ -1085,7 +1087,7 @@ class AdminController < ApplicationController
   end
 
   def request_balance_export
-    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user).id)
+    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date] || nil).id)
     flash[:success] = "We've emailed you an export of all HCB organizations' balances."
     redirect_back(fallback_location: root_path)
   end

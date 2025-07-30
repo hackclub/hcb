@@ -4,7 +4,7 @@ class OrganizerPositionInvitesController < ApplicationController
   include SetEvent
   include ChangePositionRole
 
-  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :toggle_signee_status, :resend]
+  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :resend]
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
@@ -32,7 +32,9 @@ class OrganizerPositionInvitesController < ApplicationController
     authorize @invite
 
     if service.run
-      OrganizerPosition::Contract.create(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos]) if @invite.is_signee
+      if @invite.is_signee
+        OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
+      end
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
     else
@@ -101,14 +103,6 @@ class OrganizerPositionInvitesController < ApplicationController
 
     flash[:success] = "Invite successfully resent to #{@invite.user.email}"
     redirect_to event_team_path @invite.event
-  end
-
-  def toggle_signee_status
-    authorize @invite
-    unless @invite.update(is_signee: !@invite.is_signee?)
-      flash[:error] = @invite.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
-    end
-    redirect_back(fallback_location: event_team_path(@invite.event))
   end
 
   private

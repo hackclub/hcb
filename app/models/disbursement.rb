@@ -243,7 +243,7 @@ class Disbursement < ApplicationRecord
       if destination_event.can_front_balance?
         :success
       else
-        :info
+        :muted
       end
     elsif rejected?
       :error
@@ -252,7 +252,7 @@ class Disbursement < ApplicationRecord
     elsif errored?
       :error
     elsif reviewing?
-      :info
+      :muted
     else
       :info
     end
