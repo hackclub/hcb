@@ -26,14 +26,18 @@ class Announcement
     class HcbCode < ::Announcement::Block
       validate :hcb_code_in_event
 
-      def render_html(is_email: false)
+      def custom_locals
         hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
 
         unless hcb_code&.event == announcement.event
           hcb_code = nil
         end
 
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/hcb_code", locals: { hcb_code:, event: announcement.event, is_email:, block: self }
+        { hcb_code:, event: announcement.event }
+      end
+
+      def editable
+        true
       end
 
       private

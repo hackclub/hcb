@@ -1,3 +1,5 @@
+/* global Turbo */
+
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
 import { Editor } from '@tiptap/core'
@@ -176,30 +178,44 @@ export default class extends Controller {
     }
   }
 
-  async hcbCode() {
-    const url = window.prompt('Transaction URL')
-
-    if (url === null || url === '') {
-      return
+  async hcbCode(parameters, blockId) {
+    let result
+    if (blockId) {
+      result = await this.editBlock(blockId, parameters)
+    } else {
+      result = await this.createBlock(
+        'Announcement::Block::HcbCode',
+        parameters
+      )
     }
 
-    const hcbCode = url.split('/').at(-1)
-
-    const attrs = await this.createBlock('Announcement::Block::HcbCode', {
-      hcb_code: hcbCode,
-    })
-
-    if (attrs !== null) {
-      this.editor.chain().focus().addHcbCode(attrs).run()
+    if (result !== null && 'errors' in result) {
+      return result['errors']
+    } else if (!blockId) {
+      this.editor.chain().focus().addHcbCode(result).run()
     }
+
+    return null
   }
 
-  async donationSummary() {
-    const attrs = await this.createBlock('Announcement::Block::DonationSummary')
-
-    if (attrs !== null) {
-      this.editor.chain().focus().addDonationSummary(attrs).run()
+  async donationSummary(parameters, blockId) {
+    let result
+    if (blockId) {
+      result = await this.editBlock(blockId, parameters)
+    } else {
+      result = await this.createBlock(
+        'Announcement::Block::DonationSummary',
+        parameters
+      )
     }
+
+    if (result !== null && 'errors' in result) {
+      return result['errors']
+    } else if (!blockId) {
+      this.editor.chain().focus().addDonationSummary(result).run()
+    }
+
+    return null
   }
 
   async createBlock(type, parameters) {
@@ -216,14 +232,30 @@ export default class extends Controller {
       },
     }).then(r => r.json())
 
-    if ('errors' in res) {
-      const message = `Could not insert block: ${res.errors.join(', ')}`
+    return res
+  }
 
-      alert(message)
+  async editBlock(id, parameters) {
+    const res = await fetch(`/announcements/blocks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        parameters: JSON.stringify(parameters || {}),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf(),
+      },
+    }).then(res => {
+      if (res.status === 400) {
+        return res.json()
+      } else {
+        return res.text().then(html => {
+          Turbo.renderStreamMessage(html)
+          return null
+        })
+      }
+    })
 
-      return null
-    } else {
-      return res
-    }
+    return res
   }
 }

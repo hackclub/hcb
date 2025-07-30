@@ -1,6 +1,17 @@
 <%# locals: (content: nil, autosave: true) %>
 
-<%= form_with model: @announcement, url: announcement_path(@announcement), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-announcement-id-value": @announcement.id, "tiptap-autosave-value": autosave, "turbo-frame": "_top" }.compact do |form| %>
+<%= form_with id: "announcement-form",
+              model: @announcement,
+              url: announcement_path(@announcement),
+              data: {
+                controller: "tiptap",
+                action: "tiptap_hcbCode@window->tiptap#hcbCode tiptap_donationSummary@window->tiptap#donationSummary",
+                "tiptap-target": "form",
+                "tiptap-content-value": content,
+                "tiptap-announcement-id-value": @announcement.id,
+                "tiptap-autosave-value": autosave,
+                "turbo-frame": "_top"
+              }.compact do |form| %>
   <div class="field">
     <%= form.label :title, class: "text-lg" %>
     <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full mt-1" %>
