@@ -41,6 +41,7 @@ module ProsemirrorService
         renderer.add_node ProsemirrorService::TopMerchantsNode
         renderer.add_node ProsemirrorService::TopCategoriesNode
         renderer.add_node ProsemirrorService::TopTagsNode
+        renderer.add_node ProsemirrorService::TopUsersNode
 
         renderer
       end
