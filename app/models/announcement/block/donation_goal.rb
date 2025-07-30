@@ -27,7 +27,7 @@ class Announcement
       before_create :goal_param
 
       def render_html(is_email: false)
-        goal = Donation::Goal.find_by(id: goal_param)
+        goal = Donation::Goal.find_by(event: announcement.event, id: goal_param)
         goal ||= announcement.event.donation_goal
 
         percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
