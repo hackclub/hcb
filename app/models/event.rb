@@ -552,8 +552,8 @@ class Event < ApplicationRecord
   def fronted_incoming_balance_v2_cents(start_date: nil, end_date: nil)
     pts = canonical_pending_transactions.incoming.fronted.not_declined
 
-    pts = pts.where("date >= ?", @start_date) if @start_date
-    pts = pts.where("date <= ?", @end_date) if @end_date
+    pts = pts.where("date >= ?", @start_date) if start_date
+    pts = pts.where("date <= ?", @end_date) if end_date
 
     sum_fronted_amount(pts)
   end
