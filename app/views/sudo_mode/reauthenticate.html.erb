@@ -1,5 +1,15 @@
 <% content_for(:container_class, "container--sm py-20") %>
 
+<% content_for(:head) do %>
+  <%#
+    If sudo mode is triggered from within a Turbo frame, the default behaviour
+    would be to render the response within that frame. This meta tag tells Turbo
+    to treat it as a full page navigation.
+    https://turbo.hotwired.dev/handbook/frames#%E2%80%9Cbreaking-out%E2%80%9D-from-a-frame
+  %>
+  <meta name="turbo-visit-control" content="reload">
+<% end %>
+
 <div class="flex">
   <%= render(partial: "application/logo") %>
 </div>

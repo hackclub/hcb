@@ -1087,7 +1087,7 @@ class AdminController < ApplicationController
   end
 
   def request_balance_export
-    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user).id)
+    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date] || nil).id)
     flash[:success] = "We've emailed you an export of all HCB organizations' balances."
     redirect_back(fallback_location: root_path)
   end

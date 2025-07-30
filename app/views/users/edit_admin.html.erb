@@ -347,4 +347,8 @@
       </table>
     <% end %>
   <% end %>
+
+  <h2>Comments</h2>
+  <%= render "comments/list", comments: @user.comments %>
+  <%= render "comments/form", commentable: @user %>
 </turbo-frame>

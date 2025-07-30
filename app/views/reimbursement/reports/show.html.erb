@@ -167,9 +167,7 @@
 
 <%= render partial: "actions", locals: { report: @report, user: @user } %>
 
-<% unless @report.initial_draft? %>
-  <%= render partial: "conversation" %>
-<% end %>
+<%= render partial: "conversation" %>
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
   <%= modal_header "Add Payout Information" %>

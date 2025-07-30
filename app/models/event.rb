@@ -40,10 +40,12 @@
 #  updated_at                                   :datetime         not null
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
+#  parent_id                                    :bigint
 #  point_of_contact_id                          :bigint
 #
 # Indexes
 #
+#  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
 # Foreign Keys
@@ -117,6 +119,47 @@ class Event < ApplicationRecord
     joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
+
+  def ancestor_ids
+    [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE parent_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN parent_events pe ON e.id = pe.parent_id
+      )
+      SELECT id FROM parent_events WHERE id != #{id};
+    SQL
+  end
+
+  def descendant_ids
+    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE child_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE parent_id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN child_events ce ON e.parent_id = ce.id
+      )
+      SELECT id FROM child_events;
+    SQL
+  end
+
+  def ancestors
+    Event.where(id: ancestor_ids)
+  end
+
+  def descendant_total_balance_cents
+    subevents.to_a.sum(&:balance_available_v2_cents)
+  end
+
+  belongs_to :parent, class_name: "Event", optional: true
+  has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
@@ -234,6 +277,11 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+
+  def ancestor_organizer_positions
+    OrganizerPosition.where(event_id: ancestor_ids)
+  end
+
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
@@ -369,7 +417,7 @@ class Event < ApplicationRecord
   end
 
   before_validation do
-    build_plan(type: Event::Plan::Standard) if plan.nil?
+    build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -504,8 +552,8 @@ class Event < ApplicationRecord
   def fronted_incoming_balance_v2_cents(start_date: nil, end_date: nil)
     pts = canonical_pending_transactions.incoming.fronted.not_declined
 
-    pts = pts.where("date >= ?", @start_date) if @start_date
-    pts = pts.where("date <= ?", @end_date) if @end_date
+    pts = pts.where("date >= ?", @start_date) if start_date
+    pts = pts.where("date <= ?", @end_date) if end_date
 
     sum_fronted_amount(pts)
   end
@@ -735,6 +783,12 @@ class Event < ApplicationRecord
     plan.omit_stats
   end
 
+  validate do
+    if id && id == parent_id
+      errors.add(:parent, "can't be self-referential.")
+    end
+  end
+
   def eligible_for_transparency?
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
@@ -770,6 +824,10 @@ class Event < ApplicationRecord
 
   def active_teenagers
     organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
+  end
+
+  def subevents_enabled?
+    config.subevent_plan.present?
   end
 
   def organizer_contact_emails

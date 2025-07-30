@@ -56,7 +56,6 @@ class Announcement < ApplicationRecord
     end
   end
 
-  scope :saved, -> { where.not(aasm_state: :template_draft) }
   scope :monthly, -> { where(template_type: Announcement::Templates::Monthly.name) }
   scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
   validate :content_is_json

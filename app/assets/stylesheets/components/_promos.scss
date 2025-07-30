@@ -169,13 +169,11 @@
     border-radius: inherit;
     background: conic-gradient(
       from var(--gradient-angle),
-      #ef4444 20%,
-      #f59e0b 40%,
-      #ffde59 45%,
-      #f59e0b 50%,
-      #ef4444 70%,
-      #ff2a8e 90%,
-      #ef4444 100%
+      #ec3750 20%,
+      #ff8c37 40%,
+      #f1c40f 55%,
+      #ff8c37 70%,
+      #ec3750 100%
     );
     animation: premium-rotate-gradient linear;
     animation-timeline: view();
@@ -188,12 +186,10 @@
   }
 }
 
-.promo-premium-card {
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-    url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/a6390946292318162ec1d01298d03c6eb6fd89e5_istockphoto-619260624-612x612.jpg');
+.promo-premium-banner {
   background-size: cover;
   background-position: center;
+  background-color: $smoke;
 }
 
 @property --scroll-progress {
@@ -202,8 +198,8 @@
   inherits: false;
 }
 
-.promo-premium-banner {
-  background: linear-gradient(-60deg, #94bbe9, #eeaeca, #94bbe9);
+.promo-premium-header {
+  background: linear-gradient(-60deg, #ec3750, #ff8c37, #ec3750);
   background-size: 200%;
   animation: premium-scroll-gradient linear;
   animation-timeline: scroll(root);
@@ -220,6 +216,10 @@
 }
 
 html[data-dark='true'] {
+  .promo-premium-banner {
+    background-color: $dark;
+  }
+
   .promo-bin {
     .card__banner--top {
       h3 {

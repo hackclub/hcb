@@ -9,7 +9,9 @@ module Announcements
 
       authorize block, policy_class: Announcement::BlockPolicy
 
-      block.save!
+      unless block.save
+        return render json: { errors: block.errors.map(&:full_message) }, status: :bad_request
+      end
 
       render json: { id: block.id, html: block.rendered_html }
     end
