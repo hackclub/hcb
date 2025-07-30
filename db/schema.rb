@@ -210,8 +210,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_28_132814) do
     t.jsonb "content", null: false
     t.bigint "event_id", null: false
     t.datetime "published_at"
-    t.text "rendered_email_html"
-    t.text "rendered_html"
     t.string "aasm_state"
     t.string "template_type"
     t.index ["author_id"], name: "index_announcements_on_author_id"
