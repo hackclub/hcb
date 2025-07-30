@@ -78,8 +78,16 @@ class Event
       Event::Plan.descendants
     end
 
+    def self.available_plans_by_popularity
+      available_plans.sort_by { |p| plan_popularities[p].presence || 0 }.reverse!
+    end
+
+    def self.plan_popularities
+      Event::Plan.joins(:event).group(:type).select(:type, "count(*)").to_h { |p| [p.class, p.count] }
+    end
+
     def self.that(method)
-      self.available_plans.select{ |plan| plan.new.try(method) }
+      self.available_plans.select { |plan| plan.new.try(method) }
     end
 
     validate do

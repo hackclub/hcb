@@ -85,7 +85,7 @@
       <h2>Recipient details</h2>
 
       <div class="field mt2">
-        <%= form.label :recipient_name, "Name (use company name if applicable)" %>
+        <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
         <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, disabled:, data: { 'behavior': "check_payee_name_field", extraction_field: "seller_name" }, maxlength: 250 %>
       </div>
 

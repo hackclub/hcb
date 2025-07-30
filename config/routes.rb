@@ -12,6 +12,7 @@ Rails.application.routes.draw do
     mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
+    mount SchemaEndpoint.instance => "/schema"
   end
   constraints AuditorConstraint do
     mount Blazer::Engine, at: "blazer"
@@ -110,7 +111,7 @@ Rails.application.routes.draw do
   post "enable_feature", to: "features#enable_feature"
   post "disable_feature", to: "features#disable_feature"
 
-  resources :users, only: [:edit, :update] do
+  resources :users, only: [:show, :edit, :update], concerns: :commentable do
     collection do
       get "auth", to: "logins#new"
       get "webauthn/auth_options", to: "users#webauthn_options"
@@ -303,7 +304,6 @@ Rails.application.routes.draw do
     post "cancel"
     post "resend"
     member do
-      post "toggle_signee_status"
       post "change_position_role"
     end
   end
@@ -318,7 +318,6 @@ Rails.application.routes.draw do
     member do
       post "set_index"
       post "mark_visited"
-      post "toggle_signee_status"
       post "change_position_role"
     end
 
@@ -726,8 +725,11 @@ Rails.application.routes.draw do
     get :recent_activity
     get :balance_transactions
     get :money_movement
-    get :merchants_categories
-    get :tags_users
+    get :merchants_chart
+    get :categories_chart
+    get :top_categories
+    get :tags_chart
+    get :users_chart
     get :transaction_heatmap
 
     get "edit", to: redirect("/%{event_id}/settings")
@@ -735,6 +737,7 @@ Rails.application.routes.draw do
     get "ledger"
     put "toggle_hidden"
     post "claim_point_of_contact"
+    post "create_sub_organization"
 
     post "remove_header_image"
     post "remove_background_image"
@@ -765,6 +768,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "sub_organizations"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate

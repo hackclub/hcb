@@ -83,12 +83,13 @@ module SessionsHelper
   def organizer_signed_in?(event = @event, as: :reader)
     run = ->(inner_event:, inner_as:) do
       next true if auditor_signed_in? && as == :reader
+      next true if admin_signed_in? && as == :member
       next false unless signed_in? && inner_event.present?
 
       required_role_num = OrganizerPosition.roles[inner_as]
       raise ArgumentError, "invalid role #{inner_as}" unless required_role_num.present?
 
-      valid_position = inner_event.organizer_positions.find do |op|
+      valid_position = inner_event.ancestor_organizer_positions.find do |op|
         next false unless op.user == current_user
 
         role_num = OrganizerPosition.roles[op.role]

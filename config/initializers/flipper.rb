@@ -8,7 +8,7 @@ Rails.application.configure do
 
   # Setting to `true` or `:raise` will raise error when a feature doesn't exist.
   # Use `:warn` to log a warning instead.
-  config.flipper.strict = :warn
+  config.flipper.strict = false
 
   # Don't limit to 100 actors per feature
   config.flipper.actor_limit = false
@@ -38,7 +38,7 @@ Flipper::UI.configure do |config|
       case model
       when "User"
         User.where(id: mapping.keys).pluck(:id, :email, :full_name).each do |(id, email, full_name)|
-          actor_names[mapping.fetch(id)] = ActionMailer::Base.email_address_with_name(email, full_name)
+          actor_names[mapping.fetch(id)] = CGI.escape_html(ActionMailer::Base.email_address_with_name(email, full_name))
         end
       when "Event"
         Event.where(id: mapping.keys).pluck(:id, :name).each do |(id, name)|

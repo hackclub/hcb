@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_21_124328) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_28_132814) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -210,8 +210,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_124328) do
     t.jsonb "content", null: false
     t.bigint "event_id", null: false
     t.datetime "published_at"
-    t.text "rendered_email_html"
-    t.text "rendered_html"
     t.string "aasm_state"
     t.string "template_type"
     t.index ["author_id"], name: "index_announcements_on_author_id"
@@ -670,6 +668,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_124328) do
     t.bigint "archived_by_id"
     t.string "aasm_state"
     t.datetime "deleted_at", precision: nil
+    t.integer "category", default: 0, null: false
     t.index ["archived_by_id"], name: "index_documents_on_archived_by_id"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["slug"], name: "index_documents_on_slug", unique: true
@@ -907,6 +906,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_124328) do
     t.boolean "cover_donation_fees", default: false
     t.string "contact_email"
     t.boolean "generate_monthly_announcement", default: false, null: false
+    t.string "subevent_plan"
     t.index ["event_id"], name: "index_event_configurations_on_event_id"
   end
 
@@ -982,6 +982,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_124328) do
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
+    t.bigint "parent_id"
+    t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
@@ -2238,7 +2240,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_21_124328) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.text "email"
+    t.text "email", null: false
     t.string "full_name"
     t.text "phone_number"
     t.string "slug"

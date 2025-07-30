@@ -17,7 +17,7 @@ RSpec.describe("Flipper configuration") do
 
       actor_names = Flipper::UI.configuration.actor_names_source.call([user.flipper_id])
 
-      expect(actor_names).to eq({ user.flipper_id => "Orpheus the Dinosaur <orpheus@hackclub.com>" })
+      expect(actor_names).to eq({ user.flipper_id => "Orpheus the Dinosaur &lt;orpheus@hackclub.com&gt;" })
     end
 
     it "handles users without names" do
