@@ -34,7 +34,11 @@ export const TopMerchantsNode = Node.create({
         }
       })
 
-      observer.observe(document, { attributes: true, childList: true, subtree: true })
+      observer.observe(document, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+      })
 
       return { dom }
     }

@@ -69,7 +69,7 @@ export default class extends Controller {
         TopMerchantsNode,
         TopCategoriesNode,
         TopTagsNode,
-        TopUsersNode
+        TopUsersNode,
       ],
       editorProps: {
         attributes: {
