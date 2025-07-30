@@ -60,7 +60,7 @@ module Column
       account_number = AccountNumber.find_by(column_id: @object[:account_number_id])
       # we only create RawPendingColumnTransaction for transactions to
       # event-specific account numbers.
-      return if account_number.nil? 
+      return if account_number.nil?
 
       RawPendingColumnTransaction.create!(
         amount_cents: @object["available_amount"],
