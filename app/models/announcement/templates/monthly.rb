@@ -23,7 +23,7 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: donation_summary_block.empty? ? "While we did not make any progress towards our donation goal this past month, we hope to work harder towards this goal this coming month." : "This past month, we've made a lot of progress towards our donation goal:"
+                  text: "This past month, we've made a lot of progress towards our donation goal:"
                 }
               ]
             },
