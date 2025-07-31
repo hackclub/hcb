@@ -47,15 +47,19 @@ class Announcement
       end
 
       def start_date_param
-        self.parameters["start_date"] ||= 1.month.ago.to_s
-
-        DateTime.parse(self.parameters["start_date"])
+        if self.parameters["start_date"].present?
+          DateTime.parse(self.parameters["start_date"])
+        else
+          self.parameters["start_date"] ||= 1.month.ago
+        end
       end
 
       def end_date_param
-        self.parameters["end_date"] ||= Time.now.to_s
-
-        DateTime.parse(self.parameters["end_date"])
+        if self.parameters["end_date"].present?
+          DateTime.parse(self.parameters["end_date"])
+        else
+          self.parameters["end_date"] ||= Time.now.to_s
+        end
       end
 
     end
