@@ -29,6 +29,17 @@
   <% end %>
 </h1>
 
+<% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
+  <% scheduled_for = Date.today.next_month.beginning_of_month.strftime("%b %-d") %>
+  <%= render "callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for}", footer: :questions do %>
+    <ul>
+      <li>You can <%= link_to "view and edit this announcement", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for %>.</li>
+      <li>If you would like to disable sending monthly announcements, you may do so in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
+      <li>This announcement will be sent out to everyone following you on <%= scheduled_for %>.</li>
+    </ul>
+  <% end %>
+<% end %>
+
 <% if @announcements.empty? %>
   <div class="flex flex-1 flex-col items-center justify-center">
     <div class="text-center">

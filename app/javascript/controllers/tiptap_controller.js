@@ -22,6 +22,8 @@ export default class extends Controller {
     content: String,
     announcementId: Number,
     autosave: Boolean,
+    followers: Number,
+    published: Boolean,
   }
 
   editor = null
@@ -90,6 +92,19 @@ export default class extends Controller {
   }
 
   submit(autosave) {
+    if (autosave !== true && !this.publishedValue) {
+      const data = new FormData(this.formTarget)
+      const draft = data.get('announcement[draft]')
+
+      if (draft === 'false') {
+        let confirmed = confirm(
+          `Are you sure you would like to publish this announcement and notify ${this.followersValue} follower${this.followersValue === 1 ? '' : 's'}?`
+        )
+
+        if (!confirmed) return
+      }
+    }
+
     this.autosaveInputTarget.value = autosave === true ? 'true' : 'false'
     this.contentInputTarget.value = JSON.stringify(this.editor.getJSON())
     this.formTarget.requestSubmit()

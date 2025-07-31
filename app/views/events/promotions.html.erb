@@ -15,7 +15,7 @@
         <span class="flex-grow">Jukebox</span>
         <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
       </h3>
-      <% if (!@perks_available || !@event.organized_by_teenagers? || @event.users.where(teenager: true).active.size < 10) %>
+      <% if (!@perks_available || !@event.organized_by_teenagers? || @event.users.count { |user| user.teenager? && user.active? } < 10) %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 10 active teenagers">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>

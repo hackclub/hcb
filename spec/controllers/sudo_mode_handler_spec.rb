@@ -8,13 +8,14 @@ RSpec.describe SudoModeHandler do
   render_views(true)
 
   controller(ApplicationController) do
+    skip_after_action :verify_authorized
+    before_action :enforce_sudo_mode
+
+    def index
+      render(status: :ok, plain: "Index")
+    end
+
     def create
-      skip_authorization
-
-      unless enforce_sudo_mode
-        return
-      end
-
       render(status: :created, plain: "Created")
     end
   end
@@ -68,6 +69,10 @@ RSpec.describe SudoModeHandler do
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("Confirm Access")
+
+      form = response.parsed_body.css("form").sole
+      expect(form.attr("action")).to eq("/anonymous")
+      expect(form.attr("method")).to eq("post")
     end
 
     it "allows the request to proceed if the user does not have the feature enabled" do
@@ -202,6 +207,32 @@ RSpec.describe SudoModeHandler do
           ["users[1][tags][]", "hack clubber"],
           ["users[2][name]", "Blåhaj"],
           ["users[2][settings][emoji]", "🦈"],
+        ]
+      )
+    end
+
+    it "intercepts GET requests via a different endpoint" do
+      logged_in_context
+
+      get(:index, params: { q: "dinosaurs", sort_by: "name", sort_direction: "asc" })
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Confirm Access")
+
+      form = response.parsed_body.css("form").sole
+      expect(form.attr("action")).to eq(reauthenticate_logins_path)
+      expect(form.attr("method")).to eq("post")
+
+      form_params =
+        response
+        .parsed_body
+        .css("form [name]")
+        .map { |el| [el.attr("name"), el.attr("value")] }
+        .reject { |(name, _)| name.start_with?("_sudo") }
+
+      expect(form_params).to eq(
+        [
+          ["return_to", "/anonymous?q=dinosaurs&sort_by=name&sort_direction=asc"]
         ]
       )
     end

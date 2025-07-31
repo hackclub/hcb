@@ -265,7 +265,7 @@ module TransactionGroupingEngine
         [
           HCB_CODE,
           UNKNOWN_CODE,
-          @ct_or_cp.id
+          @ct_or_cp.column_transaction_id || @ct_or_cp.id
         ].join(SEPARATOR)
       end
 
