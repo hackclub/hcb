@@ -30,7 +30,7 @@
               <%= form.submit "Onboard" %>
             <% end %>
           <% end %>
-          <%= link_to "Mark terminated", employee_terminate_path(employee), method: :POST if employee.onboarded? %>
+          <%= link_to "Mark terminated", employee_terminate_path(employee), method: :post if employee.onboarded? %>
         </td>
       </tr>
     <% end %>

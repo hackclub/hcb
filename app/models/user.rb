@@ -11,7 +11,7 @@
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
 #  creation_method               :integer
-#  email                         :text
+#  email                         :text             not null
 #  full_name                     :string
 #  locked_at                     :datetime
 #  payout_method_type            :string
@@ -79,6 +79,7 @@ class User < ApplicationRecord
 
   has_many :logins
   has_many :login_codes
+  has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
@@ -151,7 +152,7 @@ class User < ApplicationRecord
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
-  after_update :sync_with_loops
+  after_update :queue_sync_with_loops_job
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
@@ -372,13 +373,83 @@ class User < ApplicationRecord
     charge_notifications_sms? || charge_notifications_email_and_sms?
   end
 
-  def sync_with_loops
+  def queue_sync_with_loops_job
     new_user = full_name_before_last_save.blank? && !onboarding?
-    UserService::SyncWithLoops.new(user_id: id, new_user:).run
+    User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 
   def only_card_grant_user?
     card_grants.size >= 1 && events.size == 0
+  end
+
+  def backup_codes_enabled?
+    backup_codes.active.any?
+  end
+
+  def generate_backup_codes!
+    backup_codes.previewed.destroy_all
+
+    codes = []
+    ActiveRecord::Base.transaction do
+      while codes.size < 10
+        code = SecureRandom.alphanumeric(10)
+        next if codes.include?(code)
+
+        backup_codes.create!(code: code)
+        codes << code
+      end
+    end
+
+    codes
+  end
+
+  def activate_backup_codes!
+    ActiveRecord::Base.transaction do
+      backup_codes.active.map(&:mark_discarded!)
+      backup_codes.previewed.map(&:mark_active!)
+    end
+    User::BackupCodeMailer.with(user_id: id).new_codes_activated.deliver_now
+  end
+
+  def redeem_backup_code!(code)
+    backup_codes.active.each do |backup_code|
+      next unless backup_code.authenticate_code(code)
+
+      ActiveRecord::Base.transaction do
+        backup_code = User::BackupCode
+                      .lock # performs a SELECT ... FOR UPDATE https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
+                      .active # makes sure that it hasn't already been used
+                      .find(backup_code.id) # will raise `ActiveRecord::NotFound` and abort the transaction
+        backup_code.mark_used!
+        return true
+      end
+    end
+
+    false
+  end
+
+  def disable_backup_codes!
+    ActiveRecord::Base.transaction do
+      backup_codes.previewed.destroy_all
+      backup_codes.active.map(&:mark_discarded!)
+    end
+    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
+  end
+
+  def access_level_for(event, organizer_positions)
+    role = nil
+    access_level = nil
+    user_ops = organizer_positions.select { |op| op.user == self }
+    return nil if user_ops.empty?
+
+    user_ops.each do |op|
+      if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
+        role = op.role
+        access_level = op.event == event ? :direct : :indirect
+      end
+    end
+
+    { role:, access_level: }
   end
 
   private

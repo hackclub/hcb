@@ -7,8 +7,8 @@ class InvoicesController < ApplicationController
   skip_before_action :signed_in_user
 
   def index
+    authorize @event, :invoices?
     relation = @event.invoices
-    authorize relation
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.

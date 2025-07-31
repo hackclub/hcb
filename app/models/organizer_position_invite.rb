@@ -86,6 +86,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   validate :initial_control_allowance_amount_cents_nil_for_non_members
 
+  after_create_commit :autofollow_event
   after_create_commit do
     unless pending_signature?
       user == sender ? accept : deliver
@@ -142,7 +143,10 @@ class OrganizerPositionInvite < ApplicationRecord
       end
     end
 
-    OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+    # Don't send mailer if this is the first organizer
+    if self.event.users.size > 1
+      OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+    end
 
     true
   end
@@ -220,6 +224,15 @@ class OrganizerPositionInvite < ApplicationRecord
     if role == "manager" && initial_control_allowance_amount_cents.present?
       self.errors.add(:user, "can not set an initial control allowance for a manager")
     end
+  end
+
+  def autofollow_event
+    if event.announcements.any? && !event.followers.include?(user:)
+      event.event_follows.create!(user:)
+    end
+
+  rescue ActiveRecord::RecordNotUnique
+    # Do nothing. The user already follows this event.
   end
 
 end

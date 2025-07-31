@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   end
   constraints AuditorConstraint do
     mount Blazer::Engine, at: "blazer"
+    mount SchemaEndpoint.instance => "/schema"
   end
   get "/sidekiq", to: redirect("users/auth") # fallback if adminconstraint fails, meaning user is not signed in
   if Rails.env.development?
@@ -110,7 +111,7 @@ Rails.application.routes.draw do
   post "enable_feature", to: "features#enable_feature"
   post "disable_feature", to: "features#disable_feature"
 
-  resources :users, only: [:edit, :update] do
+  resources :users, only: [:show, :edit, :update], concerns: :commentable do
     collection do
       get "auth", to: "logins#new"
       get "webauthn/auth_options", to: "users#webauthn_options"
@@ -124,6 +125,7 @@ Rails.application.routes.draw do
       delete "logout", to: "users#logout"
       delete "logout_session", to: "users#logout_session"
       delete "revoke/:id", to: "users#revoke_oauth_application", as: "revoke_oauth_application"
+      post "make_oauth_authorization_eternal/:id", to: "users#make_oauth_authorization_eternal", as: "make_authorization_eternal"
 
       # sometimes users refresh the login code page and get 404'd
       get "exchange_login_code", to: redirect("/users/auth", status: 301)
@@ -139,6 +141,7 @@ Rails.application.routes.draw do
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"
       get "admin", to: "users#edit_admin"
+      get "admin_details", to: "users#admin_details"
 
       delete "logout_all", to: "users#logout_all"
 
@@ -149,6 +152,9 @@ Rails.application.routes.draw do
     post "generate_totp"
     post "enable_totp"
     post "disable_totp"
+    post "generate_backup_codes"
+    post "activate_backup_codes"
+    post "disable_backup_codes"
     patch "stripe_cardholder_profile", to: "stripe_cardholders#update_profile"
 
     resources :webauthn_credentials, only: [:create, :destroy] do
@@ -175,6 +181,7 @@ Rails.application.routes.draw do
     collection do
       get "login_preference", to: "logins#choose_login_preference", as: :choose_login_preference
       post "complete" # for webauthn
+      post "reauthenticate"
     end
     member do
       get "/", to: "logins#choose_login_preference", as: :choose_login_preference
@@ -186,6 +193,9 @@ Rails.application.routes.draw do
       # TOTP
       get "totp"
       post "totp"
+
+      get "backup_code"
+      post "backup_code"
 
       post "complete"
     end
@@ -296,7 +306,6 @@ Rails.application.routes.draw do
     post "cancel"
     post "resend"
     member do
-      post "toggle_signee_status"
       post "change_position_role"
     end
   end
@@ -311,7 +320,6 @@ Rails.application.routes.draw do
     member do
       post "set_index"
       post "mark_visited"
-      post "toggle_signee_status"
       post "change_position_role"
     end
 
@@ -564,7 +572,8 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v4 do
       defaults format: :json do
-        resource :user do
+        resource :user, only: [] do
+          get "/", to: "users#me", as: "user"
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
@@ -577,6 +586,12 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
+        end
+
+        resources :users, only: [:show] do
+          collection do
+            get "/by_email/:email", to: "users#by_email", as: "by_email", constraints: { email: /[^\/]+/ }
+          end
         end
 
         resources :events, path: "organizations", only: [:show] do
@@ -597,6 +612,7 @@ Rails.application.routes.draw do
 
           member do
             get "transactions"
+            get :followers
           end
         end
 
@@ -695,6 +711,14 @@ Rails.application.routes.draw do
     end
   end
 
+  namespace "announcements" do
+    resources :blocks, only: [:create, :show] do
+      member do
+        post "refresh"
+      end
+    end
+  end
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
@@ -703,8 +727,11 @@ Rails.application.routes.draw do
     get :recent_activity
     get :balance_transactions
     get :money_movement
-    get :merchants_categories
-    get :tags_users
+    get :merchants_chart
+    get :categories_chart
+    get :top_categories
+    get :tags_chart
+    get :users_chart
     get :transaction_heatmap
 
     get "edit", to: redirect("/%{event_id}/settings")
@@ -712,6 +739,7 @@ Rails.application.routes.draw do
     get "ledger"
     put "toggle_hidden"
     post "claim_point_of_contact"
+    post "create_sub_organization"
 
     post "remove_header_image"
     post "remove_background_image"
@@ -726,6 +754,7 @@ Rails.application.routes.draw do
     get "cards/new", to: "stripe_cards#new"
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
+    get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
 
     resources :follows, only: [:create], controller: "event/follows"
@@ -741,6 +770,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "sub_organizations"
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
