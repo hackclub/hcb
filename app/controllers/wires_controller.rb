@@ -17,7 +17,7 @@ class WiresController < ApplicationController
 
     authorize @wire
 
-    if @wire.amount_cents > SudoModeHandler::CENTS_THRESHOLD
+    if @wire.amount_cents > SudoModeHandler::THRESHOLD_CENTS
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
 

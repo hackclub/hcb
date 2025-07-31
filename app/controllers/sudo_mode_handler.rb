@@ -12,7 +12,7 @@ class SudoModeHandler
     email: 4,
   }.freeze
 
-  CENTS_THRESHOLD = 500_00
+  THRESHOLD_CENTS = 500_00
 
   Params = Struct.new(
     # When the form is submitted, `submit_method` determines which
