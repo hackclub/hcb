@@ -16,15 +16,8 @@
             <%= inline_icon "email", size: 28 %>
             <strong>Mailed check</strong>
           <% end %>
-          <% if Flipper.enabled?(:wise_transfers_2025_07_31, @user) %>
-            <%= link_to new_event_wise_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
-              <%= inline_icon "wise", size: 28 %>
-              <strong>Wise transfer</strong>
-            <% end %>
-          <% end %>
-          <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" } do %>
+          <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "web", size: 28 %>
-            <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
             <strong>International wire</strong>
           <% end %>
           <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>

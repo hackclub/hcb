@@ -323,8 +323,6 @@ class Event < ApplicationRecord
 
   has_many :wires
 
-  has_many :wise_transfers
-
   has_many :sponsors
   has_many :invoices, through: :sponsors
   has_many :payouts, through: :invoices
