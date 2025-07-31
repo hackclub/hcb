@@ -42,7 +42,7 @@ class Announcement < ApplicationRecord
     state :published
 
     event :mark_published do
-      transitions from: :draft, to: :published
+      transitions from: [:template_draft, :draft], to: :published
 
       after do
         Announcement::PublishedJob.perform_later(announcement: self)
