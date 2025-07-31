@@ -79,7 +79,7 @@ class Event
     end
 
     def self.available_plans_by_popularity
-      available_plans.sort_by { |p| plan_popularities[p] }.reverse!
+      available_plans.sort_by { |p| plan_popularities[p].presence || 0 }.reverse!
     end
 
     def self.plan_popularities

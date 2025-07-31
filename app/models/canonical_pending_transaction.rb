@@ -18,6 +18,7 @@
 #  increase_check_id                                :bigint
 #  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
+#  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -31,6 +32,7 @@
 #
 # Indexes
 #
+#  idx_on_raw_pending_column_transaction_id_ceea9a99e1              (raw_pending_column_transaction_id) UNIQUE
 #  index_canonical_pending_transactions_on_check_deposit_id         (check_deposit_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
@@ -44,6 +46,7 @@
 #  index_canonical_pending_txs_on_raw_pending_stripe_tx_id          (raw_pending_stripe_transaction_id)
 #  index_canonical_pending_txs_on_reimbursement_expense_payout_id   (reimbursement_expense_payout_id)
 #  index_canonical_pending_txs_on_reimbursement_payout_holding_id   (reimbursement_payout_holding_id)
+#  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
 #
@@ -66,6 +69,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_donation_transaction, optional: true
   belongs_to :raw_pending_invoice_transaction, optional: true
   belongs_to :raw_pending_bank_fee_transaction, optional: true
+  belongs_to :raw_pending_column_transaction, optional: true
   belongs_to :raw_pending_incoming_disbursement_transaction, optional: true
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :increase_check, optional: true
@@ -361,6 +365,10 @@ class CanonicalPendingTransaction < ApplicationRecord
 
       ::StripeCard.find_by(stripe_id: raw_pending_stripe_transaction.stripe_transaction["card"]["id"])
     end
+  end
+
+  def column_transaction_id
+    raw_pending_column_transaction&.column_id
   end
 
   private
