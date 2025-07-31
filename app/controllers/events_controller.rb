@@ -420,6 +420,10 @@ class EventsController < ApplicationController
       @all_announcements = Announcement.published.where(event: @event).order(published_at: :desc, created_at: :desc)
     end
     @announcements = @all_announcements.page(params[:page]).per(10)
+
+    if @event.config.generate_monthly_announcement
+      @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
+    end
   end
 
   before_action(only: :feed) { request.format = :atom }
