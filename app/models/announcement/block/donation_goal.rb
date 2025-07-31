@@ -39,7 +39,7 @@ class Announcement
       private
 
       def goal
-        @goal ||= (Donation::Goal.find_by(event: announcement.event, id: goal_param) || announcement.event.donation_goal)
+        @goal ||= Donation::Goal.find_by(event: announcement.event, id: goal_param) || announcement.event.donation_goal
       end
 
       def goal_param
