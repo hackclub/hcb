@@ -27,17 +27,24 @@ class Announcement
       before_create :start_date_param
       before_create :end_date_param
 
+      delegate :empty?, to: :tags
+
       def render_html(is_email: false)
         start_date = start_date_param
         end_date = end_date_param
-        event = announcement.event
-
-        tags = BreakdownEngine::Tags.new(event, start_date:, end_date:).run
 
         Announcements::BlocksController.renderer.render partial: "announcements/blocks/top_tags", locals: { is_email:, block: self, tags:, start_date:, end_date: }
       end
 
       private
+
+      def tags
+        start_date = start_date_param
+        end_date = end_date_param
+        event = announcement.event
+
+        @tags ||= BreakdownEngine::Tags.new(event, start_date:, end_date:).run
+      end
 
       def start_date_param
         self.parameters["start_date"].present? ? DateTime.parse(self.parameters["start_date"]) : nil

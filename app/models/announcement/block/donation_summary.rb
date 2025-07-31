@@ -27,16 +27,24 @@ class Announcement
       before_create :start_date_param
       before_create :end_date_param
 
+      delegate :empty?, to: :donations
+
       def render_html(is_email: false)
         start_date = start_date_param
         end_date = end_date_param
-        donations = announcement.event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..end_date).order(:created_at)
         total = donations.sum(:amount)
 
         Announcements::BlocksController.renderer.render partial: "announcements/blocks/donation_summary", locals: { donations:, total:, start_date:, end_date:, is_email:, block: self }
       end
 
       private
+
+      def donations
+        start_date = start_date_param
+        end_date = end_date_param
+
+        @donations ||= announcement.event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..end_date)
+      end
 
       def start_date_param
         self.parameters["start_date"] ||= 1.month.ago.to_s
