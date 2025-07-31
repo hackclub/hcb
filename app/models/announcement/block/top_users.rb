@@ -24,8 +24,8 @@
 class Announcement
   class Block
     class TopUsers < ::Announcement::Block
-      before_create :start_date_param
-      before_create :end_date_param
+      include HasFlexibleStartDate
+      include HasEndDate
 
       delegate :empty?, to: :users
 
@@ -44,16 +44,6 @@ class Announcement
         event = announcement.event
 
         @users ||= BreakdownEngine::Users.new(event, start_date:, end_date:).run
-      end
-
-      def start_date_param
-        self.parameters["start_date"].present? ? DateTime.parse(self.parameters["start_date"]) : nil
-      end
-
-      def end_date_param
-        self.parameters["end_date"] ||= Time.now.to_s
-
-        DateTime.parse(self.parameters["end_date"])
       end
 
     end

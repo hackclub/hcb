@@ -24,8 +24,9 @@
 class Announcement
   class Block
     class DonationSummary < ::Announcement::Block
+      include HasEndDate
+
       before_create :start_date_param
-      before_create :end_date_param
 
       delegate :empty?, to: :donations
 
@@ -51,14 +52,6 @@ class Announcement
           DateTime.parse(self.parameters["start_date"])
         else
           self.parameters["start_date"] ||= 1.month.ago
-        end
-      end
-
-      def end_date_param
-        if self.parameters["end_date"].present?
-          DateTime.parse(self.parameters["end_date"])
-        else
-          self.parameters["end_date"] ||= Time.now.to_s
         end
       end
 
