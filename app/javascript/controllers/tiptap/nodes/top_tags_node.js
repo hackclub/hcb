@@ -8,7 +8,6 @@ export const TopTagsNode = Node.create({
   priority: 2000,
   addAttributes() {
     return {
-      start_date: {},
       id: {},
       html: {},
     }
