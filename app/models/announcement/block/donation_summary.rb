@@ -43,7 +43,7 @@ class Announcement
         start_date = start_date_param
         end_date = end_date_param
 
-        @donations ||= announcement.event.donations.where(aasm_state: [:in_transit, :deposited], created_at: start_date..end_date)
+        @donations ||= announcement.event.donations.succeeded_and_not_refunded.where(created_at: start_date..end_date)
       end
 
       def start_date_param
