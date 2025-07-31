@@ -21,10 +21,6 @@
 #  index_logins_on_user_id              (user_id)
 #  index_logins_on_user_session_id      (user_session_id)
 #
-# Foreign Keys
-#
-#  fk_rails_...  (initial_login_id => logins.id)
-#
 class Login < ApplicationRecord
   self.ignored_columns = %w[initial_login_id]
 
