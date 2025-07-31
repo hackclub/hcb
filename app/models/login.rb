@@ -26,8 +26,6 @@
 #  fk_rails_...  (initial_login_id => logins.id)
 #
 class Login < ApplicationRecord
-  self.ignored_columns = %w[initial_login_id]
-
   include AASM
   include Hashid::Rails
 
