@@ -30,7 +30,10 @@ class EventsController < ApplicationController
             slug: x.slug,
             logo: x.logo.attached? ? Rails.application.routes.url_helpers.url_for(x.logo) : "none",
             demo_mode: x.demo_mode,
-            member: true
+            member: true,
+            features: {
+              subevents: x.subevents_enabled?
+            }
           }
         }
 
@@ -42,7 +45,10 @@ class EventsController < ApplicationController
                 name: e.name,
                 logo: e.logo.attached? ? Rails.application.routes.url_helpers.url_for(e.logo) : "none",
                 demo_mode: e.demo_mode,
-                member: false
+                member: false,
+                features: {
+                  subevents: e.subevents_enabled?
+                }
               }
             }
           )
