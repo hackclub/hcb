@@ -59,4 +59,12 @@ RSpec.describe Login do
       expect(login).to be_reauthentication
     end
   end
+
+  it "sets is_reauthentication automatically on creation" do
+    initial_login = create(:login)
+    reauthentication = create(:login, initial_login:, user: initial_login.user)
+
+    expect(initial_login.is_reauthentication).to eq(false)
+    expect(reauthentication.is_reauthentication).to eq(true)
+  end
 end
