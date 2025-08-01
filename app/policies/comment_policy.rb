@@ -46,7 +46,7 @@ class CommentPolicy < ApplicationPolicy
     if record.commentable.respond_to?(:events)
       record.commentable.events.collect(&:users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
-      [record.commentable.user] + record.commentable.event.users
+      [record.commentable.user] + (record.commentable.event&.users || [])
     elsif record.commentable.is_a?(Event)
       record.commentable.users
     else
