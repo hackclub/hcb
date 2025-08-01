@@ -1,5 +1,8 @@
 <% disabled = !policy(card_grant).create? %>
 
+<% title "Send a card grant" %>
+<h1>Send a card grant</h1>
+
 <% if @event.card_grant_setting.present? %>
   <p class="muted">See your <%= link_to "card grant settings", edit_event_path(@event, tab: "card_grants"), data: { turbo_frame: "_top" } %>.</p>
 <% end %>
