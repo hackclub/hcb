@@ -44,7 +44,7 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def reader?
-    OrganizerPosition.role_at_least?(user, record, :reader)
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def admin_or_manager?
