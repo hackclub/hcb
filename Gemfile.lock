@@ -789,8 +789,9 @@ GEM
       tilt (~> 2.0)
       yard (~> 0.9, >= 0.9.24)
       yard-solargraph (~> 0.1)
-    solargraph-rails (0.2.1.1)
-      solargraph (>= 0.41.1)
+    solargraph-rails (1.2.0)
+      activesupport
+      solargraph (= 0.56.0)
     sprockets (4.2.1)
       concurrent-ruby (~> 1.0)
       rack (>= 2.2.4, < 4)
@@ -985,7 +986,7 @@ DEPENDENCIES
   sidekiq-cron (~> 2.1)
   simplecov
   solargraph
-  solargraph-rails (~> 0.2.0)
+  solargraph-rails (~> 1.2.0)
   sprockets-rails (~> 3.5)
   stackprof
   statsd-instrument (~> 3.9)
