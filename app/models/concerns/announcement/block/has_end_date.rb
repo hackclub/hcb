@@ -14,6 +14,7 @@ class Announcement
           DateTime.parse(self.parameters["end_date"])
         else
           self.parameters["end_date"] ||= Time.now.to_s
+          Time.now
         end
       end
     end
