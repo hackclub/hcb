@@ -98,7 +98,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def organizer_url
-    organizer_position_contracts.where(aasm_state: :pending).last.contract.user_signature_url
+    organizer_position_contracts.where(aasm_state: :pending).last.user_signature_url
   end
 
   def pending_signature?
