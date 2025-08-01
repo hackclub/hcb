@@ -81,6 +81,7 @@ class StripeCard < ApplicationRecord
   belongs_to :stripe_cardholder
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
   belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
+  validates_presence_of :stripe_card_personalization_design_id, unless: -> { self.virtual? }
   has_one :replacement, class_name: "StripeCard", foreign_key: :replacement_for_id
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
