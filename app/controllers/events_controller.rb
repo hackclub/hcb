@@ -841,7 +841,7 @@ class EventsController < ApplicationController
       point_of_contact_id: @event.point_of_contact_id,
       invited_by: current_user,
       is_public: @event.is_public,
-      plan: @event.config.subevent_plan,
+      plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
       parent_event: @event
     ).run
