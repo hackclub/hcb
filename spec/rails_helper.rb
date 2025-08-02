@@ -17,6 +17,10 @@ Dir[Rails.root.join("spec/support/**/*.rb")].sort.each { |f| require f }
 require "public_activity/testing"
 PublicActivity.enabled = false
 
+# Setup WebMock
+# https://github.com/bblimke/webmock?tab=readme-ov-file#rspec
+require "webmock/rspec"
+
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
 # run as spec files by default. This means that files in spec/support that end
