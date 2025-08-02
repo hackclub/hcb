@@ -22,11 +22,9 @@
 
 .modal {
   background-color: $white;
-  box-shadow:
-    0 2px 4px 0 rgba(0, 0, 0, 0.125),
-    0 12px 24px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-modal);
   padding: 2rem 1rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   display: none;
   margin: auto;
@@ -146,7 +144,7 @@
   }
 
   &.bg-snow header {
-    border-bottom: 1px solid rgba(48, 48, 48, 0.125);
+    border-bottom: 0.5px solid rgba(48, 48, 48, 0.125);
   }
 
   &:not(.modal--popover) > footer,
@@ -172,7 +170,7 @@
   }
 
   &.bg-snow footer {
-    border-top: 1px solid rgba(48, 48, 48, 0.125);
+    border-top: 0.5px solid rgba(48, 48, 48, 0.125);
   }
 }
 

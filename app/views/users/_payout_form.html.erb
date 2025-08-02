@@ -32,7 +32,7 @@
       <%= user.payout_method.errors.full_messages.to_sentence %>.
     </p>
   <% end %>
-  <section data-behavior="check_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Check) %>">
+  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::Check) %>">
     <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::Check) ? user.payout_method : User::PayoutMethod::Check.new do |form| %>
       <div class="field">
         <%= form.label :address_line1, "Street address" %>
@@ -73,7 +73,7 @@
   </section>
 
   <% if Flipper.enabled?(:wire_reimbursements_2025_02_05, current_user) %>
-    <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
+    <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
       <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
         <%= render partial: "wires/recipient_details", locals: { form:, disabled: false } %>
 
@@ -88,7 +88,7 @@
     </section>
   <% end %>
 
-  <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
+  <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
     <%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions do %>
       Please update your payout method to either an ACH transfer or a mailed check.
     <% end %>
@@ -125,7 +125,7 @@
   <% end %>
   <section
     data-behavior="ach_transfer_payout_method_inputs"
-    class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) %>"
+    class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) %>"
     x-data="
     {
       routingNumber: '<%= errored ? r_no : obfuscated_routing_number %>',

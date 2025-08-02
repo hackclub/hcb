@@ -4,6 +4,52 @@ require "digest/md5"
 require "cgi"
 
 module UsersHelper
+  def users_mobile_nav(selected: nil)
+    [
+      {
+        name: "Home",
+        path: root_path,
+        icon: "home",
+        tooltip: "See all your organizations",
+        selected: selected == :home
+      },
+      (if current_user.followed_events.any?
+         {
+           name: "Feed",
+           path: my_feed_path,
+           tooltip: "See announcements for organizations you're following",
+           icon: "announcement",
+           selected: selected == :feed
+         }
+       else
+         nil
+       end),
+      {
+        name: "Cards",
+        path: my_cards_path,
+        icon: "card",
+        tooltip: "See all your cards",
+        selected: selected == :cards,
+      },
+      {
+        name: "Receipts",
+        path: my_inbox_path,
+        icon: "receipt",
+        tooltip: "See transactions awaiting receipts",
+        selected: selected == :receipts,
+        async_badge: my_missing_receipts_icon_path,
+      },
+      {
+        name: "Reimbursements",
+        path: my_reimbursements_path,
+        icon: "reimbursement",
+        tooltip: "See expense reimbursements",
+        async_badge: my_reimbursements_icon_path,
+        selected: selected == :reimbursements
+      }
+    ].compact
+  end
+
   def gravatar_url(email, name, id, size)
     name ||= begin
       temp = email.split("@").first.split(/[^a-z\d]/i).compact_blank
@@ -67,9 +113,10 @@ module UsersHelper
     klasses << options[:class] if options[:class]
     klass = klasses.join(" ")
 
-    alt = current_user_flavor_text.sample if user == current_user
+    alt = options[:alt]
+    alt ||= current_user_flavor_text.sample if user == current_user
     alt ||= user&.initials
-    alt ||= "Brown dog grinning and gazing off into the distance"
+    alt ||= ""
 
     options[:data] = (options[:data] || {}).merge(behavior: "mention", mention_value: "@#{user.email}") if click_to_mention && user
 
@@ -79,7 +126,7 @@ module UsersHelper
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
     viewer = defined?(current_user) ? current_user : nil
-    avi = avatar_for(user, click_to_mention:, default_image:, **options[:avatar])
+    avi = avatar_for(user, click_to_mention:, default_image:, **(options[:avatar] || {}))
 
     klasses = ["mention"]
     klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
