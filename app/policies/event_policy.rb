@@ -210,6 +210,10 @@ class EventPolicy < ApplicationPolicy
 
   private
 
+  def admin_or_user?
+    admin? || record.users.include?(user)
+  end
+
   def admin_or_member?
     admin? || member?
   end
