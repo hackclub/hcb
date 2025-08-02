@@ -184,7 +184,7 @@ class LoginsController < ApplicationController
   def set_login
     begin
       if params[:id]
-        @login = Login.incomplete.active.find_by_hashid!(params[:id])
+        @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
         @referral_program = @login.referral_program
         unless valid_browser_token?
           # error! browser token doesn't match the cookie.

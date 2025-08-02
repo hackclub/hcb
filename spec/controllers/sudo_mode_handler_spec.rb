@@ -265,6 +265,18 @@ RSpec.describe SudoModeHandler do
       expect(flash[:error]).to eq("Login has expired. Please try again.")
     end
 
+    it "errors if the login id is for an initial login" do
+      logged_in_context => { user: }
+      login = create(:login, user:, initial_login: nil)
+
+      post(:create, params: { _sudo: { login_id: login.hashid, submit_method: "email" } })
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Confirm Access")
+      expect(flash[:error]).to eq("Login has expired. Please try again.")
+
+    end
+
     def stub_login_service(&)
       expect(ProcessLoginService).to(
         receive(:new)

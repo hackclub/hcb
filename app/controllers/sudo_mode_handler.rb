@@ -43,7 +43,12 @@ class SudoModeHandler
       return false
     end
 
-    login = Login.incomplete.active.find_by_hashid(sudo_params.login_id)
+    login =
+      Login
+      .incomplete
+      .active
+      .reauthentication
+      .find_by_hashid(sudo_params.login_id)
 
     # If the login doesn't exist, was completed, or has expired, treat this as a
     # new request
