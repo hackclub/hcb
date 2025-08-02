@@ -21,7 +21,13 @@ json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  
 
 if stripe_card.physical?
   json.personalization do
-    json.color stripe_card.personalization_design.color
-    json.logo_url rails_blob_url(stripe_card.personalization_design.logo)
+    json.color stripe_card.personalization_design&.color
+    json.logo_url(
+      if stripe_card.personalization_design&.logo
+        rails_blob_url(stripe_card.personalization_design.logo)
+      else
+        nil
+      end
+    )
   end
 end
