@@ -3,7 +3,7 @@
 stripe_transaction = hcb_code.ct&.raw_stripe_transaction&.stripe_transaction
 stripe_authorization = hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction
 
-json.merchant do
+json.merchant if policy(hcb_code.local_hcb_code).show? do
   merchant_data = (stripe_transaction || stripe_authorization)["merchant_data"]
 
   json.name merchant_data["name"]
