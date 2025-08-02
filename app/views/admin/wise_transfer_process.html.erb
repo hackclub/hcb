@@ -1,0 +1,118 @@
+<%= link_to wires_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to wires
+<% end %>
+
+<h1>Process Wire #<%= @wise_transfer.id %></h1>
+<p><small>Current Status: <%= @wise_transfer.aasm_state %></small></p>
+
+<hr>
+
+<h3>Transfer Details</h3>
+
+<table class="table--autosize">
+  <tbody>
+    <tr>
+      <td>Event:</td>
+      <td>
+        <%= @wise_transfer.event.name %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @wise_transfer.event.financially_frozen? %>
+      </td>
+    </tr>
+    <tr>
+      <td>Requested at:</td>
+      <td><%= format_datetime @wise_transfer.created_at %></td>
+    </tr>
+    <tr>
+      <td>Sent To:</td>
+      <td><%= @wise_transfer.recipient_name %></td>
+    </tr>
+    <tr>
+      <td>Email:</td>
+      <td><%= @wise_transfer.recipient_email %></td>
+    </tr>
+    <tr>
+      <td>BIC / Swift Code:</td>
+      <td><%= @wise_transfer.bic_code %></td>
+    </tr>
+    <tr>
+      <td>Account number:</td>
+      <td><%= @wise_transfer.account_number %></td>
+    </tr>
+    <tr>
+      <td>Memo:</td>
+      <td><%= @wise_transfer.memo %></td>
+    </tr>
+    <tr>
+      <td>Payment Purpose:</td>
+      <td><%= @wise_transfer.payment_for %></td>
+    </tr>
+    <tr>
+      <td>Currency:</td>
+      <td><%= @wise_transfer.currency %></td>
+    </tr>
+    <tr>
+      <td>Address (Line 1):</td>
+      <td><%= @wise_transfer.address_line1 %></td>
+    </tr>
+    <tr>
+      <td>Address (Line 2):</td>
+      <td><%= @wise_transfer.address_line2 %></td>
+    </tr>
+    <tr>
+      <td>City:</td>
+      <td><%= @wise_transfer.address_city %></td>
+    </tr>
+    <tr>
+      <td>State:</td>
+      <td><%= @wise_transfer.address_state %></td>
+    </tr>
+    <tr>
+      <td>Postal code:</td>
+      <td><%= @wise_transfer.address_postal_code %></td>
+    </tr>
+    <tr>
+      <td>Recipient country:</td>
+      <td><%= @wise_transfer.recipient_country %></td>
+    </tr>
+    <tr>
+      <td>Amount (local currency):</td>
+      <td><%= Money.from_cents(@wise_transfer.amount_cents, @wise_transfer.currency).format %></td>
+    </tr>
+    <tr>
+      <td>Balance available:</td>
+      <td><%= render_money @wise_transfer.event.balance_available_v2_cents %></td>
+    </tr>
+    <% @wise_transfer.recipient_information&.keys&.each do |key| %>
+      <% if @wise_transfer.recipient_information[key].presence != nil %>
+        <tr>
+          <td><%= key.humanize %></td>
+          <td><%= @wise_transfer.recipient_information[key] %></td>
+        </tr>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<%= render partial: "receipts/receipt", collection: @wise_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
+
+<hr>
+
+<% if @wise_transfer.pending? %>
+  <%= button_to "💸 Approve and automatically send transfer", send_wire_path(@wise_transfer), method: :post, data: { confirm: "This will automatically send the wire. You don't need to send it manually!" } %>
+  <%= button_to "💸 Approve and manually send transfer", approve_wire_path(@wise_transfer), method: :post, data: { confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
+  <%= button_to "✏️ Edit wire", edit_wire_path(@wise_transfer), method: :get %>
+  <%= form_with(model: nil, local: true, url: reject_wire_path(@wise_transfer), method: :post) do |form| %>
+    <div class="field">
+      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+    </div>
+    <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+    <small>(This requires you to communicate to the organizer about the reason why.)</small>
+  <% end %>
+<% else %>
+  <p>This wire <%= @wise_transfer.failed? ? "" : "is " %><b><%= @wise_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wise_transfer.failed? ? @wise_transfer.return_reason.present? ? " with the following failure reason: #{@wise_transfer.return_reason}" : " for an unknown reason" : "" %>.</p>
+  <% unless @wise_transfer.failed? %>
+    <%= button_to "Reject as failed", reject_wire_path(@wise_transfer) %>
+  <% end %>
+<% end %>

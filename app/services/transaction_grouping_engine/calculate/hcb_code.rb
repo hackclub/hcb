@@ -19,6 +19,7 @@ module TransactionGroupingEngine
       ACH_TRANSFER_CODE = "300"
       WIRE_CODE = "310"
       PAYPAL_TRANSFER_CODE = "350"
+      WISE_TRANSFER_CODE = "360"
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"

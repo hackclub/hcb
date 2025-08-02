@@ -225,6 +225,7 @@ Rails.application.routes.draw do
       get "increase_checks", to: "admin#increase_checks"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
+      get "wise_transfers", to: "admin#wise_transfers"
       get "events", to: "admin#events"
       get "event_new", to: "admin#event_new"
       get "event_new_from_airtable", to: "admin#event_new_from_airtable"
@@ -267,6 +268,7 @@ Rails.application.routes.draw do
       get "increase_check_process", to: "admin#increase_check_process"
       get "paypal_transfer_process", to: "admin#paypal_transfer_process"
       get "wire_process", to: "admin#wire_process"
+      get "wise_transfer_process", to: "admin#wise_transfer_process"
       get "google_workspace_process", to: "admin#google_workspace_process"
       post "google_workspace_approve", to: "admin#google_workspace_approve"
       post "google_workspace_verify", to: "admin#google_workspace_verify"
@@ -779,6 +781,7 @@ Rails.application.routes.draw do
     resources :fees, only: [:create]
     resources :paypal_transfers, only: [:new, :create]
     resources :wires, only: [:new, :create]
+    resources :wise_transfers, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
     resources :organizer_position_invites,
               only: [:new, :create],

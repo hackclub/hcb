@@ -43,6 +43,7 @@
       <%= card_to "Check", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
       <%= card_to "Check deposits", admin_check_deposits_path, badge: CheckDeposit.unprocessed.count %>
       <%= card_to "Wires", wires_admin_index_path, badge: Wire.pending.count %>
+      <%= card_to "Wise transfers", wise_transfers_admin_index_path, badge: WiseTransfer.pending.count %>
       <%= card_to "Disbursements", disbursements_admin_index_path, badge: Disbursement.reviewing.count %>
       <%= card_to "Reimbursements", reimbursements_admin_index_path, badge: Reimbursement::Report.reimbursement_requested.count %>
       <%= card_to "Deletion requests", organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count %>

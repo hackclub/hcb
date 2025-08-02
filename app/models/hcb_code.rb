@@ -108,6 +108,7 @@ class HcbCode < ApplicationRecord
     return :reimbursement_expense_payout if reimbursement_expense_payout?
     return :paypal_transfer if paypal_transfer?
     return :wire if wire?
+    return :wise_transfer if wise_transfer?
 
     nil
   end
@@ -295,6 +296,10 @@ class HcbCode < ApplicationRecord
 
   def wire?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE
+  end
+
+  def wise_transfer?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE
   end
 
   def check?

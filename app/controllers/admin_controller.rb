@@ -687,8 +687,32 @@ class AdminController < ApplicationController
 
   end
 
+  def wise_transfers
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].present? ? params[:q] : nil
+    @event_id = params[:event_id].present? ? params[:event_id] : nil
+
+    @wise_transfers = WiseTransfer.all
+
+    @wise_transfers = @wise_transfers.search_recipient(@q) if @q
+
+    @wise_transfers.where(event_id: @event_id) if @event_id
+
+    @wise_transfers = @wise_transfers.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'pending' DESC"),
+      "created_at desc"
+    )
+
+  end
+
   def wire_process
     @wire = Wire.find(params[:id])
+
+  end
+
+  def wise_transfer_process
+    @wise_transfer = WiseTransfer.find(params[:id])
 
   end
 

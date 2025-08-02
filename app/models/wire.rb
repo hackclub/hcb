@@ -43,6 +43,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Wire < ApplicationRecord
+  puts "Wire model loaded"
   has_paper_trail
 
   include PgSearch::Model
