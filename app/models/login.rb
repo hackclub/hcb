@@ -8,6 +8,7 @@
 #  aasm_state               :string
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
+#  is_reauthentication      :boolean          default(FALSE), not null
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  initial_login_id         :bigint
