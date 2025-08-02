@@ -57,6 +57,10 @@ Rails.application.routes.draw do
       post "link"
       get "link_modal"
     end
+
+    member do
+      post "reverse"
+    end
   end
 
   scope :my do
