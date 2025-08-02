@@ -1,5 +1,5 @@
 <div class="muted">
-  <% @event.ancestors[1..].each do |ancestor| %>
+  <% @event.ancestors[0...-1].each do |ancestor| %>
     <%= link_to ancestor.name, ancestor, class: "no-underline hover:underline" %> /
   <% end %>
 </div>
