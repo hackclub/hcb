@@ -803,7 +803,7 @@ class Event < ApplicationRecord
   end
 
   def eligible_for_disabling_transparency?
-    !parent.is_public?
+    !parent&.is_public?
   end
 
   def eligible_for_indexing?
