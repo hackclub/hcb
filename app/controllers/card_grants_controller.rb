@@ -16,8 +16,7 @@ class CardGrantsController < ApplicationController
 
     @prefill_email = params[:email]
 
-    @event.create_card_grant_setting unless @event.card_grant_setting.present?
-
+    @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
