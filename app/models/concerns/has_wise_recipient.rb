@@ -52,12 +52,6 @@ module HasWiseRecipient
 
     # View https://github.com/hackclub/hcb/issues/9037 for context. Limited in India only, at the moment.
 
-    validate on: :create do
-      if recipient_information[:purpose_code].present? && RESTRICTED_PURPOSE_CODES[recipient_country.to_sym]&.include?(recipient_information[:purpose_code])
-        errors.add(:purpose_code, "can not be used on HCB, please use a more specific purpose code or contact us.")
-      end
-    end
-
     def self.information_required_for(currency) # country can be null, in which case, only the general fields will be returned.
       fields = []
 
