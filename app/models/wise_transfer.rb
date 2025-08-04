@@ -49,8 +49,6 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class WiseTransfer < ApplicationRecord
-  puts "WiseTransfer model loaded"
-
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
 
