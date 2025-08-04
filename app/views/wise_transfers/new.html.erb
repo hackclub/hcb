@@ -68,7 +68,7 @@
       <span class="error">There are no funds to transfer.<br>
     <% end %>
 
-    <p x-text="(usd_quote == null || currency == null || amount == null) ? 'Enter amount to get USD estimate' : Number.isNaN(usd_quote) ? 'Loading quote from Wise...' : `Roughly ${usd_quote} USD`" class="muted mt-0"></p>
+    <p x-text="(usd_quote == null || currency == null || amount == null) ? 'Enter an amount & currency to get an estimate in USD' : Number.isNaN(usd_quote) ? 'Loading quote from Wise...' : `Approximately ${usd_quote} USD`" class="muted mt-0"></p>
 
   </div>
 
