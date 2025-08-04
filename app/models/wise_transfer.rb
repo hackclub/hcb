@@ -80,7 +80,7 @@ class WiseTransfer < ApplicationRecord
   after_create do
     create_canonical_pending_transaction!(
       event:,
-      amount_cents: estimate_usd_amount_cents,
+      amount_cents: estimated_usd_amount_cents,
       memo: "Wise to #{recipient_name} (#{Money.from_cents(amount_cents, currency).format} #{currency})",
       date: created_at
     )
@@ -191,8 +191,8 @@ class WiseTransfer < ApplicationRecord
     price_before_payin_fee * wise_ach_fee
   end
 
-  def estimate_usd_amount_cents
-    @estimate_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
+  def estimated_usd_amount_cents
+    @estimated_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
   end
 
   private
