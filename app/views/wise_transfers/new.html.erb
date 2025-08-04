@@ -20,7 +20,7 @@
 <% end %>
 
 <%= form_with(model: [@event, @wise_transfer], local: true, html: {
-                "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, account_type: null }"
+                "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null }"
               }) do |form| %>
 
   <%= form_errors(@wise_transfer, "wise transfer", "We couldn't send this") %>
@@ -47,7 +47,7 @@
   <div class="field">
     <div class="flex items-center g1">
       <div style="width: 72px">
-        <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value" } %>
+        <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value; usd_quote = NaN; fetch('/wise_transfers/generate_quote?amount=' + amount + '&currency=' + currency).then(response => response.text()).then(text => { usd_quote = text })" } %>
       </div>
       <div class="flex flex-col flex-grow">
         <%= form.number_field :amount,
@@ -55,6 +55,7 @@
           disabled: disabled || @event.balance <= 0,
           step: 0.01,
           required: true,
+          "@change": "amount = $event.target.value; usd_quote = NaN; fetch('/wise_transfers/generate_quote?amount=' + amount + '&currency=' + currency).then(response => response.text()).then(text => { usd_quote = text })",
           data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
       </div>
     </div>
@@ -65,7 +66,8 @@
       <span class="error">There are no funds to transfer.<br>
     <% end %>
 
-    <%= link_to "Explore how much this costs in USD →", "https://wise.com/us/pricing/send-money", target: :_blank %>
+    <p x-text="(usd_quote == null || currency == null || amount == null) ? 'Enter amount to get USD estimate' : Number.isNaN(usd_quote) ? 'Loading quote from Wise...' : `Roughly ${usd_quote} USD`" class="muted mt-0"></p>
+
   </div>
 
   <div class="field">
