@@ -27,8 +27,6 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class Announcement < ApplicationRecord
-  self.ignored_columns += ["rendered_html", "rendered_email_html"]
-
   include Hashid::Rails
   include AASM
 
@@ -44,7 +42,7 @@ class Announcement < ApplicationRecord
     state :published
 
     event :mark_published do
-      transitions from: :draft, to: :published
+      transitions from: [:template_draft, :draft], to: :published
 
       after do
         Announcement::PublishedJob.perform_later(announcement: self)

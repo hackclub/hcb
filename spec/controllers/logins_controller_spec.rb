@@ -395,22 +395,57 @@ describe LoginsController do
         expect(current_session!).to eq(login.user_session)
       end
     end
+
+    it "redirects to the user's settings page if they don't have a name or phone number" do
+      user = create(:user, full_name: nil, phone_number: nil)
+      login = create(:login, user:)
+      login_code = create(:login_code, user:)
+
+      post(
+        :complete,
+        params: {
+          id: login.hashid,
+          method: "login_code",
+          login_code: login_code.code
+        }
+      )
+
+      expect(response).to redirect_to(edit_user_path(user.slug))
+    end
   end
 
-  it "redirects to the user's settings page if they don't have a name or phone number" do
-    user = create(:user, full_name: nil, phone_number: nil)
-    login = create(:login, user:)
-    login_code = create(:login_code, user:)
+  describe "#reauthenticate" do
+    it "checks for sudo mode and redirects" do
+      user = create(:user)
+      Flipper.enable(:sudo_mode_2015_07_21, user)
+      sign_in(user)
 
-    post(
-      :complete,
-      params: {
-        id: login.hashid,
-        method: "login_code",
-        login_code: login_code.code
-      }
-    )
+      travel(3.hours)
 
-    expect(response).to redirect_to(edit_user_path(user.slug))
+      post(:reauthenticate, params: { return_to: "/test" })
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Confirm Access")
+
+      post(
+        :reauthenticate,
+        params: {
+          return_to: "/test",
+          _sudo: {
+            submit_method: "email",
+            login_code: user.login_codes.last.code,
+            login_id: user.logins.last.hashid,
+          }
+        }
+      )
+
+      expect(response).to redirect_to("/test")
+    end
+
+    it "requires an active session" do
+      post(:reauthenticate, params: { return_to: "/test" })
+
+      expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: reauthenticate_logins_url))
+    end
   end
 end

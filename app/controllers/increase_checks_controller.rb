@@ -19,6 +19,10 @@ class IncreaseChecksController < ApplicationController
 
     authorize @check
 
+    if @check.amount > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
+
     if @check.save
       if check_params[:file]
         ::ReceiptService::Create.new(

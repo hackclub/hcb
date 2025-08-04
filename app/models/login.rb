@@ -8,6 +8,7 @@
 #  aasm_state               :string
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
+#  is_reauthentication      :boolean          default(FALSE), not null
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  initial_login_id         :bigint
@@ -86,6 +87,8 @@ class Login < ApplicationRecord
     mark_complete! if may_mark_complete?
   end
 
+  before_create(:sync_is_reauthentication)
+
   def authentication_factors_count
     return 0 if authentication_factors.nil?
 
@@ -146,6 +149,10 @@ class Login < ApplicationRecord
     else
       1
     end
+  end
+
+  def sync_is_reauthentication
+    self.is_reauthentication = reauthentication?
   end
 
 end

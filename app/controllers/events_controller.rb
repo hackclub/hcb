@@ -30,7 +30,10 @@ class EventsController < ApplicationController
             slug: x.slug,
             logo: x.logo.attached? ? Rails.application.routes.url_helpers.url_for(x.logo) : "none",
             demo_mode: x.demo_mode,
-            member: true
+            member: true,
+            features: {
+              subevents: x.subevents_enabled?
+            }
           }
         }
 
@@ -42,7 +45,10 @@ class EventsController < ApplicationController
                 name: e.name,
                 logo: e.logo.attached? ? Rails.application.routes.url_helpers.url_for(e.logo) : "none",
                 demo_mode: e.demo_mode,
-                member: false
+                member: false,
+                features: {
+                  subevents: e.subevents_enabled?
+                }
               }
             }
           )
@@ -84,7 +90,7 @@ class EventsController < ApplicationController
   def merchants_chart
     authorize @event
 
-    @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
+    @merchants = BreakdownEngine::Merchants.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] }
   end
@@ -92,7 +98,7 @@ class EventsController < ApplicationController
   def categories_chart
     authorize @event
 
-    @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
+    @categories = BreakdownEngine::Categories.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] }
   end
@@ -141,7 +147,7 @@ class EventsController < ApplicationController
   def tags_chart
     authorize @event
 
-    @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
+    @tags = BreakdownEngine::Tags.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe], event: @event }
   end
@@ -149,7 +155,7 @@ class EventsController < ApplicationController
   def users_chart
     authorize @event
 
-    @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
+    @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
@@ -610,15 +616,15 @@ class EventsController < ApplicationController
     relation = @event.donations.not_pending.includes(:recurring_donation)
 
     @stats = {
-      deposited: relation.where(aasm_state: [:in_transit, :deposited]).sum(:amount),
+      deposited: relation.succeeded_and_not_refunded.sum(:amount),
     }
 
-    @all_donations = relation.where(aasm_state: [:in_transit, :deposited])
+    @all_donations = relation.succeeded_and_not_refunded
 
     if params[:filter] == "refunded"
       relation = relation.refunded
     else
-      relation = relation.where(aasm_state: [:in_transit, :deposited])
+      relation = relation.succeeded_and_not_refunded
     end
 
     relation = relation.search_name(params[:q]) if params[:q].present?
@@ -772,7 +778,9 @@ class EventsController < ApplicationController
   def reimbursements
     authorize @event
     @reports = @event.reimbursement_reports.visible
-    @reports = @reports.pending if params[:status] == "pending"
+    @reports = @reports.draft if params[:status] == "draft"
+    @reports = @reports.submitted if params[:status] == "review_required"
+    @reports = @reports.reimbursement_requested if params[:status] == "pending"
     @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:status] == "reimbursed"
     @reports = @reports.rejected if params[:status] == "rejected"
     @reports = @reports.search(params[:q]) if params[:q].present?
@@ -781,7 +789,7 @@ class EventsController < ApplicationController
     @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
 
     @filter_options = [
-      { key: "status", label: "Status", type: "select", options: %w[pending reimbursed rejected] },
+      { key: "status", label: "Status", type: "select", options: %w[draft review_required pending reimbursed rejected] },
       { key: "created_*", label: "Date created", type: "date_range" }
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
@@ -835,7 +843,7 @@ class EventsController < ApplicationController
       point_of_contact_id: @event.point_of_contact_id,
       invited_by: current_user,
       is_public: @event.is_public,
-      plan: @event.config.subevent_plan,
+      plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
       parent_event: @event
     ).run
@@ -993,8 +1001,8 @@ class EventsController < ApplicationController
         "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
       },
       "hcb_transfer"           => {
-        "settled" => ->(t) { t.local_hcb_code.disbursement? },
-        "pending" => ->(t) { t.local_hcb_code.disbursement? }
+        "settled" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id },
+        "pending" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id }
       },
       "card_charge"            => {
         "settled" => ->(t) { t.raw_stripe_transaction },

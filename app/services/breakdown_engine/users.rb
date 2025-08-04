@@ -2,10 +2,11 @@
 
 module BreakdownEngine
   class Users
-    def initialize(event, show_all: false, timeframe: nil)
+    def initialize(event, show_all: false, start_date: nil, end_date: Time.now)
       @event = event
       @show_all = show_all
-      @timeframe = timeframe
+      @start_date = start_date
+      @end_date = end_date
     end
 
     def run
@@ -18,7 +19,7 @@ module BreakdownEngine
                          stripe_cardholders: {
                            user_id: position.user.id
                          },
-                         raw_stripe_transactions: @timeframe.present? ? { created_at: @timeframe.ago..Time.now } : nil
+                         raw_stripe_transactions: @start_date.present? || @end_date.present? ? { created_at: @start_date..@end_date } : nil
                        }.compact)
                        .sum(:amount_cents).to_f / 100 * -1
 
