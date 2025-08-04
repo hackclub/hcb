@@ -43,7 +43,7 @@ class AdminController < ApplicationController
     if @canonical_transaction.memo.include?("WISE INC")
       potential_wise_transfers = WiseTransfer.sent.where(amount_cents: @canonical_transaction.amount_cents)
 
-      if potential_wise_transfers.size == 1
+      if potential_wise_transfers.count.one?
         @suggested_wise_mapping = potential_wise_transfers.first
       end
     end
