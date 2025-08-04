@@ -69,8 +69,6 @@ class WiseTransfer < ApplicationRecord
 
   has_one :canonical_pending_transaction
 
-  before_save :extract_wise_id
-
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
 
@@ -193,16 +191,6 @@ class WiseTransfer < ApplicationRecord
 
   def estimated_usd_amount_cents
     @estimated_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
-  end
-
-  private
-
-  def extract_wise_id
-    url_prefix = "https://wise.com/transactions/activities/by-resource/TRANSFER/"
-
-    return unless wise_id.present? && wise_id.starts_with?(url_prefix)
-
-    self.wise_id = wise_id[url_prefix.length..]
   end
 
 end

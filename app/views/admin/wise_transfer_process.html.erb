@@ -176,7 +176,7 @@
         <%= form_with(model: @wise_transfer, local: true, url: mark_sent_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="field">
             <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
-            <%= form.text_field :wise_id, style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil? %>
+            <%= form.text_field :wise_id, style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
           </div>
           <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil? %>
         <% end %>
