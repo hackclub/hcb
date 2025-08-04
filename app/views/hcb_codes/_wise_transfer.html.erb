@@ -85,7 +85,7 @@
       <section class="card__banner relative border-bottom bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 mt-0 md:gap-2">
         <%= inline_icon "wise", size: 16 %>
         <div class="flex md:flex-row flex-col items-start justify-start gap-1 flex-grow">
-          The amount you pay (<%= render_money @hcb_code.amount_cents.abs %> USD) might change. 
+          The amount you pay (<%= render_money @hcb_code.amount_cents.abs %> USD) might change.
           <span class="md:flex-grow"></span>
           <%= link_to "Learn more about Wise transfers on HCB →", "https://help.hcb.hackclub.com/article/65-wise", class: "dark:!text-[#9FE870] !text-[#163300] bold no-underline after:content-[''] after:top-0 after:left-0 after:bottom-0 after:right-0 after:z-index-1 after:absolute", target: "_blank" %>
         </div>
