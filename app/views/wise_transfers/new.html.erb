@@ -16,7 +16,9 @@
     title: "Important information about Wise transfers",
     class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
     footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
-  HCB is partnering with Wise to offer international transfers to over 100 countries. HCB imposes no fees or minimums, but any fees charged by Wise will be passed on to your organization.
+  We've integrated Wise into HCB to offer international transfers to over 100 countries. HCB never charges fees to send transfers, however Wise will charge processing fees to your organization.
+  <br />
+  Sending over $500? Avoid all fees by sending an international wire.
 <% end %>
 
 <%= form_with(model: [@event, @wise_transfer], local: true, html: {
