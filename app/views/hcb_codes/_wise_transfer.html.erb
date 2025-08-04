@@ -38,11 +38,11 @@
       <%= format_datetime @hcb_code.wise_transfer.created_at %>
     </p>
   </section>
-  <% if @hcb_code.pt.amount_pending? %>
+  <% unless @hcb_code.pt.settled? %>
     <section class="card__banner relative border-bottom bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 md:gap-2">
       <%= inline_icon "wise", size: 16 %>
       <div class="flex md:flex-row flex-col items-start justify-start gap-1 flex-grow">
-        Funds have not been withdrawn from your account yet.
+        This amount may change.
         <span class="md:flex-grow"></span>
         <%= link_to "Learn more about Wise transfers on HCB →", "https://help.hcb.hackclub.com/article/65-wise", class: "dark:!text-[#9FE870] !text-[#163300] bold no-underline after:content-[''] after:top-0 after:left-0 after:bottom-0 after:right-0 after:z-index-1 after:absolute", target: "_blank" %>
       </div>

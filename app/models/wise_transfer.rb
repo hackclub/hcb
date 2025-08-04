@@ -113,7 +113,7 @@ class WiseTransfer < ApplicationRecord
 
     event :mark_sent do
       after do
-        canonical_pending_transaction.update(amount_cents: -usd_amount_cents, amount_pending: false)
+        canonical_pending_transaction.update(amount_cents: -usd_amount_cents)
       end
       transitions from: [:approved], to: :sent
     end

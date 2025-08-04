@@ -400,7 +400,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.bigint "wire_id"
     t.bigint "raw_pending_column_transaction_id"
     t.bigint "wise_transfer_id"
-    t.boolean "amount_pending", default: false, null: false
     t.index ["check_deposit_id"], name: "index_canonical_pending_transactions_on_check_deposit_id"
     t.index ["hcb_code"], name: "index_canonical_pending_transactions_on_hcb_code"
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"

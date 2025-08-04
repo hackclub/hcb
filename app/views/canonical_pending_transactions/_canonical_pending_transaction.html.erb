@@ -124,11 +124,7 @@
     </div>
   </td>
   <td class="nowrap text-right">
-    <% if pt.amount_pending? %>
-      PENDING
-    <% else %>
-      <%= render_transaction_amount pt.amount %>
-    <% end %>
+    <%= render_transaction_amount pt.amount %>
   </td>
   <% if @show_running_balance %>
     <td></td>
