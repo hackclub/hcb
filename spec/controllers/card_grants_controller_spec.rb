@@ -97,5 +97,27 @@ RSpec.describe CardGrantsController do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(flash[:error]).to eq("Purpose is too long (maximum is 30 characters)")
     end
+
+    it "handles downstream errors" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      sign_in(user)
+
+      post(
+        :create,
+        params: {
+          event_id: event.friendly_id,
+          card_grant: {
+            **card_grant_params,
+            amount_cents: "12345.67",
+          }
+        }
+      )
+
+      expect(event.card_grants).to be_empty
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(flash[:error]).to eq("You don't have enough money to make this disbursement.")
+    end
   end
 end

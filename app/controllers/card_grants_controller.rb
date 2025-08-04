@@ -25,8 +25,29 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
-    unless @card_grant.save
-      flash[:error] = @card_grant.errors.full_messages.to_sentence
+    begin
+      # There's no way to save a card grant without potentially triggering an
+      # exception as under the hood it calls `DisbursementService::Create` and a
+      # number of other methods (e.g. `save!`) which either succeed or raise.
+      @card_grant.save!
+    rescue => e
+      case e
+      when ActiveRecord::RecordInvalid
+        # We expect to encounter validation errors from `CardGrant`, but anything
+        # else is the result of downstream logic which shouldn't fail.
+        raise e unless e.record.is_a?(CardGrant)
+
+        flash[:error] = @card_grant.errors.full_messages.to_sentence
+      when ArgumentError
+        # `DisbursementService::Create` will raise `ArgumentError` if there are
+        # insufficient funds.
+        raise e unless e.message.start_with?("You don't have enough money")
+
+        flash[:error] = e.message
+      else
+        raise e
+      end
+
       render(:new, status: :unprocessable_entity)
       return
     end
