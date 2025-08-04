@@ -182,9 +182,9 @@ class WiseTransfer < ApplicationRecord
     payment_option = response.body["paymentOptions"].first
     price_after_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
     fees = payment_option["price"]["items"]
-    payin_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
+    pay_in_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
 
-    price_before_payin_fee = price_after_fees - payin_fee
+    price_before_pay_in_fee = price_after_fees - pay_in_fee
 
     wise_ach_fee = 1.0017 # The Wise API doesn't show profile-specific payment methods like ACH, but the ACH fee is a standard 0.17% of the amount sent.
 
