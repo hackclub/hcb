@@ -82,8 +82,7 @@ class WiseTransfer < ApplicationRecord
   after_create do
     create_canonical_pending_transaction!(
       event:,
-      amount_cents: 0,
-      amount_pending: true,
+      amount_cents: estimate_usd_amount_cents,
       memo: "#{Money.from_cents(amount_cents, currency).format} #{currency} Wise to #{recipient_name}", # this really _really_ sucks. I'm open to ideas here.
       date: created_at
     )
@@ -192,6 +191,10 @@ class WiseTransfer < ApplicationRecord
     wise_ach_fee = 1.0017 # The Wise API doesn't show profile-specific payment methods like ACH, but the ACH fee is a standard 0.17% of the amount sent.
 
     price_before_payin_fee * wise_ach_fee
+  end
+
+  def estimate_usd_amount_cents
+    @estimate_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
   end
 
   private
