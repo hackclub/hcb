@@ -25,7 +25,7 @@ class AnnouncementMailer < ApplicationMailer
     @monthly_announcement = params[:monthly_announcement]
     @scheduled_for = Date.today.next_month.beginning_of_month
 
-    mail to: @emails, subject: "[#{@event.name}] Monthly announcements are enabled for your organization"
+    mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
   end
 
   def set_warning_variables
