@@ -7,8 +7,12 @@ module OneTimeJobs
       queue = Limiter::RateQueue.new(12, interval: 1)
 
       Event.includes(:config).where(config: { generate_monthly_announcement: true }).find_each do |event|
-        queue.shift
-        AnnouncementMailer.with(event:).notice.deliver_now
+        monthly_announcement = event.announcements.monthly.last
+
+        if monthly_announcement.present?
+          queue.shift
+          AnnouncementMailer.with(event:, monthly_announcement:).notice.deliver_now
+        end
       end
     end
 
