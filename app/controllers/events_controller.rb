@@ -54,8 +54,6 @@ class EventsController < ApplicationController
           )
         end
 
-        response.content_type = "text/json"
-
         render json: events
       end
       format.html { redirect_to root_path }
