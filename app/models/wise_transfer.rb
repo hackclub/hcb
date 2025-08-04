@@ -28,6 +28,7 @@
 #  recipient_information         :jsonb
 #  recipient_name                :string           not null
 #  recipient_phone_number        :text
+#  sent_at                       :datetime
 #  tax_id_bidx                   :string
 #  tax_id_ciphertext             :string
 #  usd_amount_cents              :integer
@@ -117,6 +118,10 @@ class WiseTransfer < ApplicationRecord
       end
       transitions from: [:approved], to: :sent
     end
+
+    event :mark_deposited do
+      transitions from: :sent, to: :deposited
+    end
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
@@ -125,6 +130,10 @@ class WiseTransfer < ApplicationRecord
 
   def hcb_code
     "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE}-#{id}"
+  end
+
+  def admin_dropdown_description
+    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
   end
 
   def local_hcb_code
