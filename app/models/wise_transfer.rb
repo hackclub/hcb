@@ -81,7 +81,7 @@ class WiseTransfer < ApplicationRecord
     create_canonical_pending_transaction!(
       event:,
       amount_cents: estimate_usd_amount_cents,
-      memo: "#{Money.from_cents(amount_cents, currency).format} #{currency} Wise to #{recipient_name}", # this really _really_ sucks. I'm open to ideas here.
+      memo: "Wise to #{recipient_name} (#{Money.from_cents(amount_cents, currency).format} #{currency})",
       date: created_at
     )
   end
