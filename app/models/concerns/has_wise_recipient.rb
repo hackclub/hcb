@@ -157,5 +157,6 @@ module HasWiseRecipient
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
 
-  AVAILABLE_CURRENCIES = (::EuCentralBank::CURRENCIES + ["EUR"] - ["USD"]).freeze
+  AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TRY UAH UYU VND ZAR].freeze
+
 end
