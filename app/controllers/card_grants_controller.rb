@@ -25,14 +25,13 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
-    @card_grant.save!
+    unless @card_grant.save
+      flash[:error] = @card_grant.errors.full_messages.to_sentence
+      render(:new, status: :unprocessable_entity)
+      return
+    end
 
     flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
-
-  rescue => e
-    flash[:error] = "Something went wrong. #{e.message}"
-    Rails.error.report(e)
-  ensure
     redirect_to event_transfers_path(@event)
   end
 

@@ -39,6 +39,18 @@ RSpec.describe CardGrantsController do
   end
 
   describe "#create" do
+    def card_grant_params
+      {
+        amount_cents: "123.45",
+        email: "recipient@example.com",
+        keyword_lock: "some keywords",
+        purpose: "Raffle prize",
+        one_time_use: "true",
+        pre_authorization_required: "true",
+        instructions: "Here's a card grant for your raffle prize"
+      }
+    end
+
     it "creates a card grant" do
       user = create(:user)
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
@@ -49,15 +61,7 @@ RSpec.describe CardGrantsController do
         :create,
         params: {
           event_id: event.friendly_id,
-          card_grant: {
-            amount_cents: "123.45",
-            email: "recipient@example.com",
-            keyword_lock: "some keywords",
-            purpose: "Raffle prize",
-            one_time_use: "true",
-            pre_authorization_required: "true",
-            instructions: "Here's a card grant for your raffle prize"
-          }
+          card_grant: card_grant_params,
         }
       )
 
@@ -70,6 +74,28 @@ RSpec.describe CardGrantsController do
       expect(card_grant.one_time_use).to eq(true)
       expect(card_grant.pre_authorization_required).to eq(true)
       expect(card_grant.instructions).to eq("Here's a card grant for your raffle prize")
+    end
+
+    it "handles validation errors" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      sign_in(user)
+
+      post(
+        :create,
+        params: {
+          event_id: event.friendly_id,
+          card_grant: {
+            **card_grant_params,
+            purpose: "This is a very long purpose that should exceed the 30 character limit"
+          }
+        }
+      )
+
+      expect(event.card_grants).to be_empty
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(flash[:error]).to eq("Purpose is too long (maximum is 30 characters)")
     end
   end
 end
