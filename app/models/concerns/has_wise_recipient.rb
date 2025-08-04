@@ -19,7 +19,9 @@ module HasWiseRecipient
       end
     end
 
-    def self.information_required_for(currency) # country can be null, in which case, only the general fields will be returned.
+    # TODO: Add link to data source
+
+    def self.information_required_for(currency)
       fields = []
 
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
