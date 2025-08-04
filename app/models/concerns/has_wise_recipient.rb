@@ -7,18 +7,6 @@ module HasWiseRecipient
     include CountryEnumable
     has_country_enum(field: :recipient_country)
 
-    # validate do
-    #   unless bic_code.nil? || bic_code.match(/[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/) # https://www.johndcook.com/blog/2024/01/29/swift/
-    #     errors.add(:bic_code, "is not a valid SWIFT / BIC code")
-    #   end
-    # end
-
-    # validate do
-    #   if IBAN_FORMATS[bank_country.to_sym] && !account_number.match(IBAN_FORMATS[bank_country.to_sym])
-    #     errors.add(:account_number, "does not meet the required format for this country")
-    #   end
-    # end
-
     validate do
       if POSTAL_CODE_FORMATS[recipient_country.to_sym] && !address_postal_code.match(POSTAL_CODE_FORMATS[recipient_country.to_sym])
         errors.add(:address_postal_code, "does not meet the required format for this country")
@@ -47,10 +35,6 @@ module HasWiseRecipient
     #     errors.add(recipient_information_accessor, error) if recipient_information[recipient_information_accessor]&.match(regex)
     #   end
     # end
-
-    # see https://column.com/docs/api/#counterparty/create for valid options, under "legal_type"
-
-    # View https://github.com/hackclub/hcb/issues/9037 for context. Limited in India only, at the moment.
 
     def self.information_required_for(currency) # country can be null, in which case, only the general fields will be returned.
       fields = []
@@ -139,7 +123,7 @@ module HasWiseRecipient
     store_accessor :recipient_information, *self.recipient_information_accessors
   end
 
-  # IBAN & postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
+  # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
 
   POSTAL_CODE_FORMATS = {
     "US": /\A\d{5}(?:-\d{4})?\z/,
