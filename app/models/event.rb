@@ -172,12 +172,11 @@ class Event < ApplicationRecord
 
       from (
           select
-          cem.event_id,
+          f.event_id,
           COALESCE(sum(f.amount_cents_as_decimal), 0) as sum
-          from canonical_event_mappings cem
-          inner join fees f on cem.id = f.canonical_event_mapping_id
-          inner join events e on e.id = cem.event_id
-          group by cem.event_id
+          from fees f
+          inner join events e on e.id = f.event_id
+          group by f.event_id
       ) as q1 left outer join (
           select
           cem.event_id,
