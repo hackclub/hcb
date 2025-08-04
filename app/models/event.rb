@@ -802,6 +802,10 @@ class Event < ApplicationRecord
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
 
+  def eligible_for_disabling_transparency?
+    !parent&.is_public?
+  end
+
   def eligible_for_indexing?
     eligible_for_transparency? && !risk_level.in?(%w[moderate high])
   end
@@ -895,6 +899,10 @@ class Event < ApplicationRecord
     unless eligible_for_transparency?
       self.is_public = false
       self.is_indexable = false
+    end
+
+    unless eligible_for_disabling_transparency?
+      self.is_public = true
     end
 
     unless eligible_for_indexing?
