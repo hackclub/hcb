@@ -111,6 +111,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["W9JEIROWXKO5PEO"], category_lock: ["wrecking_and_salvage_yards"])
         service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
         expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
       end
     end
 
