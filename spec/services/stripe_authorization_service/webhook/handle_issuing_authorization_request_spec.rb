@@ -2,25 +2,6 @@
 
 require "rails_helper"
 
-FactoryBot.define do
-  factory :stripe_authorization do
-    amount { 0 }
-    approved { true }
-    merchant_data do
-      {
-        category: "grocery_stores_supermarkets",
-        network_id: "1234567890",
-        name: "HCB-TEST"
-      }
-    end
-    pending_request do
-      {
-        amount: 1000,
-      }
-    end
-  end
-end
-
 RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest, type: :model do
   let(:event) { create(:event) }
   let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:) }
