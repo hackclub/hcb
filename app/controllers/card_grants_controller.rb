@@ -18,7 +18,6 @@ class CardGrantsController < ApplicationController
 
     @event.create_card_grant_setting unless @event.card_grant_setting.present?
 
-    last_card_grant = @event.card_grants.order(created_at: :desc).first
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
