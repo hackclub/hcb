@@ -190,5 +190,24 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
 
       expect(service.run).to be(true)
     end
+
+    context "with amount > $500" do
+      let(:stripe_authorization) do
+        attributes_for(
+          :stripe_authorization,
+          :cash_withdrawal,
+          card: { id: stripe_card.stripe_id },
+          pending_amount: 500_01,
+        )
+      end
+
+      it "declines" do
+        create(:canonical_pending_transaction, amount_cents: 1000_00, event:, fronted: true)
+        stripe_card.update!(cash_withdrawal_enabled: true)
+
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("exceeds_approval_amount_limit")
+      end
+    end
   end
 end
