@@ -206,6 +206,8 @@
 
 </div>
 
+<%= render partial: "receipts/receipt", collection: @wise_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
+
 <div class="flex flex-col gap-4 border-box">
   <h3>Sending Wise transfers</h3>
   <div class="flex flex-row items-start justify-start gap-4">
@@ -228,4 +230,3 @@
   </div>
 </div>
 
-<%= render partial: "receipts/receipt", collection: @wise_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
