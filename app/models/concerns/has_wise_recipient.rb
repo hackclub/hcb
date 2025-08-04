@@ -19,23 +19,6 @@ module HasWiseRecipient
       end
     end
 
-    # the SWIFT messaging system supports a very limited set of characters.
-    # https://column.com/docs/international-wires/#valid-characters-permitted
-
-    # validate do
-    #   error = "contains invalid characters; the SWIFT system only supports the English alphabet and numbers."
-    #   regex = /[^A-Za-z0-9\-?:( ).,'+\/]/
-
-    #   errors.add(:address_line1, error) if address_line1.match(regex)
-    #   errors.add(:address_line2, error) if address_line2.present? && address_line2.match(regex)
-    #   errors.add(:address_postal_code, error) if address_postal_code.match(regex)
-    #   errors.add(:address_state, error) if address_state.match(regex)
-
-    #   Wire.recipient_information_accessors.excluding("legal_type", "email").each do |recipient_information_accessor|
-    #     errors.add(recipient_information_accessor, error) if recipient_information[recipient_information_accessor]&.match(regex)
-    #   end
-    # end
-
     def self.information_required_for(currency) # country can be null, in which case, only the general fields will be returned.
       fields = []
 
