@@ -113,8 +113,6 @@ class Announcement
         top_categories_block = Announcement::Block::TopCategories.create!(announcement:, parameters: { start_date: DateTime.current.beginning_of_month, end_date: DateTime.current.end_of_month })
 
         announcement.update!(content: json_content(donation_summary_block:, donation_goal_block:, top_categories_block:))
-
-        announcement
       end
 
     end
