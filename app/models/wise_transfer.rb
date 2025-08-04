@@ -148,19 +148,41 @@ class WiseTransfer < ApplicationRecord
       :muted
     end
   end
+  alias_method :state_color, :status_color
 
   def state_text
     aasm_state.humanize
-  end
-
-  def state
-    aasm_state
   end
 
   def last_user_change_to(...)
     user_id = versions.where_object_changes_to(...).last&.whodunnit
 
     user_id && User.find(user_id)
+  end
+
+  def self.generate_quote(money)
+    conn = Faraday.new url: "https://api.wise.com" do |f|
+      f.request :json
+      f.response :raise_error
+      f.response :json
+    end
+
+    response = conn.post("/v3/quotes", {
+                           sourceCurrency: "USD",
+                           targetCurrency: money.currency_as_string,
+                           targetAmount: money.dollars
+                         })
+
+    payment_option = response.body["paymentOptions"].first
+    price_after_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
+    fees = payment_option["price"]["items"]
+    payin_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
+
+    price_before_payin_fee = price_after_fees - payin_fee
+
+    wise_ach_fee = 1.0017 # The Wise API doesn't show profile-specific payment methods like ACH, but the ACH fee is a standard 0.17% of the amount sent.
+
+    price_before_payin_fee * wise_ach_fee
   end
 
   private
