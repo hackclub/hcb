@@ -12,6 +12,7 @@ class CreateWiseTransfers < ActiveRecord::Migration[7.2]
       t.string :address_state
       t.integer :amount_cents, null: false
       t.datetime :approved_at
+      t.datetime :sent_at
       t.string :institution_number_bidx
       t.string :institution_number_ciphertext
       t.string :branch_number_bidx

@@ -40,6 +40,14 @@ class AdminController < ApplicationController
     @canonical_pending_transactions = CanonicalPendingTransaction.unmapped.where(amount_cents: @canonical_transaction.amount_cents)
     @ahoy_events = Ahoy::Event.where("name in (?) and (properties->'canonical_transaction'->>'id')::int = ?", [::SystemEventService::Write::SettledTransactionMapped::NAME, ::SystemEventService::Write::SettledTransactionCreated::NAME], @canonical_transaction.id).order("time desc")
 
+    if @canonical_transaction.memo.include?("WISE INC")
+      potential_wise_transfers = WiseTransfer.sent.where(amount_cents: @canonical_transaction.amount_cents)
+
+      if potential_wise_transfers.size == 1
+        @suggested_wise_mapping = potential_wise_transfers.first
+      end
+    end
+
     # Mapping confirm message
     @mapping_confirm_msg = if !@canonical_transaction.local_hcb_code.unknown?
                              "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀"
@@ -1096,6 +1104,31 @@ class AdminController < ApplicationController
       canonical_transaction.update!(hcb_code: wire.hcb_code, transaction_source_type: "Wire", transaction_source_id: wire.id)
 
       wire.mark_deposited!
+
+      redirect_to transaction_admin_path(canonical_transaction)
+    end
+  rescue => e
+    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
+  end
+
+  def set_wise_transfer
+    ActiveRecord::Base.transaction do
+      wise_transfer = WiseTransfer.find(params[:wise_transfer_id])
+
+      canonical_transaction = CanonicalTransactionService::SetEvent.new(
+        canonical_transaction_id: params[:id],
+        event_id: wise_transfer.event.id,
+        user: current_user
+      ).run
+
+      CanonicalPendingTransactionService::Settle.new(
+        canonical_transaction:,
+        canonical_pending_transaction: wise_transfer.canonical_pending_transaction
+      ).run!
+
+      canonical_transaction.update!(hcb_code: wise_transfer.hcb_code, transaction_source_type: "WiseTransfer", transaction_source_id: wise_transfer.id)
+
+      wise_transfer.mark_deposited!
 
       redirect_to transaction_admin_path(canonical_transaction)
     end

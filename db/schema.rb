@@ -2384,6 +2384,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "usd_amount_cents"
+    t.datetime "sent_at"
     t.index ["event_id"], name: "index_wise_transfers_on_event_id"
     t.index ["user_id"], name: "index_wise_transfers_on_user_id"
   end

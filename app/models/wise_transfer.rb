@@ -133,7 +133,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   def admin_dropdown_description
-    "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
+    "#{usd_amount.format} (#{Money.from_cents(amount_cents, currency).format} #{currency}) to #{recipient_name} (#{recipient_email}) from #{event.name}"
   end
 
   def local_hcb_code
