@@ -25,6 +25,10 @@ class WiseTransferPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def generate_quote?
+    user&.admin? || user.events.any?
+  end
+
   private
 
   def admin_or_user?
