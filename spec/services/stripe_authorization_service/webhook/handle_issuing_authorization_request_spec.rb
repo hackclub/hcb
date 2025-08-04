@@ -5,7 +5,12 @@ require "rails_helper"
 RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest, type: :model do
   let(:event) { create(:event) }
   let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:) }
-  let(:service) { StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: { data: { object: attributes_for(:stripe_authorization, card: { id: stripe_card.stripe_id }) } }) }
+  let(:stripe_authorization) { attributes_for(:stripe_authorization, card: { id: stripe_card.stripe_id }) }
+  let(:service) do
+    StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(
+      stripe_event: { data: { object: stripe_authorization, } }
+    )
+  end
 
   it "declines with no funds" do
     expect(service.run).to be(false)
@@ -159,6 +164,30 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         expect(service.run).to be(false)
         expect(service.declined_reason).to eq("merchant_not_allowed")
       end
+    end
+  end
+
+  context "withdrawals" do
+    let(:stripe_authorization) do
+      attributes_for(
+        :stripe_authorization,
+        :cash_withdrawal,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines by default" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      expect(service.run).to be(false)
+      expect(service.declined_reason).to eq("cash_withdrawals_not_allowed")
+    end
+
+    it "approves if allowed" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      stripe_card.update!(cash_withdrawal_enabled: true)
+
+      expect(service.run).to be(true)
     end
   end
 end
