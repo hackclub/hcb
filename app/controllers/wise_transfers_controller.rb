@@ -85,6 +85,15 @@ class WiseTransfersController < ApplicationController
     redirect_back_or_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "Wire has been canceled." }
   end
 
+  def generate_quote
+    authorize WiseTransfer.new
+
+    money = Money.from_dollars(params[:amount].to_f, params[:currency])
+    quote = WiseTransfer.generate_quote(money)
+
+    render plain: quote.format, content_type: "text/plain"
+  end
+
   private
 
   def wise_transfer_params

@@ -413,6 +413,10 @@ Rails.application.routes.draw do
       post "reject"
       post "mark_sent"
     end
+
+    collection do
+      get "generate_quote"
+    end
   end
 
   resources :ach_transfers, only: [:show] do
