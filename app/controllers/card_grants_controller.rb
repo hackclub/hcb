@@ -10,11 +10,9 @@ class CardGrantsController < ApplicationController
   before_action :set_card_grant, except: %i[new create]
 
   def new
-    @card_grant = @event.card_grants.build
+    @card_grant = @event.card_grants.build(email: params[:email])
 
     authorize @card_grant
-
-    @prefill_email = params[:email]
 
     @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 

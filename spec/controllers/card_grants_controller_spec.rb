@@ -20,6 +20,22 @@ RSpec.describe CardGrantsController do
       expect(response).to have_http_status(:ok)
       expect(event.reload.card_grant_setting).to be_present
     end
+
+    it "uses the email param to pre-fill the email field" do
+      user = create(:user)
+      event = create(:event)
+      create(:organizer_position, user:, event:)
+      sign_in(user)
+
+      expect(event.card_grant_setting).to be_nil
+
+      get(:new, params: { event_id: event.friendly_id, email: "orpheus@hackclub.com" })
+
+      expect(response).to have_http_status(:ok)
+      expect(event.reload.card_grant_setting).to be_present
+      input = response.parsed_body.css("[name='card_grant[email]']").sole
+      expect(input.get_attribute("value")).to eq("orpheus@hackclub.com")
+    end
   end
 
   describe "#create" do
