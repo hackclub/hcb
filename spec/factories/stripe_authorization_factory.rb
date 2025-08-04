@@ -14,8 +14,12 @@ FactoryBot.define do
     end
     pending_request do
       {
-        amount: 1000,
+        amount: pending_amount,
       }
+    end
+
+    transient do
+      pending_amount { 10_00 }
     end
 
     trait :cash_withdrawal do
