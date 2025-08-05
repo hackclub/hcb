@@ -7,8 +7,7 @@
         <%= "platinum" if stripe_card.platinum? %>
         <%= "stripe-card--#{stripe_card.personalization_design.color}" if stripe_card.personalization_design %>
         <%= "deactivated" if stripe_card.canceled? %>
-        <%= "canceled-left" if side == "left" && stripe_card.canceled? %>
-        <%= "canceled-right" if side == "right" && stripe_card.canceled? %>
+        <%= "canceled-#{side}" if stripe_card.canceled? %>
         mt1
   "
   aria-hidden="<%= side == "right" && stripe_card.canceled? ? "true" : "false" %>"
