@@ -7,7 +7,7 @@ module PendingEventMappingEngine
         unsettled.find_each(batch_size: 100) do |cpt|
           # 1. identify invoice
           invoice = cpt.invoice
-          Airbrake.notify("invoice not found for canonical pending transaction #{cpt.id}") unless invoice
+          Rails.error.unexpected("invoice not found for canonical pending transaction #{cpt.id}") unless invoice
           next unless invoice
 
           event = invoice.event
@@ -28,7 +28,7 @@ module PendingEventMappingEngine
 
             next if cts.count < 1 # no match found yet. not processed.
 
-            Airbrake.notify("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
             ct = cts.first
 
             # 3. mark no longer pending
@@ -56,18 +56,22 @@ module PendingEventMappingEngine
             # cts = event.canonical_transactions.missing_pending.where("amount_cents = ? and date > ?", cpt.amount_cents, cpt.date) unless cts.present? # see example canonical transaction 198588
 
             if cts.empty? # no match found yet. not processed.
-              Airbrake.notify("Old manually marked as paid invoice #{invoice.id} still doesn't have a matching CT.") if invoice.manually_marked_as_paid_at&.> 2.weeks.ago
+              Rails.error.unexpected("Old manually marked as paid invoice #{invoice.id} still doesn't have a matching CT.") if invoice.manually_marked_as_paid_at&.> 2.weeks.ago
               next
             end
 
-            Airbrake.notify("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
             ct = cts.first
 
+            # this code is dangerous: https://hackclub.slack.com/archives/C047Y01MHJQ/p1748710247626659
+
+            Rails.error.unexpected "#{cpt.id} potentially should be mapped to #{ct.id}"
+
             # 3. mark no longer pending
-            CanonicalPendingTransactionService::Settle.new(
-              canonical_transaction: ct,
-              canonical_pending_transaction: cpt
-            ).run!
+            # CanonicalPendingTransactionService::Settle.new(
+            #  canonical_transaction: ct,
+            #  canonical_pending_transaction: cpt
+            # ).run!
           end
         end
       end

@@ -12,7 +12,7 @@ We recommend using Docker to get an instance running locally. It should work out
 
 ## Running HCB locally
 
-Once HCB is running locally, log in into your local instance using the email `admin@bank.engineering`. Use Letter Opener (`/letter_opener`) to access the development email outbox and retrieve the login code.
+Once HCB is running locally, log in into your local instance using the email `admin@bank.engineering`. Use [Letter Opener](https://github.com/ryanb/letter_opener) to access the development email outbox and retrieve the login code. Letter Opener can be accessed at [`localhost:3000/letter_opener`](localhost:3000/letter_opener).
 
 ### Quickstart with GitHub Codespaces
 
@@ -111,7 +111,7 @@ HCB-specific setup instructions.
    ```
 
    Since you're running HCB outside of Docker, you will need to update the
-   `DATABASE_URL` environment variable located in `.env.development`. The
+   `DATABASE_URL` environment variable located in [`.env.development`](/.env.development). The
    default caters towards Docker and GitHub Codespaces users. Please update it to
    ```
    postgres://postgres@127.0.0.1:5432
@@ -120,6 +120,10 @@ HCB-specific setup instructions.
 3. Install ruby gems
    ```bash
    bundle install
+   ```
+    If you're on a Mac you may need to install a few Homebrew dependencies to get `bundle install` to succeed:
+   ```bash
+   brew install pkg-config cairo libpq
    ```
 
 4. Install node packages
@@ -163,15 +167,15 @@ bundle exec rspec
 
 ### Staging access
 
-All PRs are deployed in a staging enviroment using Heroku. Login using the email `staging@bank.engineering`. Visit `#hcb-staging` on the [Hack Club Slack](https://hackclub.com/slack) for the code.
+All PRs are deployed in a staging enviroment using Heroku. Login using the email `staging@bank.engineering`. Visit [`#hcb-staging`](https://hackclub.slack.com/archives/C07KLU4B0M7) on the [Hack Club Slack](https://hackclub.com/slack) for the code.
 
 ## Credentials
 
-External contributors should provide credentials via a `.env.development` file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the `.env.development` file to pull in the new variables.
+External contributors should provide credentials via a [`.env.development`](/.env.development) file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the [`.env.development`](/.env.development) file to pull in the new variables.
 
 HCB relies on two services for the majority of its financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
-We also include OpenAI and Twilio keys in our `.env.development` file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
+We also include OpenAI and Twilio keys in our [`.env.development`](/.env.development) file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
 
 Internally, we use [Doppler](https://www.doppler.com/) to manage our credentials; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file to load in credentials from Doppler.
 
@@ -185,6 +189,20 @@ We've transitioned to using development keys and seed data in development, but h
 
 - Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
 
+#### Pulling data from production
+
+On the postgres server:
+```bash
+su - postgres
+pg_dump -Fc --no-acl --no-owner -h localhost -U rails -d hcb_production -f /tmp/hcb_production.dump
+```
+
+On your laptop:
+```bash
+scp hcb-postgres-3:/tmp/hcb_production.dump hcb_production.dump
+pg_restore --verbose --clean --no-acl --no-owner -h localhost -U postgres -d bank_development hcb_production.dump
+```
+
 ## Flipper
 
 [Flipper](https://github.com/flippercloud/flipper) is used to toggle feature flags on HCB. Flipper can be accessed at [localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a flag, press "Add Feature", paste in the name of a feature from [this list](https://hcb.hackclub.com/api/flags), and then press "Fully Enable".
@@ -193,11 +211,11 @@ We've transitioned to using development keys and seed data in development, but h
 
 There is two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference.
 
-1. Go to [http://localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing, the redirect URI to `http://localhost:3000/`, and scopes to `read write`. For the purposes of this guide, you should leave confidential checked (see more context [here](oauth.net/2/client-types)). Press "Submit" and then save the info on the new page that appears and press "Authorize."
+1. Go to [localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing, the redirect URI to [`http://localhost:3000/`](http://localhost:3000/), and scopes to `read write`. For the purposes of this guide, you should leave confidential checked (see more context [here](oauth.net/2/client-types)). Press "Submit" and then save the info on the new page that appears and press "Authorize."
 
 2. Open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "http://localhost:3000/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://localhost:3000/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=http://localhost:3000/&response_type=code&scope=read write`.
 
-Press the button to approve access on the page, then copy the code that appears in the address bar after being redirected. Now, send a POST request to `http://localhost:3000/api/v4/oauth/token` with a content type of `application/x-www-form-urlencoded` (you can use a tool like [Postman](https://www.postman.com/) to do this!). The request body fields are as follows:
+Press the button to approve access on the page, then copy the code that appears in the address bar after being redirected. Now, send a POST request to [`http://localhost:3000/api/v4/oauth/token`](http://localhost:3000/api/v4/oauth/token) with a content type of `application/x-www-form-urlencoded` (you can use a tool like [Postman](https://www.postman.com/) to do this!). The request body fields are as follows:
 ```
 grant_type=authorization_code
 code=<CODE>

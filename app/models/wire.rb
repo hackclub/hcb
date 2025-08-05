@@ -196,11 +196,11 @@ class Wire < ApplicationRecord
           postal_code: address_postal_code,
           country_code: recipient_country
         },
-        beneficiary_legal_id: recipient_information[:legal_id],
-        beneficiary_type: recipient_information[:legal_type],
-        local_bank_code: recipient_information[:local_bank_code],
-        local_account_number: recipient_information[:local_account_number],
-        account_type: recipient_information[:account_type]
+        beneficiary_legal_id: recipient_information["legal_id"],
+        beneficiary_type: recipient_information["legal_type"],
+        local_bank_code: recipient_information["local_bank_code"],
+        local_account_number: recipient_information["local_account_number"],
+        account_type: recipient_information["account_type"]
       }.compact_blank
     }.compact_blank)
 
@@ -213,9 +213,9 @@ class Wire < ApplicationRecord
       account_number_id:,
       message_to_beneficiary_bank: "please contact with the beneficiary",
       remittance_info: {
-        general_info: recipient_information[:remittance_info]
+        general_info: recipient_information["remittance_info"]
       },
-      purpose_code: recipient_information[:purpose_code]
+      purpose_code: recipient_information["purpose_code"]
     }.compact_blank)
 
     self.column_id = column_wire_transfer["id"]

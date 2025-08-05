@@ -16,11 +16,6 @@ class TwilioController < ActionController::Base
       @receiptable = @report.expenses.create!(amount_cents: 0)
     end
 
-    return reply_with(<<~MSG.squish) unless Flipper.enabled?(:receipt_bin_2023_04_07, @user) || @receiptable
-      Hey! Looking to upload receipts? Make sure the Receipt Bin feature preview
-      is enabled on your account (https://hcb.hackclub.com/my/settings/previews).
-    MSG
-
     return reply_with(<<~MSG.squish) if @attachments.none?
       Hey! Are you trying to upload receipts? We couldn't find any attachments in your message.#{' '}
       If you're looking for HCB support, please reach out to hcb@hackclub.com.

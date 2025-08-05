@@ -80,14 +80,16 @@ class AdminController < ApplicationController
     ::EventService::Create.new(
       name: params[:name],
       emails:,
-      is_signee: params[:is_signee].to_i == 1,
+      is_signee: params[:is_signee] == "true",
+      cosigner_email: params[:cosigner_email].presence,
+      include_onboarding_videos: params[:include_videos].to_i == 1,
       country: params[:country],
       point_of_contact_id: params[:point_of_contact_id],
       approved: params[:approved].to_i == 1,
       is_public: params[:is_public].to_i == 1,
       plan: params[:plan],
-      organized_by_hack_clubbers: params[:organized_by_hack_clubbers].to_i == 1,
-      organized_by_teenagers: params[:organized_by_teenagers].to_i == 1,
+      tags: params[:tags],
+      risk_level: params[:risk_level],
       demo_mode: params[:demo_mode].to_i == 1
     ).run
 
@@ -105,7 +107,7 @@ class AdminController < ApplicationController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      organized_by_teenagers: application["TEEN"] == "Teen",
+      tags: application["TEEN"] ? [EventTag::Tags::ORGANIZED_BY_TEENAGERS] : [],
       demo_mode: true
     ).run
 
@@ -308,6 +310,7 @@ class AdminController < ApplicationController
     @page = params[:page] || 1
     @per = params[:per] || 100
     @q = params[:q].present? ? params[:q] : nil
+    @amount = params[:amount].present? ? params[:amount] : nil
     @unmapped = params[:unmapped] != "0"
     @exclude_top_ups = params[:exclude_top_ups] == "1" ? true : nil
     @exclude_spending = params[:exclude_spending] == "1" ? true : nil
@@ -324,17 +327,19 @@ class AdminController < ApplicationController
     end
 
     if @q
-      if @q.match /\A\d+(\.\d{1,2})?\z/
-        @q = Monetize.parse(@q).cents
-        relation = relation.where("amount_cents = ? or amount_cents = ?", @q, -@q)
+      relation = relation.search_memo(@q)
+    end
+
+    if @amount
+      if @amount.match /\A\d+\z/
+        amount_cents = @amount.to_i
+        relation = relation.where("amount_cents = ? or amount_cents = ?", amount_cents, -amount_cents)
       else
-        case @q.delete(" ")
+        case @amount.delete(" ")
         when ">0", ">=0"
           relation = relation.where("amount_cents >= 0")
         when "<0", "<=0"
           relation = relation.where("amount_cents <= 0")
-        else
-          relation = relation.search_memo(@q)
         end
       end
     end
@@ -1082,7 +1087,7 @@ class AdminController < ApplicationController
   end
 
   def request_balance_export
-    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user).id)
+    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date] || nil).id)
     flash[:success] = "We've emailed you an export of all HCB organizations' balances."
     redirect_back(fallback_location: root_path)
   end
@@ -1472,6 +1477,8 @@ class AdminController < ApplicationController
         airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
+      when :pending_identity_vault_verifications
+        Faraday.new { |c| c.response :json }.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions

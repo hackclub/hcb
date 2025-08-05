@@ -226,7 +226,7 @@ module ApplicationHelper
 
   def format_date(date)
     if date.nil?
-      Airbrake.notify("Hey! date is nil here")
+      Rails.error.unexpected "Hey! date is nil here"
       return nil
     end
 
@@ -392,18 +392,18 @@ module ApplicationHelper
   def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
     return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
       (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
-        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}" do
+        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}", **options[:button_options] do
           (inline_icon options[:button_icon]) +
           (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
         end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +
-      (content_tag :div, class: "dropdown-button__menu dropdown-button__menu--hidden", data: { "dropdown-button-target": "menu" } do
+      (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
         content_tag :div do
-          (options[:options].map do |option|
-            (options[:form].radio_button options[:name], option[1], { data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
+          (options[:options].map.with_index do |option, index|
+            (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
             (options[:form].label options[:name], value: option[1] do
               (tag.strong option[0]) + (tag.p option[2])
             end)
