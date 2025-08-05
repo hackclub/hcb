@@ -98,5 +98,59 @@ RSpec.describe Api::V4::CardGrantsController do
         }
       )
     end
+
+    it "reports validation errors" do
+      user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
+      event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+
+      token = create(:api_token, user:)
+      request.headers["Authorization"] = "Bearer #{token.token}"
+
+      post(
+        :create,
+        params: {
+          event_id: event.friendly_id,
+          **card_grant_params,
+          purpose: "This is a very long purpose that should exceed the 30 character limit",
+        },
+        as: :json
+      )
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body).to eq(
+        {
+          "error"    => "invalid_operation",
+          "messages" => ["Purpose is too long (maximum is 30 characters)"]
+        }
+      )
+    end
+
+    it "handles downstream errors" do
+      user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
+      event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+
+      token = create(:api_token, user:)
+      request.headers["Authorization"] = "Bearer #{token.token}"
+
+      post(
+        :create,
+        params: {
+          event_id: event.friendly_id,
+          **card_grant_params,
+          amount_cents: 12_345_67,
+        },
+        as: :json
+      )
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body).to eq(
+        {
+          "error"    => "invalid_operation",
+          "messages" => ["You don't have enough money to make this disbursement."]
+        }
+      )
+    end
   end
 end
