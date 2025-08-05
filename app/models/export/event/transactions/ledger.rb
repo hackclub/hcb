@@ -47,7 +47,7 @@ class Export
 
             if ct.amount_cents <= 0
               hcb_code = ct.local_hcb_code
-              merchant = ct.raw_stripe_transaction ? ct.raw_stripe_transaction.stripe_transaction["merchant_data"] : nil
+              merchant = ct.raw_stripe_transaction&.stripe_transaction&.[]("merchant_data")
               category = "Transfer"
               metadata = {}
               if merchant && !public_only

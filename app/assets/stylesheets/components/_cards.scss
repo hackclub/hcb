@@ -35,7 +35,8 @@
     transform: translateY(-1px);
   }
 
-  &.card--background-image {
+  &.card--background-image,
+  .card__banner--top.card--background-image {
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -58,7 +59,8 @@
   z-index: 999;
 }
 
-.draggable-source--is-dragging .card {
+.draggable-source--is-dragging .card,
+.draggable-source--is-dragging.card {
   opacity: 0.5;
 }
 

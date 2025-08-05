@@ -19,6 +19,11 @@ module Api
         expose :beneficiary do
           expose :recipient_name, as: :name
         end
+
+        expose_associated User do |ach_transfer, options|
+          ach_transfer.creator
+        end
+
       end
 
       def self.entity_name
