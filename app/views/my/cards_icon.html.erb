@@ -1,0 +1,7 @@
+<%= turbo_frame_tag "/my/cards_icon" do %>
+  <% if @pending_grants != 0 %>
+    <div class="dock__item--badge">
+      <%= @pending_grants %>
+    </div>
+  <% end %>
+<% end %>
