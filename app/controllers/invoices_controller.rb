@@ -6,9 +6,15 @@ class InvoicesController < ApplicationController
   before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
+  INVOICE_FILTERS = [
+    { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
+    { key_base: "created", label: "Date", type: "date_range" },
+    { key_base: "amount", label: "Amount", type: "amount_range" }
+  ].freeze
+
   def index
+    authorize @event, :invoices?
     relation = @event.invoices
-    authorize relation
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
@@ -35,7 +41,7 @@ class InvoicesController < ApplicationController
       unpaid: relation.unpaid.sum(:item_amount) - archived_unpaid,
     }
 
-    case params[:filter]
+    case params[:status]
     when "paid"
       relation = relation.paid_v2
     when "unpaid"
@@ -47,6 +53,11 @@ class InvoicesController < ApplicationController
     else
       relation = relation.unarchived
     end
+
+    relation = relation.where("item_amount >= ?", params[:amount_greater_than].to_i * 100) if params[:amount_greater_than].present?
+    relation = relation.where("item_amount <= ?", params[:amount_less_than].to_i * 100) if params[:amount_less_than].present?
+    relation = relation.where("invoices.created_at >= ?", params[:created_after]) if params[:created_after].present?
+    relation = relation.where("invoices.created_at <= ?", params[:created_before]) if params[:created_before].present?
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
@@ -90,6 +101,10 @@ class InvoicesController < ApplicationController
         @stats[:pending] += @invoices[i].item_amount
       end
     end
+
+    @filter_options = INVOICE_FILTERS
+    helpers.validate_filter_options(INVOICE_FILTERS, params)
+    @has_filter = helpers.check_filters?(INVOICE_FILTERS, params)
   end
 
   def new
@@ -104,9 +119,7 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.civil(filtered_params["due_date(1i)"].to_i,
-                          filtered_params["due_date(2i)"].to_i,
-                          filtered_params["due_date(3i)"].to_i)
+    due_date = Date.parse(filtered_params["due_date"])
 
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,

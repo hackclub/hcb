@@ -29,7 +29,7 @@ We've been building HCB since 2018, so navigating the codebase can be difficult 
 
 ### Organizations
 
-Every project on HCB is considered an "organization" (the model for them is named `Event`, however). Users can be members of multiple organizations. `OrganizerPosition` acts as a [many-to-many](https://en.wikipedia.org/wiki/Many-to-many_(data_model)) join table between `Event` and `User`. `OrganizerPositionInvite` is a "pending" connection between the two, we create an `OrganizerPosition` after the user accepts the invite.
+Every project on HCB is considered an "organization" (the model for them is named [`Event`](https://github.com/hackclub/hcb/blob/main/app/models/event.rb), however). Users can be members of multiple organizations. [`OrganizerPosition`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position.rb) acts as a [many-to-many](https://en.wikipedia.org/wiki/Many-to-many_(data_model)) join table between [`Event`](https://github.com/hackclub/hcb/blob/main/app/models/event.rb) and [`User`](https://github.com/hackclub/hcb/blob/main/app/models/user.rb). [`OrganizerPositionInvite`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position_invite.rb) is a "pending" connection between the two, we create an [`OrganizerPosition`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position.rb) after the user accepts the invite.
 
 ### Finances
 
@@ -61,13 +61,13 @@ Our transaction engine is summarised in [@sampoder](https://github.com/sampoder)
 
 #### [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)
 
-`CanonicalPendingTransaction`s are transactions we expect to take place but they haven't occurred yet in our underlying bank account. For example, we create a `CanonicalPendingTransaction` the moment you send an ACH transfer even though the transfer only gets sent via Column once a operations staff member has approved.
+[`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s are transactions we expect to take place but they haven't occurred yet in our underlying bank account. For example, we create a [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) the moment you send an ACH transfer even though the transfer only gets sent via Column once a operations staff member has approved.
 
-`CanonicalPendingTransaction`s appear on the ledger as "PENDING:" until a `CanonicalTransaction` is made.
+[`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s appear on the ledger as "PENDING:" until a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) is made.
 
 #### [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)
 
-`CanonicalTransaction`s represent transactions that occur on our underlying bank account / show up on our bank statement. Our accountants and auditors rely on each transaction (including internal transfers) appearing on our bank statements. 
+[`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s represent transactions that occur on our underlying bank account / show up on our bank statement. Our accountants and auditors rely on each transaction (including internal transfers) appearing on our bank statements. 
 
 #### [`CanonicalPendingEventMapping`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_event_mapping.rb) / [`CanonicalEventMapping`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_event_mapping.rb)
 
@@ -75,11 +75,11 @@ These models map canonical pending transactions and canonical transactions to th
 
 #### [`CanonicalPendingSettledMapping`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_settled_mapping.rb)
 
-A `CanonicalPendingSettledMapping` is created to match canonical pending transactions with canonical transactions when a transaction settles.
+A [`CanonicalPendingSettledMapping`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_settled_mapping.rb) is created to match canonical pending transactions with canonical transactions when a transaction settles.
 
 #### [`HcbCode`](https://github.com/hackclub/hcb/blob/main/app/models/hcb_code.rb)
 
-HCB codes group together `CanonicalTransaction`s and `CanonicalPendingTransaction`s into transactions we can display on the ledger. For example, a donation has a `CanonicalTransaction` for both the money paid through the card and a refund for the Stripe processing fee. When we display a transactions, we display the HCB code.
+HCB codes group together [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s and [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s into transactions we can display on the ledger. For example, a donation has a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) for both the money paid through the card and a refund for the Stripe processing fee. When we display a transactions, we display the HCB code.
 
 #### Raw Transactions
 
@@ -93,7 +93,7 @@ HCB's operations team perform their work through the admin dashboard on HCB and 
 
 ### Deployment & Monitoring
 
-HCB is deployed on [Heroku](https://www.heroku.com/). We have two dynos, one for Rails and one for our [Sidekiq](https://github.com/sidekiq/sidekiq) workers. We handle errors using [Airbrake](https://www.airbrake.io/) and [AppSignal](https://www.appsignal.com/). We also run [status.hackclub.com](https://status.hackclub.com/) using [Checkly](https://www.checklyhq.com/).
+HCB is deployed on [Heroku](https://www.heroku.com/). We have two dynos, one for Rails and one for our [Sidekiq](https://github.com/sidekiq/sidekiq) workers. We handle errors using [AppSignal](https://www.appsignal.com/). We also run [status.hackclub.com](https://status.hackclub.com/) using [Checkly](https://www.checklyhq.com/).
 
 ***
 

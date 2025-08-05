@@ -20,7 +20,6 @@ export default class extends Controller {
     ach: String,
     check: String,
     wire: String,
-    disbursement: String,
   }
 
   static questions = [
@@ -84,6 +83,10 @@ export default class extends Controller {
 
   showAnswer = event => {
     const answer = event.target.dataset.answer
-    window.Turbo.visit(this[`${answer}Value`])
+    let value = ''
+    if (answer == 'ACH transfer') value = 'ach'
+    if (answer == 'Mailed check') value = 'check'
+    if (answer == 'International wire') value = 'wire'
+    window.Turbo.visit(this[`${value}Value`])
   }
 }

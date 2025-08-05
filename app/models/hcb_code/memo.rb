@@ -25,6 +25,7 @@ class HcbCode
         return fee_revenue_memo if fee_revenue?
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
         return stripe_card_memo if stripe_card? && stripe_card_memo
+        return wire_memo if wire?
 
         ct.try(:smart_memo) || pt.try(:smart_memo) || ""
       end
@@ -60,7 +61,7 @@ class HcbCode
 
       def bank_fee_memo
         if bank_fee.amount_cents.negative? && bank_fee.fee_revenue.present?
-          return "Fiscal sponsorship for #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} to #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
+          return "Fiscal sponsorship fee for #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} to #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
         elsif bank_fee.amount_cents.negative?
           return "Fiscal sponsorship"
         else
@@ -85,11 +86,11 @@ class HcbCode
       end
 
       def fee_revenue_memo
-        "Fee revenue from #{fee_revenue.start.strftime("%b %e")} to #{fee_revenue.end.strftime("%b %e")}"
+        "Fee revenue for #{fee_revenue.start.strftime("%-m/%-d")} to #{fee_revenue.end.strftime("%-m/%-d")}"
       end
 
       def outgoing_fee_reimbursement_memo
-        "🗂️ Stripe fee reimbursements for week of #{ct.date.beginning_of_week.strftime("%-m/%-d")}"
+        "🗂️ Stripe fee reimbursements for #{ct.date.beginning_of_week.strftime("%-m/%-d")} to #{ct2.date.beginning_of_week.strftime("%-m/%-d")}"
       end
 
       def reimbursement_payout_holding_memo
@@ -106,6 +107,10 @@ class HcbCode
 
       def stripe_card_memo
         YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
+      end
+
+      def wire_memo
+        "Wire to #{wire.recipient_name}"
       end
 
     end

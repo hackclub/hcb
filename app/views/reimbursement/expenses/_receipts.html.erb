@@ -2,7 +2,7 @@
 
 <%= turbo_frame_tag "receipts_for_#{expense.id}" do %>
   <div class="w-100 h-100 flex">
-    <%= form_with(url: receipts_path, method: "post", class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
+    <%= form_with(url: receipts_path, method: :post, class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
       data: {
         turbo: "true",
         controller: "file-drop form",
@@ -29,15 +29,13 @@
           <div class="receipts" style="grid-template-columns: 1fr repeat(<%= column_amount %>, 1fr)">
             <% if policy(expense).update? %>
               <div class="card card--sunken bg-transparent flex flex-col items-center justify-center g1 p-0 h-100" id="link_receipt__form" style="min-width: 200px">
-                  <label for="file_<%= expense.id %>" class="w-full flex-grow h-full flash info flex items-center justify-center cursor-pointer" id="upload-receipt-button" style="transform: scale(1)!important; box-shadow: none;">
-                    <%= inline_icon "cloud-upload" %>
-                    <span>Upload</span>
-                  </label>
-                <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-                  <%= link_to my_receipts_upload_path(current_user), class: "w-full flex-grow h-full flash flex items-center justify-center", style: "transform: scale(1)!important; color: #c44355; background-color: rgba(236, 55, 80, 0.13); box-shadow: none;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
-                    <%= inline_icon "payment-docs" %>
-                    <span>Receipt Bin</span>
-                  <% end %>
+                <label for="file_<%= expense.id %>" class="w-full flex-grow h-full flash info flex items-center justify-center cursor-pointer" id="upload-receipt-button" style="transform: scale(1)!important; box-shadow: none;">
+                  <%= inline_icon "cloud-upload" %>
+                  <span>Upload</span>
+                </label>
+                <%= link_to my_receipts_upload_path(current_user), class: "w-full flex-grow h-full flash flex items-center justify-center", style: "transform: scale(1)!important; color: #c44355; background-color: rgba(236, 55, 80, 0.13); box-shadow: none;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+                  <%= inline_icon "payment-docs" %>
+                  <span>Receipt Bin</span>
                 <% end %>
               </div>
             <% end %>
@@ -52,12 +50,10 @@
               <span>Upload</span>
             </label>
           </span>
-          <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
-                <%= inline_icon "payment-docs" %>
-                <span>Select from Receipt Bin</span>
-              <% end %>
-            <% end %>
+          <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+            <%= inline_icon "payment-docs" %>
+            <span>Select from Receipt Bin</span>
+          <% end %>
           <p class="center muted mt0 mb0">Or drag & drop your receipt here</p>
         </div>
       <% end %>
@@ -84,11 +80,9 @@
   </div>
 <% end %>
 
-<% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-    <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
-      <%= modal_header "Select receipt" %>
-      <%= turbo_frame_tag "link_modal_#{expense.id}", src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
-        <strong>Loading...</strong>
-      <% end %>
-    </section>
+<section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
+  <%= modal_header "Select receipt" %>
+  <%= turbo_frame_tag "link_modal_#{expense.id}", src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
+    <strong>Loading...</strong>
   <% end %>
+</section>
