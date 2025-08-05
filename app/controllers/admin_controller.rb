@@ -1436,6 +1436,15 @@ class AdminController < ApplicationController
     9999 # return something invalidly high to get the ops team to report it
   end
 
+  def pending_identity_vault_verifications_task_size
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+    end
+
+    client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+  end
+
   def hackathons_task_size
     hackathons = Faraday
                  .new(ssl: { verify: false }) { |c| c.response :json }
@@ -1481,7 +1490,7 @@ class AdminController < ApplicationController
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
-        Faraday.new { |c| c.response :json }.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+        pending_identity_vault_verifications_task_size
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions
