@@ -18,4 +18,4 @@ default: &defaults
 production:
   <<: *defaults
   active: true
-  revision: "<%= `git rev-parse --short HEAD`.strip %>"
+  revision: "<%= ENV["HATCHBOX_REVISION"] %>"
