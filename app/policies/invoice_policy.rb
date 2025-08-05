@@ -21,35 +21,47 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def show?
-    is_public || user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
+    is_public || auditor_or_reader?
   end
 
   def archive?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
+    admin_or_manager?
   end
 
   def void?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
+    admin_or_manager?
   end
 
   def unarchive?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
+    admin_or_manager?
   end
 
   def manually_mark_as_paid?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
+    admin_or_manager?
   end
 
   def hosted?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
+    auditor_or_reader?
   end
 
   def pdf?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
+    auditor_or_reader?
   end
 
   def refund?
     user&.admin?
+  end
+
+  def show_in_v4?
+    auditor_or_reader?
+  end
+
+  def auditor_or_reader?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
+  end
+
+  def admin_or_manager?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
   end
 
   private
