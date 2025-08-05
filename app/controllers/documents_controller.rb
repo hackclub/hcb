@@ -17,6 +17,8 @@ class DocumentsController < ApplicationController
     @active_common_documents = Document.common.active.order(created_at: :desc)
     @archived_documents = @event.documents.includes(:user).archived.order(created_at: :desc)
     @archived_common_documents = Document.common.archived.order(created_at: :desc)
+
+    authorize @event, policy_class: DocumentPolicy
   end
 
   def new
@@ -127,7 +129,7 @@ class DocumentsController < ApplicationController
   private
 
   def document_params
-    params.require(:document).permit(:event_id, :name, :file)
+    params.require(:document).permit(:event_id, :name, :file, :category)
   end
 
   def set_document

@@ -1,4 +1,4 @@
-<% if hcb_code.tags.any? %>
+<% if hcb_code.tags.any? || TagPolicy.new(current_user, @event).create? %>
   <div>
     <strong>Tags</strong>
     <div class="flex items-center flex-wrap" style="gap: 0.25rem">
@@ -7,7 +7,7 @@
       </div>
 
       <div data-controller="menu">
-        <% if policy(Tag.new).create? %>
+        <% if TagPolicy.new(current_user, @event).create? %>
           <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
         <% end %>
         <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">

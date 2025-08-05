@@ -1,4 +1,4 @@
-<% if OrganizerPosition.role_at_least?(current_user, @event, :member) %>
+<% if @event && OrganizerPosition.role_at_least?(current_user, @event, :member) %>
   <% if button %>
     <%= link_to "#", class: "menu__input #{ "btn mt-3" if defined?(large)}", data: { behavior: "modal_trigger", modal: "create_tag" }, onclick: "document.getElementById('create_tag_hcb_code_id').value = #{button.to_json}" do %>
       <%= inline_icon "plus", size: 15 %>

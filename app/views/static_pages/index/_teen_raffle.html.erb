@@ -1,4 +1,4 @@
-<% if current_user.teenager? %>
+<% if current_user.teenager? && Date.current.month == 8 %>
   <% raffle_program = "teen-raffle-#{Date.current.strftime("%m-%Y")}" %>
   <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
 

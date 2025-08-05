@@ -3,7 +3,7 @@ import { get } from '@github/webauthn-json'
 import { UAParser } from 'ua-parser-js'
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 import submitForm from '../common/submitForm'
-import airbrake from '../airbrake'
+import { appsignal } from '../appsignal'
 
 export default class extends Controller {
   static targets = [
@@ -89,7 +89,7 @@ export default class extends Controller {
         this.errorTarget.classList.remove('display-none')
 
         console.error(e)
-        airbrake?.notify(e)
+        appsignal.sendError(e)
       }
     }
   }
