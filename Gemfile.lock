@@ -238,6 +238,9 @@ GEM
       unaccent (~> 0.3)
     country_select (8.0.2)
       countries (~> 5.0)
+    crack (1.0.0)
+      bigdecimal
+      rexml
     crass (1.0.6)
     cronex (0.15.0)
       tzinfo
@@ -420,6 +423,7 @@ GEM
     grape-swagger-entity (0.6.2)
       grape-entity (~> 1)
       grape-swagger (~> 2)
+    hashdiff (1.2.0)
     hashid-rails (1.4.1)
       activerecord (>= 4.0)
       hashids (~> 1.0)
@@ -853,6 +857,10 @@ GEM
       openssl (>= 2.2)
       safety_net_attestation (~> 0.4.0)
       tpm-key_attestation (~> 0.12.0)
+    webmock (3.25.1)
+      addressable (>= 2.8.0)
+      crack (>= 0.3.2)
+      hashdiff (>= 0.4.0, < 2.0.0)
     webrick (1.9.1)
     websocket-driver (0.7.7)
       base64
@@ -999,6 +1007,7 @@ DEPENDENCIES
   validates_zipcode
   web-console (>= 3.3.0)
   webauthn (~> 3.2)
+  webmock
   whitesimilarity
   wicked_pdf
   wkhtmltopdf-binary (= 0.12.6.8)

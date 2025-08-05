@@ -151,6 +151,7 @@ end
 group :test do
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
+  gem "webmock"
 end
 
 group :development, :test do
