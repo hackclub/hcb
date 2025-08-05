@@ -1422,11 +1422,14 @@ class AdminController < ApplicationController
 
   def airtable_task_size(task_name)
     info = airtable_info[task_name]
-    task = Faraday.new { |c|
-      c.response :json
-      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
-    }.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
 
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
+    end
+
+    task = client.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
     task.size
   rescue => e
     Rails.error.report(e)
