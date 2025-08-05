@@ -24,7 +24,7 @@
     <div class="stripe-card__personalization absolute" style="right: 16px; top: 16px;">
       <div class="stripe-card__personalization_image_wrapper">
         <div class="stripe-card__personalization_inner_image_wrapper">
-          <%= image_tag Rails.application.routes.url_helpers.rails_blob_url(stripe_card.personalization_design.logo), class: "stripe-card__personalization-image" %>
+          <%= image_tag rails_blob_url(stripe_card.personalization_design.logo), class: "stripe-card__personalization-image" %>
         </div>
       </div>
     </div>
