@@ -36,7 +36,7 @@
       <% else %>
         <%= stripe_card.hidden_card_number %>
       <% end %>
-    <% elsif local_assigns[:show_card_number] || @show_card_details %>
+    <% elsif show_card_details || @show_card_details %>
       <%= stripe_card.formatted_card_number %>
     <% else %>
       <%= stripe_card.hidden_card_number_with_last_four %>
@@ -44,7 +44,7 @@
   </p>
   <p class="stripe-card__name flex justify-between items-center">
     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      <%= defined?(@event) ? stripe_card.user.name : stripe_card.event.name %>
+      <%= event.present? ? stripe_card.user.name : stripe_card.event.name %>
     </span>
     <span class="ml2 badge h6 stripe-card__status">
       <%= stripe_card.status_text %>
