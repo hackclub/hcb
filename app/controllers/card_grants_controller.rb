@@ -38,11 +38,7 @@ class CardGrantsController < ApplicationController
         raise e unless e.record.is_a?(CardGrant)
 
         flash[:error] = @card_grant.errors.full_messages.to_sentence
-      when ArgumentError
-        # `DisbursementService::Create` will raise `ArgumentError` if there are
-        # insufficient funds.
-        raise e unless e.message.start_with?("You don't have enough money")
-
+      when DisbursementService::Create::UserError
         flash[:error] = e.message
       else
         raise e
