@@ -35,7 +35,7 @@
       <% else %>
         <%= stripe_card.hidden_card_number %>
       <% end %>
-    <% elsif show_card_details || @show_card_details %>
+    <% elsif show_card_details %>
       <%= stripe_card.formatted_card_number %>
     <% else %>
       <%= stripe_card.hidden_card_number_with_last_four %>
