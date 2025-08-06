@@ -25,23 +25,6 @@
     "@jridgewell/gen-mapping" "^0.3.5"
     "@jridgewell/trace-mapping" "^0.3.24"
 
-"@appsignal/core@=1.1.24":
-  version "1.1.24"
-  resolved "https://registry.yarnpkg.com/@appsignal/core/-/core-1.1.24.tgz#a680f582ed4605b2ec77f98107a23ec97410cf69"
-  integrity sha512-5KG2/XiLPM9a5Zvi/iCHwCqgcLD0JIZuc+spfQ6H/83RepCnB4xRdt3FBsuJvDMhW9T6jnoI0asRHx5lWFB/FQ==
-  dependencies:
-    "@appsignal/types" "=3.0.1"
-    tslib "^2.3.0"
-
-"@appsignal/javascript@=1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@appsignal/javascript/-/javascript-1.5.0.tgz#9304731d202f0804a27a4056c8cb740d5bf8d21d"
-  integrity sha512-Wbf7pzUtksK70ci8kTOhVjd3zgeGFSwXqsGH8Pa/D9b3opJwUwDjbDLhdH7dFSE/lIKWKPoynzOIG+nRHND3vQ==
-  dependencies:
-    "@appsignal/core" "=1.1.24"
-    "@appsignal/types" "=3.0.1"
-    tslib "^2.3.0"
-
 "@appsignal/javascript@=1.6.0", "@appsignal/javascript@^1.5.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@appsignal/javascript/-/javascript-1.6.0.tgz#cce05f14f8a5b950c10b6fdf60e3abf55b402111"
@@ -49,12 +32,12 @@
   dependencies:
     tslib "^2.3.0"
 
-"@appsignal/plugin-breadcrumbs-console@^1.1.35":
-  version "1.1.35"
-  resolved "https://registry.yarnpkg.com/@appsignal/plugin-breadcrumbs-console/-/plugin-breadcrumbs-console-1.1.35.tgz#ad66df214aa5145d1518660488b3382a11790266"
-  integrity sha512-3dtblBrWDewQZvipBmwEka44Y+pgQpHQpnu/P9kZqtMuNNuRDRom1+0nIL2PV73jsmbxz+En2rwqTRBxahFZxQ==
+"@appsignal/plugin-breadcrumbs-console@^1.1.36":
+  version "1.1.36"
+  resolved "https://registry.yarnpkg.com/@appsignal/plugin-breadcrumbs-console/-/plugin-breadcrumbs-console-1.1.36.tgz#2ec0a6ee01770e82eaa546f05973dd19a1d5364e"
+  integrity sha512-yUJ1J8epkGEmPu/jlKeHegHv0OEaOm8mhieEGjqG3B+RL/7KW2wr4C/TjL5R7WNiWEGdHM9/nSzx7QStOtJp3w==
   dependencies:
-    "@appsignal/javascript" "=1.5.0"
+    "@appsignal/javascript" "=1.6.0"
 
 "@appsignal/plugin-path-decorator@^1.0.17":
   version "1.0.17"
