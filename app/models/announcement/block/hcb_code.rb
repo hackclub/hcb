@@ -27,12 +27,6 @@ class Announcement
       validate :hcb_code_in_event
 
       def custom_locals
-        hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
-
-        unless hcb_code&.event == announcement.event
-          hcb_code = nil
-        end
-
         { hcb_code:, event: announcement.event }
       end
 
@@ -40,7 +34,21 @@ class Announcement
         true
       end
 
+      def empty?
+        hcb_code.nil?
+      end
+
       private
+
+      def hcb_code
+        @hcb_code ||= ::HcbCode.find_by_hashid(parameters["hcb_code"])
+
+        unless @hcb_code&.event == announcement.event
+          @hcb_code = nil
+        end
+
+        @hcb_code
+      end
 
       def hcb_code_in_event
         hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])

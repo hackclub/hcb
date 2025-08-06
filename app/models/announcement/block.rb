@@ -72,6 +72,10 @@ class Announcement
       {}
     end
 
+    def empty?
+      true
+    end
+
   end
 
 end

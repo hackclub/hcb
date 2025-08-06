@@ -24,8 +24,9 @@
 class Announcement
   class Block
     class DonationGoal < ::Announcement::Block
+      before_create :goal_param
+
       def custom_locals
-        goal = announcement.event.donation_goal
         percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
 
         { goal:, percentage: }
@@ -33,6 +34,20 @@ class Announcement
 
       def partial
         "announcements/blocks/donation_goal"
+      end
+
+      def empty?
+        goal.nil?
+      end
+
+      private
+
+      def goal
+        @goal ||= Donation::Goal.find_by(event: announcement.event, id: goal_param) || announcement.event.donation_goal
+      end
+
+      def goal_param
+        self.parameters["goal"] ||= announcement.event.donation_goal&.id
       end
 
     end

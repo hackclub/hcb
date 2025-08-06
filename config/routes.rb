@@ -12,10 +12,10 @@ Rails.application.routes.draw do
     mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
-    mount SchemaEndpoint.instance => "/schema"
   end
   constraints AuditorConstraint do
     mount Blazer::Engine, at: "blazer"
+    mount SchemaEndpoint.instance => "/schema"
   end
   get "/sidekiq", to: redirect("users/auth") # fallback if adminconstraint fails, meaning user is not signed in
   if Rails.env.development?
@@ -141,6 +141,7 @@ Rails.application.routes.draw do
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"
       get "admin", to: "users#edit_admin"
+      get "admin_details", to: "users#admin_details"
 
       delete "logout_all", to: "users#logout_all"
 
@@ -180,6 +181,7 @@ Rails.application.routes.draw do
     collection do
       get "login_preference", to: "logins#choose_login_preference", as: :choose_login_preference
       post "complete" # for webauthn
+      post "reauthenticate"
     end
     member do
       get "/", to: "logins#choose_login_preference", as: :choose_login_preference
