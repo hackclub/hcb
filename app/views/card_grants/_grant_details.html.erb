@@ -20,9 +20,9 @@
           <p>
             <strong class="inline-flex items-center" style="gap: 4px">
               One time use
-              <%= link_to "#", class: "info tooltipped tooltipped--e", "aria-label": card_grant.one_time_use ? "This card will automatically freeze after you make a purchase" : "There is no limit on the number of purchases you can make using this grant", style: "display: flex;", data: { turbo: false } do %>
+              <span class="info tooltipped tooltipped--e" aria-label="This card will automatically freeze after you make a purchase"> 
                 <%= inline_icon "info", size: 18, style: "position: unset;" %>
-              <% end %>
+              </span>
             </strong>
             <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
           </p>
