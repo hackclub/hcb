@@ -1,13 +1,5 @@
 <%# locals: (block: nil) %>
 
 <%= render "announcements/modals/modal_shell", block:, type: "donationSummary", header: "#{block.present? ? "Edit this" : "Insert a"} donation summary" do %>
-  <div>
-    <%= label_tag :start_date, "Start date" %>
-    <%= date_field_tag :start_date, block.present? ? block.parameters["start_date"] : nil, data: { "announcement-modal-target": "input" } %>
-  </div>
-
-  <div>
-    <%= label_tag :end_date, "End date" %>
-    <%= date_field_tag :end_date, block.present? ? block.parameters["end_date"] : nil, data: { "announcement-modal-target": "input" } %>
-  </div>
+  <%= render "announcements/modals/date_inputs", block: %>
 <% end %>

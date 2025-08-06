@@ -8,10 +8,7 @@ export default class extends Controller {
   static outlets = ['tiptap']
 
   donationSummary() {
-    const parameters = {
-      start_date: this.inputTargets.find(t => t.name == 'start_date').value,
-      end_date: this.inputTargets.find(t => t.name == 'end_date').value,
-    }
+    const parameters = this.getDateParameters.bind(this)();
 
     this.tiptapOutlet
       .donationSummary(parameters, this.blockIdValue)
@@ -28,6 +25,14 @@ export default class extends Controller {
       .then(this.handleErrors.bind(this))
   }
 
+  topMerchants() {
+    const parameters = this.getDateParameters.bind(this)();
+
+    this.tiptapOutlet
+      .topMerchants(parameters, this.blockIdValue)
+      .then(this.handleErrors.bind(this))
+  }
+
   handleErrors(errors) {
     if (errors) {
       this.errorsTarget.innerText = errors.join('')
@@ -36,6 +41,13 @@ export default class extends Controller {
       this.inputTarget.value = ''
       this.errorsTarget.parentElement.classList.add('hidden')
       $.modal.close()
+    }
+  }
+
+  getDateParameters() {
+    return {
+      start_date: this.inputTargets.find(t => t.name == 'start_date').value,
+      end_date: this.inputTargets.find(t => t.name == 'end_date').value,
     }
   }
 }

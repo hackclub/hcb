@@ -241,11 +241,26 @@ export default class extends Controller {
     return null
   }
 
-  async topMerchants() {
-    const attrs = await this.createBlock('Announcement::Block::TopMerchants')
-    this.editor.chain().focus().addTopMerchants(attrs).run()
-  }
+  async topMerchants(parameters, blockId) {
+    let result
+    if (blockId) {
+      result = await this.editBlock(blockId, parameters)
+    } else {
+      result = await this.createBlock(
+        'Announcement::Block::TopMerchants',
+        parameters
+      )
+    }
 
+    if (result !== null && 'errors' in result) {
+      return result['errors']
+    } else if (!blockId) {
+      this.editor.chain().focus().addTopMerchants(result).run()
+    }
+
+    return null
+  }
+  
   async topCategories() {
     const attrs = await this.createBlock('Announcement::Block::TopCategories')
     this.editor.chain().focus().addTopCategories(attrs).run()
