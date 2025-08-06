@@ -33,6 +33,30 @@ export default class extends Controller {
       .then(this.handleErrors.bind(this))
   }
 
+  topCategories() {
+    const parameters = this.getDateParameters.bind(this)();
+
+    this.tiptapOutlet
+      .block("Announcement::Block::TopCategories", parameters, this.blockIdValue)
+      .then(this.handleErrors.bind(this))
+  }
+
+  topTags() {
+    const parameters = this.getDateParameters.bind(this)();
+
+    this.tiptapOutlet
+      .block("Announcement::Block::TopTags", parameters, this.blockIdValue)
+      .then(this.handleErrors.bind(this))
+  }
+
+  topUsers() {
+    const parameters = this.getDateParameters.bind(this)();
+
+    this.tiptapOutlet
+      .block("Announcement::Block::TopUsers", parameters, this.blockIdValue)
+      .then(this.handleErrors.bind(this))
+  }
+
   handleErrors(errors) {
     if (errors) {
       this.errorsTarget.innerText = errors.join('')
