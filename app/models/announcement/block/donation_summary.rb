@@ -38,10 +38,6 @@ class Announcement
         { donations:, total:, start_date:, end_date: }
       end
 
-      def editable
-        true
-      end
-
       private
 
       def donations

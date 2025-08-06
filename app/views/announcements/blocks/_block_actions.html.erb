@@ -4,7 +4,7 @@
   <div class="block-actions">
     <%= pop_icon_to "history", refresh_announcements_block_path(block), data: { turbo_method: :post }, class: "absolute top-2 right-2 tooltipped", "aria-label": "Refresh this block with the latest data" %>
 
-    <% if block.editable %>
+    <% if block.editable? %>
       <%= pop_icon_to "edit", edit_announcements_block_path(block), class: "absolute top-2 right-14 tooltipped", "aria-label": "Edit this block", rel: "modal:open" %>
     <% end %>
   </div>

@@ -30,10 +30,6 @@ class Announcement
         { hcb_code:, event: announcement.event }
       end
 
-      def editable
-        true
-      end
-
       def empty?
         hcb_code.nil?
       end

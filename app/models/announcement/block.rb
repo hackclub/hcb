@@ -48,8 +48,8 @@ class Announcement
       Announcements::BlocksController.renderer.render(partial:, locals: locals(is_email:))
     end
 
-    def editable
-      false
+    def editable?
+      true
     end
 
     def partial

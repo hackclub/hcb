@@ -40,6 +40,10 @@ class Announcement
         goal.nil?
       end
 
+      def editable?
+        false
+      end
+
       private
 
       def goal
