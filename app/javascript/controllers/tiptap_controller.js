@@ -193,87 +193,32 @@ export default class extends Controller {
     this.editor.chain().focus().setImage({ src: url }).run()
   }
 
+  async block(type, parameters, blockId) {
+    let result
+    if (blockId) {
+      result = await this.editBlock(blockId, parameters)
+    } else {
+      result = await this.createBlock(
+        type,
+        parameters
+      )
+    }
+
+    if (result !== null && 'errors' in result) {
+      return result['errors']
+    } else if (!blockId) {
+      this.editor.chain().focus().insertContent({ type, attrs: result }).run()
+    }
+
+    return null
+  }
+
   async donationGoal() {
     const attrs = await this.createBlock('Announcement::Block::DonationGoal')
 
     if (attrs !== null) {
       this.editor.chain().focus().addDonationGoal(attrs).run()
     }
-  }
-
-  async hcbCode(parameters, blockId) {
-    let result
-    if (blockId) {
-      result = await this.editBlock(blockId, parameters)
-    } else {
-      result = await this.createBlock(
-        'Announcement::Block::HcbCode',
-        parameters
-      )
-    }
-
-    if (result !== null && 'errors' in result) {
-      return result['errors']
-    } else if (!blockId) {
-      this.editor.chain().focus().addHcbCode(result).run()
-    }
-
-    return null
-  }
-
-  async donationSummary(parameters, blockId) {
-    let result
-    if (blockId) {
-      result = await this.editBlock(blockId, parameters)
-    } else {
-      result = await this.createBlock(
-        'Announcement::Block::DonationSummary',
-        parameters
-      )
-    }
-
-    if (result !== null && 'errors' in result) {
-      return result['errors']
-    } else if (!blockId) {
-      this.editor.chain().focus().addDonationSummary(result).run()
-    }
-
-    return null
-  }
-
-  async topMerchants(parameters, blockId) {
-    let result
-    if (blockId) {
-      result = await this.editBlock(blockId, parameters)
-    } else {
-      result = await this.createBlock(
-        'Announcement::Block::TopMerchants',
-        parameters
-      )
-    }
-
-    if (result !== null && 'errors' in result) {
-      return result['errors']
-    } else if (!blockId) {
-      this.editor.chain().focus().addTopMerchants(result).run()
-    }
-
-    return null
-  }
-  
-  async topCategories() {
-    const attrs = await this.createBlock('Announcement::Block::TopCategories')
-    this.editor.chain().focus().addTopCategories(attrs).run()
-  }
-
-  async topTags() {
-    const attrs = await this.createBlock('Announcement::Block::TopTags')
-    this.editor.chain().focus().addTopTags(attrs).run()
-  }
-
-  async topUsers() {
-    const attrs = await this.createBlock('Announcement::Block::TopUsers')
-    this.editor.chain().focus().addTopUsers(attrs).run()
   }
 
   async createBlock(type, parameters) {

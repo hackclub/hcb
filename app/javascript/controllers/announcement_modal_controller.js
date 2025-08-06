@@ -11,7 +11,7 @@ export default class extends Controller {
     const parameters = this.getDateParameters.bind(this)();
 
     this.tiptapOutlet
-      .donationSummary(parameters, this.blockIdValue)
+      .block("Announcement::Block::DonationSummary", parameters, this.blockIdValue)
       .then(this.handleErrors.bind(this))
   }
 
@@ -21,7 +21,7 @@ export default class extends Controller {
     }
 
     this.tiptapOutlet
-      .hcbCode(parameters, this.blockIdValue)
+      .block("Announcement::Block::HcbCode", parameters, this.blockIdValue)
       .then(this.handleErrors.bind(this))
   }
 
@@ -29,7 +29,7 @@ export default class extends Controller {
     const parameters = this.getDateParameters.bind(this)();
 
     this.tiptapOutlet
-      .topMerchants(parameters, this.blockIdValue)
+      .block("Announcement::Block::TopMerchants", parameters, this.blockIdValue)
       .then(this.handleErrors.bind(this))
   }
 
