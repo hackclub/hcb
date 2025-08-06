@@ -71,7 +71,7 @@ class StripeCard < ApplicationRecord
   scope :frozen, -> { where(stripe_status: "inactive", initially_activated: true) }
   scope :active, -> { where(stripe_status: "active") }
   scope :inactive, -> { where(stripe_status: "inactive", initially_activated: false) }
-  scope :physical_shipping, -> { physical.includes(:user, :event).reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.initially_activated } }
+  scope :physical_shipping, -> { physical.includes(:user, :event).reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.initially_activated || c.shipping_eta&.past? } }
   scope :platinum, -> { where(is_platinum_april_fools_2023: true) }
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
