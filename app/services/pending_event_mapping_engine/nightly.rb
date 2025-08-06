@@ -191,7 +191,7 @@ module PendingEventMappingEngine
         end
       end
     end
-    
+
     def settle_canonical_pending_payout_holding!
       CanonicalPendingTransaction.unsettled.reimbursement_payout_holding.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
