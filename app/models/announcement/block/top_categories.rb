@@ -29,11 +29,11 @@ class Announcement
 
       delegate :empty?, to: :categories
 
-      def render_html(is_email: false)
+      def custom_locals
         start_date = start_date_param
         end_date = end_date_param
 
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/top_categories", locals: { is_email:, block: self, categories:, start_date:, end_date: }
+        { categories:, start_date:, end_date: }
       end
 
       private
