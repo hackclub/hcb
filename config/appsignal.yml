@@ -18,3 +18,4 @@ default: &defaults
 production:
   <<: *defaults
   active: true
+  revision: "<%= ENV["HATCHBOX_REVISION"] %>"
