@@ -39,7 +39,7 @@
     </p>
     <% if @hcb_code.wise_transfer.pending? || @hcb_code.wise_transfer.approved? %>
         <% admin_tool "w-fit" do %>
-          <%= button_to "Process", wise_transfer_process_admin_path(@hcb_code.wise_transfer), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+          <%= link_to "Process", wise_transfer_process_admin_path(@hcb_code.wise_transfer), class: "btn", target: "_blank" %>
         <% end %>
       <% end %>
   </section>
