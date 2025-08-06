@@ -8,10 +8,14 @@ export default class extends Controller {
   static outlets = ['tiptap']
 
   donationSummary() {
-    const parameters = this.getDateParameters.bind(this)();
+    const parameters = this.getDateParameters.bind(this)()
 
     this.tiptapOutlet
-      .block("Announcement::Block::DonationSummary", parameters, this.blockIdValue)
+      .block(
+        'Announcement::Block::DonationSummary',
+        parameters,
+        this.blockIdValue
+      )
       .then(this.handleErrors.bind(this))
   }
 
@@ -21,39 +25,43 @@ export default class extends Controller {
     }
 
     this.tiptapOutlet
-      .block("Announcement::Block::HcbCode", parameters, this.blockIdValue)
+      .block('Announcement::Block::HcbCode', parameters, this.blockIdValue)
       .then(this.handleErrors.bind(this))
   }
 
   topMerchants() {
-    const parameters = this.getDateParameters.bind(this)();
+    const parameters = this.getDateParameters.bind(this)()
 
     this.tiptapOutlet
-      .block("Announcement::Block::TopMerchants", parameters, this.blockIdValue)
+      .block('Announcement::Block::TopMerchants', parameters, this.blockIdValue)
       .then(this.handleErrors.bind(this))
   }
 
   topCategories() {
-    const parameters = this.getDateParameters.bind(this)();
+    const parameters = this.getDateParameters.bind(this)()
 
     this.tiptapOutlet
-      .block("Announcement::Block::TopCategories", parameters, this.blockIdValue)
+      .block(
+        'Announcement::Block::TopCategories',
+        parameters,
+        this.blockIdValue
+      )
       .then(this.handleErrors.bind(this))
   }
 
   topTags() {
-    const parameters = this.getDateParameters.bind(this)();
+    const parameters = this.getDateParameters.bind(this)()
 
     this.tiptapOutlet
-      .block("Announcement::Block::TopTags", parameters, this.blockIdValue)
+      .block('Announcement::Block::TopTags', parameters, this.blockIdValue)
       .then(this.handleErrors.bind(this))
   }
 
   topUsers() {
-    const parameters = this.getDateParameters.bind(this)();
+    const parameters = this.getDateParameters.bind(this)()
 
     this.tiptapOutlet
-      .block("Announcement::Block::TopUsers", parameters, this.blockIdValue)
+      .block('Announcement::Block::TopUsers', parameters, this.blockIdValue)
       .then(this.handleErrors.bind(this))
   }
 

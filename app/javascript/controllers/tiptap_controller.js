@@ -198,10 +198,7 @@ export default class extends Controller {
     if (blockId) {
       result = await this.editBlock(blockId, parameters)
     } else {
-      result = await this.createBlock(
-        type,
-        parameters
-      )
+      result = await this.createBlock(type, parameters)
     }
 
     if (result !== null && 'errors' in result) {
