@@ -11,7 +11,7 @@
 
   <div class="flex-grow"></div>
 
-  <%= link_to @wise_transfer.wise_id.present? ? "https://wise.com/transactions/activities/by-resource/TRANSFER/#{@wise_transfer.wise_id}" : "https://wise.com/send", class: "btn btn-small bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
+  <%= link_to @wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
     <%= inline_icon "wise" %>
     Open Wise
   <% end %>

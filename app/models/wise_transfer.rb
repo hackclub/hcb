@@ -216,6 +216,14 @@ class WiseTransfer < ApplicationRecord
     update!(quoted_usd_amount_cents: estimated_usd_amount_cents) unless quoted_usd_amount_cents.present?
   end
 
+  def wise_url
+    return nil unless wise_id.present?
+
+    "https://wise.com/transactions/activities/by-resource/TRANSFER/#{wise_id}"
+  end
+
+  private
+
   WISE_ID_REGEXPS = [
     /wise\.com\/transactions\/activities\/by-resource\/transfer\/(\d+)/i,
     /wise\.com\/success\/transfer\/(\d+)/i
