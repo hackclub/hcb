@@ -120,7 +120,7 @@ class WiseTransfer < ApplicationRecord
     end
 
     event :mark_failed do
-      transitions from: [:deposited, :approved], to: :failed
+      transitions from: [:pending, :approved, :sent, :approved], to: :failed
       after do |reason = nil|
         WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
         update(return_reason: reason)

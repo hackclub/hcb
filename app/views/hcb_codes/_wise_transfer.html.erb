@@ -64,6 +64,14 @@
         <strong>Payment purpose</strong>
         <%= @hcb_code.wise_transfer.payment_for %>
       </p>
+
+      <% if @hcb_code.wise_transfer.return_reason.present? %>
+        <p>
+          <strong>Return reason</strong>
+          <%= @hcb_code.wise_transfer.return_reason %>
+        </p>
+      <% end %>
+
       <p>
         <strong>Amount (<%= @hcb_code.wise_transfer.currency %>)</strong>
         <%= Money.from_cents(@hcb_code.wise_transfer.amount_cents, @hcb_code.wise_transfer.currency).format %>

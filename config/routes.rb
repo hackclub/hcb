@@ -413,6 +413,7 @@ Rails.application.routes.draw do
       post "approve"
       post "reject"
       post "mark_sent"
+      post "mark_failed"
     end
 
     collection do

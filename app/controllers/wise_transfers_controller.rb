@@ -85,6 +85,14 @@ class WiseTransfersController < ApplicationController
     redirect_back_or_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "Wire has been canceled." }
   end
 
+  def mark_failed
+    authorize @wise_transfer
+
+    @wise_transfer.mark_failed!(params[:reason])
+
+    redirect_back_or_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "Marked as failed." }
+  end
+
   def generate_quote
     authorize WiseTransfer.new
 

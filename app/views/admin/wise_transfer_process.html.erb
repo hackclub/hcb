@@ -207,6 +207,19 @@
     <em class="muted">No available actions</em>
   <% end %>
 
+  <% if @wise_transfer.may_mark_failed? %>
+    <fieldset class="p-6">
+      <legend style="padding: 0px 8px">Fail</legend>
+      <%= form_with(model: nil, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
+        <div class="field">
+          <%= form.label "Failure reason", class: "bold mb1" %> <br>
+          <%= form.text_area :reason, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+        </div>
+        <%= form.submit "Mark failed", data: { confirm: "Mark as failed?" } %>
+      <% end %>
+    </fieldset>
+  <% end %>
+
 </div>
 
 </div>
