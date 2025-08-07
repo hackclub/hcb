@@ -219,13 +219,13 @@ class WiseTransfer < ApplicationRecord
   def wise_url
     return nil unless wise_id.present?
 
-    "https://wise.com/transactions/activities/by-resource/TRANSFER/#{wise_id}"
+    "https://wise.com/transactions/activities/by-resource/TRANSFER/#{CGI.escape(wise_id)}"
   end
 
   def wise_recipient_url
     return nil unless wise_recipient_id.present?
 
-    "https://wise.com/recipients/#{wise_recipient_id}"
+    "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
   end
 
   private
