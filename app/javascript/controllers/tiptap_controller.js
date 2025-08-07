@@ -8,6 +8,7 @@ import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import { mountReactNode } from './tiptap/mount_react_node'
 
 import csrf from '../common/csrf'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
@@ -251,6 +252,7 @@ export default class extends Controller {
       } else {
         return res.text().then(html => {
           Turbo.renderStreamMessage(html)
+          mountReactNode(null, `block_${id}`)
           return null
         })
       }
