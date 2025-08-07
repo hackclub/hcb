@@ -711,12 +711,10 @@ class AdminController < ApplicationController
       Arel.sql("aasm_state = 'pending' DESC"),
       "created_at desc"
     )
-
   end
 
   def wire_process
     @wire = Wire.find(params[:id])
-
   end
 
   def wise_transfer_process
