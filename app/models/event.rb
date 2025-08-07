@@ -418,6 +418,10 @@ class Event < ApplicationRecord
     self.activated_at = Time.now
   end
 
+  before_save if: -> { plan.card_grants_enabled? } do
+    create_card_grant_setting!
+  end
+
   before_validation do
     build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
   end
