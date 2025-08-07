@@ -43,7 +43,7 @@ gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
 gem "twilio-ruby" # SMS notifications
 
-gem "google-apis-admin_directory_v1", "~> 0.66.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.67.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -151,6 +151,7 @@ end
 group :test do
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
+  gem "webmock"
 end
 
 group :development, :test do
@@ -185,7 +186,7 @@ group :development do
 
   # Ruby language server
   gem "solargraph", require: false
-  gem "solargraph-rails", "~> 0.2.0", require: false
+  gem "solargraph-rails", "~> 1.2.0", require: false
 
   gem "htmlbeautifier", require: false # for https://marketplace.visualstudio.com/items?itemName=tomclose.format-erb
 

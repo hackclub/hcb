@@ -24,31 +24,25 @@ class EventsController < ApplicationController
     authorize Event
     respond_to do |format|
       format.json do
-        events = @current_user.events.with_attached_logo.reorder("organizer_positions.sort_index ASC", "events.id ASC").map { |x|
-          {
-            name: x.name,
-            slug: x.slug,
-            logo: x.logo.attached? ? Rails.application.routes.url_helpers.url_for(x.logo) : "none",
-            demo_mode: x.demo_mode,
-            member: true
-          }
-        }
+        events =
+          @current_user
+          .events
+          .with_attached_logo
+          .preload(:config)
+          .reorder("organizer_positions.sort_index ASC", "events.id ASC")
+          .strict_loading
+          .map { |event| serialize_event(event, member: true) }
 
         if auditor_signed_in?
           events.concat(
-            Event.excluding(@current_user.events).with_attached_logo.map { |e|
-              {
-                slug: e.slug,
-                name: e.name,
-                logo: e.logo.attached? ? Rails.application.routes.url_helpers.url_for(e.logo) : "none",
-                demo_mode: e.demo_mode,
-                member: false
-              }
-            }
+            Event
+              .excluding(@current_user.events)
+              .with_attached_logo
+              .preload(:config)
+              .strict_loading
+              .map { |event| serialize_event(event, member: false) }
           )
         end
-
-        response.content_type = "text/json"
 
         render json: events
       end
@@ -84,7 +78,7 @@ class EventsController < ApplicationController
   def merchants_chart
     authorize @event
 
-    @merchants = BreakdownEngine::Merchants.new(@event, timeframe: @timeframe).run
+    @merchants = BreakdownEngine::Merchants.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] }
   end
@@ -92,7 +86,7 @@ class EventsController < ApplicationController
   def categories_chart
     authorize @event
 
-    @categories = BreakdownEngine::Categories.new(@event, timeframe: @timeframe).run
+    @categories = BreakdownEngine::Categories.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] }
   end
@@ -141,7 +135,7 @@ class EventsController < ApplicationController
   def tags_chart
     authorize @event
 
-    @tags = BreakdownEngine::Tags.new(@event, timeframe: @timeframe).run
+    @tags = BreakdownEngine::Tags.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe], event: @event }
   end
@@ -149,7 +143,7 @@ class EventsController < ApplicationController
   def users_chart
     authorize @event
 
-    @users = BreakdownEngine::Users.new(@event, timeframe: @timeframe).run
+    @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
 
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
@@ -610,15 +604,15 @@ class EventsController < ApplicationController
     relation = @event.donations.not_pending.includes(:recurring_donation)
 
     @stats = {
-      deposited: relation.where(aasm_state: [:in_transit, :deposited]).sum(:amount),
+      deposited: relation.succeeded_and_not_refunded.sum(:amount),
     }
 
-    @all_donations = relation.where(aasm_state: [:in_transit, :deposited])
+    @all_donations = relation.succeeded_and_not_refunded
 
     if params[:filter] == "refunded"
       relation = relation.refunded
     else
-      relation = relation.where(aasm_state: [:in_transit, :deposited])
+      relation = relation.succeeded_and_not_refunded
     end
 
     relation = relation.search_name(params[:q]) if params[:q].present?
@@ -683,6 +677,7 @@ class EventsController < ApplicationController
     @ach_transfers = @event.ach_transfers
     @paypal_transfers = @event.paypal_transfers
     @wires = @event.wires
+    @wise_transfers = @event.wise_transfers
     @checks = @event.checks.includes(:lob_address)
     @increase_checks = @event.increase_checks
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
@@ -728,7 +723,12 @@ class EventsController < ApplicationController
     @wires = @wires.rejected if params[:filter] == "canceled"
     @wires = @wires.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers + @wires).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending) if params[:filter] == "in_transit"
+    @wise_transfers = @wise_transfers.deposited if params[:filter] == "deposited"
+    @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
+    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
+
+    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
 
     # Generate mock data
     if helpers.show_mock_data?
@@ -772,7 +772,9 @@ class EventsController < ApplicationController
   def reimbursements
     authorize @event
     @reports = @event.reimbursement_reports.visible
-    @reports = @reports.pending if params[:status] == "pending"
+    @reports = @reports.draft if params[:status] == "draft"
+    @reports = @reports.submitted if params[:status] == "review_required"
+    @reports = @reports.reimbursement_requested if params[:status] == "pending"
     @reports = @reports.where(aasm_state: ["reimbursement_approved", "reimbursed"]) if params[:status] == "reimbursed"
     @reports = @reports.rejected if params[:status] == "rejected"
     @reports = @reports.search(params[:q]) if params[:q].present?
@@ -781,7 +783,7 @@ class EventsController < ApplicationController
     @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
 
     @filter_options = [
-      { key: "status", label: "Status", type: "select", options: %w[pending reimbursed rejected] },
+      { key: "status", label: "Status", type: "select", options: %w[draft review_required pending reimbursed rejected] },
       { key: "created_*", label: "Date created", type: "date_range" }
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
@@ -835,7 +837,7 @@ class EventsController < ApplicationController
       point_of_contact_id: @event.point_of_contact_id,
       invited_by: current_user,
       is_public: @event.is_public,
-      plan: @event.config.subevent_plan,
+      plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
       parent_event: @event
     ).run
@@ -993,8 +995,8 @@ class EventsController < ApplicationController
         "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
       },
       "hcb_transfer"           => {
-        "settled" => ->(t) { t.local_hcb_code.disbursement? },
-        "pending" => ->(t) { t.local_hcb_code.disbursement? }
+        "settled" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id },
+        "pending" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id }
       },
       "card_charge"            => {
         "settled" => ->(t) { t.raw_stripe_transaction },
@@ -1246,6 +1248,19 @@ class EventsController < ApplicationController
 
   def set_event_follow
     @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
+  end
+
+  def serialize_event(event, member:)
+    {
+      name: event.name,
+      slug: event.slug,
+      logo: event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : "none",
+      demo_mode: event.demo_mode,
+      member:,
+      features: {
+        subevents: event.subevents_enabled?
+      }
+    }
   end
 
 end

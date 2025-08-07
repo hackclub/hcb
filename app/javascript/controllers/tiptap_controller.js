@@ -11,6 +11,10 @@ import csrf from '../common/csrf'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
 import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
 import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
+import { TopMerchantsNode } from './tiptap/nodes/top_merchants_node'
+import { TopCategoriesNode } from './tiptap/nodes/top_categories_node'
+import { TopTagsNode } from './tiptap/nodes/top_tags_node'
+import { TopUsersNode } from './tiptap/nodes/top_users_node'
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
@@ -64,6 +68,10 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
+        TopMerchantsNode,
+        TopCategoriesNode,
+        TopTagsNode,
+        TopUsersNode,
       ],
       editorProps: {
         attributes: {
@@ -215,6 +223,26 @@ export default class extends Controller {
     if (attrs !== null) {
       this.editor.chain().focus().addDonationSummary(attrs).run()
     }
+  }
+
+  async topMerchants() {
+    const attrs = await this.createBlock('Announcement::Block::TopMerchants')
+    this.editor.chain().focus().addTopMerchants(attrs).run()
+  }
+
+  async topCategories() {
+    const attrs = await this.createBlock('Announcement::Block::TopCategories')
+    this.editor.chain().focus().addTopCategories(attrs).run()
+  }
+
+  async topTags() {
+    const attrs = await this.createBlock('Announcement::Block::TopTags')
+    this.editor.chain().focus().addTopTags(attrs).run()
+  }
+
+  async topUsers() {
+    const attrs = await this.createBlock('Announcement::Block::TopUsers')
+    this.editor.chain().focus().addTopUsers(attrs).run()
   }
 
   async createBlock(type, parameters) {

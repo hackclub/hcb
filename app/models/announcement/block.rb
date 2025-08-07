@@ -48,6 +48,10 @@ class Announcement
       Announcements::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
     end
 
+    def empty?
+      true
+    end
+
   end
 
 end
