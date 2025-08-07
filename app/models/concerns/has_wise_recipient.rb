@@ -93,16 +93,12 @@ module HasWiseRecipient
       return fields
     end
 
-    def self.recipient_information_keys
+    def self.recipient_information_accessors
       fields = []
       AVAILABLE_CURRENCIES.each do |currency|
         fields += self.information_required_for(currency)
       end
       fields.collect{ |field| field[:key] }.uniq
-    end
-
-    def self.recipient_information_accessors
-      recipient_information_keys - %w[account_number institution_number branch_number tax_id recipient_birthday]
     end
 
     store_accessor :recipient_information, *self.recipient_information_accessors

@@ -107,7 +107,7 @@
       <td>Recipient country:</td>
       <td><%= @wise_transfer.recipient_country %></td>
     </tr>
-    <% WiseTransfer.recipient_information_keys&.each do |key| %>
+    <% WiseTransfer.recipient_information_accessors&.each do |key| %>
       <% if @wise_transfer.recipient_information[key].presence != nil %>
         <tr>
           <td><%= key.humanize %></td>
