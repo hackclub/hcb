@@ -14,11 +14,13 @@
 #  merchant_lock                     :string
 #  pre_authorization_required        :boolean          default(FALSE), not null
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
-#  event_id                          :bigint           not null
+#  card_grant_id                     :bigint
+#  event_id                          :bigint
 #
 # Indexes
 #
-#  index_card_grant_settings_on_event_id  (event_id)
+#  index_card_grant_settings_on_card_grant_id  (card_grant_id)
+#  index_card_grant_settings_on_event_id       (event_id)
 #
 # Foreign Keys
 #
@@ -34,6 +36,7 @@ class CardGrantSetting < ApplicationRecord
   alias_attribute :allowed_categories, :category_lock
   alias_attribute :disallowed_merchants, :banned_merchants
   has_many :card_grants, through: :event
+  belongs_to :card_grant
 
   enum :expiration_preference, {
     "90 days": 90,

@@ -62,6 +62,9 @@ class CardGrant < ApplicationRecord
   has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id).or(where(source_subledger_id: record.subledger_id)) }, through: :event
   has_one :card_grant_setting, through: :event, required: true
   alias_method :setting, :card_grant_setting
+  # TODO
+  # has_one :default_card_grant_setting, through: :event, required: true
+  # has_one :card_grant_setting
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 

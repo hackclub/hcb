@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_07_201752) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -455,7 +455,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
   end
 
   create_table "card_grant_settings", force: :cascade do |t|
-    t.bigint "event_id", null: false
+    t.bigint "event_id"
     t.string "merchant_lock"
     t.string "category_lock"
     t.string "invite_message"
@@ -465,6 +465,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.boolean "pre_authorization_required", default: false, null: false
     t.string "banned_merchants"
     t.string "banned_categories"
+    t.bigint "card_grant_id"
+    t.index ["card_grant_id"], name: "index_card_grant_settings_on_card_grant_id"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
   end
 
