@@ -4,41 +4,33 @@
 #
 # Table name: wise_transfers
 #
-#  id                            :bigint           not null, primary key
-#  aasm_state                    :string
-#  account_number_bidx           :string
-#  account_number_ciphertext     :string
-#  address_city                  :string
-#  address_line1                 :string
-#  address_line2                 :string
-#  address_postal_code           :string
-#  address_state                 :string
-#  amount_cents                  :integer          not null
-#  approved_at                   :datetime
-#  bank_name                     :string
-#  branch_number_bidx            :string
-#  branch_number_ciphertext      :string
-#  currency                      :string           not null
-#  institution_number_bidx       :string
-#  institution_number_ciphertext :string
-#  payment_for                   :string           not null
-#  quoted_usd_amount_cents       :integer
-#  recipient_birthday_ciphertext :text
-#  recipient_country             :integer          not null
-#  recipient_email               :string           not null
-#  recipient_information         :jsonb
-#  recipient_name                :string           not null
-#  recipient_phone_number        :text
-#  return_reason                 :text
-#  sent_at                       :datetime
-#  tax_id_bidx                   :string
-#  tax_id_ciphertext             :string
-#  usd_amount_cents              :integer
-#  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
-#  event_id                      :bigint           not null
-#  user_id                       :bigint           not null
-#  wise_id                       :text
+#  id                               :bigint           not null, primary key
+#  aasm_state                       :string
+#  address_city                     :string
+#  address_line1                    :string
+#  address_line2                    :string
+#  address_postal_code              :string
+#  address_state                    :string
+#  amount_cents                     :integer          not null
+#  approved_at                      :datetime
+#  bank_name                        :string
+#  currency                         :string           not null
+#  payment_for                      :string           not null
+#  quoted_usd_amount_cents          :integer
+#  recipient_birthday_ciphertext    :text
+#  recipient_country                :integer          not null
+#  recipient_email                  :string           not null
+#  recipient_information_ciphertext :text
+#  recipient_name                   :string           not null
+#  recipient_phone_number           :text
+#  return_reason                    :text
+#  sent_at                          :datetime
+#  usd_amount_cents                 :integer
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
+#  event_id                         :bigint           not null
+#  user_id                          :bigint           not null
+#  wise_id                          :text
 #
 # Indexes
 #
@@ -54,9 +46,7 @@ class WiseTransfer < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
 
-
-  has_encrypted :account_number, :institution_number, :branch_number, :tax_id
-  blind_index :account_number, :institution_number, :branch_number, :tax_id
+  has_encrypted :recipient_information, type: :json
 
   validates_length_of :payment_for, maximum: 140
 
