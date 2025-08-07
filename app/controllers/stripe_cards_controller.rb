@@ -16,7 +16,7 @@ class StripeCardsController < ApplicationController
       .where(initially_activated: false)
       .includes(:user, :event)
       .reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.shipping_eta&.past? }
-    end
+
     skip_authorization # do not force pundit
 
     render :shipping, layout: false
