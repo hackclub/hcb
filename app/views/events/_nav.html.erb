@@ -63,7 +63,7 @@
       selected: local_assigns[:selected] == :invoices if policy(@event).invoices? %>
     <%= dock_item "Account numbers",
       account_number_event_path(@event),
-      tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
+      tooltip: "Receive payouts from GoFundMe, Shopify, and more",
       icon: "bank-account",
       selected: local_assigns[:selected] == :account_number if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
     <%= dock_item "Check deposits",
