@@ -36,6 +36,11 @@ RSpec.describe WiseTransfer do
       instance.validate
       expect(instance.errors[:wise_id]).to be_empty
       expect(instance.wise_id).to eq("1234567890")
+
+      instance.wise_id = "https://wise.com/success/transfer/0987654321"
+      instance.validate
+      expect(instance.errors[:wise_id]).to be_empty
+      expect(instance.wise_id).to eq("0987654321")
     end
   end
 end

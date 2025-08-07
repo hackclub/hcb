@@ -210,7 +210,10 @@ class WiseTransfer < ApplicationRecord
     update!(quoted_usd_amount_cents: estimated_usd_amount_cents) unless quoted_usd_amount_cents.present?
   end
 
-  WISE_ID_REGEXP = /wise.com\/transactions\/activities\/by-resource\/transfer\/(\d+)/i
+  WISE_ID_REGEXPS = [
+    /wise\.com\/transactions\/activities\/by-resource\/transfer\/(\d+)/i,
+    /wise\.com\/success\/transfer\/(\d+)/i
+  ].freeze
 
   def normalize_wise_id
     return unless wise_id_changed? && wise_id.present?
@@ -222,8 +225,14 @@ class WiseTransfer < ApplicationRecord
       return
     end
 
-    match = WISE_ID_REGEXP.match(normalized)
-    self.wise_id = match[1] if match
+    WISE_ID_REGEXPS.each do |regexp|
+      match = regexp.match(normalized)
+
+      if match
+        self.wise_id = match[1]
+        break
+      end
+    end
   end
 
 end
