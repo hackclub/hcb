@@ -3,7 +3,7 @@
 require "rails_helper"
 require "webauthn/fake_client"
 
-describe LoginsController do
+RSpec.describe LoginsController do
   include SessionSupport
   include WebAuthnSupport
   render_views
