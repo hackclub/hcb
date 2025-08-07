@@ -133,7 +133,7 @@
             <% button_hint = capture do %>
               <% if report.expenses.none? %>
                 Get started by adding an expense to this report.
-              <% elsif report.missing_receipts? %>
+              <% elsif report.missing_receipts? || report.expenses.any? { |e| e.amount.zero? } %>
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
