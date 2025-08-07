@@ -17,7 +17,6 @@
 #  currency                         :string           not null
 #  payment_for                      :string           not null
 #  quoted_usd_amount_cents          :integer
-#  recipient_birthday_ciphertext    :text
 #  recipient_country                :integer          not null
 #  recipient_email                  :string           not null
 #  recipient_information_ciphertext :text

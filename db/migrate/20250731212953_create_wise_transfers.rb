@@ -18,7 +18,6 @@ class CreateWiseTransfers < ActiveRecord::Migration[7.2]
       t.text :recipient_information_ciphertext
       t.string :recipient_name, null: false
       t.text :recipient_phone_number
-      t.text :recipient_birthday_ciphertext
       t.text :return_reason
       t.integer :quoted_usd_amount_cents
       t.text :wise_id

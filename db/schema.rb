@@ -2368,7 +2368,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.string "recipient_email", null: false
     t.string "recipient_name", null: false
     t.text "recipient_phone_number"
-    t.text "recipient_birthday_ciphertext"
     t.text "wise_id"
     t.bigint "event_id", null: false
     t.bigint "user_id", null: false
