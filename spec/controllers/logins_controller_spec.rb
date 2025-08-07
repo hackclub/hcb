@@ -3,7 +3,7 @@
 require "rails_helper"
 require "webauthn/fake_client"
 
-describe LoginsController do
+RSpec.describe LoginsController do
   include SessionSupport
   include WebAuthnSupport
   render_views
@@ -37,6 +37,7 @@ describe LoginsController do
 
       login = Login.last
       expect(login.user.email).to eq(email)
+      expect(login).not_to be_reauthentication
       expect(response).to redirect_to(login_code_login_path(login))
     end
 
@@ -83,6 +84,16 @@ describe LoginsController do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    it "returns an error if the login is a reauthentication" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:, is_reauthentication: true)
+
+      get(:login_code, params: { id: login.hashid })
+
+      expect(flash[:error]).to eq("Please start again.")
+      expect(response).to redirect_to(auth_users_path)
     end
   end
 

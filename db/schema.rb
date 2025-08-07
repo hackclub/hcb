@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_31_174149) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -399,6 +399,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_31_174149) do
     t.bigint "reimbursement_payout_holding_id"
     t.bigint "wire_id"
     t.bigint "raw_pending_column_transaction_id"
+    t.bigint "wise_transfer_id"
     t.index ["check_deposit_id"], name: "index_canonical_pending_transactions_on_check_deposit_id"
     t.index ["hcb_code"], name: "index_canonical_pending_transactions_on_hcb_code"
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"
@@ -416,6 +417,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_31_174149) do
     t.index ["reimbursement_expense_payout_id"], name: "index_canonical_pending_txs_on_reimbursement_expense_payout_id"
     t.index ["reimbursement_payout_holding_id"], name: "index_canonical_pending_txs_on_reimbursement_payout_holding_id"
     t.index ["wire_id"], name: "index_canonical_pending_transactions_on_wire_id"
+    t.index ["wise_transfer_id"], name: "index_canonical_pending_transactions_on_wise_transfer_id"
     t.check_constraint "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null"
   end
 
@@ -2350,6 +2352,36 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_31_174149) do
     t.index ["user_id"], name: "index_wires_on_user_id"
   end
 
+  create_table "wise_transfers", force: :cascade do |t|
+    t.string "aasm_state"
+    t.string "bank_name"
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.integer "amount_cents", null: false
+    t.datetime "approved_at"
+    t.string "currency", null: false
+    t.string "payment_for", null: false
+    t.integer "recipient_country", null: false
+    t.string "recipient_email", null: false
+    t.string "recipient_name", null: false
+    t.text "recipient_phone_number"
+    t.text "wise_id"
+    t.bigint "event_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "usd_amount_cents"
+    t.datetime "sent_at"
+    t.text "return_reason"
+    t.integer "quoted_usd_amount_cents"
+    t.text "recipient_information_ciphertext"
+    t.index ["event_id"], name: "index_wise_transfers_on_event_id"
+    t.index ["user_id"], name: "index_wise_transfers_on_user_id"
+  end
+
   add_foreign_key "ach_transfers", "events"
   add_foreign_key "ach_transfers", "users", column: "creator_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -2503,4 +2535,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_31_174149) do
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
   add_foreign_key "wires", "users"
+  add_foreign_key "wise_transfers", "events"
+  add_foreign_key "wise_transfers", "users"
 end

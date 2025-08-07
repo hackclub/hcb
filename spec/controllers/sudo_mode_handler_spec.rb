@@ -26,9 +26,8 @@ RSpec.describe SudoModeHandler do
       Flipper.enable(:sudo_mode_2015_07_21, user) if feature_enabled
 
       user_session = sign_in(user)
-      login = user_session.initial_login
 
-      { user:, user_session:, login: }
+      { user:, user_session: }
     end
   end
 
@@ -238,7 +237,7 @@ RSpec.describe SudoModeHandler do
     end
 
     it "creates a new login" do
-      logged_in_context => { user:, login: initial_login }
+      logged_in_context => { user: }
 
       post(:create)
 
@@ -249,7 +248,7 @@ RSpec.describe SudoModeHandler do
       login = Login.find_by_hashid!(login_id)
 
       expect(login.user).to eq(user)
-      expect(login.initial_login).to eq(initial_login)
+      expect(login.is_reauthentication).to eq(true)
       expect(login).to be_incomplete
     end
   end
@@ -263,6 +262,18 @@ RSpec.describe SudoModeHandler do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("Confirm Access")
       expect(flash[:error]).to eq("Login has expired. Please try again.")
+    end
+
+    it "errors if the login id is for an initial login" do
+      logged_in_context => { user: }
+      login = create(:login, user:, is_reauthentication: false)
+
+      post(:create, params: { _sudo: { login_id: login.hashid, submit_method: "email" } })
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Confirm Access")
+      expect(flash[:error]).to eq("Login has expired. Please try again.")
+
     end
 
     def stub_login_service(&)
@@ -279,8 +290,8 @@ RSpec.describe SudoModeHandler do
     end
 
     it "handles email codes" do
-      logged_in_context => { user:, login: initial_login, user_session: }
-      login = create(:login, user:, initial_login:)
+      logged_in_context => { user:, user_session: }
+      login = create(:login, user:, is_reauthentication: true)
 
       stub_login_service do |instance, service_login|
         expect(instance).to(
@@ -307,8 +318,8 @@ RSpec.describe SudoModeHandler do
     end
 
     it "handles sms codes" do
-      logged_in_context => { user:, login: initial_login, user_session: }
-      login = create(:login, user:, initial_login:)
+      logged_in_context => { user:, user_session: }
+      login = create(:login, user:, is_reauthentication: true)
 
       stub_login_service do |instance, service_login|
         expect(instance).to(
@@ -335,8 +346,8 @@ RSpec.describe SudoModeHandler do
     end
 
     it "handles totp codes" do
-      logged_in_context => { user:, login: initial_login, user_session: }
-      login = create(:login, user:, initial_login:)
+      logged_in_context => { user:, user_session: }
+      login = create(:login, user:, is_reauthentication: true)
 
       stub_login_service do |instance, service_login|
         expect(instance).to(
@@ -363,8 +374,8 @@ RSpec.describe SudoModeHandler do
     end
 
     it "handles webauthn" do
-      logged_in_context => { user:, login: initial_login, user_session: }
-      login = create(:login, user:, initial_login:)
+      logged_in_context => { user:, user_session: }
+      login = create(:login, user:, is_reauthentication: true)
 
       session[:webauthn_challenge] = "WEBAUTHN_CHALLENGE"
 
@@ -396,8 +407,8 @@ RSpec.describe SudoModeHandler do
     end
 
     it "rejects invalid methods" do
-      logged_in_context => { user:, login: initial_login, user_session: }
-      login = create(:login, user:, initial_login:)
+      logged_in_context => { user:, user_session: }
+      login = create(:login, user:, is_reauthentication: true)
 
       expect do
         post(
@@ -417,8 +428,8 @@ RSpec.describe SudoModeHandler do
     end
 
     it "handles login failures" do
-      logged_in_context => { user:, login: initial_login, user_session: }
-      login = create(:login, user:, initial_login:)
+      logged_in_context => { user: }
+      login = create(:login, user:, is_reauthentication: true)
 
       stub_login_service do |instance, _service_login|
         expect(instance).to(

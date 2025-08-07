@@ -16,6 +16,18 @@
           <span><%= format_date card_grant.expires_on %></span>
         </p>
 
+        <% if card_grant.one_time_use %>
+          <p>
+            <strong class="inline-flex items-center" style="gap: 4px">
+              One time use
+              <span class="info tooltipped tooltipped--e" aria-label="This card will automatically freeze after you make a purchase">
+                <%= inline_icon "info", size: 18, style: "position: unset;" %>
+              </span>
+            </strong>
+            <span><%= card_grant.one_time_use ? "Yes" : "No" %></span>
+          </p>
+        <% end %>
+
         <p>
           <strong>Allowed merchants</strong>
           <% if card_grant.allowed_merchants.any? %>

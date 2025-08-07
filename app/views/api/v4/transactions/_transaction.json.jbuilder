@@ -15,6 +15,8 @@ json.declined (tx.is_a?(CanonicalPendingTransaction) && tx.declined?) || (tx.is_
 json.tags hcb_code.tags do |tag|
   json.id tag.public_id
   json.label tag.label
+  json.color tag.color
+  json.emoji tag.emoji
 end
 json.code hcb_code.hcb_i1
 json.missing_receipt hcb_code.missing_receipt?
