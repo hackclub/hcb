@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneTimeJobs
-  class AddLastFrozenByIdToStripeCards
+  class AddLastFrozenByToStripeCards
     def self.perform
       StripeCard.find_each do |sc|
         last_frozen_by_id = sc.versions.where_object_changes_to(stripe_status: "inactive").last&.whodunnit || User.system_user.id
