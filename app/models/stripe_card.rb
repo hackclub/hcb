@@ -197,9 +197,10 @@ class StripeCard < ApplicationRecord
     status_badge_type
   end
 
-  def freeze!
+  def freeze!(frozen_by: User.system_user)
     StripeService::Issuing::Card.update(self.stripe_id, status: :inactive)
     sync_from_stripe!
+    self.last_frozen_by = frozen_by
     save!
   end
 

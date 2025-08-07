@@ -24,7 +24,7 @@ class StripeCardsController < ApplicationController
     authorize @card
 
     begin
-      @card.freeze!
+      @card.freeze!(frozen_by: current_user)
       flash[:success] = "Card frozen"
     rescue => e
       flash[:error] = "Card could not be frozen"
