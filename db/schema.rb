@@ -986,6 +986,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.string "short_name"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
+    t.string "country_alpha2"
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
     t.index ["parent_id"], name: "index_events_on_parent_id"
@@ -2347,6 +2348,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.string "address_postal_code"
     t.text "column_id"
     t.text "return_reason"
+    t.string "address_country_alpha2"
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
     t.index ["event_id"], name: "index_wires_on_event_id"
     t.index ["user_id"], name: "index_wires_on_user_id"
