@@ -222,6 +222,12 @@ class WiseTransfer < ApplicationRecord
     "https://wise.com/transactions/activities/by-resource/TRANSFER/#{wise_id}"
   end
 
+  def wise_recipient_url
+    return nil unless wise_recipient_id.present?
+
+    "https://wise.com/recipients/#{wise_recipient_id}"
+  end
+
   private
 
   WISE_ID_REGEXPS = [

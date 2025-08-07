@@ -77,7 +77,12 @@
   <tbody>
     <tr>
       <td>Sent To:</td>
-      <td><%= @wise_transfer.recipient_name %></td>
+      <td>
+        <%= @wise_transfer.recipient_name %>
+        <% if @wise_transfer.wise_recipient_url %>
+          (<%= link_to("view on Wise", @wise_transfer.wise_recipient_url, target: "_blank") %>)
+        <% end %>
+      </td>
     </tr>
     <tr>
       <td>Email:</td>
