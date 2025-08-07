@@ -5,13 +5,9 @@ class Announcement
     queue_as :default
 
     def perform
-      Announcement.monthly_for(Date.today.prev_month).find_each do |announcement|
-        # Template drafts are considered canceled, and cannot transition to published
-
-        if announcement.draft?
-          Rails.error.handle do
-            announcement.mark_published!
-          end
+      Announcement.approved_monthly_for(Date.today.prev_month).find_each do |announcement|
+        Rails.error.handle do
+          announcement.mark_published!
         end
       end
 
