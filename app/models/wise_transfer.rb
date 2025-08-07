@@ -30,6 +30,7 @@
 #  event_id                         :bigint           not null
 #  user_id                          :bigint           not null
 #  wise_id                          :text
+#  wise_recipient_id                :text
 #
 # Indexes
 #
