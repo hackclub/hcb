@@ -14,7 +14,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def defrost?
-    return false if record&.event.financially_frozen?
+    return false if record&.event&.financially_frozen?
     return false if record&.last_frozen_by.present? && record&.last_frozen_by != user && !admin_or_manager?
 
     freeze?
@@ -25,7 +25,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def activate?
-    (user&.admin? || member_and_cardholder?) && !record&.canceled? && !record&.event.financially_frozen?
+    (user&.admin? || member_and_cardholder?) && !record&.canceled? && !record&.event&.financially_frozen?
   end
 
   def show?
