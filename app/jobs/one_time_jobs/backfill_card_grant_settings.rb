@@ -2,7 +2,7 @@
 
 module OneTimeJobs
   class BackfillCardGrantSettings
-    def self.perform()
+    def self.perform
       CardGrant.find_each do |cg|
         default_card_grant_setting = CardGrantSetting.find_by(event_id: cg.id)
         ActiveRecord::Base.transaction do
