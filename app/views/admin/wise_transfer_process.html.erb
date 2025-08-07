@@ -47,9 +47,15 @@
       <td>Amount (<%= @wise_transfer.currency %>):</td>
       <td><%= Money.from_cents(@wise_transfer.amount_cents, @wise_transfer.currency).format %></td>
     </tr>
+    <% if @wise_transfer.quoted_usd_amount_cents.present? %>
+      <tr>
+        <td>Quoted amount (USD):</td>
+        <td><%= render_money @wise_transfer.quoted_usd_amount_cents %></td>
+      </tr>
+    <% end %>
     <% if @wise_transfer.usd_amount_cents.present? %>
       <tr>
-        <td>Amount (USD):</td>
+        <td>Final amount (USD):</td>
         <td><%= render_money @wise_transfer.usd_amount_cents %></td>
       </tr>
     <% end %>

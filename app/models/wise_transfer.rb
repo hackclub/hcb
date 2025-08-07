@@ -78,9 +78,11 @@ class WiseTransfer < ApplicationRecord
   tracked owner: proc { |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   after_create do
+    generate_quote!
+
     create_canonical_pending_transaction!(
       event:,
-      amount_cents: -estimated_usd_amount_cents,
+      amount_cents: -quoted_usd_amount_cents,
       memo: "Wise to #{recipient_name} (#{Money.from_cents(amount_cents, currency).format} #{currency})",
       date: created_at
     )
@@ -201,6 +203,10 @@ class WiseTransfer < ApplicationRecord
 
   def estimated_usd_amount_cents
     @estimated_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
+  end
+
+  def generate_quote!
+    update!(quoted_usd_amount_cents: estimated_usd_amount_cents) unless quoted_usd_amount_cents.present?
   end
 
 end
