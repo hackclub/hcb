@@ -119,6 +119,14 @@ class WiseTransfer < ApplicationRecord
     event :mark_deposited do
       transitions from: :sent, to: :deposited
     end
+
+    event :mark_failed do
+      transitions from: [:deposited, :approved], to: :failed
+      after do |reason = nil|
+        WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
+        update(return_reason: reason)
+      end
+    end
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
