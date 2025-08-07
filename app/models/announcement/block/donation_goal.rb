@@ -32,10 +32,6 @@ class Announcement
         { goal:, percentage: }
       end
 
-      def partial
-        "announcements/blocks/donation_goal"
-      end
-
       def empty?
         goal.nil?
       end
