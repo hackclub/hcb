@@ -64,8 +64,8 @@ class WiseTransfer < ApplicationRecord
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
 
   validates :amount_cents, numericality: { greater_than_or_equal_to: 100, message: "must be at least $1" }
-  validates :usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }
-  validates :quoted_usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }
+  validates :usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }, allow_nil: true
+  validates :quoted_usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }, allow_nil: true
 
   include PublicActivity::Model
   tracked owner: proc { |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
