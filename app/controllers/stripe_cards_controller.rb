@@ -11,8 +11,11 @@ class StripeCardsController < ApplicationController
 
   def shipping
     # Only show shipping for phyiscal cards if the eta is in the future (or 1 week after)
-    @stripe_cards = current_user.stripe_cards.where.not(stripe_status: "canceled").physical_shipping.filter do |sc|
-      sc.shipping_eta&.after?(1.week.ago)
+    @stripe_cards = current_user.stripe_cards.physical
+      .where.not(stripe_status: "canceled")
+      .where(initially_activated: false)
+      .includes(:user, :event)
+      .reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.shipping_eta&.past? }
     end
     skip_authorization # do not force pundit
 
