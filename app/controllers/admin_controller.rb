@@ -719,7 +719,6 @@ class AdminController < ApplicationController
 
   def wise_transfer_process
     @wise_transfer = WiseTransfer.find(params[:id])
-
   end
 
   def donations
