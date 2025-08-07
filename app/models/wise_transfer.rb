@@ -22,12 +22,14 @@
 #  institution_number_bidx       :string
 #  institution_number_ciphertext :string
 #  payment_for                   :string           not null
+#  quoted_usd_amount_cents       :integer
 #  recipient_birthday_ciphertext :text
 #  recipient_country             :integer          not null
 #  recipient_email               :string           not null
 #  recipient_information         :jsonb
 #  recipient_name                :string           not null
 #  recipient_phone_number        :text
+#  return_reason                 :text
 #  sent_at                       :datetime
 #  tax_id_bidx                   :string
 #  tax_id_ciphertext             :string
