@@ -124,6 +124,7 @@ class WiseTransfer < ApplicationRecord
       after do |reason = nil|
         WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
         update(return_reason: reason)
+        canonical_pending_transaction.decline!
       end
     end
   end
