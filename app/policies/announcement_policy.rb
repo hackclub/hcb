@@ -14,7 +14,7 @@ class AnnouncementPolicy < ApplicationPolicy
   end
 
   def edit?
-    (manager? && record.author == user) || admin?
+    (manager? && (record.author == user || record.author == User.system_user)) || admin?
   end
 
   def update?
