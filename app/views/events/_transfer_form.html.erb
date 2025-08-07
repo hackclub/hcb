@@ -18,7 +18,7 @@
             <strong>Mailed check</strong>
             <small>United States</small>
           <% end %>
-          <% if Flipper.enabled?(:wise_transfers_2025_07_31, @user) %>
+          <% if Flipper.enabled?(:wise_transfers_2025_07_31, current_user) %>
             <%= link_to new_event_wise_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
               <%= inline_icon "wise", size: 28 %>
               <strong>Wise transfer</strong>
