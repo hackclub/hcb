@@ -15,11 +15,11 @@ class Announcement
     end
 
     def edit?
-      admin_or_manager?
+      (manager? && record.announcement.author == user) || admin?
     end
 
     def update?
-      admin_or_manager?
+      edit?
     end
 
     private
