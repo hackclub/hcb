@@ -25,6 +25,10 @@ class WiseTransferPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def mark_failed?
+    user_who_can_transfer?
+  end
+
   def generate_quote?
     user&.auditor? || user.events.any?
   end
