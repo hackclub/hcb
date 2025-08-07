@@ -88,7 +88,7 @@ describe LoginsController do
 
     it "returns an error if the login is a reauthentication" do
       user = create(:user, email: "text@example.com")
-      login = create(:login, user:, initial_login: create(:login, user:))
+      login = create(:login, user:, is_reauthentication: true)
 
       get(:login_code, params: { id: login.hashid })
 

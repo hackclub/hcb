@@ -266,7 +266,7 @@ RSpec.describe SudoModeHandler do
 
     it "errors if the login id is for an initial login" do
       logged_in_context => { user: }
-      login = create(:login, user:, initial_login: nil)
+      login = create(:login, user:, is_reauthentication: false)
 
       post(:create, params: { _sudo: { login_id: login.hashid, submit_method: "email" } })
 
