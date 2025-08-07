@@ -4,7 +4,8 @@ module OneTimeJobs
   class AddLastFrozenByIdToStripeCards
     def self.perform
       StripeCard.find_each do |sc|
-        sc.update!(last_frozen_by_id: sc.versions.where_object_changes_to(stripe_status: "inactive").last&.whodunnit)
+        last_frozen_by_id = sc.versions.where_object_changes_to(stripe_status: "inactive").last&.whodunnit || User.system_user.id
+        sc.update!(last_frozen_by_id:)
       end
     end
 
