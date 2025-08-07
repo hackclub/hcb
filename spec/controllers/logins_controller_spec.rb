@@ -70,6 +70,11 @@ describe LoginsController do
       user = create(:user, phone_number: "+18556254225")
       # This can't be done through the factory because we have validation logic
       # that clears out `phone_number_verified` when the phone number changes.
+      stub_request(:get, "https://app.loops.so/api/v1/contacts/find").
+        with(query: { email: user.email }).
+        to_return(status: 200, body: "[]", headers: {})
+
+      stub_request(:post, "https://app.loops.so/api/v1/contacts/update")
       user.update!(use_sms_auth: true, phone_number_verified: true)
       login = create(:login, user:)
 
@@ -90,6 +95,11 @@ describe LoginsController do
     context "webauthn" do
       it "signs the user in and redirects" do
         user = create(:user, phone_number: "+18556254225")
+        stub_request(:get, "https://app.loops.so/api/v1/contacts/find").
+          with(query: { email: user.email }).
+          to_return(status: 200, body: "[]", headers: {})
+        stub_request(:post, "https://app.loops.so/api/v1/contacts/update")
+
         login = create(:login, user:)
         webauthn_credential = create_webauthn_credential(user:)
 
