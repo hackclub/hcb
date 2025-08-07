@@ -120,6 +120,7 @@ class WiseTransfersController < ApplicationController
             :address_city,
             :address_postal_code,
             :address_state,
+            :wise_id,
             { file: [] }] + WiseTransfer.recipient_information_accessors
 
     keys << :usd_amount if current_user.admin?
