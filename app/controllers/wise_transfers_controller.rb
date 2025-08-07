@@ -4,7 +4,7 @@ class WiseTransfersController < ApplicationController
   include SetEvent
 
   before_action :set_event, only: %i[new create]
-  before_action :set_wise_transfer, only: %i[update approve reject mark_sent]
+  before_action :set_wise_transfer, only: %i[update approve reject mark_sent mark_failed]
 
   def new
     @wise_transfer = @event.wise_transfers.build
