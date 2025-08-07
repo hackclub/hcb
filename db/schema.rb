@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_07_185606) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1987,7 +1987,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.boolean "initially_activated", default: false, null: false
     t.boolean "cash_withdrawal_enabled", default: false
     t.datetime "canceled_at"
+    t.bigint "last_frozen_by_id"
     t.index ["event_id"], name: "index_stripe_cards_on_event_id"
+    t.index ["last_frozen_by_id"], name: "index_stripe_cards_on_last_frozen_by_id"
     t.index ["replacement_for_id"], name: "index_stripe_cards_on_replacement_for_id"
     t.index ["stripe_cardholder_id"], name: "index_stripe_cards_on_stripe_cardholder_id"
     t.index ["stripe_id"], name: "index_stripe_cards_on_stripe_id", unique: true
@@ -2515,6 +2517,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
   add_foreign_key "stripe_cardholders", "users"
   add_foreign_key "stripe_cards", "events"
   add_foreign_key "stripe_cards", "stripe_cardholders"
+  add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"
