@@ -70,6 +70,9 @@ class WiseTransfer < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc { |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  before_validation(:normalize_wise_id)
+  validates(:wise_id, format: { with: /\A\d+\z/, message: "is not a valid Wise ID" }, allow_nil: true)
+
   after_create do
     generate_quote!
 
@@ -205,6 +208,22 @@ class WiseTransfer < ApplicationRecord
 
   def generate_quote!
     update!(quoted_usd_amount_cents: estimated_usd_amount_cents) unless quoted_usd_amount_cents.present?
+  end
+
+  WISE_ID_REGEXP = /wise.com\/transactions\/activities\/by-resource\/transfer\/(\d+)/i
+
+  def normalize_wise_id
+    return unless wise_id_changed? && wise_id.present?
+
+    normalized = wise_id.strip
+
+    if normalized =~ /\A\d+\z/
+      self.wise_id = normalized
+      return
+    end
+
+    match = WISE_ID_REGEXP.match(normalized)
+    self.wise_id = match[1] if match
   end
 
 end
