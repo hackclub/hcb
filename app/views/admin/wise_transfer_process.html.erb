@@ -1,10 +1,17 @@
-<div class="flex flex-row items-center justify-between gap-4">
-  <%= link_to wise_transfers_admin_index_path, class: "btn btn-small bg-muted" do %>
+<div class="flex flex-row items-center justify-start gap-4">
+  <%= link_to wise_transfers_admin_index_path, class: "btn btn-small bg-muted flex-shrink-0" do %>
     <%= inline_icon "view-back" %>
     Back to Wise transfers
   <% end %>
 
-  <%= link_to @wise_transfer.wise_id.present? ? "https://wise.com/transactions/activities/by-resource/TRANSFER/#{@wise_transfer.wise_id}" : "https://wise.com/send", class: "btn btn-small bg-[#9FE870] text-[#163300]", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
+  <%= link_to hcb_code_path(@wise_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+    <%= inline_icon "payment-transfer" %>
+    View transaction
+  <% end %>
+
+  <div class="flex-grow"></div>
+
+  <%= link_to @wise_transfer.wise_id.present? ? "https://wise.com/transactions/activities/by-resource/TRANSFER/#{@wise_transfer.wise_id}" : "https://wise.com/send", class: "btn btn-small bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
     <%= inline_icon "wise" %>
     Open Wise
   <% end %>
@@ -142,30 +149,8 @@
 
     </fieldset>
   <% elsif @wise_transfer.approved? %>
-    <fieldset class="p-6">
+    <fieldset class="p-6" x-data="{ amount: null, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
       <legend style="padding: 0px 8px">Send</legend>
-        <% if @wise_transfer.usd_amount_cents.present? %>
-          <div class="flex flex-row justify-start items-center gap-4 mb-3">
-            <div class="field w-min-content">
-              <%= label_tag :usd_amount, "Amount (USD)", class: "bold mb1" %> <br>
-              $ <%= number_field_tag :usd_amount, render_money(@wise_transfer.usd_amount_cents, { unit: "" }),
-                placeholder: "500.00",
-                step: 0.01,
-                disabled: true %>
-            </div>
-            <% if ::Shared::AmpleBalance.ample_balance?(@wise_transfer.usd_amount_cents, @wise_transfer.event) %>
-              <p class="m-0 text-green bold flex flex-row justify-start items-center gap-2">
-                <%= inline_icon "checkmark" %>
-                Ample balance available.
-              </p>
-            <% else %>
-              <p class="m-0 text-red bold flex flex-row justify-start items-center gap-2">
-                <%= inline_icon "important" %>
-                Insufficient funds to transfer this amount.
-              </p>
-            <% end %>
-          </div>
-        <% else %>
           <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
             <div class="field">
               <%= form.label :usd_amount, "Amount (USD)", class: "bold mb1" %> <br>
@@ -173,14 +158,24 @@
                 placeholder: "500.00",
                 step: 0.01,
                 required: true,
+                class: "mb-0",
+                "@change": "amount = +$event.target.value * 100",
+                "@keyup": "amount = +$event.target.value * 100",
                 data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
             </div>
-            <div class="flex flex-row justify-start items-center gap-3 mb-4">
+            <p x-show="amount && balance >= amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
+              <%= inline_icon "checkmark", class: "text-green" %>
+              Sufficient funds available
+            </p>
+            <p x-show="amount && balance < amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
+              <%= inline_icon "important", class: "text-red" %>
+              Insufficient funds, please reject this transfer
+            </p>
+            <div class="flex flex-row justify-start items-center gap-3 mb-4 mt-2">
               <%= form.submit "🏦 Update amount", class: "mb-0" %>
               <em class="m-0"><small class="m-0">This will update the pending amount</small></em>
             </div>
           <% end %>
-        <% end %>
 
         <%= form_with(model: @wise_transfer, local: true, url: mark_sent_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="field">
@@ -193,7 +188,8 @@
     </fieldset>
 
     <fieldset class="p-6">
-      <legend style="padding: 0px 8px">Cancel</legend>
+      <legend style="padding: 0px 8px">Reject</legend>
+      <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
 
       <%= form_with(model: nil, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
         <div class="field">
@@ -201,9 +197,10 @@
           <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
         </div>
         <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
-        <small>(This requires you to communicate to the organizer about the reason why.)</small>
       <% end %>
+
     </fieldset>
+
 
   <% else %>
     <p>This Wise transfer <%= @wise_transfer.failed? ? "" : "is " %><b><%= @wise_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wise_transfer.failed? ? @wise_transfer.return_reason.present? ? " with the following failure reason: #{@wise_transfer.return_reason}" : " for an unknown reason" : "" %>.</p>
