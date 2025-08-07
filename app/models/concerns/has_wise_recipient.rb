@@ -19,7 +19,7 @@ module HasWiseRecipient
       end
     end
 
-    # TODO: Add link to data source
+    # Requirements pulled from https://wise.com/ documentation
 
     def self.information_required_for(currency)
       fields = []
