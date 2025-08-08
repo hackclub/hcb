@@ -135,8 +135,27 @@
             <% end %>
           </td>
           <td style="text-align: right;">
-            <% if d.is_a? Wire %>
+            <% case d %>
+            <% when Wire %>
               <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+            <% when WiseTransfer %>
+              <% if d.currency == "USD" %>
+                <%= render_money(d.usd_amount || d.amount) %>
+              <% else %>
+                <% fx_tooltip = capture do %>
+                  <% if d.usd_amount_cents %>
+                    <%= render_money(d.usd_amount_cents) %>
+                  <% elsif d.quoted_usd_amount_cents %>
+                    Quoted <%= render_money(d.quoted_usd_amount_cents) %>
+                  <% else %>
+                    No USD amount
+                  <% end %>
+                <% end %>
+
+                <span class="tooltipped tooltipped--w inline-block" aria-label="<%= fx_tooltip %>">
+                  <%= d.amount.format(with_currency: true) %>
+                </span>
+              <% end %>
             <% else %>
               <%= render_money(d.amount) %>
             <% end %>
