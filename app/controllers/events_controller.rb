@@ -183,6 +183,9 @@ class EventsController < ApplicationController
 
     set_cacheable
 
+    @order = params[:order_by]
+    @order_by_mapped_at = @order == "mapped_at" && admin_signed_in?
+
     @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
       event_id: @event.id,
@@ -196,7 +199,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
-      order_by_mapped_at: true
+      order_by_mapped_at: @order_by_mapped_at
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -1206,7 +1209,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
-      order_by_mapped_at: true
+      order_by_mapped_at: @order_by_mapped_at
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
