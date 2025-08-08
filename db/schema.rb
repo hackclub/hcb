@@ -1236,6 +1236,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_022931) do
     t.index "(((increase_object -> 'deposit'::text) ->> 'transaction_id'::text))", name: "index_increase_checks_on_transaction_id"
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
+    t.index ["user_id"], name: "index_increase_checks_on_user_id"
     t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
   end
 
