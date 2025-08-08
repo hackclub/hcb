@@ -104,6 +104,7 @@ class WiresController < ApplicationController
        :address_city,
        :address_postal_code,
        :address_state,
+       :payment_recipient_id,
        { file: [] }] + Wire.recipient_information_accessors
     )
   end
