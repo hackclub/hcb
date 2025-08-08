@@ -42,7 +42,7 @@ module HasWiseRecipient
         fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number", conditional: "account_type == 'bank_account'" }
         fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number", conditional: "account_type == 'bank_account'" }
         fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number", conditional: "account_type == 'bank_account'" }
-        fields << { type: :check_box, key: "use_same_email_for_interac", label_options: { "x-text": "email ? `Use '${email}' for Interac?` : 'Use the same email for Interac?'" }, conditional: "account_type == 'interac'" }
+        fields << { type: :check_box, key: "use_same_email_for_interac", required: false, label_options: { "x-text": "email ? `Use '${email}' for Interac?` : 'Use the same email for Interac?'" }, conditional: "account_type == 'interac'" }
         fields << { type: :text_field, key: "interac_email", placeholder: "fionah@gmail.com", label: "Or, enter your Interac email", conditional: "account_type == 'interac' && !use_same_email_for_interac" }
       elsif currency == "CLP"
         fields << ACCOUNT_NUMBER_FIELD
