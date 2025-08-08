@@ -316,16 +316,16 @@ class CardGrant < ApplicationRecord
     default_card_grant_setting = CardGrantSetting.find_or_create_by!(event_id:)
     card_grant_setting = CardGrantSetting.find_or_create_by!(card_grant_id: id)
     card_grant_setting.update!({
-                                banned_categories: self.banned_categories || default_card_grant_setting.banned_categories,
-                                banned_merchants: self.banned_merchants || default_card_grant_setting.banned_merchants,
-                                category_lock: self.category_lock || default_card_grant_setting.category_lock,
-                                expiration_preference: default_card_grant_setting.expiration_preference,
-                                invite_message: default_card_grant_setting.invite_message,
-                                keyword_lock: self.keyword_lock || default_card_grant_setting.keyword_lock,
-                                merchant_lock: self.merchant_lock || default_card_grant_setting.merchant_lock,
-                                pre_authorization_required: self.pre_authorization_required || default_card_grant_setting.pre_authorization_required,
-                                reimbursement_conversions_enabled: default_card_grant_setting.reimbursement_conversions_enabled
-                              })
+                                 banned_categories: self.banned_categories || default_card_grant_setting.banned_categories,
+                                 banned_merchants: self.banned_merchants || default_card_grant_setting.banned_merchants,
+                                 category_lock: self.category_lock || default_card_grant_setting.category_lock,
+                                 expiration_preference: default_card_grant_setting.expiration_preference,
+                                 invite_message: default_card_grant_setting.invite_message,
+                                 keyword_lock: self.keyword_lock || default_card_grant_setting.keyword_lock,
+                                 merchant_lock: self.merchant_lock || default_card_grant_setting.merchant_lock,
+                                 pre_authorization_required: self.pre_authorization_required || default_card_grant_setting.pre_authorization_required,
+                                 reimbursement_conversions_enabled: default_card_grant_setting.reimbursement_conversions_enabled
+                               })
   end
 
   def create_user
