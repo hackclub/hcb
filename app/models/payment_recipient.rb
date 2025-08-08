@@ -68,7 +68,7 @@ class PaymentRecipient < ApplicationRecord
                  })
     when Wire.name
       base.merge({
-                  masked_account_number:,
+                   masked_account_number:,
                    bic_code:,
                    address_line1:,
                    address_line2:,
