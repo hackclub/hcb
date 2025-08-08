@@ -54,18 +54,18 @@ class PaymentRecipient < ApplicationRecord
     case payment_model
     when AchTransfer.name
       base.merge({
-        masked_account_number:,
-        bank_name:,
-        routing_number:,
-      })
+                   masked_account_number:,
+                   bank_name:,
+                   routing_number:,
+                 })
     when IncreaseCheck.name
       base.merge({
-        address_line1:,
-        address_line2:,
-        address_city:,
-        address_state:,
-        address_zip:,
-      })
+                   address_line1:,
+                   address_line2:,
+                   address_city:,
+                   address_state:,
+                   address_zip:,
+                 })
     else
       base
     end
