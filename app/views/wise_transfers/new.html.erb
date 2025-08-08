@@ -37,7 +37,7 @@
 
   <div class="field">
     <%= form.label :recipient_email, "Email" %>
-    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, "@keyup": "email = $event.target.value; console.log('foo')" %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, "@keyup": "email = $event.target.value" %>
   </div>
 
   <%= render partial: "recipient_details", locals: { form:, disabled: } %>
