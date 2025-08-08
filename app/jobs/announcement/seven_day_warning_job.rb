@@ -6,7 +6,7 @@ class Announcement
 
     def perform
       Announcement.monthly_for(Date.today).where.not(aasm_state: :published).find_each do |announcement|
-        AnnouncementMailer.with(announcement:).seven_day_warning.deliver_now
+        AnnouncementMailer.with(announcement:).seven_day_warning.deliver_later
       end
     end
 
