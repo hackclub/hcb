@@ -195,7 +195,8 @@ class EventsController < ApplicationController
       user: @user,
       start_date: @start_date,
       end_date: @end_date,
-      missing_receipts: @missing_receipts
+      missing_receipts: @missing_receipts,
+      order_by_mapped_at: true
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -1204,7 +1205,8 @@ class EventsController < ApplicationController
       user: @user,
       start_date: @start_date,
       end_date: @end_date,
-      missing_receipts: @missing_receipts
+      missing_receipts: @missing_receipts,
+      order_by_mapped_at: true
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
