@@ -60,11 +60,10 @@ class CardGrant < ApplicationRecord
   belongs_to :sent_by, class_name: "User"
   belongs_to :disbursement, optional: true
   has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id).or(where(source_subledger_id: record.subledger_id)) }, through: :event
-  has_one :card_grant_setting, through: :event, required: true
+  has_one :default_card_grant_setting, through: :event, required: true
+  has_one :card_grant_setting
   alias_method :setting, :card_grant_setting
-  # TODO
-  # has_one :default_card_grant_setting, through: :event, required: true
-  # has_one :card_grant_setting
+  alias_method :default_setting, :default_card_grant_setting
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
@@ -246,11 +245,11 @@ class CardGrant < ApplicationRecord
   end
 
   def allowed_merchants
-    (merchant_lock + (setting&.merchant_lock || [])).uniq
+    (merchant_lock || setting&.merchant_lock || default_setting&.merchant_lock || []).uniq
   end
 
   def disallowed_merchants
-    (banned_merchants + (setting&.banned_merchants || [])).uniq
+    (banned_merchants || setting&.banned_merchants || default_setting&.banned_merchants || []).uniq
   end
 
   def allowed_merchant_names
@@ -258,11 +257,11 @@ class CardGrant < ApplicationRecord
   end
 
   def allowed_categories
-    (category_lock + (setting&.category_lock || [])).uniq
+    (category_lock || setting&.category_lock || default_setting&.category_lock || []).uniq
   end
 
   def disallowed_categories
-    (banned_categories + (setting&.banned_categories || [])).uniq
+    (banned_categories || setting&.banned_categories || default_setting&.banned_categories || []).uniq
   end
 
   def allowed_category_names
@@ -270,7 +269,7 @@ class CardGrant < ApplicationRecord
   end
 
   def keyword_lock
-    super || setting&.keyword_lock
+    super || setting&.keyword_lock || default_setting&.keyword_lock
   end
 
   def expires_after
@@ -279,6 +278,10 @@ class CardGrant < ApplicationRecord
 
   def expires_on
     created_at + expires_after.days
+  end
+
+  def invite_message
+    setting&.invite_message || default_setting&.invite_message
   end
 
   def last_user_change_to(...)
@@ -310,7 +313,19 @@ class CardGrant < ApplicationRecord
   private
 
   def create_card_grant_setting
-    CardGrantSetting.find_or_create_by!(event_id:)
+    default_card_grant_setting = CardGrantSetting.find_or_create_by!(event_id:)
+    card_grant_setting = CardGrantSetting.find_or_create_by!(card_grant_id: id)
+    card_grant_setting.update!({
+                                banned_categories: self.banned_categories || default_card_grant_setting.banned_categories,
+                                banned_merchants: self.banned_merchants || default_card_grant_setting.banned_merchants,
+                                category_lock: self.category_lock || default_card_grant_setting.category_lock,
+                                expiration_preference: default_card_grant_setting.expiration_preference,
+                                invite_message: default_card_grant_setting.invite_message,
+                                keyword_lock: self.keyword_lock || default_card_grant_setting.keyword_lock,
+                                merchant_lock: self.merchant_lock || default_card_grant_setting.merchant_lock,
+                                pre_authorization_required: self.pre_authorization_required || default_card_grant_setting.pre_authorization_required,
+                                reimbursement_conversions_enabled: default_card_grant_setting.reimbursement_conversions_enabled
+                              })
   end
 
   def create_user
