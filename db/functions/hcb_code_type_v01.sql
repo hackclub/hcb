@@ -11,6 +11,7 @@ CREATE OR REPLACE FUNCTION hcb_code_type(hcb_code text) RETURNS text
     WHEN '300' THEN 'ach_transfer'
     WHEN '310' THEN 'wire'
     WHEN '350' THEN 'paypal_transfer'
+    WHEN '360' THEN 'wise_transfer'
     WHEN '400' THEN 'check'
     WHEN '401' THEN 'increase_check'
     WHEN '402' THEN 'check_deposit'
