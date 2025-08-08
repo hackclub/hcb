@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, order_by_mapped_at: false)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, order_by: :date)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -15,7 +15,7 @@ module PendingTransactionEngine
         @expenses = expenses
         @user = user
         @missing_receipts = missing_receipts
-        @order_by_mapped_at = order_by_mapped_at
+        @order_by = order_by
       end
 
       def run
@@ -33,16 +33,18 @@ module PendingTransactionEngine
       end
 
       def canonical_pending_transactions
+        order_by_mapped_at = @order_by == :mapped_at
+
         @canonical_pending_transactions ||=
           begin
             included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
             included_local_hcb_code_associations << :tags
             cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,
-                                                         @order_by_mapped_at ? :canonical_pending_event_mapping : nil,
+                                                         order_by_mapped_at ? :canonical_pending_event_mapping : nil,
                                                          { local_hcb_code: included_local_hcb_code_associations }])
                                               .unsettled
                                               .where(id: canonical_pending_event_mappings.pluck(:canonical_pending_transaction_id))
-                                              .order("#{@order_by_mapped_at ? "canonical_pending_event_mappings.created_at" : "canonical_pending_transactions.date"} desc, canonical_pending_transactions.id desc")
+                                              .order("#{order_by_mapped_at ? "canonical_pending_event_mappings.created_at" : "canonical_pending_transactions.date"} desc, canonical_pending_transactions.id desc")
 
             if @tag_id
               cpts =

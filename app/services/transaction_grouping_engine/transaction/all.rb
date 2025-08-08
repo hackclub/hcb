@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, order_by_mapped_at: false)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, order_by: :date)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -15,7 +15,7 @@ module TransactionGroupingEngine
         @end_date = end_date&.to_datetime
         @user = user
         @missing_receipts = missing_receipts
-        @order_by_mapped_at = order_by_mapped_at
+        @order_by = order_by
       end
 
       def run
@@ -189,6 +189,8 @@ module TransactionGroupingEngine
       end
 
       def canonical_transactions_grouped_sql
+        order_by_mapped_at = @order_by == :mapped_at
+
         pt_group_sql = <<~SQL
           select
             array_agg(pt.id) as pt_ids
@@ -196,10 +198,10 @@ module TransactionGroupingEngine
             ,coalesce(pt.hcb_code, cast(pt.id as text)) as hcb_code
             ,sum(pt.amount_cents) as amount_cents
             ,sum(pt.amount_cents / 100.0)::float as amount
-            #{@order_by_mapped_at ? ",max(cpem.created_at) as mapped_at" : ""}
+            #{order_by_mapped_at ? ",max(cpem.created_at) as mapped_at" : ""}
           from
             canonical_pending_transactions pt
-          #{@order_by_mapped_at ? "left join canonical_pending_event_mappings cpem on cpem.canonical_pending_transaction_id = pt.id" : ""}
+          #{order_by_mapped_at ? "left join canonical_pending_event_mappings cpem on cpem.canonical_pending_transaction_id = pt.id" : ""}
           #{user_joins_for :pt}
           where
             fronted = true -- only included fronted pending transactions
@@ -244,10 +246,10 @@ module TransactionGroupingEngine
             ,coalesce(ct.hcb_code, cast(ct.id as text)) as hcb_code
             ,sum(ct.amount_cents) as amount_cents
             ,sum(ct.amount_cents / 100.0)::float as amount
-            #{@order_by_mapped_at ? ",max(cem.created_at) as mapped_at" : ""}
+            #{order_by_mapped_at ? ",max(cem.created_at) as mapped_at" : ""}
           from
             canonical_transactions ct
-          #{@order_by_mapped_at ? "left join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id" : ""}
+          #{order_by_mapped_at ? "left join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id" : ""}
           #{user_joins_for :ct}
           where
             ct.id in (
@@ -308,7 +310,7 @@ module TransactionGroupingEngine
             ,q1.hcb_code
             ,q1.amount_cents
             ,q1.amount::float
-            #{@order_by_mapped_at ? ",q1.mapped_at" : ""}
+            #{order_by_mapped_at ? ",q1.mapped_at" : ""}
             ,(#{date_select}) as date
             ,(#{canonical_pending_transaction_ids_select}) as canonical_pending_transaction_ids
             ,(#{canonical_pending_transactions_select}) as canonical_pending_transactions
@@ -319,7 +321,7 @@ module TransactionGroupingEngine
             #{ct_group_sql}
           ) q1
           #{modifiers}
-          order by #{@order_by_mapped_at ? "mapped_at" : "date"} desc, pt_ids[1] desc, ct_ids[1] desc
+          order by #{order_by_mapped_at ? "mapped_at" : "date"} desc, pt_ids[1] desc, ct_ids[1] desc
         SQL
 
         ActiveRecord::Base.sanitize_sql_array([q, { event_id: @event_id }])

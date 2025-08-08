@@ -39,10 +39,10 @@
         <%= inline_icon "list", size: 28 %>
       </button>
       <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
-        <% ["date", "mapped_at"].each do |order| %>
+        <% ["date", "mapped_at"].each do |order_by| %>
           <div class="flex items-center">
-            <%= link_to(upsert_query_params(order_by: order), class: "flex-auto menu__action #{"menu__action--active" if @order == order}", data: { turbo_prefetch: "false" }) do %>
-              <%= order.humanize %>
+            <%= link_to(upsert_query_params(order_by:), class: "flex-auto menu__action #{"menu__action--active" if @order_by == order_by}", data: { turbo_prefetch: "false" }) do %>
+              <%= order_by.humanize %>
             <% end %>
           </div>
         <% end %>
