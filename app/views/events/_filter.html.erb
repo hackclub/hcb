@@ -67,7 +67,7 @@
       <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
         <% [10, 25, 50, 100, 200].each do |amount| %>
           <div class="flex items-center">
-            <%= link_to(upsert_query_params(per: amount), class: "flex-auto menu__action", data: { turbo_prefetch: "false" }) do %>
+            <%= link_to(event_ledger_path(@event, upsert_query_params(per: amount)), class: "flex-auto menu__action", data: { turbo_prefetch: "false" }) do %>
               <%= amount %> Transactions Per Page
             <% end %>
           </div>
@@ -81,7 +81,7 @@
   <div class="flex items-center filter-menu">
     <%= render partial: "filter_menu" %>
 
-    <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
+    <%= link_to event_ledger_path(@event), class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
       <%= inline_icon "view-close", size: 28 %>
     <% end %>
 
@@ -91,7 +91,7 @@
           <%= render partial: "canonical_transactions/tag_icon", locals: { tag: @tag } %>
           <%= @tag.label %>
 
-          <%= link_to event_ledger_url(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
