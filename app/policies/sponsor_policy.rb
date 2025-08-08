@@ -5,6 +5,7 @@ class SponsorPolicy < ApplicationPolicy
     auditor_or_reader?
   end
 
+  # sponsors can never be seen in transparency mode
   def show?
     auditor_or_reader?
   end
