@@ -1,0 +1,5 @@
+<%# locals: (block: nil) %>
+
+<%= render "announcements/modals/modal_shell", block:, type: "topCategories", header: "#{block.present? ? "Edit this" : "Insert a"} top categories graph" do %>
+  <%= render "announcements/modals/date_inputs", block: %>
+<% end %>
