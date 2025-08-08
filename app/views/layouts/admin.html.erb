@@ -28,6 +28,7 @@
            Disbursements: [disbursements_admin_index_path, Disbursement.reviewing.count, %i[]],
            PayPal: [paypal_transfers_admin_index_path, PaypalTransfer.pending.count, %i[]],
            Wires: [wires_admin_index_path, Wire.pending.count, %i[]],
+           "Wise transfers": [wise_transfers_admin_index_path, WiseTransfer.pending.count, %i[]],
            Reimbursements: [reimbursements_admin_index_path, Reimbursement::Report.reimbursement_requested.count, %i[]]
          },
          Ledger: {

@@ -61,7 +61,15 @@ module StripeAuthorizationService
 
         return decline_with_reason!("inadequate_balance") if card_balance_available < amount_cents
 
-        return decline_with_reason!("cash_withdrawals_not_allowed") if cash_withdrawal? && !card.cash_withdrawal_enabled?
+        if cash_withdrawal?
+          unless card.cash_withdrawal_enabled?
+            return decline_with_reason!("cash_withdrawals_not_allowed")
+          end
+
+          if amount_cents > 500_00
+            return decline_with_reason!("exceeds_approval_amount_limit")
+          end
+        end
 
         return decline_with_reason!("user_cards_locked") if card.user.cards_locked? && event.plan.card_lockable?
 

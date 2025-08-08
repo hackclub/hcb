@@ -327,6 +327,10 @@ class CanonicalTransaction < ApplicationRecord
     return linked_object if linked_object.is_a?(Wire)
   end
 
+  def wise_transfer
+    return linked_object if linked_object.is_a?(WiseTransfer)
+  end
+
   def check_deposit
     return linked_object if linked_object.is_a?(CheckDeposit)
 

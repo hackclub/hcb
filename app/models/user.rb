@@ -127,6 +127,8 @@ class User < ApplicationRecord
 
   has_many :card_grants
 
+  has_many :wise_transfers
+
   has_one_attached :profile_picture
 
   has_many :w9s, class_name: "W9", as: :entity

@@ -92,6 +92,10 @@
               <span class="tooltipped tooltipped--e inline-block" aria-label="International wire">
                 <%= inline_icon "web" %>
               </span>
+            <% elsif d.is_a?(WiseTransfer) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="Wise transfer">
+                <%= inline_icon "wise" %>
+              </span>
             <% else %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
                 <%= inline_icon "door-leave" %>
@@ -99,7 +103,7 @@
             <% end %>
           </td>
           <td>
-            <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text&.capitalize %></span>
+            <span class="ml0 badge bg-<%= d.try(:state) || d.state_color %>"><%= d.state_text&.capitalize %></span>
           </td>
           <td>
             <%= format_date d.created_at %>

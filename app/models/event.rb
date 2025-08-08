@@ -172,12 +172,11 @@ class Event < ApplicationRecord
 
       from (
           select
-          cem.event_id,
+          f.event_id,
           COALESCE(sum(f.amount_cents_as_decimal), 0) as sum
-          from canonical_event_mappings cem
-          inner join fees f on cem.id = f.canonical_event_mapping_id
-          inner join events e on e.id = cem.event_id
-          group by cem.event_id
+          from fees f
+          inner join events e on e.id = f.event_id
+          group by f.event_id
       ) as q1 left outer join (
           select
           cem.event_id,
@@ -323,6 +322,8 @@ class Event < ApplicationRecord
   has_many :paypal_transfers
 
   has_many :wires
+
+  has_many :wise_transfers
 
   has_many :sponsors
   has_many :invoices, through: :sponsors
@@ -561,8 +562,8 @@ class Event < ApplicationRecord
   def fronted_incoming_balance_v2_cents(start_date: nil, end_date: nil)
     pts = canonical_pending_transactions.incoming.fronted.not_declined
 
-    pts = pts.where("date >= ?", @start_date) if start_date
-    pts = pts.where("date <= ?", @end_date) if end_date
+    pts = pts.where("date >= ?", start_date) if start_date
+    pts = pts.where("date <= ?", end_date) if end_date
 
     sum_fronted_amount(pts)
   end
