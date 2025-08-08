@@ -96,10 +96,11 @@ class CardGrant
     end
 
     def analyze!
-      conn = Faraday.new url: "https://api.openai.com" do |f|
-        f.request :json
-        f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
-        f.response :json
+      conn = Faraday.new url: "https://api.openai.com" do |c|
+        c.request :json
+        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
+        c.response :json
+        c.response :raise_error
       end
 
       prompt = <<~PROMPT
