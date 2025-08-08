@@ -199,6 +199,16 @@ class HcbCodesController < ApplicationController
     end
   end
 
+  def receipt_status
+    @hcb_code = HcbCode.find(params[:id])
+    @secret = params[:s]
+
+    authorize @hcb_code
+
+  rescue Pundit::NotAuthorizedError
+    raise unless HcbCode.find_signed(@secret, purpose: :receipt_status) == @hcb_code
+  end
+
   def toggle_tag
     hcb_code = HcbCode.find(params[:id])
     tag = Tag.find(params[:tag_id])
