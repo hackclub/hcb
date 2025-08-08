@@ -207,7 +207,7 @@ module TransactionGroupingEngine
               from
                 canonical_pending_event_mappings cpem
               where
-                cpem.event_id = :event_id
+                #{ActiveRecord::Base.sanitize_sql_for_conditions(["cpem.event_id = ?", @event_id])}
                 and cpem.subledger_id is null
               except ( -- hide pending transactions that have either settled or been declined.
                 select
@@ -226,7 +226,9 @@ module TransactionGroupingEngine
               select *
               from canonical_transactions ct
               inner join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id
-              where ct.hcb_code = pt.hcb_code and cem.event_id = :event_id
+              where
+                ct.hcb_code = pt.hcb_code
+                and #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
             )
             #{search_modifier_for :pt}
             #{user_modifier}
@@ -251,7 +253,7 @@ module TransactionGroupingEngine
               from
                 canonical_event_mappings cem
               where
-                cem.event_id = :event_id
+                #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
                 and cem.subledger_id is null
             )
             #{search_modifier_for :ct}
@@ -296,7 +298,7 @@ module TransactionGroupingEngine
           )
         SQL
 
-        q = <<~SQL
+        <<~SQL
           select
             q1.ct_ids -- ct_ids and pt_ids in this query are mutually exclusive
             ,q1.pt_ids
@@ -315,8 +317,6 @@ module TransactionGroupingEngine
           #{modifiers}
           order by date desc, pt_ids[1] desc, ct_ids[1] desc
         SQL
-
-        ActiveRecord::Base.sanitize_sql_array([q, { event_id: @event_id }])
       end
 
       def canonical_transactions_grouped
