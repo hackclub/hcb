@@ -722,6 +722,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "published", default: false, null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
   end
 
