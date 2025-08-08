@@ -245,7 +245,7 @@ class SudoModeHandler
         default_factor:,
         **form_locals,
       },
-      status: :unprocessable_entity
+      status: :unauthorized
     )
   end
 
