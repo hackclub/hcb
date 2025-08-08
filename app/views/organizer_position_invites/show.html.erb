@@ -21,7 +21,7 @@
   <% if @invite.accept %>
     <%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success h2 m1" %>
   <% else %>
-    <%= link_to "Sign Here", @invite.organizer_url, class: "btn bg-accent h2 m1" %>
+    <%= link_to "Sign here", @invite.organizer_url, class: "btn bg-accent h2 m1" %>
   <% end %>
 </div>
 </main>
