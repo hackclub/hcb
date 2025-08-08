@@ -10,6 +10,10 @@ class IncreaseChecksController < ApplicationController
     @check = @event.increase_checks.build
 
     authorize @check
+
+    if Flipper.enabled?(:payment_recipients)
+      return render :new_v2
+    end
   end
 
   def create
