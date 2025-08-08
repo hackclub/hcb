@@ -76,6 +76,7 @@ class IncreaseChecksController < ApplicationController
       :recipient_email,
       :send_email_notification,
       :address_zip,
+      :payment_recipient_id,
       file: []
     )
   end

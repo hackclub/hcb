@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_08_022931) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1232,10 +1232,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_02_222150) do
     t.string "column_delivery_status"
     t.string "recipient_email"
     t.boolean "send_email_notification", default: false
+    t.bigint "payment_recipient_id"
     t.index "(((increase_object -> 'deposit'::text) ->> 'transaction_id'::text))", name: "index_increase_checks_on_transaction_id"
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
-    t.index ["user_id"], name: "index_increase_checks_on_user_id"
+    t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
   end
 
   create_table "invoice_payouts", force: :cascade do |t|
