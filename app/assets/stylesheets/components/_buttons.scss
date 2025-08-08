@@ -1,36 +1,55 @@
 input[type='submit'],
 .btn {
   -webkit-appearance: none;
-  align-items: center;
   border: 0;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.125);
-  @include gradient(info);
-  color: $white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-border);
+  background-color: $white;
+  color: $black;
   cursor: pointer;
   display: inline-flex;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   justify-content: center;
+  align-items: center;
+  height: 36px;
   letter-spacing: 0;
-  line-height: 1.5;
   overflow: hidden;
-  padding: 0.5rem 1.25rem;
+  padding: 0 1rem;
   position: relative;
   text-align: center;
   text-decoration: none;
-  transform: scale(1);
-  transition:
-    transform 0.125s ease-in-out,
-    box-shadow 0.25s ease-in-out;
   user-select: none;
+  transition:
+    box-shadow 0.125s ease-in-out,
+    background-color 0.125s ease-in-out,
+    color 0.125s ease-in-out;
 
   &:hover,
   &:focus,
   &[aria-expanded='true'] {
-    color: $white;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
-    transform: scale(1.0625);
+    box-shadow:
+      var(--shadow-border-md),
+      inset 0 0 0px 0.5px rgba(0, 0, 0, 0.1);
+    background: darken($white, 5%);
+  }
+
+  &:focus-visible {
+    box-shadow:
+      inset 0 0 0 0.5px map-get($palette, info),
+      0 0 0 3px rgba(map-get($palette, info), 0.25) !important;
+  }
+
+  &:not([class*='bg-']):not([type='submit']) {
+    box-shadow: var(--shadow-border);
+
+    &:hover,
+    &:focus,
+    &[aria-expanded='true'] {
+      box-shadow:
+        var(--shadow-border-md),
+        inset 0 0 0px 0.5px rgba(0, 0, 0, 0.15);
+    }
   }
 
   &.disabled,
@@ -44,12 +63,33 @@ input[type='submit'],
   svg {
     width: 24px;
     height: 24px;
-    margin-left: -4px;
-    margin-right: 6px;
+    opacity: 0.875;
+  }
+
+  > svg {
+    &:first-child {
+      margin-left: -4px;
+      margin-right: 6px;
+    }
+
+    &:not(:first-child)[aria-label='down-caret'] {
+      margin-left: 6px;
+      margin-right: -4px;
+    }
   }
 
   &.bg-primary {
-    @include gradient(primary);
+    background-color: map-get($palette, primary);
+    color: $white;
+
+    &:hover {
+      background-color: darken(map-get($palette, primary), 5%);
+    }
+
+    &:active,
+    &:focus {
+      background-color: darken(map-get($palette, primary), 10%);
+    }
   }
 
   &.bg-smoke {
@@ -63,11 +103,13 @@ input[type='submit'],
   }
 
   &.bg-muted {
-    @include gradient(muted);
+    background-color: map-get($palette, muted);
+    color: $white;
   }
 
   &.bg-warning {
-    @include gradient(warning);
+    background-color: map-get($palette, warning);
+    color: $white;
 
     html[data-dark='true'] & {
       color: darken(map-get($palette, warning), 33.3%) !important;
@@ -76,10 +118,28 @@ input[type='submit'],
 
   &.bg-purple {
     @include gradient(purple);
+    color: $white;
+
+    &:hover {
+      background: darken(map-get($palette, purple), 5%);
+    }
+    &:active,
+    &:focus {
+      background: darken(map-get($palette, purple), 10%);
+    }
   }
 
   &.bg-slate {
     @include gradient(slate);
+    color: $white;
+
+    &:hover {
+      background: darken(map-get($palette, slate), 5%);
+    }
+    &:active,
+    &:focus {
+      background: darken(map-get($palette, slate), 10%);
+    }
   }
 
   &.bg-ai {
@@ -87,54 +147,59 @@ input[type='submit'],
   }
 
   &.bg-success {
-    @include gradient(success);
-    color: darken(map-get($palette, success), 33.3%) !important;
+    background-color: map-get($palette, success);
+    color: darken(map-get($palette, success), 40%) !important;
+
+    &:hover {
+      background-color: darken(map-get($palette, success), 5%);
+    }
+
+    &:active,
+    &:focus {
+      background-color: darken(map-get($palette, success), 10%);
+    }
   }
 
   &.bg-accent {
-    @include gradient(accent);
-    color: darken(map-get($palette, accent), 33.3%) !important;
+    background-color: map-get($palette, accent);
+    color: darken(map-get($palette, accent), 50%);
+
+    &:hover {
+      background-color: darken(map-get($palette, accent), 5%);
+    }
+    &:active,
+    &:focus {
+      background-color: darken(map-get($palette, accent), 10%);
+    }
   }
 
   &.bg-error,
   &.btn--destroy {
-    @include gradient(error);
+    transition:
+      box-shadow 0.125s ease,
+      background-color 0.125s ease;
+    background-color: map-get($palette, white) !important;
+    color: map-get($palette, error) !important;
+
+    &:hover {
+      background-color: rgba(map-get($palette, primary), 0.125) !important;
+    }
   }
 }
 
-.btn--form-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  text-align: center;
-  line-height: 1.25;
-  color: map-get($palette, info);
-  background-color: rgba(map-get($palette, accent), 0.25);
+.btn.bg-info,
+input[type='submit'] {
+  background-color: map-get($palette, info);
+  color: $white !important;
 
-  &:hover,
+  &:hover {
+    background-color: darken(map-get($palette, info), 5%);
+  }
+
+  &:active,
   &:focus {
-    color: map-get($palette, info);
+    background-color: darken(map-get($palette, info), 10%);
   }
-
-  html[data-dark='true'] & {
-    color: map-get($palette, white);
-  }
-}
-
-.btn--form-option--disabled {
-  background-color: rgba(map-get($palette, accent), 0.12);
-  color: rgba(map-get($palette, info), 0.7);
-
-  html[data-dark='true'] & {
-    color: rgba(map-get($palette, white), 0.7);
-  }
-
-  cursor: default;
-  pointer-events: none;
-  user-select: none;
 }
 
 .btn-small {
@@ -174,25 +239,17 @@ form .flex-auto + input[type='submit'] {
   }
 
   @media (min-width: 32em) {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.125);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-md);
 
     .btn:first-child {
-      border-radius: 0.75rem 0 0 0.75rem;
+      border-radius: var(--radius-md) 0 0 var(--radius-md);
     }
     .btn {
       border-radius: 0;
-      box-shadow: none;
       margin: 0;
-
-      &:hover,
-      &:focus {
-        z-index: 2;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.125);
-      }
     }
     .btn:last-child {
-      border-radius: 0 0.75rem 0.75rem 0;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
     }
   }
 }
