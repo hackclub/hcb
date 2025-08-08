@@ -2,31 +2,31 @@
 
 class SponsorPolicy < ApplicationPolicy
   def index?
-    user.auditor?
+    user&.auditor?
   end
 
   def show?
-    user.auditor?
+    user&.auditor?
   end
 
   def new?
-    user.admin?
+    user&.admin?
   end
 
   def create?
-    user.admin?
+    user&.admin?
   end
 
   def edit?
-    user.admin?
+    user&.admin?
   end
 
   def update?
-    user.admin?
+    user&.admin?
   end
 
   def destroy
-    user.admin?
+    user&.admin?
   end
 
   def permitted_attributes
@@ -42,7 +42,7 @@ class SponsorPolicy < ApplicationPolicy
       :id
     ]
 
-    attrs << :event_id if user.admin?
+    attrs << :event_id if user&.admin?
 
     attrs
   end
