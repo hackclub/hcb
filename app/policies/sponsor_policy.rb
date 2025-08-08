@@ -47,10 +47,6 @@ class SponsorPolicy < ApplicationPolicy
     attrs
   end
 
-  def show_in_v4?
-    user&.auditor? || user_has_position?
-  end
-
   private
 
   def user_has_position?
