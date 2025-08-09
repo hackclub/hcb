@@ -1,6 +1,6 @@
-<% if @hcb_code.wise_transfer.wise_id.present? %>
+<% if @hcb_code.wise_transfer.wise_url %>
   <% admin_tool("mt3") do %>
-    <%= link_to "https://wise.com/transactions/activities/by-resource/TRANSFER/#{@hcb_code.wise_transfer.wise_id}", class: "btn bg-accent", target: "_blank" do %>
+    <%= link_to @hcb_code.wise_transfer.wise_url, class: "btn bg-accent", target: "_blank" do %>
       <%= inline_icon "wise" %>
       View transfer on Wise
     <% end %>
