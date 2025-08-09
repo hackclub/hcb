@@ -16,6 +16,8 @@ module Api
       end
 
       def create
+        event = authorize Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
+
         sponsor = params.require(:sponsor).permit(
           :address_city,
           :address_country,
@@ -24,8 +26,7 @@ module Api
           :address_postal_code,
           :address_state,
           :contact_email,
-          :name,
-          :organization_id
+          :name
         )
 
         @sponsor = Sponsor.new(
@@ -37,7 +38,7 @@ module Api
           address_state: sponsor[:address_state],
           contact_email: sponsor[:contact_email],
           name: sponsor[:name],
-          event_id: sponsor[:organization_id]
+          event_id: event.id
         )
         authorize @sponsor
 
