@@ -147,6 +147,7 @@ class MyController < ApplicationController
     @payout_method = current_user.payout_method
   end
 
+  # this doesn't match up to the # of reimbursements on the my/reimbursements page; should it?
   def reimbursements_icon
     @draft_reimbursements_count = current_user.reimbursement_reports.draft.count
     @review_requested_reimbursements_count = current_user.assigned_reimbursement_reports.submitted.count
