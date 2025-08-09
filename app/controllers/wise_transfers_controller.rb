@@ -31,7 +31,7 @@ class WiseTransfersController < ApplicationController
           receiptable: @wise_transfer.local_hcb_code
         ).run!
       end
-      redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your wise transfer has been sent!" }
+      redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your Wise transfer has been sent!" }
     else
       render "new", status: :unprocessable_entity
     end
@@ -120,6 +120,7 @@ class WiseTransfersController < ApplicationController
             :address_city,
             :address_postal_code,
             :address_state,
+            :wise_id,
             { file: [] }] + WiseTransfer.recipient_information_accessors
 
     keys << :usd_amount if current_user.admin?

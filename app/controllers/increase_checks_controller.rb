@@ -10,6 +10,10 @@ class IncreaseChecksController < ApplicationController
     @check = @event.increase_checks.build
 
     authorize @check
+
+    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
+      return render :new_v2
+    end
   end
 
   def create
@@ -76,6 +80,7 @@ class IncreaseChecksController < ApplicationController
       :recipient_email,
       :send_email_notification,
       :address_zip,
+      :payment_recipient_id,
       file: []
     )
   end
