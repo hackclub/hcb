@@ -129,7 +129,10 @@ class MyController < ApplicationController
 
   def reimbursements
     my_reports = current_user.reimbursement_reports
-    reports_to_review = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    manager_events = current_user.events
+                                 .joins(:organizer_positions)
+                                 .where(organizer_positions: { user_id: current_user.id, role: :manager })
+    reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
     case params[:filter]
     when "mine"
       @reports = my_reports
