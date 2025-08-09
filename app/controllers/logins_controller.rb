@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class LoginsController < ApplicationController
-  skip_before_action :signed_in_user
+  skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
-  before_action :set_login, except: [:new, :create]
-  before_action :set_user, except: [:new, :create]
+  before_action :set_login, except: [:new, :create, :reauthenticate]
+  before_action :set_user, except: [:new, :create, :reauthenticate]
   before_action :set_return_to
 
   layout "login"
@@ -173,12 +173,18 @@ class LoginsController < ApplicationController
     end
   end
 
+  def reauthenticate
+    return unless enforce_sudo_mode
+
+    redirect_to(@return_to || root_path)
+  end
+
   private
 
   def set_login
     begin
       if params[:id]
-        @login = Login.incomplete.active.find_by_hashid!(params[:id])
+        @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
         @referral_program = @login.referral_program
         unless valid_browser_token?
           # error! browser token doesn't match the cookie.

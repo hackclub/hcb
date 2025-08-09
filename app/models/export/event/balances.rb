@@ -22,7 +22,7 @@
 class Export
   module Event
     class Balances < Export
-      store_accessor :parameters
+      store_accessor :parameters, :end_date
       def async?
         true
       end
@@ -72,7 +72,7 @@ class Export
             event.users.pluck(:email).join(", "),
             event.plan.revenue_fee_label,
             Rails.application.routes.url_helpers.url_for(event),
-            event.balance,
+            event.balance(end_date: end_date.presence),
             event.total_raised,
             event.omit_stats?
           ]

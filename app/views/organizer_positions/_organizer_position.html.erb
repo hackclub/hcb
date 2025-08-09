@@ -18,7 +18,7 @@
               </div>
               <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
                 <% OrganizerPosition.roles.keys.each do |role| %>
-                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: "post", turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
+                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
                     <%= role.humanize %><%= " ✔" if organizer_position.role == role %>
                   <% end %>
                 <% end %>
@@ -40,7 +40,7 @@
           </div>
           <% unless organizer_position.user == current_user || current_session&.impersonated? %>
             <div class="tooltipped tooltipped--s" aria-label="Impersonate user">
-              <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
+              <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
             </div>
           <% end %>
         <% end %>

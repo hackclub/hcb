@@ -4,7 +4,7 @@ class OrganizerPositionInvitesController < ApplicationController
   include SetEvent
   include ChangePositionRole
 
-  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :toggle_signee_status, :resend]
+  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :resend]
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
@@ -33,7 +33,7 @@ class OrganizerPositionInvitesController < ApplicationController
 
     if service.run
       if @invite.is_signee
-        OrganizerPosition::Contract.create(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
+        OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
       end
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
@@ -105,14 +105,6 @@ class OrganizerPositionInvitesController < ApplicationController
     redirect_to event_team_path @invite.event
   end
 
-  def toggle_signee_status
-    authorize @invite
-    unless @invite.update(is_signee: !@invite.is_signee?)
-      flash[:error] = @invite.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
-    end
-    redirect_back(fallback_location: event_team_path(@invite.event))
-  end
-
   private
 
   def set_opi
@@ -121,9 +113,10 @@ class OrganizerPositionInvitesController < ApplicationController
 
   def invite_params
     permitted_params = [:email, :role, :enable_controls, :initial_control_allowance_amount]
-    permitted_params << :cosigner_email if admin_signed_in?
-    permitted_params << :include_videos if admin_signed_in?
-    permitted_params << :is_signee if admin_signed_in?
+
+    if admin_signed_in?
+      permitted_params.push(:cosigner_email, :include_videos, :is_signee)
+    end
     params.require(:organizer_position_invite).permit(permitted_params)
   end
 

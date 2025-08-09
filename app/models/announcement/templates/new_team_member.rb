@@ -48,7 +48,7 @@ class Announcement
       end
 
       def create
-        Announcement.create!(event: @invite.event, title:, content: json_content, aasm_state: :template_draft, author: @author)
+        Announcement.create!(event: @invite.event, title:, content: json_content, aasm_state: :template_draft, author: @author, template_type: self.class.name)
       end
 
     end
