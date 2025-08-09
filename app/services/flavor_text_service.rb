@@ -135,6 +135,7 @@ class FlavorTextService
 
   def flavor_texts
     [
+      "duck.",
       "The hivemind known as HCB",
       "How often does time happen?",
       "To an extent",

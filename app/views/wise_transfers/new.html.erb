@@ -22,7 +22,7 @@
 <% end %>
 
 <%= form_with(model: [@event, @wise_transfer], local: true, html: {
-                "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null }"
+                "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
               }) do |form| %>
 
   <%= form_errors(@wise_transfer, "wise transfer", "We couldn't send this") %>
@@ -37,7 +37,7 @@
 
   <div class="field">
     <%= form.label :recipient_email, "Email" %>
-    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, "@keyup": "email = $event.target.value" %>
   </div>
 
   <%= render partial: "recipient_details", locals: { form:, disabled: } %>

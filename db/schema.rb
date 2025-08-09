@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -12,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_07_184027) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
+
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1232,9 +1231,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_07_184027) do
     t.string "column_delivery_status"
     t.string "recipient_email"
     t.boolean "send_email_notification", default: false
+    t.bigint "payment_recipient_id"
     t.index "(((increase_object -> 'deposit'::text) ->> 'transaction_id'::text))", name: "index_increase_checks_on_transaction_id"
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
+    t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
     t.index ["user_id"], name: "index_increase_checks_on_user_id"
   end
 
@@ -1377,7 +1378,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_07_184027) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "browser_token_ciphertext"
-    t.bigint "initial_login_id"
     t.bigint "referral_program_id"
     t.boolean "is_reauthentication", default: false, null: false
     t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
@@ -2347,8 +2347,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_07_184027) do
     t.string "address_postal_code"
     t.text "column_id"
     t.text "return_reason"
+    t.bigint "payment_recipient_id"
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
     t.index ["event_id"], name: "index_wires_on_event_id"
+    t.index ["payment_recipient_id"], name: "index_wires_on_payment_recipient_id"
     t.index ["user_id"], name: "index_wires_on_user_id"
   end
 
@@ -2480,7 +2482,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_07_184027) do
   add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_codes", "users"
-  add_foreign_key "logins", "logins", column: "initial_login_id"
   add_foreign_key "mailbox_addresses", "users"
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "closed_by_id"
@@ -2538,4 +2539,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_07_184027) do
   add_foreign_key "wires", "users"
   add_foreign_key "wise_transfers", "events"
   add_foreign_key "wise_transfers", "users"
+  create_function :hcb_code_type, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.hcb_code_type(hcb_code text)
+       RETURNS text
+       LANGUAGE sql
+       IMMUTABLE STRICT
+      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
+  SQL
+
 end
