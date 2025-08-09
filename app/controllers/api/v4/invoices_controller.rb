@@ -9,7 +9,10 @@ module Api
       end
 
       def show
+        # why does this cause "unable to find policy `NilClassPolicy` for `nil`" with a bad id?
         @invoice = authorize Invoice.find_by_public_id(params[:id])
+      rescue => e
+        return render json: { error: e.message }, status: :bad_request
       end
 
       def create
