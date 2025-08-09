@@ -23,7 +23,7 @@ module Api
         # we use public ids most places in the api so we need to convert this to a model to get the regular id
         # if this record doesnt exist it will fall back to the sponsor attributes provided and generate a sponsor
         # if the record does exist it will be updated by the invoice service to the new sponsor attributes provided here
-        sponsor = authorize Sponsor.find_by_public_id(filtered_params[:sponsor_id])
+        sponsor = authorize Sponsor.find_by_public_id(sponsor_attrs[:id])
 
         @invoice = ::InvoiceService::Create.new(
           event_id: event.id,
