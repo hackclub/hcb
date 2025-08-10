@@ -20,30 +20,10 @@
   <span class="badge ml-0 text-sm caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
-<% if current_user.card_grants.not_activated.size > 0 %>
-  <% current_user.card_grants.not_activated.each do |grant| %>
-    <div class="card border b--info container--sm mx-auto mb-12 mt-6 text-center">
-      <p class="my-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
-      <p class="mt-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
-      <%= link_to "Activate my grant", grant, class: "btn" %>
-    </div>
-  <% end %>
-<% end %>
-
-<% if current_user.card_grants.activated.size > 0 %>
-  <h2 class="heading h2 line-height-4 mt-0 ml-0 py-2 px-4 border-none">Grants</h2>
-
-  <div class="grid grid--wide mb-12">
-    <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
-      <%= render grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
-    <% end %>
-  </div>
-<% end %>
-
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
 
-    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 border-none ml-0 pl-0">Your organizations</h2>
+    <% if @events.any? %><h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 border-none ml-0 pl-0">Your organizations</h2><% end %>
 
     <% if @events.any? %>
       <% if @show_event_reorder_tip %>
@@ -85,13 +65,19 @@
     <% end %>
 
     <% if @events.empty? %>
-      <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border flex flex-col w-full items-center justify-center">
+      <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto flex flex-col w-full items-center justify-center">
         <span>
           You aren't a part of an organization yet, looking to start one?
         </span>
-        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
-          <%= inline_icon "plus" %>
-          New organization
+        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "pt2" do %>
+          <div class="card card--hover bold font-brand flex items-center justify-center align-center h-full">
+            <div class="center">
+              <div class="pop success mx-auto flex mb-1">
+                <%= inline_icon "plus", size: 28 %>
+              </div>
+              New organization
+            </div>
+          </div>
         <% end %>
       </div>
     <% end %>

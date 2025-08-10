@@ -46,6 +46,15 @@
     <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
   </section>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
+  <% if current_user.card_grants.not_activated.size > 0 %>
+    <% current_user.card_grants.not_activated.each do |grant| %>
+      <div class="card border b--info container--sm mx-auto mb-12 mt-6 text-center">
+        <p class="my-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
+        <p class="mt-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
+        <%= link_to "Activate my grant", grant, class: "btn" %>
+      </div>
+    <% end %>
+  <% end %>
   <% if @stripe_cards.any? %>
     <article class="mixed-grid grid--spacious">
       <%= render @stripe_cards, headless: true, show_purpose: true %>
