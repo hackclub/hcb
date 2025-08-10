@@ -6,7 +6,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def shipping?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def freeze?
@@ -14,8 +14,8 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def defrost?
-    return false if record&.event&.financially_frozen?
-    return false if record&.last_frozen_by.present? && record&.last_frozen_by != user && !admin_or_manager?
+    return false if record.event&.financially_frozen?
+    return false if record.last_frozen_by.present? && record.last_frozen_by != user && !admin_or_manager?
 
     freeze?
   end
@@ -25,11 +25,11 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def activate?
-    (user&.admin? || member_and_cardholder?) && !record&.canceled? && !record&.event&.financially_frozen?
+    (user&.admin? || member_and_cardholder?) && !record.canceled? && !record.event&.financially_frozen?
   end
 
   def show?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader) || grantee?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || grantee?
   end
 
   def edit?
@@ -41,7 +41,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def transactions?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader) || cardholder?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || cardholder?
   end
 
   def ephemeral_keys?
@@ -59,19 +59,19 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def member?
-    OrganizerPosition.role_at_least?(user, record&.event, :member)
+    OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
   def cardholder?
-    record&.user == user
+    record.user == user
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record&.event)&.manager?
+    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 
   def grantee?
-    cardholder? && record&.card_grant
+    cardholder? && record.card_grant
   end
 
 end
