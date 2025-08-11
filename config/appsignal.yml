@@ -9,6 +9,7 @@ default: &defaults
     - ActionController::InvalidCrossOriginRequest
     - ActionController::MethodNotAllowed
     - ActionController::ParameterMissing
+    - ActionController::RoutingError
     - ActionController::UnknownFormat
     - ActionController::UnknownHttpMethod
     - ActionDispatch::Http::MimeNegotiation::InvalidType
