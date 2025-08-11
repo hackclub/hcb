@@ -40,6 +40,14 @@ class AdminController < ApplicationController
     @canonical_pending_transactions = CanonicalPendingTransaction.unmapped.where(amount_cents: @canonical_transaction.amount_cents)
     @ahoy_events = Ahoy::Event.where("name in (?) and (properties->'canonical_transaction'->>'id')::int = ?", [::SystemEventService::Write::SettledTransactionMapped::NAME, ::SystemEventService::Write::SettledTransactionCreated::NAME], @canonical_transaction.id).order("time desc")
 
+    if @canonical_transaction.memo.include?("WISE INC")
+      potential_wise_transfers = WiseTransfer.sent.where(usd_amount_cents: -@canonical_transaction.amount_cents)
+
+      if potential_wise_transfers.one?
+        @suggested_wise_mapping = potential_wise_transfers.first
+      end
+    end
+
     # Mapping confirm message
     @mapping_confirm_msg = if !@canonical_transaction.local_hcb_code.unknown?
                              "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀"
@@ -687,9 +695,30 @@ class AdminController < ApplicationController
 
   end
 
+  def wise_transfers
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].present? ? params[:q] : nil
+    @event_id = params[:event_id].present? ? params[:event_id] : nil
+
+    @wise_transfers = WiseTransfer.all
+
+    @wise_transfers = @wise_transfers.search_recipient(@q) if @q
+
+    @wise_transfers.where(event_id: @event_id) if @event_id
+
+    @wise_transfers = @wise_transfers.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'pending' DESC"),
+      "created_at desc"
+    )
+  end
+
   def wire_process
     @wire = Wire.find(params[:id])
+  end
 
+  def wise_transfer_process
+    @wise_transfer = WiseTransfer.find(params[:id])
   end
 
   def donations
@@ -1079,6 +1108,31 @@ class AdminController < ApplicationController
     redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
   end
 
+  def set_wise_transfer
+    ActiveRecord::Base.transaction do
+      wise_transfer = WiseTransfer.find(params[:wise_transfer_id])
+
+      canonical_transaction = CanonicalTransactionService::SetEvent.new(
+        canonical_transaction_id: params[:id],
+        event_id: wise_transfer.event.id,
+        user: current_user
+      ).run
+
+      CanonicalPendingTransactionService::Settle.new(
+        canonical_transaction:,
+        canonical_pending_transaction: wise_transfer.canonical_pending_transaction
+      ).run!
+
+      canonical_transaction.update!(hcb_code: wise_transfer.hcb_code, transaction_source_type: "WiseTransfer", transaction_source_id: wise_transfer.id)
+
+      wise_transfer.mark_deposited!
+
+      redirect_to transaction_admin_path(canonical_transaction)
+    end
+  rescue => e
+    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
+  end
+
   def audit
     @topups = StripeService::Topup.list[:data]
   end
@@ -1087,7 +1141,7 @@ class AdminController < ApplicationController
   end
 
   def request_balance_export
-    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user).id)
+    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date] || nil).id)
     flash[:success] = "We've emailed you an export of all HCB organizations' balances."
     redirect_back(fallback_location: root_path)
   end
@@ -1422,15 +1476,27 @@ class AdminController < ApplicationController
 
   def airtable_task_size(task_name)
     info = airtable_info[task_name]
-    task = Faraday.new { |c|
-      c.response :json
-      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
-    }.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
 
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
+    end
+
+    task = client.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
     task.size
   rescue => e
     Rails.error.report(e)
     9999 # return something invalidly high to get the ops team to report it
+  end
+
+  def pending_identity_vault_verifications_task_size
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+    end
+
+    client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
   end
 
   def hackathons_task_size
@@ -1478,7 +1544,7 @@ class AdminController < ApplicationController
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
-        Faraday.new { |c| c.response :json }.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+        pending_identity_vault_verifications_task_size
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions

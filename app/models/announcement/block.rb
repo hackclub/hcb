@@ -26,10 +26,10 @@ class Announcement
     belongs_to :announcement
     has_one :event, through: :announcement
 
+    before_save { self.parameters ||= {} }
     after_create :refresh!
 
     def refresh!
-      self.parameters ||= {}
       self.rendered_html = render
       self.rendered_email_html = render(is_email: true)
 
@@ -46,6 +46,10 @@ class Announcement
 
     def render_html(is_email: false)
       Announcements::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
+    end
+
+    def empty?
+      true
     end
 
   end

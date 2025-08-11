@@ -141,9 +141,9 @@ class GSuite < ApplicationRecord
   def accounts_inactive?
     begin
       res = Partners::Google::GSuite::Users.new(domain:).run
-      res_count = res.users.count
+      res_count = res.users&.count || 0
       inactive_accounts = []
-      res.users.each do |user|
+      res&.users&.each do |user|
         if user.is_admin
           res_count -= 1
           next

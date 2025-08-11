@@ -27,6 +27,10 @@ class Event
         "salary account"
       end
 
+      def description
+        "Used for living expense reimbursement. Has access to all standard features (except perks); and receipts are not required."
+      end
+
       def omit_stats
         true
       end
