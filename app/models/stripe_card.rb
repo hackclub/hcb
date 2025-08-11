@@ -30,6 +30,7 @@
 #  created_at                            :datetime         not null
 #  updated_at                            :datetime         not null
 #  event_id                              :bigint           not null
+#  last_frozen_by_id                     :bigint
 #  replacement_for_id                    :bigint
 #  stripe_card_personalization_design_id :integer
 #  stripe_cardholder_id                  :bigint           not null
@@ -39,6 +40,7 @@
 # Indexes
 #
 #  index_stripe_cards_on_event_id              (event_id)
+#  index_stripe_cards_on_last_frozen_by_id     (last_frozen_by_id)
 #  index_stripe_cards_on_replacement_for_id    (replacement_for_id)
 #  index_stripe_cards_on_stripe_cardholder_id  (stripe_cardholder_id)
 #  index_stripe_cards_on_stripe_id             (stripe_id) UNIQUE
@@ -47,6 +49,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (last_frozen_by_id => users.id)
 #  fk_rails_...  (stripe_cardholder_id => stripe_cardholders.id)
 #
 class StripeCard < ApplicationRecord
@@ -79,6 +82,7 @@ class StripeCard < ApplicationRecord
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :stripe_cardholder
+  belongs_to :last_frozen_by, class_name: "User", optional: true
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
   belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
   validates_presence_of :stripe_card_personalization_design_id, unless: -> { self.virtual? }
@@ -193,9 +197,10 @@ class StripeCard < ApplicationRecord
     status_badge_type
   end
 
-  def freeze!
+  def freeze!(frozen_by: User.system_user)
     StripeService::Issuing::Card.update(self.stripe_id, status: :inactive)
     sync_from_stripe!
+    self.last_frozen_by = frozen_by
     save!
   end
 
@@ -215,13 +220,6 @@ class StripeCard < ApplicationRecord
 
   def frozen?
     initially_activated? && stripe_status == "inactive"
-  end
-
-  def last_frozen_by
-    user_id = versions.where_object_changes_to(stripe_status: "inactive").last&.whodunnit
-    return nil unless user_id
-
-    User.find_by_id(user_id)
   end
 
   def active?

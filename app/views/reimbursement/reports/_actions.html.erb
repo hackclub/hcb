@@ -36,7 +36,7 @@
         <% elsif current_user == report.user && !admin_signed_in? %>
           <div class="btn bg-success disabled" class="tooltipped tooltipped--n" aria-label="Expenses can't be added to locked reports">
             <%= inline_icon "plus" %>
-            Add <%= report.expenses.count > 0 ? "Another" : "An" %> Expense
+            Add <%= report.expenses.count > 0 ? "another" : "an" %> expense
           </div>
         <% elsif !report.closed? %>
           <%= link_to reimbursement_report_reject_path(report_id: report.id), class: "btn bg-error", data: { turbo: true, turbo_method: :post } do %>
@@ -51,7 +51,7 @@
           <% if report.reimbursement_requested? && !admin_signed_in? %>
             <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
               <%= inline_icon "reply" %>
-              Mark As Draft
+              Mark as draft
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> the HCB team is reviewing this report. To make further changes, mark it as a draft.
               <% end %>
@@ -59,13 +59,13 @@
           <% elsif current_user == report.user && report.submitted? %>
             <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
               <%= inline_icon "reply" %>
-              Mark As Draft
+              Mark as draft
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> your report is currently under review by the <%= report.event.name %> team. To make further changes, mark it as a draft.
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <%= link_to "#", class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "request_changes" } do %>
+            <%= link_to "#", class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "request_changes" }, id: "request_changes_button" do %>
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
@@ -163,7 +163,7 @@
             <% end %>
           <% end %>
         <% elsif report.draft? %>
-          <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "submit" } do %>
+          <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "submit" }, id: "submit_button" do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -203,7 +203,7 @@
             <% end %>
             <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post, data: { turbo_confirm: } do %>
               <%= inline_icon "thumbsup" %>
-              Approve <%= report.user.payout_method.title_kind %> Reimbursement
+              Approve <%= report.user.payout_method.human_kind %> reimbursement
             <% end %>
           <% end %>
         <% end %>
