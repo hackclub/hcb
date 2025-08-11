@@ -1798,18 +1798,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "referral_link_id", null: false
-    t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
-  end
-
-  create_table "referral_links", force: :cascade do |t|
-    t.string "name"
-    t.bigint "referral_program_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["referral_program_id"], name: "index_referral_links_on_referral_program_id"
   end
 
   create_table "referral_programs", force: :cascade do |t|
@@ -2515,7 +2505,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
-  add_foreign_key "referral_links", "referral_programs"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"

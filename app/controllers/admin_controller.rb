@@ -1388,20 +1388,6 @@ class AdminController < ApplicationController
     end
   end
 
-  def referral_link_create
-    @referral_link = Referral::Link.new(
-      referral_program_id: params[:referral_program_id],
-      name: params[:name]
-    )
-
-    if @referral_link.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral link created successfully." }
-    else
-      flash[:error] = @referral_link.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
-    end
-  end
-
   private
 
   def stream_data(content_type, filename, data, download = true)

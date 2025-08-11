@@ -13,35 +13,7 @@
                 </div>
 
                 <div class="flex-grow"></div>
-
-                <%= form_with model: nil, local: true, url: referral_link_create_admin_index_path, class: "flex flex-row gap-3 items-center m-0" do |form| %>
-                    <label for="name" class="flex-shrink-0 m-0">Create referral link</label>
-                    <%= form.text_field :name, placeholder: "Link Name", required: true, class: "m-0" %>
-                    <%= form.hidden_field :referral_program_id, value: program.id %>
-                    <%= form.submit "Create", class: "btn bg-success m-0" %>
-                <% end %>
             </div>
-
-            <ul>
-                <% program.links.each do |link| %>
-                    <li class="mt-0">
-                        <div class="mt-0 flex flex-row items-center gap-4 border border-t-0 p-2">
-                            <div class="flex flex-col">
-                                <h5 class="m-0 p-0"><%= link.name %></h5>
-                                <small class="text-muted"><%= link.created_at.strftime("%Y-%m-%d") %></small>
-                            </div>
-                            <div class="flex flex-row gap-2 justify-between m-0">
-                                <span class="m-0"><%= pluralize(0, "clicks") %></span>
-                            </div>
-
-                            <div class="flex-grow"></div>
-
-                            <% url = referral_link_url(link.hashid) %>
-                            <span><%= link_to(url, url) %></span>
-                        </div>
-                    </li>
-                <% end %>
-            </ul>
         </li>
     <% end %>
 </ul>
