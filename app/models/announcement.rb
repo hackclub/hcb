@@ -58,7 +58,7 @@ class Announcement < ApplicationRecord
   scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
   validate :content_is_json
 
-  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil) }
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event

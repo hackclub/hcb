@@ -364,6 +364,9 @@ GEM
     fugit (1.11.1)
       et-orbi (~> 1, >= 1.2.11)
       raabro (~> 1.4)
+    fx (0.9.0)
+      activerecord (>= 7.0)
+      railties (>= 7.0)
     geo_pattern (1.5.0)
       color (~> 1.5)
     geocoder (1.8.3)
@@ -925,6 +928,7 @@ DEPENDENCIES
   flipper-ui
   foreman
   friendly_id (~> 5.5.1)
+  fx
   geo_pattern
   geocoder
   google-apis-admin_directory_v1 (~> 0.67.0)
