@@ -1,4 +1,6 @@
-<% disabled = !policy(@event).update? %>
+<%# locals: (event:) %>
+
+<% disabled = !policy(event).update? %>
 
 <%= turbo_frame_tag :affiliations_settings do %>
   <h3 class="mb1" id="affiliations_heading">Add a new affiliation</h3>
