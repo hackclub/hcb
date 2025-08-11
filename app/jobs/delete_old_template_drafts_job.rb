@@ -5,7 +5,7 @@ class DeleteOldTemplateDraftsJob < ApplicationJob
 
   def perform
     old_template_drafts = Announcement.template_draft.where("created_at < ?", 2.months.ago)
-    old_template_drafts.delete_all!
+    old_template_drafts.destroy_all
   end
 
 end
