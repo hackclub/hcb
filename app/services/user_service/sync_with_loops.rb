@@ -61,6 +61,8 @@ module UserService
       resp = loops_client.get("api/v1/contacts/find", { email: @user.email })
 
       resp.body.first
+    rescue Faraday::ResourceNotFound
+      nil
     end
 
     def update(body:)
