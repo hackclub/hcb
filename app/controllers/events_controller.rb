@@ -360,6 +360,7 @@ class EventsController < ApplicationController
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
 
+
         if @event.description_previously_changed? && @event.description.present?
           announcement = Announcement::Templates::NewMissionStatement.new(
             event: @event,
