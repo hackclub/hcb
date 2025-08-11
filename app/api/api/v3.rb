@@ -228,7 +228,7 @@ module Api
 
     desc "Return a list of transparent organizations" do
       summary "Get a list of transparent organizations"
-      detail "Returns a list of organizations in <a href='https://changelog.hcb.hackclub.com/transparent-finances-(optional-feature)-151427'><strong>Transparency Mode</strong></a> that have opted in to public listing."
+      detail "Returns a list of organizations in <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'><strong>Transparency Mode</strong></a> that have opted in to public listing."
       failure [[404]]
       is_array true
       produces ["application/json"]
@@ -247,7 +247,7 @@ module Api
 
     desc "Return a list of recent activities" do
       summary "Get a list of recent activities on transparent HCB organizations"
-      detail "Returns a list of recent activities from all HCB organizations that are in <a href='https://changelog.hcb.hackclub.com/transparent-finances-(optional-feature)-151427'><strong>Transparency Mode</strong></a> and have opted in to public listing."
+      detail "Returns a list of recent activities from all HCB organizations that are in <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'><strong>Transparency Mode</strong></a> and have opted in to public listing."
       failure [[404]]
       is_array true
       produces ["application/json"]
@@ -267,7 +267,7 @@ module Api
     resource :organizations do
       desc "Return a transparent organization" do
         summary "Get a single organization"
-        detail "The organization must be in <a href='https://changelog.hcb.hackclub.com/transparent-finances-(optional-feature)-151427'><strong>Transparency Mode</strong></a>."
+        detail "The organization must be in <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'><strong>Transparency Mode</strong></a>."
         produces ["application/json"]
         consumes ["application/json"]
         success Entities::Organization
@@ -708,7 +708,7 @@ module Api
       info: {
         title: "The HCB API",
         description: "The HCB API is an unauthenticated REST API that allows you to read public information
-                      from organizations with <a href='https://changelog.hcb.hackclub.com/transparent-finances-(optional-feature)-151427'>Transparency Mode</a>
+                      from organizations with <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'>Transparency Mode</a>
                       enabled.
                       <br><br><strong>Questions or suggestions?</strong>
                       <br>Reach us in the #hcb channel on the <a href='https://hackclub.com/slack'>Hack Club Slack</a>

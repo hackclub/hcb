@@ -66,22 +66,7 @@
   <% end %>
 
   <% admin_tool("mt2 mb2 flex g1") do %>
-    <div class="field field--select w-100">
-      <h3 class="mb2 mt1">Contracts</h3>
-      <%= form.select :is_signee,
-          [
-            ["📃 Contract Signee", "true"],
-            ["❌ Won't sign the contract", "false"],
-          ],
-          { include_blank: "Select a contract signee status" },
-          { required: true, style: "width: 100%" } %>
-
-      <%= form.email_field :cosigner_email, placeholder: "Cosignee email (required if under 18)", class: "w-100 mt1" %>
-      <div class="field field--checkbox">
-        <%= form.check_box :include_videos %>
-        <%= form.label :include_videos, "Would you like us to include the onboarding videos?" %>
-      </div>
-    </div>
+    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
   <% end %>
 
   <%= form.submit "Submit" %>

@@ -10,12 +10,19 @@ class WiresController < ApplicationController
     @wire = @event.wires.build
 
     authorize @wire
+    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
+      return render :new_v2
+    end
   end
 
   def create
     @wire = @event.wires.build(wire_params.except(:file).merge(user: current_user))
 
     authorize @wire
+
+    if @wire.amount_cents > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
     if @wire.save
       if wire_params[:file]
@@ -100,6 +107,7 @@ class WiresController < ApplicationController
        :address_city,
        :address_postal_code,
        :address_state,
+       :payment_recipient_id,
        { file: [] }] + Wire.recipient_information_accessors
     )
   end

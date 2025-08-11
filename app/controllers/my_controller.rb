@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
 
   def activities
     @before = params[:before] || Time.now
@@ -123,9 +123,22 @@ class MyController < ApplicationController
   end
 
   def reimbursements
-    @my_reports = current_user.reimbursement_reports
-    @my_reports = @my_reports.search(params[:q]) if params[:q].present?
-    @reports_to_review = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    my_reports = current_user.reimbursement_reports
+    manager_events = current_user.events
+                                 .joins(:organizer_positions)
+                                 .where(organizer_positions: { user_id: current_user.id, role: :manager })
+    reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    case params[:filter]
+    when "mine"
+      @reports = my_reports
+    when "review"
+      @reports = reports_to_review
+    else
+      @reports = my_reports.or(reports_to_review)
+    end
+
+    @reports = @reports.search(params[:q]) if params[:q].present?
+
     @payout_method = current_user.payout_method
   end
 
@@ -139,6 +152,12 @@ class MyController < ApplicationController
   def payroll
     @jobs = current_user.jobs
     @payout_method = current_user.payout_method
+  end
+
+  def feed
+    @event_follows = current_user.event_follows
+    @all_announcements = Announcement.published.where(event: @event_follows.map(&:event)).order(published_at: :desc, created_at: :desc)
+    @announcements = @all_announcements.page(params[:page]).per(10)
   end
 
 end

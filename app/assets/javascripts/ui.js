@@ -543,6 +543,9 @@ $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
 window.unexpandReceipt = () => {
   document
     .querySelectorAll(`.receipt--expanded`)[0]
+    ?.style?.setProperty('--receipt-size', '256px')
+  document
+    .querySelectorAll(`.receipt--expanded`)[0]
     ?.classList?.remove('receipt--expanded')
   document
     .querySelector('.modal--popover.modal--popover--receipt-expanded')

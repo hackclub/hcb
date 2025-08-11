@@ -68,7 +68,7 @@ module Api
         render :show
 
       rescue => e
-        notify_airbrake(e)
+        Rails.error.report e
         render json: { error: "internal_server_error" }, status: :internal_server_error
       end
 
@@ -82,7 +82,7 @@ module Api
             return render json: { error: "Card is canceled." }, status: :unprocessable_entity
           end
 
-          @stripe_card.freeze!
+          @stripe_card.freeze!(frozen_by: current_user)
         elsif params[:status] == "active"
           if @stripe_card.initially_activated?
             return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).defrost?
@@ -122,6 +122,21 @@ module Api
           @stripe_card.defrost!
 
           render json: { success: "Card activated!" }
+        end
+      end
+
+      def cancel
+        @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
+        if @stripe_card.canceled?
+          return render json: { error: "Card is already cancelled" }, status: :unprocessable_entity
+        end
+
+        begin
+          @stripe_card.cancel!
+          render json: { success: "Card cancelled successfully" }
+        rescue => e
+          render json: { error: "Failed to cancel card", message: e.message }, status: :internal_server_error
         end
       end
 
