@@ -6,11 +6,12 @@ ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", git: "https://github.com/rails/rails.git", branch: "7-2-stable"
 
 gem "puma", "~> 6.6" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
+gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
 gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
@@ -43,7 +44,7 @@ gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
 gem "twilio-ruby" # SMS notifications
 
-gem "google-apis-admin_directory_v1", "~> 0.66.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.67.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -106,13 +107,13 @@ gem "strong_migrations", "~> 1" # protects against risky migrations
 # [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
 #               2.x is incompatible with Postgres 11.
 gem "xxhash" # fast hashing
+gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
 gem "webauthn", "~> 3.2"
 
 gem "ahoy_matey" # analytics
-gem "airbrake" # exception tracking
 gem "blazer" # business intelligence tool/dashboard
 
 gem "geo_pattern" # create procedurally generated patterns for Cards
@@ -151,6 +152,7 @@ end
 group :test do
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
+  gem "webmock"
 end
 
 group :development, :test do
@@ -174,7 +176,7 @@ gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 gem "wkhtmltopdf-binary", "0.12.6.8"
 
 group :development do
-  gem "annotate" # comment models with database schema
+  gem "annotaterb" # comment models with database schema
   gem "actual_db_schema" # rolls back phantom migrations
 
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
@@ -185,7 +187,7 @@ group :development do
 
   # Ruby language server
   gem "solargraph", require: false
-  gem "solargraph-rails", "~> 0.2.0", require: false
+  gem "solargraph-rails", "~> 1.2.0", require: false
 
   gem "htmlbeautifier", require: false # for https://marketplace.visualstudio.com/items?itemName=tomclose.format-erb
 
@@ -224,6 +226,10 @@ gem "whitesimilarity"
 
 gem "rack-timeout", require: "rack/timeout/base"
 
-# IRB is pinned to 1.14.3 because Console1984 is incompatible with >=1.15.0.
-# https://github.com/basecamp/console1984/issues/127
-gem "irb", "~> 1.14.3"
+gem "irb"
+
+gem "pstore"
+
+gem "bcrypt", "~> 3.1.7"
+
+gem "prosemirror_to_html"

@@ -100,6 +100,7 @@ class Donation < ApplicationRecord
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
   scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
+  scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -363,6 +364,10 @@ class Donation < ApplicationRecord
       DonationMailer.with(donation: self).first_donation_notification.deliver_later
     else
       DonationMailer.with(donation: self).notification.deliver_later
+    end
+
+    if event.donation_goal.present? && (event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents)
+      EventMailer.with(event:).donation_goal_reached.deliver_later
     end
   end
 

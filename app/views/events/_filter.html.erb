@@ -1,16 +1,8 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
-    <div class="input input-group max-w-none" tabindex="0">
-      <%= inline_icon "search" %>
-      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
-      <% if params[:q] && params[:q] != "" %>
-        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7 tooltipped tooltipped--s" aria-label="Clear filters">
-          <%= inline_icon "view-close", size: 24 %>
-        </button>
-      <% end %>
-    </div>
+      <%= render "search", form: %>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
     <% end %>
@@ -37,7 +29,28 @@
     </div>
   <% end %>
 
-  <% if organizer_signed_in? && Flipper.enabled?(:transaction_tags_2022_07_29, @event) && @event.tags.size > 0 %>
+  <% admin_tool "overflow-hidden" do %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end">
+      <button
+        type="button"
+        class="pop menu__toggle menu__toggle--arrowless overflow-visible"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle">
+        <%= inline_icon "list", size: 28 %>
+      </button>
+      <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+        <% ["date", "mapped_at"].each do |order_by| %>
+          <div class="flex items-center">
+            <%= link_to(upsert_query_params(order_by:), class: "flex-auto menu__action #{"menu__action--active" if @order_by == order_by}", data: { turbo_prefetch: "false" }) do %>
+              <%= order_by.humanize %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if organizer_signed_in? && @event.tags.size > 0 %>
     <div
       data-controller="menu"
       data-menu-append-to-value="turbo-frame#ledger"
@@ -96,7 +109,7 @@
     <div class="filter-menu__chips">
       <% if @tag %>
         <div class="badge badge-large bg-muted">
-          <div class="tag__preview tag-<%= @tag.color || "muted" %>"></div>
+          <%= render partial: "canonical_transactions/tag_icon", locals: { tag: @tag } %>
           <%= @tag.label %>
 
           <%= link_to event_ledger_url(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
@@ -118,6 +131,14 @@
         <div class="badge badge-large bg-muted">
           <%= @type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
           <%= link_to event_ledger_url(@event, upsert_query_params(type: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @direction %>
+        <div class="badge badge-large bg-muted">
+          <%= @direction.humanize.gsub("In", "Incoming").gsub("Out", "Outgoing") %>
+          <%= link_to event_ledger_url(@event, upsert_query_params(direction: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
@@ -148,7 +169,7 @@
       <% end %>
       <% if @missing_receipts %>
         <div class="badge badge-large bg-muted">
-          Missing Receipts
+          Missing receipts
           <%= link_to event_ledger_url(@event, upsert_query_params(missing_receipts: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>

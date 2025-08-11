@@ -17,6 +17,8 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def create?
+    return false if record.admin_only && !user.auditor?
+
     user.auditor? || users.include?(user)
   end
 
@@ -46,7 +48,7 @@ class CommentPolicy < ApplicationPolicy
     if record.commentable.respond_to?(:events)
       record.commentable.events.collect(&:users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
-      [record.commentable.user] + record.commentable.event.users
+      [record.commentable.user] + (record.commentable.event&.users || [])
     elsif record.commentable.is_a?(Event)
       record.commentable.users
     else

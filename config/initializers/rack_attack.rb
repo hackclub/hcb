@@ -19,7 +19,7 @@ class Rack::Attack
   safelist_ip("10.0.0.0/16")
 
   # Get the IP addresses of stripe as an array
-  stripe_ips_webhooks = Net::HTTP.get(URI("https://stripe.com/files/ips/ips_webhooks.txt")).split("\n")
+  stripe_ips_webhooks = File.readlines(Rails.root.join("config/stripe_ips_webhooks.txt")).map(&:strip)
   # Allow those IP addresses to send us as many webhooks as they like
   Rack::Attack.safelist("allow from Stripe (To Webhooks)") do |req|
     req.post? && stripe_ips_webhooks.include?(req.ip)
