@@ -203,7 +203,7 @@
             <% end %>
             <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post, data: { turbo_confirm: } do %>
               <%= inline_icon "thumbsup" %>
-              Approve <%= report.user.payout_method.title_kind %> Reimbursement
+              Approve <%= report.user.payout_method.human_kind %> reimbursement
             <% end %>
           <% end %>
         <% end %>
