@@ -35,9 +35,9 @@ export default class extends Controller {
   updateBlogEmbed(theme) {
     const resolvedTheme = theme === 'system' ? BK.resolveSystemTheme() : theme
 
-    const blogEmbed = document.getElementById("blog-widget-embed")
+    const blogEmbed = document.getElementById('blog-widget-embed')
     if (blogEmbed) {
       blogEmbed.src = `${blogEmbed.src.split('?')[0]}?theme=${resolvedTheme}`
-    } 
+    }
   }
 }
