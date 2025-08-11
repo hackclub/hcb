@@ -49,6 +49,7 @@ class Document < ApplicationRecord
 
   scope :common, -> { where(event_id: nil) }
 
+  attribute :category, :integer, default: 0
   enum :category, {
     general: 0,
     nonprofit_status: 1,
