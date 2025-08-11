@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_11_011720) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -901,6 +901,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.datetime "deleted_at"
     t.string "gusto_id"
     t.index ["event_id"], name: "index_employees_on_event_id"
+  end
+
+  create_table "event_affiliations", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.jsonb "metadata"
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_affiliations_on_event_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -2450,6 +2459,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
+  add_foreign_key "event_affiliations", "events"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"
