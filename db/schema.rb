@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_11_204239) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -374,6 +374,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.index ["canonical_transaction_id"], name: "index_canonical_pending_settled_mappings_on_canonical_tx_id"
   end
 
+  create_table "canonical_pending_transaction_category_mappings", force: :cascade do |t|
+    t.bigint "transaction_category_id", null: false
+    t.bigint "canonical_pending_transaction_id", null: false
+    t.text "assignment_strategy", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["canonical_pending_transaction_id"], name: "idx_on_canonical_pending_transaction_id_8616db5cc4", unique: true
+    t.index ["transaction_category_id"], name: "idx_on_transaction_category_id_a960252169"
+  end
+
   create_table "canonical_pending_transactions", force: :cascade do |t|
     t.date "date", null: false
     t.text "memo", null: false
@@ -419,6 +429,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.index ["wire_id"], name: "index_canonical_pending_transactions_on_wire_id"
     t.index ["wise_transfer_id"], name: "index_canonical_pending_transactions_on_wise_transfer_id"
     t.check_constraint "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null"
+  end
+
+  create_table "canonical_transaction_category_mappings", force: :cascade do |t|
+    t.bigint "transaction_category_id", null: false
+    t.bigint "canonical_transaction_id", null: false
+    t.text "assignment_strategy", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["canonical_transaction_id"], name: "idx_on_canonical_transaction_id_6bbda33213", unique: true
+    t.index ["transaction_category_id"], name: "idx_on_transaction_category_id_37a4eb69bc"
   end
 
   create_table "canonical_transactions", force: :cascade do |t|
@@ -2076,6 +2096,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.index ["tourable_type", "tourable_id"], name: "index_tours_on_tourable"
   end
 
+  create_table "transaction_categories", force: :cascade do |t|
+    t.citext "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_transaction_categories_on_name", unique: true
+  end
+
   create_table "transaction_csvs", force: :cascade do |t|
     t.string "aasm_state"
     t.datetime "created_at", null: false
@@ -2409,7 +2436,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
   add_foreign_key "canonical_pending_event_mappings", "events"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_pending_transactions"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_transactions"
+  add_foreign_key "canonical_pending_transaction_category_mappings", "canonical_pending_transactions"
+  add_foreign_key "canonical_pending_transaction_category_mappings", "transaction_categories"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
+  add_foreign_key "canonical_transaction_category_mappings", "canonical_transactions"
+  add_foreign_key "canonical_transaction_category_mappings", "transaction_categories"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
