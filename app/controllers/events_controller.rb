@@ -360,14 +360,6 @@ class EventsController < ApplicationController
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
 
-        if @event.config.generate_monthly_announcement_previously_changed?
-          if @event.config.generate_monthly_announcement
-            Announcement::Templates::Monthly.new(event: @event, author: User.system_user).create
-          else
-            @event.announcements.monthly_for(Date.today).first&.destroy!
-          end
-        end
-
         if @event.description_previously_changed? && @event.description.present?
           announcement = Announcement::Templates::NewMissionStatement.new(
             event: @event,
