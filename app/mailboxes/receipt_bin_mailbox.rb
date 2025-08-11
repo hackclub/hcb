@@ -34,11 +34,19 @@ class ReceiptBinMailbox < ApplicationMailbox
 
   private
 
+  RECEIPTS_ADDRESSES = ["receipts@hackclub.com", "receipts@hcb.gg"].freeze
+
   def set_user
-    if mail.to.first.start_with?("receipts@")
+    if mail.recipients.any? { |addr| RECEIPTS_ADDRESSES.include?(addr) }
       @user = User.find_by(email: mail.from[0])
     else
-      @user = MailboxAddress.activated.find_by(address: mail.to.first)&.user
+      @user =
+        MailboxAddress
+        .activated
+        .where(address: mail.recipients)
+        .order(id: desc)
+        .first
+        &.user
     end
   end
 
