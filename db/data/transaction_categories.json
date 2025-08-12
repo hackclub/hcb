@@ -1,0 +1,167 @@
+{
+  "donations": {
+    "label": "Donations",
+    "type": "revenue",
+    "group": null
+  },
+  "bank-fee-revenue": {
+    "label": "Bank fee revenue",
+    "type": "revenue",
+    "group": null
+  },
+  "interest": {
+    "label": "Interest",
+    "type": "revenue",
+    "group": null
+  },
+  "rent": {
+    "label": "Rent",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "internet-phone": {
+    "label": "Internet / Phone",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "utilities": {
+    "label": "Utilities",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "finance": {
+    "label": "Finance",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "hr": {
+    "label": "HR",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "training": {
+    "label": "Training",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "recruiting": {
+    "label": "Recruiting",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "legal": {
+    "label": "Legal",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "insurance": {
+    "label": "Insurance",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "office": {
+    "label": "Office",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "furniture": {
+    "label": "Furniture",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "bank-fees": {
+    "label": "Bank fees",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "other-fees": {
+    "label": "Other fees",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "taxes-filing-fees": {
+    "label": "Taxes / filing fees",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "fundraising": {
+    "label": "Fundraising",
+    "type": "expense",
+    "group": "Admin"
+  },
+  "travel": {
+    "label": "Travel",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "marketing": {
+    "label": "Marketing",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "food-fun": {
+    "label": "Food / fun",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "hardware-equipment": {
+    "label": "Hardware / equipment",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "server-hosting": {
+    "label": "Server / hosting",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "software-subscriptions": {
+    "label": "Software / subscriptions",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "project-supplies": {
+    "label": "Project supplies",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "shipping-postage": {
+    "label": "Shipping / postage",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "venue": {
+    "label": "Venue",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "gifts": {
+    "label": "Gifts",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "events-projects": {
+    "label": "Events / Projects",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "grants-stipends": {
+    "label": "Grants / stipends",
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "payroll-payroll-taxes": {
+    "label": "Payroll / Payroll taxes",
+    "type": "expense",
+    "group": "Personnel"
+  },
+  "benefits": {
+    "label": "Benefits",
+    "type": "expense",
+    "group": "Personnel"
+  },
+  "professional-fees-contractors": {
+    "label": "Professional fees (contractors)",
+    "type": "expense",
+    "group": "Personnel"
+  }
+}
