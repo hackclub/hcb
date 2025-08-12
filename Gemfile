@@ -128,8 +128,6 @@ gem "validates_zipcode" # validation for event's zip codes
 
 gem "rqrcode" # QR code generation
 
-gem "brakeman" # static security vulnerability scanner
-
 gem "awesome_print" # pretty print objects in console
 gem "byebug", platforms: [:windows]
 
@@ -159,6 +157,7 @@ group :development, :test do
   gem "rubocop"
   gem "rubocop-rails", "~> 2.30"
   gem "relaxed-rubocop"
+  gem "brakeman" # static security vulnerability scanner
 
   gem "rspec-rails", "~> 7.1.1"
 
