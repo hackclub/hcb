@@ -44,7 +44,7 @@ class ReceiptBinMailbox < ApplicationMailbox
         MailboxAddress
         .activated
         .where(address: mail.recipients)
-        .order(id: desc)
+        .order(id: :desc)
         .first
         &.user
     end
