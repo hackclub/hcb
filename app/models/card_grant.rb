@@ -269,7 +269,7 @@ class CardGrant < ApplicationRecord
   end
 
   def keyword_lock
-    super || setting&.keyword_lock || default_setting&.keyword_lock
+    setting&.keyword_lock || default_setting&.keyword_lock
   end
 
   def expires_after
