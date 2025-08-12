@@ -193,7 +193,7 @@ class AdminController < ApplicationController
     @access_level = params[:access_level]
     @event_id = params[:event_id].present? ? params[:event_id] : nil
     @referral_program_id = params[:referral_program_id].present? ? params[:referral_program_id] : nil
-    @params = params.permit(:page, :per, :q, :access_level, :event_id)
+    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
 
     if @event_id
       @event = Event.find(@event_id)
