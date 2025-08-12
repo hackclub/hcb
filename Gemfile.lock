@@ -649,8 +649,6 @@ GEM
       execjs
       railties (>= 3.2)
       tilt
-    recursive-open-struct (2.0.0)
-      ostruct
     red-colors (0.4.0)
       json
       matrix
@@ -956,7 +954,6 @@ DEPENDENCIES
   rack-timeout
   rails!
   react-rails
-  recursive-open-struct
   redcarpet
   redis (~> 5.4)
   relaxed-rubocop
