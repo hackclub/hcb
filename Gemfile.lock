@@ -169,9 +169,6 @@ GEM
       babel-source (>= 4.0, < 6)
       execjs (~> 2.0)
     backport (1.2.0)
-    barnes (0.0.9)
-      multi_json (~> 1)
-      statsd-ruby (~> 1.1)
     base64 (0.3.0)
     bcrypt (3.1.20)
     benchmark (0.4.1)
@@ -790,7 +787,6 @@ GEM
       sprockets (>= 3.0.0)
     stackprof (0.2.27)
     statsd-instrument (3.9.9)
-    statsd-ruby (1.5.0)
     stringio (3.1.7)
     stripe (11.7.0)
     strong_migrations (1.8.0)
@@ -879,7 +875,6 @@ DEPENDENCIES
   audits1984
   awesome_print
   aws-sdk-s3
-  barnes
   bcrypt (~> 3.1.7)
   blazer
   blind_index

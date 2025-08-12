@@ -137,15 +137,6 @@ gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
 gem "statsd-instrument", "~> 3.9" # For reporting to HC Grafana
 
-group :production do
-
-  # gem "heroku-deflater" # compression
-
-  # Heroku language runtime metrics
-  # https://devcenter.heroku.com/articles/language-runtime-metrics-ruby#add-the-barnes-gem-to-your-application
-  gem "barnes"
-end
-
 group :test do
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
