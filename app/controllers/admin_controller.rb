@@ -192,6 +192,7 @@ class AdminController < ApplicationController
     @q = params[:q].present? ? params[:q] : nil
     @access_level = params[:access_level]
     @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @referral_program_id = params[:referral_program_id].present? ? params[:referral_program_id] : nil
     @params = params.permit(:page, :per, :q, :access_level, :event_id)
 
     if @event_id
@@ -203,12 +204,18 @@ class AdminController < ApplicationController
     end
     relation = relation.includes(:events).includes(:card_grants)
 
+    if @referral_program_id
+      attribution_user_ids = Referral::Attribution.where(referral_program_id: @referral_program_id).pluck(:user_id)
+      relation = relation.where(id: attribution_user_ids)
+    end
+
     relation = relation.search_name(@q) if @q
     relation = relation.where(access_level: @access_level) if @access_level.present?
 
     @count = relation.count
 
     @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
@@ -1374,7 +1381,7 @@ class AdminController < ApplicationController
   end
 
   def referral_programs
-    @referral_programs = Referral::Program.all.includes(:links).order(created_at: :desc)
+    @referral_programs = Referral::Program.all.order(created_at: :desc)
   end
 
   def referral_program_create

@@ -1,3 +1,5 @@
+<% title "Referral Programs" %>
+
 <ul>
     <% @referral_programs.each do |program| %>
         <li>
@@ -11,6 +13,12 @@
                 </div>
 
                 <div class="flex-grow"></div>
+
+                <div class="flex flex-row gap-2">
+                    <%= link_to users_admin_index_path(referral_program_id: program.id) do %>
+                        <button>View users</button>
+                    <% end %>
+                </div>
             </div>
         </li>
     <% end %>
