@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -2381,6 +2383,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.text "return_reason"
     t.integer "quoted_usd_amount_cents"
     t.text "recipient_information_ciphertext"
+    t.text "wise_recipient_id"
     t.index ["event_id"], name: "index_wise_transfers_on_event_id"
     t.index ["user_id"], name: "index_wise_transfers_on_user_id"
   end
