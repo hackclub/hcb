@@ -1,0 +1,134 @@
+{
+  "Donations": {
+    "type": "revenue",
+    "group": null
+  },
+  "Bank fee revenue": {
+    "type": "revenue",
+    "group": null
+  },
+  "Interest": {
+    "type": "revenue",
+    "group": null
+  },
+  "Rent": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Internet / Phone": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Utilities": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Finance": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "HR": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Training": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Recruiting": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Legal": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Insurance": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Office": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Furniture": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Bank fees": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Other fees": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Taxes / filing fees": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Fundraising": {
+    "type": "expense",
+    "group": "Admin"
+  },
+  "Travel": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Marketing": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Food / fun": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Hardware / equipment": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Server / hosting": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Software / subscriptions": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Project supplies": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Shipping / postage": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Venue": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Gifts": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Events / Projects": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Grants / stipends": {
+    "type": "expense",
+    "group": "Program expenses"
+  },
+  "Payroll / Payroll taxes": {
+    "type": "expense",
+    "group": "Personnel"
+  },
+  "Benefits": {
+    "type": "expense",
+    "group": "Personnel"
+  },
+  "Professional fees (contractors)": {
+    "type": "expense",
+    "group": "Personnel"
+  }
+}
