@@ -28,6 +28,11 @@ class TransactionCategory < ApplicationRecord
     source_type: "CanonicalPendingTransaction"
   )
 
-  validates(:slug, presence: true, uniqueness: { case_sensitive: false })
+  validates(
+    :slug,
+    presence: true,
+    uniqueness: { case_sensitive: false },
+    inclusion: { in: TransactionCategory::Definition::ALL.keys }
+  )
 
 end
