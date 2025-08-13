@@ -16,6 +16,16 @@ class TransactionCategory
         ]
       end.freeze
     end
+
+    def self.grouped_options
+      grouped = TransactionCategory::Definition::ALL.values.group_by { |d| [d.group, d.type] }
+
+      grouped.map do |(group, type), definitions|
+        group_label = [type&.capitalize, group].compact.join(" | ")
+        group_options = definitions.map { |d| [d.label, d.slug] }
+        [group_label, group_options]
+      end
+    end
   end
 
   Definition::ALL = Definition.load_all
