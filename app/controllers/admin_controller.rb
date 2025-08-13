@@ -192,7 +192,8 @@ class AdminController < ApplicationController
     @q = params[:q].present? ? params[:q] : nil
     @access_level = params[:access_level]
     @event_id = params[:event_id].present? ? params[:event_id] : nil
-    @params = params.permit(:page, :per, :q, :access_level, :event_id)
+    @referral_program_id = params[:referral_program_id].present? ? params[:referral_program_id] : nil
+    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
 
     if @event_id
       @event = Event.find(@event_id)
@@ -203,12 +204,18 @@ class AdminController < ApplicationController
     end
     relation = relation.includes(:events).includes(:card_grants)
 
+    if @referral_program_id
+      attribution_user_ids = Referral::Attribution.where(referral_program_id: @referral_program_id).pluck(:user_id)
+      relation = relation.where(id: attribution_user_ids)
+    end
+
     relation = relation.search_name(@q) if @q
     relation = relation.where(access_level: @access_level) if @access_level.present?
 
     @count = relation.count
 
     @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
@@ -1371,6 +1378,21 @@ class AdminController < ApplicationController
       forwarded_port: request.headers["HTTP_X_FORWARDED_PORT"],
       forwarded_proto: request.headers["HTTP_X_FORWARDED_PROTO"],
     }
+  end
+
+  def referral_programs
+    @referral_programs = Referral::Program.all.order(created_at: :desc)
+  end
+
+  def referral_program_create
+    @referral_program = Referral::Program.new(name: params[:name], show_explore_hack_club: params[:show_explore_hack_club])
+
+    if @referral_program.save
+      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
+    else
+      flash[:error] = @referral_program.errors.full_messages.to_sentence
+      redirect_to referral_programs_admin_index_path
+    end
   end
 
   private
