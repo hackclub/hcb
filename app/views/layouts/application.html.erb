@@ -87,7 +87,7 @@
                duration: 30.minutes,
                learn_more_url: "https://blog.hcb.hackclub.com/posts/7th-may-maintenance" %>
 
-    <% if current_user&.needs_to_enable_2fa? %>
+    <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
       <div class="w-100 px4 !bg-red transparency-banner">
         <p class="h5 medium center mt1 mb1 text-white text-xl">
           ⚠️ Admin users are required to
