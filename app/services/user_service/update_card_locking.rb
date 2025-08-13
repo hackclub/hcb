@@ -20,7 +20,9 @@ module UserService
         TwilioMessageService::Send.new(@user, message).run!
       end
 
-      @user.update!(cards_locked: cards_should_lock)
+      User.with_2fa_requirement_disabled do
+        @user.update!(cards_locked: cards_should_lock)
+      end
     end
 
   end
