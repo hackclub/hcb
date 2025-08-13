@@ -59,6 +59,8 @@
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
+  include Categorizable
+
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
   pg_search_scope :pg_text_search, lambda { |query, options_hash| { query: }.merge(options_hash) }
@@ -89,8 +91,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_many :canonical_transactions, through: :canonical_pending_settled_mappings
   has_one :canonical_pending_declined_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
-  has_one :category_mapping, class_name: "TransactionCategoryMapping", as: :categorizable
-  has_one :category, class_name: "TransactionCategory", through: :category_mapping
 
   monetize :amount_cents
 

@@ -26,6 +26,7 @@ class CanonicalTransaction < ApplicationRecord
   has_paper_trail
 
   include Receiptable
+  include Categorizable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -103,8 +104,6 @@ class CanonicalTransaction < ApplicationRecord
   has_one :canonical_pending_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
   has_one :fee, through: :canonical_event_mapping
-  has_one :category_mapping, class_name: "TransactionCategoryMapping", as: :categorizable
-  has_one :category, class_name: "TransactionCategory", through: :category_mapping
 
   belongs_to :transaction_source, polymorphic: true, optional: true
 
