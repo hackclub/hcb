@@ -20,6 +20,11 @@ class TransactionCategory < ApplicationRecord
   has_many(:canonical_transaction_categories)
   has_many(:canonical_transactions, through: :canonical_transaction_categories)
 
-  validates(:name, presence: true, uniqueness: { case_sensitive: false })
+  validates(
+    :name,
+    presence: true,
+    uniqueness: { case_sensitive: false },
+    inclusion: { in: TransactionCategory::Definition::ALL.keys }
+  )
 
 end
