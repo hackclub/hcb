@@ -251,4 +251,28 @@ RSpec.describe User, type: :model do
       expect(user.errors[:session_duration_seconds]).to include("is not included in the list")
     end
   end
+
+  describe "#use_two_factor_authentication" do
+    it "is enforced for admin updates" do
+      user = create(:user, :make_admin)
+
+      expect(user.update(full_name: "Orpheus the Dinosaur")).to eq(false)
+      expect(user.errors[:access_level]).to contain_exactly("two factor authentication is required for this access level")
+    end
+
+    it "is enforced even if the admin is pretending to be a regular user" do
+      user = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      expect(user.update(full_name: "Orpheus the Dinosaur")).to eq(false)
+      expect(user.errors[:access_level]).to contain_exactly("two factor authentication is required for this access level")
+    end
+
+    it "can be selectively bypassed" do
+      user = create(:user, :make_admin)
+
+      User.with_2fa_requirement_disabled do
+        expect(user.update(full_name: "Orpheus the Dinosaur")).to eq(true)
+      end
+    end
+  end
 end

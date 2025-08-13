@@ -175,8 +175,18 @@ class User < ApplicationRecord
 
   validate :profile_picture_format
 
+  def self.with_2fa_requirement_disabled(&)
+    previous_value = Fiber[:user_2fa_requirement_disabled]
+    Fiber[:user_2fa_requirement_disabled] = true
+    yield
+  ensure
+    Fiber[:user_2fa_requirement_disabled] = previous_value
+  end
+
   validate on: :update do
-    if Rails.env.production? && admin_override_pretend? && !use_two_factor_authentication?
+    next if Fiber[:user_2fa_requirement_disabled] || Rails.env.development?
+
+    if admin_override_pretend? && !use_two_factor_authentication?
       errors.add(:access_level, "two factor authentication is required for this access level")
     end
   end
