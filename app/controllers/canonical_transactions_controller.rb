@@ -33,6 +33,28 @@ class CanonicalTransactionsController < ApplicationController
     redirect_to params[:redirect_to] || @canonical_transaction.local_hcb_code
   end
 
+  def set_category
+    @canonical_transaction = CanonicalTransaction.find(params[:id])
+
+    authorize @canonical_transaction
+
+    slug = params.dig(:canonical_transaction, :category_slug)
+
+    TransactionCategoryService
+      .new(model: @canonical_transaction)
+      .set!(slug:, assignment_strategy: "manual")
+
+    respond_to do |format|
+      format.turbo_stream {}
+      format.html do
+        redirect_to(
+          canonical_transaction_path(@canonical_transaction),
+          flash: { success: "Transaction category was successfully updated." }
+        )
+      end
+    end
+  end
+
   def waive_fee
     authorize CanonicalTransaction
 
