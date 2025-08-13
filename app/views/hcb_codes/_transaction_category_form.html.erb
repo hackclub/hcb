@@ -1,0 +1,21 @@
+<%# locals: (model:, url:) %>
+
+<%= form_for(
+      model,
+      url:,
+      method: :post,
+      data: { controller: "form" }
+    ) do |f| %>
+  <%= select_tag(
+        f.field_name(:transaction_category_name),
+        grouped_options_for_select(
+          TransactionCategory::Definition::ALL
+            .values
+            .group_by { |d| [d.group, d.type] }
+            .map { |(group, type), definitions| [[type&.capitalize, group].compact.join(" | "), definitions.map(&:name)] },
+          model.transaction_category&.name,
+        ),
+        include_blank: "None",
+        data: { action: "change->form#submit" }
+      ) %>
+<% end %>
