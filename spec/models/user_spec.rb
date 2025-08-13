@@ -253,26 +253,24 @@ RSpec.describe User, type: :model do
   end
 
   describe "#use_two_factor_authentication" do
-    it "is enforced for admin updates" do
-      user = create(:user, :make_admin)
+    it "cannot be disabled by admins" do
+      user = create(:user, :make_admin, use_two_factor_authentication: true)
 
-      expect(user.update(full_name: "Orpheus the Dinosaur")).to eq(false)
-      expect(user.errors[:access_level]).to contain_exactly("two factor authentication is required for this access level")
+      expect(user.update(use_two_factor_authentication: false)).to eq(false)
+      expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
-    it "is enforced even if the admin is pretending to be a regular user" do
-      user = create(:user, :make_admin, pretend_is_not_admin: true)
+    it "cannot be disabled by admins pretending not to be admins" do
+      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true)
 
-      expect(user.update(full_name: "Orpheus the Dinosaur")).to eq(false)
-      expect(user.errors[:access_level]).to contain_exactly("two factor authentication is required for this access level")
+      expect(user.update(use_two_factor_authentication: false)).to eq(false)
+      expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
-    it "can be selectively bypassed" do
-      user = create(:user, :make_admin)
+    it "can be disabled by regular users" do
+      user = create(:user, use_two_factor_authentication: true)
 
-      User.with_2fa_requirement_disabled do
-        expect(user.update(full_name: "Orpheus the Dinosaur")).to eq(true)
-      end
+      expect(user.update(use_two_factor_authentication: false)).to eq(true)
     end
   end
 end

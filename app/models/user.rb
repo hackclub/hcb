@@ -175,21 +175,7 @@ class User < ApplicationRecord
 
   validate :profile_picture_format
 
-  def self.with_2fa_requirement_disabled(&)
-    previous_value = Fiber[:user_2fa_requirement_disabled]
-    Fiber[:user_2fa_requirement_disabled] = true
-    yield
-  ensure
-    Fiber[:user_2fa_requirement_disabled] = previous_value
-  end
-
-  validate on: :update do
-    next if Fiber[:user_2fa_requirement_disabled] || Rails.env.development?
-
-    if admin_override_pretend? && !use_two_factor_authentication?
-      errors.add(:access_level, "two factor authentication is required for this access level")
-    end
-  end
+  validate(:admins_cannot_disable_2fa, on: :update)
 
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
@@ -517,6 +503,15 @@ class User < ApplicationRecord
   def valid_payout_method
     unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire)
       errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, or ACH transfer")
+    end
+  end
+
+  def admins_cannot_disable_2fa
+    return unless use_two_factor_authentication_changed?
+    return if Rails.env.development?
+
+    if admin_override_pretend? && !use_two_factor_authentication
+      errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
   end
 
