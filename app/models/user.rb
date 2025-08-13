@@ -450,6 +450,10 @@ class User < ApplicationRecord
     { role:, access_level: }
   end
 
+  def needs_to_enable_2fa?
+    admin_override_pretend? && !use_two_factor_authentication
+  end
+
   private
 
   def update_stripe_cardholder
@@ -510,7 +514,7 @@ class User < ApplicationRecord
     return unless use_two_factor_authentication_changed?
     return if Rails.env.development?
 
-    if admin_override_pretend? && !use_two_factor_authentication
+    if needs_to_enable_2fa?
       errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
   end
