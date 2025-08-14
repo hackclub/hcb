@@ -229,6 +229,6 @@ announcement_two_day_warning_job:
   cron: "0 12 -2 * *" # run at 8am ET; 2 days before the end of the month
   class: "Announcement::TwoDayWarningJob"
 
-delete_old_template_drafts_job:
+delete_old_unsaved_announcements_job:
   cron: "0 0 1 * *" # run first day of each month
-  class: "DeleteOldTemplateDraftsJob"
+  class: "DeleteOldUnsavedAnnouncementsJob"
