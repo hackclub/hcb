@@ -33,13 +33,13 @@ class RawPendingColumnTransaction < ApplicationRecord
     column_account_number = Column::AccountNumber.find_by(column_id: column_transaction["account_number_id"])
     return unless column_account_number
 
-    # create_canonical_pending_transaction!(
-    #  amount_cents:,
-    #  memo:,
-    #  date: date_posted,
-    #  event: column_account_number.event,
-    #  fronted: true
-    # )
+    create_canonical_pending_transaction!(
+      amount_cents:,
+      memo:,
+      date: date_posted,
+      event: column_account_number.event,
+      fronted: true
+    )
   end
 
   def memo
