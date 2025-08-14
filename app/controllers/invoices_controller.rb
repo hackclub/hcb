@@ -63,8 +63,8 @@ class InvoicesController < ApplicationController
 
     allowed_directions = %w[asc desc]
     sort_direction = params[:direction].in?(allowed_directions) ? params[:direction] : "desc"
-    
-    sort_column = 
+
+    sort_column =
       case params[:sort]
       when "created_at", "status", "amount_due"
         params[:sort]
