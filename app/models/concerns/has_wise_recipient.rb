@@ -27,7 +27,7 @@ module HasWiseRecipient
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
       elsif currency.in?(%w[HKD NGN NPR NZD PHP SGD THB])
-        fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }
+        fields << ACCOUNT_NUMBER_FIELD
       elsif currency == "ARS"
         fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number (CBU)" }
       elsif currency == "AUD"
@@ -38,9 +38,12 @@ module HasWiseRecipient
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
       elsif currency == "CAD"
-        fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number" }
-        fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number" }
-        fields << ACCOUNT_NUMBER_FIELD
+        fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "Interac": "interac" } }
+        fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number", conditional: "account_type == 'bank_account'" }
+        fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number", conditional: "account_type == 'bank_account'" }
+        fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number", conditional: "account_type == 'bank_account'" }
+        fields << { type: :check_box, key: "use_same_email_for_interac", required: false, label_options: { "x-text": "email ? `Use '${email}' for Interac?` : 'Use the same email for Interac?'" }, conditional: "account_type == 'interac'" }
+        fields << { type: :text_field, key: "interac_email", placeholder: "fionah@gmail.com", label: "Or, enter your Interac email", conditional: "account_type == 'interac' && !use_same_email_for_interac" }
       elsif currency == "CLP"
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :text_field, key: "rut_number", placeholder: "12345678-9", label: "RUT number" }

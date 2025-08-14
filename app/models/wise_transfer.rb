@@ -30,6 +30,7 @@
 #  event_id                         :bigint           not null
 #  user_id                          :bigint           not null
 #  wise_id                          :text
+#  wise_recipient_id                :text
 #
 # Indexes
 #
@@ -70,8 +71,13 @@ class WiseTransfer < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc { |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  WISE_ID_FORMAT = /\A\d+\z/
   before_validation(:normalize_wise_id)
-  validates(:wise_id, format: { with: /\A\d+\z/, message: "is not a valid Wise ID" }, allow_nil: true)
+  validates(:wise_id, format: { with: WISE_ID_FORMAT, message: "is not a valid Wise ID" }, allow_nil: true)
+
+  WISE_RECIPIENT_ID_FORMAT = /\A[\h-]{36}\z/
+  before_validation(:normalize_wise_recipient_id)
+  validates(:wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_nil: true)
 
   after_create do
     generate_quote!
@@ -210,6 +216,20 @@ class WiseTransfer < ApplicationRecord
     update!(quoted_usd_amount_cents: estimated_usd_amount_cents) unless quoted_usd_amount_cents.present?
   end
 
+  def wise_url
+    return nil unless wise_id.present?
+
+    "https://wise.com/transactions/activities/by-resource/TRANSFER/#{CGI.escape(wise_id)}"
+  end
+
+  def wise_recipient_url
+    return nil unless wise_recipient_id.present?
+
+    "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
+  end
+
+  private
+
   WISE_ID_REGEXPS = [
     /wise\.com\/transactions\/activities\/by-resource\/transfer\/(\d+)/i,
     /wise\.com\/success\/transfer\/(\d+)/i
@@ -220,7 +240,7 @@ class WiseTransfer < ApplicationRecord
 
     normalized = wise_id.strip
 
-    if normalized =~ /\A\d+\z/
+    if normalized =~ WISE_ID_FORMAT
       self.wise_id = normalized
       return
     end
@@ -233,6 +253,22 @@ class WiseTransfer < ApplicationRecord
         break
       end
     end
+  end
+
+  WISE_RECIPIENT_ID_REGEXP = /wise\.com\/recipients\/([\h-]{36})/
+
+  def normalize_wise_recipient_id
+    return unless wise_recipient_id_changed? && wise_recipient_id.present?
+
+    normalized = wise_recipient_id.strip
+
+    if normalized =~ WISE_RECIPIENT_ID_FORMAT
+      self.wise_recipient_id = normalized
+      return
+    end
+
+    match = WISE_RECIPIENT_ID_REGEXP.match(normalized)
+    self.wise_recipient_id = match[1] if match
   end
 
 end

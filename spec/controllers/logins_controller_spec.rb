@@ -423,6 +423,25 @@ RSpec.describe LoginsController do
 
       expect(response).to redirect_to(edit_user_path(user.slug))
     end
+
+    it "redirects to the auth page with a flash message if the user's account is locked" do
+      user = create(:user)
+      user.lock!
+      login = create(:login, user:)
+      login_code = create(:login_code, user:)
+
+      post(
+        :complete,
+        params: {
+          id: login.hashid,
+          method: "login_code",
+          login_code: login_code.code
+        }
+      )
+
+      expect(flash[:error]).to eq("Your HCB account has been locked.")
+      expect(response).to redirect_to(auth_users_path)
+    end
   end
 
   describe "#reauthenticate" do

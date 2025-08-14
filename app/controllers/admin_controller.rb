@@ -192,7 +192,8 @@ class AdminController < ApplicationController
     @q = params[:q].present? ? params[:q] : nil
     @access_level = params[:access_level]
     @event_id = params[:event_id].present? ? params[:event_id] : nil
-    @params = params.permit(:page, :per, :q, :access_level, :event_id)
+    @referral_program_id = params[:referral_program_id].present? ? params[:referral_program_id] : nil
+    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
 
     if @event_id
       @event = Event.find(@event_id)
@@ -203,12 +204,18 @@ class AdminController < ApplicationController
     end
     relation = relation.includes(:events).includes(:card_grants)
 
+    if @referral_program_id
+      attribution_user_ids = Referral::Attribution.where(referral_program_id: @referral_program_id).pluck(:user_id)
+      relation = relation.where(id: attribution_user_ids)
+    end
+
     relation = relation.search_name(@q) if @q
     relation = relation.where(access_level: @access_level) if @access_level.present?
 
     @count = relation.count
 
     @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
@@ -1373,6 +1380,21 @@ class AdminController < ApplicationController
     }
   end
 
+  def referral_programs
+    @referral_programs = Referral::Program.all.order(created_at: :desc)
+  end
+
+  def referral_program_create
+    @referral_program = Referral::Program.new(name: params[:name], show_explore_hack_club: params[:show_explore_hack_club])
+
+    if @referral_program.save
+      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
+    else
+      flash[:error] = @referral_program.errors.full_messages.to_sentence
+      redirect_to referral_programs_admin_index_path
+    end
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)
@@ -1476,15 +1498,27 @@ class AdminController < ApplicationController
 
   def airtable_task_size(task_name)
     info = airtable_info[task_name]
-    task = Faraday.new { |c|
-      c.response :json
-      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
-    }.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
 
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
+    end
+
+    task = client.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
     task.size
   rescue => e
     Rails.error.report(e)
     9999 # return something invalidly high to get the ops team to report it
+  end
+
+  def pending_identity_vault_verifications_task_size
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+    end
+
+    client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
   end
 
   def hackathons_task_size
@@ -1532,7 +1566,7 @@ class AdminController < ApplicationController
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
-        Faraday.new { |c| c.response :json }.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+        pending_identity_vault_verifications_task_size
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions
