@@ -25,7 +25,7 @@
     <% end %>
 </ul>
 
-<%= form_with model: nil, local: true, url: referral_program_create_admin_index_path, class: "flex flex-row gap-2" do |form| %>
+<%= form_with model: false, local: true, url: referral_program_create_admin_index_path, class: "flex flex-row gap-2" do |form| %>
     <fieldset>
         <legend>Create a referral program</legend>
         <label for="name">Program name</label>
