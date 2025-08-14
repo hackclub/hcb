@@ -89,6 +89,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_many :canonical_transactions, through: :canonical_pending_settled_mappings
   has_one :canonical_pending_declined_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
+  has_one :canonical_pending_transaction_category
+  has_one :transaction_category, through: :canonical_pending_transaction_category
 
   monetize :amount_cents
 

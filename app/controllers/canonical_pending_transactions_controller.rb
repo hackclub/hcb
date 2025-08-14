@@ -31,6 +31,27 @@ class CanonicalPendingTransactionsController < ApplicationController
     redirect_to params[:redirect_to] || @canonical_pending_transaction.local_hcb_code
   end
 
+
+  def set_category
+    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
+
+    authorize @canonical_pending_transaction
+
+    name = params.dig(:canonical_pending_transaction, :transaction_category_name)
+
+    TransactionCategoryService.new(model: @canonical_pending_transaction).set!(name)
+
+    respond_to do |format|
+      format.turbo_stream {}
+      format.html do
+        redirect_to(
+          canonical_pending_transaction_path(@canonical_transaction),
+          flash: { success: "Transaction category was successfully updated." }
+        )
+      end
+    end
+  end
+
   private
 
   def canonical_pending_transaction_params
