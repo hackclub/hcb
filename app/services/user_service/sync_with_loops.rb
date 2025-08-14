@@ -56,30 +56,20 @@ module UserService
 
     def contact_details
       @queue.shift
-      conn = Faraday.new(url: "https://app.loops.so/")
 
-      resp = conn.send(:get) do |req|
-        req.url("api/v1/contacts/find")
-        req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
-        req.params[:email] = @user.email
-      end
+      # https://loops.so/docs/api-reference/find-contact
+      resp = loops_client.get("api/v1/contacts/find", { email: @user.email })
 
-      return nil if resp.body.strip == "[]"
-
-      JSON[resp.body][0]
+      resp.body.first
+    rescue Faraday::ResourceNotFound
+      nil
     end
 
     def update(body:)
       @queue.shift
-      conn = Faraday.new(url: "https://app.loops.so/")
 
-      conn.send(:post) do |req|
-        req.url("api/v1/contacts/update")
-        req.body = body.to_json
-        req.headers["Content-Type"] = "application/json"
-        req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
-      end
-
+      # https://loops.so/docs/api-reference/update-contact
+      loops_client.post("api/v1/contacts/update", body)
     end
 
     def format_unix(timestamp)
@@ -92,6 +82,15 @@ module UserService
       @contact_details&.[]("addressLine1").present? &&
         @contact_details["addressCity"].present? &&
         @contact_details["addressCountry"].present?
+    end
+
+    def loops_client
+      @loops_client ||= Faraday.new(url: "https://loops.so/") do |c|
+        c.request :authorization, "Bearer", -> { Credentials.fetch(:LOOPS) }
+        c.request :json
+        c.response :json
+        c.response :raise_error
+      end
     end
 
   end
