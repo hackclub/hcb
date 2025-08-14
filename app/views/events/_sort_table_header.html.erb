@@ -1,6 +1,10 @@
-active = params[:sort] == sort || (params[:sort].nil? && defined?(default) && default)
+<%
+  active = params[:sort] == sort || (params[:sort].nil? && defined?(default) && default)
   direction = params[:sort] == sort ? (params[:direction] == "asc" ? "desc" : "asc") : (params[:direction] || "desc")
+  classes = []
   classes << "sort-button--active" if active
-  classes "sort-button--right" if defined
-<%= link_to upsert_query_params(sort:, direction:), class: classes.join(" ") do %>
+  classes << "sort-button--right" if defined?(right)
+%>
+<%= link_to upsert_query_params(sort: sort, direction: direction), class: classes.join(" ") do %>
+  <%= display || sort.humanize %>
 <% end %>
