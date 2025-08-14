@@ -16,7 +16,7 @@ RSpec.describe FeaturesController do
 
       post(:disable_feature, params: { feature: "sudo_mode_2015_07_21" })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(Flipper.enabled?(:sudo_mode_2015_07_21, user)).to eq(true)
 
       post(
