@@ -77,10 +77,10 @@
   <% end %>
 
   <% admin_tool(@show_running_balance ? "" : "display-none") do %>
-    <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end">
+    <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-end" class="line-height-0">
       <button
         type="button"
-        class="btn btn-small bg-info menu__toggle menu__toggle--arrowless overflow-visible z-10"
+        class="btn btn-small menu__toggle menu__toggle--arrowless overflow-visible"
         data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
         <%= inline_icon "list", size: 16, style: "margin: 0" %>
         <span class="xs-hide sm-hide md-hide nowrap">Count</span>
