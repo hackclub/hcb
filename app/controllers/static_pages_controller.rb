@@ -117,6 +117,13 @@ class StaticPagesController < ApplicationController
         "View reimbursement reports": :reader,
         "Review, approve, and reject reports": :manager,
       },
+      Announcements: {
+        "Create or delete an announcement": :manager,
+        "Publish an announcement": :manager,
+        "View announcements": :reader,
+        "View followers": :reader,
+        "Remove followers": :manager
+      },
       "Google Workspace": {
         "Create an account": :manager,
         "Suspend an account": :manager,
