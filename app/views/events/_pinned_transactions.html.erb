@@ -12,11 +12,24 @@
       <% end %>
 
       <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
-        <%= form_with url: pin_hcb_code_path(pin.hcb_code, event: @event), model: @hcb_code, data: { turbo_method: :post, turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do |form| %>
-          <button type="submit" class="pinned__transaction__pin pointer pop tooltipped tooltipped--w" aria-label="Unpin" style="margin-left: auto" onclick="event.stopPropagation()">
-            <%= inline_icon "pin-remove", size: 28 %>
-          </button>
-        <% end if organizer_signed_in? %>
+        <% if organizer_signed_in? %>
+          <%= form_for(
+                pin.hcb_code,
+                url: pin_hcb_code_path(pin.hcb_code, event: @event),
+                method: :post,
+                data: { turbo_confirm: "This will unpin the transaction for all team members. Continue?" }
+              ) do |form| %>
+            <%= form.button(
+                  type: "submit",
+                  class: "pinned__transaction__pin pointer pop tooltipped tooltipped--w",
+                  aria: { label: "Unpin" },
+                  style: "margin-left: auto",
+                  onclick: "event.stopPropagation()"
+                ) do %>
+              <%= inline_icon "pin-remove", size: 28 %>
+            <% end %>
+          <% end %>
+        <% end %>
 
         <p class="block font-bold m0 flex items-center g2">
           <%= format_date pin.hcb_code.date %>
