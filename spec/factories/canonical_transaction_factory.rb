@@ -6,5 +6,15 @@ FactoryBot.define do
     date { Faker::Date.backward(days: 14) }
     memo { Faker::Quote.matz }
     hashed_transactions { [association(:hashed_transaction, :plaid)] }
+
+    transient do
+      category_name {}
+    end
+
+    after(:create) do |ct, context|
+      if context.category_name.present?
+        TransactionCategoryService.new(model: ct).set!(name: context.category_name)
+      end
+    end
   end
 end
