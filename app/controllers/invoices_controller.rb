@@ -12,6 +12,13 @@ class InvoicesController < ApplicationController
     { key_base: "amount", label: "Amount", type: "amount_range" }
   ].freeze
 
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "date", default: true },
+    { key: "sponsors.name", display: "To" },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+
   def index
     authorize @event, :invoices?
     relation = @event.invoices
@@ -61,10 +68,25 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = relation.order(created_at: :desc)
+    allowed_directions = %w[asc desc]
+    sort_direction = params[:direction].in?(allowed_directions) ? params[:direction] : "desc"
+
+    sort_column =
+      case params[:sort]
+      when "created_at", "status", "amount_due"
+        params[:sort]
+      when "sponsor_name"
+        "sponsors.name"
+      else
+        "created_at"
+      end
+
+    relation = relation.order("#{sort_column} #{sort_direction}")
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
+
+    @invoices = relation
 
     # @ma1ted: I have no clue how to use the above methods here.
     # Reimplementing logic is okay if you apolgise to every
@@ -102,6 +124,7 @@ class InvoicesController < ApplicationController
       end
     end
 
+    @table_columns = INVOICE_COLUMNS
     @filter_options = INVOICE_FILTERS
     helpers.validate_filter_options(INVOICE_FILTERS, params)
     @has_filter = helpers.check_filters?(INVOICE_FILTERS, params)
