@@ -124,6 +124,7 @@ class InvoicesController < ApplicationController
       end
     end
 
+    @table_columns = INVOICE_COLUMNS
     @filter_options = INVOICE_FILTERS
     helpers.validate_filter_options(INVOICE_FILTERS, params)
     @has_filter = helpers.check_filters?(INVOICE_FILTERS, params)

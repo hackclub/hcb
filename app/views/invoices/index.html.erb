@@ -56,9 +56,9 @@
 <table>
   <thead>
     <tr>
-      <% INVOICE_COLUMNS.each do |column| %>
+      <% @table_columns.each do |column| %>
         <th>
-          <%= render "events/sort_table_header", sort: column[:key], display: column[:display], default: column[:default] %>
+          <%= render "events/sort_table_header", sort: column[:key], display: column[:display], right: column[:right], default: column[:default] %>
         </th>
       <% end %>
       <th></th>
