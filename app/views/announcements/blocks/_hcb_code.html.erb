@@ -1,6 +1,6 @@
 <%# locals: (hcb_code: nil, event: nil, is_email: false, block: nil) %>
 
-<%= turbo_frame_tag "block_#{block.id}", class: "hcbCode relative card shadow-none border flex flex-col py-2 my-2" do %>
+<%= render "announcements/blocks/block_shell", block:, type: "hcbCode", is_email: do %>
   <% if hcb_code.nil? %>
     <p>This transaction cannot be displayed</p>
     <% unless is_email %>

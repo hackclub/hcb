@@ -216,3 +216,19 @@ weekly_ysws_event_summary_job:
 monthly_follower_summary_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "MonthlyFollowerSummaryJob"
+
+announcement_monthly_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "Announcement::MonthlyJob"
+
+announcement_seven_day_warning_job:
+  cron: "0 12 -7 * *" # run at 8am ET; 7 days before the end of the month
+  class: "Announcement::SevenDayWarningJob"
+
+announcement_two_day_warning_job:
+  cron: "0 12 -2 * *" # run at 8am ET; 2 days before the end of the month
+  class: "Announcement::TwoDayWarningJob"
+
+delete_old_template_drafts_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "DeleteOldTemplateDraftsJob"

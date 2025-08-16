@@ -11,6 +11,10 @@ import csrf from '../common/csrf'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
 import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
 import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
+import { TopMerchantsNode } from './tiptap/nodes/top_merchants_node'
+import { TopCategoriesNode } from './tiptap/nodes/top_categories_node'
+import { TopTagsNode } from './tiptap/nodes/top_tags_node'
+import { TopUsersNode } from './tiptap/nodes/top_users_node'
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
@@ -18,6 +22,8 @@ export default class extends Controller {
     content: String,
     announcementId: Number,
     autosave: Boolean,
+    followers: Number,
+    published: Boolean,
   }
 
   editor = null
@@ -62,6 +68,10 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
+        TopMerchantsNode,
+        TopCategoriesNode,
+        TopTagsNode,
+        TopUsersNode,
       ],
       editorProps: {
         attributes: {
@@ -82,9 +92,26 @@ export default class extends Controller {
   }
 
   submit(autosave) {
+    if (autosave !== true && !this.publishedValue) {
+      const data = new FormData(this.formTarget)
+      const draft = data.get('announcement[draft]')
+
+      if (draft === 'false') {
+        let confirmed = confirm(
+          `Are you sure you would like to publish this announcement and notify ${this.followersValue} follower${this.followersValue === 1 ? '' : 's'}?`
+        )
+
+        if (!confirmed) return
+      }
+    }
+
     this.autosaveInputTarget.value = autosave === true ? 'true' : 'false'
     this.contentInputTarget.value = JSON.stringify(this.editor.getJSON())
     this.formTarget.requestSubmit()
+  }
+
+  focus() {
+    this.editor.chain().focus().run()
   }
 
   bold() {
@@ -166,7 +193,10 @@ export default class extends Controller {
 
   async donationGoal() {
     const attrs = await this.createBlock('Announcement::Block::DonationGoal')
-    this.editor.chain().focus().addDonationGoal(attrs).run()
+
+    if (attrs !== null) {
+      this.editor.chain().focus().addDonationGoal(attrs).run()
+    }
   }
 
   async hcbCode() {
@@ -182,12 +212,37 @@ export default class extends Controller {
       hcb_code: hcbCode,
     })
 
-    this.editor.chain().focus().addHcbCode(attrs).run()
+    if (attrs !== null) {
+      this.editor.chain().focus().addHcbCode(attrs).run()
+    }
   }
 
   async donationSummary() {
     const attrs = await this.createBlock('Announcement::Block::DonationSummary')
-    this.editor.chain().focus().addDonationSummary(attrs).run()
+
+    if (attrs !== null) {
+      this.editor.chain().focus().addDonationSummary(attrs).run()
+    }
+  }
+
+  async topMerchants() {
+    const attrs = await this.createBlock('Announcement::Block::TopMerchants')
+    this.editor.chain().focus().addTopMerchants(attrs).run()
+  }
+
+  async topCategories() {
+    const attrs = await this.createBlock('Announcement::Block::TopCategories')
+    this.editor.chain().focus().addTopCategories(attrs).run()
+  }
+
+  async topTags() {
+    const attrs = await this.createBlock('Announcement::Block::TopTags')
+    this.editor.chain().focus().addTopTags(attrs).run()
+  }
+
+  async topUsers() {
+    const attrs = await this.createBlock('Announcement::Block::TopUsers')
+    this.editor.chain().focus().addTopUsers(attrs).run()
   }
 
   async createBlock(type, parameters) {
@@ -204,6 +259,14 @@ export default class extends Controller {
       },
     }).then(r => r.json())
 
-    return res
+    if ('errors' in res) {
+      const message = `Could not insert block: ${res.errors.join(', ')}`
+
+      alert(message)
+
+      return null
+    } else {
+      return res
+    }
   }
 }

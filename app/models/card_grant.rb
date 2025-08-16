@@ -86,7 +86,9 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :purpose, length: { maximum: 30 }
+
+  MAXIMUM_PURPOSE_LENGTH = 30
+  validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }

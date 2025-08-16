@@ -33,8 +33,7 @@ class DonationMailer < ApplicationMailer
   end
 
   def set_emails
-    @emails = @donation.event.users.map(&:email_address_with_name)
-    @emails << @donation.event.config.contact_email if @donation.event.config.contact_email.present?
+    @emails = @donation.event.organizer_contact_emails
   end
 
 end

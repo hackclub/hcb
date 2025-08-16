@@ -61,11 +61,11 @@
       <div class="card border b--info mt0 mb3">
         <% if @user.totp.present? %>
           <p>
-            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :POST } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :POST } %>
+            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
           </p>
         <% else %>
           <p>
-            You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :POST } %> to setup your TOTP.
+            You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %> to setup your TOTP.
           </p>
         <% end %>
       </div>
@@ -103,7 +103,7 @@
           Disable backup codes
         <% end %>
       <% end %>
-      <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :POST, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'" do %>
+      <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'" do %>
         <%= inline_icon "plus", size: home_action_size %>
         <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
       <% end %>
@@ -137,7 +137,7 @@
     <% @all_sessions.each do |session| %>
       <% if session.is_a? UserSession %>
         <%= render "user_session", session: %>
-      <% elsif session.is_a? ApiToken %>
+      <% elsif session.respond_to? :authorization_count %>
         <%= render "oauth_authorization", authorization: session %>
       <% end %>
     <% end %>
@@ -152,7 +152,7 @@
       <% @expired_sessions.each do |session| %>
         <% if session.is_a? UserSession %>
           <%= render "user_session", session: %>
-        <% elsif session.is_a? ApiToken %>
+        <% elsif session.respond_to? :authorization_count %>
           <%= render "oauth_authorization", authorization: session %>
         <% end %>
       <% end %>

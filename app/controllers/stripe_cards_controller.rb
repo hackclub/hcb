@@ -24,7 +24,7 @@ class StripeCardsController < ApplicationController
     authorize @card
 
     begin
-      @card.freeze!
+      @card.freeze!(frozen_by: current_user)
       flash[:success] = "Card frozen"
     rescue => e
       flash[:error] = "Card could not be frozen"
@@ -72,6 +72,8 @@ class StripeCardsController < ApplicationController
     authorize @card
 
     if params[:show_details] == "true"
+      return unless enforce_sudo_mode
+
       ahoy.track "Card details shown", stripe_card_id: @card.id
     end
 

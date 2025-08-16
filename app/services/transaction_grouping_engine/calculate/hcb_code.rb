@@ -19,6 +19,7 @@ module TransactionGroupingEngine
       ACH_TRANSFER_CODE = "300"
       WIRE_CODE = "310"
       PAYPAL_TRANSFER_CODE = "350"
+      WISE_TRANSFER_CODE = "360"
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"
@@ -41,6 +42,7 @@ module TransactionGroupingEngine
         return increase_check_hcb_code if increase_check
         return paypal_transfer_hcb_code if paypal_transfer
         return wire_hcb_code if wire
+        return wise_transfer_hcb_code if wise_transfer
         return unknown_hcb_code if @ct_or_cp.is_a?(CanonicalTransaction) && @ct_or_cp.raw_increase_transaction&.increase_account_number.present? # Don't attempt to group transactions posted to an org's account/routing number
         return short_code_hcb_code if has_short_code?
         return invoice_hcb_code if invoice
@@ -165,6 +167,18 @@ module TransactionGroupingEngine
         @wire ||= @ct_or_cp.wire
       end
 
+      def wise_transfer_hcb_code
+        [
+          HCB_CODE,
+          WISE_TRANSFER_CODE,
+          wise_transfer.id
+        ].join(SEPARATOR)
+      end
+
+      def wise_transfer
+        @wise_transfer ||= @ct_or_cp.wise_transfer
+      end
+
       def check_deposit_hcb_code
         [
           HCB_CODE,
@@ -265,7 +279,7 @@ module TransactionGroupingEngine
         [
           HCB_CODE,
           UNKNOWN_CODE,
-          @ct_or_cp.id
+          @ct_or_cp.column_transaction_id || @ct_or_cp.id
         ].join(SEPARATOR)
       end
 

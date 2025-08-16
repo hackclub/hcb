@@ -67,13 +67,4 @@ class OrganizerPositionsController < ApplicationController
     redirect_to organizer_position.event
   end
 
-  def toggle_signee_status
-    organizer_position = OrganizerPosition.find(params[:id])
-    authorize organizer_position
-    unless organizer_position.update(is_signee: !organizer_position.is_signee?)
-      flash[:error] = organizer_position.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
-    end
-    redirect_back(fallback_location: event_team_path(organizer_position.event))
-  end
-
 end

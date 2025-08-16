@@ -39,6 +39,9 @@ class Receipt < ApplicationRecord
   blind_index :textual_content
   has_encrypted :extracted_card_last4
 
+  monetize :extracted_subtotal_amount_cents, as: "extracted_subtotal_amount", with_model_currency: :extracted_currency, allow_nil: true
+  monetize :extracted_total_amount_cents, as: "extracted_total_amount", with_model_currency: :extracted_currency, allow_nil: true
+
   include StripeAuthorizationsHelper
 
   include PublicIdentifiable

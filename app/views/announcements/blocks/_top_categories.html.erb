@@ -1,0 +1,19 @@
+<%# locals: (block:, is_email: false, categories:, start_date:, end_date:) %>
+
+<%= render "announcements/blocks/block_shell", block:, type: "topCategories", is_email: do %>
+  <p><strong>Top categories for <%= block.announcement.event.name %> <%= "from #{start_date.strftime("%B %e, %Y")}" if start_date.present? %> until <%= end_date.strftime("%B %e, %Y") %>:</strong></p>
+
+  <% if block.empty? %>
+    <p><%= block.announcement.event.name %> does not have any category data for this period.</p>
+  <% else %>
+    <% if is_email %>
+      <ol>
+        <% categories.each do |category| %>
+          <li><strong><%= category[:name] %></strong>: <%= render_money category[:value] * 100 %></p>
+        <% end %>
+      </ol>
+    <% else %>
+      <%= react_component "home/Categories", { data: categories }, { camelize_props: false } %>
+    <% end %>
+  <% end %>
+<% end %>

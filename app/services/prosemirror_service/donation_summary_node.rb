@@ -2,7 +2,7 @@
 
 module ProsemirrorService
   class DonationSummaryNode < ProsemirrorToHtml::Nodes::Node
-    @node_type = "donationSummary"
+    @node_type = "Announcement::Block::DonationSummary"
     @tag_name = "div"
 
     def tag
