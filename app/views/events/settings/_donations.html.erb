@@ -114,4 +114,5 @@
   <% end %>
 
   <%= render "events/settings/donation_tiers", disabled:, event: @event if Flipper.enabled?(:donation_tiers_2025_06_24, @event) %>
+  <%= render "events/settings/donation_stats", disabled:, event: @event %>
 <% end %>
