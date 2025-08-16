@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ApplicationMailer < ActionMailer::Base
+  self.delivery_job = MailDeliveryJob
+
   OPERATIONS_EMAIL = "hcb@hackclub.com"
 
   DOMAIN = Rails.env.production? ? "hackclub.com" : "staging.hcb.hackclub.com"
