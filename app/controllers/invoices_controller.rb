@@ -12,6 +12,13 @@ class InvoicesController < ApplicationController
     { key_base: "amount", label: "Amount", type: "amount_range" }
   ].freeze
 
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "date", default: true },
+    { key: "sponsors.name", display: "To" },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+
   def index
     authorize @event, :invoices?
     relation = @event.invoices

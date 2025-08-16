@@ -56,18 +56,11 @@
 <table>
   <thead>
     <tr>
-      <th>
-        <%= render "events/sort_table_header", sort: "status" %>
-      </th>
-      <th>
-        <%= render "events/sort_table_header", sort: "date", default: true %>
-      </th>
-      <th>
-        <%= render "events/sort_table_header", sort: "sponsors.name", display: "To" %>
-      </th>
-      <th>
-        <%= render "events/sort_table_header", sort: "amount_due", right: true, display: "Amount" %>
-      </th>
+      <% INVOICE_COLUMNS.each do |column| %>
+        <th>
+          <%= render "events/sort_table_header", sort: column[:key], display: column[:display], default: column[:default] %>
+        </th>
+      <% end %>
       <th></th>
     </tr>
   </thead>
