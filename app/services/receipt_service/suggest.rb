@@ -35,13 +35,14 @@ module ReceiptService
 
           if @receipt.email_receipt_bin? && pair = @receipt.suggested_pairings
                                                            .unreviewed
-                                                           .where("distance <= ?", 20)
+                                                           .where("distance <= ?", 200)
                                                            .order(:receipt_id, distance: :asc)
                                                            .select("DISTINCT ON (receipt_id) suggested_pairings.*")
                                                            .select { |pairing| pairing.hcb_code.missing_receipt? }
                                                            .first
             pair.mark_accepted!
-            ReceiptBinMailer.with(suggested_pairing: pair).paired.deliver_later
+
+            return pair
           end
         end
 
