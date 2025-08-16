@@ -1,3 +1,5 @@
+/* global Turbo */
+
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
 import { Editor } from '@tiptap/core'
@@ -6,6 +8,7 @@ import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import { mountReactNode } from './tiptap/mount_react_node'
 
 import csrf from '../common/csrf'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
@@ -191,58 +194,29 @@ export default class extends Controller {
     this.editor.chain().focus().setImage({ src: url }).run()
   }
 
+  async block(type, parameters, blockId) {
+    let result
+    if (blockId) {
+      result = await this.editBlock(blockId, parameters)
+    } else {
+      result = await this.createBlock(type, parameters)
+    }
+
+    if (result !== null && 'errors' in result) {
+      return result['errors']
+    } else if (!blockId) {
+      this.editor.chain().focus().insertContent({ type, attrs: result }).run()
+    }
+
+    return null
+  }
+
   async donationGoal() {
     const attrs = await this.createBlock('Announcement::Block::DonationGoal')
 
     if (attrs !== null) {
       this.editor.chain().focus().addDonationGoal(attrs).run()
     }
-  }
-
-  async hcbCode() {
-    const url = window.prompt('Transaction URL')
-
-    if (url === null || url === '') {
-      return
-    }
-
-    const hcbCode = url.split('/').at(-1)
-
-    const attrs = await this.createBlock('Announcement::Block::HcbCode', {
-      hcb_code: hcbCode,
-    })
-
-    if (attrs !== null) {
-      this.editor.chain().focus().addHcbCode(attrs).run()
-    }
-  }
-
-  async donationSummary() {
-    const attrs = await this.createBlock('Announcement::Block::DonationSummary')
-
-    if (attrs !== null) {
-      this.editor.chain().focus().addDonationSummary(attrs).run()
-    }
-  }
-
-  async topMerchants() {
-    const attrs = await this.createBlock('Announcement::Block::TopMerchants')
-    this.editor.chain().focus().addTopMerchants(attrs).run()
-  }
-
-  async topCategories() {
-    const attrs = await this.createBlock('Announcement::Block::TopCategories')
-    this.editor.chain().focus().addTopCategories(attrs).run()
-  }
-
-  async topTags() {
-    const attrs = await this.createBlock('Announcement::Block::TopTags')
-    this.editor.chain().focus().addTopTags(attrs).run()
-  }
-
-  async topUsers() {
-    const attrs = await this.createBlock('Announcement::Block::TopUsers')
-    this.editor.chain().focus().addTopUsers(attrs).run()
   }
 
   async createBlock(type, parameters) {
@@ -259,14 +233,31 @@ export default class extends Controller {
       },
     }).then(r => r.json())
 
-    if ('errors' in res) {
-      const message = `Could not insert block: ${res.errors.join(', ')}`
+    return res
+  }
 
-      alert(message)
+  async editBlock(id, parameters) {
+    const res = await fetch(`/announcements/blocks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        parameters: JSON.stringify(parameters || {}),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf(),
+      },
+    }).then(res => {
+      if (res.status === 400) {
+        return res.json()
+      } else {
+        return res.text().then(html => {
+          Turbo.renderStreamMessage(html)
+          mountReactNode(null, `block_${id}`)
+          return null
+        })
+      }
+    })
 
-      return null
-    } else {
-      return res
-    }
+    return res
   }
 }

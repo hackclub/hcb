@@ -1,0 +1,14 @@
+<%# locals: (type:, block: nil, header: "") %>
+
+<section class="<%= "modal modal--scroll bg-snow min-w-[50%]" if block.nil? %>" data-behavior="modal" role="dialog" id="insert_<%= type.underscore %>_modal" data-controller="announcement-modal" data-announcement-modal-tiptap-outlet="#announcement-form" <%= "data-announcement-modal-block-id-value=#{block.id}" if block.present? %>>
+  <%= modal_header header %>
+  <div class="flex flex-col gap-4">
+    <div class="error-card mb-0 hidden">
+      <p data-announcement-modal-target="errors"></p>
+    </div>
+
+    <%= yield %>
+
+    <button type="button" class="btn w-fit" data-action="announcement-modal#<%= type %>"><%= block.present? ? "Edit" : "Add" %></button>
+  </div>
+</section>
