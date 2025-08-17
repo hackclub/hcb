@@ -36,7 +36,8 @@ class Donation
 
       @monthly = true
 
-      @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
+      @tiers = @event.donation_tiers.where(published: true)
+      @show_tiers = @event.donation_tiers_enabled? && @tiers.any?
       @recurring_donation = RecurringDonation.new
 
       render "donations/start_donation"

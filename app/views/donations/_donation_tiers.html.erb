@@ -45,7 +45,7 @@
           Continue
         <% end %>
       </div>
-      <% @event.donation_tiers.each do |donation_tier| %>
+      <% @tiers.each do |donation_tier| %>
         <div class="card w-[250px] shrink-0 mb-8 flex flex-col">
           <h3 class="mb-0 mt-0">
             <%= donation_tier.name %>
