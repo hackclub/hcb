@@ -1226,7 +1226,8 @@ class EventsController < ApplicationController
 
       if rst.present?
         merchant_data = rst.stripe_transaction["merchant_data"]
-        { id: merchant_data["network_id"], name: merchant_data["name"] }
+        yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+        { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
       else
         nil
       end
@@ -1237,7 +1238,8 @@ class EventsController < ApplicationController
 
       if rpst.present?
         merchant_data = rpst.stripe_transaction["merchant_data"]
-        { id: merchant_data["network_id"], name: merchant_data["name"] }
+        yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+        { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
       else
         nil
       end
