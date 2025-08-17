@@ -198,6 +198,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      categories: @category.present? ? BreakdownEngine::Categorizer::CATEGORY_MAPPINGS[@category.to_sym][:categories] : nil,
       order_by: @order_by.to_sym
     ).run
 
@@ -1186,6 +1187,7 @@ class EventsController < ApplicationController
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
+    @category = params[:category]
     @direction = params[:direction]
 
     # Also used in Transactions page UI (outside of Ledger)
@@ -1208,6 +1210,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      categories: @category.present? ? BreakdownEngine::Categorizer::CATEGORY_MAPPINGS[@category.to_sym][:categories] : nil,
       order_by: @order_by&.to_sym || "date"
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
