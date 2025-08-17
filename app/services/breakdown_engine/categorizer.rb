@@ -22,7 +22,7 @@ module BreakdownEngine
       finance: { name: "Finance", categories: %w(charitable_and_social_service_organizations_fundraising wires_money_orders non_fi_stored_value_card_purchase_load financial_institutions) },
       communication: { name: "Communication", categories: %w(telecommunication_services courier_services postal_services_government_only consulting_public_relations) },
       education: { name: "Education", categories: %w(colleges_universities) },
-    }
+    }.freeze
 
     def run
       case @category
