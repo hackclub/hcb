@@ -42,10 +42,6 @@ transaction_grouping_engine_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "TransactionGroupingEngine::NightlyJob"
 
-event_mapping_engine_nightly_job:
-  cron: "0 7 * * *" # run at 7am UTC each morning
-  class: "EventMappingEngine::NightlyJob"
-
 sync_payouts_job:
   cron: "0,30 * * * *" # run every 30 minutes
   class: "SyncPayoutsJob"
