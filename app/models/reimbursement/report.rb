@@ -41,7 +41,7 @@ module Reimbursement
     include ::Shared::AmpleBalance
 
     include PublicIdentifiable
-    set_public_id_prefix :rmb
+    set_public_id_prefix :rmr
 
     belongs_to :user
 
