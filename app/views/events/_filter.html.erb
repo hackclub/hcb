@@ -177,7 +177,7 @@
       <% end %>
       <% if @merchant %>
         <div class="badge badge-large bg-muted">
-          <%= @merchants.find { |m| m[:id].to_s == @merchant }[:name] %>
+          <%= turbo_frame_tag :merchant_name, src: event_merchant_name_path(id: @merchant) %>
           <%= link_to event_ledger_path(@event, upsert_query_params(merchant: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>

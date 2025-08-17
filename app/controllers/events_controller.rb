@@ -1052,6 +1052,29 @@ class EventsController < ApplicationController
     { settled_transactions:, pending_transactions: }
   end
 
+  def merchants_filter
+    authorize @event
+
+    merchants_hash = {}
+
+    merchants_list.each do |merchant|
+      if merchants_hash.key?(merchant[:id])
+        merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
+      else
+        merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+      end
+    end
+
+    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!
+  end
+
+  def merchant_name
+    authorize @event
+
+    @merchant_id = params[:id]
+    @merchant = merchants_list.find { |merchant| merchant[:id].to_s == @merchant_id }
+  end
+
   private
 
   # Only allow a trusted parameter "white list" through.
@@ -1194,7 +1217,9 @@ class EventsController < ApplicationController
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+  end
 
+  def merchants_list
     settled_merchants = @event.canonical_transactions.map do |ct|
       rst = ct.raw_stripe_transaction
 
@@ -1205,6 +1230,7 @@ class EventsController < ApplicationController
         nil
       end
     end.select(&:present?)
+
     pending_merchants = @event.canonical_pending_transactions.map do |cpt|
       rpst = cpt.raw_pending_stripe_transaction
 
@@ -1215,7 +1241,8 @@ class EventsController < ApplicationController
         nil
       end
     end.select(&:present?)
-    @merchants = settled_merchants.concat(pending_merchants).uniq { |m| m[:id] }
+
+    settled_merchants.concat(pending_merchants)
   end
 
   def _show_pending_transactions

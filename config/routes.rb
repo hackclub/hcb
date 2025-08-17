@@ -754,6 +754,8 @@ Rails.application.routes.draw do
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
     get "ledger"
+    get "merchants_filter"
+    get "merchant_name"
     put "toggle_hidden"
     post "claim_point_of_contact"
     post "create_sub_organization"
