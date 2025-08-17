@@ -84,10 +84,19 @@
 
   <div class="pt-[64px] lg:pt-0 -mb-16 lg:mb-0 lg:pl-72 -mt-4 empty:hidden banner-container">
     <%= render "application/maintenance_banner",
-              datetime: "2025-05-07T00:00:00-08:00",
-              duration: 30.minutes,
-              learn_more_url: "https://blog.hcb.hackclub.com/posts/7th-may-maintenance" %>
-     <% if current_session&.impersonated? %>
+               datetime: "2025-05-07T00:00:00-08:00",
+               duration: 30.minutes,
+               learn_more_url: "https://blog.hcb.hackclub.com/posts/7th-may-maintenance" %>
+
+    <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
+      <div class="w-100 px4 !bg-red transparency-banner">
+        <p class="h5 medium center mt1 mb1 text-white text-xl">
+          ⚠️ Admin users are required to
+          <%= link_to("enable two-factor authentication", settings_security_path, class: "text-inherit") %>
+        </p>
+      </div>
+    <% end %>
+    <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
           <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
