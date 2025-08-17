@@ -26,10 +26,10 @@ class ApplicationMailer < ActionMailer::Base
   end
 
   def check_recipients
-    # Our SMTP service will throw an error if we attempt 
-    # to deliver an email without recipients. Occasionally 
-    # that happens due to events without members. This 
-    # will prevent those attempts from being made. 
+    # Our SMTP service will throw an error if we attempt
+    # to deliver an email without recipients. Occasionally
+    # that happens due to events without members. This
+    # will prevent those attempts from being made.
     mail.perform_deliveries = false if no_recipients?
   end
 
