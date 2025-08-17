@@ -52,8 +52,11 @@ class DonationsController < ApplicationController
     end
 
     if @event.show_top_donors
-      # Get 5 donors w/ most amount
       @top_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(amount: :desc).limit(5)
+    end
+
+    if @event.show_recent_donors
+      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(5)
     end
 
     tax_deductible = params[:goods].nil? || params[:goods] == "0"

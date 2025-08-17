@@ -36,6 +36,7 @@
 <% end %>
 
 <%= render "donations/top_donors" if @event.show_top_donors %>
+<%= render "donations/recent_donors" if @event.show_recent_donors %>
 
 <% if @event.demo_mode? %>
   <div class="container container--sm">
