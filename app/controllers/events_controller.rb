@@ -1068,13 +1068,6 @@ class EventsController < ApplicationController
     @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!
   end
 
-  def merchant_name
-    authorize @event
-
-    @merchant_id = params[:id]
-    @merchant = merchants_list.find { |merchant| merchant[:id].to_s == @merchant_id }
-  end
-
   private
 
   # Only allow a trusted parameter "white list" through.
@@ -1217,6 +1210,12 @@ class EventsController < ApplicationController
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+    if @merchant
+      merchant = merchants_list.find { |merchant| merchant[:id] == @merchant }
+
+      @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
   end
 
   def merchants_list

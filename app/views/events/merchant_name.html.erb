@@ -1,7 +1,0 @@
-<%= turbo_frame_tag :merchant_name do %>
-  <% if @merchant.present? %>
-    <%= @merchant[:name] %>
-  <% else %>
-    Merchant #<%= @merchant_id %>
-  <% end %>
-<% end %>
