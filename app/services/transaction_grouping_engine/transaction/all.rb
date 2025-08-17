@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, categories: nil, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, categories: nil, merchant: nil, order_by: :date)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -16,6 +16,7 @@ module TransactionGroupingEngine
         @user = user
         @missing_receipts = missing_receipts
         @categories = categories
+        @merchant = merchant
         @order_by = order_by
       end
 
@@ -107,6 +108,12 @@ module TransactionGroupingEngine
         return "" unless @categories.present?
 
         ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->'merchant_data'->>'category' IN (?)", @categories])
+      end
+
+      def merchant_modifier
+        return "" unless @merchant.present?
+
+        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id' = ?", @merchant])
       end
 
       def stripe_joins_for(type)
@@ -245,6 +252,7 @@ module TransactionGroupingEngine
             #{search_modifier_for :pt}
             #{user_modifier}
             #{category_modifier}
+            #{merchant_modifier}
           group by
             coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
         SQL
@@ -274,6 +282,7 @@ module TransactionGroupingEngine
             #{search_modifier_for :ct}
             #{user_modifier}
             #{category_modifier}
+            #{merchant_modifier}
           group by
             coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
         SQL

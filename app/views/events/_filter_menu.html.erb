@@ -18,6 +18,7 @@
       <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
       <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
       <button id="category" data-tabs-target="btn" data-action="click->tabs#select">Category</button>
+      <button id="merchant" data-tabs-target="btn" data-action="click->tabs#select">Merchant</button>
       <button id="receipts" data-tabs-target="btn" data-action="click->tabs#select">Receipts</button>
       <div class="menu__divider--filter-tab"></div>
 
@@ -116,6 +117,13 @@
         <% BreakdownEngine::Categorizer::CATEGORY_MAPPINGS.each do |id, category_mapping| %>
           <div class="flex items-center">
             <%= link_to(category_mapping[:name], event_ledger_path(@event, upsert_query_params(category: id)), class: "flex-auto menu__action #{"menu__action--active" if @category == id.to_s}", data: { turbo_prefetch: "false" }) %>
+          </div>
+        <% end %>
+      </div>
+      <div data-tabs-target="tab" id="merchant">
+        <% @merchants.each do |merchant| %>
+          <div class="flex items-center">
+            <%= link_to(merchant[:name], event_ledger_path(@event, upsert_query_params(merchant: merchant[:id])), class: "flex-auto menu__action #{"menu__action--active" if @merchant == merchant[:id].to_s}", data: { turbo_prefetch: "false" }) %>
           </div>
         <% end %>
       </div>

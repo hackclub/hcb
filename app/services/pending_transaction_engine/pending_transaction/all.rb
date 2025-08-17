@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, categories: nil, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, categories: nil, merchant: nil, order_by: :date)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -16,6 +16,7 @@ module PendingTransactionEngine
         @user = user
         @missing_receipts = missing_receipts
         @categories = categories
+        @merchant = merchant
         @order_by = order_by
       end
 
@@ -47,7 +48,7 @@ module PendingTransactionEngine
                                               .where(id: canonical_pending_event_mappings.pluck(:canonical_pending_transaction_id))
                                               .order("#{order_by_mapped_at ? "canonical_pending_event_mappings.created_at" : "canonical_pending_transactions.date"} desc, canonical_pending_transactions.id desc")
 
-            if @user || @categories
+            if @user || @categories || @merchant
               cpts = cpts.joins("LEFT JOIN raw_pending_stripe_transactions on raw_pending_stripe_transactions.id = canonical_pending_transactions.raw_pending_stripe_transaction_id")
             end
 
@@ -96,6 +97,10 @@ module PendingTransactionEngine
 
             if @categories
               cpts = cpts.where("raw_pending_stripe_transactions.stripe_transaction->'merchant_data'->>'category' IN (?)", @categories)
+            end
+
+            if @merchant
+              cpts = cpts.where("raw_pending_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id' = ?", @merchant)
             end
 
             if event.can_front_balance?

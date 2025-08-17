@@ -199,6 +199,7 @@ class EventsController < ApplicationController
       end_date: @end_date,
       missing_receipts: @missing_receipts,
       categories: @category.present? ? BreakdownEngine::Categorizer::CATEGORY_MAPPINGS[@category.to_sym][:categories] : nil,
+      merchant: @merchant,
       order_by: @order_by.to_sym
     ).run
 
@@ -1188,10 +1189,33 @@ class EventsController < ApplicationController
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
     @category = params[:category]
+    @merchant = params[:merchant]
     @direction = params[:direction]
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+    settled_merchants = @event.canonical_transactions.map do |ct|
+      rst = ct.raw_stripe_transaction
+
+      if rst.present?
+        merchant_data = rst.stripe_transaction["merchant_data"]
+        { id: merchant_data["network_id"], name: merchant_data["name"] }
+      else
+        nil
+      end
+    end.select(&:present?)
+    pending_merchants = @event.canonical_pending_transactions.map do |cpt|
+      rpst = cpt.raw_pending_stripe_transaction
+
+      if rpst.present?
+        merchant_data = rpst.stripe_transaction["merchant_data"]
+        { id: merchant_data["network_id"], name: merchant_data["name"] }
+      else
+        nil
+      end
+    end.select(&:present?)
+    @merchants = settled_merchants.concat(pending_merchants).uniq { |m| m[:id] }
   end
 
   def _show_pending_transactions
@@ -1211,6 +1235,7 @@ class EventsController < ApplicationController
       end_date: @end_date,
       missing_receipts: @missing_receipts,
       categories: @category.present? ? BreakdownEngine::Categorizer::CATEGORY_MAPPINGS[@category.to_sym][:categories] : nil,
+      merchant: @merchant,
       order_by: @order_by&.to_sym || "date"
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!

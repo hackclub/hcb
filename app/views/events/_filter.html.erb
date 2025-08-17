@@ -1,4 +1,4 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(mode: false, local: true, method: :get, class: "flex-auto") do |form| %>
@@ -171,6 +171,14 @@
         <div class="badge badge-large bg-muted">
           <%= BreakdownEngine::Categorizer::CATEGORY_MAPPINGS[@category.to_sym][:name] %>
           <%= link_to event_ledger_path(@event, upsert_query_params(category: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @merchant %>
+        <div class="badge badge-large bg-muted">
+          <%= @merchants.find { |m| m[:id].to_s == @merchant }[:name] %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(merchant: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
