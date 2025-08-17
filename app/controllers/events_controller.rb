@@ -1055,6 +1055,8 @@ class EventsController < ApplicationController
   def merchants_filter
     authorize @event
 
+    @merchant = params[:merchant]
+
     merchants_hash = {}
 
     merchants_list.each do |merchant|
