@@ -42,7 +42,7 @@ class Announcement < ApplicationRecord
     state :published
 
     event :mark_published do
-      transitions from: :draft, to: :published
+      transitions from: [:template_draft, :draft], to: :published
 
       after do
         Announcement::PublishedJob.perform_later(announcement: self)
@@ -58,7 +58,7 @@ class Announcement < ApplicationRecord
   scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
   validate :content_is_json
 
-  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}) }
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event

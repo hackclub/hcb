@@ -38,7 +38,7 @@ class OrganizerPosition < ApplicationRecord
 
   has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
-  has_many :tours, as: :tourable
+  has_many :tours, as: :tourable, dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
 

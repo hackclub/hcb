@@ -39,6 +39,10 @@
 module Reimbursement
   class Report < ApplicationRecord
     include ::Shared::AmpleBalance
+
+    include PublicIdentifiable
+    set_public_id_prefix :rmr
+
     belongs_to :user
 
     belongs_to :event, optional: true
@@ -103,7 +107,7 @@ module Reimbursement
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
             user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? && expenses.any? && !missing_receipts? &&
-              user.payout_method.class != User::PayoutMethod::PaypalTransfer && !event.financially_frozen?
+              user.payout_method.class != User::PayoutMethod::PaypalTransfer && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? }
           end
         end
         after do

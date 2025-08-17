@@ -20,7 +20,38 @@ module Api
 
         authorize @card_grant
 
-        @card_grant.save!
+        begin
+          # There's no way to save a card grant without potentially triggering an
+          # exception as under the hood it calls `DisbursementService::Create` and a
+          # number of other methods (e.g. `save!`) which either succeed or raise.
+          @card_grant.save!
+        rescue => e
+          messages = []
+
+          case e
+          when ActiveRecord::RecordInvalid
+            # We expect to encounter validation errors from `CardGrant`, but anything
+            # else is the result of downstream logic which shouldn't fail.
+            raise e unless e.record.is_a?(CardGrant)
+
+            messages.concat(@card_grant.errors.full_messages)
+          when DisbursementService::Create::UserError
+            messages << e.message
+          else
+            raise e
+          end
+
+          render(
+            json: { error: "invalid_operation", messages: },
+            status: :unprocessable_entity
+          )
+          return
+        end
+
+        render(
+          status: :created,
+          location: api_v4_card_grant_path(@card_grant)
+        )
       end
 
       def show
