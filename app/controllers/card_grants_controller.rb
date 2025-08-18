@@ -168,6 +168,8 @@ class CardGrantsController < ApplicationController
     @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
 
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+  rescue DisbursementService::Create::UserError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def withdraw

@@ -54,7 +54,7 @@
         <% end %>
       </div>
       <div data-tabs-target="tab" id="date">
-        <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
+        <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
           <p class="bold mb0 mt0">Transactions after...</p>
           <%= form.date_field :start, class: "border mb1", value: @start_date %>
           <p class="bold mb0 mt0">Transactions before...</p>
@@ -70,7 +70,7 @@
         <% end %>
       </div>
       <div data-tabs-target="tab" id="amount">
-        <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
+        <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
           <div class="m-2">
             <p class="bold mb-0 mt-2">Transactions more than...</p>
             <div class="flex mb1">
