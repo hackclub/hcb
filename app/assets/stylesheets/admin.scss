@@ -909,6 +909,74 @@ form:has(> #admin-logout-button) {
   margin: 0px;
 }
 
+@keyframes flash-slide-in {
+  from {
+    translate: 0 calc(-100% - var(--flash-offset, 0));
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+#flash-container {
+  position: absolute;
+  top: 0;
+  left: calc(50vw - 25ch);
+  right: calc(50vw - 25ch);
+  display: flex;
+  justify-content: center;
+
+  article.flash {
+    --flash-offset: 1rem;
+    border: 1px solid var(--hcb-bg-2);
+    border-top: 3px solid var(--hcb-link-1);
+    border-radius: 4px;
+    background: white;
+    padding: 1rem;
+    margin: var(--flash-offset) 0 0;
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 2px hsl(240 3.8% 46.1% / 12%);
+    animation-duration: 0.5s;
+    animation-name: flash-slide-in;
+    z-index: 999;
+
+    &.flash--success {
+      border-top-color: green;
+    }
+
+    &.flash--error {
+      border-top-color: red;
+    }
+
+    &.flash--dismissed {
+      translate: 0 calc(-100% - var(--flash-offset));
+      display: none;
+      transition-property: translate display;
+      transition-duration: 1s;
+      transition-behavior: allow-discrete;
+    }
+
+    .flash--content {
+      flex: 1;
+    }
+  }
+
+  .flash--close-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    color: black;
+  }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
