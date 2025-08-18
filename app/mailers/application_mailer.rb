@@ -16,6 +16,7 @@ class ApplicationMailer < ActionMailer::Base
     # that happens due to events without members. This
     # will prevent those attempts from being made.
     return if mail.recipients.compact.empty?
+
     super
   end
 
