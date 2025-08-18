@@ -1,0 +1,13 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  You are receiving this notification email because <%= @event.name %>
+  currently has a negative balance (<%= render_money(@balance) %>).
+</p>
+
+<p>Please reach out to your HCB representative to address this.</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>
