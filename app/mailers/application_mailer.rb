@@ -10,14 +10,14 @@ class ApplicationMailer < ActionMailer::Base
   # allow usage of application helper
   helper :application
 
-  def deliver_now
+  def self.deliver_mail(mail)
     # Our SMTP service will throw an error if we attempt
     # to deliver an email without recipients. Occasionally
     # that happens due to events without members. This
     # will prevent those attempts from being made.
     return if mail.recipients.compact.empty?
 
-    super
+    super(mail)
   end
 
   protected
