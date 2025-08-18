@@ -188,6 +188,10 @@ stripe_service_fee_job:
 user_seen_at_history_snapshot_job:
   cron: "0,30 * * * *" # twice every hour
   class: "User::SeenAtHistory::SnapshotJob"
+  
+user_update_card_locking_recurring:
+  cron: "*/5 * * * *" # Every 5 minutes
+  class: "User::UpdateCardLocking::RecurringJob"
 
 column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
