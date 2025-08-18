@@ -19,6 +19,8 @@ class ApplicationMailer < ActionMailer::Base
     super
   end
 
+  before_deliver :check_recipients
+
   protected
 
   def hcb_email_with_name_of(object)
