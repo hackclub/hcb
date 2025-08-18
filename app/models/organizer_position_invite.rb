@@ -97,10 +97,6 @@ class OrganizerPositionInvite < ApplicationRecord
     organizer_position_contracts.where.not(aasm_state: :voided).last
   end
 
-  def organizer_url
-    organizer_position_contracts.where(aasm_state: :pending).last.user_signature_url
-  end
-
   def pending_signature?
     is_signee && organizer_position_contracts.where(aasm_state: :signed).none?
   end
