@@ -44,12 +44,17 @@ class CanonicalTransactionsController < ApplicationController
       .new(model: @canonical_transaction)
       .set!(slug:, assignment_strategy: "manual")
 
+    message = "Transaction category was successfully updated."
+
     respond_to do |format|
-      format.turbo_stream {}
+      format.turbo_stream do
+        flash.now[:success] = message
+        render(turbo_stream: turbo_stream.replace("flash-container", partial: "application/flash"))
+      end
       format.html do
         redirect_to(
           canonical_transaction_path(@canonical_transaction),
-          flash: { success: "Transaction category was successfully updated." }
+          flash: { success: message }
         )
       end
     end
