@@ -63,6 +63,8 @@ class Announcement < ApplicationRecord
   belongs_to :author, class_name: "User"
   belongs_to :event
 
+  has_many :blocks, dependent: :destroy
+
   validates :title, presence: true, if: :published?
 
   before_save :autofollow_organizers

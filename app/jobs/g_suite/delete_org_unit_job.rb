@@ -7,7 +7,7 @@ class GSuite
     include Partners::Google::GSuite::Shared::DirectoryClient
 
     retry_on Google::Apis::ClientError, attempts: 3, wait: 2.minutes do |job, e|
-      Rails.error.report("Failed to delete GSuite org unit for domain #{domain} after 3 attempts (pls do manually): #{e.message}\nBacktrace: #{e.backtrace}")
+      Rails.error.report("Failed to delete GSuite org unit after 3 attempts (please do manually): #{e.message}\nBacktrace: #{e.backtrace}")
     end
 
     def perform(domain:, remote_org_unit_path:)
