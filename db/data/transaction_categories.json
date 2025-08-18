@@ -115,6 +115,9 @@
       "miscellaneous_publishing_and_printing"
     ]
   },
+  "miscellaneous": {
+    "label": "Miscellaneous"
+  },
   "office": {
     "label": "Office",
     "stripe_merchant_categories": [
