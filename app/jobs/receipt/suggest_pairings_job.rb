@@ -8,6 +8,7 @@ class Receipt
     end
 
     discard_on ActiveRecord::RecordNotFound, RTesseract::Error
+
   end
 
 end
