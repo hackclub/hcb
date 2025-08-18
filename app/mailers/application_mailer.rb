@@ -9,8 +9,15 @@ class ApplicationMailer < ActionMailer::Base
 
   # allow usage of application helper
   helper :application
-
-  before_deliver :check_recipients
+  
+  def deliver_now
+    # Our SMTP service will throw an error if we attempt
+    # to deliver an email without recipients. Occasionally
+    # that happens due to events without members. This
+    # will prevent those attempts from being made.
+    return if mail.recipients.compact.empty?
+    super
+  end
 
   protected
 
@@ -23,14 +30,6 @@ class ApplicationMailer < ActionMailer::Base
     end
 
     email_address_with_name("hcb@hackclub.com", name)
-  end
-
-  def check_recipients
-    # Our SMTP service will throw an error if we attempt
-    # to deliver an email without recipients. Occasionally
-    # that happens due to events without members. This
-    # will prevent those attempts from being made.
-    mail.perform_deliveries = false if no_recipients?
   end
 
   def no_recipients?
