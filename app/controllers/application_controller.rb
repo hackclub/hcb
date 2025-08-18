@@ -55,7 +55,7 @@ class ApplicationController < ActionController::Base
   rescue_from Rack::Timeout::RequestTimeoutException do
     respond_to do |format|
       format.html { render "errors/timeout" }
-      format.all { render text: "This request timed out, sorry." }
+      format.all { render plain: "This request timed out, sorry." }
     end
   end
 
@@ -99,7 +99,6 @@ class ApplicationController < ActionController::Base
       redirect_to my_settings_path
     end
   end
-
 
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."

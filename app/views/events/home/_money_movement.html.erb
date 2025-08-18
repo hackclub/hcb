@@ -17,7 +17,7 @@
               <% if transaction.is_a?(CanonicalPendingTransaction) %>
                 Pending &bull;
               <% end %>
-              <% subtitle = "#{time_ago_in_words(transaction.date)} ago" %>
+              <% subtitle = transaction.date > 24.hours.ago ? "Earlier today" : "#{time_ago_in_words(transaction.date)} ago" %>
               <% if transaction.try(:raw_stripe_transaction) || transaction.try(:raw_pending_stripe_transaction_id) %>
                 <% subtitle += ", #{transaction.stripe_cardholder.user.name}" %>
               <% end %>
@@ -71,7 +71,7 @@
               <% if transaction.is_a?(CanonicalPendingTransaction) %>
                 Pending &bull;
               <% end %>
-              <% subtitle = "#{time_ago_in_words(transaction.date)} ago" %>
+              <% subtitle = transaction.date > 24.hours.ago ? "Earlier today" : "#{time_ago_in_words(transaction.date)} ago" %>
               <% if transaction.try(:raw_stripe_transaction) || transaction.try(:raw_pending_stripe_transaction_id) %>
                 <% subtitle += ", #{transaction.stripe_cardholder.user.name}" %>
               <% end %>

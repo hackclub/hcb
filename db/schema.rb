@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1764,6 +1764,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_08_033500) do
     t.boolean "data_extracted", default: false, null: false
     t.integer "textual_content_source", default: 0
     t.string "textual_content_bidx"
+    t.string "extracted_currency"
     t.index ["receiptable_type", "receiptable_id"], name: "index_receipts_on_receiptable_type_and_receiptable_id"
     t.index ["textual_content_bidx"], name: "index_receipts_on_textual_content_bidx"
     t.index ["user_id"], name: "index_receipts_on_user_id"

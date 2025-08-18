@@ -143,7 +143,7 @@
 
     <fieldset class="p-6">
       <legend style="padding: 0px 8px">Reject</legend>
-      <%= form_with(model: nil, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
+      <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
         <div class="field">
           <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
           <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
@@ -205,7 +205,7 @@
       <legend style="padding: 0px 8px">Reject</legend>
       <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
 
-      <%= form_with(model: nil, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
+      <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
         <div class="field">
           <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
           <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
@@ -224,7 +224,7 @@
   <% if @wise_transfer.may_mark_failed? %>
     <fieldset class="p-6">
       <legend style="padding: 0px 8px">Fail</legend>
-      <%= form_with(model: nil, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
+      <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
         <div class="field">
           <%= form.label "Failure reason", class: "bold mb1" %> <br>
           <%= form.text_area :reason, style: "width: 400px;", placeholder: "(Markdown supported)" %>
