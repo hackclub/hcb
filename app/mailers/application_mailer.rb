@@ -9,7 +9,7 @@ class ApplicationMailer < ActionMailer::Base
 
   # allow usage of application helper
   helper :application
-  
+
   def deliver_now
     # Our SMTP service will throw an error if we attempt
     # to deliver an email without recipients. Occasionally
