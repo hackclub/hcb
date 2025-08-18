@@ -7,6 +7,7 @@
 #  id                              :bigint           not null, primary key
 #  data_extracted                  :boolean          default(FALSE), not null
 #  extracted_card_last4_ciphertext :text
+#  extracted_currency              :string
 #  extracted_date                  :datetime
 #  extracted_merchant_name         :string
 #  extracted_merchant_url          :string
