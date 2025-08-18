@@ -7,6 +7,7 @@ class Receipt
       ::ReceiptService::Suggest.new(receipt:).run!
     end
 
+    discard_on ActiveRecord::RecordNotFound
   end
 
 end
