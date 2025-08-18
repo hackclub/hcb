@@ -48,7 +48,13 @@ class CanonicalPendingTransactionsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         flash.now[:success] = message
-        render(turbo_stream: turbo_stream.replace("flash-container", partial: "application/flash"))
+        partial =
+          if params[:context] == "admin"
+            "admin/flash"
+          else
+            "application/flash"
+          end
+        render(turbo_stream: turbo_stream.replace("flash-container", partial:))
       end
       format.html do
         redirect_to(
