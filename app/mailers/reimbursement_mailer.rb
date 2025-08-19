@@ -37,20 +37,6 @@ class ReimbursementMailer < ApplicationMailer
     end
   end
 
-  def expense_approved
-    @report = params[:report]
-    @expense = params[:expense]
-
-    mail to: @report.user.email_address_with_name, subject: "An update on your reimbursement for #{@expense.memo}", from: hcb_email_with_name_of(@report.event)
-  end
-
-  def expense_unapproved
-    @report = params[:report]
-    @expense = params[:expense]
-
-    mail to: @report.user.email_address_with_name, subject: "An update on your reimbursement for #{@expense.memo}", from: hcb_email_with_name_of(@report.event)
-  end
-
   def ach_failed
     @payout_holding = params[:reimbursement_payout_holding]
     @report = @payout_holding.report

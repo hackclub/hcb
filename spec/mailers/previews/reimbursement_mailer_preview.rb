@@ -21,16 +21,4 @@ class ReimbursementMailerPreview < ActionMailer::Preview
     ReimbursementMailer.with(report: @report).review_requested
   end
 
-  def expense_approved
-    @expense = Reimbursement::Expense.last
-    @report = @expense.report
-    ReimbursementMailer.with(report: @report, expense: @expense).expense_approved
-  end
-
-  def expense_unapproved
-    @expense = Reimbursement::Expense.last
-    @report = @expense.report
-    ReimbursementMailer.with(report: @report, expense: @expense).expense_unapproved
-  end
-
 end
