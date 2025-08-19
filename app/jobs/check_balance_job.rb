@@ -2,6 +2,8 @@
 
 class CheckBalanceJob < ApplicationJob
   queue_as :low
+  sidekiq_options retry: false
+
   def perform(event:)
     return if event.id == EventMappingEngine::EventIds::NOEVENT
 

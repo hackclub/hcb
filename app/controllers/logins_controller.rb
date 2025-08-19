@@ -171,6 +171,8 @@ class LoginsController < ApplicationController
         redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
       end
     end
+  rescue SessionsHelper::AccountLockedError => e
+    redirect_to(auth_users_path, flash: { error: e.message })
   end
 
   def reauthenticate

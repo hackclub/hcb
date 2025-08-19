@@ -1,5 +1,11 @@
 <% title "You’ve been invited to #{@invite.event.name}" %>
 
+<% if @invite.organizer_position_contract && !@invite.organizer_position_contract.signed? %>
+  <%= render "callout", type: "warning", title: "You have a pending contract for this organization." do %>
+    If you have signed the contract, it may still be pending because your parent / legal guardian or HCB point of contact hasn't signed it. <%= help_message %>
+  <% end %>
+<% end %>
+
 <main class="center max-width-3 card mt4 md-p3 mx-auto">
 
 <h1 class="mt0"><%= @invite.event.name %></h1>
@@ -18,6 +24,10 @@
 
 <div class="flex justify-center items-center flex-wrap mt3">
   <%= link_to "Reject", organizer_position_invite_reject_path(@invite), method: :post, class: "btn bg-error m1" %>
-  <%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success h2 m1" %>
+  <% if @invite.organizer_position_contract && !@invite.organizer_position_contract.signed? %>
+    <%= link_to "View pending contract", @invite.organizer_position_contract.user_signature_url, class: "btn bg-accent h2 m1" %>
+  <% else %>
+    <%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success h2 m1" %>
+  <% end %>
 </div>
 </main>
