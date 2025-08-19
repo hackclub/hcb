@@ -81,10 +81,10 @@ module ReceiptService
         extracted_currency: data.currency&.upcase,
         extracted_card_last4: data.card_last_four,
         extracted_date: begin
-                          data.date&.to_date
-                        rescue Date::Error
-                          nil
-                        end,
+          data.date&.to_date
+        rescue Date::Error
+          nil
+        end,
         extracted_merchant_name: data.merchant_name,
         extracted_merchant_url: data.merchant_url,
         extracted_merchant_zip_code: data.merchant_zip_code,
