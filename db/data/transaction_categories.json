@@ -1,9 +1,4 @@
 {
-  "bank-fee-revenue": {
-    "label": "Bank fee revenue",
-    "type": "revenue",
-    "group": null
-  },
   "bank-fees": {
     "label": "Bank fees",
     "type": "expense",
@@ -13,11 +8,6 @@
     "label": "Benefits",
     "type": "expense",
     "group": "Personnel"
-  },
-  "donations": {
-    "label": "Donations",
-    "type": "revenue",
-    "group": null
   },
   "events-projects": {
     "label": "Events / Projects",
@@ -68,11 +58,6 @@
     "label": "Insurance",
     "type": "expense",
     "group": "Admin"
-  },
-  "interest": {
-    "label": "Interest",
-    "type": "revenue",
-    "group": null
   },
   "internet-phone": {
     "label": "Internet / Phone",
