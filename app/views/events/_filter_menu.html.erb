@@ -114,6 +114,7 @@
         <% end %>
       </div>
       <div data-tabs-target="tab" id="category">
+        <p class="italic text-center">Categories are reported by card transaction merchants, and may be inaccurate. Non-card transactions will not be included when this filter is applied.</p>
         <% BreakdownEngine::Categorizer::CATEGORY_MAPPINGS.each do |id, category_mapping| %>
           <div class="flex items-center">
             <%= link_to(category_mapping[:name], event_ledger_path(@event, upsert_query_params(category: id)), class: "flex-auto menu__action #{"menu__action--active" if @category == id.to_s}", data: { turbo_prefetch: "false" }) %>
@@ -121,6 +122,7 @@
         <% end %>
       </div>
       <div data-tabs-target="tab" id="merchant">
+        <p class="italic text-center">Merchants are the company that charges a credit card. Non-card transactions will not be included when this filter is applied.</p>
         <%= turbo_frame_tag :merchants_filter, src: event_merchants_filter_path(@event, merchant: @merchant), loading: :lazy, target: "event_#{@event.id}_ledger" %>
       </div>
       <div data-tabs-target="tab" id="receipts">
