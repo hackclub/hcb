@@ -59,12 +59,12 @@ class Announcement < ApplicationRecord
   scope :approved_monthly_for, ->(date) { monthly_for(date).draft }
   validate :content_is_json
 
-  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil) }
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  has_many :blocks
+  has_many :blocks, dependent: :destroy
 
   validates :title, presence: true, if: :published?
 

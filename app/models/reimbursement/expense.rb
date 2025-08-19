@@ -47,6 +47,9 @@ module Reimbursement
     has_paper_trail
     acts_as_paranoid
 
+    include PublicIdentifiable
+    set_public_id_prefix :rme
+
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event.id }, only: []
 

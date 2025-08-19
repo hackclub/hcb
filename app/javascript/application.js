@@ -37,10 +37,14 @@ window.Turbo = Turbo
 import persist from '@alpinejs/persist'
 import Alpine from 'alpinejs'
 import ach_form from './datas/ach_form'
+import wire_form from './datas/wire_form'
+import check_form from './datas/check_form'
 
 window.Alpine = Alpine
 Alpine.plugin(persist)
 Alpine.data('ach', ach_form)
+Alpine.data('wire', wire_form)
+Alpine.data('check', check_form)
 
 Alpine.start()
 
