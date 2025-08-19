@@ -30,7 +30,9 @@ RSpec.describe NotifyEventsWithNegativeBalanceJob do
     expect(event3.balance).to eq(-56_78)
 
     sent_emails = capture_emails do
-      described_class.new.perform
+      Sidekiq::Testing.inline! do
+        described_class.perform_async
+      end
     end
 
     negative_balance_email = sent_emails.sole
