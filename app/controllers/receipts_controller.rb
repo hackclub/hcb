@@ -174,7 +174,7 @@ class ReceiptsController < ApplicationController
     end
 
   rescue => e
-    Rails.error.report(e)
+    Rails.error.report(e) unless e.is_a?(ActiveRecord::RecordInvalid)
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
