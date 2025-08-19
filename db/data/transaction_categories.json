@@ -1,152 +1,92 @@
 {
   "bank-fees": {
-    "label": "Bank fees",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Bank fees"
   },
   "benefits": {
-    "label": "Benefits",
-    "type": "expense",
-    "group": "Personnel"
+    "label": "Benefits"
   },
   "events-projects": {
-    "label": "Events / Projects",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Events / Projects"
   },
   "finance": {
-    "label": "Finance",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Finance"
   },
   "food-fun": {
-    "label": "Food / fun",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Food / fun"
   },
   "fundraising": {
-    "label": "Fundraising",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Fundraising"
   },
   "furniture": {
-    "label": "Furniture",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Furniture"
   },
   "gifts": {
-    "label": "Gifts",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Gifts"
   },
   "grants-stipends": {
-    "label": "Grants / stipends",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Grants / stipends"
   },
   "hardware-equipment": {
-    "label": "Hardware / equipment",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Hardware / equipment"
   },
   "hr": {
-    "label": "HR",
-    "type": "expense",
-    "group": "Admin"
+    "label": "HR"
   },
   "insurance": {
-    "label": "Insurance",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Insurance"
   },
   "internet-phone": {
-    "label": "Internet / Phone",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Internet / Phone"
   },
   "legal": {
-    "label": "Legal",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Legal"
   },
   "marketing": {
-    "label": "Marketing",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Marketing"
   },
   "office": {
-    "label": "Office",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Office"
   },
   "other-fees": {
-    "label": "Other fees",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Other fees"
   },
   "payroll-payroll-taxes": {
-    "label": "Payroll / Payroll taxes",
-    "type": "expense",
-    "group": "Personnel"
+    "label": "Payroll / Payroll taxes"
   },
   "professional-fees-contractors": {
-    "label": "Professional fees (contractors)",
-    "type": "expense",
-    "group": "Personnel"
+    "label": "Professional fees (contractors)"
   },
   "project-supplies": {
-    "label": "Project supplies",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Project supplies"
   },
   "recruiting": {
-    "label": "Recruiting",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Recruiting"
   },
   "rent": {
-    "label": "Rent",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Rent"
   },
   "server-hosting": {
-    "label": "Server / hosting",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Server / hosting"
   },
   "shipping-postage": {
-    "label": "Shipping / postage",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Shipping / postage"
   },
   "software-subscriptions": {
-    "label": "Software / subscriptions",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Software / subscriptions"
   },
   "taxes-filing-fees": {
-    "label": "Taxes / filing fees",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Taxes / filing fees"
   },
   "training": {
-    "label": "Training",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Training"
   },
   "travel": {
-    "label": "Travel",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Travel"
   },
   "utilities": {
-    "label": "Utilities",
-    "type": "expense",
-    "group": "Admin"
+    "label": "Utilities"
   },
   "venue": {
-    "label": "Venue",
-    "type": "expense",
-    "group": "Program expenses"
+    "label": "Venue"
   }
 }
