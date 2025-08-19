@@ -14,7 +14,7 @@ class NotifyEventsWithNegativeBalanceJob
   end
 
   def each_iteration(event)
-    return if event.id == EventMappingEngine::EventIds::NOEVENT
+    return if event.plan.is_a?(Event::Plan::Internal)
 
     event_balance = event.balance
     return unless event_balance.negative?
