@@ -5,7 +5,13 @@
   currently has a negative balance (<%= render_money(@balance) %>).
 </p>
 
-<p>Please reach out to your HCB representative to address this.</p>
+<p>
+  Please reach out to your HCB representative
+  <% if @event.point_of_contact %>
+    (<%= mail_to(@event.point_of_contact.email, @event.point_of_contact.full_name) %>)
+  <% end %>
+  to address this.
+</p>
 
 <p>
   From,<br>

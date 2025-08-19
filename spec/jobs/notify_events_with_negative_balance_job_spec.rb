@@ -40,4 +40,25 @@ RSpec.describe NotifyEventsWithNegativeBalanceJob do
     expect(negative_balance_email.subject).to eq("Event with negative balance has a negative balance")
     expect(negative_balance_email.html_part.body.to_s).to include("-$12.34")
   end
+
+  it "includes the point of contact if present" do
+    admin = create(:user, :make_admin, full_name: "Admin User", email: "admin@example.com")
+
+    event = create(:event, name: "Event with negative balance", point_of_contact: admin)
+    user = create(:user, full_name: "Event Organizer", email: "organizer@example.com")
+    create(:organizer_position, event:, user:)
+    # Create a card grant with an admin user that makes the balance negative
+    create(:card_grant, amount_cents: 12_34, event:, sent_by: admin)
+    expect(event.balance).to eq(-12_34)
+
+    sent_emails = capture_emails do
+      Sidekiq::Testing.inline! do
+        described_class.perform_async
+      end
+    end
+
+    parsed_body = Nokogiri::HTML5.fragment(sent_emails.sole.html_part.body.to_s)
+    mailto = parsed_body.css("a[href^='mailto:admin@example.com']").sole
+    expect(mailto.text).to eq("Admin User")
+  end
 end
