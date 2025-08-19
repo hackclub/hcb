@@ -37,7 +37,7 @@ class DisbursementsController < ApplicationController
   def new
     @destination_event = Event.friendly.find(params[:event_id]) if params[:event_id]
     @source_event = Event.friendly.find(params[:source_event_id]) if params[:source_event_id]
-    @event = @source_event
+    @event = @source_event # this is to render the navigation bar for the correct event.
     @disbursement = Disbursement.new(
       destination_event: @destination_event,
       source_event: @source_event,

@@ -10,7 +10,7 @@
   <% end %>
 <% end %>
 
-<% if current_user&.admin? %>
+<% if admin_signed_in? %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
     <%= modal_header "Issue refund" %>
     <%= form_with url: refund_invoice_path(id: @invoice.id) do |form| %>
@@ -43,7 +43,7 @@
 <% end %>
 
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code do %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <%= @sponsor.name %>
       <span class="regular muted"> invoiced for </span>

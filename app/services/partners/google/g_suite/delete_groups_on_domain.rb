@@ -17,7 +17,9 @@ module Partners
           end
           begin
             res = directory_client.list_groups(customer: gsuite_customer_id, domain: @domain)
-            res.groups.each do |group|
+            # we use a safe navigation operator here because res.groups could potentially still be nil
+            # despite the list_groups call not returning an error
+            res.groups&.each do |group|
               directory_client.delete_group(group.id)
             end
           rescue => e

@@ -26,6 +26,7 @@ class HcbCode
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
         return stripe_card_memo if stripe_card? && stripe_card_memo
         return wire_memo if wire?
+        return wise_transfer_memo if wise_transfer?
 
         ct.try(:smart_memo) || pt.try(:smart_memo) || ""
       end
@@ -90,7 +91,7 @@ class HcbCode
       end
 
       def outgoing_fee_reimbursement_memo
-        "🗂️ Stripe fee reimbursements for #{ct.date.beginning_of_week.strftime("%-m/%-d")} to #{ct2.date.beginning_of_week.strftime("%-m/%-d")}"
+        "🗂️ Stripe fee reimbursements for week of #{ct.date.beginning_of_week.strftime("%-m/%-d")}"
       end
 
       def reimbursement_payout_holding_memo
@@ -111,6 +112,10 @@ class HcbCode
 
       def wire_memo
         "Wire to #{wire.recipient_name}"
+      end
+
+      def wise_transfer_memo
+        "Wise transfer to #{wise_transfer.recipient_name}"
       end
 
     end

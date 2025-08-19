@@ -51,6 +51,10 @@ class AchTransfersController < ApplicationController
 
     authorize @ach_transfer
 
+    if @ach_transfer.amount > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
+
     if @ach_transfer.save
       if ach_transfer_params[:file]
         ::ReceiptService::Create.new(

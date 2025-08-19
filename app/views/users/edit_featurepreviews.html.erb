@@ -9,31 +9,6 @@
   <section>
 
     <%= render partial: "features/preview", locals: {
-          id: "two-factor-authentication",
-          feature_flag: :two_factor_authentication_2024_05_22,
-          name: "Two factor authentication",
-          classes: ["feature-two-factor-authentication"],
-          description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
-          footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
-        } %>
-
-    <%= render partial: "features/preview", locals: {
-          id: "totp",
-          feature_flag: :totp_2024_06_13,
-          name: "Time-based one time passwords",
-          classes: ["feature-totp"],
-          description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
-        } %>
-
-    <%= render partial: "features/preview", locals: {
-          id: "receipt-bin",
-          feature_flag: :receipt_bin_2023_04_07,
-          name: "Receipt Bin",
-          description: "Keeping track of receipts for every transaction can be tiring, and it's easy to forget to upload them. We're introducing a new way to manage receipts: Receipt Bin. After uploading receipts to the Receipt Bin, you can link receipts to transactions or save them for later.",
-          footer: "We also support uploading receipts to your Receipt Bin via emailing and texting!"
-        } %>
-
-    <%= render partial: "features/preview", locals: {
           id: "transaction-popovers",
           feature_flag: :hcb_code_popovers_2023_06_16,
           name: "Popovers",
@@ -47,107 +22,148 @@
           description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions."
         } if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
 
-        <details>
-          <summary class="mb2">Past feature previews</summary>
+    <%= render partial: "features/preview", locals: {
+          id: "sudo-mode",
+          feature_flag: :sudo_mode_2015_07_21,
+          name: "Sudo mode",
+          description: <<~TXT
+            This feature flag improves the security of your account by requiring
+            you to confirm access before performing a potentially sensitive
+            action.
+          TXT
+        } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "turbo",
-                classes: ["feature-turbo"],
-                fully_shipped: true,
-                name: "Turbo Async Pages",
-                description: "Opting into this preview will enable <a href=\"https://turbo.hotwired.dev\" target=\"_blank\">Turbo</a>, a framework for speeding up web application UIs (like HCB's!) Possible side effects include:
-                  <ul>
-                    <li>Faster (sometimes instant!) page transitions</li>
-                    <li>Possibly broken UI behavior</li>
-                    <li>Flashes of cached content</li>
-                  </ul>",
-                footer: "This feature is an early tech preview and <strong>will have bugs</strong>. Please let us know when you encounter them!"
-              } %>
+    <details>
+      <summary class="mb2">Past feature previews</summary>
 
-          <%= render partial: "features/preview", locals: {
-                id: "weekly-receipt-email",
-                classes: ["feature-weekly-receipt-email", "feature-generic"],
-                fully_shipped: true,
-                name: "Receipt Report",
-                description: "Opting into this preview will send you a weekly reminder with a list of all your missing receipts.",
-                footer: "Try #{link_to "triggering an email for yourself", trigger_receipt_report_path, method: :post, data: { turbo: false } }!"
-              } %>
+      <%= render partial: "features/preview", locals: {
+            id: "two-factor-authentication",
+            feature_flag: :two_factor_authentication_2024_05_22,
+            fully_shipped: true,
+            name: "Two factor authentication",
+            classes: ["feature-two-factor-authentication"],
+            description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
+            footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
+          } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "receipt-email-upload",
-                classes: ["feature-receipt-upload"],
-                fully_shipped: true,
-                name: "Email Receipt Upload",
-                description: "We send an email once a card is charged along the lines of \"Please
-            upload a receipt for your $10 charge\" with a link to a form on HCB
-            to upload receipts.
-            After opting-in to this feature preview, you can reply directly to
-            that email with your receipt attached to upload it."
-              } %>
+      <%= render partial: "features/preview", locals: {
+            id: "totp",
+            feature_flag: :totp_2024_06_13,
+            fully_shipped: true,
+            name: "Time-based one time passwords",
+            classes: ["feature-totp"],
+            description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB."
+          } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "internal-transfers",
-                classes: ["feature-disbursements"],
-                fully_shipped: true,
-                name: "Internal Transfers",
-                description: "Users with multiple organizations on HCB can now create
-          transfers between their accounts. After opting-in, new options will
-          show up on an organization's \"Transfers\" page, including a \"New
-          Transfer\" button and tools for searching and sorting the existing
-          transfers list.",
-                footer: "This feature is on a per-user basis. Co-organizers will also have to
-            opt-in for access."
-              } %>
+      <%= render partial: "features/preview", locals: {
+            id: "receipt-bin",
+            feature_flag: :receipt_bin_2023_04_07,
+            fully_shipped: true,
+            name: "Receipt Bin",
+            description: "Keeping track of receipts for every transaction can be tiring, and it's easy to forget to upload them. We're introducing a new way to manage receipts: Receipt Bin. After uploading receipts to the Receipt Bin, you can link receipts to transactions or save them for later.",
+            footer: "We also support uploading receipts to your Receipt Bin via emailing and texting!"
+          } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "suggested-memos",
-                classes: ["feature-disbursements"],
-                fully_shipped: true,
-                name: "Transaction Memo Suggestions",
-                description: "Renaming transactions is a great way for donors and team members to
-          understand how your organization's money is spent. After opting-in to
-          this feature preview, you will be provided with some suggestions when
-          renaming a transaction. Feel free to choose one of those suggestions or
-          write your own, as you normally would. To provide you these suggestions,
-          we look at the memos of similar transactions in your organization. As a
-          result, organizations with more renamed transactions will have more
-          accurate suggestions!",
-                footer: "This feature is on a per-user basis. Co-organizers will also have to
-            opt-in for access."
-              } %>
+      <%= render partial: "features/preview", locals: {
+            id: "turbo",
+            classes: ["feature-turbo"],
+            fully_shipped: true,
+            name: "Turbo Async Pages",
+            description: "Opting into this preview will enable <a href=\"https://turbo.hotwired.dev\" target=\"_blank\">Turbo</a>, a framework for speeding up web application UIs (like HCB's!) Possible side effects include:
+              <ul>
+                <li>Faster (sometimes instant!) page transitions</li>
+                <li>Possibly broken UI behavior</li>
+                <li>Flashes of cached content</li>
+              </ul>",
+            footer: "This feature is an early tech preview and <strong>will have bugs</strong>. Please let us know when you encounter them!"
+          } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "recently_on_hcb",
-                feature_flag: :recently_on_hcb_2024_05_23,
-                name: "Recently on HCB...",
-                description: "This feature preview adds a panel to your sidebar with things that have happened recently on your organizations, for example, when an invoice is paid or a new team member is invited."
-              } %>
+      <%= render partial: "features/preview", locals: {
+            id: "weekly-receipt-email",
+            classes: ["feature-weekly-receipt-email", "feature-generic"],
+            fully_shipped: true,
+            name: "Receipt Report",
+            description: "Opting into this preview will send you a weekly reminder with a list of all your missing receipts.",
+            footer: "Try #{link_to "triggering an email for yourself", trigger_receipt_report_path, method: :post, data: { turbo: false } }!"
+          } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "command_bar",
-                feature_flag: :command_bar_2024_02_05,
-                name: "Command Bar (⌘+K)",
-                description: "Looking to whizz around HCB's interface? Enable the command bar and use it to switch between different organizations and pages. It also features a search tool that allows you to search transactions, cards and events."
-              } %>
+      <%= render partial: "features/preview", locals: {
+            id: "receipt-email-upload",
+            classes: ["feature-receipt-upload"],
+            fully_shipped: true,
+            name: "Email Receipt Upload",
+            description: "We send an email once a card is charged along the lines of \"Please
+        upload a receipt for your $10 charge\" with a link to a form on HCB
+        to upload receipts.
+        After opting-in to this feature preview, you can reply directly to
+        that email with your receipt attached to upload it."
+          } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "rename_on_homepage",
-                feature_flag: :rename_on_homepage_2023_12_06,
-                name: "Rename Transactions on the Ledger",
-                description: "This feature flag enables you to directly rename transactions on your organization's home page. Try it out by shift clicking on a transaction, typing out a new memo, and pressing enter!"
-              } %>
+      <%= render partial: "features/preview", locals: {
+            id: "internal-transfers",
+            classes: ["feature-disbursements"],
+            fully_shipped: true,
+            name: "Internal Transfers",
+            description: "Users with multiple organizations on HCB can now create
+      transfers between their accounts. After opting-in, new options will
+      show up on an organization's \"Transfers\" page, including a \"New
+      Transfer\" button and tools for searching and sorting the existing
+      transfers list.",
+            footer: "This feature is on a per-user basis. Co-organizers will also have to
+        opt-in for access."
+          } %>
 
-          <%= render partial: "features/preview", locals: {
-                id: "sms-receipt-notification",
-                classes: ["feature-sms-receipt-notification"],
-                feature_flag: :sms_receipt_notifications_2022_11_23,
-                name: "SMS Charge Notifications",
-                description: "We're experimenting with new ways to alert people that they need to
-            upload a receipt. After opting-in, you'll get a text whenever your
-            card is charged asking for a receipt. You can change your phone
-            number in your user settings.",
-                footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
-              } %>
-        </details>
+      <%= render partial: "features/preview", locals: {
+            id: "suggested-memos",
+            classes: ["feature-disbursements"],
+            fully_shipped: true,
+            name: "Transaction Memo Suggestions",
+            description: "Renaming transactions is a great way for donors and team members to
+      understand how your organization's money is spent. After opting-in to
+      this feature preview, you will be provided with some suggestions when
+      renaming a transaction. Feel free to choose one of those suggestions or
+      write your own, as you normally would. To provide you these suggestions,
+      we look at the memos of similar transactions in your organization. As a
+      result, organizations with more renamed transactions will have more
+      accurate suggestions!",
+            footer: "This feature is on a per-user basis. Co-organizers will also have to
+        opt-in for access."
+          } %>
+
+      <%= render partial: "features/preview", locals: {
+            id: "recently_on_hcb",
+            feature_flag: :recently_on_hcb_2024_05_23,
+            fully_shipped: true,
+            name: "Recently on HCB...",
+            description: "This feature preview adds a panel to your sidebar with things that have happened recently on your organizations, for example, when an invoice is paid or a new team member is invited."
+          } %>
+
+      <%= render partial: "features/preview", locals: {
+            id: "command_bar",
+            feature_flag: :command_bar_2024_02_05,
+            name: "Command Bar (⌘+K)",
+            description: "Looking to whizz around HCB's interface? Enable the command bar and use it to switch between different organizations and pages. It also features a search tool that allows you to search transactions, cards and events."
+          } %>
+
+      <%= render partial: "features/preview", locals: {
+            id: "rename_on_homepage",
+            feature_flag: :rename_on_homepage_2023_12_06,
+            name: "Rename Transactions on the Ledger",
+            description: "This feature flag enables you to directly rename transactions on your organization's home page. Try it out by shift clicking on a transaction, typing out a new memo, and pressing enter!"
+          } %>
+
+      <%= render partial: "features/preview", locals: {
+            id: "sms-receipt-notification",
+            classes: ["feature-sms-receipt-notification"],
+            feature_flag: :sms_receipt_notifications_2022_11_23,
+            fully_shipped: true,
+            name: "SMS Charge Notifications",
+            description: "We're experimenting with new ways to alert people that they need to
+        upload a receipt. After opting-in, you'll get a text whenever your
+        card is charged asking for a receipt. You can change your phone
+        number in your user settings.",
+            footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", my_settings_path, data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?)
+          } %>
+    </details>
   </section>
 </turbo-frame>
