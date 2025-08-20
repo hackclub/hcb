@@ -46,17 +46,12 @@
   dependencies:
     "@appsignal/javascript" "=1.6.0"
 
-"@appsignal/stimulus@^1.0.19":
-  version "1.0.19"
-  resolved "https://registry.yarnpkg.com/@appsignal/stimulus/-/stimulus-1.0.19.tgz#e6fa949034bf99b47c56c8095024b9cea600084c"
-  integrity sha512-iOdcQPQraxg+LW9h0HVoN7SGaYysq8fiOPjMI48IcrRmlzv21PRRiZyZc10ZMsbm8GSATG4g5Mp0qBEBYvjp5Q==
+"@appsignal/stimulus@^1.0.20":
+  version "1.0.20"
+  resolved "https://registry.yarnpkg.com/@appsignal/stimulus/-/stimulus-1.0.20.tgz#66635b504a8ced16614387878216b029a57f7147"
+  integrity sha512-gWK3meS2VyqdCu2Km8PlitYRiVYtN7vOlIpdUDkqC1D12xbE+uD7hjZMS2iYeI0rLP2Z6eF7mw9WHDCmD6Uyng==
   dependencies:
-    "@appsignal/types" "=3.0.1"
-
-"@appsignal/types@=3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@appsignal/types/-/types-3.0.1.tgz#b3a7848f43c8f175476dccbf02a0958b3d2ef801"
-  integrity sha512-vCAKUohJkhN9jk3v2hTOdUDV5FYPr63dBOnmFdPINVUye8HnkpYZD5wrLaRNNKO5UlyhIt8jTkoKkmjkIlkiuQ==
+    "@appsignal/javascript" "=1.6.0"
 
 "@babel/code-frame@^7.27.1":
   version "7.27.1"
