@@ -852,7 +852,7 @@ class Event < ApplicationRecord
   end
 
   def point_of_contact_history
-    @point_of_contact_history ||= versions.map(&:changeset).select{|a| a["point_of_contact_id"].present?}.map { |c| User.find_by(id: c["point_of_contact_id"][0]) }
+    @point_of_contact_history ||= versions.map(&:changeset).select{ |a| a["point_of_contact_id"].present? }.map { |c| User.find_by(id: c["point_of_contact_id"][0]) }
   end
 
   private
