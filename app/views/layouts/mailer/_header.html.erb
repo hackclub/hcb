@@ -7,7 +7,7 @@
 <div class="section" style="text-align: left;">
   <% if @announcement.present? %>
     <a
-      href="<%= Rails.application.routes.url_helpers.root_url %><%= Rails.application.routes.url_helpers.event_path(@announcement.event) %>"
+      href="<%= Rails.application.routes.url_helpers.root_url %><%= Rails.application.routes.url_helpers.event_path(@announcement.event) + "/announcements" %>"
       target="_blank">
       <img
         src="<%= @announcement.event.logo.present? ? Rails.application.routes.url_helpers.url_for(@announcement.event.logo) : Rails.application.routes.url_helpers.root_url + "brand/hcb-icon-icon-original.png" %>"
