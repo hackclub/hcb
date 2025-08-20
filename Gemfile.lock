@@ -833,7 +833,7 @@ GEM
     validates_email_format_of (1.8.2)
       i18n (>= 0.8.0)
       simpleidn
-    validates_zipcode (0.5.3)
+    validates_zipcode (0.5.4)
       activemodel (>= 4.2.0)
     web-console (4.2.1)
       actionview (>= 6.0.0)
