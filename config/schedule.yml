@@ -232,3 +232,7 @@ announcement_two_day_warning_job:
 announcement_delete_unsaved_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "Announcement::DeleteUnsavedJob"
+
+notify_events_with_negative_balance_job:
+  cron: "0 13 * * 1" # run at 9am est on monday
+  class: "NotifyEventsWithNegativeBalanceJob"

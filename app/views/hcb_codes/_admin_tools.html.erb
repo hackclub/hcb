@@ -25,9 +25,14 @@
         <th>DATE</th>
         <th>MEMO</th>
         <th>AMOUNT</th>
+        <th>CATEGORY</th>
         <th></th>
       </tr>
-      <% @hcb_code.canonical_pending_transactions.each do |ct| %>
+      <% @hcb_code
+           .canonical_pending_transactions
+           .preload(:category)
+           .strict_loading
+           .each do |ct| %>
         <tr>
           <td>
             <%= ct.id %>
@@ -45,12 +50,25 @@
             <%= ct.amount %>
           </td>
           <td>
+            <%= render(
+                  partial: "transaction_category_form",
+                  locals: {
+                    model: ct,
+                    url: set_category_canonical_pending_transaction_path(ct)
+                  }
+                ) %>
+          </td>
+          <td>
             <%= link_to "view", "/canonical_pending_transactions/#{ct.id}" %>
           </td>
         </tr>
       <% end %>
 
-      <% @hcb_code.canonical_transactions.each do |ct| %>
+      <% @hcb_code
+           .canonical_transactions
+           .preload(:category)
+           .strict_loading
+           .each do |ct| %>
         <tr>
           <td>
             <%= ct.id %>
@@ -66,6 +84,15 @@
           </td>
           <td>
             <%= ct.amount %>
+          </td>
+          <td>
+            <%= render(
+                  partial: "transaction_category_form",
+                  locals: {
+                    model: ct,
+                    url: set_category_canonical_transaction_path(ct)
+                  }
+                ) %>
           </td>
           <td>
             <%= link_to "view", "/transactions/#{ct.id}" %>

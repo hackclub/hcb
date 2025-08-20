@@ -1,0 +1,92 @@
+{
+  "bank-fees": {
+    "label": "Bank fees"
+  },
+  "benefits": {
+    "label": "Benefits"
+  },
+  "events-projects": {
+    "label": "Events / Projects"
+  },
+  "finance": {
+    "label": "Finance"
+  },
+  "food-fun": {
+    "label": "Food / fun"
+  },
+  "fundraising": {
+    "label": "Fundraising"
+  },
+  "furniture": {
+    "label": "Furniture"
+  },
+  "gifts": {
+    "label": "Gifts"
+  },
+  "grants-stipends": {
+    "label": "Grants / stipends"
+  },
+  "hardware-equipment": {
+    "label": "Hardware / equipment"
+  },
+  "hr": {
+    "label": "HR"
+  },
+  "insurance": {
+    "label": "Insurance"
+  },
+  "internet-phone": {
+    "label": "Internet / Phone"
+  },
+  "legal": {
+    "label": "Legal"
+  },
+  "marketing": {
+    "label": "Marketing"
+  },
+  "office": {
+    "label": "Office"
+  },
+  "other-fees": {
+    "label": "Other fees"
+  },
+  "payroll-payroll-taxes": {
+    "label": "Payroll / Payroll taxes"
+  },
+  "professional-fees-contractors": {
+    "label": "Professional fees (contractors)"
+  },
+  "project-supplies": {
+    "label": "Project supplies"
+  },
+  "recruiting": {
+    "label": "Recruiting"
+  },
+  "rent": {
+    "label": "Rent"
+  },
+  "server-hosting": {
+    "label": "Server / hosting"
+  },
+  "shipping-postage": {
+    "label": "Shipping / postage"
+  },
+  "software-subscriptions": {
+    "label": "Software / subscriptions"
+  },
+  "taxes-filing-fees": {
+    "label": "Taxes / filing fees"
+  },
+  "training": {
+    "label": "Training"
+  },
+  "travel": {
+    "label": "Travel"
+  },
+  "utilities": {
+    "label": "Utilities"
+  },
+  "venue": {
+    "label": "Venue"
+  }
+}
