@@ -19,4 +19,11 @@ class TransactionCategory
 
   Definition::ALL = Definition.load_all
 
+  Definition::BY_STRIPE_MERCHANT_CATEGORY =
+    Definition::ALL.each_with_object({}) do |(_slug, definition), hash|
+      definition.stripe_merchant_categories.each do |stripe_merchant_category|
+        hash[stripe_merchant_category] = definition
+      end
+    end.freeze
+
 end
