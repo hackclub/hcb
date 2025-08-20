@@ -87,7 +87,7 @@
         <% } %>
         <%= form.collection_select :point_of_contact_id, User.admin.or(User.where(id: @event.point_of_contact_id)).order(:email), :id, :email, {}, { disabled: } %>
         <% if event.point_of_contact_history.any? %>
-          (Previously <%= event.point_of_contact_history.map(&:email).join(", ") %>)
+          (Previously <%= event.point_of_contact_history.map(&:email).to_sentence %>)
         <% end %>
       </div>
 
