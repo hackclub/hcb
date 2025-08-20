@@ -34,7 +34,7 @@ module Receiptable
     def no_or_lost_receipt!
       self.marked_no_or_lost_receipt_at = Time.now
       self.save!
-      if user = try(:author) || try(:user) || try(:event)
+      if user = try(:author) || try(:user)
         ::User::UpdateCardLockingJob.perform_later(user:)
       end
       self
