@@ -30,9 +30,9 @@ class TransactionCategoryService
 
     # Bail if the model isn't a stripe transaction or for some reason we can't
     # find the category
-    return unless stripe_merchant_category_key.present?
+    return unless stripe_merchant_category.present?
 
-    definition = TransactionCategory::Definition::BY_STRIPE_MERCHANT_CATEGORY[stripe_merchant_category_key]
+    definition = TransactionCategory::Definition::BY_STRIPE_MERCHANT_CATEGORY[stripe_merchant_category]
 
     # We don't have mappings for every stripe category
     return unless definition
@@ -45,17 +45,17 @@ class TransactionCategoryService
 
   attr_reader(:model)
 
-  def stripe_merchant_category_key
+  def stripe_merchant_category
     case model
     when CanonicalPendingTransaction
-      model.raw_pending_stripe_transaction&.merchant_category_key
+      model.raw_pending_stripe_transaction&.merchant_category
     when CanonicalTransaction
-      model.raw_stripe_transaction&.merchant_category_key
+      model.raw_stripe_transaction&.merchant_category
     else
       raise ArgumentError, "unsupported model type: #{@model.class.name}"
     end
   end
 
-  memo_wise(:stripe_merchant_category_key)
+  memo_wise(:stripe_merchant_category)
 
 end

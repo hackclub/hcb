@@ -38,7 +38,7 @@ class RawPendingStripeTransaction < ApplicationRecord
     stripe_transaction.dig("merchant_data", "name")
   end
 
-  def merchant_category_key
+  def merchant_category
     stripe_transaction&.dig("merchant_data", "category")
   end
 

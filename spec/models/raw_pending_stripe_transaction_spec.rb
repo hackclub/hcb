@@ -15,13 +15,13 @@ RSpec.describe RawPendingStripeTransaction, type: :model do
     end
   end
 
-  describe "#merchant_category_key" do
-    it "returns the merchant category key from the JSON data" do
-      expect(raw_pending_stripe_transaction.merchant_category_key).to eq("bakeries")
+  describe "#merchant_category" do
+    it "returns the merchant category from the JSON data" do
+      expect(raw_pending_stripe_transaction.merchant_category).to eq("bakeries")
     end
 
     it "returns nil by default" do
-      expect(described_class.new.merchant_category_key).to be_nil
+      expect(described_class.new.merchant_category).to be_nil
     end
   end
 end
