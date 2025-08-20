@@ -12,7 +12,7 @@
     "@appsignal/plugin-path-decorator": "^1.0.17",
     "@appsignal/stimulus": "^1.0.20",
     "@babel/core": "^7.27.4",
-    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@csstools/postcss-sass": "^5.1.1",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
