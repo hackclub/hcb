@@ -1058,7 +1058,7 @@ class EventsController < ApplicationController
 
     merchants_hash = {}
 
-    merchants_list.each do |merchant|
+    @event.merchants.each do |merchant|
       if merchants_hash.key?(merchant[:id])
         merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
       else
@@ -1212,38 +1212,10 @@ class EventsController < ApplicationController
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
     if @merchant
-      merchant = merchants_list.find { |merchant| merchant[:id] == @merchant }
+      merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
     end
-  end
-
-  def merchants_list
-    settled_merchants = @event.canonical_transactions.map do |ct|
-      rst = ct.raw_stripe_transaction
-
-      if rst.present?
-        merchant_data = rst.stripe_transaction["merchant_data"]
-        yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
-        { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
-      else
-        nil
-      end
-    end.select(&:present?)
-
-    pending_merchants = @event.canonical_pending_transactions.map do |cpt|
-      rpst = cpt.raw_pending_stripe_transaction
-
-      if rpst.present?
-        merchant_data = rpst.stripe_transaction["merchant_data"]
-        yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
-        { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
-      else
-        nil
-      end
-    end.select(&:present?)
-
-    settled_merchants.concat(pending_merchants)
   end
 
   def _show_pending_transactions
