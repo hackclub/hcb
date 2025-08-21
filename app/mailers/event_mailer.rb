@@ -41,4 +41,10 @@ class EventMailer < ApplicationMailer
     mail to: @emails, subject: "#{@event.name} has reached its donation goal!"
   end
 
+  def negative_balance
+    @balance = params.fetch(:balance)
+
+    mail(to: @emails, subject: "#{@event.name} has a negative balance")
+  end
+
 end
