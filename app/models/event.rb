@@ -815,6 +815,7 @@ class Event < ApplicationRecord
     # Sync stats to application's airtable record
     ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
       app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
+      app["HCB POC Email"] = point_of_contact.email
 
       # For Anish's TUB
       app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
