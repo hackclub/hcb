@@ -40,6 +40,19 @@
       <th>MappedBy</th>
       <td><%= @canonical_transaction.canonical_event_mapping.try(:user).try(:email) %></td>
     </tr>
+    <tr>
+      <th>Category</th>
+      <td>
+        <%= render(
+              partial: "hcb_codes/transaction_category_form",
+              locals: {
+                model: @canonical_transaction,
+                url: set_category_canonical_transaction_path(@canonical_transaction),
+                admin_context: true
+              }
+            ) %>
+      </td>
+    </tr>
   </tbody>
 </table>
 
