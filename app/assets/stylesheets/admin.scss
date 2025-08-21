@@ -513,13 +513,17 @@ th {
   padding: 0.5rem;
 }
 
-th {
+thead th {
   background: var(--hcb-bg-2);
 }
 
 tr:nth-child(even) {
   /* Set every other cell slightly darker. Improves readability. */
   background: var(--hcb-bg-2);
+}
+
+table.no-stripes {
+  tr:nth-child(even) { background: inherit; }
 }
 
 table caption {
