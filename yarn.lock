@@ -1465,11 +1465,6 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-bullet-list/-/extension-bullet-list-3.1.0.tgz#2f7e7d0e7c8bfe05557886503cc99a1526389479"
   integrity sha512-lSuj0T/c/lAI01sgOdDUmFmnxItIC2WQHxzg16KOoDCzW/PtWBc6pNmCSexmqqGoTg9xNWytPWvKapZ/GCwhiQ==
 
-"@tiptap/extension-code-block-lowlight@^2.25.0":
-  version "2.25.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/extension-code-block-lowlight/-/extension-code-block-lowlight-2.25.0.tgz#37c45b3f6c5b0b8a2a42f7542f11c89335a76bc8"
-  integrity sha512-RunmpexQ+sYNmQbBdjQq/6s1aYYx7lQxOzPO5Q64qx5FjVbekZkQI9c98jv4v0ez7qjRLZBcyG2ETD3bQuHs4Q==
-
 "@tiptap/extension-code-block@^3.1.0":
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/@tiptap/extension-code-block/-/extension-code-block-3.1.0.tgz#b3965616e9b8cd202c93ccbf5950c15ea96952e2"
