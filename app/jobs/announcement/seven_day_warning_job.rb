@@ -19,7 +19,7 @@ class Announcement
             announcement.mark_draft!
           end
 
-          AnnouncementMailer.with(announcement:).seven_day_warning.deliver_now
+          AnnouncementMailer.with(announcement:).seven_day_warning.deliver_later
         end
       end
     end

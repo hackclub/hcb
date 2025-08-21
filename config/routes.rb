@@ -481,7 +481,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update]
+  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+    member do
+      post "set_category"
+    end
+  end
 
   resources :canonical_transactions, only: [:show, :edit] do
     member do
@@ -489,6 +493,7 @@ Rails.application.routes.draw do
       post "unwaive_fee"
       post "mark_bank_fee"
       post "set_custom_memo"
+      post "set_category"
     end
   end
 

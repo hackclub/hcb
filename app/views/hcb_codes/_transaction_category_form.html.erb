@@ -1,0 +1,18 @@
+<%# locals: (model:, url:) %>
+
+<%= form_for(
+      model,
+      url:,
+      method: :post,
+      data: { controller: "form" }
+    ) do |f| %>
+  <%= select_tag(
+        f.field_name(:category_slug),
+        options_for_select(
+          TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
+          model.category&.slug,
+        ),
+        include_blank: "None",
+        data: { action: "change->form#submit" }
+      ) %>
+<% end %>
