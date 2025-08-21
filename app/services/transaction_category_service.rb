@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class TransactionCategoryService
+  prepend MemoWise
+
   def initialize(model:)
     unless model.is_a?(Categorizable)
       raise ArgumentError, "unsupported model type: #{model.class.name}"
@@ -22,8 +24,38 @@ class TransactionCategoryService
     mapping.save!
   end
 
+  def sync_from_stripe!
+    # If there's already a category assigned, don't reassign it
+    return if @model.category.present?
+
+    # Bail if the model isn't a stripe transaction or for some reason we can't
+    # find the category
+    return unless stripe_merchant_category.present?
+
+    definition = TransactionCategory::Definition::BY_STRIPE_MERCHANT_CATEGORY[stripe_merchant_category]
+
+    # We don't have mappings for every stripe category
+    return unless definition
+
+    category = TransactionCategory.find_or_create_by!(slug: definition.slug)
+    model.create_category_mapping!(category:, assignment_strategy: "automatic")
+  end
+
   private
 
   attr_reader(:model)
+
+  def stripe_merchant_category
+    case model
+    when CanonicalPendingTransaction
+      model.raw_pending_stripe_transaction&.merchant_category
+    when CanonicalTransaction
+      model.raw_stripe_transaction&.merchant_category
+    else
+      raise ArgumentError, "unsupported model type: #{@model.class.name}"
+    end
+  end
+
+  memo_wise(:stripe_merchant_category)
 
 end
