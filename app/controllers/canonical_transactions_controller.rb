@@ -3,6 +3,7 @@
 require "csv"
 
 class CanonicalTransactionsController < ApplicationController
+  include TurboStreamFlash
   def show
     @canonical_transaction = CanonicalTransaction.find(params[:id])
 
@@ -49,7 +50,7 @@ class CanonicalTransactionsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         flash.now[:success] = message
-        render(turbo_stream: turbo_stream.replace("flash-container", partial: "application/flash"))
+        update_flash_via_turbo_stream(use_admin_layout: params[:context] == "admin")
       end
       format.html do
         redirect_to(

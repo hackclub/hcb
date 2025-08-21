@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CanonicalPendingTransactionsController < ApplicationController
+  include TurboStreamFlash
+
   def show
     @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
     authorize @canonical_pending_transaction
@@ -48,13 +50,7 @@ class CanonicalPendingTransactionsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         flash.now[:success] = message
-        partial =
-          if params[:context] == "admin"
-            "admin/flash"
-          else
-            "application/flash"
-          end
-        render(turbo_stream: turbo_stream.replace("flash-container", partial:))
+        update_flash_via_turbo_stream(use_admin_layout: params[:context] == "admin")
       end
       format.html do
         redirect_to(
