@@ -523,7 +523,9 @@ tr:nth-child(even) {
 }
 
 table.no-stripes {
-  tr:nth-child(even) { background: inherit; }
+  tr:nth-child(even) {
+    background: inherit;
+  }
 }
 
 table caption {
