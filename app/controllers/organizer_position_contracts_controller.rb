@@ -26,7 +26,7 @@ class OrganizerPositionContractsController < ApplicationController
     flash[:success] = "Contract resent to user succesfully."
     redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
   end
-  
+
   def resend_to_cosigner
     authorize @contract
 
