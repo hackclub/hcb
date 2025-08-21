@@ -35,7 +35,7 @@ module ReceiptService
 
           if @receipt.email_receipt_bin? && pair = @receipt.suggested_pairings
                                                            .unreviewed
-                                                           .where("distance <= ?", 200)
+                                                           .where("distance <= ?", 20)
                                                            .order(:receipt_id, distance: :asc)
                                                            .select("DISTINCT ON (receipt_id) suggested_pairings.*")
                                                            .select { |pairing| pairing.hcb_code.missing_receipt? }
