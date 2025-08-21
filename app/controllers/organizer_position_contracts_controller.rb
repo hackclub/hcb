@@ -33,10 +33,10 @@ class OrganizerPositionContractsController < ApplicationController
     if @contract.cosigner_email.present?
       OrganizerPosition::ContractsMailer.with(contract: @contract).notify_cosigner.deliver_later
       flash[:success] = "Contract resent to cosigner succesfully."
-    else 
+    else
       flash[:error] = "This contract has no cosigner."
     end
-    
+
     redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
   end
 
