@@ -183,7 +183,7 @@ class EventsController < ApplicationController
 
     set_cacheable
 
-    @order_by = admin_signed_in? && params[:order_by] || "date"
+    @order_by = auditor_signed_in? && params[:order_by] || "date"
 
     @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
