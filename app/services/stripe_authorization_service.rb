@@ -5,7 +5,6 @@ module StripeAuthorizationService
     Set.new(
       [
         "betting_casino_gambling",
-        "cigar_stores_and_stands",
         # This looks like a typo but matches Stripe's documentation
         # https://docs.stripe.com/issuing/categories
         "government_licensed_online_casions_online_gambling_us_region_only",
