@@ -15,7 +15,10 @@
   pointer-events: none;
   text-align: center;
   transform: scale(0.875);
-  transition: 0.125s all ease-in-out, top 0s, left 0s;
+  transition:
+    0.125s all ease-in-out,
+    top 0s,
+    left 0s;
   backdrop-filter: blur(2px);
   z-index: 999;
   opacity: 0;
