@@ -91,11 +91,15 @@ module StripeAuthorizationService
         )
       end
 
+      def merchant_category
+        auth.dig(:merchant_data, :category)
+      end
+
       def merchant_allowed?
         disallowed_categories = card&.card_grant&.disallowed_categories
         disallowed_merchants = card&.card_grant&.disallowed_merchants
 
-        return false if disallowed_categories&.include?(auth[:merchant_data][:category])
+        return false if disallowed_categories&.include?(merchant_category)
         return false if disallowed_merchants&.include?(auth[:merchant_data][:network_id])
 
         allowed_categories = card&.card_grant&.allowed_categories
@@ -105,7 +109,7 @@ module StripeAuthorizationService
         has_restrictions = allowed_categories.present? || allowed_merchants.present? || keyword_lock.present?
         return true unless has_restrictions
 
-        return true if allowed_categories&.include?(auth[:merchant_data][:category])
+        return true if allowed_categories&.include?(merchant_category)
         return true if allowed_merchants&.include?(auth[:merchant_data][:network_id])
         return true if keyword_lock.present? && Regexp.new(keyword_lock).match?(auth[:merchant_data][:name])
 
