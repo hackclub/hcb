@@ -1,5 +1,8 @@
 import $ from 'jquery'
 import ReactRailsUJS from 'react_ujs'
+import * as FloatingUIDOM from '@floating-ui/dom'
+
+window.FloatingUIDOM = FloatingUIDOM
 
 // Support component names relative to this directory:
 var componentRequireContext = require.context('./components', true)
