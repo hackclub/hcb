@@ -19,7 +19,11 @@ module PendingTransactionEngine
             fronted: true,
             fee_waived: fee_waived?
           }
-          ::CanonicalPendingTransaction.create!(attrs)
+          cpt = ::CanonicalPendingTransaction.create!(attrs)
+
+          TransactionCategoryService.new(model: cpt).set!(slug: "donations", assignment_strategy: "automatic")
+
+          cpt
         end
 
         private
