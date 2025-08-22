@@ -57,6 +57,15 @@ module StripeAuthorizationService
       def approve?
         return decline_with_reason!("event_frozen") if event.financially_frozen?
 
+        if forbidden_merchant_category?
+          AdminMailer
+            .with(stripe_card: card, merchant_category:)
+            .blocked_authorization
+            .deliver_later
+
+          return decline_with_reason!("merchant_not_allowed")
+        end
+
         return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?
 
         return decline_with_reason!("inadequate_balance") if card_balance_available < amount_cents
@@ -93,6 +102,10 @@ module StripeAuthorizationService
 
       def merchant_category
         auth.dig(:merchant_data, :category)
+      end
+
+      def forbidden_merchant_category?
+        StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category)
       end
 
       def merchant_allowed?
