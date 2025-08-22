@@ -930,7 +930,7 @@ form:has(> #admin-logout-button) {
   article.flash {
     --flash-offset: 1rem;
     border: 1px solid var(--hcb-bg-3);
-    border-top: 3px solid var(--hcb-link-1);
+    border-top: 3px solid var(--hcb-accent);
     border-radius: 4px;
     background: var(--hcb-bg-1);
     padding: 1rem;
@@ -946,11 +946,11 @@ form:has(> #admin-logout-button) {
     z-index: 999;
 
     &.flash--success {
-      border-top-color: green;
+      border-top-color: var(--hcb-accent-active);
     }
 
     &.flash--error {
-      border-top-color: red;
+      border-top-color: var(--hcb-primary);
     }
 
     &.flash--dismissed {
