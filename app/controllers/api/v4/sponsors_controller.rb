@@ -38,7 +38,7 @@ module Api
         if @sponsor.save
           render :show
         else
-          return render json: { error: e.message }, status: :bad_request
+          return render json: { error: "Could not create a new sponsor." }, status: :unprocessable_entity
         end
       end
 

@@ -49,12 +49,6 @@ module Api
         ).run
 
         render :show
-      rescue Pundit::NotAuthorizedError
-        raise
-      rescue => e
-        Rails.error.report(e)
-
-        return render json: { error: e.message }, status: :internal_server_error
       end
 
     end
