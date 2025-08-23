@@ -130,6 +130,13 @@ class StripeCard < ApplicationRecord
     self.canceled_at = Time.now if stripe_status_changed?(to: "canceled")
   end
 
+  def self.cards_in_shipping
+    physical.where.not(stripe_status: "canceled")
+            .where(initially_activated: false)
+            .includes(:user, :event)
+            .reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.shipping_eta&.past? }
+  end
+
   def full_card_number
     secret_details[:number]
   end
