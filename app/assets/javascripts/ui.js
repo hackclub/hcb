@@ -116,7 +116,7 @@ $(document).keydown(function (e) {
   }
 })
 
-const attachTooltipListener = () => {
+window.attachTooltipListener = () => {
   const tooltip = document.getElementById("tooltip-container");
 
   $(".tooltipped").on({
@@ -124,6 +124,8 @@ const attachTooltipListener = () => {
       if (window.innerWidth < 768) return;
 
       const trigger = event.currentTarget;
+      if (!trigger.classList.contains("tooltipped")) return;
+
       const triggerRect = trigger.getBoundingClientRect();
       const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
       const offset = 5;
@@ -141,7 +143,7 @@ const attachTooltipListener = () => {
 
       const positions = {
         s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
-        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight + offset],
+        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
         e: () => [triggerRect.right + window.scrollX + offset, centerY],
         w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
       };
