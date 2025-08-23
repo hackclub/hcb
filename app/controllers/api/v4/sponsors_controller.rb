@@ -9,8 +9,8 @@ module Api
       end
 
       def show
-        # why does this cause "unable to find policy `NilClassPolicy` for `nil`" with a bad id?
-        @sponsor = authorize Sponsor.find_by_public_id(params[:id])
+        @sponsor = Sponsor.find_by_public_id(params[:id])
+        authorize @sponsor
       rescue => e
         return render json: { error: e.message }, status: :bad_request
       end
