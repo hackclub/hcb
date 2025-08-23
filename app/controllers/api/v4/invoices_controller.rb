@@ -29,7 +29,8 @@ module Api
 
         due_date = filtered_params["due_date"].to_datetime
 
-        sponsor = authorize Sponsor.find_by_public_id(params[:sponsor_id])
+        sponsor = Sponsor.find_by_public_id(params[:sponsor_id])
+        authorize sponsor
 
         @invoice = ::InvoiceService::Create.new(
           event_id: event.id,
