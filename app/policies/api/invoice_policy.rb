@@ -7,7 +7,7 @@ module Api
     end
 
     def show?
-      OrganizerPosition.role_at_least?(user, record, :reader)
+      record.event.is_public || OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
     def create?
