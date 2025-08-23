@@ -119,6 +119,11 @@ $(document).keydown(function (e) {
 window.attachTooltipListener = () => {
   const tooltip = document.getElementById("tooltip-container");
 
+  const removeTooltips = () => {
+    if (window.innerWidth < 768) return;
+    tooltip.className = "";
+  }
+
   $(".tooltipped").on({
     mouseenter(event) {
       if (window.innerWidth < 768) return;
@@ -153,10 +158,12 @@ window.attachTooltipListener = () => {
     },
 
     mouseleave() {
-      if (window.innerWidth < 768) return;
-      tooltip.className = "";
+      removeTooltips()
     }
   });
+  // on unload turbo
+  $(document).on('turbo:before-visit', removeTooltips);
+  $(document).on('beforeunload', removeTooltips)
 }
 
 $(document).on('turbo:frame-load', window.attachTooltipListener)
