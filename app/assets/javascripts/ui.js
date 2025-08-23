@@ -159,10 +159,11 @@ window.attachTooltipListener = () => {
   });
 }
 
-$(document).on('turbo:frame-load', attachTooltipListener)
+$(document).on('turbo:frame-load', window.attachTooltipListener)
+$(document).on('turbo:after-stream-render', window.attachTooltipListener)
 
 $(document).on('turbo:load', function () {
-  attachTooltipListener();
+  window.attachTooltipListener();
 
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
@@ -261,7 +262,7 @@ $(document).on('turbo:load', function () {
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
       event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch {}
+    } catch { }
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
