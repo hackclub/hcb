@@ -116,13 +116,7 @@ $(document).keydown(function (e) {
   }
 })
 
-$(document).on('turbo:load', function () {
-  if (window.location !== window.parent.location) {
-    $('[data-behavior~=hide_iframe]').hide()
-  }
-
-  $('[data-behavior~=select_content]').on('click', e => e.target.select())
-
+const attachTooltipListener = () => {
   const tooltip = document.getElementById("tooltip-container");
 
   $(".tooltipped").on({
@@ -161,8 +155,19 @@ $(document).on('turbo:load', function () {
       tooltip.className = "";
     }
   });
+}
 
+const observer = new MutationObserver(attachTooltipListener);
+observer.observe(document.body, { childList: true, subtree: true });
 
+$(document).on('turbo:load', function () {
+  attachTooltipListener();
+
+  if (window.location !== window.parent.location) {
+    $('[data-behavior~=hide_iframe]').hide()
+  }
+
+  $('[data-behavior~=select_content]').on('click', e => e.target.select())
   BK.s('autohide').hide()
 
   if (BK.thereIs('login')) {
@@ -255,7 +260,7 @@ $(document).on('turbo:load', function () {
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
       event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch {}
+    } catch { }
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
