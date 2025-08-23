@@ -35,15 +35,15 @@ module Api
 
       def sponsor_params
         params.require(:sponsor).permit(
-                  :address_city,
-                  :address_country,
-                  :address_line1,
-                  :address_line2,
-                  :address_postal_code,
-                  :address_state,
-                  :contact_email,
-                  :name
-                )
+          :address_city,
+          :address_country,
+          :address_line1,
+          :address_line2,
+          :address_postal_code,
+          :address_state,
+          :contact_email,
+          :name
+        )
       end
 
     end

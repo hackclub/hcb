@@ -50,10 +50,10 @@ module Api
 
       def invoice_params
         params.require(:invoice).permit(
-                  :due_date,
-                  :item_description,
-                  :item_amount
-                )
+          :due_date,
+          :item_description,
+          :item_amount
+        )
       end
 
     end
