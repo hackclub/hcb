@@ -22,7 +22,7 @@ module Api
 
         @donation.save!
 
-        render "show"
+        render "show", status: :created
       end
 
     end

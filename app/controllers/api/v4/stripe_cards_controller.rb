@@ -68,7 +68,7 @@ module Api
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?
 
-        render :show
+        render :show, status: :created, location: api_v4_stripe_card_path(@stripe_card)
       end
 
       def update

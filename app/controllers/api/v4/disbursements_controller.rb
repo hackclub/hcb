@@ -28,7 +28,7 @@ module Api
           return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
         end
 
-        render :show
+        render :show, status: :created, location: api_v4_transaction_path(@disbursement)
       end
 
     end

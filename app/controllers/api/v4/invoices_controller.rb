@@ -48,7 +48,7 @@ module Api
           sponsor_address_country: sponsor.address_country
         ).run
 
-        render :show
+        render :show, status: :created, location: api_v4_invoice_path(@invoice)
       end
 
     end

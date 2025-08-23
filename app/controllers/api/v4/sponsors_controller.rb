@@ -36,7 +36,7 @@ module Api
         authorize @sponsor
 
         if @sponsor.save
-          render :show
+          render :show, status: :created, location: api_v4_sponsor_path(@sponsor)
         else
           return render json: { error: "Could not create a new sponsor." }, status: :unprocessable_entity
         end

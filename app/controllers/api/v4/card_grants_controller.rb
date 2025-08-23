@@ -51,10 +51,7 @@ module Api
           return
         end
 
-        render(
-          status: :created,
-          location: api_v4_card_grant_path(@card_grant)
-        )
+        render :show, status: :created, location: api_v4_card_grant_path(@card_grant)
       end
 
       def show
