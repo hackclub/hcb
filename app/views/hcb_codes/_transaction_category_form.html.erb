@@ -1,11 +1,16 @@
-<%# locals: (model:, url:) %>
+<%# locals: (model:, url:, admin_context: false) %>
 
 <%= form_for(
       model,
       url:,
       method: :post,
-      data: { controller: "form" }
+      data: { controller: "form" },
+      html: { class: "m-0" }
     ) do |f| %>
+  <% if admin_context %>
+    <%= hidden_field_tag("context", "admin") %>
+  <% end %>
+
   <%= select_tag(
         f.field_name(:category_slug),
         options_for_select(
@@ -13,6 +18,7 @@
           model.category&.slug,
         ),
         include_blank: "None",
-        data: { action: "change->form#submit" }
+        data: { action: "change->form#submit" },
+        class: "m-0"
       ) %>
 <% end %>
