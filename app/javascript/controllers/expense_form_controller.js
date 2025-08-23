@@ -172,7 +172,7 @@ export default class extends Controller {
     fieldWrapper.classList.add('tooltipped', 'tooltipped--n')
     fieldWrapper.setAttribute('aria-label', label)
 
-    window.attachTooltipListener();
+    window.attachTooltipListener()
   }
 
   #removeTooltip(field) {
