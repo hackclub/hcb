@@ -3,8 +3,11 @@
 module Api
   module V4
     class SponsorsController < ApplicationController
+      include SetEvent
+
+      before_action :set_api_event, only: [:index, :create]
+
       def index
-        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
         @sponsors = authorize(@event.sponsors.order(created_at: :desc))
       end
 
@@ -16,7 +19,7 @@ module Api
       end
 
       def create
-        event = authorize Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
+        authorize @event
 
         sponsor = params.require(:sponsor).permit(
           :address_city,
@@ -38,7 +41,7 @@ module Api
           address_state: sponsor[:address_state],
           contact_email: sponsor[:contact_email],
           name: sponsor[:name],
-          event_id: event.id
+          event_id: @event.id
         )
         authorize @sponsor
 

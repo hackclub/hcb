@@ -3,9 +3,12 @@
 module Api
   module V4
     class StripeCardsController < ApplicationController
+      include SetEvent
+
       def index
         if params[:event_id].present?
-          @event = authorize(Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]), :card_overview?)
+          set_api_event
+          authorize @event, :card_overview?
           @stripe_cards = @event.stripe_cards.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
@@ -28,8 +31,8 @@ module Api
       end
 
       def create
-        event = authorize(Event.find(params[:card][:organization_id]))
-        authorize event, :create_stripe_card?, policy_class: EventPolicy
+        event = Event.find(params[:card][:organization_id])
+        authorize event, :create_stripe_card?
 
         card = params.require(:card).permit(
           :organization_id,

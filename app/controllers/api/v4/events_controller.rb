@@ -3,7 +3,9 @@
 module Api
   module V4
     class EventsController < ApplicationController
-      before_action :set_event, except: [:index]
+      include SetEvent
+
+      before_action :set_api_event, except: [:index]
       skip_after_action :verify_authorized, only: [:index]
 
       def index
@@ -39,10 +41,6 @@ module Api
       require_oauth2_scope "event_followers", :followers
 
       private
-
-      def set_event
-        @event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
-      end
 
       def paginate_transactions(transactions)
         limit = params[:limit]&.to_i || 25

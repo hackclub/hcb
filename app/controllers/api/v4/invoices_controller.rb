@@ -3,8 +3,11 @@
 module Api
   module V4
     class InvoicesController < ApplicationController
+      include SetEvent
+
+      before_action :set_api_event, only: [:index, :create]
+
       def index
-        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
         @invoices = authorize(@event.invoices.order(created_at: :desc))
       end
 
@@ -16,8 +19,7 @@ module Api
       end
 
       def create
-        event = authorize Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
-        authorize event, :create?, policy_class: InvoicePolicy
+        authorize @event, :create?
 
         filtered_params = params.require(:invoice).permit(
           :due_date,
