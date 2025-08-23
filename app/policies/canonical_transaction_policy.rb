@@ -13,6 +13,10 @@ class CanonicalTransactionPolicy < ApplicationPolicy
     admin_or_teammember
   end
 
+  def set_category?
+    user&.admin?
+  end
+
   def export?
     admin_or_teammember
   end

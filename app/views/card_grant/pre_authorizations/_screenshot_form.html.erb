@@ -1,6 +1,6 @@
 <div id="screenshot_upload_form" class="flex-shrink-0 h-[200px]">
   <div class="<%= "mb3" if defined?(include_spacing) %> h-100" style="position: relative;">
-    <%= form_with model: nil, url: card_grant_pre_authorizations_path, method: :patch, remote: true, class: "flex flex-col justify-center h-100", data: {
+    <%= form_with model: false, url: card_grant_pre_authorizations_path, method: :patch, remote: true, class: "flex flex-col justify-center h-100", data: {
           turbo: defined?(turbo) ? turbo : "false",
           controller: "file-drop form",
           action: defined?(disabled) && disabled ? "" : "
@@ -50,7 +50,7 @@
                                 "action"           => "change->form#submit"
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
-            <%= form.label :file, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-screenshot-button", disabled: false do %>
+            <%= form.label :screenshot, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-screenshot-button", disabled: false do %>
               <%= inline_icon "cloud-upload" %>
               <% if local_assigns[:success] || local_assigns[:error] %>
                 <span id="upload-screenshot-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>

@@ -1,7 +1,7 @@
 <% instance = local_assigns.__id__ %>
 <div id="receipt_upload_form">
   <div class="<%= "mb3" if defined?(include_spacing) %>" style="position: relative;">
-    <%= form_with model: nil, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
+    <%= form_with model: false, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
           turbo: defined?(turbo) ? turbo : "false",
           controller: "file-drop form",
           action: "
@@ -65,7 +65,7 @@
             <% additional_classes = [].tap do |array|
                  array << "bg-success" if local_assigns[:success]
                  array << "bg-error" if local_assigns[:error]
-                 array << "disabled" if defined?(receiptable) && !ReceiptablePolicy.new(current_user, receiptable).upload?
+                 array << "disabled" if defined?(receiptable) && current_user && !ReceiptablePolicy.new(current_user, receiptable).upload?
                end.join(", ") %>
             <%= form.label :file, class: "btn m1 #{additional_classes}", id: "upload-receipt-button" do %>
               <%= inline_icon "cloud-upload" %>

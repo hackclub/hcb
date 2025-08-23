@@ -28,7 +28,7 @@
   <%= form.submit "Search" %>
 <% end %>
 
-<%= form_with(model: nil, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
+<%= form_with(model: false, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
   <%= form.submit "Attempt to verify all currently verifying domains" %>
 <% end %>
 

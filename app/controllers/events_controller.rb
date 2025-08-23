@@ -183,6 +183,8 @@ class EventsController < ApplicationController
 
     set_cacheable
 
+    @order_by = auditor_signed_in? && params[:order_by] || "date"
+
     @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
       event_id: @event.id,
@@ -195,7 +197,8 @@ class EventsController < ApplicationController
       user: @user,
       start_date: @start_date,
       end_date: @end_date,
-      missing_receipts: @missing_receipts
+      missing_receipts: @missing_receipts,
+      order_by: @order_by.to_sym
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -677,6 +680,7 @@ class EventsController < ApplicationController
     @ach_transfers = @event.ach_transfers
     @paypal_transfers = @event.paypal_transfers
     @wires = @event.wires
+    @wise_transfers = @event.wise_transfers
     @checks = @event.checks.includes(:lob_address)
     @increase_checks = @event.increase_checks
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
@@ -722,7 +726,12 @@ class EventsController < ApplicationController
     @wires = @wires.rejected if params[:filter] == "canceled"
     @wires = @wires.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers + @wires).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending) if params[:filter] == "in_transit"
+    @wise_transfers = @wise_transfers.deposited if params[:filter] == "deposited"
+    @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
+    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
+
+    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
 
     # Generate mock data
     if helpers.show_mock_data?
@@ -1198,7 +1207,8 @@ class EventsController < ApplicationController
       user: @user,
       start_date: @start_date,
       end_date: @end_date,
-      missing_receipts: @missing_receipts
+      missing_receipts: @missing_receipts,
+      order_by: @order_by&.to_sym || "date"
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
