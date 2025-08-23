@@ -26,6 +26,7 @@ class CanonicalTransaction < ApplicationRecord
   has_paper_trail
 
   include Receiptable
+  include Categorizable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -325,6 +326,10 @@ class CanonicalTransaction < ApplicationRecord
 
   def wire
     return linked_object if linked_object.is_a?(Wire)
+  end
+
+  def wise_transfer
+    return linked_object if linked_object.is_a?(WiseTransfer)
   end
 
   def check_deposit

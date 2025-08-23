@@ -2,58 +2,110 @@
 
 <h1>Transaction <%= @canonical_transaction.id %></h1>
 
-<table>
-  <thead>
+<table class="no-stripes <%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
+  <tbody>
     <tr>
       <th>ID</th>
-      <th>Date</th>
-      <th>Memo</th>
-      <th>Bank account</th>
-      <th>FriendlyMemo</th>
-      <th>CustomMemo</th>
-      <th>Amount</th>
-      <th>HCB Code</th>
-      <th>MappedBy</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr class="<%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
       <td><%= link_to @canonical_transaction.id, canonical_transaction_path(@canonical_transaction) %></td>
+    </tr>
+    <tr>
+      <th>Date</th>
       <td><%= @canonical_transaction.date %></td>
+    </tr>
+    <tr>
+      <th>Memo</th>
       <td><%= @canonical_transaction.memo %></td>
+    </tr>
+    <tr>
+      <th>Bank account</th>
       <td><%= @canonical_transaction.bank_account_name %></td>
+    </tr>
+    <tr>
+      <th>FriendlyMemo</th>
       <td><%= @canonical_transaction.friendly_memo %></td>
+    </tr>
+    <tr>
+      <th>CustomMemo</th>
       <td><%= @canonical_transaction.custom_memo %></td>
+    </tr>
+    <tr>
+      <th>Amount</th>
       <td><%= @canonical_transaction.amount.format %></td>
+    </tr>
+    <tr>
+      <th>HCB Code</th>
       <td><%= link_to @canonical_transaction.hcb_code, hcb_code_path(@canonical_transaction.local_hcb_code) %></td>
+    </tr>
+    <tr>
+      <th>MappedBy</th>
       <td><%= @canonical_transaction.canonical_event_mapping.try(:user).try(:email) %></td>
+    </tr>
+    <tr>
+      <th>Category</th>
+      <td>
+        <%= render(
+              partial: "hcb_codes/transaction_category_form",
+              locals: {
+                model: @canonical_transaction,
+                url: set_category_canonical_transaction_path(@canonical_transaction),
+                admin_context: true
+              }
+            ) %>
+      </td>
     </tr>
   </tbody>
 </table>
+
+<% if @suggested_wise_mapping %>
+  <div class="border-[#9FE870] border-solid border-1 p-5 my-6">
+    <h3 class="mt-0 pt-0 mb-4">Suggested Wise mapping</h3>
+
+    <p class="flex flex-row items-center gap-2">
+      <%= badge_for(@suggested_wise_mapping.state_text, class: "ml-0 bg-#{@suggested_wise_mapping.status_color}") %>
+      <%= @suggested_wise_mapping.admin_dropdown_description %>
+    </p>
+
+    <p>Sent at <%= format_datetime @suggested_wise_mapping.sent_at %></p>
+
+    <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), class: "mb-0", method: :post do |form| %>
+      <%= form.hidden_field :wise_transfer_id, value: @suggested_wise_mapping.id %>
+      <%= form.submit "Map to Wise transfer ##{@suggested_wise_mapping.id}", data: { "turbo-confirm": "Are you sure you want to map this transaction to Wise transfer ##{@suggested_wise_mapping.id}?" }, class: "!mb-0 mt-3" %>
+      <%= link_to "View Wise transfer ##{@suggested_wise_mapping.id}", wise_transfer_process_admin_path(@suggested_wise_mapping), class: "ml-2", target: "_blank" %>
+    <% end %>
+  </div>
+<% end %>
 
 <table>
   <thead>
     <tr>
       <th>Map to an Event</th>
       <th>Map to a Wire</th>
+      <th>Map to a Wise transfer</th>
     </tr>
   </thead>
   <tbody>
     <tr class="<%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
-      <td class="flex" style="gap: 8px">
-        <%= form_with model: nil, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
-          <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.event.try(:id) }, { style: "width: 300px;" }) %>
-          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
-        <% end %>
-
+      <td>
+        <div class="flex flex-row gap-2">
+          <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
+            <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.event.try(:id) }, { style: "width: 300px;" }) %>
+            <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+          <% end %>
+        </div>
         <%= form_with url: set_event_path(@canonical_transaction), method: :post do |form| %>
           <%= form.hidden_field :event_id, value: EventMappingEngine::EventIds::NOEVENT %>
-          <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" } %>
+          <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" }, class: "my-0" %>
         <% end %>
       </td>
       <td>
-        <%= form_with model: nil, local: true, url: set_wire_path(@canonical_transaction), method: :post do |form| %>
+        <%= form_with model: false, local: true, url: set_wire_path(@canonical_transaction), method: :post do |form| %>
           <%= form.collection_select(:wire_id, Wire.approved + [@canonical_transaction.wire].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wire&.id }, { style: "width: 300px;" }) %>
+          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+        <% end %>
+      </td>
+      <td>
+        <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), method: :post do |form| %>
+          <%= form.collection_select(:wise_transfer_id, WiseTransfer.sent + [@canonical_transaction.wise_transfer].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wise_transfer&.id }, { style: "width: 300px;" }) %>
           <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>
       </td>

@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:latest
+        image: postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -105,6 +105,16 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      # https://docs.github.com/en/actions/tutorials/use-containerized-services/create-redis-service-containers
+      redis:
+        image: redis:latest
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,6 +156,7 @@ jobs:
         env:
           ${{ insert }}: ${{ secrets }}
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          REDIS_URL: redis://localhost:6379
           RAILS_ENV: test
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
         run: bundle exec rspec --tag ~skip
@@ -159,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:latest
+        image: postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

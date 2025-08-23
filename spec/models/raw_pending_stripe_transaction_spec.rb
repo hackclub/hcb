@@ -14,4 +14,14 @@ RSpec.describe RawPendingStripeTransaction, type: :model do
       expect(raw_pending_stripe_transaction.authorization_method).to eql("online")
     end
   end
+
+  describe "#merchant_category" do
+    it "returns the merchant category from the JSON data" do
+      expect(raw_pending_stripe_transaction.merchant_category).to eq("bakeries")
+    end
+
+    it "returns nil by default" do
+      expect(described_class.new.merchant_category).to be_nil
+    end
+  end
 end

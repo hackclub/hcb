@@ -50,4 +50,34 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
       end
     end
   end
+
+  context "when the canonical pending transaction has a transaction category" do
+    let(:canonical_pending_transaction) do
+      cpt = create(:canonical_pending_transaction, category_slug: "rent")
+      cpt.category_mapping.update(assignment_strategy: "manual")
+      cpt
+    end
+
+    context "when the canonical transaction does not have one" do
+      let(:canonical_transaction) { create(:canonical_transaction, category_slug: nil) }
+
+      it "assigns the same category and assignment strategy to the canonical transaction" do
+        service.run!
+
+        canonical_transaction.reload
+        expect(canonical_transaction.category.slug).to eq("rent")
+        expect(canonical_transaction.category_mapping.assignment_strategy).to eq("manual")
+      end
+    end
+
+    context "when the canonical transaction has a transaction category" do
+      let(:canonical_transaction) { create(:canonical_transaction, category_slug: "server-hosting") }
+
+      it "keeps the canonical transactions' category" do
+        service.run!
+
+        expect(canonical_transaction.reload.category.slug).to eq("server-hosting")
+      end
+    end
+  end
 end

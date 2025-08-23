@@ -323,6 +323,8 @@ class Event < ApplicationRecord
 
   has_many :wires
 
+  has_many :wise_transfers
+
   has_many :sponsors
   has_many :invoices, through: :sponsors
   has_many :payouts, through: :invoices
@@ -847,6 +849,12 @@ class Event < ApplicationRecord
     emails << config.contact_email if config.contact_email.present?
 
     emails
+  end
+
+  def point_of_contact_history
+    @point_of_contact_history ||= versions
+                                  .filter_map { |v| v.changeset["point_of_contact_id"].presence }
+                                  .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
   end
 
   private
