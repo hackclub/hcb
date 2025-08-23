@@ -21,18 +21,7 @@ module Api
       def create
         authorize @event
 
-        sponsor = params.require(:sponsor).permit(
-          :address_city,
-          :address_country,
-          :address_line1,
-          :address_line2,
-          :address_postal_code,
-          :address_state,
-          :contact_email,
-          :name
-        )
-
-        @sponsor = event.sponsors.new(sponsor)
+        @sponsor = event.sponsors.new(sponsor_params)
         authorize @sponsor
 
         if @sponsor.save
@@ -40,6 +29,21 @@ module Api
         else
           return render json: { error: "Could not create a new sponsor." }, status: :unprocessable_entity
         end
+      end
+
+      private
+
+      def sponsor_params
+        params.require(:sponsor).permit(
+                  :address_city,
+                  :address_country,
+                  :address_line1,
+                  :address_line2,
+                  :address_postal_code,
+                  :address_state,
+                  :contact_email,
+                  :name
+                )
       end
 
     end

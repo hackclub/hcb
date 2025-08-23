@@ -21,13 +21,7 @@ module Api
       def create
         authorize @event, :create?
 
-        filtered_params = params.require(:invoice).permit(
-          :due_date,
-          :item_description,
-          :item_amount
-        )
-
-        due_date = filtered_params["due_date"].to_datetime
+        due_date = invoice_params["due_date"].to_datetime
 
         sponsor = Sponsor.find_by_public_id(params[:sponsor_id])
         authorize sponsor
@@ -35,8 +29,8 @@ module Api
         @invoice = ::InvoiceService::Create.new(
           event_id: event.id,
           due_date:,
-          item_description: filtered_params[:item_description],
-          item_amount: filtered_params[:item_amount],
+          item_description: invoice_params[:item_description],
+          item_amount: invoice_params[:item_amount],
           current_user:,
           sponsor_id: sponsor.id,
           sponsor_name: sponsor.name,
@@ -50,6 +44,16 @@ module Api
         ).run
 
         render :show, status: :created, location: api_v4_invoice_path(@invoice)
+      end
+
+      private
+
+      def invoice_params
+        params.require(:invoice).permit(
+                  :due_date,
+                  :item_description,
+                  :item_amount
+                )
       end
 
     end
