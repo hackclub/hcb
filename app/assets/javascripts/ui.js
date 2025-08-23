@@ -157,8 +157,7 @@ const attachTooltipListener = () => {
   });
 }
 
-const observer = new MutationObserver(attachTooltipListener);
-observer.observe(document.body, { childList: true, subtree: true });
+$(document).on('turbo:frame-load', attachTooltipListener)
 
 $(document).on('turbo:load', function () {
   attachTooltipListener();
