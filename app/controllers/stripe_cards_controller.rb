@@ -131,7 +131,11 @@ class StripeCardsController < ApplicationController
   rescue => e
     Rails.error.report(e)
 
-    redirect_to event_cards_new_path(event), flash: { error: e.message }
+    if event.present?
+      redirect_to event_cards_new_path(event), flash: { error: e.message }
+    else
+      redirect_to my_cards_path, flash: { error: e.message }
+    end
   end
 
   def edit
