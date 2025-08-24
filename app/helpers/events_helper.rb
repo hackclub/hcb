@@ -167,7 +167,7 @@ module EventsHelper
         path: event_sub_organizations_path(event_id: @event.slug),
         tooltip: "Create & manage subsidiary organisations",
         icon: "channels",
-        selected: selected == :sub_organizations 
+        selected: selected == :sub_organizations
       }
     end
 

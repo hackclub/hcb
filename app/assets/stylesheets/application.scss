@@ -181,7 +181,7 @@ tr.clickable {
     cursor: not-allowed;
   }
 
-  [data-dark="true"] & {
+  [data-dark='true'] & {
     color: inherit;
 
     svg {
