@@ -509,7 +509,7 @@ export const adminActions = adminUrls => [
     perform: navigate('/flipper/features'),
   },
   {
-    id: 'admin_tool_30',
+    id: 'admin_tool_31',
     section: 'Admin Tools',
     priority: Priority.HIGH,
     name: 'Referral programs',
