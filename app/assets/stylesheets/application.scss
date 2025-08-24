@@ -180,6 +180,18 @@ tr.clickable {
     color: map-get($palette, muted);
     cursor: not-allowed;
   }
+
+  [data-dark="true"] & {
+    color: inherit;
+
+    svg {
+      fill: currentColor;
+    }
+
+    &:hover {
+      background-color: rgba(map-get($palette, slate), 0.3);
+    }
+  }
 }
 
 thead {

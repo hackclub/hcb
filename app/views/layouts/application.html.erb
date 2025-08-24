@@ -189,16 +189,13 @@
     <%= render "application/the_bin" if @the_bin %>
 
     <aside class="sidebar">
-      <%# we need a wrapper div with a large width to prevent the tooltips from being hidden %>
-      <div class="sidebar--scroll-container" id="sidebar-scroll-container">
-        <div class="w-full lg:w-72 py-6 px-4 pointer-events-auto">
-          <%= yield(:header) %>
-          <div class="hidden lg:block">
-            <%= render "application/flash" %>
-          </div>
-          <div class="hidden lg:block flex-1">
-            <%= yield(:nav) %>
-          </div>
+      <div class="sidebar--scroll-container">
+        <%= yield(:header) %>
+        <div class="hidden lg:block">
+          <%= render "application/flash" %>
+        </div>
+        <div class="hidden lg:block flex-1">
+          <%= yield(:nav) %>
         </div>
       </div>
       <%= render "application/user_menu" %>

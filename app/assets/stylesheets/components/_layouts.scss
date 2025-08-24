@@ -40,11 +40,7 @@
     }
 
     .sidebar--scroll-container {
-      @apply flex-1 overflow-y-auto scrollbar-hidden pointer-events-none flex items-center lg:items-start w-full outline-none;
-
-      @media (min-width: 1024px) {
-        width: 70vw;
-      }
+      @apply flex-1 overflow-y-auto scrollbar-hidden w-full p-2;
     }
   }
 
