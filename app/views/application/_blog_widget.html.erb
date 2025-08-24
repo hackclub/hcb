@@ -15,7 +15,7 @@
     data-menu-target="content">
     <p class="font-bold text-lg my-0 pb-3 w-full text-center">✨ What's new?</p>
 
-    <iframe loading="lazy" src="<%= "#{Rails.env.development? ? "http://localhost:3001" : "https://blog.hcb.hackclub.com"}/embed?theme=light" %>" class="border-0 w-full min-h-96" style="zoom: 0.9;" data-blog-target="embed"></iframe>
+    <iframe id="blog-widget-embed" loading="lazy" src="<%= "#{Rails.env.development? ? "http://localhost:3001" : "https://blog.hcb.hackclub.com"}/embed?theme=light" %>" class="border-0 w-full min-h-96" style="zoom: 0.9;"></iframe>
 
     <div class="px-5 pt-2 w-full">
       <a href="https://blog.hcb.hackclub.com" target="_blank" class="flex justify-center items-center"><%= inline_icon :external, size: 26 %> See all posts</a>

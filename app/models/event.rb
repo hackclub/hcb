@@ -851,6 +851,12 @@ class Event < ApplicationRecord
     emails
   end
 
+  def point_of_contact_history
+    @point_of_contact_history ||= versions
+                                  .filter_map { |v| v.changeset["point_of_contact_id"].presence }
+                                  .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
+  end
+
   private
 
   def point_of_contact_is_admin

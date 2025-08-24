@@ -6,6 +6,11 @@ RSpec.describe EventsController do
   include SessionSupport
 
   describe "#index" do
+    before do
+      # This is required since creating event configs creates a monthly announcement for the event authored by the system user
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
     it "renders a list of the user's events as json" do
       user = create(:user)
 
