@@ -15,7 +15,7 @@
 #  pre_authorization_required        :boolean          default(FALSE), not null
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
 #  card_grant_id                     :bigint
-#  event_id                          :bigint
+#  event_id                          :bigint           not null
 #
 # Indexes
 #
