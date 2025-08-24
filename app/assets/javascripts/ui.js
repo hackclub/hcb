@@ -116,33 +116,21 @@ $(document).keydown(function (e) {
   }
 })
 
-$(document).on('turbo:load', function () {
-  // Persist sidebar scroll position while navigating between pages
-  document.addEventListener("turbo:before-cache", () => {
-    const sidebar = document.getElementById("sidebar-scroll-container");
-    if (sidebar) sessionStorage.setItem("sidebarScrollPosition", sidebar.scrollTop)
-  });
-
-  document.addEventListener("turbo:load", () => {
-    const sidebar = document.getElementById("sidebar-scroll-container");
-    if (!sidebar) return;
-    const scrollPosition = sessionStorage.getItem("sidebarScrollPosition");
-    if (scrollPosition) sidebar.scrollTop = scrollPosition;
-  });
-
-  if (window.location !== window.parent.location) {
-    $('[data-behavior~=hide_iframe]').hide()
-  }
-
-  $('[data-behavior~=select_content]').on('click', e => e.target.select())
-
+window.attachTooltipListener = () => {
   const tooltip = document.getElementById("tooltip-container");
+
+  const removeTooltips = () => {
+    if (window.innerWidth < 768) return;
+    tooltip.className = "";
+  }
 
   $(".tooltipped").on({
     mouseenter(event) {
       if (window.innerWidth < 768) return;
 
       const trigger = event.currentTarget;
+      if (!trigger.classList.contains("tooltipped")) return;
+
       const triggerRect = trigger.getBoundingClientRect();
       const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
       const offset = 5;
@@ -160,7 +148,7 @@ $(document).on('turbo:load', function () {
 
       const positions = {
         s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
-        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight + offset],
+        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
         e: () => [triggerRect.right + window.scrollX + offset, centerY],
         w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
       };
@@ -170,12 +158,25 @@ $(document).on('turbo:load', function () {
     },
 
     mouseleave() {
-      if (window.innerWidth < 768) return;
-      tooltip.className = "";
+      removeTooltips()
     }
   });
+  // on unload turbo
+  $(document).on('turbo:before-visit', removeTooltips);
+  $(document).on('beforeunload', removeTooltips)
+}
 
+$(document).on('turbo:frame-load', window.attachTooltipListener)
+$(document).on('turbo:after-stream-render', window.attachTooltipListener)
 
+$(document).on('turbo:load', function () {
+  window.attachTooltipListener();
+
+  if (window.location !== window.parent.location) {
+    $('[data-behavior~=hide_iframe]').hide()
+  }
+
+  $('[data-behavior~=select_content]').on('click', e => e.target.select())
   BK.s('autohide').hide()
 
   if (BK.thereIs('login')) {

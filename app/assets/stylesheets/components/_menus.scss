@@ -2,7 +2,30 @@
   cursor: pointer;
   position: relative;
   font-family: $font-family;
-  outline: none;
+
+  &[aria-expanded='true'] {
+    outline: none;
+
+    &:not(.menu__toggle--arrowless):after {
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: solid transparent;
+      content: '';
+      position: absolute;
+      pointer-events: none;
+      z-index: 5;
+
+      @media (max-width: 32em) {
+        display: none;
+      }
+    }
+
+    &:not(.menu__toggle--arrowless):after {
+      border-bottom-color: map-get($palette, white);
+      border-width: 10px;
+    }
+  }
 }
 
 .menu__content {
