@@ -10,12 +10,12 @@ module OneTimeJobs
           cg_setting.update!(
             {
               banned_categories: (cg.banned_categories + (default_cg_setting&.banned_categories || [])).uniq,
-              banned_merchants: (cg.banned_merchants || (default_cg_setting&.banned_merchants || [])).uniq,
-              category_lock: (cg.category_lock || (default_cg_setting&.category_lock || [])).uniq,
+              banned_merchants: (cg.banned_merchants + (default_cg_setting&.banned_merchants || [])).uniq,
+              category_lock: (cg.category_lock + (default_cg_setting&.category_lock || [])).uniq,
               expiration_preference: default_cg_setting.expiration_preference,
               invite_message: default_cg_setting.invite_message,
               keyword_lock: cg.keyword_lock || default_cg_setting&.keyword_lock,
-              merchant_lock: (cg.merchant_lock || (default_cg_setting&.merchant_lock || [])).uniq,
+              merchant_lock: (cg.merchant_lock + (default_cg_setting&.merchant_lock || [])).uniq,
               pre_authorization_required: [cg.pre_authorization_required, default_cg_setting.pre_authorization_required].first(&:present?),
               reimbursement_conversions_enabled: default_cg_setting.reimbursement_conversions_enabled
             }
