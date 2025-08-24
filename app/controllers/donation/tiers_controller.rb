@@ -2,6 +2,8 @@
 
 class Donation
   class TiersController < ApplicationController
+    include DonationPageSetup
+
     before_action :set_event, except: [:set_index]
 
     def index
@@ -9,37 +11,14 @@ class Donation
     end
 
     def start
-      @donation = Donation.new(
-        name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
-        email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),
-        amount: params[:amount],
-        message: params[:message],
-        fee_covered: params[:fee_covered],
-        event: @event,
-        ip_address: request.remote_ip,
-        user_agent: request.user_agent,
-        referrer: request.referrer,
-        utm_source: params[:utm_source],
-        utm_medium: params[:utm_medium],
-        utm_campaign: params[:utm_campaign],
-        utm_term: params[:utm_term],
-        utm_content: params[:utm_content]
-      )
-
-      authorize @donation, :start_donation?
-
+      return not_found unless @event.donation_page_available?
+      puts "PARAMS LIST"
+      puts params
       @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
-      if params[:tier_id].present? && @tier.nil? && params[:tier_id] != "custom"
-        redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." }
-        return
-      end
-
-      @monthly = true
-
-      @tiers = @event.donation_tiers.where(published: true)
-      @show_tiers = @event.donation_tiers_enabled? && @tiers.any?
-      @recurring_donation = RecurringDonation.new
-
+      
+      build_donation_page!(event: @event, params:, request:)
+      authorize @event, :show?
+      @hide_flash = true
       render "donations/start_donation"
     end
 
@@ -120,7 +99,7 @@ class Donation
     private
 
     def set_event
-      @event = Event.where(slug: params[:event_id]).first
+      @event = Event.where(slug: params[:event_name]).first
       render json: { error: "Event not found" }, status: :not_found unless @event
     end
 
