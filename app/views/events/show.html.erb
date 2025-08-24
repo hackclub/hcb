@@ -117,11 +117,11 @@
     <% if @event.created_at < 1.week.ago %>
       <div data-controller="menu" data-menu-append-to-value="#tags-chart">
         <button
-          class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-dark flex items-center cursor-pointer"
+          class="homepage-eyebrow my-0 gap-1 border-0 bg-transparent flex items-center cursor-pointer"
           data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
           data-menu-target="toggle">
           <span data-event-home-target="button">All time</span>
-          <%= inline_icon "down-caret" %>
+          <%= inline_icon "down-caret", size: 20 %>
         </button>
         <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
           <a data-action="event-home#updateTimeframe click->menu#close">All time</a>

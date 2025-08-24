@@ -102,6 +102,20 @@ input[type='submit'],
     }
   }
 
+  &.bg-blue {
+    background-color: map-get($palette, info);
+    color: $white;
+
+    &:hover {
+      background-color: darken(map-get($palette, info), 5%);
+    }
+
+    &:active,
+    &:focus {
+      background-color: darken(map-get($palette, info), 10%);
+    }
+  }
+
   &.bg-muted {
     background-color: map-get($palette, muted);
     color: $white;
