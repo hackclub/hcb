@@ -26,7 +26,7 @@ class StaticPagesController < ApplicationController
         event&.is_public? && event.is_indexable?
       end.sample(6)
 
-      @latest_hcb_announcement = Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK).announcements.published.order(published_at: :desc).last
+      @latest_hcb_announcement = Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK).announcements.published.order(published_at: :desc).first
 
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
@@ -116,6 +116,13 @@ class StaticPagesController < ApplicationController
         "Get reimbursed through HCB": :member,
         "View reimbursement reports": :reader,
         "Review, approve, and reject reports": :manager,
+      },
+      Announcements: {
+        "Create or delete an announcement": :manager,
+        "Publish an announcement": :manager,
+        "View announcements": :reader,
+        "View followers": :reader,
+        "Remove followers": :manager
       },
       "Google Workspace": {
         "Create an account": :manager,

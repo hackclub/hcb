@@ -123,6 +123,46 @@ $(document).on('turbo:load', function () {
 
   $('[data-behavior~=select_content]').on('click', e => e.target.select())
 
+  const tooltip = document.getElementById("tooltip-container");
+
+  $(".tooltipped").on({
+    mouseenter(event) {
+      if (window.innerWidth < 768) return;
+
+      const trigger = event.currentTarget;
+      const triggerRect = trigger.getBoundingClientRect();
+      const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
+      const offset = 5;
+
+      tooltip.className = "active";
+      tooltip.textContent = trigger.getAttribute("aria-label");
+
+      // Sync size classes
+      ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
+        if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
+      });
+
+      const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
+      const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+
+      const positions = {
+        s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
+        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight + offset],
+        e: () => [triggerRect.right + window.scrollX + offset, centerY],
+        w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
+      };
+
+      const [left, top] = (positions[placement] || positions.n)();
+      Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+    },
+
+    mouseleave() {
+      if (window.innerWidth < 768) return;
+      tooltip.className = "";
+    }
+  });
+
+
   BK.s('autohide').hide()
 
   if (BK.thereIs('login')) {

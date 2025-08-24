@@ -56,7 +56,7 @@
     ⚠️ Warning: this action is permanent and irreversable. If you do this in error, a new invoice will have to be created for the sponsor, which will send them another email. Please exercise caution. Your account will be associated with this action.
   </p>
 
-  <%= form_with(model: nil, local: true, url: invoice_mark_paid_admin_path(@invoice.id), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: invoice_mark_paid_admin_path(@invoice.id), method: :post) do |form| %>
     <fieldset>
       <legend>Manually Mark Paid</legend>
       <p>

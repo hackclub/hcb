@@ -192,6 +192,7 @@
         <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
         <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
         <%= link_to "Documents", event_documents_path(event_id: @event.slug) if policy(@event).documentation? %>
+        <%= link_to "Sub-organizations", event_sub_organizations_path(event_id: @event.slug) if policy(@event).sub_organizations? %>
         <%= link_to "Settings", edit_event_path(@event) if organizer_signed_in?(as: :member) %>
       </div>
     </button>
