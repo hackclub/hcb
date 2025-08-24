@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/concerns/donation_page_setup.rb
 module DonationPageSetup
   extend ActiveSupport::Concern
