@@ -13,6 +13,10 @@ class CanonicalPendingTransactionPolicy < ApplicationPolicy
     admin_or_teammember
   end
 
+  def set_category?
+    user&.admin?
+  end
+
   private
 
   def admin_or_teammember
