@@ -2,13 +2,16 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["min", "max", "track"]
-  static values = { min: Number, max: Number, step: Number, gap: Number }
+  static targets = ["min", "max", "minInput", "maxInput", "track"]
+  static values = { min: Number, max: Number, step: Number, gap: Number, defaultMin: Number, defaultMax: Number }
 
   connect() {
-    // defaults
-    this.minValue = this.hasMinValue ? this.minValue : 0
-    this.maxValue = this.hasMaxValue ? this.maxValue : 100
+    const lo = (typeof this.defaultMinValue !== "undefined" ? this.defaultMinValue : (typeof this.minValue !== "undefined" ? this.minValue : 0));
+    const hi = (typeof this.defaultMaxValue !== "undefined" ? this.defaultMaxValue : (typeof this.maxValue !== "undefined" ? this.maxValue : 100));
+
+    this.minValue = lo
+    this.maxValue = hi
+
     this.stepValue = this.hasStepValue ? this.stepValue : 1
     this.gapValue = this.hasGapValue ? this.gapValue : 0
 
@@ -19,9 +22,8 @@ export default class extends Controller {
       el.step = this.stepValue
     }
 
-    // initialize values if empty
-    if (!this.minTarget.value) this.minTarget.value = this.minValue
-    if (!this.maxTarget.value) this.maxTarget.value = this.maxValue
+    this.minInputTarget.value = lo
+    this.maxInputTarget.value = hi
 
     this._sync()
     this._bind()
@@ -58,8 +60,9 @@ export default class extends Controller {
     const hi = Number(this.maxTarget.value)
 
     // outputs (optional)
-    if (this.hasMinTarget) this.minTarget.value = lo
-    if (this.hasMaxTarget) this.maxTarget.value = hi
+    if (this.minInputTarget) this.minInputTarget.value = lo
+    if (this.maxInputTarget) this.maxInputTarget.value = hi
+
 
     // track fill
     if (this.hasTrackTarget) {

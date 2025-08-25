@@ -63,22 +63,29 @@
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
               <div
                 data-controller="dual-slider"
+                class="range-wrap"
                 data-dual-slider-min-value="0"
                 data-dual-slider-max-value="1000"
-                data-dual-slider-step-value="1"
-                data-dual-slider-gap-value="0"
-                class="range-wrap"
+                data-dual-slider-default-min-value="<%= params["#{filter[:key_base]}_less_than"] || 0 %>"
+                data-dual-slider-default-max-value="<%= params["#{filter[:key_base]}_greater_than"] || 1000 %>"
               >
                 
-                <% ["less_than", "greater_than"].each do |suffix| %>
-                  <%= form.number_field "#{filter[:key_base]}_#{suffix}", data: { "dual-slider-target": suffix == 'less_than' ? "min" : "max" }, class: "bg-transparent !border-none", value: params["#{filter[:key_base]}_#{suffix}"] %>
-                <% end %>
+                <div class="flex items-center -mt-10 mb-10">
+                    <div class="flex gap-2 w-full">
+                    <% ["less_than", "greater_than"].each do |suffix| %>
+                      <%= form.number_field "#{filter[:key_base]}_#{suffix}",
+                        data: { "dual-slider-target": (suffix == 'less_than' ? "min" : "max") + "Input"},
+                        class: "bg-transparent !border-none w-full #{suffix == 'less_than' ? "minInput" : "maxInput"}"
+                      %>
+                    <% end %>
+                    </div>
+                </div>
 
                 <div class="track" data-dual-slider-target="track"></div>
 
-                <div class="flex items-center readout -mt-20">
-                  <input type="range" data-dual-slider-target="min" name="min_price" />
-                  <input type="range" data-dual-slider-target="max" name="max_price" />
+                <div class="readout">
+                  <input type="range" data-dual-slider-target="min" />
+                  <input type="range" data-dual-slider-target="max" />
                 </div>
               </div>
 

@@ -3,60 +3,65 @@
   width: 100%;
   max-width: 420px;
   padding: 18px 0;
-}
-.range-wrap .track {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 4px;
-  transform: translateY(-50%);
-  border-radius: 999px;
-  background: var(--range-bg, #e5e7eb);
-}
 
-/* stack the two inputs on top of the track */
-.range-wrap input[type='range'] {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 100%;
-  margin: 0;
-  background: transparent;
-  pointer-events: auto;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 0;
-}
+  & .track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 4px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: var(--range-bg, #e5e7eb);
+  }
+  & input[type='range'] {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    margin: 0;
+    background: transparent;
+    pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 0;
+  }
+  & input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+  }
 
-/* webkit thumb */
-.range-wrap input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #3b82f6;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-}
-/* firefox */
-.range-wrap input[type='range']::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #3b82f6;
-  border: 2px solid white;
-  cursor: pointer;
-}
-.range-wrap .readout {
-  font:
-    14px system-ui,
-    sans-serif;
-  display: flex;
-  gap: 6px;
-  align-items: center;
+  & input[type='range']::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid white;
+    cursor: pointer;
+  }
+
+  & .readout {
+    font:
+      14px system-ui,
+      sans-serif;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+
+    & .minInput {
+    }
+
+    & .maxOutput {
+      text-align: right;
+    }
+  }
 }
