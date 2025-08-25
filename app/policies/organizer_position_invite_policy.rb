@@ -34,7 +34,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def change_position_role?
-    admin_or_manager?
+    admin_or_manager? && !record.signee?
   end
 
   private

@@ -1,6 +1,19 @@
 <p>
-We got your <%= "receipt".pluralize(@receipts_count) %>, thanks! You can find <%= @receipts_count == 1 ? "it" : "them" %> in your <%= link_to "Receipt Bin", my_inbox_url %>.
+We got your <%= "receipt".pluralize(@receipts_count) %>, thanks!
+<% unless @receipts_count == @paired_with.size %>
+You can find <%= @receipts_count == 1 ? "it" : "them" %> in your <%= link_to("Receipt Bin", my_inbox_url) %>.
+<% end %>
 </p>
+
+<% if @paired_with.any? %>
+  <p>We also automatically matched <%= @receipts_count == 1 ? "it" : "#{@paired_with.size} #{"receipt".pluralize(@paired_with.size)}" %> to the following <%= "transaction".pluralize(@paired_with.size) %>:</p>
+
+  <ul>
+    <% @paired_with.map do |pair| %>
+      <li><%= link_to pair.memo, hcb_code_url(pair) %> from <%= time_ago_in_words pair.pt&.raw_pending_stripe_transaction&.created_at || Time.at(pair.raw_stripe_transaction.stripe_transaction["created"]) %> ago - <%= link_to "click to reverse this pairing", hcb_code_url(pair, reverse: pair.receipts.last.id) %></li>
+    <% end %>
+  </ul>
+<% end %>
 
 <p>
   From,<br>

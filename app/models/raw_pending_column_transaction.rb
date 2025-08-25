@@ -50,4 +50,8 @@ class RawPendingColumnTransaction < ApplicationRecord
     end
   end
 
+  before_validation on: :create do
+    self.description = memo
+  end
+
 end

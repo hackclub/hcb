@@ -117,6 +117,13 @@ module Reimbursement
       end
     end
 
+    before_update do
+      if approved? && (memo_changed? || amount_cents_changed? || category_changed? || description_changed?)
+        mark_pending!
+        self.approved_by = nil
+      end
+    end
+
     def receipt_required?
       true
     end

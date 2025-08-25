@@ -1,4 +1,4 @@
-<%# locals: (form:, disabled:, excluded_fields: []) %>
+<%# locals: (form:, disabled:, required: true, excluded_fields: []) %>
 
 <% (Event.countries_for_select + [nil]).each do |country| %>
   <template x-if="country == '<%= country.nil? ? "null" : country[0] %>'">
@@ -8,9 +8,9 @@
         <div class="field">
           <%= form.label field[:key], field[:label], class: "mb1" %>
           <% if field[:type] == :select %>
-            <%= form.select field[:key], field[:options], required: true, disabled: "", prompt: "Please select..." %>
+            <%= form.select field[:key], field[:options], required:, disabled: "", prompt: "Please select..." %>
           <% else %>
-            <%= form.send(field[:type], field[:key], required: true) %>
+            <%= form.send(field[:type], field[:key], required:) %>
           <% end %>
           <div class="muted mt1">
             <%= field[:description] %>

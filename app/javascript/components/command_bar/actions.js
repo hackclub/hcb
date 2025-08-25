@@ -508,6 +508,14 @@ export const adminActions = adminUrls => [
     icon: <Icon glyph="flag-fill" size={16} />,
     perform: navigate('/flipper/features'),
   },
+  {
+    id: 'admin_tool_31',
+    section: 'Admin Tools',
+    priority: Priority.HIGH,
+    name: 'Referral programs',
+    icon: <Icon glyph="share" size={16} />,
+    perform: navigate('/admin/referral_programs'),
+  },
 ]
 
 function navigate(to) {

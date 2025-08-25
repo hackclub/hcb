@@ -188,6 +188,10 @@ stripe_service_fee_job:
 user_seen_at_history_snapshot_job:
   cron: "0,30 * * * *" # twice every hour
   class: "User::SeenAtHistory::SnapshotJob"
+  
+user_update_card_locking_recurring:
+  cron: "*/5 * * * *" # Every 5 minutes
+  class: "User::UpdateCardLocking::RecurringJob"
 
 column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
@@ -225,6 +229,10 @@ announcement_two_day_warning_job:
   cron: "0 12 -2 * *" # run at 8am ET; 2 days before the end of the month
   class: "Announcement::TwoDayWarningJob"
 
-delete_old_template_drafts_job:
+announcement_delete_unsaved_job:
   cron: "0 0 1 * *" # run first day of each month
-  class: "DeleteOldTemplateDraftsJob"
+  class: "Announcement::DeleteUnsavedJob"
+
+notify_events_with_negative_balance_job:
+  cron: "0 13 * * 1" # run at 9am est on monday
+  class: "NotifyEventsWithNegativeBalanceJob"

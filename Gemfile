@@ -15,6 +15,7 @@ gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
 gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
+gem "activejob-traffic_control" # throttle jobs
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
