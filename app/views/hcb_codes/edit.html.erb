@@ -8,10 +8,13 @@
 
 <% if @frame %>
   <%= turbo_frame_tag @hcb_code do %>
-    <%= form_with model: @hcb_code, data: { turbo: true, controller: "form" }, html: { style: "flex-grow: 1" } do |form| %>
+    <%= form_with model: @hcb_code,
+                    data: { turbo: true, controller: "form" },
+                    html: { style: "flex-grow: 1", onsubmit: "$('#checkIcon').hide(); $('#loadingIcon').removeClass('hidden');" } do |form| %>
       <div class="flex items-center">
         <button class="pop border-none cursor-pointer mr2 <%= "ai" if @ai_memo %> tooltipped tooltipped--e" aria-label="Save">
-          <%= inline_icon "check", size: 28 %>
+          <%= inline_icon "check", size: 28, id: "checkIcon" %>
+          <%= inline_icon "loading", size: 20, id: "loadingIcon", class: "hidden" %>
         </button>
 
         <%= form.text_field :memo,
