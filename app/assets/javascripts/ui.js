@@ -494,7 +494,8 @@ $(document).on('turbo:frame-load', function () {
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
     BK.thereIs('paypal_transfer_payout_method_inputs') &&
-    BK.thereIs('wire_payout_method_inputs')
+    BK.thereIs('wire_payout_method_inputs') &&
+    BK.thereIs('wise_transfer_payout_method_inputs')
   ) {
     const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
     const achTransferPayoutMethodInputs = BK.s(
@@ -504,6 +505,7 @@ $(document).on('turbo:frame-load', function () {
       'paypal_transfer_payout_method_inputs'
     )
     const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
+    const wiseTransferPayoutMethodInputs = BK.s('wise_transfer_payout_method_inputs')
     $(document).on(
       'change',
       '#user_payout_method_type_userpayoutmethodcheck',
@@ -512,7 +514,8 @@ $(document).on('turbo:frame-load', function () {
           checkPayoutMethodInputs.slideDown() &&
             achTransferPayoutMethodInputs.slideUp() &&
             paypalTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -523,7 +526,8 @@ $(document).on('turbo:frame-load', function () {
           achTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
             paypalTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -534,7 +538,8 @@ $(document).on('turbo:frame-load', function () {
           paypalTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -545,7 +550,20 @@ $(document).on('turbo:frame-load', function () {
           paypalTransferPayoutMethodInputs.slideUp() &&
             checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideDown()
+            wirePayoutMethodInputs.slideDown() &&
+            wiseTransferPayoutMethodInputs.slideUp()
+      }
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodwisetransfer',
+      e => {
+        if (e.target.checked)
+          wiseTransferPayoutMethodInputs.slideDown() &&
+            checkPayoutMethodInputs.slideUp() &&
+            achTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp() &&
+            paypalTransferPayoutMethodInputs.slideUp()
       }
     )
   }
