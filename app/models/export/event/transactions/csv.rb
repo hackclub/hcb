@@ -66,7 +66,7 @@ class Export
         end
 
         def header
-          ::CSV::Row.new(headers, ["date", "memo", "amount_cents", "tags", "comments", "user_id", "user_name"], true)
+          ::CSV::Row.new(headers, headers.map(&:to_s), true)
         end
 
         def row(ct)
@@ -85,7 +85,7 @@ class Export
         end
 
         def headers
-          [:date, :memo, :amount_cents, :tags, :comments]
+          [:date, :memo, :amount_cents, :tags, :comments, :user_id, :user_name]
         end
 
       end
