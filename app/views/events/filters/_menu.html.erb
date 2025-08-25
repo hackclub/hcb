@@ -61,13 +61,26 @@
 
           <% when "amount_range" %>
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
+              <div
+                data-controller="dual-slider"
+                data-dual-slider-min-value="0"
+                data-dual-slider-max-value="1000"
+                data-dual-slider-step-value="1"
+                data-dual-slider-gap-value="0"
+                class="range-wrap"
+              >
+                
                 <% ["less_than", "greater_than"].each do |suffix| %>
-                  <label class="bold"><%= suffix.humanize %>...</label>
-                  <div class="input p-0 mb-2 flex border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3 items-center">
-                    <span class="bold muted text-md" style="width: 1rem;">$</span>
-                    <%= form.number_field "#{filter[:key_base]}_#{suffix}", class: "bg-transparent !border-none", value: params["#{filter[:key_base]}_#{suffix}"] %>
-                  </div>
+                  <%= form.number_field "#{filter[:key_base]}_#{suffix}", data: { "dual-slider-target": suffix == 'less_than' ? "min" : "max" }, class: "bg-transparent !border-none", value: params["#{filter[:key_base]}_#{suffix}"] %>
                 <% end %>
+
+                <div class="track" data-dual-slider-target="track"></div>
+
+                <div class="flex items-center readout -mt-20">
+                  <input type="range" data-dual-slider-target="min" name="min_price" />
+                  <input type="range" data-dual-slider-target="max" name="max_price" />
+                </div>
+              </div>
 
               <% request.query_parameters.except("#{filter[:key_base]}_less_than", "#{filter[:key_base]}_greater_than").each do |k, v| %>
                 <%= hidden_field_tag k, v %>
