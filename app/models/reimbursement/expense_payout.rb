@@ -11,7 +11,7 @@
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  event_id                         :bigint           not null
-#  reimbursement_expenses_id        :bigint           not null
+#  reimbursement_expenses_id        :bigint
 #  reimbursement_payout_holdings_id :bigint
 #
 # Indexes
@@ -35,7 +35,7 @@ module Reimbursement
     set_public_id_prefix :rep
 
     belongs_to :event
-    belongs_to :expense, foreign_key: "reimbursement_expenses_id", inverse_of: :expense_payout
+    belongs_to :expense, foreign_key: "reimbursement_expenses_id", inverse_of: :expense_payout, optional: true
     belongs_to :payout_holding, optional: true, foreign_key: "reimbursement_payout_holdings_id", inverse_of: :expense_payouts
 
     monetize :amount_cents
@@ -52,7 +52,7 @@ module Reimbursement
     scope :in_transit_or_pending, -> { where("aasm_state in (?)", ["pending", "in_transit"]) }
 
     after_create do
-      CanonicalPendingTransaction.create!(reimbursement_expense_payout: self, event:, amount_cents:, memo: expense.memo, date: created_at, fronted: true)
+      CanonicalPendingTransaction.create!(reimbursement_expense_payout: self, event:, amount_cents:, memo:, date: created_at, fronted: true)
     end
 
     aasm do

@@ -1822,9 +1822,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_050656) do
     t.string "aasm_state"
     t.integer "amount_cents", null: false
     t.bigint "reimbursement_payout_holdings_id"
-    t.bigint "reimbursement_expenses_id", null: false
+    t.bigint "reimbursement_expenses_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "memo"
     t.index ["event_id"], name: "index_reimbursement_expense_payouts_on_event_id"
     t.index ["reimbursement_expenses_id"], name: "index_expense_payouts_on_expenses_id"
     t.index ["reimbursement_payout_holdings_id"], name: "index_expense_payouts_on_expense_payout_holdings_id"
@@ -1885,6 +1886,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_050656) do
     t.integer "expense_number", default: 0, null: false
     t.datetime "deleted_at", precision: nil
     t.bigint "reviewer_id"
+    t.float "conversion_rate", default: 1.0, null: false
     t.string "currency"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"

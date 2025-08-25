@@ -1,4 +1,5 @@
 <% expense = @hcb_code.reimbursement_expense_payout.expense %>
+<% payout_holding = @hcb_code.reimbursement_expense_payout.payout_holding %>
 
 <article class="card pb0 mt3 mb1">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
@@ -16,9 +17,9 @@
   <section class="details pt2 pb2">
     <p>
       <strong>Associated report</strong>
-      <%= link_to expense.report.name, expense.report, data: { turbo_frame: "_top" } %>
+      <%= link_to payout_holding.report.name, payout_holding.report, data: { turbo_frame: "_top" } %>
     </p>
-    <% if expense.description.present? %>
+    <% if expense&.description.present? %>
       <p>
         <strong>Description</strong>
         <%= expense.description %>
@@ -32,6 +33,8 @@
   <%= render partial: "hcb_codes/pin", locals: { hcb_code: @hcb_code } %>
 </div>
 
-<div class="mb4">
-  <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, popover: @frame ? "HcbCode:#{@hcb_code.hashid}" : nil } %>
-</div>
+<% if expense %>
+  <div class="mb4">
+    <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, popover: @frame ? "HcbCode:#{@hcb_code.hashid}" : nil } %>
+  </div>
+<% end %>
