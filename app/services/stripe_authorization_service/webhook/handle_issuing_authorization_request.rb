@@ -101,7 +101,7 @@ module StripeAuthorizationService
       end
 
       def merchant_category
-        auth.dig(:merchant_data, :category)
+        auth[:merchant_data][:category]
       end
 
       def forbidden_merchant_category?
