@@ -53,6 +53,9 @@
   <% else %>
     <%= blankslate "No cards found!" %>
   <% end %>
+
+  <%= render partial: "subscriptions_list" %>
+  
   <% if @emburse_cards.any? %>
     <details class="mt3">
       <summary>

@@ -51,6 +51,10 @@ class MyController < ApplicationController
       Arel.sql("stripe_status = 'active' DESC"),
       Arel.sql("stripe_status = 'inactive' DESC")
     )
+
+    @subscriptions = Rails.cache.fetch("user_#{current_user.id}_subscriptions", expires_in: 1.day) do
+      @stripe_cards.map { |card| StripeCardService::PredictSubscriptions.new(card: card).run }.flatten
+    end
   end
 
   def tasks
