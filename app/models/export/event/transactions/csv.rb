@@ -80,12 +80,14 @@ class Export
               public_only ? "" : ct.local_hcb_code.comments.not_admin_only.pluck(:content).join("\n\n"),
               ct.local_hcb_code.author&.public_id || "",
               ct.local_hcb_code.author&.name || "",
+              ct.category&.slug,
+              ct.category&.label,
             ]
           )
         end
 
         def headers
-          [:date, :memo, :amount_cents, :tags, :comments, :user_id, :user_name]
+          [:date, :memo, :amount_cents, :tags, :comments, :user_id, :user_name, :category_slug, :category_label]
         end
 
       end
