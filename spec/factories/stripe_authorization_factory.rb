@@ -32,16 +32,5 @@ FactoryBot.define do
         }
       end
     end
-
-    trait :gambling do
-      merchant_data do
-        {
-          category: "betting_casino_gambling",
-          category_code: "7995",
-          network_id: "1234567890",
-          name: "CASINO"
-        }
-      end
-    end
   end
 end
