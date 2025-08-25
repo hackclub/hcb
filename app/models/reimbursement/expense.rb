@@ -146,6 +146,8 @@ module Reimbursement
       100
     end
 
+    delegate :conversion_rate, to: :report
+
     def value_label
       "Amount"
     end
@@ -181,7 +183,7 @@ module Reimbursement
     end
 
     def valid_expense_type
-      unless type.nil? || [Reimbursement::Expense.name, Reimbursement::Expense::Mileage.name].include?(type)
+      unless type.nil? || [Reimbursement::Expense.name, Reimbursement::Expense::Mileage.name, Reimbursement::Expense::Fee.name].include?(type)
         errors.add(:type, "must be a valid expense type.")
       end
     end

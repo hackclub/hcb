@@ -142,10 +142,10 @@ module Reimbursement
             expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event) && !event.financially_frozen?
           end
         end
-        after do |fee_amount_cents = 0|
+        after do
           ReimbursementMailer.with(report: self).reimbursement_approved.deliver_later
           create_activity(key: "reimbursement_report.approved", owner: user)
-          reimburse!(fee:)
+          reimburse!
         end
       end
 
@@ -329,15 +329,11 @@ module Reimbursement
       user_id && User.find(user_id)
     end
 
-    def reimburse!(fee_amount_cents: 0)
+    def reimburse!
       expense_payouts = []
 
       expenses.approved.each do |expense|
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents * conversion_rate, event: expense.report.event, expense:, memo: expense.memo)
-      end
-
-      if fee_amount_cents > 0
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -fee_amount_cents, event:, memo: "Transfer fee")
+        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents * expense.conversion_rate, event: expense.report.event, expense:, memo: expense.memo)
       end
 
       return if expense_payouts.empty?
