@@ -38,7 +38,7 @@ class TransactionCategory < ApplicationRecord
   delegate :label, to: :definition
 
   def definition
-    TransactionCategory::Definition::ALL[slug]
+    TransactionCategory::Definition::ALL.fetch(slug)
   end
 
 end
