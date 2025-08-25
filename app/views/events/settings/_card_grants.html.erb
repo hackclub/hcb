@@ -3,42 +3,19 @@
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>
   <% if event.card_grant_setting.present? %>
-    <div class="card">
-      <%= form.fields_for :card_grant_setting, event.card_grant_setting do |card_grant_setting_fields| %>
+
+    <%= form.fields_for :card_grant_setting, event.card_grant_setting do |card_grant_setting_fields| %>
+      <h3 class="mb1" id="transparency_mode_heading">Grant settings</h3>
+      <div class="card">
+
         <%= card_grant_setting_fields.hidden_field :id, value: event.card_grant_setting.id %>
 
-        <div class="field field--checkbox">
-          <%= card_grant_setting_fields.check_box :reimbursement_conversions_enabled, disabled:, switch: true %>
-          <%= card_grant_setting_fields.label :reimbursement_conversions_enabled, "Enable converting card grants to reimbursement reports" %>
-        </div>
-
         <div class="field">
-          <%= card_grant_setting_fields.label :merchant_lock, "Update approved merchants" %>
-          <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: event.card_grant_setting.merchant_lock.join(", "), disabled: %>
-          <p class="h5 muted mt0 mb1">
-            Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
+          <%= card_grant_setting_fields.label :invite_message, "Invitation message" %>
+          <p class="h5 muted m-0">
+            This message is included in emails sent to card grant recipients when invited to activate a card grant.
           </p>
-        </div>
 
-        <div class="field">
-          <%= card_grant_setting_fields.label :category_lock, "Update category lock" %>
-          <%= card_grant_setting_fields.text_field :category_lock, placeholder: "fast_food_restaurants", value: event.card_grant_setting.category_lock.join(", "), disabled: %>
-          <p class="h5 muted mt0 mb1">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to lock all card grants issued from this event to.</p>
-        </div>
-
-        <div class="field">
-          <%= card_grant_setting_fields.label :keyword_lock, "Update merchant name lock" %>
-          <%= card_grant_setting_fields.text_field :keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z", value: event.card_grant_setting.keyword_lock, disabled: %>
-          <p class="h5 muted mt0 mb1">Provide a <a href="https://rubular.com">Ruby regular expression</a> string for us to match the merchant name to.</p>
-        </div>
-        <p class="h4 mb-0 muted">These locks work in tandem:</p>
-        <ul class="mt-0 h5 muted">
-          <li>If you have no locks set, all transactions will be allowed.</li>
-          <li>If you have one lock set, only transactions matching that lock will be allowed.</li>
-          <li>If you have multiple locks set, transactions that match any of those locks will be allowed.</li>
-        </ul>
-        <div class="field">
-          <%= card_grant_setting_fields.label :invite_message, "Update invite message" %>
           <%= card_grant_setting_fields.text_area :invite_message, placeholder: "It's pizza time!", value: event.card_grant_setting.invite_message, disabled: %>
           <p class="h5 muted mt0 mb1">
             <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
@@ -52,18 +29,118 @@
           <%= card_grant_setting_fields.select :expiration_preference, CardGrantSetting.expiration_preferences.keys, { selected: event.card_grant_setting.expiration_preference }, { disabled: } %>
         </div>
 
-        <div class="field field--checkbox mb-0">
-          <%= card_grant_setting_fields.check_box :pre_authorization_required, disabled:, switch: false %>
-          <%= card_grant_setting_fields.label :pre_authorization_required, "Enable pre-authorization before activating grants" %>
+        <div class="field field--checkbox flex flex-row items-center justify-between">
+          <div>
+            <span style="font-weight: 700">Enable conversion to reimbursement reports</span>
+            <p class="h5 muted m-0">
+              Allow recipients to convert their card grants into reimbursement reports with a set limit
+            </p>
+          </div>
+          <div class="field--checkbox--switch" style="flex-shrink:0">
+            <%= card_grant_setting_fields.label :reimbursement_conversions_enabled do %>
+              <%= card_grant_setting_fields.check_box :reimbursement_conversions_enabled,
+                switch: true %>
+              <span class="slider"></span>
+            <% end %>
+          </div>
         </div>
-        <p class="h5 muted mt0 mb-4">
-          Pre-authorization requires grant recipients to submit screenshots and a product URL before activating their card for online purchases.
-        </p>
 
-      <% end %>
+        <div class="field field--checkbox mb-0 flex flex-row items-center justify-between">
+          <div>
+            <span style="font-weight: 700">Enable pre-authorization on new cards by default</span>
+            <p class="h5 muted m-0">
+              Pre-authorization requires grant recipients to submit documentation before activating their card
+            </p>
+          </div>
+          <div class="field--checkbox--switch" style="flex-shrink:0">
+            <%= card_grant_setting_fields.label :pre_authorization_required do %>
+              <%= card_grant_setting_fields.check_box :pre_authorization_required,
+                switch: true %>
+              <span class="slider"></span>
+            <% end %>
+          </div>
+        </div>
 
-      <%= form.submit "Update", disabled: %>
-    </div>
+        <%= form.submit "Update", disabled:, class: "mt-4" %>
+
+      </div>
+
+      <h3 class="mb1" id="transparency_mode_heading">Spending restrictions</h3>
+      <div class="card mb-4">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="w-full flex-grow">
+
+            <h3 class="m-0 px-0 flex flex-row items-center gap-2 text-green">
+              <%= inline_icon "checkmark", size: 24 %>
+              Allowed merchants
+            </h3>
+            <p class="h5 muted mt-1 mb-3">
+              When any of these rules are set, only merchants matching one or more of these criteria will be authorized.
+            </p>
+
+            <div class="field">
+              <%= card_grant_setting_fields.label :merchant_lock, "Approved merchant IDs" %>
+              <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: event.card_grant_setting.merchant_lock.join(", "), disabled: %>
+              <p class="h5 muted mt-0 mb-2">
+                Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
+              </p>
+            </div>
+
+            <div class="field">
+              <%= card_grant_setting_fields.label :category_lock, "Approved merchant categories" %>
+              <%= card_grant_setting_fields.text_field :category_lock, placeholder: "fast_food_restaurants", value: event.card_grant_setting.category_lock.join(", "), disabled: %>
+              <p class="h5 muted mt-0 mb-2">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to lock all card grants issued from this event to.</p>
+            </div>
+
+            <div class="field mb-0">
+              <%= card_grant_setting_fields.label :keyword_lock, "Approved merchant names" %>
+              <%= card_grant_setting_fields.text_field :keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z", value: event.card_grant_setting.keyword_lock, disabled: %>
+              <p class="h5 muted my-0">Provide a <a href="https://rubular.com">Ruby regular expression</a> string for us to match the merchant name to.</p>
+            </div>
+          </div>
+
+          <div class="bg-muted self-stretch" style="width: 1px;"></div>
+
+          <div class="w-full flex-grow">
+            <h3 class="m-0 px-0 flex flex-row items-center gap-2 text-primary">
+              <%= inline_icon "private-outline", size: 24 %>
+              Blocked merchants
+            </h3>
+            <p class="h5 muted mt-1 mb-3">
+              When any of these rules are set, merchants that fall under one or more of these criteria will be declined.
+            </p>
+
+            <div class="field">
+              <%= card_grant_setting_fields.label :banned_merchants, "Blocked merchant IDs" %>
+              <%= card_grant_setting_fields.text_field :banned_merchants, placeholder: "123456789", class: "w-100 fit", value: event.card_grant_setting.banned_merchants.join(", "), disabled: %>
+              <p class="h5 muted mt-0 mb-2">
+                Provide a comma-separated list of merchant network IDs to block across all grants issued from this event.
+              </p>
+            </div>
+
+            <div class="field">
+              <%= card_grant_setting_fields.label :banned_categories, "Blocked merchant categories" %>
+              <%= card_grant_setting_fields.text_field :banned_categories, placeholder: "fast_food_restaurants", value: event.card_grant_setting.banned_categories.join(", "), disabled: %>
+              <p class="h5 muted mt-0 mb-0">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to block across all grants issued from this event.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="border-top border-bottom card__banner card__darker secondary my-4">
+          <p class="h4 mt-0 mb-1 muted">These locks work in tandem:</p>
+          <ul class="m-0 h5 muted">
+            <li>If a transaction matches with any of the <strong class="text-primary">blocked merchants</strong>, it will be declined before any other checks are applied.</li>
+            <li>If you have no <strong class="text-green">allowed merchants</strong> set, all transactions will be allowed.</li>
+            <li>If you have one lock set, only transactions matching that lock will be allowed.</li>
+            <li>If you have multiple locks set, transactions that match any of those locks will be allowed.</li>
+          </ul>
+        </div>
+
+        <%= form.submit "Update", disabled: %>
+
+      </div>
+    <% end %>
 
   <% end %>
 <% end %>

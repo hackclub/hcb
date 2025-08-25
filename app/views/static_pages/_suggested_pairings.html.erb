@@ -45,11 +45,11 @@
                   <tbody data-behavior="transactions">
                     <% if pairing.hcb_code.canonical_transactions.any? %>
                       <% pairing.hcb_code.canonical_transactions.each do |ct| %>
-                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, hide_tags: true, show_event_name: true } %>
+                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, show_event_name: true } %>
                       <% end %>
                     <% else %>
                       <% pairing.hcb_code.canonical_pending_transactions.each do |pt| %>
-                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, hide_tags: true, show_event_name: true } %>
+                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, show_event_name: true } %>
                       <% end %>
                     <% end %>
                   </tbody>
@@ -73,12 +73,12 @@
             <%= inline_icon "view-close", size: 32 %>
             <span>Ignore</span>
           <% end %>
-          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} tooltipped ml1 tooltipped--n", "aria-label": "Ignore suggestion", data: { turbo: true, turbo_method: :POST } do %>
+          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} tooltipped ml1 tooltipped--n", "aria-label": "Ignore suggestion", data: { turbo: true, turbo_method: :post } do %>
             <%= inline_icon "link", size: 32 %>
             <span>Accept</span>
           <% end %>
           <% if pairing.receipt.suggested_memo %>
-            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" } do %>
+            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post, turbo_frame: "_top" } do %>
               <%= inline_icon "edit", size: 32 %>
               <span>Accept with memo</span>
             <% end %>
@@ -91,7 +91,7 @@
             <span>Ignore</span>
           <% end %>
 
-          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" } do %>
+          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post, turbo_frame: "_top" } do %>
             <%= inline_icon "link", size: 32 %>
             <span>Accept</span>
           <% end %>
@@ -99,7 +99,7 @@
 
         <% if pairing.receipt.suggested_memo %>
           <div class="flex flex-row justify-center md-hide lg-hide mt-2">
-            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :POST } do %>
+            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post } do %>
               <%= inline_icon "edit", size: 32 %>
               <span>Accept with memo</span>
             <% end %>

@@ -36,7 +36,7 @@
         <% elsif current_user == report.user && !admin_signed_in? %>
           <div class="btn bg-success disabled" class="tooltipped tooltipped--n" aria-label="Expenses can't be added to locked reports">
             <%= inline_icon "plus" %>
-            Add <%= report.expenses.count > 0 ? "Another" : "An" %> Expense
+            Add <%= report.expenses.count > 0 ? "another" : "an" %> expense
           </div>
         <% elsif !report.closed? %>
           <%= link_to reimbursement_report_reject_path(report_id: report.id), class: "btn bg-error", data: { turbo: true, turbo_method: :post } do %>
@@ -51,7 +51,7 @@
           <% if report.reimbursement_requested? && !admin_signed_in? %>
             <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
               <%= inline_icon "reply" %>
-              Mark As Draft
+              Mark as draft
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> the HCB team is reviewing this report. To make further changes, mark it as a draft.
               <% end %>
@@ -59,13 +59,13 @@
           <% elsif current_user == report.user && report.submitted? %>
             <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
               <%= inline_icon "reply" %>
-              Mark As Draft
+              Mark as draft
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> your report is currently under review by the <%= report.event.name %> team. To make further changes, mark it as a draft.
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <%= link_to "#", class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "request_changes" } do %>
+            <%= link_to "#", class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "request_changes" }, id: "request_changes_button" do %>
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
@@ -133,7 +133,7 @@
             <% button_hint = capture do %>
               <% if report.expenses.none? %>
                 Get started by adding an expense to this report.
-              <% elsif report.missing_receipts? %>
+              <% elsif report.missing_receipts? || report.expenses.any? { |e| e.amount.zero? } %>
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
@@ -163,7 +163,7 @@
             <% end %>
           <% end %>
         <% elsif report.draft? %>
-          <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "submit" } do %>
+          <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "submit" }, id: "submit_button" do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -171,7 +171,7 @@
             <% end %>
           <% end %>
         <% elsif report.may_mark_reimbursement_requested? && policy(report).request_reimbursement? %>
-          <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: "post" } do %>
+          <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: :post } do %>
             <%= inline_icon "payment-transfer" %>
             Reimburse <%= render_money report.amount_to_reimburse %>
           <% end %>
@@ -194,14 +194,16 @@
           </div>
         <% elsif report.reimbursement_requested? %>
           <% admin_tool("overflow-visible") do %>
-            <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post do %>
-              <%= inline_icon "thumbsup" %>
-              Approve <%= report.user.payout_method.title_kind %> Reimbursement
-            <% end %>
+            <% turbo_confirm = nil %>
             <% unless ::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) %>
               <% button_hint = capture do %>
                 <span class="bold warning">⚠️ Warning</span>: this organization does not have the balance to fulfil this report.
               <% end %>
+              <% turbo_confirm = "⚠️ WARNING: Approving this reimbursement will make the event balance negative. This organization does not have sufficient funds to fulfill this request. Are you sure you want to proceed?" %>
+            <% end %>
+            <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post, data: { turbo_confirm: } do %>
+              <%= inline_icon "thumbsup" %>
+              Approve <%= report.user.payout_method.human_kind %> reimbursement
             <% end %>
           <% end %>
         <% end %>

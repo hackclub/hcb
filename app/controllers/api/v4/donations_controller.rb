@@ -12,7 +12,8 @@ module Api
                                    collected_by_id: current_user.id,
                                    in_person: true,
                                    name: params[:name] || nil,
-                                   email: params[:email] || nil
+                                   email: params[:email] || nil,
+                                   tax_deductible: params[:tax_deductible] || true
                                  })
 
         authorize @donation

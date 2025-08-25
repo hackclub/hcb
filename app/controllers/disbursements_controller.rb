@@ -37,7 +37,7 @@ class DisbursementsController < ApplicationController
   def new
     @destination_event = Event.friendly.find(params[:event_id]) if params[:event_id]
     @source_event = Event.friendly.find(params[:source_event_id]) if params[:source_event_id]
-    @event = @source_event
+    @event = @source_event # this is to render the navigation bar for the correct event.
     @disbursement = Disbursement.new(
       destination_event: @destination_event,
       source_event: @source_event,
@@ -47,12 +47,12 @@ class DisbursementsController < ApplicationController
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
 
-    @allowed_source_events = if current_user.admin?
+    @allowed_source_events = if admin_signed_in?
                                Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
                                current_user.events.not_hidden.filter_demo_mode(false)
                              end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-    @allowed_destination_events = if current_user.admin?
+    @allowed_destination_events = if admin_signed_in?
                                     Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   elsif @source_event&.plan&.unrestricted_disbursements_enabled?
                                     allowed_destination_event_ids = current_user.events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
@@ -71,7 +71,7 @@ class DisbursementsController < ApplicationController
 
     authorize @disbursement
 
-    if current_user.admin? && disbursement_params["scheduled_on(1i)"].present?
+    if admin_signed_in? && disbursement_params["scheduled_on(1i)"].present?
       scheduled_on = Date.new(disbursement_params["scheduled_on(1i)"].to_i,
                               disbursement_params["scheduled_on(2i)"].to_i,
                               disbursement_params["scheduled_on(3i)"].to_i)
@@ -99,7 +99,7 @@ class DisbursementsController < ApplicationController
 
     flash[:success] = "Transfer successfully requested."
 
-    if current_user.admin?
+    if admin_signed_in?
       redirect_to disbursements_admin_index_path
     else
       redirect_to event_transfers_path(@source_event)

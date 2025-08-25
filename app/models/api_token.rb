@@ -51,4 +51,6 @@ class ApiToken < ApplicationRecord
     PREFIX + SecureRandom.urlsafe_base64(token_size)
   end
 
+  def abbreviated = "#{token[..7]}...#{token[-3..]}"
+
 end
