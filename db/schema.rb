@@ -1822,7 +1822,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_064629) do
     t.string "aasm_state"
     t.integer "amount_cents", null: false
     t.bigint "reimbursement_payout_holdings_id"
-    t.bigint "reimbursement_expenses_id"
+    t.bigint "reimbursement_expenses_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "memo"
