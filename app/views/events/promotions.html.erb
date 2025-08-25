@@ -14,7 +14,7 @@
         <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
       </h3>
       <% if !@event.plan.eligible_for_perks? %>
-      	<% jukebox_ineligible_reason = "Perks are not available for HQ organizations"
+      	<% jukebox_ineligible_reason = "Perks are not available for HQ organizations" %>
       <% elsif !@perks_available %>
       	<% jukebox_ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
       <% elsif !@event.organized_by_teenagers? %>
