@@ -21,14 +21,7 @@
   .avatar-row:not(.avatar-row--no-transform) {
     img,
     div {
-      transition:
-        0.125s margin-right ease-in-out,
-        0.5s transform ease-in-out;
-    }
-
-    img:hover,
-    div:hover {
-      transform: rotate(-180deg);
+      transition: 0.125s margin-right ease-in-out;
     }
 
     &:hover img,

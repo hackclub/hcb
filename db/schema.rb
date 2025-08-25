@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -1571,7 +1569,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.string "program", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -1813,7 +1810,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.string "background_image_url"
     t.string "login_header_text"
     t.text "login_body_text"
-    t.string "login_text_color"
+    t.string "login_text_color", default: "#ffffff"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|

@@ -1,7 +1,7 @@
 .card {
   --card-bg: #ffffff;
   background-color: $white;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.125);
+  box-shadow: var(--shadow-border-sm);
   padding: 1rem;
   border-radius: 0.5rem;
   overflow: hidden;
@@ -28,7 +28,7 @@
   :not(.draggable-source--is-dragging) > &.card--hover:hover,
   &.card--hover:focus {
     transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
+    box-shadow: var(--shadow-border-lg);
   }
 
   &.card--hover:active {
@@ -167,19 +167,6 @@ a.card {
 
 .card--sunset {
   background-image: url('https://cloud-awvmmj0xe.vercel.app/sunset_card.png');
-}
-
-.card--breakdown {
-  @extend .card;
-  @extend .border;
-  padding: 20px;
-  padding-top: 0px;
-  padding-bottom: 24px;
-  border: 1px solid map-get($palette, smoke);
-
-  & .error {
-    color: saturate(lighten(map-get($palette, error), 40%), 60%);
-  }
 }
 
 #card-pin {

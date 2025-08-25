@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 2400" width="30" height="30">
-  <g stroke-width="200" stroke-linecap="round" stroke="currentColor" fill="none">
+  <g stroke-width="200" stroke-linecap="round" stroke-opacity="0.5" stroke="currentColor" fill="none">
     <path d="M1200 600V100"/>
     <path opacity=".5" d="M1200 2300v-500"/>
     <path opacity=".917" d="M900 680.4l-250-433"/>

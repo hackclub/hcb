@@ -18,7 +18,7 @@
       <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
       <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
       <button id="receipts" data-tabs-target="btn" data-action="click->tabs#select">Receipts</button>
-      <div class="menu__divider--filter-tab"></div>
+      <div class="menu__divider--filter-tab" style="display:block;margin-top:10px!important"></div>
 
       <% if @event.tags.size > 0 %>
         <div data-tabs-target="tab" id="tags">
@@ -65,7 +65,7 @@
           <% end %>
 
           <div class="flex justify-start">
-            <%= form.submit "Filter transactions" %>
+            <%= form.submit "Filter transactions", class: "w-full" %>
           </div>
         <% end %>
       </div>
