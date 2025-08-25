@@ -8,6 +8,7 @@
 #  aasm_state                       :string
 #  amount_cents                     :integer          not null
 #  hcb_code                         :string
+#  memo                             :string
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  event_id                         :bigint           not null

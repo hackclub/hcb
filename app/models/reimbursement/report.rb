@@ -7,6 +7,7 @@
 #  id                         :bigint           not null, primary key
 #  aasm_state                 :string
 #  conversion_rate            :float            default(1.0), not null
+#  currency                   :string
 #  deleted_at                 :datetime
 #  expense_number             :integer          default(0), not null
 #  invite_message             :text
