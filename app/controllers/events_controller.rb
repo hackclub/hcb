@@ -9,6 +9,7 @@ class EventsController < ApplicationController
   include Rails::Pagination
   before_action :set_event, except: [:index, :new, :create]
   before_action :set_transaction_filters, only: [:transactions, :ledger]
+  before_action :set_card_view, only: [:card_overview, :card_grant_overview]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
@@ -530,6 +531,23 @@ class EventsController < ApplicationController
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
+  end
+
+  def card_grant_overview
+    card_grants_page = (params[:card_grants_page] || 1).to_i
+    card_grants_per_page = (params[:card_grants_per_page] || 20).to_i
+
+    transactions_page = (params[:transactions_page] || 1).to_i
+    transactions_per_page = (params[:transactions_per_page] || 20).to_i
+
+    authorize @event
+
+    @card_grants = @event.card_grants.order(created_at: :desc)
+    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+
+    @all_stripe_cards = @event.stripe_cards.where.associated(:card_grant)
+    @hcb_codes = HcbCode.where(hcb_code: @all_stripe_cards.flat_map(&:all_hcb_codes)).order(created_at: :desc)
+    @paginated_hcb_codes = @hcb_codes.page(transactions_page).per(transactions_per_page)
   end
 
   def documentation
@@ -1188,6 +1206,11 @@ class EventsController < ApplicationController
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+  end
+
+  def set_card_view
+    cookies[:card_overview_view] = params[:view] if params[:view]
+    @view = cookies[:card_overview_view] || "grid"
   end
 
   def _show_pending_transactions
