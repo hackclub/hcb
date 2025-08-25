@@ -14,19 +14,17 @@
         <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
       </h3>
       <% if !@event.plan.eligible_for_perks? %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Perks are not available for HQ organizations">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
+      	<% jukebox_ineligible_reason = "Perks are not available for HQ organizations"
       <% elsif !@perks_available %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="You must be a manager and organization must not be on demo mode">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
+      	<% jukebox_ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
       <% elsif !@event.organized_by_teenagers? %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have teen-led tag (reach out to your POC regarding this)">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
+      	<% jukebox_ineligible_reason = "Organization must have teen-led tag (reach out to your POC regarding this)" %>
       <% elsif @event.users.count { |user| user.teenager? && user.active? } < 10 %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 10 or more active teens">
+      	<% jukebox_ineligible_reason = "Organization must have 10 or more active teens %>
+      <% end %>
+      
+      <% if defined?(jukebox_ineligible_reason) %>
+      	<div class="tooltipped tooltipped--w inline-block" aria-label="<%= jukebox_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
