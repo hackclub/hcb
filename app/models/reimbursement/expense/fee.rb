@@ -38,6 +38,10 @@ module Reimbursement
         1
       end
 
+      def currency
+        "USD"
+      end
+
     end
 
   end
