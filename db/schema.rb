@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_25_050656) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1885,6 +1885,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.integer "expense_number", default: 0, null: false
     t.datetime "deleted_at", precision: nil
     t.bigint "reviewer_id"
+    t.string "currency"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"

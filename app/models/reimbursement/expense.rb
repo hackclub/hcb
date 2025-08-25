@@ -34,7 +34,7 @@ module Reimbursement
   class Expense < ApplicationRecord
     include ApplicationHelper
     belongs_to :report, inverse_of: :expenses, foreign_key: "reimbursement_report_id", touch: true
-    monetize :amount_cents
+    monetize :amount_cents, as: "amount", with_model_currency: :currency
     validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }
     attribute :expense_number, :integer
     has_one :expense_payout
@@ -157,6 +157,8 @@ module Reimbursement
     def is_standard?
       type.nil? || type == "Reimbursement::Expense"
     end
+
+    delegate :currency, to: :report
 
     def card_label
       return memo + " (#{render_money(amount_cents)})" if memo && !is_standard?

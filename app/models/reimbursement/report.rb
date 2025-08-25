@@ -62,7 +62,7 @@ module Reimbursement
 
     monetize :maximum_amount_cents, allow_nil: true
     monetize :amount_to_reimburse_cents, allow_nil: true
-    monetize :amount_cents, as: "amount", allow_nil: true
+    monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :delete_all
     has_one :payout_holding, inverse_of: :report
