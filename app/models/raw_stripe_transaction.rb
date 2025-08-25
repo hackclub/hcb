@@ -22,6 +22,10 @@ class RawStripeTransaction < ApplicationRecord
   has_many :hashed_transactions
   has_one :canonical_transaction, as: :transaction_source
 
+  include ActiveSupport::NumberHelper
+
+  ZERO_DECIMAL_CURRENCIES = %w[BIF CLP DJF GNF JPY KMF KRW MGA PYG RWF UGX VND VUV XAF XOF XPF].freeze
+
   def memo
     @memo ||= stripe_transaction.dig("merchant_data", "name")
   end
@@ -36,6 +40,19 @@ class RawStripeTransaction < ApplicationRecord
 
   def refund?
     stripe_transaction["type"] == "refund"
+  end
+
+  def local_amount
+    currency = stripe_transaction["merchant_currency"]&.upcase
+    amount = stripe_transaction["merchant_amount"].abs
+
+    return nil if currency.nil? || currency == "USD"
+
+    if ZERO_DECIMAL_CURRENCIES.include?(currency)
+      "#{number_to_delimited(amount)} #{currency}"
+    else
+      "#{number_to_currency(BigDecimal((amount || 0).to_s) / 100, unit: "")} #{currency}"
+    end
   end
 
   private
