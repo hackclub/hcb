@@ -18,6 +18,10 @@ class ReceiptPolicy < ApplicationPolicy
     record.receiptable.nil? && record.user == user
   end
 
+  def reverse?
+    record.user == user && unlocked?
+  end
+
   private
 
   def unlocked?

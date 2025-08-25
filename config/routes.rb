@@ -57,6 +57,10 @@ Rails.application.routes.draw do
       post "link"
       get "link_modal"
     end
+
+    member do
+      post "reverse"
+    end
   end
 
   scope :my do
@@ -317,6 +321,8 @@ Rails.application.routes.draw do
   resources :organizer_position_contracts, only: [:create], path: "contracts" do
     member do
       post "void"
+      post "resend_to_user"
+      post "resend_to_cosigner"
     end
   end
 
@@ -481,7 +487,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update]
+  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+    member do
+      post "set_category"
+    end
+  end
 
   resources :canonical_transactions, only: [:show, :edit] do
     member do
@@ -489,6 +499,7 @@ Rails.application.routes.draw do
       post "unwaive_fee"
       post "mark_bank_fee"
       post "set_custom_memo"
+      post "set_category"
     end
   end
 

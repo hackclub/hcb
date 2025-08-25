@@ -4,7 +4,7 @@
   <% else %>
     <fieldset>
       <legend class="heading h2 pt2 pb2">Which organization?</legend>
-      <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
+      <%= form.select :event_id, current_user.events.not_demo_mode.where.not(id: current_user.reader_events).pluck(:name, :id) %>
     </fieldset>
   <% end %>
   <fieldset>

@@ -79,7 +79,7 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt

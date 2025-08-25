@@ -30,7 +30,7 @@
   <% end %>
 
   <% admin_tool "overflow-hidden" do %>
-    <div data-controller="menu" data-menu-placement-value="bottom-end">
+    <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger">
       <button
         type="button"
         class="pop menu__toggle menu__toggle--arrowless overflow-visible"
