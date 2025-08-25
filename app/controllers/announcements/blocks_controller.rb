@@ -22,6 +22,22 @@ module Announcements
       render json: { id: @block.id, html: @block.rendered_html }
     end
 
+    def edit
+      authorize @block, policy_class: Announcement::BlockPolicy
+
+      render @block.modal, layout: false, locals: { block: @block }
+    end
+
+    def update
+      authorize @block, policy_class: Announcement::BlockPolicy
+
+      unless @block.update(parameters: JSON.parse(params[:parameters]))
+        return render json: { errors: @block.errors.map(&:full_message) }, status: :bad_request
+      end
+
+      render turbo_stream: turbo_stream.replace("block_#{@block.id}", partial: @block.partial, locals: @block.locals)
+    end
+
     def refresh
       authorize @block, policy_class: Announcement::BlockPolicy
 
