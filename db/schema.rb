@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_25_050656) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_25_064629) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2232,6 +2232,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_050656) do
     t.string "address_line2"
     t.string "address_state"
     t.string "address_postal_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "user_payout_method_wise_transfers", force: :cascade do |t|
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "bank_name"
+    t.integer "recipient_country"
+    t.text "recipient_information_ciphertext"
+    t.string "currency"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
