@@ -6,15 +6,19 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
 
   context "when passing a raw pending stripe transaction that is not yet processed" do
     it "processes into a CanonicalPendingTransaction" do
-      expect(RawPendingStripeTransaction.count).to eq(0)
-
-
-      raw_pending_stripe_transaction = create(:raw_pending_stripe_transaction,
-                                              date_posted: Date.current)
+      raw_pending_stripe_transaction = create(
+        :raw_pending_stripe_transaction,
+        stripe_merchant_category: "bakeries",
+        date_posted: Date.current
+      )
 
       expect do
         described_class.new(raw_pending_stripe_transaction:).run
       end.to change { CanonicalPendingTransaction.count }.by(1)
+
+      cpt = raw_pending_stripe_transaction.reload.canonical_pending_transaction
+      expect(cpt).to be_present
+      expect(cpt.category.slug).to eq("food-fun")
     end
   end
 
@@ -51,6 +55,7 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
         expect(canonical_pending_transaction.date).to eq(raw_pending_stripe_transaction.date_posted)
         expect(canonical_pending_transaction.memo).to eq(raw_pending_stripe_transaction.memo)
         expect(canonical_pending_transaction.amount_cents).to eq(raw_pending_stripe_transaction.amount_cents)
+        expect(canonical_pending_transaction.category.slug).to eq("food-fun")
       end
     end
   end

@@ -74,7 +74,7 @@ Layout/EmptyLines:
 Style/RaiseArgs:
   Enabled: false
 
-Naming/PredicateName:
+Naming/PredicatePrefix:
   Enabled: false
 
 Style/ConditionalAssignment:

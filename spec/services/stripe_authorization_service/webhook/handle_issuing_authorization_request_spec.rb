@@ -3,9 +3,11 @@
 require "rails_helper"
 
 RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest, type: :model do
+  include ActionMailer::TestHelper
+
   let(:event) { create(:event) }
   let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:) }
-  let(:stripe_authorization) { attributes_for(:stripe_authorization, card: { id: stripe_card.stripe_id }) }
+  let(:stripe_authorization) { build(:stripe_authorization, card: { id: stripe_card.stripe_id }) }
   let(:service) do
     StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(
       stripe_event: { data: { object: stripe_authorization, } }
@@ -28,12 +30,37 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     expect(service.run).to be(true)
   end
 
+  context "forbidden merchants" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :gambling,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines and notifies ops" do
+      sent_emails = capture_emails do
+        expect(service.run).to be(false)
+      end
+
+      expect(service.declined_reason).to eq("merchant_not_allowed")
+
+      ops_email =
+        sent_emails
+        .filter { |mail| mail.recipients.include?(ApplicationMailer::OPERATIONS_EMAIL) }
+        .sole
+
+      expect(ops_email.subject).to eq("#{event.name}: Stripe card authorization blocked")
+    end
+  end
+
   context "card grants" do
     let(:event) { create(:event, :card_grant_event) }
     before(:example) { create(:canonical_pending_transaction, amount_cents: 10000, event:, fronted: true ) }
 
     def create_service(stripe_card: card_grant.stripe_card, amount: 1000)
-      StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: { data: { object: attributes_for(:stripe_authorization, card: { id: stripe_card.stripe_id }, pending_request: { amount: }) } })
+      StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: { data: { object: build(:stripe_authorization, card: { id: stripe_card.stripe_id }, pending_request: { amount: }) } })
     end
 
     it "approves" do
@@ -170,7 +197,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
 
   context "withdrawals" do
     let(:stripe_authorization) do
-      attributes_for(
+      build(
         :stripe_authorization,
         :cash_withdrawal,
         card: { id: stripe_card.stripe_id }
@@ -193,7 +220,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
 
     context "with amount > $500" do
       let(:stripe_authorization) do
-        attributes_for(
+        build(
           :stripe_authorization,
           :cash_withdrawal,
           card: { id: stripe_card.stripe_id },
