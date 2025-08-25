@@ -41,7 +41,8 @@ module ReceiptService
                                                            .select { |pairing| pairing.hcb_code.missing_receipt? }
                                                            .first
             pair.mark_accepted!
-            ReceiptBinMailer.with(suggested_pairing: pair).paired.deliver_later
+
+            return pair
           end
         end
 

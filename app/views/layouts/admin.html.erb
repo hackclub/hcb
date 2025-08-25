@@ -140,16 +140,8 @@
       </div>
     </nav>
 
-    <% flash.to_h.except("imported_transactions", "file").each do |key, value| %>
-      <% if key == "error" %>
-        <p style="text-align:center;background:red;color:white;"><%= value %></p>
-      <% elsif key == "success" %>
-        <p style="text-align:center;background:green;color:white;"><%= value %></p>
-      <% else %>
-        <p style="text-align:center;background:darkblue;color:white;"><%= value %></p>
-      <% end %>
-      <hr>
-    <% end %>
+    <%= render(partial: "admin/flash") %>
+
     <div id="main" class="overflow-x-auto overflow-y-auto" style="padding: 2rem; margin: 0 auto">
       <%= yield %>
     </div>

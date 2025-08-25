@@ -1,3 +1,3 @@
 <ul class="grid grid--medium-narrow left-align w-100 mt0" id="receipts_list">
-  <%= render partial: "receipts/receipt", collection: @hcb_code.receipts.with_attached_file.includes(:user).order(created_at: :asc), as: :receipt, locals: { show_delete_button: true, link_to_file: true, popover: @frame ? "HcbCode:#{@hcb_code.hashid}" : nil } %>
+  <%= render partial: "receipts/receipt", collection: @hcb_code.receipts.with_attached_file.includes(:user).order(created_at: :asc), as: :receipt, locals: { show_delete_button: true, link_to_file: true, popover: @frame ? "HcbCode:#{@hcb_code.hashid}" : nil, show_receipt_bin_button: defined?(show_receipt_bin_button) && show_receipt_bin_button } %>
 </ul>

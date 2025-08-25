@@ -18,7 +18,11 @@ module PendingTransactionEngine
             raw_pending_donation_transaction_id: @raw_pending_donation_transaction.id,
             fronted: true
           }
-          ::CanonicalPendingTransaction.create!(attrs)
+          cpt = ::CanonicalPendingTransaction.create!(attrs)
+
+          TransactionCategoryService.new(model: cpt).set!(slug: "donations", assignment_strategy: "automatic")
+
+          cpt
         end
 
         private
