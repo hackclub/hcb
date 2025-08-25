@@ -20,7 +20,7 @@
       <% elsif !@event.organized_by_teenagers? %>
       	<% jukebox_ineligible_reason = "Organization must have teen-led tag (reach out to your POC regarding this)" %>
       <% elsif @event.users.count { |user| user.teenager? && user.active? } < 10 %>
-      	<% jukebox_ineligible_reason = "Organization must have 10 or more active teens %>
+      	<% jukebox_ineligible_reason = "Organization must have 10 or more active teens" %>
       <% end %>
       
       <% if defined?(jukebox_ineligible_reason) %>
