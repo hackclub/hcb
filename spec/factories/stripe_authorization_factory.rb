@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :stripe_authorization do
+  factory(:stripe_authorization, class: "Stripe::Issuing::Authorization") do
+    skip_create
+    initialize_with { Stripe::Issuing::Authorization.construct_from(attributes) }
+
     amount { 0 }
     approved { true }
     merchant_data do
