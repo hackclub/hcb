@@ -100,7 +100,7 @@ class HcbCode
       end
 
       def reimbursement_expense_payout_memo
-        reimbursement_expense_payout.memo || reimbursement_expense_payout.expense&.memo || "Reimbursed expense"
+        reimbursement_expense_payout.expense.memo
       end
 
       def reimbursement_payout_transfer_memo
