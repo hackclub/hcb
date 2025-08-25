@@ -60,4 +60,11 @@ class ReimbursementMailer < ApplicationMailer
     mail subject: "[Reimbursements] PayPal transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
+  def expenses_approved
+    @report = params[:report]
+    @expenses = params[:expenses]
+
+    mail subject: "[Reimbursements] Expenses approved for #{@report.name}", to: @report.user.email_address_with_name
+  end
+
 end

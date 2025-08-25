@@ -91,6 +91,10 @@ reimbursement_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "Reimbursement::NightlyJob"
 
+reimbursement_expenses_approved_job:
+  cron: "*/20 * * * *" # run every 20 minutes
+  class: "Reimbursement::ExpensesApprovedJob"
+
 payroll_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "Payroll::NightlyJob"
