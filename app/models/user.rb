@@ -84,7 +84,7 @@ class User < ApplicationRecord
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_positions
-  has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition"
+  has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
   has_many :organizer_position_deletion_requests, inverse_of: :closed_by
   has_many :webauthn_credentials
