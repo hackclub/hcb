@@ -6,9 +6,6 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
 
   context "when passing a raw pending invoice transaction that is not yet processed" do
     it "processes into a CanonicalPendingTransaction" do
-      expect(RawPendingInvoiceTransaction.count).to eq(0)
-
-
       raw_pending_invoice_transaction = create(:raw_pending_invoice_transaction, date_posted: Date.current)
 
       expect do
@@ -49,6 +46,8 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
         expect(canonical_pending_transaction.memo).to eq(raw_pending_invoice_transaction.memo)
         expect(canonical_pending_transaction.amount_cents).to eq(raw_pending_invoice_transaction.amount_cents)
         expect(canonical_pending_transaction.fronted).to eq(true)
+        expect(canonical_pending_transaction.category.slug).to eq("donations")
+        expect(canonical_pending_transaction.category_mapping.assignment_strategy).to eq("automatic")
       end
     end
   end
