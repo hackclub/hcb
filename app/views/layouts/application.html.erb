@@ -75,6 +75,7 @@
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <div id="tooltip-container"></div>
     <%= react_component "tour/TourOverlay",
                         tour: @tour&.name,
                         id: @tour&.id,
@@ -87,6 +88,14 @@
                duration: 30.minutes,
                learn_more_url: "https://blog.hcb.hackclub.com/posts/7th-may-maintenance" %>
 
+    <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
+      <div class="w-100 px4 !bg-red transparency-banner">
+        <p class="h5 medium center mt1 mb1 text-white text-xl">
+          ⚠️ Admin users are required to
+          <%= link_to("enable two-factor authentication", settings_security_path, class: "text-inherit") %>
+        </p>
+      </div>
+    <% end %>
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">

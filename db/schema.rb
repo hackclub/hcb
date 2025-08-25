@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_11_011720) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1773,6 +1773,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_011720) do
     t.boolean "data_extracted", default: false, null: false
     t.integer "textual_content_source", default: 0
     t.string "textual_content_bidx"
+    t.string "extracted_currency"
     t.index ["receiptable_type", "receiptable_id"], name: "index_receipts_on_receiptable_type_and_receiptable_id"
     t.index ["textual_content_bidx"], name: "index_receipts_on_textual_content_bidx"
     t.index ["user_id"], name: "index_receipts_on_user_id"
@@ -2085,6 +2086,24 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_011720) do
     t.index ["tourable_type", "tourable_id"], name: "index_tours_on_tourable"
   end
 
+  create_table "transaction_categories", force: :cascade do |t|
+    t.citext "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_transaction_categories_on_slug", unique: true
+  end
+
+  create_table "transaction_category_mappings", force: :cascade do |t|
+    t.bigint "transaction_category_id", null: false
+    t.text "categorizable_type", null: false
+    t.bigint "categorizable_id", null: false
+    t.text "assignment_strategy", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["categorizable_type", "categorizable_id"], name: "idx_on_categorizable_type_categorizable_id_f3e1245d19", unique: true
+    t.index ["transaction_category_id"], name: "index_transaction_category_mappings_on_transaction_category_id"
+  end
+
   create_table "transaction_csvs", force: :cascade do |t|
     t.string "aasm_state"
     t.datetime "created_at", null: false
@@ -2392,6 +2411,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_011720) do
     t.text "return_reason"
     t.integer "quoted_usd_amount_cents"
     t.text "recipient_information_ciphertext"
+    t.text "wise_recipient_id"
     t.index ["event_id"], name: "index_wise_transfers_on_event_id"
     t.index ["user_id"], name: "index_wise_transfers_on_user_id"
   end
@@ -2531,6 +2551,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_011720) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"
   add_foreign_key "transactions", "checks"

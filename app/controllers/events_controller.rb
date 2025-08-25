@@ -183,7 +183,7 @@ class EventsController < ApplicationController
 
     set_cacheable
 
-    @order_by = admin_signed_in? && params[:order_by] || "date"
+    @order_by = auditor_signed_in? && params[:order_by] || "date"
 
     @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
@@ -418,9 +418,7 @@ class EventsController < ApplicationController
     end
     @announcements = @all_announcements.page(params[:page]).per(10)
 
-    if @event.config.generate_monthly_announcement
-      @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
-    end
+    @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
   end
 
   before_action(only: :feed) { request.format = :atom }
