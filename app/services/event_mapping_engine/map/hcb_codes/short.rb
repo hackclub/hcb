@@ -67,9 +67,9 @@ module EventMappingEngine
         def assign_transaction_category!(hcb_code:, canonical_transaction:)
           category_slug =
             if hcb_code.bank_fee?
-              "bank-fees"
-            elsif hcb_code.stripe_service_fee?
               "other-fees"
+            elsif hcb_code.stripe_service_fee?
+              "bank-fees"
             elsif hcb_code.outgoing_fee_reimbursement?
               "other-fees"
             end

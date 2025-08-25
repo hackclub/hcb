@@ -37,7 +37,7 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
 
     ct.reload
     expect(ct.event).to eq(event)
-    expect(ct.category.slug).to eq("bank-fees")
+    expect(ct.category.slug).to eq("other-fees")
     expect(ct.category_mapping.assignment_strategy).to eq("automatic")
   end
 
@@ -62,7 +62,7 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
 
     ct.reload
     expect(ct.event).to eq(event)
-    expect(ct.category.slug).to eq("other-fees")
+    expect(ct.category.slug).to eq("bank-fees")
     expect(ct.category_mapping.assignment_strategy).to eq("automatic")
   end
 
