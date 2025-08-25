@@ -334,7 +334,7 @@ module Reimbursement
       expenses.approved.each do |expense|
         expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents * conversion_rate, event: expense.report.event, expense:, memo: expense.memo)
       end
-      
+
       if fee_amount_cents > 0
         expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -fee_amount_cents, event:, memo: "Transfer fee")
       end
