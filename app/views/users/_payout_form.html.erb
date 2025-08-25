@@ -99,8 +99,6 @@
   <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, current_user) %>
     <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) %>">
       <%= form.fields_for :payout_method_wise_transfer, user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) ? user.payout_method : User::PayoutMethod::WiseTransfer.new do |form| %>
-
-
         <div class="actions inline-block mt1">
           <%= form.submit "Save" %>
         </div>
