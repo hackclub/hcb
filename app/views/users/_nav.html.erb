@@ -29,7 +29,7 @@
       my_feed_path,
       tooltip: "See announcements for organizations you're following",
       icon: "announcement",
-      selected: local_assigns[:selected] == :feed if current_user.followed_events.any? %>
+      selected: local_assigns[:selected] == :feed %>
     <%= dock_item "Cards",
       my_cards_path,
       tooltip: "See all your cards",
