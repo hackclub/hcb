@@ -40,6 +40,10 @@ module SetEvent
       redirect_to params.to_unsafe_h
     end
 
+    def set_api_event
+      @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]) || Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
+    end
+
   end
 
 end

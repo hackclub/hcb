@@ -3,9 +3,14 @@
 module Api
   module V4
     class CardGrantsController < ApplicationController
+      include SetEvent
+
+      before_action :set_api_event, only: [:create]
+
       def index
         if params[:event_id].present?
-          @event = authorize(Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]), :transfers?)
+          set_api_event
+          authorize @event, :transfers?
           @card_grants = @event.card_grants.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
@@ -14,8 +19,6 @@ module Api
       end
 
       def create
-        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
-
         @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
 
         authorize @card_grant
@@ -48,10 +51,7 @@ module Api
           return
         end
 
-        render(
-          status: :created,
-          location: api_v4_card_grant_path(@card_grant)
-        )
+        render :show, status: :created, location: api_v4_card_grant_path(@card_grant)
       end
 
       def show
