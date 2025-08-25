@@ -2,10 +2,25 @@
 
 class Donation
   class TiersController < ApplicationController
+    include DonationPageSetup
+
     before_action :set_event, except: [:set_index]
 
     def index
       @tiers = @event.donation_tiers
+    end
+
+    def start
+      return not_found unless @event.donation_page_available?
+
+      puts "PARAMS LIST"
+      puts params
+      @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
+
+      build_donation_page!(event: @event, params:, request:)
+      authorize @event, :show?
+      @hide_flash = true
+      render "donations/start_donation"
     end
 
     def set_index
@@ -63,7 +78,8 @@ class Donation
         tier.update(
           name: tier_data[:name],
           description: tier_data[:description],
-          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i
+          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i,
+          published: tier_data[:published] == "1"
         )
       end
 
@@ -84,7 +100,7 @@ class Donation
     private
 
     def set_event
-      @event = Event.where(slug: params[:event_id]).first
+      @event = Event.where(slug: params[:event_name] || params[:event_id]).first
       render json: { error: "Event not found" }, status: :not_found unless @event
     end
 
