@@ -34,7 +34,7 @@
               height: @home_size || 36,
               alt: "HCB logo" %>
         <% end %>
-        <% title = yield(:title) if content_for?(:title) %>
+
         <% if title %>
           <span>
             <%= nav.active_section&.name || "Admin" %>
