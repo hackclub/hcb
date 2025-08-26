@@ -20,6 +20,18 @@ module Admin
 
       memo_wise(:active?)
 
+      def task_sum
+        items.reject { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum
+      end
+
+      memo_wise(:task_sum)
+
+      def counter_sum
+        items.select { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum
+      end
+
+      memo_wise(:counter_sum)
+
     end
 
     class Item
