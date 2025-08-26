@@ -71,7 +71,7 @@
           <% task_sum = section.items.reject { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum %>
           <% counter_sum = section.items.select { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum %>
           <details open class="admin-nav-item pb0">
-            <summary class="nav-item" style="<%= section.name == parent ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
+            <summary class="nav-item" style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
               <%= section.name %>
               <span class="badge <%= task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
                 <%= task_sum > 0 ? task_sum : counter_sum %>
@@ -80,7 +80,7 @@
             <div class="dropdown">
               <div class="sub-items">
                 <% section.items.each do |item| %>
-                  <%= link_to item.path, style: active == item.name ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
+                  <%= link_to item.path, style: item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
                     <%= item.name %>
                     <span class="badge <%= (:counter.in? item.flags) || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
                       <%= item.count %>
