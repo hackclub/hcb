@@ -21,13 +21,13 @@ module Admin
       memo_wise(:active?)
 
       def task_sum
-        items.reject { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum
+        items.sum { |item| item.flags.include?(:counter) ? 0 : item.count }
       end
 
       memo_wise(:task_sum)
 
       def counter_sum
-        items.select { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum
+        items.sum { |item| item.flags.include?(:counter) ? item.count : 0 }
       end
 
       memo_wise(:counter_sum)
