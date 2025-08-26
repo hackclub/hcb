@@ -86,7 +86,7 @@ class MarkdownService
       return nil unless link_type == :email
 
       u = User.find_by(email: link)
-      return nil unless u && @record && Pundit.policy(u, @record)&.show?
+      return mail_to link unless u && @record && Pundit.policy(u, @record)&.show?
 
       if @location == :email
         return mail_to link, "@#{u.name}", class: "mention"
@@ -127,7 +127,7 @@ class MarkdownService
         return nil unless hcb
 
         Pundit.authorize(@current_user, hcb, :show?)
-        link_to "#{'comment on ' if comment.present?}#{hcb.humanized_type.downcase} (HCB-#{hcb.hashid})",
+        link_to "#{'comment on ' if comment.present?}#{hcb.humanized_type_sentence_case} (HCB-#{hcb.hashid})",
                 link,
                 target: "_blank",
                 class: "tooltipped tooltipped--e autolink",

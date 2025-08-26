@@ -796,6 +796,7 @@ Rails.application.routes.draw do
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
     get "statements"
+    get "statement_of_activity"
     get "promotions"
     get "reimbursements"
     get "employees"
