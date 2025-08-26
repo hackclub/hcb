@@ -21,12 +21,12 @@
   <body>
     <a class="skip-to-main" href="#main">Skip to main content</a>
 
-    <% nav = Admin::Nav.new.sections %>
+    <% nav = Admin::Nav.new %>
 
     <% title = yield(:title) if content_for?(:title) %>
-    <% parent, active = *(title ? nav.map do |name, items|
-                                    items.map do |item, value|
-                                      [item.to_s.downcase.gsub(" ", ""), [name, item]]
+    <% parent, active = *(title ? nav.sections.map do |section|
+                                    section.items.map do |item, value|
+                                      [item.to_s.downcase.gsub(" ", ""), [section.name, item]]
                                     end
                                   end.flatten(1).to_h[title.to_s.downcase.gsub(" ", "")] : ["Admin", nil]) %>
 
@@ -67,19 +67,19 @@
       </div>
 
       <div class="nav-row" style="width: 100%; display: flex; padding: 8px 0px;">
-        <% nav.each do |name, items| %>
-          <% task_sum = items.reject { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
-          <% counter_sum = items.select { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
+        <% nav.sections.each do |section| %>
+          <% task_sum = section.items.reject { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
+          <% counter_sum = section.items.select { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
           <details open class="admin-nav-item pb0">
-            <summary class="nav-item" style="<%= name == parent ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
-              <%= name %>
+            <summary class="nav-item" style="<%= section.name == parent ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
+              <%= section.name %>
               <span class="badge <%= task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
                 <%= task_sum > 0 ? task_sum : counter_sum %>
               </span>
             </summary>
             <div class="dropdown">
               <div class="sub-items">
-                <% items.each do |name, item| %>
+                <% section.items.each do |name, item| %>
                   <% link, count, flags = *item %>
 
                   <%= link_to link, style: active == name ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
