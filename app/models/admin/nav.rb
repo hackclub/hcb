@@ -3,6 +3,8 @@
 module Admin
   class Nav
     include Rails.application.routes.url_helpers
+    prepend MemoWise
+
 
     def sections
       {
@@ -51,6 +53,8 @@ module Admin
         }
       }
     end
+
+    memo_wise(:sections)
 
   end
 end
