@@ -418,9 +418,7 @@ class EventsController < ApplicationController
     end
     @announcements = @all_announcements.page(params[:page]).per(10)
 
-    if @event.config.generate_monthly_announcement
-      @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
-    end
+    @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
   end
 
   before_action(only: :feed) { request.format = :atom }

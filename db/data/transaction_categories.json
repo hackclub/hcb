@@ -5,6 +5,9 @@
   "benefits": {
     "label": "Benefits"
   },
+  "donations": {
+    "label": "Donations"
+  },
   "events-projects": {
     "label": "Events / Projects"
   },

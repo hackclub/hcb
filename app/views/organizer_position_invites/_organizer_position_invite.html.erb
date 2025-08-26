@@ -85,7 +85,7 @@
     Invited <%= relative_timestamp(organizer_position_invite.created_at) %>
     as a
     <div class="inline" data-controller="menu" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
-      <% can_change_role = organizer_signed_in?(as: :manager) %>
+      <% can_change_role = policy(organizer_position_invite).change_position_role? %>
 
       <span class="h6 bold info <%= "pointer" if can_change_role %>"><%= organizer_position_invite.role %></span>
 

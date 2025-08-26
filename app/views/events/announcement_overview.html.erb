@@ -7,10 +7,8 @@
 <h1 class="flex heading items-center">
   <span class="flex-grow flex items-center flex-1">
     Announcements
-    <% if @event_follow.present? || organizer_signed_in?(as: :reader) %>
-      <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
-        <%= inline_icon "rss", size: 30 %>
-      <% end %>
+    <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
+      <%= inline_icon "rss", size: 30 %>
     <% end %>
     <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
       <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>

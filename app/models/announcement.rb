@@ -54,7 +54,7 @@ class Announcement < ApplicationRecord
     end
   end
 
-  scope :monthly, -> { where(template_type: Announcement::Templates::Monthly.name) }
+  scope :monthly, -> { joins(event: :config).where(:template_type => Announcement::Templates::Monthly.name, "event_configurations.generate_monthly_announcement" => true) }
   scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
   scope :approved_monthly_for, ->(date) { monthly_for(date).draft }
   validate :content_is_json
