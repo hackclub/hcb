@@ -20,6 +20,13 @@ RSpec.describe WiseTransfer do
       expect(instance.errors[:wise_id]).to be_empty
     end
 
+    it "is required if the wise transfer is marked as sent" do
+      instance = build_instance(wise_id: nil, aasm_state: "sent")
+      instance.validate
+
+      expect(instance.errors[:wise_id]).to eq(["can't be blank"])
+    end
+
     it "must be a number" do
       instance = build_instance(wise_id: "NOPE")
       instance.validate
@@ -49,6 +56,13 @@ RSpec.describe WiseTransfer do
       instance = build_instance(wise_recipient_id: nil)
       instance.validate
       expect(instance.errors[:wise_recipient_id]).to be_empty
+    end
+
+    it "is required if the wise transfer is marked as sent" do
+      instance = build_instance(wise_recipient_id: nil, aasm_state: "sent")
+      instance.validate
+
+      expect(instance.errors[:wise_recipient_id]).to eq(["can't be blank"])
     end
 
     it "must be a UUID-like string" do
