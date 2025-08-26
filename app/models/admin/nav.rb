@@ -19,6 +19,10 @@ module Admin
 
     end
 
+    def initialize(page_title:)
+      @page_title = page_title
+    end
+
     def sections
       [
         spending,
@@ -33,6 +37,8 @@ module Admin
     memo_wise(:sections)
 
     private
+
+    attr_reader(:page_title)
 
     def misc
       Section.new(
