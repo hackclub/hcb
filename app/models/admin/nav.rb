@@ -49,6 +49,10 @@ module Admin
         @active
       end
 
+      def record_count?
+        flags.include?(:counter)
+      end
+
     end
 
     def initialize(page_title:)

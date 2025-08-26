@@ -75,7 +75,7 @@
                 <% section.items.each do |item| %>
                   <%= link_to item.path, style: item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
                     <%= item.name %>
-                    <span class="badge <%= (:counter.in? item.flags) || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
+                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
                       <%= item.count %>
                     </span>
                   <% end %>
