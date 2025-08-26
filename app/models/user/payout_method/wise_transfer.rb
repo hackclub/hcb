@@ -2,27 +2,25 @@
 
 # == Schema Information
 #
-# Table name: user_payout_method_wires
+# Table name: user_payout_method_wise_transfers
 #
-#  id                        :bigint           not null, primary key
-#  account_number_bidx       :string           not null
-#  account_number_ciphertext :string           not null
-#  address_city              :string
-#  address_line1             :string
-#  address_line2             :string
-#  address_postal_code       :string
-#  address_state             :string
-#  bic_code_bidx             :string           not null
-#  bic_code_ciphertext       :string           not null
-#  recipient_country         :integer
-#  recipient_information     :jsonb
-#  created_at                :datetime         not null
-#  updated_at                :datetime         not null
+#  id                               :bigint           not null, primary key
+#  address_city                     :string
+#  address_line1                    :string
+#  address_line2                    :string
+#  address_postal_code              :string
+#  address_state                    :string
+#  bank_name                        :string
+#  currency                         :string
+#  recipient_country                :integer
+#  recipient_information_ciphertext :text
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
 #
 class User
   module PayoutMethod
     class WiseTransfer < ApplicationRecord
-      self.table_name = "user_payout_method_wires"
+      self.table_name = "user_payout_method_wise_transfers"
       has_one :user, inverse_of: :payout_method, as: :payout_method
       has_encrypted :recipient_information, type: :json
 

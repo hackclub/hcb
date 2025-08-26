@@ -454,6 +454,20 @@ class UsersController < ApplicationController
       }
     end
 
+    if params.require(:user)[:payout_method_type] == User::PayoutMethod::WiseTransfer.name
+      attributes << {
+        payout_method_wise_transfer: [
+          :address_line1,
+          :address_line2,
+          :address_city,
+          :address_state,
+          :address_postal_code,
+          :recipient_country,
+          :currency,
+        ] + WiseTransfer.recipient_information_accessors
+      }
+    end
+
     if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
       attributes << {
         payout_method_attributes: [
@@ -480,6 +494,8 @@ class UsersController < ApplicationController
     # The Wire payout method attributes are under the `payout_method_wire` param instead of `payout_method_attributes` to prevent conflict with existing keys for other payout methods such as AchTransfer.
     # Rails requires that DOM form inputs have unique names.
     p[:payout_method_attributes] = p.delete(:payout_method_wire) if p[:payout_method_wire]
+    # Same thing for Wise transfer payouts
+    p[:payout_method_attributes] = p.delete(:payout_method_wise_transfer) if p[:payout_method_wise_transfer]
 
     p
   end
