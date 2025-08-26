@@ -7,68 +7,80 @@ module Admin
 
     Section = Struct.new(:name, :items, keyword_init: true)
 
+    class Item
+      attr_reader(:name, :path, :count, :flags)
+
+      def initialize(name:, path:, count:, flags: [])
+        @name = name
+        @path = path
+        @count = count
+        @flags = flags
+      end
+
+    end
+
     def sections
       [
         Section.new(
           name: "Spending",
-          items: {
-            ACHs: [ach_admin_index_path, AchTransfer.pending.count, %i[]],
-            Checks: [increase_checks_admin_index_path, IncreaseCheck.pending.count, %i[]],
-            Disbursements: [disbursements_admin_index_path, Disbursement.reviewing.count, %i[]],
-            PayPal: [paypal_transfers_admin_index_path, PaypalTransfer.pending.count, %i[]],
-            Wires: [wires_admin_index_path, Wire.pending.count, %i[]],
-            "Wise transfers": [wise_transfers_admin_index_path, WiseTransfer.pending.count, %i[]],
-            Reimbursements: [reimbursements_admin_index_path, Reimbursement::Report.reimbursement_requested.count, %i[]]
-          }
+          items: [
+            Item.new(name: "ACHs", path: ach_admin_index_path, count: AchTransfer.pending.count),
+            Item.new(name: "Checks", path: increase_checks_admin_index_path, count: IncreaseCheck.pending.count),
+            Item.new(name: "Disbursements", path: disbursements_admin_index_path, count: Disbursement.reviewing.count),
+            Item.new(name: "PayPal", path: paypal_transfers_admin_index_path, count: PaypalTransfer.pending.count),
+            Item.new(name: "Wires", path: wires_admin_index_path, count: Wire.pending.count),
+            Item.new(name: "Wise transfers", path: wise_transfers_admin_index_path, count: WiseTransfer.pending.count),
+            Item.new(name: "Reimbursements", path: reimbursements_admin_index_path, count: Reimbursement::Report.reimbursement_requested.count)
+          ]
         ),
         Section.new(
           name: "Ledger",
-          items: {
-            Ledger: [ledger_admin_index_path, CanonicalTransaction.not_stripe_top_up.unmapped.count, %i[]],
-            "Pending Ledger": [pending_ledger_admin_index_path, CanonicalPendingTransaction.unsettled.count, %i[counter]],
-            "Raw Transactions": [raw_transactions_admin_index_path, RawCsvTransaction.unhashed.count, %i[]],
-            "Intrafi Transactions": [raw_intrafi_transactions_admin_index_path, RawIntrafiTransaction.count, %i[counter]],
-            "HCB codes": [hcb_codes_admin_index_path, 0, %i[counter]],
-            "Audits": [admin_ledger_audits_path, Admin::LedgerAudit.pending.count, %i[]],
-          }
+          items: [
+            Item.new(name: "Ledger", path: ledger_admin_index_path, count: CanonicalTransaction.not_stripe_top_up.unmapped.count),
+            Item.new(name: "Pending Ledger", path: pending_ledger_admin_index_path, count: CanonicalPendingTransaction.unsettled.count, flags: %i[counter]),
+            Item.new(name: "Raw Transactions", path: raw_transactions_admin_index_path, count: RawCsvTransaction.unhashed.count),
+            Item.new(name: "Intrafi Transactions", path: raw_intrafi_transactions_admin_index_path, count: RawIntrafiTransaction.count, flags: %i[counter]),
+            Item.new(name: "HCB codes", path: hcb_codes_admin_index_path, count: 0, flags: %i[counter]),
+            Item.new(name: "Audits", path: admin_ledger_audits_path, count: Admin::LedgerAudit.pending.count),
+          ]
         ),
         Section.new(
           name: "Incoming Money",
-          items: {
-            Donations: [donations_admin_index_path, 0, %i[]],
-            "Recurring Donations": [recurring_donations_admin_index_path, 0, %i[]],
-            Invoices: [invoices_admin_index_path, 0, %i[]],
-            Sponsors: [sponsors_admin_index_path, 0, %i[]]
-          }
+          items: [
+            Item.new(name: "Donations", path: donations_admin_index_path, count: 0),
+            Item.new(name: "Recurring Donations", path: recurring_donations_admin_index_path, count: 0),
+            Item.new(name: "Invoices", path: invoices_admin_index_path, count: 0),
+            Item.new(name: "Sponsors", path: sponsors_admin_index_path, count: 0)
+          ]
         ),
         Section.new(
           name: "Organizations",
-          items: {
-            Organizations: [events_admin_index_path, Event.approved.count, %i[counter]],
-            "Google Workspace Requests": [google_workspaces_admin_index_path, GSuite.needs_ops_review.count, %i[]],
-            "Account Numbers": [account_numbers_admin_index_path, Column::AccountNumber.count, %i[counter]]
-          }
+          items: [
+            Item.new(name: "Organizations", path: events_admin_index_path, count: Event.approved.count, flags: %i[counter]),
+            Item.new(name: "Google Workspace Requests", path: google_workspaces_admin_index_path, count: GSuite.needs_ops_review.count),
+            Item.new(name: "Account Numbers", path: account_numbers_admin_index_path, count: Column::AccountNumber.count, flags: %i[counter])
+          ]
         ),
         Section.new(
           name: "Payroll",
-          items: {
-            Employees: [employees_admin_index_path, Employee.onboarding.count, %i[]],
-            Payments: [employee_payments_admin_index_path, Employee::Payment.paid.count, %i[counter]],
-            W9s: [admin_w9s_path, W9.all.count, %i[counter]]
-          }
+          items: [
+            Item.new(name: "Employees", path: employees_admin_index_path, count: Employee.onboarding.count),
+            Item.new(name: "Payments", path: employee_payments_admin_index_path, count: Employee::Payment.paid.count, flags: %i[counter]),
+            Item.new(name: "W9s", path: admin_w9s_path, count: W9.all.count, flags: %i[counter])
+          ]
         ),
         Section.new(
           name: "Misc",
-          items: {
-            "Bank Accounts": [bank_accounts_admin_index_path, BankAccount.failing.count, %i[counter]],
-            "HCB Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],
-            "Column Statements": [admin_column_statements_path, Column::Statement.count, %i[counter]],
-            "Users": [users_admin_index_path, User.count, %i[counter]],
-            "Card Designs": [stripe_card_personalization_designs_admin_index_path, StripeCard::PersonalizationDesign.count, %i[counter]],
-            "Emails": [emails_admin_index_path, Ahoy::Message.count, %i[counter]],
-            "Unknown Merchants": [unknown_merchants_admin_index_path, Rails.cache.fetch("admin_unknown_merchants")&.length || 0, %i[counter]],
-            "Referral Programs": [referral_programs_admin_index_path, Referral::Program.count, %i[counter]]
-          }
+          items: [
+            Item.new(name: "Bank Accounts", path: bank_accounts_admin_index_path, count: BankAccount.failing.count, flags: %i[counter]),
+            Item.new(name: "HCB Fees", path: bank_fees_admin_index_path, count: BankFee.in_transit_or_pending.count, flags: %i[counter]),
+            Item.new(name: "Column Statements", path: admin_column_statements_path, count: Column::Statement.count, flags: %i[counter]),
+            Item.new(name: "Users", path: users_admin_index_path, count: User.count, flags: %i[counter]),
+            Item.new(name: "Card Designs", path: stripe_card_personalization_designs_admin_index_path, count: StripeCard::PersonalizationDesign.count, flags: %i[counter]),
+            Item.new(name: "Emails", path: emails_admin_index_path, count: Ahoy::Message.count, flags: %i[counter]),
+            Item.new(name: "Unknown Merchants", path: unknown_merchants_admin_index_path, count: Rails.cache.fetch("admin_unknown_merchants")&.length || 0, flags: %i[counter]),
+            Item.new(name: "Referral Programs", path: referral_programs_admin_index_path, count: Referral::Program.count, flags: %i[counter])
+          ]
         )
       ]
     end

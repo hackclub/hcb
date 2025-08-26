@@ -25,8 +25,8 @@
 
     <% title = yield(:title) if content_for?(:title) %>
     <% parent, active = *(title ? nav.sections.map do |section|
-                                    section.items.map do |item, value|
-                                      [item.to_s.downcase.gsub(" ", ""), [section.name, item]]
+                                    section.items.map do |item|
+                                      [item.name.to_s.downcase.gsub(" ", ""), [section.name, item]]
                                     end
                                   end.flatten(1).to_h[title.to_s.downcase.gsub(" ", "")] : ["Admin", nil]) %>
 
@@ -68,8 +68,8 @@
 
       <div class="nav-row" style="width: 100%; display: flex; padding: 8px 0px;">
         <% nav.sections.each do |section| %>
-          <% task_sum = section.items.reject { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
-          <% counter_sum = section.items.select { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
+          <% task_sum = section.items.reject { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum %>
+          <% counter_sum = section.items.select { |item| item.flags.include?(:counter) }.map { |item| item.count }.sum %>
           <details open class="admin-nav-item pb0">
             <summary class="nav-item" style="<%= section.name == parent ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
               <%= section.name %>
@@ -79,13 +79,11 @@
             </summary>
             <div class="dropdown">
               <div class="sub-items">
-                <% section.items.each do |name, item| %>
-                  <% link, count, flags = *item %>
-
-                  <%= link_to link, style: active == name ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
-                    <%= name %>
-                    <span class="badge <%= (:counter.in? flags) || count.zero? ? "bg-muted" : "" %> h-fit-content">
-                      <%= count %>
+                <% section.items.each do |item| %>
+                  <%= link_to item.path, style: active == item.name ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
+                    <%= item.name %>
+                    <span class="badge <%= (:counter.in? item.flags) || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
+                      <%= item.count %>
                     </span>
                   <% end %>
                 <% end %>
