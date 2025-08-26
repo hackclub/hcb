@@ -21,13 +21,13 @@ module Admin
       memo_wise(:active?)
 
       def task_sum
-        items.sum { |item| item.flags.include?(:counter) ? 0 : item.count }
+        items.sum { |item| item.task_count? ? item.count : 0 }
       end
 
       memo_wise(:task_sum)
 
       def counter_sum
-        items.sum { |item| item.flags.include?(:counter) ? item.count : 0 }
+        items.sum { |item| item.record_count? ? item.count : 0 }
       end
 
       memo_wise(:counter_sum)
@@ -35,14 +35,18 @@ module Admin
     end
 
     class Item
-      attr_reader(:name, :path, :count, :flags)
+      attr_reader(:name, :path, :count)
 
-      def initialize(name:, path:, count:, flags: [], active: false)
+      def initialize(name:, path:, count:, count_type: :tasks, active: false)
         @name = name
         @path = path
         @count = count
-        @flags = flags
+        @count_type = count_type
         @active = active
+
+        unless [:tasks, :records].include?(count_type)
+          raise ArgumentError, "invalid count_type: #{count_type.inspect}"
+        end
       end
 
       def active?
@@ -50,7 +54,11 @@ module Admin
       end
 
       def record_count?
-        flags.include?(:counter)
+        @count_type == :records
+      end
+
+      def task_count?
+        @count_type == :tasks
       end
 
     end
@@ -102,14 +110,14 @@ module Admin
       Section.new(
         name: "Misc",
         items: [
-          make_item(name: "Bank Accounts", path: bank_accounts_admin_index_path, count: BankAccount.failing.count, flags: %i[counter]),
-          make_item(name: "HCB Fees", path: bank_fees_admin_index_path, count: BankFee.in_transit_or_pending.count, flags: %i[counter]),
-          make_item(name: "Column Statements", path: admin_column_statements_path, count: Column::Statement.count, flags: %i[counter]),
-          make_item(name: "Users", path: users_admin_index_path, count: User.count, flags: %i[counter]),
-          make_item(name: "Card Designs", path: stripe_card_personalization_designs_admin_index_path, count: StripeCard::PersonalizationDesign.count, flags: %i[counter]),
-          make_item(name: "Emails", path: emails_admin_index_path, count: Ahoy::Message.count, flags: %i[counter]),
-          make_item(name: "Unknown Merchants", path: unknown_merchants_admin_index_path, count: Rails.cache.fetch("admin_unknown_merchants")&.length || 0, flags: %i[counter]),
-          make_item(name: "Referral Programs", path: referral_programs_admin_index_path, count: Referral::Program.count, flags: %i[counter])
+          make_item(name: "Bank Accounts", path: bank_accounts_admin_index_path, count: BankAccount.failing.count, count_type: :records),
+          make_item(name: "HCB Fees", path: bank_fees_admin_index_path, count: BankFee.in_transit_or_pending.count, count_type: :records),
+          make_item(name: "Column Statements", path: admin_column_statements_path, count: Column::Statement.count, count_type: :records),
+          make_item(name: "Users", path: users_admin_index_path, count: User.count, count_type: :records),
+          make_item(name: "Card Designs", path: stripe_card_personalization_designs_admin_index_path, count: StripeCard::PersonalizationDesign.count, count_type: :records),
+          make_item(name: "Emails", path: emails_admin_index_path, count: Ahoy::Message.count, count_type: :records),
+          make_item(name: "Unknown Merchants", path: unknown_merchants_admin_index_path, count: Rails.cache.fetch("admin_unknown_merchants")&.length || 0, count_type: :records),
+          make_item(name: "Referral Programs", path: referral_programs_admin_index_path, count: Referral::Program.count, count_type: :records)
         ]
       )
     end
@@ -119,8 +127,8 @@ module Admin
         name: "Payroll",
         items: [
           make_item(name: "Employees", path: employees_admin_index_path, count: Employee.onboarding.count),
-          make_item(name: "Payments", path: employee_payments_admin_index_path, count: Employee::Payment.paid.count, flags: %i[counter]),
-          make_item(name: "W9s", path: admin_w9s_path, count: W9.all.count, flags: %i[counter])
+          make_item(name: "Payments", path: employee_payments_admin_index_path, count: Employee::Payment.paid.count, count_type: :records),
+          make_item(name: "W9s", path: admin_w9s_path, count: W9.all.count, count_type: :records)
         ]
       )
     end
@@ -129,9 +137,9 @@ module Admin
       Section.new(
         name: "Organizations",
         items: [
-          make_item(name: "Organizations", path: events_admin_index_path, count: Event.approved.count, flags: %i[counter]),
+          make_item(name: "Organizations", path: events_admin_index_path, count: Event.approved.count, count_type: :records),
           make_item(name: "Google Workspace Requests", path: google_workspaces_admin_index_path, count: GSuite.needs_ops_review.count),
-          make_item(name: "Account Numbers", path: account_numbers_admin_index_path, count: Column::AccountNumber.count, flags: %i[counter])
+          make_item(name: "Account Numbers", path: account_numbers_admin_index_path, count: Column::AccountNumber.count, count_type: :records)
         ]
       )
     end
@@ -153,10 +161,10 @@ module Admin
         name: "Ledger",
         items: [
           make_item(name: "Ledger", path: ledger_admin_index_path, count: CanonicalTransaction.not_stripe_top_up.unmapped.count),
-          make_item(name: "Pending Ledger", path: pending_ledger_admin_index_path, count: CanonicalPendingTransaction.unsettled.count, flags: %i[counter]),
+          make_item(name: "Pending Ledger", path: pending_ledger_admin_index_path, count: CanonicalPendingTransaction.unsettled.count, count_type: :records),
           make_item(name: "Raw Transactions", path: raw_transactions_admin_index_path, count: RawCsvTransaction.unhashed.count),
-          make_item(name: "Intrafi Transactions", path: raw_intrafi_transactions_admin_index_path, count: RawIntrafiTransaction.count, flags: %i[counter]),
-          make_item(name: "HCB codes", path: hcb_codes_admin_index_path, count: 0, flags: %i[counter]),
+          make_item(name: "Intrafi Transactions", path: raw_intrafi_transactions_admin_index_path, count: RawIntrafiTransaction.count, count_type: :records),
+          make_item(name: "HCB codes", path: hcb_codes_admin_index_path, count: 0, count_type: :records),
           make_item(name: "Audits", path: admin_ledger_audits_path, count: Admin::LedgerAudit.pending.count),
         ]
       )
