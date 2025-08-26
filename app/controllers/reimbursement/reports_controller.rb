@@ -165,6 +165,16 @@ module Reimbursement
 
       begin
         @report.with_lock do
+          if params[:fee_amount_cents]
+            @report.expenses.create(
+              value: params[:fee_amount_cents],
+              memo: "Transfer fee",
+              type: Reimbursement::Expense::Fee,
+              aasm_state: :approved,
+              approved_by: current_user,
+              approved_at: Time.now
+            )
+          end
           @report.mark_reimbursement_approved!
         end
         flash[:success] = "Reimbursement has been approved; the team & report creator will be notified."

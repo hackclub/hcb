@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_25_064629) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1885,6 +1885,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.integer "expense_number", default: 0, null: false
     t.datetime "deleted_at", precision: nil
     t.bigint "reviewer_id"
+    t.float "conversion_rate", default: 1.0, null: false
+    t.string "currency"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
@@ -2229,6 +2231,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.string "address_line2"
     t.string "address_state"
     t.string "address_postal_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "user_payout_method_wise_transfers", force: :cascade do |t|
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "bank_name"
+    t.integer "recipient_country"
+    t.text "recipient_information_ciphertext"
+    t.string "currency"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

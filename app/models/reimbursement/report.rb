@@ -6,6 +6,8 @@
 #
 #  id                         :bigint           not null, primary key
 #  aasm_state                 :string
+#  conversion_rate            :float            default(1.0), not null
+#  currency                   :string
 #  deleted_at                 :datetime
 #  expense_number             :integer          default(0), not null
 #  invite_message             :text
@@ -62,7 +64,7 @@ module Reimbursement
 
     monetize :maximum_amount_cents, allow_nil: true
     monetize :amount_to_reimburse_cents, allow_nil: true
-    monetize :amount_cents, as: "amount", allow_nil: true
+    monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :delete_all
     has_one :payout_holding, inverse_of: :report
@@ -331,7 +333,7 @@ module Reimbursement
       expense_payouts = []
 
       expenses.approved.each do |expense|
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event: expense.report.event, expense:)
+        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents * expense.conversion_rate, event: expense.report.event, expense:)
       end
 
       return if expense_payouts.empty?
