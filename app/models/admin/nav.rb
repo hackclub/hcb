@@ -56,6 +56,12 @@ module Admin
 
     memo_wise(:sections)
 
+    def active_section
+      sections.find(&:active?)
+    end
+
+    memo_wise(:active_section)
+
     private
 
     attr_reader(:page_title)

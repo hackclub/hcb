@@ -24,11 +24,6 @@
     <% title = yield(:title) if content_for?(:title) %>
 
     <% nav = Admin::Nav.new(page_title: title) %>
-    <% parent, active = *(title ? nav.sections.map do |section|
-                                    section.items.map do |item|
-                                      [item.name.to_s.downcase.gsub(" ", ""), [section.name, item]]
-                                    end
-                                  end.flatten(1).to_h[title.to_s.downcase.gsub(" ", "")] : ["Admin", nil]) %>
 
     <nav style="display: flex; flex-direction: column; background: var(--hcb-bg-2-5); gap: 0px">
       <div style="width: 100%; display: flex; gap: 8px; align-items: center; font-size: 22px; padding: 8px; border-bottom: 1px solid var(--hcb-bg-2);">
@@ -42,7 +37,7 @@
         <% title = yield(:title) if content_for?(:title) %>
         <% if title %>
           <span>
-            <%= parent %>
+            <%= nav.active_section&.name || "Admin" %>
           </span>
           <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
           <b style="font-weight: 600;">
