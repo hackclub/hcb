@@ -86,7 +86,7 @@ class MarkdownService
       return nil unless link_type == :email
 
       u = User.find_by(email: link)
-      return nil unless u && @record && Pundit.policy(u, @record)&.show?
+      return mail_to link unless u && @record && Pundit.policy(u, @record)&.show?
 
       if @location == :email
         return mail_to link, "@#{u.name}", class: "mention"
