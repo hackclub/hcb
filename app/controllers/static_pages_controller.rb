@@ -44,8 +44,11 @@ class StaticPagesController < ApplicationController
     end
   end
 
-    return redirect_to root_path, flash: { error: "You are not authorized to visit this page." } if !auditor_signed_in?
   def admin_tools
+    unless auditor_signed_in?
+      redirect_to(root_path, flash: { error: "You are not authorized to visit this page." })
+      return
+    end
 
     @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
   end
