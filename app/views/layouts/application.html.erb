@@ -119,7 +119,7 @@
       </div>
     <% end %>
 
-    <% if @event && !@event&.demo_mode? && @event&.robotics_team? && organizer_signed_in? && !@hide_robotics_banner %>
+    <% if @event && !@event&.demo_mode? && @event&.robotics_team? && organizer_signed_in? && !@hide_robotics_banner && Date.current.month < 10 %>
       <div class="w-100s px3 bg-red card--hover" data-behavior="hide_iframe">
           <p class="h3 font-medium text-center text-balance mt2 mb0 white">
             You currently have <%= number_to_human(@event&.users.count { |user| user.teenager? && user.active? }) %> tickets for the Robotics 3D Printer Raffle. Earn a ticket for each active teen in your organization.
