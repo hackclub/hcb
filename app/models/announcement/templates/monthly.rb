@@ -101,7 +101,7 @@ class Announcement
                 { type: "text", text: "The #{@event.name} team" },
               ],
             },
-          ].filter(&:present?),
+          ].compact,
         }
       end
 
