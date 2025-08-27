@@ -42,9 +42,12 @@ class StaticPagesController < ApplicationController
       @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
 
     end
-    if auditor_signed_in?
-      @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
-    end
+  end
+
+  def admin
+    return redirect_to root_path, flash: { error: "You are not authorized to visit this page." } if !auditor_signed_in?
+
+    @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
   end
 
   def branding

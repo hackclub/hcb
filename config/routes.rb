@@ -556,6 +556,7 @@ Rails.application.routes.draw do
   get "security", to: "static_pages#security"
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
+  get "admin", to: "static_pages#admin"
   get "audit", to: "admin#audit"
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
