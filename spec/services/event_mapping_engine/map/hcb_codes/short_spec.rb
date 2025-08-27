@@ -37,7 +37,7 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
 
     ct.reload
     expect(ct.event).to eq(event)
-    expect(ct.category.slug).to eq("other-fees")
+    expect(ct.category.slug).to eq("fiscal-sponsorship-fees")
     expect(ct.category_mapping.assignment_strategy).to eq("automatic")
   end
 
@@ -62,7 +62,7 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
 
     ct.reload
     expect(ct.event).to eq(event)
-    expect(ct.category.slug).to eq("bank-fees")
+    expect(ct.category.slug).to eq("stripe-service-fees")
     expect(ct.category_mapping.assignment_strategy).to eq("automatic")
   end
 
@@ -84,7 +84,28 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
 
     ct.reload
     expect(ct.event).to eq(event)
-    expect(ct.category.slug).to eq("other-fees")
+    expect(ct.category.slug).to eq("stripe-fee-reimbursements")
     expect(ct.category_mapping.assignment_strategy).to eq("automatic")
   end
+
+  it "adds a category to fee revenue" do
+    event = create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+
+    fee_revenue = FeeRevenue.create!(
+      amount_cents: 12_34,
+      start: Date.current.beginning_of_month,
+      end: Date.current.end_of_month,
+    )
+
+    local_hcb_code = fee_revenue.local_hcb_code
+    ct = create(:canonical_transaction, memo: "HCB-#{local_hcb_code.short_code}")
+
+    described_class.new.run
+
+    ct.reload
+    expect(ct.event).to eq(event)
+    expect(ct.category.slug).to eq("hcb-revenue")
+    expect(ct.category_mapping.assignment_strategy).to eq("automatic")
+  end
+
 end
