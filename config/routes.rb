@@ -285,6 +285,7 @@ Rails.application.routes.draw do
   end
 
   namespace :admin do
+    root to: redirect("/admin/events")
     namespace :ledger_audits do
       resources :tasks, only: [:index, :show, :create] do
         post :reviewed
@@ -556,6 +557,7 @@ Rails.application.routes.draw do
   get "security", to: "static_pages#security"
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
+  get "admin_tools", to: "static_pages#admin_tools"
   get "audit", to: "admin#audit"
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
@@ -796,6 +798,7 @@ Rails.application.routes.draw do
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
     get "statements"
+    get "statement_of_activity"
     get "promotions"
     get "reimbursements"
     get "employees"
