@@ -1,6 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Stimulus controller for dual-thumb range slider with numeric inputs
 export default class extends Controller {
   static values = {
     min: { type: Number, default: 0 },
