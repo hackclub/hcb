@@ -1,0 +1,157 @@
+import { Controller } from "@hotwired/stimulus"
+
+// Stimulus controller for dual-thumb range slider with numeric inputs
+export default class extends Controller {
+  static values = {
+    min: { type: Number, default: 0 },
+    max: { type: Number, default: 100 },
+    step: { type: Number, default: 1 },
+
+    lo: { type: Number, default: null },
+    hi: { type: Number, default: null },
+
+    minDistance: { type: Number, default: 1 }
+  }
+
+  connect() {
+    this.value = [this.loValue || this.minValue, this.hiValue || this.maxValue]
+    this.activeThumb = null
+    this.render()
+  }
+
+  clamp(n, min, max) {
+    return Math.min(max, Math.max(min, n))
+  }
+
+  valueToPercent(value) {
+    return ((value - this.minValue) * 100) / (this.maxValue - this.minValue)
+  }
+
+  percentToValue(percent) {
+    const raw = this.minValue + (percent / 100) * (this.maxValue - this.minValue)
+    const rounded = Math.round(raw / this.stepValue) * this.stepValue
+    return this.clamp(rounded, this.minValue, this.maxValue)
+  }
+
+  setLo(next) {
+    this.value = [this.clamp(next, this.minValue, this.value[1] - this.minDistanceValue), this.value[1]]
+    this.render()
+  }
+
+  setHi(next) {
+    this.value = [this.value[0], this.clamp(next, this.value[0] + this.minDistanceValue, this.maxValue)]
+    this.render()
+  }
+
+  handlePointer(e, which) {
+    const rect = this.track.getBoundingClientRect()
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const percent = this.clamp(((clientX - rect.left) / rect.width) * 100, 0, 100)
+    const raw = this.percentToValue(percent)
+    if (which === 'lo') this.setLo(raw)
+    else this.setHi(raw)
+  }
+
+  onTrackDown = (e) => {
+    e.preventDefault()
+    const rect = this.track.getBoundingClientRect()
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const percent = this.clamp(((clientX - rect.left) / rect.width) * 100, 0, 100)
+    const raw = this.percentToValue(percent)
+    const dLo = Math.abs(raw - this.value[0])
+    const dHi = Math.abs(raw - this.value[1])
+    const which = (dLo === dHi ? raw < this.value[0] : dLo < dHi) ? 'lo' : 'hi'
+    which === 'lo' ? this.setLo(raw) : this.setHi(raw)
+    this.activeThumb = which
+    document.addEventListener('mousemove', this.onMove)
+    document.addEventListener('mouseup', this.onUp)
+    document.addEventListener('touchmove', this.onMove, { passive: false })
+    document.addEventListener('touchend', this.onUp)
+  }
+
+  onThumbDown = (which) => (e) => {
+    e.preventDefault()
+    this.activeThumb = which
+    document.addEventListener('mousemove', this.onMove)
+    document.addEventListener('mouseup', this.onUp)
+    document.addEventListener('touchmove', this.onMove, { passive: false })
+    document.addEventListener('touchend', this.onUp)
+  }
+
+  onMove = (e) => {
+    if (!this.activeThumb) return
+    this.handlePointer(e, this.activeThumb)
+  }
+
+  onUp = () => {
+    this.activeThumb = null
+    document.removeEventListener('mousemove', this.onMove)
+    document.removeEventListener('mouseup', this.onUp)
+    document.removeEventListener('touchmove', this.onMove)
+    document.removeEventListener('touchend', this.onUp)
+  }
+
+  onInputChange = (which) => (e) => {
+    const val = parseInt(e.target.value, 10)
+    if (isNaN(val)) return
+    if (which === 'lo') this.setLo(val)
+    else this.setHi(val)
+  }
+
+  render() {
+    if (!this.container) {
+      this.container = document.createElement('div')
+      this.container.className = 'w-full select-none'
+      this.container.innerHTML = `
+        <style>
+          .rs-track { position: relative; width: 100%; cursor: pointer; }
+          .rs-bar { position: absolute; height: 6px; left: 0; right: 0; top: 50%; transform: translateY(-50%); border-radius: 9999px; background: rgba(0,0,0,0.12); }
+          .rs-range { position: absolute; height: 6px; top: 50%; transform: translateY(-50%); border-radius: 9999px; background: var(--info); }
+          .rs-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border-radius: 9999px; background: white; border: 2px solid var(--info); cursor: grab; }
+          .rs-thumb:active { cursor: grabbing; }
+          .rs-inputs { display: flex; justify-content: space-between; margin-bottom: 8px; }
+          .rs-inputs input { width: 80px; text-align: center; padding: 2px 4px; border: 1px solid #ccc; border-radius: 4px; }
+        </style>
+        <div class="rs-inputs">
+          <input type="number" class="rs-input" />
+          <input type="number" class="rs-input" />
+        </div>
+        <div class="rs-track">
+          <div class="rs-bar"></div>
+          <div class="rs-range text-blue-600"></div>
+          <button type="button" class="rs-thumb text-blue-600"></button>
+          <button type="button" class="rs-thumb text-blue-600"></button>
+        </div>`
+
+      this.element.innerHTML = '';
+
+      this.element.appendChild(this.container)
+      this.inputs = this.container.querySelectorAll('.rs-input')
+      this.track = this.container.querySelector('.rs-track')
+      this.range = this.container.querySelector('.rs-range')
+      this.thumbs = this.container.querySelectorAll('.rs-thumb')
+
+      this.track.addEventListener('mousedown', this.onTrackDown)
+      this.track.addEventListener('touchstart', this.onTrackDown)
+      this.thumbs[0].addEventListener('mousedown', this.onThumbDown('lo'))
+      this.thumbs[0].addEventListener('touchstart', this.onThumbDown('lo'))
+      this.thumbs[1].addEventListener('mousedown', this.onThumbDown('hi'))
+      this.thumbs[1].addEventListener('touchstart', this.onThumbDown('hi'))
+      this.inputs[0].addEventListener('change', this.onInputChange('lo'))
+      this.inputs[1].addEventListener('change', this.onInputChange('hi'))
+    }
+
+    const [lo, hi] = this.value
+    const pctLo = this.valueToPercent(lo)
+    const pctHi = this.valueToPercent(hi)
+
+    this.range.style.left = `${pctLo}%`
+    this.range.style.width = `${pctHi - pctLo}%`
+
+    this.thumbs[0].style.left = `${pctLo}%`
+    this.thumbs[1].style.left = `${pctHi}%`
+
+    this.inputs[0].value = lo
+    this.inputs[1].value = hi
+  }
+}
