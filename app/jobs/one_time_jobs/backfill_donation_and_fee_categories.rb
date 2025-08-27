@@ -11,6 +11,7 @@ module OneTimeJobs
       TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE,
       TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE,
       TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
+      TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE
     ].freeze
 
     def build_enumerator(cursor:)
@@ -30,10 +31,8 @@ module OneTimeJobs
       slug =
         if hcb_code.invoice? || hcb_code.donation?
           "donations"
-        elsif hcb_code.bank_fee?
-          "bank-fees"
-        elsif hcb_code.stripe_service_fee? || hcb_code.outgoing_fee_reimbursement?
-          "other-fees"
+        else
+          EventMappingEngine::Map::HcbCodes::Short.category_slug_for_hcb_code(hcb_code)
         end
 
       return unless slug

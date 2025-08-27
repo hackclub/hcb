@@ -50,9 +50,17 @@ RSpec.describe OneTimeJobs::BackfillDonationAndFeeCategories do
       TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
       Time.now.strftime("%G_%V")
     ].join(TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
-    fee_reimbursement_local_hcb_code = HcbCode.create!(hcb_code: fee_reimbursement_hcb_code)
+    HcbCode.create!(hcb_code: fee_reimbursement_hcb_code)
     fee_reimbursement_ct = create(:canonical_transaction)
     fee_reimbursement_ct.update!(hcb_code: fee_reimbursement_hcb_code)
+
+    fee_revenue = FeeRevenue.create!(
+      amount_cents: 12_34,
+      start: Date.current.beginning_of_month,
+      end: Date.current.end_of_month,
+    )
+    fee_revenue_local_hcb_code = fee_revenue.local_hcb_code
+    fee_revenue_ct = create(:canonical_transaction, memo: "HCB-#{fee_revenue_local_hcb_code.short_code}")
 
     Sidekiq::Testing.inline! do
       described_class.perform_async
@@ -60,8 +68,9 @@ RSpec.describe OneTimeJobs::BackfillDonationAndFeeCategories do
 
     expect(invoice_cpt.reload.category.slug).to eq("donations")
     expect(donation_cpt.reload.category.slug).to eq("donations")
-    expect(bank_fee_cpt.reload.category.slug).to eq("bank-fees")
-    expect(stripe_ct.reload.category.slug).to eq("other-fees")
-    expect(fee_reimbursement_ct.reload.category.slug).to eq("other-fees")
+    expect(bank_fee_cpt.reload.category.slug).to eq("fiscal-sponsorship-fees")
+    expect(stripe_ct.reload.category.slug).to eq("stripe-service-fees")
+    expect(fee_reimbursement_ct.reload.category.slug).to eq("stripe-fee-reimbursements")
+    expect(fee_revenue_ct.reload.category.slug).to eq("hcb-revenue")
   end
 end
