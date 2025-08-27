@@ -917,6 +917,20 @@ class EventsController < ApplicationController
     @end_date = Date.today.prev_month.beginning_of_month.to_date
   end
 
+  def statement_of_activity
+    authorize @event
+
+    @start_date = params[:start]&.to_date || (@event.activated_at || @event.created_at).to_date
+    @end_date = params[:end]&.to_date || Time.now.to_date
+
+    transactions = @event.canonical_transactions.where("date between ? AND ?", @start_date, @end_date)
+    @transactions_by_category = transactions.includes(:category).group("category.slug").sum(:amount_cents)
+
+    @net_asset_change = transactions.sum(:amount_cents)
+    @total_revenue = transactions.where("amount_cents > 0").sum(:amount_cents)
+    @total_expense = transactions.where("amount_cents < 0").sum(:amount_cents)
+  end
+
   def termination
     authorize @event
 
