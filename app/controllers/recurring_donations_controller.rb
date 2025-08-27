@@ -78,7 +78,7 @@ class RecurringDonationsController < ApplicationController
   def cancel
     @recurring_donation.cancel!
 
-    redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "Your donation has been canceled." }
+    redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "This donation has been canceled." }
   end
 
   private
