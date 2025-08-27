@@ -172,10 +172,6 @@ class Invoice < ApplicationRecord
       transitions from: :open_v2, to: :void_v2
     end
 
-    event :mark_past_due do
-      transitions from: :open_v2, to: :past_due_v2
-    end
-
     event :mark_archived do
       transitions from: [:open_v2, :paid_v2, :void_v2, :past_due_v2, :deposited_v2], to: :archived_v2
     end
