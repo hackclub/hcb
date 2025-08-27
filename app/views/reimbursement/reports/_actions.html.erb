@@ -219,9 +219,17 @@
                 <%= inline_icon "thumbsup" %>
                 Approve & send Wise reimbursement
               <% end %>
-              <section data-behavior="modal" role="dialog" id="wise_approval" class="modal modal--scroll bg-snow">
+              <section data-behavior="modal" role="dialog" id="wise_approval" class="modal modal--scroll modal--wide bg-snow">
                 <%= modal_header "Approve & send Wise reimbursement" %>
-                This reimbursement must be sent via Wise at the same time it is approved. <span class="bold">Input the following transfer details into Wise</span>:
+                This reimbursement must be sent via Wise at the same time it is approved to prevent fee fluctuations. 
+
+                <div class="flex flex-row items-start justify-start gap-2 mt-4">
+                  <span class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">1</span>
+                  <strong class="m-0">
+                    Input the following transfer details into <%= link_to "Wise", "https://wise.com/send", target: :_blank %>
+                  </strong>
+                </div>
+
                 <table class="w-full table-fixed my-6">
                   <tbody>
                     <tr>
@@ -277,12 +285,14 @@
                     <% end %>
                   </tbody>
                 </table>
-                <p>
-                  <span class="bold">Then, confirm that the amount after fees is less than <%= render_money report.event.balance %></span>.
-                </p>
-                <p>
-                  You may now send the Wise transfer. After sending it please input the following details to mark this report as reimbursed:
-                </p>
+
+                <div class="flex flex-row items-start justify-start gap-2 my-4">
+                  <span class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">2</span>
+                  <strong class="m-0">
+                    Then, confirm that the amount after fees is less than <%= render_money report.event.balance %>
+                  </strong>
+                </div>
+
                 <%= form_with url: reimbursement_report_admin_approve_path(report_id: @report.id) do |form| %>
                   <%= form.label :wise_total_before_fees, "Total before fees (in USD, from Wise)" %>
                   <div class="field">
@@ -310,7 +320,15 @@
                       </div>
                     </div>
                   </div>
-                  <%= form.submit "Submit" %>
+
+                  <div class="flex flex-row items-start justify-start gap-2 my-4">
+                    <span class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">2</span>
+                    <strong class="m-0">
+                      You may now send the Wise transfer
+                    </strong>
+                  </div>
+
+                  <%= form.submit "Mark as sent" %>
                 <% end %>
               </section>
             <% else %>
