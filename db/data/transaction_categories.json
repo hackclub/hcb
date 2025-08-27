@@ -19,6 +19,9 @@
       "financial_institutions"
     ]
   },
+  "fiscal-sponsorship-fees": {
+    "label": "Fiscal sponsorship fees"
+  },
   "food-fun": {
     "label": "Food / fun",
     "stripe_merchant_categories": [
@@ -81,6 +84,10 @@
       "hardware_equipment_and_supplies",
       "hardware_stores"
     ]
+  },
+  "hcb-revenue": {
+    "hq_only": true,
+    "label": "HCB Revenue"
   },
   "hr": {
     "label": "HR"
@@ -345,6 +352,14 @@
       "computers_peripherals_and_software",
       "direct_marketing_subscription"
     ]
+  },
+  "stripe-fee-reimbursements": {
+    "hq_only": true,
+    "label": "Stripe fee reimbursements"
+  },
+  "stripe-service-fees": {
+    "hq_only": true,
+    "label": "Stripe service fees"
   },
   "taxes-filing-fees": {
     "label": "Taxes / filing fees",

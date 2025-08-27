@@ -74,7 +74,6 @@ class StripeCard < ApplicationRecord
   scope :frozen, -> { where(stripe_status: "inactive", initially_activated: true) }
   scope :active, -> { where(stripe_status: "active") }
   scope :inactive, -> { where(stripe_status: "inactive", initially_activated: false) }
-  scope :physical_shipping, -> { physical.includes(:user, :event).reject { |c| c.stripe_obj[:shipping][:status] == "delivered" } }
   scope :platinum, -> { where(is_platinum_april_fools_2023: true) }
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
@@ -129,6 +128,13 @@ class StripeCard < ApplicationRecord
 
   before_save do
     self.canceled_at = Time.now if stripe_status_changed?(to: "canceled")
+  end
+
+  def self.cards_in_shipping
+    physical.where.not(stripe_status: "canceled")
+            .where(initially_activated: false)
+            .includes(:user, :event)
+            .reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.shipping_eta&.past? }
   end
 
   def full_card_number
