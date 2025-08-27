@@ -38,7 +38,7 @@
 .rs-inputs {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 .rs-inputs input {
   width: 80px;
@@ -46,4 +46,5 @@
   padding: 2px 4px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  min-height: 0px;
 }
