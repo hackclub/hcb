@@ -5,7 +5,7 @@
 
   <div class="card flex flex-col items-start gap-2 p0">
     <div class="event_settings__banner">
-      <% if @event.background_image.attached? %>
+      <% if @event.background_image.persisted? %>
         <%= image_tag @event.background_image, height: 200, class: "banner__image" %>
       <% end %>
 

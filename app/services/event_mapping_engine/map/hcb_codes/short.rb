@@ -20,6 +20,8 @@ module EventMappingEngine
             ActiveRecord::Base.transaction do
               ct.update_column(:hcb_code, hcb_code.hcb_code)
 
+              assign_transaction_category!(hcb_code:, canonical_transaction: ct)
+
               attrs = {
                 canonical_transaction_id: ct.id,
                 event_id: guess_event_id(hcb_code, ct),
@@ -60,6 +62,25 @@ module EventMappingEngine
           end
 
           return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
+        end
+
+        def assign_transaction_category!(hcb_code:, canonical_transaction:)
+          category_slug =
+            if hcb_code.bank_fee?
+              "fiscal-sponsorship-fees"
+            elsif hcb_code.fee_revenue?
+              "hcb-revenue"
+            elsif hcb_code.stripe_service_fee?
+              "stripe-service-fees"
+            elsif hcb_code.outgoing_fee_reimbursement?
+              "stripe-fee-reimbursements"
+            end
+
+          return unless category_slug
+
+          TransactionCategoryService
+            .new(model: canonical_transaction)
+            .set!(slug: category_slug, assignment_strategy: "automatic")
         end
 
       end

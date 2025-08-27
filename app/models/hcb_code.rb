@@ -125,6 +125,13 @@ class HcbCode < ApplicationRecord
     t.to_s.humanize
   end
 
+  def humanized_type_sentence_case
+    return "ACH" if ach_transfer?
+    return "Wise transfer" if wise_transfer?
+
+    humanized_type.downcase
+  end
+
   def amount_cents
     @amount_cents ||= begin
       return canonical_transactions.sum(:amount_cents) if canonical_transactions.any?
