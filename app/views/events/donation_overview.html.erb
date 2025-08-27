@@ -191,11 +191,6 @@
             <td class="text-right">
               <%= render_money recurring_donation.total_donated %>
             </td>
-            <% if recurring_donation.is_a? RecurringDonation && OrganizerPosition.role_at_least?(current_user, @event, :manager) %>
-              <td class="text-right">
-                <%= button_to "Cancel", cancel_recurring_donation_path(recurring_donation.url_hash), method: :post, data: { confirm: "Are you sure you want to cancel this recurring donation?" }, class: "btn bg-error" %>
-              </td>
-            <% end %>
           </tr>
         <% end %>
       </tbody>
