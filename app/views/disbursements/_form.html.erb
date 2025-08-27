@@ -5,8 +5,20 @@
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
-  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
+  <div class="flex items-center justify-center mb2">
+    <div class="flex flex-col flex-grow">
+      <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
+      <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
+    </div>
+    <span class="mr2 flex-shrink-0 flex items-center justify-center tooltipped tooltipped--e" aria-label="Swap">
+      <%= pop_icon_to "transactions",
+        new_disbursement_path(
+          event_id: params[:source_event_id] || disbursement.source_event_id,
+          source_event_id: params[:event_id] || disbursement.event_id
+        ),
+        class: "mr2 align-middle" if organizer_signed_in?(as: :member) %>
+    </span>
+  </div>
 
   <% if auditor_signed_in? %>
     <div class="admin-tools field field--checkbox">
