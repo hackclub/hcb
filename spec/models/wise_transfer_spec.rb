@@ -20,11 +20,16 @@ RSpec.describe WiseTransfer do
       expect(instance.errors[:wise_id]).to be_empty
     end
 
-    it "is required if the wise transfer is marked as sent" do
-      instance = build_instance(wise_id: nil, aasm_state: "sent")
-      instance.validate
+    it "is required if the wise transfer is marked as sent or deposited" do
+      ["sent", "deposited"].each do |aasm_state|
+        instance = build_instance(wise_id: nil, aasm_state:)
+        instance.validate
 
-      expect(instance.errors[:wise_id]).to eq(["can't be blank"])
+        expect(instance.errors[:wise_id]).to(
+          eq(["can't be blank"]),
+          "wise transfer with aasm state #{aasm_state.inspect} should require wise_id"
+        )
+      end
     end
 
     it "must be a number" do
@@ -58,11 +63,16 @@ RSpec.describe WiseTransfer do
       expect(instance.errors[:wise_recipient_id]).to be_empty
     end
 
-    it "is required if the wise transfer is marked as sent" do
-      instance = build_instance(wise_recipient_id: nil, aasm_state: "sent")
-      instance.validate
+    it "is required if the wise transfer is marked as sent or deposited" do
+      ["sent", "deposited"].each do |aasm_state|
+        instance = build_instance(wise_recipient_id: nil, aasm_state:)
+        instance.validate
 
-      expect(instance.errors[:wise_recipient_id]).to eq(["can't be blank"])
+        expect(instance.errors[:wise_recipient_id]).to(
+          eq(["can't be blank"]),
+          "wise transfer with aasm state #{aasm_state.inspect} should require wise_recipient_id"
+        )
+      end
     end
 
     it "must be a UUID-like string" do
