@@ -153,7 +153,6 @@ class Invoice < ApplicationRecord
     state :open_v2, initial: true
     state :paid_v2
     state :deposited_v2
-    state :past_due_v2
     state :void_v2
     state :archived_v2
     state :refunded_v2
