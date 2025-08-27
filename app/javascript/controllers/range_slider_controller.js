@@ -102,15 +102,6 @@ export default class extends Controller {
       this.container = document.createElement('div')
       this.container.className = 'w-full select-none'
       this.container.innerHTML = `
-        <style>
-          .rs-track { position: relative; width: 100%; cursor: pointer; }
-          .rs-bar { position: absolute; height: 6px; left: 0; right: 0; top: 50%; transform: translateY(-50%); border-radius: 9999px; background: rgba(0,0,0,0.12); }
-          .rs-range { position: absolute; height: 6px; top: 50%; transform: translateY(-50%); border-radius: 9999px; background: var(--info); }
-          .rs-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border-radius: 9999px; background: white; border: 2px solid var(--info); cursor: grab; }
-          .rs-thumb:active { cursor: grabbing; }
-          .rs-inputs { display: flex; justify-content: space-between; margin-bottom: 8px; }
-          .rs-inputs input { width: 80px; text-align: center; padding: 2px 4px; border: 1px solid #ccc; border-radius: 4px; }
-        </style>
         <div class="rs-inputs">
           <input type="number" class="rs-input" />
           <input type="number" class="rs-input" />
