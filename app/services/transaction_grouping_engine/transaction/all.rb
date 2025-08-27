@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, category: nil, order_by: :date)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -15,6 +15,7 @@ module TransactionGroupingEngine
         @end_date = end_date&.to_datetime
         @user = user
         @missing_receipts = missing_receipts
+        @category = category
         @order_by = order_by
       end
 
@@ -102,6 +103,12 @@ module TransactionGroupingEngine
         ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user.stripe_cardholder.stripe_id])
       end
 
+      def category_modifier
+        return "" unless @category.present?
+
+        ActiveRecord::Base.sanitize_sql_array(["and transaction_categories.id = ?", @category.id])
+      end
+
       def user_joins_for(type)
         return "" unless @user.present?
 
@@ -110,6 +117,14 @@ module TransactionGroupingEngine
         return "left join raw_stripe_transactions on raw_stripe_transactions.id = transaction_source_id AND transaction_source_type = 'RawStripeTransaction'" if type == "ct"
 
         "left join raw_stripe_transactions on raw_stripe_transactions.id = raw_pending_stripe_transaction_id"
+      end
+
+      def category_joins_for(type)
+        return "" unless @category.present?
+
+        ct_type = type == :ct ? "CanonicalTransaction" : "CanonicalPendingTransaction"
+
+        return "left join transaction_category_mappings tcm on #{type}.id = tcm.categorizable_id AND tcm.categorizable_type = '#{ct_type}' left join transaction_categories on transaction_categories.id = tcm.transaction_category_id"
       end
 
       def modifiers
@@ -203,6 +218,7 @@ module TransactionGroupingEngine
             canonical_pending_transactions pt
           #{order_by_mapped_at ? "left join canonical_pending_event_mappings cpem on cpem.canonical_pending_transaction_id = pt.id" : ""}
           #{user_joins_for :pt}
+          #{category_joins_for :pt}
           where
             fronted = true -- only included fronted pending transactions
             and
@@ -237,6 +253,7 @@ module TransactionGroupingEngine
             )
             #{search_modifier_for :pt}
             #{user_modifier}
+            #{category_modifier}
           group by
             coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
         SQL
@@ -253,6 +270,7 @@ module TransactionGroupingEngine
             canonical_transactions ct
           #{order_by_mapped_at ? "left join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id" : ""}
           #{user_joins_for :ct}
+          #{category_joins_for :ct}
           where
             ct.id in (
               select
@@ -265,6 +283,7 @@ module TransactionGroupingEngine
             )
             #{search_modifier_for :ct}
             #{user_modifier}
+            #{category_modifier}
           group by
             coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
         SQL
