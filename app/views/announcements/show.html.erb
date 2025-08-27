@@ -26,7 +26,7 @@
   </p>
 
   <div class="flex gap-2">
-    <% if !editing %>
+    <% unless editing %>
       <% if @announcement.draft? && (policy(@announcement).publish? || auditor_signed_in?) %>
         <%= link_to publish_announcement_path(@announcement), class: "btn flex items-center bg-success #{"disabled" if !policy(@announcement).publish?}", data: { turbo_confirm: "Are you sure you would like to publish this announcement and notify #{@event.followers.size} #{"follower".pluralize(@event.followers.size)}?", turbo_method: :post } do %>
           <%= inline_icon "send" %>
