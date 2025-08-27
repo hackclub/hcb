@@ -11,7 +11,11 @@ class TransactionCategoryService
     @model = model
   end
 
-  def set!(slug:, assignment_strategy: nil)
+  def set!(slug:, assignment_strategy: "automatic")
+    unless TransactionCategoryMapping.assignment_strategies.key?(assignment_strategy)
+      raise(ArgumentError, "invalid assignment strategy: #{assignment_strategy.inspect}")
+    end
+
     unless slug.present?
       model.category_mapping&.destroy!
       return
@@ -20,7 +24,7 @@ class TransactionCategoryService
     category = TransactionCategory.find_or_create_by!(slug:)
     mapping = model.category_mapping || model.build_category_mapping
     mapping.category = category
-    mapping.assignment_strategy = assignment_strategy if assignment_strategy.present?
+    mapping.assignment_strategy = assignment_strategy
     mapping.save!
   end
 
