@@ -16,6 +16,10 @@ class TransactionCategoryService
       raise(ArgumentError, "invalid assignment strategy: #{assignment_strategy.inspect}")
     end
 
+    # If this is an automatic assignment and there's an existing manual mapping,
+    # do not proceed further
+    return if assignment_strategy == "automatic" && model.category_mapping&.manual?
+
     unless slug.present?
       model.category_mapping&.destroy!
       return
