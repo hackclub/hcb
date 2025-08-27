@@ -4,6 +4,20 @@ module EventMappingEngine
   module Map
     module HcbCodes
       class Short
+        def self.category_slug_for_hcb_code(hcb_code)
+          if hcb_code.bank_fee?
+            "fiscal-sponsorship-fees"
+          elsif hcb_code.fee_revenue?
+            "hcb-revenue"
+          elsif hcb_code.stripe_service_fee?
+            "stripe-service-fees"
+          elsif hcb_code.outgoing_fee_reimbursement?
+            "stripe-fee-reimbursements"
+          else
+            nil
+          end
+        end
+
         def run
           unmapped_short_codes.find_each(batch_size: 100) do |ct|
             # 1 locate short code id
@@ -65,16 +79,7 @@ module EventMappingEngine
         end
 
         def assign_transaction_category!(hcb_code:, canonical_transaction:)
-          category_slug =
-            if hcb_code.bank_fee?
-              "fiscal-sponsorship-fees"
-            elsif hcb_code.fee_revenue?
-              "hcb-revenue"
-            elsif hcb_code.stripe_service_fee?
-              "stripe-service-fees"
-            elsif hcb_code.outgoing_fee_reimbursement?
-              "stripe-fee-reimbursements"
-            end
+          category_slug = self.class.category_slug_for_hcb_code(hcb_code)
 
           return unless category_slug
 
