@@ -46,7 +46,7 @@
                 <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
                 <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", disabled: %>
               </div>
-              <% if @event.logo. %>
+              <% if @event.logo.attached? %>
                 <div class="menu__divider"></div>
                 <%= link_to "Remove logo", event_remove_logo_path(@event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
               <% end %>
