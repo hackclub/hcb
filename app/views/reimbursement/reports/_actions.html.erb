@@ -201,9 +201,110 @@
               <% end %>
               <% turbo_confirm = "⚠️ WARNING: Approving this reimbursement will make the event balance negative. This organization does not have sufficient funds to fulfill this request. Are you sure you want to proceed?" %>
             <% end %>
-            <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post, data: { turbo_confirm: } do %>
-              <%= inline_icon "thumbsup" %>
-              Approve <%= report.user.payout_method.human_kind %> reimbursement
+            <% if report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
+              <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "wise_approval" }, id: "submit_button" do %>
+                <%= inline_icon "thumbsup" %>
+                Approve & send Wise reimbursement
+              <% end %>
+              <section data-behavior="modal" role="dialog" id="wise_approval" class="modal modal--scroll bg-snow">
+                <%= modal_header "Approve & send Wise reimbursement" %>
+                This reimbursement must be sent via Wise at the same time it is approved. <span class="bold">Input the following transfer details into Wise</span>:
+                <table class="w-full table-fixed my-6">
+                  <tbody>
+                    <tr>
+                      <td>Amount (<%= report.currency %>):</td>
+                      <td><%= Money.from_cents(report.amount_to_reimburse_cents, report.currency).format %></td>
+                    </tr>
+                    <tr>
+                      <td>Name:</td>
+                      <td>
+                        <%= report.user.name %>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Email:</td>
+                      <td><%= report.user.email %></td>
+                    </tr>
+                    <tr>
+                      <td>Address (Line 1):</td>
+                      <td><%= report.user.payout_method.address_line1 %></td>
+                    </tr>
+                    <tr>
+                      <td>Address (Line 2):</td>
+                      <td><%= report.user.payout_method.address_line2 %></td>
+                    </tr>
+                    <tr>
+                      <td>City:</td>
+                      <td><%= report.user.payout_method.address_city %></td>
+                    </tr>
+                    <tr>
+                      <td>State:</td>
+                      <td><%= report.user.payout_method.address_state %></td>
+                    </tr>
+                    <tr>
+                      <td>Postal code:</td>
+                      <td><%= report.user.payout_method.address_postal_code %></td>
+                    </tr>
+                    <tr>
+                      <td>Recipient country:</td>
+                      <td><%= report.user.payout_method.recipient_country %></td>
+                    </tr>
+                    <% WiseTransfer.recipient_information_accessors&.each do |key| %>
+                      <% if report.user.payout_method.recipient_information[key].presence != nil %>
+                        <tr>
+                          <td><%= key.humanize %></td>
+                          <td><%= report.user.payout_method.recipient_information[key] %></td>
+                        </tr>
+                      <% elsif report.user.payout_method.read_attribute(key.to_sym).present? %>
+                        <tr>
+                          <td><%= key.humanize %></td>
+                          <td><%= report.user.payout_method.read_attribute(key.to_sym) %></td>
+                        </tr>
+                      <% end %>
+                    <% end %>
+                  </tbody>
+                </table>
+                <p>
+                  <span class="bold">Then, confirm that the amount after fees is less than <%= render_money report.event.balance %></span>.
+                </p>
+                <p>
+                  You may now send the Wise transfer. After sending it please input the following details to mark this report as reimbursed:
+                </p>
+                <%= form_with url: reimbursement_report_admin_approve_path(report_id: @report.id) do |form| %>
+                  <%= form.label :wise_total_before_fees, "Total before fees (in USD, from Wise)" %>
+                  <div class="field">
+                    <div class="flex items-center">
+                      <span class="bold muted" style="width: 1rem;">$</span>
+                      <div class="flex flex-col">
+                        <%= form.number_field :wise_total_before_fees,
+                          placeholder: "500.00",
+                          step: 0.01,
+                          required: true,
+                          data: { behavior: "check_amount_field", controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
+                      </div>
+                    </div>
+                  </div>
+                  <%= form.label :wise_total_after_fees, "Total after fees (in USD, from Wise)" %>
+                  <div class="field">
+                    <div class="flex items-center">
+                      <span class="bold muted" style="width: 1rem;">$</span>
+                      <div class="flex flex-col">
+                        <%= form.number_field :wise_total_after_fees,
+                          placeholder: "500.00",
+                          step: 0.01,
+                          required: true,
+                          data: { behavior: "check_amount_field", controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
+                      </div>
+                    </div>
+                  </div>
+                  <%= form.submit "Submit" %>
+                <% end %>
+              </section>
+            <% else %>
+              <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post, data: { turbo_confirm: } do %>
+                <%= inline_icon "thumbsup" %>
+                Approve <%= report.user.payout_method.human_kind %> reimbursement
+              <% end %>
             <% end %>
           <% end %>
         <% end %>
@@ -230,20 +331,26 @@
       <% if report.locked? %>
         <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
           <span class="stat__label">Expenses approved</span>
-          <span class="stat__value"><%= report.expenses.approved.count %>/<%= report.expenses.count %></span>
+          <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
         </div>
         <div class="stat stat--small" style="flex-shrink: 0;">
           <span class="stat__label">Amount approved</span>
           <span class="stat__value"><%= render_money report.amount_to_reimburse_cents, unit: "" %></span>
         </div>
+        <% if report.fees_charged_cents > 0 %>
+          <div class="stat stat--small" style="flex-shrink: 0;">
+            <span class="stat__label">Fees charged</span>
+            <span class="stat__value"><%= render_money report.fees_charged_cents, unit: "" %></span>
+          </div>
+        <% end %>
       <% else %>
         <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
           <span class="stat__label">Total expenses</span>
-          <span class="stat__value"><%= report.expenses.count %></span>
+          <span class="stat__value"><%= report.expenses.to_sum.count %></span>
         </div>
         <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
           <span class="stat__label">Complete</span>
-          <span class="stat__value"><%= report.expenses.complete.count %>/<%= report.expenses.count %></span>
+          <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
         </div>
       <% end %>
       <p class="mt0 mb0" id="summary-hint">

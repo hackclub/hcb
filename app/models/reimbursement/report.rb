@@ -241,13 +241,17 @@ module Reimbursement
     def amount_cents
       return amount_to_reimburse_cents if reimbursement_requested? || reimbursement_approved? || reimbursed?
 
-      expenses.sum(:amount_cents)
+      expenses.to_sum.sum(:amount_cents)
     end
 
     def amount_to_reimburse_cents
-      return [expenses.approved.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents
+      return [expenses.approved.to_sum.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents
 
-      expenses.approved.sum(:amount_cents)
+      expenses.approved.to_sum.sum(:amount_cents)
+    end
+
+    def fees_charged_cents
+      expenses.approved.where(type: Reimbursement::Expense::Fee.name).sum(:amount_cents)
     end
 
     def last_reimbursement_requested_by

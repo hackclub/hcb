@@ -46,6 +46,8 @@ module Reimbursement
     include Hashid::Rails
     has_paper_trail
     acts_as_paranoid
+    
+    scope :to_sum, -> { where.not(type: Reimbursement::Expense::Fee.name) }
 
     include PublicIdentifiable
     set_public_id_prefix :rme
