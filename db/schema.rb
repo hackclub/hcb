@@ -1886,7 +1886,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_064629) do
     t.datetime "deleted_at", precision: nil
     t.bigint "reviewer_id"
     t.float "conversion_rate", default: 1.0, null: false
-    t.string "currency"
+    t.string "currency", default: "USD", null: false
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"

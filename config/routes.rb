@@ -522,6 +522,7 @@ Rails.application.routes.draw do
       post "request_changes"
       post "reject"
       post "submit"
+      post "update_currency"
       post "draft"
       collection do
         post "quick_expense"

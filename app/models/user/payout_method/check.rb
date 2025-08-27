@@ -54,6 +54,10 @@ class User
         "Check"
       end
 
+      def currency
+        "USD"
+      end
+
     end
   end
 
