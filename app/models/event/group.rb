@@ -21,6 +21,16 @@
 #
 class Event
   class Group < ApplicationRecord
+    belongs_to(:user)
+    has_many(
+      :memberships,
+      class_name: "Event::GroupMembership",
+      inverse_of: :group
+    )
+    has_many(:events, through: :memberships)
+
+    validates(:name, uniqueness: { case_sensitive: false }, presence: true)
+
   end
 
 end

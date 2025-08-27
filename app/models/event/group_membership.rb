@@ -22,6 +22,14 @@
 #
 class Event
   class GroupMembership < ApplicationRecord
+    belongs_to(
+      :group,
+      class_name: "Event::Group",
+      foreign_key: :event_group_id,
+      inverse_of: :memberships
+    )
+    belongs_to(:event)
+
   end
 
 end

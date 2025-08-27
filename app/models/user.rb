@@ -103,6 +103,8 @@ class User < ApplicationRecord
 
   has_many :managed_events, inverse_of: :point_of_contact
 
+  has_many :event_groups, class_name: "Event::Group"
+
   has_many :g_suite_accounts, inverse_of: :fulfilled_by
   has_many :g_suite_accounts, inverse_of: :creator
 
