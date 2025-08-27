@@ -79,6 +79,17 @@ module Reimbursement
       end
     end
 
+    def update_currency
+      authorize @report
+
+      currency = @report.user.payout_method.currency
+      if @report.update(currency:)
+        flash[:success] = "Report successfully updated to #{currency}."
+      else
+        flash[:error] = @report.errors.full_messages.to_sentence
+      end
+    end
+
     def finished
     end
 

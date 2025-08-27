@@ -7,7 +7,7 @@
 #  id                         :bigint           not null, primary key
 #  aasm_state                 :string
 #  conversion_rate            :float            default(1.0), not null
-#  currency                   :string
+#  currency                   :string           default("USD"), not null
 #  deleted_at                 :datetime
 #  expense_number             :integer          default(0), not null
 #  invite_message             :text
@@ -108,8 +108,9 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? && expenses.any? && !missing_receipts? &&
-              user.payout_method.class != User::PayoutMethod::PaypalTransfer && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? }
+            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
+              expenses.any? && !missing_receipts? && user.payout_method.class != User::PayoutMethod::PaypalTransfer &&
+              !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } && !mismatched_currency?
           end
         end
         after do
@@ -311,6 +312,10 @@ module Reimbursement
 
     def missing_receipts?
       expenses.complete.with_receipt.count != expenses.count
+    end
+
+    def mismatched_currency?
+      user.payout_method.present? && currency != user.payout_method.currency
     end
 
     def exceeds_maximum_amount?

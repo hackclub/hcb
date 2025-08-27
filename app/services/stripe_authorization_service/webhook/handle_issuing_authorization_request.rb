@@ -57,6 +57,15 @@ module StripeAuthorizationService
       def approve?
         return decline_with_reason!("event_frozen") if event.financially_frozen?
 
+        if forbidden_merchant_category?
+          AdminMailer
+            .with(stripe_card: card, merchant_category:)
+            .blocked_authorization
+            .deliver_later
+
+          return decline_with_reason!("merchant_not_allowed")
+        end
+
         return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?
 
         return decline_with_reason!("inadequate_balance") if card_balance_available < amount_cents
@@ -91,11 +100,19 @@ module StripeAuthorizationService
         )
       end
 
+      def merchant_category
+        auth[:merchant_data][:category]
+      end
+
+      def forbidden_merchant_category?
+        StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category)
+      end
+
       def merchant_allowed?
         disallowed_categories = card&.card_grant&.disallowed_categories
         disallowed_merchants = card&.card_grant&.disallowed_merchants
 
-        return false if disallowed_categories&.include?(auth[:merchant_data][:category])
+        return false if disallowed_categories&.include?(merchant_category)
         return false if disallowed_merchants&.include?(auth[:merchant_data][:network_id])
 
         allowed_categories = card&.card_grant&.allowed_categories
@@ -105,7 +122,7 @@ module StripeAuthorizationService
         has_restrictions = allowed_categories.present? || allowed_merchants.present? || keyword_lock.present?
         return true unless has_restrictions
 
-        return true if allowed_categories&.include?(auth[:merchant_data][:category])
+        return true if allowed_categories&.include?(merchant_category)
         return true if allowed_merchants&.include?(auth[:merchant_data][:network_id])
         return true if keyword_lock.present? && Regexp.new(keyword_lock).match?(auth[:merchant_data][:name])
 
