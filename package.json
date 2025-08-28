@@ -36,7 +36,7 @@
     "@tiptap/extension-placeholder": "^2.24.0",
     "@tiptap/extension-underline": "^2.26.1",
     "@tiptap/pm": "^2.26.1",
-    "@tiptap/starter-kit": "^3.1.0",
+    "@tiptap/starter-kit": "^3.3.0",
     "ahoy.js": "^0.4.4",
     "alpinejs": "^3.14.9",
     "autoprefixer": "^10.4.21",
