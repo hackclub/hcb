@@ -21,7 +21,7 @@ module Api
       def create
         authorize @event
 
-        @sponsor = event.sponsors.new(sponsor_params)
+        @sponsor = @event.sponsors.new(sponsor_params)
         authorize @sponsor
 
         if @sponsor.save
