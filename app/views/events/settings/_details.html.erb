@@ -29,7 +29,7 @@
       <% end %>
 
       <div class="event_settings__banner--logo">
-        <% if @event.logo.attached? %>
+        <% if @event.logo.persisted? %>
           <%= image_tag @event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
         <% else %>
           <%= image_tag "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
@@ -150,7 +150,7 @@
         Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
         The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
       </p>
-      <% if @event.stripe_card_logo.attached? %>
+      <% if @event.stripe_card_logo.persisted? %>
         <%= image_tag @event.stripe_card_logo, width: 48 %>
       <% end %>
       <div class="field--fileupload mt2">
