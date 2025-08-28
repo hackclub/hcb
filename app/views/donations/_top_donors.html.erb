@@ -2,7 +2,7 @@
   <h2>Top donors</h2>
 
   <% @top_donors.each_with_index do |donor, i| %>
-    <div class="card mt-3 flex items-center gap-4 topDonorCard <%= %w[firstPlace secondPlace thirdPlace][i] || '' %>">
+    <div class="card mt-3 flex items-center gap-4 topDonorCard <%= %w[firstPlace secondPlace thirdPlace][i] || "" %>">
       <div class="number w-10 text-xs font-bold flex h-7 border-2 border-solid rounded-full items-center border-gray-300 text-gray-500 justify-center">#<%= i + 1 %></div>
       <h4 class="my-0 -mt-1"><%= donor.name %></h4>
       <p class="my-0 ml-auto"><%= number_to_currency(donor.amount) %></p>
