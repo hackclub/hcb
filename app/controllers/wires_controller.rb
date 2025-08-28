@@ -26,12 +26,16 @@ class WiresController < ApplicationController
 
     if @wire.save
       if wire_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: wire_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @wire.local_hcb_code
-        ).run!
+        begin
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: wire_params[:file],
+            upload_method: :transfer_create_page,
+            receiptable: @wire.local_hcb_code
+          ).run!
+        rescue ActiveRecord::RecordInvalid => e
+          return redirect_to url_for(@wire.local_hcb_code), flash: { info: "Wire successfully submitted, however, the receipt file was invalid." }
+        end
       end
       redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }
     else

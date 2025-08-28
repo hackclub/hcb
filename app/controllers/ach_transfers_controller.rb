@@ -57,13 +57,16 @@ class AchTransfersController < ApplicationController
 
     if @ach_transfer.save
       if ach_transfer_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: ach_transfer_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @ach_transfer.local_hcb_code
-        ).run!
-      end
+        begin
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: ach_transfer_params[:file],
+            upload_method: :transfer_create_page,
+            receiptable: @ach_transfer.local_hcb_code
+          ).run!
+        rescue ActiveRecord::RecordInvalid => e
+          return redirect_to event_transfers_path(@event), flash: { info: "ACH transfer successfully submitted, however, the receipt file was invalid." }
+        end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }
     else
       render :new, status: :unprocessable_entity
