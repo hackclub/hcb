@@ -410,6 +410,9 @@ class AdminController < ApplicationController
 
     relation = relation.unsettled if @unsettled
 
+    # Preload transaction categories
+    relation = relation.preload(:category)
+
     @count = relation.count
 
     @canonical_pending_transactions = relation.page(@page).per(@per).order("date desc")

@@ -42,9 +42,15 @@ class StaticPagesController < ApplicationController
       @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
 
     end
-    if auditor_signed_in?
-      @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
+  end
+
+  def admin_tools
+    unless auditor_signed_in?
+      redirect_to(root_path, flash: { error: "You are not authorized to visit this page." })
+      return
     end
+
+    @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
   end
 
   def branding
@@ -116,6 +122,13 @@ class StaticPagesController < ApplicationController
         "Get reimbursed through HCB": :member,
         "View reimbursement reports": :reader,
         "Review, approve, and reject reports": :manager,
+      },
+      Announcements: {
+        "Create or delete an announcement": :manager,
+        "Publish an announcement": :manager,
+        "View announcements": :reader,
+        "View followers": :reader,
+        "Remove followers": :manager
       },
       "Google Workspace": {
         "Create an account": :manager,

@@ -65,6 +65,7 @@
             <% additional_classes = [].tap do |array|
                  array << "bg-success" if local_assigns[:success]
                  array << "bg-error" if local_assigns[:error]
+                 array << "disabled" if defined?(receiptable) && current_user && !ReceiptablePolicy.new(current_user, receiptable).upload?
                end.join(", ") %>
             <%= form.label :file, class: "btn m1 #{additional_classes}", id: "upload-receipt-button" do %>
               <%= inline_icon "cloud-upload" %>

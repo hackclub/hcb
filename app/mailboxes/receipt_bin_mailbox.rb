@@ -25,10 +25,13 @@ class ReceiptBinMailbox < ApplicationMailbox
 
     return bounce_error if result.empty?
 
+    paired_with = result.map { |r| r.reload.receiptable }.select(&:present?)
+
     ReceiptBinMailer.with(
       mail: inbound_email,
       reply_to: mail.to.first,
-      receipts_count: result.size
+      receipts_count: result.size,
+      paired_with:
     ).bounce_success.deliver_now
   end
 

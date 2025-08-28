@@ -2079,6 +2079,24 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.index ["tourable_type", "tourable_id"], name: "index_tours_on_tourable"
   end
 
+  create_table "transaction_categories", force: :cascade do |t|
+    t.citext "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_transaction_categories_on_slug", unique: true
+  end
+
+  create_table "transaction_category_mappings", force: :cascade do |t|
+    t.bigint "transaction_category_id", null: false
+    t.text "categorizable_type", null: false
+    t.bigint "categorizable_id", null: false
+    t.text "assignment_strategy", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["categorizable_type", "categorizable_id"], name: "idx_on_categorizable_type_categorizable_id_f3e1245d19", unique: true
+    t.index ["transaction_category_id"], name: "index_transaction_category_mappings_on_transaction_category_id"
+  end
+
   create_table "transaction_csvs", force: :cascade do |t|
     t.string "aasm_state"
     t.datetime "created_at", null: false
@@ -2525,6 +2543,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"
   add_foreign_key "transactions", "checks"

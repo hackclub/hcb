@@ -65,7 +65,7 @@ module Column
       RawPendingColumnTransaction.create!(
         column_id: @object["id"],
         amount_cents: @object["available_amount"],
-        date_posted: @object["effective_at_utc"],
+        date_posted: @object["settlement_date"],
         column_transaction: @object,
         column_event_type:
       )

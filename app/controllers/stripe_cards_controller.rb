@@ -10,10 +10,9 @@ class StripeCardsController < ApplicationController
   end
 
   def shipping
-    # Only show shipping for phyiscal cards if the eta is in the future (or 1 week after)
-    @stripe_cards = current_user.stripe_cards.where.not(stripe_status: "canceled").physical_shipping.filter do |sc|
-      sc.shipping_eta&.after?(1.week.ago)
-    end
+    # Only show shipping for phyiscal cards if the eta is in the future and they haven't already been activated or canceled.
+    @stripe_cards = current_user.stripe_cards.cards_in_shipping
+
     skip_authorization # do not force pundit
 
     render :shipping, layout: false
@@ -131,7 +130,11 @@ class StripeCardsController < ApplicationController
   rescue => e
     Rails.error.report(e)
 
-    redirect_to event_cards_new_path(event), flash: { error: e.message }
+    if event.present?
+      redirect_to event_cards_new_path(event), flash: { error: e.message }
+    else
+      redirect_to my_cards_path, flash: { error: e.message }
+    end
   end
 
   def edit

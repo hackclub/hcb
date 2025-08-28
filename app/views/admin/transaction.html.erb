@@ -2,31 +2,56 @@
 
 <h1>Transaction <%= @canonical_transaction.id %></h1>
 
-<table>
-  <thead>
+<table class="no-stripes <%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
+  <tbody>
     <tr>
       <th>ID</th>
-      <th>Date</th>
-      <th>Memo</th>
-      <th>Bank account</th>
-      <th>FriendlyMemo</th>
-      <th>CustomMemo</th>
-      <th>Amount</th>
-      <th>HCB Code</th>
-      <th>MappedBy</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr class="<%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
       <td><%= link_to @canonical_transaction.id, canonical_transaction_path(@canonical_transaction) %></td>
+    </tr>
+    <tr>
+      <th>Date</th>
       <td><%= @canonical_transaction.date %></td>
+    </tr>
+    <tr>
+      <th>Memo</th>
       <td><%= @canonical_transaction.memo %></td>
+    </tr>
+    <tr>
+      <th>Bank account</th>
       <td><%= @canonical_transaction.bank_account_name %></td>
+    </tr>
+    <tr>
+      <th>FriendlyMemo</th>
       <td><%= @canonical_transaction.friendly_memo %></td>
+    </tr>
+    <tr>
+      <th>CustomMemo</th>
       <td><%= @canonical_transaction.custom_memo %></td>
+    </tr>
+    <tr>
+      <th>Amount</th>
       <td><%= @canonical_transaction.amount.format %></td>
+    </tr>
+    <tr>
+      <th>HCB Code</th>
       <td><%= link_to @canonical_transaction.hcb_code, hcb_code_path(@canonical_transaction.local_hcb_code) %></td>
+    </tr>
+    <tr>
+      <th>MappedBy</th>
       <td><%= @canonical_transaction.canonical_event_mapping.try(:user).try(:email) %></td>
+    </tr>
+    <tr>
+      <th>Category</th>
+      <td>
+        <%= render(
+              partial: "hcb_codes/transaction_category_form",
+              locals: {
+                model: @canonical_transaction,
+                url: set_category_canonical_transaction_path(@canonical_transaction),
+                admin_context: true
+              }
+            ) %>
+      </td>
     </tr>
   </tbody>
 </table>

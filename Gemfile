@@ -15,6 +15,7 @@ gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
 gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
+gem "activejob-traffic_control" # throttle jobs
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -58,7 +59,7 @@ gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
-gem "active_storage_validations", "2.0.2" # file validations
+gem "active_storage_validations", "3.0.1" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 

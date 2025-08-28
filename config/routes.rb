@@ -57,6 +57,10 @@ Rails.application.routes.draw do
       post "link"
       get "link_modal"
     end
+
+    member do
+      post "reverse"
+    end
   end
 
   scope :my do
@@ -281,6 +285,7 @@ Rails.application.routes.draw do
   end
 
   namespace :admin do
+    root to: redirect("/admin/events")
     namespace :ledger_audits do
       resources :tasks, only: [:index, :show, :create] do
         post :reviewed
@@ -317,6 +322,8 @@ Rails.application.routes.draw do
   resources :organizer_position_contracts, only: [:create], path: "contracts" do
     member do
       post "void"
+      post "resend_to_user"
+      post "resend_to_cosigner"
     end
   end
 
@@ -460,6 +467,7 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
+      get "receipt_status"
       post "invoice_as_personal_transaction"
       post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
@@ -480,7 +488,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update]
+  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+    member do
+      post "set_category"
+    end
+  end
 
   resources :canonical_transactions, only: [:show, :edit] do
     member do
@@ -488,6 +500,7 @@ Rails.application.routes.draw do
       post "unwaive_fee"
       post "mark_bank_fee"
       post "set_custom_memo"
+      post "set_category"
     end
   end
 
@@ -544,6 +557,7 @@ Rails.application.routes.draw do
   get "security", to: "static_pages#security"
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
+  get "admin_tools", to: "static_pages#admin_tools"
   get "audit", to: "admin#audit"
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
@@ -784,6 +798,7 @@ Rails.application.routes.draw do
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
     get "statements"
+    get "statement_of_activity"
     get "promotions"
     get "reimbursements"
     get "employees"
