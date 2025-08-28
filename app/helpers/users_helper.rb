@@ -50,7 +50,7 @@ module UsersHelper
     ].compact
 
     if current_user.jobs.any?
-       items << {
+      items << {
         name: "Pay",
         path: my_payroll_path,
         icon: "person-badge",
