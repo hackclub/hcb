@@ -139,7 +139,7 @@ class MyController < ApplicationController
     when "review"
       @reports = @reports_to_review
     else
-      @reports = @my_reports.or(@reports_to_review)
+      @reports = @my_reports.or(@reports_to_review).uniq
     end
 
     @reports = @reports.search(params[:q]) if params[:q].present?
@@ -148,7 +148,7 @@ class MyController < ApplicationController
   end
 
   def reimbursements_icon
-    @reports_count = @my_reports.or(@reports_to_review).count
+    @reports_count = @my_reports.or(@reports_to_review).uniq.count
 
     render :reimbursements_icon, layout: false
   end
