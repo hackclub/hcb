@@ -65,13 +65,10 @@
                 data-controller="range-slider"
                 data-range-slider-min-value="<%= filter[:range][0] %>"
                 data-range-slider-max-value="<%= filter[:range][1] %>"
-
-                data-range-slider-lo-value="<%= params[filter[:key_base] + '_greater_than'] %>" 
-                data-range-slider-hi-value="<%= params[filter[:key_base] + '_less_than'] %>" 
-
+                data-range-slider-lo-value="<%= params[filter[:key_base] + "_greater_than"] %>"
+                data-range-slider-hi-value="<%= params[filter[:key_base] + "_less_than"] %>"
                 data-range-slider-key-base-value="<%= filter[:key_base] %>"
-                data-action="range:change->filters#updatePrice"
-              >
+                data-action="range:change->filters#updatePrice">
                 <div data-range-slider-target="root" class="w-full select-none"></div>
               </div>
 
@@ -79,7 +76,7 @@
                 <%= hidden_field_tag k, v %>
               <% end %>
 
-              <%= form.submit "Filter..." , class: "w-full mt-5" %>
+              <%= form.submit "Filter...", class: "w-full mt-5" %>
             <% end %>
           <% end %>
         </div>

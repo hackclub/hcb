@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   static values = {
@@ -10,13 +10,21 @@ export default class extends Controller {
     hi: { type: Number, default: null },
 
     minDistance: { type: Number, default: 1 },
-    keyBase: { type: String, default: "" }
+    keyBase: { type: String, default: '' },
   }
 
   connect() {
     this.value = [
-      this.clamp(this.loValue ?? this.minValue, this.minValue, this.maxValue - this.minDistanceValue),
-      this.clamp(this.hiValue ? this.hiValue : this.maxValue, this.minValue + this.minDistanceValue, this.maxValue)
+      this.clamp(
+        this.loValue ?? this.minValue,
+        this.minValue,
+        this.maxValue - this.minDistanceValue
+      ),
+      this.clamp(
+        this.hiValue ? this.hiValue : this.maxValue,
+        this.minValue + this.minDistanceValue,
+        this.maxValue
+      ),
     ]
 
     this.activeThumb = null
@@ -32,35 +40,50 @@ export default class extends Controller {
   }
 
   percentToValue(percent) {
-    const raw = this.minValue + (percent / 100) * (this.maxValue - this.minValue)
+    const raw =
+      this.minValue + (percent / 100) * (this.maxValue - this.minValue)
     const rounded = Math.round(raw / this.stepValue) * this.stepValue
     return this.clamp(rounded, this.minValue, this.maxValue)
   }
 
   setLo(next) {
-    this.value = [this.clamp(next, this.minValue, this.value[1] - this.minDistanceValue), this.value[1]]
+    this.value = [
+      this.clamp(next, this.minValue, this.value[1] - this.minDistanceValue),
+      this.value[1],
+    ]
     this.render()
   }
 
   setHi(next) {
-    this.value = [this.value[0], this.clamp(next, this.value[0] + this.minDistanceValue, this.maxValue)]
+    this.value = [
+      this.value[0],
+      this.clamp(next, this.value[0] + this.minDistanceValue, this.maxValue),
+    ]
     this.render()
   }
 
   handlePointer(e, which) {
     const rect = this.track.getBoundingClientRect()
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const percent = this.clamp(((clientX - rect.left) / rect.width) * 100, 0, 100)
+    const percent = this.clamp(
+      ((clientX - rect.left) / rect.width) * 100,
+      0,
+      100
+    )
     const raw = this.percentToValue(percent)
     if (which === 'lo') this.setLo(raw)
     else this.setHi(raw)
   }
 
-  onTrackDown = (e) => {
+  onTrackDown = e => {
     e.preventDefault()
     const rect = this.track.getBoundingClientRect()
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const percent = this.clamp(((clientX - rect.left) / rect.width) * 100, 0, 100)
+    const percent = this.clamp(
+      ((clientX - rect.left) / rect.width) * 100,
+      0,
+      100
+    )
     const raw = this.percentToValue(percent)
     const dLo = Math.abs(raw - this.value[0])
     const dHi = Math.abs(raw - this.value[1])
@@ -73,7 +96,7 @@ export default class extends Controller {
     document.addEventListener('touchend', this.onUp)
   }
 
-  onThumbDown = (which) => (e) => {
+  onThumbDown = which => e => {
     e.preventDefault()
     this.activeThumb = which
     document.addEventListener('mousemove', this.onMove)
@@ -82,7 +105,7 @@ export default class extends Controller {
     document.addEventListener('touchend', this.onUp)
   }
 
-  onMove = (e) => {
+  onMove = e => {
     if (!this.activeThumb) return
     this.handlePointer(e, this.activeThumb)
   }
@@ -95,7 +118,7 @@ export default class extends Controller {
     document.removeEventListener('touchend', this.onUp)
   }
 
-  onInputChange = (which) => (e) => {
+  onInputChange = which => e => {
     const val = parseInt(e.target.value, 10)
     if (isNaN(val)) return
     if (which === 'lo') this.setLo(val)
@@ -118,7 +141,7 @@ export default class extends Controller {
           <button type="button" class="rs-thumb text-blue-600"></button>
         </div>`
 
-      this.element.innerHTML = '';
+      this.element.innerHTML = ''
 
       this.element.appendChild(this.container)
       this.inputs = this.container.querySelectorAll('.rs-input')
