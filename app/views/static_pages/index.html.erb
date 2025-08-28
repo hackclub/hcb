@@ -157,5 +157,9 @@
       </ul>
     <% end %>
   <% end %>
-  <%= render partial: "static_pages/admin" %>
+  <% if auditor_signed_in? %>
+    <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :lazy, target: "_top", class: "w-full") do %>
+      <p>Loading admin tools</p>
+    <% end %>
+  <% end %>
 </main>

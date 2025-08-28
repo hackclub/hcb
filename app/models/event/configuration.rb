@@ -41,9 +41,10 @@ class Event
     def create_or_destroy_monthly_announcement
       if self.generate_monthly_announcement_previously_changed?
         if self.generate_monthly_announcement
-          Announcement::Templates::Monthly.new(event: self.event, author: User.system_user).create if self.event.announcements.monthly_for(Date.today).empty?
+          Announcement::Templates::Monthly.new(event: self.event, author: User.system_user).create if self.event.announcements.all_monthly_for(Date.today).empty?
         else
-          self.event.announcements.monthly_for(Date.today).first&.destroy!
+          monthly_announcement_draft = self.event.announcements.all_monthly_for(Date.today).first
+          monthly_announcement_draft&.destroy! unless monthly_announcement_draft&.published?
         end
       end
     end

@@ -11,8 +11,10 @@
         <p class="h5 muted mt0 mb1">
           Get a regular email roundup of your transactions awaiting receipts.
         </p>
-        <%= form.select :receipt_report_option,
-                        (User.receipt_report_options.map { |k, v| [k.humanize, k] }) %>
+        <%= form.select(
+              :receipt_report_option,
+              User.receipt_report_options.map { |k, v| [k.humanize, k] }
+            ) %>
       </fieldset>
       <fieldset class="field">
         <legend class="font-medium">Transaction comments</legend>
