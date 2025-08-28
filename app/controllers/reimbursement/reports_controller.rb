@@ -182,7 +182,7 @@ module Reimbursement
               return redirect_to @report
             end
 
-            conversion_rate = (params[:wise_total_without_fees].to_f / @report.amount_to_reimburse.to_f).round(2)
+            conversion_rate = (params[:wise_total_without_fees].to_f / @report.amount_to_reimburse).round(2)
             @report.update(conversion_rate:)
             approved_amount_usd_cents = @report.expenses.approved.sum { |expense| expense.amount_cents * expense.conversion_rate }
             fee_expense_value = (params[:wise_total_including_fees].to_f * 100 - approved_amount_usd_cents.to_f) / 100
