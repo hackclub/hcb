@@ -12,7 +12,7 @@ module Errors
 
   class StripeIssuingBalanceAnomaly < StandardError
   end
-  
+
   class StripeInvalidNameError < StandardError
   end
 
