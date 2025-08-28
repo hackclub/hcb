@@ -14,7 +14,7 @@
   <% premium_ineligible_reason = "Organization must have teen-led tag (reach out to your POC regarding this)" %>
 <% end %>
 
-<% active_teen_count = 10 %>
+<% active_teen_count = @event.users.count { |user| user.teenager? && user.active? } %>
 
 <div class="mb3 rounded-xl promo-premium-border">
   <div class="card pb0" id="premium-jukebox">
