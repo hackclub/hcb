@@ -294,12 +294,12 @@
                 </div>
 
                 <%= form_with url: reimbursement_report_admin_approve_path(report_id: @report.id) do |form| %>
-                  <%= form.label :wise_total_before_fees, "Total before fees (in USD, from Wise)" %>
+                  <%= form.label :wise_total_including_fees, "Total including fees (in USD, from Wise)" %>
                   <div class="field">
                     <div class="flex items-center">
                       <span class="bold muted" style="width: 1rem;">$</span>
                       <div class="flex flex-col">
-                        <%= form.number_field :wise_total_before_fees,
+                        <%= form.number_field :wise_total_including_fees,
                           placeholder: "500.00",
                           step: 0.01,
                           required: true,
@@ -307,12 +307,12 @@
                       </div>
                     </div>
                   </div>
-                  <%= form.label :wise_total_after_fees, "Total after fees (in USD, from Wise)" %>
+                  <%= form.label :wise_total_without_fees, "Total without fees (in USD, from Wise)" %>
                   <div class="field">
                     <div class="flex items-center">
                       <span class="bold muted" style="width: 1rem;">$</span>
                       <div class="flex flex-col">
-                        <%= form.number_field :wise_total_after_fees,
+                        <%= form.number_field :wise_total_without_fees,
                           placeholder: "500.00",
                           step: 0.01,
                           required: true,

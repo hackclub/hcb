@@ -176,12 +176,14 @@ module Reimbursement
 
       begin
         @report.with_lock do
-          if params[:wise_total_before_fees] && params[:wise_total_after_fees]
-            conversion_rate = (params[:wise_total_before_fees].to_f / @report.amount_to_reimburse.to_f).round(2)
+          if params[:wise_total_without_fees] && params[:wise_total_including_fees]
+            conversion_rate = (params[:wise_total_without_fees].to_f / @report.amount_to_reimburse.to_f).round(2)
             @report.update(conversion_rate:)
             approved_amount_usd_cents = @report.expenses.approved.sum { |expense| expense.amount_cents * expense.conversion_rate }
-            @report.expenses.create(
-              value: (params[:wise_total_after_fees].to_f * 100 - approved_amount_usd_cents.to_f) / 100,
+            fee_expense_value = (params[:wise_total_including_fees].to_f * 100 - approved_amount_usd_cents.to_f) / 100
+
+            @report.expenses.create!(
+              value: fee_expense_value,
               memo: "Transfer fee",
               type: Reimbursement::Expense::Fee,
               aasm_state: :approved,
