@@ -5,34 +5,49 @@ class Event
     include SetEvent
 
     before_action :set_event, only: :create
+    before_action :set_metadata, only: [:create, :update]
 
     def create
       authorize @event, policy_class: AffiliationPolicy
 
-      case params[:type]
-      when "first"
-        metadata = first_params
-      when "vex"
-        metadata = vex_params
-      when "hack_club"
-        metadata = hack_club_params
-      end
-
       @event.affiliations.create({
         name: params[:type],
-        metadata:
+        metadata: @metadata
       })
+
+      redirect_back fallback_location: @event
     end
 
     def update
-      authorize @affiliation
+      affiliation = Affiliation.find(params[:id])
+
+      authorize affiliation
+
+      affiliation.update(name: params[:type], metadata: @metadata)
+
+      redirect_back fallback_location: @event
     end
 
     def destroy
-      authorize @affiliation
+      affiliation = Affiliation.find(params[:id])
+
+      authorize affiliation
+
+      affiliation.destroy!
     end
 
     private
+
+    def set_metadata
+      case params[:type]
+      when "first"
+        @metadata = first_params
+      when "vex"
+        @metadata = vex_params
+      when "hack_club"
+        @metadata = hack_club_params
+      end
+    end
 
     def first_params
       params.permit(:league, :team_number, :size)

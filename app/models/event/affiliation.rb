@@ -23,6 +23,33 @@ class Event
   class Affiliation < ApplicationRecord
     belongs_to :event
 
+    def display_name
+      case name
+      when "first"
+        "FIRST"
+      when "vex"
+        "VEX"
+      when "hack_club"
+        "Hack Club"
+      end
+    end
+
+    def league
+      metadata["league"] if is_first? || is_vex?
+    end
+
+    def team_number
+      metadata["team_number"] if is_first? || is_vex?
+    end
+
+    def size
+      metadata["size"] if is_first? || is_vex? || is_hack_club?
+    end
+
+    def venue_name
+      metadata["venue_name"] if is_hack_club?
+    end
+
     def is_first?
       name == "first"
     end
