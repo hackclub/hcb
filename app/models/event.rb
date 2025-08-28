@@ -286,6 +286,7 @@ class Event < ApplicationRecord
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
+  has_many :readers, -> { where(organizer_positions: { role: :reader }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
@@ -819,6 +820,7 @@ class Event < ApplicationRecord
     # Sync stats to application's airtable record
     ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
       app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
+      app["HCB POC Email"] = point_of_contact.email
 
       # For Anish's TUB
       app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?

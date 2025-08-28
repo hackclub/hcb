@@ -35,4 +35,10 @@ class TransactionCategory < ApplicationRecord
     inclusion: { in: TransactionCategory::Definition::ALL.keys }
   )
 
+  delegate :label, to: :definition
+
+  def definition
+    TransactionCategory::Definition::ALL.fetch(slug)
+  end
+
 end
