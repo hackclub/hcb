@@ -5,5 +5,20 @@
 <%= turbo_frame_tag :affiliations_settings do %>
   <h3 class="mb1" id="affiliations_heading">Add a new affiliation</h3>
   <div class="card mb3">
+    <%= form_with(url: event_affiliations_path(event), local: true, html: { "x-data": "{ type: 'vex' }" }) do |form| %>
+      <div class="field">
+        <%= form.label :type, "Type" %>
+        <%= form.select :type, [["VEX", "vex"], ["FIRST", "first"], ["Hack Club", "hack_club"]], { required: true, include_blank: "Select a type", selected: "vex" }, { "@change": "type = $event.target.value" } %>
+      </div>
+      <template x-if="type == 'vex'">
+        <p>vex</p>
+      </template>
+      <template x-if="type == 'first'">
+        <p>first</p>
+      </template>
+      <template x-if="type == 'hack_club'">
+        <p>hack_club</p>
+      </template>
+    <% end %>
   </div>
 <% end %>
