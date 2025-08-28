@@ -10,7 +10,11 @@
     </p>
     <p>
       <strong>Type</strong>
-      Reimbursed expense
+      <% if expense.is_fee? %>
+        Wise transfer fee
+      <% else %>
+        Reimbursed expense
+      <% end %>
     </p>
   </section>
   <section class="details pt2 pb2">
@@ -26,6 +30,17 @@
     <% end %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
+
+  <% if expense.is_fee? %>
+    <section class="card__banner relative bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 mt-0 md:gap-2">
+      <%= inline_icon "wise", size: 16 %>
+      <div class="flex md:flex-row flex-col items-start justify-start gap-1 flex-grow">
+        Wise imposes fees for processing reimbursements
+        <span class="md:flex-grow"></span>
+        <%= link_to "Learn more about Wise transfers on HCB →", "https://help.hcb.hackclub.com/article/65-wise", class: "dark:!text-[#9FE870] !text-[#163300] bold no-underline after:content-[''] after:top-0 after:left-0 after:bottom-0 after:right-0 after:z-index-1 after:absolute", target: "_blank" %>
+      </div>
+    </section>
+  <% end %>
 </article>
 
 <div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
