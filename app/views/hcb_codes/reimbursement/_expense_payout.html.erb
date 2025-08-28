@@ -3,7 +3,7 @@
 <article class="card pb0 mt3 mb1">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
-  <section class="card__banner card__darker details-horiz border-top">
+  <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
       <strong>Date</strong>
       <%= format_date @hcb_code.date %>
