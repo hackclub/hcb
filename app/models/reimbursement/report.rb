@@ -222,6 +222,10 @@ module Reimbursement
         return "PayPal transfer"
       when IncreaseCheck
         return "check"
+      when WiseTransfer
+        return "Wise transfer"
+      when Wire
+        return "international wire"
       end
 
       return "transfer"
