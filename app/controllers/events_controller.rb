@@ -1053,9 +1053,11 @@ class EventsController < ApplicationController
       }
     }
 
-    if type
-      filter = type_filters[type]
-      if filter
+    if type.present?
+      types = type.is_a?(Array) ? type : [type]
+      types.each do |t|
+        filter = type_filters[t]
+        next unless filter
         settled_transactions = settled_transactions.select(&filter["settled"])
         pending_transactions = pending_transactions.select(&filter["pending"])
       end
