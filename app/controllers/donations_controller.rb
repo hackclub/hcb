@@ -60,6 +60,9 @@ class DonationsController < ApplicationController
 
     if @event.show_recent_donors
       @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(5)
+      if @recent_donors.size < 5
+        @recent_donors = []
+      end
     end
 
     tax_deductible = params[:goods].nil? || params[:goods] == "0"
