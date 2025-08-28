@@ -177,6 +177,11 @@ module Reimbursement
       begin
         @report.with_lock do
           if params[:wise_total_without_fees] && params[:wise_total_including_fees]
+            unless params[:wise_total_including_fees].to_f >= params[:wise_total_without_fees].to_f
+              flash[:error] = "The total including fees must be greater than or equal to the total without fees."
+              return redirect_to @report
+            end
+
             conversion_rate = (params[:wise_total_without_fees].to_f / @report.amount_to_reimburse.to_f).round(2)
             @report.update(conversion_rate:)
             approved_amount_usd_cents = @report.expenses.approved.sum { |expense| expense.amount_cents * expense.conversion_rate }
