@@ -18,7 +18,7 @@ class MyController < ApplicationController
   end
 
   def hide_promotional_banner
-    cookies.permanent[:hide_promotional_banner] = 1
+    cookies.permanent[:hide_robotics_raffle_banner] = 1
     redirect_back_or_to root_path
   end
 
