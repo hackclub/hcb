@@ -12,7 +12,8 @@ module Api
       end
 
       def show
-        @sponsor = Sponsor.find_by_public_id(params[:id])
+        skip_authorization
+        @sponsor = Sponsor.find_by_public_id!(params[:id])
         authorize @sponsor
       rescue => e
         return render json: { error: e.message }, status: :bad_request
