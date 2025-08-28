@@ -25,7 +25,8 @@ class Event
     has_many(
       :memberships,
       class_name: "Event::GroupMembership",
-      inverse_of: :group
+      inverse_of: :group,
+      dependent: :destroy
     )
     has_many(:events, through: :memberships)
 
