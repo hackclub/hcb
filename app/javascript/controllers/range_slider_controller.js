@@ -15,8 +15,8 @@ export default class extends Controller {
 
   connect() {
     this.value = [
-      this.clamp(this.loValue || this.minValue, this.minValue, this.maxValue - this.minDistanceValue),
-      this.clamp(this.hiValue || this.maxValue, this.minValue + this.minDistanceValue, this.maxValue)
+      this.clamp(this.loValue ?? this.minValue, this.minValue, this.maxValue - this.minDistanceValue),
+      this.clamp(this.hiValue ? this.hiValue : this.maxValue, this.minValue + this.minDistanceValue, this.maxValue)
     ]
 
     this.activeThumb = null
