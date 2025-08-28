@@ -15,9 +15,35 @@
     <h3 class="mb2"><%= possessive(event.name) %> affiliations</h3>
   <% end %>
   <% event.affiliations.each do |affiliation| %>
-    <div class="card mb2 flex justify-between items-center">
-      <h4><%= affiliation.display_name %></h4>
-      <div class="flex items-center justify-center">
+    <div class="card mb2 flex">
+      <div class="flex flex-col">
+      <h4 class="mt1 mb0"><%= affiliation.display_name %></h4>
+        <% if affiliation.is_first? || affiliation.is_vex? %>
+          <span class="mt1 flex flex-row items-center">
+            <p class="font-bold mt0 mb0">League:&nbsp;</p>
+            <%= affiliation.league.upcase %>
+          </span>
+          <span class="flex flex-row items-center">
+            <p class="font-bold mt0 mb0">Team number:&nbsp;</p>
+            <%= affiliation.team_number %>
+          </span>
+          <span class="flex flex-row items-center">
+            <p class="font-bold mt0 mb0">Size:&nbsp;</p>
+            <%= affiliation.size %>
+          </span>
+        <% elsif affiliation.is_hack_club? %>
+          <span class="mt1 flex flex-row items-center">
+            <p class="font-bold mt0 mb0">Venue name:&nbsp;</p>
+            <%= affiliation.venue_name %>
+          </span>
+          <span class="mt0 flex flex-row items-center">
+            <p class="font-bold mt0 mb0">Size:&nbsp;</p>
+            <%= affiliation.size %>
+          </span>
+        <% end %>
+      </div>
+      <div class="flex-grow"></div>
+      <div class="flex items-start justify-center">
         <div class="flex items-center justify-center">
           <%= pop_icon_to "edit",
             "#",
