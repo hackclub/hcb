@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_25_064629) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_28_004712) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1860,11 +1860,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_064629) do
     t.bigint "increase_check_id"
     t.bigint "ach_transfer_id"
     t.bigint "wire_id"
+    t.bigint "wise_transfer_id"
     t.index ["ach_transfer_id"], name: "index_reimbursement_payout_holdings_on_ach_transfer_id"
     t.index ["increase_check_id"], name: "index_reimbursement_payout_holdings_on_increase_check_id"
     t.index ["paypal_transfer_id"], name: "index_reimbursement_payout_holdings_on_paypal_transfer_id"
     t.index ["reimbursement_reports_id"], name: "index_reimbursement_payout_holdings_on_reimbursement_reports_id"
     t.index ["wire_id"], name: "index_reimbursement_payout_holdings_on_wire_id"
+    t.index ["wise_transfer_id"], name: "index_reimbursement_payout_holdings_on_wise_transfer_id"
   end
 
   create_table "reimbursement_reports", force: :cascade do |t|
