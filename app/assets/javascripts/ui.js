@@ -135,8 +135,11 @@ window.attachTooltipListener = () => {
       const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
       const offset = 5;
 
+      const label = trigger.getAttribute("aria-label");
+      if (!label.trim()) return;
+
       tooltip.className = "active";
-      tooltip.textContent = trigger.getAttribute("aria-label");
+      tooltip.textContent = label;
 
       // Sync size classes
       ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
@@ -269,7 +272,7 @@ $(document).on('turbo:load', function () {
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
       event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch {}
+    } catch { }
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
