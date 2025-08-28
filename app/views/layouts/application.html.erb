@@ -119,14 +119,14 @@
       </div>
     <% end %>
 
-    <% if @event && !@event&.demo_mode? && @event&.robotics_team? && organizer_signed_in? && !@hide_robotics_banner && Date.current.month < 10 %>
+    <% if @event && !@event&.demo_mode? && @event&.robotics_team? && organizer_signed_in? && !@hide_promotional_banner && Date.current.month < 10 %>
       <div class="w-100s px3 promo-robotics-raffle card--hover" data-behavior="hide_iframe">
           <p class="h3 font-medium text-center text-balance mt2 mb0 white">
             You currently have <%= number_to_human(@event&.users&.count { |user| user.teenager? && user.active? }) %> tickets for the Robotics 3D Printer Raffle. Earn a ticket for each active teen in your organization.
           </p>
           <p class="h4 text-center text-balance mt0 mb2 white">
             Find more info <%= link_to "here", event_promotions_path(@event), class: "white" %>.
-            <%= link_to toggle_robotics_banner_path, data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" }, method: :post, class: "white" do %>
+            <%= link_to hide_promotional_banner_path, data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" }, method: :post, class: "white" do %>
               <i>Dismiss.</i>
             <% end %>
           </p>

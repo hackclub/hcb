@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :toggle_robotics_banner] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
 
   def activities
     @before = params[:before] || Time.now
@@ -17,8 +17,8 @@ class MyController < ApplicationController
     redirect_to my_activities_url
   end
 
-  def toggle_robotics_banner
-    cookies.permanent[:hide_robotics_banner] = 1
+  def hide_promotional_banner
+    cookies.permanent[:hide_promotional_banner] = 1
     redirect_back_or_to root_path
   end
 

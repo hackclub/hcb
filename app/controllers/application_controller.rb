@@ -30,7 +30,7 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
-    @hide_robotics_banner = cookies[:hide_robotics_banner] == "1"
+    @hide_promotional_banner = cookies[:hide_promotional_banner] == "1"
   end
 
   before_action do
