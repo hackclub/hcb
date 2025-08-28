@@ -16,7 +16,7 @@
     "@babel/preset-react": "^7.27.1",
     "@csstools/postcss-sass": "^5.1.1",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/dom": "^1.7.3",
+    "@floating-ui/dom": "^1.7.4",
     "@floating-ui/react-dom": "1.0.0",
     "@fnando/sparkline": "^0.3.10",
     "@github/text-expander-element": "^2.9.2",

@@ -71,6 +71,28 @@ RSpec.describe TransactionCategoryService do
         expect(ct.category_mapping).to be_nil
       end
     end
+
+    it "does not modify manual transactions" do
+      ct = create(:canonical_transaction)
+
+      # Perform an initial manual assignment
+      described_class.new(model: ct).set!(slug: "rent", assignment_strategy: "manual")
+      ct.reload
+      expect(ct.category.slug).to eq("rent")
+      expect(ct.category_mapping).to be_manual
+
+      # Attempt to change it with an automatic assignment
+      described_class.new(model: ct).set!(slug: "utilities", assignment_strategy: "automatic")
+      ct.reload
+      expect(ct.category.slug).to eq("rent")
+      expect(ct.category_mapping).to be_manual
+
+      # Actually change it with a manual assignment
+      described_class.new(model: ct).set!(slug: "utilities", assignment_strategy: "manual")
+      ct.reload
+      expect(ct.category.slug).to eq("utilities")
+      expect(ct.category_mapping).to be_manual
+    end
   end
 
   describe "sync_from_stripe!" do
