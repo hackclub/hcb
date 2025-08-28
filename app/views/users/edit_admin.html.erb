@@ -68,13 +68,13 @@
     </h3>
   <% end %>
 
-  <% admin_tool do %>
-    <%= turbo_frame_tag :admin_details, src: admin_details_user_path(@user), loading: :lazy do %>
+  <%= turbo_frame_tag :admin_details, src: admin_details_user_path(@user), loading: :lazy do %>
+    <% admin_tool do %>
       <p>Loading user details</p>
     <% end %>
   <% end %>
 
   <h2>Comments</h2>
-  <%= render "comments/list", comments: @user.comments %>
+  <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
   <%= render "comments/form", commentable: @user %>
 </turbo-frame>
