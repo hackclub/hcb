@@ -5,7 +5,7 @@ require "cgi"
 
 module UsersHelper
   def users_mobile_nav(selected: nil)
-    [
+    items = [
       {
         name: "Home",
         path: root_path,
@@ -46,8 +46,20 @@ module UsersHelper
         tooltip: "See expense reimbursements",
         async_badge: my_reimbursements_icon_path,
         selected: selected == :reimbursements
-      }
+      },
     ].compact
+
+    if current_user.jobs.any?
+       items << {
+        name: "Pay",
+        path: my_payroll_path,
+        icon: "person-badge",
+        tooltip: "Submit invoices & get paid",
+        selected: selected == :payroll
+      }
+    end
+
+    items
   end
 
   def gravatar_url(email, name, id, size)
