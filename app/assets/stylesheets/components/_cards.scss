@@ -53,6 +53,41 @@
         var(--bg-image);
     }
   }
+
+  &.topDonorCard {
+    border: 2px solid transparent;
+
+    &.firstPlace {
+      border-color: #d5882b !important;
+      & .number {
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        border-color: #d79c32 !important;
+        background: #d79c32;
+        color: #fefb88;
+      }
+    }
+    &.secondPlace {
+      border-color: #897678 !important;
+      & .number {
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        border-color: #757575 !important;
+        background: #757575;
+        color: #fefefe;
+      }
+    }
+    &.thirdPlace {
+      border-color: #964523 !important;
+      & .number {
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        border-color: #bb581c !important;
+        background: #bb581c;
+        color: #fee38a;
+      }
+    }
+  }
 }
 
 .draggable-mirror {
