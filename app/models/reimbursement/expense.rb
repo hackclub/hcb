@@ -145,7 +145,7 @@ module Reimbursement
 
     # multiplier for value -> amount_cents
     def rate
-      100
+      Money.from_amount(1, currency).cents
     end
 
     delegate :conversion_rate, to: :report

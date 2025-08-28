@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_28_004712) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_28_051556) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2249,6 +2249,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_28_004712) do
     t.string "currency"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "wise_recipient_id"
   end
 
   create_table "user_seen_at_histories", force: :cascade do |t|

@@ -182,10 +182,23 @@ module Reimbursement
               return redirect_to @report
             end
 
-            conversion_rate = (params[:wise_total_without_fees].to_f / @report.amount_to_reimburse).round(2)
+            wise_total_including_fees_cents = params[:wise_total_including_fees].to_f * 100
+            wise_total_without_fees_cents = params[:wise_total_without_fees].to_f * 100
+
+            unless ::Shared::AmpleBalance.ample_balance?(wise_total_including_fees_cents, @report.event)
+              flash[:error] = "This organization does not have sufficient funds to cover the transfer."
+              return redirect_to @report
+            end
+
+            if @report.maximum_amount_cents.present? && wise_total_including_fees_cents > @report.maximum_amount_cents
+              flash[:error] = "This amount is above the maximum amount set by the organizers."
+              return redirect_to @report
+            end
+
+            conversion_rate = (wise_total_without_fees_cents / @report.amount_to_reimburse_cents).round(4)
             @report.update(conversion_rate:)
             approved_amount_usd_cents = @report.expenses.approved.sum { |expense| expense.amount_cents * expense.conversion_rate }
-            fee_expense_value = (params[:wise_total_including_fees].to_f * 100 - approved_amount_usd_cents.to_f) / 100
+            fee_expense_value = (wise_total_including_fees_cents - approved_amount_usd_cents.to_f) / 100
 
             @report.expenses.create!(
               value: fee_expense_value,
@@ -205,6 +218,48 @@ module Reimbursement
 
       # Reimbursement::NightlyJob.perform_later
 
+      redirect_to @report
+    end
+
+    def admin_send_wise_transfer
+      authorize @report
+
+      clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+      payout_holding = @report.payout_holding
+      Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
+      payout_holding.mark_settled!
+      @report.user.payout_method.update(wise_recipient_id: params[:wise_recipient_id])
+      wise_transfer = clearinghouse.wise_transfers.create!(
+        payment_for: "Reimbursement for #{@report.name}.",
+        address_line1: @report.user.payout_method.address_line1,
+        address_line2: @report.user.payout_method.address_line2,
+        address_city: @report.user.payout_method.address_city,
+        address_state: @report.user.payout_method.address_state,
+        address_postal_code: @report.user.payout_method.address_postal_code,
+        recipient_country: @report.user.payout_method.recipient_country,
+        recipient_email: @report.user.email,
+        recipient_name: @report.user.full_name,
+        bank_name: @report.user.payout_method.bank_name,
+        recipient_information: @report.user.payout_method.recipient_information,
+        currency: @report.currency,
+        user: User.system_user,
+        usd_amount_cents: payout_holding.amount_cents,
+        quoted_usd_amount_cents: payout_holding.amount_cents,
+        amount_cents: @report.amount_to_reimburse_cents,
+        wise_id: params[:wise_id],
+        wise_recipient_id: params[:wise_recipient_id],
+        sent_at: Time.now,
+        recipient_phone_number: @report.user.phone_number,
+      )
+      wise_transfer.mark_approved!
+      wise_transfer.mark_sent!
+      payout_holding.wise_transfer = wise_transfer
+      payout_holding.save!
+      payout_holding.mark_sent!
+
+      redirect_to @report
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
       redirect_to @report
     end
 

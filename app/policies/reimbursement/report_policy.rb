@@ -54,6 +54,10 @@ module Reimbursement
       admin && open
     end
 
+    def admin_send_wise_transfer?
+      admin
+    end
+
     def reverse?
       admin
     end

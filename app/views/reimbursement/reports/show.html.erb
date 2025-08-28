@@ -15,7 +15,7 @@
       <%= "is requesting " unless @report.closed? %>
       <%= render "total", report: @report %>
       <% if @report.maximum_amount_cents %>
-        (<%= @report.maximum_amount_cents %> cap)
+        (<%= render_money @report.maximum_amount_cents %> cap)
       <% end %>
       <%= "from #{@event.name}" if @event && @use_user_nav %> for
     </span>
@@ -159,6 +159,40 @@
     </p>
   <% end %>
 <% end %>
+
+
+<% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
+  <% admin_tool("mt-4") do %>
+    <h3 class="mt-0">Process Wise reimbursement</h3>
+
+    <div class="flex flex-row items-start justify-start gap-2 my-4">
+      <span class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">3</span>
+      <strong class="m-0">
+        You may now send the Wise transfer
+      </strong>
+    </div>
+
+    <%= render partial: "wise_information", locals: { report: @report } %>
+
+    <%= form_with(model: false, local: true, url: reimbursement_report_admin_send_wise_transfer_path(@report), method: :post) do |form| %>
+      <div class="field">
+        <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %>
+        <%= form.text_field :wise_id, class: "mt-0", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+      </div>
+      <div class="field">
+        <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %>
+        <%= form.text_field(
+              :wise_recipient_id,
+              style: "width: 400px;",
+              class: "mt-0",
+              placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            ) %>
+      </div>
+      <%= form.submit "Mark transfer as sent" %>
+    <% end %>
+  <% end %>
+<% end %>
+
 
 <div id="expenses">
   <%= render partial: "expenses", locals: { report: @report } %>

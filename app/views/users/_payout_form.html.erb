@@ -106,6 +106,8 @@
           <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value;" } %>
         </div>
 
+        <%= form.hidden_field :wise_recipient_id, value: "" %>
+
         <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false } %>
 
         <div class="actions inline-block mt1">

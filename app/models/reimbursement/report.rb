@@ -63,7 +63,7 @@ module Reimbursement
     has_paper_trail ignore: :expense_number
 
     monetize :maximum_amount_cents, allow_nil: true
-    monetize :amount_to_reimburse_cents, allow_nil: true
+    monetize :amount_to_reimburse_cents, allow_nil: true, with_model_currency: :currency
     monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :delete_all
@@ -129,7 +129,7 @@ module Reimbursement
       event :mark_reimbursement_requested do
         transitions from: :submitted, to: :reimbursement_requested do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event) && !event.financially_frozen?
+            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && (currency != "USD" || Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)) && !event.financially_frozen?
           end
         end
         after do
@@ -140,7 +140,7 @@ module Reimbursement
       event :mark_reimbursement_approved do
         transitions from: :reimbursement_requested, to: :reimbursement_approved do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event) && !event.financially_frozen?
+            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && (currency != "USD" || Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)) && !event.financially_frozen?
           end
         end
         after do
@@ -250,7 +250,7 @@ module Reimbursement
     end
 
     def amount_to_reimburse_cents
-      return [expenses.approved.to_sum.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents
+      return [expenses.approved.to_sum.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents && currency == "USD"
 
       expenses.approved.to_sum.sum(:amount_cents)
     end
@@ -323,7 +323,7 @@ module Reimbursement
     end
 
     def exceeds_maximum_amount?
-      maximum_amount_cents && amount_cents > maximum_amount_cents
+      maximum_amount_cents && amount_cents > maximum_amount_cents && currency == "USD"
     end
 
     def below_minimum_amount?

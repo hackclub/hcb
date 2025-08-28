@@ -16,6 +16,7 @@
 #  recipient_information_ciphertext :text
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
+#  wise_recipient_id                :text
 #
 class User
   module PayoutMethod
