@@ -66,13 +66,16 @@ class WiseTransfersController < ApplicationController
   def mark_sent
     authorize @wise_transfer
 
-    @wise_transfer.mark_sent!
+    @wise_transfer.assign_attributes(wise_transfer_params)
 
-    if @wise_transfer.update(wise_transfer_params)
-      redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "Marked as sent." }
-    else
-      redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { error: @wise_transfer.errors.full_messages.to_sentence }
+    begin
+      @wise_transfer.mark_sent!
+      flash[:success] = "Marked as sent."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.record.errors.full_messages.to_sentence
     end
+
+    redirect_to(wise_transfer_process_admin_path(@wise_transfer))
   end
 
   def reject

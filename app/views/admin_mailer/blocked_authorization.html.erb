@@ -1,0 +1,24 @@
+<p>
+  A Stripe card authorization for a <code><%= @merchant_category %></code> merchant was blocked.
+</p>
+
+<ul>
+  <li>
+    <%= link_to("Event: #{@event.name}", event_url(@event)) %>
+  </li>
+  <li>
+    <%= link_to("Stripe Card", stripe_card_url(@stripe_card)) %>
+    <ul>
+      <% if @stripe_card.name.present? %>
+        <li><strong>Card name:</strong> <%= @stripe_card.name %></li>
+      <% end %>
+      <li>
+        <strong>Cardholder:</strong>
+        <%= link_to(admin_user_url(@stripe_card.user)) do %>
+          <%= @stripe_card.user.full_name %>
+          (<%= @stripe_card.user.email %>)
+        <% end %>
+      </li>
+    </ul>
+  </li>
+</ul>

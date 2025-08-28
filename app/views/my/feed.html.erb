@@ -19,12 +19,18 @@
       <h3 class="text-2xl font-bold mb-0">
         It's quiet here...
       </h3>
-      <p class="text-gray-500 my-1 max-w-sm">
-        Follow a transparent organization to see updates from them here.
-      </p>
-      <%= link_to "https://hackclub.com/fiscal-sponsorship/directory?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
-        View all organizations
-        <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+      <% if @event_follows.any? %>
+        <p class="text-gray-500 my-1 max-w-sm">
+          No announcements are posted yet.
+        </p>
+      <% else %>
+        <p class="text-gray-500 my-1 max-w-sm">
+          Follow a transparent organization to see updates from them here.
+        </p>
+        <%= link_to "https://hackclub.com/fiscal-sponsorship/directory?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
+          View all organizations
+          <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+        <% end %>
       <% end %>
     </div>
   </div>
