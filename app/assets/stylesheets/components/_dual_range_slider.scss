@@ -20,7 +20,9 @@
   transform: translateY(-50%);
   border-radius: 9999px;
   background: var(--info);
+  transition: all 0.1s;
 }
+
 .rs-thumb {
   position: absolute;
   top: 50%;
@@ -31,20 +33,29 @@
   background: white;
   border: 2px solid var(--info);
   cursor: grab;
+  transition: all 0.1s;
+  display: block;
+  box-shadow: 0 0 0 8px rgba(0, 123, 255, 0);
+
+  &:hover {
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  }
 }
-.rs-thumb:active {
-  cursor: grabbing;
-}
+
 .rs-inputs {
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
-}
-.rs-inputs input {
-  width: 80px;
-  text-align: center;
-  padding: 2px 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  min-height: 0px;
+  & input {
+    width: 80px;
+    text-align: center;
+    padding: 2px 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-height: 0px;
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+  }
 }

@@ -9,11 +9,16 @@ export default class extends Controller {
     lo: { type: Number, default: null },
     hi: { type: Number, default: null },
 
-    minDistance: { type: Number, default: 1 }
+    minDistance: { type: Number, default: 1 },
+    keyBase: { type: String, default: "" }
   }
 
   connect() {
-    this.value = [this.loValue || this.minValue, this.hiValue || this.maxValue]
+    this.value = [
+      this.clamp(this.loValue || this.minValue, this.minValue, this.maxValue - this.minDistanceValue),
+      this.clamp(this.hiValue || this.maxValue, this.minValue + this.minDistanceValue, this.maxValue)
+    ]
+
     this.activeThumb = null
     this.render()
   }
@@ -103,8 +108,8 @@ export default class extends Controller {
       this.container.className = 'w-full select-none'
       this.container.innerHTML = `
         <div class="rs-inputs">
-          <input type="number" class="rs-input" />
-          <input type="number" class="rs-input" />
+          <input type="number" class="rs-input" name="${this.keyBaseValue}_greater_than" />
+          <input type="number" class="rs-input" name="${this.keyBaseValue}_less_than" />
         </div>
         <div class="rs-track">
           <div class="rs-bar"></div>
