@@ -82,6 +82,119 @@ RSpec.describe Admin::EventGroupsController do
     end
   end
 
+  describe "#event" do
+    it "renders a form with checkboxes for each group" do
+      user = create(:user, :make_admin, full_name: "Orpheus Dinosaur")
+      scrapyard = user.event_groups.create!(name: "Scrapyard")
+      daydream = user.event_groups.create!(name: "Daydream")
+
+      event = create(:event)
+      daydream.memberships.create!(event:)
+
+      sign_in(user)
+
+      get(:event, params: { event_id: event.id })
+
+      expect(response).to have_http_status(:ok)
+
+      rows = response.parsed_body.css("table tbody tr")
+
+      daydream_input = rows[0].at_css("input[name='event[event_group_ids][]']")
+      expect(daydream_input["value"]).to eq(daydream.id.to_s)
+      expect(daydream_input["checked"]).to eq("checked")
+      expect(rows[0].at_css("label").text.squish).to eq("Daydream (Orpheus Dinosaur)")
+
+      scrapyard_input = rows[1].at_css("input[name='event[event_group_ids][]']")
+      expect(scrapyard_input["value"]).to eq(scrapyard.id.to_s)
+      expect(scrapyard_input["checked"]).to be_nil
+      expect(rows[1].at_css("label").text.squish).to eq("Scrapyard (Orpheus Dinosaur)")
+
+    end
+  end
+
+  describe "#update_event" do
+    it "clears out unselected groups" do
+      user = create(:user, :make_admin)
+      sign_in(user)
+
+      event = create(:event)
+
+      group1 = user.event_groups.create!(name: "Group 1")
+      group1.memberships.create!(event:)
+
+      group2 = user.event_groups.create!(name: "Group 2")
+      group2.memberships.create!(event:)
+
+      patch(
+        :update_event,
+        params: {
+          event_id: event.id,
+        }
+      )
+
+      expect(response).to redirect_to(event_admin_event_groups_path(event))
+      expect(group1.reload.events).to be_empty
+      expect(group2.reload.events).to be_empty
+
+    end
+
+    it "adds selected groups and maintains existing ones" do
+      user = create(:user, :make_admin)
+      sign_in(user)
+
+      event = create(:event)
+
+      # Group 1 will be preserved
+      group1 = user.event_groups.create!(name: "Group 1")
+      group1.memberships.create!(event:)
+
+      # Group 2 will be removed
+      group2 = user.event_groups.create!(name: "Group 2")
+      group2.memberships.create!(event:)
+
+      # Group 3 will be added
+      group3 = user.event_groups.create!(name: "Group 3")
+
+      patch(
+        :update_event,
+        params: {
+          event_id: event.id,
+          event: {
+            event_group_ids: [group1.id, group3.id]
+          }
+        }
+      )
+
+      expect(response).to redirect_to(event_admin_event_groups_path(event))
+      expect(group1.reload.events).to include(event)
+      expect(group2.reload.events).to be_empty
+      expect(group3.reload.events).to include(event)
+    end
+
+    it "adds a new group" do
+      user = create(:user, :make_admin)
+      sign_in(user)
+
+      event = create(:event)
+
+      patch(
+        :update_event,
+        params: {
+          event_id: event.id,
+          event: {
+            new_event_group_name: "Scrapyard"
+          }
+        }
+      )
+
+      expect(response).to redirect_to(event_admin_event_groups_path(event))
+      group = user.reload.event_groups.last
+      expect(group.events).to include(event)
+      expect(group.user).to eq(user)
+      expect(group.name).to eq("Scrapyard")
+    end
+  end
+
   def inspect_row(row)
     table = row.ancestors("table")
     headers = table.css("thead tr th").map { |th| th.text.squish }

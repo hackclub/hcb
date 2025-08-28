@@ -96,6 +96,7 @@
           <%= link_to "Process", event_process_admin_path(event) if event.pending? || event.unapproved? %>
           <%= link_to "Edit", edit_event_path(event, tab: "admin") unless event.pending? || event.unapproved? %>
           <%= link_to "Review", event_process_admin_path(event) unless event.pending? || event.unapproved? %>
+          <%= render(partial: "event_groups_link", locals: { event: }) %>
         </td>
       </tr>
     <% end %>
