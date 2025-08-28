@@ -53,7 +53,7 @@ class DonationsController < ApplicationController
 
     if @event.show_top_donors
       @top_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(amount: :desc).limit(5)
-      if @top_donors.size < 5 
+      if @top_donors.size < 5
         @top_donors = []
       end
     end
