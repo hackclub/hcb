@@ -27,7 +27,7 @@ module Api
         authorize sponsor
 
         @invoice = ::InvoiceService::Create.new(
-          event_id: event.id,
+          event_id: @event.id,
           due_date:,
           item_description: invoice_params[:item_description],
           item_amount: invoice_params[:item_amount],
