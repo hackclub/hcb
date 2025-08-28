@@ -3,7 +3,7 @@
 json.recurring donation.recurring?
 json.donor do
   json.name donation.name
-  json.email donation.email
+  json.email donation.email if policy(donation.local_hcb_code).show?
   json.recurring_donor_id donation.recurring_donation.hashid if donation.recurring?
 end
 json.attribution do

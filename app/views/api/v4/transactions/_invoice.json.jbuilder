@@ -9,5 +9,5 @@ json.due_date invoice.due_date.to_date
 json.sponsor do
   json.id invoice.sponsor.public_id
   json.name invoice.sponsor.name
-  json.email invoice.sponsor.contact_email
+  json.email invoice.sponsor.contact_email if policy(invoice.local_hcb_code).show?
 end

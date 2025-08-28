@@ -11,11 +11,11 @@ module Api
       end
 
       def show
-        authorize @event, :show_in_v4?
+        authorize @event, :show?
       end
 
       def transactions
-        authorize @event, :show_in_v4?
+        authorize @event, :show?
 
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @settled_transactions, event: @event).run!
