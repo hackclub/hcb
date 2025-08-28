@@ -162,7 +162,6 @@
   <% end %>
 <% end %>
 
-
 <% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
   <% admin_tool("mt-4") do %>
     <h3 class="mt-0">Process Wise reimbursement</h3>
@@ -194,7 +193,6 @@
     <% end %>
   <% end %>
 <% end %>
-
 
 <div id="expenses">
   <%= render partial: "expenses", locals: { report: @report } %>
