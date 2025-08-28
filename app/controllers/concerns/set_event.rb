@@ -41,7 +41,11 @@ module SetEvent
     end
 
     def set_api_event
-      @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]) || Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
+      if params[:event_id]
+        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
+      else
+        @event = Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
+      end
     end
 
   end
