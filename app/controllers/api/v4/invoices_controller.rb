@@ -18,7 +18,7 @@ module Api
       end
 
       def create
-        authorize @event, :create?
+        authorize @event, :create?, policy_class: InvoicePolicy
 
         due_date = invoice_params["due_date"].to_datetime
 
