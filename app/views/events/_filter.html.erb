@@ -1,7 +1,7 @@
 <% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(mode: false, local: true, method: :get, class: "flex-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
       <%= render "search", form: %>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
