@@ -336,7 +336,7 @@ class UsersController < ApplicationController
 
       render :edit, status: :unprocessable_entity
     end
-  rescue StripeInvalidNameError => e
+  rescue Errors::StripeInvalidNameError => e
     redirect_back_or_to edit_user_path(@user), flash: { error: e.message }
   end
 
