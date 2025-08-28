@@ -102,7 +102,7 @@
   <%= button_to "💸 Approve and automatically send transfer", send_wire_path(@wire), method: :post, data: { confirm: "This will automatically send the wire. You don't need to send it manually!" } %>
   <%= button_to "💸 Approve and manually send transfer", approve_wire_path(@wire), method: :post, data: { confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
   <%= button_to "✏️ Edit wire", edit_wire_path(@wire), method: :get %>
-  <%= form_with(mode: false, local: true, url: reject_wire_path(@wire), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: reject_wire_path(@wire), method: :post) do |form| %>
     <div class="field">
       <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
