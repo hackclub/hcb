@@ -184,7 +184,7 @@ module Reimbursement
 
             @report.expenses.create!(
               value: fee_expense_value,
-              memo: "Transfer fee",
+              memo: "Wise transfer fee",
               type: Reimbursement::Expense::Fee,
               aasm_state: :approved,
               approved_by: current_user,
