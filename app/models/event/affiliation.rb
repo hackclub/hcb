@@ -23,6 +23,18 @@ class Event
   class Affiliation < ApplicationRecord
     belongs_to :event
 
+    def is_first?
+      name == "first"
+    end
+
+    def is_vex?
+      name == "vex"
+    end
+
+    def is_hack_club?
+      name == "hack_club"
+    end
+
   end
 
 end
