@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Admin
-  class EventGroupsController < AdminController
+  class EventGroupsController < Admin::BaseController
     def index
       @event_groups =
         Event::Group

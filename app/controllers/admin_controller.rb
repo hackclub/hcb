@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
-class AdminController < ApplicationController
-  skip_after_action :verify_authorized # do not force pundit
-  before_action :signed_in_admin
-
-  layout "admin"
-
+class AdminController < Admin::BaseController
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
