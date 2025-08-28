@@ -29,7 +29,6 @@ class ApplicationController < ActionController::Base
     cookies.permanent[:first_visit] = 1
   end
 
-  # This cookie is used for Safari PWA prompts
   before_action do
     @hide_robotics_banner = cookies[:hide_robotics_banner] == "1"
   end
