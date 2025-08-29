@@ -460,7 +460,7 @@ class User < ApplicationRecord
     return true if payout_method.nil?
     return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
     return false if reimbursement_reports.reimbursement_requested.any?
-    return false if reimbursement_reports.joins(:payout_holding).where({payout_holding: { aasm_state: :pending}}).any?
+    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
   end
 
   private
