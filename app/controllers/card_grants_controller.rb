@@ -101,9 +101,17 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    @card_grant&.setting.update(params.require(:card_grant).permit(:merchant_lock, :category_lock, :keyword_lock))
+    cg_params = params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock)
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
+    @card_grant&.setting.update(
+      {
+        merchant_lock: cg_params.card_grant.merchant_lock,
+        category_lock: cg_params.card_grant.category_lock,
+        keyword_lock: cg_params.card_grant.keyword_lock
+      }
+    )
+
+    if @card_grant.update(cg_params)
       flash[:success] = "Grant's purpose has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
