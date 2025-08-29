@@ -97,14 +97,14 @@ module TransactionGroupingEngine
       end
 
       def user_modifier
-        return "" unless @user.present? && @user.is_a?(Array) && @user.any?
+        return "" unless @user.present? && @user.all? { |u| u&.stripe_cardholder&.stripe_id.present? }
 
-        ids = @user.map(&:to_s)
-        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", ids])
+        stripe_ids = @user.map { |u| u.stripe_cardholder.stripe_id }
+        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", stripe_ids])
       end
 
       def user_joins_for(type)
-        return "" unless @user.present? && @user.is_a?(Array) && @user.any?
+        return "" unless @user.present?
 
         type = type.to_s
 
