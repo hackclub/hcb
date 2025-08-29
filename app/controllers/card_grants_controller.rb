@@ -30,6 +30,23 @@ class CardGrantsController < ApplicationController
       # exception as under the hood it calls `DisbursementService::Create` and a
       # number of other methods (e.g. `save!`) which either succeed or raise.
       @card_grant.save!
+
+      default_cg_setting = @event.card_grant_setting
+      CardGrantSetting.create!(
+        {
+          banned_categories: default_cg_setting.banned_categories,
+          banned_merchants: default_cg_setting.banned_merchants,
+          category_lock: default_cg_setting.category_lock,
+          expiration_preference: default_cg_setting.expiration_preference,
+          invite_message: default_cg_setting.invite_message,
+          keyword_lock: default_cg_setting.keyword_lock,
+          merchant_lock: default_cg_setting.merchant_lock,
+          pre_authorization_required: default_cg_setting.pre_authorization_required,
+          reimbursement_conversions_enabled: default_cg_setting.reimbursement_conversions_enabled,
+          card_grant_id: @card_grant.id,
+          event_id: @event.id
+        }
+      )
     rescue => e
       case e
       when ActiveRecord::RecordInvalid
