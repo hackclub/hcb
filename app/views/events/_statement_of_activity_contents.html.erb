@@ -31,13 +31,17 @@
 <% if statement_of_activity.event_group %>
   <details>
     <summary>Included events</summary>
-    <ul>
-      <% statement_of_activity.event_group.events.each do |event| %>
-        <li>
-          <%= link_to(event.name, event_path(event)) %>
-        </li>
-      <% end %>
-    </ul>
+    <% if statement_of_activity.event_group.events.empty? %>
+      <p>This group does not have any associated events</p>
+    <% else %>
+      <ul>
+        <% statement_of_activity.event_group.events.each do |event| %>
+          <li>
+            <%= link_to(event.name, event_path(event)) %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
   </details>
 <% end %>
 
