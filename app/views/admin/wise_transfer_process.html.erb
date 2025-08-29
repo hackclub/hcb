@@ -36,6 +36,12 @@
 <table class="w-full table-fixed border-box max-w-[500px] min-w-0">
   <tbody>
     <tr>
+      <td>HCB Code</td>
+      <td>
+        <%= link_to(@wise_transfer.hcb_code, hcb_code_path(@wise_transfer.hcb_code)) %>
+      </td>
+    </tr>
+    <tr>
       <td>Event:</td>
       <td>
         <%= @wise_transfer.event.name %>
