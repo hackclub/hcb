@@ -101,7 +101,7 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.setting
+    if @card_grant&.setting
       @card_grant.setting.update(params.require(:card_grant).permit(:merchant_lock, :category_lock, :keyword_lock))
     end
 
