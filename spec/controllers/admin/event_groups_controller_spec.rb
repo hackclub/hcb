@@ -31,8 +31,8 @@ RSpec.describe Admin::EventGroupsController do
 
       expect(rows).to eq(
         [
-          [["Name", "Daydream"], ["Owner", "Barney Dinosaur"], ["Events", "Daydream Ottawa ×"]],
-          [["Name", "Scrapyard"], ["Owner", "You"], ["Events", "Scrapyard London × Scrapyard Vermont ×"]]
+          [["Name", "Daydream"], ["Owner", "Barney Dinosaur"], ["Events", "Daydream Ottawa"]],
+          [["Name", "Scrapyard"], ["Owner", "You"], ["Events", "Scrapyard London Scrapyard Vermont"]]
         ]
       )
     end

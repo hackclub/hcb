@@ -45,23 +45,25 @@
                       admin_event_group_event_group_membership_path(group, membership),
                       method: :delete,
                       data: { confirm: "Are you sure" },
-                      form_class: "m-0 inline",
-                      class: "m-0 bg-muted"
+                      form_class: "m-0 inline-block",
+                      aria_label: "asdasda",
+                      class: "m-0 btn btn-small bg-muted p-1 text-center",
                     ) do %>
-                  &times;
+                  <%= inline_icon("view-close", size: 16, class: "!m-0 !w-auto !h-auto") %>
                 <% end %>
                 <br>
               <% end %>
             <% end %>
           </td>
           <td>
+            <%= link_to("Statement of Activity", "#", class: "btn btn-small") %>
             <%= button_to(
                   "Delete",
                   admin_event_group_path(group),
                   method: :delete,
                   data: { confirm: "Are you sure?" },
-                  form_class: "m-0",
-                  class: "m-0"
+                  form_class: "m-0 inline-block",
+                  class: "m-0 btn btn-small btn--destroy"
                 ) %>
           </td>
         </tr>
