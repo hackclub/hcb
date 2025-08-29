@@ -311,7 +311,7 @@
     <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>" id="summary">
       <div class="stat stat--small" style="flex-shrink: 0;">
         <span class="stat__label">Amount requested</span>
-        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= render_money report.amount_cents, unit: "" %></span>
+        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
       </div>
       <% if report.locked? %>
         <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
@@ -320,7 +320,7 @@
         </div>
         <div class="stat stat--small" style="flex-shrink: 0;">
           <span class="stat__label">Amount approved</span>
-        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= render_money report.amount_to_reimburse_cents, unit: "" %></span>
+        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount_to_reimburse.format(symbol: false) %></span>
         </div>
         <% if report.fees_charged_cents > 0 %>
           <div class="stat stat--small" style="flex-shrink: 0;">

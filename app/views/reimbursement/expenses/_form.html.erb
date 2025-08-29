@@ -12,7 +12,11 @@
     <% end %>
     <div class="ml1">
       <%= form.label :value, expense.value_label, class: "bold" %>
-      <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, value: number_with_precision(expense.value, precision: 2), data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
+      <% if expense.rate == 100 %>
+        <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, value: number_with_precision(expense.value, precision: 2), data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
+      <% else %>
+        <%= form.number_field :value, placeholder: "500", step: 1, min: 1, value: number_with_precision(expense.value, precision: 0), data: { controller: "truncate-decimal", "truncate-decimal-places-value": "0", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
+      <% end %>
     </div>
   </div>
   <% if expense.report.event&.plan&.requires_reimbursement_expense_categorization? %>

@@ -227,6 +227,7 @@ module Reimbursement
       clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       payout_holding = @report.payout_holding
       Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
+      payout_holding.reload
       payout_holding.mark_settled!
       @report.user.payout_method.update(wise_recipient_id: params[:wise_recipient_id])
       wise_transfer = clearinghouse.wise_transfers.create!(
