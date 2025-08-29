@@ -13,10 +13,21 @@
 #  show_explore_hack_club :boolean          default(FALSE), not null
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
+#  creator_id             :bigint           not null
+#
+# Indexes
+#
+#  index_referral_programs_on_creator_id  (creator_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (creator_id => users.id)
 #
 module Referral
   class Program < ApplicationRecord
     include Hashid::Rails
+
+    belongs_to :creator, class_name: "User"
 
     validates :name, presence: true
     validates :show_explore_hack_club, inclusion: { in: [true, false] }
