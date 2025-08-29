@@ -136,7 +136,7 @@ window.attachTooltipListener = () => {
       const offset = 5;
 
       const label = trigger.getAttribute("aria-label").trim();
-      if (!label.trim()) return;
+      if (!label) return;
 
       tooltip.className = "active";
       tooltip.textContent = label;
