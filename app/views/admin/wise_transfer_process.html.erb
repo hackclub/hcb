@@ -149,7 +149,7 @@
       <fieldset class="p-6">
         <legend style="padding: 0px 8px">Reject</legend>
         <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
-          <div class="field">
+          <div class="mb-2">
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
           </div>
@@ -162,7 +162,7 @@
       <fieldset class="p-6" x-data="{ amount: null, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
         <legend style="padding: 0px 8px">Send</legend>
             <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
-              <div class="field">
+              <div class="mb-2">
                 <%= form.label :usd_amount, "Amount (USD)", class: "bold mb1" %> <br>
                 $ <%= form.number_field :usd_amount,
                   placeholder: "500.00",
@@ -197,7 +197,7 @@
             <% end %>
 
           <%= form_with(model: @wise_transfer, local: true, url: mark_sent_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
-            <div class="field">
+            <div class="mb-2">
               <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
               <%= form.text_field :wise_id, style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
             </div>
@@ -211,7 +211,7 @@
         <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
 
         <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
-          <div class="field">
+          <div class="mb-2">
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
           </div>
@@ -230,7 +230,7 @@
       <fieldset class="p-6">
         <legend style="padding: 0px 8px">Fail</legend>
         <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
-          <div class="field">
+          <div class="mb-2">
             <%= form.label "Failure reason", class: "bold mb1" %> <br>
             <%= form.text_area :reason, style: "width: 400px;", placeholder: "(Markdown supported)" %>
           </div>
