@@ -97,7 +97,7 @@ module Api
 
         cg_params = params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions)
 
-        @card_grant&.setting.update(
+        @card_grant&.setting&.update(
           {
             merchant_lock: cg_params.merchant_lock,
             category_lock: cg_params.category_lock,

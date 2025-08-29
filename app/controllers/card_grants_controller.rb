@@ -103,7 +103,7 @@ class CardGrantsController < ApplicationController
 
     cg_params = params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock)
 
-    @card_grant&.setting.update(
+    @card_grant&.setting&.update(
       {
         merchant_lock: cg_params.card_grant.merchant_lock,
         category_lock: cg_params.card_grant.category_lock,
