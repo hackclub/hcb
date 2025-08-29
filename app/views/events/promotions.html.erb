@@ -16,105 +16,99 @@
 
 <% active_teen_count = @event.users.count { |user| user.teenager? && user.active? } %>
 
-<div class="mb3 rounded-xl promo-premium-border">
-  <div class="card pb0" id="premium-jukebox">
-    <div class="card__banner card__banner--top flex justify-between items-center promo-premium-banner">
-      <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
-        <span class="flex-grow">Jukebox</span>
-        <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
-      </h3>
+<div class="card pb0 mb3 promo-jukebox" id="premium-jukebox">
+  <div class="card__banner card__banner--top flex justify-between items-center">
+    <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
+      <span class="flex-grow">Jukebox</span>
+      <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
+    </h3>
 
-      <% if premium_ineligible_reason.present? %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
-      <% elsif active_teen_count < 10 %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 10 or more active teens">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
-      <% else %>
-        <%= link_to "Apply",
-          fillout_form("briCUMzx5Sus", { "hcbprojname" => @event.name, "hcburl" => event_url(@event) + "/team", "name" => current_user.name, "email" => current_user.email }),
-          class: "btn promo-premium-header bg-clip-padding",
-          target: :_blank %>
-      <% end %>
-    </div>
-
-    <p>
-      Does your HCB organization have 10 or more active teens? Add a link to
-      <%= link_to "Jukebox Print", "https://www.jukeboxprint.com/custom-stickers" %>
-      to your website for a $500 coupon to spend on custom stickers, cards, marketing materials, and more!
-    </p>
-    <section class="card__banner card__darker secondary border-top italic">
-      You currently have <%= number_to_human(active_teen_count) %>/10 active teenagers in your organization!
-    </section>
+    <% if premium_ineligible_reason.present? %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% elsif active_teen_count < 10 %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 10 or more active teens">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% else %>
+      <%= link_to "Apply",
+        fillout_form("briCUMzx5Sus", { "hcbprojname" => @event.name, "hcburl" => event_url(@event) + "/team", "name" => current_user.name, "email" => current_user.email }),
+        class: "btn promo-premium-header bg-clip-padding",
+        target: :_blank %>
+    <% end %>
   </div>
+
+  <p>
+    Does your HCB organization have 10 or more active teens? Add a link to
+    <%= link_to "Jukebox Print", "https://www.jukeboxprint.com/custom-stickers" %>
+    to your website for a $500 coupon to spend on custom stickers, cards, marketing materials, and more!
+  </p>
+  <section class="card__banner card__darker secondary border-top italic">
+    You currently have <%= number_to_human(active_teen_count) %>/10 active teenagers in your organization!
+  </section>
 </div>
 
-<div class="mb3 rounded-xl promo-premium-border">
-  <div class="card pb0" id="premium-pins">
-    <div class="card__banner card__banner--top flex justify-between items-center promo-premium-banner">
-      <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
-        <span class="flex-grow">Pins & Keychains</span>
-        <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
-      </h3>
+<div class="card pb0 mb3 promo-pins-keychains" id="premium-pins">
+  <div class="card__banner card__banner--top flex justify-between items-center">
+    <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
+      <span class="flex-grow">Pins & Keychains</span>
+      <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
+    </h3>
 
-      <% if premium_ineligible_reason.present? %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
-      <% elsif active_teen_count < 5 %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 5 or more active teens">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
-      <% else %>
-        <%= link_to "Apply",
-          fillout_form("2XR9U2gBNDus", { "orgname" => @event.name, "hcburl" => event_url(@event) + "/team", "name" => current_user.name, "email" => current_user.email }),
-          class: "btn promo-premium-header bg-clip-padding",
-          target: :_blank %>
-      <% end %>
-    </div>
-
-    <p>
-      We'll ship you some super cool custom HCB pins and keychains if you have 5 or more active teens!
-    </p>
-    <section class="card__banner card__darker secondary border-top italic">
-      You currently have <%= number_to_human(active_teen_count) %>/5 active teenagers in your organization!
-    </section>
+    <% if premium_ineligible_reason.present? %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% elsif active_teen_count < 5 %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 5 or more active teens">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% else %>
+      <%= link_to "Apply",
+        fillout_form("2XR9U2gBNDus", { "orgname" => @event.name, "hcburl" => event_url(@event) + "/team", "name" => current_user.name, "email" => current_user.email }),
+        class: "btn promo-premium-header bg-clip-padding",
+        target: :_blank %>
+    <% end %>
   </div>
+
+  <p>
+    We'll ship you some super cool custom HCB pins and keychains if you have 5 or more active teens!
+  </p>
+  <section class="card__banner card__darker secondary border-top italic">
+    You currently have <%= number_to_human(active_teen_count) %>/5 active teenagers in your organization!
+  </section>
 </div>
 
-<div class="mb3 rounded-xl promo-premium-border">
-  <div class="card pb0" id="premium-domains">
-    <div class="card__banner card__banner--top flex justify-between items-center promo-premium-banner">
-      <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
-        <span class="flex-grow">Domains</span>
-        <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
-      </h3>
+<div class="card pb0 mb3 promo-premium-domains" id="premium-domains">
+  <div class="card__banner card__banner--top flex justify-between items-center">
+    <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
+      <span class="flex-grow">Domains</span>
+      <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
+    </h3>
 
-      <% if premium_ineligible_reason.present? %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
-      <% elsif active_teen_count < 5 %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 5 or more active teens">
-          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
-        </div>
-      <% else %>
-        <%= link_to "Apply",
-          fillout_form("xxiJm98eDpus", { "orgname" => @event.name, "hcburl" => event_url(@event) + "/team", "email" => current_user.email }),
-          class: "btn promo-premium-header bg-clip-padding",
-          target: :_blank %>
-      <% end %>
-    </div>
-
-    <p>
-      Get $20 to spend on domains in the form of a card grant if you have 5 or more active teens!
-    </p>
-    <section class="card__banner card__darker secondary border-top italic">
-      You currently have <%= number_to_human(active_teen_count) %>/5 active teenagers in your organization!
-    </section>
+    <% if premium_ineligible_reason.present? %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% elsif active_teen_count < 5 %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 5 or more active teens">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% else %>
+      <%= link_to "Apply",
+        fillout_form("xxiJm98eDpus", { "orgname" => @event.name, "hcburl" => event_url(@event) + "/team", "email" => current_user.email }),
+        class: "btn promo-premium-header bg-clip-padding",
+        target: :_blank %>
+    <% end %>
   </div>
+
+  <p>
+    Get $20 to spend on domains in the form of a card grant if you have 5 or more active teens!
+  </p>
+  <section class="card__banner card__darker secondary border-top italic">
+    You currently have <%= number_to_human(active_teen_count) %>/5 active teenagers in your organization!
+  </section>
 </div>
 
 <div class="card pb0 mb3 promo-robotics" id="bin">
@@ -123,8 +117,12 @@
       <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
       Fee Waiver
     </h3>
-    <% if (!@perks_available || !@event.organized_by_teenagers? || active_teen_count < 5) %>
-      <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
+    <% if premium_ineligible_reason.present? %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% elsif active_teen_count < 5 %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 5 or more active teens">
         <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
       </div>
     <% else %>
