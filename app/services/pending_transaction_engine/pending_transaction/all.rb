@@ -69,10 +69,10 @@ module PendingTransactionEngine
                     .where("receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND canonical_pending_transactions.amount_cents <= 0")
             end
 
-            if @user
+            if @user.present? && @user.is_a?(Array) && @user.any?
               cpts =
-                cpts.joins("LEFT JOIN raw_pending_stripe_transactions on raw_pending_stripe_transactions.id = canonical_pending_transactions.raw_pending_stripe_transaction_id")
-                    .where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user&.stripe_cardholder&.stripe_id)
+                cpts.joins("LEFT JOIN raw_pending_stripe_transactions ON raw_pending_stripe_transactions.id = canonical_pending_transactions.raw_pending_stripe_transaction_id")
+                  .where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", @user)
             end
 
             if @minimum_amount

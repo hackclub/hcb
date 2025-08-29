@@ -1195,7 +1195,9 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
+    @user = if params[:user].present?
+      Array(params[:user]).map { |u| @event.users.friendly.find(u, allow_nil: true) }.compact
+    end
 
     @type = params[:type]
     @start_date = params[:start].presence
