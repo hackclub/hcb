@@ -3,23 +3,6 @@
 <% if card_grant.pending_invite? %>
   <%# Prompt user to create a Stripe Card %>
   <div class="flex flex-col w-100">
-    <div class="card mb3 pb0 w-100">
-      <div class="card__banner card__banner--top flex justify-between items-center border-bottom divide-secondary <%= "card--background-image" if @event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(@event.background_image).dump})" if @event.background_image.attached? %>">
-        <h3 class="h1 pt2 pb2 my0 color-black">
-          <%= @event.name %>
-          has granted you
-          <%= render_money @card_grant.amount %>
-          <% if @card_grant.purpose.present? %>
-            for <%= @card_grant.purpose %>
-          <% end %>
-        </h3>
-      </div>
-      <div class="flex flex-row items-end justify-start gap-2 mb2">
-        <h3 class="m-0">Card activation</h3>
-        <%= inline_icon "view-forward", class: "m-0 self-center", size: 20 %>
-        <p class="m-0">We just need one more thing before you can start spending your grant.</p>
-      </div>
-    </div>
 
     <div class="container--xs m-auto">
 

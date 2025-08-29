@@ -7,7 +7,47 @@
       <%= inline_icon "door-leave", size: home_action_size %>
     <% end %>
   </span>
-
+  <% admin_tool do %>
+    <p class="mt-2 mb-1 bold">Individual authorizations (<%= authorization.authorization_count %>):</p>
+    <table class="table table--small text-sm">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Token</th>
+          <th>Authorized At</th>
+          <th>Scopes</th>
+          <th>Expires</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% authorization.tokens.each do |token| %>
+          <tr>
+            <td><%= token.id %></td>
+            <td><code><%= token.abbreviated %></code></td>
+            <td><%= local_time_ago token.created_at %></td>
+            <td><%= token.scopes %></td>
+            <td>
+              <% if token.expires_in %>
+                <%= time_ago_in_words(token.created_at + token.expires_in.seconds) %> from now
+              <% else %>
+                Never
+              <% end %>
+            </td>
+            <td>
+              <% if token.expires_in %>
+                <%= link_to make_authorization_eternal_users_path(id: token.id), method: :post,
+                            class: "btn bg-success py1 px2 h4" do %>
+                  <%= inline_icon "clock", size: home_action_size %>
+                  make eternal
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
   <p class="regular italic muted text-sm m-0 mt-1">
     <%= authorization.authorization_count == 1 ? "Authorized" : "Last authorized" %> <%= local_time_ago authorization.created_at %>
   </p>

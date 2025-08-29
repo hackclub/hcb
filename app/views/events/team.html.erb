@@ -32,8 +32,26 @@
   <% end %>
 </h1>
 
+<% if @event.parent.present? %>
+  <%= render "callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
+    <p>Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, all team members of <%= @event.parent.name %> can access and view this organization.</p>
+
+    <% if @indirect_access.present? %>
+      <p>These team members can access this organization:</p>
+
+      <div class="grid">
+        <% @indirect_access.each do |user, role| %>
+          <span class="flex">
+            <%= user_mention(user) %><%= role == "manager" ? "can manage" : "can view" %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>
+
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
     <%= render "search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>
@@ -42,8 +60,8 @@
     <% ["all", "readers", "members", "managers"].each do |filter| %>
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
     <% end %>
-    <% if admin_signed_in? %>
-      <%= link_to "Active Teens", "?filter=active_teens#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teens", role: "tab" %>
+    <% if auditor_signed_in? %>
+      <%= link_to "Active teens", "?filter=active_teens#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teens", role: "tab" %>
     <% end %>
   </div>
 </div>

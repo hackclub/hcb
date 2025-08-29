@@ -2,7 +2,7 @@
 
 <h1>Create an organization from Airtable</h1>
 
-<%= form_with(model: nil, local: true, url: event_create_from_airtable_admin_index_path) do |form| %>
+<%= form_with(model: false, local: true, url: event_create_from_airtable_admin_index_path) do |form| %>
   <p>
     <%= form.label :airtable_record_id, "Airtable Record ID" %>
     <br>

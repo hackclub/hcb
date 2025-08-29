@@ -10,7 +10,7 @@
           <span class="btn bg-accent disabled">Shipped!</span>
         </div>
       <% elsif Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || current_user) %>
-        <%= link_to "Disable", disable_feature_path(feature: local_assigns[:feature_flag], event_id: local_assigns[:event]&.id), method: :post, class: "btn bg-accent", data: { turbo_confirm: local_assigns[:disable_warning], turbo_method: "post" }, disabled: %>
+        <%= link_to "Disable", disable_feature_path(feature: local_assigns[:feature_flag], event_id: local_assigns[:event]&.id), method: :post, class: "btn bg-accent", data: { turbo_confirm: local_assigns[:disable_warning], turbo_method: :post }, disabled: %>
       <% else %>
         <%= link_to "Enable", enable_feature_path(feature: local_assigns[:feature_flag], event_id: local_assigns[:event]&.id), method: :post, class: "btn bg-info", disabled: %>
       <% end %>

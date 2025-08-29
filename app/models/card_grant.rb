@@ -6,8 +6,11 @@
 #
 #  id                         :bigint           not null, primary key
 #  amount_cents               :integer
+#  banned_categories          :string
+#  banned_merchants           :string
 #  category_lock              :string
 #  email                      :string           not null
+#  instructions               :text
 #  keyword_lock               :string
 #  merchant_lock              :string
 #  one_time_use               :boolean
@@ -78,10 +81,14 @@ class CardGrant < ApplicationRecord
 
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
+  serialize :banned_merchants, coder: CommaSeparatedCoder
+  serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :purpose, length: { maximum: 30 }
+
+  MAXIMUM_PURPOSE_LENGTH = 30
+  validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
@@ -99,7 +106,7 @@ class CardGrant < ApplicationRecord
     elsif pending_invite?
       "info"
     elsif stripe_card.frozen? || stripe_card.inactive?
-      "info"
+      "warning"
     else
       "success"
     end
@@ -117,6 +124,15 @@ class CardGrant < ApplicationRecord
     else
       "Active"
     end
+  end
+
+  def status_badge_type
+    s = state.to_sym
+    return :success if s == :success
+    return :error if s == :muted
+    return :warning if s == :info
+
+    :muted
   end
 
   def pending_invite?
@@ -146,7 +162,7 @@ class CardGrant < ApplicationRecord
 
   def withdraw!(amount_cents:, withdrawn_by: sent_by)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
-    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents > balance.amount * 100
+    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents >= balance.amount * 100
 
     custom_memo = "Withdrawal from grant to #{user.name}"
 
@@ -230,12 +246,20 @@ class CardGrant < ApplicationRecord
     (merchant_lock + (setting&.merchant_lock || [])).uniq
   end
 
+  def disallowed_merchants
+    (banned_merchants + (setting&.banned_merchants || [])).uniq
+  end
+
   def allowed_merchant_names
     allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name || "Unnamed Merchant (#{merchant_id})" }.uniq
   end
 
   def allowed_categories
     (category_lock + (setting&.category_lock || [])).uniq
+  end
+
+  def disallowed_categories
+    (banned_categories + (setting&.banned_categories || [])).uniq
   end
 
   def allowed_category_names

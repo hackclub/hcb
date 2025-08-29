@@ -232,3 +232,15 @@ tr.strikethrough td:before {
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
+
+// https://piccalil.li/blog/link-button/
+.link-button {
+  display: inline;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  background: transparent;
+  color: currentColor;
+}

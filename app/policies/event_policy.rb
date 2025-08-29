@@ -10,13 +10,20 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  def show_in_v4?
+    auditor_or_reader?
+  end
+
   # Turbo frames for the event homepage (show)
   alias_method :team_stats?, :show?
   alias_method :recent_activity?, :show?
   alias_method :money_movement?, :show?
   alias_method :balance_transactions?, :show?
-  alias_method :merchants_categories?, :show?
-  alias_method :tags_users?, :show?
+  alias_method :merchants_chart?, :show?
+  alias_method :categories_chart?, :show?
+  alias_method :top_categories?, :show?
+  alias_method :tags_chart?, :show?
+  alias_method :users_chart?, :show?
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
@@ -36,13 +43,6 @@ class EventPolicy < ApplicationPolicy
 
   def balance_by_date?
     is_public || auditor_or_reader?
-  end
-
-  # NOTE(@lachlanjc): this is bad, I’m sorry.
-  # This is the StripeCardsController#shipping method when rendered on the event
-  # card overview page. This should be moved out of here.
-  def shipping?
-    auditor_or_reader?
   end
 
   def edit?
@@ -80,12 +80,20 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  def announcement_overview?
+    is_public || record.announcements.published.any? || auditor_or_reader?
+  end
+
+  def feed?
+    announcement_overview?
+  end
+
   def emburse_card_overview?
     is_public || auditor_or_reader?
   end
 
   def card_overview?
-    (is_public || auditor_or_reader?) && record.approved? && record.plan.cards_enabled?
+    show? && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -101,11 +109,15 @@ class EventPolicy < ApplicationPolicy
   end
 
   def statements?
-    is_public || auditor_or_reader?
+    show?
+  end
+
+  def statement_of_activity?
+    show? && admin?
   end
 
   def async_balance?
-    is_public || auditor_or_reader?
+    show?
   end
 
   def create_transfer?
@@ -129,7 +141,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def transfers?
-    (is_public || auditor_or_reader?) && record.plan.transfers_enabled?
+    show? && record.plan.transfers_enabled?
   end
 
   def promotions?
@@ -137,7 +149,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements_pending_review_icon?
-    is_public || auditor_or_reader?
+    show?
   end
 
   def reimbursements?
@@ -148,8 +160,20 @@ class EventPolicy < ApplicationPolicy
     auditor_or_reader?
   end
 
+  def sub_organizations?
+    auditor_or_reader? && (record.subevents_enabled? || record.subevents.any?)
+  end
+
+  def create_sub_organization?
+    admin_or_manager? && record.subevents_enabled?
+  end
+
   def donation_overview?
-    (is_public || auditor_or_reader?) && record.approved? && record.plan.donations_enabled?
+    show? && record.approved? && record.plan.donations_enabled?
+  end
+
+  def invoices?
+    show? && record.approved? && record.plan.invoices_enabled?
   end
 
   def account_number?
@@ -210,16 +234,16 @@ class EventPolicy < ApplicationPolicy
     user&.auditor?
   end
 
-  def member?
-    OrganizerPosition.role_at_least?(user, record, :member)
-  end
-
   def reader?
     OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
+  def member?
+    OrganizerPosition.role_at_least?(user, record, :member)
+  end
+
   def manager?
-    OrganizerPosition.find_by(user:, event: record)&.manager?
+    OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
   def admin_or_manager?

@@ -16,16 +16,22 @@
       <% end %>
     </h3>
   </div>
-  <div class="flex flex-row items-end justify-start gap-2 mb2">
-    <h3 class="m-0">Pre-authorization</h3>
-    <%= inline_icon "view-forward", class: "m-0 self-center", size: 20 %>
-    <p class="m-0">Before you can get spending, we need to know what you're planning to buy.</p>
+  <div class="flex flex-row items-center justify-start gap-2 mb2 lg:items-end">
+    <div class="flex items-start flex-col lg:flex-row lg:items-end justify-start gap-2">
+      <div class="flex flex-row items-end justify-start gap-2 w-min-content min-w-0 flex-shrink-0">
+        <h3 class="m-0 p-0">Pre-authorization</h3>
+        <%= inline_icon "view-forward", class: "m-0 lg:self-center", size: 20 %>
+      </div>
+      <p class="m-0">Before you can get spending, we need to know what you're planning&nbsp;to&nbsp;buy.</p>
+    </div>
     <div class="flex-grow"></div>
-    <%= render partial: "card_grant/pre_authorizations/status_badge", locals: { pre_authorization: @pre_authorization } %>
+    <div class="flex flex-row items-center w-min-content flex-shrink-0">
+      <%= render partial: "card_grant/pre_authorizations/status_badge", locals: { pre_authorization: @pre_authorization, organizer: false } %>
+    </div>
   </div>
 </div>
 
-<% if @pre_authorization.approved? %>
+<% if @pre_authorization.approved? || @pre_authorization.fraudulent? %>
   <div class="card flex flex-row gap-2 justify-between align-center mb3">
     <h3 class="flex flex-row items-center m-0">
       <%= inline_icon "checkmark", size: 24, class: "mr2 text-green" %>
@@ -34,6 +40,16 @@
     <%= link_to "View card details", card_grant_path(@card_grant), class: "btn bg-success" %>
   </div>
 <% end %>
+
+<% if @card_grant.instructions.present? %>
+  <%= render "callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
+    <p class="m-0">
+      <%= @card_grant.instructions %>
+    </p>
+  <% end %>
+<% end %>
+
+<%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @pre_authorization, link_to_pre_authorization: false } %>
 
 <%= form_with model: @pre_authorization, id: "pre_authorization_form", url: card_grant_pre_authorizations_path(@card_grant), method: :patch, class: "flex flex-col", data: { turbo: true } do |form| %>
 
@@ -48,7 +64,7 @@
 <% end %>
 
 <h3>2. Upload a screenshot of your cart</h3>
-<p>Upload a screenshot of your cart showing the item you want to purchase, as well as any taxes, fees, or shipping costs. This helps us verify the total amount you need to spend.</p>
+<p>Upload a screenshot of your cart showing the item you want to purchase. Make sure it includes the total cost, as well as any taxes, fees, and shipping costs. This helps us verify the total amount you need to spend.</p>
 
 <div class="flex justify-start flex-row gap-4">
   <% if @pre_authorization.draft? %>
@@ -71,7 +87,7 @@
     } %>
 
 <h3>3. Submit for review</h3>
-<p>Once you've provided the product link and uploaded the screenshot, our automated review process will screen your submission and activate your grant.</p>
+<p>Once you've provided the product link and uploaded the screenshot, our review process will screen your submission and activate your grant.</p>
 
 <% if @pre_authorization.draft? %>
   <input type="submit" class="btn" value="Submit for review" form="pre_authorization_form">

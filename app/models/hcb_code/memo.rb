@@ -26,6 +26,8 @@ class HcbCode
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
         return stripe_card_memo if stripe_card? && stripe_card_memo
         return wire_memo if wire?
+        return wise_transfer_memo if wise_transfer?
+        return stripe_service_fee_memo if stripe_service_fee?
 
         ct.try(:smart_memo) || pt.try(:smart_memo) || ""
       end
@@ -61,7 +63,7 @@ class HcbCode
 
       def bank_fee_memo
         if bank_fee.amount_cents.negative? && bank_fee.fee_revenue.present?
-          return "Fiscal sponsorship for #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} to #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
+          return "Fiscal sponsorship fee for #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} to #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
         elsif bank_fee.amount_cents.negative?
           return "Fiscal sponsorship"
         else
@@ -86,7 +88,7 @@ class HcbCode
       end
 
       def fee_revenue_memo
-        "Fee revenue from #{fee_revenue.start.strftime("%b %e")} to #{fee_revenue.end.strftime("%b %e")}"
+        "Fee revenue for #{fee_revenue.start.strftime("%-m/%-d")} to #{fee_revenue.end.strftime("%-m/%-d")}"
       end
 
       def outgoing_fee_reimbursement_memo
@@ -109,8 +111,16 @@ class HcbCode
         YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
       end
 
+      def stripe_service_fee_memo
+        stripe_service_fee.stripe_description
+      end
+
       def wire_memo
         "Wire to #{wire.recipient_name}"
+      end
+
+      def wise_transfer_memo
+        "Wise transfer to #{wise_transfer.recipient_name}"
       end
 
     end

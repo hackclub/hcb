@@ -15,7 +15,8 @@ class FeaturesController < ApplicationController
     totp_2024_06_13: %w[🔒 ⏰],
     event_home_page_redesign_2024_09_21: %w[🏠 📊 📉 💸],
     card_logos_2024_08_27: %w[🌈 💳 📸],
-    donation_tiers_2025_06_24: %w[💖 🥇 🥈 🥉]
+    donation_tiers_2025_06_24: %w[💖 🥇 🥈 🥉],
+    sudo_mode_2015_07_21: %w[🔐 🔒 🔑 🔓]
   }.freeze
 
   def enable_feature
@@ -26,7 +27,7 @@ class FeaturesController < ApplicationController
             end
     feature = params[:feature]
     authorize actor
-    if FEATURES.key?(feature.to_sym) || current_user.admin?
+    if FEATURES.key?(feature.to_sym) || admin_signed_in?
       if Flipper.enable_actor(feature, actor)
         confetti!(emojis: FEATURES[feature.to_sym])
         flash[:success] = "You've opted into this beta; let us know if you have any feedback."
@@ -47,7 +48,12 @@ class FeaturesController < ApplicationController
             end
     feature = params[:feature]
     authorize actor
-    if FEATURES.key?(feature.to_sym) || current_user.admin?
+
+    if feature == "sudo_mode_2015_07_21"
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
+
+    if FEATURES.key?(feature.to_sym) || admin_signed_in?
       if Flipper.disable_actor(feature, actor)
         # If it's the user permissions feature, make all the users & invites in the org managers.
         if feature == "user_permissions_2024_03_09" && actor.is_a?(Event)

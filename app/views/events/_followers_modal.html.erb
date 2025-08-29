@@ -1,0 +1,24 @@
+<%# locals: (event_follows:) %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_followers">
+  <%= modal_header "Followers" %>
+  <ul class="grid grid-cols-<%= event_follows.size == 1 ? "1" : "2" %> text-left w-full mt-2">
+    <% event_follows.each do |event_follow| %>
+      <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+        <span class="w-full flex gap-2 items-center align-middle">
+          <%= user_mention event_follow.user %>
+          <div class="flex-grow"></div>
+          <%= pop_icon_to "member-remove",
+                          follow_path(event_follow),
+                          class: "error",
+                          data: {
+                            turbo_frame: "_top",
+                            turbo_method: :delete,
+                            turbo_confirm: "Are you sure you want to remove this follower?",
+                          },
+                          disabled: policy(event_follow).destroy? %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+</section>

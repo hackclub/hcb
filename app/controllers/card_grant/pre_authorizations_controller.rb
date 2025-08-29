@@ -8,53 +8,67 @@ class CardGrant
       authorize @pre_authorization
     end
 
+    def organizer_approve
+      authorize @pre_authorization
+
+      @pre_authorization.mark_approved!
+
+      flash[:success] = "Pre-authorization approved"
+      redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
+    def organizer_reject
+      authorize @pre_authorization
+
+      @pre_authorization.mark_rejected!(current_user)
+
+      flash[:success] = "Pre-authorization rejected, card grant canceled"
+      redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
     def update
       authorize @pre_authorization
-      streams = []
+
+      unless @pre_authorization.draft?
+        flash[:error] = "You can only update an unsubmitted pre-authorization."
+        return redirect_to card_grant_pre_authorizations_path(@card_grant)
+      end
 
       if params[:screenshot].present?
         @pre_authorization.screenshots.attach(params[:screenshot])
 
-        streams << turbo_stream.replace(:screenshot_upload_form, partial: "card_grant/pre_authorizations/screenshot_form", locals: {
-                                          success: "#{"Screenshot".pluralize(params[:screenshot].length)} added!",
-                                          turbo: true
-                                        })
-
-        streams << turbo_stream.replace(:screenshot_list, partial: "card_grant/pre_authorizations/screenshot_list", locals: {
-                                          screenshots: @pre_authorization.screenshots
-                                        })
-
-        streams << turbo_stream.replace(:screenshot_count, partial: "card_grant/pre_authorizations/screenshot_count", locals: {
-                                          count: @pre_authorization.screenshots.count,
-                                          card_grant: @card_grant,
-                                          disabled: !@pre_authorization.draft?
-                                        })
-
         return respond_to do |format|
           format.turbo_stream do
-            render turbo_stream: streams
+            render turbo_stream: [
+              turbo_stream.replace(:screenshot_upload_form, partial: "card_grant/pre_authorizations/screenshot_form", locals: {
+                                     success: "#{"Screenshot".pluralize(params[:screenshot].length)} added!",
+                                     turbo: true
+                                   }),
+              turbo_stream.replace(:screenshot_list, partial: "card_grant/pre_authorizations/screenshot_list", locals: {
+                                     screenshots: @pre_authorization.screenshots
+                                   }),
+              turbo_stream.replace(:screenshot_count, partial: "card_grant/pre_authorizations/screenshot_count", locals: {
+                                     count: @pre_authorization.screenshots.count,
+                                     card_grant: @card_grant,
+                                     disabled: !@pre_authorization.draft?
+                                   })
+            ]
           end
 
           format.html { redirect_to card_grant_pre_authorizations_path(@card_grant) }
         end
       end
 
-      if @pre_authorization.draft?
+      @pre_authorization.update!(product_url: pre_authorization_params[:product_url])
 
-        @pre_authorization.update!(product_url: pre_authorization_params[:product_url])
-
-        if @pre_authorization.product_url.blank? || !@pre_authorization.screenshots.attached?
-          flash[:error] = "Please provide a product link and upload a screenshot before submitting."
-          return redirect_to card_grant_pre_authorizations_path(@card_grant)
-        end
-
-        @pre_authorization.mark_submitted!
-
-        flash[:success] = "Pre-authorization submitted"
-
-        ::CardGrant::PreAuthorization::AnalyzeJob.perform_later(pre_authorization: @pre_authorization)
+      if @pre_authorization.product_url.blank? || !@pre_authorization.screenshots.attached?
+        flash[:error] = "Please provide a product link and upload a screenshot before submitting."
+        return redirect_to card_grant_pre_authorizations_path(@card_grant)
       end
 
+      @pre_authorization.mark_submitted!
+
+      flash[:success] = "Pre-authorization submitted"
       redirect_to card_grant_pre_authorizations_path(@card_grant)
     end
 
@@ -92,9 +106,7 @@ class CardGrant
     end
 
     def pre_authorization_params
-      params[:card_grant_pre_authorization].permit(
-        :product_url
-      )
+      params.require(:card_grant_pre_authorization).permit(:product_url)
     end
 
   end

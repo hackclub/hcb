@@ -48,11 +48,11 @@
       <strong>Expires on</strong>
       <span><%= format_date card_grant.expires_on %></span>
     </p>
+
     <p>
       <strong>Email</strong>
       <span><%= mail_to card_grant.email %></span>
     </p>
-
     <p>
       <strong>Allowed merchants</strong>
       <% if card_grant.allowed_merchants.any? %>
@@ -84,9 +84,4 @@
       </p>
     <% end %>
   </section>
-  <% if card_grant.pending_invite? || @frame %>
-    <section>
-      <%= render partial: "card_grants/actions", locals: { card_grant: } %>
-    </section>
-  <% end %>
 </div>

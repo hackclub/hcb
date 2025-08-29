@@ -4,7 +4,7 @@
   <% else %>
     <fieldset>
       <legend class="heading h2 pt2 pb2">Which organization?</legend>
-      <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
+      <%= form.select :event_id, current_user.events.not_demo_mode.where.not(id: current_user.reader_events).pluck(:name, :id) %>
     </fieldset>
   <% end %>
   <fieldset>
@@ -49,11 +49,11 @@
     <h2 class="grid__fill">Shipping info</h2>
     <div class="field">
       <%= form.label :stripe_shipping_name, "Shipping name" %>
-      <%= form.text_field :stripe_shipping_name, value: current_user&.full_name, required: true, disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_name, value: current_user&.full_name, disabled: @event&.demo_mode? %>
     </div>
     <div class="field">
       <%= form.label :stripe_shipping_address_line1, "Address (line 1)" %>
-      <%= form.text_field :stripe_shipping_address_line1, value: prefill(:line1), placeholder: suggested(:line1), required: true, disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_line1, value: prefill(:line1), placeholder: suggested(:line1), disabled: @event&.demo_mode? %>
     </div>
     <div class="field">
       <%= form.label :stripe_shipping_address_line2, "Address (line 2)" %>
@@ -61,23 +61,23 @@
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_city, "City" %>
-      <%= form.text_field :stripe_shipping_address_city, value: prefill(:city), placeholder: suggested(:city), required: true, disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_city, value: prefill(:city), placeholder: suggested(:city), disabled: @event&.demo_mode? %>
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_state, "State / province" %>
-      <%= form.text_field :stripe_shipping_address_state, value: prefill(:state), placeholder: suggested(:state), required: true, disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_state, value: prefill(:state), placeholder: suggested(:state), disabled: @event&.demo_mode? %>
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_postal_code, "ZIP code" %>
-      <%= form.text_field :stripe_shipping_address_postal_code, value: prefill(:postal_code), placeholder: suggested(:postal_code), required: true, disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_address_postal_code, value: prefill(:postal_code), placeholder: suggested(:postal_code), disabled: @event&.demo_mode? %>
     </div>
     <div class="field grid__half">
       <%= form.label :stripe_shipping_address_country, "Country" %>
-      <%= form.country_select :stripe_shipping_address_country, only: ["US"], sort_provided: false, selected: "US", required: true, disabled: @event&.demo_mode? %>
+      <%= form.country_select :stripe_shipping_address_country, only: ["US"], sort_provided: false, selected: "US", disabled: @event&.demo_mode? %>
     </div>
 
     <% designs = [@event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
-    <% designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.admin? %>
+    <% designs += StripeCard::PersonalizationDesign.unlisted.available if auditor_signed_in? %>
     <% if designs.any? %>
       <h2 class="grid__fill">Card design</h2>
       <div class="field field--options" style="max-width: unset;">

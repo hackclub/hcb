@@ -25,6 +25,18 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
+  def generate_backup_codes?
+    record == user
+  end
+
+  def activate_backup_codes?
+    record == user
+  end
+
+  def disable_backup_codes?
+    user.admin? || record == user
+  end
+
   def edit_address?
     user.auditor? || record == user
   end
@@ -47,6 +59,10 @@ class UserPolicy < ApplicationPolicy
 
   def edit_admin?
     user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
+  def admin_details?
+    user.auditor?
   end
 
   def update?

@@ -4,6 +4,7 @@ module Column
   class SweepJob < ApplicationJob
     MINIMUM_AVG_BALANCE = 5_000_000_00 # 5 mil
     FLOATING_BALANCE = MINIMUM_AVG_BALANCE + 500_000_00 # 5.5 mil
+    MANUAL_REVIEW_THRESHOLD = 400_000_00 # 400k
     queue_as :low
 
     def perform
@@ -12,11 +13,11 @@ module Column
       difference = balance - FLOATING_BALANCE
 
       if balance < MINIMUM_AVG_BALANCE
-        Airbrake.notify("Column available balance under #{MINIMUM_AVG_BALANCE}")
+        Rails.error.unexpected "Column available balance under #{MINIMUM_AVG_BALANCE}"
       end
 
-      if difference.abs > 200_000_00 && difference.negative? && !Flipper.enabled?(:bypass_next_column_sweep_manual_review) # if negative, it is a transfer from SVB (FS Main) to Column
-        Airbrake.notify("Column::SweepJob > $200,000. Requires human approval by enabling `bypass_next_column_sweep_manual_review` Flipper flag.")
+      if difference.abs > MANUAL_REVIEW_THRESHOLD && difference.negative? && !Flipper.enabled?(:bypass_next_column_sweep_manual_review) # if negative, it is a transfer from SVB (FS Main) to Column
+        Rails.error.unexpected "Column::SweepJob > #{ApplicationController.helpers.render_money(MANUAL_REVIEW_THRESHOLD)}. Requires human approval by enabling `bypass_next_column_sweep_manual_review` Flipper flag."
         return
       end
       Flipper.disable(:bypass_next_column_sweep_manual_review)

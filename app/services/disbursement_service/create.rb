@@ -4,6 +4,11 @@ module DisbursementService
   class Create
     include ::Shared::AmpleBalance
 
+    # This service raises exceptions that should ideally be displayed to the end
+    # user (e.g. insufficient funds) as they are best placed to address those
+    # issues.
+    class UserError < ArgumentError; end
+
     def initialize(source_event_id:, destination_event_id:,
                    name:, amount:, requested_by_id:, fulfilled_by_id: nil,
                    destination_subledger_id: nil, scheduled_on: nil, source_subledger_id: nil,
@@ -29,9 +34,9 @@ module DisbursementService
       raise ArgumentError, "amount_cents must be greater than 0" unless amount_cents > 0
 
       if @source_subledger_id.present?
-        raise ArgumentError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
+        raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
       else
-        raise ArgumentError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
+        raise UserError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
       end
 
       disbursement = Disbursement.create!(attrs)

@@ -530,6 +530,8 @@ input:where([data-behavior='otp_input']) {
   display: flex;
   border-radius: 0.75rem;
 
+  width: fit-content;
+
   transform: scale(1);
   transition:
     transform 0.125s ease-in-out,

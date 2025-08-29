@@ -1,0 +1,425 @@
+{
+  "bank-fees": {
+    "label": "Bank fees"
+  },
+  "benefits": {
+    "label": "Benefits"
+  },
+  "donations": {
+    "label": "Donations"
+  },
+  "events-projects": {
+    "label": "Events / Projects"
+  },
+  "finance": {
+    "label": "Finance",
+    "stripe_merchant_categories": [
+      "accounting_bookkeeping_services",
+      "credit_reporting_agencies",
+      "financial_institutions"
+    ]
+  },
+  "fiscal-sponsorship-fees": {
+    "label": "Fiscal sponsorship fees"
+  },
+  "food-fun": {
+    "label": "Food / fun",
+    "stripe_merchant_categories": [
+      "amusement_parks_carnivals",
+      "antique_reproductions",
+      "antique_shops",
+      "aquariums",
+      "art_dealers_and_galleries",
+      "bakeries",
+      "bands_orchestras",
+      "barber_and_beauty_shops",
+      "billiard_pool_establishments",
+      "bowling_alleys",
+      "candy_nut_and_confectionery_stores",
+      "caterers",
+      "country_clubs",
+      "dairy_products_stores",
+      "digital_goods_games",
+      "drinking_places",
+      "eating_places_restaurants",
+      "fast_food_restaurants",
+      "golf_courses_public",
+      "grocery_stores_supermarkets",
+      "health_and_beauty_spas",
+      "miscellaneous_food_stores",
+      "motion_picture_theaters",
+      "package_stores_beer_wine_and_liquor",
+      "sports_clubs_fields",
+      "theatrical_ticket_agencies",
+      "tourist_attractions_and_exhibits",
+      "video_game_arcades",
+      "video_tape_rental_stores"
+    ]
+  },
+  "fundraising": {
+    "label": "Fundraising",
+    "stripe_merchant_categories": [
+      "charitable_and_social_service_organizations_fundraising"
+    ]
+  },
+  "furniture": {
+    "label": "Furniture"
+  },
+  "gifts": {
+    "label": "Gifts",
+    "stripe_merchant_categories": [
+      "gift_card_novelty_and_souvenir_shops"
+    ]
+  },
+  "grants-stipends": {
+    "label": "Grants / stipends"
+  },
+  "hardware-equipment": {
+    "label": "Hardware / equipment",
+    "stripe_merchant_categories": [
+      "computer_repair",
+      "digital_goods_large_volume",
+      "electronics_repair_shops",
+      "electronics_stores",
+      "hardware_equipment_and_supplies",
+      "hardware_stores"
+    ]
+  },
+  "hcb-revenue": {
+    "hq_only": true,
+    "label": "HCB Revenue"
+  },
+  "hr": {
+    "label": "HR"
+  },
+  "insurance": {
+    "label": "Insurance",
+    "stripe_merchant_categories": [
+      "direct_marketing_insurance_services",
+      "insurance_default",
+      "insurance_underwriting_premiums"
+    ]
+  },
+  "internet-phone": {
+    "label": "Internet / Phone",
+    "stripe_merchant_categories": [
+      "telecommunication_equipment_and_telephone_sales",
+      "telecommunication_services",
+      "telegraph_services"
+    ]
+  },
+  "legal": {
+    "label": "Legal",
+    "stripe_merchant_categories": [
+      "court_costs",
+      "legal_services_attorneys"
+    ]
+  },
+  "marketing": {
+    "label": "Marketing",
+    "stripe_merchant_categories": [
+      "advertising_services",
+      "digital_goods_applications",
+      "digital_goods_media",
+      "direct_marketing_catalog_merchant",
+      "miscellaneous_publishing_and_printing"
+    ]
+  },
+  "miscellaneous": {
+    "label": "Miscellaneous"
+  },
+  "office": {
+    "label": "Office",
+    "stripe_merchant_categories": [
+      "floor_covering_stores",
+      "furniture_home_furnishings_and_equipment_stores_except_appliances",
+      "home_supply_warehouse_stores",
+      "household_appliance_stores",
+      "miscellaneous_home_furnishing_specialty_stores",
+      "news_dealers_and_newsstands",
+      "non_fi_money_orders",
+      "non_fi_stored_value_card_purchase_load",
+      "office_and_commercial_furniture",
+      "quick_copy_repro_and_blueprint",
+      "stationary_office_supplies_printing_and_writing_paper",
+      "stationery_stores_office_and_school_supply_stores",
+      "typewriter_stores",
+      "wholesale_clubs"
+    ]
+  },
+  "other-fees": {
+    "label": "Other fees"
+  },
+  "payroll-payroll-taxes": {
+    "label": "Payroll / Payroll taxes"
+  },
+  "professional-fees-contractors": {
+    "label": "Professional fees (contractors)",
+    "stripe_merchant_categories": [
+      "ac_refrigeration_repair",
+      "ambulance_services",
+      "architectural_surveying_services",
+      "auto_body_repair_shops",
+      "auto_paint_shops",
+      "boat_dealers",
+      "business_secretarial_schools",
+      "carpentry_services",
+      "carpet_upholstery_cleaning",
+      "child_care_services",
+      "chiropodists_podiatrists",
+      "chiropractors",
+      "civic_social_fraternal_associations",
+      "cleaning_and_maintenance",
+      "colleges_universities",
+      "commercial_photography_art_and_graphics",
+      "concrete_work_services",
+      "consulting_public_relations",
+      "counseling_services",
+      "dance_hall_studios_schools",
+      "dating_escort_services",
+      "dentists_orthodontists",
+      "detective_agencies",
+      "doctors",
+      "door_to_door_sales",
+      "dry_cleaners",
+      "educational_services",
+      "electrical_services",
+      "elementary_secondary_schools",
+      "emergency_services_gcas_visa_use_only",
+      "employment_temp_agencies",
+      "exterminating_services",
+      "freezer_and_locker_meat_provisioners",
+      "fuel_dealers_non_automotive",
+      "funeral_services_crematories",
+      "furniture_repair_refinishing",
+      "general_services",
+      "government_services",
+      "hospitals",
+      "information_retrieval_services",
+      "landscaping_services",
+      "laundries",
+      "laundry_cleaning_services",
+      "masonry_stonework_and_plaster",
+      "massage_parlors",
+      "medical_and_dental_labs",
+      "medical_services",
+      "metal_service_centers",
+      "miscellaneous_auto_dealers",
+      "miscellaneous_business_services",
+      "miscellaneous_general_services",
+      "miscellaneous_recreation_services",
+      "miscellaneous_repair_shops",
+      "mobile_home_dealers",
+      "motor_homes_dealers",
+      "motorcycle_shops_and_dealers",
+      "motorcycle_shops_dealers",
+      "nursing_personal_care",
+      "optometrists_ophthalmologist",
+      "osteopaths",
+      "photo_developing",
+      "photographic_studios",
+      "picture_video_production",
+      "political_organizations",
+      "professional_services",
+      "real_estate_agents_and_managers_rentals",
+      "secretarial_support_services",
+      "shoe_repair_hat_cleaning",
+      "small_appliance_repair",
+      "snowmobile_dealers",
+      "special_trade_services",
+      "specialty_cleaning",
+      "tailors_alterations",
+      "testing_laboratories",
+      "tire_retreading_and_repair",
+      "towing_services",
+      "typesetting_plate_making_and_related_services",
+      "veterinary_services",
+      "vocational_trade_schools",
+      "watch_jewelry_repair",
+      "welding_repair",
+      "wires_money_orders"
+    ]
+  },
+  "project-supplies": {
+    "label": "Project supplies",
+    "stripe_merchant_categories": [
+      "artists_supply_and_craft_shops",
+      "auto_and_home_supply_stores",
+      "auto_service_shops",
+      "automobile_associations",
+      "automotive_parts_and_accessories_stores",
+      "automotive_tire_stores",
+      "book_stores",
+      "books_periodicals_and_newspapers",
+      "buying_shopping_services",
+      "camera_and_photographic_supply_stores",
+      "chemicals_and_allied_products",
+      "childrens_and_infants_wear_stores",
+      "clothing_rental",
+      "commercial_equipment",
+      "commercial_footwear",
+      "construction_materials",
+      "cosmetic_stores",
+      "department_stores",
+      "direct_marketing_combination_catalog_and_retail_merchant",
+      "discount_stores",
+      "drapery_window_covering_and_upholstery_stores",
+      "drug_stores_and_pharmacies",
+      "drugs_drug_proprietaries_and_druggist_sundries",
+      "durable_goods",
+      "duty_free_stores",
+      "electric_razor_stores",
+      "electrical_parts_and_equipment",
+      "equipment_rental",
+      "family_clothing_stores",
+      "fireplace_fireplace_screens_and_accessories_stores",
+      "florists",
+      "florists_supplies_nursery_stock_and_flowers",
+      "furriers_and_fur_shops",
+      "glass_paint_and_wallpaper_stores",
+      "glassware_crystal_stores",
+      "hearing_aids_sales_and_supplies",
+      "hobby_toy_and_game_shops",
+      "industrial_supplies",
+      "jewelry_stores_watches_clocks_and_silverware_stores",
+      "luggage_and_leather_goods_stores",
+      "lumber_building_materials_stores",
+      "marinas_service_and_supplies",
+      "marketplaces",
+      "medical_dental_ophthalmic_and_hospital_equipment_and_supplies",
+      "membership_organizations",
+      "mens_and_boys_clothing_and_accessories_stores",
+      "mens_womens_clothing_stores",
+      "miscellaneous_apparel_and_accessory_shops",
+      "miscellaneous_general_merchandise",
+      "miscellaneous_specialty_retail",
+      "motor_vehicle_supplies_and_new_parts",
+      "music_stores_musical_instruments_pianos_and_sheet_music",
+      "nondurable_goods",
+      "nurseries_lawn_and_garden_supply_stores",
+      "opticians_eyeglasses",
+      "orthopedic_goods_prosthetic_devices",
+      "paints_varnishes_and_supplies",
+      "pawn_shops",
+      "pet_shops_pet_food_and_supplies",
+      "photographic_photocopy_microfilm_equipment_and_supplies",
+      "piece_goods_notions_and_other_dry_goods",
+      "precious_stones_and_metals_watches_and_jewelry",
+      "record_stores",
+      "religious_goods_stores",
+      "roofing_siding_sheet_metal",
+      "sewing_needlework_fabric_and_piece_goods_stores",
+      "shoe_stores",
+      "sporting_goods_stores",
+      "sports_and_riding_apparel_stores",
+      "stamp_and_coin_stores",
+      "swimming_pools_sales",
+      "tent_and_awning_shops",
+      "uniforms_commercial_clothing",
+      "used_merchandise_and_secondhand_stores",
+      "variety_stores",
+      "video_amusement_game_supplies",
+      "wig_and_toupee_stores",
+      "womens_accessory_and_specialty_shops",
+      "womens_ready_to_wear_stores"
+    ]
+  },
+  "recruiting": {
+    "label": "Recruiting"
+  },
+  "rent": {
+    "label": "Rent"
+  },
+  "server-hosting": {
+    "label": "Server / hosting",
+    "stripe_merchant_categories": [
+      "computer_network_services"
+    ]
+  },
+  "shipping-postage": {
+    "label": "Shipping / postage",
+    "stripe_merchant_categories": [
+      "courier_services",
+      "postal_services_government_only",
+      "public_warehousing_and_storage"
+    ]
+  },
+  "software-subscriptions": {
+    "label": "Software / subscriptions",
+    "stripe_merchant_categories": [
+      "computer_programming",
+      "computer_software_stores",
+      "computers_peripherals_and_software",
+      "direct_marketing_subscription"
+    ]
+  },
+  "stripe-fee-reimbursements": {
+    "hq_only": true,
+    "label": "Stripe fee reimbursements"
+  },
+  "stripe-service-fees": {
+    "hq_only": true,
+    "label": "Stripe service fees"
+  },
+  "taxes-filing-fees": {
+    "label": "Taxes / filing fees",
+    "stripe_merchant_categories": [
+      "fines_government_administrative_entities",
+      "tax_payments_government_agencies",
+      "tax_preparation_services"
+    ]
+  },
+  "training": {
+    "label": "Training"
+  },
+  "travel": {
+    "label": "Travel",
+    "stripe_merchant_categories": [
+      "airlines_air_carriers",
+      "airports_flying_fields",
+      "automated_fuel_dispensers",
+      "bicycle_shops",
+      "boat_rentals_and_leases",
+      "bus_lines",
+      "car_and_truck_dealers_new_used",
+      "car_and_truck_dealers_used_only",
+      "car_rental_agencies",
+      "car_washes",
+      "commuter_transport_and_ferries",
+      "cruise_lines",
+      "direct_marketing_travel",
+      "electric_vehicle_charging",
+      "hotels_motels_and_resorts",
+      "motor_freight_carriers_and_trucking",
+      "parking_lots_garages",
+      "passenger_railways",
+      "petroleum_and_petroleum_products",
+      "railroads",
+      "recreational_vehicle_rentals",
+      "service_stations",
+      "sporting_recreation_camps",
+      "t_ui_travel_germany",
+      "taxicabs_limousines",
+      "timeshares",
+      "tolls_bridge_fees",
+      "transportation_services",
+      "travel_agencies_tour_operators",
+      "truck_utility_trailer_rentals"
+    ]
+  },
+  "utilities": {
+    "label": "Utilities",
+    "stripe_merchant_categories": [
+      "cable_satellite_and_other_pay_television_and_radio",
+      "heating_plumbing_a_c",
+      "plumbing_heating_equipment_and_supplies",
+      "utilities"
+    ]
+  },
+  "venue": {
+    "label": "Venue",
+    "stripe_merchant_categories": [
+      "trailer_parks_campgrounds"
+    ]
+  }
+}

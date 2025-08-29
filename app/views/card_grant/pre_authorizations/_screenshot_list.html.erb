@@ -1,6 +1,6 @@
 <div id="screenshot_list" class="flex flex-row gap-4 h-[200px] w-full overflow-x-auto min-w-0">
     <% screenshots.each do |screenshot| %>
-        <%= image_tag screenshot, class: "h-100 !w-min-content card min-w-0" %>
+        <%= image_tag screenshot, class: "h-100 !w-min-content card min-w-0 !flex-shrink-0" %>
     <% end %>
 
     <% if screenshots.empty? %>

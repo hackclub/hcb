@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import submitForm from '../common/submitForm'
-import airbrake from '../airbrake'
+import { appsignal } from '../appsignal'
 
 let dropzone
 
@@ -17,7 +17,6 @@ function extractId(dataTransfer) {
     receiptId = imgTag.getAttribute('data-receipt-id')
   } catch (err) {
     console.error(err)
-    // airbrake?.notify(err)
   }
 
   if (!receiptId) {
@@ -33,7 +32,7 @@ function extractId(dataTransfer) {
       receiptId = imageElement.getAttribute('data-receipt-id')
     } catch (err) {
       console.error(err)
-      airbrake?.notify(err)
+      appsignal.sendError(err)
     }
   }
 
@@ -117,7 +116,6 @@ export default class extends Controller {
   }
 
   dragenter() {
-    console.log('event: dragenter')
     if (this.counter == 0) {
       this.showDropzone()
     }
@@ -125,7 +123,6 @@ export default class extends Controller {
   }
 
   dragleave() {
-    console.log('event: dragleave')
     this.counter--
     if (this.counter == 0) {
       this.hideDropzone()

@@ -2,7 +2,7 @@
 <% page_sm %>
 <% no_app_shell %>
 
-<%= render "header" if signed_in? %>
+<%= render "events/landing/header" %>
 
 <div class="card mb3 <%= signed_in? ? "mt3" : "mt6" %> pt3 pb3">
   <%= inline_icon :checkmark, size: 48, class: "success block mx-auto mb1" %>

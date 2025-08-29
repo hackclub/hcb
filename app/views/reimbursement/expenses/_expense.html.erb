@@ -101,7 +101,7 @@
       <div class="field event-select-target">
         <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
         <%= form.select(:reimbursement_report_id,
-            current_user.admin? ?
+            admin_signed_in? ?
               (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
             current_user == expense.report.user ?
               current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :

@@ -34,6 +34,9 @@ module Receiptable
     def no_or_lost_receipt!
       self.marked_no_or_lost_receipt_at = Time.now
       self.save!
+      if user = try(:author) || try(:user)
+        ::User::UpdateCardLockingJob.perform_later(user:)
+      end
       self
     rescue NoMethodError => e
       puts "Add a datetime 'mark_no_or_lost_receipt_at' column to #{self.class.name} for this to work"

@@ -30,7 +30,7 @@
     <% end %>
     <% if @report.payout_holding&.failed? %>
       <% admin_tool "w-fit p0 tooltipped tooltipped--w overflow-visible", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;", 'aria-label': "Cancel this reimbursement" do %>
-        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", method: :POST, data: { confirm: "After cancelling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them." } do %>
+        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", method: :post, data: { confirm: "After cancelling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them." } do %>
           <%= inline_icon "forbidden", size: 28, color: "#ff8c37" %>
         <% end %>
       <% end %>
@@ -39,11 +39,12 @@
     <% if @report.draft? && organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "delete",
                       reimbursement_report_path(@report),
-                      method: :delete,
+                      data: { turbo_confirm: "Are you sure?", turbo_method: :delete },
                       icon_size: 26,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px; background: #ec375020; color: #ec3750",
-                      'aria-label': "Delete this report." %>
+                      'aria-label': "Delete this report.",
+                      disabled: !policy(@report).destroy? %>
     <% end %>
     <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "settings",
@@ -52,7 +53,8 @@
                       icon_size: 28,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px;",
-                      'aria-label': "Edit this report's properties." %>
+                      'aria-label': "Edit this report's properties.",
+                      disabled: !policy(@report).edit? %>
     <% end %>
   </h3>
   <h2 class="heading mt0 mb1 flex justify-start flex-row" style="gap: 0px">
@@ -66,7 +68,7 @@
 </section>
 
 <section data-behavior="modal" role="dialog" id="request_changes" class="modal modal--scroll bg-snow">
-  <%= modal_header "Return Report" %>
+  <%= modal_header "Return report" %>
   <p>
     Returning the report to <%= @report.user.first_name %> will allow them (as well as you and other team members) to make changes
     to the report. <span class="bold">If you have specific changes you'd like to see made, list them below:</span>
@@ -85,7 +87,7 @@
 </section>
 
 <section data-behavior="modal" role="dialog" id="submit" class="modal modal--scroll bg-snow">
-  <%= modal_header "Submit Report" %>
+  <%= modal_header "Submit report" %>
   <%= form_with url: reimbursement_report_submit_path(report_id: @report.id), model: [@report, Comment.new] do |form| %>
     <%= form.hidden_field :commentable_type, value: @commentable.class %>
     <%= form.hidden_field :commentable_id, value: @report.id %>
@@ -167,12 +169,10 @@
 
 <%= render partial: "actions", locals: { report: @report, user: @user } %>
 
-<% unless @report.initial_draft? %>
-  <%= render partial: "conversation" %>
-<% end %>
+<%= render partial: "conversation" %>
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
-  <%= modal_header "Add Payout Information" %>
+  <%= modal_header "Add payout information" %>
   <%= render "/users/payout_form", user: @report.user, report: @report %>
 </section>
 
