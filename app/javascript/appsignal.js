@@ -9,7 +9,7 @@ export const appsignal = new Appsignal({
   ignoreErrors: [
     /The request is not allowed by the user agent or the platform in the current context, possibly because the user denied permission\./,
   ],
-  revision: HATCHBOX_REVISION
+  revision: HATCHBOX_REVISION,
 })
 
 appsignal.use(pathPlugin())
