@@ -1058,6 +1058,7 @@ class EventsController < ApplicationController
       types.each do |t|
         filter = type_filters[t]
         next unless filter
+
         settled_transactions = settled_transactions.select(&filter["settled"])
         pending_transactions = pending_transactions.select(&filter["pending"])
       end
