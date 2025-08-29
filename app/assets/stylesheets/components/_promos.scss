@@ -147,49 +147,24 @@
   }
 }
 
-@property --gradient-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-.promo-premium-border {
-  position: relative;
-  background-clip: padding-box;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: -1;
-    margin: -4px;
-    border-radius: inherit;
-    background: conic-gradient(
-      from var(--gradient-angle),
-      #ec3750 20%,
-      #ff8c37 40%,
-      #f1c40f 55%,
-      #ff8c37 70%,
-      #ec3750 100%
-    );
-    animation: premium-rotate-gradient linear;
-    animation-timeline: view();
+.promo-jukebox {
+  .card__banner--top {
+    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/461bd68c2a583c2cb6ece6fb971300ba4c06ae3e_2669065-semi-gloss-16pt-business-cards.jpg');
+    background-size: cover;
+    background-position: center;
   }
 }
 
-@keyframes premium-rotate-gradient {
-  to {
-    --gradient-angle: 360deg;
+.promo-pins-keychains {
+  .card__banner--top {
+    background-color: $black;
   }
 }
 
-.promo-premium-banner {
-  background-size: cover;
-  background-position: center;
-  background-color: $smoke;
+.promo-premium-domains {
+  .card__banner--top {
+    background-color: $black;
+  }
 }
 
 @property --scroll-progress {
