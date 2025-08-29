@@ -10,10 +10,12 @@ class Event
     def create
       authorize @event, policy_class: AffiliationPolicy
 
-      @event.affiliations.create({
-        name: params[:type],
-        metadata: @metadata
-      })
+      @event.affiliations.create(
+        {
+          name: params[:type],
+          metadata: @metadata
+        }
+      )
 
       redirect_back fallback_location: @event
     end
