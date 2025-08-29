@@ -7,6 +7,7 @@ module TransactionEngine
 
     def perform
       ::TransactionEngine::Nightly.new.run
+      ::EventMappingEngine::Nightly.new.run
     end
 
   end

@@ -4,6 +4,7 @@ require_relative "boot"
 
 require "rails/all"
 require_relative "../app/lib/credentials"
+require_relative "../lib/active_storage/previewer/document_previewer"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -92,6 +93,9 @@ module Bank
     config.active_record.encryption.primary_key = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :PRIMARY_KEY)
     config.active_record.encryption.deterministic_key = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :DETERMINISTIC_KEY)
     config.active_record.encryption.key_derivation_salt = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :KEY_DERIVATION_SALT)
+
+    # CSV previews
+    config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
 
   end
 end

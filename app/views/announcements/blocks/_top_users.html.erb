@@ -1,0 +1,19 @@
+<%# locals: (block:, is_email: false, users:, start_date:, end_date:) %>
+
+<%= render "announcements/blocks/block_shell", block:, type: "topUsers", is_email: do %>
+  <p><strong>Top users for <%= block.announcement.event.name %> <%= "from #{start_date.strftime("%B %e, %Y")}" if start_date.present? %> until <%= end_date.strftime("%B %e, %Y") %>:</strong></p>
+
+  <% if block.empty? %>
+    <p><%= block.announcement.event.name %> does not have any user spending data for this period.</p>
+  <% else %>
+    <% if is_email %>
+      <ol>
+        <% users.each do |user| %>
+          <li><strong><%= user[:name] %></strong>: <%= render_money user[:value] * 100 %></p>
+        <% end %>
+      </ol>
+    <% else %>
+      <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
+    <% end %>
+  <% end %>
+<% end %>

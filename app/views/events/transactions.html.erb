@@ -5,6 +5,7 @@
 <% end %>
 
 <% if @event&.is_public %>
+  <% auto_discover_feed(@event) %>
   <% content_for :head do %>
     <% img = "https://hcb-og.hackclub.com/api/embeds/#{@event.slug}" %>
     <meta property="og:type" content="website">
@@ -37,8 +38,8 @@
   </div>
 <% end %>
 
-<h1 class="flex items-center">
-  <span class="flex-grow">Transactions</span>
+<h1 class="flex items-center flex-wrap">
+  <span class="flex-grow mb1">Transactions</span>
   <% admin_tool("p0 m2 badge", "span") do %>
     <span class="m0 badge bg-muted">
       #<%= @event.id %>
@@ -48,7 +49,7 @@
     </span>
   <% end %>
 
-  <%= render "events/follow_button" %>
+  <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
 </h1>
 
 <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
@@ -140,7 +141,7 @@
 
   <%= render "pinned_transactions" %>
 
-  <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, **params.to_unsafe_h) do %>
+  <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, request.query_parameters) do %>
     <%= render partial: "filter" %>
 
     <%= render "application/loading_container", klass: "mt-8" %>

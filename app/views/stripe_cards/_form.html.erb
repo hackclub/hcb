@@ -4,7 +4,7 @@
   <% else %>
     <fieldset>
       <legend class="heading h2 pt2 pb2">Which organization?</legend>
-      <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
+      <%= form.select :event_id, current_user.events.not_demo_mode.where.not(id: current_user.reader_events).pluck(:name, :id) %>
     </fieldset>
   <% end %>
   <fieldset>
@@ -77,7 +77,7 @@
     </div>
 
     <% designs = [@event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
-    <% designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.admin? %>
+    <% designs += StripeCard::PersonalizationDesign.unlisted.available if auditor_signed_in? %>
     <% if designs.any? %>
       <h2 class="grid__fill">Card design</h2>
       <div class="field field--options" style="max-width: unset;">

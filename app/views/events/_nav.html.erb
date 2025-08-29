@@ -36,7 +36,8 @@
           selected: local_assigns[:selected] == :activation_flow %>
         <% end %>
     <% end %>
-    <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
+
+    <% if policy(@event).donation_overview? || policy(@event).invoices? || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
       <h4 class="mb0 h5 font-medium muted">Receive</h4>
       <hr>
     <% end %>
@@ -59,7 +60,7 @@
       event_invoices_path(event_id: @event.slug),
       tooltip: "Collect sponsor payments",
       icon: "briefcase",
-      selected: local_assigns[:selected] == :invoices if @event.approved? && @event.plan.invoices_enabled? %>
+      selected: local_assigns[:selected] == :invoices if policy(@event).invoices? %>
     <%= dock_item "Account numbers",
       account_number_event_path(@event),
       tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
@@ -95,7 +96,7 @@
       event_employees_path(event_id: @event.slug),
       tooltip: "Manage payroll",
       icon: "person-badge",
-      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) %>
+      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) && policy(@event).employees? %>
     <hr>
     <%= dock_item "Team",
       event_team_path(event_id: @event.slug),
@@ -122,6 +123,11 @@
       tooltip: "View legal documents and financial statements",
       icon: "docs",
       selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
+    <%= dock_item "Sub-organizations",
+      event_sub_organizations_path(event_id: @event.slug),
+      tooltip: "Create & manage subsidiary organisations",
+      icon: "channels",
+      selected: local_assigns[:selected] == :sub_organizations if policy(@event).sub_organizations? %>
     <%= dock_item "Settings",
       edit_event_path(@event),
       tooltip: "Edit organization settings",
@@ -141,7 +147,7 @@
       event_transactions_path(event_id: @event.slug),
       icon: "transactions",
       selected: local_assigns[:selected] == :transactions if policy(@event).transactions? %>
-    <% if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
+    <% if policy(@event).donation_overview? || policy(@event).invoices? || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
       <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="receive">
         <div class="line-height-0 relative"><%= inline_icon "support", size: 32, class: "primary" %></div>
         <span class="line-height-3">Receive</span>
@@ -154,7 +160,7 @@
           <% elsif @event.plan.donations_enabled? %>
             <%= link_to "Donate", start_donation_donations_path(event_name: @event.slug) %>
           <% end %>
-          <%= link_to "Invoices", event_invoices_path(@event) if @event.approved? && @event.plan.invoices_enabled? %>
+          <%= link_to "Invoices", event_invoices_path(@event) if policy(@event).invoices? %>
           <%= link_to "Account numbers", account_number_event_path(@event) if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
           <%= link_to "Check deposits", event_check_deposits_path(@event) if policy(@event.check_deposits.build).index? %>
         </div>
@@ -181,13 +187,12 @@
       <div class="menu__content" data-behavior="menu_content">
         <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
         <div class="menu__divider"></div>
-        <% if Flipper.enabled?(:organization_announcements_tier_1_2025_07_07, @event) && policy(@event).announcement_overview? %>
-          <%= link_to "Announcements", event_announcement_overview_path(event_id: @event.slug) if policy(@event).announcement_overview? %>
-        <% end %>
+        <%= link_to "Announcements", event_announcement_overview_path(event_id: @event.slug) if policy(@event).announcement_overview? %>
         <%= link_to "Team", event_team_path(event_id: @event.slug) if policy(@event).show? %>
         <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
         <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
         <%= link_to "Documents", event_documents_path(event_id: @event.slug) if policy(@event).documentation? %>
+        <%= link_to "Sub-organizations", event_sub_organizations_path(event_id: @event.slug) if policy(@event).sub_organizations? %>
         <%= link_to "Settings", edit_event_path(@event) if organizer_signed_in?(as: :member) %>
       </div>
     </button>

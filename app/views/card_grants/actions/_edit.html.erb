@@ -3,10 +3,14 @@
 <div class="tooltipped tooltipped--w" aria-label="Manage this grant">
   <%= link_to edit_card_grant_path(card_grant),
               class: "btn",
-              data: { behavior: "modal_trigger", modal: "edit_card_grant" },
-              disabled: !policy(card_grant).edit? do %>
-    <%= inline_icon "settings" %>
-    Manage grant
+              data: { behavior: "modal_trigger", modal: "edit_card_grant" } do %>
+    <% if policy(card_grant).edit? %>
+      <%= inline_icon "settings" %>
+      Manage grant
+    <% else %>
+      <%= inline_icon "settings" %>
+      View grant settings
+    <% end %>
   <% end %>
 </div>
 

@@ -9,7 +9,7 @@
       memo: @hcb_code.check.memo %>
 
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code do %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <div class="flex items-start" style="flex-grow: 1">
       <span class="flex-auto mr1">
         <span class="regular muted"><%= @hcb_code.check.deposited? ? "Sent" : "Sending" %> </span>

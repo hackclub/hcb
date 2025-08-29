@@ -2,7 +2,7 @@
 
 <h1>Create an organization</h1>
 
-<%= form_with(model: nil, local: true, url: event_create_admin_index_path) do |form| %>
+<%= form_with(local: true, url: event_create_admin_index_path) do |form| %>
   <fieldset>
     <legend>Organization</legend>
     <p>
@@ -17,10 +17,7 @@
       <%= form.email_field :organizer_email, placeholder: "Email Address", value: params[:organizer_email], required: false %>
     </p>
 
-    <p>
-      <%= form.check_box :is_signee, { checked: true } %>
-      <%= form.label :is_signee, "Organizer signed contract?" %>
-    </p>
+    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: true %>
 
     <p>
       <%= form.label :country %>

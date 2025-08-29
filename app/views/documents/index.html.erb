@@ -17,36 +17,56 @@
   <%= link_to "Upload a document",
   new_document_path(event_id: @event.slug),
   class: "btn bg-success",
-  disabled: !current_user.admin? %>
+  disabled: !admin_signed_in? %>
 <% end %>
 
 <ul class="grid">
-  <%= render partial: "document", collection: @active_documents %>
-  <%= render partial: "document", collection: @active_common_documents %>
+  <div class="grid-row text">
+    <h3>General documents</h3>
+    <div class="grid grid-cols-3 gap-4">
+      <% if @event.approved? && !@event.demo_mode? %>
+        <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
+          <li class="card card--hover h-100">
+            <div class="overflow-hidden" style="max-height: 250px;">
+              <%= image_tag event_verification_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
+            </div>
 
-  <% if @event.approved? && !@event.demo_mode? %>
-    <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
-      <li class="card card--hover h-100">
-        <div class="overflow-hidden" style="max-height: 250px;">
-          <%= image_tag event_verification_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
-        </div>
+            <strong class="h3 block mt1 line-height-2">Verification Letter</strong>
+            <%= user_mention @event.point_of_contact %>
+          </li>
+        <% end if @event.account_number %>
+        <%= link_to event_fiscal_sponsorship_letter_path(event_id: @event.slug, format: "pdf") do %>
+            <li class="card card--hover h-100 w-fit">
+              <div class="overflow-hidden" style="max-height: 250px;">
+                <%= image_tag event_fiscal_sponsorship_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
+              </div>
+              <strong class="h3 block mt1 line-height-2">Fiscal Sponsorship Confirmation</strong>
+              <%= user_mention @event.point_of_contact %>
+            </li>
+          <% end %>
+      <% end %>
+      <%= render partial: "document", collection: @active_documents&.general %>
+      <%= render partial: "document", collection: @active_common_documents.general %>
+    </div>
 
-        <strong class="h3 block mt1 line-height-2">Verification Letter</strong>
-        <%= user_mention @event.point_of_contact %>
-      </li>
-    <% end if @event.account_number %>
+    <h3>Nonprofit status</h3>
+    <div class="grid grid-cols-3 gap-4">
+      <%= render partial: "document", collection: @active_documents&.nonprofit_status %>
+      <%= render partial: "document", collection: @active_common_documents.nonprofit_status %>
+    </div>
 
-    <%= link_to event_fiscal_sponsorship_letter_path(event_id: @event.slug, format: "pdf") do %>
-      <li class="card card--hover h-100">
-        <div class="overflow-hidden" style="max-height: 250px;">
-          <%= image_tag event_fiscal_sponsorship_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
-        </div>
+    <h3>Tax-exemption documents</h3>
+    <div class="grid grid-cols-3 gap-4">
+      <%= render partial: "document", collection: @active_documents&.tax_exemption %>
+      <%= render partial: "document", collection: @active_common_documents.tax_exemption %>
+    </div>
 
-        <strong class="h3 block mt1 line-height-2">Fiscal Sponsorship Confirmation</strong>
-        <%= user_mention @event.point_of_contact %>
-      </li>
-    <% end %>
-  <% end %>
+    <h3>Forms</h3>
+    <div class="grid grid-cols-3 gap-4">
+      <%= render partial: "document", collection: @active_documents&.forms %>
+      <%= render partial: "document", collection: @active_common_documents.forms %>
+    </div>
+  </div>
 </ul>
 
 <% if @archived_documents.any? || @archived_common_documents.any? %>

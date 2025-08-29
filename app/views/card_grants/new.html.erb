@@ -1,4 +1,7 @@
 <% page_sm %>
 <%= render "events/nav", selected: :transfers %>
 
-<% render "create_form", locals: { card_grant: @card_grant } %>
+<% title "Send a card grant" %>
+<h1>Send a card grant</h1>
+
+<%= render "create_form", card_grant: @card_grant %>

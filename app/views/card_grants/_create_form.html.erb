@@ -7,7 +7,7 @@
 <%= form_with model: [@event, card_grant], data: { turbo_frame: "_top" } do |form| %>
   <div class="field">
     <%= form.label :email %>
-    <%= form.email_field :email, value: @prefill_email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: %>
+    <%= form.email_field :email, value: card_grant.email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: %>
   </div>
 
   <div class="field">
@@ -20,7 +20,7 @@
 
   <div class="field">
     <%= form.label :purpose, "Purpose (optional, shown to recipient)" %>
-    <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled: %>
+    <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled:, maxlength: CardGrant::MAXIMUM_PURPOSE_LENGTH %>
   </div>
 
   <div class="field">

@@ -13,7 +13,7 @@
       <%= form_with(model: event, local: true) do |form| %>
         <%= form.label :donation_tiers_enabled do %>
           <%= form.check_box :donation_tiers_enabled,
-            data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+            data: { action: "change->accordion#toggle", accordion_target: "checkbox" },
             disabled:,
             checked: @event.donation_tiers_enabled,
             onchange: "this.closest('form').requestSubmit();",

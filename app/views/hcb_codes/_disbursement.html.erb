@@ -3,7 +3,7 @@
 <% @subledger = @hcb_code.disbursement.destination_subledger || @hcb_code.disbursement.source_subledger %>
 
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code do %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <%= @source.name %>
       <span class="regular muted">
@@ -74,7 +74,7 @@
       </p>
       <p>
         <strong>Grant</strong>
-        <%= link_to card_grant_path(@subledger.card_grant), "Grant to #{@subledger.card_grant.user.name}" %>
+        <%= link_to "Grant to #{@subledger.card_grant.user.name}", card_grant_path(@subledger.card_grant) %>
       </p>
     <% else %>
       <p>

@@ -1,0 +1,15 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  <%= @invite.user.name %> has accepted their invite to join <%= @invite.event.name %> as a <%= @invite.role %>!
+  <% if @invite.initial_control_allowance_amount_cents.present? %>
+    They have an initial spending allowance of <%= render_money @invite.initial_control_allowance_amount_cents %>.
+  <% end %>
+</p>
+
+If you wish, <%= link_to "create an announcement", edit_announcement_url(@announcement) %> to introduce your new team member!
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

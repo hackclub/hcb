@@ -62,7 +62,7 @@ module TransactionGroupingEngine
           ct.raw_stripe_transaction = raw_stripe_transactions_by_id[ct.transaction_source_id] if ct.transaction_source_type == "RawStripeTransaction"
 
           hashed_transactions = hashed_transactions_by_canonical_transaction_id[ct.id] || []
-          Airbrake.notify("There was more (or less) than 1 hashed_transaction for canonical_transaction: #{ct.id}") if hashed_transactions.length > 1
+          Rails.error.unexpected("There was more (or less) than 1 hashed_transaction for canonical_transaction: #{ct.id}") if hashed_transactions.length > 1
           ct.hashed_transaction = hashed_transactions.first
         end
 

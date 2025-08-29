@@ -7,7 +7,7 @@ module PendingEventMappingEngine
         unsettled.find_each(batch_size: 100) do |cpt|
           # 1. identify donation
           donation = cpt.raw_pending_donation_transaction.donation
-          Airbrake.notify("Donation not found for canonical pending transaction #{cpt.id}") unless donation
+          Rails.error.unexpected("Donation not found for canonical pending transaction #{cpt.id}") unless donation
           next unless donation
 
           next unless donation.payout
@@ -27,7 +27,7 @@ module PendingEventMappingEngine
 
           next if cts.count < 1 # no match found yet. not processed.
 
-          Airbrake.notify("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+          Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
           ct = cts.first
 
           # 3. mark no longer pending

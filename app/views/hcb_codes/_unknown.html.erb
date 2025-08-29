@@ -1,5 +1,5 @@
 <article class="card pb0 mt3 mb1">
-  <%= render "heading", hcb_code: @hcb_code, render_memo: true %>
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
@@ -13,7 +13,7 @@
   </section>
 
   <section class='details pt2 pb2'>
-    <% if @hcb_code.ct.transaction_source.is_a?(RawColumnTransaction) && @hcb_code.ct.transaction_source.remote_object.present? %>
+    <% if @hcb_code.ct&.transaction_source&.is_a?(RawColumnTransaction) && @hcb_code.ct.transaction_source.remote_object.present? %>
       <% ["company_name", "company_id", "company_entry_description", "beneficiary_name", "beneficiary_reference", "originator_name", "originator_to_beneficiary_information_line_1",
           "originator_to_beneficiary_information_line_2", "originator_to_beneficiary_information_line_3", "originator_to_beneficiary_information_line_4", "raw_originator_address", "description"].each do |key| %>
         <% if @hcb_code.ct.transaction_source.remote_object[key].present? %>

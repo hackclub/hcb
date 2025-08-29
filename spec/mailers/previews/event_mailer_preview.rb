@@ -9,4 +9,17 @@ class EventMailerPreview < ActionMailer::Preview
     EventMailer.with(event: Donation::Goal.last.event).donation_goal_reached
   end
 
+  def monthly_follower_summary
+    EventMailer.with(event: Event::Follow.last.event).monthly_follower_summary
+  end
+
+  def negative_balance
+    EventMailer
+      .with(
+        event: Event.first,
+        balance: -123_45,
+      )
+      .negative_balance
+  end
+
 end

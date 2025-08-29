@@ -22,6 +22,8 @@
 #
 class Event
   class Follow < ApplicationRecord
+    include Hashid::Rails
+
     belongs_to :user
     belongs_to :event
 

@@ -47,6 +47,9 @@ module Reimbursement
     has_paper_trail
     acts_as_paranoid
 
+    include PublicIdentifiable
+    set_public_id_prefix :rme
+
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event.id }, only: []
 
@@ -111,6 +114,13 @@ module Reimbursement
           update(approved_by: current_user) if current_user
           ReimbursementMailer.with(report: self.report, expense: self).expense_unapproved.deliver_later
         end
+      end
+    end
+
+    before_update do
+      if approved? && (memo_changed? || amount_cents_changed? || category_changed? || description_changed?)
+        mark_pending!
+        self.approved_by = nil
       end
     end
 

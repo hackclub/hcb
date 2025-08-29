@@ -3,7 +3,8 @@
 class UsersController < ApplicationController
   skip_before_action :signed_in_user, only: [:webauthn_options]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
-  skip_after_action :verify_authorized, only: [:revoke_oauth_application,
+  skip_after_action :verify_authorized, only: [:show,
+                                               :revoke_oauth_application,
                                                :edit_address,
                                                :edit_payout,
                                                :impersonate,
@@ -22,6 +23,11 @@ class UsersController < ApplicationController
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
 
   wrap_parameters format: :url_encoded_form
+
+  def show
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    redirect_to admin_user_path(@user)
+  end
 
   def impersonate
     authorize current_user
@@ -94,6 +100,18 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(current_user)
   end
 
+  def make_oauth_authorization_eternal
+    token = ApiToken.find(params[:id])
+    authorize token, :make_eternal?
+
+    if token.update(expires_in: nil)
+      flash[:success] = "Authorization made eternal."
+    else
+      flash[:error] = "Failed to make authorization eternal."
+    end
+    redirect_back_or_to security_user_path(token.user)
+  end
+
   def receipt_report
     ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
@@ -103,9 +121,6 @@ class UsersController < ApplicationController
   def edit
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding
-    @mailbox_address = @user.active_mailbox_address
-    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
 
@@ -113,9 +128,6 @@ class UsersController < ApplicationController
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     redirect_to edit_user_path(@user) unless @user.stripe_cardholder
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
 
@@ -126,25 +138,30 @@ class UsersController < ApplicationController
 
   def edit_featurepreviews
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    set_onboarding
-    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
 
   def edit_security
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    set_onboarding
     show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     @sessions = @sessions.not_expired
-    @oauth_authorizations = @user.api_tokens
-                                 .where.not(application_id: nil)
-                                 .select("application_id, MAX(api_tokens.created_at) AS created_at, MIN(api_tokens.created_at) AS first_authorized_at, COUNT(*) AS authorization_count")
-                                 .accessible
-                                 .group(:application_id)
-                                 .includes(:application)
-    @all_sessions = (@sessions + @oauth_authorizations).sort_by { |s| s.created_at }.reverse!
+    oauth_tokens_by_app = @user.api_tokens
+                               .where.not(application_id: nil)
+                               .accessible
+                               .includes(:application)
+                               .order(created_at: :desc)
+                               .group_by(&:application)
+    oauth_authorizations = oauth_tokens_by_app.map do |app, tokens|
+      OpenStruct.new(
+        application: app,
+        created_at: tokens.max_by(&:created_at).created_at,
+        first_authorized_at: tokens.min_by(&:created_at).created_at,
+        authorization_count: tokens.size,
+        tokens: tokens,
+      )
+    end
+    @all_sessions = (@sessions + oauth_authorizations).sort_by { |s| s.created_at }.reverse!
 
     @expired_sessions = @user
                         .user_sessions
@@ -189,11 +206,34 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(@user)
   end
 
+  def generate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @previewed_backup_codes = @user.generate_backup_codes!
+  end
+
+  def activate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.activate_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
+  def disable_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.disable_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    set_onboarding
-    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+
+    authorize @user
+  end
+
+  def admin_details
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
 
     # User Information
     @invoices = Invoice.where(creator: @user)
@@ -212,6 +252,12 @@ class UsersController < ApplicationController
     @user = User.friendly.find(params[:id])
     authorize @user
 
+    @user.assign_attributes(user_params)
+
+    if @user.use_two_factor_authentication_changed?
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
+
     if admin_signed_in?
       if @user.auditor? && params[:user][:running_balance_enabled].present?
         enable_running_balance = params[:user][:running_balance_enabled] == "1"
@@ -225,7 +271,7 @@ class UsersController < ApplicationController
         if @user == current_user
           flash[:error] = "As much as you might desire to, you cannot lock yourself out."
           return redirect_to admin_user_path(@user)
-        elsif @user.admin? && !current_user.superadmin?
+        elsif @user.admin? && !superadmin_signed_in?
           flash[:error] = "Only superadmins can lock or unlock admins."
           return redirect_to admin_user_path(@user)
         elsif locked && @user.superadmin?
@@ -238,8 +284,6 @@ class UsersController < ApplicationController
         end
       end
     end
-
-    email_change_requested = false
 
     if params[:user][:email].present? && params[:user][:email] != @user.email
       begin
@@ -256,7 +300,7 @@ class UsersController < ApplicationController
       end
     end
 
-    if @user.update(user_params)
+    if @user.save
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
 
       if @user.full_name_before_last_save.blank?
@@ -277,18 +321,23 @@ class UsersController < ApplicationController
       end
     else
       set_onboarding
-      show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
-      @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+
       if @user.stripe_cardholder&.errors&.any?
         flash.now[:error] = @user.stripe_cardholder.errors.first.full_message
-        render :edit_address, status: :unprocessable_entity and return
+        render :edit_address, status: :unprocessable_entity
+        return
       end
+
       if @user.payout_method&.errors&.any?
         flash.now[:error] = @user.payout_method.errors.first.full_message
-        render :edit_payout, status: :unprocessable_entity and return
+        render :edit_payout, status: :unprocessable_entity
+        return
       end
+
       render :edit, status: :unprocessable_entity
     end
+  rescue Errors::StripeInvalidNameError => e
+    redirect_back_or_to edit_user_path(@user), flash: { error: e.message }
   end
 
   def delete_profile_picture

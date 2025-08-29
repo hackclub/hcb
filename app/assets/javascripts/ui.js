@@ -116,13 +116,70 @@ $(document).keydown(function (e) {
   }
 })
 
+window.attachTooltipListener = () => {
+  const tooltip = document.getElementById("tooltip-container");
+
+  const removeTooltips = () => {
+    if (window.innerWidth < 768) return;
+    tooltip.className = "";
+  }
+
+  $(".tooltipped").on({
+    mouseenter(event) {
+      if (window.innerWidth < 768) return;
+
+      const trigger = event.currentTarget;
+      if (!trigger.classList.contains("tooltipped")) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
+      const offset = 5;
+
+      const label = trigger.getAttribute("aria-label").trim();
+      if (!label) return;
+
+      tooltip.className = "active";
+      tooltip.textContent = label;
+
+      // Sync size classes
+      ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
+        if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
+      });
+
+      const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
+      const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+
+      const positions = {
+        s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
+        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
+        e: () => [triggerRect.right + window.scrollX + offset, centerY],
+        w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
+      };
+
+      const [left, top] = (positions[placement] || positions.n)();
+      Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+    },
+
+    mouseleave() {
+      removeTooltips()
+    }
+  });
+  // on unload turbo
+  $(document).on('turbo:before-visit', removeTooltips);
+  $(document).on('beforeunload', removeTooltips)
+}
+
+$(document).on('turbo:frame-load', window.attachTooltipListener)
+$(document).on('turbo:after-stream-render', window.attachTooltipListener)
+
 $(document).on('turbo:load', function () {
+  window.attachTooltipListener();
+
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }
 
   $('[data-behavior~=select_content]').on('click', e => e.target.select())
-
   BK.s('autohide').hide()
 
   if (BK.thereIs('login')) {
@@ -541,6 +598,9 @@ $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
 })
 
 window.unexpandReceipt = () => {
+  document
+    .querySelectorAll(`.receipt--expanded`)[0]
+    ?.style?.setProperty('--receipt-size', '256px')
   document
     .querySelectorAll(`.receipt--expanded`)[0]
     ?.classList?.remove('receipt--expanded')

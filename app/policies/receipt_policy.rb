@@ -10,11 +10,16 @@ class ReceiptPolicy < ApplicationPolicy
       # Checking if receiptable is nil prevents unauthorized
       # deletion when user no longer has access to an org
       (record&.receiptable.nil? && record&.user == user) ||
-      (record&.receiptable.instance_of?(Reimbursement::Expense) && record&.user == user && unlocked?)
+      (record&.receiptable.instance_of?(Reimbursement::Expense) && record&.user == user && unlocked?) ||
+      (user && record&.receiptable.try(:card_grant)&.user == user && record.receiptable.card_grant.active?)
   end
 
   def link?
     record.receiptable.nil? && record.user == user
+  end
+
+  def reverse?
+    record.user == user && unlocked?
   end
 
   private

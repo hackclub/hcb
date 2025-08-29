@@ -4,15 +4,17 @@
 #
 # Table name: announcements
 #
-#  id           :bigint           not null, primary key
-#  content      :text             not null
-#  deleted_at   :datetime
-#  published_at :datetime
-#  title        :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  author_id    :bigint           not null
-#  event_id     :bigint           not null
+#  id            :bigint           not null, primary key
+#  aasm_state    :string
+#  content       :jsonb            not null
+#  deleted_at    :datetime
+#  published_at  :datetime
+#  template_type :string
+#  title         :string           not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  author_id     :bigint           not null
+#  event_id      :bigint           not null
 #
 # Indexes
 #
@@ -26,36 +28,77 @@
 #
 class Announcement < ApplicationRecord
   include Hashid::Rails
+  include AASM
+
   has_paper_trail
   acts_as_paranoid
 
-  validates :content, presence: true
+  aasm timestamps: true do
+    # When we create a template and prompt it to users, it's in this
+    # `template_draft` so that it's "unlisted" on the index page.
+    state :template_draft
+
+    state :draft, initial: true
+    state :published
+
+    event :mark_published do
+      transitions from: :draft, to: :published
+
+      after do
+        Announcement::PublishedJob.perform_later(announcement: self)
+      end
+    end
+
+    event :mark_draft do
+      transitions from: :template_draft, to: :draft
+    end
+  end
+
+  scope :all_monthly, -> { where(template_type: Announcement::Templates::Monthly.name) }
+  scope :monthly, -> { all_monthly.joins(event: :config).where("event_configurations.generate_monthly_announcement" => true) }
+  scope :all_monthly_for, ->(date) { all_monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
+  scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
+  scope :approved_monthly_for, ->(date) { monthly_for(date).draft }
+  validate :content_is_json
+
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  scope :published, -> { where.not(published_at: nil) }
+  has_many :blocks, dependent: :destroy
 
-  def publish!
-    update!(published_at: Time.now)
+  validates :title, presence: true, if: :published?
 
-    AnnouncementPublishedJob.perform_later(announcement: self)
+  before_save :autofollow_organizers
+
+  def render
+    ProsemirrorService::Renderer.render_html(content, event)
   end
 
-  def render_html
-    renderer = ProsemirrorToHtml::Renderer.new
-
-    # rubocop:disable Rails/OutputSafety
-    renderer.render(JSON.parse(self.content)).html_safe
-    # rubocop:enable Rails/OutputSafety
+  def render_email
+    ProsemirrorService::Renderer.render_html(content, event, is_email: true)
   end
 
-  def draft?
-    published_at.nil?
+  private
+
+  def autofollow_organizers
+    # is this the first announcement to be published?
+    if published? && event.announcements.published.none?
+      event.users.excluding(event.followers).find_each do |user|
+        event.event_follows.create!(user:)
+
+      rescue ActiveRecord::RecordNotUnique
+        # Do nothing. The user already follows this event.
+      end
+    end
   end
 
-  def published?
-    !draft?
+  def content_is_json
+    unless content.is_a?(Hash)
+      Rails.error.unexpected("Announcement #{id}'s content is not a Hash")
+      errors.add(:content, "is invalid")
+    end
   end
 
 end

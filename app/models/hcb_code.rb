@@ -108,6 +108,7 @@ class HcbCode < ApplicationRecord
     return :reimbursement_expense_payout if reimbursement_expense_payout?
     return :paypal_transfer if paypal_transfer?
     return :wire if wire?
+    return :wise_transfer if wise_transfer?
 
     nil
   end
@@ -124,6 +125,13 @@ class HcbCode < ApplicationRecord
     t.to_s.humanize
   end
 
+  def humanized_type_sentence_case
+    return "ACH" if ach_transfer?
+    return "Wise transfer" if wise_transfer?
+
+    humanized_type.downcase
+  end
+
   def amount_cents
     @amount_cents ||= begin
       return canonical_transactions.sum(:amount_cents) if canonical_transactions.any?
@@ -136,6 +144,7 @@ class HcbCode < ApplicationRecord
   end
 
   def amount_cents_by_event(event)
+    return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
     return invoice.item_amount if invoice?
 
@@ -296,6 +305,10 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE
   end
 
+  def wise_transfer?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE
+  end
+
   def check?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
   end
@@ -346,6 +359,10 @@ class HcbCode < ApplicationRecord
 
   def wire
     @wire ||= Wire.find_by(id: hcb_i2) if wire?
+  end
+
+  def wise_transfer
+    @wise_transfer ||= WiseTransfer.find_by(id: hcb_i2) if wise_transfer?
   end
 
   def check
@@ -484,7 +501,7 @@ class HcbCode < ApplicationRecord
 
     (type == :card_charge) ||
       # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check, :paypal_transfer, :wire].include?(type) && created_at > Time.utc(2024, 2, 1))
+      ([:ach, :check, :paypal_transfer, :wire, :wise_transfer].include?(type) && created_at > Time.utc(2024, 2, 1))
   end
 
   def receipt_optional?
@@ -570,6 +587,7 @@ class HcbCode < ApplicationRecord
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
     return donation&.collected_by if donation? && donation&.in_person?
+    return wise_transfer&.user if wise_transfer?
   end
 
   def fallback_avatar
