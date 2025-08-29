@@ -33,7 +33,13 @@ module Admin
     end
 
     def statement_of_activity
-      @event_group = Event::Group.find(params[:id])
+      @event_group = Event::Group.preload(:events).strict_loading.find(params[:id])
+
+      @statement_of_activity = Event::StatementOfActivity.new(
+        @event_group,
+        start_date_param: params[:start],
+        end_date_param: params[:end]
+      )
     end
 
     def event
