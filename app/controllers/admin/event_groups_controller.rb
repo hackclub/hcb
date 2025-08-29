@@ -32,6 +32,10 @@ module Admin
       redirect_to(admin_event_groups_path)
     end
 
+    def statement_of_activity
+      @event_group = Event::Group.find(params[:id])
+    end
+
     def event
       @event = Event.strict_loading.friendly.find(params[:event_id])
       @event_groups =
