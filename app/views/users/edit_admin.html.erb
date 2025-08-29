@@ -74,7 +74,9 @@
     <% end %>
   <% end %>
 
-  <h2>Comments</h2>
-  <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
-  <%= render "comments/form", commentable: @user %>
+  <%= admin_tool do %>
+    <h2>Comments</h2>
+    <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
+    <%= render "comments/form", commentable: @user %>
+  <% end %>
 </turbo-frame>
