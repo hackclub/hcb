@@ -456,6 +456,13 @@ class User < ApplicationRecord
     admin_override_pretend? && !use_two_factor_authentication
   end
 
+  def can_update_payout_method?
+    return true if payout_method.nil?
+    return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+    return false if reimbursement_reports.reimbursement_requested.any?
+    return false if reimbursement_reports.joins(:payout_holding).where({payout_holding: { aasm_state: :pending}}).any?
+  end
+
   private
 
   def update_stripe_cardholder
