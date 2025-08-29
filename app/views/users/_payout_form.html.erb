@@ -16,14 +16,12 @@
         <strong>Mailed check</strong>
         <small>(10-12 biz. days)</small>
       <% end %>
-      <% if Flipper.enabled?(:wire_reimbursements_2025_02_05, user) %>
-        <%= form.radio_button :payout_method_type, "User::PayoutMethod::Wire" %>
-        <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
-          <%= inline_icon "web", size: 28 %>
-          <strong>International wire</strong>
-          <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-          <small>(1-5 biz. days)</small>
-        <% end %>
+      <%= form.radio_button :payout_method_type, "User::PayoutMethod::Wire" %>
+      <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
+        <%= inline_icon "web", size: 28 %>
+        <strong>International wire</strong>
+        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
+        <small>(1-5 biz. days)</small>
       <% end %>
     </div>
   </fieldset>
@@ -72,21 +70,19 @@
     <% end %>
   </section>
 
-  <% if Flipper.enabled?(:wire_reimbursements_2025_02_05, current_user) %>
-    <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
-      <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
-        <%= render partial: "wires/recipient_details", locals: { form:, disabled: false, required: false } %>
+  <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
+    <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
+      <%= render partial: "wires/recipient_details", locals: { form:, disabled: false, required: false } %>
 
-        <%= render partial: "wires/account_details", locals: { form:, disabled: false, required: false, account_number_field_name: :account_number } %>
+      <%= render partial: "wires/account_details", locals: { form:, disabled: false, required: false, account_number_field_name: :account_number } %>
 
-        <%= render partial: "wires/country_specific_details", locals: { form:, disabled: false, required: false, excluded_fields: ["remittance_info", "purpose_code"] } %>
+      <%= render partial: "wires/country_specific_details", locals: { form:, disabled: false, required: false, excluded_fields: ["remittance_info", "purpose_code"] } %>
 
-        <div class="actions inline-block mt1">
-          <%= form.submit "Save" %>
-        </div>
-      <% end %>
-    </section>
-  <% end %>
+      <div class="actions inline-block mt1">
+        <%= form.submit "Save" %>
+      </div>
+    <% end %>
+  </section>
 
   <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
     <%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions do %>
