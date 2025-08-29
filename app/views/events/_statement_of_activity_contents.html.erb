@@ -28,6 +28,19 @@
   spent <%= render_money statement_of_activity.total_expense.abs %>.
 </p>
 
+<% if statement_of_activity.event_group %>
+  <details>
+    <summary>Included events</summary>
+    <ul>
+      <% statement_of_activity.event_group.events.each do |event| %>
+        <li>
+          <%= link_to(event.name, event_path(event)) %>
+        </li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>
+
 <table>
   <thead>
   <tr>
