@@ -168,7 +168,7 @@
             <% end %>
           </div>
         <% elsif report.draft? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && !report.team_review_required? %>
-          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-warning", method: :post, data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance."} do %>
+          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-warning", method: :post, data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance." } do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -200,7 +200,7 @@
               <%= inline_icon "payment-transfer" %>
               Reimburse <%= report.amount_to_reimburse.format %>
             <% end %>
-          </div> 
+          </div>
         <% elsif report.may_mark_reimbursement_requested? && policy(report).request_reimbursement? %>
           <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: :post } do %>
             <%= inline_icon "payment-transfer" %>
