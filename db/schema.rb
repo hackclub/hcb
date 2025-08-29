@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_29_022524) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -905,8 +905,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
 
   create_table "event_affiliations", force: :cascade do |t|
     t.bigint "event_id", null: false
-    t.jsonb "metadata"
-    t.string "name"
+    t.jsonb "metadata", null: false
+    t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
