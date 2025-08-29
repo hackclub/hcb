@@ -90,9 +90,7 @@
         Is your organization a high-school robotics team? Get an entry into a raffle for a Bambu Lab A1 from now until September 30th for each active teenager in your organization!
         <% if !(@event.robotics_team? && @event.organized_by_teenagers?) %>
           Are you a high-school robotics team, but it says you're ineligible?
-          <%= link_to "Let us know so we can update our records.",
-            fillout_form("thC4xqWfTBus", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }),
-            target: :_blank %>
+          Please email us at <%= mail_to "hcb@hackclub.com" %> so we can update our records.
         <% end %>
       </p>
       <section class="card__banner card__darker secondary border-top italic">
