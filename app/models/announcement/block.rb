@@ -45,7 +45,31 @@ class Announcement
     end
 
     def render_html(is_email: false)
-      Announcements::BlocksController.renderer.render(partial: "announcements/blocks/unknown_block")
+      Announcements::BlocksController.renderer.render(partial:, locals: locals(is_email:))
+    end
+
+    def editable?
+      true
+    end
+
+    def partial
+      "announcements/blocks/#{partial_name}"
+    end
+
+    def modal
+      "announcements/modals/_#{partial_name}"
+    end
+
+    def partial_name
+      self.class.name.split("::").last.underscore
+    end
+
+    def locals(is_email: false)
+      custom_locals.merge(is_email:, block: self)
+    end
+
+    def custom_locals
+      {}
     end
 
     def empty?

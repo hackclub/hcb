@@ -30,12 +30,12 @@ class Announcement
 
       delegate :empty?, to: :donations
 
-      def render_html(is_email: false)
+      def custom_locals
         start_date = start_date_param
         end_date = end_date_param
         total = donations.sum(:amount)
 
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/donation_summary", locals: { donations:, total:, start_date:, end_date:, is_email:, block: self }
+        { donations:, total:, start_date:, end_date: }
       end
 
       private

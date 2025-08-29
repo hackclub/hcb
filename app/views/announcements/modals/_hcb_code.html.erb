@@ -1,0 +1,8 @@
+<%# locals: (block: nil) %>
+
+<%= render "announcements/modals/modal_shell", block:, type: "hcbCode", header: "#{block.present? ? "Edit this" : "Insert a"} transaction" do %>
+  <div>
+    <%= label_tag "link", "Transaction link" %>
+    <%= url_field_tag "link", block.present? ? "#{request.env['rack.url_scheme'] + '://' + request.host_with_port}/hcb/#{block.parameters["hcb_code"]}" : nil, data: { "announcement-modal-target": "input" } %>
+  </div>
+<% end %>
