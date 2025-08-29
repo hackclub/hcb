@@ -82,12 +82,23 @@ module Reimbursement
     def update_currency
       authorize @report
 
-      currency = @report.user.payout_method.currency
-      if @report.update(currency:)
-        flash[:success] = "Report successfully updated to #{currency}."
-      else
-        flash[:error] = @report.errors.full_messages.to_sentence
+      old_currency = @report.currency
+      new_currency = @report.user.payout_method.currency
+
+      ActiveRecord::Base.transaction do
+        @report.update!(currency: new_currency)
+
+        @report.expenses.each do |expense|
+          fractional = Money.from_amount(expense.value, old_currency).cents
+          full = Money.from_cents(fractional, new_currency).amount
+
+          expense.update!(value: full)
+        end
       end
+
+      flash[:success] = "Report successfully updated to #{new_currency}."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
     end
 
     def finished

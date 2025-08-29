@@ -159,7 +159,7 @@
               <% end %>
             <% end %>
           </div>
-        <% elsif report.draft? && report.currency === "USD" && !::Shared::AmpleBalance.ample_balance?(report.amount_cents, report.event) && !report.team_review_required? %>
+        <% elsif report.draft? && report.currency == "USD" && !::Shared::AmpleBalance.ample_balance?(report.amount_cents, report.event) && !report.team_review_required? %>
           <div class="btn bg-info disabled">
             <%= inline_icon "send" %>
             Submit & request review
@@ -167,6 +167,14 @@
               <span class="bold warning">Warning</span>: your report is beyond your balance. To continue, lower the amount requested.
             <% end %>
           </div>
+        <% elsif report.draft? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && !report.team_review_required? %>
+          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-warning", method: :post, data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance."} do %>
+            <%= inline_icon "send" %>
+            Submit & request review
+            <% button_hint = capture do %>
+              <span class="bold warning">Warning</span>: your report is quoted to cost <%= render_money @report.wise_transfer_quote_amount %> USD, which is beyond your balance.
+            <% end %>
+          <% end %>
         <% elsif report.initial_draft? %>
           <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info", method: :post do %>
             <%= inline_icon "send" %>
@@ -183,16 +191,26 @@
               <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
             <% end %>
           <% end %>
+        <% elsif report.submitted? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && policy(report).request_reimbursement? %>
+          <% button_hint = capture do %>
+            <span class="bold warning">Warning</span>: this report is quoted to cost <%= render_money @report.wise_transfer_quote_amount %> USD, which is beyond your balance.
+          <% end %>
+          <div class="tooltipped tooltipped--n" aria-label="This event may not be fulfill this request.">
+            <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-warning", data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance.", turbo_method: :post } do %>
+              <%= inline_icon "payment-transfer" %>
+              Reimburse <%= report.amount_to_reimburse.format %>
+            <% end %>
+          </div> 
         <% elsif report.may_mark_reimbursement_requested? && policy(report).request_reimbursement? %>
           <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: :post } do %>
             <%= inline_icon "payment-transfer" %>
-            Reimburse <%= render_money report.amount_to_reimburse %>
+            Reimburse <%= report.amount_to_reimburse.format %>
           <% end %>
         <% elsif report.submitted? && (report.currency == "USD" && !::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) || report.event.financially_frozen?) && policy(report).request_reimbursement? %>
           <div class="tooltipped tooltipped--n" aria-label="This event can not fulfill this request.">
             <div class="btn bg-info disabled">
               <%= inline_icon "payment-transfer" %>
-              Reimburse <%= render_money report.amount_to_reimburse %>
+              Reimburse <%= report.amount_to_reimburse.format %>
             </div>
           </div>
         <% elsif report.submitted? && policy(report).approve_all_expenses? && report.expenses.approved.none? %>

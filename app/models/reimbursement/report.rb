@@ -334,6 +334,16 @@ module Reimbursement
       invited_by_id.nil?
     end
 
+    def wise_transfer_quote_amount
+      @wise_transfer_quote_amount ||= WiseTransfer.generate_quote(amount_to_reimburse)
+    rescue
+      Money.from_cents(0)
+    end
+
+    def wise_transfer_may_exceed_balance?
+      !::Shared::AmpleBalance.ample_balance?(wise_transfer_quote_amount.cents, event)
+    end
+
     private
 
     def last_user_change_to(...)
