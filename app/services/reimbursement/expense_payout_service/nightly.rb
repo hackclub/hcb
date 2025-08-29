@@ -5,6 +5,8 @@ module Reimbursement
     class Nightly
       def run
         Reimbursement::ExpensePayout.pending.find_each(batch_size: 100) do |expense_payout|
+          next if payout_holding.report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name
+
           Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
         end
 

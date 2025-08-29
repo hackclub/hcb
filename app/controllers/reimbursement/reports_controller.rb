@@ -237,6 +237,9 @@ module Reimbursement
 
       clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       payout_holding = @report.payout_holding
+      @report.payout_holding.expense_payouts.pending.each do |expense_payout|
+        Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
+      end
       Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
       payout_holding.reload
       payout_holding.mark_settled!
