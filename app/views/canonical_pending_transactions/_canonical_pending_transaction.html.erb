@@ -63,7 +63,7 @@
             <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
           <% end %>
           <%= turbo_frame_tag "#{pt.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
-            <span title="<%= transaction_memo(pt) %>" style="flex-grow: 1;">
+            <span style="flex-grow: 1;">
               <% if pt.local_hcb_code.card_grant? && !organizer_signed_in? %>
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
               <% elsif pt.stripe_card&.subledger.present? && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
