@@ -63,4 +63,4 @@
   <p>Please select an affiliation type.</p>
 </template>
 
-<%= form.submit (affiliation.new_record? ? "Add affiliation" : "Update").to_s, disabled: %>
+<%= form.submit "#{affiliation.new_record? ? "Add affiliation" : "Update"}", disabled: %>
