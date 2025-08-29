@@ -16,7 +16,9 @@ module Api
       def create
         @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
 
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+        cg_params = params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user)
+
+        @card_grant = @event.card_grants.build(cg_params)
 
         authorize @card_grant
 
@@ -25,6 +27,23 @@ module Api
           # exception as under the hood it calls `DisbursementService::Create` and a
           # number of other methods (e.g. `save!`) which either succeed or raise.
           @card_grant.save!
+
+          default_cg_setting = @event.card_grant_setting
+          CardGrantSetting.create!(
+            {
+              banned_categories: default_cg_setting.banned_categories,
+              banned_merchants: default_cg_setting.banned_merchants,
+              category_lock: cg_params.category_lock,
+              expiration_preference: default_cg_setting.expiration_preference,
+              invite_message: default_cg_setting.invite_message,
+              keyword_lock: cg_params.keyword_lock,
+              merchant_lock: cg_params.merchant_lock,
+              pre_authorization_required: cg_params.pre_authorization_required,
+              reimbursement_conversions_enabled: default_cg_setting.reimbursement_conversions_enabled,
+              card_grant_id: @card_grant.id,
+              event_id: @event.id
+            }
+          )
         rescue => e
           messages = []
 
@@ -76,7 +95,17 @@ module Api
 
         authorize @card_grant
 
-        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions))
+        cg_params = params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions)
+
+        @card_grant&.setting.update(
+          {
+            merchant_lock: cg_params.merchant_lock,
+            category_lock: cg_params.category_lock,
+            keyword_lock: cg_params.keyword_lock
+          }
+        )
+
+        @card_grant.update!(cg_params)
 
         render :show
       end
