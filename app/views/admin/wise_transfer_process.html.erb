@@ -139,14 +139,14 @@
     <h3>Process</h3>
 
     <% if @wise_transfer.pending? %>
-      <fieldset class="p-6">
+      <fieldset class="px-6 py-3">
         <legend style="padding: 0px 8px">Approve</legend>
         <p>For this approval check, you're only looking at the transfer purpose and documentation. The balance check will be done after it is approved.</p>
         <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post %>
 
       </fieldset>
 
-      <fieldset class="p-6">
+      <fieldset class="px-6 py-3">
         <legend style="padding: 0px 8px">Reject</legend>
         <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
@@ -159,7 +159,7 @@
 
       </fieldset>
     <% elsif @wise_transfer.approved? %>
-      <fieldset class="p-6" x-data="{ amount: null, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
+      <fieldset class="px-6 py-3" x-data="{ amount: null, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
         <legend style="padding: 0px 8px">Send</legend>
             <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
               <div class="mb-2">
@@ -206,7 +206,7 @@
 
       </fieldset>
 
-      <fieldset class="p-6">
+      <fieldset class="px-6 py-3">
         <legend style="padding: 0px 8px">Reject</legend>
         <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
 
@@ -227,7 +227,7 @@
     <% end %>
 
     <% if @wise_transfer.may_mark_failed? %>
-      <fieldset class="p-6">
+      <fieldset class="px-6 py-3">
         <legend style="padding: 0px 8px">Fail</legend>
         <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
