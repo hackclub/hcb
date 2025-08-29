@@ -6,9 +6,9 @@ class ReceiptsController < ApplicationController
   before_action :set_paper_trail_whodunnit, only: :create
   before_action :find_receiptable, only: [:create, :link, :link_modal]
   before_action :set_event, only: [:create, :link]
+  before_action :set_receipt, only: [:destroy, :reverse]
 
   def destroy
-    @receipt = Receipt.find(params[:id])
     @receiptable = @receipt.receiptable
     authorize @receipt
 
@@ -129,7 +129,7 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.prepend(
                        :receipts_list,
                        partial: "receipts/receipt",
-                       locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true }
+                       locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, show_receipt_bin_button: true, link_to_file: true }
                      ))
     end
 
@@ -174,7 +174,7 @@ class ReceiptsController < ApplicationController
     end
 
   rescue => e
-    Rails.error.report(e)
+    Rails.error.report(e) unless e.is_a?(ActiveRecord::RecordInvalid)
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
@@ -204,6 +204,39 @@ class ReceiptsController < ApplicationController
           end
 
           redirect_back fallback_location: URI.parse(@receiptable&.try(:url) || url_for(@receiptable) || my_inbox_path)
+        end
+      }
+    end
+  end
+
+  def reverse
+    authorize @receipt
+    @receiptable = @receipt.receiptable
+
+    if @receipt.suggested_pairings.accepted.any?
+      pairing = @receipt.suggested_pairings.accepted.first
+      success = pairing.mark_reversed!
+    else
+      success = @receipt.update(receiptable: nil)
+    end
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: generate_streams }
+      format.html         {
+        if params[:popover]&.starts_with?("HcbCode:")
+          flash[:popover] = params[:popover].gsub("HcbCode:", "")
+        end
+
+        if success
+          flash[:success] = {
+            text: "Moved receipt to your",
+            link: my_inbox_path,
+            link_text: "receipt bin"
+          }
+          redirect_back fallback_location: @receiptable || my_inbox_path
+        else
+          flash[:error] = "Failed to move receipt to your receipt bin"
+          redirect_back fallback_location: @receiptable || my_inbox_path
         end
       }
     end
@@ -252,7 +285,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
                            partial: "canonical_transactions/canonical_transaction",
-                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { ct:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: true } : { ct:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true, show_tags: true }
                          ))
         end
       else
@@ -261,7 +294,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
                            partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, } : { pt:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: true } : { pt:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true, show_tags: true }
                          ))
         end
       end
@@ -299,7 +332,7 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.append(
                        :receipts_list,
                        partial: "receipts/receipt",
-                       locals: { receipt: @receipt, show_delete_button: true, link_to_file: true }
+                       locals: { receipt: @receipt, show_delete_button: true, show_receipt_bin_button: true, link_to_file: true }
                      ))
     elsif @receipt
       streams.append(turbo_stream.remove("receipt_#{@receipt.id}"))
@@ -325,6 +358,10 @@ class ReceiptsController < ApplicationController
     return unless route[:controller].classify == "Event"
 
     @event = Event.friendly.find(route[:id]) rescue nil
+  end
+
+  def set_receipt
+    @receipt = Receipt.find(params[:id])
   end
 
   def on_transaction_page?

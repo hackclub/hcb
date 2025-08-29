@@ -7,6 +7,7 @@
 #  id                              :bigint           not null, primary key
 #  data_extracted                  :boolean          default(FALSE), not null
 #  extracted_card_last4_ciphertext :text
+#  extracted_currency              :string
 #  extracted_date                  :datetime
 #  extracted_merchant_name         :string
 #  extracted_merchant_url          :string
@@ -39,6 +40,9 @@ class Receipt < ApplicationRecord
   blind_index :textual_content
   has_encrypted :extracted_card_last4
 
+  monetize :extracted_subtotal_amount_cents, as: "extracted_subtotal_amount", with_model_currency: :extracted_currency, allow_nil: true
+  monetize :extracted_total_amount_cents, as: "extracted_total_amount", with_model_currency: :extracted_currency, allow_nil: true
+
   include StripeAuthorizationsHelper
 
   include PublicIdentifiable
@@ -59,6 +63,8 @@ class Receipt < ApplicationRecord
   # - @sampoder
   PREPROCESSED_SIZES = ["1024x1024"].freeze
 
+  CARD_LOCKING_START_DATE = Date.new(2025, 6, 13)
+
   has_one_attached :file do |attachable|
     PREPROCESSED_SIZES.each do |resize|
       attachable.variant(resize.to_sym, resize:, preprocessed: true)
@@ -73,7 +79,7 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt
@@ -85,6 +91,11 @@ class Receipt < ApplicationRecord
       Receipt::SuggestPairingsJob.perform_later(self)
     end
   end
+
+  after_commit do
+    User::UpdateCardLockingJob.perform_later(user:)
+  end
+
   validate :has_owner
 
   enum :upload_method, {

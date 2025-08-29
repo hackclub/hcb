@@ -30,6 +30,10 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
+    @hide_promotional_banner = cookies[:hide_robotics_raffle_banner] == "1"
+  end
+
+  before_action do
     # Disallow indexing
     response.set_header("X-Robots-Tag", "noindex")
   end
@@ -55,7 +59,7 @@ class ApplicationController < ActionController::Base
   rescue_from Rack::Timeout::RequestTimeoutException do
     respond_to do |format|
       format.html { render "errors/timeout" }
-      format.all { render text: "This request timed out, sorry." }
+      format.all { render plain: "This request timed out, sorry." }
     end
   end
 
@@ -100,11 +104,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
-
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
       redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end

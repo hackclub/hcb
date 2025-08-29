@@ -1,5 +1,7 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-dark="<%= @is_dark %>">
   <head>
     <title>
       <%= "#{yield(:title)} –" if content_for?(:title) %>
@@ -19,56 +21,9 @@
   <body>
     <a class="skip-to-main" href="#main">Skip to main content</a>
 
-    <% nav = {
-         Spending: {
-           ACHs: [ach_admin_index_path, AchTransfer.pending.count, %i[]],
-           Checks: [increase_checks_admin_index_path, IncreaseCheck.pending.count, %i[]],
-           Disbursements: [disbursements_admin_index_path, Disbursement.reviewing.count, %i[]],
-           PayPal: [paypal_transfers_admin_index_path, PaypalTransfer.pending.count, %i[]],
-           Wires: [wires_admin_index_path, Wire.pending.count, %i[]],
-           Reimbursements: [reimbursements_admin_index_path, Reimbursement::Report.reimbursement_requested.count, %i[]]
-         },
-         Ledger: {
-           Ledger: [ledger_admin_index_path, CanonicalTransaction.not_stripe_top_up.unmapped.count, %i[]],
-           "Pending Ledger": [pending_ledger_admin_index_path, CanonicalPendingTransaction.unsettled.count, %i[counter]],
-           "Raw Transactions": [raw_transactions_admin_index_path, RawCsvTransaction.unhashed.count, %i[]],
-           "Intrafi Transactions": [raw_intrafi_transactions_admin_index_path, RawIntrafiTransaction.count, %i[counter]],
-           "HCB codes": [hcb_codes_admin_index_path, 0, %i[counter]],
-           "Audits": [admin_ledger_audits_path, Admin::LedgerAudit.pending.count, %i[]]
-         },
-         "Incoming Money": {
-           Donations: [donations_admin_index_path, 0, %i[]],
-           "Recurring Donations": [recurring_donations_admin_index_path, 0, %i[]],
-           Invoices: [invoices_admin_index_path, 0, %i[]],
-           Sponsors: [sponsors_admin_index_path, 0, %i[]]
-         },
-         Organizations: {
-           Organizations: [events_admin_index_path, Event.approved.count, %i[counter]],
-           "Google Workspace Requests": [google_workspaces_admin_index_path, GSuite.needs_ops_review.count, %i[]],
-           "Account Numbers": [account_numbers_admin_index_path, Column::AccountNumber.count, %i[counter]]
-         },
-         Payroll: {
-           Employees: [employees_admin_index_path, Employee.onboarding.count, %i[]],
-           Payments: [employee_payments_admin_index_path, Employee::Payment.paid.count, %i[counter]],
-           W9s: [admin_w9s_path, W9.all.count, %i[counter]]
-         },
-         Misc: {
-           "Bank Accounts": [bank_accounts_admin_index_path, BankAccount.failing.count, %i[counter]],
-           "HCB Fees": [bank_fees_admin_index_path, BankFee.in_transit_or_pending.count, %i[counter]],
-           "Column Statements": [admin_column_statements_path, Column::Statement.count, %i[counter]],
-           "Users": [users_admin_index_path, User.count, %i[counter]],
-           "Card Designs": [stripe_card_personalization_designs_admin_index_path, StripeCard::PersonalizationDesign.count, %i[counter]],
-           "Emails": [emails_admin_index_path, Ahoy::Message.count, %i[counter]],
-           "Unknown Merchants": [unknown_merchants_admin_index_path, Rails.cache.fetch("admin_unknown_merchants")&.length || 0, %i[counter]],
-         }
-       } %>
-
     <% title = yield(:title) if content_for?(:title) %>
-    <% parent, active = *(title ? nav.map do |name, items|
-                                    items.map do |item, value|
-                                      [item.to_s.downcase.gsub(" ", ""), [name, item]]
-                                    end
-                                  end.flatten(1).to_h[title.to_s.downcase.gsub(" ", "")] : ["Admin", nil]) %>
+
+    <% nav = Admin::Nav.new(page_title: title) %>
 
     <nav style="display: flex; flex-direction: column; background: var(--hcb-bg-2-5); gap: 0px">
       <div style="width: 100%; display: flex; gap: 8px; align-items: center; font-size: 22px; padding: 8px; border-bottom: 1px solid var(--hcb-bg-2);">
@@ -79,10 +34,10 @@
               height: @home_size || 36,
               alt: "HCB logo" %>
         <% end %>
-        <% title = yield(:title) if content_for?(:title) %>
+
         <% if title %>
           <span>
-            <%= parent %>
+            <%= nav.active_section&.name || "Admin" %>
           </span>
           <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
           <b style="font-weight: 600;">
@@ -95,9 +50,7 @@
         <% end %>
 
         <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
-          <a href="https://changelog.hcb.hackclub.com" target="_blank" aria-label="See what’s new with HCB" id="changelog-icon" class="tooltipped tooltipped--w">
-            <%= inline_icon "rep", size: home_action_size %>
-          </a>
+          <%= render partial: "application/blog_widget" %>
           <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "tooltipped tooltipped--w" do %>
             <%= inline_icon "payment-docs", size: home_action_size %>
           <% end %>
@@ -109,25 +62,21 @@
       </div>
 
       <div class="nav-row" style="width: 100%; display: flex; padding: 8px 0px;">
-        <% nav.each do |name, items| %>
-          <% task_sum = items.reject { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
-          <% counter_sum = items.select { |name, item| item.third.include?(:counter) }.map { |name, item| item.second }.sum %>
+        <% nav.sections.each do |section| %>
           <details open class="admin-nav-item pb0">
-            <summary class="nav-item" style="<%= name == parent ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
-              <%= name %>
-              <span class="badge <%= task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
-                <%= task_sum > 0 ? task_sum : counter_sum %>
+            <summary class="nav-item" style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
+              <%= section.name %>
+              <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
+                <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
               </span>
             </summary>
             <div class="dropdown">
               <div class="sub-items">
-                <% items.each do |name, item| %>
-                  <% link, count, flags = *item %>
-
-                  <%= link_to link, style: active == name ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
-                    <%= name %>
-                    <span class="badge <%= (:counter.in? flags) || count.zero? ? "bg-muted" : "" %> h-fit-content">
-                      <%= count %>
+                <% section.items.each do |item| %>
+                  <%= link_to item.path, style: item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
+                    <%= item.name %>
+                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
+                      <%= item.count %>
                     </span>
                   <% end %>
                 <% end %>
@@ -138,16 +87,8 @@
       </div>
     </nav>
 
-    <% flash.to_h.except("imported_transactions", "file").each do |key, value| %>
-      <% if key == "error" %>
-        <p style="text-align:center;background:red;color:white;"><%= value %></p>
-      <% elsif key == "success" %>
-        <p style="text-align:center;background:green;color:white;"><%= value %></p>
-      <% else %>
-        <p style="text-align:center;background:darkblue;color:white;"><%= value %></p>
-      <% end %>
-      <hr>
-    <% end %>
+    <%= render(partial: "admin/flash") %>
+
     <div id="main" class="overflow-x-auto overflow-y-auto" style="padding: 2rem; margin: 0 auto">
       <%= yield %>
     </div>

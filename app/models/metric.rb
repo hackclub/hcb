@@ -60,7 +60,7 @@ class Metric < ApplicationRecord
     # If creating, save and return the new record
     if metric.new_record?
       unless metric.save
-        Airbrake.notify("Failed to save metric #{metric.inspect}")
+        Rails.error.unexpected "Failed to save metric #{metric.inspect}"
         return nil
       end
       return metric
@@ -70,7 +70,7 @@ class Metric < ApplicationRecord
       metric.populate
       metric.updated_at = Time.now # force touch even if no changes
       unless metric.save
-        Airbrake.notify("Failed to save metric #{metric.inspect}")
+        Rails.error.unexpected "Failed to save metric #{metric.inspect}"
         metric.reload
       end
     end

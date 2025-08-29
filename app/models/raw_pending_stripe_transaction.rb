@@ -28,7 +28,7 @@ class RawPendingStripeTransaction < ApplicationRecord
   scope :pending, -> { where("stripe_transaction->>'status' = 'pending'") }
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| record.stripe_card&.user || User.find_by(email: "bank@hackclub.com") }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
+  tracked owner: proc{ |controller, record| record.stripe_card&.user || User.system_user }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
 
   def date
     date_posted
@@ -36,6 +36,10 @@ class RawPendingStripeTransaction < ApplicationRecord
 
   def memo
     stripe_transaction.dig("merchant_data", "name")
+  end
+
+  def merchant_category
+    stripe_transaction&.dig("merchant_data", "category")
   end
 
   def likely_event_id

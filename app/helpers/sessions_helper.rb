@@ -10,6 +10,12 @@ module SessionsHelper
     "30 days" => 30.days.to_i
   }.freeze
 
+  # For security reasons we severely restrict the duration of impersonated
+  # sessions
+  IMPERSONATED_SESSION_DURATION = SESSION_DURATION_OPTIONS.fetch("1 hour")
+
+  class AccountLockedError < StandardError; end
+
   def impersonate_user(user)
     sign_out
     sign_in(user:, impersonate: true)
@@ -24,7 +30,13 @@ module SessionsHelper
   # DEPRECATED - begin to start deprecating and ultimately replace with sign_in_and_set_cookie
   def sign_in(user:, fingerprint_info: {}, impersonate: false, webauthn_credential: nil)
     session_token = SecureRandom.urlsafe_base64
-    expiration_at = Time.now + user.session_duration_seconds
+    session_duration =
+      if impersonate
+        IMPERSONATED_SESSION_DURATION
+      else
+        user.session_duration_seconds
+      end
+    expiration_at = Time.now + session_duration
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
@@ -40,6 +52,8 @@ module SessionsHelper
 
     if impersonate
       user_session.impersonated_by = current_user
+    else
+      raise(AccountLockedError, "Your HCB account has been locked.") if user.locked?
     end
 
     user_session.save!
@@ -72,13 +86,14 @@ module SessionsHelper
 
   def organizer_signed_in?(event = @event, as: :reader)
     run = ->(inner_event:, inner_as:) do
-      next true if auditor_signed_in?
+      next true if auditor_signed_in? && as == :reader
+      next true if admin_signed_in? && as == :member
       next false unless signed_in? && inner_event.present?
 
       required_role_num = OrganizerPosition.roles[inner_as]
       raise ArgumentError, "invalid role #{inner_as}" unless required_role_num.present?
 
-      valid_position = inner_event.organizer_positions.find do |op|
+      valid_position = inner_event.ancestor_organizer_positions.find do |op|
         next false unless op.user == current_user
 
         role_num = OrganizerPosition.roles[op.role]
@@ -147,5 +162,24 @@ module SessionsHelper
       &.user_sessions
       &.where&.not(id: current_session.id)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+  end
+
+  def sudo_mode?
+    current_session&.sudo_mode?
+  end
+
+  # Intercepts the request and renders a reauthentication form if the user does
+  # not have sudo mode.
+  #
+  # It can either be used as a `before_action` callback or as part of an action
+  # implementation if you only want to require sudo mode in specific cases. In
+  # the latter scenario, you _MUST_ check the return value and only proceed if
+  # it is `true`.
+  #
+  # @return [Boolean] whether sudo mode was obtained and the controller action can proceed
+  def enforce_sudo_mode
+    return true if sudo_mode?
+
+    SudoModeHandler.new(controller_instance: self).call
   end
 end

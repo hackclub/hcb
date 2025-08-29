@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class OrganizerPositionContractsController < ApplicationController
-  before_action :set_opc, only: [:void]
+  before_action :set_opc, only: [:void, :resend_to_user, :resend_to_cosigner]
 
   def create
     @contract = OrganizerPosition::Contract.new(opc_params)
@@ -15,6 +15,28 @@ class OrganizerPositionContractsController < ApplicationController
     authorize @contract
     @contract.mark_voided!
     flash[:success] = "Contract voided succesfully."
+    redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
+  end
+
+  def resend_to_user
+    authorize @contract
+
+    OrganizerPosition::ContractsMailer.with(contract: @contract).notify.deliver_later
+
+    flash[:success] = "Contract resent to user succesfully."
+    redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
+  end
+
+  def resend_to_cosigner
+    authorize @contract
+
+    if @contract.cosigner_email.present?
+      OrganizerPosition::ContractsMailer.with(contract: @contract).notify_cosigner.deliver_later
+      flash[:success] = "Contract resent to cosigner succesfully."
+    else
+      flash[:error] = "This contract has no cosigner."
+    end
+
     redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
   end
 

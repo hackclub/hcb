@@ -12,7 +12,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
+  create_schema "google_sheets"
+
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
@@ -47,6 +49,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.text "routing_number_ciphertext"
     t.string "account_number_bidx"
     t.string "routing_number_bidx"
+    t.date "invoiced_at"
     t.index ["account_number_bidx"], name: "index_ach_transfers_on_account_number_bidx"
     t.index ["column_id"], name: "index_ach_transfers_on_column_id", unique: true
     t.index ["creator_id"], name: "index_ach_transfers_on_creator_id"
@@ -185,6 +188,32 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.datetime "started_at", precision: nil
     t.index ["user_id"], name: "index_ahoy_visits_on_user_id"
     t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
+  end
+
+  create_table "announcement_blocks", force: :cascade do |t|
+    t.text "rendered_html"
+    t.text "rendered_email_html"
+    t.jsonb "parameters"
+    t.bigint "announcement_id", null: false
+    t.string "type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
+  end
+
+  create_table "announcements", force: :cascade do |t|
+    t.string "title", null: false
+    t.bigint "author_id", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "content", null: false
+    t.bigint "event_id", null: false
+    t.datetime "published_at"
+    t.string "aasm_state"
+    t.string "template_type"
+    t.index ["author_id"], name: "index_announcements_on_author_id"
+    t.index ["event_id"], name: "index_announcements_on_event_id"
   end
 
   create_table "api_tokens", force: :cascade do |t|
@@ -369,11 +398,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.bigint "paypal_transfer_id"
     t.bigint "reimbursement_payout_holding_id"
     t.bigint "wire_id"
+    t.bigint "raw_pending_column_transaction_id"
+    t.bigint "wise_transfer_id"
     t.index ["check_deposit_id"], name: "index_canonical_pending_transactions_on_check_deposit_id"
     t.index ["hcb_code"], name: "index_canonical_pending_transactions_on_hcb_code"
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"
     t.index ["paypal_transfer_id"], name: "index_canonical_pending_transactions_on_paypal_transfer_id"
     t.index ["raw_pending_bank_fee_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id"
+    t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
+    t.index ["raw_pending_column_transaction_id"], name: "index_canonical_pending_txs_on_rpct_id"
     t.index ["raw_pending_donation_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_donation_tx_id"
     t.index ["raw_pending_incoming_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_incoming_disbursement_transaction_id"
     t.index ["raw_pending_invoice_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_invoice_tx_id"
@@ -384,6 +417,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.index ["reimbursement_expense_payout_id"], name: "index_canonical_pending_txs_on_reimbursement_expense_payout_id"
     t.index ["reimbursement_payout_holding_id"], name: "index_canonical_pending_txs_on_reimbursement_payout_holding_id"
     t.index ["wire_id"], name: "index_canonical_pending_transactions_on_wire_id"
+    t.index ["wise_transfer_id"], name: "index_canonical_pending_transactions_on_wise_transfer_id"
     t.check_constraint "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null"
   end
 
@@ -403,6 +437,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.index ["transaction_source_type", "transaction_source_id"], name: "index_canonical_transactions_on_transaction_source"
   end
 
+  create_table "card_grant_pre_authorizations", force: :cascade do |t|
+    t.bigint "card_grant_id", null: false
+    t.string "product_url"
+    t.string "aasm_state", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "extracted_product_name"
+    t.text "extracted_product_description"
+    t.integer "extracted_product_price_cents"
+    t.integer "extracted_total_price_cents"
+    t.string "extracted_merchant_name"
+    t.text "extracted_validity_reasoning"
+    t.boolean "extracted_valid_purchase"
+    t.integer "extracted_fraud_rating"
+    t.index ["card_grant_id"], name: "index_card_grant_pre_authorizations_on_card_grant_id"
+  end
+
   create_table "card_grant_settings", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "merchant_lock"
@@ -411,6 +462,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.integer "expiration_preference", default: 365, null: false
     t.string "keyword_lock"
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
+    t.boolean "pre_authorization_required", default: false, null: false
+    t.string "banned_merchants"
+    t.string "banned_categories"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
   end
 
@@ -430,31 +484,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.integer "status", default: 0, null: false
     t.string "keyword_lock"
     t.string "purpose"
+    t.boolean "one_time_use"
+    t.boolean "pre_authorization_required", default: false, null: false
+    t.text "instructions"
+    t.string "banned_merchants"
+    t.string "banned_categories"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
     t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id"
     t.index ["subledger_id"], name: "index_card_grants_on_subledger_id"
     t.index ["user_id"], name: "index_card_grants_on_user_id"
-  end
-
-  create_table "changelog_posts", force: :cascade do |t|
-    t.string "title"
-    t.integer "headway_id"
-    t.string "markdown"
-    t.datetime "published_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "changelog_posts_users", force: :cascade do |t|
-    t.bigint "changelog_post_id", null: false
-    t.bigint "user_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["changelog_post_id", "user_id"], name: "index_changelog_posts_users_on_changelog_post_id_and_user_id", unique: true
-    t.index ["changelog_post_id"], name: "index_changelog_posts_users_on_changelog_post_id"
-    t.index ["user_id"], name: "index_changelog_posts_users_on_user_id"
   end
 
   create_table "check_deposits", force: :cascade do |t|
@@ -633,6 +673,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.bigint "archived_by_id"
     t.string "aasm_state"
     t.datetime "deleted_at", precision: nil
+    t.integer "category", default: 0, null: false
     t.index ["archived_by_id"], name: "index_documents_on_archived_by_id"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["slug"], name: "index_documents_on_slug", unique: true
@@ -672,6 +713,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.index ["failure_stripe_balance_transaction_id"], name: "index_donation_payouts_on_failure_stripe_balance_transaction_id", unique: true
     t.index ["stripe_balance_transaction_id"], name: "index_donation_payouts_on_stripe_balance_transaction_id", unique: true
     t.index ["stripe_payout_id"], name: "index_donation_payouts_on_stripe_payout_id", unique: true
+  end
+
+  create_table "donation_tiers", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.integer "amount_cents", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.integer "sort_index"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_donation_tiers_on_event_id"
   end
 
   create_table "donations", force: :cascade do |t|
@@ -857,7 +910,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.datetime "updated_at", null: false
     t.boolean "cover_donation_fees", default: false
     t.string "contact_email"
+    t.boolean "generate_monthly_announcement", default: false, null: false
+    t.string "subevent_plan"
     t.index ["event_id"], name: "index_event_configurations_on_event_id"
+  end
+
+  create_table "event_follows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "event_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_follows_on_event_id"
+    t.index ["user_id", "event_id"], name: "index_event_follows_on_user_id_and_event_id", unique: true
   end
 
   create_table "event_plans", force: :cascade do |t|
@@ -887,7 +951,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   end
 
   create_table "events", force: :cascade do |t|
-    t.text "name"
+    t.text "name", null: false
     t.text "address"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -922,6 +986,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.string "short_name"
     t.integer "risk_level"
     t.boolean "financially_frozen", default: false, null: false
+    t.boolean "donation_tiers_enabled", default: false, null: false
+    t.bigint "parent_id"
+    t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
 
@@ -987,7 +1054,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   create_table "flipper_gates", force: :cascade do |t|
     t.string "feature_key", null: false
     t.string "key", null: false
-    t.string "value"
+    t.text "value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["feature_key", "key", "value"], name: "index_flipper_gates_on_feature_key_and_key_and_value", unique: true
@@ -1165,9 +1232,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.string "column_delivery_status"
     t.string "recipient_email"
     t.boolean "send_email_notification", default: false
+    t.bigint "payment_recipient_id"
     t.index "(((increase_object -> 'deposit'::text) ->> 'transaction_id'::text))", name: "index_increase_checks_on_transaction_id"
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
+    t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
     t.index ["user_id"], name: "index_increase_checks_on_user_id"
   end
 
@@ -1310,6 +1379,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "browser_token_ciphertext"
+    t.bigint "referral_program_id"
+    t.boolean "is_reauthentication", default: false, null: false
+    t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -1499,7 +1571,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.string "program", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_raffles_on_user_id"
+    t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -1565,6 +1637,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.string "state"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "raw_pending_column_transactions", force: :cascade do |t|
+    t.string "column_id", null: false
+    t.integer "column_event_type", null: false
+    t.jsonb "column_transaction", null: false
+    t.text "description", null: false
+    t.date "date_posted", null: false
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["column_id"], name: "index_raw_pending_column_transactions_on_column_id", unique: true
   end
 
   create_table "raw_pending_donation_transactions", force: :cascade do |t|
@@ -1680,6 +1764,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.boolean "data_extracted", default: false, null: false
     t.integer "textual_content_source", default: 0
     t.string "textual_content_bidx"
+    t.string "extracted_currency"
     t.index ["receiptable_type", "receiptable_id"], name: "index_receipts_on_receiptable_type_and_receiptable_id"
     t.index ["textual_content_bidx"], name: "index_receipts_on_textual_content_bidx"
     t.index ["user_id"], name: "index_receipts_on_user_id"
@@ -1725,6 +1810,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.boolean "show_explore_hack_club", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "background_image_url"
+    t.string "login_header_text"
+    t.text "login_body_text"
+    t.string "login_text_color"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -1900,7 +1989,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.boolean "initially_activated", default: false, null: false
     t.boolean "cash_withdrawal_enabled", default: false
     t.datetime "canceled_at"
+    t.bigint "last_frozen_by_id"
     t.index ["event_id"], name: "index_stripe_cards_on_event_id"
+    t.index ["last_frozen_by_id"], name: "index_stripe_cards_on_last_frozen_by_id"
     t.index ["replacement_for_id"], name: "index_stripe_cards_on_replacement_for_id"
     t.index ["stripe_cardholder_id"], name: "index_stripe_cards_on_stripe_cardholder_id"
     t.index ["stripe_id"], name: "index_stripe_cards_on_stripe_id", unique: true
@@ -1956,7 +2047,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "event_id", null: false
+    t.string "emoji"
     t.index ["event_id"], name: "index_tags_on_event_id"
+    t.check_constraint "emoji IS NOT NULL", name: "tags_emoji_null"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -1982,6 +2075,24 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.datetime "updated_at", null: false
     t.integer "step", default: 0
     t.index ["tourable_type", "tourable_id"], name: "index_tours_on_tourable"
+  end
+
+  create_table "transaction_categories", force: :cascade do |t|
+    t.citext "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_transaction_categories_on_slug", unique: true
+  end
+
+  create_table "transaction_category_mappings", force: :cascade do |t|
+    t.bigint "transaction_category_id", null: false
+    t.text "categorizable_type", null: false
+    t.bigint "categorizable_id", null: false
+    t.text "assignment_strategy", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["categorizable_type", "categorizable_id"], name: "idx_on_categorizable_type_categorizable_id_f3e1245d19", unique: true
+    t.index ["transaction_category_id"], name: "index_transaction_category_mappings_on_transaction_category_id"
   end
 
   create_table "transaction_csvs", force: :cascade do |t|
@@ -2053,6 +2164,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_backup_codes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "aasm_state", default: "previewed", null: false
+    t.text "code_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_backup_codes_on_user_id"
+  end
+
   create_table "user_email_updates", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "aasm_state", null: false
@@ -2065,8 +2185,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.datetime "updated_at", null: false
     t.text "authorization_token_ciphertext"
     t.text "verification_token_ciphertext"
+    t.string "authorization_token_bidx"
+    t.string "verification_token_bidx"
+    t.index ["authorization_token_bidx"], name: "index_user_email_updates_on_authorization_token_bidx"
     t.index ["updated_by_id"], name: "index_user_email_updates_on_updated_by_id"
     t.index ["user_id"], name: "index_user_email_updates_on_user_id"
+    t.index ["verification_token_bidx"], name: "index_user_email_updates_on_verification_token_bidx"
   end
 
   create_table "user_payout_method_ach_transfers", force: :cascade do |t|
@@ -2119,7 +2243,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   end
 
   create_table "user_sessions", force: :cascade do |t|
-    t.bigint "user_id"
+    t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "fingerprint"
@@ -2156,7 +2280,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.text "email"
+    t.text "email", null: false
     t.string "full_name"
     t.text "phone_number"
     t.string "slug"
@@ -2180,6 +2304,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.boolean "use_two_factor_authentication", default: false
     t.boolean "teenager"
     t.integer "creation_method"
+    t.boolean "cards_locked", default: false, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end
@@ -2244,9 +2369,42 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
     t.string "address_postal_code"
     t.text "column_id"
     t.text "return_reason"
+    t.bigint "payment_recipient_id"
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
     t.index ["event_id"], name: "index_wires_on_event_id"
+    t.index ["payment_recipient_id"], name: "index_wires_on_payment_recipient_id"
     t.index ["user_id"], name: "index_wires_on_user_id"
+  end
+
+  create_table "wise_transfers", force: :cascade do |t|
+    t.string "aasm_state"
+    t.string "bank_name"
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.integer "amount_cents", null: false
+    t.datetime "approved_at"
+    t.string "currency", null: false
+    t.string "payment_for", null: false
+    t.integer "recipient_country", null: false
+    t.string "recipient_email", null: false
+    t.string "recipient_name", null: false
+    t.text "recipient_phone_number"
+    t.text "wise_id"
+    t.bigint "event_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "usd_amount_cents"
+    t.datetime "sent_at"
+    t.text "return_reason"
+    t.integer "quoted_usd_amount_cents"
+    t.text "recipient_information_ciphertext"
+    t.text "wise_recipient_id"
+    t.index ["event_id"], name: "index_wise_transfers_on_event_id"
+    t.index ["user_id"], name: "index_wise_transfers_on_user_id"
   end
 
   add_foreign_key "ach_transfers", "events"
@@ -2256,6 +2414,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
+  add_foreign_key "announcement_blocks", "announcements"
+  add_foreign_key "announcements", "events"
+  add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
@@ -2268,14 +2429,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   add_foreign_key "canonical_pending_settled_mappings", "canonical_pending_transactions"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_transactions"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
+  add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
   add_foreign_key "card_grants", "stripe_cards"
   add_foreign_key "card_grants", "subledgers"
   add_foreign_key "card_grants", "users"
   add_foreign_key "card_grants", "users", column: "sent_by_id"
-  add_foreign_key "changelog_posts_users", "changelog_posts"
-  add_foreign_key "changelog_posts_users", "users"
   add_foreign_key "check_deposits", "events"
   add_foreign_key "checks", "lob_addresses"
   add_foreign_key "checks", "users", column: "creator_id"
@@ -2292,6 +2452,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   add_foreign_key "documents", "users"
   add_foreign_key "documents", "users", column: "archived_by_id"
   add_foreign_key "donation_goals", "events"
+  add_foreign_key "donation_tiers", "events"
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"
@@ -2310,6 +2471,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_configurations", "events"
+  add_foreign_key "event_follows", "events"
+  add_foreign_key "event_follows", "users"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"
@@ -2376,7 +2539,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   add_foreign_key "stripe_cardholders", "users"
   add_foreign_key "stripe_cards", "events"
   add_foreign_key "stripe_cards", "stripe_cardholders"
+  add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"
   add_foreign_key "transactions", "checks"
@@ -2386,6 +2551,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   add_foreign_key "transactions", "fee_reimbursements"
   add_foreign_key "transactions", "fee_relationships"
   add_foreign_key "transactions", "invoice_payouts"
+  add_foreign_key "user_backup_codes", "users"
   add_foreign_key "user_email_updates", "users"
   add_foreign_key "user_email_updates", "users", column: "updated_by_id"
   add_foreign_key "user_seen_at_histories", "users"
@@ -2395,4 +2561,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_01_121459) do
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
   add_foreign_key "wires", "users"
+  add_foreign_key "wise_transfers", "events"
+  add_foreign_key "wise_transfers", "users"
+  create_function :hcb_code_type, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.hcb_code_type(hcb_code text)
+       RETURNS text
+       LANGUAGE sql
+       IMMUTABLE STRICT
+      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
+  SQL
+
 end

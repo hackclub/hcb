@@ -32,23 +32,36 @@
   <% end %>
 </h1>
 
-<div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
-    <div class="input input-group max-w-none" tabindex="0">
-    <%= inline_icon "search" %>
-      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
-    <% if params[:q] && params[:q] != "" %>
-      <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
-        <%= inline_icon "view-close", size: 24 %>
-      </button>
+<% if @event.parent.present? %>
+  <%= render "callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
+    <p>Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, all team members of <%= @event.parent.name %> can access and view this organization.</p>
+
+    <% if @indirect_access.present? %>
+      <p>These team members can access this organization:</p>
+
+      <div class="grid">
+        <% @indirect_access.each do |user, role| %>
+          <span class="flex">
+            <%= user_mention(user) %><%= role == "manager" ? "can manage" : "can view" %>
+          </span>
+        <% end %>
+      </div>
     <% end %>
-  </div>
+  <% end %>
+<% end %>
+
+<div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+    <%= render "search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
   <div style="text-align: center;">
     <% ["all", "readers", "members", "managers"].each do |filter| %>
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
+    <% end %>
+    <% if auditor_signed_in? %>
+      <%= link_to "Active teens", "?filter=active_teens#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teens", role: "tab" %>
     <% end %>
   </div>
 </div>
@@ -101,7 +114,7 @@
 <% end %>
 
 <% admin_tool("mt2") do %>
-  <h2 class="flex items-center mt3 mb2">
+  <h2 class="flex items-center mt1 mb2">
     Previous members
     <%= badge_for @event.organizer_positions.with_deleted.where.not(deleted_at: nil).count, class: "bg-muted" %>
   </h2>

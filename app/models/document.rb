@@ -7,6 +7,7 @@
 #  id             :bigint           not null, primary key
 #  aasm_state     :string
 #  archived_at    :datetime
+#  category       :integer          default("general"), not null
 #  deleted_at     :datetime
 #  name           :text
 #  slug           :text
@@ -48,6 +49,13 @@ class Document < ApplicationRecord
 
   scope :common, -> { where(event_id: nil) }
 
+  enum :category, {
+    general: 0,
+    nonprofit_status: 1,
+    tax_exemption: 2,
+    forms: 3
+  }
+
   aasm timestamps: true do
     state :active, initial: true
     state :archived, before_exit: -> do
@@ -70,14 +78,9 @@ class Document < ApplicationRecord
 
   def preview_url(resize: "500x500")
     return nil unless file
+    return nil unless file.previewable?
 
-    case file.content_type
-    when "application/pdf"
-      return nil unless file.previewable?
-
-      file.preview(resize:)
-    else
-    end
+    file.preview(resize:)
   end
 
   def common?

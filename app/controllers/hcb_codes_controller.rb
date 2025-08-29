@@ -40,6 +40,8 @@ class HcbCodesController < ApplicationController
       @show_ach_details = true
     end
 
+    @reverse_receipt_id = params[:reverse]
+
     if params[:frame]
       @frame = true
       @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
@@ -128,7 +130,13 @@ class HcbCodesController < ApplicationController
       return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
-    redirect_to @hcb_code
+    if @hcb_code.card_grant?
+      @card_grant = @hcb_code.card_grant
+      @event = @card_grant.event
+      return render partial: "card_grants/details", locals: { card_grant: @card_grant }
+    else
+      redirect_to @hcb_code
+    end
   end
 
   def comment
@@ -191,6 +199,16 @@ class HcbCodesController < ApplicationController
     else
       redirect_to @hcb_code, flash: { error: error_reason }
     end
+  end
+
+  def receipt_status
+    @hcb_code = HcbCode.find(params[:id])
+    @secret = params[:s]
+
+    authorize @hcb_code
+
+  rescue Pundit::NotAuthorizedError
+    raise unless HcbCode.find_signed(@secret, purpose: :receipt_status) == @hcb_code
   end
 
   def toggle_tag

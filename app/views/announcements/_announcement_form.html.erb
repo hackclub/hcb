@@ -1,0 +1,59 @@
+<%# locals: (content: nil, autosave: true) %>
+
+<%= form_with model: @announcement, url: announcement_path(@announcement), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-announcement-id-value": @announcement.id, "tiptap-autosave-value": autosave, "tiptap-followers-value": @event.followers.size, "tiptap-published-value": @announcement.published?, "turbo-frame": "_top" }.compact do |form| %>
+  <% if @show_announcement_explanation %>
+    <div class="callout callout--info w-full ml-0 block">
+      <p class="mt-0 mb-1 text-lg" style="font-weight: 700">
+        Keep your supporters in the loop
+      </p>
+      <ul class="pl-4 my-0">
+        <li>👥 Followers can subscribe to your org</li>
+        <li>📣 Share updates with a rich-text editor + HCB data blocks</li>
+        <li>🗒️ Updates show up in the Feed + inbox</li>
+      </ul>
+    </div>
+  <% end %>
+  <div class="field">
+    <%= form.label :title, class: "text-lg" %>
+    <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full mt-1" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :content, class: "text-lg" %>
+    <%= form.hidden_field :json_content, data: { "tiptap-target": "contentInput" } %>
+    <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md mt-1 relative">
+      <div class="flex gap-2 bg-snow dark:bg-darkless p-2 rounded-md rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
+        <%= render partial: "announcements/format_menu" %>
+      </div>
+      <div data-tiptap-target="editor" data-action="click->tiptap#focus" class="dark:bg-darkless bg-snow p-2 rounded-md rounded-t-none py-1 min-h-32"></div>
+      <div class="tooltipped absolute right-1 bottom-1 h-8" aria-label="Styling with Markdown is supported">
+        <%= inline_icon "markdown", size: 32 %>
+      </div>
+    </div>
+  </div>
+
+  <%= form.hidden_field :autosave, data: { "tiptap-target": "autosaveInput" } %>
+
+  <%= form.hidden_field :event_id, value: @event.slug %>
+
+  <% if content.present? %>
+    <div>
+      <p class="italic text-muted">Your changes automatically save</p>
+
+      <button type="button" class="btn" data-action="tiptap#submit">
+        <%= inline_icon "reply" %> Back
+      </button>
+    </div>
+  <% else %>
+    <%= dropdown_button form:,
+                        options: [
+                          ["Publish now", false, "Publish this post instantly."],
+                          ["Create draft", true, "Save as a draft to publish later."]
+                        ],
+                        button_icon: "send",
+                        name: "draft",
+                        button_options: { data: { action: "tiptap#submit" }, type: "button" },
+                        menu_class: "relative",
+                        template: ->(value) { value ? "Create draft" : "Publish now" } %>
+  <% end %>
+<% end %>

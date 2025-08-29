@@ -23,7 +23,8 @@
 <% if current_user.card_grants.not_activated.size > 0 %>
   <% current_user.card_grants.not_activated.each do |grant| %>
     <div class="card border b--info container--sm mx-auto mb-12 mt-6 text-center">
-      <p class="mt-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
+      <p class="my-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
+      <p class="mt-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
       <%= link_to "Activate my grant", grant, class: "btn" %>
     </div>
   <% end %>
@@ -47,7 +48,7 @@
     <% if @events.any? %>
       <% if @show_event_reorder_tip %>
         <% if @events.size > 1 %>
-          <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
+          <%= link_to "https://blog.hcb.hackclub.com/posts/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
             <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
           <% end %>
         <% end %>
@@ -111,6 +112,24 @@
       </ul>
     <% end %>
 
+    <%= render "static_pages/index/teen_raffle" %>
+
+    <%# Latest HCB announcement %>
+    <% if @latest_hcb_announcement %>
+      <div class="flex flex-row w-full justify-between items-center">
+        <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+          The latest from HCB
+        </h2>
+        <%= link_to event_announcement_overview_path(Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK)), class: "muted", target: :_blank do %>
+          View all announcements
+          <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+        <% end %>
+      </div>
+      <div class="mb-4 text-left w-full self-stretch">
+        <%= render partial: "announcements/announcement_card", locals: { announcement: @latest_hcb_announcement } %>
+      </div>
+    <% end %>
+
     <%= render "static_pages/index/explore" %>
 
     <% if current_user.organizer_position_contracts.sent.any? %>
@@ -131,5 +150,9 @@
       </ul>
     <% end %>
   <% end %>
-  <%= render partial: "static_pages/admin" %>
+  <% if auditor_signed_in? %>
+    <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :lazy, target: "_top", class: "w-full") do %>
+      <p>Loading admin tools</p>
+    <% end %>
+  <% end %>
 </main>

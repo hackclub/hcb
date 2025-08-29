@@ -9,7 +9,7 @@ module Reimbursement
 
           case payout_holding.report.user.payout_method
           when User::PayoutMethod::Wire
-            begin
+            Rails.error.handle do
               wire = clearinghouse.wires.build(
                 memo: "Reimbursement for #{payout_holding.report.name}.",
                 payment_for: "Reimbursement for #{payout_holding.report.name}."[0...140],
@@ -29,7 +29,7 @@ module Reimbursement
                                                                                                               remittance_info: Wire.reimbursement_remittance_info_for(payout_holding.report.user.payout_method.recipient_country),
                                                                                                             }),
                 currency: "USD",
-                user: User.find_by(email: "bank@hackclub.com")
+                user: User.system_user
               )
               begin
                 wire.save!
@@ -47,8 +47,6 @@ module Reimbursement
                 payout_holding.save!
                 payout_holding.mark_sent!
               end
-            rescue => e
-              Airbrake.notify(e)
             end
           when User::PayoutMethod::Check
             Rails.error.handle do
@@ -64,7 +62,7 @@ module Reimbursement
                 recipient_email: payout_holding.report.user.email,
                 send_email_notification: false,
                 address_zip: payout_holding.report.user.payout_method.address_postal_code,
-                user: User.find_by(email: "bank@hackclub.com")
+                user: User.system_user
               )
               check.save!
               check.send_check!
@@ -83,14 +81,14 @@ module Reimbursement
                 routing_number: payout_holding.report.user.payout_method.routing_number,
                 account_number: payout_holding.report.user.payout_method.account_number,
                 bank_name: (ColumnService.get("/institutions/#{payout_holding.report.user.payout_method.routing_number}")["full_name"] rescue "Bank Account"),
-                creator: User.find_by(email: "bank@hackclub.com"),
+                creator: User.system_user,
                 company_entry_description: "REIMBURSE"
               )
               ach_transfer.save!
               begin
-                ach_transfer.approve!(User.find_by(email: "bank@hackclub.com"))
+                ach_transfer.approve!(User.system_user)
               rescue
-                ach_transfer.mark_rejected!(User.find_by(email: "bank@hackclub.com"))
+                ach_transfer.mark_rejected!(User.system_user)
                 payout_holding.mark_failed!
                 ReimbursementMailer.with(
                   reimbursement_payout_holding: payout_holding,
@@ -110,7 +108,7 @@ module Reimbursement
                 memo: "Reimbursement for #{payout_holding.report.name}.",
                 recipient_email: payout_holding.report.user.payout_method.recipient_email,
                 recipient_name: payout_holding.report.user.name,
-                user: User.find_by(email: "bank@hackclub.com")
+                user: User.system_user,
               )
               paypal_transfer.save!
               payout_holding.paypal_transfer = paypal_transfer

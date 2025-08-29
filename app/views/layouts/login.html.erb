@@ -114,18 +114,29 @@
           <%= yield %>
         </div>
         <% hackathon = sample_hackathon %>
+
         <div class="overflow-hidden max-h-none p-3 grid h-screen relative hidden lg:block flex-grow">
-          <div class="relative bg-cover bg-center text-white w-full h-full rounded-xl" style="background: <%= hackathon[:background] %>; background-size: cover; background-position: center;">
+          <div class="relative bg-cover bg-center text-white w-full h-full rounded-xl" style="background: <%= @referral_program&.background_image_css.presence || hackathon[:background] %>; background-size: cover; background-position: <%= @referral_program&.background_image_css.present? ? "right" : "center" %>; color: <%= @referral_program&.login_text_color.presence %>">
             <div class="max-w-xl px-16 mx-auto flex flex-col items-center justify-center h-full select-none">
-              <h5 class="text-4xl lg:text-5xl mb-0 text-center mt-0 sm:mt-3 md:mt-5 font-medium">The&nbsp;<span class="font-bold">foundation</span><br>
-                for&nbsp;your&nbsp;nonprofit</h5>
-              <p class="my-5 text-sm lg:text-md text-center font-medium hidden sm:block text-balance">Start your nonprofit with our fiscal sponsorship program,
-                HCB: a 501(c)(3) legal entity, bank account, automatic
-                taxes & accounting, and best-in-class software.</p>
-              <%= link_to "Learn more", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=learnmore", class: "border-2 border-solid border-white px-4 py-2 rounded-xl !text-white no-underline hover:bg-[rgba(255,255,255,.1)] active:bg-[rgba(255,255,255,.2)] flex", target: "_blank" %>
+              <h5 class="text-4xl lg:text-5xl mb-0 text-center mt-0 sm:mt-3 md:mt-5 font-medium">
+                <%= @referral_program&.login_header_text.presence || capture do %>
+                  The&nbsp;<span class="font-bold">foundation</span><br>
+                  for&nbsp;your&nbsp;nonprofit
+                <% end %>
+              </h5>
+              <p class="my-5 text-sm lg:text-md text-center font-medium hidden sm:block text-balance">
+                <%= @referral_program&.login_body_text.presence || capture do %>
+                  Start your nonprofit with our fiscal sponsorship program,
+                  HCB: a 501(c)(3) legal entity, bank account, automatic
+                  taxes & accounting, and best-in-class software.
+                <% end %>
+              </p>
+              <%= link_to "Learn more", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=learnmore", class: "border-2 border-solid border-white px-4 py-2 rounded-xl !text-white no-underline hover:bg-[rgba(255,255,255,.1)] active:bg-[rgba(255,255,255,.2)] flex", target: "_blank" unless @referral_program&.login_body_text.present? %>
             </div>
             <div class="absolute bottom-0 left-0 m-0 p-5 w-full opacity-75 text-center">
-              <p class="text-xs mb-0 mt-1"><%= link_to "#{hackathon[:name]} • #{hackathon[:time]}", hackathon[:url] || "#", class: "!text-white no-underline", target: "_blank" %></p>
+              <% unless @referral_program&.background_image_url.present? %>
+                <p class="text-xs mb-0 mt-1"><%= link_to "#{hackathon[:name]} • #{hackathon[:time]}", hackathon[:url] || "#", class: "!text-white no-underline", target: "_blank" %></p>
+              <% end %>
             </div>
           </div>
         </div>

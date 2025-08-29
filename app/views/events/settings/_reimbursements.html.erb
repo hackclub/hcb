@@ -7,11 +7,7 @@
       <% if event.users.size > 1 %>
         <div class="field field--checkbox">
           <%= form.check_box :reimbursements_require_organizer_peer_review, disabled:, switch: true %>
-          <% if Flipper.enabled?(:user_permissions_2024_03_09, event) %>
-            <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers." %>
-          <% else %>
-            <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by team members." %>
-          <% end %>
+          <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers." %>
         </div>
       <% end %>
       <div class="field field--checkbox">

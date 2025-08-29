@@ -65,7 +65,7 @@ class HcbCodeMailbox < ApplicationMailbox
       @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: command["argument"]) }
       @renamed_to = command["argument"]
     when "@tag"
-      return unless command["argument"] && Flipper.enabled?(:transaction_tags_2022_07_29, @hcb_code.event)
+      return unless command["argument"]
 
       event = @hcb_code.event
       tag = event.tags.search_label(command["argument"]).first
@@ -75,11 +75,6 @@ class HcbCodeMailbox < ApplicationMailbox
         @hcb_code.tags << tag
       end
       @tagged_with << tag.label
-    when "@reverse"
-      @reversed_pairing = SuggestedPairing.find_by(hcb_code_id: @hcb_code.id, aasm_state: :accepted)
-      return unless @reversed_pairing
-
-      @reversed_pairing.mark_reveresed!
     end
   end
 
