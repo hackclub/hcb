@@ -72,7 +72,7 @@ module PendingTransactionEngine
             if @user.present? && @user.is_a?(Array) && @user.any?
               cpts =
                 cpts.joins("LEFT JOIN raw_pending_stripe_transactions ON raw_pending_stripe_transactions.id = canonical_pending_transactions.raw_pending_stripe_transaction_id")
-                  .where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", @user)
+                    .where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", @user)
             end
 
             if @minimum_amount

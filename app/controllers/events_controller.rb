@@ -1196,8 +1196,8 @@ class EventsController < ApplicationController
     end
 
     @user = if params[:user].present?
-      Array(params[:user]).map { |u| @event.users.friendly.find(u, allow_nil: true) }.compact
-    end
+              Array(params[:user]).map { |u| @event.users.friendly.find(u, allow_nil: true) }.compact
+            end
 
     @type = params[:type]
     @start_date = params[:start].presence

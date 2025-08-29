@@ -120,12 +120,12 @@
       <% if @user.present? %>
         <% Array(@user).each do |user| %>
           <div class="badge badge-large bg-muted">
-        <%= avatar_for user, size: 18 %>
-        <%= user.name %>
+            <%= avatar_for user, size: 18 %>
+            <%= user.name %>
 
-        <%= link_to event_ledger_path(@event, upsert_query_params(user: { remove: user.id })), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-          <%= inline_icon "view-close", size: 20 %>
-        <% end %>
+            <%= link_to event_ledger_path(@event, upsert_query_params(user: { remove: user.id })), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+              <%= inline_icon "view-close", size: 20 %>
+            <% end %>
           </div>
         <% end %>
       <% end %>
