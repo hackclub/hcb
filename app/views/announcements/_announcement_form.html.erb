@@ -1,6 +1,13 @@
 <%# locals: (content: nil, autosave: true) %>
 
 <%= form_with model: @announcement, url: announcement_path(@announcement), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-announcement-id-value": @announcement.id, "tiptap-autosave-value": autosave, "tiptap-followers-value": @event.followers.size, "tiptap-published-value": @announcement.published?, "turbo-frame": "_top" }.compact do |form| %>
+  <% if @show_announcement_explanation %>
+    <div class="callout callout--info w-full ml-0">
+      <p class="py-0">
+        Announcements are a great way to keep your followers updated on important news and events.
+      </p>
+    </div>
+  <% end %>
   <div class="field">
     <%= form.label :title, class: "text-lg" %>
     <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full mt-1" %>
