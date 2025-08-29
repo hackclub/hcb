@@ -23,7 +23,7 @@
         <% jukebox_ineligible_reason = "Organization must have 10 or more active teens" %>
       <% end %>
 
-      <% if defined?(jukebox_ineligible_reason) %>
+      <% if jukebox_ineligible_reason %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="<%= jukebox_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
