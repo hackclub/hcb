@@ -66,6 +66,7 @@ export default class extends Controller {
 
     return null;
   }
+
   #monthMatrix(viewDate) {
     const start = this.#startOfMonth(viewDate);
     const end = this.#endOfMonth(viewDate);
@@ -97,7 +98,6 @@ export default class extends Controller {
     return value;
   }
 
-
   #render() {
     this.element.innerHTML = this.#template();
 
@@ -107,7 +107,6 @@ export default class extends Controller {
     this.$nextBtn = this.element.querySelector('[data-role="next-month"]');
     this.$monthTitle = this.element.querySelector('[data-role="month-title"]');
     this.$weeksGrid = this.element.querySelector('[data-role="weeks"]');
-    this.$reset = this.element.querySelector('[data-role="reset"]');
 
     this.$typedStart.addEventListener("input", (e) => {
       const value = this.#formatInputDate(e.target.value);
@@ -127,8 +126,6 @@ export default class extends Controller {
     this.$prevBtn.addEventListener('click', () => { this.view = this.#addMonths(this.view, -1); this.#renderCalendar(); });
     this.$nextBtn.addEventListener('click', () => { this.view = this.#addMonths(this.view, 1); this.#renderCalendar(); });
 
-
-    this.$reset.addEventListener('click', () => { this.start = null; this.end = null; this.#renderCalendar(); this.#emitChange(); });
     this.#renderCalendar();
   }
 
@@ -147,20 +144,24 @@ export default class extends Controller {
       const muted = (day.getMonth() !== mStart.getMonth());
 
       let bg = between ? 'bg-info text-white' : 'bg-transparent';
-      let text = muted ? 'text-gray-400' : 'text-gray-800';
-      // let ring = (selectedStart || selectedEnd) ? 'ring-2 ring-gray-500' : 'ring-1 ring-gray-200';
-      let rounded = 'rounded-xl';
+      let text = muted ? 'text-gray-400 dark:text-gray-600' : 'text-gray-800 dark:text-white';
 
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.setAttribute('aria-label', day.toDateString());
-      btn.className = `border-0 relative ${rounded} ${bg} ${text} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black`;
+      btn.className = `border-0 relative rounded-xl ${bg} ${text} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black`;
+
+      // cache the date for repainting w/o re-render
+      btn.__day = this.#clampDay(day);
+
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.#pickDay(this.#clampDay(day))
+        this.#pickDay(btn.__day);
       });
-      btn.addEventListener('mouseenter', () => { this.hovered = this.#clampDay(day); this.#updateCalendarHover(); });
-      btn.addEventListener('mouseleave', () => { this.hovered = null; this.#updateCalendarHover(); });
+
+      // repaint only — do NOT rebuild DOM on hover
+      btn.addEventListener('mouseenter', () => { this.hovered = btn.__day; this.#paintHover(); });
+      btn.addEventListener('mouseleave', () => { this.hovered = null; this.#paintHover(); });
 
       const span = document.createElement('span');
       span.className = `inline-flex h-full w-full items-center justify-center ${selectedStart || selectedEnd ? 'font-semibold' : ''}`;
@@ -171,25 +172,61 @@ export default class extends Controller {
     });
 
     this.$weeksGrid.replaceChildren(frag);
+    this.$dayButtons = Array.from(this.$weeksGrid.children); // cache for repaint
 
+    // sync inputs
     this.$typedStart.value = this.start ? this.#formatDate(this.start) : '';
     this.$typedEnd.value = this.end ? this.#formatDate(this.end) : '';
+
+    // initial paint for current hover/selection
+    this.#paintHover();
   }
 
-  #updateCalendarHover() {
-    this.#renderCalendar();
+  // Paint selection/hover state without rebuilding nodes
+  #paintHover() {
+    if (!this.$dayButtons) return;
+    for (const btn of this.$dayButtons) {
+      const day = btn.__day;
+      const selectedStart = this.start && this.#isSameDay(day, this.start);
+      const selectedEnd = this.end && this.#isSameDay(day, this.end);
+      const between = this.#inRange(day);
+
+      btn.classList.toggle('bg-info', !!between);
+      btn.classList.toggle('text-white', !!between);
+      btn.classList.toggle('bg-transparent', !between);
+
+      const span = btn.firstElementChild;
+      if (span) span.classList.toggle('font-semibold', !!(selectedStart || selectedEnd));
+    }
   }
+
+  #updateCalendarHover() { this.#paintHover(); }
 
   #pickDay(day) {
+    const prevViewMonth = this.view.getMonth();
+    const prevViewYear = this.view.getFullYear();
+
     if (!this.start || (this.start && this.end)) {
       this.start = day; this.end = null; this.view = day;
     } else if (this.start && !this.end) {
       if (this.#isBefore(day, this.start)) { this.end = this.start; this.start = day; }
       else { this.end = day; }
     }
+
     this.typedStart = this.#formatDate(this.start);
     this.typedEnd = this.#formatDate(this.end);
-    this.#renderCalendar();
+
+    // if selection moves to another month, rebuild; else repaint
+    const monthChanged = this.view.getMonth() !== prevViewMonth || this.view.getFullYear() !== prevViewYear;
+    if (monthChanged) {
+      this.#renderCalendar();
+    } else {
+      // update inputs + visual state only
+      this.$typedStart.value = this.start ? this.#formatDate(this.start) : '';
+      this.$typedEnd.value = this.end ? this.#formatDate(this.end) : '';
+      this.#paintHover();
+    }
+
     this.#emitChange();
   }
 
@@ -209,11 +246,11 @@ export default class extends Controller {
       if (d) {
         const day = this.#clampDay(d);
         if (this.end && this.#isBefore(this.end, day)) this.end = null;
+        const needRerender = this.view.getMonth() !== day.getMonth() || this.view.getFullYear() !== day.getFullYear();
         this.start = day; this.view = day;
-        this.#renderCalendar();
+        if (needRerender) this.#renderCalendar(); else { this.#paintHover(); }
         this.#emitChange();
-      }
-      else {
+      } else {
         this.$typedStart.value = '';
       }
     } else {
@@ -221,12 +258,11 @@ export default class extends Controller {
       if (d) {
         const day = this.#clampDay(d);
         if (this.start && this.#isBefore(day, this.start)) this.start = day;
+        const needRerender = this.view.getMonth() !== day.getMonth() || this.view.getFullYear() !== day.getFullYear();
         this.end = day;
-        this.#renderCalendar();
+        if (needRerender) { this.view = day; this.#renderCalendar(); } else { this.#paintHover(); }
         this.#emitChange();
-      }
-      else {
-        // invalid end date clears it
+      } else {
         this.$typedEnd.value = '';
       }
     }
@@ -264,11 +300,7 @@ export default class extends Controller {
           </div>
 
           <div data-role="weeks" class="grid grid-cols-7 gap-1 py-2"></div>
-
-          <div class="flex gap-2 my-2">
-            <button type="reset" data-role="reset" class="btn btn-small bg-muted flex-1">Clear</button>
-            <button type="submit" class="btn btn-small flex-1">Filter...</button>
-          </div>
+          <button type="submit" class="btn w-full">Filter...</button>
         </div>
       </div>
     `;
