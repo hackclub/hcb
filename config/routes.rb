@@ -519,11 +519,13 @@ Rails.application.routes.draw do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
       post "request_reimbursement"
       post "admin_approve"
+      post "admin_send_wise_transfer"
       post "reverse"
       post "approve_all_expenses"
       post "request_changes"
       post "reject"
       post "submit"
+      post "update_currency"
       post "draft"
       collection do
         post "quick_expense"

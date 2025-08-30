@@ -40,6 +40,10 @@ class User
         "ACH Transfer"
       end
 
+      def currency
+        "USD"
+      end
+
     end
   end
 

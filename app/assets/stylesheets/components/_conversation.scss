@@ -3,6 +3,9 @@
   width: 2px;
   height: calc(100% + 24px);
   background-color: map-get($palette, smoke);
+  html[data-dark='true'] & {
+    background-color: map-get($palette, slate);
+  }
   display: block;
   position: absolute;
   top: 36px;

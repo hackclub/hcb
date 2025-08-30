@@ -50,6 +50,10 @@ class User
         "International Wire"
       end
 
+      def currency
+        "USD"
+      end
+
     end
   end
 

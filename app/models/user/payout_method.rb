@@ -22,6 +22,10 @@ class User
       "Unknown"
     end
 
+    def currency
+      "USD"
+    end
+
   end
 
 end

@@ -7,15 +7,15 @@ module Reimbursement
     end
 
     def edit?
-      unlocked && (admin || manager || creator)
+      unlocked && (admin || manager || creator) && !record.is_fee?
     end
 
     def update?
-      unlocked && (admin || manager || creator)
+      unlocked && (admin || manager || creator) && !record.is_fee?
     end
 
     def destroy?
-      unlocked && (admin || manager || creator)
+      unlocked && (admin || manager || creator) && !record.is_fee?
     end
 
     def approve?

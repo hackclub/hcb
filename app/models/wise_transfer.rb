@@ -61,6 +61,8 @@ class WiseTransfer < ApplicationRecord
 
   has_one :canonical_pending_transaction
 
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
+
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
 

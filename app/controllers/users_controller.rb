@@ -408,7 +408,6 @@ class UsersController < ApplicationController
       :receipt_report_option,
       :birthday,
       :seasonal_themes_enabled,
-      :payout_method_type,
       :comment_notifications,
       :charge_notifications,
       :use_sms_auth,
@@ -428,49 +427,66 @@ class UsersController < ApplicationController
       }
     end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::Check.name
-      attributes << {
-        payout_method_attributes: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :address_country
-        ]
-      }
-    end
+    if @user.can_update_payout_method?
+      attributes << :payout_method_type
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Check.name
+        attributes << {
+          payout_method_attributes: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :address_country
+          ]
+        }
+      end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
-      attributes << {
-        payout_method_wire: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :recipient_country,
-          :bic_code,
-          :account_number
-        ] + Wire.recipient_information_accessors
-      }
-    end
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
+        attributes << {
+          payout_method_wire: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :recipient_country,
+            :bic_code,
+            :account_number
+          ] + Wire.recipient_information_accessors
+        }
+      end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
-      attributes << {
-        payout_method_attributes: [
-          :account_number,
-          :routing_number
-        ]
-      }
-    end
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::WiseTransfer.name
+        attributes << {
+          payout_method_wise_transfer: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :recipient_country,
+            :currency,
+          ] + WiseTransfer.recipient_information_accessors
+        }
+      end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::PaypalTransfer.name
-      attributes << {
-        payout_method_attributes: [
-          :recipient_email
-        ]
-      }
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
+        attributes << {
+          payout_method_attributes: [
+            :account_number,
+            :routing_number
+          ]
+        }
+      end
+
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::PaypalTransfer.name
+        attributes << {
+          payout_method_attributes: [
+            :recipient_email
+          ]
+        }
+      end
     end
 
     if superadmin_signed_in?
@@ -482,6 +498,8 @@ class UsersController < ApplicationController
     # The Wire payout method attributes are under the `payout_method_wire` param instead of `payout_method_attributes` to prevent conflict with existing keys for other payout methods such as AchTransfer.
     # Rails requires that DOM form inputs have unique names.
     p[:payout_method_attributes] = p.delete(:payout_method_wire) if p[:payout_method_wire]
+    # Same thing for Wise transfer payouts
+    p[:payout_method_attributes] = p.delete(:payout_method_wise_transfer) if p[:payout_method_wise_transfer]
 
     p
   end

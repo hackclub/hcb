@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_28_051556) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1860,11 +1860,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.bigint "increase_check_id"
     t.bigint "ach_transfer_id"
     t.bigint "wire_id"
+    t.bigint "wise_transfer_id"
     t.index ["ach_transfer_id"], name: "index_reimbursement_payout_holdings_on_ach_transfer_id"
     t.index ["increase_check_id"], name: "index_reimbursement_payout_holdings_on_increase_check_id"
     t.index ["paypal_transfer_id"], name: "index_reimbursement_payout_holdings_on_paypal_transfer_id"
     t.index ["reimbursement_reports_id"], name: "index_reimbursement_payout_holdings_on_reimbursement_reports_id"
     t.index ["wire_id"], name: "index_reimbursement_payout_holdings_on_wire_id"
+    t.index ["wise_transfer_id"], name: "index_reimbursement_payout_holdings_on_wise_transfer_id"
   end
 
   create_table "reimbursement_reports", force: :cascade do |t|
@@ -1885,6 +1887,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.integer "expense_number", default: 0, null: false
     t.datetime "deleted_at", precision: nil
     t.bigint "reviewer_id"
+    t.float "conversion_rate", default: 1.0, null: false
+    t.string "currency", default: "USD", null: false
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
@@ -2231,6 +2235,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.string "address_postal_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "user_payout_method_wise_transfers", force: :cascade do |t|
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "bank_name"
+    t.integer "recipient_country"
+    t.text "recipient_information_ciphertext"
+    t.string "currency"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "wise_recipient_id"
   end
 
   create_table "user_seen_at_histories", force: :cascade do |t|
