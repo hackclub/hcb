@@ -1,7 +1,7 @@
 <% raffle_program = "teen-raffle-#{Date.current.strftime("%m-%Y")}" %>
 <%= render "raffles/raffle_modal", id: "join_teen_raffle", program: raffle_program %>
 
-<% if current_user.teenager? && Date.current.month == 8 %>
+<% if current_user.teenager? && Date.current.month == 9 %>
   <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
 
   <% current_month = Date.current.strftime("%B") %>
@@ -23,7 +23,7 @@
           <% if already_joined %>
             <span class="italic block mt-2 text-sm">
               You have already joined the raffle this month. Remember to check
-              back in <%= next_month %> for the next Raffle!
+              back in <%= next_month %> for the next raffle!
             </span>
           <% end %>
         </p>
