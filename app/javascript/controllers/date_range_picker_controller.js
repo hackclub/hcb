@@ -365,13 +365,13 @@ export default class extends Controller {
   #template() {
     return `
       <div class="w-full max-w-xl">
-        <div class="flex items-center gap-3 mb-3">
+        <div class="flex items-center gap-2 mb-3">
           <div class="relative flex-1">
-            <input name="${this.nameStartValue}" class="input text-center" data-role="typed-start" placeholder="${this.placeholderStartValue}" value="${this.typedStart ?? ''}" />
+            <input name="${this.nameStartValue}" class="input text-center text-sm" data-role="typed-start" placeholder="${this.placeholderStartValue}" value="${this.typedStart ?? ''}" />
           </div>
           <span class="text-gray-400 select-none">to</span>
           <div class="relative flex-1">
-            <input name="${this.nameEndValue}" class="input text-center" data-role="typed-end" placeholder="${this.placeholderEndValue}" value="${this.typedEnd ?? ''}" />
+            <input name="${this.nameEndValue}" class="input text-center text-sm" data-role="typed-end" placeholder="${this.placeholderEndValue}" value="${this.typedEnd ?? ''}" />
           </div>
         </div>
 
