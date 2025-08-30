@@ -74,7 +74,7 @@
     <% end %>
   <% end %>
 
-  <%= admin_tool do %>
+  <% admin_tool do %>
     <h2 class="mb2 mt1">Comments</h2>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @user %>
