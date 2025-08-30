@@ -46,6 +46,16 @@
             <% end %>
 
           <% when "date_range" %>
+            <div
+              data-controller="date-range-picker"
+              data-date-range-picker-initial-start-value="2025-08-01"
+              data-date-range-picker-initial-end-value="2025-08-15"
+              data-date-range-picker-placeholder-start-value="Start date"
+              data-date-range-picker-placeholder-end-value="End date"
+              data-date-range-picker-name-start-value="start"  
+              data-date-range-picker-name-end-value="end"   
+            ></div>
+            <div class="hidden">
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
               <% ["after", "before"].each do |suffix| %>
                 <label class="bold"><%= suffix.humanize %>...</label>
@@ -58,7 +68,7 @@
 
               <%= form.submit "Filter..." %>
             <% end %>
-
+            </div>
           <% when "amount_range" %>
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
                 <% ["less_than", "greater_than"].each do |suffix| %>
