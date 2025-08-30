@@ -152,7 +152,7 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant
   rescue Stripe::InvalidRequestError => e
     redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
-  rescue ArgumentError => e
+  rescue Errors::StripeInvalidNameError => e
     redirect_to @card_grant, flash: { error: e.message }
   end
 

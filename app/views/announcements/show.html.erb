@@ -26,22 +26,26 @@
   </p>
 
   <div class="flex gap-2">
-    <% if ((current_user == @announcement.author && organizer_signed_in?(as: :manager)) || auditor_signed_in?) && !editing %>
-      <% if @announcement.draft? %>
+    <% unless editing %>
+      <% if @announcement.draft? && (policy(@announcement).publish? || auditor_signed_in?) %>
         <%= link_to publish_announcement_path(@announcement), class: "btn flex items-center bg-success #{"disabled" if !policy(@announcement).publish?}", data: { turbo_confirm: "Are you sure you would like to publish this announcement and notify #{@event.followers.size} #{"follower".pluralize(@event.followers.size)}?", turbo_method: :post } do %>
           <%= inline_icon "send" %>
           Publish
         <% end %>
       <% end %>
 
-      <%= link_to edit_announcement_path(@announcement), class: "btn flex items-center #{"disabled" if !policy(@announcement).edit?}", target: "post_editor" do %>
-        <%= inline_icon "edit" %>
-        Edit
+      <% if policy(@announcement).edit? || auditor_signed_in? %>
+        <%= link_to edit_announcement_path(@announcement), class: "btn flex items-center #{"disabled" if !policy(@announcement).edit?}", target: "post_editor" do %>
+          <%= inline_icon "edit" %>
+          Edit
+        <% end %>
       <% end %>
 
-      <%= link_to announcement_path(@announcement), class: "btn flex items-center bg-error #{"disabled" if !policy(@announcement).destroy?}", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
-        <%= inline_icon "delete" %>
-        Delete
+      <% if policy(@announcement).destroy? || auditor_signed_in? %>
+        <%= link_to announcement_path(@announcement), class: "btn flex items-center bg-error #{"disabled" if !policy(@announcement).destroy?}", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
+          <%= inline_icon "delete" %>
+          Delete
+        <% end %>
       <% end %>
     <% end %>
   </div>
