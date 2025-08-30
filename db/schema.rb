@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_29_194533) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1814,6 +1814,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
     t.string "login_header_text"
     t.text "login_body_text"
     t.string "login_text_color"
+    t.bigint "creator_id", null: false
+    t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -2527,6 +2529,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_191925) do
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
+  add_foreign_key "referral_programs", "users", column: "creator_id"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"
