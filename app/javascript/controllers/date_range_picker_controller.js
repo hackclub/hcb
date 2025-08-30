@@ -4,8 +4,8 @@ export default class extends Controller {
   static values = {
     initialStart: String,
     initialEnd: String,
-    placeholderStart: { type: String, default: 'Start date' },
-    placeholderEnd: { type: String, default: 'End date' },
+    placeholderStart: { type: String, default: 'YYYY-MM-DD' },
+    placeholderEnd: { type: String, default: 'YYYY-MM-DD' },
     nameStart: String,
     nameEnd: String,
   };
@@ -39,13 +39,31 @@ export default class extends Controller {
   #isSameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
   #isBefore(a, b) { return a && b && (new Date(a)).setHours(0, 0, 0, 0) < (new Date(b)).setHours(0, 0, 0, 0); }
   #clampDay(d) { if (!d) return null; const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
-  #formatDate(d) { if (!d) return ''; const mm = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0'); const yyyy = d.getFullYear(); return `${mm}/${dd}/${yyyy}`; }
+  #formatDate(d) {
+    if (!d) return '';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
   #parseDate(str) {
-    if (!str) return null; const s = String(str).trim();
+    if (!str) return null;
+    const s = String(str).trim();
+
     let m = s.match(/^\s*(\d{4})-(\d{1,2})-(\d{1,2})\s*$/);
-    if (m) { const y = +m[1], mo = +m[2] - 1, d = +m[3]; const dt = new Date(y, mo, d); return dt.getMonth() === mo && dt.getDate() === d ? dt : null; }
+    if (m) {
+      const y = +m[1], mo = +m[2] - 1, d = +m[3];
+      const dt = new Date(y, mo, d);
+      return dt.getMonth() === mo && dt.getDate() === d ? dt : null;
+    }
+
     m = s.match(/^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*$/);
-    if (m) { const mo = +m[1] - 1, d = +m[2], y = +m[3]; const dt = new Date(y, mo, d); return dt.getMonth() === mo && dt.getDate() === d ? dt : null; }
+    if (m) {
+      const mo = +m[1] - 1, d = +m[2], y = +m[3];
+      const dt = new Date(y, mo, d);
+      return dt.getMonth() === mo && dt.getDate() === d ? dt : null;
+    }
+
     return null;
   }
   #monthMatrix(viewDate) {
@@ -71,13 +89,14 @@ export default class extends Controller {
     let value = v.replace(/\D/g, "");
     if (value.length > 8) value = value.slice(0, 8);
 
-    if (value.length > 4) {
-      value = value.replace(/(\d{2})(\d{2})(\d{0,4})/, "$1/$2/$3");
-    } else if (value.length > 2) {
-      value = value.replace(/(\d{2})(\d{0,2})/, "$1/$2");
+    if (value.length > 6) {
+      value = value.replace(/(\d{4})(\d{2})(\d{0,2})/, "$1-$2-$3");
+    } else if (value.length > 4) {
+      value = value.replace(/(\d{4})(\d{0,2})/, "$1-$2");
     }
     return value;
   }
+
 
   #render() {
     this.element.innerHTML = this.#template();
@@ -110,14 +129,6 @@ export default class extends Controller {
 
 
     this.$reset.addEventListener('click', () => { this.start = null; this.end = null; this.#renderCalendar(); this.#emitChange(); });
-
-    if (this.nameStartValue && !this.element.querySelector('input[type="hidden"][data-kind="start"]')) {
-      const i = document.createElement('input'); i.type = 'hidden'; i.name = this.nameStartValue; i.dataset.kind = 'start'; this.element.appendChild(i);
-    }
-    if (this.nameEndValue && !this.element.querySelector('input[type="hidden"][data-kind="end"]')) {
-      const i = document.createElement('input'); i.type = 'hidden'; i.name = this.nameEndValue; i.dataset.kind = 'end'; this.element.appendChild(i);
-    }
-
     this.#renderCalendar();
   }
 
@@ -229,46 +240,37 @@ export default class extends Controller {
   }
 
   #template() {
-    const typedStart = this.typedStart ?? '';
-    const typedEnd = this.typedEnd ?? '';
-    const phS = this.placeholderStartValue;
-    const phE = this.placeholderEndValue;
-
     return `
       <div class="w-full max-w-xl">
-        <div class="flex items-center gap-3 my-3 px-2">
+        <div class="flex items-center gap-3 mb-3">
           <div class="relative flex-1">
-            <input class="input text-center" data-role="typed-start" placeholder="${this.#escape(phS)}" value="${this.#escape(typedStart)}" />
+            <input name="${this.nameStartValue}" class="input text-center" data-role="typed-start" placeholder="${this.placeholderStartValue}" value="${this.typedStart ?? ''}" />
           </div>
           <span class="text-gray-400 select-none">to</span>
           <div class="relative flex-1">
-            <input class="input text-center" data-role="typed-end" placeholder="${this.#escape(phE)}" value="${this.#escape(typedEnd)}" />
+            <input name="${this.nameEndValue}" class="input text-center" data-role="typed-end" placeholder="${this.placeholderEndValue}" value="${this.typedEnd ?? ''}" />
           </div>
         </div>
 
         <div>
-          <div class="flex items-center justify-between px-2 pb-2">
+          <div class="flex items-center justify-between pb-2 px-1">
             <button type="button" data-role="prev-month" class="pop">←</button>
             <div data-role="month-title" class="text-lg font-[700]"></div>
             <button type="button" data-role="next-month" class="pop">→</button>
           </div>
 
-          <div class="grid grid-cols-7 gap-1 px-2 text-center text-xs text-gray-500">
+          <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-500">
             ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="py-1">${d}</div>`).join('')}
           </div>
 
-          <div data-role="weeks" class="grid grid-cols-7 gap-1 p-2"></div>
+          <div data-role="weeks" class="grid grid-cols-7 gap-1 py-2"></div>
 
-          <div class="flex gap-2 px-2 my-2">
-            <button type="button" data-role="reset" class="btn btn-small bg-muted flex-1">Clear</button>
-            <button type="button" data-role="reset" class="btn btn-small flex-1">Filter...</button>
+          <div class="flex gap-2 my-2">
+            <button type="reset" data-role="reset" class="btn btn-small bg-muted flex-1">Clear</button>
+            <button type="submit" class="btn btn-small flex-1">Filter...</button>
           </div>
         </div>
       </div>
     `;
-  }
-
-  #escape(str) {
-    return String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c]));
   }
 }
