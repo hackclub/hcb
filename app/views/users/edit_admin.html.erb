@@ -1,10 +1,9 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
+<%= render "users/nav", selected: :settings_admin %>
 
 <h1>Settings</h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth" class="flex flex-col gap-4">
-  <%= render "settings_nav", active: "admin" %>
   <% admin_tool do %>
     <h3 class="mb2 mt1">User info</h3>
     <section>

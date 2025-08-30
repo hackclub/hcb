@@ -2,16 +2,16 @@
 
 <%= link_to event, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
   <li class="card card--hover flex flex-col justify-between h-full mx-auto <%= "card--background-image" if event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
-    <div id="event-<%= event.id %>-title" class="flex mb-4">
+    <div id="event-<%= event.id %>-title" class="flex mb-2">
       <% if event.logo.attached? %>
         <div class="flex gap-2 items-center">
           <%= image_tag event.logo, height: 24, width: 24, class: "rounded align-bottom" %>
-          <strong class="text-xl leading-tight">
+          <strong class="text-xl leading-tight text-balance">
             <%= event.name %>
           </strong>
         </div>
       <% else %>
-        <strong class="text-xl leading-tight">
+        <strong class="text-xl leading-tight text-balance">
           <%= event.name %>
         </strong>
       <% end %>

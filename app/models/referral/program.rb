@@ -8,7 +8,7 @@
 #  background_image_url   :string
 #  login_body_text        :text
 #  login_header_text      :string
-#  login_text_color       :string
+#  login_text_color       :string           default("#ffffff")
 #  name                   :string           not null
 #  show_explore_hack_club :boolean          default(FALSE), not null
 #  created_at             :datetime         not null
