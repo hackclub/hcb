@@ -1,12 +1,9 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
+<%= render "users/nav", selected: :settings_security %>
 
-<h1>
-  Settings
-</h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-<%= render "settings_nav", active: "security" %>
+<%= render "settings_header", active: "security" %>
 <fieldset>
   <% unless @user.phone_number.blank? %>
     <%= turbo_frame_tag :sms_auth_card do %>
@@ -41,13 +38,11 @@
             <%= form.submit "Update preferences" %>
           <% end %>
         <% else %>
-          <p>
+          <p class="mt0 mb0">
             To send login codes to your phone or enable two factor authentication, first
-            <action data-behavior="modal_trigger" data-modal="verify_phone">
-              <a>
-                verify your phone number.
-              </a>
-            </action>
+            <button data-behavior="modal_trigger" data-modal="verify_phone" class="appearance-none [font:inherit] text-muted underline bg-transparent border-0 p-0 cursor-pointer">
+              verify your phone number.
+            </button>
           </p>
         <% end %>
       <% end %>
@@ -88,8 +83,8 @@
     </div>
   <% else %>
     <div class="secondary center mb4">
-      <%= inline_icon "fingerprint", width: "40px", class: "secondary block mx-auto mb1" %>
-      Sign in to HCB using your fingerprint or a hardware security key.
+      <%= inline_icon "fingerprint", width: "40px", class: "fill-muted block mx-auto mb1" %>
+      Sign in to HCB using your fingerprint or a hardware security key
     </div>
   <% end %>
   <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="backup-codes">

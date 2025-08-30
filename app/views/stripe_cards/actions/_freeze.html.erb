@@ -5,7 +5,7 @@
   <div class="tooltipped tooltipped--n" aria-label="<%= policy(stripe_card).defrost? ? defrost_tooltip : "You don't have permission to perform this action" %>">
     <%= link_to defrost_stripe_card_path(stripe_card),
                 method: :post,
-                class: "btn bg-accent",
+                class: "btn bg-accent !text-white",
                 disabled: !policy(stripe_card).defrost? do %>
       <%= inline_icon "freeze" %> Defrost card
     <% end %>
@@ -15,7 +15,7 @@
   <div class="tooltipped tooltipped--n" aria-label="<%= policy(stripe_card).freeze? ? freeze_tooltip : "You don't have permission to perform this action" %>">
     <%= link_to freeze_stripe_card_path(stripe_card),
                 method: :post,
-                class: "btn bg-accent",
+                class: "btn bg-accent !text-white",
                 disabled: !policy(stripe_card).freeze? do %>
       <%= inline_icon "freeze" %> Freeze card
     <% end %>
