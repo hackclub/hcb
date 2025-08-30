@@ -11,17 +11,16 @@
           <% 53.times do |y| %>
             <% entry = @heatmap.to_a[y * 7 + x][1] %>
             <% label = DateTime.parse(@heatmap.to_a[y * 7 + x][0]).strftime("%B %d, %Y") %>
-            <% pos_bg = "rgba(57, 211, 83, #{Math.log(entry[:positive]) / Math.log(@maximum_positive_change)})" %>
-            <% neg_bg = "rgba(248, 81, 73, #{Math.log(entry[:negative].abs) / Math.log(@maximum_negative_change.abs)})" %>
-            <% if entry[:positive] > entry[:negative].abs %>
+
+            <% if entry > 0 %>
               <div class="grid-item tooltipped tooltipped--s border-transparent"
-                   aria-label="<%= "#{label}: #{render_money(entry[:positive])}" %>"
-                   style="background-color: <%= pos_bg %>">
+                   aria-label="<%= "#{label}: #{render_money(entry)}" %>"
+                   style="background-color: rgba(57, 211, 83, <%= Math.log(entry) / Math.log(@maximum_positive_change) %>)">
               </div>
-            <% elsif entry[:negative].abs > entry[:positive] %>
+            <% elsif entry < 0 %>
               <div class="grid-item tooltipped tooltipped--s border-transparent"
-                   aria-label="<%= "#{label}: #{render_money(entry[:negative])}" %>"
-                   style="background-color: <%= neg_bg %>">
+                   aria-label="<%= "#{label}: #{render_money(entry)}" %>"
+                   style="background-color: rgba(248, 81, 73, <%= Math.log(entry.abs) / Math.log(@maximum_negative_change.abs) %>)">
               </div>
             <% else %>
               <div class="grid-item tooltipped tooltipped--s bg-snow border dark:border-dark dark:bg-darkless"
