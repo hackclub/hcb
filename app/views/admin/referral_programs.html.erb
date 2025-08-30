@@ -33,10 +33,6 @@
     <legend>Create a referral program</legend>
     <label for="name">Program name</label>
     <%= form.text_field :name, placeholder: "Program Name", required: true, class: "w-100" %>
-    <p>
-      <%= form.check_box :show_explore_hack_club, { checked: false } %>
-      <%= form.label :show_explore_hack_club, 'Show "Explore Hack Club"?' %>
-    </p>
     <br>
     <%= form.submit "Create", class: "btn bg-success" %>
   </fieldset>
