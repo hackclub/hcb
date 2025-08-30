@@ -1,18 +1,19 @@
-<% disabled = !policy(local_assigns[:event] || current_user).update? %>
+<%# leaving current_user just so we don't get a NilClassPolicy error ever %>
+<% disabled = !policy(local_assigns[:event] || local_assigns[:user] || current_user).update? %>
 
-<% if !defined?(unlisted) || !defined?(@shown_private_feature_previews) || @shown_private_feature_previews&.include?(local_assigns[:id]) || Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || current_user) %>
-  <div class="card mt2 mb2 border" id="<%= local_assigns[:id] %>">
-    <div class="card__banner card__banner--top border-bottom flex justify-between items-center <%= local_assigns[:classes]&.any? ? local_assigns[:classes].join(" ") : "feature-generic" %>">
-      <h3 class="h3 my0 color-black"><%= local_assigns[:name] %></h3>
+<% if !defined?(unlisted) || !defined?(@shown_private_feature_previews) || @shown_private_feature_previews&.include?(local_assigns[:id]) || Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
+  <div class="card pb0 mb3" id="<%= local_assigns[:id] %>">
+    <div class="card__banner card__banner--top flex justify-between items-center <%= local_assigns[:classes]&.any? ? local_assigns[:classes].join(" ") : "feature-generic" %>">
+      <h3 class="h1 pt2 pb2 my0 color-black"><%= local_assigns[:name] %></h3>
       <% if local_assigns[:fully_shipped] || Flipper.enabled?(local_assigns[:feature_flag]) %>
         <%# Feature is enabled for all users, don't include a choice %>
         <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="This feature is now generally available!">
           <span class="btn bg-success btn-small disabled">Shipped!</span>
         </div>
-      <% elsif Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || current_user) %>
-        <%= link_to "Disable", disable_feature_path(feature: local_assigns[:feature_flag], event_id: local_assigns[:event]&.id), method: :post, class: "btn bg-accent", data: { turbo_confirm: local_assigns[:disable_warning], turbo_method: :post }, disabled: %>
+      <% elsif Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
+        <%= link_to "Disable", disable_feature_path(feature: local_assigns[:feature_flag], event_id: local_assigns[:event]&.id, user_id: local_assigns[:user]&.id), method: :post, class: "btn bg-accent", data: { turbo_confirm: local_assigns[:disable_warning], turbo_method: :post }, disabled: %>
       <% else %>
-        <%= link_to "Enable", enable_feature_path(feature: local_assigns[:feature_flag], event_id: local_assigns[:event]&.id), method: :post, class: "btn bg-accent btn-small", disabled: %>
+        <%= link_to "Enable", enable_feature_path(feature: local_assigns[:feature_flag], event_id: local_assigns[:event]&.id, user_id: local_assigns[:user]&.id), method: :post, class: "btn bg-info", disabled: %>
       <% end %>
     </div>
     <p class="m-0">

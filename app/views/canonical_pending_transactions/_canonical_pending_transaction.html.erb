@@ -63,7 +63,7 @@
             <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
           <% end %>
           <%= turbo_frame_tag "#{pt.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
-            <span title="<%= transaction_memo(pt) %>" style="flex-grow: 1;">
+            <span style="flex-grow: 1;">
               <% if pt.local_hcb_code.card_grant? && !organizer_signed_in? %>
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
               <% elsif pt.stripe_card&.subledger.present? && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
@@ -86,7 +86,7 @@
         <% end %>
       </div>
 
-      <% if !@frame && defined?(show_tags) && organizer_signed_in? && !pt.instance_of?(OpenStruct) %>
+      <% if !@frame && defined?(show_tags) && organizer_signed_in?(as: :member) && !pt.instance_of?(OpenStruct) %>
         <% if suggestion = pt.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
