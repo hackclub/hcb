@@ -1,6 +1,4 @@
-<%# locals: (event:) %>
-
-<% disabled = !policy(event).update? %>
+<% disabled = !policy(@event).update? %>
 
 <%= turbo_frame_tag :reimbursements_settings do %>
   <%= form_with(model: event, local: true, class: @frame ? "" : "card") do |form| %>
