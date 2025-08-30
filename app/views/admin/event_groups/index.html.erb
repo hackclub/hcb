@@ -1,0 +1,71 @@
+<% content_for(:title, "Event Groups") %>
+
+<%= form_for([:admin, @event_group]) do |f| %>
+  <%= f.text_field(:name, required: true, placeholder: "Name") %>
+  <%= f.submit %>
+<% end %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Owner</th>
+      <th>Events</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @event_groups.empty? %>
+      <tr>
+        <td colspan="4" class="text-center p-14">
+          You don't have any event groups yet.
+        </td>
+      </tr>
+    <% else %>
+      <% @event_groups.each do |group| %>
+        <tr class="align-top">
+          <td><%= group.name %></td>
+          <td>
+            <% if group.user == current_user %>
+              You
+            <% else %>
+              <%= link_to(group.user.full_name || group.user.email, admin_user_path(group.user)) %>
+            <% end %>
+          </td>
+          <td>
+            <% if group.memberships.empty? %>
+              Add events using the "members" action on the <%= link_to("organizations", events_admin_index_path) %> page.
+            <% else %>
+              <% group
+                   .memberships
+                   .sort_by { |membership| membership.event.name }
+                   .each do |membership| %>
+                <%= membership.event.name %>
+                <%= button_to(
+                      admin_event_group_event_group_membership_path(group, membership),
+                      method: :delete,
+                      data: { confirm: "Are you sure" },
+                      form_class: "m-0 inline",
+                      class: "m-0 bg-muted"
+                    ) do %>
+                  &times;
+                <% end %>
+                <br>
+              <% end %>
+            <% end %>
+          </td>
+          <td>
+            <%= button_to(
+                  "Delete",
+                  admin_event_group_path(group),
+                  method: :delete,
+                  data: { confirm: "Are you sure?" },
+                  form_class: "m-0",
+                  class: "m-0"
+                ) %>
+          </td>
+        </tr>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>

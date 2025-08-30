@@ -157,6 +157,12 @@ module Admin
             path: referral_programs_admin_index_path,
             count: Referral::Program.count,
             count_type: :records
+          ),
+          make_item(
+            name: "Event Groups",
+            path: admin_event_groups_path,
+            count: Event::Group.count,
+            count_type: :records,
           )
         ]
       )

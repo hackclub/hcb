@@ -133,8 +133,7 @@ RSpec.describe UserSession, type: :model do
       Nokogiri::HTML5
         .fragment(raw_html)
         .text
-        .gsub(/\s+/, " ")
-        .strip
+        .squish
     end
   end
 end

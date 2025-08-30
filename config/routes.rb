@@ -302,6 +302,13 @@ Rails.application.routes.draw do
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
+    resources(:event_groups, only: [:index, :create, :destroy]) do
+      collection do
+        get("events/:event_id", as: :event, to: "event_groups#event")
+        patch("events/:event_id", to: "event_groups#update_event")
+      end
+      resources(:event_group_memberships, path: "memberships", only: [:destroy])
+    end
   end
 
   post "set_event", to: "admin#set_event_multiple_transactions", as: :set_event_multiple_transactions

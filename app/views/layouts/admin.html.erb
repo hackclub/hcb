@@ -28,7 +28,8 @@
     <nav style="display: flex; flex-direction: column; background: var(--hcb-bg-2-5); gap: 0px">
       <div style="width: 100%; display: flex; gap: 8px; align-items: center; font-size: 22px; padding: 8px; border-bottom: 1px solid var(--hcb-bg-2);">
         <%= link_to root_path, class: "text-decoration-none", style: "height: 36px; margin-right: 8px;" do %>
-          <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{Rails.env}.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+          <% logo_env = Rails.env.local? ? "development" : Rails.env %>
+          <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
               name: "header-logo",
               class: "logo",
               height: @home_size || 36,
