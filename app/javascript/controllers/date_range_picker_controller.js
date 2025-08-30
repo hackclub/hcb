@@ -67,6 +67,18 @@ export default class extends Controller {
     return { weeks, start, end };
   }
 
+  #formatInputDate(v) {
+    let value = v.replace(/\D/g, "");
+    if (value.length > 8) value = value.slice(0, 8);
+
+    if (value.length > 4) {
+      value = value.replace(/(\d{2})(\d{2})(\d{0,4})/, "$1/$2/$3");
+    } else if (value.length > 2) {
+      value = value.replace(/(\d{2})(\d{0,2})/, "$1/$2");
+    }
+    return value;
+  }
+
   #render() {
     this.element.innerHTML = this.#template();
 
@@ -78,8 +90,18 @@ export default class extends Controller {
     this.$weeksGrid = this.element.querySelector('[data-role="weeks"]');
     this.$reset = this.element.querySelector('[data-role="reset"]');
 
-    this.$typedStart.addEventListener('input', (e) => { this.typedStart = e.target.value; });
-    this.$typedEnd.addEventListener('input', (e) => { this.typedEnd = e.target.value; });
+    this.$typedStart.addEventListener("input", (e) => {
+      const value = this.#formatInputDate(e.target.value);
+      this.typedStart = value;
+      this.$typedStart.value = value;
+    });
+
+    this.$typedEnd.addEventListener("input", (e) => {
+      const value = this.#formatInputDate(e.target.value);
+      this.typedEnd = value;
+      this.$typedEnd.value = value;
+    });
+
     this.$typedStart.addEventListener('blur', () => this.#commitTyped('start'));
     this.$typedEnd.addEventListener('blur', () => this.#commitTyped('end'));
 
@@ -113,7 +135,7 @@ export default class extends Controller {
       const between = this.#inRange(day);
       const muted = (day.getMonth() !== mStart.getMonth());
 
-      let bg = between ? 'bg-info text-white' : 'bg-white';
+      let bg = between ? 'bg-info text-white' : 'bg-transparent';
       let text = muted ? 'text-gray-400' : 'text-gray-800';
       // let ring = (selectedStart || selectedEnd) ? 'ring-2 ring-gray-500' : 'ring-1 ring-gray-200';
       let rounded = 'rounded-xl';
@@ -121,7 +143,7 @@ export default class extends Controller {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.setAttribute('aria-label', day.toDateString());
-      btn.className = `border-0 relative ${rounded} ${bg} ${text} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-black`;
+      btn.className = `border-0 relative ${rounded} ${bg} ${text} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black`;
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.#pickDay(this.#clampDay(day))
@@ -180,6 +202,9 @@ export default class extends Controller {
         this.#renderCalendar();
         this.#emitChange();
       }
+      else {
+        this.$typedStart.value = '';
+      }
     } else {
       const d = this.#parseDate(this.typedEnd);
       if (d) {
@@ -188,6 +213,10 @@ export default class extends Controller {
         this.end = day;
         this.#renderCalendar();
         this.#emitChange();
+      }
+      else {
+        // invalid end date clears it
+        this.$typedEnd.value = '';
       }
     }
   }
