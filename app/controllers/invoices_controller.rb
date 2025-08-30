@@ -9,7 +9,6 @@ class InvoicesController < ApplicationController
   INVOICE_FILTERS = [
     { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
     { key_base: "created", label: "Date", type: "date_range" },
-    { key_base: "amount", label: "Amount", type: "amount_range" }
   ].freeze
 
   def index
@@ -102,9 +101,15 @@ class InvoicesController < ApplicationController
       end
     end
 
-    @filter_options = INVOICE_FILTERS
-    helpers.validate_filter_options(INVOICE_FILTERS, params)
-    @has_filter = helpers.check_filters?(INVOICE_FILTERS, params)
+    min_amount = @event.invoices.min_by(&:item_amount)&.item_amount || 0
+    max_amount = @event.invoices.max_by(&:item_amount)&.item_amount || 0
+
+    @filter_options = [
+      *INVOICE_FILTERS,
+      { key_base: "amount", label: "Amount", type: "amount_range", range: [min_amount / 100, max_amount / 100] }
+    ]
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def new
