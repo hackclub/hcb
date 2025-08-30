@@ -36,6 +36,7 @@ class Event
       authorize affiliation
 
       affiliation.destroy!
+      redirect_back fallback_location: @event
     end
 
     private
