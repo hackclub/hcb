@@ -89,15 +89,18 @@ class DisbursementsController < ApplicationController
     ).run
 
     if disbursement_params[:file]
-      ::ReceiptService::Create.new(
-        uploader: current_user,
-        attachments: disbursement_params[:file],
-        upload_method: :transfer_create_page,
-        receiptable: disbursement.local_hcb_code
-      ).run!
+      begin
+        ::ReceiptService::Create.new(
+          uploader: current_user,
+          attachments: disbursement_params[:file],
+          upload_method: :transfer_create_page,
+          receiptable: disbursement.local_hcb_code
+        ).run!
+        flash[:success] = "Transfer successfully requested."
+      rescue ActiveRecord::RecordInvalid => e
+        flash[:info] = "Transfer successfully requested, however, the file was invalid."
+      end
     end
-
-    flash[:success] = "Transfer successfully requested."
 
     if admin_signed_in?
       redirect_to disbursements_admin_index_path
