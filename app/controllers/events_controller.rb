@@ -323,6 +323,7 @@ class EventsController < ApplicationController
     authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @affiliations = @event.affiliations if @settings_tab == "affiliations"
 
     render :edit, layout: !@frame
   end
