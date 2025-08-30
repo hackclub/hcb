@@ -1,11 +1,9 @@
-<%# locals: (event:) %>
-
-<% disabled = !policy(event).update? %>
+<% disabled = !policy(@event).update? %>
 
 <%= turbo_frame_tag :tags_settings do %>
   <h3 class="mb1" id="cards_heading">Create a new tag</h3>
   <div class="card mb3">
-    <%= form_with(url: event_tags_path(event)) do |form| %>
+    <%= form_with(url: event_tags_path(@event)) do |form| %>
       <div class="flex gap-3">
         <% placeholder = [
              { emoji: "🧃", label: "Food & drinks" },
@@ -43,10 +41,10 @@
       <%= form.submit "Create tag", disabled: %>
     <% end %>
   </div>
-  <% unless event.tags.none? %>
-    <h3 class="mb2" id="cards_heading"><%= possessive(event.name) %> tags</h3>
+  <% unless @event.tags.none? %>
+    <h3 class="mb2" id="cards_heading"><%= possessive(@event.name) %> tags</h3>
   <% end %>
-  <% event.tags.each do |tag| %>
+  <% @event.tags.each do |tag| %>
     <div class="card mb2 flex justify-between items-center">
       <div class="flex items-center">
         <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
@@ -61,7 +59,7 @@
             disabled: %>
           <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_tag_<%= tag.id %>">
             <%= modal_header("Edit tag") %>
-            <%= form_with url: event_tag_path(event, tag.id), method: :patch, id: "edit_tag_form" do |form| %>
+            <%= form_with url: event_tag_path(@event, tag.id), method: :patch, id: "edit_tag_form" do |form| %>
               <div class="flex flex-col gap-3 mb-2">
                 <div class="flex gap-3">
                   <div data-controller="emoji-picker" class="relative" data-emoji-picker-target="container">
@@ -85,7 +83,7 @@
           </section>
         </div>
         <%= pop_icon_to "delete",
-          event_tag_path(event, tag.id),
+          event_tag_path(@event, tag.id),
           method: :delete,
           icon_size: 26,
           class: "tooltipped tooltipped--w h-8 w-8",
