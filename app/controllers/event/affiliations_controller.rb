@@ -10,13 +10,16 @@ class Event
     def create
       authorize @event, policy_class: AffiliationPolicy
 
-      @event.affiliations.create(
+      affiliation = @event.affiliations.create(
         {
           name: params[:type],
           metadata: @metadata
         }
       )
 
+      unless affiliation.persisted?
+        flash[:error] = affiliation.errors.full_messages.to_sentence.presence || "Failed to create affiliation."
+      end
       redirect_back fallback_location: @event
     end
 
