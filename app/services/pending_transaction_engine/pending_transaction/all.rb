@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, category: nil, order_by: :date)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -15,6 +15,7 @@ module PendingTransactionEngine
         @expenses = expenses
         @user = user
         @missing_receipts = missing_receipts
+        @category = category
         @order_by = order_by
       end
 
@@ -89,6 +90,12 @@ module PendingTransactionEngine
 
             if @end_date
               cpts = cpts.where("canonical_pending_transactions.date <= cast(? as date)", @end_date)
+            end
+
+            if @category
+              cpts = cpts.joins("LEFT JOIN transaction_category_mappings tcm on canonical_pending_transactions.id = tcm.categorizable_id AND tcm.categorizable_type = 'CanonicalPendingTransaction'")
+                         .joins("LEFT JOIN transaction_categories tc on tc.id = tcm.transaction_category_id")
+                         .where("tc.id = ?", @category.id)
             end
 
             if event.can_front_balance?
