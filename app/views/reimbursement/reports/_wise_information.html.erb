@@ -6,6 +6,12 @@
       <td>Amount (<%= report.currency %>):</td>
       <td><%= Money.from_cents(report.amount_to_reimburse_cents, report.currency).format %></td>
     </tr>
+    <% if report.payout_holding %>
+      <tr>
+        <td>Amount (USD):</td>
+        <td><%= render_money report.payout_holding.amount_cents %></td>
+      </tr>
+    <% end %>
     <tr>
       <td>Name:</td>
       <td>
