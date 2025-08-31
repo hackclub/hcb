@@ -5,7 +5,7 @@
 <% disabled = !policy(event).update? %>
 
 <%= turbo_frame_tag :donations_settings do %>
-  <%= form_with(model: event, local: true, class: event ? "" : "card") do |form| %>
+  <%= form_with(model: event, local: true, class: frame ? "" : "card") do |form| %>
     <%= form_errors event, "organization" %>
     <% unless event.unapproved? %>
       <div data-controller="accordion">
