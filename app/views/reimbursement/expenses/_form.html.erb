@@ -19,7 +19,7 @@
       <% end %>
     </div>
   </div>
-  <% if expense.report.event&.plan&.requires_reimbursement_expense_categorization? %>
+  <% if expense.report.event&.plan&.requires_reimbursement_expense_categorization? && !expense.is_fee? %>
     <div class="field mt1 mb1 flex flex-col w-100">
       <%= form.label :category, "Category", class: "bold" %>
       <%= form.select :category, Reimbursement::Expense.categories.keys, { include_blank: "Uncategorized" }, { style: "max-width: 100vw;", data: { "expense-form-target": "field" } } %>
