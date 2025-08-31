@@ -115,7 +115,6 @@
           <% end %>
         </div>
         <div data-tabs-target="tab" id="merchant">
-          <p class="italic text-center px-2">Merchants are the company that charges a credit card. Non-card transactions will not be included when this filter is applied.</p>
           <%= turbo_frame_tag :merchants_filter, src: event_merchants_filter_path(@event, merchant: @merchant), loading: :lazy, target: "event_#{@event.id}_ledger" %>
         </div>
         <div data-tabs-target="tab" id="receipts">
