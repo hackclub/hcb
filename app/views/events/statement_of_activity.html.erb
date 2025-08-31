@@ -1,0 +1,43 @@
+<% title "Statement of Activity" %>
+<% page_md %>
+
+<div class="flex justify-between items-baseline">
+  <h1 class="border-b-0">Statement of Activity</h1>
+
+  <%= form_with method: :get do |form| %>
+    <div class="flex gap-2 items-center w-fit">
+      From
+      <%= form.date_field :start, value: @start_date, onchange: "this.form.requestSubmit();" %>
+      To
+      <%= form.date_field :end, value: @end_date, onchange: "this.form.requestSubmit();" %>
+    </div>
+  <% end %>
+</div>
+<hr class="mt-0">
+
+<p>
+  From <%= @start_date.strftime("%B %-d, %Y") %>
+  to <%= @end_date.strftime("%B %-d, %Y") %>,
+  <strong><%= link_to @event.name, @event %></strong> had a change in net asset
+  of <%= render_money @net_asset_change %>;
+  after having raised <%= render_money @total_revenue %> and
+  spent <%= render_money @total_expense.abs %>.
+</p>
+
+<table>
+  <thead>
+  <tr>
+    <th>Category</th>
+    <th>Total Amount</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @transactions_by_category.each do |category_slug, amount_cents_sum| %>
+    <% category = TransactionCategory::Definition::ALL[category_slug] %>
+    <tr>
+      <td title="<%= category&.slug %>"><%= category&.label || "Uncategorized" %></td>
+      <td><%= render_money amount_cents_sum.abs %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>

@@ -38,11 +38,7 @@ class CardGrantsController < ApplicationController
         raise e unless e.record.is_a?(CardGrant)
 
         flash[:error] = @card_grant.errors.full_messages.to_sentence
-      when ArgumentError
-        # `DisbursementService::Create` will raise `ArgumentError` if there are
-        # insufficient funds.
-        raise e unless e.message.start_with?("You don't have enough money")
-
+      when DisbursementService::Create::UserError
         flash[:error] = e.message
       else
         raise e
@@ -156,6 +152,8 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant
   rescue Stripe::InvalidRequestError => e
     redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
+  rescue Errors::StripeInvalidNameError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def cancel
@@ -172,6 +170,8 @@ class CardGrantsController < ApplicationController
     @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
 
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+  rescue DisbursementService::Create::UserError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def withdraw

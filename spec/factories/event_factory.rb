@@ -5,10 +5,16 @@ FactoryBot.define do
     name { Faker::Name.unique.name }
     transient do
       plan_type { Event::Plan::FeeWaived }
+      organizers { [] }
     end
 
     after(:create) do |event, context|
       event.plan.update(type: context.plan_type)
+
+      context.organizers.each do |user|
+        create(:organizer_position, event:, user:)
+      end
+
       event.reload
     end
 

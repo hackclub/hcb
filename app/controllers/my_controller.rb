@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :cards_icon, :tasks, :payroll, :toggle_three_teens_banner, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :cards_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
+
+  before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
 
   def activities
     @before = params[:before] || Time.now
@@ -17,8 +19,8 @@ class MyController < ApplicationController
     redirect_to my_activities_url
   end
 
-  def toggle_three_teens_banner
-    cookies.permanent[:hide_three_teens_banner] = 1
+  def hide_promotional_banner
+    cookies.permanent[:hide_robotics_raffle_banner] = 1
     redirect_back_or_to root_path
   end
 
@@ -128,15 +130,13 @@ class MyController < ApplicationController
   end
 
   def reimbursements
-    my_reports = current_user.reimbursement_reports
-    reports_to_review = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
     case params[:filter]
     when "mine"
-      @reports = my_reports
+      @reports = @my_reports
     when "review"
-      @reports = reports_to_review
+      @reports = @reports_to_review
     else
-      @reports = my_reports.or(reports_to_review)
+      @reports = @my_reports.or(@reports_to_review)
     end
 
     @reports = @reports.search(params[:q]) if params[:q].present?
@@ -145,8 +145,7 @@ class MyController < ApplicationController
   end
 
   def reimbursements_icon
-    @draft_reimbursements_count = current_user.reimbursement_reports.draft.count
-    @review_requested_reimbursements_count = current_user.assigned_reimbursement_reports.submitted.count
+    @reports_count = @my_reports.or(@reports_to_review).count
 
     render :reimbursements_icon, layout: false
   end
@@ -166,6 +165,16 @@ class MyController < ApplicationController
     @event_follows = current_user.event_follows
     @all_announcements = Announcement.published.where(event: @event_follows.map(&:event)).order(published_at: :desc, created_at: :desc)
     @announcements = @all_announcements.page(params[:page]).per(10)
+  end
+
+  private
+
+  def set_reimbursement_reports
+    @my_reports = current_user.reimbursement_reports
+    manager_events = current_user.events
+                                 .joins(:organizer_positions)
+                                 .where(organizer_positions: { user_id: current_user.id, role: :manager })
+    @reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
   end
 
 end

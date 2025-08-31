@@ -135,6 +135,7 @@ class FlavorTextService
 
   def flavor_texts
     [
+      "duck.",
       "The hivemind known as HCB",
       "How often does time happen?",
       "To an extent",
@@ -273,7 +274,7 @@ class FlavorTextService
       "Made with Rails, Ruby and did I forget to mention Rails?",
       "Did you see the price of #{%w[Ðogecoin ₿itcoin Ξtherium].sample(random: @random)}?!",
       "Guess how much it costs to run this thing!",
-      "Bytes served fresh daily by Heroku",
+      "Bytes served fresh daily by Hetzner",
       "Running with Ruby on Rails #{Rails.gem_version.canonical_segments.first}",
       "Running on Rails on Ruby",
       "Try saying that 5 times fast!",

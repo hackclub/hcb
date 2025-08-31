@@ -30,11 +30,23 @@ class Event
     validates :subevent_plan, inclusion: { in: -> { Event::Plan.available_plans.map(&:name) } }, allow_blank: true
 
     after_create :set_defaults
+    after_save :create_or_destroy_monthly_announcement
 
     private
 
     def set_defaults
       self.generate_monthly_announcement = event.is_public unless self.generate_monthly_announcement.present?
+    end
+
+    def create_or_destroy_monthly_announcement
+      if self.generate_monthly_announcement_previously_changed?
+        if self.generate_monthly_announcement
+          Announcement::Templates::Monthly.new(event: self.event, author: User.system_user).create if self.event.announcements.all_monthly_for(Date.today).empty?
+        else
+          monthly_announcement_draft = self.event.announcements.all_monthly_for(Date.today).first
+          monthly_announcement_draft&.destroy! unless monthly_announcement_draft&.published?
+        end
+      end
     end
 
   end

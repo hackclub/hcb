@@ -14,6 +14,8 @@ module SessionsHelper
   # sessions
   IMPERSONATED_SESSION_DURATION = SESSION_DURATION_OPTIONS.fetch("1 hour")
 
+  class AccountLockedError < StandardError; end
+
   def impersonate_user(user)
     sign_out
     sign_in(user:, impersonate: true)
@@ -50,6 +52,8 @@ module SessionsHelper
 
     if impersonate
       user_session.impersonated_by = current_user
+    else
+      raise(AccountLockedError, "Your HCB account has been locked.") if user.locked?
     end
 
     user_session.save!

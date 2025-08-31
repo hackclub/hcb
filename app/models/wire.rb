@@ -29,13 +29,15 @@
 #  updated_at                :datetime         not null
 #  column_id                 :text
 #  event_id                  :bigint           not null
+#  payment_recipient_id      :bigint
 #  user_id                   :bigint           not null
 #
 # Indexes
 #
-#  index_wires_on_column_id  (column_id) UNIQUE
-#  index_wires_on_event_id   (event_id)
-#  index_wires_on_user_id    (user_id)
+#  index_wires_on_column_id             (column_id) UNIQUE
+#  index_wires_on_event_id              (event_id)
+#  index_wires_on_payment_recipient_id  (payment_recipient_id)
+#  index_wires_on_user_id               (user_id)
 #
 # Foreign Keys
 #
@@ -56,8 +58,13 @@ class Wire < ApplicationRecord
 
   include AASM
   include Freezable
+  include Payment
 
   include HasWireRecipient
+
+  def payment_recipient_attributes
+    %i[address_line1 address_line2 address_city address_state address_postal_code recipient_country account_number bic_code recipient_information]
+  end
 
   belongs_to :event
   belongs_to :user

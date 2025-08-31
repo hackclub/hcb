@@ -39,7 +39,7 @@
     <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
   </div>
 
-  <%= render partial: "recipient_details", locals: { form:, disabled: } %>
+  <%= render partial: "recipient_details", locals: { form:, disabled:, required: true } %>
 
   <h2 class="mb2 mt3">Payment information</h2>
 
@@ -73,9 +73,9 @@
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
-  <%= render partial: "account_details", locals: { form:, disabled: } %>
+  <%= render partial: "account_details", locals: { form:, disabled:, required: true } %>
 
-  <%= render partial: "country_specific_details", locals: { form:, disabled: } %>
+  <%= render partial: "country_specific_details", locals: { form:, disabled:, required: true } %>
 
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
