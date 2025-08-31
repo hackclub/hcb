@@ -10,7 +10,7 @@
     <%= settings_tab active: @settings_tab == "details" || @settings_tab.nil? do %>
       <%= link_to "Organization details", edit_event_path(@event, tab: "details"), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
-    <% unless @event.unapproved? %>
+    <% if @event.approved? %>
       <% if @event.plan.donations_enabled? %>
         <%= settings_tab active: @settings_tab == "donations" do %>
           <%= link_to "Donations", edit_event_path(@event, tab: "donations"), data: { turbo: true, turbo_action: "advance" } %>
@@ -47,15 +47,15 @@
 <% if @settings_tab == "features" %>
   <%= render "events/settings/features", event: @event %>
 <% elsif @settings_tab == "donations" %>
-  <%= render "events/settings/donations", event: @event %>
+  <%= render "events/settings/donations", event: @event, frame: @frame %>
 <% elsif @settings_tab == "tags" %>
   <%= render "events/settings/tags", event: @event %>
 <% elsif @settings_tab == "reimbursements" %>
-  <%= render "events/settings/reimbursements", event: @event %>
+  <%= render "events/settings/reimbursements", event: @event, frame: @frame %>
 <% elsif @settings_tab == "card_grants" %>
   <%= render "events/settings/card_grants", event: @event %>
 <% elsif @settings_tab == "audit_log" %>
-  <%= render "events/settings/audit_log", event: @event %>
+  <%= render "events/settings/audit_log", event: @event, activities: @activities, activities_before: @activities_before %>
 <% elsif @settings_tab == "admin" && auditor_signed_in? %>
   <%= render "events/settings/admin", event: @event %>
 <% else %>

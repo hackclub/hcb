@@ -1,7 +1,9 @@
-<p>
-  <%= @event.name %> is on the <strong><%= @event.plan.label %></strong> plan.
+<%# locals: (event:) %>
 
-  <% if @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
+<p>
+  <%= event.name %> is on the <strong><%= event.plan.label %></strong> plan.
+
+  <% if event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
     The <strong><a
           href="https://blog.hcb.hackclub.com/posts/hackathon-grants-and-0-fee-241524">fee waiver</a> expires
       </strong>

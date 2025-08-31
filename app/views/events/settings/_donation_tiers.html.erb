@@ -1,4 +1,6 @@
-<% if @frame %>
+<%# locals: (event:, frame:) %>
+
+<% if frame %>
   <div class="menu__divider m-0 my-8"></div>
 <% end %>
 <div data-controller="accordion" class="card mt-4">
@@ -15,7 +17,7 @@
           <%= form.check_box :donation_tiers_enabled,
             data: { action: "change->accordion#toggle", accordion_target: "checkbox" },
             disabled:,
-            checked: @event.donation_tiers_enabled,
+            checked: event.donation_tiers_enabled,
             onchange: "this.closest('form').requestSubmit();",
             switch: true %>
           <span class="slider"></span>
