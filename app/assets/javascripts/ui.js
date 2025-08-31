@@ -135,8 +135,11 @@ window.attachTooltipListener = () => {
       const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
       const offset = 5;
 
+      const label = trigger.getAttribute("aria-label").trim();
+      if (!label) return;
+
       tooltip.className = "active";
-      tooltip.textContent = trigger.getAttribute("aria-label");
+      tooltip.textContent = label;
 
       // Sync size classes
       ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
