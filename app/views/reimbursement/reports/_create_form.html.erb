@@ -68,6 +68,11 @@
       <%= form.label :event_id, "Organization", class: "mt1 bold" %>
       <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
 
+      <% if current_user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+        <%= form.label :currency, "Currency", class: "mt-4 bold" %>
+        <%= form.select :currency, [current_user.payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
+      <% end %>
+
       <% if defined?(receipt) %>
         <%= form.label :value, "Amount", class: "mt1 bold" %>
         <div class="flex items-center">
