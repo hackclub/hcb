@@ -44,7 +44,7 @@
     <% end %>
   </div>
   <% if event.tags.any? %>
-    <h3 class="mb2" id="cards_heading"><%= possessive(event.name) %> <%= "tag".pluralize(event.tags.size) %></h3>
+    <h3 class="mb2" id="cards_heading"><%= possessive(event.name) %> tags</h3>
   <% end %>
   <% event.tags.each do |tag| %>
     <div class="card mb2 flex justify-between items-center">
