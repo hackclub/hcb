@@ -55,7 +55,7 @@
     <% end %>
   <% end %>
 
-  <%= form_with(url: event_donation_goals_path(event), local: true, method: event.donation_goal ? :patch : :post, class: event ? "" : "card mt-4") do |form| %>
+  <%= form_with(url: event_donation_goals_path(event), local: true, method: event.donation_goal ? :patch : :post, class: frame ? "" : "card mt-4") do |form| %>
     <% if event %>
       <div class="menu__divider m-0 my-8"></div>
     <% end %>
