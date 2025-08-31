@@ -19,17 +19,12 @@ class FeaturesController < ApplicationController
     sudo_mode_2015_07_21: %w[🔐 🔒 🔑 🔓]
   }.freeze
 
+  before_action :set_actor_and_feature
+
   def enable_feature
-    actor = if params[:event_id]
-              Event.find(params[:event_id])
-            else
-              current_user
-            end
-    feature = params[:feature]
-    authorize actor
-    if FEATURES.key?(feature.to_sym) || admin_signed_in?
-      if Flipper.enable_actor(feature, actor)
-        confetti!(emojis: FEATURES[feature.to_sym])
+    if FEATURES.key?(@feature.to_sym) || admin_signed_in?
+      if Flipper.enable_actor(@feature, @actor)
+        confetti!(emojis: FEATURES[@feature.to_sym])
         flash[:success] = "You've opted into this beta; let us know if you have any feedback."
       else
         flash[:error] = "Error while opting into this beta. Please contact us or try again."
@@ -37,35 +32,27 @@ class FeaturesController < ApplicationController
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
     end
-    redirect_back fallback_location: actor
+    redirect_back fallback_location: @actor
   end
 
   def disable_feature
-    actor = if params[:event_id]
-              Event.find(params[:event_id])
-            else
-              current_user
-            end
-    feature = params[:feature]
-    authorize actor
-
-    if feature == "sudo_mode_2015_07_21"
+    if @feature == "sudo_mode_2015_07_21"
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
 
-    if FEATURES.key?(feature.to_sym) || admin_signed_in?
-      if Flipper.disable_actor(feature, actor)
+    if FEATURES.key?(@feature.to_sym) || admin_signed_in?
+      if Flipper.disable_actor(@feature, @actor)
         # If it's the user permissions feature, make all the users & invites in the org managers.
-        if feature == "user_permissions_2024_03_09" && actor.is_a?(Event)
+        if @feature == "user_permissions_2024_03_09" && @actor.is_a?(Event)
           # Disable all spending controls
-          actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
-          Flipper.disable_actor("spending_controls_2024_06_03", actor)
+          @actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
+          Flipper.disable_actor("spending_controls_2024_06_03", @actor)
 
-          actor.organizer_positions.update_all(role: :manager)
-          actor.organizer_position_invites.pending.update_all(role: :manager)
-        elsif feature == "spending_controls_2024_06_03" && actor.is_a?(Event)
+          @actor.organizer_positions.update_all(role: :manager)
+          @actor.organizer_position_invites.pending.update_all(role: :manager)
+        elsif @feature == "spending_controls_2024_06_03" && @actor.is_a?(Event)
           # Disable all controls
-          actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
+          @actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
         end
         flash[:success] = "You've opted out of this beta; please let us know if you had any feedback."
       else
@@ -74,7 +61,19 @@ class FeaturesController < ApplicationController
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
     end
-    redirect_back fallback_location: actor
+    redirect_back fallback_location: @actor
+  end
+
+  def set_actor_and_feature
+    if params[:event_id]
+      @actor = Event.find(params[:event_id])
+    elsif params[:user_id]
+      @actor = User.find(params[:user_id])
+    else
+      @actor = current_user
+    end
+    @feature = params[:feature]
+    authorize @actor
   end
 
 end

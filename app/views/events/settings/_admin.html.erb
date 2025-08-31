@@ -203,7 +203,7 @@
   <% end %>
 
   <% admin_tool do %>
-    <%= render "comments/list", comments: @event.comments %>
+    <%= render "comments/list", comments: @event.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @event, admin_only: true %>
   <% end %>
 
