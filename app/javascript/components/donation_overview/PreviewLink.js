@@ -96,102 +96,96 @@ class PreviewLink extends React.Component {
     }
 
     return (
-      <>
-        <label
-          htmlFor="prefill-amount"
-          className="mb1"
-          style={{ fontWeight: 600 }}
-        >
-          Prefilled amount (USD)
-        </label>
-        <div className="field">
-          <div className="flex items-center">
-            <span className="bold muted" style={{ width: '1rem' }}>
-              $
-            </span>
-            <input
-              placeholder="500.00"
-              step="0.01"
-              min="0.01"
-              type="number"
-              name="prefill-amount"
-              onChange={this.handleChange}
-            />
-          </div>
-        </div>
-        <label
-          htmlFor="prefill-message"
-          className="mb1"
-          style={{ fontWeight: 600 }}
-        >
-          Prefilled message
-        </label>
-        <div className="field">
-          <div className="flex items-center">
-            <input
-              placeholder="optional"
-              type="text"
-              name="prefill-message"
-              onChange={this.handleChange}
-            />
-          </div>
-        </div>
-        <label htmlFor="prefill-monthly flex items-center">
-          <span style={{ fontWeight: 600 }}>Monthly charge?</span>
-          <input
-            type="checkbox"
-            name="prefill-monthly"
-            onChange={this.handleChange}
-          />
-        </label>
-        <label htmlFor="prefill-goods flex items-center" className="mt2">
-          <span style={{ fontWeight: 600 }}>For goods or services?</span>
-          <input
-            type="checkbox"
-            name="prefill-goods"
-            onChange={this.handleChange}
-          />
-        </label>
-        <hr style={{ margin: '1rem 0' }} />
-        <label
-          htmlFor="prefill-url"
-          className="mb1"
-          style={{ fontWeight: 600 }}
-        >
-          {this.state.amount == null
-            ? 'Donation link'
-            : 'Prefilled donation link'}
-        </label>
-        <div className="field">
-          <div className="flex items-center">
-            <input
-              value={url}
-              readOnly={true}
-              name="prefill-url"
-              type="text"
-              ref={c => (this.inputField = c)}
-            />
-            <span
-              className="ml1 tooltipped tooltipped--w cursor-pointer"
-              aria-label={
-                this.state.copy ? '✅ Copied to clipboard!' : 'Copy link'
-              }
-              style={{ width: '1rem' }}
-              onClick={this.handleCopy}
-            >
-              ⧉
-            </span>
-          </div>
-          {showSubtitle && (
-            <>
-              <span className="muted">
-                This will be prefilled as a {humanizedMonthly}{' '}
-                <strong>{humanizedAmount}</strong>donation{humanizedMessage}.
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label
+            htmlFor="prefill-amount"
+            className="mb1"
+            style={{ fontWeight: 600 }}
+          >
+            Amount
+          </label>
+          <div className="field">
+            <div className="flex items-center">
+              <span className="bold muted" style={{ width: '1rem' }}>
+                $
               </span>
-            </>
-          )}
+              <input
+                placeholder="500.00"
+                step="0.01"
+                min="0.01"
+                type="number"
+                name="prefill-amount"
+                onChange={this.handleChange}
+              />
+            </div>
+          </div>
+          <label
+            htmlFor="prefill-message"
+            className="mb1"
+            style={{ fontWeight: 600 }}
+          >
+            Message
+          </label>
+          <div className="field">
+            <div className="flex items-center">
+              <input
+                placeholder="optional"
+                type="text"
+                name="prefill-message"
+                onChange={this.handleChange}
+              />
+            </div>
+          </div>
+          <label htmlFor="prefill-monthly flex items-center">
+            <span style={{ fontWeight: 600 }}>Monthly charge?</span>
+            <input
+              type="checkbox"
+              name="prefill-monthly"
+              onChange={this.handleChange}
+            />
+          </label>
+          <label htmlFor="prefill-goods flex items-center" className="mt2">
+            <span style={{ fontWeight: 600 }}>For goods or services?</span>
+            <input
+              type="checkbox"
+              name="prefill-goods"
+              onChange={this.handleChange}
+            />
+          </label>
         </div>
-      </>
+        <div className="flex-1">
+          <div className="field">
+            <div className="flex items-center">
+              <input
+                value={url}
+                readOnly={true}
+                name="prefill-url"
+                type="text"
+                ref={c => (this.inputField = c)}
+              />
+              <span
+                className="ml1 tooltipped tooltipped--w cursor-pointer"
+                aria-label={
+                  this.state.copy ? '✅ Copied to clipboard!' : 'Copy link'
+                }
+                style={{ width: '1rem' }}
+                onClick={this.handleCopy}
+              >
+                ⧉
+              </span>
+            </div>
+            {showSubtitle && (
+              <>
+                <span className="muted">
+                  This will be prefilled as a {humanizedMonthly}{' '}
+                  <strong>{humanizedAmount}</strong>donation{humanizedMessage}.
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     )
   }
 }
