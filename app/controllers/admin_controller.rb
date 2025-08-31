@@ -1388,7 +1388,7 @@ class AdminController < ApplicationController
   end
 
   def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name], show_explore_hack_club: params[:show_explore_hack_club])
+    @referral_program = Referral::Program.new(name: params[:name], show_explore_hack_club: true)
 
     if @referral_program.save
       redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
