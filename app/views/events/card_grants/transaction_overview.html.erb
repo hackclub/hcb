@@ -4,7 +4,7 @@
   <div class="table-container">
     <table>
       <tbody data-behavior="transactions">
-        <% @hcb_codes.each do |hcb_code| %>
+        <% @paginated_hcb_codes.each do |hcb_code| %>
           <% if hcb_code.canonical_transactions.any? %>
             <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, force_display_details: true } %>
           <% else %>
