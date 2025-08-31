@@ -20,6 +20,7 @@ module Referral
 
     validates :name, presence: true
     validates :show_explore_hack_club, inclusion: { in: [true, false] }
+    self.ignored_columns += ["show_explore_hack_club"]
 
     has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
     has_many :users, -> { distinct }, through: :attributions, source: :user
