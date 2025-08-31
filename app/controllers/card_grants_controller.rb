@@ -10,29 +10,33 @@ class CardGrantsController < ApplicationController
   before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index]
 
   def index
-    card_grants_page = (params[:card_grants_page] || 1).to_i
-    card_grants_per_page = (params[:card_grants_per_page] || 20).to_i
-
-    transactions_page = (params[:transactions_page] || 1).to_i
-    transactions_per_page = (params[:transactions_per_page] || 20).to_i
-
-    authorize @event
-
-    @card_grants = @event.card_grants.order(created_at: :desc)
-    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
-
-    @all_stripe_cards = @event.stripe_cards.where.associated(:card_grant)
-    @hcb_codes = HcbCode.where(hcb_code: @all_stripe_cards.flat_map(&:all_hcb_codes)).order(created_at: :desc)
-    @paginated_hcb_codes = @hcb_codes.page(transactions_page).per(transactions_per_page)
+    authorize @event, :card_grant_overview?
 
     render "events/card_grants/overview"
   end
 
   def card_index
+    authorize @event, :card_grant_overview?
+
+    card_grants_page = (params[:card_grants_page] || 1).to_i
+    card_grants_per_page = (params[:card_grants_per_page] || 20).to_i
+
+    @card_grants = @event.card_grants.order(created_at: :desc)
+    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+
     render "events/card_grants/card_overview"
   end
 
   def transaction_index
+    authorize @event, :card_grant_overview?
+
+    transactions_page = (params[:transactions_page] || 1).to_i
+    transactions_per_page = (params[:transactions_per_page] || 20).to_i
+
+    @all_stripe_cards = @event.stripe_cards.where.associated(:card_grant)
+    @hcb_codes = HcbCode.where(hcb_code: @all_stripe_cards.flat_map(&:all_hcb_codes)).order(created_at: :desc)
+    @paginated_hcb_codes = @hcb_codes.page(transactions_page).per(transactions_per_page)
+
     render "events/card_grants/transaction_overview"
   end
 

@@ -17,65 +17,6 @@
   <% end %>
 </h1>
 
-<div class="table-container">
-  <table>
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th>Date</th>
-        <th>To</th>
-        <th>For</th>
-        <th>Amount</th>
-        <th class="text-right">Balance</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @paginated_card_grants.each do |card_grant| %>
-        <tr>
-          <td>
-            <span class="ml0 badge bg-<%= card_grant.state %>"><%= card_grant.state_text %></span>
-          </td>
-          <td>
-            <%= format_date card_grant.created_at %>
-          </td>
-          <td>
-            <%= user_mention card_grant.user %>
-          </td>
-          <td>
-            <%= card_grant.purpose.presence || Disbursement.find_by(id: card_grant.disbursement_id).local_hcb_code.memo %>
-          </td>
-          <td>
-            <%= render_money card_grant.amount_cents %>
-          </td>
-          <td class="text-right">
-            <%= render_money card_grant.balance %>
-          </td>
-          <td>
-            <%= link_to "View", card_grant_url(card_grant) %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+<%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager %>
 
-  <%= paginate @paginated_card_grants %>
-</div>
-
-<h2 class="heading mt4 pb1">Card grant transactions</h2>
-
-<div class="table-container">
-  <table>
-    <tbody data-behavior="transactions">
-      <% @hcb_codes.each do |hcb_code| %>
-        <% if hcb_code.canonical_transactions.any? %>
-          <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, force_display_details: true } %>
-        <% else %>
-          <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions, as: :pt %>
-        <% end %>
-      <% end %>
-    </tbody>
-  </table>
-
-  <%= paginate @paginated_hcb_codes %>
-</div>
+<%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager %>
