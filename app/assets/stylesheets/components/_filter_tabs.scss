@@ -12,6 +12,17 @@
   &:first-child {
     margin-left: 0.2rem;
   }
+
+  &.bordered {
+    border-bottom: 2px solid rgba(200, 200, 200, 0.3);
+    padding: 0.5rem 1rem;
+    flex: 1;
+
+    &.active {
+      border-color: map-get($palette, primary);
+      color: map-get($palette, primary);
+    }
+  }
 }
 
 .menu__divider--filter-tab {
