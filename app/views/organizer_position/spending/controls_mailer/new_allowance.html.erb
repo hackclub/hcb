@@ -1,0 +1,9 @@
+<p>Hey <%= @control.organizer_position.user.name %>,</p>
+
+<p>Your spending balance for <%= @control.organizer_position.event.name %> has <%= @allowance.amount_cents > 0 ? "increased" : "decreased" %> by <%= render_money @allowance.amount_cents.abs %> with the following memo:</p>
+<blockquote><%= @allowance.memo %></blockquote>
+
+<p>Your spending balance is now <%= render_money @control.balance_cents %>.</p>
+
+<p><em><%= link_to "See our blog post to learn more about spending controls on HCB.", "https://blog.hcb.hackclub.com/posts/spending-controls-295539" %></em></p>
+
