@@ -1,6 +1,6 @@
 <%= turbo_frame_tag :card_grant_transaction_overview do %>
   <h2 class="heading mt4 pb1">Card grant transactions</h2>
-  
+
   <div class="table-container">
     <table>
       <tbody data-behavior="transactions">
@@ -13,7 +13,7 @@
         <% end %>
       </tbody>
     </table>
-  
+
     <%= paginate @paginated_hcb_codes %>
   </div>
 <% end %>
