@@ -21,6 +21,8 @@
 #
 class Event
   class Affiliation < ApplicationRecord
+    include Hashid::Rails
+
     belongs_to :event
 
     store :metadata, accessors: [:league, :team_number, :size, :venue_name], code: JSON
