@@ -12,7 +12,7 @@
           <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
         </div>
         <div class="flex flex-row gap-2 justify-between m-0">
-          <span class="m-0"><%= user_mention program.creator %></span>
+          <span class="m-0">Created by: <%= user_mention program.creator %></span>
         </div>
         <%= link_to program_url(program), program_url(program) %>
 
