@@ -21,7 +21,8 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    cg_params = params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user)
+    @card_grant = @event.card_grants.build(cg_params)
 
     authorize @card_grant
 
@@ -30,6 +31,23 @@ class CardGrantsController < ApplicationController
       # exception as under the hood it calls `DisbursementService::Create` and a
       # number of other methods (e.g. `save!`) which either succeed or raise.
       @card_grant.save!
+
+      default_cg_setting = @event.card_grant_setting
+      CardGrantSetting.create!(
+        {
+          banned_categories: default_cg_setting.banned_categories,
+          banned_merchants: default_cg_setting.banned_merchants,
+          category_lock: default_cg_setting.category_lock,
+          expiration_preference: default_cg_setting.expiration_preference,
+          invite_message: default_cg_setting.invite_message,
+          keyword_lock: cg_params.card_grant.keyword_lock,
+          merchant_lock: default_cg_setting.merchant_lock,
+          pre_authorization_required: cg_params.card_grant.pre_authorization_required,
+          reimbursement_conversions_enabled: default_cg_setting.reimbursement_conversions_enabled,
+          card_grant_id: @card_grant.id,
+          event_id: @event.id
+        }
+      )
     rescue => e
       case e
       when ActiveRecord::RecordInvalid
@@ -83,7 +101,17 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
+    cg_params = params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock)
+
+    @card_grant&.setting&.update(
+      {
+        merchant_lock: cg_params.card_grant.merchant_lock,
+        category_lock: cg_params.card_grant.category_lock,
+        keyword_lock: cg_params.card_grant.keyword_lock
+      }
+    )
+
+    if @card_grant.update(cg_params)
       flash[:success] = "Grant's purpose has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
