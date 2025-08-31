@@ -76,6 +76,6 @@
 
   <% admin_tool do %>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
-    <%= render "comments/form", commentable: @user, admin_only: true  %>
+    <%= render "comments/form", commentable: @user, admin_only: true %>
   <% end %>
 </turbo-frame>
