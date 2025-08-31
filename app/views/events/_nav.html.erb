@@ -28,7 +28,7 @@
       icon: "announcement",
       selected: local_assigns[:selected] == :announcements if policy(@event).announcement_overview? %>
     <% if policy(@event).activation_flow? %>
-      <% admin_tool("m0 p0 overflow-visible w-fit") do %>
+      <% admin_tool("py0 pr0 overflow-visible w-fit") do %>
         <%= dock_item "Activate",
           event_activation_flow_path(event_id: @event.slug),
           tooltip: "Activate this organization",
