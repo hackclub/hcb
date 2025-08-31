@@ -9,7 +9,7 @@
           <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • <code><%= program.hashid %></code></small>
         </div>
         <div class="flex flex-row gap-2 justify-between m-0">
-          <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></</span>
+          <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
         </div>
         <%= link_to program_url(program), program_url(program) %>
 
