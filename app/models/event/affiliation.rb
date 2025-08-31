@@ -25,7 +25,7 @@ class Event
 
     belongs_to :event
 
-    store :metadata, accessors: [:league, :team_number, :size, :venue_name], code: JSON
+    store_accessor :metadata, :league, :team_number, :size, :venue_name
 
     def display_name
       case name
