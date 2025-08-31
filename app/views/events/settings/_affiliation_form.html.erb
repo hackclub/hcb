@@ -3,7 +3,7 @@
 <% disabled = !policy(affiliation).update? %>
 
 <div class="field">
-  <%# not applying a disabled here so they can know what the different affiliations are like %>
+  <%# not applying a disabled here so readers can discover the different affiliations available %>
   <%= form.label :type, "Type" %>
   <%= form.select :type, [["FIRST", "first"], ["VEX", "vex"], ["Hack Club", "hack_club"]], { required: true, include_blank: "Select a type", selected: affiliation.name || "first" }, { "@change": "type = $event.target.value" } %>
 </div>
