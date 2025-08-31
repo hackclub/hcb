@@ -3,7 +3,7 @@
 </p>
 
 <p>
-  <%= @pre_authorization.user.name %> has submitted a card grant pre-authorization that has been marked as potentially fraudulent.
+  <%= @pre_authorization.user.name %> has submitted a card grant pre-authorization for <%= @pre_authorization.event.name %> that has been marked as potentially fraudulent.
   <%= link_to "Review this pre-authorization on HCB.", card_grant_pre_authorizations_url(@pre_authorization.card_grant) %>
 </p>
 
