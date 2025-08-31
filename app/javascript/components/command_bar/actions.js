@@ -8,6 +8,7 @@ import React from 'react'
 const restrictedFilter = e => !e.demo_mode
 
 export const generateEventActions = data => {
+  console.log(data)
   return [
     ...data.map(event => ({
       id: event.slug,
@@ -100,6 +101,15 @@ export const generateEventActions = data => {
       icon: <Icon glyph="leader" size={16} />,
       parent: event.slug,
     })),
+    ...data
+      .filter(e => e.features.subevents)
+      .map(event => ({
+        id: `${event.slug}-subevents`,
+        name: 'Sub-organizations',
+        perform: navigate(`/${event.slug}/sub_organizations`),
+        icon: <Icon glyph="channels" size={16} />,
+        parent: event.slug,
+      })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-perks`,
       name: 'Perks',
@@ -497,6 +507,14 @@ export const adminActions = adminUrls => [
     name: 'Flipper',
     icon: <Icon glyph="flag-fill" size={16} />,
     perform: navigate('/flipper/features'),
+  },
+  {
+    id: 'admin_tool_31',
+    section: 'Admin Tools',
+    priority: Priority.HIGH,
+    name: 'Referral programs',
+    icon: <Icon glyph="share" size={16} />,
+    perform: navigate('/admin/referral_programs'),
   },
 ]
 

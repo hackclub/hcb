@@ -1,3 +1,5 @@
+<%# locals: (form: nil, param: :q) %>
+
 <div class="input input-group max-w-none" tabindex="0">
   <%= inline_icon "search" %>
   <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
@@ -5,5 +7,8 @@
     <%= link_to upsert_query_params(q: nil), class: "pop muted w-7 h-7 tooltipped tooltipped--s", "aria-label": "Clear search" do %>
       <%= inline_icon "view-close", size: 24 %>
     <% end %>
+  <% end %>
+  <% params.except(:q, :controller, :action).each do |key, value| %>
+    <%= hidden_field_tag key, value %>
   <% end %>
 </div>

@@ -21,7 +21,7 @@
     <details>
       <summary>Available plans</summary>
 
-      <% Event::Plan.available_plans.each do | plan | %>
+      <% Event::Plan.available_plans_by_popularity.each do | plan | %>
         <p><strong><%= plan.new.label %></strong>: <%= plan.new.description %></p>
       <% end %>
     </details>
@@ -86,6 +86,9 @@
           Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(@event), method: :post %>
         <% } %>
         <%= form.collection_select :point_of_contact_id, User.admin.or(User.where(id: @event.point_of_contact_id)).order(:email), :id, :email, {}, { disabled: } %>
+        <% if event.point_of_contact_history.any? %>
+          (Previously <%= event.point_of_contact_history.map(&:email).to_sentence %>)
+        <% end %>
       </div>
 
       <div class="field field--checkbox">
@@ -106,6 +109,40 @@
       <div class="action">
         <%= form.submit "Update", disabled:, data: { turbo: false } %>
       </div>
+    <% end %>
+  <% end %>
+
+  <% admin_tool do %>
+    <%= form_with(model: event, local: true) do |form| %>
+
+      <h3 id="sub_organizations" class="mb2 mt1">Sub-organizations</h3>
+
+      <ul>
+        <% @event.subevents.order(created_at: :desc).each do |subevent| %>
+          <li>
+            <%= link_to subevent.name, event_path(subevent) %>
+          </li>
+        <% end %>
+      </ul>
+
+      <%= form.fields_for :config do |config| %>
+        <div class="field">
+          <%= config.label :subevent_plan, "Sub-organization default plan" %>
+          <%= config.select :subevent_plan, { selected: @event.config.subevent_plan }, { disabled: } do %>
+            <optgroup label="🚫 Disabled">
+              <option value="">🚫 Disable creating sub-organizations</option>
+            </optgroup>
+            <optgroup label="✅ Enabled">
+              <%= options_for_select(Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, @event.config.subevent_plan) %>
+            </optgroup>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="action">
+        <%= form.submit "Update", disabled:, data: { turbo: false } %>
+      </div>
+
     <% end %>
   <% end %>
 
@@ -138,7 +175,7 @@
     <% admin_tool do %>
       <h3 id="admin_fees" class="mb2 mt1">Wire minimum exemption</h3>
       <% if Flipper.enabled?(:exempt_from_wire_minimum, @event) %>
-        <%= link_to "Disable", disable_feature_path(feature: :exempt_from_wire_minimum, event_id: @event.id), method: :post, class: "btn bg-accent", data: { turbo_method: "post" }, disabled: %>
+        <%= link_to "Disable", disable_feature_path(feature: :exempt_from_wire_minimum, event_id: @event.id), method: :post, class: "btn bg-accent", data: { turbo_method: :post }, disabled: %>
       <% else %>
         <%= link_to "Enable", enable_feature_path(feature: :exempt_from_wire_minimum, event_id: @event.id), method: :post, class: "btn bg-info", disabled: %>
       <% end %>

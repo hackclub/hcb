@@ -32,7 +32,11 @@ class Event
       end
 
       def description
-        "Has access to all standard features, used for most organizations."
+        if self.instance_of?(Event::Plan::Standard)
+          "Has access to all standard features, used for most organizations."
+        else
+          "Has access to all standard features"
+        end
       end
 
       def features
@@ -68,6 +72,14 @@ class Event
       end
 
       def contract_required?
+        true
+      end
+
+      def card_lockable?
+        true
+      end
+
+      def eligible_for_perks?
         true
       end
 

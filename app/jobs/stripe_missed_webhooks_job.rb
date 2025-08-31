@@ -2,6 +2,8 @@
 
 class StripeMissedWebhooksJob < ApplicationJob
   queue_as :default
+  sidekiq_options retry: false
+
   def perform
     events = StripeService::Event.list({ limit: 100, created: { gte: Time.now.to_i - 5 * 60 }, delivery_success: false }).data
     if events.any?

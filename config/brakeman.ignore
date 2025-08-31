@@ -2,54 +2,20 @@
   "ignored_warnings": [
     {
       "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "18d9a7883755596ad9b083cfbd00e3fc19fdf296e396510648066dc43b432b27",
-      "check_name": "LinkToHref",
-      "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/stripe_cards/show.html.erb",
-      "line": 6,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent m1\")",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "StripeCardsController",
-          "method": "show",
-          "line": 88,
-          "file": "app/controllers/stripe_cards_controller.rb",
-          "rendered": {
-            "name": "stripe_cards/show",
-            "file": "app/views/stripe_cards/show.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "stripe_cards/show"
-      },
-      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": "this is already validated"
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
       "warning_code": 2,
-      "fingerprint": "280b73eef84a624f5e7cca1c5bc67d106f57f116050b8e08356cc935eadfe007",
+      "fingerprint": "154fc5e6dd75905b4d439027dc586e15421a58a265d590f753ce34b81d23095e",
       "check_name": "CrossSiteScripting",
       "message": "Unescaped model attribute",
       "file": "app/views/announcements/_announcement_body.html.erb",
       "line": 4,
       "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
-      "code": "Announcement.find(params[:id]).rendered_html",
+      "code": "Announcement.find(params[:id]).render",
       "render_path": [
         {
           "type": "controller",
           "class": "AnnouncementsController",
           "method": "show",
-          "line": 42,
+          "line": 43,
           "file": "app/controllers/announcements_controller.rb",
           "rendered": {
             "name": "announcements/show",
@@ -59,7 +25,7 @@
         {
           "type": "template",
           "name": "announcements/show",
-          "line": 49,
+          "line": 55,
           "file": "app/views/announcements/show.html.erb",
           "rendered": {
             "name": "announcements/_announcement_body",
@@ -77,6 +43,40 @@
         79
       ],
       "note": "Content is never updated directly by user and always rendered on the server"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "18d9a7883755596ad9b083cfbd00e3fc19fdf296e396510648066dc43b432b27",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/stripe_cards/show.html.erb",
+      "line": 6,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent m1\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "StripeCardsController",
+          "method": "show",
+          "line": 90,
+          "file": "app/controllers/stripe_cards_controller.rb",
+          "rendered": {
+            "name": "stripe_cards/show",
+            "file": "app/views/stripe_cards/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "stripe_cards/show"
+      },
+      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "this is already validated"
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -196,6 +196,74 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "6a82c5e649d0b925f7f1d62680a6e2aa12392aa77c32b7018bc053bb8534d820",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/wise_transfer_process.html.erb",
+      "line": 14,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-[#9FE870] text-[#163300] flex-shrink-0\", :style => \"color: #163300!important; background: #9FE870\", :target => \"_blank\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "wise_transfer_process",
+          "line": 722,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/wise_transfer_process",
+            "file": "app/views/admin/wise_transfer_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/wise_transfer_process"
+      },
+      "user_input": "WiseTransfer.find(params[:id]).wise_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "`wise_url` is constructed from validated fields and uses `CGI.escape`"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "87bbf4eaa2f56dae12d31496998c846d8ede1769c79d11856fc01015d3feb757",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/wise_transfer_process.html.erb",
+      "line": 83,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"view on Wise\", WiseTransfer.find(params[:id]).wise_recipient_url, :target => \"_blank\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "wise_transfer_process",
+          "line": 722,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/wise_transfer_process",
+            "file": "app/views/admin/wise_transfer_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/wise_transfer_process"
+      },
+      "user_input": "WiseTransfer.find(params[:id]).wise_recipient_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "`wise_recipient_url` is constructed from validated fields and uses `CGI.escape`"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "9b86435f32d34208ef6e6a8465f5374fe7fc9f978e36ef755363d14120b959f8",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -208,7 +276,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 951,
+          "line": 982,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -276,7 +344,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 879,
+          "line": 910,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -310,7 +378,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 879,
+          "line": 910,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -378,7 +446,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 951,
+          "line": 982,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -398,6 +466,6 @@
       "note": "Domain is validated to not have a javascript: url scheme & dns_check_url is injecting that domain in a https url"
     }
   ],
-  "updated": "2025-07-14 20:54:05 +0000",
+  "updated": "2025-08-07 17:03:40 -0400",
   "brakeman_version": "6.2.2"
 }

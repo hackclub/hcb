@@ -9,7 +9,7 @@
       <% if announcement.draft? %>
         <span class="text-orange border-orange rounded-full border-solid border-[1px] text-sm p-[6px] mr-1 no-underline">Draft</span>
       <% end %>
-      <%= link_to announcement.title, announcement_path(announcement) %>
+      <%= link_to announcement.title, announcement_path(announcement), class: "font-bold no-underline text-black dark:text-smoke hover:underline" %>
     </h2>
     <% if organizer_signed_in?(as: :member) && !show_event %>
       <div class="flex gap-2">

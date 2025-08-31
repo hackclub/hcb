@@ -33,12 +33,8 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
     admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
   end
 
-  def toggle_signee_status?
-    user&.admin?
-  end
-
   def change_position_role?
-    admin_or_manager?
+    admin_or_manager? && !record.signee?
   end
 
   private

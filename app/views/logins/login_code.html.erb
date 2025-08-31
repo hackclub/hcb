@@ -47,7 +47,7 @@
     <%= hidden_field_tag :timezone %>
     <%= hidden_field_tag :return_to, @return_to if @return_to %>
     <% if @use_sms_auth %>
-      <%= hidden_field_tag :sms %>
+      <%= hidden_field_tag :sms, true %>
     <% else %>
       <p class="h5 muted"><em>Make sure to check your spam folder</em></p>
     <% end %>

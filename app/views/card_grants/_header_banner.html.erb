@@ -1,6 +1,6 @@
 <%# locals: (card_grant:, footer: nil) %>
 
-<section class="card mt-8 min-h-[300px] flex flex-col justify-between <%= "card--background-image" if card_grant.event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(card_grant.event.background_image).dump})" if card_grant.event.background_image.attached? %>">
+<section class="card mt-8 min-h-[300px] flex flex-col justify-between card--background-image" style="<%= card_grant.event.background_image.attached? ? "--bg-image: url(#{url_for(card_grant.event.background_image).dump})" : "--bg-image: #{GeoPattern.generate(card_grant.stripe_card&.public_id || card_grant.public_id).to_data_uri}" %>">
   <div class="flex flex-row justify-end items-start">
     <% if organizer_signed_in?(as: :member) %>
       <%= render "card_grants/actions/edit", card_grant: card_grant %>

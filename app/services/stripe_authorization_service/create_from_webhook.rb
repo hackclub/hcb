@@ -44,9 +44,14 @@ module StripeAuthorizationService
             AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
           end
 
+          spending_control = cpt.stripe_card.active_spending_control
+          if spending_control.present?
+            SpendingControlService.check_low_balance(spending_control, cpt.local_hcb_code)
+          end
+
           if cpt&.stripe_card&.card_grant&.one_time_use
             PaperTrail.request(whodunnit: User.system_user.id) do
-              cpt.stripe_card.freeze!
+              cpt.stripe_card.freeze!(frozen_by: User.system_user)
             end
           end
         else

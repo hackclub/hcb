@@ -82,7 +82,7 @@ module Api
             return render json: { error: "Card is canceled." }, status: :unprocessable_entity
           end
 
-          @stripe_card.freeze!
+          @stripe_card.freeze!(frozen_by: current_user)
         elsif params[:status] == "active"
           if @stripe_card.initially_activated?
             return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).defrost?

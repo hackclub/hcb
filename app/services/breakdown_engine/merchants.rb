@@ -4,9 +4,10 @@ module BreakdownEngine
   class Merchants
     include StripeAuthorizationsHelper
 
-    def initialize(event, past_month: false)
+    def initialize(event, start_date: nil, end_date: Time.now)
       @event = event
-      @past_month = past_month
+      @start_date = start_date
+      @end_date = end_date
     end
 
     def run
@@ -17,7 +18,12 @@ module BreakdownEngine
       )
                                       .joins("LEFT JOIN canonical_transactions ct ON raw_stripe_transactions.id = ct.transaction_source_id AND ct.transaction_source_type = 'RawStripeTransaction'")
                                       .joins("LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id")
-                                      .where("event_mapping.event_id = ? #{"AND raw_stripe_transactions.created_at > NOW() - INTERVAL '1 month'" if @past_month}", @event.id)
+                                      .where({
+                                        event_mapping: {
+                                          event_id: @event.id
+                                        },
+                                        raw_stripe_transactions: @start_date.present? || @end_date.present? ? { created_at: @start_date..@end_date } : nil
+                                      }.compact)
                                       .group("merchant")
                                       .order(Arel.sql("SUM(raw_stripe_transactions.amount_cents) * -1 DESC"))
                                       .limit(15)

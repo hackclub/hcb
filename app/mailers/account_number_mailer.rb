@@ -2,7 +2,7 @@
 
 class AccountNumberMailer < ApplicationMailer
   before_action :set_event_memo_and_amount_cents
-  default to: -> { @event.users.map(&:email_address_with_name) }
+  default to: -> { @event.organizer_contact_emails }
 
   def insufficent_balance
     mail subject: "A direct debit for #{@event.name} was reversed due to an insufficent balance"
