@@ -31,14 +31,6 @@
 </h1>
 
 <% if @event.donation_page_available? %>
-  <section class="modal" data-behavior="modal" role="dialog" id="donor_graph">
-    <%= modal_header "Embed donor graph" %>
-  </section>
-
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="prefilled_link">
-    <%= modal_header "Prefilled link" %>
-    <%= react_component "donation_overview/PreviewLink", path: start_donation_donations_url(@event) %>
-  </section>
 <% else %>
   <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
 <% end %>
