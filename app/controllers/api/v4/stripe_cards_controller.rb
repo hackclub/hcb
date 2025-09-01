@@ -41,8 +41,7 @@ module Api
           :shipping_address_line2,
           :shipping_address_state,
           :shipping_address_country,
-          :card_personalization_design_id,
-          :birthday
+          :card_personalization_design_id
         )
 
         return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
