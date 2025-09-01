@@ -1,7 +1,7 @@
 <% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
       <%= render "search", form: %>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
@@ -30,7 +30,7 @@
   <% end %>
 
   <% admin_tool "overflow-hidden" do %>
-    <div data-controller="menu" data-menu-placement-value="bottom-end">
+    <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger">
       <button
         type="button"
         class="pop menu__toggle menu__toggle--arrowless overflow-visible"

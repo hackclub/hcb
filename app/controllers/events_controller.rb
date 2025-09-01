@@ -183,7 +183,7 @@ class EventsController < ApplicationController
 
     set_cacheable
 
-    @order_by = admin_signed_in? && params[:order_by] || "date"
+    @order_by = auditor_signed_in? && params[:order_by] || "date"
 
     @pending_transactions = _show_pending_transactions
     @all_transactions = TransactionGroupingEngine::Transaction::All.new(
@@ -323,6 +323,7 @@ class EventsController < ApplicationController
     authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @affiliations = @event.affiliations if @settings_tab == "affiliations"
 
     render :edit, layout: !@frame
   end
@@ -418,9 +419,7 @@ class EventsController < ApplicationController
     end
     @announcements = @all_announcements.page(params[:page]).per(10)
 
-    if @event.config.generate_monthly_announcement
-      @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
-    end
+    @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
   end
 
   before_action(only: :feed) { request.format = :atom }
@@ -770,6 +769,8 @@ class EventsController < ApplicationController
 
   def promotions
     authorize @event
+
+    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
   end
 
   def reimbursements
@@ -917,6 +918,20 @@ class EventsController < ApplicationController
 
     @start_date = (@event.activated_at || @event.created_at).beginning_of_month.to_date
     @end_date = Date.today.prev_month.beginning_of_month.to_date
+  end
+
+  def statement_of_activity
+    authorize @event
+
+    @start_date = params[:start]&.to_date || (@event.activated_at || @event.created_at).to_date
+    @end_date = params[:end]&.to_date || Time.now.to_date
+
+    transactions = @event.canonical_transactions.where("date between ? AND ?", @start_date, @end_date)
+    @transactions_by_category = transactions.includes(:category).group("category.slug").sum(:amount_cents)
+
+    @net_asset_change = transactions.sum(:amount_cents)
+    @total_revenue = transactions.where("amount_cents > 0").sum(:amount_cents)
+    @total_expense = transactions.where("amount_cents < 0").sum(:amount_cents)
   end
 
   def termination

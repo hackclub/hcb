@@ -33,7 +33,7 @@
 </div>
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
   <div>
@@ -135,8 +135,22 @@
             <% end %>
           </td>
           <td style="text-align: right;">
-            <% if d.is_a? Wire %>
+            <% case d %>
+            <% when Wire %>
               <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+            <% when WiseTransfer %>
+              <% ledger_amount = capture do %>
+                <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+              <% end %>
+
+              <% if d.currency == "USD" %>
+                <%= ledger_amount %>
+              <% else %>
+                <% fx_tooltip = d.amount.format(with_currency: true) %>
+                <span class="tooltipped tooltipped--w inline-block" aria-label="<%= fx_tooltip %>">
+                  <%= ledger_amount %>
+                </span>
+              <% end %>
             <% else %>
               <%= render_money(d.amount) %>
             <% end %>

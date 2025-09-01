@@ -1,4 +1,4 @@
-<%# locals: (blog_shown: true, top: false) %>
+<%# locals: (top: false) %>
 
 <div data-controller="menu" data-menu-placement-value="<%= top ? "bottom-end" : "bottom-center" %>">
   <button
@@ -11,7 +11,7 @@
     <%= inline_icon "sun", size: home_action_size, class: "dark:hidden" %>
   </button>
 
-  <div data-menu-target="content" class="menu__content menu__content--compact menu__content--2 min-w-32 w-32" data-controller="dark-mode-toggle" <%= "data-dark-mode-toggle-blog-outlet=#blog-widget" if blog_shown %>>
+  <div data-menu-target="content" class="menu__content menu__content--compact menu__content--2 min-w-32 w-32" data-controller="dark-mode-toggle">
     <a data-dark-mode-toggle-target="toggle" data-value="system">
       System
       <%= inline_icon "check", class: "hidden ml-auto", size: 24, style: "margin-right: -5px" %>

@@ -26,6 +26,14 @@ class User
       validates :address_postal_code, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
       attribute :address_country, :text, default: "US"
 
+      validate do
+        combined_length = [address_line1, address_line2].filter(&:present?).sum(&:length)
+
+        if combined_length > 50
+          errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
+        end
+      end
+
       def kind
         "check"
       end

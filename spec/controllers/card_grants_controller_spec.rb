@@ -120,4 +120,72 @@ RSpec.describe CardGrantsController do
       expect(flash[:error]).to eq("You don't have enough money to make this disbursement.")
     end
   end
+
+  describe "topup" do
+    it "tops up a card grant" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      sign_in(user)
+
+      card_grant = create(
+        :card_grant,
+        event:,
+        sent_by: user,
+        amount_cents: 12_34
+      )
+
+      post(
+        :topup,
+        params: {
+          event_id: event.friendly_id,
+          id: card_grant.hashid,
+          amount: "56.78"
+        }
+      )
+
+      expect(flash[:success]).to eq("Successfully topped up grant.")
+      expect(response).to redirect_to(card_grant_path(card_grant))
+
+      expect(card_grant.reload.balance).to eq(Money.new(69_12, :usd))
+
+      disbursement = event.disbursements.last
+      expect(disbursement.amount).to eq(56_78)
+      expect(disbursement.source_event).to eq(event)
+      expect(disbursement.event).to eq(event)
+      expect(disbursement.source_subledger_id).to be_nil
+      expect(disbursement.destination_subledger_id).to eq(card_grant.subledger_id)
+      expect(disbursement.requested_by_id).to eq(user.id)
+    end
+
+    it "handles downstream errors" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      sign_in(user)
+
+      card_grant = create(
+        :card_grant,
+        event:,
+        sent_by: user,
+        amount_cents: 12_34
+      )
+
+      expect do
+        post(
+          :topup,
+          params: {
+            event_id: event.friendly_id,
+            id: card_grant.hashid,
+            amount: "12345.67"
+          }
+        )
+      end.not_to change(event.disbursements, :count)
+
+      expect(flash[:error]).to eq("You don't have enough money to make this disbursement.")
+      expect(response).to redirect_to(card_grant_path(card_grant))
+
+      expect(card_grant.reload.balance).to eq(Money.new(12_34, :usd))
+    end
+  end
 end

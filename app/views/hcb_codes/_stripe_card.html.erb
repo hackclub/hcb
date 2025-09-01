@@ -91,7 +91,7 @@
   </section>
 
   <section class="details pt2 pb2 details--wide details--tall">
-    <% if @hcb_code.pt&.declined? %>
+    <% if @hcb_code.pt&.declined? && @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") != "reversed" %>
       <% reason = @hcb_code.pt.decline_reason %>
       <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
       <p>

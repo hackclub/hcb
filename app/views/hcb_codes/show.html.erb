@@ -53,3 +53,13 @@
     <%= render partial: "hcb_codes/pending_transaction_history" %>
   <% end %>
 <% end %>
+
+<% if @reverse_receipt_id.present? %>
+  <section id="reverse_receipt_modal" class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" data-modal-auto-open="true" data-modal="reverse_receipt_modal">
+    <%= modal_header("Reverse receipt pairing") %>
+    <p>Are you sure you would like to reverse the receipt pairing for this transaction?</p>
+
+    <%= button_to "Yes", reverse_receipt_path(@reverse_receipt_id, format: :html), class: "left bg-success btn", method: :post %>
+    <a href="#" class="right bg-error btn" rel="modal:close">No</a>
+  </section>
+<% end %>

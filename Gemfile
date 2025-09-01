@@ -15,6 +15,7 @@ gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
 gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
+gem "activejob-traffic_control" # throttle jobs
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -36,7 +37,6 @@ gem "faraday" # web requests
 gem "stripe", "11.7.0"
 gem "plaid", "~> 34.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
-gem "recursive-open-struct" # for stubbing stripe api objects
 
 gem "aws-sdk-s3", require: false
 
@@ -59,7 +59,7 @@ gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
-gem "active_storage_validations", "2.0.2" # file validations
+gem "active_storage_validations", "3.0.1" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
@@ -95,7 +95,7 @@ gem "grape-entity" # For Grape::Entity ( https://github.com/ruby-grape/grape-ent
 gem "grape-kaminari"
 gem "grape-route-helpers"
 gem "grape-swagger"
-gem "grape-swagger-entity", "~> 0.6"
+gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
@@ -128,26 +128,14 @@ gem "validates_zipcode" # validation for event's zip codes
 
 gem "rqrcode" # QR code generation
 
-gem "brakeman" # static security vulnerability scanner
-
 gem "awesome_print" # pretty print objects in console
 gem "byebug", platforms: [:windows]
-gem "dry-validation"
 
 gem "bootsnap", ">= 1.4.4", require: false # reduces boot times through caching; required in config/boot.rb
 
 gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
 gem "statsd-instrument", "~> 3.9" # For reporting to HC Grafana
-
-group :production do
-
-  # gem "heroku-deflater" # compression
-
-  # Heroku language runtime metrics
-  # https://devcenter.heroku.com/articles/language-runtime-metrics-ruby#add-the-barnes-gem-to-your-application
-  gem "barnes"
-end
 
 group :test do
   gem "factory_bot_rails" # Test data
@@ -160,6 +148,7 @@ group :development, :test do
   gem "rubocop"
   gem "rubocop-rails", "~> 2.30"
   gem "relaxed-rubocop"
+  gem "brakeman" # static security vulnerability scanner
 
   gem "rspec-rails", "~> 7.1.1"
 
