@@ -1411,7 +1411,7 @@ class AdminController < ApplicationController
   end
 
   def filtered_events(events: Event.all)
-    @q = params[:q].presence || nil
+    @q = params[:q].presence
     @demo_mode = params[:demo_mode].presence || "full" # full accounts only by default
     @engaged = params[:engaged] == "1" # unchecked by default
     @pending = params[:pending] == "0" ? nil : true # checked by default
