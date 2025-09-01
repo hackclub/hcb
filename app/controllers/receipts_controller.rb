@@ -123,7 +123,7 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.prepend(
                        @ledger_instance.present? ? "#{@ledger_instance}_receipts_list" : "receipts_list",
                        partial: "receipts/receipt",
-                       locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, show_receipt_bin_button: true, link_to_file: true }
+                       locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, show_receipt_bin_button: true, link_to_file: true, turbo_for_deletion: true }
                      ))
     end
 
