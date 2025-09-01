@@ -145,7 +145,7 @@ class MyController < ApplicationController
   end
 
   def reimbursements_icon
-    @reports_count = @my_reports.or(@reports_to_review).count
+    @reports_count = @my_reports.draft.or(@reports_to_review).count
 
     render :reimbursements_icon, layout: false
   end
