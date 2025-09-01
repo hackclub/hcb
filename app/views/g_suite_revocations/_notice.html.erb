@@ -5,7 +5,7 @@
     <% elsif @g_suite.revocation.because_of_invalid_dns? %>
       This revocation was initiated because your organization's domain, <%= @g_suite.domain %>, has invalid or missing DNS records required by Google Workspace. If you'd like to keep your Google Workspace access, please verify your domain's DNS records. Once your domain is verified, you'll get an email that confirms the revocation has been canceled. If you no longer need Google Workspace access, we ask that you do not verify your domain and allow the revocation to proceed.
     <% else %>
-      This revocation was initiated by the HCB Operations Team because <%= @g_suite.revocation.other_reason.present? ? @g_suite.revocation.other_reason : "of an unknown reason" %>.
+      This revocation was initiated by the HCB Operations Team because <%= @g_suite.revocation.other_reason.presence || "of an unknown reason" %>.
     <% end %>
     Once revoked, your data and accounts will be permanently deleted.
     Please <%= link_to "contact us", "mailto:hcb@hackclub.com?subject=Question Re: Google Workspace Access Revocation for #{@g_suite.domain}" %> if you have any questions.

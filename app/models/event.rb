@@ -848,8 +848,10 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails
-    emails = users.map(&:email_address_with_name)
+  def organizer_contact_emails(only_managers: false)
+    included_users = only_managers ? managers : users
+
+    emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
 
     emails
