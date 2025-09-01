@@ -77,14 +77,14 @@
           <% end %>
         </div>
 
-        <% if !event&.demo_mode? && defined?(show_tags) %>
+        <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
           <div class="flex flex-wrap tags hcb_code_<%= ct.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
             <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: ct.local_hcb_code } %>
           </div>
         <% end %>
       </div>
 
-      <% if !@frame && defined?(show_tags) && organizer_signed_in?(as: :member) && !ct.instance_of?(OpenStruct) %>
+      <% if !@frame && defined?(show_tags) && show_tags && organizer_signed_in?(as: :member) && !ct.instance_of?(OpenStruct) %>
         <% if suggestion = ct.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
