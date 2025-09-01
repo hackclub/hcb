@@ -41,7 +41,7 @@ class Event
           unless event.plan.writeable?
             event.update(financially_frozen: true)
             event.stripe_cards.active.each do |card|
-              card.freeze!
+              card.freeze!(frozen_by: User.system_user)
             end
           end
           if event.plan.hidden?

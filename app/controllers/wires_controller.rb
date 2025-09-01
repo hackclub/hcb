@@ -10,6 +10,9 @@ class WiresController < ApplicationController
     @wire = @event.wires.build
 
     authorize @wire
+    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
+      return render :new_v2
+    end
   end
 
   def create
@@ -68,6 +71,19 @@ class WiresController < ApplicationController
 
     @wire.send_wire!
 
+    if params[:charge_fee] == "1"
+      disbursement = DisbursementService::Create.new(
+        name: "Low-value wire transfer fee",
+        destination_event_id: EventMappingEngine::EventIds::HACK_CLUB_BANK,
+        source_event_id: @wire.event.id,
+        amount: 25,
+        requested_by_id: current_user.id,
+        fronted: @wire.event.plan.front_disbursements_enabled?
+      ).run
+
+      disbursement.local_hcb_code.comments.create(content: "Associated with #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
+    end
+
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }
 
   rescue Faraday::Error => e
@@ -104,6 +120,7 @@ class WiresController < ApplicationController
        :address_city,
        :address_postal_code,
        :address_state,
+       :payment_recipient_id,
        { file: [] }] + Wire.recipient_information_accessors
     )
   end

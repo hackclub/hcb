@@ -7,10 +7,8 @@
 <h1 class="flex heading items-center">
   <span class="flex-grow flex items-center flex-1">
     Announcements
-    <% if @event_follow.present? || organizer_signed_in?(as: :reader) %>
-      <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
-        <%= inline_icon "rss", size: 30 %>
-      <% end %>
+    <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
+      <%= inline_icon "rss", size: 30 %>
     <% end %>
     <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
       <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
@@ -30,13 +28,25 @@
 </h1>
 
 <% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
-  <% scheduled_for = Date.today.next_month.beginning_of_month.strftime("%b %-d") %>
-  <%= render "callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for}", footer: :questions do %>
-    <ul>
-      <li>You can <%= link_to "view and edit this announcement", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for %>.</li>
-      <li>If you would like to disable sending monthly announcements, you may do so in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
-      <li>This announcement will be sent out to everyone following you on <%= scheduled_for %>.</li>
-    </ul>
+  <% scheduled_for = Date.today.next_month.beginning_of_month %>
+  <% scheduled_for_string = scheduled_for.strftime("%B #{scheduled_for.day.ordinalize}") %>
+
+  <% if @monthly_announcement.template_draft? && (DateTime.now > DateTime.now.end_of_month - 1.week) %>
+    <%= render "callout", type: "error", title: "Your scheduled monthly announcement is canceled", footer: :questions do %>
+      <ul>
+        <li>Since blocks contained in this monthly announcement have no data, the scheduled monthly announcement for <%= Date.today.strftime("%B") %> has been canceled.</li>
+        <li>If you would like to keep this monthly announcement, <%= link_to "edit it", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
+        <li>You can also disable sending monthly announcements in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
+      </ul>
+    <% end %>
+  <% elsif !@monthly_announcement.published? %>
+    <%= render "callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for_string}", footer: :questions do %>
+      <ul>
+        <li>You can <%= link_to "view and edit this announcement", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
+        <li>If you would like to disable sending monthly announcements, you may do so in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
+        <li>This announcement will be sent out to everyone following you on <%= scheduled_for_string %>.</li>
+      </ul>
+    <% end %>
   <% end %>
 <% end %>
 
@@ -71,5 +81,5 @@
 <%= paginate @announcements %>
 
 <% if organizer_signed_in? %>
-  <%= render "announcements/announcement_modal" %>
+  <%= render "announcements/announcement_modal", announcement: @announcement %>
 <% end %>

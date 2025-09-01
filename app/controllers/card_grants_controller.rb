@@ -10,15 +10,11 @@ class CardGrantsController < ApplicationController
   before_action :set_card_grant, except: %i[new create]
 
   def new
-    @card_grant = @event.card_grants.build
+    @card_grant = @event.card_grants.build(email: params[:email])
 
     authorize @card_grant
 
-    @prefill_email = params[:email]
-
-    @event.create_card_grant_setting unless @event.card_grant_setting.present?
-
-    last_card_grant = @event.card_grants.order(created_at: :desc).first
+    @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
@@ -29,14 +25,30 @@ class CardGrantsController < ApplicationController
 
     authorize @card_grant
 
-    @card_grant.save!
+    begin
+      # There's no way to save a card grant without potentially triggering an
+      # exception as under the hood it calls `DisbursementService::Create` and a
+      # number of other methods (e.g. `save!`) which either succeed or raise.
+      @card_grant.save!
+    rescue => e
+      case e
+      when ActiveRecord::RecordInvalid
+        # We expect to encounter validation errors from `CardGrant`, but anything
+        # else is the result of downstream logic which shouldn't fail.
+        raise e unless e.record.is_a?(CardGrant)
+
+        flash[:error] = @card_grant.errors.full_messages.to_sentence
+      when DisbursementService::Create::UserError
+        flash[:error] = e.message
+      else
+        raise e
+      end
+
+      render(:new, status: :unprocessable_entity)
+      return
+    end
 
     flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
-
-  rescue => e
-    flash[:error] = "Something went wrong. #{e.message}"
-    Rails.error.report(e)
-  ensure
     redirect_to event_transfers_path(@event)
   end
 
@@ -140,6 +152,8 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant
   rescue Stripe::InvalidRequestError => e
     redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
+  rescue Errors::StripeInvalidNameError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def cancel
@@ -156,6 +170,8 @@ class CardGrantsController < ApplicationController
     @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
 
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+  rescue DisbursementService::Create::UserError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def withdraw

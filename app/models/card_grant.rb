@@ -86,7 +86,9 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :purpose, length: { maximum: 30 }
+
+  MAXIMUM_PURPOSE_LENGTH = 30
+  validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
@@ -160,7 +162,7 @@ class CardGrant < ApplicationRecord
 
   def withdraw!(amount_cents:, withdrawn_by: sent_by)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
-    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents > balance.amount * 100
+    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents >= balance.amount * 100
 
     custom_memo = "Withdrawal from grant to #{user.name}"
 

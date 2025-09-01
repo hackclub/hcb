@@ -3,13 +3,17 @@
 <%= render "announcements/blocks/block_shell", block:, type: "topTags", is_email: do %>
   <p><strong>Top tags for <%= block.announcement.event.name %> <%= "from #{start_date.strftime("%B %e, %Y")}" if start_date.present? %> until <%= end_date.strftime("%B %e, %Y") %>:</strong></p>
 
-  <% if is_email %>
-    <ol>
-      <% tags.each do |tag| %>
-        <li><strong><%= tag[:name] %></strong>: <%= render_money tag[:value] * 100 %></p>
-      <% end %>
-    </ol>
+  <% if block.empty? %>
+    <p><%= block.announcement.event.name %> does not have any tag data for this period.</p>
   <% else %>
-    <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
+    <% if is_email %>
+      <ol>
+        <% tags.each do |tag| %>
+          <li><strong><%= tag[:name] %></strong>: <%= render_money tag[:value] * 100 %></p>
+        <% end %>
+      </ol>
+    <% else %>
+      <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
+    <% end %>
   <% end %>
 <% end %>

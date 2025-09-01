@@ -1,11 +1,13 @@
-<% if current_user.teenager? && Date.current.month == 8 %>
-  <% raffle_program = "teen-raffle-#{Date.current.strftime("%m-%Y")}" %>
+<% raffle_program = "teen-raffle-#{Date.current.strftime("%m-%Y")}" %>
+<%= render "raffles/raffle_modal", id: "join_teen_raffle", program: raffle_program %>
+
+<% if current_user.teenager? && Date.current.month == 9 %>
   <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
 
   <% current_month = Date.current.strftime("%B") %>
   <% next_month = Date.current.next_month.strftime("%B") %>
 
-  <%= link_to already_joined ? "javascript:void(0);" : new_raffle_path(program: raffle_program), class: "w-full no-underline text-inherit #{"cursor-default" if already_joined}" do %>
+  <% @raffle_card = capture do %>
     <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/38be05dd4accefb1708c06ba6f99401b4265e7a1_image.png')">
       <div class="flex gap-2 items-center mb-4">
         <span>🎟️</span>
@@ -21,7 +23,7 @@
           <% if already_joined %>
             <span class="italic block mt-2 text-sm">
               You have already joined the raffle this month. Remember to check
-              back in <%= next_month %> for the next Raffle!
+              back in <%= next_month %> for the next raffle!
             </span>
           <% end %>
         </p>
@@ -30,5 +32,13 @@
         </div>
       </div>
     </div>
+  <% end %>
+
+  <% if already_joined %>
+    <%= @raffle_card %>
+  <% else %>
+    <%= link_to new_raffle_path(program: raffle_program), class: "w-full no-underline text-inherit", data: { behavior: "modal_trigger", modal: "join_teen_raffle" } do %>
+      <%= @raffle_card %>
+    <% end %>
   <% end %>
 <% end %>

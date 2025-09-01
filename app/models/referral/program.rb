@@ -10,7 +10,7 @@
 #  login_header_text      :string
 #  login_text_color       :string
 #  name                   :string           not null
-#  show_explore_hack_club :boolean          default(FALSE), not null
+#  show_explore_hack_club :boolean          default(FALSE)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #
@@ -20,6 +20,7 @@ module Referral
 
     validates :name, presence: true
     validates :show_explore_hack_club, inclusion: { in: [true, false] }
+    self.ignored_columns += ["show_explore_hack_club"]
 
     has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
     has_many :users, -> { distinct }, through: :attributions, source: :user
@@ -27,6 +28,12 @@ module Referral
 
     def background_image_css
       background_image_url.present? ? "url('#{background_image_url}')" : nil
+    end
+
+    def new_users
+      attributions.joins(:user)
+                  .where("EXTRACT(EPOCH FROM (referral_attributions.created_at - users.created_at)) < 60*60")
+                  .map(&:user)
     end
 
   end

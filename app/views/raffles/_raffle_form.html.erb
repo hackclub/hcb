@@ -1,0 +1,14 @@
+<%# locals: (program:) %>
+
+<%= form_with(url: raffles_path, html: { onsubmit: "location.reload();", action: "" }) do |f| %>
+  <% if program %>
+    <%= f.hidden_field :program, value: program %>
+  <% else %>
+    <%= f.label :program do %>
+      Program
+      <%= f.text_field :program %>
+    <% end %>
+  <% end %>
+
+  <%= f.submit "Join", class: "btn mt-4" %>
+<% end %>

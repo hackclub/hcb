@@ -147,6 +147,13 @@
   }
 }
 
+.promo-robotics-raffle {
+  background-color: #0066b3;
+  .card__banner--top {
+    background-color: #0066b3;
+  }
+}
+
 @property --gradient-angle {
   syntax: '<angle>';
   initial-value: 0deg;

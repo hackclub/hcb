@@ -5,7 +5,7 @@
 
   <div class="card flex flex-col items-start gap-2 p0">
     <div class="event_settings__banner">
-      <% if @event.background_image.attached? %>
+      <% if @event.background_image.persisted? %>
         <%= image_tag @event.background_image, height: 200, class: "banner__image" %>
       <% end %>
 
@@ -29,7 +29,7 @@
       <% end %>
 
       <div class="event_settings__banner--logo">
-        <% if @event.logo.attached? %>
+        <% if @event.logo.persisted? %>
           <%= image_tag @event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
         <% else %>
           <%= image_tag "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
@@ -150,7 +150,7 @@
         Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
         The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
       </p>
-      <% if @event.stripe_card_logo.attached? %>
+      <% if @event.stripe_card_logo.persisted? %>
         <%= image_tag @event.stripe_card_logo, width: 48 %>
       <% end %>
       <div class="field--fileupload mt2">
@@ -176,6 +176,9 @@
     </div>
     <p class="h5 muted mt0 mb1">
       Use this to enable auto-scheduled monthly announcements.
+      <% if @event.config.generate_monthly_announcement %>
+        If disabled, the current monthly announcement draft will be discarded.
+      <% end %>
     </p>
     <%= form.submit "Update", disabled: %>
   </div>
