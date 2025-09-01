@@ -10,7 +10,7 @@
 #  login_header_text      :string
 #  login_text_color       :string
 #  name                   :string           not null
-#  show_explore_hack_club :boolean          default(FALSE), not null
+#  show_explore_hack_club :boolean          default(FALSE)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #

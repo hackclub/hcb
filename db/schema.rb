@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_29_022524) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1816,7 +1816,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_29_022524) do
 
   create_table "referral_programs", force: :cascade do |t|
     t.string "name", null: false
-    t.boolean "show_explore_hack_club", default: false, null: false
+    t.boolean "show_explore_hack_club", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "background_image_url"
