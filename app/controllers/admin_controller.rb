@@ -170,7 +170,7 @@ class AdminController < ApplicationController
   def bank_fees
     @page = params[:page] || 1
     @per = params[:per] || 100
-    @event_id = params[:event_id].presence || nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -1151,7 +1151,7 @@ class AdminController < ApplicationController
   end
 
   def request_balance_export
-    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date] || nil).id)
+    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date].presence).id)
     flash[:success] = "We've emailed you an export of all HCB organizations' balances."
     redirect_back(fallback_location: root_path)
   end

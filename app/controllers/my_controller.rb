@@ -28,8 +28,8 @@ class MyController < ApplicationController
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
-    @status = params[:status].presence_in(%w[active inactive frozen canceled]) || nil
-    @type = params[:type].presence_in(%w[virtual physical]) || nil
+    @status = params[:status].presence_in(%w[active inactive frozen canceled])
+    @type = params[:type].presence_in(%w[virtual physical])
     @filter_applied = @status || @type
 
     @stripe_cards = case @status
