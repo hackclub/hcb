@@ -155,7 +155,7 @@ class ReceiptsController < ApplicationController
         receipt_upload_form_config[:show_author_img] = @show_author_img
       end
       streams.append(
-        turbo_stream.replace("#{@receiptable.id}_receipt_upload_form", partial: "receipts/form_v3", locals: receipt_upload_form_config)
+        turbo_stream.replace(@receiptable ? "#{@receiptable.id}_receipt_upload_form" : :receipt_upload_form, partial: "receipts/form_v3", locals: receipt_upload_form_config)
       )
     end
 
