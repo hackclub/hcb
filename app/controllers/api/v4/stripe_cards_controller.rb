@@ -28,7 +28,7 @@ module Api
       end
 
       def create
-        event = Event.find(params[:card][:organization_id])
+        event = Event.find_by_public_id(params[:card][:organization_id]) || Event.friendly.find(params[:card][:organization_id])
         authorize event, :create_stripe_card?, policy_class: EventPolicy
 
         card = params.require(:card).permit(
