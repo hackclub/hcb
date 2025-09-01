@@ -75,7 +75,7 @@ RSpec.describe StripeCardsController do
         :login,
         user:,
         authenticated_with_email: true,
-        initial_login: user_session.initial_login
+        is_reauthentication: true
       )
       login.update!(user_session:)
 

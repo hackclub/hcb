@@ -12,11 +12,11 @@ module Column
       if type == "ach.incoming_transfer.scheduled"
         handle_ach_incoming_transfer_scheduled
       elsif type == "ach.incoming_transfer.settled"
-        handle_as_raw_pending_column_transaction
+        handle_as_raw_pending_column_transaction("ach.incoming_transfer.settled")
       elsif type == "wire.incoming_transfer.completed"
-        handle_as_raw_pending_column_transaction
+        handle_as_raw_pending_column_transaction("wire.incoming_transfer.completed")
       elsif type == "swift.incoming_transfer.completed"
-        handle_as_raw_pending_column_transaction
+        handle_as_raw_pending_column_transaction("swift.incoming_transfer.completed")
       elsif type == "ach.outgoing_transfer.returned"
         handle_ach_outgoing_transfer_returned
       elsif type == "check.outgoing_debit.settled"
@@ -56,15 +56,16 @@ module Column
       # at this point, the ACH is approved!
     end
 
-    def handle_as_raw_pending_column_transaction(column_event_type:)
+    def handle_as_raw_pending_column_transaction(column_event_type)
       account_number = AccountNumber.find_by(column_id: @object[:account_number_id])
       # we only create RawPendingColumnTransaction for transactions to
       # event-specific account numbers.
       return if account_number.nil?
 
       RawPendingColumnTransaction.create!(
-        amount_cents: @object["available_amount"],
-        date_posted: @object["effective_at_utc"],
+        column_id: @object[:id],
+        amount_cents: @object[:amount],
+        date_posted: Date.today,
         column_transaction: @object,
         column_event_type:
       )

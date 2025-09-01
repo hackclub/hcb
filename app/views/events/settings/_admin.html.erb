@@ -86,6 +86,9 @@
           Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(@event), method: :post %>
         <% } %>
         <%= form.collection_select :point_of_contact_id, User.admin.or(User.where(id: @event.point_of_contact_id)).order(:email), :id, :email, {}, { disabled: } %>
+        <% if event.point_of_contact_history.any? %>
+          (Previously <%= event.point_of_contact_history.map(&:email).to_sentence %>)
+        <% end %>
       </div>
 
       <div class="field field--checkbox">
@@ -200,7 +203,7 @@
   <% end %>
 
   <% admin_tool do %>
-    <%= render "comments/list", comments: @event.comments %>
+    <%= render "comments/list", comments: @event.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @event, admin_only: true %>
   <% end %>
 

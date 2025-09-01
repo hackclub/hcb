@@ -32,6 +32,22 @@ RSpec.describe UsersController do
         expect(new_session.expiration_at).to eq(1.hour.from_now) # make sure we capped the session length
       end
     end
+
+    it "allows admins to impersonate locked accounts" do
+      admin_user = create(:user, :make_admin)
+      impersonated_user = create(:user, full_name: "Impersonated User")
+      impersonated_user.lock!
+
+      initial_session = sign_in(admin_user)
+
+      post(:impersonate, params: { id: impersonated_user.id })
+      expect(response).to redirect_to(root_path)
+      expect(flash[:info]).to eq("You're now impersonating Impersonated User.")
+
+      new_session = current_session!
+      expect(new_session.user_id).to eq(impersonated_user.id)
+      expect(new_session.impersonated_by_id).to eq(admin_user.id)
+    end
   end
 
   describe "#update" do

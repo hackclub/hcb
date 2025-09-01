@@ -24,7 +24,7 @@ class DocumentsController < ApplicationController
   def new
     # documents whose event_id is nil is shared across
     # all events
-    @document = Document.new(event: @event || nil)
+    @document = Document.new(event: @event.presence)
     authorize @document
   end
 

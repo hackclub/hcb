@@ -47,7 +47,7 @@ RSpec.describe UserSession, type: :model do
         user = create(:user)
         Flipper.enable(:sudo_mode_2015_07_21, user)
         user_session = create(:user_session, user:)
-        initial_login = create(
+        _initial_login = create(
           :login,
           user:,
           user_session:,
@@ -60,7 +60,7 @@ RSpec.describe UserSession, type: :model do
 
         _login = create(
           :login,
-          initial_login:,
+          is_reauthentication: true,
           user:,
           user_session:,
           aasm_state: "complete",
@@ -88,11 +88,11 @@ RSpec.describe UserSession, type: :model do
       initial_login.update!(user_session:)
 
       travel(1.hour)
-      reauth1 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth1 = create(:login, user: user_session.user, authenticated_with_email: true, is_reauthentication: true)
       reauth1.update!(user_session:)
 
       travel(1.hour)
-      reauth2 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth2 = create(:login, user: user_session.user, authenticated_with_email: true, is_reauthentication: true)
       reauth2.update!(user_session:)
 
       expect(user_session.last_reauthenticated_at).to eq(reauth2.created_at)

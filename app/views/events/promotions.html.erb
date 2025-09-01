@@ -2,8 +2,6 @@
 <% page_md %>
 <%= render "events/nav", selected: :promotions %>
 
-<% @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && organizer_signed_in? && !@event.demo_mode? && @event.plan.eligible_for_perks? %>
-
 <h1>
   Promotions &amp; perks
 </h1>
@@ -15,8 +13,18 @@
         <span class="flex-grow">Jukebox</span>
         <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
       </h3>
-      <% if (!@perks_available || !@event.organized_by_teenagers? || @event.users.count { |user| user.teenager? && user.active? } < 10) %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 10 active teenagers">
+      <% if !@event.plan.eligible_for_perks? %>
+        <% jukebox_ineligible_reason = "Perks are not available for HQ organizations" %>
+      <% elsif !@perks_available %>
+        <% jukebox_ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
+      <% elsif !@event.organized_by_teenagers? %>
+        <% jukebox_ineligible_reason = "Organization must have teen-led tag (reach out to your POC regarding this)" %>
+      <% elsif @event.users.count { |user| user.teenager? && user.active? } < 10 %>
+        <% jukebox_ineligible_reason = "Organization must have 10 or more active teens" %>
+      <% end %>
+
+      <% if jukebox_ineligible_reason %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= jukebox_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
@@ -38,22 +46,57 @@
   </div>
 </div>
 
-<% if @event.robotics_team? %>
-  <div class="card pb0 mb3 promo-robotics" id="bin">
-    <div class="card__banner card__banner--top flex justify-between items-center">
-      <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
-        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
-        Fee Waiver
-      </h3>
+<div class="card pb0 mb3 promo-robotics" id="robotics-fee-waiver">
+  <div class="card__banner card__banner--top flex justify-between items-center">
+    <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
+      Fee Waiver
+    </h3>
+    <% if (!@perks_available || !@event.organized_by_teenagers? || @event.users.count { |user| user.teenager? && user.active? } < 5) %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% else %>
       <%= link_to "Apply",
         @perks_available ? fillout_form("8NZy8a2ui9us") : root_path,
         class: "btn",
         target: :_blank %>
+    <% end %>
+  </div>
+  <h3 class="mb0 mt0">Raise some money this season with zero fees on HCB!</h3>
+  <p>
+    Are you a teen-led robotics team? We’d love to waive all of your HCB fees till September 30th! Have 5 active teens on your HCB account, and we’ll waive all fees!
+  </p>
+</div>
+
+<% if Date.current.month < 10 %>
+  <div class="mb3 rounded-xl">
+    <div class="card pb0" id="robotics-printer-raffle">
+      <div class="card__banner card__banner--top flex justify-between items-center promo-robotics-raffle">
+        <h3 class="h1 py-4 my0 flex items-center smoke justify-center">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7eb839cffb744ac3d23d6980945e3dac0903e9d8_drukarka-3d-bambu-lab-a1-578982107-removebg-preview.png" height="72px" class="mr2">
+          3D Printer Raffle
+        </h3>
+        <% if @event.robotics_team? && @event.organized_by_teenagers? %>
+          <span class="btn disabled bg-clip-padding">Entered</span>
+        <% else %>
+          <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a teen-led organization and robotics team">
+            <span class="btn disabled bg-clip-padding">Ineligible</span>
+          </div>
+        <% end %>
+      </div>
+
+      <p>
+        Is your organization a high-school robotics team? Get an entry into a raffle for a Bambu Lab A1 from now until September 30th for each active teenager in your organization!
+        <% if !(@event.robotics_team? && @event.organized_by_teenagers?) %>
+          Are you a high-school robotics team, but it says you're ineligible?
+          Please email us at <%= mail_to "hcb@hackclub.com" %> so we can update our records.
+        <% end %>
+      </p>
+      <section class="card__banner card__darker secondary border-top italic">
+        You currently have <%= number_to_human(@event.users.count { |user| user.teenager? && user.active? }) %> active teenagers in your organization!
+      </section>
     </div>
-    <h3 class="mb0 mt0">Raise some money this off-season with zero fees on HCB!</h3>
-    <p>
-      Are you a teen-led robotics team? We’d love to waive all of your HCB fees till August 31st! Spend 5 minutes inviting teens to your HCB account, and we’ll waive fees!
-    </p>
   </div>
 <% end %>
 

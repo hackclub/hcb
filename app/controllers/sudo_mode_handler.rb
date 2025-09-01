@@ -43,7 +43,12 @@ class SudoModeHandler
       return false
     end
 
-    login = Login.incomplete.active.find_by_hashid(sudo_params.login_id)
+    login =
+      Login
+      .incomplete
+      .active
+      .reauthentication
+      .find_by_hashid(sudo_params.login_id)
 
     # If the login doesn't exist, was completed, or has expired, treat this as a
     # new request
@@ -183,12 +188,7 @@ class SudoModeHandler
 
     return existing if existing
 
-    raise("Session does not have an initial login") unless current_session.initial_login
-
-    Login.create!(
-      user: current_user,
-      initial_login: current_session.initial_login
-    )
+    Login.create!(user: current_user, is_reauthentication: true)
   end
 
   def form_locals

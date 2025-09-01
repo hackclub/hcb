@@ -14,4 +14,8 @@ class AnnouncementMailerPreview < ActionMailer::Preview
     AnnouncementMailer.with(announcement: Announcement.monthly.last).two_day_warning
   end
 
+  def canceled
+    AnnouncementMailer.with(announcement: Announcement.monthly.last).canceled
+  end
+
 end
