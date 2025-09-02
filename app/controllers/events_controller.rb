@@ -924,6 +924,18 @@ class EventsController < ApplicationController
     authorize @event
 
     @statement_of_activity = Event::StatementOfActivity.new(@event, start_date_param: params[:start], end_date_param: params[:end])
+
+    respond_to do |format|
+      format.html
+      format.xlsx do
+        send_data(
+          @statement_of_activity.xlsx,
+          filename: "#{@event.name} - Statement of Activity.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: "attachment"
+        )
+      end
+    end
   end
 
   def termination
