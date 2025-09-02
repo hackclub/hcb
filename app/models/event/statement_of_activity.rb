@@ -89,11 +89,12 @@ class Event
       transactions_by_category.to_a.each do |category, transactions|
         category_name = category&.label || "Uncategorized"
         category_total = category_totals[category&.slug] / 100.0
-        write_row.call(category_name, category_total, format: bold)
 
         transactions.each do |transaction|
           write_row.call(transaction.local_hcb_code.memo, transaction.amount_cents / 100.0, level: 1)
         end
+
+        write_row.call(category_name, category_total, format: bold)
       end
 
       workbook.close
