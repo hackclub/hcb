@@ -45,7 +45,7 @@ export function Guide() {
             paddingLeft: '3px',
             paddingRight: '3px',
             color: 'black',
-            border: 'none'
+            border: 'none',
           }}
         >
           @organization
