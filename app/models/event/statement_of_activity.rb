@@ -40,6 +40,14 @@ class Event
       end
     end
 
+    memo_wise def transactions_by_category
+      transactions.includes(:category, :local_hcb_code).group_by(&:category).sort_by do |category, _transactions|
+        next Float::INFINITY if category.nil? # Put the "Uncategorized" category at the end
+
+        category_totals[category.slug] # I'm using SQL calculated totals since it is faster than Array's sum(&:amount_cents)
+      end.to_h
+    end
+
     memo_wise def category_totals
       transactions.includes(:category).group("category.slug").sum(:amount_cents)
     end
@@ -54,6 +62,42 @@ class Event
 
     memo_wise def total_expense
       transactions.where("amount_cents < 0").sum(:amount_cents)
+    end
+
+    memo_wise def xlsx
+      io = StringIO.new
+      workbook = WriteXLSX.new(io)
+
+      bold = workbook.add_format(bold: 1)
+
+      worksheet = workbook.add_worksheet('Statement of Activity')
+      subject_name = @event_group&.name || @event.name
+      worksheet.write("A1", "#{subject_name}'s Statement of Activity", bold)
+
+      current_row = 2
+      write_row = ->(*column_values, level: nil, format: nil) do
+        worksheet.write_row(current_row, 0, column_values, format)
+
+        if level
+          # Syntax: set_row(row, height, format, hidden, level, collapsed)
+          worksheet.set_row(current_row, nil, nil, 0, level)
+        end
+
+        current_row += 1
+      end
+
+      transactions_by_category.to_a.each do |category, transactions|
+        category_name = category&.label || "Uncategorized"
+        category_total = category_totals[category&.slug] / 100.0
+        write_row.call(category_name, category_total, format: bold)
+
+        transactions.each do |transaction|
+          write_row.call(transaction.local_hcb_code.memo, transaction.amount_cents / 100.0, level: 1)
+        end
+      end
+
+      workbook.close
+      io.string
     end
 
     private
