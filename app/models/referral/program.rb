@@ -18,7 +18,6 @@ module Referral
     include Hashid::Rails
 
     validates :name, presence: true
-    self.ignored_columns += ["show_explore_hack_club"]
 
     has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
     has_many :users, -> { distinct }, through: :attributions, source: :user
