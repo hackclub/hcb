@@ -61,6 +61,8 @@ class WiseTransfer < ApplicationRecord
 
   has_one :canonical_pending_transaction
 
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
+
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
 
@@ -74,10 +76,12 @@ class WiseTransfer < ApplicationRecord
   WISE_ID_FORMAT = /\A\d+\z/
   before_validation(:normalize_wise_id)
   validates(:wise_id, format: { with: WISE_ID_FORMAT, message: "is not a valid Wise ID" }, allow_nil: true)
+  validates(:wise_id, presence: true, if: :processed?)
 
   WISE_RECIPIENT_ID_FORMAT = /\A[\h-]{36}\z/
   before_validation(:normalize_wise_recipient_id)
   validates(:wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_nil: true)
+  validates(:wise_recipient_id, presence: true, if: :processed?)
 
   after_create do
     generate_quote!
@@ -136,6 +140,10 @@ class WiseTransfer < ApplicationRecord
         canonical_pending_transaction.decline!
       end
     end
+  end
+
+  def processed?
+    sent? || deposited?
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }

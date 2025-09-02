@@ -81,5 +81,5 @@
 <%= paginate @announcements %>
 
 <% if organizer_signed_in? %>
-  <%= render "announcements/announcement_modal" %>
+  <%= render "announcements/announcement_modal", announcement: @announcement %>
 <% end %>

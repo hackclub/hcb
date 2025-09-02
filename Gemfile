@@ -73,6 +73,8 @@ gem "business_time"
 gem "poppler" # PDF parsing
 gem "wicked_pdf" # HTML to PDF conversion
 
+gem "write_xlsx" # Export Excel files
+gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
@@ -95,7 +97,7 @@ gem "grape-entity" # For Grape::Entity ( https://github.com/ruby-grape/grape-ent
 gem "grape-kaminari"
 gem "grape-route-helpers"
 gem "grape-swagger"
-gem "grape-swagger-entity", "~> 0.6"
+gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
