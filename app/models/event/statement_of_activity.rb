@@ -40,7 +40,7 @@ class Event
       end
     end
 
-    memo_wise def transactions_by_category
+    memo_wise def category_totals
       transactions.includes(:category).group("category.slug").sum(:amount_cents)
     end
 

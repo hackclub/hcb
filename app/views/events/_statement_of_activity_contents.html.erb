@@ -53,14 +53,14 @@
   </tr>
   </thead>
   <tbody>
-  <% if statement_of_activity.transactions_by_category.empty? %>
+  <% if statement_of_activity.category_totals.empty? %>
     <tr>
       <td colspan="2" class="text-center p-14">
         There were no transactions in this date range.
       </td>
     </tr>
   <% else %>
-    <% statement_of_activity.transactions_by_category.each do |category_slug, amount_cents_sum| %>
+    <% statement_of_activity.category_totals.each do |category_slug, amount_cents_sum| %>
       <% category = TransactionCategory::Definition::ALL[category_slug] %>
       <tr>
         <td title="<%= category&.slug %>"><%= category&.label || "Uncategorized" %></td>
