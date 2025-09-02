@@ -74,6 +74,8 @@ class Event
       subject_name = @event_group&.name || @event.name
       worksheet.write("A1", "#{subject_name}'s Statement of Activity", bold)
 
+      worksheet.set_column("A:A", 40) # Set first column width to 40
+
       current_row = 2
       write_row = ->(*column_values, level: nil, format: nil) do
         worksheet.write_row(current_row, 0, column_values, format)
