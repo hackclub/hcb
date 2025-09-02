@@ -100,9 +100,9 @@ class Event
 
       # Header row for transaction list
       if @event_group.present?
-        write_row.call("Transaction Memo", "Amount", "Organization", format: bold)
+        write_row.call("Transaction Memo", "Amount", "Organization", "URL", format: bold)
       else
-        write_row.call("Transaction Memo", "Amount", format: bold)
+        write_row.call("Transaction Memo", "Amount", "URL", format: bold)
       end
 
       transactions_by_category.to_a.each do |category, transactions|
@@ -110,10 +110,13 @@ class Event
         category_total = category_totals[category&.slug] / 100.0
 
         transactions.each do |transaction|
+          memo = transaction.memo
+          amount_cents = transaction.amount_cents / 100.0
+          url = Rails.application.routes.url_helpers.url_for(transaction.local_hcb_code)
           if @event_group.present?
-            write_row.call(transaction.local_hcb_code.memo, transaction.amount_cents / 100.0, transaction.event.name, level: 1)
+            write_row.call(memo, amount_cents, transaction.event.name, url, level: 1)
           else
-            write_row.call(transaction.local_hcb_code.memo, transaction.amount_cents / 100.0, level: 1)
+            write_row.call(memo, amount_cents, url, level: 1)
           end
         end
 
