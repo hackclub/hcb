@@ -307,6 +307,9 @@ Rails.application.routes.draw do
         get("events/:event_id", as: :event, to: "event_groups#event")
         patch("events/:event_id", to: "event_groups#update_event")
       end
+      member do
+        get(:statement_of_activity)
+      end
       resources(:event_group_memberships, path: "memberships", only: [:destroy])
     end
   end
