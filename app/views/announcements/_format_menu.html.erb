@@ -1,3 +1,5 @@
+<%# locals: (event:) %>
+
 <div class="flex items-center gap-2">
   <div id="format-menus"></div>
   <div data-controller="menu" data-menu-append-to-value="#format-menus">
@@ -66,7 +68,7 @@
     </button>
 
     <div data-menu-target="content" class="menu__content menu__content--compact">
-      <% if @event.donation_goal.present? %>
+      <% if event.donation_goal.present? %>
         <button data-action="tiptap#donationGoal" type="button" class="block border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md">Donation Goal</button>
       <% end %>
       <button data-action="tiptap#hcbCode" type="button" class="block border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md">Transaction</button>

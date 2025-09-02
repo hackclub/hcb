@@ -26,8 +26,7 @@ class AnnouncementMailer < ApplicationMailer
     @announcement = params[:announcement]
     @event = @announcement.event
 
-    @emails = @event.managers.map(&:email_address_with_name)
-    @emails << @event.config.contact_email if @event.config.contact_email.present?
+    @emails = @event.organizer_contact_emails(only_managers: true)
 
     @scheduled_for = Date.today.next_month.beginning_of_month
   end
