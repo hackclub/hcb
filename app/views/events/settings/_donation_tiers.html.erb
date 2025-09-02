@@ -1,5 +1,7 @@
 <%# locals: (event:, frame:) %>
 
+<% disabled = !policy(event).update? %>
+
 <% if frame %>
   <div class="menu__divider m-0 my-8"></div>
 <% end %>
