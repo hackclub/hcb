@@ -41,7 +41,7 @@ class Event
     end
 
     memo_wise def transactions_by_category
-      transactions.includes(:category, :local_hcb_code).group_by(&:category).sort_by do |category, _transactions|
+      transactions.includes(:category, :local_hcb_code, :event).group_by(&:category).sort_by do |category, _transactions|
         next Float::INFINITY if category.nil? # Put the "Uncategorized" category at the end
 
         category_totals[category.slug] # I'm using SQL calculated totals since it is faster than Array's sum(&:amount_cents)
@@ -88,12 +88,33 @@ class Event
         current_row += 1
       end
 
+      if @event_group.present?
+        write_row.call("Included organizations:", format: bold)
+        @event_group.events.each do |event|
+          write_row.call(event.name, level: 1)
+        end
+        write_row.call("Total organization count:", @event_group.events.count)
+
+        current_row += 2 # Give some space before the transaction list
+      end
+
+      # Header row for transaction list
+      if @event_group.present?
+        write_row.call("Transaction Memo", "Amount", "Organization", format: bold)
+      else
+        write_row.call("Transaction Memo", "Amount", format: bold)
+      end
+
       transactions_by_category.to_a.each do |category, transactions|
         category_name = category&.label || "Uncategorized"
         category_total = category_totals[category&.slug] / 100.0
 
         transactions.each do |transaction|
-          write_row.call(transaction.local_hcb_code.memo, transaction.amount_cents / 100.0, level: 1)
+          if @event_group.present?
+            write_row.call(transaction.local_hcb_code.memo, transaction.amount_cents / 100.0, transaction.event.name, level: 1)
+          else
+            write_row.call(transaction.local_hcb_code.memo, transaction.amount_cents / 100.0, level: 1)
+          end
         end
 
         write_row.call(category_name, category_total, format: bold)

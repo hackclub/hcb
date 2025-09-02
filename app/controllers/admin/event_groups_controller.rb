@@ -46,7 +46,7 @@ module Admin
         format.xlsx do
           send_data(
             @statement_of_activity.xlsx,
-            filename: "#{@event_group.name} - Statement of Activity.xlsx",
+            filename: "#{@event_group.name} Event Group - Statement of Activity.xlsx",
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             disposition: "attachment"
           )
