@@ -70,7 +70,7 @@ class Event
 
       bold = workbook.add_format(bold: 1)
 
-      worksheet = workbook.add_worksheet('Statement of Activity')
+      worksheet = workbook.add_worksheet("Statement of Activity")
       subject_name = @event_group&.name || @event.name
       worksheet.write("A1", "#{subject_name}'s Statement of Activity", bold)
 
