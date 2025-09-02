@@ -65,6 +65,9 @@ class CardGrant
 
       event :mark_fraudulent do
         transitions from: :submitted, to: :fraudulent
+        after do
+          PreAuthorizationMailer.with(pre_authorization: self).notify_fraudulent.deliver_later
+        end
       end
 
       event :mark_rejected do

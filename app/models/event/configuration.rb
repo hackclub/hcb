@@ -29,13 +29,13 @@ class Event
     normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
     validates :subevent_plan, inclusion: { in: -> { Event::Plan.available_plans.map(&:name) } }, allow_blank: true
 
-    after_create :set_defaults
+    before_create :set_defaults
     after_save :create_or_destroy_monthly_announcement
 
     private
 
     def set_defaults
-      self.generate_monthly_announcement = event.is_public unless self.generate_monthly_announcement.present?
+      self.generate_monthly_announcement = event.is_public if self.generate_monthly_announcement.nil?
     end
 
     def create_or_destroy_monthly_announcement
