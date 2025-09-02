@@ -29,7 +29,13 @@ module Api
           ISO3166::Country.new(organization.country)&.common_name
         end
         expose :continent do |organization|
-          ISO3166::Country.new(organization.country)&.continent
+          continent = ISO3166::Country.new(organization.country)&.continent
+          case continent
+          when "Australia"
+            "Oceania"
+          else
+            continent
+          end
         end
       end
 
