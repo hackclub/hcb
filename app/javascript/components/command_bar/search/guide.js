@@ -31,7 +31,7 @@ export function Guide() {
             paddingRight: '3px',
             marginRight: '1.5px',
             color: 'black',
-            border: 'none'
+            border: 'none',
           }}
         >
           @transaction
