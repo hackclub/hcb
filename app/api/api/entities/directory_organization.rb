@@ -30,6 +30,7 @@ module Api
         end
         expose :continent do |organization|
           continent = ISO3166::Country.new(organization.country)&.continent
+          # https://github.com/countries/countries/issues/700
           case continent
           when "Australia"
             "Oceania"
