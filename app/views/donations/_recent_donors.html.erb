@@ -1,0 +1,13 @@
+<% unless @recent_donors.empty? %>
+  <h2>Recent donors</h2>
+
+  <div class="flex gap-2 flex-col sm:flex-row">
+    <% @recent_donors.each do |donor| %>
+      <div class="card mt-3 flex flex-col flex-1 gap-1">
+        <p class="my-0 homepage-eyebrow"><%= time_ago_in_words(donor.updated_at) %> ago</p>
+        <h4 class="my-0"><%= donor.name %></h4>
+        <p class="my-0"><%= number_to_currency(donor.amount) %></p>
+      </div>
+    <% end %>
+  </div>
+<% end %>
