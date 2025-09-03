@@ -245,61 +245,60 @@ export default class extends Controller {
   }
 
   #shiftDay(d, n) {
-    const x = new Date(d);
-    x.setDate(x.getDate() + n);
-    return this.#clampDay(x);
+    const x = new Date(d)
+    x.setDate(x.getDate() + n)
+    return this.#clampDay(x)
   }
 
   #paintHover() {
-    if (!this.$dayButtons) return;
+    if (!this.$dayButtons) return
 
-    const inR = day => this.#inRange(day);
+    const inR = day => this.#inRange(day)
 
     for (const btn of this.$dayButtons) {
-      const day = btn.__day;
-      const isStart = this.#isSameDay(day, this.start);
-      const isEnd = this.#isSameDay(day, this.end);
-      const on = inR(day);
+      const day = btn.__day
+      const isStart = this.#isSameDay(day, this.start)
+      const isEnd = this.#isSameDay(day, this.end)
+      const on = inR(day)
 
-      btn.classList.toggle('bg-info', !!on);
-      btn.classList.toggle('text-white', !!on);
-      btn.classList.toggle('bg-transparent', !on);
+      btn.classList.toggle('bg-info', !!on)
+      btn.classList.toggle('text-white', !!on)
+      btn.classList.toggle('bg-transparent', !on)
 
       btn.style.borderRadius =
         btn.style.borderTopLeftRadius =
         btn.style.borderTopRightRadius =
         btn.style.borderBottomLeftRadius =
-        btn.style.borderBottomRightRadius = '';
+        btn.style.borderBottomRightRadius =
+          ''
 
       if (on) {
-        const col = day.getDay();
-        const left = col > 0 && inR(this.#shiftDay(day, -1));
-        const right = col < 6 && inR(this.#shiftDay(day, +1));
-        const up = inR(this.#shiftDay(day, -7));
-        const down = inR(this.#shiftDay(day, +7));
+        const col = day.getDay()
+        const left = col > 0 && inR(this.#shiftDay(day, -1))
+        const right = col < 6 && inR(this.#shiftDay(day, +1))
+        const up = inR(this.#shiftDay(day, -7))
+        const down = inR(this.#shiftDay(day, +7))
 
-        const r = '10px';
-        const tl = !left && !up;
-        const tr = !right && !up;
-        const bl = !left && !down;
-        const br = !right && !down;
+        const r = '10px'
+        const tl = !left && !up
+        const tr = !right && !up
+        const bl = !left && !down
+        const br = !right && !down
 
         if (tl && tr && bl && br) {
-          btn.style.borderRadius = r;
+          btn.style.borderRadius = r
         } else {
-          btn.style.borderTopLeftRadius = tl ? r : '0px';
-          btn.style.borderTopRightRadius = tr ? r : '0px';
-          btn.style.borderBottomLeftRadius = bl ? r : '0px';
-          btn.style.borderBottomRightRadius = br ? r : '0px';
+          btn.style.borderTopLeftRadius = tl ? r : '0px'
+          btn.style.borderTopRightRadius = tr ? r : '0px'
+          btn.style.borderBottomLeftRadius = bl ? r : '0px'
+          btn.style.borderBottomRightRadius = br ? r : '0px'
         }
       }
 
-
-      const span = btn.firstElementChild;
-      if (span) span.classList.toggle('font-semibold', !!(isStart || isEnd));
+      const span = btn.firstElementChild
+      if (span) span.classList.toggle('font-semibold', !!(isStart || isEnd))
     }
   }
-
 
   #pickDay(day) {
     const prevViewMonth = this.view.getMonth()
