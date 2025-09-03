@@ -75,7 +75,7 @@
             <% end %>
             <div class="flex flex-col justify-between">
               <div class="flex alias-creation">
-                <% if account.g_suite_aliases.count < 30 && policy(al).create? %>
+                <% if account.g_suite_aliases.count < 30 && policy(account).create? %>
                   <div
                     class="pop success pointer tooltipped tooltipped--e line-height-0 m-2 alias-new"
                     aria-label="Create Alias">
