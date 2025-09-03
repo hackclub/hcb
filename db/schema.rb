@@ -933,6 +933,24 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
     t.index ["user_id", "event_id"], name: "index_event_follows_on_user_id_and_event_id", unique: true
   end
 
+  create_table "event_group_memberships", force: :cascade do |t|
+    t.bigint "event_group_id", null: false
+    t.bigint "event_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_group_id"], name: "index_event_group_memberships_on_event_group_id"
+    t.index ["event_id", "event_group_id"], name: "index_event_group_memberships_on_event_id_and_event_group_id", unique: true
+  end
+
+  create_table "event_groups", force: :cascade do |t|
+    t.citext "name", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_event_groups_on_name", unique: true
+    t.index ["user_id"], name: "index_event_groups_on_user_id"
+  end
+
   create_table "event_plans", force: :cascade do |t|
     t.string "aasm_state"
     t.bigint "event_id", null: false
@@ -1816,7 +1834,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
 
   create_table "referral_programs", force: :cascade do |t|
     t.string "name", null: false
-    t.boolean "show_explore_hack_club", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "background_image_url"
@@ -1869,11 +1886,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
     t.bigint "increase_check_id"
     t.bigint "ach_transfer_id"
     t.bigint "wire_id"
+    t.bigint "wise_transfer_id"
     t.index ["ach_transfer_id"], name: "index_reimbursement_payout_holdings_on_ach_transfer_id"
     t.index ["increase_check_id"], name: "index_reimbursement_payout_holdings_on_increase_check_id"
     t.index ["paypal_transfer_id"], name: "index_reimbursement_payout_holdings_on_paypal_transfer_id"
     t.index ["reimbursement_reports_id"], name: "index_reimbursement_payout_holdings_on_reimbursement_reports_id"
     t.index ["wire_id"], name: "index_reimbursement_payout_holdings_on_wire_id"
+    t.index ["wise_transfer_id"], name: "index_reimbursement_payout_holdings_on_wise_transfer_id"
   end
 
   create_table "reimbursement_reports", force: :cascade do |t|
@@ -1894,6 +1913,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
     t.integer "expense_number", default: 0, null: false
     t.datetime "deleted_at", precision: nil
     t.bigint "reviewer_id"
+    t.float "conversion_rate", default: 1.0, null: false
+    t.string "currency", default: "USD", null: false
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
@@ -2242,6 +2263,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_payout_method_wise_transfers", force: :cascade do |t|
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "bank_name"
+    t.integer "recipient_country"
+    t.text "recipient_information_ciphertext"
+    t.string "currency"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "wise_recipient_id"
+  end
+
   create_table "user_seen_at_histories", force: :cascade do |t|
     t.bigint "user_id"
     t.datetime "period_start_at", null: false
@@ -2483,6 +2519,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"
+  add_foreign_key "event_group_memberships", "event_groups"
+  add_foreign_key "event_group_memberships", "events"
+  add_foreign_key "event_groups", "users"
   add_foreign_key "event_plans", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"

@@ -59,7 +59,7 @@ module PendingTransactionEngine
             end
 
             if @revenue
-              cpts = cpts.where("canonical_pending_transactions.amount_cents >= 0")
+              cpts = cpts.where("canonical_pending_transactions.amount_cents > 0")
             end
 
             if @missing_receipts

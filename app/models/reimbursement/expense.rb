@@ -34,7 +34,7 @@ module Reimbursement
   class Expense < ApplicationRecord
     include ApplicationHelper
     belongs_to :report, inverse_of: :expenses, foreign_key: "reimbursement_report_id", touch: true
-    monetize :amount_cents
+    monetize :amount_cents, as: "amount", with_model_currency: :currency
     validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }
     attribute :expense_number, :integer
     has_one :expense_payout
@@ -46,6 +46,8 @@ module Reimbursement
     include Hashid::Rails
     has_paper_trail
     acts_as_paranoid
+
+    scope :to_sum, -> { where.not(type: Reimbursement::Expense::Fee.name) }
 
     include PublicIdentifiable
     set_public_id_prefix :rme
@@ -143,8 +145,10 @@ module Reimbursement
 
     # multiplier for value -> amount_cents
     def rate
-      100
+      Money.from_amount(1, currency).cents
     end
+
+    delegate :conversion_rate, to: :report
 
     def value_label
       "Amount"
@@ -157,6 +161,16 @@ module Reimbursement
     def is_standard?
       type.nil? || type == "Reimbursement::Expense"
     end
+
+    def is_fee?
+      type == "Reimbursement::Expense::Fee"
+    end
+
+    def is_mileage?
+      type == "Reimbursement::Expense::Mileage"
+    end
+
+    delegate :currency, to: :report
 
     def card_label
       return memo + " (#{render_money(amount_cents)})" if memo && !is_standard?
@@ -179,8 +193,14 @@ module Reimbursement
     end
 
     def valid_expense_type
-      unless type.nil? || [Reimbursement::Expense.name, Reimbursement::Expense::Mileage.name].include?(type)
+      unless type.nil? || [Reimbursement::Expense.name, Reimbursement::Expense::Mileage.name, Reimbursement::Expense::Fee.name].include?(type)
         errors.add(:type, "must be a valid expense type.")
+      end
+    end
+
+    before_validation do
+      if self.type.nil?
+        self.type = Reimbursement::Expense.name
       end
     end
 
