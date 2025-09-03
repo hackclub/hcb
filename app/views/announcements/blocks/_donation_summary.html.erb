@@ -1,7 +1,6 @@
 <%# locals: (donations: nil, total: 0, start_date:, end_date:, is_email: false, block: nil) %>
 
-<%= render "announcements/blocks/block_shell", block:, type: "donationSummary", is_email: do %>
-  <p><strong>Donation summary for <%= start_date.strftime("%B %e, %Y") %> - <%= end_date.strftime("%B %e, %Y") %></strong></p>
+<%= render "announcements/blocks/block_shell", block:, type: "donationSummary", is_email:, title: "Donation summary for #{start_date.strftime("%B %e, %Y")} - #{end_date.strftime("%B %e, %Y")}" do %>
   <% if block.empty? %>
     <p><%= block.announcement.event.name %> did not get any donations during this period.</p>
   <% else %>
