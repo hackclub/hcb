@@ -64,9 +64,9 @@ module UserService
           req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
           req.params[:email] = @user.email
         end
-  
+
         return nil if resp.body.strip == "[]"
-  
+
         JSON[resp.body][0]
       rescue => e
         Rails.error.report("Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops.", handled: false, severity: :error, context: "service")
