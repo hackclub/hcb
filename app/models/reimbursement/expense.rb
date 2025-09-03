@@ -198,5 +198,11 @@ module Reimbursement
       end
     end
 
+    before_validation do
+      if self.type.nil?
+        self.type = Reimbursement::Expense.name
+      end
+    end
+
   end
 end
