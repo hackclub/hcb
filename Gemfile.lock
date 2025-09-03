@@ -542,6 +542,7 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.4)
+    nkf (0.2.0)
     nokogiri (1.18.9)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
@@ -730,6 +731,7 @@ GEM
     ruby-vips (2.1.4)
       ffi (~> 1.12)
     ruby2_keywords (0.0.5)
+    rubyzip (2.4.1)
     safely_block (0.4.1)
     safety_net_attestation (0.4.0)
       jwt (~> 2.0)
@@ -861,6 +863,9 @@ GEM
       activesupport
       ostruct
     wkhtmltopdf-binary (0.12.6.8)
+    write_xlsx (1.12.1)
+      nkf
+      rubyzip (>= 1.0.0)
     xxhash (0.6.0)
     yard (0.9.37)
     yard-solargraph (0.1.0)
@@ -978,6 +983,7 @@ DEPENDENCIES
   rubocop
   rubocop-rails (~> 2.30)
   ruby-limiter
+  rubyzip (>= 2.3.0, < 3.0)
   safely_block
   sidekiq (~> 7.3.8)
   sidekiq-cron (~> 2.1)
@@ -1000,6 +1006,7 @@ DEPENDENCIES
   whitesimilarity
   wicked_pdf
   wkhtmltopdf-binary (= 0.12.6.8)
+  write_xlsx
   xxhash
   yellow_pages!
 

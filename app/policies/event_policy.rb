@@ -169,7 +169,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def donation_overview?
-    show? && record.approved? && record.plan.donations_enabled?
+    show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
   def invoices?
