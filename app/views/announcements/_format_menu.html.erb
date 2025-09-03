@@ -77,7 +77,7 @@
 
     <div data-menu-target="content" class="menu__content menu__content--compact text-sm">
       <% if event.donation_goal.present? %>
-        <button data-action="tiptap#donationGoal" type="button" class="block border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md">Donation Goal</button>
+        <button data-action="tiptap#donationGoal" type="button" class="menu__action">Donation Goal</button>
       <% end %>
 
       <button data-behavior="modal_trigger" data-modal="insert_hcb_code_modal" type="button" class="menu__action">Transaction</button>
