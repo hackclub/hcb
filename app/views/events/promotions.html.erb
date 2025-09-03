@@ -46,14 +46,25 @@
     </div>
   </div>
 
+
   <div class="card pb0 mb3 promo-robotics" id="robotics-fee-waiver">
     <div class="card__banner card__banner--top flex justify-between items-center">
       <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
         <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
         Fee Waiver
       </h3>
-      <% if (!@perks_available || @teen_users < 5) %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="Must have at least 5 active teenagers">
+      <% if !(@event.robotics_team? || @event.affiliations.robotics.any?) %>
+        <% fee_waiver_ineligible_reason = "Organization does not have a robotics affiliation or tag" %>
+      <% if !@event.plan.eligible_for_perks? %>
+        <% fee_waiver_ineligible_reason = "Perks are not available for HQ organizations" %>
+      <% elsif !@perks_available %>
+        <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
+      <% elsif @teen_users < 5 %>
+        <% fee_waiver_ineligible_reason = "Organization must have 5 or more active teens" %>
+      <% end %>
+      
+      <% if fee_waiver_ineligible_reason %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= fee_waiver_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
