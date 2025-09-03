@@ -58,7 +58,7 @@ module UserService
       begin
         @queue.shift
         conn = Faraday.new(url: "https://app.loops.so/")
-  
+
         resp = conn.send(:get) do |req|
           req.url("api/v1/contacts/find")
           req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
