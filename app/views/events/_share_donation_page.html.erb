@@ -1,9 +1,3 @@
-<% @event.is_public = true %>
-
-
-
-
-
 <%= pop_icon_to "share", "javascript:void(0)", data: { behavior: "modal_trigger", modal: "share_donation_page" } %>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="share_donation_page">
@@ -15,7 +9,7 @@
         <button id="link" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Link</button>
         <button id="qr" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">QR code</button>
         <% if @event.is_public? %>
-          <button id="donor_graph" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Donor graph</button>
+          <button id="donor_graph" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Donor&nbsp;graph</button>
         <% end %>
         <button id="embed" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Embed</button>
       </div>
@@ -25,7 +19,7 @@
       <%= react_component "donation_overview/PreviewLink", path: start_donation_donations_url(@event) %>
     </div>
     <div data-tabs-target="tab" id="qr">
-      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-wrap flex-col sm:flex-row gap-4">
         <div class="flex-1">
           <div class="bg-white rounded-2xl w-fit h-fit cursor-pointer border border-muted *:w-52 *:h-52 *:hidden" onclick="saveActiveQRCodeAsImage()" style="padding-top: 4.5px; padding-left: 4.5px;">
             <qr-code
@@ -68,21 +62,21 @@
           </div>
         </div>
         <div class="flex-1">
-          <div class="iconsGrid grid grid-cols-3 gap-2 w-fit *:h-14 *:bg-snow *:rounded-xl *:cursor-pointer">
-            <%= inline_icon "view-close", size: 56, class: "btn bg-muted p-2", onclick: "changeCode('blank')" %>
-            <%= inline_icon "bank-account", size: 56, class: "btn bg-muted p-2", onclick: "changeCode('icon')" %>
-            <%= inline_icon "support", size: 56, class: "btn bg-muted p-2", onclick: "changeCode('support')" %>
+          <div class="w-full iconsGrid grid grid-cols-5 sm:grid-cols-3 gap-2 w-fit *:bg-snow *:rounded-xl *:cursor-pointer">
+            <%= inline_icon "view-close", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('blank')" %>
+            <%= inline_icon "bank-account", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('icon')" %>
+            <%= inline_icon "support", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('support')" %>
             <% if @event.logo.attached? %>
-              <%= image_tag @event.logo, slot: "icon", class: "btn bg-muted p-2", onclick: "changeCode('logo')" %>
+              <%= image_tag @event.logo, slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('logo')" %>
             <% end %>
-            <%= image_tag "logo-production.svg", slot: "icon", class: "btn bg-muted p-2", onclick: "changeCode('bank')" %>
-            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "btn bg-muted p-2", onclick: "changeCode('bank-dark')" %>
+            <%= image_tag "logo-production.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('bank')" %>
+            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('bank-dark')" %>
           </div>
-          <button class="btn mt2" onclick="saveActiveQRCodeAsImage()" id="downloadButton">Download</button>
+          <button class="btn mt-2 w-full" onclick="saveActiveQRCodeAsImage()" id="downloadButton">Download</button>
         </div>
       </div>
     </div>
-    <div data-tabs-target="tab" id="donor_graph" class="flex gap-4">
+    <div data-tabs-target="tab" id="donor_graph" class="flex gap-4 flex-col sm:flex-row">
       <div class="flex-1">
         <p class="mt0">Use this image URL to show a donor graph on your website, GitHub repo, or anywhere in between.</p>
         <pre class="bg-gray-200 dark:bg-gray-700">https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
@@ -96,7 +90,7 @@
       </div>
 
       <div>
-        <img src="https://graph.hcb.hackclub.com/hq" style="width: 250px;height:auto" />
+        <img src="https://graph.hcb.hackclub.com/<%= @event.slug %>" style="width: 250px;height:auto" />
       </div>
     </div>
     <div data-tabs-target="tab" id="embed">
