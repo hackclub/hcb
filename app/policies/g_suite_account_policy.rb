@@ -26,7 +26,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def destroy?
-    admin_or_manager?
+    user.admin?
   end
 
   def reject?

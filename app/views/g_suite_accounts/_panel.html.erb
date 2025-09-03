@@ -64,7 +64,7 @@
                         <span><%= al.username %></span><span class="muted"><%= al.at_domain %></span>
                       </p>
                     </div>
-                    <%= pop_icon_to "view-close", g_suite_alias_path(id: al.id), data: { turbo_confirm: "Are you sure you would like to delete this alias?", turbo_method: :delete }, class: "pop error pointer alias-delete m-2 ml-0", size: home_action_size, disabled: !policy(account).destroy? %>
+                    <%= pop_icon_to "view-close", g_suite_alias_path(id: al.id), data: { turbo_confirm: "Are you sure you would like to delete this alias?", turbo_method: :delete }, class: "pop error pointer alias-delete m-2 ml-0", size: home_action_size, disabled: !policy(al).destroy? %>
                   </li>
                 <% end %>
               </ul>
@@ -75,7 +75,7 @@
             <% end %>
             <div class="flex flex-col justify-between">
               <div class="flex alias-creation">
-                <% if account.g_suite_aliases.count < 30 && policy(account).create? %>
+                <% if account.g_suite_aliases.count < 30 && policy(al).create? %>
                   <div
                     class="pop success pointer tooltipped tooltipped--e line-height-0 m-2 alias-new"
                     aria-label="Create Alias">
