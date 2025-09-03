@@ -2,7 +2,7 @@
 
 <% if is_email %>
   <div id="block_<%= block.id %>" class="<%= type %> relative card shadow-none border flex flex-col py-2 my-2">
-    <% if title %>
+    <% if title.present? %>
       <p class="my-0"><strong><%= title %></strong></p>
     <% end %>
     <%= yield %>
