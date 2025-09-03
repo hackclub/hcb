@@ -55,18 +55,23 @@ module UserService
     end
 
     def contact_details
-      @queue.shift
-      conn = Faraday.new(url: "https://app.loops.so/")
-
-      resp = conn.send(:get) do |req|
-        req.url("api/v1/contacts/find")
-        req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
-        req.params[:email] = @user.email
+      begin
+        @queue.shift
+        conn = Faraday.new(url: "https://app.loops.so/")
+  
+        resp = conn.send(:get) do |req|
+          req.url("api/v1/contacts/find")
+          req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
+          req.params[:email] = @user.email
+        end
+  
+        return nil if resp.body.strip == "[]"
+  
+        JSON[resp.body][0]
+      rescue Exception => e
+        Rails.error.report("Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops.", handled: false, severity: :error, context: "service")
+        raise e
       end
-
-      return nil if resp.body.strip == "[]"
-
-      JSON[resp.body][0]
     end
 
     def update(body:)
