@@ -244,44 +244,62 @@ export default class extends Controller {
     this.#paintHover()
   }
 
+  #shiftDay(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return this.#clampDay(x);
+  }
+
   #paintHover() {
-    if (!this.$dayButtons) return
+    if (!this.$dayButtons) return;
+
+    const inR = day => this.#inRange(day);
+
     for (const btn of this.$dayButtons) {
-      const day = btn.__day
-      const selectedStart = this.#isSameDay(day, this.start)
-      const selectedEnd = this.#isSameDay(day, this.end)
-      const between = this.#inRange(day)
+      const day = btn.__day;
+      const isStart = this.#isSameDay(day, this.start);
+      const isEnd = this.#isSameDay(day, this.end);
+      const on = inR(day);
 
-      btn.classList.toggle('bg-info', !!between)
-      btn.classList.toggle('text-white', !!between)
-      btn.classList.toggle('bg-transparent', !between)
+      btn.classList.toggle('bg-info', !!on);
+      btn.classList.toggle('text-white', !!on);
+      btn.classList.toggle('bg-transparent', !on);
 
-      // corner radii
-      btn.style.borderTopLeftRadius = selectedStart ? '500px' : '0px'
-      btn.style.borderBottomLeftRadius = selectedStart ? '500px' : '0px'
-      btn.style.borderTopRightRadius = selectedEnd ? '500px' : '0px'
-      btn.style.borderBottomRightRadius = selectedEnd ? '500px' : '0px'
+      btn.style.borderRadius =
+        btn.style.borderTopLeftRadius =
+        btn.style.borderTopRightRadius =
+        btn.style.borderBottomLeftRadius =
+        btn.style.borderBottomRightRadius = '';
 
-      if (day.getDay() == 0) {
-        btn.style.borderTopLeftRadius = '500px'
-        btn.style.borderBottomLeftRadius = '500px'
+      if (on) {
+        const col = day.getDay();
+        const left = col > 0 && inR(this.#shiftDay(day, -1));
+        const right = col < 6 && inR(this.#shiftDay(day, +1));
+        const up = inR(this.#shiftDay(day, -7));
+        const down = inR(this.#shiftDay(day, +7));
+
+        const r = '10px';
+        const tl = !left && !up;
+        const tr = !right && !up;
+        const bl = !left && !down;
+        const br = !right && !down;
+
+        if (tl && tr && bl && br) {
+          btn.style.borderRadius = r;
+        } else {
+          btn.style.borderTopLeftRadius = tl ? r : '0px';
+          btn.style.borderTopRightRadius = tr ? r : '0px';
+          btn.style.borderBottomLeftRadius = bl ? r : '0px';
+          btn.style.borderBottomRightRadius = br ? r : '0px';
+        }
       }
 
-      if (day.getDay() == 6) {
-        btn.style.borderTopRightRadius = '500px'
-        btn.style.borderBottomRightRadius = '500px'
-      }
 
-      // single-day range (start==end) → full circle
-      if (selectedStart && selectedEnd) {
-        btn.style.borderRadius = '500px'
-      }
-
-      const span = btn.firstElementChild
-      if (span)
-        span.classList.toggle('font-semibold', !!(selectedStart || selectedEnd))
+      const span = btn.firstElementChild;
+      if (span) span.classList.toggle('font-semibold', !!(isStart || isEnd));
     }
   }
+
 
   #pickDay(day) {
     const prevViewMonth = this.view.getMonth()
