@@ -262,6 +262,16 @@ export default class extends Controller {
       btn.style.borderTopRightRadius = selectedEnd ? '500px' : '0px'
       btn.style.borderBottomRightRadius = selectedEnd ? '500px' : '0px'
 
+      if (day.getDay() == 0) {
+        btn.style.borderTopLeftRadius = '500px'
+        btn.style.borderBottomLeftRadius = '500px'
+      }
+
+      if (day.getDay() == 6) {
+        btn.style.borderTopRightRadius = '500px'
+        btn.style.borderBottomRightRadius = '500px'
+      }
+
       // single-day range (start==end) → full circle
       if (selectedStart && selectedEnd) {
         btn.style.borderRadius = '500px'
