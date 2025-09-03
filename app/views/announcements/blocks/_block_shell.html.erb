@@ -10,13 +10,13 @@
       <div class="absolute top-2 right-2">
         <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
       </div>
-    <% else  %>
+    <% else %>
       <div class="flex justify-between items-center gap-5">
         <p class="my-0"><strong><%= title %></strong></p>
         <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
       </div>
-    <% end%>
-    
+    <% end %>
+
     <div class="flex flex-col">
       <%= yield %>
     </div>
