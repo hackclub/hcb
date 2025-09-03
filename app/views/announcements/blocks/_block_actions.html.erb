@@ -2,6 +2,8 @@
 
 <% unless is_email %>
   <div class="block-actions">
-    <%= pop_icon_to "history", refresh_announcements_block_path(block), data: { turbo_method: :post }, class: "absolute top-2 right-2 tooltipped", "aria-label": "Refresh this block with the latest data" %>
+    <%= button_to refresh_announcements_block_path(block), class: "pop cursor-pointer absolute top-2 right-2 tooltipped", "aria-label": "Refresh this block with the latest data" do %>
+      <%= inline_icon "history", size: 28 %>
+    <% end %>
   </div>
 <% end %>
