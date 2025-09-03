@@ -209,7 +209,7 @@ export default class extends Controller {
       const btn = document.createElement('button')
       btn.type = 'button'
       btn.setAttribute('aria-label', day.toDateString())
-      btn.className = `border-0 relative rounded-xl ${bg} ${text} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black`
+      btn.className = `border-0 relative ${bg} ${text} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black`
 
       btn.__day = this.#clampDay(day)
 
@@ -248,13 +248,24 @@ export default class extends Controller {
     if (!this.$dayButtons) return
     for (const btn of this.$dayButtons) {
       const day = btn.__day
-      const selectedStart = this.start && this.#isSameDay(day, this.start)
-      const selectedEnd = this.end && this.#isSameDay(day, this.end)
+      const selectedStart = this.#isSameDay(day, this.start)
+      const selectedEnd = this.#isSameDay(day, this.end)
       const between = this.#inRange(day)
 
       btn.classList.toggle('bg-info', !!between)
       btn.classList.toggle('text-white', !!between)
       btn.classList.toggle('bg-transparent', !between)
+
+      // corner radii
+      btn.style.borderTopLeftRadius = selectedStart ? '500px' : '0px'
+      btn.style.borderBottomLeftRadius = selectedStart ? '500px' : '0px'
+      btn.style.borderTopRightRadius = selectedEnd ? '500px' : '0px'
+      btn.style.borderBottomRightRadius = selectedEnd ? '500px' : '0px'
+
+      // single-day range (start==end) → full circle
+      if (selectedStart && selectedEnd) {
+        btn.style.borderRadius = '500px'
+      }
 
       const span = btn.firstElementChild
       if (span)
@@ -386,7 +397,7 @@ export default class extends Controller {
             ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="py-1">${d}</div>`).join('')}
           </div>
 
-          <div data-role="weeks" class="grid grid-cols-7 gap-1 py-2"></div>
+          <div data-role="weeks" class="grid grid-cols-7 gap-0 py-2"></div>
           <button type="submit" class="btn w-full">Filter...</button>
         </div>
       </div>
