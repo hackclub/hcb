@@ -1,5 +1,13 @@
 <% current_user ||= local_assigns[:p][:current_user] %>
 
-<%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
-  logged into HCB<%= " on #{activity.trackable.os_info}" if activity.trackable&.os_info.present? %>
+<% if activity&.trackable&.impersonated? %>
+  <% if current_user.auditor? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+      impersonated <%= activity.trackable.user.name %> on HCB
+    <% end %>
+  <% end %>
+<% else %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+    logged into HCB<%= " on #{activity.trackable.os_info}" if activity.trackable&.os_info.present? %>
+  <% end %>
 <% end %>

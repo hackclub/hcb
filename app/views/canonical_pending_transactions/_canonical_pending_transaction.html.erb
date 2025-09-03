@@ -1,5 +1,7 @@
 <% instance = pt.__id__ %>
+<% event = @event || pt.local_hcb_code.event %>
 <% tagged_with = pt.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
+
 <tr
   class="transaction muted <%= unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user)
                                  pt.amount.negative? ? "transaction--negative" : pt.amount.positive? ? "transaction--positive" : "transaction--zero"
@@ -38,59 +40,87 @@
       <div class="flex-auto">
         <div class="flex items-center justify-start">
           <% if pt.declined? %>
-            <%= badge_for "Declined", class: "bg-error m0 mr1" %>
+            <% if pt.local_hcb_code.stripe_reversed_by_merchant? %>
+              <%= badge_for "Reversed", class: "bg-info m0 mr1" %>
+            <% else %>
+              <action data-behavior="modal_trigger" data-modal="declined_information_pt_<%= instance %>" class="pointer" tabindex="0">
+                <span class="badge m-0 pr-[6px] mr-2 bg-error">
+                  Declined
+                  <%= inline_icon :info, size: 16 %>
+                </span>
+              </action>
+              <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_pt_<%= instance %>">
+                <%= modal_header "Transaction declined" %>
+
+                <%= render partial: "hcb_codes/decline_reason", locals: {
+                      hcb_code: pt.local_hcb_code,
+                      include_troubleshooting: true,
+                      include_external: true
+                    } %>
+              </section>
+            <% end %>
           <% else %>
             <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
           <% end %>
           <%= turbo_frame_tag "#{pt.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
-            <span title="<%= transaction_memo(pt) %>" style="flex-grow: 1;">
-              <%= pt.local_hcb_code.card_grant? && !organizer_signed_in? ? link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) : content_tag(:span) do %>
-                <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+            <span style="flex-grow: 1;">
+              <% if pt.local_hcb_code.card_grant? && !organizer_signed_in? %>
+                <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
+              <% elsif pt.stripe_card&.subledger.present? && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
+                <%= link_to url_for(pt.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
+                  <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                <% end %>
+              <% else %>
+                <span>
+                  <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                </span>
               <% end %>
             </span>
           <% end %>
         </div>
 
-        <% if Flipper.enabled?(:transaction_tags_2022_07_29, @event) && !@event&.demo_mode? %>
-          <div class="flex flex-wrap pending_transactions_tags tags" style="gap: 0.25rem" id="hcb_code_<%= pt.local_hcb_code.hashid %>_tags">
+        <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
+          <div class="flex flex-wrap pending_transactions_tags tags hcb_code_<%= pt.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
             <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: pt.local_hcb_code } %>
           </div>
         <% end %>
       </div>
 
-      <% if !defined?(receipt_upload_button) && !defined?(hide_tags) && organizer_signed_in? && !pt.instance_of?(OpenStruct) && Flipper.enabled?(:transaction_tags_2022_07_29, @event || pt.local_hcb_code.event) %>
+      <% if !@frame && defined?(show_tags) && show_tags && organizer_signed_in?(as: :member) && !pt.instance_of?(OpenStruct) %>
         <% if suggestion = pt.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
-            <%= link_to suggestion.tag.label, tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :POST } %>
+            <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
             <%= button_to tag_suggestion_reject_path(suggestion), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
               <%= inline_icon "view-close", size: 16 %>
             <% end %>
           </div>
         <% end %>
-        <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
-          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
-          <div class="menu__content menu__content--2 menu__content--compact menu__content--left h6" data-menu-target="content">
-            <% (@event || pt.local_hcb_code.event).tags.each do |tag| %>
-              <div class="flex items-center" data-tag="<%= tag.id %>">
-                <%= button_to toggle_tag_hcb_code_path(id: pt.local_hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(pt.local_hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
-                  <%= tag.label %>
-                  <%= "✓" if tagged_with.include?(tag) %>
-                <% end %>
-                <%= button_to event_tag_path(@event || pt.local_hcb_code.event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
-                  <%= inline_icon "delete", size: 16, style: "margin: 0" %>
-                <% end %>
-              </div>
-            <% end %>
-            <% if (@event || pt.local_hcb_code.event).tags.any? %>
-              <div class="menu__divider tags__divider"></div>
-            <% end %>
-            <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.hashid } %>
+        <% if event.present? && policy(pt.local_hcb_code).toggle_tag? %>
+          <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
+            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
+              <% event.tags.each do |tag| %>
+                <div class="flex items-center" data-tag="<%= tag.id %>">
+                  <%= button_to toggle_tag_hcb_code_path(id: pt.local_hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(pt.local_hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                    <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+                    <%= tag.label %>
+                    <%= "✓" if tagged_with.include?(tag) %>
+                  <% end %>
+                  <%= button_to event_tag_path(event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
+                    <%= inline_icon "delete", size: 18, style: "margin: 0" %>
+                  <% end %>
+                </div>
+              <% end %>
+              <% if event.tags.any? %>
+                <div class="menu__divider tags__divider"></div>
+              <% end %>
+              <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.hashid } %>
+            </div>
           </div>
-        </div>
+        <% end %>
       <% end %>
       <% if pt.local_hcb_code %>
-        <%= list_badge_for admin_signed_in? ? pt.local_hcb_code.comments.size : pt.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
+        <%= list_badge_for auditor_signed_in? ? pt.local_hcb_code.comments.size : pt.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
         <%= list_badge_for pt.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: pt.local_hcb_code.receipt_optional?, required: pt.local_hcb_code.missing_receipt? %>
       <% end %>
     </div>
@@ -104,10 +134,11 @@
 
   <% if local_assigns[:show_author_column] %>
     <% author = pt.local_hcb_code.author %>
-    <td class="<%= "tooltipped tooltipped--w" if author&.name %>" aria-label="<%= author&.name %>">
-      <div class="flex items-center justify-center">
+    <% author_name = pt.local_hcb_code.author_name %>
+    <td>
+      <div class="flex items-center justify-center <%= "tooltipped tooltipped--w" if author_name %>" aria-label="<%= author_name %>">
         <% if author.present? %>
-          <%= avatar_for author, 24, { class: "align-middle author" } %>
+          <%= avatar_for author, class: "align-middle author" %>
         <% elsif pt.local_hcb_code.fallback_avatar %>
           <%= image_tag(pt.local_hcb_code.fallback_avatar, loading: "lazy", width: 24, height: 24, class: "rounded-full shrink-none") %>
         <% end %>
@@ -127,17 +158,17 @@
           <%= form.hidden_field :receiptable_type, value: pt.local_hcb_code.class %>
           <%= form.hidden_field :receiptable_id, value: pt.local_hcb_code.id %>
           <%= form.hidden_field :upload_method, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
-          <div class="<%= "btn-group btn-group--no-wrap" if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>">
-            <%= form.label "file_#{pt.local_hcb_code.hashid}", class: "btn", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
+          <%= form.hidden_field :show_receipt_button, value: local_assigns[:receipt_upload_button] %>
+          <%= form.hidden_field :show_author_img, value: local_assigns[:show_author_column] %>
+          <div class="btn-group btn-group--no-wrap w-100">
+            <%= form.label "file_#{pt.local_hcb_code.hashid}", class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>
-              Upload receipt
+              <%= pt.local_hcb_code.receipts.any? ? "Upload another receipt" : "Upload receipt" %>
             <% end %>
 
-            <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-              <%= link_to my_receipts_upload_path, class: "btn bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
-                <%= inline_icon "payment-docs" %>
-                <span>Select</span>
-              <% end %>
+            <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+              <%= inline_icon "payment-docs" %>
+              <span>Select</span>
             <% end %>
           </div>
         <% end %>
@@ -149,10 +180,10 @@
       <% end %>
     </td>
 
-    <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
+    <% if !local_assigns[:receipt_upload_button_disabled] %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
-        <%= turbo_frame_tag "link_modal_#{pt.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id), turbo_frame: "_top" do %>
+        <%= turbo_frame_tag "link_modal_#{pt.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column]), turbo_frame: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
       </section>
@@ -160,10 +191,11 @@
   <% end %>
 </tr>
 
-<% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || pt.local_hcb_code.event).present? %>
-  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>">
-    <%= modal_header(pt.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event_name: @event&.name, amount_cents: pt.amount), external_link: pt.local_hcb_code.url) %>
-    <%= async_frame_to pt.local_hcb_code.popover_url, as: :span, lazy: true do %>
+<% if pt.stripe_card&.subledger&.present? || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
+  <% pretty_title = pt.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:) %>
+  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>" data-state-url="<%= hcb_code_path(pt.local_hcb_code) %>" data-state-title="<%= pretty_title %>">
+    <%= modal_header(pretty_title, external_link: url_for(pt.local_hcb_code)) %>
+    <%= turbo_frame_tag pt.local_hcb_code.public_id, src: pt.local_hcb_code.popover_path(transaction_show_receipt_button: local_assigns[:receipt_upload_button], transaction_show_author_img: local_assigns[:show_author_column], ledger_instance: instance), loading: :lazy, target: "_top" do %>
       <div class="shimmer mb1 mt3">
         <div class="shimmer__border"></div>
         <div class="shimmer__main">
@@ -173,7 +205,7 @@
                 <%= pop_icon_to "edit",
                     my_inbox_path,
                     class: "mr2 align-middle", "aria-label": "Rename transaction",
-                    data: { turbo: true } if organizer_signed_in? %>
+                    data: { turbo: true } if organizer_signed_in?(as: :member) %>
                 <span class="align-middle"
                       data-controller="navigation"
                       data-action="dblclick->navigation#navigate"

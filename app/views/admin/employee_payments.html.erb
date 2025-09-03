@@ -1,0 +1,11 @@
+<% title "Payments" %>
+
+<%= form_with method: :get do |form| %>
+  <%= form.text_field :q, value: @q, placeholder: "Search", class: "w-100" %>
+<% end %>
+
+<%= page_entries_info @payments, entry_name: "employee payments" %>
+
+<%= render "employees/payments", payments: @payments, show_stats: false %>
+
+<%= paginate @payments %>

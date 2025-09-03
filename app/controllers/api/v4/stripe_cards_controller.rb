@@ -19,22 +19,124 @@ module Api
 
       def transactions
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
         @hcb_codes = @stripe_card.hcb_codes.order(created_at: :desc)
+        @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
         @total_count = @hcb_codes.size
         @has_more = false # TODO: implement pagination
+      end
+
+      def create
+        event = Event.find_by_public_id(params[:card][:organization_id]) || Event.friendly.find(params[:card][:organization_id])
+        authorize event, :create_stripe_card?, policy_class: EventPolicy
+
+        card = params.require(:card).permit(
+          :organization_id,
+          :card_type,
+          :shipping_name,
+          :shipping_address_city,
+          :shipping_address_line1,
+          :shipping_address_postal_code,
+          :shipping_address_line2,
+          :shipping_address_state,
+          :shipping_address_country,
+          :card_personalization_design_id
+        )
+
+        return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
+        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request unless card[:shipping_address_country] == "US"
+
+        @stripe_card = ::StripeCardService::Create.new(
+          current_user:,
+          current_session: { ip: request.remote_ip },
+          event_id: event.id,
+          card_type: card[:card_type],
+          stripe_shipping_name: card[:shipping_name],
+          stripe_shipping_address_city: card[:shipping_address_city],
+          stripe_shipping_address_state: card[:shipping_address_state],
+          stripe_shipping_address_line1: card[:shipping_address_line1],
+          stripe_shipping_address_line2: card[:shipping_address_line2],
+          stripe_shipping_address_postal_code: card[:shipping_address_postal_code],
+          stripe_shipping_address_country: card[:shipping_address_country],
+          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+        ).run
+
+        return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?
+
+        render :show
+
+      rescue => e
+        Rails.error.report e
+        render json: { error: "internal_server_error" }, status: :internal_server_error
       end
 
       def update
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if params[:status] == "frozen"
-          @stripe_card.freeze! unless @stripe_card.frozen?
+          return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).freeze?
+
+          if @stripe_card.canceled?
+            return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+          end
+
+          @stripe_card.freeze!(frozen_by: current_user)
         elsif params[:status] == "active"
-          @stripe_card.defrost! unless @stripe_card.stripe_status == "active"
+          if @stripe_card.initially_activated?
+            return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).defrost?
+
+            if @stripe_card.stripe_status == "active"
+              return render json: { error: "Card is already active." }, status: :unprocessable_entity
+            end
+
+            @stripe_card.defrost!
+            return render json: { success: "Card defrosted!" }
+          end
+
+          return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).activate?
+
+          if params[:last4].blank?
+            return render json: { error: "Last four digits are required." }, status: :unprocessable_entity
+          end
+
+          # Find the correct card based on it's last4
+          card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
+          if card.nil? || card.id != @stripe_card.id
+            return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_entity
+          end
+
+          if @stripe_card.canceled?
+            return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+          end
+
+          # If this replaces another card, attempt to cancel the old card.
+          if @stripe_card.replacement_for
+            suppress(Stripe::InvalidRequestError) do
+              @stripe_card.replacement_for.cancel!
+            end
+          end
+
+          @stripe_card.update(initially_activated: true)
+          @stripe_card.defrost!
+
+          render json: { success: "Card activated!" }
+        end
+      end
+
+      def cancel
+        @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
+        if @stripe_card.canceled?
+          return render json: { error: "Card is already cancelled" }, status: :unprocessable_entity
         end
 
-        render "show"
+        begin
+          @stripe_card.cancel!
+          render json: { success: "Card cancelled successfully" }
+        rescue => e
+          render json: { error: "Failed to cancel card", message: e.message }, status: :internal_server_error
+        end
       end
 
       def ephemeral_keys
@@ -47,7 +149,7 @@ module Api
 
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 
-        render json: { ephemeralKeySecret: @ephemeral_key.secret, stripe_id: @stripe_card.stripe_id }
+        render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, ephemeralKeyCreated: @ephemeral_key.created, ephemeralKeyExpires: @ephemeral_key.expires, stripe_id: @stripe_card.stripe_id }
 
       rescue Stripe::InvalidRequestError
         return render json: { error: "internal_server_error" }, status: :internal_server_error

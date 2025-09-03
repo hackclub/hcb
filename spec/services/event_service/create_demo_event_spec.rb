@@ -4,7 +4,6 @@ require "rails_helper"
 
 RSpec.describe EventService::CreateDemoEvent, type: :model do
   let!(:point_of_contact) { create(:user, :make_admin) }
-  let!(:partner) { create(:partner, slug: "bank") }
   let(:name) { "Event X" }
   let(:country) { "US" }
 
@@ -15,7 +14,6 @@ RSpec.describe EventService::CreateDemoEvent, type: :model do
       EventService::CreateDemoEvent.new(
         name:,
         point_of_contact_id: point_of_contact.id,
-        partner_id: partner.id,
         email: user_email,
         country:
       )
@@ -34,7 +32,6 @@ RSpec.describe EventService::CreateDemoEvent, type: :model do
       EventService::CreateDemoEvent.new(
         name:,
         point_of_contact_id: point_of_contact.id,
-        partner_id: partner.id,
         email: user.email,
         country:
       )
@@ -61,7 +58,6 @@ RSpec.describe EventService::CreateDemoEvent, type: :model do
       EventService::CreateDemoEvent.new(
         name:,
         point_of_contact_id: point_of_contact.id,
-        partner_id: partner.id,
         email: current_user.email,
         country:
       )

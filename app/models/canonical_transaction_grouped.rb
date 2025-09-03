@@ -13,7 +13,6 @@ class CanonicalTransactionGrouped
            :stripe_cardholder, to: :ct, allow_nil: true
   delegate :invoice?,
            :donation?,
-           :partner_donation?,
            :ach_transfer?,
            :check?,
            :disbursement?,
@@ -24,7 +23,6 @@ class CanonicalTransactionGrouped
   def memo
     return invoice_memo if invoice?
     return donation_memo if donation?
-    return partner_donation_memo if partner_donation?
     return ach_transfer_memo if ach_transfer?
     return check_memo if check?
     return ct&.smart_memo if stripe_card?
@@ -104,7 +102,7 @@ class CanonicalTransactionGrouped
   end
 
   def invoice_memo
-    smartish_custom_memo || "INVOICE TO #{invoice.smart_memo}"
+    smartish_custom_memo || "Invoice to #{invoice.smart_memo}".stripe
   end
 
   def donation
@@ -112,15 +110,7 @@ class CanonicalTransactionGrouped
   end
 
   def donation_memo
-    smartish_custom_memo || "DONATION FROM #{donation.smart_memo}"
-  end
-
-  def partner_donation
-    PartnerDonation.find(hcb_i2)
-  end
-
-  def partner_donation_memo
-    smartish_custom_memo || "DONATION FROM #{partner_donation.smart_memo}"
+    smartish_custom_memo || "Donation from #{donation.smart_memo}".strip
   end
 
   def ach_transfer
@@ -128,7 +118,7 @@ class CanonicalTransactionGrouped
   end
 
   def ach_transfer_memo
-    smartish_custom_memo || "ACH TO #{ach_transfer.smart_memo}"
+    smartish_custom_memo || "ACH to #{ach_transfer.smart_memo}".strip
   end
 
   def check
@@ -136,7 +126,7 @@ class CanonicalTransactionGrouped
   end
 
   def check_memo
-    smartish_custom_memo || "Check to #{check.smart_memo}"
+    smartish_custom_memo || "Check to #{check.smart_memo}".strip
   end
 
   def disbursement

@@ -11,4 +11,9 @@ class DonationMailerPreview < ActionMailer::Preview
     DonationMailer.with(donation: @donation).first_donation_notification
   end
 
+  def notification
+    @donation = Donation.deposited.last
+    DonationMailer.with(donation: @donation).notification
+  end
+
 end

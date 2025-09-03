@@ -18,22 +18,24 @@ class ReimbursementMailbox < ApplicationMailbox
 
     report = @user.reimbursement_reports.create(inviter: @user)
 
-    expense = report.expenses.create!(amount_cents: 0)
+    @attachments.each do |attachment|
+      expense = report.expenses.create!(amount_cents: 0)
 
-    receipts = ::ReceiptService::Create.new(
-      receiptable: expense,
-      uploader: @user,
-      attachments: @attachments,
-      upload_method: :email_reimbursement
-    ).run!
+      receipts = ::ReceiptService::Create.new(
+        receiptable: expense,
+        uploader: @user,
+        attachments: [attachment],
+        upload_method: :email_reimbursement
+      ).run!
 
-    expense.update(memo: receipts.first.suggested_memo, value: receipts.first.extracted_total_amount_cents.to_f / 100) if receipts.first.suggested_memo
+      expense.update(memo: receipts.first.suggested_memo, value: receipts.first.extracted_total_amount_cents.to_f / 100) if receipts.first.suggested_memo
+    end
 
     Reimbursement::MailboxMailer.with(
       mail: inbound_email,
       reply_to: mail.to.first,
       report:,
-      receipts_count: receipts.size
+      receipts_count: report.expenses.size
     ).bounce_success.deliver_now
   end
 

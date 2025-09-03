@@ -24,6 +24,9 @@
     },
     "SECRET_KEY_BASE": {
       "required": true
+    },
+    "DOPPLER_TOKEN": {
+      "required": true
     }
   },
   "formation": {

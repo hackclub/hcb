@@ -13,16 +13,18 @@ class DocumentsController < ApplicationController
   end
 
   def index
-    @active_documents = @event.documents.includes(:user).active
-    @active_common_documents = Document.common.active
-    @archived_documents = @event.documents.includes(:user).archived
-    @archived_common_documents = Document.common.archived
+    @active_documents = @event.documents.includes(:user).active.order(created_at: :desc)
+    @active_common_documents = Document.common.active.order(created_at: :desc)
+    @archived_documents = @event.documents.includes(:user).archived.order(created_at: :desc)
+    @archived_common_documents = Document.common.archived.order(created_at: :desc)
+
+    authorize @event, policy_class: DocumentPolicy
   end
 
   def new
     # documents whose event_id is nil is shared across
     # all events
-    @document = Document.new(event: @event || nil)
+    @document = Document.new(event: @event.presence)
     authorize @document
   end
 
@@ -103,7 +105,7 @@ class DocumentsController < ApplicationController
       end
 
       format.png do
-        send_data ::DocumentService::PreviewFiscalSponsorshipLetter.new(event: @event).run, filename: "fiscal_sponsorship_letter.png"
+        send_data ::DocumentPreviewService.new(type: :fiscal_sponsorship_letter, event: @event).run, filename: "fiscal_sponsorship_letter.png"
       end
     end
   end
@@ -119,7 +121,7 @@ class DocumentsController < ApplicationController
       end
 
       format.png do
-        send_data ::DocumentService::PreviewVerificationLetter.new(event: @event, contract_signers: @contract_signers).run, filename: "verification_letter.png"
+        send_data ::DocumentPreviewService.new(type: :verification_letter, event: @event, contract_signers: @contract_signers).run, filename: "verification_letter.png"
       end
     end
   end
@@ -127,7 +129,7 @@ class DocumentsController < ApplicationController
   private
 
   def document_params
-    params.require(:document).permit(:event_id, :name, :file)
+    params.require(:document).permit(:event_id, :name, :file, :category)
   end
 
   def set_document

@@ -6,7 +6,9 @@ module Reimbursement
 
     def create
       @report = Reimbursement::Report.find(params[:report_id])
-      @expense = @report.expenses.build(amount_cents: 0)
+
+      type = params[:type] == "mileage" ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
+      @expense = @report.expenses.build(amount_cents: 0, type:)
 
       authorize @expense
 
@@ -102,7 +104,7 @@ module Reimbursement
     private
 
     def expense_params
-      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type).compact_blank
+      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type, :category).compact_blank
     end
 
     def set_expense
@@ -114,16 +116,18 @@ module Reimbursement
     end
 
     def blankslate_turbo_stream
-      turbo_stream.replace(:blankslate, partial: "reimbursement/reports/blankslate", locals: { report: @expense.report })
+      turbo_stream.replace(:blankslate, partial: "reimbursement/reports/blankslate", locals: { report: Reimbursement::Report.find(@expense.reimbursement_report_id) })
     end
 
     def actions_turbo_stream
       turbo_stream.replace("action-wrapper", partial: "reimbursement/reports/actions", locals: { report: @expense.report, user: @expense.report.user })
     end
 
+    EXPENSE_TYPE_MAP = [Reimbursement::Expense, Reimbursement::Expense::Mileage, Reimbursement::Expense::Fee].index_by(&:to_s).freeze
+
     def replace_expense_turbo_stream
       turbo_stream.replace(@expense, partial: "reimbursement/expenses/expense", locals: {
-                             expense: @expense.becomes(@expense.type&.constantize || Reimbursement::Expense)
+                             expense: @expense.becomes(EXPENSE_TYPE_MAP[@expense.type] || Reimbursement::Expense)
                            })
     end
 

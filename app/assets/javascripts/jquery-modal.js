@@ -33,8 +33,9 @@
     this.$body = $('body')
     this.options = $.extend({}, $.modal.defaults, options)
     this.options.doFade = !isNaN(parseInt(this.options.fadeDuration, 10))
+    this.options.fadeDuration = $.modal.isActive() ? 0 : this.options.fadeDuration
     this.$blocker = null
-    if (this.options.closeExisting) while ($.modal.isActive()) $.modal.close() // Close any open modals.
+    if (this.options.closeExisting) while ($.modal.isActive()) $.modal.close(null, true) // Close any open modals.
     modals.push(this)
     if (el.is('a')) {
       target = el.attr('href')
@@ -106,10 +107,10 @@
         })
     },
 
-    close: function () {
+    close: function (now) {
       modals.pop()
-      this.unblock()
-      this.hide()
+      this.unblock(now)
+      this.hide(now)
       unexpandReceipt()
       if (!$.modal.isActive()) $(document).off('keydown.modal')
     },
@@ -152,7 +153,9 @@
     },
 
     show: function () {
-      Turbo.cache.clear()
+      if (typeof Turbo != "undefined") {
+        Turbo.cache.clear()
+      }
       this.$elm.trigger($.modal.BEFORE_OPEN, [this._ctx()])
       if (this.options.showClose) {
         this.closeButton = $(
@@ -176,11 +179,11 @@
       this.$elm.trigger($.modal.OPEN, [this._ctx()])
     },
 
-    hide: function () {
+    hide: function (now) {
       this.$elm.trigger($.modal.BEFORE_CLOSE, [this._ctx()])
       if (this.closeButton) this.closeButton.remove()
       var _this = this
-      if (this.options.doFade) {
+      if (this.options.doFade && !now) {
         this.$elm.fadeOut(this.options.fadeDuration, function () {
           _this.$elm.trigger($.modal.AFTER_CLOSE, [_this._ctx()])
         })
@@ -219,11 +222,11 @@
     }
   }
 
-  $.modal.close = function (event) {
+  $.modal.close = function (event, now) {
     if (!$.modal.isActive()) return
     if (event) event.preventDefault()
     var current = getCurrent()
-    current.close()
+    current.close(now)
     return current.$elm
   }
 

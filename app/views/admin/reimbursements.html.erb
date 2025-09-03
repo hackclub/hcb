@@ -46,7 +46,7 @@
             None
           <% end %>
         </td>
-        <td>
+        <td class="max-width-2">
           <%= link_to reimbursement_report_path(report) do %>
             <%= report.name %>
           <% end %>
@@ -65,5 +65,3 @@
 </table>
 
 <%= paginate @reports %>
-
-<%= turbo_frame_tag :reimbursement_status, src: reimbursements_status_admin_index_path, target: "_top" %>

@@ -34,6 +34,7 @@ class CanonicalEventMapping < ApplicationRecord
   belongs_to :user, optional: true
 
   has_one :fee, dependent: :destroy
+  validates_associated :fee
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
 

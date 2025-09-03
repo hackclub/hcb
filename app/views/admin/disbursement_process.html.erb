@@ -11,11 +11,17 @@
   <tbody>
     <tr>
       <td style="text-align: right;">From:</td>
-      <td><%= link_to @disbursement.source_event.name, @disbursement.source_event %></td>
+      <td>
+        <%= link_to @disbursement.source_event.name, @disbursement.source_event %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.source_event.financially_frozen? %>
+      </td>
     </tr>
     <tr>
       <td style="text-align: right;">To:</td>
-      <td><%= link_to @disbursement.destination_event.name, @disbursement.destination_event %></td>
+      <td>
+        <%= link_to @disbursement.destination_event.name, @disbursement.destination_event %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.destination_event.financially_frozen? %>
+      </td>
     </tr>
     <tr>
       <td style="text-align: right;">Amount:</td>
@@ -64,11 +70,15 @@
       <small>When approved, this disbursement will automatically send on <%= @disbursement.scheduled_on.strftime("%Y-%m-%d") %>.</small>
     <% end %>
 
-    <%= form_with(model: nil, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
+    <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
       <%= form.submit "Approve disbursement" %>
     <% end %>
 
-    <%= form_with(model: nil, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+    <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+      <div class="field">
+        <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+        <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+      </div>
       <%= form.submit "Reject disbursement",
         class: "admin-bg-orange",
         data: { confirm: "Are you sure you want to reject this disbursement?" } %>

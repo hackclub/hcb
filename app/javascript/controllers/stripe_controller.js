@@ -1,3 +1,5 @@
+/* global BK */
+
 import { Controller } from '@hotwired/stimulus'
 import { loadStripe } from '@stripe/stripe-js'
 
@@ -18,10 +20,7 @@ export default class extends Controller {
 
     this.elements = this.stripe.elements({
       clientSecret: this.clientSecretValue,
-      appearance:
-        themes[this.themeValue][
-          localStorage.getItem('dark') === 'true' ? 'dark' : 'light'
-        ],
+      appearance: themes[this.themeValue][BK.isDark() ? 'dark' : 'light'],
     })
 
     const paymentElement = this.elements.create('payment', {

@@ -1,0 +1,113 @@
+<%# EXPLORE HACK CLUB %>
+
+<% if current_user.teenager? %>
+  <div class="flex flex-row w-full justify-between items-center">
+    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+      Explore Hack Club
+    </h2>
+    <%= link_to "https://hackclub.com?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
+      Learn more
+      <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+    <% end %>
+  </div>
+
+  <ul class="grid grid--medium-narrow left-align w-100 mt0">
+    <%= link_to "https://daydream.hackclub.com?utm_source=hcb&utm_medium=web&utm_campaign=explore", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+      <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/8c3f7462593d856a8a43315b3a451bd733ceac05_frame_2__33_.png')">
+        <div class="flex gap-2 items-center">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/986e5819e2a6dfe12f63cf466ed570e66abd4dc8_image_4__2_.png" height="24" weight="24" class="rounded align-bottom" alt="Daydream logo">
+          <strong class="text-xl leading-tight">
+            Daydream
+          </strong>
+        </div>
+        <p>
+          A worldwide game jam happening in 100+ cities on
+          September 27th & 28th. Find an event in your city!
+        </p>
+      </li>
+    <% end %>
+    <%= link_to "https://sprig.hackclub.com?utm_source=hcb&utm_medium=web&utm_campaign=explore", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+      <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/66c5fe262f184804a350fcecc44d77fd3d9d8944_image.png')">
+        <div class="flex gap-2 items-center">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/de7a5973beecd3e2e4675d8b703ecbd7c9a4f6c6_image.png" height="24" weight="24" class="rounded align-bottom" alt="Sprig logo">
+          <strong class="text-xl leading-tight">
+            Sprig
+          </strong>
+        </div>
+        <p>
+          Build a JavaScript game, share it with the community, and receive a
+          free Sprig gaming console.
+        </p>
+      </li>
+    <% end %>
+    <%= link_to "https://hackclub.com/slack?utm_source=hcb&utm_medium=web&utm_campaign=explore", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+      <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://cloud-j0p07nviw-hack-club-bot.vercel.app/0image.png')">
+        <div class="flex gap-2 items-center">
+          <img src="https://assets.hackclub.com/icon-rounded.png" height="24" weight="24" class="rounded align-bottom" alt="Slack logo">
+          <strong class="text-xl leading-tight">
+            Hack Club Slack
+          </strong>
+        </div>
+        <p>
+          Join the Slack to find the community for your favorite programming
+          language, ask for advice, or just hang out.
+        </p>
+      </li>
+    <% end %>
+    <%= link_to "https://summer.hackclub.com/?ref=hcb", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+      <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/1b8340020a77988cb3e6b18c1fefdba8ac665471_frame_22.png')">
+        <div class="flex gap-2 items-center">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/1cb0b459884b32a0c984d457faed42d26de92f9c_compass_favicon.png" height="24" weight="24" class="rounded align-bottom" alt="Summer of Making logo">
+          <strong class="text-xl leading-tight">
+            Summer of Making
+          </strong>
+        </div>
+        <p>
+          Build stuff. Get stuff. Repeat. For ages 18 and under. Ends September 30th, 2025.
+        </p>
+      </li>
+    <% end %>
+    <%= link_to "https://athena.hackclub.com?utm_source=hcb&utm_medium=web&utm_campaign=explore", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+      <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/53f6c0dbd5689fd9715850e9c0aed7e9b181a1ba_athena-bg.png')">
+        <div class="flex gap-2 items-center">
+          <strong class="text-xl leading-tight">
+            Athena Award
+          </strong>
+        </div>
+        <p>
+          Build three projects in 30 hours and earn an invite to the largest all-girls high school hackathon in New York City.
+        </p>
+      </li>
+    <% end %>
+    <%= link_to "https://boba.hackclub.com?utm_source=hcb&utm_medium=web&utm_campaign=explore", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+      <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/874636112e7ee89c5ae228af158302ace7c1cfea_boba-bg.jpeg')">
+        <div class="flex gap-2 items-center">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/b4eb0c338c24e411b01761bf9add90fc955ef42f_boba-logo.png" height="24" weight="24" class="rounded align-bottom" alt="Boba Drops logo">
+          <strong class="text-xl leading-tight">
+            Boba Drops
+          </strong>
+        </div>
+        <p>
+          Build your first website to get a free boba tea, or run a workshop to help others build theirs!
+        </p>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<%# EXPLORE HCB %>
+<% unless @featured_events.none? %>
+  <div class="flex flex-row w-full justify-between items-center">
+    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+      Explore HCB
+    </h2>
+    <%= link_to "https://hackclub.com/fiscal-sponsorship/directory?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
+      View all organizations
+      <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+    <% end %>
+  </div>
+
+  <ul class="grid grid--medium-narrow left-align w-100 mt0">
+    <%= render partial: "events/event_card", collection: @featured_events, as: :event, locals: { show_category_badge: true, show_date_stat: true } %>
+  </ul>
+<% end %>

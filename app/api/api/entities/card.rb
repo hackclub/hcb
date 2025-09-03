@@ -8,9 +8,9 @@ module Api
         expose :card_type, as: :type, documentation: { type: "string", values: %w[virtual physical] }
 
         expose :status, documentation: {
-          type: "string", values: %w[active frozen canceled]
+          type: "string", values: %w[active inactive frozen canceled]
         } do |stripe_card, options|
-          next "frozen" if stripe_card.frozen? # rename 'inactive' to 'frozen'
+          next "frozen" if stripe_card.frozen?
 
           stripe_card.stripe_status
         end

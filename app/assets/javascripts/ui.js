@@ -1,5 +1,6 @@
-/* global BK, $, loadTextExpander */
+/* global BK, $ */
 
+// eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
@@ -16,7 +17,6 @@ const loadModals = element => {
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
-      closeExisting: false,
     })
     return this.blur()
   })
@@ -31,36 +31,25 @@ const loadModals = element => {
   )
 }
 
-// restore previous theme setting
-$(document).ready(function () {
-  if (
-    document.querySelector('html').getAttribute('data-ignore-theme') == null &&
-    BK.isDark()
-  ) {
-    BK.s('toggle_theme').find('svg').toggle()
-    return BK.styleDark(true)
-  }
-})
-
 $(document).on('click', '[data-behavior~=flash]', function () {
   $(this).fadeOut('medium')
 })
 
 loadModals(document)
-;(() => {
-  let autoModals = $('[data-modal-auto-open~=true]')
+  ; (() => {
+    let autoModals = $('[data-modal-auto-open~=true]')
 
-  if (autoModals.length < 1) return
+    if (autoModals.length < 1) return
 
-  let element = autoModals.first()
+    let element = autoModals.first()
 
-  BK.s('modal', '#' + $(element).data('modal')).modal({
-    modalClass: $(element).parents('turbo-frame').length
-      ? 'turbo-frame-modal'
-      : undefined,
-    closeExisting: false,
-  })
-})()
+    BK.s('modal', '#' + $(element).data('modal')).modal({
+      modalClass: $(element).parents('turbo-frame').length
+        ? 'turbo-frame-modal'
+        : undefined,
+      closeExisting: false,
+    })
+  })()
 
 $(document).on('keyup', 'action', function (e) {
   if (e.keyCode === 13) {
@@ -71,56 +60,6 @@ $(document).on('keyup', 'action', function (e) {
 $(document).on('submit', '[data-behavior~=login]', function () {
   const val = $('input[name=email]').val()
   return localStorage.setItem('login_email', val)
-})
-
-$(document).on('change', '[name="invoice[sponsor]"]', function (e) {
-  let sponsor = $(e.target).children('option:selected').data('json')
-  if (!sponsor) {
-    sponsor = {}
-  }
-
-  if (sponsor.id) {
-    $('[data-behavior~=sponsor_update_warning]').slideDown('fast')
-  } else {
-    $('[data-behavior~=sponsor_update_warning]').slideUp('fast')
-  }
-
-  const fields = [
-    'name',
-    'contact_email',
-    'address_line1',
-    'address_line2',
-    'address_city',
-    'address_state',
-    'address_postal_code',
-    'address_country',
-    'id',
-  ]
-
-  return fields.forEach(field =>
-    $(`#invoice_sponsor_attributes_${field}`).val(sponsor[field])
-  )
-})
-
-$(document).on('change', '[name="check[lob_address]"]', function (e) {
-  let lob_address = $(e.target).children('option:selected').data('json')
-  if (!lob_address) {
-    lob_address = {}
-  }
-
-  if (lob_address.id) {
-    $('[data-behavior~=lob_address_update_warning]').slideDown('fast')
-  } else {
-    $('[data-behavior~=lob_address_update_warning]').slideUp('fast')
-  }
-
-  const fields = ['name', 'address1', 'address2', 'city', 'state', 'zip', 'id']
-
-  return fields.forEach(field =>
-    $(`input#check_lob_address_attributes_${field}`)
-      .val(lob_address[field])
-      .change()
-  )
 })
 
 const updateAmountPreview = function () {
@@ -177,37 +116,71 @@ $(document).keydown(function (e) {
   }
 })
 
-$(document).on('click', '[data-behavior~=toggle_theme]', () => BK.toggleDark())
+window.attachTooltipListener = () => {
+  const tooltip = document.getElementById("tooltip-container");
 
-function loadAsyncFrames() {
-  $.each(BK.s('async_frame'), (i, frame) => {
-    const loadFrame = () => {
-      $.get($(frame).data('src'), data => {
-        const parent = $(frame).parent()
-        $(frame).replaceWith(data)
-        loadModals(parent)
-        loadTextExpander()
-      }).fail(() => {
-        $(frame).children('.shimmer').first().addClass('shimmer--error')
-      })
+  const removeTooltips = () => {
+    if (window.innerWidth < 768) return;
+    tooltip.className = "";
+  }
+
+  $(".tooltipped").on({
+    mouseenter(event) {
+      if (window.innerWidth < 768) return;
+
+      const trigger = event.currentTarget;
+      if (!trigger.classList.contains("tooltipped")) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
+      const offset = 5;
+
+      const label = trigger.getAttribute("aria-label").trim();
+      if (!label) return;
+
+      tooltip.className = "active";
+      tooltip.textContent = label;
+
+      // Sync size classes
+      ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
+        if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
+      });
+
+      const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
+      const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+
+      const positions = {
+        s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
+        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
+        e: () => [triggerRect.right + window.scrollX + offset, centerY],
+        w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
+      };
+
+      const [left, top] = (positions[placement] || positions.n)();
+      Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+    },
+
+    mouseleave() {
+      removeTooltips()
     }
-
-    if ($(frame).data('loading') == 'lazy') {
-      whenViewed(frame, loadFrame)
-    } else loadFrame()
-  })
+  });
+  // on unload turbo
+  $(document).on('turbo:before-visit', removeTooltips);
+  $(document).on('beforeunload', removeTooltips)
 }
 
+$(document).on('turbo:frame-load', window.attachTooltipListener)
+$(document).on('turbo:after-stream-render', window.attachTooltipListener)
+
 $(document).on('turbo:load', function () {
+  window.attachTooltipListener();
+
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }
 
   $('[data-behavior~=select_content]').on('click', e => e.target.select())
-
   BK.s('autohide').hide()
-
-  loadAsyncFrames()
 
   if (BK.thereIs('login')) {
     let email
@@ -262,27 +235,30 @@ $(document).on('turbo:load', function () {
 
   // if you add the money behavior to an input, it'll add commas, only allow two numbers for cents,
   // and only permit numbers to be entered
-  $('input[data-behavior~=money]').on('input', function () {
-    let value = $(this)
-      .val()
-      .replace(/,/g, '') // replace all commas with nothing
-      .replace(/[^0-9.]+/g, '') // replace anything that isn't a number or a dot with nothing
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // put commas into the number (pulled off of stack overflow)
 
-    let removeExtraCents
+  function attachMoneyInputListener() {
+    $('input[data-behavior~="money"]').off('input').on('input', function () {
+      let value = $(this)
+        .val()
+        .replace(/,/g, '') // remove all commas
+        .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ','); // add commas for thousands
 
-    if (value.lastIndexOf('.') != -1) {
-      let cents = value.substring(value.lastIndexOf('.'), value.length)
-      cents = cents.replace(/[.,]/g, '').substring(0, cents.length > 2 ? 2 : 1)
+      if (value.includes('.')) {
+        let parts = value.split('.');
+        value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '');
+      }
 
-      removeExtraCents =
-        value.substring(0, value.lastIndexOf('.')) + '.' + cents
-    } else {
-      removeExtraCents = value
-    }
+      $(this).val(value);
+    });
+  }
 
-    $(this).val(removeExtraCents)
-  })
+  attachMoneyInputListener();
+
+  // Used to attach the money input listener to inputs inside of menus / popups.
+
+  const observer = new MutationObserver(() => attachMoneyInputListener());
+  observer.observe(document.body, { childList: true, subtree: true });
 
   $('input[data-behavior~=prevent_whitespace]').on({
     keydown: function (e) {
@@ -291,6 +267,12 @@ $(document).on('turbo:load', function () {
     change: function () {
       this.value = this.value.replace(/\s/g, '')
     },
+  })
+
+  $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
+    try {
+      event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
+    } catch {}
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
@@ -339,6 +321,41 @@ $(document).on('turbo:load', function () {
     })
     $(virtualInput).on('change', e => {
       if (e.target.checked) shippingInputs.slideUp()
+    })
+  }
+
+  if (BK.thereIs('accounts_list')) {
+    $('.account-header').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var aliasesContainer = accountContainer.find('.account-aliases');
+      aliasesContainer.slideToggle();
+      $(this).toggleClass('rotated');
+    });
+    $('.alias-new').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var newAliasForm = accountContainer.find('.alias-form');
+      var creationAlias = accountContainer.find('.alias-creation');
+      newAliasForm.slideDown();
+      creationAlias.slideUp();
+    });
+    $('.alias-cancel').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var newAliasForm = accountContainer.find('.alias-form');
+      newAliasForm.slideUp();
+      var creationAlias = accountContainer.find('.alias-creation');
+      creationAlias.slideDown();
+    })
+    $('.alias-save').on('click', function () {
+      var accountContainer = $(this).closest('.account-container');
+      var creationAlias = accountContainer.find('.alias-creation');
+      var newAliasForm = accountContainer.find('.alias-form');
+      creationAlias.slideDown();
+      newAliasForm.slideUp();
+    });
+    $('.alias-delete').on('click', function () {
+      var thisAlias = $(this).closest('.alias-container');
+      thisAlias.toggleClass('error');
+      thisAlias.slideUp();
     })
   }
 
@@ -419,8 +436,7 @@ $(document).on('turbo:load', function () {
 
   $('[data-behavior~=mention]').on('click', e => {
     BK.s('comment').val(
-      `${
-        BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
+      `${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
       }${e.target.dataset.mentionValue || e.target.innerText}`
     )
     BK.s('comment')[0].scrollIntoView()
@@ -466,6 +482,7 @@ $(document).on('turbo:load', function () {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return disableTilt()
     } else {
+      disableTilt() // disable it, then enable it. 
       return enableTilt()
     }
   }
@@ -479,7 +496,9 @@ $(document).on('turbo:frame-load', function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
-    BK.thereIs('paypal_transfer_payout_method_inputs')
+    BK.thereIs('paypal_transfer_payout_method_inputs') &&
+    BK.thereIs('wire_payout_method_inputs') &&
+    BK.thereIs('wise_transfer_payout_method_inputs')
   ) {
     const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
     const achTransferPayoutMethodInputs = BK.s(
@@ -488,6 +507,8 @@ $(document).on('turbo:frame-load', function () {
     const paypalTransferPayoutMethodInputs = BK.s(
       'paypal_transfer_payout_method_inputs'
     )
+    const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
+    const wiseTransferPayoutMethodInputs = BK.s('wise_transfer_payout_method_inputs')
     $(document).on(
       'change',
       '#user_payout_method_type_userpayoutmethodcheck',
@@ -495,7 +516,9 @@ $(document).on('turbo:frame-load', function () {
         if (e.target.checked)
           checkPayoutMethodInputs.slideDown() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp()
+            paypalTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -505,7 +528,9 @@ $(document).on('turbo:frame-load', function () {
         if (e.target.checked)
           achTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp()
+            paypalTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -515,7 +540,33 @@ $(document).on('turbo:frame-load', function () {
         if (e.target.checked)
           paypalTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp()
+            achTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
+      }
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodwire',
+      e => {
+        if (e.target.checked)
+          paypalTransferPayoutMethodInputs.slideUp() &&
+            checkPayoutMethodInputs.slideUp() &&
+            achTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideDown() &&
+            wiseTransferPayoutMethodInputs.slideUp()
+      }
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodwisetransfer',
+      e => {
+        if (e.target.checked)
+          wiseTransferPayoutMethodInputs.slideDown() &&
+            checkPayoutMethodInputs.slideUp() &&
+            achTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp() &&
+            paypalTransferPayoutMethodInputs.slideUp()
       }
     )
   }
@@ -529,6 +580,11 @@ $(document).on(
       $(this).closest('form').get(0).requestSubmit()
     }
   }
+)
+
+$(document).on('click', '[data-behavior~=clear_input]', function (event) {
+  $(event.target).parent().find('input').get(0).value = ""
+}
 )
 
 $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
@@ -560,6 +616,9 @@ $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
 })
 
 window.unexpandReceipt = () => {
+  document
+    .querySelectorAll(`.receipt--expanded`)[0]
+    ?.style?.setProperty('--receipt-size', '256px')
   document
     .querySelectorAll(`.receipt--expanded`)[0]
     ?.classList?.remove('receipt--expanded')
@@ -598,8 +657,6 @@ document.addEventListener('turbo:before-stream-render', event => {
       })
     } else if (streamElement.action == 'close_modal') {
       $.modal.close().remove()
-    } else if (streamElement.action == 'load_new_async_frames') {
-      loadAsyncFrames()
     } else {
       fallbackToDefaultActions(streamElement)
     }
@@ -623,3 +680,42 @@ $(document).on('wheel', 'input[type=number]', e => {
   e.preventDefault()
   e.target.blur()
 })
+
+// this allows for popovers to change the URL in the browser when opened.
+// it also handles using the back button, to reopen or close a popover.
+
+$(document).on($.modal.BEFORE_OPEN, function (event, modal) {
+  if (modal?.elm[0]?.dataset?.stateUrl) {
+    if (!document.documentElement.dataset.returnToStateUrl) {
+      document.documentElement.dataset.returnToStateUrl = window.location.href;
+      document.documentElement.dataset.returnToStateTitle = document.title;
+    }
+    document.title = modal.elm[0].dataset.stateTitle;
+    window.history.pushState({ modal: modal.elm[0].id }, '', modal.elm[0].dataset.stateUrl);
+  }
+});
+
+$(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
+  if (document.documentElement.dataset.returnToStateUrl) {
+    window.history.pushState(null, '', document.documentElement.dataset.returnToStateUrl);
+    document.title = document.documentElement.dataset.returnToStateTitle;
+  }
+});
+
+window.addEventListener("popstate", (e) => {
+  if (e.state?.modal) {
+    $(`#${e.state.modal}`).modal();
+  } else {
+    $.modal.close();
+  }
+});
+
+if (navigator.setAppBadge) {
+  window.addEventListener("load", async () => {
+    const response = await fetch("/my/tasks.json")
+    if (!response.redirected) { // redirected == the user isn't signed in.
+      const { count } = await response.json()
+      navigator.setAppBadge(count)
+    }
+  })
+}

@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module User
@@ -23,6 +24,7 @@ class Metric
 
       def calculate
         RawStripeTransaction.select(
+          "raw_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id' AS merchant_network_id",
           "CASE
              WHEN raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name' SIMILAR TO '(SQ|GOOGLE|TST|RAZ|INF|PayUp|IN|INT|\\*)%'
                THEN TRIM(UPPER(raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name'))
@@ -31,17 +33,22 @@ class Metric
           "SUM(raw_stripe_transactions.amount_cents) * -1 AS amount_spent"
         )
                             .joins("JOIN stripe_cardholders on raw_stripe_transactions.stripe_transaction->>'cardholder' = stripe_cardholders.stripe_id")
-                            .where("EXTRACT(YEAR FROM date_posted) = ?", 2023)
+                            .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
                             .where(stripe_cardholders: { user_id: user.id })
                             .group(
+                              "raw_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id'",
                               "CASE
-               WHEN raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name' SIMILAR TO '(SQ|GOOGLE|TST|RAZ|INF|PayUp|IN|INT|\\*)%'
-                 THEN TRIM(UPPER(raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name'))
-               ELSE TRIM(UPPER(SPLIT_PART(raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name', '*', 1)))
-             END"
+                                 WHEN raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name' SIMILAR TO '(SQ|GOOGLE|TST|RAZ|INF|PayUp|IN|INT|\\*)%'
+                                   THEN TRIM(UPPER(raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name'))
+                                 ELSE TRIM(UPPER(SPLIT_PART(raw_stripe_transactions.stripe_transaction->'merchant_data'->>'name', '*', 1)))
+                               END"
                             )
                             .order(Arel.sql("SUM(raw_stripe_transactions.amount_cents) * -1 DESC"))
-                            .each_with_object({}) { |item, hash| hash[item[:merchant_name]] = item[:amount_spent] }
+                            .each_with_object({}) do |item, hash|
+                              name = YellowPages::Merchant.lookup(network_id: item.merchant_network_id).name
+                              hash[name || item.merchant_name] ||= 0
+                              hash[name || item.merchant_name] += item[:amount_spent]
+                            end
       end
 
     end

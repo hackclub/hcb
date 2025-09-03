@@ -4,8 +4,15 @@ module DisbursementService
   class Create
     include ::Shared::AmpleBalance
 
+    # This service raises exceptions that should ideally be displayed to the end
+    # user (e.g. insufficient funds) as they are best placed to address those
+    # issues.
+    class UserError < ArgumentError; end
+
     def initialize(source_event_id:, destination_event_id:,
-                   name:, amount:, requested_by_id:, fulfilled_by_id: nil, destination_subledger_id: nil, scheduled_on: nil, source_subledger_id: nil, should_charge_fee: false, skip_auto_approve: false)
+                   name:, amount:, requested_by_id:, fulfilled_by_id: nil,
+                   destination_subledger_id: nil, scheduled_on: nil, source_subledger_id: nil,
+                   should_charge_fee: false, skip_auto_approve: false, fronted: false)
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
       @destination_event_id = destination_event_id
@@ -19,12 +26,18 @@ module DisbursementService
       @scheduled_on = scheduled_on
       @should_charge_fee = should_charge_fee
       @skip_auto_approve = skip_auto_approve
+      @fronted = fronted
     end
 
     def run
       raise ArgumentError, "amount is required" unless @amount
       raise ArgumentError, "amount_cents must be greater than 0" unless amount_cents > 0
-      raise ArgumentError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
+
+      if @source_subledger_id.present?
+        raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
+      else
+        raise UserError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
+      end
 
       disbursement = Disbursement.create!(attrs)
 
@@ -34,6 +47,8 @@ module DisbursementService
       o_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::OutgoingDisbursement.new(raw_pending_outgoing_disbursement_transaction: rpodt).run
       # 3. Map to event
       ::PendingEventMappingEngine::Map::Single::OutgoingDisbursement.new(canonical_pending_transaction: o_cpt).run
+      # 4. Front if required
+      o_cpt.update(fronted: @fronted)
 
       if disbursement.scheduled_on.nil?
         # We only want to import Incoming Disbursements AFTER the scheduled date
@@ -44,6 +59,8 @@ module DisbursementService
         i_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::IncomingDisbursement.new(raw_pending_incoming_disbursement_transaction: rpidt).run
         # 3. Map to event
         ::PendingEventMappingEngine::Map::Single::IncomingDisbursement.new(canonical_pending_transaction: i_cpt).run
+        # 4. Front if required
+        i_cpt.update(fronted: @fronted)
       end
 
       if requested_by_admin? || disbursement.source_event == disbursement.destination_event # Auto-fulfill disbursements between subledgers in the same event

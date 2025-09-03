@@ -9,6 +9,7 @@
 #  deleted_at           :datetime
 #  dkim_key             :text
 #  domain               :citext
+#  immune_to_revocation :boolean          default(FALSE), not null
 #  remote_org_unit_path :text
 #  verification_key     :text
 #  created_at           :datetime         not null
@@ -28,7 +29,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class GSuite < ApplicationRecord
-  VALID_DOMAIN = /[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?\z/ix
+  VALID_DOMAIN = /\A[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?\z/ix
 
   acts_as_paranoid
   validates_as_paranoid
@@ -42,7 +43,8 @@ class GSuite < ApplicationRecord
 
   belongs_to :event
   belongs_to :created_by, class_name: "User", optional: true
-  has_many :accounts, class_name: "GSuiteAccount"
+  has_many :accounts, class_name: "GSuiteAccount", dependent: :destroy
+  has_one :revocation, class_name: "GSuite::Revocation", dependent: :destroy
 
   aasm do
     state :creating, initial: true
@@ -66,15 +68,20 @@ class GSuite < ApplicationRecord
     event :mark_verification_error do
       after do
         if aasm.from_state == :verified
-          GSuiteMailer.with(recipient: self.created_by, g_suite_id: self.id).notify_of_error_after_verified.deliver_later
+          GSuiteMailer.with(g_suite_id: self.id).notify_of_error_after_verified.deliver_later
         else
-          GSuiteMailer.with(recipient: self.created_by, g_suite_id: self.id).notify_of_verification_error.deliver_later
+          GSuiteMailer.with(g_suite_id: self.id).notify_of_verification_error.deliver_later
         end
       end
       transitions from: [:verifying, :verified], to: :verification_error
     end
 
     event :mark_verified do
+      after do
+        if revocation.present?
+          revocation.destroy!
+        end
+      end
       transitions from: [:verifying], to: :verified
     end
 
@@ -87,6 +94,22 @@ class GSuite < ApplicationRecord
 
   before_validation :clean_up_verification_key
 
+  before_destroy do
+    begin
+      Partners::Google::GSuite::DeleteDomain.new(domain: domain).run
+    rescue => e
+      Rails.error.report(e)
+      throw :abort
+    end
+    true
+  end
+
+  after_commit do
+    if immune_to_revocation?
+      revocation&.destroy!
+    end
+  end
+
   def needs_ops_review?
     @needs_ops_review ||= creating? || verifying?
   end
@@ -94,7 +117,7 @@ class GSuite < ApplicationRecord
   def verified_on_google?
     @verified_on_google ||= ::Partners::Google::GSuite::Domain.new(domain:).run.verified
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
 
     false
   end
@@ -113,6 +136,37 @@ class GSuite < ApplicationRecord
 
   def previously_verified?
     versions.where_object_changes_to(aasm_state: "verified").any?
+  end
+
+  def accounts_inactive?
+    begin
+      res = Partners::Google::GSuite::Users.new(domain:).run
+      res_count = res.users&.count || 0
+      inactive_accounts = []
+      res&.users&.each do |user|
+        if user.is_admin
+          res_count -= 1
+          next
+        end
+        if user.suspended?
+          res_count -= 1
+          next
+        end
+        user_last_login = Partners::Google::GSuite::User.new(email: user.primary_email).run.last_login_time
+        if user_last_login.nil? || user_last_login < 6.months.ago
+          inactive_accounts << user
+        end
+      end
+
+      inactive_accounts.count == res_count
+    rescue => e
+      if e.message.include?("Domain not found")
+        return true
+      end
+
+      Rails.error.report(e)
+      throw :abort
+    end
   end
 
   private

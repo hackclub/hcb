@@ -13,4 +13,12 @@ module StripeAuthorizationsHelper
 
     yp_merchant.name || merchant["name"].titleize
   end
+
+  def humanized_category(merchant)
+    yp_category = YellowPages::Category.lookup(code: merchant["category_code"])
+
+    StatsD.event("CategoryNotFound", merchant["category_code"]) unless yp_category.name
+
+    yp_category.name || merchant["category"].humanize
+  end
 end

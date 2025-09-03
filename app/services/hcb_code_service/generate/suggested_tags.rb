@@ -33,7 +33,7 @@ module HcbCodeService
 
         conn = Faraday.new url: "https://api.openai.com" do |f|
           f.request :json
-          f.request :authorization, "Bearer", -> { Rails.application.credentials.openai.api_key }
+          f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
           f.response :raise_error
           f.response :json
         end

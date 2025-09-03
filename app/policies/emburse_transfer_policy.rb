@@ -2,11 +2,11 @@
 
 class EmburseTransferPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def show?
-    user&.admin?
+    user&.auditor?
   end
 
   def edit?
@@ -30,7 +30,7 @@ class EmburseTransferPolicy < ApplicationPolicy
   end
 
   def export?
-    user&.admin?
+    user&.auditor?
   end
 
   private

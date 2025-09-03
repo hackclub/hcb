@@ -6,7 +6,7 @@ class AddExpirationAtToUserSessions < ActiveRecord::Migration[6.0]
 
     reversible do |dir|
       dir.up do
-        UserSession.with_deleted.update_all("expiration_at = created_at + INTERVAL '30 days'")
+        UserSession.unscoped.update_all("expiration_at = created_at + INTERVAL '30 days'")
       end
     end
 

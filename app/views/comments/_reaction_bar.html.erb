@@ -3,7 +3,7 @@
     <button class="reactions-btn" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
       <%= inline_icon "emoji-add", size: 16 %>
     </button>
-    <div class="menu__content menu__content--2 rounded-full" data-menu-target="content" style="width: auto;z-index: 999">
+    <div class="menu__content menu__content--2 rounded-full" data-menu-target="content" style="width: auto;">
       <%
         Comment::Reaction::EMOJIS.each do |emoji|
         has_reacted = comment.reactions.any? { |r| r.emoji == emoji && r.reactor == current_user }

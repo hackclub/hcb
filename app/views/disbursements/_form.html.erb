@@ -1,43 +1,18 @@
-<% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
+<%# locals: (disbursement:, event: nil, source_event: nil, destination_event: nil, allowed_source_events:, allowed_destination_events:) %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null}" }) do |form| %>
+<% disabled = source_event.present? && !policy(source_event).create_transfer? %>
+
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <div class="field event-select-target">
-    <%= form.label :source_event_id, "From" %>
-    <%= form.collection_select(:source_event_id,
-                                @allowed_source_events,
-                                :id,
-                                current_user.admin? ? :admin_dropdown_description : :disbursement_dropdown_description,
-                                { prompt: "Select one…", disabled: ->(e) { e != @source_event && !policy(e).create_transfer? || (!current_user.admin? && e.balance_available <= 0) } },
-                                required: true,
-                                disabled: ) %>
-  </div>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
 
-  <div class="field event-select-target">
-    <%= form.label :event_id, "To" %>
-    <%= form.select(:event_id,
-                    @allowed_destination_events.map do |event|
-                      [
-                        current_user.admin? ? event.admin_dropdown_description : event.disbursement_dropdown_description,
-                        event.id,
-                        { "data-fee" => event.revenue_fee.to_s },
-                      ]
-                    end,
-                    { prompt: "Select one…" },
-                    required: true,
-                    disabled:,
-                    "x-on:input" => "fee = $event.target.options[$event.target.selectedIndex].dataset.fee") %>
-    <% unless admin_signed_in? %>
-      <span class="muted">You can transfer to any organization you're a part of.</span>
-    <% end %>
-  </div>
-
-  <% if admin_signed_in? %>
-    <div class="admin-tools field field--checkbox" x-show="fee > 0" x-cloak x-transition.duration.500ms>
-      <%= form.check_box :should_charge_fee %>
+  <% if auditor_signed_in? %>
+    <div class="admin-tools field field--checkbox">
+      <%= form.check_box :should_charge_fee, disabled: !admin_signed_in? %>
       <%= form.label :should_charge_fee do %>
-        Charge <span x-text="Math.round(fee * 100) || '0'"></span>% fiscal sponsorship fee?
+        Charge fiscal sponsorship fee?
       <% end %>
     </div>
   <% end %>
@@ -46,20 +21,44 @@
   <div class="field">
     <div class="flex items-center">
       <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount, value: (@disbursement&.amount.nil? ? nil : (@disbursement.amount.to_f / 100)),
+      <%= form.number_field :amount, value: (disbursement&.amount.nil? ? nil : (disbursement&.amount.to_f / 100)),
                                      placeholder: "500.00",
                                      step: 0.01,
                                      min: 0.01,
                                      required: true,
                                      disabled:,
-                                     data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+                                     data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
     </div>
   </div>
 
   <div class="field">
     <%= form.label :name, "What is the transfer for?" %>
     <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, disabled: %>
-    <span class="muted">This is to help HCB keep record of our transactions. It will be used as the memo on your transaction list.</span>
+    <span class="muted">This is to help HCB keep record of our transactions.</span>
+  </div>
+
+  <%= form.label :file, "Attach a receipt / invoice (optional)", class: "mt2" %>
+  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
+          action: "
+        dragover@window->file-drop#dragover
+        drop@window->file-drop#drop
+        dragenter@window->file-drop#dragenter
+        dragleave@window->file-drop#dragleave
+      "
+        } %>
+    <%= form.file_field :file,
+        multiple: true,
+        include_hidden: false,
+        required: false,
+        accept: "image/*,image/heic,.pdf",
+        style: "margin: 8px 0px",
+        class: "field--fileupload__field",
+        data: {
+          "file-drop-target" => "fileInput"
+        },
+        disabled: %>
+    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
   </div>
 
   <% admin_tool do %>
@@ -72,7 +71,7 @@
 
   <div
       class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"
-      aria-label="<%= @event&.demo_mode? ? "Transfers are disabled in Playground mode" : disabled ? "Only managers can make transfers!" : nil %>">
+      aria-label="<%= event&.demo_mode? ? "Transfers are disabled in Playground mode" : (disabled ? "Only managers can make transfers!" : nil) %>">
     <%= form.submit "Make transfer", class: "btn", disabled: %>
   </div>
 <% end %>

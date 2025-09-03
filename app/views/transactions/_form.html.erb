@@ -18,23 +18,6 @@
         <p class="muted h5 mb0">If this isn’t a transfer to reimburse a Stripe fee, leave this field blank.</p>
         </div>
       <% end %>
-      <% if transaction.potential_check? && (Check.in_transit.any? || Check.refunded_but_needs_match.any?) %>
-        <div class="field">
-          <%= form.label :check, "Check" %>
-          <%= form.collection_select(:check_id, Check.where(amount: transaction.amount.abs), :id, :admin_dropdown_description, include_blank: "Select one…") %>
-          <p class="muted h5 mb2">If this isn't a transaction made from a Check, leave this field blank.</p>
-          <% if transaction.bank_account.is_positive_pay %>
-            <% if transaction.amount > 0 %>
-              <p>This is a positive transaction into a positive pay account, so it's money being put in place for a recently sent check.</p>
-            <% elsif transaction.amount < 0 %>
-              <p>This is a negative transaction from a positive pay account, so it's either the money being withdrawn via check or a refund</p>
-              <% if transaction.name.include? 'Check' %>
-                <p>We suspect that it's the money being withdrawn via check because of transaction memo. Please double check.</p>
-              <% end %>
-            <% end %>
-          <% end %>
-        </div>
-      <% end %>
       <% if transaction.potential_ach_transfer? %>
           <%= form.label :ach_transfer, "ACH Transfer" %>
           <%= form.collection_select(:ach_transfer_id, AchTransfer.in_transit, :id, :admin_dropdown_description, include_blank: "Select one…") %>

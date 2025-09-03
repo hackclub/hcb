@@ -79,18 +79,6 @@ describe HcbCodeService::CanDispute do
     end
   end
 
-  context "when transaction is a partner donation" do
-    let(:hcb_code) { build(:hcb_code, code_type: ::HCBCode::PARTNER_DONATION_CODE) }
-    let!(:ct) { create(:canonical_transaction).update(hcb_code: hcb_code.hcb_code) }
-
-    it "returns true" do
-      result, = described_class.new(hcb_code:).run
-
-      expect(result).to eq(true)
-    end
-  end
-
-
   context "when transaction is a bank transaction newer than 90 days" do
     let(:ct) { create(:canonical_transaction, date: Date.today - 90.days, amount_cents: -1) }
 

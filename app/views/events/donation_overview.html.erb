@@ -31,13 +31,19 @@
           data: { behavior: "modal_trigger", modal: "prefilled_link" } do %>
           Prefilled amount
         <% end %>
+        <% if @event.is_public? %>
+          <%= link_to "#",
+            data: { behavior: "modal_trigger", modal: "donor_graph" } do %>
+            Donor graph
+          <% end %>
+        <% end %>
       </div>
     </action>
   <% end %>
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "donations"),
       data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "donation_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" %>
+      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" if organizer_signed_in?(as: :member) %>
   <% if @event.donation_page_available? %>
     <%= link_to start_donation_donations_path(@event), target: "_blank", class: "btn" do %>
       <%= inline_icon "external" %>
@@ -115,12 +121,27 @@
     <iframe src='<%= start_donation_donations_url @event %>' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='256px' width='512px' allowfullscreen style="width: 100%; max-width: 100%; max-height: 40vh;"></iframe>
   </section>
 
+  <section class="modal" data-behavior="modal" role="dialog" id="donor_graph">
+    <%= modal_header "Embed donor graph" %>
+    <p class="mt0">Use this image URL to show a donor graph on your website, GitHub repo, or anywhere in between.</p>
+    <pre>https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
+
+    <p class="mt0">You can also use this HTML to easily embed the graph. Feel free to change the styling.</p>
+    <pre><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
+
+    <p class="muted text-sm">
+      To use additional styling and image options,
+      <%= link_to "check out the docs", "https://graph.hcb.hackclub.com", target: "_blank" %>
+      for more info.
+    </p>
+  </section>
+
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="prefilled_link">
     <%= modal_header "Prefilled link" %>
     <%= react_component "donation_overview/PreviewLink", path: start_donation_donations_url(@event) %>
   </section>
 <% else %>
-  <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, anchor: "donations") %>.</p>
+  <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
 <% end %>
 
 <div class="mt3 mb2 statset">
@@ -134,7 +155,7 @@
   </div>
 </div>
 
-<% if @recurring_donations.size > 0 %>
+<% if @recurring_donations.size > 0 && @donations.current_page == 1 %>
   <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
     Recurring donations
   </h2>
@@ -170,6 +191,11 @@
             <td class="text-right">
               <%= render_money recurring_donation.total_donated %>
             </td>
+            <% if recurring_donation.is_a?(RecurringDonation) && OrganizerPosition.role_at_least?(current_user, @event, :manager) %>
+              <td class="text-right">
+                <%= pop_icon_to "view-close", cancel_recurring_donation_path(recurring_donation.url_hash), method: :post, data: { confirm: "Are you sure you want to cancel this recurring donation?" }, class: "error" %>
+              </td>
+            <% end %>
           </tr>
         <% end %>
       </tbody>
@@ -199,16 +225,8 @@
 </h2>
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <div class="input input-group max-w-none" tabindex="0">
-      <%= inline_icon "search" %>
-      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
-      <% if params[:q] && params[:q] != "" %>
-        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
-          <%= inline_icon "view-close", size: 24 %>
-        </button>
-      <% end %>
-    </div>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "search", form: %>
   <% end %>
   <div>
     <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": !["refunded"].include?(params[:filter]), role: "tab" %>
@@ -218,7 +236,6 @@
 
 <% if @donations.size > 0 %>
 <article class="table-container">
-
   <table>
     <thead>
       <tr>
@@ -248,6 +265,9 @@
             <% if d.recurring? %>
               <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Monthly donor"><%= inline_icon "support-recurring", size: 24, class: "muted" %></div>
             <% end %>
+            <% if d.in_person? %>
+              <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="In-person donor"><%= inline_icon "card", size: 24, class: "muted" %></div>
+            <% end %>
             <% if d.anonymous? %>
               <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
             <% end %>
@@ -257,13 +277,21 @@
           </td>
           <td>
             <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-            <%= link_to "Details", hcb_code_url(d.hcb_code) if organizer_signed_in? %>
+            <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
           </td>
         </tr>
+        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= d.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(d.local_hcb_code.hashid) %>" data-state-title="<%= "#{d.name} invoiced for #{render_money(d.amount)}" %>">
+            <%= modal_header("#{d.name} donated #{render_money(d.amount)}", external_link: hcb_code_url(d.local_hcb_code.hashid)) %>
+            <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
+              <%= render partial: "application/loading_container" %>
+            <% end %>
+          </section>
+        <% end %>
       <% end %>
     </tbody>
   </table>
-
+  <%= paginate @donations %>
 </article>
 
 <% else %>
@@ -273,9 +301,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <%= javascript_include_tag "donation_qr_codes.js" %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
-  <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
-  <%= async_frame_to edit_event_path(@event, tab: "donations", params: { frame: true }), lazy: true, as: :div do %>
-    <strong>Loading...</strong>
-  <% end %>
-</section>
+<% if organizer_signed_in? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
+    <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
+    <%= turbo_frame_tag :donations_settings, src: edit_event_path(@event, tab: "donations", params: { frame: true }), loading: "lazy" do %>
+      <strong>Loading...</strong>
+    <% end %>
+  </section>
+<% end %>

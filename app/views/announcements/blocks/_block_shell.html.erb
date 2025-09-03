@@ -1,0 +1,11 @@
+<%# locals: (block:, type:, is_email: false) %>
+
+<% if is_email %>
+  <div id="block_<%= block.id %>" class="<%= type %> relative card shadow-none border flex flex-col py-2 my-2">
+    <%= yield %>
+  </div>
+<% else %>
+  <%= turbo_frame_tag "block_#{block.id}", class: "#{type} relative card shadow-none border flex flex-col py-2 my-2" do %>
+    <%= yield %>
+  <% end %>
+<% end %>

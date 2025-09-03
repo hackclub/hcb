@@ -58,11 +58,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    border-bottom: rgba(255, 255, 255, 0.98) solid 1rem;
     padding: 0.5rem 1rem;
-    @supports (padding: env(safe-area-inset-bottom)) {
-      padding-bottom: env(safe-area-inset-bottom) !important;
-    }
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0rem)) !important;
 
     position: fixed;
     overflow: visible;
@@ -73,7 +70,6 @@
     background-color: rgba(255, 255, 255, 0.98);
     @supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
       background-color: rgba(255, 255, 255, 0.9);
-      border-bottom: rgba(255, 255, 255, 0.9) solid 1rem;
       -webkit-backdrop-filter: saturate(180%) blur(12px);
       backdrop-filter: saturate(180%) blur(12px);
     }

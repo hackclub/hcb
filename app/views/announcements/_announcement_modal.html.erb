@@ -1,0 +1,7 @@
+<%# locals: (announcement:) %>
+
+<section class="modal modal--scroll bg-snow min-w-[50%]" data-behavior="modal" role="dialog" id="create_announcement">
+  <%= modal_header "Create a new announcement" %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: "create announcements" } unless policy(announcement).new? %>
+  <%= turbo_frame_tag :create_announcement, src: event_announcements_new_path(announcement.event), loading: :lazy, target: "_top" %>
+</section>

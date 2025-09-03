@@ -2,42 +2,39 @@
 
 <h1>Create an organization</h1>
 
-<%= form_with(model: nil, local: true, url: event_create_admin_index_path) do |form| %>
+<%= form_with(local: true, url: event_create_admin_index_path) do |form| %>
   <fieldset>
     <legend>Organization</legend>
     <p>
       <%= form.label :name, "Name (required)" %>
       <br>
-      <%= form.text_field :name, placeholder: "Organization Name", required: true %>
+      <%= form.text_field :name, placeholder: "Organization Name", value: params[:name], required: true %>
     </p>
 
     <p>
       <%= form.label :organizer_email, "Organizer's Email Address" %>
       <br>
-      <%= form.email_field :organizer_email, placeholder: "Email Address", required: false %>
+      <%= form.email_field :organizer_email, placeholder: "Email Address", value: params[:organizer_email], required: false %>
     </p>
 
-    <p>
-      <%= form.check_box :is_signee, { checked: true } %>
-      <%= form.label :is_signee, "Organizer signed contract?" %>
-    </p>
+    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: true %>
 
     <p>
       <%= form.label :country %>
       <br>
-      <%= form.collection_select :country, Event.countries_for_select, :first, :last %>
-    </p>
-
-    <p>
-      <%= form.label :category %>
-      <br>
-      <%= form.collection_select :category, Event.categories, :first, :first, { include_blank: "Select a category" } %>
+      <%= form.collection_select :country, Event.countries_for_select, :first, :last, selected: params[:country] %>
     </p>
 
     <div class="field mb2">
-      <%= form.label :plan_type, "Assign a plan" %>
+      <%= form.label :plan, "Assign a plan" %>
       <br>
-      <%= form.select(:plan_type, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }) %>
+      <%= form.select(:plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: params[:plan]) %>
+    </div>
+
+    <div class="field mb2">
+      <%= form.label :tags, "Organization Tags" %>
+      <br>
+      <%= form.select(:tags, EventTag::Tags::ALL.map { |tag| [tag.to_s.titleize, tag] }, selected: params[:tags], multiple: true) %>
     </div>
 
     <div class="field">
@@ -58,21 +55,10 @@
     <p>
       <%= form.check_box :demo_mode %>
       <%= form.label :demo_mode, "Playground Mode?" %>
-    </p>
 
     <p>
-      <%= form.check_box :omit_stats, { checked: false } %>
-      <%= form.label :omit_stats, "Omit from stats?" %>
-    </p>
-
-    <p>
-      <%= form.check_box :organized_by_hack_clubbers, { checked: false } %>
-      <%= form.label :organized_by_hack_clubbers, "Organized by Hack Clubbers?" %>
-    </p>
-
-    <p>
-      <%= form.check_box :organized_by_teenagers, { checked: false } %>
-      <%= form.label :organized_by_teenagers, "Organized by teenagers?" %>
+      <%= form.label :risk_level %>
+      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, selected: params[:risk_level] %>
     </p>
 
   </fieldset>

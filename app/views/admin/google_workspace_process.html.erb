@@ -1,5 +1,18 @@
 <h1>Process Google Workspace #<%= @g_suite.id %></h1>
-<p><small>Current Status: <%= @g_suite.aasm_state %></small></p>
+<p>
+  <small>
+    Current Status:
+    <% if @g_suite.revocation.present? %>
+      <% if @g_suite.revocation.pending? %>
+        Pending Revocation (scheduled for <%= format_datetime @g_suite.revocation.scheduled_at %>)
+      <% else %>
+        Revoked at <%= format_datetime @g_suite.revocation.scheduled_at %>
+      <% end %>
+    <% else %>
+      <%= @g_suite.aasm_state %>
+    <% end %>
+  </small>
+</p>
 
 <h3>Google Workspace Details</h3>
 <table class="table--autosize">
@@ -56,7 +69,7 @@
       <li>Click 'Submit' below</li>
     </ol>
   <% end %>
-  <%= form_with(model: nil, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
     <%= form.submit "Approve" %>
   <% end %>
 <% end %>
@@ -68,7 +81,7 @@
 <% if @g_suite.verifying? %>
   <p>HCB is now trying to automatically verify if the user has configured their domain correctly with the TXT record. This happens once every hour.</p>
   <p>If you would like to manually attempt to verify this domain:</p>
-  <%= form_with(model: nil, local: true, url: google_workspace_verify_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: google_workspace_verify_admin_path(@g_suite), method: :post) do |form| %>
     <%= form.submit "Click Here" %>
   <% end %>
   <p>You can additionally verify that the TXT record they have matches the verification key we have on file:</p>
@@ -76,7 +89,7 @@
   <p><%= link_to "DNS Check", @g_suite.dns_check_url, target: "_blank" %></p>
   <p>If it does not match or is missing, make sure to notify the event owner and have them set it up on their DNS provider.</p>
   <p>Has it still been stuck on verifying after a few days? Try updating the verification key.</p>
-  <%= form_with(model: nil, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
     <%= form.submit "Update verification key" %>
   <% end %>
   <% if false %>
@@ -119,14 +132,42 @@
     <li>Once the DKIM key has been added to the domain's DNS by the organizer, go back to the Google Admin page above, select the domain, and click "Start Authentication"</li>
   </ul>
 </div>
-<%= form_with(model: nil, local: true, url: google_workspace_update_admin_path(@g_suite), method: :post) do |dkim_key_form| %>
+<%= form_with(model: false, local: true, url: google_workspace_update_admin_path(@g_suite), method: :post) do |dkim_key_form| %>
   <%= dkim_key_form.label :dkim_key do %>
     <%= dkim_key_form.text_field :dkim_key, value: @g_suite.dkim_key %>
   <% end %>
   <%= dkim_key_form.submit "Update DKIM key" %>
 <% end %>
-
 <hr>
-<h3>Delete</h3>
-<p>The following button will destroy the Google Workspace record.<br>Before proceeding, make sure that there are no active Google Workspace accounts.</p>
-<%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+<h3>Google Workspace Revocation Immunity</h3>
+<p>This Google Workspace is<%= @g_suite.immune_to_revocation? ? nil : " not" %> immune to revocation.<%= !@g_suite.immune_to_revocation? && @g_suite.revocation.present? ? " Turning this on will immediately cancel the current revocation for this Google Workspace." : nil %> </p>
+<%= form_with(model: false, local: true, url: google_workspace_toggle_revocation_immunity_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form.submit "Toggle" %>
+<% end %>
+<hr>
+<% if @g_suite.revocation.present? && @g_suite.revocation.revoked? %>
+  <h3>Delete</h3>
+  <p>This Google Workspace has been revoked and is ready for deletion. The users have already been notified of the revocation. The following button will destroy the Google Workspace record and <b>permanently</b> delete the domain from GW along with all associated accounts and groups.</p>
+  <%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+  <h3>Cancel Revocation</h3>
+  <p>This Google Workspace has <b>already been revoked</b>. If, for some reason, you need to cancel the revocation, the below button will do so and send an email notifying the users on the organization of the same. Note: If the revocation was initiated for inactivity or invalid DNS records, a new revocation will be automatically opened within the next day if the issues are not fixed.</p>
+  <%= link_to "Cancel Revocation", g_suite_revocation_path(@g_suite), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+<% elsif @g_suite.revocation.present? && @g_suite.revocation.pending? %>
+  <h3>Cancel Revocation</h3>
+  <p>This Google Workspace has a <b>pending revocation</b>. If you need to cancel the revocation, the below button will do so and send an email notifying the users on the organization of the same. Note: If the revocation was initiated for inactivity or invalid DNS records, a new revocation will be automatically opened in the next day if the issues are not fixed.</p>
+  <%= link_to "Cancel Revocation", g_suite_revocation_path(@g_suite), method: :delete, data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+  <h3>Delete</h3>
+  <p>This Google Workspace has a <b>pending revocation</b> and <b>should NOT be deleted yet</b>. If, for some reason, you need to delete this record immediately, the following button will destroy the Google Workspace record and <b>permanently</b> delete the domain from GW along with all associated accounts and groups.</p>
+  <%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "THIS MOST LIKELY ISN'T THE RIGHT BUTTON. Are you sure you want to delete this Google Workspace with a pending revocation?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+<% elsif @g_suite.immune_to_revocation? %>
+  <h3>This Google Workspace is immune to revocation</h3>
+  <p>Toggle their immunity above before opening a revocation.</p>
+<% else %>
+  <h3>Begin Revocation</h3>
+  <p>This will begin the revocation of the organization's Google Workspace access and send an email to the users on the organization notifying them of the upcoming revocation. The users will have 2 weeks to wrap up their activities before access is revoked.</p>
+  <%= form_with(model: [@g_suite, GSuite::Revocation.new], url: g_suite_revocations_path(@g_suite), method: :post, local: true) do |form| %>
+    <%= form.label :other_reason, "This Google Workspace is being revoked because..." %><br><br>
+    <%= form.text_field :other_reason, placeholder: "you have broken the Google Workspace terms of service", style: "width: 50%; min-width:200px" %><br><br>
+    <%= form.submit "Begin Revocation", data: { confirm: "Are you sure?" }, class: "admin-bg-warning p1 rounded link-reset" %>
+  <% end %>
+<% end %>

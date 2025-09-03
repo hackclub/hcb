@@ -1,0 +1,19 @@
+# https://devcenter.heroku.com/articles/build-docker-images-heroku-yml
+
+setup:
+  addons:
+    - plan: heroku-postgresql
+      as: DATABASE
+    - plan: heroku-redis
+      as: REDIS
+    - plan: heroku-redis
+      as: REDIS_CACHE
+build:
+  docker:
+    web: production.Dockerfile
+run:
+  web: bin/rails server -p $PORT
+  worker:
+    command:
+      - RAILS_MAX_THREADS=10 bundle exec sidekiq
+    image: web

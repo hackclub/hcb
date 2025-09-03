@@ -45,9 +45,10 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
     @user = @card.user
 
     return unless @user.email_charge_notifications_enabled?
+    return if @card.canceled? && @card.canceled_at < 1.month.ago
 
     @merchant = @cpt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]
-    @reason = @cpt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]["reason"]
+    @reason = @cpt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]&.[]("reason")
     @webhook_declined_reason = @cpt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason")
 
     @failed_verification_checks = @cpt.raw_pending_stripe_transaction.stripe_transaction["verification_data"].select { |k, v| k.end_with?("check") && v == "mismatch" }.keys

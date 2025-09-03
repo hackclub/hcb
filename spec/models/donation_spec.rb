@@ -10,33 +10,27 @@ RSpec.describe Donation, type: :modal do
     expect(donation).to be_valid
   end
 
-  it "sends a payment notification on first donation paid" do
+  it "sends the correct payment notification for each succeeded donation" do
     event = create(:event)
 
     expect do
       donation = create(:donation, event:)
       donation.status = "succeeded"
       donation.save
-    end.to change(enqueued_jobs, :size).by(1)
-  end
-
-  it "does not send notifications for later donations" do
-    event = create(:event)
+    end.to have_enqueued_mail(DonationMailer, :first_donation_notification).once
 
     expect do
-      donation = create(:donation, event:)
-      donation.status = "succeeded"
-      donation.save
-
       donation2 = create(:donation, event:)
       donation2.status = "succeeded"
       donation2.save
+    end.to have_enqueued_mail(DonationMailer, :notification).once
 
+    expect do
       donation3 = create(:donation, event:)
+      donation3.message = "Happy hacking!"
       donation3.status = "succeeded"
       donation3.save
-      donation3.delete
-    end.to change(enqueued_jobs, :size).by(1)
+    end.to have_enqueued_mail(DonationMailer, :notification).once
   end
 
   it "does not send multiple email notifications" do

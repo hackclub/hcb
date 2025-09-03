@@ -3,22 +3,16 @@
 require "rails_helper"
 
 RSpec.describe OrganizerPositionInviteService::Create do
-  def create_event(representative_email)
-    partner = Partner.create!({
-                                slug: SecureRandom.hex(30),
-                                representative: User.create!(email: representative_email)
-                              })
+  def create_event
     Event.create!({
                     name: "test-event",
-                    partner:,
-                    organization_identifier: SecureRandom.hex(30)
                   })
   end
 
   context "associated user" do
     context "when it does not exist" do
       it "creates the user before creating the invite" do
-        event = create_event("partner@example.com")
+        event = create_event
         sender = User.create!(email: "sender@example.com")
 
         invitee_email = "invitee@example.com"
@@ -41,7 +35,7 @@ RSpec.describe OrganizerPositionInviteService::Create do
 
     context "when it does exist" do
       it "associates the existing user to the newly created invite" do
-        event = create_event("partner@example.com")
+        event = create_event
         sender = User.create!(email: "sender@example.com")
         invited_user = User.create!(email: "invitee@example.com")
 

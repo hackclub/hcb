@@ -4,11 +4,11 @@ module PayoutService
   class Nightly
     def run
       ::Donation.where(aasm_state: [:in_transit, :refunded]).missing_payout.find_each(batch_size: 100) do |donation|
-        ::PayoutJob::Donation.perform_later(donation.id)
+        ::Payout::DonationJob.perform_later(donation.id)
       end
 
       ::Invoice.paid_v2.missing_payout.find_each(batch_size: 100) do |invoice|
-        ::PayoutJob::Invoice.perform_later(invoice.id)
+        ::Payout::InvoiceJob.perform_later(invoice.id)
       end
     end
 

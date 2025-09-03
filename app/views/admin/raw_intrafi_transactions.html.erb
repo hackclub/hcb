@@ -1,0 +1,47 @@
+<% title "Intrafi Transactions" %>
+
+<div class="flex items-center mb2 justify-between">
+  <div class="flex-grow">
+    <%= page_entries_info @raw_intrafi_transactions, entry_name: "transactions" %>
+  </div>
+  <%= form_with local: true, url: raw_intrafi_transactions_import_admin_index_path, method: :post, class: "mb-0" do |form| %>
+    <%= form.file_field :file, accept: ".csv", class: "mb-0" %>
+    <%= form.submit class: "mb-0", value: "Import" %>
+  <% end %>
+</div>
+
+<% if @raw_imported_file.present? %>
+  <details>
+    <summary class="flex items-center">
+      <%= inline_icon "docs", size: 24, class: "mr1" %>
+      <span>Uploaded file</span>
+    </summary>
+
+    <pre class="bg-snow p2 mt1 mb0"><code><%= @raw_imported_file %></code></pre>
+  </details>
+<% end %>
+
+<table class="min-w-0">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Date</th>
+      <th>Date Imported</th>
+      <th>Memo</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @raw_intrafi_transactions.each do |rt| %>
+      <tr class="<%= "admin-bg-transit" if rt.id.in?(@imported) %>">
+        <td><%= rt.id %></td>
+        <td><%= rt.date_posted %></td>
+        <td><%= rt.created_at.to_date %></td>
+        <td><%= rt.memo %></td>
+        <td><%= render_money rt.amount_cents %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @raw_intrafi_transactions %>

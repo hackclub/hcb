@@ -31,7 +31,7 @@ module GSuiteService
     end
 
     def notify_of_verified
-      GSuiteMailer.with(recipient: g_suite.created_by.email, g_suite_id: g_suite.id).notify_of_verified.deliver_now if g_suite.created_by.present?
+      GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_verified.deliver_now if g_suite.created_by.present?
     end
 
   end

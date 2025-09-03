@@ -21,6 +21,7 @@ class ReceiptBinMailer < ApplicationMailer
 
   def bounce_success
     @receipts_count = params[:receipts_count]
+    @paired_with = params[:paired_with]
     mail subject: @inbound_mail&.mail&.subject || "Thank you for your #{"receipt".pluralize(@receipts_count)}!"
   end
 

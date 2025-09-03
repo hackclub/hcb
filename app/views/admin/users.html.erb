@@ -6,6 +6,7 @@
   <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
 
   <%= form.select :access_level, User.access_levels.keys.map { |level| [level.humanize, level] }, { include_blank: "All user types", selected: @access_level } %>
+  <%= form.select :referral_program_id, @referral_programs.map { |program| [program.name, program.id] }, { include_blank: "No referral filter", selected: @referral_program_id } %>
 
   <div>
     <%= form.submit "Search" %>
@@ -30,6 +31,7 @@
       <th class="w-32">Created</th>
       <th>Name</th>
       <th>Email</th>
+      <th>Phone</th>
       <th>Org Positions</th>
       <th class="w-48">Card Grants</th>
       <th># Receipts Missing</th>
@@ -38,7 +40,7 @@
   </thead>
   <tbody>
     <% @users.each do |user| %>
-      <tr style="<%= "background: #ff8c38;" if user.admin? %>">
+      <tr style="<%= "background: #ff8c38;" if user.auditor? %>">
         <td><%= user.id %></td>
         <td><%= user.created_at.strftime("%Y-%m-%d") %></td>
         <td>
@@ -49,7 +51,13 @@
         <td>
           <%= user.email %>
           <% user.email_updates.confirmed.order(created_at: :desc).pluck(:original).excluding(user.email).each do | email | %>
-            <br> <i><%= email %></i>
+            <br><small><i><%= email %></i></small>
+          <% end %>
+        </td>
+        <td>
+          <%= user.phone_number %>
+          <% unless user.phone_number_verified %>
+            <br><small><i>⚠️ Unverified</i></small>
           <% end %>
         </td>
         <td>
@@ -85,7 +93,7 @@
           <%= user.transactions_missing_receipt.count %>
         </td>
         <td>
-          <%= link_to "Impersonate", impersonate_user_path(user.id), data: { turbo_confirm: "Are you sure?", turbo_method: "post" } unless current_session&.impersonated? %>
+          <%= link_to "Impersonate", impersonate_user_path(user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
           <%= link_to "More Info", admin_user_path(user) %>
         </td>
       </tr>

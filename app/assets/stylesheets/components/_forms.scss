@@ -66,6 +66,10 @@ input[type='file'] {
   max-width: 100%;
 }
 
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
 .field--fileupload {
   display: flex;
   gap: 0.5rem;
@@ -102,6 +106,24 @@ input[type='file'] {
     }
 
     color: $muted;
+  }
+
+  &:has([disabled]) {
+    .field--fileupload__label,
+    .field--fileupload__field {
+      color: map-get($palette, slate);
+      cursor: no-drop;
+    }
+
+    .field--fileupload__label {
+      transition: none;
+      color: $muted;
+      border-color: map-get($palette, smoke);
+
+      &:hover {
+        transform: none;
+      }
+    }
   }
 }
 
@@ -283,7 +305,8 @@ label {
 
 $select: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="%238492a6" viewbox="0 0 32 32"><path d="M0 6 L32 6 L16 28 z"/></svg>');
 
-select {
+select,
+.input.input--select {
   background-image: #{$select};
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
@@ -294,6 +317,13 @@ select {
 select[name$='i)]'] {
   width: 4.5rem;
   display: inline-block;
+  .onboarding & {
+    flex: 1;
+    width: auto;
+    &:first-child {
+      flex: 2;
+    }
+  }
 }
 
 // rails month inputs should be wider
@@ -326,11 +356,13 @@ legend {
     margin-bottom: 0.25rem;
   }
 
-  input {
+  input,
+  .field_with_errors:has(> input) {
     display: none;
   }
 
-  label {
+  label,
+  .field_with_errors > label {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -343,12 +375,16 @@ legend {
     background-color: rgba(map-get($palette, accent), 0.25);
   }
 
-  input:disabled + label {
+  input:disabled + label,
+  .field_with_errors:has(> input:disabled) + .field_with_errors:has(> label) {
     opacity: 0.5;
     cursor: default;
   }
 
-  input:checked + label {
+  input:checked + label,
+  .field_with_errors:has(> input:checked)
+    + .field_with_errors:has(> label)
+    > label {
     box-shadow:
       0 0 0 1px white,
       0 0 0 3px map-get($palette, info);
@@ -385,4 +421,127 @@ form section.grid--split {
 
 .grid__half {
   grid-column: span 1 !important;
+}
+
+// Inspired by https://dev.to/madsstoumann/using-a-single-input-for-one-time-code-352l
+
+input:where([data-behavior='otp_input']) {
+  --otp-digits: 6;
+  --otp-ls: 2.3ch;
+  --otp-gap: 1.25;
+
+  /* private consts */
+  --_otp-bgsz: calc(var(--otp-ls) + 1ch);
+  --_otp-digit: 0;
+
+  all: unset;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(51, 142, 218, 0.125) calc(var(--otp-gap) * var(--otp-ls)),
+      transparent 0
+    ),
+    linear-gradient(
+      90deg,
+      #252429 calc(var(--otp-gap) * var(--otp-ls)),
+      transparent 0
+    );
+
+  background-position:
+    calc(var(--_otp-digit) * var(--_otp-bgsz)) 0,
+    0 0;
+  background-repeat: no-repeat, repeat-x;
+  background-size: var(--_otp-bgsz) 100%;
+
+  caret-color: #ddcfcf;
+  caret-shape: block;
+
+  clip-path: inset(0% calc(var(--otp-ls) / 2) 0% 0%);
+
+  font-family: ui-monospace, monospace;
+  font-size: 2em !important;
+  inline-size: calc(var(--otp-digits) * var(--_otp-bgsz));
+  letter-spacing: var(--otp-ls);
+  padding-block: 1ch;
+  padding: 0.2em 0px !important;
+  padding-inline-start: calc(
+    ((var(--otp-ls) - 0.9ch) / 2) * var(--otp-gap)
+  ) !important;
+
+  border-radius: 0px !important;
+  background-color: rgba(0, 0, 0, 0) !important;
+  border: none !important;
+  color: inherit !important;
+}
+
+.dropdown-button__menu {
+  width: 100%;
+
+  position: absolute;
+  top: 110%;
+  left: 0px;
+
+  border-radius: 0.75rem;
+
+  background-color: $smoke;
+
+  [data-dark='true'] & {
+    background-color: $darker;
+  }
+
+  display: none;
+  opacity: 0;
+
+  z-index: 10;
+
+  margin-top: 8px;
+}
+
+.dropdown-button__menu div {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+
+  border-radius: inherit;
+}
+
+.dropdown-button__menu input {
+  display: none;
+}
+
+.dropdown-button__menu label {
+  padding: 0.5rem 1rem;
+  border-radius: inherit;
+}
+
+.dropdown-button__menu label p {
+  margin: 3px 0px;
+}
+
+.dropdown-button__menu label:hover {
+  background-color: color-mix(in srgb, $slate 20%, transparent);
+}
+.dropdown-button__menu input:checked + label {
+  background-color: color-mix(in srgb, $green-dark 20%, transparent);
+}
+
+.dropdown-button__container {
+  display: flex;
+  border-radius: 0.75rem;
+
+  width: fit-content;
+
+  transform: scale(1);
+  transition:
+    transform 0.125s ease-in-out,
+    box-shadow 0.25s ease-in-out;
+
+  &:hover,
+  &:focus,
+  &[aria-expanded='true'] {
+    color: $white;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
+    transform: scale(1.0625);
+  }
 }

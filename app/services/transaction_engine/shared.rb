@@ -11,7 +11,7 @@ module TransactionEngine
       case @bank_account_id
       when 1
         "EVENTFISCALSPONSORSHIP"
-      when 4
+      when 4, 50
         "FSMAIN"
       when "SVBFSOPERATING" # SVB FS OPERATING - account ends in ***0703
         "SVBFSOPERATING" # used to handle special case of some ACH transfers going out under the wrong bank account

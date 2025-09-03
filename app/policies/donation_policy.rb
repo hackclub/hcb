@@ -2,6 +2,10 @@
 
 class DonationPolicy < ApplicationPolicy
   def show?
+    record.event.users.include?(user) || user&.auditor?
+  end
+
+  def create?
     record.event.users.include?(user) || user&.admin?
   end
 
@@ -14,15 +18,19 @@ class DonationPolicy < ApplicationPolicy
   end
 
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def export?
-    record.event.users.include?(user) || user&.admin?
+    record.event.users.include?(user) || user&.auditor?
   end
 
   def export_donors?
-    record.event.users.include?(user) || user&.admin?
+    record.event.users.include?(user) || user&.auditor?
+  end
+
+  def update?
+    OrganizerPosition.find_by(user:, event: record.event)&.manager? || user&.admin?
   end
 
   def refund?

@@ -9,9 +9,7 @@
 #  activated_at                                 :datetime
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
-#  category                                     :integer
 #  country                                      :integer
-#  custom_css_url                               :string
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
 #  demo_mode_request_meeting_at                 :datetime
@@ -20,52 +18,38 @@
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
-#  expected_budget                              :integer
-#  has_fiscal_sponsorship_document              :boolean
+#  donation_tiers_enabled                       :boolean          default(FALSE), not null
+#  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
 #  is_indexable                                 :boolean          default(TRUE)
 #  is_public                                    :boolean          default(TRUE)
 #  last_fee_processed_at                        :datetime
-#  name                                         :text
-#  omit_stats                                   :boolean          default(FALSE)
-#  organization_identifier                      :string           not null
-#  owner_address                                :string
-#  owner_birthdate                              :date
-#  owner_email                                  :string
-#  owner_name                                   :string
-#  owner_phone                                  :string
-#  pending_transaction_engine_at                :datetime         default(Sat, 13 Feb 2021 22:49:40.000000000 UTC +00:00)
+#  name                                         :text             not null
 #  postal_code                                  :string
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
-#  redirect_url                                 :string
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
+#  risk_level                                   :integer
+#  short_name                                   :string
 #  slug                                         :text
-#  sponsorship_fee                              :decimal(, )
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
-#  transaction_engine_v2_at                     :datetime
-#  webhook_url                                  :string
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
-#  club_airtable_id                             :text
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
-#  partner_id                                   :bigint
+#  parent_id                                    :bigint
 #  point_of_contact_id                          :bigint
 #
 # Indexes
 #
-#  index_events_on_club_airtable_id                        (club_airtable_id) UNIQUE
-#  index_events_on_partner_id                              (partner_id)
-#  index_events_on_partner_id_and_organization_identifier  (partner_id,organization_identifier) UNIQUE
-#  index_events_on_point_of_contact_id                     (point_of_contact_id)
+#  index_events_on_parent_id            (parent_id)
+#  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (partner_id => partners.id)
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
@@ -87,8 +71,11 @@ class Event < ApplicationRecord
   validates_as_paranoid
 
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
+  normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
-  validates :short_name, length: { maximum: 16 }, allow_blank: true
+  validates :name, presence: true
+  MAX_SHORT_NAME_LENGTH = 16
+  validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
   include AASM
   include PgSearch::Model
@@ -110,11 +97,9 @@ class Event < ApplicationRecord
   scope :transparent, -> { where(is_public: true) }
   scope :not_transparent, -> { where(is_public: false) }
   scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
-  scope :omitted, -> { where(omit_stats: true) }
-  scope :not_omitted, -> { where(omit_stats: false) }
+  scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
+  scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :hidden, -> { where("hidden_at is not null") }
-  scope :not_partner, -> { where(partner_id: 1) }
-  scope :partner, -> { where.not(partner_id: 1) }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
   scope :funded, -> {
@@ -123,14 +108,58 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
+  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
+  scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
   scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
+  scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
   scope :flag_enabled, ->(flag) {
     joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
+
+  def ancestor_ids
+    [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE parent_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN parent_events pe ON e.id = pe.parent_id
+      )
+      SELECT id FROM parent_events WHERE id != #{id};
+    SQL
+  end
+
+  def descendant_ids
+    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE child_events AS (
+        SELECT id, parent_id
+        FROM events
+        WHERE parent_id = #{id}
+        UNION ALL
+        SELECT e.id, e.parent_id
+        FROM events e
+        INNER JOIN child_events ce ON e.parent_id = ce.id
+      )
+      SELECT id FROM child_events;
+    SQL
+  end
+
+  def ancestors
+    Event.where(id: ancestor_ids)
+  end
+
+  def descendant_total_balance_cents
+    subevents.to_a.sum(&:balance_available_v2_cents)
+  end
+
+  belongs_to :parent, class_name: "Event", optional: true
+  has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
@@ -143,13 +172,11 @@ class Event < ApplicationRecord
 
       from (
           select
-          cem.event_id,
+          f.event_id,
           COALESCE(sum(f.amount_cents_as_decimal), 0) as sum
-          from canonical_event_mappings cem
-          inner join fees f on cem.id = f.canonical_event_mapping_id
-          inner join events e on e.id = cem.event_id
-          where e.transaction_engine_v2_at is not null
-          group by cem.event_id
+          from fees f
+          inner join events e on e.id = f.event_id
+          group by f.event_id
       ) as q1 left outer join (
           select
           cem.event_id,
@@ -158,7 +185,6 @@ class Event < ApplicationRecord
           inner join fees f on cem.id = f.canonical_event_mapping_id
           inner join canonical_transactions ct on cem.canonical_transaction_id = ct.id
           inner join events e on e.id = cem.event_id
-          where e.transaction_engine_v2_at is not null
           and f.reason = 'HACK CLUB FEE'
           group by cem.event_id
       ) q2
@@ -176,11 +202,11 @@ class Event < ApplicationRecord
     where("(last_fee_processed_at is null or last_fee_processed_at <= ?) and id in (?)", MIN_WAITING_TIME_BETWEEN_FEES.ago, self.event_ids_with_pending_fees.to_a.map { |a| a["event_id"] })
   end
 
-  self.ignored_columns = %w[start end sponsorship_fee]
-
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
+
+  before_validation :enforce_transparency_eligibility
 
   BADGES = {
     # Qualifier must be a method on Event. If the method returns true, the badge
@@ -209,11 +235,6 @@ class Event < ApplicationRecord
       qualifier: :demo_mode?,
       emoji: "🧪",
       description: "Demo Account"
-    },
-    winter_hardware_grant: {
-      qualifier: :hardware_grant?,
-      emoji: "❄️",
-      description: "Winter hardware grant"
     }
   }.freeze
 
@@ -223,9 +244,8 @@ class Event < ApplicationRecord
     state :rejected # Rejected from fiscal sponsorship
 
     # DEPRECATED
-    state :awaiting_connect # Initial state of partner events. Waiting for user to fill out HCB Connect form
-    state :pending # Awaiting HCB approval (after filling out HCB Connect form)
     state :unapproved # Old spend only events. Deprecated, should not be granted to any new events
+    state :pending
 
     event :mark_pending do
       transitions from: [:awaiting_connect, :approved], to: :pending
@@ -256,13 +276,27 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_positions, dependent: :destroy
+
+  def ancestor_organizer_positions
+    OrganizerPosition.where(event_id: ancestor_ids)
+  end
+
+  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
+  has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
+  has_many :readers, -> { where(organizer_positions: { role: :reader }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
+  has_many :event_follows, class_name: "Event::Follow"
+  has_many :followers, through: :event_follows, source: :user
+
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
+
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -281,6 +315,8 @@ class Event < ApplicationRecord
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
+  has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
+  has_many :donation_tiers, -> { order(sort_index: :asc) }, dependent: :destroy, class_name: "Donation::Tier"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses
@@ -288,11 +324,18 @@ class Event < ApplicationRecord
 
   has_many :paypal_transfers
 
+  has_many :wires
+
+  has_many :wise_transfers
+
   has_many :sponsors
   has_many :invoices, through: :sponsors
   has_many :payouts, through: :invoices
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+
+  has_many :employees
+  has_many :employee_payments, through: :employees, source: :payments, class_name: "Employee::Payment"
 
   has_many :documents
 
@@ -302,6 +345,8 @@ class Event < ApplicationRecord
   has_many :canonical_event_mappings, -> { on_main_ledger }
   has_many :canonical_transactions, through: :canonical_event_mappings
 
+  has_many :announcements
+
   scope :engaged, -> {
     Event.where(id: Event.joins(:canonical_transactions)
         .where("canonical_transactions.date >= ?", 6.months.ago)
@@ -310,7 +355,7 @@ class Event < ApplicationRecord
 
   scope :dormant, -> { where.not(id: Event.engaged) }
 
-  has_many :fees, through: :canonical_event_mappings
+  has_many :fees
   has_many :bank_fees
 
   has_many :tags, -> { includes(:hcb_codes) }
@@ -320,17 +365,12 @@ class Event < ApplicationRecord
 
   has_many :check_deposits
 
-  belongs_to :partner, optional: true
-  has_one :partnered_signup, required: false
-  has_many :partner_donations
-
   has_many :subledgers
 
   has_many :card_grants
   has_one :card_grant_setting
   accepts_nested_attributes_for :card_grant_setting, update_only: true
 
-  has_one :stripe_ach_payment_source
   has_one :increase_account_number
 
   has_one :column_account_number, class_name: "Column::AccountNumber"
@@ -339,9 +379,16 @@ class Event < ApplicationRecord
   has_many :grants
 
   has_one_attached :donation_header_image
+  validates :donation_header_image, content_type: [:png, :jpeg]
+
   has_one_attached :background_image
+  validates :background_image, content_type: [:png, :jpeg, :gif]
+
   has_one_attached :logo
+  validates :logo, content_type: [:png, :jpeg]
+
   has_one_attached :stripe_card_logo
+  validates :stripe_card_logo, content_type: [:png, :jpeg]
 
   include HasMetrics
 
@@ -353,8 +400,11 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
+  validate :contract_signed, unless: :demo_mode?
 
-  validates :name, :organization_identifier, presence: true
+  validates :name, presence: true
+  before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
+
   validates :slug, presence: true, format: { without: /\s/ }
   validates :slug, format: { without: /\A\d+\z/ }
   validates_uniqueness_of_without_deleted :slug
@@ -365,20 +415,29 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
-  before_create { self.increase_account_id ||= IncreaseService::AccountIds::FS_MAIN }
+  before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
   end
 
   before_validation do
-    build_plan(plan_type: Event::Plan::Standard) if plan.nil?
+    build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
-  after_commit :generate_stripe_card_designs, if: -> { stripe_card_logo&.blob&.saved_changes? && stripe_card_logo.attached? && !Rails.env.test? }
+  after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
+  before_save :enable_monthly_announcements
+
+  # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
+  # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
+  after_destroy_commit do
+    organizer_positions.with_deleted.each do |position|
+      position.organizer_position_deletion_requests.destroy_all
+    end
+  end
 
   comma do
     id
@@ -387,7 +446,6 @@ class Event < ApplicationRecord
     slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
     is_public "transparent"
-    category
   end
 
   CUSTOM_SORT = Arel.sql(
@@ -400,27 +458,18 @@ class Event < ApplicationRecord
     "ELSE 'z' || name END ASC   "
   )
 
-  enum category: {
-    hackathon: 0,
-    'hack club': 1,
-    nonprofit: 2,
-    event: 3,
-    'high school hackathon': 4,
-    'robotics team': 5,
-    'hardware grant': 6, # winter event 2022
-    'hack club hq': 7,
-    'outernet guild': 8, # summer event 2023
-    'grant recipient': 9,
-    salary: 10, # e.g. Sam's Shillings
-    ai: 11,
-    'hcb internals': 12 # eg. https://hcb.hackclub.com/clearing
-  }
-
-  enum stripe_card_shipping_type: {
+  enum :stripe_card_shipping_type, {
     standard: 0,
     express: 1,
     priority: 2,
   }
+
+  enum :risk_level, {
+    zero: 0,
+    slight: 1,
+    moderate: 2,
+    high: 3,
+  }, suffix: :risk_level
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.id }, only: [:create]
@@ -476,90 +525,72 @@ class Event < ApplicationRecord
     balance
   end
 
+  def total_spent_cents
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
+  end
+
   def balance_v2_cents(start_date: nil, end_date: nil)
-    @balance_v2_cents ||=
-      begin
-        sum = settled_balance_cents(start_date:, end_date:)
-        sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
-        sum += fronted_incoming_balance_v2_cents(start_date:, end_date:) if can_front_balance?
-        sum
-      end
+    sum = settled_balance_cents(start_date:, end_date:)
+    sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
+    sum += fronted_incoming_balance_v2_cents(start_date:, end_date:) if can_front_balance?
+    sum
   end
 
   # This calculates v2 cents of settled (Canonical Transactions)
   # @return [Integer] Balance in cents (v2 transaction engine)
   def settled_balance_cents(start_date: nil, end_date: nil)
-    @settled_balance_cents ||=
-      settled_incoming_balance_cents(start_date:, end_date:) +
-      settled_outgoing_balance_cents(start_date:, end_date:)
+    settled_incoming_balance_cents(start_date:, end_date:) + settled_outgoing_balance_cents(start_date:, end_date:)
   end
 
   # v2 cents (v2 transaction engine)
   def settled_incoming_balance_cents(start_date: nil, end_date: nil)
-    @settled_incoming_balance_cents ||=
-      begin
-        ct = canonical_transactions.where("amount_cents > 0")
+    ct = canonical_transactions.where("amount_cents > 0")
 
-        ct = ct.where("date >= ?", start_date) if start_date
-        ct = ct.where("date <= ?", end_date) if end_date
+    ct = ct.where("date >= ?", start_date) if start_date
+    ct = ct.where("date <= ?", end_date) if end_date
 
-        ct.sum(:amount_cents)
-      end
+    ct.sum(:amount_cents)
   end
 
   # v2 cents (v2 transaction engine)
   def settled_outgoing_balance_cents(start_date: nil, end_date: nil)
-    @settled_outgoing_balance_cents ||=
-      begin
-        ct = canonical_transactions.where("amount_cents < 0")
+    ct = canonical_transactions.where("amount_cents < 0")
 
-        ct = ct.where("date >= ?", start_date) if start_date
-        ct = ct.where("date <= ?", end_date) if end_date
+    ct = ct.where("date >= ?", start_date) if start_date
+    ct = ct.where("date <= ?", end_date) if end_date
 
-        ct.sum(:amount_cents)
-      end
+    ct.sum(:amount_cents)
   end
 
   def fronted_incoming_balance_v2_cents(start_date: nil, end_date: nil)
-    @fronted_incoming_balance_v2_cents ||=
-      begin
-        pts = canonical_pending_transactions.incoming.fronted.not_declined
+    pts = canonical_pending_transactions.incoming.fronted.not_declined
 
-        pts = pts.where("date >= ?", @start_date) if @start_date
-        pts = pts.where("date <= ?", @end_date) if @end_date
+    pts = pts.where("date >= ?", start_date) if start_date
+    pts = pts.where("date <= ?", end_date) if end_date
 
-        sum_fronted_amount(pts)
-      end
+    sum_fronted_amount(pts)
   end
 
   def pending_balance_v2_cents(start_date: nil, end_date: nil)
-    @pending_balance_v2_cents ||=
-      pending_incoming_balance_v2_cents(start_date:, end_date:) +
-      pending_outgoing_balance_v2_cents(start_date:, end_date:)
+    pending_incoming_balance_v2_cents(start_date:, end_date:) + pending_outgoing_balance_v2_cents(start_date:, end_date:)
   end
 
   def pending_incoming_balance_v2_cents(start_date: nil, end_date: nil)
-    @pending_incoming_balance_v2_cents ||=
-      begin
-        cpt = canonical_pending_transactions.incoming.unsettled.not_fronted
+    cpt = canonical_pending_transactions.incoming.unsettled.not_fronted
 
-        cpt = cpt.where("date >= ?", start_date) if start_date
-        cpt = cpt.where("date <= ?", end_date) if end_date
+    cpt = cpt.where("date >= ?", start_date) if start_date
+    cpt = cpt.where("date <= ?", end_date) if end_date
 
-        cpt.sum(:amount_cents)
-      end
+    cpt.sum(:amount_cents)
   end
 
   def pending_outgoing_balance_v2_cents(start_date: nil, end_date: nil)
-    @pending_outgoing_balance_v2_cents ||=
-      begin
-        cpt = canonical_pending_transactions.outgoing.unsettled
+    cpt = canonical_pending_transactions.outgoing.unsettled
 
-        cpt = cpt.where("date >= ?", start_date) if start_date
-        cpt = cpt.where("date <= ?", end_date) if end_date
+    cpt = cpt.where("date >= ?", start_date) if start_date
+    cpt = cpt.where("date <= ?", end_date) if end_date
 
-        cpt.sum(:amount_cents)
-      end
+    cpt.sum(:amount_cents)
   end
 
   def balance_available_v2_cents
@@ -602,24 +633,6 @@ class Event < ApplicationRecord
 
   alias fee_balance fee_balance_v2_cents
 
-  def plan_name
-    if demo_mode?
-      "playground mode"
-    elsif plan.present?
-      plan.label
-    elsif unapproved?
-      "pending approval"
-    elsif hack_club_hq?
-      "Hack Club affiliated project"
-    elsif salary?
-      "salary account"
-    elsif revenue_fee == 0
-      "full fiscal sponsorship (fee waived)"
-    else
-      "full fiscal sponsorship"
-    end
-  end
-
   def used_emburse?
     emburse_cards.any?
   end
@@ -657,6 +670,14 @@ class Event < ApplicationRecord
     event_tags.where(name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS]).exists?
   end
 
+  def robotics_team?
+    event_tags.where(name: EventTag::Tags::ROBOTICS_TEAM).exists?
+  end
+
+  def hackathon?
+    event_tags.where(name: EventTag::Tags::HACKATHON).exists?
+  end
+
   def reload
     @total_fee_payments_v2_cents = nil
     super
@@ -688,9 +709,9 @@ class Event < ApplicationRecord
 
   def service_level
     return 1 if robotics_team?
-    return 1 if hack_club_hq?
     return 1 if organized_by_hack_clubbers?
     return 1 if organized_by_teenagers?
+    return 1 if plan.is_a?(Event::Plan::HackClubAffiliate)
     return 1 if canonical_transactions.revenue.where("date >= ?", 1.year.ago).sum(:amount_cents) >= 50_000_00
     return 1 if balance_available_v2_cents > 50_000_00
 
@@ -705,17 +726,17 @@ class Event < ApplicationRecord
     !engaged?
   end
 
-  def sponsorship_fee
-    Airbrake.notify("Deprecated Event#sponsorship_fee used.")
-    revenue_fee
-  end
-
-  def plan
-    super&.becomes(super.plan_type&.constantize)
+  def frozen?
+    Flipper.enabled?(:frozen, self)
   end
 
   def revenue_fee
-    plan&.revenue_fee || (Airbrake.notify("#{id} is missing a plan!") && 0.07)
+    configured = plan&.revenue_fee
+    return configured if configured.present?
+
+    Rails.error.unexpected("#{id} is missing a plan!")
+
+    Event::Plan::FALLBACK_REVENUE_FEE
   end
 
   def generate_stripe_card_designs
@@ -723,10 +744,12 @@ class Event < ApplicationRecord
 
     ActiveRecord::Base.transaction do
       stripe_card_personalization_designs.update(stale: true)
-      file = attachment_changes["stripe_card_logo"]&.attachable || StringIO.new(stripe_card_logo.blob.open { |f| f.read })
-      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :black, event: self).run
-      file.rewind
-      ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(file.read), color: :white, event: self).run
+      stripe_card_logo.blob.open do |tempfile|
+        converted = ImageProcessing::MiniMagick.source(tempfile.path).convert!("png")
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :black, event: self).run
+        converted.rewind
+        ::StripeCardService::PersonalizationDesign::Create.new(file: StringIO.new(converted.read), color: :white, event: self).run
+      end
     end
   rescue Stripe::InvalidRequestError => e
     stripe_card_logo.delete
@@ -746,23 +769,105 @@ class Event < ApplicationRecord
   end
 
   def donation_page_available?
-    donation_page_enabled && plan.donations_enabled?
+    donation_page_enabled && plan.donations_enabled? && !financially_frozen?
   end
 
   def public_reimbursement_page_available?
-    public_reimbursement_page_enabled && plan.reimbursements_enabled?
+    public_reimbursement_page_enabled && plan.reimbursements_enabled? && !financially_frozen?
   end
 
-  def short_name(length: 16)
+  def short_name(length: MAX_SHORT_NAME_LENGTH)
     return name if length >= name.length
 
     self[:short_name] || name[0...length]
   end
 
+  monetize :minimum_wire_amount_cents
+
+  def minimum_wire_amount_cents
+    return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
+    return 100 if plan.exempt_from_wire_minimum?
+    return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
+
+    return 500_00
+  end
+
+  def omit_stats?
+    plan.omit_stats
+  end
+
+  validate do
+    if id && id == parent_id
+      errors.add(:parent, "can't be self-referential.")
+    end
+  end
+
+  def eligible_for_transparency?
+    !plan.is_a?(Event::Plan::SalaryAccount)
+  end
+
+  def eligible_for_disabling_transparency?
+    !parent&.is_public?
+  end
+
+  def eligible_for_indexing?
+    eligible_for_transparency? && !risk_level.in?(%w[moderate high])
+  end
+
+  def sync_to_airtable
+    # Sync stats to application's airtable record
+    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
+      app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
+      app["HCB POC Email"] = point_of_contact.email
+
+      # For Anish's TUB
+      app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
+      app["Referral Raised 25"] = total_raised > 25_00
+      app["Referral Transparent"] = is_public
+      app["Referral 2 Teen Members"] = organizer_positions.includes(:user).where(user: { teenager: true }).count > 2
+
+      app.save
+    end
+  end
+
+  def set_airtable_status(status)
+    app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
+
+    return unless app.present?
+
+    app["Status"] = status unless app["Status"] == "Onboarded"
+
+    app.save
+  end
+
+  def active_teenagers
+    organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
+  end
+
+  def subevents_enabled?
+    config.subevent_plan.present?
+  end
+
+  def organizer_contact_emails(only_managers: false)
+    included_users = only_managers ? managers : users
+
+    emails = included_users.map(&:email_address_with_name)
+    emails << config.contact_email if config.contact_email.present?
+
+    emails
+  end
+
+  def point_of_contact_history
+    @point_of_contact_history ||= versions
+                                  .filter_map { |v| v.changeset["point_of_contact_id"].presence }
+                                  .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
+  end
+
   private
 
   def point_of_contact_is_admin
-    return unless point_of_contact # for remote partner created events
+    return unless point_of_contact_changed?
+    return unless point_of_contact
     return if point_of_contact&.admin_override_pretend?
 
     errors.add(:point_of_contact, "must be an admin")
@@ -780,6 +885,12 @@ class Event < ApplicationRecord
     errors.add(:demo_mode, "limit reached for user")
   end
 
+  def contract_signed
+    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
+
+    errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
+  end
+
   def sum_fronted_amount(pts)
     pt_sum_by_hcb_code = pts.group(:hcb_code).sum(:amount_cents)
     hcb_codes = pt_sum_by_hcb_code.keys
@@ -795,6 +906,28 @@ class Event < ApplicationRecord
 
   def move_friendly_id_error_to_slug
     errors.add :slug, *errors.delete(:friendly_id) if errors[:friendly_id].present?
+  end
+
+  def enforce_transparency_eligibility
+    unless eligible_for_transparency?
+      self.is_public = false
+      self.is_indexable = false
+    end
+
+    unless eligible_for_disabling_transparency?
+      self.is_public = true
+    end
+
+    unless eligible_for_indexing?
+      self.is_indexable = false
+    end
+  end
+
+  def enable_monthly_announcements
+    # We'll enable monthly announcements when transparency mode is turned on
+    if is_public_changed?(to: true)
+      config.update(generate_monthly_announcement: true)
+    end
   end
 
 end

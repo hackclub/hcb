@@ -8,14 +8,14 @@ module DonationService
 
         next unless cpt
         next unless cpt.settled?
-        next unless donation.fee_reimbursed?
+        next unless donation.local_hcb_code.ct.present?
 
         raise ArgumentError, "anomaly detected when attempting to mark deposited donation #{donation.id}" if anomaly_detected?(donation:)
 
         begin
           donation.mark_deposited!
         rescue => e
-          Airbrake.notify(e)
+          Rails.error.report(e)
         end
       end
     end

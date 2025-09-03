@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module Event
@@ -24,7 +25,7 @@ class Metric
       def calculate
         CanonicalTransaction
           .joins("LEFT JOIN canonical_event_mappings ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id")
-          .where("canonical_event_mappings.event_id = ? AND EXTRACT(YEAR FROM canonical_transactions.created_at) = ?", event.id, 2023)
+          .where("canonical_event_mappings.event_id = ? AND EXTRACT(YEAR FROM canonical_transactions.created_at) = ?", event.id, 2024)
           .group("date(canonical_transactions.created_at)")
           .select(
             "date(canonical_transactions.created_at) AS transaction_date",

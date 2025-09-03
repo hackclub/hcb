@@ -8,12 +8,19 @@ class DonationsController < ApplicationController
 
   skip_after_action :verify_authorized, only: [:export, :show, :qr_code, :finish_donation, :finished]
   skip_before_action :signed_in_user
-  before_action :set_donation, only: [:show]
+  before_action :set_donation, only: [:show, :update]
   before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
   before_action :check_background_param
   before_action :hide_seasonal_decorations
   skip_before_action :redirect_to_onboarding
+
+  before_action do
+    @force_fullstory = true
+    if (request&.env&.[]("HTTP_ACCEPT_LANGUAGE") && !request&.env&.[]("HTTP_ACCEPT_LANGUAGE")&.include?("-US")) || !@event&.country_US?
+      @international = true
+    end
+  end
 
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
@@ -44,17 +51,31 @@ class DonationsController < ApplicationController
       return not_found
     end
 
-    tax_deductible = params[:goods].nil? ? true : params[:goods] == "0"
+    tax_deductible = params[:goods].nil? || params[:goods] == "0"
+
+    @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
+    @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
+    if params[:tier_id] && @tier.nil?
+      redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." }
+    end
+
 
     @donation = Donation.new(
-      name: params[:name],
-      email: params[:email],
+      name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
+      email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),
       amount: params[:amount],
       message: params[:message],
+      fee_covered: params[:fee_covered],
       event: @event,
-      ip_address: request.ip,
+      ip_address: request.remote_ip,
       user_agent: request.user_agent,
-      tax_deductible:
+      tax_deductible:,
+      referrer: request.referrer,
+      utm_source: params[:utm_source],
+      utm_medium: params[:utm_medium],
+      utm_campaign: params[:utm_campaign],
+      utm_term: params[:utm_term],
+      utm_content: params[:utm_content]
     )
 
     authorize @donation
@@ -67,11 +88,14 @@ class DonationsController < ApplicationController
         email: params[:email],
         amount: params[:amount],
         message: params[:message],
+        fee_covered: params[:fee_covered],
         tax_deductible:
       )
     end
 
     @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(@event, monthly: @monthly).run / 100.0)
+
+    @hide_flash = true
   end
 
   def make_donation
@@ -87,10 +111,10 @@ class DonationsController < ApplicationController
       redirect_to root_url and return
     end
 
-    d_params[:ip_address] = request.ip
+    d_params[:ip_address] = request.remote_ip
     d_params[:user_agent] = request.user_agent
 
-    tax_deductible = d_params[:goods].nil? ? true : d_params[:goods] == "0"
+    tax_deductible = d_params[:goods].nil? || d_params[:goods] == "0"
 
     @donation = Donation.new(d_params.except(:goods).merge({ tax_deductible: }))
     @donation.event = @event
@@ -150,13 +174,17 @@ class DonationsController < ApplicationController
 
     authorize @donation
 
-    ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
-
-    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
+    if @donation.canonical_transactions.any?
+      ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
+    else
+      Donation::RefundJob.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents, current_user)
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
+    end
   end
 
   def export
-    authorize @event.donations.first
+    authorize @event.donations.build
 
     respond_to do |format|
       format.csv { stream_donations_csv }
@@ -165,10 +193,21 @@ class DonationsController < ApplicationController
   end
 
   def export_donors
-    authorize @event.donations.first
+    authorize @event.donations.build
 
     respond_to do |format|
       format.csv { stream_donors_csv }
+    end
+  end
+
+  def update
+    authorize @donation
+    @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
+
+    if @donation.update(params.require(:donation).permit(:anonymous, :name))
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details." }
+    else
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: @donation.errors.full_messages.to_sentence }
     end
   end
 
@@ -246,7 +285,7 @@ class DonationsController < ApplicationController
   end
 
   def donation_params
-    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered)
+    params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered, :referrer, :utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content)
   end
 
   def redirect_to_404

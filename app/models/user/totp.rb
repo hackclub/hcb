@@ -19,6 +19,8 @@
 #
 class User
   class Totp < ApplicationRecord
+    ISSUER = "HCB"
+
     acts_as_paranoid
 
     include AASM
@@ -61,7 +63,7 @@ class User
     private
 
     def instance
-      ROTP::TOTP.new(secret, issuer: "HCB")
+      ROTP::TOTP.new(secret, issuer: ISSUER)
     end
 
   end

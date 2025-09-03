@@ -3,8 +3,7 @@
 class UsersController < ApplicationController
   skip_before_action :signed_in_user, only: [:webauthn_options]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
-  skip_after_action :verify_authorized, only: [:logout_all,
-                                               :logout_session,
+  skip_after_action :verify_authorized, only: [:show,
                                                :revoke_oauth_application,
                                                :edit_address,
                                                :edit_payout,
@@ -24,6 +23,11 @@ class UsersController < ApplicationController
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
 
   wrap_parameters format: :url_encoded_form
+
+  def show
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    redirect_to admin_user_path(@user)
+  end
 
   def impersonate
     authorize current_user
@@ -50,7 +54,7 @@ class UsersController < ApplicationController
 
     session[:auth_email] = params[:email]
 
-    return head :not_found if params[:require_webauthn_preference] && session[:login_preference] != "webauthn"
+    return head :not_found if params[:require_webauthn_preference] == "true" && session[:login_preference] != "webauthn"
 
     user = User.find_by(email: params[:email])
 
@@ -72,19 +76,19 @@ class UsersController < ApplicationController
   end
 
   def logout_all
-    sign_out_of_all_sessions
-    redirect_back_or_to security_user_path(current_user), flash: { success: "Success" }
+    user = User.friendly.find(params[:id])
+    authorize user
+    sign_out_of_all_sessions(user)
+    redirect_back_or_to security_user_path(user), flash: { success: "Success" }
   end
 
   def logout_session
     begin
       session = UserSession.find(params[:id])
-      if session.user.id != current_user.id
-        return redirect_back_or_to settings_security_path, flash: { error: "Error deleting the session" }
-      end
+      authorize session.user
 
-      session.destroy!
-      flash[:success] = "Deleted session!"
+      session.update(signed_out_at: Time.now, expiration_at: Time.now)
+      flash[:success] = "Logged out of session!"
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "Session is not found"
     end
@@ -96,18 +100,27 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(current_user)
   end
 
+  def make_oauth_authorization_eternal
+    token = ApiToken.find(params[:id])
+    authorize token, :make_eternal?
+
+    if token.update(expires_in: nil)
+      flash[:success] = "Authorization made eternal."
+    else
+      flash[:error] = "Failed to make authorization eternal."
+    end
+    redirect_back_or_to security_user_path(token.user)
+  end
+
   def receipt_report
-    ReceiptReportJob::Send.perform_later(current_user.id, force_send: true)
+    ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
     redirect_to settings_previews_path
   end
 
   def edit
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.onboarding?
-    @mailbox_address = @user.active_mailbox_address
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+    set_onboarding
     authorize @user
   end
 
@@ -115,9 +128,6 @@ class UsersController < ApplicationController
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     redirect_to edit_user_path(@user) unless @user.stripe_cardholder
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
 
@@ -128,30 +138,35 @@ class UsersController < ApplicationController
 
   def edit_featurepreviews
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
 
   def edit_security
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
-    @oauth_authorizations = @user.api_tokens
-                                 .where.not(application_id: nil)
-                                 .select("application_id, MAX(api_tokens.created_at) AS created_at, MIN(api_tokens.created_at) AS first_authorized_at, COUNT(*) AS authorization_count")
-                                 .accessible
-                                 .group(:application_id)
-                                 .includes(:application)
-    @all_sessions = (@sessions + @oauth_authorizations).sort_by { |s| s.created_at }.reverse!
+    @sessions = @sessions.not_expired
+    oauth_tokens_by_app = @user.api_tokens
+                               .where.not(application_id: nil)
+                               .accessible
+                               .includes(:application)
+                               .order(created_at: :desc)
+                               .group_by(&:application)
+    oauth_authorizations = oauth_tokens_by_app.map do |app, tokens|
+      OpenStruct.new(
+        application: app,
+        created_at: tokens.max_by(&:created_at).created_at,
+        first_authorized_at: tokens.min_by(&:created_at).created_at,
+        authorization_count: tokens.size,
+        tokens: tokens,
+      )
+    end
+    @all_sessions = (@sessions + oauth_authorizations).sort_by { |s| s.created_at }.reverse!
 
     @expired_sessions = @user
                         .user_sessions
-                        .with_deleted
+                        .recently_expired_within(1.week.ago)
                         .not_impersonated
-                        .where("deleted_at >= ? OR (expiration_at >= ? AND expiration_at < ?)", 1.week.ago, 1.week.ago, Time.now.utc)
                         .order(created_at: :desc)
 
     authorize @user
@@ -191,11 +206,34 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(@user)
   end
 
+  def generate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @previewed_backup_codes = @user.generate_backup_codes!
+  end
+
+  def activate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.activate_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
+  def disable_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.disable_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+
+    authorize @user
+  end
+
+  def admin_details
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
 
     # User Information
     @invoices = Invoice.where(creator: @user)
@@ -209,33 +247,43 @@ class UsersController < ApplicationController
   end
 
   def update
+    return_to = params[:return_to]
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     @user = User.friendly.find(params[:id])
     authorize @user
 
-    if @user.admin? && params[:user][:running_balance_enabled].present?
-      enable_running_balance = params[:user][:running_balance_enabled] == "1"
-      if @user.running_balance_enabled? != enable_running_balance
-        @user.update_attribute(:running_balance_enabled, enable_running_balance)
-      end
+    @user.assign_attributes(user_params)
+
+    if @user.use_two_factor_authentication_changed?
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
 
-    if params[:user][:locked].present?
+    if admin_signed_in?
+      if @user.auditor? && params[:user][:running_balance_enabled].present?
+        enable_running_balance = params[:user][:running_balance_enabled] == "1"
+        if @user.running_balance_enabled? != enable_running_balance
+          @user.update_attribute(:running_balance_enabled, enable_running_balance)
+        end
+      end
+
       locked = params[:user][:locked] == "1"
-      if locked && @user == current_user
-        flash[:error] = "As much as you might desire to, you cannot lock yourself out."
-        return redirect_to admin_user_path(@user)
-      elsif locked && @user.admin?
-        flash[:error] = "Contact a engineer to lock out another admin."
-        return redirect_to admin_user_path(@user)
-      elsif locked
-        @user.lock!
-      else
-        @user.unlock!
+      if @user.locked? != locked
+        if @user == current_user
+          flash[:error] = "As much as you might desire to, you cannot lock yourself out."
+          return redirect_to admin_user_path(@user)
+        elsif @user.admin? && !superadmin_signed_in?
+          flash[:error] = "Only superadmins can lock or unlock admins."
+          return redirect_to admin_user_path(@user)
+        elsif locked && @user.superadmin?
+          flash[:error] = "To lock this user, demote them to a regular admin first."
+          return redirect_to admin_user_path(@user)
+        elsif locked
+          @user.lock!
+        else
+          @user.unlock!
+        end
       end
     end
-
-    email_change_requested = false
 
     if params[:user][:email].present? && params[:user][:email] != @user.email
       begin
@@ -252,12 +300,12 @@ class UsersController < ApplicationController
       end
     end
 
-    if @user.update(user_params)
+    if @user.save
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
 
       if @user.full_name_before_last_save.blank?
         flash[:success] = "Profile created!"
-        redirect_to root_path
+        redirect_to(return_to || root_path)
       else
         if @user.payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
@@ -272,19 +320,24 @@ class UsersController < ApplicationController
         redirect_back_or_to edit_user_path(@user)
       end
     else
-      @onboarding = User.friendly.find(params[:id]).full_name.blank?
-      show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-      @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+      set_onboarding
+
       if @user.stripe_cardholder&.errors&.any?
         flash.now[:error] = @user.stripe_cardholder.errors.first.full_message
-        render :edit_address, status: :unprocessable_entity and return
+        render :edit_address, status: :unprocessable_entity
+        return
       end
+
       if @user.payout_method&.errors&.any?
         flash.now[:error] = @user.payout_method.errors.first.full_message
-        render :edit_payout, status: :unprocessable_entity and return
+        render :edit_payout, status: :unprocessable_entity
+        return
       end
+
       render :edit, status: :unprocessable_entity
     end
+  rescue Errors::StripeInvalidNameError => e
+    redirect_back_or_to edit_user_path(@user), flash: { error: e.message }
   end
 
   def delete_profile_picture
@@ -338,6 +391,11 @@ class UsersController < ApplicationController
     @shown_private_feature_previews = params[:classified_top_secret]&.split(",") || []
   end
 
+  def set_onboarding
+    @onboarding = @user.onboarding?
+    @hide_seasonal_decorations = true if @onboarding
+  end
+
   def user_params
     attributes = [
       :full_name,
@@ -350,9 +408,10 @@ class UsersController < ApplicationController
       :receipt_report_option,
       :birthday,
       :seasonal_themes_enabled,
-      :payout_method_type,
       :comment_notifications,
-      :charge_notifications
+      :charge_notifications,
+      :use_sms_auth,
+      :use_two_factor_authentication
     ]
 
     if @user.stripe_cardholder
@@ -368,41 +427,81 @@ class UsersController < ApplicationController
       }
     end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::Check.name
-      attributes << {
-        payout_method_attributes: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :address_country
-        ]
-      }
-    end
+    if @user.can_update_payout_method?
+      attributes << :payout_method_type
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Check.name
+        attributes << {
+          payout_method_attributes: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :address_country
+          ]
+        }
+      end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
-      attributes << {
-        payout_method_attributes: [
-          :account_number,
-          :routing_number
-        ]
-      }
-    end
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
+        attributes << {
+          payout_method_wire: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :recipient_country,
+            :bic_code,
+            :account_number
+          ] + Wire.recipient_information_accessors
+        }
+      end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::PaypalTransfer.name
-      attributes << {
-        payout_method_attributes: [
-          :recipient_email
-        ]
-      }
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::WiseTransfer.name
+        attributes << {
+          payout_method_wise_transfer: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :recipient_country,
+            :currency,
+          ] + WiseTransfer.recipient_information_accessors
+        }
+      end
+
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
+        attributes << {
+          payout_method_attributes: [
+            :account_number,
+            :routing_number
+          ]
+        }
+      end
+
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::PaypalTransfer.name
+        attributes << {
+          payout_method_attributes: [
+            :recipient_email
+          ]
+        }
+      end
     end
 
     if superadmin_signed_in?
       attributes << :access_level
     end
 
-    params.require(:user).permit(attributes)
+    p = params.require(:user).permit(attributes)
+
+    # The Wire payout method attributes are under the `payout_method_wire` param instead of `payout_method_attributes` to prevent conflict with existing keys for other payout methods such as AchTransfer.
+    # Rails requires that DOM form inputs have unique names.
+    p[:payout_method_attributes] = p.delete(:payout_method_wire) if p[:payout_method_wire]
+    # Same thing for Wise transfer payouts
+    p[:payout_method_attributes] = p.delete(:payout_method_wise_transfer) if p[:payout_method_wise_transfer]
+
+    p
   end
 
 end

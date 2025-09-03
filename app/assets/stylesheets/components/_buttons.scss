@@ -68,10 +68,18 @@ input[type='submit'],
 
   &.bg-warning {
     @include gradient(warning);
+
+    html[data-dark='true'] & {
+      color: darken(map-get($palette, warning), 33.3%) !important;
+    }
   }
 
   &.bg-purple {
     @include gradient(purple);
+  }
+
+  &.bg-slate {
+    @include gradient(slate);
   }
 
   &.bg-ai {
