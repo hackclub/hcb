@@ -79,7 +79,8 @@
   </div>
 
   <p>
-    We'll ship you some super cool custom HCB pins and keychains if you have 5 or more active teens!
+    Ever wish you were just a little more dripped out in HCB swag? 
+    We'll ship you some super cool custom HCB pins and keychains for free if you have 5 or more active teens!
   </p>
   <section class="card__banner card__darker secondary border-top italic">
     You currently have <%= active_teen_count %>/5 active teenagers in your organization!
@@ -110,7 +111,10 @@
   </div>
 
   <p>
-    Get $20 to spend on domains in the form of a card grant if you have 5 or more active teens!
+    More domains?? Get $20 to spend on domains in the form of a card grant if you have 5 or more active teens!
+  </p>
+  <p>
+    This is a separate promotion from the Porkbun domains below; feel free to claim both :D
   </p>
   <section class="card__banner card__darker secondary border-top italic">
     You currently have <%= active_teen_count %>/5 active teenagers in your organization!
@@ -125,11 +129,11 @@
     </h3>
     <% if premium_ineligible_reason.present? %>
       <div class="tooltipped tooltipped--w inline-block" aria-label="<%= premium_ineligible_reason %>">
-        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+        <span class="btn disabled">Ineligible</span>
       </div>
     <% elsif active_teen_count < 5 %>
       <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must have 5 or more active teens">
-        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+        <span class="btn disabled">Ineligible</span>
       </div>
     <% else %>
       <%= link_to "Apply",
@@ -138,12 +142,11 @@
         target: :_blank %>
     <% end %>
   </div>
-  <h3 class="mb0 mt0">Raise some money this season with zero fees on HCB!</h3>
   <p>
-    Are you a teen-led robotics team? We’d love to waive all of your HCB fees till September 30th! Have 5 active teens on your HCB account, and we’ll waive all fees!
+    Are you a teen-led robotics team with 5 or more active teens on your HCB organization? We’d love to waive all of your HCB fees till September 30th!
   </p>
   <section class="card__banner card__darker secondary border-top italic">
-    You currently have <%= active_teen_count %> active teenagers in your organization!
+    You currently have <%= active_teen_count %>/5 active teenagers in your organization!
   </section>
 </div>
 
