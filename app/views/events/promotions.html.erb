@@ -6,6 +6,8 @@
   Promotions &amp; perks
 </h1>
 
+<%# Perks for TEEN organizations %>
+<% if @event.organized_by_teenagers? || @teen_users > 0 %>
 <% if !@event.plan.eligible_for_perks? %>
   <% premium_ineligible_reason = "Perks are not available for HQ organizations" %>
 <% elsif !@perks_available %>
@@ -152,73 +154,71 @@
         <h3 class="h1 py-4 my0 flex items-center smoke justify-center">
           <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7eb839cffb744ac3d23d6980945e3dac0903e9d8_drukarka-3d-bambu-lab-a1-578982107-removebg-preview.png" height="72px" class="mr2">
           3D Printer Raffle
-        </h3>
-        <% if @event.robotics_team? && @event.organized_by_teenagers? %>
-          <span class="btn disabled bg-clip-padding">Entered</span>
-        <% else %>
-          <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a teen-led organization and robotics team">
-            <span class="btn disabled bg-clip-padding">Ineligible</span>
-          </div>
-        <% end %>
+          </h3>
+          <% if @event.robotics_team? || @event.affiliations.robotics.any? %>
+            <span class="btn disabled bg-clip-padding">Entered</span>
+          <% else %>
+            <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a robotics team or have a robotics affiliation.">
+              <span class="btn disabled bg-clip-padding">Ineligible</span>
+            </div>
+          <% end %>
+        </div>
+
+        <p>
+          Is your organization a high-school robotics team? Get an entry into a raffle for a Bambu Lab A1 from now until September 30th for each active teenager in your organization!
+        </p>
+        <section class="card__banner card__darker secondary border-top italic">
+          You currently have <%= number_to_human(@teen_users) %> active teenagers in your organization!
+        </section>
       </div>
+    </div>
+  <% end %>
 
+  <% if @event.hackathon? || @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
+    <div class="card pb0 mb3 <%= "muted" unless @perks_available %>" id="hackathons-page">
+      <div class="card__banner card__banner--top flex justify-between items-center promo-hackathons-page">
+        <%= image_tag "https://assets.hackclub.com/flag-standalone.svg", height: 90, class: "p-4" %>
+        <%= link_to @perks_available ? "Apply" : "Ineligible",
+          "https://dash.hackathons.hackclub.com/hackathons/submissions/new",
+          class: "btn #{'disabled' unless @perks_available}",
+          target: :_blank %>
+      </div>
       <p>
-        Is your organization a high-school robotics team? Get an entry into a raffle for a Bambu Lab A1 from now until September 30th for each active teenager in your organization!
-        <% if !(@event.robotics_team? && @event.organized_by_teenagers?) %>
-          Are you a high-school robotics team, but it says you're ineligible?
-          Please email us at <%= mail_to "hcb@hackclub.com" %> so we can update our records.
-        <% end %>
+        Are you running a high school student-led hackathon? If you would like to get <%= @event.name %> listed on <%= link_to "hackathons.hackclub.com", "https://hackathons.hackclub.com/" %>, apply here!
       </p>
-      <section class="card__banner card__darker secondary border-top italic">
-        You currently have <%= number_to_human(@event.users.count { |user| user.teenager? && user.active? }) %> active teenagers in your organization!
-      </section>
     </div>
-  </div>
-<% end %>
+  <% end %>
 
-<% if @event.hackathon? || @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
-  <div class="card pb0 mb3 <%= "muted" unless @perks_available %>" id="hackathons-page">
-    <div class="card__banner card__banner--top flex justify-between items-center promo-hackathons-page">
-      <%= image_tag "https://assets.hackclub.com/flag-standalone.svg", height: 90, class: "p-4" %>
-      <%= link_to @perks_available ? "Apply" : "Ineligible",
-        "https://dash.hackathons.hackclub.com/hackathons/submissions/new",
-        class: "btn #{'disabled' unless @perks_available}",
-        target: :_blank %>
+  <div class="card mb3" id="domains">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-domains">
+      <h3 class="h1 py-4 my0 color-black">Domains</h3>
+        <% if !@event.g_suites.none? || !@perks_available || !@event.organized_by_teenagers? %>
+          <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
+            <span class="btn disabled">Ineligible</span>
+          </div>
+        <% else %>
+          <%= link_to "Apply",
+            @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
+            class: "btn #{"disabled" unless @perks_available}",
+            target: :_blank %>
+        <% end %>
     </div>
-    <p>
-      Are you running a high school student-led hackathon? If you would like to get <%= @event.name %> listed on <%= link_to "hackathons.hackclub.com", "https://hackathons.hackclub.com/" %>, apply here!
+
+    <p class="mb0">
+      Running a high school student-led hackathon, nonprofit, or club? HCB
+      will purchase your domain for under $20 and cover the cost for the
+      first year. After the first year, you'll be responsible for paying to
+      renew. This can only be claimed once per organization.
+      <% if Flipper.enabled?(:google_workspace, @event) %>
+        You'll also have the option of setting
+        up <%= link_to "Google Workspace", event_g_suite_overview_path %> once
+        we've purchased your domain.
+      <% end %>
     </p>
   </div>
 <% end %>
 
-<div class="card mb3" id="domains">
-  <div class="card__banner card__banner--top flex justify-between items-center promo-domains">
-    <h3 class="h1 py-4 my0 color-black">Domains</h3>
-      <% if !@event.g_suites.none? || !@perks_available || !@event.organized_by_teenagers? %>
-        <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
-          <span class="btn disabled">Ineligible</span>
-        </div>
-      <% else %>
-        <%= link_to "Apply",
-          @perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => @event.name, "hcburl" => event_url(@event), "name" => current_user.name, "email" => current_user.email }) : root_path,
-          class: "btn #{"disabled" unless @perks_available}",
-          target: :_blank %>
-      <% end %>
-  </div>
-
-  <p class="mb0">
-    Running a high school student-led hackathon, nonprofit, or club? HCB
-    will purchase your domain for under $20 and cover the cost for the
-    first year. After the first year, you'll be responsible for paying to
-    renew. This can only be claimed once per organization.
-    <% if Flipper.enabled?(:google_workspace, @event) %>
-      You'll also have the option of setting
-      up <%= link_to "Google Workspace", event_g_suite_overview_path %> once
-      we've purchased your domain.
-    <% end %>
-  </p>
-</div>
-
+<%# Perks for ALL organizations %>
 <div class="card mb3 pb0" id="stickers">
   <div class="card__banner card__banner--top flex justify-between items-center promo-stickers">
     <span class="flex flex-row items-center">
@@ -349,7 +349,7 @@
     </p>
   </div>
 
-  <% if @event.robotics_team? %>
+  <% if @event.robotics_team? || @event.affiliations.robotics.any? %>
     <div class="card pb0 mb3 promo-onboard" id="bin">
       <div class="card__banner card__banner--top flex justify-between items-center">
         <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
