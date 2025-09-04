@@ -277,13 +277,17 @@ class Invoice < ApplicationRecord
     self.starting_balance = inv.starting_balance
     self.statement_descriptor = inv.statement_descriptor
     self.status = inv.status
-    self.stripe_charge_id = inv&.charge&.id
+    if inv&.charge&.is_a?(String)
+      self.stripe_charge_id = inv.charge
+    else
+      self.stripe_charge_id = inv&.charge&.id
+      # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
+      self.payment_method_type = type = inv&.charge&.payment_method_details&.type
+    end
     self.subtotal = inv.subtotal
     self.tax = inv.tax
     # self.tax_percent = inv.tax_percent
     self.total = inv.total
-    # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
-    self.payment_method_type = type = inv&.charge&.payment_method_details&.type
     return unless self.payment_method_type
 
     details = inv&.charge&.payment_method_details&.[](self.payment_method_type)
