@@ -227,10 +227,13 @@
   animation: premium-scroll-gradient linear;
   animation-timeline: scroll(root);
   background-position: 0% center;
-  opacity: 0.9 !important;
+
+  .btn {
+    opacity: 0.75 !important;
+  }
 
   .badge {
-    background-color: rgba(132, 146, 166, 1) !important;
+    background-color: rgba(132, 146, 166, 0.75) !important;
     color: map-get($palette, smoke) !important;
   }
 }
