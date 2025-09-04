@@ -404,7 +404,7 @@ class UsersController < ApplicationController
       :profile_picture,
       :pretend_is_not_admin,
       :sessions_reported,
-      :session_duration_seconds,
+      :session_validity_preference,
       :receipt_report_option,
       :birthday,
       :seasonal_themes_enabled,

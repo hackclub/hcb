@@ -36,7 +36,7 @@ module SessionsHelper
       else
         user.session_duration_seconds
       end
-    expiration_at = Time.now + session_duration
+    expiration_at = UserSession::SESSION_DURATION.from_now
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
