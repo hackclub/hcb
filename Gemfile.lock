@@ -504,8 +504,7 @@ GEM
     matrix (0.4.3)
     memo_wise (1.13.0)
     method_source (1.1.0)
-    mini_magick (5.2.0)
-      benchmark
+    mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
