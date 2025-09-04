@@ -1,8 +1,6 @@
 <%# locals: (block:, is_email: false, users:, start_date:, end_date:) %>
 
-<%= render "announcements/blocks/block_shell", block:, type: "topUsers", is_email: do %>
-  <p><strong>Top users for <%= block.announcement.event.name %> <%= "from #{start_date.strftime("%B %e, %Y")}" if start_date.present? %> until <%= end_date.strftime("%B %e, %Y") %>:</strong></p>
-
+<%= render "announcements/blocks/block_shell", block:, type: "topUsers", is_email:, title: "Top users for #{block.announcement.event.name} #{"from #{start_date.strftime("%B %e, %Y")}" if start_date.present?} until #{end_date.strftime("%B %e, %Y")}" do %>
   <% if block.empty? %>
     <p><%= block.announcement.event.name %> does not have any user spending data for this period.</p>
   <% else %>

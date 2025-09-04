@@ -41,16 +41,6 @@
   <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
 </h1>
 
-<% if organizer_signed_in? && @event.demo_mode %>
-  <div class="card border b--info pb0 mb-4" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
-    <p class="mt0">
-      <strong>Welcome to Playground Mode</strong>
-      <br>
-      While in Playground mode, explore the dashboard with mock data, and invite your team.
-    </p>
-  </div>
-<% end %>
-
 <div class="flex flex-col gap-[20px]" data-controller="event-home">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden">

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_04_031408) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2334,7 +2334,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_045714) do
     t.boolean "phone_number_verified", default: false
     t.boolean "use_sms_auth", default: false
     t.string "webauthn_id"
-    t.integer "session_duration_seconds", default: 2592000, null: false
+    t.integer "session_duration_seconds", default: 2592000
     t.boolean "seasonal_themes_enabled", default: true, null: false
     t.datetime "locked_at", precision: nil
     t.boolean "running_balance_enabled", default: false, null: false
