@@ -191,7 +191,7 @@ class WiseTransfer < ApplicationRecord
     user_id && User.find(user_id)
   end
 
-  def self.generate_quote(money)
+  def self.generate_detailed_quote(initial_local_amount)
     conn = Faraday.new url: "https://api.wise.com" do |f|
       f.request :json
       f.response :raise_error
@@ -200,20 +200,36 @@ class WiseTransfer < ApplicationRecord
 
     response = conn.post("/v3/quotes", {
                            sourceCurrency: "USD",
-                           targetCurrency: money.currency_as_string,
-                           targetAmount: money.dollars
+                           targetCurrency: initial_local_amount.currency_as_string,
+                           targetAmount: initial_local_amount.dollars
                          })
 
     payment_option = response.body["paymentOptions"].first
-    price_after_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
+    price_after_all_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
     fees = payment_option["price"]["items"]
+
     pay_in_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
+    unadjusted_fee_total = fees.sum { |fee| Money.from_dollars(fee["value"]["amount"], "USD") }
 
-    price_before_pay_in_fee = price_after_fees - pay_in_fee
+    without_fees_usd_amount = price_after_all_fees - unadjusted_fee_total
 
+    price_before_ach_fee = price_after_all_fees - pay_in_fee
     wise_ach_fee = 1.0017 # The Wise API doesn't show profile-specific payment methods like ACH, but the ACH fee is a standard 0.17% of the amount sent.
 
-    price_before_pay_in_fee * wise_ach_fee
+    with_fees_usd_amount = price_before_ach_fee * wise_ach_fee
+
+    fees_usd_amount = with_fees_usd_amount - without_fees_usd_amount
+
+    {
+      initial_local_amount:,
+      without_fees_usd_amount:,
+      with_fees_usd_amount:,
+      fees_usd_amount:
+    }
+  end
+
+  def self.generate_quote(money)
+    generate_detailed_quote(money)[:with_fees_usd_amount]
   end
 
   def estimated_usd_amount_cents
