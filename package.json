@@ -49,7 +49,7 @@
     "gsap": "^3.13.0",
     "html-to-image": "^1.11.13",
     "intl": "^1.2.5",
-    "js-confetti": "^0.12.0",
+    "js-confetti": "^0.13.1",
     "kbar": "^0.1.0-beta.45",
     "local-time": "^3.0.3",
     "lodash": "^4.17.21",
