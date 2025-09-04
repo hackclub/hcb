@@ -770,6 +770,7 @@ class EventsController < ApplicationController
   def promotions
     authorize @event
 
+    @teen_users = @event.users.count { |user| user.teenager? && user.active? }
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
   end
 
@@ -923,15 +924,19 @@ class EventsController < ApplicationController
   def statement_of_activity
     authorize @event
 
-    @start_date = params[:start]&.to_date || (@event.activated_at || @event.created_at).to_date
-    @end_date = params[:end]&.to_date || Time.now.to_date
+    @statement_of_activity = Event::StatementOfActivity.new(@event, start_date_param: params[:start], end_date_param: params[:end])
 
-    transactions = @event.canonical_transactions.where("date between ? AND ?", @start_date, @end_date)
-    @transactions_by_category = transactions.includes(:category).group("category.slug").sum(:amount_cents)
-
-    @net_asset_change = transactions.sum(:amount_cents)
-    @total_revenue = transactions.where("amount_cents > 0").sum(:amount_cents)
-    @total_expense = transactions.where("amount_cents < 0").sum(:amount_cents)
+    respond_to do |format|
+      format.html
+      format.xlsx do
+        send_data(
+          @statement_of_activity.xlsx,
+          filename: "#{@event.name} - Statement of Activity.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: "attachment"
+        )
+      end
+    end
   end
 
   def termination

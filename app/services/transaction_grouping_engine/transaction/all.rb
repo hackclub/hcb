@@ -140,7 +140,7 @@ module TransactionGroupingEngine
         end
 
         conditions << "q1.amount_cents < 0" if @expenses
-        conditions << "q1.amount_cents >= 0" if @revenue
+        conditions << "q1.amount_cents > 0" if @revenue
 
         if @minimum_amount
           conditions << "ABS(q1.amount_cents) >= :min_cents"

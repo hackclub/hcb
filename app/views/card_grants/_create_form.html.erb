@@ -29,16 +29,22 @@
   </div>
 
   <div class="field">
-    <%= form.label :one_time_use do %>
+    <%= form.label :one_time_use, class: "flex gap-2 items-center" do %>
       <%= form.check_box :one_time_use, disabled: %>
-      One time use? (freezes after first charge)
+      One time use?
+      <span class="info tooltipped tooltipped--e h-5" aria-label="Card will freeze after the first charge">
+        <%= inline_icon "info", size: 20 %>
+      </span>
     <% end %>
   </div>
 
   <div class="field">
-    <%= form.label :pre_authorization_required do %>
+    <%= form.label :pre_authorization_required, class: "flex gap-2 items-center" do %>
       <%= form.check_box :pre_authorization_required, disabled: %>
-      Require pre-authorization? (documentation before activation compared with purpose)
+      Require pre-authorization?
+      <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient will submit documentation of their purchase before activation, which will be compared with the grant's purpose and flagged if it is potentially fraudulent">
+        <%= inline_icon "info", size: 20 %>
+      </span>
     <% end %>
   </div>
 

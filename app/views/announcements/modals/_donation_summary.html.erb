@@ -1,0 +1,5 @@
+<%# locals: (block: nil) %>
+
+<%= render "announcements/modals/modal_shell", block:, type: "donationSummary", header: "#{block.present? ? "Edit this" : "Insert a"} donation summary" do %>
+  <%= render "announcements/modals/date_inputs", block:, is_start_date_flexible: false %>
+<% end %>
