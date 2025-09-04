@@ -52,7 +52,7 @@
 <% end %>
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
-  <%= form_with(mode: false, local: true, method: :get, class: "flex-1 my-3 w-full sm:w-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 my-3 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
   <div style="text-align: center;">

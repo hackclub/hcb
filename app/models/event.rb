@@ -290,11 +290,13 @@ class Event < ApplicationRecord
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
-  has_many :event_follows, class_name: "Event::Follow"
+  has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
+
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -846,8 +848,10 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails
-    emails = users.map(&:email_address_with_name)
+  def organizer_contact_emails(only_managers: false)
+    included_users = only_managers ? managers : users
+
+    emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
 
     emails
