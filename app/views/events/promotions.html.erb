@@ -46,7 +46,6 @@
     </div>
   </div>
 
-
   <div class="card pb0 mb3 promo-robotics" id="robotics-fee-waiver">
     <div class="card__banner card__banner--top flex justify-between items-center">
       <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
@@ -62,7 +61,7 @@
       <% elsif @teen_users < 5 %>
         <% fee_waiver_ineligible_reason = "Organization must have 5 or more active teens" %>
       <% end %>
-      
+
       <% if fee_waiver_ineligible_reason %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="<%= fee_waiver_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
