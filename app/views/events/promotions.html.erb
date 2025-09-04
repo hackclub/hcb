@@ -54,7 +54,7 @@
       </h3>
       <% if !(@event.robotics_team? || @event.affiliations.robotics.any?) %>
         <% fee_waiver_ineligible_reason = "Organization does not have a robotics affiliation or tag" %>
-      <% if !@event.plan.eligible_for_perks? %>
+      <% elsif !@event.plan.eligible_for_perks? %>
         <% fee_waiver_ineligible_reason = "Perks are not available for HQ organizations" %>
       <% elsif !@perks_available %>
         <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
@@ -281,7 +281,7 @@
     </p>
   </div>
 
-  <% if @event.robotics_team? %>
+  <% if @event.robotics_team? || @event.affiliations.robotics.any? %>
     <div class="card pb0 mb3 promo-onboard" id="bin">
       <div class="card__banner card__banner--top flex justify-between items-center">
         <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
