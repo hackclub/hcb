@@ -15,7 +15,7 @@ RSpec.describe UsersController do
 
         # This is a normal session which should last for the duration that the
         # user configured
-        expect(initial_session.expiration_at).to eq(30.days.from_now)
+        expect(initial_session.expiration_at).to eq(2.weeks.from_now)
 
         post(:impersonate, params: { id: impersonated_user.id })
         expect(response).to redirect_to(root_path)
