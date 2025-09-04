@@ -277,7 +277,7 @@ class Invoice < ApplicationRecord
     self.starting_balance = inv.starting_balance
     self.statement_descriptor = inv.statement_descriptor
     self.status = inv.status
-    if inv&.charge&.is_a?(String)
+    if inv&.charge.is_a?(String)
       self.stripe_charge_id = inv.charge
     else
       self.stripe_charge_id = inv&.charge&.id
