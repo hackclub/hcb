@@ -12,7 +12,9 @@
       </p>
       <div class="bg-gray-200 dark:bg-neutral-700 rounded-full w-full">
         <div class="h-full bg-primary rounded flex items-center justify-center" style="width: <%= percentage * 100 %>%">
-          <p class="text-sm text-black p-[1px] my-0"><%= number_with_precision(percentage * 100, precision: 1) %>%</p>
+          <p class="text-sm text-black p-[1px] my-0">
+            <%= percentage > 0 ? "#{number_with_precision(percentage * 100, precision: 1)}%" : "&nbsp".html_safe %>
+          </p>
         </div>
       </div>
     <% end %>
