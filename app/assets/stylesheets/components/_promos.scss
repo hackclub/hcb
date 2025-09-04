@@ -122,6 +122,7 @@
     h3 {
       color: #363a44 !important;
     }
+
     background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/2screenshot_2024-05-15_at_17.37.21.png');
     background-size: cover;
     background-position: left center;
@@ -157,8 +158,27 @@
 
 .promo-robotics-raffle {
   background-color: #0066b3;
+
   .card__banner--top {
     background-color: #0066b3;
+  }
+}
+
+.promo-pins-keychains {
+  .card__banner--top {
+    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/bdccd1902f329907b007e86785410044232727a1_Frame_1__3_.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-premium-domains {
+  .card__banner--top {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.25)),
+      url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/fc95f9840ba500e89313b1d64e0db8c58e8b6165_Frame_2__2_.png');
+    background-size: cover;
+    background-position: center;
   }
 }
 
@@ -195,22 +215,6 @@
   }
 }
 
-.promo-pins-keychains {
-  .card__banner--top {
-    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/2322798994ea6587a094f3950b4445a1335e8aac_frame_1__1_.png');
-    background-size: cover;
-    background-position: center;
-  }
-}
-
-.promo-premium-domains {
-  .card__banner--top {
-    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/fc95f9840ba500e89313b1d64e0db8c58e8b6165_Frame_2__2_.png');
-    background-size: cover;
-    background-position: center;
-  }
-}
-
 @property --scroll-progress {
   syntax: '<percentage>';
   initial-value: 0%;
@@ -235,6 +239,7 @@
   0% {
     background-position: 0% center;
   }
+
   100% {
     background-position: 200% center;
   }
@@ -250,9 +255,11 @@ html[data-dark='true'] {
       h3 {
         color: #fff !important;
       }
+
       background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/3screenshot_2024-05-15_at_17.37.30.png');
     }
   }
+
   .promo-pvsa {
     background: repeating-linear-gradient(
       135deg,
