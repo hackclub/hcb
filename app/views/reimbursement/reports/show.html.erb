@@ -211,12 +211,17 @@
 </div>
 
 <% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
+  <% footer = capture do %>
+    <%= turbo_frame_tag :wise_transfer_quote, loading: :lazy, src: reimbursement_report_wise_transfer_quote_path(@report) do %>
+      Fetching latest estimate...
+    <% end %>
+  <% end %>
   <%= render "callout",
       type: "info",
       icon: "wise",
       title: "Important information about Wise reimbursements",
       class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-4",
-      footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+      footer: (footer || link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise")) do %>
     We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to your organization.
   <% end %>
 <% end %>
