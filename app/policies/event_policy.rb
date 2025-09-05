@@ -113,7 +113,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def statement_of_activity?
-    show? && admin?
+    show? && auditor?
   end
 
   def async_balance?

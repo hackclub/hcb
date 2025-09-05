@@ -8,18 +8,13 @@ RSpec.describe UsersController do
   describe "#impersonate" do
     it "allows admins to switch to an impersonated session" do
       freeze_time do
-        # Manually set a long session expiration so we can make sure
-        # impersonated sessions are short
-        session_duration_seconds = 30.days.seconds.to_i
-
-        admin_user = create(:user, :make_admin, full_name: "Admin User", session_duration_seconds:)
-        impersonated_user = create(:user, full_name: "Impersonated User", session_duration_seconds:)
+        admin_user = create(:user, :make_admin, full_name: "Admin User")
+        impersonated_user = create(:user, full_name: "Impersonated User")
 
         initial_session = sign_in(admin_user)
 
-        # This is a normal session which should last for the duration that the
-        # user configured
-        expect(initial_session.expiration_at).to eq(30.days.from_now)
+        # This is a normal session which should last for 2 weeks
+        expect(initial_session.expiration_at).to eq(2.weeks.from_now)
 
         post(:impersonate, params: { id: impersonated_user.id })
         expect(response).to redirect_to(root_path)

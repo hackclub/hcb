@@ -22,7 +22,6 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_duration_seconds      :integer          default(2592000), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean
@@ -39,6 +38,7 @@
 #  index_users_on_slug   (slug) UNIQUE
 #
 class User < ApplicationRecord
+  self.ignored_columns += ["session_duration_seconds"]
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
@@ -174,8 +174,6 @@ class User < ApplicationRecord
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
-
-  validates(:session_duration_seconds, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
   validate :profile_picture_format
 

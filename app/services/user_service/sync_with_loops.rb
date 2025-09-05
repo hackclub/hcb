@@ -69,7 +69,7 @@ module UserService
 
         JSON[resp.body][0]
       rescue => e
-        Rails.error.report("Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops.", handled: false, severity: :error, context: "service")
+        Rails.error.report(Exception.new("Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops."), handled: false, severity: :error, context: "service")
         raise e
       end
     end

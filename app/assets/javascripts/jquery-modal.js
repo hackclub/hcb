@@ -243,7 +243,7 @@
     clickClose: true,
     closeText: 'Close',
     closeClass: '',
-    modalClass: 'modal',
+    modalClass: 'modal modal--scroll bg-snow',
     blockerClass: 'jquery-modal',
     spinnerHtml:
       '<div class="rect1"></div><div class="rect2"></div><div class="rect3"></div><div class="rect4"></div>',
