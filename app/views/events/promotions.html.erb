@@ -7,7 +7,7 @@
 </h1>
 
 <%# Perks for TEEN organizations %>
-<% if @event.organized_by_teenagers? || @teen_users > 0 %>
+<% if @event.organized_by_teenagers? || @active_teen_count > 0 %>
   <% if !@event.plan.eligible_for_perks? %>
     <% ineligible_reason = "Perks are not available for HQ organizations" %>
   <% elsif !@perks_available %>
@@ -156,7 +156,7 @@
             Is your organization a high-school robotics team? Get an entry into a raffle for a Bambu Lab A1 from now until September 30th for each active teenager in your organization!
           </p>
           <section class="card__banner card__darker secondary border-top italic">
-            You currently have <%= number_to_human(@teen_users) %> active teenagers in your organization!
+            You currently have <%= number_to_human(@active_teen_count) %> active teenagers in your organization!
           </section>
         </div>
       </div>
