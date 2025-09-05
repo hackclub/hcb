@@ -2349,7 +2349,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_04_215031) do
     t.boolean "phone_number_verified", default: false
     t.boolean "use_sms_auth", default: false
     t.string "webauthn_id"
-    t.integer "session_duration_seconds", default: 2592000
     t.boolean "seasonal_themes_enabled", default: true, null: false
     t.datetime "locked_at", precision: nil
     t.boolean "running_balance_enabled", default: false, null: false

@@ -537,6 +537,7 @@ Rails.application.routes.draw do
       post "submit"
       post "update_currency"
       post "draft"
+      get "wise_transfer_quote"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"
