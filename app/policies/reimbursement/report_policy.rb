@@ -14,6 +14,10 @@ module Reimbursement
       admin || team_member || creator || auditor
     end
 
+    def wise_transfer_quote?
+      admin || team_member || creator || auditor
+    end
+
     def edit?
       admin || manager || (creator && unlocked)
     end

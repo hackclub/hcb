@@ -38,7 +38,6 @@
 #  index_users_on_slug   (slug) UNIQUE
 #
 class User < ApplicationRecord
-  self.ignored_columns += ["session_duration_seconds"]
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
