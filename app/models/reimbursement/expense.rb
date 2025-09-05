@@ -99,12 +99,9 @@ module Reimbursement
       event :mark_approved do
         transitions from: :pending, to: :approved
         after do |current_user|
-          if report.team_review_required?
-            ReimbursementMailer.with(report: self.report, expense: self).expense_approved.deliver_later
-            if current_user
-              update(approved_by: current_user)
-              create_activity(key: "reimbursement_expense.approved", owner: current_user)
-            end
+          if report.team_review_required? && current_user
+            update(approved_by: current_user)
+            create_activity(key: "reimbursement_expense.approved", owner: current_user)
           end
 
         end
@@ -114,7 +111,6 @@ module Reimbursement
         transitions from: :approved, to: :pending
         after do |current_user|
           update(approved_by: current_user) if current_user
-          ReimbursementMailer.with(report: self.report, expense: self).expense_unapproved.deliver_later
         end
       end
     end
@@ -195,6 +191,12 @@ module Reimbursement
     def valid_expense_type
       unless type.nil? || [Reimbursement::Expense.name, Reimbursement::Expense::Mileage.name, Reimbursement::Expense::Fee.name].include?(type)
         errors.add(:type, "must be a valid expense type.")
+      end
+    end
+
+    before_validation do
+      if self.type.nil?
+        self.type = Reimbursement::Expense.name
       end
     end
 

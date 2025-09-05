@@ -26,8 +26,8 @@ class Announcement
     class HcbCode < ::Announcement::Block
       validate :hcb_code_in_event
 
-      def render_html(is_email: false)
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/hcb_code", locals: { hcb_code:, event: announcement.event, is_email:, block: self }
+      def custom_locals
+        { hcb_code:, event: announcement.event }
       end
 
       def empty?

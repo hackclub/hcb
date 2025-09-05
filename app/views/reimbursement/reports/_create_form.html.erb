@@ -37,6 +37,14 @@
           <% end %>
         </div>
       </fieldset>
+      <div id="currency_wrapper">
+        <% if current_user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+          <div class="field">
+            <%= form.label :currency, "Currency", class: "mt-4 bold" %>
+            <%= form.select :currency, [current_user.payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
+          </div>
+        <% end %>
+      </div>
       <div id="external_contributor_wrapper">
         <div class="field">
           <%= form.label :user_email, "Teammate", class: "display-none-not-important bold" %>

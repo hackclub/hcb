@@ -172,7 +172,7 @@
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
-              <span class="bold warning">Warning</span>: your report is quoted to cost <%= render_money @report.wise_transfer_quote_amount %> USD, which is beyond your balance.
+              <span class="bold warning">Warning</span>: your report is quoted to cost <%= render_money report.wise_transfer_quote_amount %> USD, which is beyond your balance.
             <% end %>
           <% end %>
         <% elsif report.initial_draft? %>
@@ -193,7 +193,7 @@
           <% end %>
         <% elsif report.submitted? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && policy(report).request_reimbursement? %>
           <% button_hint = capture do %>
-            <span class="bold warning">Warning</span>: this report is quoted to cost <%= render_money @report.wise_transfer_quote_amount %> USD, which is beyond your balance.
+            <span class="bold warning">Warning</span>: this report is quoted to cost <%= render_money report.wise_transfer_quote_amount %> USD, which is beyond your balance.
           <% end %>
           <div class="tooltipped tooltipped--n" aria-label="This event may not be fulfill this request.">
             <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-warning", data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance.", turbo_method: :post } do %>
@@ -272,7 +272,7 @@
                   </strong>
                 </div>
 
-                <%= form_with url: reimbursement_report_admin_approve_path(report_id: @report.id) do |form| %>
+                <%= form_with url: reimbursement_report_admin_approve_path(report_id: report.id) do |form| %>
                   <%= form.label :wise_total_including_fees, "Total including fees (in USD, from Wise)" %>
                   <div class="field">
                     <div class="flex items-center">

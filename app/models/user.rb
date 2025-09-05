@@ -22,7 +22,6 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_duration_seconds      :integer          default(2592000), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean
@@ -174,8 +173,6 @@ class User < ApplicationRecord
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
-
-  validates(:session_duration_seconds, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
   validate :profile_picture_format
 

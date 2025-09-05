@@ -537,6 +537,7 @@ Rails.application.routes.draw do
       post "submit"
       post "update_currency"
       post "draft"
+      get "wise_transfer_quote"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"
@@ -756,7 +757,7 @@ Rails.application.routes.draw do
   end
 
   namespace "announcements" do
-    resources :blocks, only: [:create, :show] do
+    resources :blocks, only: [:create, :edit, :update, :show] do
       member do
         post "refresh"
       end
@@ -865,6 +866,7 @@ Rails.application.routes.draw do
         post "cancel"
         post "convert_to_reimbursement_report"
         post "toggle_one_time_use"
+        post "disable_pre_authorization"
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"

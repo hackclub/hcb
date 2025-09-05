@@ -13,8 +13,8 @@ class Announcement
         if self.parameters["end_date"].present?
           DateTime.parse(self.parameters["end_date"])
         else
-          self.parameters["end_date"] ||= Time.now.to_s
-          Time.now
+          self.parameters["end_date"] ||= Date.today.to_s
+          Date.today.to_datetime
         end
       end
     end
