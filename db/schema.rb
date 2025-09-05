@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_04_212653) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_05_220326) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1832,6 +1832,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_04_212653) do
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
+  create_table "referral_links", force: :cascade do |t|
+    t.bigint "creator_id", null: false
+    t.string "alias"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["alias"], name: "index_referral_links_on_alias", unique: true
+    t.index ["creator_id"], name: "index_referral_links_on_creator_id"
+  end
+
   create_table "referral_programs", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "created_at", null: false
@@ -2575,6 +2584,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_04_212653) do
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
+  add_foreign_key "referral_links", "users", column: "creator_id"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"

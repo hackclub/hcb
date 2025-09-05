@@ -92,6 +92,8 @@ class User < ApplicationRecord
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
 
+  has_many :referral_links, foreign_key: :creator_id, inverse_of: :creator
+
   has_many :messages, class_name: "Ahoy::Message", as: :user
 
   has_many :events, through: :organizer_positions
