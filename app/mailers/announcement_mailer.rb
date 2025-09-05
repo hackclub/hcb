@@ -22,6 +22,16 @@ class AnnouncementMailer < ApplicationMailer
     mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been canceled"
   end
 
+  def notice
+    @event = params[:event]
+    @emails = @event.organizer_contact_emails(only_managers: true)
+
+    @monthly_announcement = params[:monthly_announcement]
+    @scheduled_for = Date.today.next_month.beginning_of_month
+
+    mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
+  end
+
   def set_warning_variables
     @announcement = params[:announcement]
     @event = @announcement.event
