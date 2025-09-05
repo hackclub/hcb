@@ -27,7 +27,7 @@ module Referral
     private
 
     def set_link
-      @link = Referral::Link.find_by_hashid(params[:id])
+      @link = Referral::Link.find_by(slug: params[:id]) || Referral::Link.find_by_hashid(params[:id])
     end
 
   end
