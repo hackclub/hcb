@@ -22,7 +22,7 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_validity_preference   :integer          default(4320), not null
+#  session_validity_preference   :integer          default("3 days"), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean
@@ -76,6 +76,16 @@ class User < ApplicationRecord
     card_grant: 3,
     grant: 4
   }
+
+  enum :session_validity_preference, {
+    "15 minutes": 15,
+    "1 hour": 60,
+    "6 hours": 60 * 6,
+    "1 day": 60 * 24,
+    "3 days": 60 * 24 * 3,
+    "1 week": 60 * 24 * 7,
+    "2 weeks": 60 * 24 * 14,
+  }, prefix: true
 
   has_many :logins
   has_many :login_codes
