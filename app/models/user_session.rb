@@ -72,6 +72,19 @@ class UserSession < ApplicationRecord
     !impersonated_by.nil?
   end
 
+  def set_as_peacefully_expired
+    # Don't let this raise exceptions, otherwise users can't sign out
+    begin
+      update(peacefully_expired: true)
+    rescue => e
+      Airbrake.notify e, session: self
+      Rails.logger.error "Error setting session as peacefully expired: #{e.message}"
+    end
+
+    # Return self to allow chaining
+    self
+  end
+
   SESSION_DURATION = 2.weeks
 
   LAST_SEEN_AT_COOLDOWN = 5.minutes

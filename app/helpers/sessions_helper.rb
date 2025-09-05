@@ -2,12 +2,14 @@
 
 module SessionsHelper
   SESSION_DURATION_OPTIONS = {
+    "1 minute" => 1.minute.to_i,
+    "15 minutes" => 15.minutes.to_i,
     "1 hour"  => 1.hour.to_i,
+    "6 hours" => 6.hours.to_i,
     "1 day"   => 1.day.to_i,
     "3 days"  => 3.days.to_i,
-    "7 days"  => 7.days.to_i,
-    "14 days" => 14.days.to_i,
-    "30 days" => 30.days.to_i
+    "1 week"  => 1.week.to_i,
+    "2 weeks" => 2.weeks.to_i,
   }.freeze
 
   # For security reasons we severely restrict the duration of impersonated
