@@ -1,10 +1,10 @@
 <%# locals: (card_grant:) %>
 
 <% pre_authorization_tooltip = if policy(card_grant).disable_pre_authorization?
-                    "Disable pre-authorizations for this grant"
-                  else
-                    "You don't have permission to perform this action"
-                  end %>
+                                 "Disable pre-authorizations for this grant"
+                               else
+                                 "You don't have permission to perform this action"
+                               end %>
 <div class="tooltipped tooltipped--n" aria-label="<%= pre_authorization_tooltip %>">
   <%= link_to disable_pre_authorization_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
               method: :post,
