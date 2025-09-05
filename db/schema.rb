@@ -1836,11 +1836,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_221605) do
 
   create_table "referral_links", force: :cascade do |t|
     t.bigint "creator_id", null: false
-    t.string "alias"
+    t.string "slug"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["alias"], name: "index_referral_links_on_alias", unique: true
     t.index ["creator_id"], name: "index_referral_links_on_creator_id"
+    t.index ["slug"], name: "index_referral_links_on_slug", unique: true
   end
 
   create_table "referral_programs", force: :cascade do |t|
