@@ -23,11 +23,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def edit?
-    user.auditor? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user)
   end
 
   def update?
-    user.auditor? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user)
   end
 
   def react?
@@ -39,7 +39,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.auditor? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user)
   end
 
   private
