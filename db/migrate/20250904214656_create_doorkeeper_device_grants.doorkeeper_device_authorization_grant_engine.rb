@@ -23,7 +23,5 @@ class CreateDoorkeeperDeviceGrants < ActiveRecord::Migration[7.2]
       column: :application_id,
       validate: false
     )
-
-    add_foreign_key :oauth_device_grants, :oauth_access_grants, column: :resource_owner_id, validate: false
   end
 end

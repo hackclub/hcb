@@ -18,9 +18,9 @@ Doorkeeper::DeviceAuthorizationGrant.configure do
   # user_code_generator 'Doorkeeper::DeviceAuthorizationGrant::OAuth::Helpers::UserCode'
 
   # A Proc returning the end-user verification URI on the authorization server.
-  # verification_uri ->(host_name) do
-  #   "#{host_name}/oauth/device"
-  # end
+  verification_uri ->(host_name) do
+    "#{host_name}/api/v4/oauth/device"
+  end
 
   # A Proc returning the verification URI that includes the "user_code"
   # (or other information with the same function as the "user_code"), which is

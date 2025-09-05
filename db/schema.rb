@@ -2569,7 +2569,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_04_215031) do
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_codes", "users"
   add_foreign_key "mailbox_addresses", "users"
-  add_foreign_key "oauth_device_grants", "oauth_access_grants", column: "resource_owner_id"
   add_foreign_key "oauth_device_grants", "oauth_applications", column: "application_id"
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "closed_by_id"
