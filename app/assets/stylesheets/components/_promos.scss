@@ -1,31 +1,35 @@
 @import '../variables';
 
 .promo-pvsa {
-  background: repeating-linear-gradient(135deg,
-      #eee 0%,
-      white 40%,
-      #3c3b6e 40%,
-      #3c3b6e 65%,
-      #b22234 65%,
-      #b22234 70%,
-      white 70%,
-      white 75%,
-      #b22234 75%,
-      #b22234 80%,
-      white 80%,
-      white 85%,
-      #b22234 85%,
-      #b22234 90%,
-      white 90%,
-      #eee 100%);
+  background: repeating-linear-gradient(
+    135deg,
+    #eee 0%,
+    white 40%,
+    #3c3b6e 40%,
+    #3c3b6e 65%,
+    #b22234 65%,
+    #b22234 70%,
+    white 70%,
+    white 75%,
+    #b22234 75%,
+    #b22234 80%,
+    white 80%,
+    white 85%,
+    #b22234 85%,
+    #b22234 90%,
+    white 90%,
+    #eee 100%
+  );
 }
 
 .promo-domains {
   background-color: #f5f5f5;
   background-image:
-    linear-gradient(to right,
+    linear-gradient(
+      to right,
       rgba(245, 246, 252, 0.25),
-      rgba(248, 248, 248, 0.05)),
+      rgba(248, 248, 248, 0.05)
+    ),
     url('https://cloud-drtdkpcni-hack-club-bot.vercel.app/0not-a-hcb-leek.png');
   background-size: cover;
   background-repeat: no-repeat;
@@ -34,9 +38,11 @@
 .promo-stickerninja {
   background-color: #f5f5f5;
   background-image:
-    linear-gradient(to right,
+    linear-gradient(
+      to right,
       rgba(245, 246, 252, 0.25),
-      rgba(248, 248, 248, 0.05)),
+      rgba(248, 248, 248, 0.05)
+    ),
     url('https://cloud-brj27gj5t-hack-club-bot.vercel.app/0ninja_background.png');
   background-size: cover;
   background-repeat: no-repeat;
@@ -194,12 +200,14 @@
     z-index: -1;
     margin: -4px;
     border-radius: inherit;
-    background: conic-gradient(from var(--gradient-angle),
-        #ec3750 20%,
-        #ff8c37 40%,
-        #f1c40f 55%,
-        #ff8c37 70%,
-        #ec3750 100%);
+    background: conic-gradient(
+      from var(--gradient-angle),
+      #ec3750 20%,
+      #ff8c37 40%,
+      #f1c40f 55%,
+      #ff8c37 70%,
+      #ec3750 100%
+    );
     animation: premium-rotate-gradient linear;
     animation-timeline: view();
   }
@@ -254,23 +262,25 @@ html[data-dark='true'] {
   }
 
   .promo-pvsa {
-    background: repeating-linear-gradient(135deg,
-        #8492a6 0%,
-        #8492a6 40%,
-        #3c3b6e 40%,
-        #3c3b6e 65%,
-        #b22234 65%,
-        #b22234 70%,
-        #8492a6 70%,
-        #8492a6 75%,
-        #b22234 75%,
-        #b22234 80%,
-        #8492a6 80%,
-        #8492a6 85%,
-        #b22234 85%,
-        #b22234 90%,
-        #8492a6 90%,
-        #8492a6 100%);
+    background: repeating-linear-gradient(
+      135deg,
+      #8492a6 0%,
+      #8492a6 40%,
+      #3c3b6e 40%,
+      #3c3b6e 65%,
+      #b22234 65%,
+      #b22234 70%,
+      #8492a6 70%,
+      #8492a6 75%,
+      #b22234 75%,
+      #b22234 80%,
+      #8492a6 80%,
+      #8492a6 85%,
+      #b22234 85%,
+      #b22234 90%,
+      #8492a6 90%,
+      #8492a6 100%
+    );
   }
 
   .promo-domains {
