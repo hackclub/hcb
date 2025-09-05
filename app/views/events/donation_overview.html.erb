@@ -16,29 +16,7 @@
     </div>
   <% end %>
   <% if @event.donation_page_available? %>
-    <action type="button" class="pop menu__toggle" data-behavior="menu_toggle" aria-expanded="false" tabindex="0">
-      <%= inline_icon "share" %>
-      <div class="menu__content" data-behavior="menu_content">
-        <%= link_to qr_code_donations_path(@event.slug),
-          data: { behavior: "modal_trigger", modal: "qr_code" } do %>
-          QR code
-        <% end %>
-        <%= link_to start_donation_donations_url(@event),
-          data: { behavior: "modal_trigger", modal: "embed_code" } do %>
-          Embed code
-        <% end %>
-        <%= link_to "#",
-          data: { behavior: "modal_trigger", modal: "prefilled_link" } do %>
-          Prefilled amount
-        <% end %>
-        <% if @event.is_public? %>
-          <%= link_to "#",
-            data: { behavior: "modal_trigger", modal: "donor_graph" } do %>
-            Donor graph
-          <% end %>
-        <% end %>
-      </div>
-    </action>
+    <%= render partial: "share_donation_page" %>
   <% end %>
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "donations"),
@@ -53,93 +31,6 @@
 </h1>
 
 <% if @event.donation_page_available? %>
-  <section class="modal" data-behavior="modal" role="dialog" id="qr_code">
-    <%= modal_header "Donations QR code" %>
-    <div class="flex flex-wrap gap-4">
-      <div class="flex-1">
-        <div class="bg-white rounded-2xl w-fit h-fit cursor-pointer border border-muted *:w-52 *:h-52 *:hidden" onclick="saveActiveQRCodeAsImage()" style="padding-top: 4.5px; padding-left: 4.5px;">
-          <qr-code
-            contents='<%= start_donation_donations_url @event %>'
-            id="qrCode--icon">
-            <img
-              src="https://icons.hackclub.com/api/icons/black/bank-account"
-              class="h-12 -translate-x-[5.5px]"
-              slot="icon">
-          </qr-code>
-          <qr-code
-            contents='<%= start_donation_donations_url @event %>'
-            id="qrCode--support">
-            <img
-              src="https://icons.hackclub.com/api/icons/black/support"
-              class="h-12 -translate-x-[5.5px]"
-              slot="icon">
-          </qr-code>
-          <% if @event.logo.attached? %>
-            <qr-code
-              contents='<%= start_donation_donations_url @event %>'
-              id="qrCode--logo">
-              <%= image_tag "data:#{@event.logo.blob.content_type};base64," + @event.logo.open { |file| Base64.encode64(file.read) }, slot: "icon", class: "rounded", style: "height: 36px;" %>
-            </qr-code>
-          <% end %>
-          <qr-code
-            contents='<%= start_donation_donations_url @event %>'
-            id="qrCode--bank">
-            <%= image_tag "logo-production.svg", slot: "icon", class: "rounded", style: "height: 36px;" %>
-          </qr-code>
-          <qr-code
-            contents='<%= start_donation_donations_url @event %>'
-            id="qrCode--bank-dark">
-            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "rounded", style: "height: 36px;" %>
-          </qr-code>
-          <qr-code
-            contents='<%= start_donation_donations_url @event %>'
-            class="!block"
-            id="qrCode--blank" />
-        </div>
-      </div>
-      <div class="flex-1">
-        <div class="iconsGrid grid grid-cols-3 gap-2 w-fit *:h-14 *:bg-snow *:rounded-xl *:cursor-pointer">
-          <%= inline_icon "view-close", size: 56, class: "btn bg-muted p-2", onclick: "changeCode('blank')" %>
-          <%= inline_icon "bank-account", size: 56, class: "btn bg-muted p-2", onclick: "changeCode('icon')" %>
-          <%= inline_icon "support", size: 56, class: "btn bg-muted p-2", onclick: "changeCode('support')" %>
-          <% if @event.logo.attached? %>
-            <%= image_tag @event.logo, slot: "icon", class: "btn bg-muted p-2", onclick: "changeCode('logo')" %>
-          <% end %>
-          <%= image_tag "logo-production.svg", slot: "icon", class: "btn bg-muted p-2", onclick: "changeCode('bank')" %>
-          <%= image_tag "logo-production-dark.svg", slot: "icon", class: "btn bg-muted p-2", onclick: "changeCode('bank-dark')" %>
-        </div>
-        <button class="btn mt2" onclick="saveActiveQRCodeAsImage()" id="downloadButton">Download</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="modal" data-behavior="modal" role="dialog" id="embed_code">
-    <%= modal_header "Donations embed" %>
-    <p class="mt0">Paste this HTML code into your website to embed your donation page. Feel free to change the styling.</p>
-    <pre><%= html_escape "<iframe src='#{start_donation_donations_url @event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='512px' allowfullscreen></iframe>".gsub("'", '"') %></pre>
-    <h3 class="mb0">Preview</h3>
-    <iframe src='<%= start_donation_donations_url @event %>' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='256px' width='512px' allowfullscreen style="width: 100%; max-width: 100%; max-height: 40vh;"></iframe>
-  </section>
-
-  <section class="modal" data-behavior="modal" role="dialog" id="donor_graph">
-    <%= modal_header "Embed donor graph" %>
-    <p class="mt0">Use this image URL to show a donor graph on your website, GitHub repo, or anywhere in between.</p>
-    <pre>https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
-
-    <p class="mt0">You can also use this HTML to easily embed the graph. Feel free to change the styling.</p>
-    <pre><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
-
-    <p class="muted text-sm">
-      To use additional styling and image options,
-      <%= link_to "check out the docs", "https://graph.hcb.hackclub.com", target: "_blank" %>
-      for more info.
-    </p>
-  </section>
-
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="prefilled_link">
-    <%= modal_header "Prefilled link" %>
-    <%= react_component "donation_overview/PreviewLink", path: start_donation_donations_url(@event) %>
-  </section>
 <% else %>
   <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
 <% end %>
