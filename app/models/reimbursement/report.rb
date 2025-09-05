@@ -335,7 +335,7 @@ module Reimbursement
     end
 
     def wise_transfer_quote_amount
-      @wise_transfer_quote_amount ||= WiseTransfer.generate_quote(draft? ? amount : amount_to_reimburse)
+      @wise_transfer_quote_amount ||= WiseTransfer.generate_quote(amount)
     rescue
       Money.from_cents(0)
     end
