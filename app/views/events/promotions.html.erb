@@ -146,7 +146,7 @@
             <% if @event.robotics_team? || @event.affiliations.robotics.any? %>
               <span class="btn disabled bg-clip-padding">Entered</span>
             <% else %>
-              <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a robotics team or have a robotics affiliation.">
+              <div class="tooltipped tooltipped--w inline-block" aria-label="Organization must be tagged as a robotics team or have a robotics affiliation.">
                 <span class="btn disabled bg-clip-padding">Ineligible</span>
               </div>
             <% end %>
