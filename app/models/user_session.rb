@@ -13,6 +13,7 @@
 #  latitude                 :decimal(, )
 #  longitude                :decimal(, )
 #  os_info                  :string
+#  peacefully_expired       :boolean          default(FALSE)
 #  session_token_bidx       :string
 #  session_token_ciphertext :text
 #  signed_out_at            :datetime
@@ -77,7 +78,6 @@ class UserSession < ApplicationRecord
     begin
       update(peacefully_expired: true)
     rescue => e
-      Airbrake.notify e, session: self
       Rails.logger.error "Error setting session as peacefully expired: #{e.message}"
     end
 

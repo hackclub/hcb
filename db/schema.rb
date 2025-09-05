@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_05_005653) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_05_014716) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2305,6 +2305,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_005653) do
     t.string "session_token_bidx"
     t.datetime "last_seen_at"
     t.datetime "signed_out_at"
+    t.boolean "peacefully_expired", default: false
     t.index ["impersonated_by_id"], name: "index_user_sessions_on_impersonated_by_id"
     t.index ["session_token_bidx"], name: "index_user_sessions_on_session_token_bidx"
     t.index ["user_id"], name: "index_user_sessions_on_user_id"
