@@ -1,4 +1,4 @@
-<%# locals: (donations: nil, total: 0, start_date:, end_date:, is_email: false, block: nil) %>
+<%# locals: (block:, is_email: false, start_date:, end_date:, donations:, total:) %>
 
 <%= render "announcements/blocks/block_shell", block:, type: "donationSummary", is_email:, title: "Donation summary for #{start_date.strftime("%B %e, %Y")} - #{end_date.strftime("%B %e, %Y")}" do %>
   <% if block.empty? %>
