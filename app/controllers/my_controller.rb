@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :cards_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
 
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
 
@@ -148,6 +148,12 @@ class MyController < ApplicationController
     @reports_count = @my_reports.draft.or(@reports_to_review).count
 
     render :reimbursements_icon, layout: false
+  end
+
+  def cards_icon
+    @pending_grants = current_user.card_grants.not_activated.size
+
+    render :cards_icon, layout: false
   end
 
   def payroll
