@@ -613,6 +613,7 @@ Rails.application.routes.draw do
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
   end
+  use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
   namespace :api do
     namespace :v4 do
@@ -866,6 +867,7 @@ Rails.application.routes.draw do
         post "cancel"
         post "convert_to_reimbursement_report"
         post "toggle_one_time_use"
+        post "disable_pre_authorization"
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
