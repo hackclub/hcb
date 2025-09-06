@@ -29,6 +29,10 @@ module Referral
     belongs_to :program, class_name: "Referral::Program"
     belongs_to :creator, class_name: "User"
 
+    has_many :attributions, dependent: :destroy, foreign_key: :referral_link_id, inverse_of: :link
+    has_many :users, -> { distinct }, through: :attributions, source: :user
+    has_many :logins, foreign_key: :referral_link_id, class_name: "Login", inverse_of: :referral_link
+
     def value
       slug || hashid
     end

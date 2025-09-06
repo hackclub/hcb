@@ -20,14 +20,14 @@ class LoginsController < ApplicationController
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
-    @referral_link = Referral::Link.find_by(slug: params[:referral]) || Referral::Link.find_by_hashid(params[:referral]) if params[:referral].present?
+    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence || Referral::Link.find_by_hashid(params[:referral]) if params[:referral].present?
   end
 
   # when you submit your email
   def create
     user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
 
-    referral_link = Referral::Link.find_by_hashid(params[:referral_link_id]) if params[:referral_link_id].present?
+    referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence || Referral::Link.find_by_hashid(params[:referral_link_id]) if params[:referral_link_id].present?
     login = user.logins.create(referral_link:)
 
     cookies.signed["browser_token_#{login.hashid}"] = { value: login.browser_token, expires: Login::EXPIRATION.from_now }
