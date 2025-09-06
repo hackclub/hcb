@@ -226,10 +226,6 @@
         </div>
 
         <% unless @onboarding %>
-          <div class="field">
-            <%= form.label :session_duration_seconds, "Stay signed in for" %>
-            <%= form.select :session_duration_seconds, SessionsHelper::SESSION_DURATION_OPTIONS.to_a %>
-          </div>
           <fieldset>
             <legend class="medium">Share usage data with HCB</legend>
             <p class="h5 muted mt-0 mb-3">

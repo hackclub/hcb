@@ -318,7 +318,7 @@ export const adminActions = adminUrls => [
     id: 'admin_tool_7',
     section: 'Admin Tools',
     priority: Priority.HIGH,
-    name: 'Deletion requests',
+    name: 'Organizer position deletion requests',
     icon: <Icon glyph="member-remove" size={16} />,
     perform: () =>
       (window.location.href = '/organizer_position_deletion_requests'),

@@ -1,5 +1,15 @@
 <%# locals: (card_grant:) %>
 
+<% if card_grant.pre_authorization&.unauthorized? %>
+  <div class="tooltipped tooltipped--w">
+    <%= link_to card_grant_pre_authorizations_path(card_grant),
+                class: "btn bg-accent" do %>
+      <%= inline_icon "pre-authorization" %>
+      View pre-authorization
+    <% end %>
+  </div>
+<% end %>
+
 <div class="tooltipped tooltipped--w" aria-label="Manage this grant">
   <%= link_to edit_card_grant_path(card_grant),
               class: "btn",
