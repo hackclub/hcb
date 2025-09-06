@@ -21,6 +21,12 @@
 #
 module Referral
   class Link < ApplicationRecord
+    include Hashid::Rails
+
     belongs_to :creator, class_name: "User"
+
+    def value
+      slug || hashid
+    end
   end
 end
