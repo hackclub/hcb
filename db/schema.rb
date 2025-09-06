@@ -1840,6 +1840,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_06_021346) do
     t.bigint "creator_id", null: false
     t.bigint "program_id", null: false
     t.string "slug"
+    t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_links_on_creator_id"

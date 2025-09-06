@@ -46,7 +46,8 @@ module Referral
     def create_default_link
       links.create!(
         {
-          creator:
+          creator:,
+          name: "default"
         }
       )
     end
