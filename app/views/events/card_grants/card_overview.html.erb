@@ -1,0 +1,46 @@
+<%= turbo_frame_tag :card_grant_card_overview do %>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Date</th>
+          <th>To</th>
+          <th>For</th>
+          <th>Amount</th>
+          <th class="text-right">Balance</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @paginated_card_grants.each do |card_grant| %>
+          <tr>
+            <td>
+              <span class="ml0 badge bg-<%= card_grant.state %>"><%= card_grant.state_text %></span>
+            </td>
+            <td>
+              <%= format_date card_grant.created_at %>
+            </td>
+            <td>
+              <%= user_mention card_grant.user %>
+            </td>
+            <td>
+              <%= card_grant.purpose.presence || Disbursement.find_by(id: card_grant.disbursement_id).local_hcb_code.memo %>
+            </td>
+            <td>
+              <%= render_money card_grant.amount_cents %>
+            </td>
+            <td class="text-right">
+              <%= render_money card_grant.balance %>
+            </td>
+            <td>
+              <%= link_to "View", card_grant_url(card_grant), data: { turbo_frame: "_top" } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <%= paginate @paginated_card_grants %>
+  </div>
+<% end %>
