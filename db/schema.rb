@@ -1838,10 +1838,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_06_012932) do
 
   create_table "referral_links", force: :cascade do |t|
     t.bigint "creator_id", null: false
+    t.bigint "program_id", null: false
     t.string "slug"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_links_on_creator_id"
+    t.index ["program_id"], name: "index_referral_links_on_program_id"
     t.index ["slug"], name: "index_referral_links_on_slug", unique: true
   end
 
@@ -2590,6 +2592,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_06_012932) do
   add_foreign_key "referral_attributions", "referral_links"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
+  add_foreign_key "referral_links", "referral_programs", column: "program_id"
   add_foreign_key "referral_links", "users", column: "creator_id"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
