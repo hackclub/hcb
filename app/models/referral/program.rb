@@ -12,6 +12,11 @@
 #  name                 :string           not null
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
+#  creator_id           :bigint
+#
+# Indexes
+#
+#  index_referral_programs_on_creator_id  (creator_id)
 #
 module Referral
   class Program < ApplicationRecord
@@ -19,10 +24,14 @@ module Referral
 
     validates :name, presence: true
 
+    belongs_to :creator, class_name: "User"
+
     has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
     has_many :users, -> { distinct }, through: :attributions, source: :user
     has_many :logins, foreign_key: :referral_program_id, class_name: "Login", inverse_of: :referral_program
     has_many :links, foreign_key: :program_id, class_name: "Link", inverse_of: :referral_program
+
+    after_create :create_default_link
 
     def background_image_css
       background_image_url.present? ? "url('#{background_image_url}')" : nil
@@ -32,6 +41,14 @@ module Referral
       attributions.joins(:user)
                   .where("EXTRACT(EPOCH FROM (referral_attributions.created_at - users.created_at)) < 60*60")
                   .map(&:user)
+    end
+
+    def create_default_link
+      links.create!(
+        {
+          creator:
+        }
+      )
     end
 
   end
