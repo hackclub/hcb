@@ -2,7 +2,7 @@
 # e.g. `docker compose -f docker-compose.dbonly.yml up`
 services:
   db:
-    image: "postgres:11.16"
+    image: "postgres:15.13"
     volumes:
       - pg-data:/var/lib/postgresql/data
     environment:
