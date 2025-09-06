@@ -7,11 +7,11 @@
         <div class="flex flex-col">
           <h5 class="m-0 p-0"><%= program.name %></h5>
           <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • <code><%= program.hashid %></code></small>
+          <%= user_mention program.creator %>
         </div>
         <div class="flex flex-row gap-2 justify-between m-0">
           <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
         </div>
-        <%= link_to program_url(program), program_url(program) %>
 
         <div class="flex-grow"></div>
 
@@ -20,6 +20,13 @@
             <button>View users</button>
           <% end %>
         </div>
+        <% program.links.each do |link| %>
+          <div class="border p1">
+            <p>Name: <%= link.name %></p>
+            <p>Link: <%= link_to link_url(link) %></p>
+            <p>Created by: <%= user_mention link.creator %></p>
+          </div>
+        <% end %>
       </div>
     </li>
   <% end %>
