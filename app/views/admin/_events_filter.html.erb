@@ -70,6 +70,11 @@
     <%= form.select :risk_level, Event.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]), { include_blank: "any", selected: @risk_level } %>
   <% end %>
 
+  <%= form.label :min_active_teens do %>
+    <span style="text-wrap: wrap;">Minimum # of active teens</span>
+    <%= form.number_field :min_active_teens, value: @min_active_teens %>
+  <% end %>
+
 </div>
 
 <fieldset style='display: flex; flex-wrap: wrap; gap: 4px 16px; border: 1px lightgray solid; border-radius: 0.2rem; padding: 0.6rem; padding-top: 0.3rem; margin-right: 0.5rem; margin-top: 8px;'>

@@ -1423,6 +1423,7 @@ class AdminController < Admin::BaseController
     @risk_level = params[:risk_level].presence || "any"
     @point_of_contact_id = params[:point_of_contact_id].presence || "all"
     @plan = params[:plan].presence || "all"
+    @min_active_teens = params[:min_active_teens].presence || 0
     if params[:country] == 9999.to_s
       @country = 9999
     else
@@ -1480,6 +1481,11 @@ class AdminController < Admin::BaseController
     states << "approved" if @approved
     states << "rejected" if @rejected
     relation = relation.where("events.aasm_state in (?)", states)
+
+    relation = relation.select do |event|
+      event.users.select { |u| u.active? && u.teenager? }.size >= @min_active_teens.to_i
+    end
+    relation = Event.where(id: relation.map(&:id))
 
     # Sorting
     case @sort_by
