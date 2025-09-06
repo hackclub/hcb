@@ -19,6 +19,14 @@ class EventsController < ApplicationController
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
+  LEDGER_FILTERS = [
+    { key: "type", label: "Type", type: "select", options: %w[all settled pending] },
+    { key: "direction", label: "Direction", type: "select", options: %w[all revenue expenses] },
+    { key: "amount", label: "Amount", type: "range_range" },
+    { key: "user", label: "User", type: "user_select" },
+    { key: "date", label: "Date", type: "date_range" },
+  ].freeze
+
   # GET /events
   def index
     authorize Event
