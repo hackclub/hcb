@@ -94,7 +94,7 @@
     <% if @event.config.anonymous_donations %>
       <div class="field field--checkbox mb0">
         <%= form.check_box :anonymous, style: "margin-left: 0;" %>
-        <%= form.label :anonymous, "Keep my donation private.", style: "display: inline; flex-grow: 1;" %>
+        <%= form.label :anonymous, "Don't display my name publicly.", style: "display: inline; flex-grow: 1;" %>
         <a class="tooltipped tooltipped--w link--ignore flex" aria-label='When you donate anonymously, you will appear as "Anonymous donor" on public pages. Team members, however, can still see your information.' tabindex="0">
           <%= inline_icon "info", width: 24 %>
         </a>
