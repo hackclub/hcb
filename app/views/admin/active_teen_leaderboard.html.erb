@@ -1,0 +1,20 @@
+<% title "Active Teen Leaderboard" %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th># of organizations</th>
+      <th># of active teens</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% User.admin.find_each do |user| %>
+      <tr>
+        <td><%= user.name %></td>
+        <td><%= user.managed_events.count %></td>
+        <td><%= User.active_teen.distinct.count %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
