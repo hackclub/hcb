@@ -2350,7 +2350,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_014716) do
     t.boolean "teenager"
     t.integer "creation_method"
     t.boolean "cards_locked", default: false, null: false
-    t.integer "session_validity_preference", default: 4320, null: false
+    t.integer "session_validity_preference", default: 259200, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end

@@ -22,7 +22,7 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_validity_preference   :integer          default(4320), not null
+#  session_validity_preference   :integer          default(259200), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean

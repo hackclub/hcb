@@ -6,7 +6,7 @@ class UserSession
 
     def perform
       UserSession.joins(:user)
-                 .where("user_sessions.last_seen_at + (users.session_validity_preference * interval '1 minute') < NOW()")
+                 .where("user_sessions.last_seen_at + (users.session_validity_preference * interval '1 second') < NOW()")
                  .find_each do |session|
         session.set_as_peacefully_expired
         session.destroy
