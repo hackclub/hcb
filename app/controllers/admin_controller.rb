@@ -1483,9 +1483,9 @@ class AdminController < Admin::BaseController
     relation = relation.where("events.aasm_state in (?)", states)
 
     relation = relation.joins(:users)
-      .where(users: { teenager: true, id: User.active })
-      .group('events.id')
-      .having('COUNT(users.id) >= ?', @min_active_teens)
+                       .where(users: { teenager: true, id: User.active })
+                       .group("events.id")
+                       .having("COUNT(users.id) >= ?", @min_active_teens)
 
     # Sorting
     case @sort_by
