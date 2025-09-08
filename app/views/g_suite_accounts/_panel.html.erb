@@ -35,16 +35,16 @@
               <%= inline_icon "more" %>
               <div class="menu__content" data-behavior="menu_content">
                 <% if account.accepted? && organizer_signed_in? %>
-                <%= link_to "Reset password",
-                    g_suite_account_reset_password_path(account.id),
-                    method: :put,
-                    class: ("disabled" unless policy(account).reset_password?),
-                    'data-confirm': "Reset the account password for #{account.address}? We’ll email a new password to the backup email." %>
-                <%= link_to (account.suspended? ? "Re-activate" : "Suspend"),
-                    g_suite_account_toggle_suspension_path(account.id),
-                    method: :put,
-                    class: ("disabled" unless policy(account).toggle_suspension?),
-                    'data-confirm': "Do you really want to #{account.suspended? ? 're-activate' : 'suspend'} #{account.address}?" %>
+                  <%= link_to "Reset password",
+                      g_suite_account_reset_password_path(account.id),
+                      method: :put,
+                      class: ("disabled" unless policy(account).reset_password?),
+                      'data-confirm': "Reset the account password for #{account.address}? We’ll email a new password to the backup email." %>
+                  <%= link_to (account.suspended? ? "Re-activate" : "Suspend"),
+                      g_suite_account_toggle_suspension_path(account.id),
+                      method: :put,
+                      class: ("disabled" unless policy(account).toggle_suspension?),
+                      'data-confirm': "Do you really want to #{account.suspended? ? 're-activate' : 'suspend'} #{account.address}?" %>
                 <% end %>
                 <%= link_to "Delete",
                   account,
@@ -64,16 +64,7 @@
                         <span><%= al.username %></span><span class="muted"><%= al.at_domain %></span>
                       </p>
                     </div>
-                    <%= form_with(url: g_suite_alias_path(id: al.id), method: :delete, data: { turbo: false }, disabled: !policy(account).destroy?) do |form| %>
-                      <div class="flex flex-row justify-between m-auto">
-                        <%= form.hidden_field :g_suite_alias_id, value: al.id %>
-                        <div class="actions m-2 ml-0">
-                          <%= form.button nil, class: "pop error pointer alias-delete" do %>
-                            <%= inline_icon "view-close", size: home_action_size %>
-                          <% end %>
-                        </div>
-                      </div>
-                    <% end %>
+                    <%= pop_icon_to "view-close", g_suite_alias_path(id: al.id), data: { turbo_confirm: "Are you sure you would like to delete this alias?", turbo_method: :delete }, class: "pop error pointer alias-delete m-2 ml-0", size: home_action_size, disabled: !policy(al).destroy? %>
                   </li>
                 <% end %>
               </ul>

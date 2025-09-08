@@ -1,4 +1,6 @@
-<% disabled = !policy(@event).update? %>
+<%# locals: (event:) %>
+
+<% disabled = !policy(event).update? %>
 
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>

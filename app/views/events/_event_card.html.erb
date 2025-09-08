@@ -45,7 +45,7 @@
       <% if local_assigns[:show_date_stat] %>
         <span class="flex items-center gap-1 tabular-nums">
           <%= inline_icon "event-add", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
-          <%= time_ago_in_words(event.created_at).sub("about ", "").sub("over ", "") %> ago
+          <%= time_ago_in_words(event.created_at).sub("about ", "").sub("over ", "").sub("almost ", "") %> ago
         </span>
       <% else %>
         <span class="flex items-center gap-1 tabular-nums">

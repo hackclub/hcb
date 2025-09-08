@@ -22,7 +22,6 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_duration_seconds      :integer          default(2592000), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean
@@ -103,6 +102,8 @@ class User < ApplicationRecord
 
   has_many :managed_events, inverse_of: :point_of_contact
 
+  has_many :event_groups, class_name: "Event::Group"
+
   has_many :g_suite_accounts, inverse_of: :fulfilled_by
   has_many :g_suite_accounts, inverse_of: :creator
 
@@ -172,8 +173,6 @@ class User < ApplicationRecord
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
-
-  validates(:session_duration_seconds, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
   validate :profile_picture_format
 
@@ -456,6 +455,15 @@ class User < ApplicationRecord
     admin_override_pretend? && !use_two_factor_authentication
   end
 
+  def can_update_payout_method?
+    return true if payout_method.nil?
+    return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+    return false if reimbursement_reports.reimbursement_requested.any?
+    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
+
+    true
+  end
+
   private
 
   def update_stripe_cardholder
@@ -507,8 +515,8 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire)
-      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, or ACH transfer")
+    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire) || payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, Wise transfer, or ACH transfer")
     end
   end
 
