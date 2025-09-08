@@ -1,6 +1,6 @@
-<% if @hcb_code.wise_transfer.wise_id.present? %>
+<% if @hcb_code.wise_transfer.wise_url %>
   <% admin_tool("mt3") do %>
-    <%= link_to "https://wise.com/transactions/activities/by-resource/TRANSFER/#{@hcb_code.wise_transfer.wise_id}", class: "btn bg-accent", target: "_blank" do %>
+    <%= link_to @hcb_code.wise_transfer.wise_url, class: "btn bg-accent", target: "_blank" do %>
       <%= inline_icon "wise" %>
       View transfer on Wise
     <% end %>
@@ -90,7 +90,7 @@
     </section>
 
     <% unless @hcb_code.pt.settled? %>
-      <section class="card__banner relative border-bottom bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 mt-0 md:gap-2">
+      <section class="card__banner relative bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 mt-0 md:gap-2">
         <%= inline_icon "wise", size: 16 %>
         <div class="flex md:flex-row flex-col items-start justify-start gap-1 flex-grow">
           The amount you pay (<%= render_money @hcb_code.amount_cents.abs %> USD) might change.

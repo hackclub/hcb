@@ -28,6 +28,7 @@ class EventPolicy < ApplicationPolicy
 
   alias_method :transactions?, :show?
   alias_method :ledger?, :transactions?
+  alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
     user&.admin?
@@ -112,6 +113,10 @@ class EventPolicy < ApplicationPolicy
     show?
   end
 
+  def statement_of_activity?
+    show? && auditor?
+  end
+
   def async_balance?
     show?
   end
@@ -165,7 +170,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def donation_overview?
-    show? && record.approved? && record.plan.donations_enabled?
+    show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
   def invoices?

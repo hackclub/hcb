@@ -63,9 +63,9 @@ module Column
       return if account_number.nil?
 
       RawPendingColumnTransaction.create!(
-        column_id: @object["id"],
-        amount_cents: @object["available_amount"],
-        date_posted: @object["effective_at_utc"],
+        column_id: @object[:id],
+        amount_cents: @object[:amount],
+        date_posted: Date.today,
         column_transaction: @object,
         column_event_type:
       )

@@ -40,10 +40,13 @@ class HcbCodesController < ApplicationController
       @show_ach_details = true
     end
 
+    @reverse_receipt_id = params[:reverse]
+
     if params[:frame]
       @frame = true
       @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
       @transaction_show_author_img = params[:transaction_show_author_img].nil? ? false : params[:transaction_show_author_img]
+      @ledger_instance = params[:ledger_instance]
 
       render :show, layout: false
     else
@@ -197,6 +200,16 @@ class HcbCodesController < ApplicationController
     else
       redirect_to @hcb_code, flash: { error: error_reason }
     end
+  end
+
+  def receipt_status
+    @hcb_code = HcbCode.find(params[:id])
+    @secret = params[:s]
+
+    authorize @hcb_code
+
+  rescue Pundit::NotAuthorizedError
+    raise unless HcbCode.find_signed(@secret, purpose: :receipt_status) == @hcb_code
   end
 
   def toggle_tag

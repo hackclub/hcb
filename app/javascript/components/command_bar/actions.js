@@ -318,7 +318,7 @@ export const adminActions = adminUrls => [
     id: 'admin_tool_7',
     section: 'Admin Tools',
     priority: Priority.HIGH,
-    name: 'Deletion requests',
+    name: 'Organizer position deletion requests',
     icon: <Icon glyph="member-remove" size={16} />,
     perform: () =>
       (window.location.href = '/organizer_position_deletion_requests'),
@@ -507,6 +507,14 @@ export const adminActions = adminUrls => [
     name: 'Flipper',
     icon: <Icon glyph="flag-fill" size={16} />,
     perform: navigate('/flipper/features'),
+  },
+  {
+    id: 'admin_tool_31',
+    section: 'Admin Tools',
+    priority: Priority.HIGH,
+    name: 'Referral programs',
+    icon: <Icon glyph="share" size={16} />,
+    perform: navigate('/admin/referral_programs'),
   },
 ]
 

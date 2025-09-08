@@ -13,6 +13,8 @@ class AnnouncementsController < ApplicationController
 
     authorize @announcement
 
+    @show_announcement_explanation = Announcement.where(author: current_user).where.not(published_at: nil).empty?
+
     @announcement.save!
   end
 

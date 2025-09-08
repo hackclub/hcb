@@ -286,14 +286,17 @@ class Event < ApplicationRecord
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
+  has_many :readers, -> { where(organizer_positions: { role: :reader }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
-  has_many :event_follows, class_name: "Event::Follow"
+  has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
+
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -815,6 +818,7 @@ class Event < ApplicationRecord
     # Sync stats to application's airtable record
     ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
       app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
+      app["HCB POC Email"] = point_of_contact.email
 
       # For Anish's TUB
       app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
@@ -844,11 +848,33 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails
-    emails = users.map(&:email_address_with_name)
+  def organizer_contact_emails(only_managers: false)
+    included_users = only_managers ? managers : users
+
+    emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
 
     emails
+  end
+
+  def merchants
+    settled_merchants = canonical_transactions.map do |ct|
+      rst = ct.raw_stripe_transaction
+      stripe_transaction_merchant(rst) if rst.present?
+    end.select(&:present?)
+
+    pending_merchants = canonical_pending_transactions.map do |cpt|
+      rpst = cpt.raw_pending_stripe_transaction
+      stripe_transaction_merchant(rpst) if rpst.present?
+    end.select(&:present?)
+
+    settled_merchants.concat(pending_merchants)
+  end
+
+  def point_of_contact_history
+    @point_of_contact_history ||= versions
+                                  .filter_map { |v| v.changeset["point_of_contact_id"].presence }
+                                  .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
   end
 
   private
@@ -916,6 +942,12 @@ class Event < ApplicationRecord
     if is_public_changed?(to: true)
       config.update(generate_monthly_announcement: true)
     end
+  end
+
+  def stripe_transaction_merchant(transaction)
+    merchant_data = transaction.stripe_transaction["merchant_data"]
+    yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+    { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
   end
 
 end

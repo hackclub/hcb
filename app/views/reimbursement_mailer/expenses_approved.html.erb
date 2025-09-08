@@ -1,0 +1,30 @@
+<p>
+  Hey <%= @report.user.name %>!
+</p>
+
+<p>
+  The <%= @report.event.name %> team has approved the following <%= "expense".pluralize(@expenses.size) %> for reimbursement:
+</p>
+
+<ul>
+  <% @expenses.each do |expense| %>
+    <li><em><%= expense.memo %></em> for <%= render_money expense.amount_cents %></li>
+  <% end %>
+</ul>
+
+<p>
+  They're still reviewing the rest of your report; you'll hear from
+  them shortly after they finish reviewing <%= link_to "the entire report", @report %>.
+</p>
+
+<p>
+  If you have any questions, please contact <%= @report.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @report.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

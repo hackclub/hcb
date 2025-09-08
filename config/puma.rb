@@ -46,11 +46,3 @@ plugin :tmp_restart
 
 # Report stats to AppSignal
 plugin :appsignal
-
-# Heroku Barnes config for Puma
-# https://github.com/heroku/barnes
-require "barnes"
-before_fork do
-  # worker configuration
-  Barnes.start
-end

@@ -6,6 +6,8 @@
 #
 #  id                         :bigint           not null, primary key
 #  aasm_state                 :string
+#  conversion_rate            :float            default(1.0), not null
+#  currency                   :string           default("USD"), not null
 #  deleted_at                 :datetime
 #  expense_number             :integer          default(0), not null
 #  invite_message             :text
@@ -39,6 +41,10 @@
 module Reimbursement
   class Report < ApplicationRecord
     include ::Shared::AmpleBalance
+
+    include PublicIdentifiable
+    set_public_id_prefix :rmr
+
     belongs_to :user
 
     belongs_to :event, optional: true
@@ -57,8 +63,8 @@ module Reimbursement
     has_paper_trail ignore: :expense_number
 
     monetize :maximum_amount_cents, allow_nil: true
-    monetize :amount_to_reimburse_cents, allow_nil: true
-    monetize :amount_cents, as: "amount", allow_nil: true
+    monetize :amount_to_reimburse_cents, allow_nil: true, with_model_currency: :currency
+    monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :delete_all
     has_one :payout_holding, inverse_of: :report
@@ -102,8 +108,9 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? && expenses.any? && !missing_receipts? &&
-              user.payout_method.class != User::PayoutMethod::PaypalTransfer && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? }
+            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
+              expenses.any? && !missing_receipts? && user.payout_method.class != User::PayoutMethod::PaypalTransfer &&
+              !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } && !mismatched_currency?
           end
         end
         after do
@@ -122,7 +129,7 @@ module Reimbursement
       event :mark_reimbursement_requested do
         transitions from: :submitted, to: :reimbursement_requested do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event) && !event.financially_frozen?
+            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && (currency != "USD" || Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)) && !event.financially_frozen?
           end
         end
         after do
@@ -133,7 +140,7 @@ module Reimbursement
       event :mark_reimbursement_approved do
         transitions from: :reimbursement_requested, to: :reimbursement_approved do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event) && !event.financially_frozen?
+            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && (currency != "USD" || Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)) && !event.financially_frozen?
           end
         end
         after do
@@ -215,6 +222,10 @@ module Reimbursement
         return "PayPal transfer"
       when IncreaseCheck
         return "check"
+      when WiseTransfer
+        return "Wise transfer"
+      when Wire
+        return "international wire"
       end
 
       return "transfer"
@@ -235,13 +246,17 @@ module Reimbursement
     def amount_cents
       return amount_to_reimburse_cents if reimbursement_requested? || reimbursement_approved? || reimbursed?
 
-      expenses.sum(:amount_cents)
+      expenses.to_sum.sum(:amount_cents)
     end
 
     def amount_to_reimburse_cents
-      return [expenses.approved.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents
+      return [expenses.approved.to_sum.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents && currency == "USD"
 
-      expenses.approved.sum(:amount_cents)
+      expenses.approved.to_sum.sum(:amount_cents)
+    end
+
+    def fees_charged_cents
+      expenses.approved.where(type: Reimbursement::Expense::Fee.name).sum(:amount_cents)
     end
 
     def last_reimbursement_requested_by
@@ -303,8 +318,12 @@ module Reimbursement
       expenses.complete.with_receipt.count != expenses.count
     end
 
+    def mismatched_currency?
+      user.payout_method.present? && currency != user.payout_method.currency
+    end
+
     def exceeds_maximum_amount?
-      maximum_amount_cents && amount_cents > maximum_amount_cents
+      maximum_amount_cents && amount_cents > maximum_amount_cents && currency == "USD"
     end
 
     def below_minimum_amount?
@@ -313,6 +332,22 @@ module Reimbursement
 
     def from_public_reimbursement_form?
       invited_by_id.nil?
+    end
+
+    def wise_transfer_quote_amount
+      @wise_transfer_quote_amount ||= WiseTransfer.generate_quote(amount)
+    rescue
+      Money.from_cents(0)
+    end
+
+    def wise_transfer_quote_without_fees_amount
+      @wise_transfer_quote_without_fees_amount ||= WiseTransfer.generate_detailed_quote(draft? ? amount : amount_to_reimburse)[:without_fees_usd_amount]
+    rescue
+      Money.from_cents(0)
+    end
+
+    def wise_transfer_may_exceed_balance?
+      !::Shared::AmpleBalance.ample_balance?(wise_transfer_quote_amount.cents, event)
     end
 
     private
@@ -327,7 +362,7 @@ module Reimbursement
       expense_payouts = []
 
       expenses.approved.each do |expense|
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event: expense.report.event, expense:)
+        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents * expense.conversion_rate, event: expense.report.event, expense:)
       end
 
       return if expense_payouts.empty?

@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
-class AdminController < ApplicationController
-  skip_after_action :verify_authorized # do not force pundit
-  before_action :signed_in_admin
-
-  layout "admin"
-
+class AdminController < Admin::BaseController
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
@@ -73,7 +68,7 @@ class AdminController < ApplicationController
   end
 
   def event_process
-    @event = Event.find(params[:id])
+    @event = Event.friendly.find(params[:id])
   end
 
   def event_new
@@ -170,7 +165,7 @@ class AdminController < ApplicationController
   def bank_fees
     @page = params[:page] || 1
     @per = params[:per] || 100
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -189,10 +184,11 @@ class AdminController < ApplicationController
   def users
     @page = params[:page] || 1
     @per = params[:per] || 100
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @access_level = params[:access_level]
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
-    @params = params.permit(:page, :per, :q, :access_level, :event_id)
+    @event_id = params[:event_id].presence
+    @referral_program_id = params[:referral_program_id].presence
+    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
 
     if @event_id
       @event = Event.find(@event_id)
@@ -203,12 +199,18 @@ class AdminController < ApplicationController
     end
     relation = relation.includes(:events).includes(:card_grants)
 
+    if @referral_program_id
+      attribution_user_ids = Referral::Attribution.where(referral_program_id: @referral_program_id).pluck(:user_id)
+      relation = relation.where(id: attribution_user_ids)
+    end
+
     relation = relation.search_name(@q) if @q
     relation = relation.where(access_level: @access_level) if @access_level.present?
 
     @count = relation.count
 
     @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
@@ -240,7 +242,7 @@ class AdminController < ApplicationController
   def raw_transactions
     @page = params[:page] || 1
     @per = params[:per] || 100
-    @unique_bank_identifier = params[:unique_bank_identifier].present? ? params[:unique_bank_identifier] : nil
+    @unique_bank_identifier = params[:unique_bank_identifier].presence
 
     relation = RawCsvTransaction
     relation = relation.where(unique_bank_identifier: @unique_bank_identifier) if @unique_bank_identifier
@@ -317,14 +319,14 @@ class AdminController < ApplicationController
   def ledger
     @page = params[:page] || 1
     @per = params[:per] || 100
-    @q = params[:q].present? ? params[:q] : nil
-    @amount = params[:amount].present? ? params[:amount] : nil
+    @q = params[:q].presence
+    @amount = params[:amount].presence
     @unmapped = params[:unmapped] != "0"
     @exclude_top_ups = params[:exclude_top_ups] == "1" ? true : nil
     @exclude_spending = params[:exclude_spending] == "1" ? true : nil
     @mapped_by_human = params[:mapped_by_human] == "1" ? true : nil
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
-    @user_id = params[:user_id].present? ? params[:user_id] : nil
+    @event_id = params[:event_id].presence
+    @user_id = params[:user_id].presence
 
     relation = CanonicalTransaction.left_joins(:canonical_event_mapping)
 
@@ -372,9 +374,9 @@ class AdminController < ApplicationController
   def pending_ledger
     @page = params[:page] || 1
     @per = params[:per] || 100
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @unsettled = params[:unsettled] == "1" ? true : nil
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -403,6 +405,9 @@ class AdminController < ApplicationController
 
     relation = relation.unsettled if @unsettled
 
+    # Preload transaction categories
+    relation = relation.preload(:category)
+
     @count = relation.count
 
     @canonical_pending_transactions = relation.page(@page).per(@per).order("date desc")
@@ -411,10 +416,10 @@ class AdminController < ApplicationController
   def ach
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -454,10 +459,10 @@ class AdminController < ApplicationController
   def reimbursements
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -597,10 +602,10 @@ class AdminController < ApplicationController
   def checks
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @in_transit = params[:in_transit] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -655,8 +660,8 @@ class AdminController < ApplicationController
   def paypal_transfers
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @q = params[:q].presence
+    @event_id = params[:event_id].presence
 
     @paypal_transfers = PaypalTransfer.all
 
@@ -679,8 +684,8 @@ class AdminController < ApplicationController
   def wires
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @q = params[:q].presence
+    @event_id = params[:event_id].presence
 
     @wires = Wire.all
 
@@ -698,8 +703,8 @@ class AdminController < ApplicationController
   def wise_transfers
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @q = params[:q].presence
+    @event_id = params[:event_id].presence
 
     @wise_transfers = WiseTransfer.all
 
@@ -724,16 +729,16 @@ class AdminController < ApplicationController
   def donations
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
-    @ip_address = params[:ip_address].present? ? params[:ip_address] : nil
-    @user_agent = params[:user_agent].present? ? params[:user_agent] : nil
+    @q = params[:q].presence
+    @ip_address = params[:ip_address].presence
+    @user_agent = params[:user_agent].presence
     @deposited = params[:deposited] == "1" ? true : nil
     @in_transit = params[:in_transit] == "1" ? true : nil
     @failed = params[:failed] == "1" ? true : nil
     @missing_payout = params[:missing_payout] == "1" ? true : nil
     @missing_fee_reimbursement = params[:missing_fee_reimbursement] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -770,7 +775,7 @@ class AdminController < ApplicationController
     @active = params[:active] == "1" ? true : nil
     @canceled = params[:canceled] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     relation = RecurringDonation.includes(:event).where.not(stripe_status: [:incomplete, :incomplete_expired])
 
@@ -786,12 +791,12 @@ class AdminController < ApplicationController
   def disbursements
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @reviewing = params[:reviewing] == "1" ? true : nil
     @pending = params[:pending] == "1" ? true : nil
     @processing = params[:processing] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -831,7 +836,7 @@ class AdminController < ApplicationController
     @params = params.permit(:page, :per, :q, :has_receipt, :start_date, :end_date)
     @page = @params[:page] || 1
     @per = @params[:per] || 20
-    @q = @params[:q].present? ? @params[:q] : nil
+    @q = @params[:q].presence
     @has_receipt = @params[:has_receipt]
     @start_date = @params[:start_date]
     @end_date = @params[:end_date]
@@ -864,7 +869,7 @@ class AdminController < ApplicationController
   def invoices
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @open = params[:open] == "1" ? true : nil
     @paid = params[:paid] == "1" ? true : nil
     @missing_payout = params[:missing_payout] == "1" ? true : nil
@@ -872,7 +877,7 @@ class AdminController < ApplicationController
     @past_due = params[:past_due] == "1" ? true : nil
     @voided = params[:voided] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -926,9 +931,9 @@ class AdminController < ApplicationController
   def sponsors
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -948,14 +953,14 @@ class AdminController < ApplicationController
   def google_workspaces
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
+    @q = params[:q].presence
     @needs_ops_review = params[:needs_ops_review] == "1" ? true : nil
     @configuring = params[:configuring] == "1" ? true : nil
     @verification_error = params[:verification_error] == "1" ? true : nil
     @revocation_present = params[:revocation_present] == "1" ? true : nil
     @pending_deletion = params[:pending_deletion] == "1" ? true : nil
 
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
+    @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -1141,7 +1146,7 @@ class AdminController < ApplicationController
   end
 
   def request_balance_export
-    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date] || nil).id)
+    ExportJob.perform_later(export_id: Export::Event::Balances.create(requested_by: current_user, end_date: params[:end_date].presence).id)
     flash[:success] = "We've emailed you an export of all HCB organizations' balances."
     redirect_back(fallback_location: root_path)
   end
@@ -1261,9 +1266,9 @@ class AdminController < ApplicationController
   def account_numbers
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @q = params[:q].present? ? params[:q] : nil
-    @event_id = params[:event_id].present? ? params[:event_id] : nil
-    @account_number_type = params[:account_number_type].present? ? params[:account_number_type] : nil # default/nil = show all, 1 = deposit only, 2 = spend + deposit
+    @q = params[:q].presence
+    @event_id = params[:event_id].presence
+    @account_number_type = params[:account_number_type].presence # default/nil = show all, 1 = deposit only, 2 = spend + deposit
 
     relation = Column::AccountNumber.includes(:event)
 
@@ -1373,6 +1378,21 @@ class AdminController < ApplicationController
     }
   end
 
+  def referral_programs
+    @referral_programs = Referral::Program.all.order(created_at: :desc)
+  end
+
+  def referral_program_create
+    @referral_program = Referral::Program.new(name: params[:name])
+
+    if @referral_program.save
+      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
+    else
+      flash[:error] = @referral_program.errors.full_messages.to_sentence
+      redirect_to referral_programs_admin_index_path
+    end
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)
@@ -1386,30 +1406,30 @@ class AdminController < ApplicationController
   end
 
   def filtered_events(events: Event.all)
-    @q = params[:q].present? ? params[:q] : nil
-    @demo_mode = params[:demo_mode].present? ? params[:demo_mode] : "full" # full accounts only by default
+    @q = params[:q].presence
+    @demo_mode = params[:demo_mode].presence || "full" # full accounts only by default
     @engaged = params[:engaged] == "1" # unchecked by default
     @pending = params[:pending] == "0" ? nil : true # checked by default
     @unapproved = params[:unapproved] == "0" ? nil : true # checked by default
     @approved = params[:approved] == "0" ? nil : true # checked by default
     @rejected = params[:rejected] == "0" ? nil : true # checked by default
-    @transparent = params[:transparent].present? ? params[:transparent] : "both" # both by default
-    @omitted = params[:omitted].present? ? params[:omitted] : "both" # both by default
-    @funded = params[:funded].present? ? params[:funded] : "both" # both by default
-    @hidden = params[:hidden].present? ? params[:hidden] : "both" # both by default
-    @active = params[:active].present? ? params[:active] : "both" # both by default
+    @transparent = params[:transparent].presence || "both" # both by default
+    @omitted = params[:omitted].presence || "both" # both by default
+    @funded = params[:funded].presence || "both" # both by default
+    @hidden = params[:hidden].presence || "both" # both by default
+    @active = params[:active].presence || "both" # both by default
     @organized_by = params[:organized_by].presence || "anyone"
     @tagged_with = params[:tagged_with].presence || "anything"
     @risk_level = params[:risk_level].presence || "any"
-    @point_of_contact_id = params[:point_of_contact_id].present? ? params[:point_of_contact_id] : "all"
-    @plan = params[:plan].present? ? params[:plan] : "all"
+    @point_of_contact_id = params[:point_of_contact_id].presence || "all"
+    @plan = params[:plan].presence || "all"
     if params[:country] == 9999.to_s
       @country = 9999
     else
-      @country = params[:country].present? ? params[:country] : "all"
+      @country = params[:country].presence || "all"
     end
     @activity_since_date = params[:activity_since]
-    @sort_by = params[:sort_by].present? ? params[:sort_by] : "date_desc"
+    @sort_by = params[:sort_by].presence || "date_desc"
 
     relation = events
 
@@ -1476,15 +1496,27 @@ class AdminController < ApplicationController
 
   def airtable_task_size(task_name)
     info = airtable_info[task_name]
-    task = Faraday.new { |c|
-      c.response :json
-      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
-    }.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
 
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+      c.authorization :Bearer, Credentials.fetch(:AIRTABLE)
+    end
+
+    task = client.get("https://api.airtable.com/v0/#{info[:id]}/#{info[:table]}", info[:query]).body["records"]
     task.size
   rescue => e
     Rails.error.report(e)
     9999 # return something invalidly high to get the ops team to report it
+  end
+
+  def pending_identity_vault_verifications_task_size
+    client = Faraday.new do |c|
+      c.response :json
+      c.response :raise_error
+    end
+
+    client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
   end
 
   def hackathons_task_size
@@ -1532,7 +1564,7 @@ class AdminController < ApplicationController
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
-        Faraday.new { |c| c.response :json }.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+        pending_identity_vault_verifications_task_size
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions
