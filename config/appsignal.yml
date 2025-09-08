@@ -15,6 +15,7 @@ default: &defaults
     - ActionDispatch::Http::MimeNegotiation::InvalidType
     - ActionDispatch::Http::Parameters::ParseError
     - ActiveRecord::RecordNotFound
+    - RTesseract::Error
 
 production:
   <<: *defaults
