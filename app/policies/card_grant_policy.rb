@@ -65,6 +65,10 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager? && record.active?
   end
 
+  def disable_pre_authorization?
+    admin_or_manager? && record.pre_authorization_required?
+  end
+
   def topup?
     admin_or_manager? && record.active?
   end

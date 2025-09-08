@@ -28,6 +28,7 @@ class EventPolicy < ApplicationPolicy
 
   alias_method :transactions?, :show?
   alias_method :ledger?, :transactions?
+  alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
     user&.admin?

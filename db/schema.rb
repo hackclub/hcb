@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_05_014716) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_04_215031) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1464,6 +1464,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_014716) do
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
+  create_table "oauth_device_grants", force: :cascade do |t|
+    t.bigint "resource_owner_id"
+    t.bigint "application_id", null: false
+    t.string "device_code", null: false
+    t.string "user_code"
+    t.integer "expires_in", null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_polling_at"
+    t.string "scopes", default: "", null: false
+    t.index ["application_id"], name: "index_oauth_device_grants_on_application_id"
+    t.index ["device_code"], name: "index_oauth_device_grants_on_device_code", unique: true
+    t.index ["resource_owner_id"], name: "index_oauth_device_grants_on_resource_owner_id"
+    t.index ["user_code"], name: "index_oauth_device_grants_on_user_code", unique: true
+  end
+
   create_table "organizer_position_contracts", force: :cascade do |t|
     t.bigint "document_id"
     t.bigint "organizer_position_invite_id", null: false
@@ -2555,6 +2570,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_014716) do
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_codes", "users"
   add_foreign_key "mailbox_addresses", "users"
+  add_foreign_key "oauth_device_grants", "oauth_applications", column: "application_id"
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "closed_by_id"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "submitted_by_id"

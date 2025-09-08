@@ -5,7 +5,7 @@
 
   <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="wise_fee_breakdown">
     <%= modal_header "How much will this transfer cost?" %>
-    <p class="mt-0">HCB never charges fees for transfers or reimbursements. However, when using Wise to send money internationally, Wise charges additional fees that vary based on the amount and destination of the transfer.</p>
+    <p class="mt-0">HCB never charges fees for transfers or reimbursements. However, when using Wise to send money internationally, Wise charges additional fees that vary based on the amount and destination of the transfer. These amounts are estimates and could change.</p>
 
     <table>
       <thead>
@@ -35,7 +35,7 @@
         </tr>
 
         <tr class="border-none">
-          <td class="right-align pr1"><strong>Total</strong></td>
+          <td class="pr1"><strong>Total</strong></td>
           <td class="muted">-</td>
           <td><%= @with_fees_quote_amount.format %></td>
         </tr>
