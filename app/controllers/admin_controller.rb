@@ -1482,10 +1482,10 @@ class AdminController < Admin::BaseController
     states << "rejected" if @rejected
     relation = relation.where("events.aasm_state in (?)", states)
 
-    relation = relation.select do |event|
-      event.users.select { |u| u.active? && u.teenager? }.size >= @min_active_teens.to_i
-    end
-    relation = Event.where(id: relation.map(&:id))
+    relation = relation.joins(:users)
+      .where(users: { teenager: true, id: User.active })
+      .group('events.id')
+      .having('COUNT(users.id) >= ?', @min_active_teens)
 
     # Sorting
     case @sort_by
