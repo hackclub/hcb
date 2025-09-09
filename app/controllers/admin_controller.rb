@@ -1392,6 +1392,9 @@ class AdminController < Admin::BaseController
       redirect_to referral_programs_admin_index_path
     end
   end
+  
+  def active_teenagers_leaderboard
+  end
 
   private
 
