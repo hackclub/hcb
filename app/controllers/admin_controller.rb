@@ -1393,6 +1393,9 @@ class AdminController < Admin::BaseController
     end
   end
 
+  def active_teenagers_leaderboard
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)

@@ -256,6 +256,7 @@ Rails.application.routes.draw do
       post "referral_program_create", to: "admin#referral_program_create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
     end
 
     member do
