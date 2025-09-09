@@ -2,7 +2,6 @@
 
 module SessionsHelper
   SESSION_DURATION_OPTIONS = {
-    "1 minute"   => 1.minute.to_i,
     "15 minutes" => 15.minutes.to_i,
     "1 hour"     => 1.hour.to_i,
     "6 hours"    => 6.hours.to_i,
