@@ -104,8 +104,7 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def user_not_authorized(error)
-    Rails.error.unexpected(error)
+  def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
       redirect_back_or_to root_path
