@@ -32,7 +32,7 @@
       </p>
     <% end %>
 
-    <% if stripe_card.frozen? %>
+    <% if stripe_card.frozen? && stripe_card.last_frozen_by %>
       <div class="fs-mask">
         <strong>Frozen by</strong>
         <%= user_mention stripe_card.last_frozen_by %>
