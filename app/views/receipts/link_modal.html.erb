@@ -1,5 +1,6 @@
 <%= turbo_frame_tag "link_modal_#{@receiptable.id}" do %>
   <%= form_with url: link_receipts_path, method: :post, class: "relative", data: {
+        controller: "receipt-select",
         turbo: @streams
       } do |form| %>
     <% if @receipts.size == 0 %>
