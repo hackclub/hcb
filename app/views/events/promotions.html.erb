@@ -9,9 +9,9 @@
 <%# Perks for TEEN organizations %>
 <% if @event.organized_by_teenagers? || @active_teen_count > 0 %>
   <% if !@event.plan.eligible_for_perks? %>
-    <% ineligible_reason = "Perks are not available for HQ organizations" %>
+    <% ineligible_reason = "Perks are not available for #{@event.plan.label} organizations" %>
   <% elsif !@perks_available %>
-    <% ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
+    <% ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
   <% end %>
 
   <div class="card pb0 mb3 promo-jukebox" id="premium-jukebox">
