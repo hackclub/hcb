@@ -28,7 +28,7 @@
         </div>
       <% else %>
         <%= link_to "Apply",
-          fillout_form("briCUMzx5Sus", { "hcbprojname" => @event.name, "hcburl" => event_url(@event) + "/team", "name" => current_user.name, "email" => current_user.email }),
+          fillout_form("briCUMzx5Sus", { "hcbprojname" => @event.name, "hcburl" => event_team_url(@event), "name" => current_user.name, "email" => current_user.email }),
           class: "btn promo-premium-header bg-clip-padding",
           target: :_blank %>
       <% end %>
@@ -62,7 +62,7 @@
         </div>
       <% else %>
         <%= link_to "Apply",
-          fillout_form("2XR9U2gBNDus", { "orgname" => @event.name, "hcburl" => event_url(@event) + "/team", "name" => current_user.name, "email" => current_user.email }),
+          fillout_form("2XR9U2gBNDus", { "orgname" => @event.name, "hcburl" => event_team_url(@event), "name" => current_user.name, "email" => current_user.email }),
           class: "btn promo-premium-header bg-clip-padding",
           target: :_blank %>
       <% end %>
@@ -91,7 +91,7 @@
         </div>
       <% else %>
         <%= link_to "Apply",
-          fillout_form("xxiJm98eDpus", { "orgname" => @event.name, "hcburl" => event_url(@event) + "/team", "email" => current_user.email }),
+          fillout_form("xxiJm98eDpus", { "orgname" => @event.name, "hcburl" => event_team_url(@event), "email" => current_user.email }),
           class: "btn promo-premium-header bg-clip-padding",
           target: :_blank %>
       <% end %>
