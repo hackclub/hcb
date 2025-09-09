@@ -13,7 +13,6 @@
 #  latitude                 :decimal(, )
 #  longitude                :decimal(, )
 #  os_info                  :string
-#  peacefully_expired       :boolean          default(FALSE)
 #  session_token_bidx       :string
 #  session_token_ciphertext :text
 #  signed_out_at            :datetime
@@ -72,20 +71,6 @@ class UserSession < ApplicationRecord
   def impersonated?
     !impersonated_by.nil?
   end
-
-  def set_as_peacefully_expired
-    # Don't let this raise exceptions, otherwise users can't sign out
-    begin
-      update(peacefully_expired: true)
-    rescue => e
-      Rails.logger.error "Error setting session as peacefully expired: #{e.message}"
-    end
-
-    # Return self to allow chaining
-    self
-  end
-
-  SESSION_DURATION = 2.weeks
 
   LAST_SEEN_AT_COOLDOWN = 5.minutes
 

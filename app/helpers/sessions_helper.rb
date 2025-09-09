@@ -2,6 +2,7 @@
 
 module SessionsHelper
   SESSION_DURATION_OPTIONS = {
+    "1 minute"   => 1.minute.to_i,
     "15 minutes" => 15.minutes.to_i,
     "1 hour"     => 1.hour.to_i,
     "6 hours"    => 6.hours.to_i,
@@ -35,7 +36,7 @@ module SessionsHelper
       if impersonate
         IMPERSONATED_SESSION_DURATION
       else
-        UserSession::SESSION_DURATION
+        SESSION_DURATION_OPTIONS.fetch("2 weeks")
       end
     expiration_at = Time.now + session_duration
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
@@ -134,11 +135,12 @@ module SessionsHelper
   def signed_in_user
     unless signed_in?
       if request.fullpath == "/"
-        redirect_to auth_users_path(require_reload: true)
+        return redirect_to auth_users_path(require_reload: true)
       else
-        redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
+        return redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
       end
     end
+    current_session.update!(expiration_at: Time.now + current_user.session_validity_preference)
   end
 
   def signed_in_admin
