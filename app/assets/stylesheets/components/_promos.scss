@@ -180,39 +180,6 @@
   }
 }
 
-@property --gradient-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-.promo-premium-border {
-  position: relative;
-  background-clip: padding-box;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: -1;
-    margin: -4px;
-    border-radius: inherit;
-    background: conic-gradient(
-      from var(--gradient-angle),
-      #ec3750 20%,
-      #ff8c37 40%,
-      #f1c40f 55%,
-      #ff8c37 70%,
-      #ec3750 100%
-    );
-    animation: premium-rotate-gradient linear;
-    animation-timeline: view();
-  }
-}
-
 @property --scroll-progress {
   syntax: '<percentage>';
   initial-value: 0%;
