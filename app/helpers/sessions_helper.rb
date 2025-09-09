@@ -134,14 +134,14 @@ module SessionsHelper
   end
 
   def signed_in_user
-    unless signed_in?
+    if signed_in?
+      current_session.update!(expiration_at: Time.now + current_user.session_validity_preference)
+    else
       if request.fullpath == "/"
         redirect_to auth_users_path(require_reload: true)
       else
         redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
       end
-    else
-      current_session.update!(expiration_at: Time.now + current_user.session_validity_preference)
     end
   end
 
