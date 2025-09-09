@@ -125,8 +125,6 @@ module SessionsHelper
 
     session_token = cookies.encrypted[:session_token]
 
-    return UserSession.first if Rails.env.test?
-
     return nil if session_token.nil?
 
     # Find a valid session (not expired) using the session token
