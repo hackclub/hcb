@@ -105,12 +105,20 @@ class AdminController < Admin::BaseController
     record = ApplicationsTable.find(params[:airtable_record_id])
     application = record.fields
     country = ISO3166::Country.find_country_by_any_name(application["Event Location"])
+
+    tags = []
+    tags << EventTag::Tags::ORGANIZED_BY_TEENAGERS if application["TEEN"]
+  
+    if ["Robotics", "FIRST/Robotics", "FIRST - Argosy"].include?(application["Org Type"])
+      tags << EventTag::Tags::ROBOTICS_TEAM
+    end
+    
     event = ::EventService::Create.new(
       name: application["Event Name"],
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      tags: application["TEEN"] ? [EventTag::Tags::ORGANIZED_BY_TEENAGERS] : [],
+      tags: tags,
       demo_mode: true
     ).run
 
