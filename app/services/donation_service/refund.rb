@@ -2,7 +2,7 @@
 
 module DonationService
   class Refund
-    def initialize(donation_id:, amount:, reason:)
+    def initialize(donation_id:, amount:, reason: nil)
       @donation_id = donation_id
       @amount = amount
       @reason = reason

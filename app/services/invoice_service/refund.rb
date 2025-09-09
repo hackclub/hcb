@@ -2,7 +2,7 @@
 
 module InvoiceService
   class Refund
-    def initialize(invoice_id:, amount:, reason:)
+    def initialize(invoice_id:, amount:, reason: nil)
       @invoice_id = invoice_id
       @amount = amount
       @reason = reason
