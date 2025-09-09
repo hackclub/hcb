@@ -214,101 +214,87 @@ module TransactionGroupingEngine
         order_by_mapped_at = @order_by == :mapped_at
 
         pt_group_sql = <<~SQL
-                    select
-                      array_agg(pt.id) as pt_ids
-                      ,array[]::bigint[] as ct_ids
-                      ,coalesce(pt.hcb_code, cast(pt.id as text)) as hcb_code
-                      ,sum(pt.amount_cents) as amount_cents
-                      ,sum(pt.amount_cents / 100.0)::float as amount
-                      #{order_by_mapped_at ? ",max(cpem.created_at) as mapped_at" : ""}
-                    from
-                      canonical_pending_transactions pt
-                    #{order_by_mapped_at ? "left join canonical_pending_event_mappings cpem on cpem.canonical_pending_transaction_id = pt.id" : ""}
-          <<<<<<< HEAD
-                    #{user_joins_for :pt}
-                    #{category_joins_for :pt}
-          =======
-                    #{stripe_joins_for :pt}
-          >>>>>>> main
-                    where
-                      fronted = true -- only included fronted pending transactions
-                      and
-                      pt.id in (
-                        select
-                          cpem.canonical_pending_transaction_id
-                        from
-                          canonical_pending_event_mappings cpem
-                        where
-                          #{ActiveRecord::Base.sanitize_sql_for_conditions(["cpem.event_id = ?", @event_id])}
-                          and cpem.subledger_id is null
-                        except ( -- hide pending transactions that have either settled or been declined.
-                          select
-                            cpsm.canonical_pending_transaction_id
-                          from
-                            canonical_pending_settled_mappings cpsm
-                          union
-                          select
-                            cpdm.canonical_pending_transaction_id
-                          from
-                            canonical_pending_declined_mappings cpdm
-                        )
-                      )
-                      and
-                      not exists ( -- hide pt if there are ct in its hcb code (handles edge case of unsettled PT)
-                        select *
-                        from canonical_transactions ct
-                        inner join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id
-                        where
-                          ct.hcb_code = pt.hcb_code
-                          and #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
-                      )
-                      #{search_modifier_for :pt}
-                      #{user_modifier}
-          <<<<<<< HEAD
-                      #{category_modifier}
-          =======
-                      #{merchant_modifier}
-          >>>>>>> main
-                    group by
-                      coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
+          select
+            array_agg(pt.id) as pt_ids
+            ,array[]::bigint[] as ct_ids
+            ,coalesce(pt.hcb_code, cast(pt.id as text)) as hcb_code
+            ,sum(pt.amount_cents) as amount_cents
+            ,sum(pt.amount_cents / 100.0)::float as amount
+            #{order_by_mapped_at ? ",max(cpem.created_at) as mapped_at" : ""}
+          from
+            canonical_pending_transactions pt
+          #{order_by_mapped_at ? "left join canonical_pending_event_mappings cpem on cpem.canonical_pending_transaction_id = pt.id" : ""}
+          #{category_joins_for :pt}
+          #{stripe_joins_for :pt}
+          where
+            fronted = true -- only included fronted pending transactions
+            and
+            pt.id in (
+              select
+                cpem.canonical_pending_transaction_id
+              from
+                canonical_pending_event_mappings cpem
+              where
+                #{ActiveRecord::Base.sanitize_sql_for_conditions(["cpem.event_id = ?", @event_id])}
+                and cpem.subledger_id is null
+              except ( -- hide pending transactions that have either settled or been declined.
+                select
+                  cpsm.canonical_pending_transaction_id
+                from
+                  canonical_pending_settled_mappings cpsm
+                union
+                select
+                  cpdm.canonical_pending_transaction_id
+                from
+                  canonical_pending_declined_mappings cpdm
+              )
+            )
+            and
+            not exists ( -- hide pt if there are ct in its hcb code (handles edge case of unsettled PT)
+              select *
+              from canonical_transactions ct
+              inner join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id
+              where
+                ct.hcb_code = pt.hcb_code
+                and #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
+            )
+            #{search_modifier_for :pt}
+            #{user_modifier}
+            #{category_modifier}
+            #{merchant_modifier}
+          group by
+            coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
         SQL
 
         ct_group_sql = <<~SQL
-                    select
-                      array[]::bigint[] as pt_ids
-                      ,array_agg(ct.id) as ct_ids
-                      ,coalesce(ct.hcb_code, cast(ct.id as text)) as hcb_code
-                      ,sum(ct.amount_cents) as amount_cents
-                      ,sum(ct.amount_cents / 100.0)::float as amount
-                      #{order_by_mapped_at ? ",max(cem.created_at) as mapped_at" : ""}
-                    from
-                      canonical_transactions ct
-                    #{order_by_mapped_at ? "left join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id" : ""}
-          <<<<<<< HEAD
-                    #{user_joins_for :ct}
-                    #{category_joins_for :ct}
-          =======
-                    #{stripe_joins_for :ct}
-          >>>>>>> main
-                    where
-                      ct.id in (
-                        select
-                          cem.canonical_transaction_id
-                        from
-                          canonical_event_mappings cem
-                        where
-                          #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
-                          and cem.subledger_id is null
-                      )
-                      #{search_modifier_for :ct}
-                      #{user_modifier}
-          <<<<<<< HEAD
-                      #{category_modifier}
-          =======
-                      #{merchant_modifier}
-          >>>>>>> main
-                    group by
-                      coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
+          select
+            array[]::bigint[] as pt_ids
+            ,array_agg(ct.id) as ct_ids
+            ,coalesce(ct.hcb_code, cast(ct.id as text)) as hcb_code
+            ,sum(ct.amount_cents) as amount_cents
+            ,sum(ct.amount_cents / 100.0)::float as amount
+            #{order_by_mapped_at ? ",max(cem.created_at) as mapped_at" : ""}
+          from
+            canonical_transactions ct
+          #{order_by_mapped_at ? "left join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id" : ""}
+          #{category_joins_for :ct}
+          #{stripe_joins_for :ct}
+          where
+            ct.id in (
+              select
+                cem.canonical_transaction_id
+              from
+                canonical_event_mappings cem
+              where
+                #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
+                and cem.subledger_id is null
+            )
+            #{search_modifier_for :ct}
+            #{user_modifier}
+            #{category_modifier}
+            #{merchant_modifier}
+          group by
+            coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
         SQL
 
         canonical_pending_transactions_select = <<~SQL
