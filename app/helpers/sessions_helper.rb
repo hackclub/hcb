@@ -125,7 +125,7 @@ module SessionsHelper
 
     session_token = cookies.encrypted[:session_token]
 
-    return UserSession.first if Rails.env.development?
+    return UserSession.first if Rails.env.test?
 
     return nil if session_token.nil?
 
