@@ -56,6 +56,7 @@ Rails.application.routes.draw do
     collection do
       post "link"
       get "link_modal"
+      get "inline_link"
     end
 
     member do

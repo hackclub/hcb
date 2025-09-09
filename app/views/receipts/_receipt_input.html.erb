@@ -1,0 +1,28 @@
+<%# locals: (form:, disabled: false) %>
+
+<%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
+<div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+  <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
+        action: "
+      dragover@window->file-drop#dragover
+      drop@window->file-drop#drop
+      dragenter@window->file-drop#dragenter
+      dragleave@window->file-drop#dragleave
+    "
+      } %>
+  <%= form.file_field :file,
+      multiple: true,
+      include_hidden: false,
+      required: false,
+      accept: "image/*,image/heic,.pdf",
+      style: "margin: 8px 0px",
+      class: "field--fileupload__field",
+      data: {
+        "file-drop-target" => "fileInput",
+        "action" => "change->extraction#upload"
+      },
+      disabled: %>
+  <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
+</div>
+<%= turbo_frame_tag :inline_link, src: inline_link_receipts_path %>
+<p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>

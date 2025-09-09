@@ -1,17 +1,11 @@
 <%= turbo_frame_tag "link_modal_#{@receiptable.id}" do %>
   <%= form_with url: link_receipts_path, method: :post, class: "relative", data: {
-        controller: "receipt-select",
         turbo: @streams
       } do |form| %>
     <% if @receipts.size == 0 %>
       <%= blankslate "Receipt Bin is empty." %>
     <% else %>
-      <div class="receipt__search mb3 m0 p0">
-        <input data-receipt-select-target="search" data-action="keyup->receipt-select#search" placeholder="Search" style="max-width: none;" type="text" id="q">
-      </div>
-      <span data-receipt-select-target="select" style="display: none;">
-        <%= form.select :receipt_id, @receipts.map { |receipt| [receipt.id, receipt.id] }, include_blank: true %>
-      </span>
+      <%= render "receipts/link_form", receipts: @receipts, suggested_receipt_ids: @suggested_receipt_ids %>
 
       <%= form.hidden_field :receiptable_id, value: @receiptable.id %>
       <%= form.hidden_field :receiptable_type, value: @receiptable.class %>
@@ -19,16 +13,6 @@
       <%= (form.hidden_field :popover, value: @popover) if defined?(@popover) %>
       <%= form.hidden_field :show_receipt_button, value: @show_receipt_button %>
       <%= form.hidden_field :show_author_img, value: @show_author_img %>
-
-      <ul class="grid grid--narrow left-align w-100 grid--spacious mt0 justify-center">
-        <% @receipts.each do |receipt| %>
-          <li class="flex grid flex-col justify-between h-100 mx4 modal__<%= receipt.id %>" id="modal_receipt_<%= receipt.id %>">
-            <%= render partial: "receipts/receipt", locals: { receipt:, selectable: true, textual_content: true, pairing: @suggested_receipt_ids.include?(receipt.id), size: 169 } %>
-          </li>
-        <% end %>
-      </ul>
-
-      <%= blankslate "No receipts found.", class: "mt3 mb5", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
     <% end %>
 
     <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">

@@ -92,6 +92,12 @@ class ReceiptsController < ApplicationController
 
   end
 
+  def inline_link
+    skip_authorization
+
+    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user).order(created_at: :desc)
+  end
+
   def create
     streams = []
 

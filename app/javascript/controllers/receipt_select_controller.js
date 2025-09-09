@@ -27,12 +27,18 @@ export default class extends Controller {
     const receiptId = e.currentTarget.getAttribute('data-receipt-id')
 
     if (receiptId === prevReceiptId) {
-      this.confirmTarget.disabled = true
+      if (this.hasConfirmTarget) {
+        this.confirmTarget.disabled = true
+      }
+
       this.selectElement.value = ''
       return this.#render()
     }
 
-    this.confirmTarget.disabled = false
+    if (this.hasConfirmTarget) {
+      this.confirmTarget.disabled = false
+    }
+    
     this.selectElement.value = receiptId
     e.currentTarget.classList.add('receipt--selected')
 
