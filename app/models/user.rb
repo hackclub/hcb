@@ -100,7 +100,7 @@ class User < ApplicationRecord
   has_many :event_follows, class_name: "Event::Follow"
   has_many :followed_events, through: :event_follows, source: :event
 
-  has_many :managed_events, inverse_of: :point_of_contact
+  has_many :managed_events, inverse_of: :point_of_contact, class_name: "Event"
 
   has_many :event_groups, class_name: "Event::Group"
 
@@ -209,6 +209,7 @@ class User < ApplicationRecord
   scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
+  scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
   # a auditor is an admin who can only view things.

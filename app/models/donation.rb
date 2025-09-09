@@ -375,9 +375,10 @@ class Donation < ApplicationRecord
     self.event.donations.succeeded.size == 1
   end
 
-  def create_payment_intent_attrs
+  def create_payment_intent_attrs(customer)
     {
       amount:,
+      customer: customer.id,
       currency: "usd",
       statement_descriptor: "HCB",
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
@@ -386,7 +387,8 @@ class Donation < ApplicationRecord
   end
 
   def create_stripe_payment_intent
-    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs)
+    customer = StripeService::Customer.create(email:, name:)
+    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs(customer))
 
     self.stripe_payment_intent_id = payment_intent.id
 
