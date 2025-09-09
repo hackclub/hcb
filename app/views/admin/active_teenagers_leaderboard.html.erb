@@ -9,11 +9,11 @@
     </tr>
   </thead>
   <tbody>
-    <% User.admin.sort_by { |u| -u.active_teenagers_count }.each do |user| %>
+    <% User.admin.sort_by { |u| -u.managed_active_teenagers_count }.each do |user| %>
       <tr>
         <td><%= user_mention user %></td>
         <td><%= user.managed_events.count %></td>
-        <td><%= user.active_teenagers_count %></td>
+        <td><%= user.managed_active_teenagers_count %></td>
       </tr>
     <% end %>
   </tbody>

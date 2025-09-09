@@ -465,7 +465,7 @@ class User < ApplicationRecord
     true
   end
 
-  def active_teenagers_count
+  def managed_active_teenagers_count
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
