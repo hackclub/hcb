@@ -443,8 +443,6 @@ class Event < ApplicationRecord
     id
     created_at
     name
-    balance
-    total_raised
     revenue_fee
     country
     slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
