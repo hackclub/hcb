@@ -41,6 +41,7 @@
           <div class="field--checkbox--switch" style="flex-shrink:0">
             <%= card_grant_setting_fields.label :reimbursement_conversions_enabled do %>
               <%= card_grant_setting_fields.check_box :reimbursement_conversions_enabled,
+                disabled:,
                 switch: true %>
               <span class="slider"></span>
             <% end %>
@@ -57,6 +58,7 @@
           <div class="field--checkbox--switch" style="flex-shrink:0">
             <%= card_grant_setting_fields.label :pre_authorization_required do %>
               <%= card_grant_setting_fields.check_box :pre_authorization_required,
+                disabled:,
                 switch: true %>
               <span class="slider"></span>
             <% end %>

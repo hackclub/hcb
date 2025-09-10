@@ -128,8 +128,6 @@ class StripeCardsController < ApplicationController
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
   rescue => e
-    Rails.error.report(e)
-
     if event.present?
       redirect_to event_cards_new_path(event), flash: { error: e.message }
     else

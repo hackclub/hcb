@@ -3,9 +3,14 @@
 </p>
 
 <p>
-  The <%= @report.event.name %> team has removed approval from your expense
-  "<em><%= @expense.memo %></em>" for reimbursement.
+  The <%= @report.event.name %> team has approved the following <%= "expense".pluralize(@expenses.size) %> for reimbursement:
 </p>
+
+<ul>
+  <% @expenses.each do |expense| %>
+    <li><em><%= expense.memo %></em> for <%= render_money expense.amount_cents %></li>
+  <% end %>
+</ul>
 
 <p>
   They're still reviewing the rest of your report; you'll hear from

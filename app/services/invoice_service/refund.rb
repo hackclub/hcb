@@ -2,9 +2,10 @@
 
 module InvoiceService
   class Refund
-    def initialize(invoice_id:, amount:)
+    def initialize(invoice_id:, amount:, reason: nil)
       @invoice_id = invoice_id
       @amount = amount
+      @reason = reason
     end
 
     def run
@@ -17,7 +18,7 @@ module InvoiceService
         invoice.canonical_pending_transactions.update_all(fronted: false)
 
         # 2. Process remotely
-        ::StripeService::Refund.create(charge: stripe_charge_id, amount: @amount)
+        ::StripeService::Refund.create(charge: stripe_charge_id, amount: @amount, reason: @reason)
 
         # 3. Create top-up on Stripe. Located in `StripeController#handle_charge_refunded`
 

@@ -290,7 +290,7 @@ class Event < ApplicationRecord
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
-  has_many :event_follows, class_name: "Event::Follow"
+  has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
@@ -857,6 +857,20 @@ class Event < ApplicationRecord
     emails
   end
 
+  def merchants
+    settled_merchants = canonical_transactions.map do |ct|
+      rst = ct.raw_stripe_transaction
+      stripe_transaction_merchant(rst) if rst.present?
+    end.select(&:present?)
+
+    pending_merchants = canonical_pending_transactions.map do |cpt|
+      rpst = cpt.raw_pending_stripe_transaction
+      stripe_transaction_merchant(rpst) if rpst.present?
+    end.select(&:present?)
+
+    settled_merchants.concat(pending_merchants)
+  end
+
   def point_of_contact_history
     @point_of_contact_history ||= versions
                                   .filter_map { |v| v.changeset["point_of_contact_id"].presence }
@@ -928,6 +942,12 @@ class Event < ApplicationRecord
     if is_public_changed?(to: true)
       config.update(generate_monthly_announcement: true)
     end
+  end
+
+  def stripe_transaction_merchant(transaction)
+    merchant_data = transaction.stripe_transaction["merchant_data"]
+    yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+    { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
   end
 
 end

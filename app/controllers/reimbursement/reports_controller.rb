@@ -73,6 +73,14 @@ module Reimbursement
 
     end
 
+    def wise_transfer_quote
+      authorize @report
+
+      @with_fees_quote_amount = @report.wise_transfer_quote_amount
+      @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
+      @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+    end
+
     def start
       unless @event.public_reimbursement_page_available?
         return not_found

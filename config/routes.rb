@@ -255,6 +255,7 @@ Rails.application.routes.draw do
       post "referral_program_create", to: "admin#referral_program_create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
     end
 
     member do
@@ -537,6 +538,7 @@ Rails.application.routes.draw do
       post "submit"
       post "update_currency"
       post "draft"
+      get "wise_transfer_quote"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"
@@ -612,6 +614,7 @@ Rails.application.routes.draw do
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
   end
+  use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
   namespace :api do
     namespace :v4 do
@@ -756,7 +759,7 @@ Rails.application.routes.draw do
   end
 
   namespace "announcements" do
-    resources :blocks, only: [:create, :show] do
+    resources :blocks, only: [:create, :edit, :update, :show] do
       member do
         post "refresh"
       end
@@ -781,6 +784,7 @@ Rails.application.routes.draw do
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
     get "ledger"
+    get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
     post "create_sub_organization"
@@ -865,6 +869,7 @@ Rails.application.routes.draw do
         post "cancel"
         post "convert_to_reimbursement_report"
         post "toggle_one_time_use"
+        post "disable_pre_authorization"
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
