@@ -129,8 +129,8 @@ GEM
       addressable (>= 2.3.2)
       nokogiri
       safely_block (>= 0.4)
-    ahoy_matey (5.3.0)
-      activesupport (>= 7)
+    ahoy_matey (5.4.0)
+      activesupport (>= 7.1)
       device_detector (>= 1)
       safely_block (>= 0.4)
     airrecord (1.0.12)
