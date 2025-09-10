@@ -4,7 +4,7 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>Status</th>
+        <th>Card</th>
         <th>Amount</th>
         <th>Every</th>
       </tr>
@@ -13,8 +13,8 @@
       <% @subscriptions.each do |subscription| %>
         <tr>
           <td><%= subscription.merchant %></td>
-          <td><%= subscription.card %></td>
-          <td><%= number_to_currency(subscription.last_hcb_code.amount) %></td>
+          <td><%= StripeCard.find_by(stripe_id: subscription.card).last4 %></td>
+          <td><%= render_money(HcbCode.find_by(hcb_code: subscription.last_hcb_code).amount_cents) %></td>
           <td><%= subscription.average_date_difference %> days</td>
         </tr>
       <% end %>
