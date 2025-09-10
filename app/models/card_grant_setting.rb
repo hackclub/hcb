@@ -25,6 +25,8 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CardGrantSetting < ApplicationRecord
+  has_paper_trail
+
   belongs_to :event
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
