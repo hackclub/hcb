@@ -1,0 +1,67 @@
+<%# locals: (event:, perks_available:) %>
+  
+<div class="card mb3" id="stickermule">
+  <div class="card__banner card__banner--top flex justify-between items-center" style="background-color:#4E2817">
+    <%= image_tag "stickermule.svg", width: 240 %>
+    <%= link_to "Expired",
+                perks_available ? "https://hack.af/stickermule?prefill_Event%20Name=#{event.name}&prefill_First%20Name=#{current_user.first_name}&prefill_Email=#{current_user.email}" : root_path,
+                class: "btn disabled",
+                target: :_blank %>
+  </div>
+
+  <p class="muted">
+    HCB is working with Sticker Mule to make up to $400 of Sticker Mule credits
+    available to hackathons and clubs on HCB, growing with attendance for hackathons.
+  </p>
+
+  <div class="grid grid-spacious muted">
+    <div class="mr1">
+      <h3 class="mb0">Hack Clubs</h3>
+      <table>
+        <tr>
+          <th>Tier</th>
+          <th>Credit</th>
+        </tr>
+        <tr>
+          <td>Base</td>
+          <td>$20</td>
+        </tr>
+        <tr>
+          <td>With logo on website*</td>
+          <td>$200</td>
+        </tr>
+      </table>
+    </div>
+    <div>
+      <h3 class="mb0">Hackathons</h3>
+      <table>
+        <tr>
+          <th>Attendees</th>
+          <th>Credit</th>
+        </tr>
+        <tr>
+          <td>Base</td>
+          <td>$50</td>
+        </tr>
+        <tr>
+          <td>Over 100*</td>
+          <td>$100</td>
+        </tr>
+        <tr>
+          <td>Over 200*</td>
+          <td>$200</td>
+        </tr>
+        <tr>
+          <td>Over 400*</td>
+          <td>$400</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <p class="muted">
+    *To qualify for these tiers, add the <%= link_to "Sticker Mule logo", "https://www.stickermule.com/press", target: :_blank %> to your website
+    that links back to <%= link_to "stickermule.com", "https://www.stickermule.com", target: :_blank %>,
+    and to any other materials like hackathon T-shirts.
+  </p>
+</div>
