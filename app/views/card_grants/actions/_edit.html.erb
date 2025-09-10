@@ -24,7 +24,9 @@
   <% end %>
 </div>
 
-<section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="edit_card_grant">
-  <%= modal_header "Manage grant" %>
-  <%= turbo_frame_tag "edit_#{@card_grant.id}", src: edit_overview_event_card_grant_path(@card_grant) %>
-</section>
+<% if policy(card_grant).edit_overview? %>
+  <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="edit_card_grant">
+    <%= modal_header "Manage grant" %>
+    <%= turbo_frame_tag "edit_#{card_grant.id}", src: edit_overview_event_card_grant_path(card_grant) %>
+  </section>
+<% end %>
