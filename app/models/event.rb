@@ -447,7 +447,7 @@ class Event < ApplicationRecord
     country
     slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
     is_public "Transparent"
-    users "Active teenagers" do |users| users.count { |user| user.teenager? && user.active? } end
+    users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
   CUSTOM_SORT = Arel.sql(
