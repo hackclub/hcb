@@ -8,11 +8,7 @@
 
 <%# Perks for TEEN organizations %>
 <% if @event.organized_by_teenagers? || @active_teen_count > 0 %>
-  <% if !@event.plan.eligible_for_perks? %>
-    <% ineligible_reason = "Perks are not available for #{@event.plan.label} organizations" %>
-  <% elsif !@perks_available %>
-    <% ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
-  <% end %>
+
 
   <div class="card pb0 mb3 promo-jukebox" id="premium-jukebox">
     <div class="card__banner card__banner--top flex justify-between items-center">
@@ -21,9 +17,15 @@
         <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
       </h3>
 
-      <% ineligible_reason = "Organization must have 10 or more active teens" if @active_teen_count < 10 %>
-      <% if ineligible_reason %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= ineligible_reason %>">
+      <% if !@event.plan.eligible_for_perks? %>
+        <% jukebox_ineligible_reason = "Perks are not available for #{@event.plan.label} organizations" %>
+      <% elsif !@perks_available %>
+        <% jukebox_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+      <% elsif @active_teen_count < 10 %>
+        <% jukebox_ineligible_reason = "Organization must have 10 or more active teens" %>
+      <% end %>
+      <% if jukebox_ineligible_reason %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= jukebox_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
@@ -55,9 +57,15 @@
         <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
       </h3>
 
-      <% ineligible_reason = "Organization must have 5 or more active teens" if @active_teen_count < 5 %>
-      <% if ineligible_reason %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= ineligible_reason %>">
+      <% if !@event.plan.eligible_for_perks? %>
+        <% pins_ineligible_reason = "Perks are not available for #{@event.plan.label} organizations" %>
+      <% elsif !@perks_available %>
+        <% pins_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+      <% elsif @active_teen_count < 5 %>
+        <% pins_ineligible_reason = "Organization must have 5 or more active teens" %>
+      <% end %>
+      <% if pins_ineligible_reason %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= pins_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
@@ -84,9 +92,15 @@
         <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
       </h3>
 
-      <% ineligible_reason = "Organization must have 5 or more active teens" if @active_teen_count < 5 %>
-      <% if ineligible_reason %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= ineligible_reason %>">
+      <% if !@event.plan.eligible_for_perks? %>
+        <% domains_ineligible_reason = "Perks are not available for #{@event.plan.label} organizations" %>
+      <% elsif !@perks_available %>
+        <% domains_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+      <% elsif @active_teen_count < 5 %>
+        <% domains_ineligible_reason = "Organization must have 5 or more active teens" %>
+      <% end %>
+      <% if domains_ineligible_reason %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= domains_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
@@ -115,9 +129,15 @@
         Fee Waiver
       </h3>
 
-      <% ineligible_reason = "Organization must have 5 or more active teens" if @active_teen_count < 5 %>
-      <% if ineligible_reason %>
-        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= ineligible_reason %>">
+      <% if !@event.plan.eligible_for_perks? %>
+        <% fee_waiver_ineligible_reason = "Perks are not available for #{@event.plan.label} organizations" %>
+      <% elsif !@perks_available %>
+        <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+      <% elsif @active_teen_count < 5 %>
+        <% fee_waiver_ineligible_reason = "Organization must have 5 or more active teens" %>
+      <% end %>
+      <% if fee_waiver_ineligible_reason %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= fee_waiver_ineligible_reason %>">
           <span class="btn disabled">Ineligible</span>
         </div>
       <% else %>
