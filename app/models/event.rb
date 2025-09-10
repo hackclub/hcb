@@ -447,7 +447,7 @@ class Event < ApplicationRecord
     total_raised
     revenue_fee
     country
-    slug "Url" do |slug| "https://hcb.hackclub.com/#{slug}" end
+    slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
     is_public "Transparent"
     users "Active teenagers" do |users| users.count { |user| user.teenager? && user.active? } end
   end
