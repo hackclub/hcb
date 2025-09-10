@@ -1437,10 +1437,10 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-italic/-/extension-italic-2.26.1.tgz#cd798d5e410d112f70aaea2c7eb30716f4a483c6"
   integrity sha512-pOs6oU4LyGO89IrYE4jbE8ZYsPwMMIiKkYfXcfeD9NtpGNBnjeVXXF5I9ndY2ANrCAgC8k58C3/powDRf0T2yA==
 
-"@tiptap/extension-link@^2.25.0":
-  version "2.25.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/extension-link/-/extension-link-2.25.0.tgz#afe13bc71184ae74344f2e4ef56bab9b40cbc02d"
-  integrity sha512-jNd+1Fd7wiIbxlS51weBzyDtBEBSVzW0cgzdwOzBYQtPJueRyXNNVERksyinDuVgcfvEWgmNZUylgzu7mehnEg==
+"@tiptap/extension-link@^2.26.1":
+  version "2.26.1"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-link/-/extension-link-2.26.1.tgz#8e479556b08aa42e2ac9369d45c30c281051a45a"
+  integrity sha512-7yfum5Jymkue/uOSTQPt2SmkZIdZx7t3QhZLqBU7R9ettkdSCBgEGok6N+scJM1R1Zes+maSckLm0JZw5BKYNA==
   dependencies:
     linkifyjs "^4.2.0"
 
@@ -1459,10 +1459,10 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-paragraph/-/extension-paragraph-2.26.1.tgz#2e25f9e72fd5b4b34ca8e9e3c355303d86eae055"
   integrity sha512-UezvM9VDRAVJlX1tykgHWSD1g3MKfVMWWZ+Tg+PE4+kizOwoYkRWznVPgCAxjmyHajxpCKRXgqTZkOxjJ9Kjzg==
 
-"@tiptap/extension-placeholder@^2.24.0":
-  version "2.24.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/extension-placeholder/-/extension-placeholder-2.24.0.tgz#0cd238de49114dc4c04032ad72d3bdcdd0338342"
-  integrity sha512-/rfirea9xHh5d/uYSPFOzx/o909XrBNpunt3sYZNi4RWf/+79QEW54/O1cGLj/l8uhms3gL/Bn+Ksv5mvdSJlg==
+"@tiptap/extension-placeholder@^2.26.1":
+  version "2.26.1"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-placeholder/-/extension-placeholder-2.26.1.tgz#a44280063978dfa86aad71dee6cad36c3a7862a0"
+  integrity sha512-MBlqbkd+63btY7Qu+SqrXvWjPwooGZDsLTtl7jp52BczBl61cq9yygglt9XpM11TFMBdySgdLHBrLtQ0B7fBlw==
 
 "@tiptap/extension-strike@^2.26.1":
   version "2.26.1"

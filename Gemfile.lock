@@ -263,6 +263,8 @@ GEM
     docile (1.4.0)
     doorkeeper (5.8.2)
       railties (>= 5)
+    doorkeeper-device_authorization_grant (1.0.3)
+      doorkeeper (~> 5.5)
     dotenv (3.1.7)
     dotenv-rails (3.1.7)
       dotenv (= 3.1.7)
@@ -906,6 +908,7 @@ DEPENDENCIES
   cssbundling-rails (~> 1.4)
   diffy
   doorkeeper (~> 5.8)
+  doorkeeper-device_authorization_grant
   dotenv-rails
   email_reply_parser
   erb_lint
@@ -1010,7 +1013,7 @@ DEPENDENCIES
   yellow_pages!
 
 RUBY VERSION
-   ruby 3.4.4p34
+   ruby 3.4.5p51
 
 BUNDLED WITH
    2.5.22

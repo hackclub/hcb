@@ -2,7 +2,7 @@
 
 module OneTimeJobs
   class SendAnnouncementNotice < ApplicationJob
-    def self.perform
+    def perform
       Event.includes(:config).where(config: { generate_monthly_announcement: true }).find_each do |event|
         monthly_announcement = event.announcements.monthly.last
 
