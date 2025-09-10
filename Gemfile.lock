@@ -804,7 +804,7 @@ GEM
       dalli
       msgpack
       redis
-    terser (1.2.5)
+    terser (1.2.6)
       execjs (>= 0.3.0, < 3)
     thor (1.4.0)
     tilt (2.6.1)
