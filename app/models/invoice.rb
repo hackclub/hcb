@@ -154,7 +154,6 @@ class Invoice < ApplicationRecord
     state :paid_v2
     state :deposited_v2
     state :void_v2
-    state :archived_v2
     state :refunded_v2
 
     event :mark_paid do
@@ -170,24 +169,6 @@ class Invoice < ApplicationRecord
 
     event :mark_void do
       transitions from: :open_v2, to: :void_v2
-    end
-
-    event :mark_archived do
-      transitions from: [:open_v2, :paid_v2, :void_v2, :past_due_v2, :deposited_v2], to: :archived_v2
-    end
-
-    event :mark_unarchived do
-      transitions from: :archived_v2, to: [:open_v2, :paid_v2, :void_v2, :past_due_v2, :deposited_v2]
-      before do
-        archive_version = versions.reverse.find do |version|
-          version.changeset["aasm_state"].present? && version.changeset["aasm_state"][1] == "archived_v2"
-        end
-
-        if archive_version.present?
-          previous_state = archive_version.changeset["aasm_state"][0]
-          self.aasm_state = previous_state
-        end
-      end
     end
 
     event :mark_refunded do
