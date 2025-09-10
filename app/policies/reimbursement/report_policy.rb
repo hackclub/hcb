@@ -14,6 +14,10 @@ module Reimbursement
       admin || team_member || creator || auditor
     end
 
+    def wise_transfer_quote?
+      admin || team_member || creator || auditor
+    end
+
     def edit?
       admin || manager || (creator && unlocked)
     end
@@ -46,8 +50,16 @@ module Reimbursement
       (admin || manager) && open
     end
 
+    def update_currency?
+      (admin || creator) && open && record.mismatched_currency?
+    end
+
     def admin_approve?
       admin && open
+    end
+
+    def admin_send_wise_transfer?
+      admin
     end
 
     def reverse?

@@ -23,7 +23,7 @@
       ☎️ moshi moshi?
       <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), method: :post %>
     <% end %>
-    <%= render "receipts/list_v2", show_receipt_bin_button: true %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
     <% admin_tool_if @hcb_code.receipt_optional? do %>
       <%= begin receipt_upload_form_config = {
             receiptable: @hcb_code,
@@ -39,7 +39,8 @@
                 receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
                 receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
                 receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
-                render partial: "receipts/form_v3", locals: receipt_upload_form_config end %>
+                render partial: "receipts/form_v3", locals: receipt_upload_form_config
+          end %>
     <% end %>
   <% end %>
 

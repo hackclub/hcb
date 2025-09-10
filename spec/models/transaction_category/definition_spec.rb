@@ -18,13 +18,15 @@ RSpec.describe TransactionCategory::Definition do
         expect(attributes).to(be_a(Hash), "#{slug.inspect} property is not an object")
 
         attributes.each_key do |key|
-          expect(["label", "stripe_merchant_categories"]).to(
+          expect(["label", "stripe_merchant_categories", "hq_only"]).to(
             include(key),
             "#{slug.inspect} has unsupported key #{key.inspect}"
           )
         end
 
         expect(attributes["label"]).to(be_a(String).and(be_present), "#{slug.inspect} is missing a label")
+
+        expect(attributes["hq_only"]).to(be_in([true, false, nil]), "#{slug.inspect} has an invalid hq_only property")
 
         stripe_categories = attributes["stripe_merchant_categories"]
         next if stripe_categories.nil?

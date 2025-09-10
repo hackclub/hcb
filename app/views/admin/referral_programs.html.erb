@@ -9,12 +9,9 @@
           <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • <code><%= program.hashid %></code></small>
         </div>
         <div class="flex flex-row gap-2 justify-between m-0">
-          <span class="m-0"><%= pluralize(program.attributions.size, "attribution") %></span>
+          <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
         </div>
-        <div class="flex flex-row gap-2 justify-between m-0">
-          <span class="m-0"><%= pluralize(program.new_users.size, "new user") %></span>
-        </div>
-        <%= link_to program_url(program), program_url(program), class: "tooltipped tooltipped--n", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: program_url(program), action: "clipboard#copy" }, "@click": "event.preventDefault()" %>
+        <%= link_to program_url(program), program_url(program) %>
 
         <div class="flex-grow"></div>
 
@@ -31,12 +28,8 @@
 <%= form_with model: false, local: true, url: referral_program_create_admin_index_path, class: "flex flex-row gap-2" do |form| %>
   <fieldset>
     <legend>Create a referral program</legend>
-    <label for="name">Program name</label>
+    <%= form.label :name, "Program name" %>
     <%= form.text_field :name, placeholder: "Program Name", required: true, class: "w-100" %>
-    <p>
-      <%= form.check_box :show_explore_hack_club, { checked: false } %>
-      <%= form.label :show_explore_hack_club, 'Show "Explore Hack Club"?' %>
-    </p>
     <br>
     <%= form.submit "Create", class: "btn bg-success" %>
   </fieldset>

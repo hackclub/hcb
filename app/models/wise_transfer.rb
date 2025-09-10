@@ -61,6 +61,8 @@ class WiseTransfer < ApplicationRecord
 
   has_one :canonical_pending_transaction
 
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
+
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
 
@@ -74,10 +76,12 @@ class WiseTransfer < ApplicationRecord
   WISE_ID_FORMAT = /\A\d+\z/
   before_validation(:normalize_wise_id)
   validates(:wise_id, format: { with: WISE_ID_FORMAT, message: "is not a valid Wise ID" }, allow_nil: true)
+  validates(:wise_id, presence: true, if: :processed?)
 
   WISE_RECIPIENT_ID_FORMAT = /\A[\h-]{36}\z/
   before_validation(:normalize_wise_recipient_id)
   validates(:wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_nil: true)
+  validates(:wise_recipient_id, presence: true, if: :processed?)
 
   after_create do
     generate_quote!
@@ -138,6 +142,10 @@ class WiseTransfer < ApplicationRecord
     end
   end
 
+  def processed?
+    sent? || deposited?
+  end
+
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
 
   alias_attribute :name, :recipient_name
@@ -183,7 +191,7 @@ class WiseTransfer < ApplicationRecord
     user_id && User.find(user_id)
   end
 
-  def self.generate_quote(money)
+  def self.generate_detailed_quote(initial_local_amount)
     conn = Faraday.new url: "https://api.wise.com" do |f|
       f.request :json
       f.response :raise_error
@@ -192,20 +200,36 @@ class WiseTransfer < ApplicationRecord
 
     response = conn.post("/v3/quotes", {
                            sourceCurrency: "USD",
-                           targetCurrency: money.currency_as_string,
-                           targetAmount: money.dollars
+                           targetCurrency: initial_local_amount.currency_as_string,
+                           targetAmount: initial_local_amount.dollars
                          })
 
     payment_option = response.body["paymentOptions"].first
-    price_after_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
+    price_after_all_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
     fees = payment_option["price"]["items"]
+
     pay_in_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
+    unadjusted_fee_total = fees.sum { |fee| Money.from_dollars(fee["value"]["amount"], "USD") }
 
-    price_before_pay_in_fee = price_after_fees - pay_in_fee
+    without_fees_usd_amount = price_after_all_fees - unadjusted_fee_total
 
+    price_before_ach_fee = price_after_all_fees - pay_in_fee
     wise_ach_fee = 1.0017 # The Wise API doesn't show profile-specific payment methods like ACH, but the ACH fee is a standard 0.17% of the amount sent.
 
-    price_before_pay_in_fee * wise_ach_fee
+    with_fees_usd_amount = price_before_ach_fee * wise_ach_fee
+
+    fees_usd_amount = with_fees_usd_amount - without_fees_usd_amount
+
+    {
+      initial_local_amount:,
+      without_fees_usd_amount:,
+      with_fees_usd_amount:,
+      fees_usd_amount:
+    }
+  end
+
+  def self.generate_quote(money)
+    generate_detailed_quote(money)[:with_fees_usd_amount]
   end
 
   def estimated_usd_amount_cents

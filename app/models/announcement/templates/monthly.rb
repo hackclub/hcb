@@ -101,16 +101,16 @@ class Announcement
                 { type: "text", text: "The #{@event.name} team" },
               ],
             },
-          ],
+          ].compact,
         }
       end
 
       def create
         announcement = Announcement.create!(event: @event, title:, content: {}, aasm_state: :template_draft, author: @author, template_type: self.class.name)
 
-        donation_summary_block = Announcement::Block::DonationSummary.create!(announcement:, parameters: { start_date: DateTime.current.beginning_of_month, end_date: DateTime.current.end_of_month })
+        donation_summary_block = Announcement::Block::DonationSummary.create!(announcement:, parameters: { start_date: Date.today.beginning_of_month, end_date: Date.today.end_of_month })
         donation_goal_block = Announcement::Block::DonationGoal.create!(announcement:)
-        top_categories_block = Announcement::Block::TopCategories.create!(announcement:, parameters: { start_date: DateTime.current.beginning_of_month, end_date: DateTime.current.end_of_month })
+        top_categories_block = Announcement::Block::TopCategories.create!(announcement:, parameters: { start_date: Date.today.beginning_of_month, end_date: Date.today.end_of_month })
 
         announcement.update!(content: json_content(donation_summary_block:, donation_goal_block:, top_categories_block:))
       end
