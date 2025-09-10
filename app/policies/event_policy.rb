@@ -162,7 +162,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def sub_organizations?
-    auditor_or_reader? && (record.subevents_enabled? || record.subevents.any?)
+    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?) 
   end
 
   def create_sub_organization?
