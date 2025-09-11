@@ -12,7 +12,7 @@
     <% elsif !perks_available %>
       <% pins_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
     <% elsif active_teenagers_count < 5 %>
-      <% pins_ineligible_reason = "Organization must have 5 or more active teens" %>
+      <% pins_ineligible_reason = "Organization must have 5 or more active teenagers" %>
     <% end %>
     <% if pins_ineligible_reason %>
       <div class="tooltipped tooltipped--w inline-block" aria-label="<%= pins_ineligible_reason %>">
@@ -28,7 +28,7 @@
 
   <p>
     Ever wish you were just a little more dripped out in HCB swag?
-    We'll ship you some super cool custom HCB pins and keychains for free if you have 5 or more active teens!
+    We'll ship you some super cool custom HCB pins and keychains for free if you have 5 or more active teenagers!
   </p>
   <section class="card__banner card__darker secondary border-top italic">
     You currently have <%= active_teenagers_count %>/5 active teenagers in your organization!
