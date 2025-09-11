@@ -116,7 +116,7 @@ class AdminController < Admin::BaseController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      tags: tags,
+      tags:,
       demo_mode: true
     ).run
 
