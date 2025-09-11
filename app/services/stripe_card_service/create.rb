@@ -65,7 +65,7 @@ module StripeCardService
     end
 
     def formatted_stripe_shipping_address_line2
-      @stripe_shipping_address_line2.present? ? @stripe_shipping_address_line2 : nil
+      @stripe_shipping_address_line2.presence
     end
 
     def create_remote_stripe_card!

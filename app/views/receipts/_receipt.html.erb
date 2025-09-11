@@ -105,7 +105,7 @@
       <% end %>
       <% if defined?(show_delete_button) && policy(receipt).destroy? %>
         <%= pop_icon_to "view-close",
-            receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion]) }.compact),
+            receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion] || local_assigns[:popover]), show_receipt_button: local_assigns[:show_receipt_button], show_author_img: local_assigns[:show_author_img], ledger_instance: @ledger_instance }.compact),
             data: {
               behavior: "modal_ignore",
               turbo_method: :delete,

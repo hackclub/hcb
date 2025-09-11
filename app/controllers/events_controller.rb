@@ -198,6 +198,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      merchant: @merchant,
       order_by: @order_by.to_sym
     ).run
 
@@ -323,6 +324,9 @@ class EventsController < ApplicationController
     authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @affiliations = @event.affiliations if @settings_tab == "affiliations"
+
+    CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
 
     render :edit, layout: !@frame
   end
@@ -769,6 +773,7 @@ class EventsController < ApplicationController
   def promotions
     authorize @event
 
+    @active_teen_count = @event.users.active_teenager.count
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
   end
 
@@ -922,15 +927,19 @@ class EventsController < ApplicationController
   def statement_of_activity
     authorize @event
 
-    @start_date = params[:start]&.to_date || (@event.activated_at || @event.created_at).to_date
-    @end_date = params[:end]&.to_date || Time.now.to_date
+    @statement_of_activity = Event::StatementOfActivity.new(@event, start_date_param: params[:start], end_date_param: params[:end])
 
-    transactions = @event.canonical_transactions.where("date between ? AND ?", @start_date, @end_date)
-    @transactions_by_category = transactions.includes(:category).group("category.slug").sum(:amount_cents)
-
-    @net_asset_change = transactions.sum(:amount_cents)
-    @total_revenue = transactions.where("amount_cents > 0").sum(:amount_cents)
-    @total_expense = transactions.where("amount_cents < 0").sum(:amount_cents)
+    respond_to do |format|
+      format.html
+      format.xlsx do
+        send_data(
+          @statement_of_activity.xlsx,
+          filename: "#{@event.name} - Statement of Activity.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: "attachment"
+        )
+      end
+    end
   end
 
   def termination
@@ -1065,6 +1074,24 @@ class EventsController < ApplicationController
     end
 
     { settled_transactions:, pending_transactions: }
+  end
+
+  def merchants_filter
+    authorize @event
+
+    @merchant = params[:merchant]
+
+    merchants_hash = {}
+
+    @event.merchants.each do |merchant|
+      if merchants_hash.key?(merchant[:id])
+        merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
+      else
+        merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+      end
+    end
+
+    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
   end
 
   private
@@ -1205,10 +1232,17 @@ class EventsController < ApplicationController
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
+    @merchant = params[:merchant]
     @direction = params[:direction]
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+    if @merchant
+      merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
+
+      @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
   end
 
   def _show_pending_transactions
@@ -1227,6 +1261,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      merchant: @merchant,
       order_by: @order_by&.to_sym || "date"
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!

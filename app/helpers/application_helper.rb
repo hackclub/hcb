@@ -380,10 +380,10 @@ module ApplicationHelper
     name + (name.ends_with?("s") ? "'" : "'s")
   end
 
-  def error_boundary(fallback: nil, fallback_text: nil, &block)
+  def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
     block.call
   rescue => e
-    Rails.error.report(e)
+    Rails.error.report(e) unless e.in?(ignored_errors)
 
     return content_tag(:p, fallback_text || "That didn't work, sorry.") unless fallback
 
