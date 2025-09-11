@@ -441,11 +441,13 @@ class Event < ApplicationRecord
 
   comma do
     id
+    created_at
     name
     revenue_fee
-    slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
-    is_public "transparent"
+    slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
+    is_public "Transparent"
+    users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
   CUSTOM_SORT = Arel.sql(

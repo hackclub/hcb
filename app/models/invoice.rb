@@ -152,6 +152,7 @@ class Invoice < ApplicationRecord
   aasm timestamps: true do
     state :open_v2, initial: true
     state :paid_v2
+    state :deposited_v2
     state :void_v2
     state :refunded_v2
 
@@ -160,6 +161,10 @@ class Invoice < ApplicationRecord
       after do
         create_activity(key: "invoice.paid", owner: nil)
       end
+    end
+
+    event :mark_deposited do
+      transitions from: :paid_v2, to: :deposited_v2
     end
 
     event :mark_void do
@@ -172,7 +177,7 @@ class Invoice < ApplicationRecord
   end
 
   enum :status, {
-    draft: "draft", # only 3 invoices [203, 204, 128] leftover from when drafts existed
+    draft: "draft", # no invoices use this status anymore
     open: "open",
     paid: "paid",
     void: "void"
