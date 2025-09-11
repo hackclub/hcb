@@ -773,7 +773,7 @@ class EventsController < ApplicationController
   def promotions
     authorize @event
 
-    @active_teen_count = @event.users.active_teenager.count
+    @active_teenagers_count = @event.users.active_teenager.count
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
   end
 
