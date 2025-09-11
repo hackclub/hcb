@@ -78,6 +78,7 @@ class UserSession < ApplicationRecord
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
     update_columns(last_seen_at: Time.now)
+    current_session.update!(expiration_at: Time.now + current_user.session_validity_preference)
   end
 
   def expired?
