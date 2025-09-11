@@ -9,7 +9,6 @@ class EventsController < ApplicationController
   include Rails::Pagination
   before_action :set_event, except: [:index, :new, :create]
   before_action :set_transaction_filters, only: [:transactions, :ledger]
-  before_action :set_card_view, only: [:card_overview, :card_grant_overview]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
@@ -1205,11 +1204,6 @@ class EventsController < ApplicationController
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
-  end
-
-  def set_card_view
-    cookies[:card_overview_view] = params[:view] if params[:view]
-    @view = cookies[:card_overview_view] || "grid"
   end
 
   def _show_pending_transactions
