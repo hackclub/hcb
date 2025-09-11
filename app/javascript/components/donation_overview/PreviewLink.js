@@ -68,23 +68,20 @@ class PreviewLink extends React.Component {
       this.state.monthly ||
       this.state.goods
 
-    if (this.state.monthly)
-      url.searchParams.set('monthly', this.state.monthly)
+    if (this.state.monthly) url.searchParams.set('monthly', this.state.monthly)
 
-    if (this.state.message)
-      url.searchParams.set('message', this.state.message)
+    if (this.state.message) url.searchParams.set('message', this.state.message)
 
-    if (this.state.goods)
-      url.searchParams.set('goods', this.state.goods)
+    if (this.state.goods) url.searchParams.set('goods', this.state.goods)
 
-    if (this.state.amount)
-      url.searchParams.set('amount', this.state.amount)
-
+    if (this.state.amount) url.searchParams.set('amount', this.state.amount)
 
     return (
       <div className="flex flex-col gap-3">
         <div className="flex-1">
-          <h4 className="my-3">{showSubtitle ? "Prefilled donation" : "Donation"} link</h4>
+          <h4 className="my-3">
+            {showSubtitle ? 'Prefilled donation' : 'Donation'} link
+          </h4>
           <div className="flex items-center input pr-2 w-full max-w-full mb-1">
             <input
               value={url}
@@ -101,7 +98,7 @@ class PreviewLink extends React.Component {
           </div>
         </div>
         <div className="flex-1">
-          <hr className='my-3' />
+          <hr className="my-3" />
           <h4 className="mt-5 mb-3">Customize</h4>
           <div className="flex gap-2 flex-col sm:flex-row">
             <div className="flex-1">
@@ -121,7 +118,7 @@ class PreviewLink extends React.Component {
                   step="0.01"
                   min="0.01"
                   type="number"
-                  className='!border-0 p-0 flex-1'
+                  className="!border-0 p-0 flex-1"
                   style={{ minHeight: 0, padding: 0 }}
                   name="prefill-amount"
                   onChange={this.handleChange}
@@ -153,7 +150,10 @@ class PreviewLink extends React.Component {
             <span style={{ fontWeight: 600, marginRight: '0.5rem' }}>
               Charge monthly?
             </span>
-            <label className="field--checkbox--switch ml-auto" style={{ flexShrink: 0 }}>
+            <label
+              className="field--checkbox--switch ml-auto"
+              style={{ flexShrink: 0 }}
+            >
               <input
                 id="prefill-monthly"
                 type="checkbox"
@@ -168,11 +168,17 @@ class PreviewLink extends React.Component {
           <div className="flex items-center mb-2">
             <span style={{ fontWeight: 600, marginRight: '0.5rem' }}>
               Mark as &quot;receiving goods for this donation?&quot;
-              <a className="tooltipped tooltipped--w link--ignore inline-flex align-middle" aria-label="Per IRS guidelines, for a contribution to be tax-deductible in the US, you agree that no goods or services will be provided in return for this gift. Please leave this box blank if making a tax-deductible donation that you will receive no goods or services for." >
+              <a
+                className="tooltipped tooltipped--w link--ignore inline-flex align-middle"
+                aria-label="Per IRS guidelines, for a contribution to be tax-deductible in the US, you agree that no goods or services will be provided in return for this gift. Please leave this box blank if making a tax-deductible donation that you will receive no goods or services for."
+              >
                 <Icon glyph="info" size={16} className="ml-1" />
               </a>
             </span>
-            <label className="field--checkbox--switch ml-auto" style={{ flexShrink: 0 }}>
+            <label
+              className="field--checkbox--switch ml-auto"
+              style={{ flexShrink: 0 }}
+            >
               <input
                 id="prefill-goods"
                 type="checkbox"
@@ -185,7 +191,6 @@ class PreviewLink extends React.Component {
             </label>
           </div>
         </div>
-
       </div>
     )
   }
