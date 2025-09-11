@@ -1,0 +1,29 @@
+<%# locals: (event:, perks_available:) %>
+
+<div class="card mb3" id="domains">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-domains">
+    <h3 class="h1 py-4 my0 color-black">Domains</h3>
+      <% if !event.g_suites.none? || !perks_available || !event.organized_by_teenagers? %>
+        <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="You do not have access to this perk.">
+          <span class="btn disabled">Ineligible</span>
+        </div>
+      <% else %>
+        <%= link_to "Apply",
+          perks_available ? fillout_form("pUUaNHEiT1us", { "hcbprojname" => event.name, "hcburl" => event_url(event), "name" => current_user.name, "email" => current_user.email }) : root_path,
+          class: "btn #{"disabled" unless perks_available}",
+          target: :_blank %>
+      <% end %>
+  </div>
+
+  <p class="mb0">
+    Running a high school student-led hackathon, nonprofit, or club? HCB
+    will purchase your domain for under $20 and cover the cost for the
+    first year. After the first year, you'll be responsible for paying to
+    renew. This can only be claimed once per organization.
+    <% if Flipper.enabled?(:google_workspace, event) %>
+      You'll also have the option of setting
+      up <%= link_to "Google Workspace", event_g_suite_overview_path %> once
+      we've purchased your domain.
+    <% end %>
+  </p>
+</div>

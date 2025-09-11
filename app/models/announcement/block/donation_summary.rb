@@ -51,7 +51,7 @@ class Announcement
         if self.parameters["start_date"].present?
           DateTime.parse(self.parameters["start_date"])
         else
-          self.parameters["start_date"] ||= 1.month.ago.to_s
+          self.parameters["start_date"] ||= 1.month.ago.to_date.to_s
           1.month.ago
         end
       end

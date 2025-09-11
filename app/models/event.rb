@@ -441,11 +441,13 @@ class Event < ApplicationRecord
 
   comma do
     id
+    created_at
     name
     revenue_fee
-    slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
-    is_public "transparent"
+    slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
+    is_public "Transparent"
+    users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
   CUSTOM_SORT = Arel.sql(
@@ -857,6 +859,20 @@ class Event < ApplicationRecord
     emails
   end
 
+  def merchants
+    settled_merchants = canonical_transactions.map do |ct|
+      rst = ct.raw_stripe_transaction
+      stripe_transaction_merchant(rst) if rst.present?
+    end.select(&:present?)
+
+    pending_merchants = canonical_pending_transactions.map do |cpt|
+      rpst = cpt.raw_pending_stripe_transaction
+      stripe_transaction_merchant(rpst) if rpst.present?
+    end.select(&:present?)
+
+    settled_merchants.concat(pending_merchants)
+  end
+
   def point_of_contact_history
     @point_of_contact_history ||= versions
                                   .filter_map { |v| v.changeset["point_of_contact_id"].presence }
@@ -928,6 +944,12 @@ class Event < ApplicationRecord
     if is_public_changed?(to: true)
       config.update(generate_monthly_announcement: true)
     end
+  end
+
+  def stripe_transaction_merchant(transaction)
+    merchant_data = transaction.stripe_transaction["merchant_data"]
+    yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+    { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
   end
 
 end
