@@ -300,7 +300,7 @@ class UsersController < ApplicationController
       end
     end
 
-    # extend the user session expiration to the new preference so you cant accidentally sign yourself out by updating it
+    # extend the user session expiration to the new preference so you can't accidentally sign yourself out by updating it
     current_session.update!(expiration_at: Time.now + current_user.session_validity_preference) if params[:session_validity_preference]
 
     if @user.save
