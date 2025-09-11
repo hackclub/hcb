@@ -57,6 +57,7 @@ Rails.application.routes.draw do
       post "link"
       get "link_modal"
       get "inline_link"
+      get "receipt_item"
     end
 
     member do

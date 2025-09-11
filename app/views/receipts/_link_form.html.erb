@@ -8,7 +8,7 @@
     <%= select_tag :receipt_id, options_from_collection_for_select(receipts, "id", "id"), include_blank: true %>
   </span>
 
-  <ul class="grid grid--narrow left-align w-100 grid--spacious mt0 justify-center">
+  <ul class="grid grid--narrow left-align w-100 grid--spacious mt0 justify-center peer">
     <% receipts.each do |receipt| %>
       <li class="flex grid flex-col justify-between h-100 mx4 modal__<%= receipt.id %>" id="modal_receipt_<%= receipt.id %>">
         <%= render partial: "receipts/receipt", locals: { receipt:, selectable: true, textual_content: true, pairing: suggested_receipt_ids.include?(receipt.id), size: 169 } %>
@@ -16,5 +16,12 @@
     <% end %>
   </ul>
 
-  <%= blankslate "No receipts found.", class: "mt3 mb5", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
+  <%= blankslate "No receipts found.", class: "mt3 mb5 peer-empty:!block", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
+
+  <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
+    <%= link_to my_inbox_path, target: "_blank", class: "btn btn--primary mr2" do %>
+      Manage receipts
+    <% end %>
+    <%= yield %>
+  </footer>
 </div>

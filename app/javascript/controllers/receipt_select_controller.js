@@ -32,7 +32,7 @@ export default class extends Controller {
       }
 
       this.selectElement.value = ''
-      return this.#render()
+      return this.render()
     }
 
     if (this.hasConfirmTarget) {
@@ -42,14 +42,14 @@ export default class extends Controller {
     this.selectElement.value = receiptId
     e.currentTarget.classList.add('receipt--selected')
 
-    this.#render()
+    this.render()
   }
 
   search() {
-    this.#render()
+    this.render()
   }
 
-  #render() {
+  render() {
     const query = this.searchTarget.value
 
     const receipts = this.#filter(query)

@@ -1,28 +1,53 @@
 <%# locals: (form:, disabled: false) %>
 
-<%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
-<div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-  <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-        action: "
-      dragover@window->file-drop#dragover
-      drop@window->file-drop#drop
-      dragenter@window->file-drop#dragenter
-      dragleave@window->file-drop#dragleave
-    "
-      } %>
-  <%= form.file_field :file,
-      multiple: true,
-      include_hidden: false,
-      required: false,
-      accept: "image/*,image/heic,.pdf",
-      style: "margin: 8px 0px",
-      class: "field--fileupload__field",
-      data: {
-        "file-drop-target" => "fileInput",
-        "action" => "change->extraction#upload"
-      },
-      disabled: %>
-  <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
+<div data-controller="inline-receipt" data-inline-receipt-receipt-select-outlet="#receipt-select-container">
+  <p class="mt2 semibold">Attach a receipt / invoice</p>
+
+  <ul data-inline-receipt-target="list" class="peer text-muted"></ul>
+
+  <div class="flex gap-5 h-8">
+    <div class="field w-fit field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+      <%= form.label :file, "Upload file", class: "field--fileupload__label", data: {
+            action: "
+          dragover@window->file-drop#dragover
+          drop@window->file-drop#drop
+          dragenter@window->file-drop#dragenter
+          dragleave@window->file-drop#dragleave
+        "
+          } %>
+      <%= form.file_field :file,
+          multiple: true,
+          include_hidden: false,
+          required: false,
+          accept: "image/*,image/heic,.pdf",
+          style: "margin: 8px 0px",
+          class: "!hidden",
+          data: {
+            "file-drop-target" => "fileInput",
+            "inline-receipt-target" => "fileInput",
+            "action" => "change->extraction#upload change->inline-receipt#addFile"
+          },
+          disabled: %>
+    </div>
+
+    <button type="button" class="field--fileupload__label bg-transparent" data-action="inline-receipt#toggleBin">
+      <span>Select from Receipt Bin</span>
+    </button>
+
+    <button type="button" class="field--fileupload__label bg-transparent !text-primary border-primary hidden" data-action="inline-receipt#clear" data-inline-receipt-target="clearButton">
+      <span>Clear</span>
+    </button>
+  </div>
+
+  <section class="card pt0 mt2 hidden" data-inline-receipt-target="bin">
+    <header class="pb2" style="z-index: 1000;<% if local_assigns[:popover] %> padding-top: 1rem;<% end %>">
+      <%= pop_icon_to "view-close", nil, class: "modal__close muted m1", tabindex: 0, data: { action: "inline-receipt#toggleBin" } %>
+      <h2 class="mt0 mb0 pb0 border-none">Select receipt</h2>
+    </header>
+    <%= turbo_frame_tag :inline_link, src: inline_link_receipts_path %>
+  </section>
+
+  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+
+  <%= form.hidden_field :receipts, data: { "inline-receipt-target": "receiptsInput" } %>
 </div>
-<%= turbo_frame_tag :inline_link, src: inline_link_receipts_path, data: { controller: "receipt-select" } %>
-<p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
