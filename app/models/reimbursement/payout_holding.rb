@@ -15,6 +15,7 @@
 #  paypal_transfer_id       :bigint
 #  reimbursement_reports_id :bigint           not null
 #  wire_id                  :bigint
+#  wise_transfer_id         :bigint
 #
 # Indexes
 #
@@ -23,6 +24,7 @@
 #  index_reimbursement_payout_holdings_on_paypal_transfer_id        (paypal_transfer_id)
 #  index_reimbursement_payout_holdings_on_reimbursement_reports_id  (reimbursement_reports_id)
 #  index_reimbursement_payout_holdings_on_wire_id                   (wire_id)
+#  index_reimbursement_payout_holdings_on_wise_transfer_id          (wise_transfer_id)
 #
 module Reimbursement
   class PayoutHolding < ApplicationRecord
@@ -38,6 +40,7 @@ module Reimbursement
     belongs_to :increase_check, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :paypal_transfer, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :wire, optional: true, inverse_of: :reimbursement_payout_holding
+    belongs_to :wise_transfer, optional: true, inverse_of: :reimbursement_payout_holding
 
     after_create :set_and_create_hcb_code
     belongs_to :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode", inverse_of: :reimbursement_payout_holding, optional: true
@@ -91,7 +94,7 @@ module Reimbursement
     end
 
     def payout_transfer
-      ach_transfer || increase_check || paypal_transfer
+      ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
     end
 
     def reverse!

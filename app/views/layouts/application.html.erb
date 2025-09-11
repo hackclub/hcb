@@ -119,6 +119,22 @@
       </div>
     <% end %>
 
+    <% if @event && !@event&.demo_mode? && @event&.robotics_team? && organizer_signed_in? && !@hide_promotional_banner && Date.current.month < 10 %>
+      <div class="w-100s px3 promo-robotics-raffle card--hover flex flex-row items-center" data-behavior="hide_iframe">
+        <div class="flex flex-col flex-grow">
+          <p class="h3 font-medium text-center text-balance mt2 mb0 white">
+            You currently have <%= number_to_human(@event&.users&.active_teenager&.count) %> tickets for the Robotics 3D Printer Raffle. Earn a ticket for each active teen in your organization.
+          </p>
+          <p class="h4 text-center text-balance mt0 mb2 white">
+            Find more info <%= link_to "here", event_promotions_path(@event), class: "white" %>.
+          </p>
+        </div>
+        <span class="pr2">
+          <%= pop_icon_to "view-close", hide_promotional_banner_path, data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" }, method: :post, class: "white" %>
+        </span>
+      </div>
+    <% end %>
+
     <% if @event&.demo_mode? && !@no_app_shell && !@no_transparency_header %>
       <div class="w-full dev-banner dev-banner--info rounded-b no-underline">
         <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">

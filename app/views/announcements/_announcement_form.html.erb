@@ -1,9 +1,21 @@
-<%# locals: (content: nil, autosave: true) %>
+<%# locals: (announcement:, autosave: true, show_announcement_explanation: false) %>
 
-<%= form_with model: @announcement, url: announcement_path(@announcement), data: { controller: "tiptap", "tiptap-target": "form", "tiptap-content-value": content, "tiptap-announcement-id-value": @announcement.id, "tiptap-autosave-value": autosave, "tiptap-followers-value": @event.followers.size, "tiptap-published-value": @announcement.published?, "turbo-frame": "_top" }.compact do |form| %>
+<%= form_with id: "announcement-form",
+              model: announcement,
+              url: announcement_path(announcement),
+              data: {
+                controller: "tiptap",
+                "tiptap-target": "form",
+                "tiptap-content-value": announcement.content,
+                "tiptap-announcement-id-value": announcement.id,
+                "tiptap-autosave-value": autosave,
+                "tiptap-followers-value": @event.followers.size,
+                "tiptap-published-value": announcement.published?,
+                "turbo-frame": "_top",
+              }.compact do |form| %>
   <div class="field">
     <%= form.label :title, class: "text-lg" %>
-    <%= form.text_field :title, placeholder: "#{@event.name}'s June Update", class: "!max-w-none w-full mt-1" %>
+    <%= form.text_field :title, placeholder: "#{announcement.event.name}'s June Update", class: "!max-w-none w-full mt-1" %>
   </div>
 
   <div class="field">
@@ -11,7 +23,7 @@
     <%= form.hidden_field :json_content, data: { "tiptap-target": "contentInput" } %>
     <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md mt-1 relative">
       <div class="flex gap-2 bg-snow dark:bg-darkless p-2 rounded-md rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
-        <%= render partial: "announcements/format_menu" %>
+        <%= render partial: "announcements/format_menu", locals: { event: announcement.event } %>
       </div>
       <div data-tiptap-target="editor" data-action="click->tiptap#focus" class="dark:bg-darkless bg-snow p-2 rounded-md rounded-t-none py-1 min-h-32"></div>
       <div class="tooltipped absolute right-1 bottom-1 h-8" aria-label="Styling with Markdown is supported">
@@ -22,9 +34,9 @@
 
   <%= form.hidden_field :autosave, data: { "tiptap-target": "autosaveInput" } %>
 
-  <%= form.hidden_field :event_id, value: @event.slug %>
+  <%= form.hidden_field :event_id, value: announcement.event.slug %>
 
-  <% if content.present? %>
+  <% if announcement.content.present? %>
     <div>
       <p class="italic text-muted">Your changes automatically save</p>
 
