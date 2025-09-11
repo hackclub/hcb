@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :subscriptions_list, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
 
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
 
@@ -58,7 +58,10 @@ class MyController < ApplicationController
       Arel.sql("stripe_status = 'active' DESC"),
       Arel.sql("stripe_status = 'inactive' DESC")
     )
+  end
 
+  def subscriptions_list
+    @stripe_cards = current_user.stripe_cards.includes(:event)
     @subscriptions = Rails.cache.fetch("user_#{current_user.id}_subscriptions", expires_in: 1.day) do
       @stripe_cards.map { |card| StripeCardService::PredictSubscriptions.new(card: card).run }.flatten
     end

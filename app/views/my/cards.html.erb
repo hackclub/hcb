@@ -54,7 +54,7 @@
     <%= blankslate "No cards found!" %>
   <% end %>
 
-  <%= render partial: "subscriptions_list" %>
+  <%= turbo_frame_tag :subscriptions_list, src: my_subscriptions_list_path, target: "_top" %>
 
   <% if @emburse_cards.any? %>
     <details class="mt3">
