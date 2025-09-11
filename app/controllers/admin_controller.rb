@@ -112,7 +112,6 @@ class AdminController < Admin::BaseController
     if ["Robotics", "FIRST/Robotics", "FIRST - Argosy"].include?(application["Org Type"])
       tags << EventTag::Tags::ROBOTICS_TEAM
     end
-    
     event = ::EventService::Create.new(
       name: application["Event Name"],
       country: country&.alpha2,
