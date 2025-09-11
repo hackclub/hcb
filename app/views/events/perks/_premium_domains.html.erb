@@ -1,4 +1,4 @@
-<%# locals: (event:, perks_available:, active_teen_count:) %>
+<%# locals: (event:, perks_available:, active_teenagers_count:) %>
 
 <div class="card pb0 mb3 promo-premium-domains" id="premium-domains">
   <div class="card__banner card__banner--top flex justify-between items-center">
@@ -11,7 +11,7 @@
       <% domains_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
     <% elsif !perks_available %>
       <% domains_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
-    <% elsif active_teen_count < 5 %>
+    <% elsif active_teenagers_count < 5 %>
       <% domains_ineligible_reason = "Organization must have 5 or more active teens" %>
     <% end %>
     <% if domains_ineligible_reason %>
@@ -33,6 +33,6 @@
     This is a separate promotion from the Porkbun domains below; feel free to claim both :D
   </p>
   <section class="card__banner card__darker secondary border-top italic">
-    You currently have <%= active_teen_count %>/5 active teenagers in your organization!
+    You currently have <%= active_teenagers_count %>/5 active teenagers in your organization!
   </section>
 </div>
