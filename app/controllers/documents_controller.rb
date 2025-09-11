@@ -47,6 +47,7 @@ class DocumentsController < ApplicationController
       redirect_to download_document_path(@document)
       return
     end
+
     authorize @document
   end
 
