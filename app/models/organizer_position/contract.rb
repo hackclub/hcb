@@ -116,6 +116,25 @@ class OrganizerPosition
       "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Cosigner" }[0]["slug"]}"
     end
 
+    def pending_signer_info
+      return nil unless sent_with_docuseal?
+
+      doc = docuseal_document
+      signee = doc["submitters"].find { |s| s["role"] == "Contract Signee" }
+      cosigner = doc["submitters"].find { |s| s["role"] == "Cosigner" }
+      hcb_signer = doc["submitters"].find { |s| s["role"] == "HCB" }
+
+      if signee && signee["status"] != "completed"
+        { role: "Contract Signee", name: "You", email: signee["email"] }
+      elsif cosigner && cosigner["status"] != "completed"
+        { role: "Cosigner", name: "Your parent/legal guardian", email: cosigner["email"] }
+      elsif hcb_signer && hcb_signer["status"] != "completed"
+        { role: "HCB", name: "HCB point of contact", email: hcb_signer["email"] }
+      else
+        nil
+      end
+    end
+
     def send_using_docuseal!
       raise ArgumentError, "can only send contracts when pending" unless pending?
 
