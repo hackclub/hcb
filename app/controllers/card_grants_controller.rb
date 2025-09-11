@@ -19,7 +19,7 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     card_grants_page = (params[:page] || 1).to_i
-    card_grants_per_page = (params[:per] || 1).to_i # change this back to 20 after testing
+    card_grants_per_page = (params[:per] || 20).to_i
 
     @card_grants = @event.card_grants.order(created_at: :desc)
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
@@ -31,7 +31,7 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     transactions_page = (params[:page] || 1).to_i
-    transactions_per_page = (params[:per] || 1).to_i # change this back to 20 after testing
+    transactions_per_page = (params[:per] || 20).to_i
 
     @all_stripe_cards = @event.stripe_cards.where.associated(:card_grant)
     @hcb_codes = HcbCode.where(hcb_code: @all_stripe_cards.flat_map(&:all_hcb_codes)).order(created_at: :desc)
