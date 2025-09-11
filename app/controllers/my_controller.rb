@@ -63,7 +63,13 @@ class MyController < ApplicationController
   def subscriptions_list
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @subscriptions = Rails.cache.fetch("user_#{current_user.id}_subscriptions", expires_in: 1.day) do
-      @stripe_cards.map { |card| StripeCardService::PredictSubscriptions.new(card: card).run }.flatten
+      @stripe_cards.each do |card|
+        StripeCardService::PredictSubscriptions.new(card: card).run
+      end
+
+      Subscription.where(card: @stripe_cards.pluck(:stripe_id))
+                  .order(updated_at: :desc)
+                  .to_a
     end
   end
 
