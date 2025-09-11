@@ -87,12 +87,12 @@ module StripeCardService
 
       ActiveRecord::Base.connection.exec_query(query).cast_values.map do |row|
         OpenStruct.new({
-          merchant: row[0],
-          card: row[1],
-          hcb_codes: row[2],
-          last_hcb_code: row[3],
-          average_date_difference: row[4]
-        })
+                         merchant: row[0],
+                         card: row[1],
+                         hcb_codes: row[2],
+                         last_hcb_code: row[3],
+                         average_date_difference: row[4]
+                       })
       end
 
     end
