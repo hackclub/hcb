@@ -6,8 +6,8 @@ export default class extends Controller {
     max: { type: Number, default: 100 },
     step: { type: Number, default: 1 },
 
-    lo: { type: Number, default: null },
-    hi: { type: Number, default: null },
+    low: { type: Number, default: null },
+    high: { type: Number, default: null },
 
     minDistance: { type: Number, default: 1 },
     keyBase: { type: String, default: '' },
@@ -16,12 +16,12 @@ export default class extends Controller {
   connect() {
     this.value = [
       this.clamp(
-        this.loValue ?? this.minValue,
+        this.lowValue ?? this.minValue,
         this.minValue,
         this.maxValue - this.minDistanceValue
       ),
       this.clamp(
-        this.hiValue ? this.hiValue : this.maxValue,
+        this.highValue ? this.highValue : this.maxValue,
         this.minValue + this.minDistanceValue,
         this.maxValue
       ),
@@ -130,24 +130,24 @@ export default class extends Controller {
       this.container = document.createElement('div')
       this.container.className = 'w-full select-none'
       this.container.innerHTML = `
-        <div class="rs-inputs">
-          <input type="number" class="rs-input" name="${this.keyBaseValue}_greater_than" />
-          <input type="number" class="rs-input" name="${this.keyBaseValue}_less_than" />
+        <div class="range-slider--inputs">
+          <input type="number" class="range-slider--input" name="${this.keyBaseValue}_greater_than" />
+          <input type="number" class="range-slider--input" name="${this.keyBaseValue}_less_than" />
         </div>
-        <div class="rs-track">
-          <div class="rs-bar"></div>
-          <div class="rs-range text-blue-600"></div>
-          <button type="button" class="rs-thumb text-blue-600"></button>
-          <button type="button" class="rs-thumb text-blue-600"></button>
+        <div class="range-slider--track">
+          <div class="range-slider--bar"></div>
+          <div class="range-slider--range text-blue-600"></div>
+          <button type="button" class="range-slider--thumb text-blue-600"></button>
+          <button type="button" class="range-slider--thumb text-blue-600"></button>
         </div>`
 
       this.element.innerHTML = ''
 
       this.element.appendChild(this.container)
-      this.inputs = this.container.querySelectorAll('.rs-input')
-      this.track = this.container.querySelector('.rs-track')
-      this.range = this.container.querySelector('.rs-range')
-      this.thumbs = this.container.querySelectorAll('.rs-thumb')
+      this.inputs = this.container.querySelectorAll('.range-slider--input')
+      this.track = this.container.querySelector('.range-slider--track')
+      this.range = this.container.querySelector('.range-slider--range')
+      this.thumbs = this.container.querySelectorAll('.range-slider--thumb')
 
       this.track.addEventListener('mousedown', this.onTrackDown)
       this.track.addEventListener('touchstart', this.onTrackDown)

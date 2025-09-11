@@ -1,9 +1,9 @@
-.rs-track {
+.range-slider--track {
   position: relative;
   width: 100%;
   cursor: pointer;
 }
-.rs-bar {
+.range-slider--bar {
   position: absolute;
   height: 6px;
   left: 0;
@@ -13,7 +13,7 @@
   border-radius: 9999px;
   background: rgba(0, 0, 0, 0.12);
 }
-.rs-range {
+.range-slider--range {
   position: absolute;
   height: 6px;
   top: 50%;
@@ -23,7 +23,7 @@
   transition: all 0.1s;
 }
 
-.rs-thumb {
+.range-slider--thumb {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -42,7 +42,7 @@
   }
 }
 
-.rs-inputs {
+.range-slider--inputs {
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
