@@ -39,7 +39,7 @@
     </button>
   </div>
 
-  <section class="card pt0 mt2 hidden" data-inline-receipt-target="bin">
+  <section class="card mt2 hidden" data-inline-receipt-target="bin">
     <header class="pb2" style="z-index: 1000;<% if local_assigns[:popover] %> padding-top: 1rem;<% end %>">
       <%= pop_icon_to "view-close", nil, class: "modal__close muted m1", tabindex: 0, data: { action: "inline-receipt#toggleBin" } %>
       <h2 class="mt0 mb0 pb0 border-none">Select receipt</h2>
