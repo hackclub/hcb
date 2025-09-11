@@ -137,8 +137,7 @@ export default class extends Controller {
         <div class="range-slider--track">
           <div class="range-slider--bar"></div>
           <div class="range-slider--range text-blue-600"></div>
-          <button type="button" class="range-slider--thumb text-blue-600"></button>
-          <button type="button" class="range-slider--thumb text-blue-600"></button>
+          ${[...new Array(2)].map(() => `<button type="button" class="range-slider--thumb text-blue-600"></button>`).join('')}
         </div>`
 
       this.element.innerHTML = ''
