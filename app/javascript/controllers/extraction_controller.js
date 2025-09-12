@@ -32,10 +32,12 @@ export default class extends Controller {
   pasteData(response) {
     let empty = true
 
+    const extractedKeys = Object.keys(response).filter(key => response[key] !== null)
+
     Array.from(this.formTarget.elements).map(element => {
       if (
         element.dataset.extractionField &&
-        Object.keys(response).includes(element.dataset.extractionField)
+        extractedKeys.includes(element.dataset.extractionField)
       ) {
         if (element.value != '') {
           empty = false
@@ -49,7 +51,7 @@ export default class extends Controller {
       Array.from(this.formTarget.elements).map(element => {
         if (
           element.dataset.extractionField &&
-          Object.keys(response).includes(element.dataset.extractionField)
+          extractedKeys.includes(element.dataset.extractionField)
         ) {
           element.value = response[element.dataset.extractionField]
           element.dispatchEvent(new Event('paste'))
