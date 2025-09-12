@@ -1,8 +1,9 @@
 import { Controller } from '@hotwired/stimulus'
+import csrf from '../common/csrf'
 
 export default class extends Controller {
-  static targets = ["list", "fileInput", "clearButton", "bin", "receiptsInput"]
-  static outlets = ["receipt-select"]
+  static targets = ['list', 'fileInput', 'clearButton', 'bin', 'receiptsInput']
+  static outlets = ['receipt-select', 'extraction']
 
   binOpen = false
 
@@ -11,52 +12,62 @@ export default class extends Controller {
   }
 
   addFile() {
-    const files = this.fileInputTarget.files;
+    const files = this.fileInputTarget.files
     const newFile = files[files.length - 1]
 
     const html = `<li>${newFile.name}</li>`
-    this.listTarget.innerHTML += html;
-    this.clearButtonTarget.classList.remove("hidden")
+    this.listTarget.innerHTML += html
+    this.clearButtonTarget.classList.remove('hidden')
   }
 
-  addReceipt() {
-    const selectedReceipt = this.binTarget.querySelector("select").value;
+  async addReceipt() {
+    const selectedReceiptId = this.binTarget.querySelector('select').value
 
-    const binElement = document.getElementById(`modal_receipt_${selectedReceipt}`);
+    const binElement = document.getElementById(
+      `modal_receipt_${selectedReceiptId}`
+    )
     binElement.remove()
 
-    const receipts = this.receiptsInputTarget.value.split(",")
-    receipts.push(selectedReceipt)
-    this.receiptsInputTarget.value = receipts.filter(r => r !== "").join(",")
-   
-    const html = `<li><turbo-frame id="receipt_item_${selectedReceipt}" src="/receipts/receipt_item?id=${selectedReceipt}"></turbo-frame></li>`
-    this.listTarget.innerHTML += html;
-    this.clearButtonTarget.classList.remove("hidden")
+    const receipts = this.receiptsInputTarget.value.split(',')
+    receipts.push(selectedReceiptId)
+    this.receiptsInputTarget.value = receipts.filter(r => r !== '').join(',')
+
+    const metadata = await fetch(`/receipts/${selectedReceiptId}/metadata`, {
+      headers: { 'X-CSRF-Token': csrf() },
+    }).then(res => res.json())
+
+    const html = `<li>${metadata.name}</li>`
+    this.listTarget.innerHTML += html
+    this.clearButtonTarget.classList.remove('hidden')
 
     this.receiptSelectOutlet.render()
+
+    if (this.hasExtractionOutlet) {
+      this.extractionOutlet.pasteData(metadata)
+    }
   }
 
   clear() {
-    this.fileInputTarget.value = "";
-    this.receiptsInputTarget.value = ""
+    this.fileInputTarget.value = ''
+    this.receiptsInputTarget.value = ''
     this.receipts = []
 
-    this.listTarget.innerHTML = "";
-    this.clearButtonTarget.classList.add("hidden")
+    this.listTarget.innerHTML = ''
+    this.clearButtonTarget.classList.add('hidden')
 
-    const binFrame = this.binTarget.querySelector("turbo-frame")
-    binFrame.reload();
+    const binFrame = this.binTarget.querySelector('turbo-frame')
+    binFrame.reload()
 
     this.receiptSelectOutlet.render()
   }
 
   toggleBin(event) {
-    event.preventDefault();
+    event.preventDefault()
 
     if (this.binOpen) {
-      this.binTarget.classList.add("hidden")
+      this.binTarget.classList.add('hidden')
     } else {
-      this.binTarget.classList.remove("hidden")
+      this.binTarget.classList.remove('hidden')
     }
 
     this.binOpen = !this.binOpen

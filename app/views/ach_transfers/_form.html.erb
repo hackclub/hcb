@@ -8,6 +8,7 @@
   url: event_ach_transfers_path(ach_transfer.event),
   data: { controller: "input extraction", extraction_target: "form" },
   html: {
+    id: "extraction-form",
     "x-data" => "ach(#{{
       payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
       editing: ach_transfer.account_number.present?,

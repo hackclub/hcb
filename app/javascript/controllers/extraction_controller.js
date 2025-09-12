@@ -26,6 +26,10 @@ export default class extends Controller {
     Turbo.navigator.delegate.adapter.progressBar.hide()
     document.querySelector('html').setAttribute('data-ai-loading', false)
 
+    this.pasteData(response)
+  }
+
+  pasteData(response) {
     let empty = true
 
     Array.from(this.formTarget.elements).map(element => {
@@ -40,6 +44,8 @@ export default class extends Controller {
     })
 
     if (empty) {
+      let success = false
+
       Array.from(this.formTarget.elements).map(element => {
         if (
           element.dataset.extractionField &&
@@ -47,35 +53,38 @@ export default class extends Controller {
         ) {
           element.value = response[element.dataset.extractionField]
           element.dispatchEvent(new Event('paste'))
+          success = true
         }
       })
 
-      let dropzone = document.createElement('div')
-      dropzone.classList.add('file-dropzone')
-      dropzone.classList.add('data-extracted')
+      if (success) {
+        let dropzone = document.createElement('div')
+        dropzone.classList.add('file-dropzone')
+        dropzone.classList.add('data-extracted')
 
-      const title = document.createElement('h1')
-      title.innerText = '🧾 Successfully extracted!'
-      dropzone.appendChild(title)
+        const title = document.createElement('h1')
+        title.innerText = '🧾 Successfully extracted!'
+        dropzone.appendChild(title)
 
-      document.body.appendChild(dropzone)
-      document.body.style.overflow = 'hidden'
+        document.body.appendChild(dropzone)
+        document.body.style.overflow = 'hidden'
 
-      // Explanation: https://stackoverflow.com/a/24195487/10987085
-      window.getComputedStyle(dropzone).opacity
+        // Explanation: https://stackoverflow.com/a/24195487/10987085
+        window.getComputedStyle(dropzone).opacity
 
-      dropzone.classList.add('visible')
+        dropzone.classList.add('visible')
 
-      const jsConfetti = new JSConfetti()
+        const jsConfetti = new JSConfetti()
 
-      jsConfetti
-        .addConfetti({
-          emojis: '✨',
-        })
-        .then(() => {
-          dropzone.remove()
-          document.body.style.overflow = 'auto'
-        })
+        jsConfetti
+          .addConfetti({
+            emojis: '✨',
+          })
+          .then(() => {
+            dropzone.remove()
+            document.body.style.overflow = 'auto'
+          })
+      }
     }
   }
 }

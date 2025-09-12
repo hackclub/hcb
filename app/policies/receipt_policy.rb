@@ -22,7 +22,7 @@ class ReceiptPolicy < ApplicationPolicy
     record.user == user && unlocked?
   end
 
-  def receipt_item?
+  def metadata?
     record.user == user
   end
 

@@ -38,7 +38,7 @@ export default class extends Controller {
     if (this.hasConfirmTarget) {
       this.confirmTarget.disabled = false
     }
-    
+
     this.selectElement.value = receiptId
     e.currentTarget.classList.add('receipt--selected')
 

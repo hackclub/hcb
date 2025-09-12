@@ -7,7 +7,7 @@ class ReceiptsController < ApplicationController
   before_action :find_receiptable, only: [:create, :link, :link_modal]
   before_action :set_event, only: [:create, :link]
   before_action :set_transaction_display_data
-  before_action :set_receipt, only: [:destroy, :reverse, :receipt_item]
+  before_action :set_receipt, only: [:destroy, :reverse, :metadata]
 
   def destroy
     @receiptable = @receipt.receiptable
@@ -96,10 +96,6 @@ class ReceiptsController < ApplicationController
     skip_authorization
 
     @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user).order(created_at: :desc)
-  end
-
-  def receipt_item
-    authorize @receipt
   end
 
   def create
@@ -243,6 +239,12 @@ class ReceiptsController < ApplicationController
         end
       }
     end
+  end
+
+  def metadata
+    authorize @receipt
+
+    render json: { name: @receipt.file.blob.filename, total: @receipt.extracted_total_amount_cents / 100.0, seller_name: @receipt.extracted_merchant_name, seller_address_zip: @receipt.extracted_merchant_zip_code }
   end
 
   private
