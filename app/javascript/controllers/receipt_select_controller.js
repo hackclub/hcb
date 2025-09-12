@@ -27,17 +27,13 @@ export default class extends Controller {
     const receiptId = e.currentTarget.getAttribute('data-receipt-id')
 
     if (receiptId === prevReceiptId) {
-      if (this.hasConfirmTarget) {
-        this.confirmTarget.disabled = true
-      }
+      this.confirmTarget.disabled = true
 
       this.selectElement.value = ''
       return this.render()
     }
 
-    if (this.hasConfirmTarget) {
-      this.confirmTarget.disabled = false
-    }
+    this.confirmTarget.disabled = false
 
     this.selectElement.value = receiptId
     e.currentTarget.classList.add('receipt--selected')
@@ -81,11 +77,10 @@ export default class extends Controller {
 
     hidden.forEach(el => (el.parentElement.style.display = 'none'))
 
-    if (shown.length === 0) {
-      this.noResultsTarget.style.display = 'block'
-    } else {
-      this.noResultsTarget.style.display = 'none'
-    }
+    const empty = shown.length === 0
+
+    this.confirmTarget.disabled = empty
+    this.noResultsTarget.style.display = empty ? 'block' : 'none'
   }
 
   #filter(query) {

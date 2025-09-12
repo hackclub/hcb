@@ -32,7 +32,9 @@ export default class extends Controller {
   pasteData(response) {
     let empty = true
 
-    const extractedKeys = Object.keys(response).filter(key => response[key] !== null)
+    const extractedKeys = Object.keys(response).filter(
+      key => response[key] !== null
+    )
 
     Array.from(this.formTarget.elements).map(element => {
       if (
