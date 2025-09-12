@@ -1,6 +1,6 @@
 <%# locals: (program:) %>
 
-<%= form_with(url: raffles_path, html: { onsubmit: "location.reload();", action: "" }) do |f| %>
+<%= form_with(url: raffles_path) do |f| %>
   <% if program %>
     <%= f.hidden_field :program, value: program %>
   <% else %>
