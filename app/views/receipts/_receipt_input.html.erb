@@ -25,7 +25,7 @@
           data: {
             "file-drop-target" => "fileInput",
             "receipt-input-target" => "fileInput",
-            "action" => "change->extraction#upload change->receipt-input#addFile"
+            "action" => "#{"change->extraction#upload " if extraction}change->receipt-input#addFile"
           },
           disabled: %>
     </div>
