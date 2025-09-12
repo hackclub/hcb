@@ -1,6 +1,6 @@
 <%# locals: (form:, disabled: false, required: false, extraction: false) %>
 
-<div class="py-2" data-controller="receipt-input" data-receipt-input-receipt-select-outlet="#receipt-select-container" <%= 'data-receipt-input-extraction-outlet=#extraction-form' if extraction %>>
+<div class="py-2" data-controller="receipt-input" data-receipt-input-receipt-select-outlet="#receipt-select-container" <%= "data-receipt-input-extraction-outlet=#extraction-form" if extraction %>>
   <p class="mt-2 mb-1 semibold">Attach a receipt / invoice <%= "(optional)" unless required %></p>
 
   <ul data-receipt-input-target="list" class="peer text-muted empty:m-0"></ul>
@@ -23,9 +23,9 @@
           style: "margin: 8px 0px",
           class: "!hidden",
           data: {
-            "file-drop-target" => "fileInput",
+            "file-drop-target"     => "fileInput",
             "receipt-input-target" => "fileInput",
-            "action" => "#{"change->extraction#upload " if extraction}change->receipt-input#addFile"
+            "action"               => "#{"change->extraction#upload " if extraction}change->receipt-input#addFile"
           },
           disabled: %>
     </div>

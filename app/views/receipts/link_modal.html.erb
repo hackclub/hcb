@@ -8,8 +8,8 @@
     <% else %>
       <%= render "receipts/link_form", receipts: @receipts, suggested_receipt_ids: @suggested_receipt_ids do %>
           <%= form.submit "Add to transaction", class: "btn bg-success", style: "transition: 0.2s all;", data: {
-            "receipt-select-target" => "confirm"
-          }, onclick: "$.modal.close()", disabled: true %>
+                "receipt-select-target" => "confirm"
+              }, onclick: "$.modal.close()", disabled: true %>
       <% end %>
 
       <%= form.hidden_field :receiptable_id, value: @receiptable.id %>
