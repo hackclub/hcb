@@ -137,7 +137,7 @@
   <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
     <div class="field">
       <%= form.label :session_validity_preference, "Sign me out after" %>
-      <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, selected: current_user.session_validity_preference || SessionsHelper::SESSION_DURATION_OPTIONS.fetch("3 days") %>
+      <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, selected: current_user.session_validity_preference %>
     </div>
 
     <div class="submit">
