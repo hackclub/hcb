@@ -66,6 +66,7 @@ RSpec.describe Api::V4::CardGrantsController do
           "category_lock"              => [],
           "merchant_lock"              => [],
           "keyword_lock"               => "some keywords",
+          "email"                      => "orpheus@hackclub.com",
           "disbursements"              => [
             {
               "id"             => disbursement.public_id,
