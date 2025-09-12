@@ -300,9 +300,6 @@ class UsersController < ApplicationController
       end
     end
 
-    # extend the user session expiration to the new preference so you can't accidentally sign yourself out by updating it
-    current_session.update!(expiration_at: Time.now + current_user.session_validity_preference) if params[:session_validity_preference]
-
     if @user.save
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
 
