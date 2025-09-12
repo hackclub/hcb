@@ -48,7 +48,7 @@
       <th>Fee</th>
       <th>Country</th>
       <th>Status</th>
-      <th>Active teens</th>
+      <th>Active teenagers</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -94,7 +94,7 @@
           <% end %>
         </td>
         <td>
-          <%= event.users.count { |user| user.teenager? && user.active? } %>
+          <%= event.users.active_teenager.count %>
         </td>
         <td>
           <%= link_to "Process", event_process_admin_path(event) if event.pending? || event.unapproved? %>
