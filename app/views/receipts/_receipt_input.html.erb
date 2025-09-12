@@ -1,6 +1,6 @@
-<%# locals: (form:, disabled: false, required: false) %>
+<%# locals: (form:, disabled: false, required: false, extraction: false) %>
 
-<div data-controller="receipt-input" data-receipt-input-receipt-select-outlet="#receipt-select-container" data-receipt-input-extraction-outlet="#extraction-form">
+<div data-controller="receipt-input" data-receipt-input-receipt-select-outlet="#receipt-select-container" <%= 'data-receipt-input-extraction-outlet=#extraction-form' if extraction %>>
   <p class="mt2 semibold">Attach a receipt / invoice <%= "(optional)" unless required %></p>
 
   <ul data-receipt-input-target="list" class="peer text-muted"></ul>

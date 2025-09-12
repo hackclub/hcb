@@ -139,7 +139,7 @@
     <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
   </div>
 
-  <%= render "receipts/receipt_input", form:, disabled:, required: true %>
+  <%= render "receipts/receipt_input", form:, disabled:, required: true, extraction: true %>
 
   <% admin_tool do %>
     <div class="field">
