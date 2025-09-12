@@ -37,7 +37,7 @@
 
   <div class="container--xs">
     <h1 class="mt0">Send a check</h1>
-    <%= form_with(model: [@event, @check], local: true, data: { controller: "extraction", extraction_target: "form" }) do |form| %>
+    <%= form_with(model: [@event, @check], local: true, data: { controller: "extraction", extraction_target: "form" }, id: "extraction-form") do |form| %>
       <%= form_errors(@check, "check", "We couldn't send this") %>
 
       <div class="field">
@@ -187,31 +187,7 @@
         <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
       </div>
 
-      <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
-      <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-        <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-              action: "
-            dragover@window->file-drop#dragover
-            drop@window->file-drop#drop
-            dragenter@window->file-drop#dragenter
-            dragleave@window->file-drop#dragleave
-          "
-            } %>
-        <%= form.file_field :file,
-            multiple: true,
-            include_hidden: false,
-            required: false,
-            accept: "image/*,image/heic,.pdf",
-            style: "margin: 8px 0px",
-            class: "field--fileupload__field",
-            data: {
-              "file-drop-target" => "fileInput",
-              "action"           => "change->extraction#upload"
-            },
-            disabled: %>
-        <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
-      </div>
-      <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+      <%= render "receipts/receipt_input", form:, disabled:, required: true, extraction: true %>
 
       <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your check will be mailed out on the next business day.">
         <%= form.submit "Send check", disabled: %>

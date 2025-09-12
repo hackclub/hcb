@@ -1,9 +1,9 @@
 <%# locals: (form:, disabled: false, required: false, extraction: false) %>
 
 <div class="py-2" data-controller="receipt-input" data-receipt-input-receipt-select-outlet="#receipt-select-container" <%= 'data-receipt-input-extraction-outlet=#extraction-form' if extraction %>>
-  <p class="mt2 semibold">Attach a receipt / invoice <%= "(optional)" unless required %></p>
+  <p class="mt-2 mb-1 semibold">Attach a receipt / invoice <%= "(optional)" unless required %></p>
 
-  <ul data-receipt-input-target="list" class="peer text-muted"></ul>
+  <ul data-receipt-input-target="list" class="peer text-muted empty:m-0"></ul>
 
   <div class="flex gap-5 h-8">
     <div class="field w-fit field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
