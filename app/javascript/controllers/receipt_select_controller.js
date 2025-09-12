@@ -79,7 +79,9 @@ export default class extends Controller {
 
     const empty = shown.length === 0
 
-    this.confirmTarget.disabled = empty
+    if (!this.confirmTarget.disabled) {
+      this.confirmTarget.disabled = empty
+    }
     this.noResultsTarget.style.display = empty ? 'block' : 'none'
   }
 
