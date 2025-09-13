@@ -1,10 +1,10 @@
 <% title "You’ve been invited to #{@invite.event.name}" %>
 
 <% if @invite.organizer_position_contract && !@invite.organizer_position_contract.signed? %>
-  <% pending_signer = @invite.organizer_position_contract.pending_signer_info %>
+  <% pending_signee = @invite.organizer_position_contract.pending_signee_info %>
   <%= render "callout", type: "warning", title: "You have a pending contract for this organization." do %>
-    <% if pending_signer %>
-      The contract is still pending because <%= pending_signer[:name] %> (<%= pending_signer[:email] %>) hasn't signed it yet.
+    <% if pending_signee %>
+      The contract is still pending because <%= pending_signee[:label] %> (<%= pending_signee[:email] %>) hasn't signed it yet.
     <% else %>
       If you have signed the contract, it may still be pending because your parent / legal guardian or HCB point of contact hasn't signed it.
     <% end %>

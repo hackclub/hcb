@@ -116,23 +116,10 @@ class OrganizerPosition
       "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Cosigner" }[0]["slug"]}"
     end
 
-    def pending_signer_info
-      return nil unless sent_with_docuseal?
+    def pending_signee_information
+      return docuseal_pending_signee_information if sent_with_docuseal?
 
-      doc = docuseal_document
-      signee = doc["submitters"].find { |s| s["role"] == "Contract Signee" }
-      cosigner = doc["submitters"].find { |s| s["role"] == "Cosigner" }
-      hcb_signer = doc["submitters"].find { |s| s["role"] == "HCB" }
-
-      if signee && signee["status"] != "completed"
-        { role: "Contract Signee", name: "You", email: signee["email"] }
-      elsif cosigner && cosigner["status"] != "completed"
-        { role: "Cosigner", name: "Your parent/legal guardian", email: cosigner["email"] }
-      elsif hcb_signer && hcb_signer["status"] != "completed"
-        { role: "HCB", name: "HCB point of contact", email: hcb_signer["email"] }
-      else
-        nil
-      end
+      nil
     end
 
     def send_using_docuseal!
@@ -238,6 +225,24 @@ class OrganizerPosition
       end
     end
 
+    def docuseal_pending_signee_information
+      return nil unless sent_with_docuseal?
+
+      submitters = docuseal_document["submitters"]
+      signee = submitters.find { |s| s["role"] == "Contract Signee" }
+      cosigner = submitters.find { |s| s["role"] == "Cosigner" }
+      hcb_signer = submitters.find { |s| s["role"] == "HCB" }
+
+      if signee && signee["status"] != "completed"
+        { role: "Contract Signee", label: "You", email: signee["email"] }
+      elsif cosigner && cosigner["status"] != "completed"
+        { role: "Cosigner", label: "Your parent/legal guardian", email: cosigner["email"] }
+      elsif hcb_signer && hcb_signer["status"] != "completed"
+        { role: "HCB", label: "HCB point of contact", email: hcb_signer["email"] }
+      else
+        nil
+      end
+    end
 
   end
 
