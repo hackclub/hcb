@@ -387,8 +387,8 @@ class StripeCard < ApplicationRecord
     Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
   end
 
-  def ephemeral_key(nonce:)
-    Stripe::EphemeralKey.create({ nonce:, issuing_card: stripe_id }, { stripe_version: "2020-03-02" })
+  def ephemeral_key(nonce:, stripe_version: "2020-03-02")
+    Stripe::EphemeralKey.create({ nonce:, issuing_card: stripe_id }, { stripe_version: })
   end
 
   private
