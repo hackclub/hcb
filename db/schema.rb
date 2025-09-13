@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_04_215031) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_11_173917) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2070,6 +2070,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_04_215031) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_subledgers_on_event_id"
+  end
+
+  create_table "subscriptions", force: :cascade do |t|
+    t.string "merchant"
+    t.string "card"
+    t.json "hcb_codes"
+    t.string "last_hcb_code"
+    t.decimal "average_date_difference"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merchant", "card"], name: "index_subscriptions_on_merchant_and_card", unique: true
   end
 
   create_table "suggested_pairings", force: :cascade do |t|
