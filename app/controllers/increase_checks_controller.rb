@@ -29,12 +29,16 @@ class IncreaseChecksController < ApplicationController
 
     if @check.save
       if check_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: check_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @check.local_hcb_code
-        ).run!
+        begin
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: check_params[:file],
+            upload_method: :transfer_create_page,
+            receiptable: @check.local_hcb_code
+          ).run!
+        rescue ActiveRecord::RecordInvalid => e
+          return redirect_to url_for(@check.local_hcb_code), flash: { info: "Check successfully submitted, however, the receipt file was invalid." }
+        end
       end
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else

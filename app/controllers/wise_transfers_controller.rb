@@ -24,12 +24,16 @@ class WiseTransfersController < ApplicationController
 
     if @wise_transfer.save
       if wise_transfer_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: wise_transfer_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @wise_transfer.local_hcb_code
-        ).run!
+        begin
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: wise_transfer_params[:file],
+            upload_method: :transfer_create_page,
+            receiptable: @wise_transfer.local_hcb_code
+          ).run!
+        rescue ActiveRecord::RecordInvalid => e
+          return redirect_to url_for(@wise_transfer.local_hcb_code), flash: { info: "Wise transfer successfully submitted, however, the receipt file was invalid." }
+        end
       end
       redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your Wise transfer has been sent!" }
     else
