@@ -28,6 +28,16 @@ class IncreaseChecksController < ApplicationController
     end
 
     if @check.save
+      if params[:increase_check][:receipts]
+        receipts = params[:increase_check][:receipts].split ","
+        receipts.each do |receipt_id|
+          receipt = Receipt.find(receipt_id)
+          authorize receipt, :link?
+
+          receipt.update!(receiptable: @check.local_hcb_code)
+        end
+      end
+
       if check_params[:file]
         ::ReceiptService::Create.new(
           uploader: current_user,

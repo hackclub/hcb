@@ -70,35 +70,35 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
+.field--fileupload__label {
+  white-space: nowrap;
+  display: block;
+  padding: 5px 0;
+
+  display: block;
+  padding: 0.25rem 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+
+  color: map-get($palette, info) !important;
+  border: 1px dashed map-get($palette, info);
+
+  transition: transform 0.125s ease-in-out;
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  letter-spacing: 0;
+  line-height: 1.5;
+
+  &:hover {
+    transform: scale(1.0625);
+  }
+}
+
 .field--fileupload {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-
-  .field--fileupload__label {
-    white-space: nowrap;
-    display: block;
-    padding: 5px 0;
-
-    display: block;
-    padding: 0.25rem 1rem;
-    cursor: pointer;
-    border-radius: 6px;
-
-    color: map-get($palette, info);
-    border: 1px dashed map-get($palette, info);
-
-    transition: transform 0.125s ease-in-out;
-    font-size: 0.875rem;
-    font-weight: 600;
-
-    letter-spacing: 0;
-    line-height: 1.5;
-
-    &:hover {
-      transform: scale(1.0625);
-    }
-  }
 
   .field--fileupload__field {
     &::file-selector-button {
