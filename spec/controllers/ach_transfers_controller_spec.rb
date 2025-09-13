@@ -19,7 +19,9 @@ describe AchTransfersController do
     before do
       # janky way of signing in for tests, we basically override the call in sessions_helper that checks for current_user to return this test user
       user = create(:user)
+      session = create(:user_session)
       allow(controller).to receive(:current_user).and_return(user)
+      allow(controller).to receive(:current_session).and_return(session)
     end
 
     it "doesn't perform a lookup when routing number is invalid" do
