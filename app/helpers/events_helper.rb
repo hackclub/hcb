@@ -128,8 +128,8 @@ module EventsHelper
   private
 
   def validate_date_range(base, params)
-    less = params["#{base}_before"]
-    greater = params["#{base}_after"]
+    less = params["#{base}_after"]
+    greater = params["#{base}_before"]
     return unless less.present? && greater.present?
 
     begin
