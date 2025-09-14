@@ -90,16 +90,14 @@
   <%# This empty div pushes the content below to the bottom of the card. %>
   <div class="mt-auto"></div>
 
-  <% if auditor_signed_in? %>
-    <div class="warning m0">
-      Last active:
-      <% if organizer_position.user.last_seen_at.present? %>
-        <%= format_date(organizer_position.user.last_seen_at) %>
-      <% else %>
-        unknown
-      <% end %>
-    </div>
-  <% end %>
+  <div class="m0">
+    Last active:
+    <% if organizer_position.user.last_seen_at.present? %>
+      <%= format_date(organizer_position.user.last_seen_at) %>
+    <% else %>
+      unknown
+    <% end %>
+  </div>
   <div class="muted flex justify-between align-bottom relative w-100 h6 mt1">
     <p class="m0">
       Invited
