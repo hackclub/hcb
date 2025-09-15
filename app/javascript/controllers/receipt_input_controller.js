@@ -2,7 +2,13 @@ import { Controller } from '@hotwired/stimulus'
 import csrf from '../common/csrf'
 
 export default class extends Controller {
-  static targets = ['list', 'fileInput', 'clearButton', 'bin', 'receiptsInputContainer']
+  static targets = [
+    'list',
+    'fileInput',
+    'clearButton',
+    'bin',
+    'receiptsInputContainer',
+  ]
   static outlets = ['receipt-select', 'extraction']
 
   binOpen = false
@@ -28,10 +34,10 @@ export default class extends Controller {
     )
     binElement.remove()
 
-    const newInput = document.createElement("input");
-    newInput.type = "hidden"
+    const newInput = document.createElement('input')
+    newInput.type = 'hidden'
     newInput.value = selectedReceiptId
-    newInput.name = "receipts[]"
+    newInput.name = 'receipts[]'
     this.receiptsInputContainerTarget.appendChild(newInput)
 
     const metadata = await fetch(`/receipts/${selectedReceiptId}/metadata`, {
