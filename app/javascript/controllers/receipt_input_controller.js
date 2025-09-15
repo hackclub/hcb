@@ -1,3 +1,4 @@
+/* global getCookie, BK */
 import { Controller } from '@hotwired/stimulus'
 import csrf from '../common/csrf'
 
@@ -59,8 +60,14 @@ export default class extends Controller {
   appendItem(name, image) {
     const itemElement = document.createElement("div")
 
+    let imageUrl = image;
+    if (!imageUrl) {
+      const theme = getCookie('theme') || BK.resolveSystemTheme()
+      imageUrl = `https://icons.hackclub.com/api/icons/${theme === "light" ? "black" : "white"}/payment-docs`
+    }
+
     const imageElement = document.createElement("img")
-    imageElement.src = image || "https://icons.hackclub.com/api/icons/white/payment-docs"
+    imageElement.src = imageUrl
     imageElement.alt = image ? `Receipt preview for "${name}"` : "Receipt icon"
     itemElement.appendChild(imageElement)
 

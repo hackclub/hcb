@@ -557,8 +557,12 @@ input:where([data-behavior='otp_input']) {
     padding: 1rem;
 
     border-bottom-width: 1px;
-    border-bottom-color: $slate;
+    border-bottom-color: $smoke;
     border-bottom-style: solid;
+
+    html[data-dark='true'] & {
+      border-bottom-color: $slate;
+    }
 
     img {
       width: 2rem;
