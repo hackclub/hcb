@@ -23,9 +23,8 @@ class WiseTransfersController < ApplicationController
     end
 
     if @wise_transfer.save
-      if params[:wise_transfer][:receipts]
-        receipts = params[:wise_transfer][:receipts].split ","
-        receipts.each do |receipt_id|
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
           receipt = Receipt.find(receipt_id)
           authorize receipt, :link?
 

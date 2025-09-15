@@ -25,9 +25,8 @@ class WiresController < ApplicationController
     end
 
     if @wire.save
-      if params[:wire][:receipts]
-        receipts = params[:wire][:receipts].split ","
-        receipts.each do |receipt_id|
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
           receipt = Receipt.find(receipt_id)
           authorize receipt, :link?
 

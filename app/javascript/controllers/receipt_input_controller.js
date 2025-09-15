@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 import csrf from '../common/csrf'
 
 export default class extends Controller {
-  static targets = ['list', 'fileInput', 'clearButton', 'bin', 'receiptsInput']
+  static targets = ['list', 'fileInput', 'clearButton', 'bin', 'receiptsInputContainer']
   static outlets = ['receipt-select', 'extraction']
 
   binOpen = false
@@ -28,9 +28,11 @@ export default class extends Controller {
     )
     binElement.remove()
 
-    const receipts = this.receiptsInputTarget.value.split(',')
-    receipts.push(selectedReceiptId)
-    this.receiptsInputTarget.value = receipts.filter(r => r !== '').join(',')
+    const newInput = document.createElement("input");
+    newInput.type = "hidden"
+    newInput.value = selectedReceiptId
+    newInput.name = "receipts[]"
+    this.receiptsInputContainerTarget.appendChild(newInput)
 
     const metadata = await fetch(`/receipts/${selectedReceiptId}/metadata`, {
       headers: { 'X-CSRF-Token': csrf() },
@@ -49,7 +51,7 @@ export default class extends Controller {
 
   clear() {
     this.fileInputTarget.value = ''
-    this.receiptsInputTarget.value = ''
+    this.receiptsInputContainerTarget.innerHTML = ''
     this.receipts = []
 
     this.listTarget.innerHTML = ''

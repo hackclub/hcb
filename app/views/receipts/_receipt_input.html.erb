@@ -51,5 +51,6 @@
     <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
   <% end %>
 
-  <%= form.hidden_field :receipts, data: { "receipt-input-target": "receiptsInput" } %>
+  <div data-receipt-input-target="receiptsInputContainer">
+  </div>
 </div>

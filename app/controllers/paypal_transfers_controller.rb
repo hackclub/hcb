@@ -18,9 +18,8 @@ class PaypalTransfersController < ApplicationController
     authorize @paypal_transfer
 
     if @paypal_transfer.save
-      if params[:paypal_transfer][:receipts]
-        receipts = params[:paypal_transfer][:receipts].split ","
-        receipts.each do |receipt_id|
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
           receipt = Receipt.find(receipt_id)
           authorize receipt, :link?
 

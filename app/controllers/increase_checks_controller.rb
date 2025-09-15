@@ -28,9 +28,8 @@ class IncreaseChecksController < ApplicationController
     end
 
     if @check.save
-      if params[:increase_check][:receipts]
-        receipts = params[:increase_check][:receipts].split ","
-        receipts.each do |receipt_id|
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
           receipt = Receipt.find(receipt_id)
           authorize receipt, :link?
 
