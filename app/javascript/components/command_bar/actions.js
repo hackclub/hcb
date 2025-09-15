@@ -281,7 +281,7 @@ export const adminActions = (adminUrls, isPretending) => {
             },
           }).then(navigate('/')),
         section: 'Actions',
-        icon: <Icon glyph="door-leave" size={16} />,
+        icon: <Icon glyph="bolt" size={16} />,
         priority: Priority.HIGH,
       },
     ]
@@ -300,7 +300,7 @@ export const adminActions = (adminUrls, isPretending) => {
           },
         }).then(navigate('/')),
       section: 'Actions',
-      icon: <Icon glyph="door-leave" size={16} />,
+      icon: <Icon glyph="bolt" size={16} />,
       priority: Priority.HIGH,
     },
     {
