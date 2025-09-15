@@ -22,8 +22,8 @@ export default class extends Controller {
     const files = this.fileInputTarget.files
     const newFile = files[files.length - 1]
 
-    let preview;
-    if (newFile.type.startsWith("image")) {
+    let preview
+    if (newFile.type.startsWith('image')) {
       preview = URL.createObjectURL(newFile)
     }
 
@@ -58,20 +58,20 @@ export default class extends Controller {
   }
 
   appendItem(name, image) {
-    const itemElement = document.createElement("div")
+    const itemElement = document.createElement('div')
 
-    let imageUrl = image;
+    let imageUrl = image
     if (!imageUrl) {
       const theme = getCookie('theme') || BK.resolveSystemTheme()
-      imageUrl = `https://icons.hackclub.com/api/icons/${theme === "light" ? "black" : "white"}/payment-docs`
+      imageUrl = `https://icons.hackclub.com/api/icons/${theme === 'light' ? 'black' : 'white'}/payment-docs`
     }
 
-    const imageElement = document.createElement("img")
+    const imageElement = document.createElement('img')
     imageElement.src = imageUrl
-    imageElement.alt = image ? `Receipt preview for "${name}"` : "Receipt icon"
+    imageElement.alt = image ? `Receipt preview for "${name}"` : 'Receipt icon'
     itemElement.appendChild(imageElement)
 
-    const nameElement = document.createElement("p")
+    const nameElement = document.createElement('p')
     nameElement.innerText = name
     itemElement.appendChild(nameElement)
 
