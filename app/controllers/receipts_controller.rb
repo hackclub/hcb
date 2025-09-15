@@ -95,7 +95,7 @@ class ReceiptsController < ApplicationController
   def inline_link
     skip_authorization
 
-    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user).order(created_at: :desc)
+    @receipts = current_user.receipts.in_receipt_bin.with_attached_file.order(created_at: :desc)
   end
 
   def create
