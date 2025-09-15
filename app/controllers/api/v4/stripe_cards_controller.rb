@@ -145,7 +145,7 @@ module Api
         return render json: { error: "not_authorized" }, status: :forbidden unless current_token.application&.trusted?
         return render json: { error: "invalid_operation", messages: ["card must be virtual"] }, status: :bad_request unless @stripe_card.virtual?
 
-        @ephemeral_key = @stripe_card.ephemeral_key(nonce: params[:nonce], stripe_version: params[:stripe_version])
+        @ephemeral_key = @stripe_card.ephemeral_key(nonce: params[:nonce], stripe_version: params[:stripe_version] || "2020-03-02")
 
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 
