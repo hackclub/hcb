@@ -266,23 +266,25 @@ export const initalActions = [
 ]
 
 export const adminActions = (adminUrls, isPretending) => {
-  if(isPretending) {
-    return [{
-      id: 'pretend',
-      name: 'Stop pretending not to be an admin',
-      keywords: 'pretend admin',
-      perform: () =>
-        fetch('/users/toggle_pretend_is_not_admin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrf(),
-          },
-        }).then(navigate('/')),
-      section: 'Actions',
-      icon: <Icon glyph="door-leave" size={16} />,
-      priority: Priority.HIGH,
-    }]
+  if (isPretending) {
+    return [
+      {
+        id: 'pretend',
+        name: 'Stop pretending not to be an admin',
+        keywords: 'pretend admin',
+        perform: () =>
+          fetch('/users/toggle_pretend_is_not_admin', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrf(),
+            },
+          }).then(navigate('/')),
+        section: 'Actions',
+        icon: <Icon glyph="door-leave" size={16} />,
+        priority: Priority.HIGH,
+      },
+    ]
   }
   return [
     {
