@@ -244,7 +244,7 @@ class ReceiptsController < ApplicationController
   def metadata
     authorize @receipt
 
-    render json: { name: @receipt.file.blob.filename, total: (@receipt.extracted_total_amount_cents.present? ? @receipt.extracted_total_amount_cents / 100.0 : nil), seller_name: @receipt.extracted_merchant_name, seller_address_zip: @receipt.extracted_merchant_zip_code }
+    render json: { name: @receipt.file.blob.filename, preview: @receipt.preview, total: (@receipt.extracted_total_amount_cents.present? ? @receipt.extracted_total_amount_cents / 100.0 : nil), seller_name: @receipt.extracted_merchant_name, seller_address_zip: @receipt.extracted_merchant_zip_code }
   end
 
   private

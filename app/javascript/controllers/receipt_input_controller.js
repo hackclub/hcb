@@ -21,9 +21,12 @@ export default class extends Controller {
     const files = this.fileInputTarget.files
     const newFile = files[files.length - 1]
 
-    const html = `<li>${newFile.name}</li>`
-    this.listTarget.innerHTML += html
-    this.clearButtonTarget.classList.remove('hidden')
+    let preview;
+    if (newFile.type.startsWith("image")) {
+      preview = URL.createObjectURL(newFile)
+    }
+
+    this.appendItem(newFile.name, preview)
   }
 
   async addReceipt() {
@@ -44,15 +47,29 @@ export default class extends Controller {
       headers: { 'X-CSRF-Token': csrf() },
     }).then(res => res.json())
 
-    const html = `<li>${metadata.name}</li>`
-    this.listTarget.innerHTML += html
-    this.clearButtonTarget.classList.remove('hidden')
+    this.appendItem(metadata.name, metadata.preview)
 
     this.receiptSelectOutlet.render()
 
     if (this.hasExtractionOutlet) {
       this.extractionOutlet.pasteData(metadata)
     }
+  }
+
+  appendItem(name, image) {
+    const itemElement = document.createElement("div")
+
+    const imageElement = document.createElement("img")
+    imageElement.src = image || "https://icons.hackclub.com/api/icons/white/payment-docs"
+    imageElement.alt = image ? `Receipt preview for "${name}"` : "Receipt icon"
+    itemElement.appendChild(imageElement)
+
+    const nameElement = document.createElement("p")
+    nameElement.innerText = name
+    itemElement.appendChild(nameElement)
+
+    this.listTarget.appendChild(itemElement)
+    this.clearButtonTarget.classList.remove('hidden')
   }
 
   clear() {

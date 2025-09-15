@@ -545,3 +545,28 @@ input:where([data-behavior='otp_input']) {
     transform: scale(1.0625);
   }
 }
+
+.receipt-input__list {
+  list-style-type: none;
+  padding: 0.25rem 0rem;
+  
+  div {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+
+    border-bottom-width: 1px;
+    border-bottom-color: $slate;
+    border-bottom-style: solid;
+
+    img {
+      width: 2rem;
+      height: 3rem;
+    }
+  }
+
+  div:last-child {
+    border-bottom-width: 0px;
+  }
+}
