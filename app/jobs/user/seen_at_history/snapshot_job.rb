@@ -20,7 +20,7 @@ class User
       end
 
       def users
-        ::User.joins(:user_sessions).where("user_sessions.last_seen_at between ? and ?", period_start, period_end).distinct
+        ::User.joins(:user_sessions).where("user_sessions.last_seen_at between ? and ? AND user_sessions.impersonated_by_id is NULL", period_start, period_end).distinct
       end
 
       def period_start
