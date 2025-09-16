@@ -13,5 +13,5 @@
         "Google Workspace Waitlist" => "https://airtable.com/appEzv7w2IBMoxxHe/tbl9CkfZHKZYrXf1T/viwgfJvrrD9Jn9VLj"
       } : {} %>
 
-   <%= react_component "command_bar/CommandBar", { admin: auditor_signed_in?, adminUrls: @admin_urls }, { camelize_props: false } %>
+   <%= react_component "command_bar/CommandBar", { admin: auditor_signed_in?, admin_override_pretend: current_user.admin_override_pretend?, adminUrls: @admin_urls }, { camelize_props: false } %>
 <% end %>

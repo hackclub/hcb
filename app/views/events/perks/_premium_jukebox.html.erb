@@ -12,7 +12,7 @@
     <% elsif !perks_available %>
       <% jukebox_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
     <% elsif active_teenagers_count < 10 %>
-      <% jukebox_ineligible_reason = "Organization must have 10 or more active teens" %>
+      <% jukebox_ineligible_reason = "Organization must have 10 or more active teenagers" %>
     <% end %>
     <% if jukebox_ineligible_reason %>
       <div class="tooltipped tooltipped--w inline-block" aria-label="<%= jukebox_ineligible_reason %>">
@@ -27,7 +27,7 @@
   </div>
 
   <p>
-    Does your HCB organization have 10 or more active teens? Add a link to
+    Does your HCB organization have 10 or more active teenagers? Add a link to
     <%= link_to "Jukebox Print", "https://www.jukeboxprint.com/custom-stickers" %>
     to your website for a $500 coupon to spend on custom stickers, cards, marketing materials, and more!
   </p>

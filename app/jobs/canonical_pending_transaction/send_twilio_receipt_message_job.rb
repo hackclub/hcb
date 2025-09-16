@@ -21,10 +21,6 @@ class CanonicalPendingTransaction
       TwilioMessageService::Send.new(@user, message, hcb_code:).run!
     end
 
-    discard_on(Twilio::REST::RestError) do |job, error|
-      Rails.error.report(error) unless User.find(job.arguments.first[:user_id]).phone_number.starts_with?("+44") # we can't send text messages to the UK
-    end
-
   end
 
 end

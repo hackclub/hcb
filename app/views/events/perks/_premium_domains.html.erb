@@ -12,7 +12,7 @@
     <% elsif !perks_available %>
       <% domains_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
     <% elsif active_teenagers_count < 5 %>
-      <% domains_ineligible_reason = "Organization must have 5 or more active teens" %>
+      <% domains_ineligible_reason = "Organization must have 5 or more active teenagers" %>
     <% end %>
     <% if domains_ineligible_reason %>
       <div class="tooltipped tooltipped--w inline-block" aria-label="<%= domains_ineligible_reason %>">
@@ -27,7 +27,7 @@
   </div>
 
   <p>
-    More domains? Get $20 to spend on domains in the form of a card grant if you have 5 or more active teens!
+    More domains? Get $20 to spend on domains in the form of a card grant if you have 5 or more active teenagers!
   </p>
   <p>
     This is a separate promotion from the Porkbun domains below; feel free to claim both :D
