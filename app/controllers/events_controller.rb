@@ -1063,7 +1063,7 @@ class EventsController < ApplicationController
     }
 
     if type.present?
-      types = type.is_a?(Array) ? type : [type]
+      types = Array(type)
       types.each do |t|
         filter = type_filters[t]
         next unless filter
