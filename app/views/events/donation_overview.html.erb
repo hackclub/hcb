@@ -93,11 +93,13 @@
               slot="icon">
           </qr-code>
           <% if @event.logo.attached? %>
-            <qr-code
-              contents='<%= start_donation_donations_url @event %>'
-              id="qrCode--logo">
-              <%= image_tag "data:#{@event.logo.blob.content_type};base64," + @event.logo.open { |file| Base64.encode64(file.read) }, slot: "icon", class: "rounded", style: "height: 36px;" %>
-            </qr-code>
+            <%= error_boundary fallback_text: "failed to load logo", ignored_errors: [ActiveStorage::FileNotFoundError] do %>
+              <qr-code
+                contents='<%= start_donation_donations_url @event %>'
+                id="qrCode--logo">
+                <%= image_tag "data:#{@event.logo.blob.content_type};base64," + @event.logo.open { |file| Base64.encode64(file.read) }, slot: "icon", class: "rounded", style: "height: 36px;" %>
+              </qr-code>
+            <% end %>
           <% end %>
           <qr-code
             contents='<%= start_donation_donations_url @event %>'

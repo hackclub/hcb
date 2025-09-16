@@ -13,7 +13,7 @@
 
       <% if et.receipts.any? %>
         <% if organizer_signed_in? %>
-          <span class="tooltipped tooltipped--e" aria-label="<%= et.category_name.present? ? et.category_name : "Not categorized" %>">
+          <span class="tooltipped tooltipped--e" aria-label="<%= et.category_name.presence || "Not categorized" %>">
             <%= link_to et, target: "_blank", class: "text-decoration-none" do %>
               <%= inline_icon "receipt", size: 16, class: "ml1" %>
             <% end %>

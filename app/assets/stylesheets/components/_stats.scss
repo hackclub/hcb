@@ -8,10 +8,11 @@
   line-height: 1;
   margin: 0; // reset browser default on <dd>
   margin-bottom: 0.25rem;
+  --unit: '$';
 }
 
 .stat:not(.stat--plain) .stat__value:before {
-  content: '$';
+  content: var(--unit);
   color: map-get($palette, muted);
   font-size: 1.5rem;
   vertical-align: top;
