@@ -24,7 +24,7 @@ module HasWiseRecipient
     def self.information_required_for(currency)
       fields = []
 
-      if self.is_a?(User::PayoutMethod::WiseTransfer)
+      if self.name.constantize == User::PayoutMethod::WiseTransfer
         fields << { 
           type: :text_field,
           key: "account_holder",
