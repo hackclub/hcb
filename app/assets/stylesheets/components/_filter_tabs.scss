@@ -17,7 +17,7 @@
     font-family: inherit;
     color: inherit;
     border-bottom: 2px solid transparent;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.7rem;
 
     &.active {
       border-color: map-get($palette, primary);
