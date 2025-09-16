@@ -1,4 +1,4 @@
-<%# locals: (form:, disabled:, excluded_fields: [], model: User::PayoutMethod::WiseTransfer) %>
+<%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer) %>
 
 <% (WiseTransfer::AVAILABLE_CURRENCIES + [nil]).each do |currency| %>
   <template x-if="currency == '<%= currency.nil? ? "null" : currency %>'">
