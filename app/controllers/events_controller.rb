@@ -20,11 +20,11 @@ class EventsController < ApplicationController
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
   LEDGER_FILTERS = [
-    { key: "type", label: "Type", type: "select", options: %w[all settled pending] },
-    { key: "direction", label: "Direction", type: "select", options: %w[all revenue expenses] },
-    { key: "amount", label: "Amount", type: "range_range" },
     { key: "user", label: "User", type: "user_select" },
+    { key: "type", label: "Type", type: "select", options: %w[all settled pending] },
     { key: "date", label: "Date", type: "date_range" },
+    { key: "amount", label: "Amount", type: "range_range" },
+    { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] },
   ].freeze
 
   # GET /events
@@ -180,6 +180,15 @@ class EventsController < ApplicationController
       @popover = flash[:popover]
       flash.delete(:popover)
     end
+
+    @filters = LEDGER_FILTERS
+  end
+
+  def user_select
+    authorize @event
+    @users = @event.users.order("full_name ASC")
+
+    render partial: "events/filters/user_select", locals: { users: @users }
   end
 
   def ledger
@@ -247,6 +256,8 @@ class EventsController < ApplicationController
       @transactions = Kaminari.paginate_array(@transactions).page(params[:page]).per(params[:per] || 75)
       @mock_total = @transactions.sum(&:amount_cents)
     end
+
+    @filters = LEDGER_FILTERS
 
     render layout: false
   end

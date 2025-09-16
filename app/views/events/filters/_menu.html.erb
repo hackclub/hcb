@@ -58,6 +58,11 @@
 
               <%= form.submit "Filter..." %>
             <% end %>
+          
+          <% when "user_select" %>
+          <%= turbo_frame_tag "user_select", loading: "lazy", src: event_user_select_path(@event) do %>
+            Loading...
+          <% end %>
 
           <% when "amount_range" %>
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
