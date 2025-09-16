@@ -1222,7 +1222,7 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = if params[:user].present?
+    @users = if params[:user].present?
               Array(params[:user]).map { |u| @event.users.friendly.find(u, allow_nil: true) }.compact
             end
 
