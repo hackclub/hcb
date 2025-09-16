@@ -232,7 +232,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def stopped?
-    column_status == 'stopped'
+    column_status == "stopped"
   end
 
   def reissue!
