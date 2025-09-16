@@ -11,6 +11,7 @@ module StripeAuthorizationService
         "government_licensed_horse_dog_racing_us_region_only",
         "government_owned_lotteries_non_us_region",
         "government_owned_lotteries_us_region_only",
+        "wires_money_orders"
       ]
     ).freeze
 end
