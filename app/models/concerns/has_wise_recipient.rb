@@ -3,7 +3,7 @@
 module HasWiseRecipient
   extend ActiveSupport::Concern
 
-  included do
+  included do |base|
     include CountryEnumable
     has_country_enum(field: :recipient_country)
 
@@ -24,7 +24,14 @@ module HasWiseRecipient
     def self.information_required_for(currency)
       fields = []
 
-      fields << { type: :text_field, key: "account_holder", placeholder: "Fiona Hackworth", label: "Account holder's name" }
+      if base.is_a?(User::PayoutMethod::WiseTransfer)
+        fields << { 
+          type: :text_field,
+          key: "account_holder",
+          placeholder: "Fiona Hackworth",
+          label: "Account holder's name"
+        }
+      end
 
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
