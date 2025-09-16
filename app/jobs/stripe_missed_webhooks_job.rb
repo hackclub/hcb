@@ -10,7 +10,7 @@ class StripeMissedWebhooksJob < ApplicationJob
       if events.count == 100
         Rails.error.unexpected "🚨 100+ Stripe webhooks failed in the past five minutes."
       else
-        Rails.error.unexpected "🚨 #{events.count} Stripe webhooks failed in the past five minutes."
+        Rails.error.unexpected "🚨 #{events.count} Stripe webhooks failed in the past five minutes: #{events.pluck(:id).to_sentence}."
       end
     end
   end

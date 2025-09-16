@@ -1,5 +1,5 @@
-<% raffle_program = "teen-raffle-#{Date.current.strftime("%m-%Y")}" %>
-<%= render "raffles/raffle_modal", id: "join_teen_raffle", program: raffle_program %>
+<% raffle_program = "teenager-raffle-#{Date.current.strftime("%m-%Y")}" %>
+<%= render "raffles/raffle_modal", id: "join_teenager_raffle", program: raffle_program %>
 
 <% if current_user.teenager? && Date.current.month == 9 %>
   <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
@@ -37,7 +37,7 @@
   <% if already_joined %>
     <%= @raffle_card %>
   <% else %>
-    <%= link_to new_raffle_path(program: raffle_program), class: "w-full no-underline text-inherit", data: { behavior: "modal_trigger", modal: "join_teen_raffle" } do %>
+    <%= link_to new_raffle_path(program: raffle_program), class: "w-full no-underline text-inherit", data: { behavior: "modal_trigger", modal: "join_teenager_raffle" } do %>
       <%= @raffle_card %>
     <% end %>
   <% end %>
