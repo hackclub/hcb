@@ -16,9 +16,8 @@
   &.bordered {
     font-family: inherit;
     color: inherit;
-    border-bottom: 2px solid rgba(200, 200, 200, 0.3);
+    border-bottom: 2px solid transparent;
     padding: 0.5rem 1rem;
-    flex: 1;
 
     &.active {
       border-color: map-get($palette, primary);
