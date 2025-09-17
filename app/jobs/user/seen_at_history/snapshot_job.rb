@@ -23,10 +23,10 @@ class User
         ::User
           .joins(:user_sessions)
           .where(
-          	user_sessions: { 
-          		last_seen_at: period_start..period_end, 
-          		impersonated_by_id: nil 
-          	}
+            user_sessions: {
+              last_seen_at: period_start..period_end,
+              impersonated_by_id: nil
+            }
           )
           .distinct
       end
