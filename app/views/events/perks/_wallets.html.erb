@@ -1,0 +1,21 @@
+<%# locals: (event:, perks_available:) %>
+
+<% wallets_available = false %>
+
+<div class="card mb3" id="wallets">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-wallets">
+    <h3 class="h1 py-4 my0 color-black">Wallets</h3>
+    <%= link_to wallets_available ? "Request" : "Expired",
+                perks_available && wallets_available ? "https://hack.af/hcb-wallets?prefill_Organization%20Name=#{event.name}&prefill_Recipient%20Name=#{current_user.name}&prefill_Login%20Email=#{current_user.email}" : root_path,
+                class: "btn #{"disabled" unless perks_available && wallets_available}",
+                target: :_blank %>
+  </div>
+
+  <p class="mb0">
+    The days of needing thick leather wallets are coming to an end. Have physical HCB cards, but not sure how
+    to keep them?
+    We'll ship you a <%= link_to "minimalist wallet", "https://hack.af/minimalist-wallet", target: :_blank %>—durable with a
+    slim form factor designed to carry the basic necessities. Each wallet is individually printed and personally shipped
+    out by the HCB team.
+  </p>
+</div>

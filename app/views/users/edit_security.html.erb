@@ -61,7 +61,7 @@
       <div class="card border b--info mt0 mb3">
         <% if @user.totp.present? %>
           <p>
-            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post } %>
+            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
           </p>
         <% else %>
           <p>

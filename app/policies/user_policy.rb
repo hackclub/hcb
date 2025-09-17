@@ -105,4 +105,8 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
+  def toggle_pretend_is_not_admin?
+    user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
 end

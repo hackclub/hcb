@@ -11,9 +11,11 @@ gem "rails", git: "https://github.com/rails/rails.git", branch: "7-2-stable"
 gem "puma", "~> 6.6" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
+gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
-gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
+gem "sidekiq-cron", "~> 2.3" # run Sidekiq jobs at scheduled intervals
+gem "activejob-traffic_control" # throttle jobs
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -35,7 +37,6 @@ gem "faraday" # web requests
 gem "stripe", "11.7.0"
 gem "plaid", "~> 34.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
-gem "recursive-open-struct" # for stubbing stripe api objects
 
 gem "aws-sdk-s3", require: false
 
@@ -43,7 +44,7 @@ gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
 gem "twilio-ruby" # SMS notifications
 
-gem "google-apis-admin_directory_v1", "~> 0.66.0" # GSuite
+gem "google-apis-admin_directory_v1", "~> 0.67.0" # GSuite
 
 gem "pg_search" # full-text search
 
@@ -58,7 +59,7 @@ gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 gem "friendly_id", "~> 5.5.1" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
-gem "active_storage_validations", "2.0.2" # file validations
+gem "active_storage_validations", "3.0.1" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
@@ -72,6 +73,8 @@ gem "business_time"
 gem "poppler" # PDF parsing
 gem "wicked_pdf" # HTML to PDF conversion
 
+gem "write_xlsx" # Export Excel files
+gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
@@ -94,7 +97,7 @@ gem "grape-entity" # For Grape::Entity ( https://github.com/ruby-grape/grape-ent
 gem "grape-kaminari"
 gem "grape-route-helpers"
 gem "grape-swagger"
-gem "grape-swagger-entity", "~> 0.6"
+gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
@@ -127,11 +130,8 @@ gem "validates_zipcode" # validation for event's zip codes
 
 gem "rqrcode" # QR code generation
 
-gem "brakeman" # static security vulnerability scanner
-
 gem "awesome_print" # pretty print objects in console
 gem "byebug", platforms: [:windows]
-gem "dry-validation"
 
 gem "bootsnap", ">= 1.4.4", require: false # reduces boot times through caching; required in config/boot.rb
 
@@ -139,18 +139,10 @@ gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
 gem "statsd-instrument", "~> 3.9" # For reporting to HC Grafana
 
-group :production do
-
-  # gem "heroku-deflater" # compression
-
-  # Heroku language runtime metrics
-  # https://devcenter.heroku.com/articles/language-runtime-metrics-ruby#add-the-barnes-gem-to-your-application
-  gem "barnes"
-end
-
 group :test do
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
+  gem "webmock"
 end
 
 group :development, :test do
@@ -158,6 +150,7 @@ group :development, :test do
   gem "rubocop"
   gem "rubocop-rails", "~> 2.30"
   gem "relaxed-rubocop"
+  gem "brakeman" # static security vulnerability scanner
 
   gem "rspec-rails", "~> 7.1.1"
 
@@ -185,7 +178,7 @@ group :development do
 
   # Ruby language server
   gem "solargraph", require: false
-  gem "solargraph-rails", "~> 0.2.0", require: false
+  gem "solargraph-rails", "~> 1.2.0", require: false
 
   gem "htmlbeautifier", require: false # for https://marketplace.visualstudio.com/items?itemName=tomclose.format-erb
 
@@ -198,6 +191,7 @@ gem "jbuilder", "~> 2.13"
 
 gem "ledgerjournal"
 gem "doorkeeper", "~> 5.8"
+gem "doorkeeper-device_authorization_grant"
 
 gem "cssbundling-rails", "~> 1.4"
 

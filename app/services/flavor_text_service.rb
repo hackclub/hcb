@@ -135,6 +135,7 @@ class FlavorTextService
 
   def flavor_texts
     [
+      "duck.",
       "The hivemind known as HCB",
       "How often does time happen?",
       "To an extent",
@@ -273,7 +274,7 @@ class FlavorTextService
       "Made with Rails, Ruby and did I forget to mention Rails?",
       "Did you see the price of #{%w[Ðogecoin ₿itcoin Ξtherium].sample(random: @random)}?!",
       "Guess how much it costs to run this thing!",
-      "Bytes served fresh daily by Heroku",
+      "Bytes served fresh daily by Hetzner",
       "Running with Ruby on Rails #{Rails.gem_version.canonical_segments.first}",
       "Running on Rails on Ruby",
       "Try saying that 5 times fast!",
@@ -502,7 +503,7 @@ class FlavorTextService
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
       "Wanna&nbsp;<a href='#{Rails.configuration.constants.github_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
       "everyone's favorite money thing!",
-      -> { "#{UserSession.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
+      -> { "#{UserSession.not_impersonated.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
       "We Column like we see 'em!",
       "Raccoon-tested, dinosaur-approved.",
       "original recipe!",
@@ -529,6 +530,7 @@ class FlavorTextService
       "Wire me up before you go-go",
       "Gone SEPA-rate ways",
       "I like my fiscal sponsors like I like my relationships: regulated and auditable",
+      "🤧 ACHoo",
       '#{FlavorTextService.new.generate}', # rubocop:disable Lint/InterpolationCheck
       -> { missing_receipts = HcbCode.missing_receipt.receipt_required.count; "only #{missing_receipts} missing #{"receipt".pluralize(missing_receipts)}!" }, # => "only 20 missing receipts!"
     ]

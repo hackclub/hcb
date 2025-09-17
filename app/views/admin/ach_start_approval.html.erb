@@ -27,7 +27,7 @@
 <h3>Actions</h3>
 
 <% if @ach_transfer.pending? %>
-  <%= form_with(model: nil, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
     <%= form.submit @ach_transfer.scheduled_on.present? ? "Approve ACH transfer" : "Send ACH transfer", data: { confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
     <% if @ach_transfer.scheduled_on.present? %>
       <br>
@@ -36,14 +36,14 @@
   <% end %>
 
   <% unless @ach_transfer.scheduled_on.present? %>
-    <%= form_with(model: nil, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
+    <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
       <%= form.submit "⚡ Send in realtime", data: { confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incurr a $1 fee from Column, that will be covered by HCB." } %>
     <% end %>
   <% end %>
 
   <p>or</p>
 
-  <%= form_with(model: nil, local: true, url: ach_reject_admin_path(@ach_transfer), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: ach_reject_admin_path(@ach_transfer), method: :post) do |form| %>
     <div class="field">
       <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>

@@ -115,6 +115,10 @@ module Reimbursement
               payout_holding.save!
               payout_holding.mark_sent!
             end
+          when User::PayoutMethod::WiseTransfer
+            if payout_holding.created_at < 20.minutes.ago
+              Rails.error.unexpected "🚨 WiseTransfer payout holding (#{payout_holding.id}) created more than 20 minutes ago but still unsent."
+            end
           else
             raise ArgumentError, "🚨⚠️ unsupported payout method!"
           end

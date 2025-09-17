@@ -19,15 +19,12 @@
                     <% disabled_message = "HCB transfers disabled" if sending && !policy(event).create_transfer? %>
                     <div data-id="<%= event.public_id %>" data-slug="<%= event.slug %>" data-name="<%= event.name %>" data-organization-select-target="organization" style="<%= i > 50 ? "display: none" : "" %>" data-index="<%= i %>">
                         <button <%= "disabled" if disabled_message %> aria-label="<%= disabled_message %>" class="<%= "tooltipped tooltipped--i" if disabled_message %> text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer disabled:cursor-default hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150" type="button">
-                            <div class="text-left"><%= event.name %></div>
+                            <div class="text-left <%= "tooltipped tooltipped--e" if admin_signed_in? %>" aria-label="<%= "ID: #{event.id}" if admin_signed_in? %>"><%= event.name %></div>
+
                             <div class="text-muted pl-2">
-                                <% if admin_signed_in? %>
-                                    <%= event.id %>
-                                <% else %>
-                                    <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
-                                        <strong>-</strong>
-                                    <% end %>
-                                <% end %>
+                              <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
+                                  <strong>-</strong>
+                              <% end %>
                             </div>
                         </button>
                         <hr class="my-0">

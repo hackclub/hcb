@@ -1,3 +1,5 @@
+/* global Turbo */
+
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
 import { Editor } from '@tiptap/core'
@@ -6,11 +8,16 @@ import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import { mountReactNode } from './tiptap/mount_react_node'
 
 import csrf from '../common/csrf'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
 import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
 import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
+import { TopMerchantsNode } from './tiptap/nodes/top_merchants_node'
+import { TopCategoriesNode } from './tiptap/nodes/top_categories_node'
+import { TopTagsNode } from './tiptap/nodes/top_tags_node'
+import { TopUsersNode } from './tiptap/nodes/top_users_node'
 
 export default class extends Controller {
   static targets = ['editor', 'form', 'contentInput', 'autosaveInput']
@@ -64,6 +71,10 @@ export default class extends Controller {
         DonationGoalNode,
         HcbCodeNode,
         DonationSummaryNode,
+        TopMerchantsNode,
+        TopCategoriesNode,
+        TopTagsNode,
+        TopUsersNode,
       ],
       editorProps: {
         attributes: {
@@ -183,37 +194,28 @@ export default class extends Controller {
     this.editor.chain().focus().setImage({ src: url }).run()
   }
 
+  async block(type, parameters, blockId) {
+    let result
+    if (blockId) {
+      result = await this.editBlock(blockId, parameters)
+    } else {
+      result = await this.createBlock(type, parameters)
+    }
+
+    if (result !== null && 'errors' in result) {
+      return result['errors']
+    } else if (!blockId) {
+      this.editor.chain().focus().insertContent({ type, attrs: result }).run()
+    }
+
+    return null
+  }
+
   async donationGoal() {
     const attrs = await this.createBlock('Announcement::Block::DonationGoal')
 
     if (attrs !== null) {
       this.editor.chain().focus().addDonationGoal(attrs).run()
-    }
-  }
-
-  async hcbCode() {
-    const url = window.prompt('Transaction URL')
-
-    if (url === null || url === '') {
-      return
-    }
-
-    const hcbCode = url.split('/').at(-1)
-
-    const attrs = await this.createBlock('Announcement::Block::HcbCode', {
-      hcb_code: hcbCode,
-    })
-
-    if (attrs !== null) {
-      this.editor.chain().focus().addHcbCode(attrs).run()
-    }
-  }
-
-  async donationSummary() {
-    const attrs = await this.createBlock('Announcement::Block::DonationSummary')
-
-    if (attrs !== null) {
-      this.editor.chain().focus().addDonationSummary(attrs).run()
     }
   }
 
@@ -231,14 +233,31 @@ export default class extends Controller {
       },
     }).then(r => r.json())
 
-    if ('errors' in res) {
-      const message = `Could not insert block: ${res.errors.join(', ')}`
+    return res
+  }
 
-      alert(message)
+  async editBlock(id, parameters) {
+    const res = await fetch(`/announcements/blocks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        parameters: JSON.stringify(parameters || {}),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrf(),
+      },
+    }).then(res => {
+      if (res.status === 400) {
+        return res.json()
+      } else {
+        return res.text().then(html => {
+          Turbo.renderStreamMessage(html)
+          mountReactNode(null, `block_${id}`)
+          return null
+        })
+      }
+    })
 
-      return null
-    } else {
-      return res
-    }
+    return res
   }
 }

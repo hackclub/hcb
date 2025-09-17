@@ -112,8 +112,7 @@
       </ul>
     <% end %>
 
-    <%= render "static_pages/index/robotics_raffle" %>
-    <%= render "static_pages/index/teen_raffle" %>
+    <%= render "static_pages/index/teenager_raffle" %>
 
     <%# Latest HCB announcement %>
     <% if @latest_hcb_announcement %>
@@ -151,5 +150,9 @@
       </ul>
     <% end %>
   <% end %>
-  <%= render partial: "static_pages/admin" %>
+  <% if auditor_signed_in? %>
+    <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :eager, target: "_top", class: "w-full") do %>
+      <p>Loading admin tools</p>
+    <% end %>
+  <% end %>
 </main>

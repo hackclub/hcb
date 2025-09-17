@@ -21,22 +21,24 @@
 #  increase_status         :string
 #  memo                    :string
 #  payment_for             :string
-#  recipient_name          :string
 #  recipient_email         :string
+#  recipient_name          :string
 #  send_email_notification :boolean          default(FALSE)
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  column_id               :string
 #  event_id                :bigint           not null
 #  increase_id             :string
+#  payment_recipient_id    :bigint
 #  user_id                 :bigint
 #
 # Indexes
 #
-#  index_increase_checks_on_column_id       (column_id) UNIQUE
-#  index_increase_checks_on_event_id        (event_id)
-#  index_increase_checks_on_transaction_id  ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
-#  index_increase_checks_on_user_id         (user_id)
+#  index_increase_checks_on_column_id             (column_id) UNIQUE
+#  index_increase_checks_on_event_id              (event_id)
+#  index_increase_checks_on_payment_recipient_id  (payment_recipient_id)
+#  index_increase_checks_on_transaction_id        ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
+#  index_increase_checks_on_user_id               (user_id)
 #
 # Foreign Keys
 #
@@ -53,6 +55,7 @@ class IncreaseCheck < ApplicationRecord
   include AASM
   include Payoutable
   include Freezable
+  include Payment
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -62,6 +65,10 @@ class IncreaseCheck < ApplicationRecord
 
   belongs_to :event
   belongs_to :user, optional: true
+
+  def payment_recipient_attributes
+    %i[address_line1 address_line2 address_city address_state address_zip]
+  end
 
   has_one :canonical_pending_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
@@ -225,11 +232,11 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
-    return unless column_id.present? && column_issued?
+    return unless column_id.present? && (column_issued? || column_stopped?)
 
     stopped_id = column_id
 
-    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}")
+    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_stopped?
 
     update!(
       column_id: nil,

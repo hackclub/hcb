@@ -77,7 +77,7 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :sender, class_name: "User"
 
   belongs_to :organizer_position, optional: true
-  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract"
+  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract", dependent: :destroy
 
   validate :not_already_organizer
   validate :not_already_invited, on: :create

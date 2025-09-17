@@ -4,9 +4,10 @@ module BreakdownEngine
   class Merchants
     include StripeAuthorizationsHelper
 
-    def initialize(event, timeframe: nil)
+    def initialize(event, start_date: nil, end_date: Time.now)
       @event = event
-      @timeframe = timeframe
+      @start_date = start_date
+      @end_date = end_date
     end
 
     def run
@@ -21,7 +22,7 @@ module BreakdownEngine
                                         event_mapping: {
                                           event_id: @event.id
                                         },
-                                        raw_stripe_transactions: @timeframe.present? ? { created_at: @timeframe.ago..Time.now } : nil
+                                        raw_stripe_transactions: @start_date.present? || @end_date.present? ? { created_at: @start_date..@end_date } : nil
                                       }.compact)
                                       .group("merchant")
                                       .order(Arel.sql("SUM(raw_stripe_transactions.amount_cents) * -1 DESC"))

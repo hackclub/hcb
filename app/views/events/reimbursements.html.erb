@@ -47,7 +47,7 @@
 </div>
 
 <div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb2">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
   <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
@@ -88,7 +88,7 @@
                <%= user_mention report.user %>
             </td>
             <td class="right-align">
-               <%= render_money report.amount_cents %>
+               <%= report.amount.format %>
             </td>
           </tr>
         <% end %>

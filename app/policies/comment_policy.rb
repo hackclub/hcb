@@ -17,15 +17,17 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def create?
+    return false if record.admin_only && !user.auditor?
+
     user.auditor? || users.include?(user)
   end
 
   def edit?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   def update?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   def react?
@@ -37,7 +39,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   private
@@ -46,7 +48,7 @@ class CommentPolicy < ApplicationPolicy
     if record.commentable.respond_to?(:events)
       record.commentable.events.collect(&:users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
-      [record.commentable.user] + record.commentable.event.users
+      [record.commentable.user] + (record.commentable.event&.users || [])
     elsif record.commentable.is_a?(Event)
       record.commentable.users
     else

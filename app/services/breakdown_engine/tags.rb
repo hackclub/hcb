@@ -2,21 +2,27 @@
 
 module BreakdownEngine
   class Tags
-    def initialize(event, timeframe: nil)
+    def initialize(event, start_date: nil, end_date: Time.now)
       @event = event
-      @timeframe = timeframe
+      @start_date = start_date
+      @end_date = end_date
     end
 
     def run
       tags = @event.tags.includes(hcb_codes: [:canonical_transactions, :canonical_pending_transactions]).each_with_object([]) do |tag, array|
-        transactions = @timeframe.present? ? tag.hcb_codes.select { |hcb_code| hcb_code.date&.after?(@timeframe.ago) } : tag.hcb_codes
+        transactions = tag.hcb_codes.select do |hcb_code|
+          next false unless @start_date.nil? || hcb_code.date&.after?(@start_date)
+          next false unless @end_date.nil? || hcb_code.date&.before?(@end_date)
+
+          true
+        end
         amount_cents_sum = transactions.sum do |hcb_code|
           hcb_code.amount_cents.abs
         end
         next if amount_cents_sum == 0
 
         array << {
-          name: tag.label,
+          name: "#{tag.emoji} #{tag.label}",
           truncated: tag.label,
           value: Money.from_cents(amount_cents_sum).to_f
         }

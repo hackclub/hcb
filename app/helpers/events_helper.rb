@@ -92,13 +92,27 @@ module EventsHelper
   end
 
   def check_filters?(filter_options, params)
-    filter_options.any? do |option|
-      key = option[:key]
-      if key.to_s.end_with?("_*") && option[:type] == "date_range"
-        base = key.to_s.chomp("_*")
-        params["#{base}_before"].present? || params["#{base}_after"].present?
+    filter_options.any? do |opt|
+      key = opt[:key].to_s
+
+      case opt[:type]
+      when "date_range"
+        params["#{opt[:key_base]}_before"].present? || params["#{opt[:key_base]}_after"].present?
+      when "amount_range"
+        params["#{opt[:key_base]}_less_than"].present? || params["#{opt[:key_base]}_greater_than"].present?
       else
         params[key].present?
+      end
+    end
+  end
+
+  def validate_filter_options(filter_options, params)
+    filter_options.each do |opt|
+      case opt[:type]
+      when "date_range"
+        validate_date_range(opt[:key_base], params)
+      when "amount_range"
+        validate_amount_range(opt[:key_base], params)
       end
     end
   end
@@ -110,4 +124,33 @@ module EventsHelper
       end
     end
   end
+
+  private
+
+  def validate_date_range(base, params)
+    less = params["#{base}_before"]
+    greater = params["#{base}_after"]
+    return unless less.present? && greater.present?
+
+    begin
+      less_date = Date.parse(less)
+      greater_date = Date.parse(greater)
+      if greater_date < less_date
+        flash[:error] = "Invalid date range: 'after' date is greater than 'before' date"
+      end
+    rescue ArgumentError
+      flash[:error] = "Invalid date format"
+    end
+  end
+
+  def validate_amount_range(base, params)
+    less = params["#{base}_less_than"]
+    greater = params["#{base}_greater_than"]
+    return unless less.present? && greater.present?
+
+    if greater.to_f > less.to_f
+      flash[:error] = "Invalid amount range: minimum is greater than maximum"
+    end
+  end
+
 end

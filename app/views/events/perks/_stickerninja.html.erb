@@ -1,0 +1,24 @@
+<%# locals: (perks_available:) %>
+
+<div class="card mb3" id="stickerninja">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-stickerninja">
+    <%= link_to image_tag("stickerninja.png", width: 120), "https://stickerninja.com/", target: :_blank %>
+    <div class="actions tooltipped tooltipped--w inline-block mt0" aria-label="You are not eligible to access this perk.">
+      <span class="btn disabled">Expired</span>
+    </div>
+  </div>
+
+  <p class="mb0">
+    Want to give away stickers at your next event or rep your organization year round? We've got you covered.
+    HCB has partnered with StickerNinja to offer fiscally sponsored organizations 15% off on all orders. Visit their website
+    <%= link_to "here", "https://stickerninja.com/", target: :_blank %>
+    to place an order.
+    <% if perks_available %>
+      <br>
+      <br>
+      <strong>This discount code is reusable and exclusively for HCB users.
+        Sharing it outside of your organization may result in everyone using HCB losing the perk.
+      </strong>
+    <% end %>
+  </p>
+</div>
