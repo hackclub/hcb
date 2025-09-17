@@ -858,7 +858,7 @@ GEM
     write_xlsx (1.12.2)
       nkf
       rubyzip (~> 2.4.0)
-    xxhash (0.6.0)
+    xxhash (0.7.0)
     yard (0.9.37)
     yard-solargraph (0.1.0)
       yard (~> 0.9)
