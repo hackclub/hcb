@@ -152,7 +152,7 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_create { self.teenager = teenager? }
+  before_update { self.teenager = teenager? }
 
   before_create :format_number
   before_save :on_phone_number_update
