@@ -22,17 +22,13 @@
 #
 class Event
   class Plan
-    class Argosy2025 < SpendOnly
+    class ArgosyFtcSim2025 < Argosy2025
       def label
-        "2025 Argosy grantee spend-only"
-      end
-
-      def features
-        super - %w[promotions google_workspace]
+        "2025 Argosy FTC SIM grant spend-only"
       end
 
       def contract_docuseal_template_id
-        1766872
+        1711777
       end
 
     end
