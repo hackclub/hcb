@@ -69,7 +69,7 @@
       <% category = TransactionCategory::Definition::ALL[category_slug] %>
       <tr>
         <td title="<%= category&.slug %>"><%= category&.label || "Uncategorized" %></td>
-        <td><%= render_money amount_cents_sum.abs %></td>
+        <td><%= render_money amount_cents_sum %></td>
       </tr>
     <% end %>
   <% end %>

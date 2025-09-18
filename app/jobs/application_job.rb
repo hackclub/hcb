@@ -8,4 +8,8 @@ class ApplicationJob < ActiveJob::Base
     def self.sidekiq_options(**); end
   end
 
+  discard_on(Twilio::REST::RestError) do |job, error|
+    Rails.error.report(error) unless error.message.include?("errors/21612") # we can't send text messages to the UK and other countries: https://www.twilio.com/docs/errors/21612
+  end
+
 end

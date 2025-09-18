@@ -306,8 +306,8 @@ class EventsController < ApplicationController
       @filter = "manager"
     when "readers"
       @filter = "reader"
-    when "active_teens"
-      @filter = "active_teens" if auditor_signed_in?
+    when "active_teenagers"
+      @filter = "active_teenagers" if auditor_signed_in?
     end
 
     @q = params[:q] || ""
@@ -319,7 +319,7 @@ class EventsController < ApplicationController
                            .joins(:user)
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
-    if @filter == "active_teens"
+    if @filter == "active_teenagers"
       @all_positions = @all_positions.select { |op| op.user.teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
@@ -799,7 +799,7 @@ class EventsController < ApplicationController
   def promotions
     authorize @event
 
-    @active_teen_count = @event.users.active_teenager.count
+    @active_teenagers_count = @event.users.active_teenager.count
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
   end
 
