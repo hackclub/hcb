@@ -8,6 +8,12 @@ module ApplicationHelper
     params.merge(new_params)
   end
 
+  def upsert_query_params_from_url(url, **new_params)
+    uri = URI.parse(url)
+    params = Rack::Utils.parse_query(uri.query) || {}
+    params.merge(new_params)
+  end
+
   def render_money(amount, opts = {})
     amount = amount.cents if amount.is_a?(Money)
 

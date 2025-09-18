@@ -186,7 +186,14 @@ class EventsController < ApplicationController
 
   def user_select
     authorize @event
-    @users = @event.users.order("full_name ASC")
+    @search = params[:search] || ""
+    @filter_key = params[:filter_key]
+    @selected = params[:selected]
+    @url = params[:url]
+
+    users_relation = @event.users.where("full_name ILIKE ?", "%#{@search}%").order("full_name ASC")
+    page = (params[:page] || 1).to_i
+    @users = Kaminari.paginate_array(users_relation.to_a).page(page).per(20)
 
     render partial: "events/filters/user_select", locals: { users: @users }
   end
