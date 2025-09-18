@@ -164,7 +164,7 @@ GEM
       parser (>= 2.4)
       smart_properties
     bigdecimal (3.2.3)
-    bindata (2.5.1)
+    bindata (2.5.0)
     bindex (0.8.1)
     blazer (3.3.0)
       activerecord (>= 7.1)
@@ -195,7 +195,7 @@ GEM
     cairo-gobject (4.2.9)
       cairo (>= 1.16.2)
       glib2 (= 4.2.9)
-    cbor (0.5.10.1)
+    cbor (0.5.9.8)
     chartkick (5.1.5)
     childprocess (5.1.0)
       logger (~> 1.5)
@@ -800,7 +800,7 @@ GEM
     thor (1.4.0)
     tilt (2.6.1)
     timeout (0.4.3)
-    tpm-key_attestation (0.14.1)
+    tpm-key_attestation (0.12.1)
       bindata (~> 2.4)
       openssl (> 2.0)
       openssl-signature_algorithm (~> 1.0)
@@ -834,14 +834,14 @@ GEM
       activemodel (>= 6.0.0)
       bindex (>= 0.4.0)
       railties (>= 6.0.0)
-    webauthn (3.4.1)
+    webauthn (3.2.2)
       android_key_attestation (~> 0.3.0)
       bindata (~> 2.4)
       cbor (~> 0.5.9)
       cose (~> 1.1)
       openssl (>= 2.2)
       safety_net_attestation (~> 0.4.0)
-      tpm-key_attestation (~> 0.14.0)
+      tpm-key_attestation (~> 0.12.0)
     webmock (3.25.1)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
@@ -994,7 +994,7 @@ DEPENDENCIES
   validates_email_format_of
   validates_zipcode
   web-console (>= 3.3.0)
-  webauthn (~> 3.4)
+  webauthn (~> 3.2)
   webmock
   whitesimilarity
   wicked_pdf
