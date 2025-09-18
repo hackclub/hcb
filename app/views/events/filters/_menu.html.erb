@@ -13,82 +13,83 @@
     <%= inline_icon "filter", size: 28 %>
   </button>
 
-  <div
-    class="menu__content menu__content--2 menu__content--compact h5"
-    style="width: 290px; padding: 0.5rem"
-    data-menu-target="content">
+  <div class="menu__content menu__content--2 menu__content--compact h5 <%= "w-[350px] h-[400px] p-0" if defined?(vertical) %>" data-menu-target="content" data-controller="filter">
+    <div data-controller="tabs" data-tabs-default-tab-value="<%= filters[0][:label] %>" class="<%= "grid grid-cols-3 h-full gap-0" if defined?(vertical) %>">
+      <div class="<%= "bg-smoke dark:bg-dark flex flex-col items-start gap-1 p-3" if defined?(vertical) %>">
+        <% filters.each do |filter| %>
+          <button
+            id="<%= filter[:label] %>"
+            data-tabs-target="btn"
+            data-action="tabs#select">
+            <%= filter[:label].humanize %>
+          </button>
+        <% end %>
+      </div>
 
-    <div data-controller="tabs" data-tabs-default-tab-value="<%= filters[0][:label] %>">
-
-      <% filters.each do |filter| %>
-        <button
-          id="<%= filter[:label] %>"
-          data-tabs-target="btn"
-          data-action="tabs#select">
-          <%= filter[:label].humanize %>
-        </button>
+      <% unless defined?(vertical) %>
+        <div class="menu__divider"></div>
       <% end %>
 
-      <div class="menu__divider"></div>
-
-      <% filters.each do |filter| %>
-        <div data-tabs-target="tab" id="<%= filter[:label] %>">
-          <% case filter[:type] %>
-          <% when "select" %>
-            <% if filter[:options].empty? %>
-              <p class="p-1 text-center">No <%= filter[:label].pluralize %> found</p>
-            <% end %>
-            <% filter[:options].each do |option| %>
-              <% label, value = option.is_a?(Array) ? option : [option.humanize, option] %>
-              <%= link_to label,
-                          upsert_query_params(filter[:key] => value),
-                          class: "menu__action !border-none #{'menu__action--active' if params[filter[:key]] == value.to_s}" %>
-            <% end %>
-
-          <% when "date_range" %>
-            <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
-              <% ["after", "before"].each do |suffix| %>
-                <label class="bold"><%= suffix.humanize %>...</label>
-                <%= form.date_field "#{filter[:key_base]}_#{suffix}", class: "border mb1", value: params["#{filter[:key_base]}_#{suffix}"] %>
+      <div class="<%= "col-span-2 p-2 overflow-y-scroll" if defined?(vertical) %>">
+        <% filters.each do |filter| %>
+          <div data-tabs-target="tab" id="<%= filter[:label] %>">
+            <% case filter[:type] %>
+            <% when "select" %>
+              <% if filter[:options].empty? %>
+                <p class="p-1 text-center">No <%= filter[:label].pluralize %> found</p>
+              <% end %>
+              <% filter[:options].each do |option| %>
+                <% label, value = option.is_a?(Array) ? option : [option.humanize, option] %>
+                <%= link_to label,
+                            upsert_query_params(filter[:key] => value),
+                            class: "menu__action !border-none #{'menu__action--active' if params[filter[:key]] == value.to_s}" %>
               <% end %>
 
-              <% request.query_parameters.except("#{filter[:key_base]}_before", "#{filter[:key_base]}_after").each do |k, v| %>
-                <%= hidden_field_tag k, v %>
-              <% end %>
-
-              <%= form.submit "Filter..." %>
-            <% end %>
-
-          <% when "user_select" %>
-            <%= turbo_frame_tag "user_select",
-                loading: "lazy",
-                src: event_user_select_path(
-                  @event,
-                  filter_key: filter[:key],
-                  selected: params[filter[:key]],
-                  url: event_path(@event)
-                ) do %>
-              Loading...
-            <% end %>
-          <% when "amount_range" %>
-            <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
-                <% ["less_than", "greater_than"].each do |suffix| %>
+            <% when "date_range" %>
+              <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
+                <% ["after", "before"].each do |suffix| %>
                   <label class="bold"><%= suffix.humanize %>...</label>
-                  <div class="input p-0 mb-2 flex border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3 items-center">
-                    <span class="bold muted text-md" style="width: 1rem;">$</span>
-                    <%= form.number_field "#{filter[:key_base]}_#{suffix}", class: "bg-transparent !border-none", value: params["#{filter[:key_base]}_#{suffix}"] %>
-                  </div>
+                  <%= form.date_field "#{filter[:key_base]}_#{suffix}", class: "border mb1", value: params["#{filter[:key_base]}_#{suffix}"] %>
                 <% end %>
 
-              <% request.query_parameters.except("#{filter[:key_base]}_less_than", "#{filter[:key_base]}_greater_than").each do |k, v| %>
-                <%= hidden_field_tag k, v %>
+                <% request.query_parameters.except("#{filter[:key_base]}_before", "#{filter[:key_base]}_after").each do |k, v| %>
+                  <%= hidden_field_tag k, v %>
+                <% end %>
+
+                <%= form.submit "Filter..." %>
               <% end %>
 
-              <%= form.submit "Filter..." %>
+            <% when "user_select" %>
+              <%= turbo_frame_tag "user_select",
+                  loading: "lazy",
+                  src: event_user_select_path(
+                    @event,
+                    filter_key: filter[:key],
+                    selected: params[filter[:key]],
+                    url: event_path(@event)
+                  ) do %>
+                Loading...
+              <% end %>
+            <% when "amount_range" %>
+              <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
+                  <% ["less_than", "greater_than"].each do |suffix| %>
+                    <label class="bold"><%= suffix.humanize %>...</label>
+                    <div class="input p-0 mb-2 flex border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3 items-center">
+                      <span class="bold muted text-md" style="width: 1rem;">$</span>
+                      <%= form.number_field "#{filter[:key_base]}_#{suffix}", class: "bg-transparent !border-none", value: params["#{filter[:key_base]}_#{suffix}"] %>
+                    </div>
+                  <% end %>
+
+                <% request.query_parameters.except("#{filter[:key_base]}_less_than", "#{filter[:key_base]}_greater_than").each do |k, v| %>
+                  <%= hidden_field_tag k, v %>
+                <% end %>
+
+                <%= form.submit "Filter..." %>
+              <% end %>
             <% end %>
-          <% end %>
-        </div>
-      <% end %>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
 </div>

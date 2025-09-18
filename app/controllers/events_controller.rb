@@ -23,7 +23,7 @@ class EventsController < ApplicationController
     { key: "user", label: "User", type: "user_select" },
     { key: "type", label: "Type", type: "select", options: %w[all settled pending] },
     { key: "date", label: "Date", type: "date_range" },
-    { key: "amount", label: "Amount", type: "range_range" },
+    { key: "amount", label: "Amount", type: "amount_range" },
     { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] },
   ].freeze
 
