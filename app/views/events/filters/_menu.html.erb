@@ -82,7 +82,13 @@
                 Loading...
               <% end %>
             <% when "merchant_select" %>
-              <% turbo_frame_tag :merchants_filter, src: event_merchants_filter_path(@event, merchant: @merchant), loading: "lazy", target: "event_#{@event.id}_ledger" do %>
+              <%= turbo_frame_tag "merchants_filter",
+                  loading: "lazy",
+                  target: "event_#{@event.id}_ledger",
+                  src: event_merchants_filter_path(
+                    @event,
+                    merchant: @merchant
+                  ) do %>
                 Loading...
               <% end %>
             <% when "amount_range" %>
