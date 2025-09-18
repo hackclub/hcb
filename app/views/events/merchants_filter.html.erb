@@ -4,4 +4,7 @@
       <%= link_to(merchant[:name], event_ledger_path(@event, upsert_query_params(merchant: merchant[:id])), class: "flex-auto menu__action #{"menu__action--active" if @merchant == merchant[:id]}", data: { turbo_prefetch: "false" }) %>
     </div>
   <% end %>
+  <% if @merchants.empty? %>
+    <p class="p-1 text-center">No merchants found</p>
+  <% end %>
 <% end %>
