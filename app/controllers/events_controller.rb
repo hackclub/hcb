@@ -27,6 +27,9 @@ class EventsController < ApplicationController
     filters << { key: "date", label: "Date", type: "date_range" }
     filters << { key: "amount", label: "Amount", type: "amount_range" }
     filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
+    filters << { key: "merchant", label: "User", type: "merchant_select" }
+    filters << { key: "receipts", label: "User", type: "select", options: %w[all missing] }
+
     filters
   end
 
@@ -210,7 +213,7 @@ class EventsController < ApplicationController
     tags_relation = @event.tags.where("label ILIKE ?", "%#{@search}%").order("label ASC")
     page = (params[:page] || 1).to_i
     @tags = Kaminari.paginate_array(tags_relation.to_a).page(page).per(20)
-    
+
     render partial: "events/filters/tag_select", locals: { tags: @tags }
   end
 
