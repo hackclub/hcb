@@ -114,9 +114,27 @@
     <% end %>
   <% end %>
 
+  <% if Flipper.enabled?(:parent_event_assignment_2025_09_18, current_user) %>
+    <% admin_tool do %>
+      <%= form_with(model: event, local: true) do |form| %>
+        <h3 id="parent_organization" class="mb2 mt1">Parent Organization</h3>
+
+        <div class="field">
+          <%= form.select(
+            :parent_id,
+            Event.order(name: :asc, id: :asc).where.not(id: event.id).map { |event| [event.name, event.id] },
+            include_blank: "None") %>
+        </div>
+
+        <div class="action">
+          <%= form.submit "Update", disabled:, data: { turbo: false } %>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <% admin_tool do %>
     <%= form_with(model: event, local: true) do |form| %>
-
       <h3 id="sub_organizations" class="mb2 mt1">Sub-organizations</h3>
 
       <ul>
