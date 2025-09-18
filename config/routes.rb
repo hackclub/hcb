@@ -783,6 +783,7 @@ Rails.application.routes.draw do
     get :transaction_heatmap
 
     get :user_select
+    get :tag_select
 
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"

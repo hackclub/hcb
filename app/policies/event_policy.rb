@@ -27,6 +27,7 @@ class EventPolicy < ApplicationPolicy
   alias_method :transaction_heatmap?, :show?
 
   alias_method :user_select?, :show?
+  alias_method :tag_select?, :show?
 
   alias_method :transactions?, :show?
   alias_method :ledger?, :transactions?

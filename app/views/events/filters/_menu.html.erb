@@ -70,6 +70,17 @@
                   ) do %>
                 Loading...
               <% end %>
+            <% when "tag_select" %>
+              <%= turbo_frame_tag "tag_select",
+                  loading: "lazy",
+                  src: event_tag_select_path(
+                    @event,
+                    filter_key: filter[:key],
+                    selected: params[filter[:key]],
+                    url: event_path(@event)
+                  ) do %>
+                Loading...
+              <% end %>
             <% when "amount_range" %>
               <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
                   <% ["less_than", "greater_than"].each do |suffix| %>

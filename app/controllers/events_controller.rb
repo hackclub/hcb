@@ -201,6 +201,19 @@ class EventsController < ApplicationController
     render partial: "events/filters/user_select", locals: { users: @users }
   end
 
+  def tag_select
+    authorize @event
+    @search = params[:search] || ""
+    @filter_key = params[:filter_key]
+    @selected = params[:selected]
+    @url = params[:url]
+    tags_relation = @event.tags.where("label ILIKE ?", "%#{@search}%").order("label ASC")
+    page = (params[:page] || 1).to_i
+    @tags = Kaminari.paginate_array(tags_relation.to_a).page(page).per(20)
+    
+    render partial: "events/filters/tag_select", locals: { tags: @tags }
+  end
+
   def ledger
     begin
       authorize @event
