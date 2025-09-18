@@ -19,13 +19,16 @@ class EventsController < ApplicationController
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
-  LEDGER_FILTERS = [
-    { key: "user", label: "User", type: "user_select" },
-    { key: "type", label: "Type", type: "select", options: %w[all settled pending] },
-    { key: "date", label: "Date", type: "date_range" },
-    { key: "amount", label: "Amount", type: "amount_range" },
-    { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] },
-  ].freeze
+  def ledger_filters
+    filters = []
+    filters << { key: "tags", label: "Tags", type: "tag_select" } if @event.tags.size > 0
+    filters << { key: "user", label: "User", type: "user_select" }
+    filters << { key: "type", label: "Type", type: "select", options: %w[all settled pending] }
+    filters << { key: "date", label: "Date", type: "date_range" }
+    filters << { key: "amount", label: "Amount", type: "amount_range" }
+    filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
+    filters
+  end
 
   # GET /events
   def index
@@ -181,7 +184,7 @@ class EventsController < ApplicationController
       flash.delete(:popover)
     end
 
-    @filters = LEDGER_FILTERS
+    @filters = ledger_filters
   end
 
   def user_select
@@ -264,7 +267,7 @@ class EventsController < ApplicationController
       @mock_total = @transactions.sum(&:amount_cents)
     end
 
-    @filters = LEDGER_FILTERS
+    @filters = ledger_filters
 
     render layout: false
   end
