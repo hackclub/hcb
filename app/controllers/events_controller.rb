@@ -27,8 +27,8 @@ class EventsController < ApplicationController
     filters << { key: "date", label: "Date", type: "date_range" }
     filters << { key: "amount", label: "Amount", type: "amount_range" }
     filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
-    filters << { key: "merchant", label: "User", type: "merchant_select" }
-    filters << { key: "receipts", label: "User", type: "select", options: %w[all missing] }
+    filters << { key: "merchant", label: "Merchant", type: "merchant_select" }
+    filters << { key: "receipts", label: "Receipts", type: "select", options: %w[all missing] }
 
     filters
   end

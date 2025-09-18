@@ -81,6 +81,8 @@
                   ) do %>
                 Loading...
               <% end %>
+            <% when "merchant_select" %>
+              <%= turbo_frame_tag :merchants_filter, src: event_merchants_filter_path(@event, merchant: @merchant), loading: :lazy, target: "event_#{@event.id}_ledger" %>
             <% when "amount_range" %>
               <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
                   <% ["less_than", "greater_than"].each do |suffix| %>
