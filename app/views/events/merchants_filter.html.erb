@@ -1,10 +1,21 @@
 <%= turbo_frame_tag :merchants_filter do %>
+  <%= form_with url: event_merchants_filter_path, method: :get, local: true, class: "mb-2 flex gap-2" do |f| %>
+    <%= f.text_field :search, value: params[:search], placeholder: "Search", class: "w-full pr-10", data: { action: "input->form#submit", form_target: "input" } %>
+      <button type="submit" class="pop muted">
+        <%= inline_icon "search" %>
+      </button>
+      <% request.query_parameters.except(:search).each do |key, value| %>
+        <%= hidden_field_tag key, value %>
+      <% end %>
+  <% end %>
   <% @merchants.each do |merchant| %>
     <div class="flex items-center">
       <%= link_to(merchant[:name], upsert_query_params_from_url(params[:url], merchant: merchant[:id]), class: "flex-auto menu__action #{"menu__action--active" if @merchant == merchant[:id]}", data: { turbo_prefetch: "false" }) %>
     </div>
   <% end %>
   <% if @merchants.empty? %>
-    <p class="p-1 text-center">No merchants found</p>
+    <p class="muted italic p-1 pr-10">
+      <%= @search ? "We couldn't find any merchants with your search term" : "No merchants found" %>
+    </p>
   <% end %>
 <% end %>

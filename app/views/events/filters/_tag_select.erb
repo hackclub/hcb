@@ -5,7 +5,7 @@
       <%= inline_icon "search" %>
     </button>
     <% request.query_parameters.except(:search).each do |key, value| %>
-        <%= hidden_field_tag key, value %>
+      <%= hidden_field_tag key, value %>
     <% end %>
   <% end %>
   <% @tags.each do |tag| %>

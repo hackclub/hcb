@@ -86,7 +86,6 @@
             <% when "merchant_select" %>
               <%= turbo_frame_tag "merchants_filter",
                   loading: "lazy",
-                  target: "event_#{@event.id}_ledger",
                   src: event_merchants_filter_path(
                     @event,
                     filter_key: filter[:key],

@@ -193,7 +193,6 @@ class EventsController < ApplicationController
   def user_select
     authorize @event
     @search = params[:search] || ""
-    @selected = params[:selected]
 
     users_relation = @event.users.where("full_name ILIKE ?", "%#{@search}%").order("full_name ASC")
     page = (params[:page] || 1).to_i
@@ -205,7 +204,6 @@ class EventsController < ApplicationController
   def tag_select
     authorize @event
     @search = params[:search] || ""
-    @selected = params[:selected]
     tags_relation = @event.tags.where("label ILIKE ?", "%#{@search}%").order("label ASC")
     page = (params[:page] || 1).to_i
     @tags = Kaminari.paginate_array(tags_relation.to_a).page(page).per(20)
@@ -1118,6 +1116,7 @@ class EventsController < ApplicationController
     authorize @event
 
     @merchant = params[:merchant]
+    @search = params[:search]
 
     merchants_hash = {}
 
@@ -1129,7 +1128,12 @@ class EventsController < ApplicationController
       end
     end
 
-    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+    filtered_merchants = @search.present? ? merchants_hash.select { |_, m| m[:name].downcase.include?(@search.downcase) } : merchants_hash
+    @merchants = filtered_merchants.map { |id, m| { id:, name: m[:name], count: m[:count] } }.sort_by { |m| -m[:count] }
+
+    page = (params[:page] || 1).to_i
+    per_page = (params[:per] || 20).to_i
+    @merchants = Kaminari.paginate_array(@merchants).page(page).per(per_page)
   end
 
   private
