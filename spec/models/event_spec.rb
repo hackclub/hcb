@@ -64,4 +64,32 @@ RSpec.describe Event, type: :model do
       }.to change { event.reload.total_fee_payments_v2_cents }.from(0).to(1000)
     end
   end
+
+  describe "#parent_id" do
+    it "cannot be cyclical" do
+      event1, event2, event3 = create_list(:event, 3)
+
+      # Set up 1 -> 2 -> 3
+      event2.update!(parent_id: event1.id)
+      event3.update!(parent_id: event2.id)
+
+      event1.parent_id = event3.id
+      expect(event1.valid?).to eq(false)
+      expect(event1.errors[:parent]).to eq(["is cyclical"])
+    end
+
+    it "cannot exceed the maximum depth" do
+      stub_const("Event::MAX_PARENT_DEPTH", 3)
+
+      event1, event2, event3, event4 = create_list(:event, 4)
+
+      # Set up 1 -> 2 -> 3
+      event2.update!(parent_id: event1.id)
+      event3.update!(parent_id: event2.id)
+
+      event4.parent_id = event3.id
+      expect(event4.valid?).to eq(false)
+      expect(event4.errors[:parent]).to eq(["max depth exceeded"])
+    end
+  end
 end
