@@ -1,7 +1,7 @@
 <%# locals: (tag: nil) %>
 
-<div class="relative w-7 mr-2">
-  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+<div class="relative w-[2rem] mr-2">
+  <div class="tag__preview rounded-full w-[2rem] h-[1.3rem] tag-<%= tag.color || "muted" %>"></div>
   <% if tag.emoji.present? %>
     <p class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0"><%= tag.emoji %></p>
   <% end %>

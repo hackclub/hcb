@@ -1,5 +1,5 @@
 <div class="flex items-center filter-menu">
-  <%= render "events/filters/menu", filters: %>
+  <%= render "events/filters/menu", vertical: defined?(vertical) ? vertical : false, filters: %>
   <%= link_to nil,
               class: "-ml-2 pop muted tooltipped tooltipped--s",
               aria: { label: "Clear filters" },
@@ -8,7 +8,8 @@
   <% end %>
 
   <div class="filter-menu__chips">
-    <% filters.each do |filter| %>
+    <%= yield %>
+    <% filters.reject { |f| ["user_select", "tag_select", "merchant_select"].include?(f[:type]) }.each do |filter| %>
       <% if params[filter[:key]] %>
         <div class="badge badge-large bg-muted">
           <%= params[filter[:key]].humanize %>

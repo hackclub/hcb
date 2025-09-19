@@ -24,8 +24,8 @@ class EventsController < ApplicationController
     filters << { key: "tags", label: "Tags", type: "tag_select" } if @event.tags.size > 0
     filters << { key: "user", label: "User", type: "user_select" }
     filters << { key: "type", label: "Type", type: "select", options: [["ACH transfer", "ach_transfer"], "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", ["HCB transfer", "hcb_transfer"], "invoice", "mailed_check", ["PayPal transfer", "paypal_transfer"], "refund", "reimbursement", "wire"] }
-    filters << { key: "date", label: "Date", type: "date_range" }
-    filters << { key: "amount", label: "Amount", type: "amount_range" }
+    filters << { key_base: "date", label: "Date", type: "date_range" }
+    filters << { key_base: "amount", label: "Amount", type: "amount_range" }
     filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
     filters << { key: "merchant", label: "Merchant", type: "merchant_select" }
     filters << { key: "receipts", label: "Receipts", type: "select", options: %w[all missing] }
@@ -1265,8 +1265,8 @@ class EventsController < ApplicationController
     @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
     @type = params[:type]
-    @start_date = params[:start].presence
-    @end_date = params[:end].presence
+    @start_date = params[:date_after].presence
+    @end_date = params[:date_before].presence
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?

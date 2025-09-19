@@ -1,3 +1,5 @@
+<% showVertical = defined?(vertical) && vertical %>
+
 <div
   data-controller="menu"
   class="inline-flex items-center"
@@ -13,9 +15,9 @@
     <%= inline_icon "filter", size: 28 %>
   </button>
 
-  <div class="menu__content menu__content--2 menu__content--compact h5 <%= "w-[350px] h-[400px] p-0" if defined?(vertical) %>" data-menu-target="content" data-controller="filter">
-    <div data-controller="tabs" data-tabs-default-tab-value="<%= filters[0][:label] %>" class="<%= "grid grid-cols-3 h-full gap-0" if defined?(vertical) %>">
-      <div class="<%= "bg-smoke dark:bg-dark flex flex-col items-start gap-1 p-3" if defined?(vertical) %>">
+  <div class="menu__content menu__content--2 menu__content--compact h5 <%= "w-[350px] h-[400px] p-0" if showVertical %>" data-menu-target="content" data-controller="filter">
+    <div data-controller="tabs" data-tabs-default-tab-value="<%= filters[0][:label] %>" class="<%= "grid grid-cols-3 h-full gap-0" if showVertical %>">
+      <div class="<%= "bg-smoke dark:bg-dark flex flex-col items-start gap-1 p-3" if showVertical %>">
         <% filters.each do |filter| %>
           <button
             id="<%= filter[:label] %>"
@@ -26,11 +28,11 @@
         <% end %>
       </div>
 
-      <% unless defined?(vertical) %>
+      <% unless showVertical %>
         <div class="menu__divider"></div>
       <% end %>
 
-      <div class="<%= "col-span-2 p-2 overflow-y-scroll" if defined?(vertical) %>">
+      <div class="<%= "col-span-2 p-2 overflow-y-scroll" if showVertical %>">
         <% filters.each do |filter| %>
           <div data-tabs-target="tab" id="<%= filter[:label] %>">
             <% case filter[:type] %>
