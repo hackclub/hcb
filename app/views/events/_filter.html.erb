@@ -8,7 +8,6 @@
     <% end %>
   <% end %>
 
-  <%= render partial: "filter_menu" unless filter_applied %>
   <%= render "events/filters/menu", vertical: true, filters: @filters unless filter_applied %>
 
   <% if @event.canonical_transactions.any? %>

@@ -21,7 +21,7 @@ class EventsController < ApplicationController
 
   def ledger_filters
     filters = []
-    filters << { key: "tags", label: "Tags", type: "tag_select" } if @event.tags.size > 0
+    filters << { key: "tag", label: "Tags", type: "tag_select" } if @event.tags.size > 0
     filters << { key: "user", label: "User", type: "user_select" }
     filters << { key: "type", label: "Type", type: "select", options: [["ACH transfer", "ach_transfer"], "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", ["HCB transfer", "hcb_transfer"], "invoice", "mailed_check", ["PayPal transfer", "paypal_transfer"], "refund", "reimbursement", "wire"] }
     filters << { key_base: "date", label: "Date", type: "date_range" }
@@ -193,7 +193,6 @@ class EventsController < ApplicationController
   def user_select
     authorize @event
     @search = params[:search] || ""
-    @filter_key = params[:filter_key]
     @selected = params[:selected]
 
     users_relation = @event.users.where("full_name ILIKE ?", "%#{@search}%").order("full_name ASC")
@@ -206,7 +205,6 @@ class EventsController < ApplicationController
   def tag_select
     authorize @event
     @search = params[:search] || ""
-    @filter_key = params[:filter_key]
     @selected = params[:selected]
     tags_relation = @event.tags.where("label ILIKE ?", "%#{@search}%").order("label ASC")
     page = (params[:page] || 1).to_i

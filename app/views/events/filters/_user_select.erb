@@ -10,7 +10,7 @@
   <% end %>
   <% @users.each do |user| %>
     <%= link_to user.full_name,
-            upsert_query_params_from_url(params[:url], @filter_key => user.id),
+            upsert_query_params_from_url(params[:url], params[:filter_key] => user.id),
             class: "menu__action !border-none #{'menu__action--active' if @selected == user.id.to_s}",
             data: { turbo_frame: "_top" } %>
   <% end %>
