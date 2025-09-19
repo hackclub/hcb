@@ -23,7 +23,7 @@ class EventsController < ApplicationController
     filters = []
     filters << { key: "tags", label: "Tags", type: "tag_select" } if @event.tags.size > 0
     filters << { key: "user", label: "User", type: "user_select" }
-    filters << { key: "type", label: "Type", type: "select", options: %w[all settled pending] }
+    filters << { key: "type", label: "Type", type: "select", options: [["ACH transfer", "ach_transfer"], "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", ["HCB transfer", "hcb_transfer"], "invoice", "mailed_check", ["PayPal transfer", "paypal_transfer"], "refund", "reimbursement", "wire"] }
     filters << { key: "date", label: "Date", type: "date_range" }
     filters << { key: "amount", label: "Amount", type: "amount_range" }
     filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
