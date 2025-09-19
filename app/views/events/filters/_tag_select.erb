@@ -10,7 +10,7 @@
   <% end %>
   <% @tags.each do |tag| %>
     <div class="flex items-center" data-tag="<%= tag.id %>">
-      <%= link_to(upsert_query_params_from_url(params[:url], tag: tag.label), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_prefetch: "false" }) do %>
+      <%= link_to(upsert_query_params_from_url(params[:url], tag: tag.label), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_frame: "_top", turbo_prefetch: "false" }) do %>
         <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
         <%= tag.label %>
       <% end %>
