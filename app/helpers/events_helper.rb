@@ -80,7 +80,7 @@ module EventsHelper
       rescue
         return value
       end
-    end 
+    end
 
     return value
   end
