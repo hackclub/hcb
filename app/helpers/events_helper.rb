@@ -74,6 +74,14 @@ module EventsHelper
     return "Yes" if value == true
     return "No" if value == false
 
+    if field.ends_with?("_at")
+      begin
+        return local_time(value)
+      rescue
+        return value
+      end
+    end 
+
     return value
   end
 
