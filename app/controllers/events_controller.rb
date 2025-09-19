@@ -195,7 +195,6 @@ class EventsController < ApplicationController
     @search = params[:search] || ""
     @filter_key = params[:filter_key]
     @selected = params[:selected]
-    @url = params[:url]
 
     users_relation = @event.users.where("full_name ILIKE ?", "%#{@search}%").order("full_name ASC")
     page = (params[:page] || 1).to_i
@@ -209,7 +208,6 @@ class EventsController < ApplicationController
     @search = params[:search] || ""
     @filter_key = params[:filter_key]
     @selected = params[:selected]
-    @url = params[:url]
     tags_relation = @event.tags.where("label ILIKE ?", "%#{@search}%").order("label ASC")
     page = (params[:page] || 1).to_i
     @tags = Kaminari.paginate_array(tags_relation.to_a).page(page).per(20)

@@ -101,7 +101,7 @@
 
 <% if filter_applied %>
   <div class="flex items-center filter-menu">
-    <%= render partial: "filter_menu" %>
+    <%= render "events/filters/menu", vertical: true, filters: @filters %>
 
     <%= link_to event_ledger_path(@event), class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
       <%= inline_icon "view-close", size: 28 %>
