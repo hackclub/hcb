@@ -104,7 +104,7 @@
 
         <%= form.hidden_field :wise_recipient_id, value: "" %>
 
-        <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false } %>
+        <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: User::PayoutMethod::WiseTransfer } %>
 
         <div class="actions inline-block mt1">
           <%= form.submit "Save" %>

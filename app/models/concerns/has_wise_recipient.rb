@@ -24,6 +24,15 @@ module HasWiseRecipient
     def self.information_required_for(currency)
       fields = []
 
+      if self == User::PayoutMethod::WiseTransfer
+        fields << {
+          type: :text_field,
+          key: "account_holder",
+          placeholder: "Fiona Hackworth",
+          label: "Account holder's name"
+        }
+      end
+
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
       elsif currency.in?(%w[HKD NGN NPR NZD PHP SGD THB])
