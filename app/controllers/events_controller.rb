@@ -1140,7 +1140,7 @@ class EventsController < ApplicationController
 
   # Only allow a trusted parameter "white list" through.
   def event_params
-    result_params = params.require(:event).permit(
+    permitted_params = [
       :name,
       :short_name,
       :description,
@@ -1176,26 +1176,34 @@ class EventsController < ApplicationController
       :stripe_card_shipping_type,
       :plan,
       :financially_frozen,
-      card_grant_setting_attributes: [
-        :merchant_lock,
-        :category_lock,
-        :keyword_lock,
-        :invite_message,
-        :banned_merchants,
-        :banned_categories,
-        :expiration_preference,
-        :reimbursement_conversions_enabled,
-        :pre_authorization_required
-      ],
-      config_attributes: [
-        :id,
-        :anonymous_donations,
-        :cover_donation_fees,
-        :contact_email,
-        :generate_monthly_announcement,
-        :subevent_plan
-      ]
-    )
+      {
+        card_grant_setting_attributes: [
+          :merchant_lock,
+          :category_lock,
+          :keyword_lock,
+          :invite_message,
+          :banned_merchants,
+          :banned_categories,
+          :expiration_preference,
+          :reimbursement_conversions_enabled,
+          :pre_authorization_required
+        ],
+        config_attributes: [
+          :id,
+          :anonymous_donations,
+          :cover_donation_fees,
+          :contact_email,
+          :generate_monthly_announcement,
+          :subevent_plan
+        ]
+      }
+    ]
+
+    if Flipper.enabled?(:parent_event_assignment_2025_09_18, current_user)
+      permitted_params << :parent_id
+    end
+
+    result_params = params.require(:event).permit(*permitted_params)
 
     # convert whatever the user inputted into something that is a legal slug
     result_params[:slug] = ActiveSupport::Inflector.parameterize(user_event_params[:slug]) if result_params[:slug]
