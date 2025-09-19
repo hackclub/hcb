@@ -40,7 +40,8 @@ input[type='submit'],
       0 0 0 3px rgba(map-get($palette, info), 0.25) !important;
   }
 
-  &:not([class*='bg-']):not([type='submit']) {
+  // Use .btn-default for buttons that do not have a background class or are not submit inputs
+  .btn-default {
     box-shadow: var(--shadow-border);
 
     &:hover,
