@@ -22,6 +22,10 @@ class ReceiptPolicy < ApplicationPolicy
     record.user == user && unlocked?
   end
 
+  def metadata?
+    record.user == user
+  end
+
   private
 
   def unlocked?
