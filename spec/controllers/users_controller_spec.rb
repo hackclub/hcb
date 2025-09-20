@@ -13,9 +13,6 @@ RSpec.describe UsersController do
 
         initial_session = sign_in(admin_user)
 
-        # This is a normal session which should last for 2 weeks
-        expect(initial_session.expiration_at).to eq(2.weeks.from_now)
-
         post(:impersonate, params: { id: impersonated_user.id })
         expect(response).to redirect_to(root_path)
         expect(flash[:info]).to eq("You're now impersonating Impersonated User.")
