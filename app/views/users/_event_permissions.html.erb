@@ -1,0 +1,26 @@
+<%# locals: (node:) %>
+<li>
+  <% badge_class =
+       case node.role
+       when "reader"
+         "bg-success"
+       when "member"
+         "bg-warning"
+       when "manager"
+         "bg-error"
+       else
+         "bg-muted"
+       end %>
+
+  <div class="badge <%= badge_class %> ml0"><%= node.role&.humanize || "None" %></div>
+
+  <%= link_to node.event.name, event_path(node.event), data: { turbo_frame: "_top" } %>
+
+  <% if node.child_nodes.present? %>
+    <ul>
+      <% node.child_nodes.each do |child_node| %>
+        <%= render(partial: "event_permissions", locals: { node: child_node }) %>
+      <% end %>
+    </ul>
+  <% end %>
+</li>

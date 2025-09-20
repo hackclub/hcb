@@ -248,6 +248,7 @@ class UsersController < ApplicationController
     @lob_checks = Check.where(creator: @user)
     @ach_transfers = AchTransfer.where(creator: @user)
     @disbursements = Disbursement.where(requested_by: @user)
+    @permissions_overview = User::PermissionsOverview.new(user: @user)
 
     authorize @user
   end

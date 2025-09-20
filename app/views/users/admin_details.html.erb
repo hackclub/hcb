@@ -279,5 +279,18 @@
         </table>
       <% end %>
     <% end %>
+
+    <% if @permissions_overview.event_graph.present? %>
+      <% admin_tool do %>
+        <h3 class="mb2 mt1">Permissions</h3>
+
+        <ul>
+          <% @permissions_overview.event_graph.each do |node| %>
+            <%= render(partial: "event_permissions", locals: { node: }) %>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
   </div>
 <% end %>
