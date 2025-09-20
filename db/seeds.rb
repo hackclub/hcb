@@ -172,6 +172,17 @@ OrganizerPositionInvite.find_or_create_by!(
   sender: user,
 )
 
+# ARGOSY_GRANT_FUND_2025
+argosy_grant_fund_event = Event.create_with(
+  name: "Argosy Foundation Grant Fund",
+  slug: "argosy-foundation-grant",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025)
+
+
 # FIRST_TRANSPARENCY_GRANT_FUND
 first_transparency_grant_fund_event = Event.create_with(
   name: "Transparency Grant Fund",
