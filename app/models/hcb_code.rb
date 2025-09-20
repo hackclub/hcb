@@ -500,6 +500,8 @@ class HcbCode < ApplicationRecord
   def receipt_required?
     return false if pt&.declined?
 
+    return false if !event.plan.receipts_required?
+
     (type == :card_charge) ||
       # starting from Feb. 2024, receipts have been required for ACHs & checks
       ([:ach, :check, :paypal_transfer, :wire, :wise_transfer].include?(type) && created_at > Time.utc(2024, 2, 1))
