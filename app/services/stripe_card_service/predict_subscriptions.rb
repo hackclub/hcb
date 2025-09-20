@@ -72,11 +72,11 @@ module StripeCardService
 
       subscriptions = result.map do |row|
         {
-          merchant: row['merchant'],
-          card: row['card'],
-          hcb_codes: row['hcb_codes'],
-          last_hcb_code: row['last_hcb_code'],
-          average_date_difference: row['average_date_difference'],
+          merchant: row["merchant"],
+          card: row["card"],
+          hcb_codes: row["hcb_codes"],
+          last_hcb_code: row["last_hcb_code"],
+          average_date_difference: row["average_date_difference"],
           updated_at: Time.current,
           created_at: Time.current
         }
@@ -87,5 +87,6 @@ module StripeCardService
         unique_by: [:merchant, :card]
       )
     end
+
   end
 end
