@@ -99,7 +99,7 @@
 
 <% if @hcb_code %>
   <h2>Receipts</h2>
-  <%= render "receipts/list_v2" %>
+  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @hcb_code,
         enable_linking: true,

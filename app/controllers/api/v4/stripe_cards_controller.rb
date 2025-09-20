@@ -31,8 +31,8 @@ module Api
       end
 
       def create
-        event = Event.find(params[:card][:organization_id])
-        authorize event, :create_stripe_card?
+        event = Event.find_by_public_id(params[:card][:organization_id]) || Event.friendly.find(params[:card][:organization_id])
+        authorize event, :create_stripe_card?, policy_class: EventPolicy
 
         card = params.require(:card).permit(
           :organization_id,
@@ -44,8 +44,7 @@ module Api
           :shipping_address_line2,
           :shipping_address_state,
           :shipping_address_country,
-          :card_personalization_design_id,
-          :birthday
+          :card_personalization_design_id
         )
 
         return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
@@ -145,7 +144,7 @@ module Api
         return render json: { error: "not_authorized" }, status: :forbidden unless current_token.application&.trusted?
         return render json: { error: "invalid_operation", messages: ["card must be virtual"] }, status: :bad_request unless @stripe_card.virtual?
 
-        @ephemeral_key = @stripe_card.ephemeral_key(nonce: params[:nonce])
+        @ephemeral_key = @stripe_card.ephemeral_key(nonce: params[:nonce], stripe_version: params[:stripe_version] || "2020-03-02")
 
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 

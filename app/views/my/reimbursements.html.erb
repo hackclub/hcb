@@ -119,7 +119,7 @@
                <%= report.event&.name || "None" %>
             </td>
             <td>
-               <%= render_money report.amount_cents %>
+               <%= report.amount.format %>
             </td>
             <td>
                <%= format_date report.created_at %>

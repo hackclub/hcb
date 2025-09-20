@@ -130,7 +130,7 @@ class StripeCardholder < ApplicationRecord
       periods, commas, hyphens, spaces, and apostrophes.
     REQ
     name = name.gsub(/[^a-zA-Z.,\-\s']/, "").strip
-    raise ArgumentError, requirements if name.gsub(/[^a-z]/i, "").blank?
+    raise Errors::StripeInvalidNameError, requirements if name.gsub(/[^a-z]/i, "").blank?
 
     name
   end

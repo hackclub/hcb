@@ -1,0 +1,77 @@
+<%# locals: (statement_of_activity:) %>
+
+<div class="flex justify-between items-center gap-4">
+  <h1 class="border-b-0 flex-grow">Statement of Activity</h1>
+
+  <%= form_with(method: :get, data: { controller: "form" }, class: "mb-0") do |form| %>
+    <div class="flex gap-2 items-center w-fit text-nowrap">
+      From
+      <%= form.date_field :start, value: statement_of_activity.start_date, data: { action: "change->form#submit" }, class: "mb-0" %>
+      To
+      <%= form.date_field :end, value: statement_of_activity.end_date, data: { action: "change->form#submit" }, class: "mb-0" %>
+    </div>
+  <% end %>
+
+  <%= link_to({ format: :xlsx }, class: "btn") do %>
+    <%= inline_icon "download" %>
+    <small>Download XLSX</small>
+  <% end %>
+</div>
+<hr class="mt-0">
+
+<p>
+  From <%= statement_of_activity.start_date.strftime("%B %-d, %Y") %>
+  to <%= statement_of_activity.end_date.strftime("%B %-d, %Y") %>,
+  <% if statement_of_activity.event_group %>
+    the <strong><%= statement_of_activity.event_group.name %></strong> event group
+  <% else %>
+    <strong><%= link_to statement_of_activity.event.name, statement_of_activity.event %></strong>
+  <% end %>
+  had a change in net assets
+  of <%= render_money statement_of_activity.net_asset_change %>;
+  after having raised <%= render_money statement_of_activity.total_revenue %> and
+  spent <%= render_money statement_of_activity.total_expense.abs %>.
+</p>
+
+<% if statement_of_activity.event_group %>
+  <details>
+    <summary>Included events</summary>
+    <% if statement_of_activity.event_group.events.empty? %>
+      <p>This group does not have any associated events</p>
+    <% else %>
+      <ul>
+        <% statement_of_activity.event_group.events.each do |event| %>
+          <li>
+            <%= link_to(event.name, event_path(event)) %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </details>
+<% end %>
+
+<table>
+  <thead>
+  <tr>
+    <th>Category</th>
+    <th>Total Amount</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% if statement_of_activity.category_totals.empty? %>
+    <tr>
+      <td colspan="2" class="text-center p-14">
+        There were no transactions in this date range.
+      </td>
+    </tr>
+  <% else %>
+    <% statement_of_activity.category_totals.each do |category_slug, amount_cents_sum| %>
+      <% category = TransactionCategory::Definition::ALL[category_slug] %>
+      <tr>
+        <td title="<%= category&.slug %>"><%= category&.label || "Uncategorized" %></td>
+        <td><%= render_money amount_cents_sum %></td>
+      </tr>
+    <% end %>
+  <% end %>
+  </tbody>
+</table>

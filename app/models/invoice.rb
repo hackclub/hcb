@@ -152,6 +152,7 @@ class Invoice < ApplicationRecord
   aasm timestamps: true do
     state :open_v2, initial: true
     state :paid_v2
+    state :deposited_v2
     state :void_v2
     state :refunded_v2
 
@@ -160,6 +161,10 @@ class Invoice < ApplicationRecord
       after do
         create_activity(key: "invoice.paid", owner: nil)
       end
+    end
+
+    event :mark_deposited do
+      transitions from: :paid_v2, to: :deposited_v2
     end
 
     event :mark_void do
@@ -172,7 +177,7 @@ class Invoice < ApplicationRecord
   end
 
   enum :status, {
-    draft: "draft", # only 3 invoices [203, 204, 128] leftover from when drafts existed
+    draft: "draft", # no invoices use this status anymore
     open: "open",
     paid: "paid",
     void: "void"
@@ -283,13 +288,17 @@ class Invoice < ApplicationRecord
     self.starting_balance = inv.starting_balance
     self.statement_descriptor = inv.statement_descriptor
     self.status = inv.status
-    self.stripe_charge_id = inv&.charge&.id
+    if inv&.charge.is_a?(String)
+      self.stripe_charge_id = inv.charge
+    else
+      self.stripe_charge_id = inv&.charge&.id
+      # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
+      self.payment_method_type = type = inv&.charge&.payment_method_details&.type
+    end
     self.subtotal = inv.subtotal
     self.tax = inv.tax
     # self.tax_percent = inv.tax_percent
     self.total = inv.total
-    # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
-    self.payment_method_type = type = inv&.charge&.payment_method_details&.type
     return unless self.payment_method_type
 
     details = inv&.charge&.payment_method_details&.[](self.payment_method_type)

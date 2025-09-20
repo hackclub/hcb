@@ -1,7 +1,7 @@
 <%# locals: (hcb_code:, render_memo: false) %>
 
 <h2 class="h2 mt0 border-none flex items-center justify-between" style="gap: 1ch">
-  <%= turbo_frame_tag hcb_code, class: "flex items-center" do %>
+  <%= turbo_frame_tag hcb_code, class: "flex items-center flex-grow" do %>
     <%= pop_icon_to "edit",
         edit_hcb_code_path(hcb_code),
         class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
@@ -18,7 +18,6 @@
     <% end %>
 
     <%= render "hcb_codes/memo_stream", hcb_code: %>
-    <span style="flex-grow: 1;"></span>
     <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: } %>
   <% end %>
   <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: } %>
