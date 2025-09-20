@@ -91,7 +91,7 @@
   </section>
 
   <section class="details pt2 pb2 details--wide details--tall">
-    <% if @hcb_code.pt&.declined? %>
+    <% if @hcb_code.pt&.declined? && @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") != "reversed" %>
       <% reason = @hcb_code.pt.decline_reason %>
       <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
       <p>
@@ -110,7 +110,7 @@
       <span style="height: 100%;">
         <strong>Merchant</strong>
       </span>
-      <% if organizer_signed_in? %>
+      <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
         <% if defined?(@frame) && @frame %>
           <details>
             <summary class="inline-flex no-select">
@@ -170,7 +170,8 @@
                 <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
               </p>
             </div>
-            <p class="my0 muted">
+            <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+            <p class="muted">
               Details are provided by the merchant and not guaranteed to be correct.
             </p>
           </details>
@@ -192,8 +193,8 @@
         <span style="height: 100%;">
           <strong>Charge method</strong>
         </span>
-        <% if organizer_signed_in? %>
-          <% if defined?(@frame) && @frame %>
+      <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
+        <% if defined?(@frame) && @frame %>
             <details>
               <summary class="inline-flex no-select">
                 <%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
@@ -272,7 +273,7 @@
 </article>
 
 <% unless defined?(@frame) && @frame %>
-  <% if organizer_signed_in? %>
+  <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="merchant_details_<%= instance %>">
       <%= modal_header "Merchant details" %>
 
@@ -323,7 +324,8 @@
           <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
-      <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
+      <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+      <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">
           Details are provided by the merchant and not guaranteed to be correct.
         </p>

@@ -8,11 +8,14 @@ class AnnouncementsController < ApplicationController
   skip_before_action :signed_in_user, only: [:show]
 
   def new
-    @announcement = Announcement.new
     @event = Event.friendly.find(params[:event_id])
-    @announcement.event = @event
+    @announcement = Announcement.build(content: {}, title: "", author: current_user, event: @event)
 
     authorize @announcement
+
+    @show_announcement_explanation = Announcement.where(author: current_user).where.not(published_at: nil).empty?
+
+    @announcement.save!
   end
 
   def create
@@ -44,15 +47,30 @@ class AnnouncementsController < ApplicationController
   def edit
     authorize @announcement
 
+    @announcement.content = ProsemirrorService::Renderer.set_html(@announcement.content, source_event: @announcement.event)
+
     render "announcements/show", locals: { editing: true }
   end
 
   def update
     authorize @announcement
 
-    json_content = params[:announcement][:json_content]
+    content_hash = JSON.parse(params[:announcement][:json_content])
+    @announcement.transaction do
+      @announcement.update!(announcement_params.merge({ content: ProsemirrorService::Renderer.set_html(content_hash), author: @announcement.author == User.system_user ? current_user : nil }.compact))
+      @announcement.mark_draft! if @announcement.template_draft?
 
-    @announcement.update!(announcement_params.merge(content: json_content))
+      if params[:announcement][:draft] == "false" && !@announcement.published?
+        @announcement.mark_published!
+      end
+    end
+
+    block_ids = ProsemirrorService::Renderer.block_ids(content_hash)
+    Announcement::Block.where(announcement: @announcement).find_each do |block|
+      unless block_ids.include? block.id
+        block.destroy
+      end
+    end
 
     if params[:announcement][:autosave] != "true"
       flash[:success] = "Updated announcement"
@@ -73,9 +91,11 @@ class AnnouncementsController < ApplicationController
   def publish
     authorize @announcement
 
-    @announcement.mark_published!
-
-    flash[:success] = "Published announcement"
+    if @announcement.mark_published!
+      flash[:success] = "Published announcement"
+    else
+      flash[:error] = @announcement.errors.full_messages.to_sentence
+    end
 
     redirect_to announcement_path(@announcement)
   end

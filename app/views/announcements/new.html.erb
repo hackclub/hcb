@@ -4,4 +4,6 @@
 
 <h1>Create a new announcement</h1>
 
-<%= render "announcement_form" %>
+<%= turbo_frame_tag :create_announcement do %>
+  <%= render "announcement_form", announcement: @announcement, autosave: false, show_announcement_explanation: @show_announcement_explanation %>
+<% end %>

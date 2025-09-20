@@ -55,6 +55,10 @@ class Event
         35 # custom rate for HQ events
       end
 
+      def eligible_for_perks?
+        false
+      end
+
     end
 
   end

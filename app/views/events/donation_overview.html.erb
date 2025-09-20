@@ -75,11 +75,13 @@
               slot="icon">
           </qr-code>
           <% if @event.logo.attached? %>
-            <qr-code
-              contents='<%= start_donation_donations_url @event %>'
-              id="qrCode--logo">
-              <%= image_tag "data:#{@event.logo.blob.content_type};base64," + @event.logo.open { |file| Base64.encode64(file.read) }, slot: "icon", class: "rounded", style: "height: 36px;" %>
-            </qr-code>
+            <%= error_boundary fallback_text: "failed to load logo", ignored_errors: [ActiveStorage::FileNotFoundError] do %>
+              <qr-code
+                contents='<%= start_donation_donations_url @event %>'
+                id="qrCode--logo">
+                <%= image_tag "data:#{@event.logo.blob.content_type};base64," + @event.logo.open { |file| Base64.encode64(file.read) }, slot: "icon", class: "rounded", style: "height: 36px;" %>
+              </qr-code>
+            <% end %>
           <% end %>
           <qr-code
             contents='<%= start_donation_donations_url @event %>'
@@ -191,6 +193,11 @@
             <td class="text-right">
               <%= render_money recurring_donation.total_donated %>
             </td>
+            <% if recurring_donation.is_a?(RecurringDonation) && OrganizerPosition.role_at_least?(current_user, @event, :manager) %>
+              <td class="text-right">
+                <%= pop_icon_to "view-close", cancel_recurring_donation_path(recurring_donation.url_hash), method: :post, data: { confirm: "Are you sure you want to cancel this recurring donation?" }, class: "error" %>
+              </td>
+            <% end %>
           </tr>
         <% end %>
       </tbody>
@@ -220,7 +227,7 @@
 </h2>
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
   <div>
@@ -272,9 +279,17 @@
           </td>
           <td>
             <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-            <%= link_to "Details", hcb_code_url(d.hcb_code) if organizer_signed_in? %>
+            <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
           </td>
         </tr>
+        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= d.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(d.local_hcb_code.hashid) %>" data-state-title="<%= "#{d.name} invoiced for #{render_money(d.amount)}" %>">
+            <%= modal_header("#{d.name} donated #{render_money(d.amount)}", external_link: hcb_code_url(d.local_hcb_code.hashid)) %>
+            <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
+              <%= render partial: "application/loading_container" %>
+            <% end %>
+          </section>
+        <% end %>
       <% end %>
     </tbody>
   </table>

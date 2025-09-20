@@ -23,7 +23,7 @@
   <% end %>
 
   <div class="field" id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
-    <%= form.label :recipient_name %>
+    <%= form.label :recipient_name, "Recipient's legal name" %>
     <%= form.text_field :recipient_name,
                         placeholder: "Max Kern",
                         required: true,
@@ -46,10 +46,10 @@
                         },
                         "x-ref" => "name_input",
                         "@input" => "payment_recipient = null" %>
-    <span class="muted">This is only for your reference— it doesn't need to match the name on the recipient's bank account.</span>
-    <% if organizer_signed_in? && ach_transfer.event.payment_recipients.any? %>
+    <span class="muted">This may be used for tax purposes; it should match the name on the recipient's bank account.</span>
+    <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
       <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
-        <% ach_transfer.event.payment_recipients.each do |payment_recipient| %>
+        <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
           <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
             <button
               type="button"
@@ -60,7 +60,7 @@
               <span class="truncate"><%= payment_recipient.name %></span>
               <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
             </button>
-            <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: "delete", turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
+            <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
               <%= inline_icon "view-close", size: 24, class: "align-middle" %>
             <% end %>
           </div>

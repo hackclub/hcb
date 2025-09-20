@@ -169,7 +169,7 @@ class StripeController < ActionController::Base
 
       donation = Donation.find_by(stripe_payment_intent_id: dispute[:payment_intent])
 
-      return notify_airbrake("Received charge dispute on nonexistent donation") if donation.nil?
+      return Rails.error.unexpected("Received charge dispute on nonexistent donation") if donation.nil?
 
       # Let's un-front the transaction.
       donation.canonical_pending_transactions.update_all(fronted: false)
@@ -178,7 +178,7 @@ class StripeController < ActionController::Base
 
       invoice = Invoice.find_by(stripe_charge_id: dispute[:charge])
 
-      return notify_airbrake("Received charge dispute on nonexistent invoice") if invoice.nil?
+      return Rails.error.unexpected("Received charge dispute on nonexistent invoice") if invoice.nil?
 
       invoice.canonical_pending_transactions.update_all(fronted: false)
     end
@@ -306,14 +306,14 @@ class StripeController < ActionController::Base
         }
       )
     elsif dispute["status"] != "won"
-      Airbrake.notify("Dispute with funds reinstated but without a win: #{dispute["id"]}")
+      Rails.error.unexpected "Dispute with funds reinstated but without a win: #{dispute["id"]}"
     elsif dispute["currency"] != "usd"
-      Airbrake.notify("Dispute with funds reinstated but non-USD currency. Must be manually handled.")
+      Rails.error.unexpected "Dispute with funds reinstated but non-USD currency. Must be manually handled."
     end
   end
 
   def handle_refund_failed(event)
-    Airbrake.notify("Refund failed on Stripe: #{event}.")
+    Rails.error.unexpected "Refund failed on Stripe: #{event}."
   end
 
 end

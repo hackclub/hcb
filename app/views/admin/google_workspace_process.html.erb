@@ -69,7 +69,7 @@
       <li>Click 'Submit' below</li>
     </ol>
   <% end %>
-  <%= form_with(model: nil, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
     <%= form.submit "Approve" %>
   <% end %>
 <% end %>
@@ -81,7 +81,7 @@
 <% if @g_suite.verifying? %>
   <p>HCB is now trying to automatically verify if the user has configured their domain correctly with the TXT record. This happens once every hour.</p>
   <p>If you would like to manually attempt to verify this domain:</p>
-  <%= form_with(model: nil, local: true, url: google_workspace_verify_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: google_workspace_verify_admin_path(@g_suite), method: :post) do |form| %>
     <%= form.submit "Click Here" %>
   <% end %>
   <p>You can additionally verify that the TXT record they have matches the verification key we have on file:</p>
@@ -89,7 +89,7 @@
   <p><%= link_to "DNS Check", @g_suite.dns_check_url, target: "_blank" %></p>
   <p>If it does not match or is missing, make sure to notify the event owner and have them set it up on their DNS provider.</p>
   <p>Has it still been stuck on verifying after a few days? Try updating the verification key.</p>
-  <%= form_with(model: nil, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: google_workspace_approve_admin_path(@g_suite), method: :post) do |form| %>
     <%= form.submit "Update verification key" %>
   <% end %>
   <% if false %>
@@ -132,7 +132,7 @@
     <li>Once the DKIM key has been added to the domain's DNS by the organizer, go back to the Google Admin page above, select the domain, and click "Start Authentication"</li>
   </ul>
 </div>
-<%= form_with(model: nil, local: true, url: google_workspace_update_admin_path(@g_suite), method: :post) do |dkim_key_form| %>
+<%= form_with(model: false, local: true, url: google_workspace_update_admin_path(@g_suite), method: :post) do |dkim_key_form| %>
   <%= dkim_key_form.label :dkim_key do %>
     <%= dkim_key_form.text_field :dkim_key, value: @g_suite.dkim_key %>
   <% end %>
@@ -141,7 +141,7 @@
 <hr>
 <h3>Google Workspace Revocation Immunity</h3>
 <p>This Google Workspace is<%= @g_suite.immune_to_revocation? ? nil : " not" %> immune to revocation.<%= !@g_suite.immune_to_revocation? && @g_suite.revocation.present? ? " Turning this on will immediately cancel the current revocation for this Google Workspace." : nil %> </p>
-<%= form_with(model: nil, local: true, url: google_workspace_toggle_revocation_immunity_admin_path(@g_suite), method: :post) do |form| %>
+<%= form_with(model: false, local: true, url: google_workspace_toggle_revocation_immunity_admin_path(@g_suite), method: :post) do |form| %>
   <%= form.submit "Toggle" %>
 <% end %>
 <hr>

@@ -7,6 +7,7 @@
 #  id                              :bigint           not null, primary key
 #  data_extracted                  :boolean          default(FALSE), not null
 #  extracted_card_last4_ciphertext :text
+#  extracted_currency              :string
 #  extracted_date                  :datetime
 #  extracted_merchant_name         :string
 #  extracted_merchant_url          :string
@@ -38,6 +39,9 @@ class Receipt < ApplicationRecord
   has_encrypted :textual_content
   blind_index :textual_content
   has_encrypted :extracted_card_last4
+
+  monetize :extracted_subtotal_amount_cents, as: "extracted_subtotal_amount", with_model_currency: :extracted_currency, allow_nil: true
+  monetize :extracted_total_amount_cents, as: "extracted_total_amount", with_model_currency: :extracted_currency, allow_nil: true
 
   include StripeAuthorizationsHelper
 
@@ -75,7 +79,7 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt

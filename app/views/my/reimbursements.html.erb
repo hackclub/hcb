@@ -69,54 +69,28 @@
   </section>
 <% end %>
 
-<% if @reports_to_review.any? %>
-  <h3 class="mb1">Review requested on</h3>
-  <article class="table-container">
-    <table>
-      <thead>
-      <tr>
-        <th class="!pl-0">Report</th>
-        <th>Organization</th>
-        <th>Amount</th>
-        <th>Created</th>
-      </tr>
-      </thead>
-      <tbody>
-        <% @reports_to_review.order(created_at: :desc).each do |report| %>
-          <tr>
-            <td class="!pl-0" style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
-              <%= link_to report.name, report %>
-            </td>
-            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-               <%= report.event&.name || "None" %>
-            </td>
-            <td>
-               <%= render_money report.amount_cents %>
-            </td>
-            <td>
-               <%= format_date report.created_at %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </article>
-<% end %>
+<h3 class="mb0">Reports</h3>
 
-<h3 class="mb0">Reports created</h3>
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2 mt1">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "events/search", form: %>
+  <% end %>
+  <div>
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["mine", "review"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Mine", "?filter=mine", class: "filterbar__item", "aria-selected": params[:filter] == "mine", role: "tab" %>
+    <%= link_to "To review", "?filter=review", class: "filterbar__item", "aria-selected": params[:filter] == "review", role: "tab" %>
+  </div>
+</div>
 
-<%= form_with(model: nil, local: true, method: :get, class: "my-3") do |form| %>
-  <%= render "events/search", form: %>
-<% end %>
-
-<% if @my_reports.blank? %>
+<% if @reports.blank? %>
   <%= blankslate "No reports found!" %>
 <% else %>
   <article class="table-container">
     <table>
       <thead>
       <tr>
-        <th class="!pl-0">Status</th>
+        <th></th>
+        <th>Status</th>
         <th>Report</th>
         <th>Organization</th>
         <th>Amount</th>
@@ -124,9 +98,12 @@
       </tr>
       </thead>
       <tbody>
-        <% @my_reports.order(created_at: :desc).each do |report| %>
+        <% @reports.order(created_at: :desc).each do |report| %>
           <tr>
-            <td class="!pl-0">
+            <td class="!pl-0 flex items-center justify-center" style="margin-top: 1px;">
+              <%= avatar_for report.user, size: 24 %>
+            </td>
+            <td>
               <% if report.status_description %>
                 <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
                   <%= report.status_text %>
@@ -142,7 +119,7 @@
                <%= report.event&.name || "None" %>
             </td>
             <td>
-               <%= render_money report.amount_cents %>
+               <%= report.amount.format %>
             </td>
             <td>
                <%= format_date report.created_at %>

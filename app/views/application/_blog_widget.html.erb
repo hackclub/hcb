@@ -8,16 +8,14 @@
     data-menu-target="toggle"
     data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "rep", size: home_action_size %>
-    <% if Flipper.enabled?(:changelog_widget_2025_04_24, current_user) %>
-      <span class="badge !bg-red !text-white hidden absolute top-[-15px] right-[-4px] block m-0 py-[2px] px-1" data-blog-target="badge"></span>
-    <% end %>
+    <span class="badge !bg-red !text-white hidden absolute top-[-15px] right-[-4px] block m-0 py-[2px] px-1" data-blog-target="badge"></span>
   </a>
   <div
     class="absolute top-10 card py-3 px-0 w-80 z-10 flex flex-col items-center justify-start leading-normal hidden"
     data-menu-target="content">
     <p class="font-bold text-lg my-0 pb-3 w-full text-center">✨ What's new?</p>
 
-    <iframe loading="lazy" src="<%= "#{Rails.env.development? ? "http://localhost:3001" : "https://blog.hcb.hackclub.com"}/embed?theme=light" %>" class="border-0 w-full min-h-96" style="zoom: 0.9;" data-blog-target="embed"></iframe>
+    <iframe id="blog-widget-embed" loading="lazy" src="<%= "#{Rails.env.development? ? "http://localhost:3001" : "https://blog.hcb.hackclub.com"}/embed?theme=light" %>" class="border-0 w-full min-h-96" style="zoom: 0.9;"></iframe>
 
     <div class="px-5 pt-2 w-full">
       <a href="https://blog.hcb.hackclub.com" target="_blank" class="flex justify-center items-center"><%= inline_icon :external, size: 26 %> See all posts</a>

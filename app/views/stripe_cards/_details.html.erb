@@ -32,6 +32,13 @@
       </p>
     <% end %>
 
+    <% if stripe_card.frozen? && stripe_card.last_frozen_by %>
+      <div class="fs-mask">
+        <strong>Frozen by</strong>
+        <%= user_mention stripe_card.last_frozen_by %>
+      </div>
+    <% end %>
+
     <% if stripe_card.cash_withdrawal_enabled? %>
       <p>
         <strong>Cash withdrawals</strong>
@@ -66,6 +73,11 @@
     </div>
 
     <div class="fs-mask">
+      <strong>Expiration date</strong>
+      <%= copy_to_clipboard(render_short_exp_date(stripe_card), class: "w-fit", tooltip_direction: "e") { render_exp_date stripe_card } %>
+    </div>
+
+    <div class="fs-mask">
       <strong>CVC</strong>
       <div class="flex justify-between font-mono items-center">
         <% if stripe_card.user == current_user && stripe_card.virtual? %>
@@ -94,11 +106,6 @@
         </div>
       </div>
     <% end %>
-
-    <div class="fs-mask">
-      <strong>Expiration date</strong>
-      <%= copy_to_clipboard(render_short_exp_date(stripe_card), class: "w-fit", tooltip_direction: "e") { render_exp_date stripe_card } %>
-    </div>
 
     <div class="fs-mask">
       <strong class="inline-flex items-center" style="gap: 4px">
@@ -135,6 +142,18 @@
       <%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, class: "w-fit", tooltip_direction: "e") %>
     </div>
 
+    <% if stripe_card.user.phone_number %>
+      <div class="fs-mask">
+        <strong class="inline-flex items-center" style="gap: 4px">
+          Phone number
+          <span class="info tooltipped tooltipped--e h-[18px]" aria-label="This is your phone number - use this if asked during checkout.">
+            <%= inline_icon "info", size: 18, style: "position: unset;" %>
+          </span>
+        </strong>
+        <%= copy_to_clipboard(stripe_card.user.pretty_phone_number, class: "w-fit", tooltip_direction: "e") %>
+      </div>
+    <% end %>
+
     <div>
       <strong>Type</strong>
       <%= stripe_card.virtual? ? "Virtual" : "Physical" %>
@@ -166,7 +185,7 @@
 
   <section class="card__banner card__banner--bottom card__darker pt2 pb2">
     <p class="muted mt0 mb0">
-      Alert us if there are fraudulent or incorrect charges on your card. <%= help_message %>
+      Alert us if there are fraudulent or incorrect charges on your card, or if your card was stolen or compromised. <%= help_message %>
     </p>
   </section>
 </article>

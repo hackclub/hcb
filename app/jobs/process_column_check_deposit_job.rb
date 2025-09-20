@@ -5,7 +5,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
   class ApiError < StandardError; end
 
   def perform(check_deposit:, validate: true)
-    raise ArgumentError, "check deposit already processed" if check_deposit.column_id.present? || check_deposit.increase_id.present?
+    return if check_deposit.column_id.present? || check_deposit.increase_id.present?
 
     conn = Faraday.new url: "https://api.column.com" do |f|
       f.request :basic_auth, "", Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :API_KEY)
@@ -46,7 +46,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
 
   rescue Faraday::Error, ProcessColumnCheckDepositJob::UnconfidentError => e
     check_deposit.update!(status: :manual_submission_required)
-    Airbrake.notify("Check deposit ##{check_deposit.id} needs to be manually submitted to Column.")
+    Rails.error.unexpected "Check deposit ##{check_deposit.id} needs to be manually submitted to Column."
     raise ApiError, e.response_body["message"] if e.is_a?(Faraday::Error)
   end
 

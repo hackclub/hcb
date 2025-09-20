@@ -11,7 +11,7 @@
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
 #  creation_method               :integer
-#  email                         :text
+#  email                         :text             not null
 #  full_name                     :string
 #  locked_at                     :datetime
 #  payout_method_type            :string
@@ -22,7 +22,6 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_duration_seconds      :integer          default(2592000), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean
@@ -79,10 +78,12 @@ class User < ApplicationRecord
 
   has_many :logins
   has_many :login_codes
+  has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_positions
+  has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
   has_many :organizer_position_deletion_requests, inverse_of: :closed_by
   has_many :webauthn_credentials
@@ -94,11 +95,14 @@ class User < ApplicationRecord
   has_many :messages, class_name: "Ahoy::Message", as: :user
 
   has_many :events, through: :organizer_positions
+  has_many :reader_events, through: :reader_organizer_positions, class_name: "Event", source: :event
 
   has_many :event_follows, class_name: "Event::Follow"
   has_many :followed_events, through: :event_follows, source: :event
 
-  has_many :managed_events, inverse_of: :point_of_contact
+  has_many :managed_events, inverse_of: :point_of_contact, class_name: "Event"
+
+  has_many :event_groups, class_name: "Event::Group"
 
   has_many :g_suite_accounts, inverse_of: :fulfilled_by
   has_many :g_suite_accounts, inverse_of: :creator
@@ -126,6 +130,8 @@ class User < ApplicationRecord
 
   has_many :card_grants
 
+  has_many :wise_transfers
+
   has_one_attached :profile_picture
 
   has_many :w9s, class_name: "W9", as: :entity
@@ -146,12 +152,14 @@ class User < ApplicationRecord
 
   include HasTasks
 
+  before_update { self.teenager = teenager? }
+
   before_create :format_number
   before_save :on_phone_number_update
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
-  after_update :sync_with_loops
+  after_update :queue_sync_with_loops_job
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
@@ -168,15 +176,9 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
 
-  validates(:session_duration_seconds, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
-
   validate :profile_picture_format
 
-  validate on: :update do
-    if Rails.env.production? && admin_override_pretend? && !use_two_factor_authentication?
-      errors.add(:access_level, "two factor authentication is required for this access level")
-    end
-  end
+  validate(:admins_cannot_disable_2fa, on: :update)
 
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
@@ -206,9 +208,10 @@ class User < ApplicationRecord
     end
   end
 
-  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
+  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
+  scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
   # a auditor is an admin who can only view things.
@@ -357,11 +360,11 @@ class User < ApplicationRecord
   end
 
   def last_seen_at
-    user_sessions.maximum(:last_seen_at)
+    user_sessions.not_impersonated.maximum(:last_seen_at)
   end
 
   def last_login_at
-    user_sessions.maximum(:created_at)
+    user_sessions.not_impersonated.maximum(:created_at)
   end
 
   def email_charge_notifications_enabled?
@@ -372,13 +375,100 @@ class User < ApplicationRecord
     charge_notifications_sms? || charge_notifications_email_and_sms?
   end
 
-  def sync_with_loops
+  def queue_sync_with_loops_job
     new_user = full_name_before_last_save.blank? && !onboarding?
-    UserService::SyncWithLoops.new(user_id: id, new_user:).run
+    User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 
   def only_card_grant_user?
     card_grants.size >= 1 && events.size == 0
+  end
+
+  def backup_codes_enabled?
+    backup_codes.active.any?
+  end
+
+  def generate_backup_codes!
+    backup_codes.previewed.destroy_all
+
+    codes = []
+    ActiveRecord::Base.transaction do
+      while codes.size < 10
+        code = SecureRandom.alphanumeric(10)
+        next if codes.include?(code)
+
+        backup_codes.create!(code: code)
+        codes << code
+      end
+    end
+
+    codes
+  end
+
+  def activate_backup_codes!
+    ActiveRecord::Base.transaction do
+      backup_codes.active.map(&:mark_discarded!)
+      backup_codes.previewed.map(&:mark_active!)
+    end
+    User::BackupCodeMailer.with(user_id: id).new_codes_activated.deliver_now
+  end
+
+  def redeem_backup_code!(code)
+    backup_codes.active.each do |backup_code|
+      next unless backup_code.authenticate_code(code)
+
+      ActiveRecord::Base.transaction do
+        backup_code = User::BackupCode
+                      .lock # performs a SELECT ... FOR UPDATE https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE
+                      .active # makes sure that it hasn't already been used
+                      .find(backup_code.id) # will raise `ActiveRecord::NotFound` and abort the transaction
+        backup_code.mark_used!
+        return true
+      end
+    end
+
+    false
+  end
+
+  def disable_backup_codes!
+    ActiveRecord::Base.transaction do
+      backup_codes.previewed.destroy_all
+      backup_codes.active.map(&:mark_discarded!)
+    end
+    BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
+  end
+
+  def access_level_for(event, organizer_positions)
+    role = nil
+    access_level = nil
+    user_ops = organizer_positions.select { |op| op.user == self }
+    return nil if user_ops.empty?
+
+    user_ops.each do |op|
+      if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
+        role = op.role
+        access_level = op.event == event ? :direct : :indirect
+      end
+    end
+
+    { role:, access_level: }
+  end
+
+  def needs_to_enable_2fa?
+    admin_override_pretend? && !use_two_factor_authentication
+  end
+
+  def can_update_payout_method?
+    return true if payout_method.nil?
+    return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+    return false if reimbursement_reports.reimbursement_requested.any?
+    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
+
+    true
+  end
+
+  def managed_active_teenagers_count
+    User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
   private
@@ -432,8 +522,17 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire)
-      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, or ACH transfer")
+    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire) || payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, Wise transfer, or ACH transfer")
+    end
+  end
+
+  def admins_cannot_disable_2fa
+    return unless use_two_factor_authentication_changed?
+    return if Rails.env.development?
+
+    if needs_to_enable_2fa?
+      errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
   end
 

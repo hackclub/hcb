@@ -65,6 +65,9 @@ class CardGrant
 
       event :mark_fraudulent do
         transitions from: :submitted, to: :fraudulent
+        after do
+          PreAuthorizationMailer.with(pre_authorization: self).notify_fraudulent.deliver_later
+        end
       end
 
       event :mark_rejected do
@@ -96,10 +99,11 @@ class CardGrant
     end
 
     def analyze!
-      conn = Faraday.new url: "https://api.openai.com" do |f|
-        f.request :json
-        f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
-        f.response :json
+      conn = Faraday.new url: "https://api.openai.com" do |c|
+        c.request :json
+        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
+        c.response :json
+        c.response :raise_error
       end
 
       prompt = <<~PROMPT
@@ -179,6 +183,14 @@ class CardGrant
       end
 
       broadcast_refresh_to self
+    end
+
+    def unauthorized?
+      draft? || submitted? || rejected?
+    end
+
+    def authorized?
+      approved? || fraudulent?
     end
 
   end

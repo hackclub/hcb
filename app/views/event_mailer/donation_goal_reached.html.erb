@@ -1,6 +1,10 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
-<p>Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been reached after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now %>!</p>
+<p>
+  Congrats! Your donation goal of <%= render_money @goal.amount_cents %> has been reached after <%= distance_of_time_in_words @goal.tracking_since, DateTime.now %>!
+  If you wish, <%= link_to "create an announcement", edit_announcement_url(@announcement) %> to celebrate having reached your goal.
+</p>
+
 <p>Here are all the donations that helped to contribute to this goal:</p>
 <ul>
 <% @donations.each do |donation| %>
@@ -10,7 +14,7 @@
 <% end %>
 </ul>
 
-<p>If you wish, you can adjust your donation goal on the <%= link_to "organization settings page", edit_event_url(@event) %>.</p>
+<p>You can adjust your donation goal on the <%= link_to "organization settings page", edit_event_url(@event) %>.</p>
 
 <p>
   From,<br>

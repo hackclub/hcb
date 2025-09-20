@@ -10,10 +10,9 @@ class StripeCardsController < ApplicationController
   end
 
   def shipping
-    # Only show shipping for phyiscal cards if the eta is in the future (or 1 week after)
-    @stripe_cards = current_user.stripe_cards.where.not(stripe_status: "canceled").physical_shipping.filter do |sc|
-      sc.shipping_eta&.after?(1.week.ago)
-    end
+    # Only show shipping for phyiscal cards if the eta is in the future and they haven't already been activated or canceled.
+    @stripe_cards = current_user.stripe_cards.cards_in_shipping
+
     skip_authorization # do not force pundit
 
     render :shipping, layout: false
@@ -24,7 +23,7 @@ class StripeCardsController < ApplicationController
     authorize @card
 
     begin
-      @card.freeze!
+      @card.freeze!(frozen_by: current_user)
       flash[:success] = "Card frozen"
     rescue => e
       flash[:error] = "Card could not be frozen"
@@ -64,7 +63,7 @@ class StripeCardsController < ApplicationController
   def show
     @card = StripeCard.includes(:event, :user).find(params[:id])
 
-    if @card.card_grant.present? && !current_user&.auditor?
+    if @card.card_grant.present? && !auditor_signed_in?
       authorize @card.card_grant
       return redirect_to card_grant_path(@card.card_grant, frame: params[:frame])
     end
@@ -72,6 +71,8 @@ class StripeCardsController < ApplicationController
     authorize @card
 
     if params[:show_details] == "true"
+      return unless enforce_sudo_mode
+
       ahoy.track "Card details shown", stripe_card_id: @card.id
     end
 
@@ -127,9 +128,11 @@ class StripeCardsController < ApplicationController
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
   rescue => e
-    Rails.error.report(e)
-
-    redirect_to event_cards_new_path(event), flash: { error: e.message }
+    if event.present?
+      redirect_to event_cards_new_path(event), flash: { error: e.message }
+    else
+      redirect_to my_cards_path, flash: { error: e.message }
+    end
   end
 
   def edit

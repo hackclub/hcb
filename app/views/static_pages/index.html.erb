@@ -112,22 +112,23 @@
       </ul>
     <% end %>
 
-    <%= render "static_pages/index/robotics_raffle" %>
-    <%= render "static_pages/index/teen_raffle" %>
+    <%= render "static_pages/index/teenager_raffle" %>
 
     <%# Latest HCB announcement %>
-    <div class="flex flex-row w-full justify-between items-center">
-      <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
-        HCB announcements
-      </h2>
-      <%= link_to event_announcement_overview_path(Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK)), class: "muted", target: :_blank do %>
-        View all announcements
-        <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
-      <% end %>
-    </div>
-    <div class="flex flex-col gap-2 items-start text-left w-full self-stretch">
-      <%= render partial: "announcements/announcement_card", collection: Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK).announcements.order(published_at: :desc).last(2), as: :announcement %>
-    </div>
+    <% if @latest_hcb_announcement %>
+      <div class="flex flex-row w-full justify-between items-center">
+        <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+          The latest from HCB
+        </h2>
+        <%= link_to event_announcement_overview_path(Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK)), class: "muted", target: :_blank do %>
+          View all announcements
+          <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+        <% end %>
+      </div>
+      <div class="mb-4 text-left w-full self-stretch">
+        <%= render partial: "announcements/announcement_card", locals: { announcement: @latest_hcb_announcement } %>
+      </div>
+    <% end %>
 
     <%= render "static_pages/index/explore" %>
 
@@ -149,5 +150,9 @@
       </ul>
     <% end %>
   <% end %>
-  <%= render partial: "static_pages/admin" %>
+  <% if auditor_signed_in? %>
+    <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :eager, target: "_top", class: "w-full") do %>
+      <p>Loading admin tools</p>
+    <% end %>
+  <% end %>
 </main>

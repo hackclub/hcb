@@ -4,18 +4,17 @@
 #
 # Table name: announcements
 #
-#  id                  :bigint           not null, primary key
-#  aasm_state          :string
-#  content             :jsonb            not null
-#  deleted_at          :datetime
-#  published_at        :datetime
-#  rendered_email_html :text
-#  rendered_html       :text
-#  title               :string           not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  author_id           :bigint           not null
-#  event_id            :bigint           not null
+#  id            :bigint           not null, primary key
+#  aasm_state    :string
+#  content       :jsonb            not null
+#  deleted_at    :datetime
+#  published_at  :datetime
+#  template_type :string
+#  title         :string           not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  author_id     :bigint           not null
+#  event_id      :bigint           not null
 #
 # Indexes
 #
@@ -35,6 +34,10 @@ class Announcement < ApplicationRecord
   acts_as_paranoid
 
   aasm timestamps: true do
+    # When we create a template and prompt it to users, it's in this
+    # `template_draft` so that it's "unlisted" on the index page.
+    state :template_draft
+
     state :draft, initial: true
     state :published
 
@@ -42,23 +45,59 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
-        AnnouncementPublishedJob.perform_later(announcement: self)
+        Announcement::PublishedJob.perform_later(announcement: self)
       end
+    end
+
+    event :mark_draft do
+      transitions from: :template_draft, to: :draft
     end
   end
 
-  validates :content, presence: true
+  scope :all_monthly, -> { where(template_type: Announcement::Templates::Monthly.name) }
+  scope :monthly, -> { all_monthly.joins(event: :config).where("event_configurations.generate_monthly_announcement" => true) }
+  scope :all_monthly_for, ->(date) { all_monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
+  scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
+  scope :approved_monthly_for, ->(date) { monthly_for(date).draft }
+  validate :content_is_json
+
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
 
-  before_save do
-    if content_changed?
-      self.rendered_html = ProsemirrorService::Renderer.render_html(content, event)
+  has_many :blocks, dependent: :destroy
 
-      if draft?
-        self.rendered_email_html = ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+  validates :title, presence: true, if: :published?
+
+  before_save :autofollow_organizers
+
+  def render
+    ProsemirrorService::Renderer.render_html(content, event)
+  end
+
+  def render_email
+    ProsemirrorService::Renderer.render_html(content, event, is_email: true)
+  end
+
+  private
+
+  def autofollow_organizers
+    # is this the first announcement to be published?
+    if published? && event.announcements.published.none?
+      event.users.excluding(event.followers).find_each do |user|
+        event.event_follows.create!(user:)
+
+      rescue ActiveRecord::RecordNotUnique
+        # Do nothing. The user already follows this event.
       end
+    end
+  end
+
+  def content_is_json
+    unless content.is_a?(Hash)
+      Rails.error.unexpected("Announcement #{id}'s content is not a Hash")
+      errors.add(:content, "is invalid")
     end
   end
 

@@ -75,6 +75,7 @@
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <div id="tooltip-container"></div>
     <%= react_component "tour/TourOverlay",
                         tour: @tour&.name,
                         id: @tour&.id,
@@ -87,10 +88,18 @@
                duration: 30.minutes,
                learn_more_url: "https://blog.hcb.hackclub.com/posts/7th-may-maintenance" %>
 
+    <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
+      <div class="w-100 px4 !bg-red transparency-banner">
+        <p class="h5 medium center mt1 mb1 text-white text-xl">
+          ⚠️ Admin users are required to
+          <%= link_to("enable two-factor authentication", settings_security_path, class: "text-inherit") %>
+        </p>
+      </div>
+    <% end %>
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
-          <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
+          <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
         </p>
       </div>
     <% end %>
@@ -109,21 +118,20 @@
         </p>
       </div>
     <% end %>
-    <% if organizer_signed_in? && @event && (@event.activated_at || @event.created_at) >= "2025-07-03" && !@event.demo_mode? && @event.organized_by_teenagers? && @event.active_teenagers <= 3 && !@hide_three_teens_banner %>
-      <div class="w-100s px3 bg-red card--hover" data-behavior="hide_iframe">
-        <%= link_to fillout_form("o5bgWXhPgfus", { "email" => current_user.email, "name" => current_user.name, "organization_name" => @event.name, "organization_link" => event_url(@event) }), class: "no-underline hover:underline hover:decoration-white hover:decoration-2" do %>
+
+    <% if @event && !@event&.demo_mode? && @event&.robotics_team? && organizer_signed_in? && !@hide_promotional_banner && Date.current.month < 10 %>
+      <div class="w-100s px3 promo-robotics-raffle card--hover flex flex-row items-center" data-behavior="hide_iframe">
+        <div class="flex flex-col flex-grow">
           <p class="h3 font-medium text-center text-balance mt2 mb0 white">
-            Add three teens, get $5 each!
+            You currently have <%= number_to_human(@event&.users&.active_teenager&.count) %> tickets for the Robotics 3D Printer Raffle. Earn a ticket for each active teenager in your organization.
           </p>
-        <% end %>
-        <p class="h4 text-center text-balance mt0 mb1 white">
-          For a limited time, you will recieve $5 for every new teen you invite to your organization! This is valid for up to 3 teenagers.
-        </p>
-        <p class="h4 text-center text-balance mt0 mb2 white">
-          <%= link_to toggle_three_teens_banner_path, data: { turbo: false }, method: :post, class: "white" do %>
-            <i>Maybe later - thanks!</i>
-          <% end %>
-        </p>
+          <p class="h4 text-center text-balance mt0 mb2 white">
+            Find more info <%= link_to "here", event_promotions_path(@event), class: "white" %>.
+          </p>
+        </div>
+        <span class="pr2">
+          <%= pop_icon_to "view-close", hide_promotional_banner_path, data: { turbo: true, turbo_method: :POST, turbo_frame: "_top" }, method: :post, class: "white" %>
+        </span>
       </div>
     <% end %>
 
@@ -180,7 +188,7 @@
 
             <div class="welcome__content">
               <div class="center">
-                <h3 class="h3 caps secondary block m0">Welcome to</h3>
+                <h3 class="h3 caps secondary block my-0">Welcome to</h3>
                 <h1 class="primary mt0 border-none"><%= @organizer_position&.initial? ? "HCB" : @event.name %></h1>
               </div>
 

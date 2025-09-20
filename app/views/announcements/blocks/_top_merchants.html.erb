@@ -1,0 +1,17 @@
+<%# locals: (block:, is_email: false, merchants:, start_date:, end_date:) %>
+
+<%= render "announcements/blocks/block_shell", block:, type: "topMerchants", is_email:, title: "Top merchants for #{block.announcement.event.name} #{"from #{start_date.strftime("%B %e, %Y")}" if start_date.present?} until #{end_date.strftime("%B %e, %Y")}" do %>
+  <% if block.empty? %>
+    <p><%= block.announcement.event.name %> does not have any merchant data for this period.</p>
+  <% else %>
+    <% if is_email %>
+      <ol>
+        <% merchants.each do |merchant| %>
+          <li><strong><%= merchant[:name] %></strong>: <%= render_money merchant[:value] * 100 %></p>
+        <% end %>
+      </ol>
+    <% else %>
+      <%= react_component "home/Merchants", { data: merchants }, { camelize_props: false } %>
+    <% end %>
+  <% end %>
+<% end %>
