@@ -782,6 +782,9 @@ Rails.application.routes.draw do
     get :users_chart
     get :transaction_heatmap
 
+    get :user_select
+    get :tag_select
+
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
     get "ledger"
