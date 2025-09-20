@@ -1,4 +1,4 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @merchant %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
@@ -163,6 +163,14 @@
           <%= render_money @maximum_amount if @maximum_amount %>
 
           <%= link_to event_ledger_path(@event, upsert_query_params(minimum_amount: nil, maximum_amount: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @category %>
+        <div class="badge badge-large bg-muted">
+          <%= @category.definition.label %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(category: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
