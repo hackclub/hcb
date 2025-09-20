@@ -12,7 +12,6 @@ module Api
       end
 
       def show
-        skip_authorization
         @invoice = Invoice.find_by_public_id!(params[:id])
         authorize @invoice
       end
