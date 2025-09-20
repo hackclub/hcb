@@ -56,7 +56,7 @@ class Event
     end
 
     def receipts_required?
-      type == Event::Plan::SalaryAccount.name
+      true
     end
 
     def was_backfilled?
