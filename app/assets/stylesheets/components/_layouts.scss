@@ -40,7 +40,7 @@
     }
 
     .sidebar--scroll-container {
-      @apply flex-1 overflow-y-auto scrollbar-hidden w-full p-2;
+      @apply flex-1 overflow-y-auto scrollbar-hidden w-full p-2 px-5;
     }
   }
 
