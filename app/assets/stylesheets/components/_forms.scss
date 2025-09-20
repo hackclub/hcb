@@ -475,25 +475,15 @@ input:where([data-behavior='otp_input']) {
 }
 
 .dropdown-button__menu {
-  width: 100%;
+  width: 100% !important;
 
-  position: absolute;
+  position: absolute !important;
   top: 110%;
   left: 0px;
 
-  border-radius: 0.75rem;
-
-  background-color: $smoke;
-
-  [data-dark='true'] & {
-    background-color: $darker;
-  }
-
   display: none;
   opacity: 0;
-
   z-index: 10;
-
   margin-top: 8px;
 }
 
@@ -511,7 +501,7 @@ input:where([data-behavior='otp_input']) {
 }
 
 .dropdown-button__menu label {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 0.75rem !important;
   border-radius: inherit;
 }
 
@@ -519,9 +509,6 @@ input:where([data-behavior='otp_input']) {
   margin: 3px 0px;
 }
 
-.dropdown-button__menu label:hover {
-  background-color: color-mix(in srgb, $slate 20%, transparent);
-}
 .dropdown-button__menu input:checked + label {
   background-color: color-mix(in srgb, $green-dark 20%, transparent);
 }
