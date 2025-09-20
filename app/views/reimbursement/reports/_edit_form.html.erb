@@ -9,7 +9,7 @@
       <%= form.text_field :report_to, value: @report.user.email, readonly: true %>
     </div>
   </div>
-  
+
   <% if organizer_signed_in? && (@report.submitted? || @report.draft?) %>
     <%= form.label :maximum_amount, "Maximum reimbursable value", class: "mt2" %>
     <div class="field">
@@ -25,8 +25,7 @@
           data: {
             controller: "truncate-decimal",
             action: "truncate-decimal#truncate blur->truncate-decimal#pad"
-          }
-        %>
+          } %>
       </div>
     </div>
   <% end %>
