@@ -35,7 +35,7 @@ module SessionsHelper
       if impersonate
         IMPERSONATED_SESSION_DURATION
       else
-        SESSION_DURATION_OPTIONS.fetch("2 weeks")
+        user.session_validity_preference
       end
     expiration_at = Time.now + session_duration
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }

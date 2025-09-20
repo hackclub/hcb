@@ -7,7 +7,7 @@ module SessionSupport
   # @param user [User]
   # @return [UserSession]
   def sign_in(user)
-    expiration_at = Time.now + SessionsHelper::SESSION_DURATION_OPTIONS.fetch("2 weeks")
+    expiration_at = Time.now + user.session_validity_preference
 
     required_factor_count = user.use_two_factor_authentication ? 2 : 1
     login = build(:login, user:)
