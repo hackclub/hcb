@@ -23,7 +23,7 @@ module Api
         end
         @receipt = Receipt.create!(file: params[:file], receiptable: @hcb_code, user: current_user, upload_method: :api)
 
-        render "show"
+        render "show", status: :created
       end
 
       def destroy
