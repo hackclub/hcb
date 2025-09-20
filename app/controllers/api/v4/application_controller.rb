@@ -15,12 +15,6 @@ module Api
       before_action :set_expand
       before_action :set_paper_trail_whodunnit
 
-      if Rails.env.production?
-        rescue_from StandardError do |e|
-          render json: { error: "internal_server_error" }, status: :internal_server_error
-        end
-      end
-
       rescue_from Pundit::NotAuthorizedError do |e|
         render json: { error: "not_authorized" }, status: :forbidden
       end
