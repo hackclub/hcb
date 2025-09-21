@@ -23,7 +23,6 @@
                   my_subscriptions_details_path(merchant: subscription.merchant, card: subscription.card_id),
                   data: { behavior: "modal_trigger", modal: "subscription_details_#{subscription.merchant}_#{subscription.card_id}" } %>
             </td>
-          </tr>
 
           <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="subscription_details_<%= subscription.merchant %>_<%= subscription.card_id %>">
             <%= modal_header "Subscription" %>
