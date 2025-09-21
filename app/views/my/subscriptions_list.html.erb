@@ -21,8 +21,7 @@
             <td>
               <%= link_to "Details",
                   my_subscriptions_details_path(merchant: subscription.merchant, card: subscription.card_id),
-                  data: { behavior: "modal_trigger", modal: "subscription_details_#{subscription.merchant}_#{subscription.card_id}" }
-              %>
+                  data: { behavior: "modal_trigger", modal: "subscription_details_#{subscription.merchant}_#{subscription.card_id}" } %>
             </td>
           </tr>
 
