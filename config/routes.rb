@@ -87,6 +87,7 @@ Rails.application.routes.draw do
     get "receipts", to: redirect("/my/inbox")
     post "receipts/upload", to: "static_pages#receipt", as: :my_receipts_upload
     get "subscriptions", to: "my#subscriptions_list", as: :my_subscriptions_list
+    get "subscriptions/details", to: "my#subscriptions_details", as: :my_subscriptions_details
     get "missing_receipts_icon", to: "my#missing_receipts_icon", as: :my_missing_receipts_icon
     get "receipt_bin/suggested_pairings", to: "static_pages#suggested_pairings", as: :suggested_pairings
 

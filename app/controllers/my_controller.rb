@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :subscriptions_list, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :subscriptions_list, :subscriptions_details, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
 
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
 
@@ -71,6 +71,20 @@ class MyController < ApplicationController
                   .order(updated_at: :desc)
                   .to_a
     end
+
+    @subscriptions.each do |subscription|
+      subscription.card_last4 = StripeCard.find_by(stripe_id: subscription.card)&.last4
+      subscription.card_id = StripeCard.find_by(stripe_id: subscription.card)&.id
+    end
+  end
+
+  def subscriptions_details
+    @merchant = params[:merchant]
+    @card = params[:card]
+    @subscription = Subscription.find_by(merchant: @merchant, card: @card)
+    @hcb_codes = HcbCode.where(hcb_code: @subscription.hcb_codes).order(created_at: :desc)
+
+    render :subscription_details, layout: false
   end
 
   def tasks
