@@ -211,8 +211,4 @@ class StaticPagesController < ApplicationController
     }
   end
 
-  def redirect_to_html
-    redirect_to "/#{params[:page]}"
-  end
-
 end
