@@ -44,6 +44,9 @@
     the <strong><%= statement_of_activity.event_group.name %></strong> event group
   <% else %>
     <strong><%= link_to statement_of_activity.event.name, statement_of_activity.event %></strong>
+    <% if statement_of_activity.include_descendants %>
+      and its descendants
+    <% end %>
   <% end %>
   had a change in net assets
   of <%= render_money statement_of_activity.net_asset_change %>;
