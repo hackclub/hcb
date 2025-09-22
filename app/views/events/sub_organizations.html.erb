@@ -43,12 +43,12 @@
 
       <div class="field">
         <%= form.label :name, "Project name", class: "bold" %>
-        <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project" %>
+        <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project", value: params[:name] %>
       </div>
 
       <div class="field">
         <%= form.label :email, "Organizer email", class: "bold" %>
-        <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}" %>
+        <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}", value: params[:email] %>
       </div>
 
       <div class="field">
