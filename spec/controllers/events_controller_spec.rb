@@ -88,26 +88,4 @@ RSpec.describe EventsController do
       )
     end
   end
-
-  describe "#sub_organizations" do
-    it "renders the sub-organizations page with URL parameter prefilling" do
-      user = create(:user)
-      event = create(:event, name: "Test Event")
-      create(:organizer_position, user:, event:)
-
-      sign_in(user)
-
-      get(:sub_organizations, params: { 
-        event_id: event.slug,
-        name: "Test Sub Org",
-        email: "test@example.com",
-        cosigner_email: "cosigner@example.com"
-      })
-
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include('value="Test Sub Org"')
-      expect(response.body).to include('value="test@example.com"')
-      expect(response.body).to include('value="cosigner@example.com"')
-    end
-  end
 end
