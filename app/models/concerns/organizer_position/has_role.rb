@@ -10,28 +10,29 @@ class OrganizerPosition
       enum :role, {
         reader: 5,
         member: 25,
-        manager: 100
+        manager: 100,
+        owner: 1000
       }
 
       roles.each do |role_name, role_value|
         scope "#{role_name}_access", -> { where("role >= ?", role_value) }
       end
 
-      validate :at_least_one_manager
+      validate :at_least_one_owner
 
-      validate :signee_is_manager
+      validate :signee_is_owner
     end
 
     private
 
-    def at_least_one_manager
-      event&.organizer_positions&.where(role: :manager)&.any?
+    def at_least_one_owner
+      event&.organizer_positions&.where(role: :owner)&.any?
     end
 
-    def signee_is_manager
-      return unless is_signee && role != "manager"
+    def signee_is_owner
+      return unless is_signee && role != "owner"
 
-      errors.add(:role, "must be a manager because the user is a legal owner.")
+      errors.add(:role, "must be an owner because the user is a legal owner.")
     end
   end
 
