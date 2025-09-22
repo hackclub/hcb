@@ -104,20 +104,26 @@
                 <% end %>
               <% end %>
             <% end %>
+          <% elsif report.mismatched_currency? %>
+            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
+              <div class="btn bg-info disabled">
+                <%= inline_icon "send" %>
+                Submit & request review
+                <% button_hint = capture do %>
+                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
+                <% end %>
+              </div>
+            </div>
           <% elsif admin_signed_in? %>
             <%= link_to payouts_user_path(user), class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" }  do %>
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s Payout Information
               <% button_hint = capture do %>
-                <% if report.mismatched_currency? %>
-                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
+                <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
+                <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
+                  update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
                 <% else %>
-                  <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
-                  <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
-                    update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
-                  <% else %>
-                    add their payout information.
-                  <% end %>
+                  add their payout information.
                 <% end %>
               <% end %>
             <% end %>
@@ -128,16 +134,6 @@
                 Submit & request review
                 <% button_hint = capture do %>
                   <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
-                <% end %>
-              </div>
-            </div>
-          <% elsif report.mismatched_currency? %>
-            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
-              <div class="btn bg-info disabled">
-                <%= inline_icon "send" %>
-                Submit & request review
-                <% button_hint = capture do %>
-                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
                 <% end %>
               </div>
             </div>
