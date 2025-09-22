@@ -34,7 +34,7 @@
               <%= render_money card_grant.balance %>
             </td>
             <td>
-              <%= link_to "View", card_grant_url(card_grant), data: { turbo_frame: "_top" } %>
+              <%= render "events/card_grant_actions", card_grant: %>
             </td>
           </tr>
         <% end %>
