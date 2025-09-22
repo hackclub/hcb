@@ -31,34 +31,36 @@
   <%= render partial: "events/event_card", collection: @sub_organizations, as: :event %>
 </ul>
 
-<section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
-  <%= form_with(url: event_create_sub_organization_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
-    <%= modal_header "Create a sub-organization" %>
-    <div class="card border b--info mt2 mb2 container--sm mx-auto">
-      <p class="mt0 mb0">
-        Sub-organizations are subsidiaries of your organization. All members of <%= @event.name %> can access and view sub-organizations, but only managers can create and edit them.
-      </p>
-    </div>
+<% if policy(@event).create_sub_organization? %>
+  <section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
+    <%= form_with(url: event_create_sub_organization_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
+      <%= modal_header "Create a sub-organization" %>
+      <div class="card border b--info mt2 mb2 container--sm mx-auto">
+        <p class="mt0 mb0">
+          Sub-organizations are subsidiaries of your organization. All members of <%= @event.name %> can access and view sub-organizations, but only managers can create and edit them.
+        </p>
+      </div>
 
-    <div class="field">
-      <%= form.label :name, "Project name", class: "bold" %>
-      <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project" %>
-    </div>
+      <div class="field">
+        <%= form.label :name, "Project name", class: "bold" %>
+        <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project" %>
+      </div>
 
-    <div class="field">
-      <%= form.label :email, "Organizer email", class: "bold" %>
-      <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}" %>
-    </div>
+      <div class="field">
+        <%= form.label :email, "Organizer email", class: "bold" %>
+        <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}" %>
+      </div>
 
-    <div class="field">
-      <%= form.label :cosigner_email, "Co-signer email", class: "bold" %>
-      <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18" %>
-    </div>
+      <div class="field">
+        <%= form.label :cosigner_email, "Co-signer email", class: "bold" %>
+        <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18" %>
+      </div>
 
-    <small class="muted mt-0 mb-4">This project will be created on the <strong><%= @event.plan.label %></strong> plan</small>
+      <small class="muted mt-0 mb-4">This project will be created on the <strong><%= @event.plan.label %></strong> plan</small>
 
-    <div class="inline-block">
-      <%= form.submit "Create sub-organization", class: "mt1", disabled: @event&.demo_mode? %>
-    </div>
-  <% end %>
-</section>
+      <div class="inline-block">
+        <%= form.submit "Create sub-organization", class: "mt1", disabled: @event&.demo_mode? %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

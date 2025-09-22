@@ -34,7 +34,7 @@ module SessionsHelper
       if impersonate
         IMPERSONATED_SESSION_DURATION
       else
-        user.session_duration_seconds
+        UserSession::SESSION_DURATION
       end
     expiration_at = Time.now + session_duration
     cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }

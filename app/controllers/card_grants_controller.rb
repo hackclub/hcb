@@ -234,6 +234,15 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant, flash: { success: "#{@card_grant.one_time_use ? "Enabled" : "Disabled"} one time use for this card grant." }
   end
 
+  def disable_pre_authorization
+    authorize @card_grant
+
+    @card_grant.pre_authorization&.destroy!
+    @card_grant.update(pre_authorization_required: false)
+
+    redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
+  end
+
   def edit
     authorize @card_grant
   end

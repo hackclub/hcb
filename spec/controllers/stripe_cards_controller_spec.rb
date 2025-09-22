@@ -26,7 +26,7 @@ RSpec.describe StripeCardsController do
     response
       .parsed_body
       .css("article.card section.details > *")
-      .map { |el| el.text.gsub(/\s+/, " ").strip }
+      .map { |el| el.text.squish }
   end
 
   describe "#show" do

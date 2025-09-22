@@ -10,7 +10,13 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def view_image?
-    auditor_or_manager?
+    # You can view the check deposit images (front & back) as long as you meet
+    # at least one of the following conditions:
+    # - You're an auditor (admin)
+    # - You're a manager of the event
+    # - You're an organizer of the event (e.g. reader, member, etc.), but ALSO
+    #   was the person who uploaded the check deposit.
+    auditor_or_manager? || (user? && record.created_by == user)
   end
 
   def toggle_fronted?

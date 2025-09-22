@@ -28,7 +28,7 @@
       icon: "announcement",
       selected: local_assigns[:selected] == :announcements if policy(@event).announcement_overview? %>
     <% if policy(@event).activation_flow? %>
-      <% admin_tool("m0 p0 overflow-visible w-fit") do %>
+      <% admin_tool("py0 pr0 overflow-visible w-fit") do %>
         <%= dock_item "Activate",
           event_activation_flow_path(event_id: @event.slug),
           tooltip: "Activate this organization",
@@ -48,7 +48,7 @@
         icon: "support",
         data: { tour_step: "donations" },
         selected: local_assigns[:selected] == :donations %>
-    <% elsif @event.plan.donations_enabled? %>
+    <% elsif @event.donation_page_available? %>
       <%= dock_item "Donate",
         start_donation_donations_path(event_name: @event.slug),
         tooltip: "Support this organization",
@@ -162,7 +162,7 @@
           <div class="menu__divider"></div>
           <% if policy(@event).donation_overview? %>
             <%= link_to "Donations", event_donation_overview_path(@event) %>
-          <% elsif @event.plan.donations_enabled? %>
+          <% elsif @event.donation_page_available? %>
             <%= link_to "Donate", start_donation_donations_path(event_name: @event.slug) %>
           <% end %>
           <%= link_to "Invoices", event_invoices_path(@event) if policy(@event).invoices? %>

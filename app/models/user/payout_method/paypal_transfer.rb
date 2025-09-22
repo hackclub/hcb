@@ -43,6 +43,10 @@ class User
         "PayPal"
       end
 
+      def currency
+        "USD"
+      end
+
     end
   end
 
