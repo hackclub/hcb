@@ -152,6 +152,11 @@ class Event
     memo_wise def events
       if event_group
         event_group.events.to_a
+      elsif include_descendants
+        [
+          event,
+          *Event.where(id: event.descendant_ids).to_a
+        ]
       else
         [event]
       end
