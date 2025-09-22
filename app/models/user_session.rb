@@ -74,7 +74,7 @@ class UserSession < ApplicationRecord
 
   LAST_SEEN_AT_COOLDOWN = 5.minutes
 
-  def touch_last_seen_at
+  def update_last_seen_at
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
     updates = { last_seen_at: Time.now }
