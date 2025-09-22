@@ -153,6 +153,8 @@ class User < ApplicationRecord
 
   include HasTasks
 
+  before_update { self.teenager = teenager? }
+
   before_create :format_number
   before_save :on_phone_number_update
 
@@ -209,7 +211,7 @@ class User < ApplicationRecord
     end
   end
 
-  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
+  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
@@ -361,11 +363,11 @@ class User < ApplicationRecord
   end
 
   def last_seen_at
-    user_sessions.maximum(:last_seen_at)
+    user_sessions.not_impersonated.maximum(:last_seen_at)
   end
 
   def last_login_at
-    user_sessions.maximum(:created_at)
+    user_sessions.not_impersonated.maximum(:created_at)
   end
 
   def email_charge_notifications_enabled?

@@ -10,7 +10,8 @@ json.call(
   :allowed_merchants,
   :allowed_categories,
   :one_time_use,
-  :pre_authorization_required
+  :pre_authorization_required,
+  :email
 )
 json.balance_cents card_grant.balance.cents if expand?(:balance_cents)
 json.status card_grant.status

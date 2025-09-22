@@ -503,7 +503,7 @@ class FlavorTextService
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
       "Wanna&nbsp;<a href='#{Rails.configuration.constants.github_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
       "everyone's favorite money thing!",
-      -> { "#{UserSession.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
+      -> { "#{UserSession.not_impersonated.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
       "We Column like we see 'em!",
       "Raccoon-tested, dinosaur-approved.",
       "original recipe!",

@@ -243,10 +243,15 @@ class SudoModeHandler
         login:,
         additional_factors:,
         default_factor:,
+        break_out_of_turbo_frame:,
         **form_locals,
       },
       status: :unprocessable_entity
     )
+  end
+
+  def break_out_of_turbo_frame
+    request.get? && controller_instance.send(:turbo_frame_request?)
   end
 
 end

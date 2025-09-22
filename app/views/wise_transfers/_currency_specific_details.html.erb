@@ -1,9 +1,9 @@
-<%# locals: (form:, disabled:, excluded_fields: []) %>
+<%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer) %>
 
 <% (WiseTransfer::AVAILABLE_CURRENCIES + [nil]).each do |currency| %>
   <template x-if="currency == '<%= currency.nil? ? "null" : currency %>'">
     <div>
-      <% WiseTransfer.information_required_for(currency.nil? ? nil : currency).each do |field| %>
+      <% model.information_required_for(currency.nil? ? nil : currency).each do |field| %>
         <% unless (field[:key]).in?(excluded_fields) %>
         <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>" x-on:change="<%= field[:key] %> = <%= field[:type] == :check_box ? "$event.target.checked" : "$event.target.value" %>" <% if field[:conditional] %> x-show="<%= field[:conditional] %>" <% end %>>
           <%= form.label field[:key], field[:label], (field[:label_options] || {}) %>
