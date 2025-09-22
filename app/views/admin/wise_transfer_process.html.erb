@@ -205,6 +205,8 @@
           </div>
         <% end %>
 
+        <hr>
+
         <%= form_with(model: @wise_transfer, local: true, url: mark_sent_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
