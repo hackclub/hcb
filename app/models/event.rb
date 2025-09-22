@@ -907,7 +907,7 @@ class Event < ApplicationRecord
   def contract_signed
     return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
 
-    errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
+    errors.add(:base, "Missing an owner, non-demo mode organizations must have an owner.")
   end
 
   def sum_fronted_amount(pts)

@@ -19,8 +19,6 @@ class OrganizerPosition
       end
 
       validate :at_least_one_manager
-
-      validate :signee_is_owner
     end
 
     private

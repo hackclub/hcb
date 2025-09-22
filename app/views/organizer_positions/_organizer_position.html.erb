@@ -104,7 +104,6 @@
     <p class="m0">
       Invited
       <%= relative_timestamp(organizer_position.organizer_position_invite.created_at) %>
-      <%= "as a contract signee" if organizer_position.signee? || organizer_position.organizer_position_invite&.organizer_position_contract.present? %>
       by <%= organizer_position.organizer_position_invite.sender.name %>
     </p>
     <% user_mention organizer_position.organizer_position_invite.sender %>

@@ -16,7 +16,7 @@ class OrganizerPositionPolicy < ApplicationPolicy
   def change_position_role?
     return false unless user
     return false if record.user == user
-    return false if record.signee?
+    return false if record.owner?
 
     admin_or_manager?
   end
