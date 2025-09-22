@@ -8,6 +8,12 @@ module OneTimeJobs
           op.update!(role: :owner)
         end
       end
+
+      OrganizerPositionInvite.find_each do |op|
+        if op.is_signee
+          op.update!(role: :owner)
+        end
+      end
     end
 
   end
