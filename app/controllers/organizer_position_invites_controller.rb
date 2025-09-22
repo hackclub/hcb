@@ -20,19 +20,18 @@ class OrganizerPositionInvitesController < ApplicationController
   def create
     user_email = invite_params[:email]
     role = invite_params[:role]
-    is_signee = invite_params[:is_signee] || false
 
     enable_spending_controls = (invite_params[:enable_controls] == "true") && (role != "manager")
     initial_control_allowance_amount = invite_params[:initial_control_allowance_amount]
 
-    service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email:, is_signee:, role:, enable_spending_controls:, initial_control_allowance_amount:)
+    service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email:, role:, enable_spending_controls:, initial_control_allowance_amount:)
 
     @invite = service.model
 
     authorize @invite
 
     if service.run
-      if @invite.is_signee
+      if @invite.role == "owner"
         OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
       end
       flash[:success] = "Invite successfully sent to #{user_email}"
@@ -115,7 +114,7 @@ class OrganizerPositionInvitesController < ApplicationController
     permitted_params = [:email, :role, :enable_controls, :initial_control_allowance_amount]
 
     if admin_signed_in?
-      permitted_params.push(:cosigner_email, :include_videos, :is_signee)
+      permitted_params.push(:cosigner_email, :include_videos)
     end
     params.require(:organizer_position_invite).permit(permitted_params)
   end

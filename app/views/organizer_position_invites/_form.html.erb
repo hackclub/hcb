@@ -16,11 +16,16 @@
 
   <%= form.label :role, class: "mb1" %>
   <div class="field field--options flex">
-    <% OrganizerPositionInvite.roles.keys.map do |role| %>
+    <% OrganizerPositionInvite.roles.keys.excluding("owner").map do |role| %>
       <%= form.radio_button :role, role, "x-model": "role" %>
       <%= form.label :role, value: role do %>
         <strong><%= role.titleize %></strong>
       <% end %>
+    <% end %>
+
+    <%= form.radio_button :role, "owner", "x-model": "role" %>
+    <%= form.label :role, value: "owner", class: "admin-tools overflow-visible" do %>
+      <strong>Owner <span class="text-sm font-normal">(contract&nbsp;signee)</span></strong>
     <% end %>
   </div>
 
@@ -65,9 +70,11 @@
     </div>
   <% end %>
 
-  <% admin_tool("mt2 mb2 flex g1") do %>
-    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
-  <% end %>
+  <div x-show="role === 'owner'" x-cloak x-transition.duration.500ms>
+    <% admin_tool("mt2 mb2 flex g1") do %>
+      <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
+    <% end %>
+  </div>
 
   <%= form.submit "Submit" %>
 <% end %>
