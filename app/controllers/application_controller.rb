@@ -56,6 +56,8 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  rescue_from ActionView::MissingTemplate, with: :not_found
+
   rescue_from Rack::Timeout::RequestTimeoutException do
     respond_to do |format|
       format.html { render "errors/timeout" }
