@@ -13,7 +13,7 @@ RSpec.describe UsersController do
 
         initial_session = sign_in(admin_user)
 
-        # This is a normal session which should last for the admin user's session_validity_preference
+        # This is a normal session which should last for the user's session_validity_preference
         expect(initial_session.expiration_at).to eq(admin_user.session_validity_preference.seconds.from_now)
 
         post(:impersonate, params: { id: impersonated_user.id })
