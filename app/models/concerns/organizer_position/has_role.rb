@@ -28,12 +28,6 @@ class OrganizerPosition
     def at_least_one_manager
       event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
     end
-
-    def signee_is_owner
-      return unless is_signee && role != "owner"
-
-      errors.add(:role, "must be an owner because the user is a legal owner.")
-    end
   end
 
 end
