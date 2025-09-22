@@ -26,8 +26,7 @@ RSpec.describe Event::StatementOfActivity do
     end
 
     it "picks the oldest creation date when dealing with a group" do
-      user = create(:user)
-      group = Event::Group.create!(user:, name: "Group")
+      group = create(:event_group)
 
       event1 = create(:event, created_at: Time.new(2025, 1, 1))
       group.memberships.create!(event: event1)
@@ -44,8 +43,7 @@ RSpec.describe Event::StatementOfActivity do
       freeze_time do
         travel_to(Time.new(2025, 1, 1))
 
-        user = create(:user)
-        group = Event::Group.create!(user:, name: "Group")
+        group = create(:event_group)
 
         instance = described_class.new(group)
 
