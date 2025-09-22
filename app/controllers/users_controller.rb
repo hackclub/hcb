@@ -472,7 +472,7 @@ class UsersController < ApplicationController
             :address_postal_code,
             :recipient_country,
             :currency,
-          ] + WiseTransfer.recipient_information_accessors
+          ] + User::PayoutMethod::WiseTransfer.recipient_information_accessors
         }
       end
 
