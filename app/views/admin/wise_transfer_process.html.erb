@@ -186,7 +186,6 @@
               placeholder: "500.00",
               step: 0.01,
               required: true,
-              class: "mb-0",
               "@change": "amount = +$event.target.value * 100",
               "@keyup": "amount = +$event.target.value * 100",
               data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
