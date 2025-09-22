@@ -98,7 +98,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def pending_signature?
-    is_signee && organizer_position_contracts.where(aasm_state: :signed).none?
+    role == "owner" && organizer_position_contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -125,7 +125,6 @@ class OrganizerPositionInvite < ApplicationRecord
       event:,
       user:,
       role:,
-      is_signee:,
       first_time: show_onboarding,
     )
 
@@ -200,10 +199,6 @@ class OrganizerPositionInvite < ApplicationRecord
     # https://github.com/norman/friendly_id/issues/480
     sequence = OrganizerPositionInvite.where("slug LIKE ?", "#{slug}-%").size + 2
     [slug, "#{slug} #{sequence}"]
-  end
-
-  def signee?
-    is_signee
   end
 
   private

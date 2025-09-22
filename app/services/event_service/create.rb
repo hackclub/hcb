@@ -7,7 +7,7 @@ module EventService
                    cosigner_email: nil,
                    include_onboarding_videos: false,
                    emails: [],
-                   is_signee: true,
+                   is_owner: true,
                    country: [],
                    is_public: true,
                    is_indexable: true,
@@ -21,7 +21,7 @@ module EventService
                    invited_by: nil)
       @name = name
       @emails = emails
-      @is_signee = is_signee
+      @is_owner = is_owner
       @country = country
       @point_of_contact_id = point_of_contact_id
       @is_public = is_public
@@ -55,10 +55,10 @@ module EventService
         # event.mark_approved! if @approved
 
         @emails.each do |email|
-          invite_service = OrganizerPositionInviteService::Create.new(event:, sender: @invited_by || point_of_contact, user_email: email, is_signee: @is_signee)
+          invite_service = OrganizerPositionInviteService::Create.new(event:, sender: @invited_by || point_of_contact, user_email: email, role: @is_owner ? "owner" : "manager")
           invite_service.run!
 
-          if @is_signee
+          if @is_owner
             OrganizerPosition::Contract.create(organizer_position_invite: invite_service.model, cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
           end
         end

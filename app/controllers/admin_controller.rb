@@ -83,7 +83,7 @@ class AdminController < Admin::BaseController
     ::EventService::Create.new(
       name: params[:name],
       emails:,
-      is_signee: params[:is_signee] == "true",
+      is_owner: params[:is_owner] == "true",
       cosigner_email: params[:cosigner_email].presence,
       include_onboarding_videos: params[:include_videos].to_i == 1,
       country: params[:country],

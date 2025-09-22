@@ -120,7 +120,7 @@ class DocumentsController < ApplicationController
   def verification_letter
     authorize @event, policy_class: DocumentPolicy
 
-    @contract_signers = @event.organizer_positions.where(is_signee: true).includes(:user).map(&:user)
+    @owners = @event.organizer_positions.owner.includes(:user).map(&:user)
 
     respond_to do |format|
       format.pdf do
@@ -128,7 +128,7 @@ class DocumentsController < ApplicationController
       end
 
       format.png do
-        send_data ::DocumentPreviewService.new(type: :verification_letter, event: @event, contract_signers: @contract_signers).run, filename: "verification_letter.png"
+        send_data ::DocumentPreviewService.new(type: :verification_letter, event: @event, owners: @owners).run, filename: "verification_letter.png"
       end
     end
   end

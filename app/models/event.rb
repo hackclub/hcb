@@ -287,7 +287,7 @@ class Event < ApplicationRecord
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
-  has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
+  has_many :owners, -> { where(organizer_positions: { role: :owner }) }, through: :organizer_positions, source: :user
   has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
   has_many :readers, -> { where(organizer_positions: { role: :reader }) }, through: :organizer_positions, source: :user
   has_many :g_suites
@@ -826,7 +826,7 @@ class Event < ApplicationRecord
       app["HCB POC Email"] = point_of_contact.email
 
       # For Anish's TUB
-      app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
+      app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(role: :owner, user: { teenager: true }).any?
       app["Referral Raised 25"] = total_raised > 25_00
       app["Referral Transparent"] = is_public
       app["Referral 2 Teen Members"] = organizer_positions.includes(:user).where(user: { teenager: true }).count > 2
