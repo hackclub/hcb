@@ -17,6 +17,10 @@
   <% end %>
 </h1>
 
-<%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager %>
+<%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager do %>
+  <p>Loading card grants</p>
+<% end %>
 
-<%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager %>
+<%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager do %>
+  <p>Loading transactions</p>
+<% end %>
