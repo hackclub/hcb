@@ -18,15 +18,15 @@ class OrganizerPosition
         scope "#{role_name}_access", -> { where("role >= ?", role_value) }
       end
 
-      validate :at_least_one_owner
+      validate :at_least_one_manager
 
       validate :signee_is_owner
     end
 
     private
 
-    def at_least_one_owner
-      event&.organizer_positions&.where(role: :owner)&.any?
+    def at_least_one_manager
+      event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
     end
 
     def signee_is_owner
