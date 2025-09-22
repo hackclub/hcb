@@ -79,7 +79,7 @@ class UserSession < ApplicationRecord
 
     updates = { last_seen_at: Time.now }
     updates[:expiration_at] = Time.now + user.session_validity_preference unless impersonated?
-    update_columns(**updates) 
+    update_columns(**updates)
   end
 
   def expired?
