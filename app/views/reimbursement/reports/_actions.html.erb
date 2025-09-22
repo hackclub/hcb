@@ -109,11 +109,15 @@
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s Payout Information
               <% button_hint = capture do %>
-                <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
-                <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
-                  update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                <% if report.mismatched_currency? %>
+                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
                 <% else %>
-                  add their payout information.
+                  <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
+                  <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
+                    update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                  <% else %>
+                    add their payout information.
+                  <% end %>
                 <% end %>
               <% end %>
             <% end %>
@@ -123,7 +127,11 @@
                 <%= inline_icon "send" %>
                 Submit & request review
                 <% button_hint = capture do %>
-                  <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
+                  <% if report.mismatched_currency? %>
+                    <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
+                  <% else %>
+                    <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
+                  <% end %>
                 <% end %>
               </div>
             </div>
