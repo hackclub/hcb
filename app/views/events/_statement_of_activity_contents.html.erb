@@ -5,9 +5,9 @@
 
   <%= form_with(method: :get, data: { controller: "form" }, class: "mb-0") do |form| %>
     <div class="flex gap-2 items-center w-fit text-nowrap">
-      From
+      <%= form.label(:start, "From") %>
       <%= form.date_field :start, value: statement_of_activity.start_date, data: { action: "change->form#submit" }, class: "mb-0" %>
-      To
+      <%= form.label(:end, "To") %>
       <%= form.date_field :end, value: statement_of_activity.end_date, data: { action: "change->form#submit" }, class: "mb-0" %>
     </div>
   <% end %>
