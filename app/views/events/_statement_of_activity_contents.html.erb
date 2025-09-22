@@ -26,6 +26,7 @@
       <%= form.check_box(
             :include_descendants,
             checked: statement_of_activity.include_descendants,
+            include_hidden: false,
             data: { action: "change->form#submit" },
             class: "mb-0"
           ) %>
