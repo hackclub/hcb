@@ -70,6 +70,9 @@ class CardGrant
 
       flash[:success] = "Pre-authorization submitted"
       redirect_to card_grant_pre_authorizations_path(@card_grant)
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
+      redirect_to card_grant_pre_authorizations_path(@card_grant)
     end
 
     def clear_screenshots
