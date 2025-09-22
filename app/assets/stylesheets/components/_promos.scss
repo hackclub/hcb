@@ -193,12 +193,8 @@
   animation-timeline: scroll(root);
   background-position: 0% center;
 
-  &.btn {
-    opacity: 0.69;
-  }
-
   .badge {
-    background-color: rgba(100, 111, 126, 0.69) !important;
+    background-color: rgba(100, 111, 126, 0.70) !important;
     color: map-get($palette, smoke) !important;
   }
 }
