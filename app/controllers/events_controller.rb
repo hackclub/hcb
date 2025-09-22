@@ -927,7 +927,12 @@ class EventsController < ApplicationController
   def statement_of_activity
     authorize @event
 
-    @statement_of_activity = Event::StatementOfActivity.new(@event, start_date_param: params[:start], end_date_param: params[:end])
+    @statement_of_activity = Event::StatementOfActivity.new(
+      @event,
+      start_date_param: params[:start],
+      end_date_param: params[:end],
+      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants]),
+    )
 
     respond_to do |format|
       format.html

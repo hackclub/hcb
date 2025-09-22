@@ -1,23 +1,40 @@
 <%# locals: (statement_of_activity:) %>
 
-<div class="flex justify-between items-center gap-4">
-  <h1 class="border-b-0 flex-grow">Statement of Activity</h1>
-
-  <%= form_with(method: :get, data: { controller: "form" }, class: "mb-0") do |form| %>
-    <div class="flex gap-2 items-center w-fit text-nowrap">
-      <%= form.label(:start, "From") %>
-      <%= form.date_field :start, value: statement_of_activity.start_date, data: { action: "change->form#submit" }, class: "mb-0" %>
-      <%= form.label(:end, "To") %>
-      <%= form.date_field :end, value: statement_of_activity.end_date, data: { action: "change->form#submit" }, class: "mb-0" %>
-    </div>
-  <% end %>
+<div class="flex justify-between items-center gap-4 my-4">
+  <h1 class="border-b-0 flex-grow m-0 p-0">Statement of Activity</h1>
 
   <%= link_to({ format: :xlsx }, class: "btn") do %>
     <%= inline_icon "download" %>
     <small>Download XLSX</small>
   <% end %>
 </div>
-<hr class="mt-0">
+
+<%= form_with(
+      method: :get,
+      data: { controller: "form" },
+      class: "mb-0 flex items-center gap-4"
+    ) do |form| %>
+  <div class="flex gap-2 items-center w-fit text-nowrap">
+    <%= form.label(:start, "From") %>
+    <%= form.date_field :start, value: statement_of_activity.start_date, data: { action: "change->form#submit" }, class: "mb-0" %>
+    <%= form.label(:end, "To") %>
+    <%= form.date_field :end, value: statement_of_activity.end_date, data: { action: "change->form#submit" }, class: "mb-0" %>
+  </div>
+
+  <div>
+    <% if statement_of_activity.supports_descendants? %>
+      <%= form.check_box(
+            :include_descendants,
+            checked: statement_of_activity.include_descendants,
+            data: { action: "change->form#submit" },
+            class: "mb-0"
+          ) %>
+      <%= form.label(:include_descendants, "Include descendants", class: "inline") %>
+    <% end %>
+  </div>
+<% end %>
+
+<hr class="my-4">
 
 <p>
   From <%= statement_of_activity.start_date.strftime("%B %-d, %Y") %>

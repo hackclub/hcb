@@ -4,9 +4,14 @@ class Event
   class StatementOfActivity
     prepend MemoWise
 
-    attr_reader(:event, :event_group)
+    attr_reader(:event, :event_group, :include_descendants)
 
-    def initialize(event_or_event_group, start_date_param: nil, end_date_param: nil)
+    def initialize(
+      event_or_event_group,
+      start_date_param: nil,
+      end_date_param: nil,
+      include_descendants: false
+    )
       @event_group, @event = nil
 
       case event_or_event_group
@@ -20,6 +25,11 @@ class Event
 
       @start_date_param = start_date_param
       @end_date_param = end_date_param
+      @include_descendants = include_descendants
+    end
+
+    def supports_descendants?
+      event.present?
     end
 
     memo_wise def start_date
