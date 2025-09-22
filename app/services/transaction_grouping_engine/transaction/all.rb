@@ -107,7 +107,7 @@ module TransactionGroupingEngine
       def category_modifier
         return "" unless @category.present?
 
-        ActiveRecord::Base.sanitize_sql_array(["and transaction_categories.id = ?", @category.id])
+        ActiveRecord::Base.sanitize_sql_array(["and transaction_category_mappings.transaction_category_id = ?", @category.id])
       end
 
       def merchant_modifier
@@ -131,7 +131,7 @@ module TransactionGroupingEngine
 
         ct_type = type == :ct ? "CanonicalTransaction" : "CanonicalPendingTransaction"
 
-        return "left join transaction_category_mappings tcm on #{type}.id = tcm.categorizable_id AND tcm.categorizable_type = '#{ct_type}' left join transaction_categories on transaction_categories.id = tcm.transaction_category_id"
+        return "left join transaction_category_mappings on #{type}.id = transaction_category_mappings.categorizable_id AND transaction_category_mappings.categorizable_type = '#{ct_type}'"
       end
 
       def modifiers
