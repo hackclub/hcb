@@ -568,6 +568,10 @@ Rails.application.routes.draw do
     end
   end
 
+  scope controller: :static_pages do
+    get "/*page.txt", action: :redirect_to_html
+  end
+
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
