@@ -425,7 +425,7 @@ class Event < ApplicationRecord
   end
 
   before_validation do
-    build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
+    build_plan(type: fallback_plan_class) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -980,6 +980,20 @@ class Event < ApplicationRecord
     if outcome != :halted
       errors.add(:parent, "max depth exceeded")
     end
+  end
+
+  def fallback_plan_class
+    if parent
+      if parent.config&.subevent_plan.present?
+        return parent.config.subevent_plan.constantize
+      end
+
+      if parent.plan
+        return parent.plan.class
+      end
+    end
+
+    Event::Plan::Standard
   end
 
 end
