@@ -161,6 +161,9 @@ class Event < ApplicationRecord
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
+  MAX_PARENT_DEPTH = 50
+  validate(:parent_id_is_acyclical)
+
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
       ;select event_id, fee_balance from (
@@ -441,11 +444,13 @@ class Event < ApplicationRecord
 
   comma do
     id
+    created_at
     name
     revenue_fee
-    slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
-    is_public "transparent"
+    slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
+    is_public "Transparent"
+    users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
   CUSTOM_SORT = Arel.sql(
@@ -948,6 +953,33 @@ class Event < ApplicationRecord
     merchant_data = transaction.stripe_transaction["merchant_data"]
     yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
     { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
+  end
+
+  def parent_id_is_acyclical
+    return unless parent_id.present? && parent_id_changed?
+
+    current_event = self
+    visited_event_ids = Set.new
+
+    visited_event_ids << id if id.present?
+
+    outcome = 1.upto(MAX_PARENT_DEPTH) do
+      if current_event.parent
+        if visited_event_ids.add?(current_event.parent_id)
+          current_event = current_event.parent
+          next
+        else
+          errors.add(:parent, "is cyclical")
+          break :halted
+        end
+      else
+        break :halted
+      end
+    end
+
+    if outcome != :halted
+      errors.add(:parent, "max depth exceeded")
+    end
   end
 
 end

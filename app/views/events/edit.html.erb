@@ -21,7 +21,7 @@
           <%= link_to "Reimbursements", edit_event_path(@event, tab: "reimbursements"), data: { turbo: true, turbo_action: "advance" } %>
         <% end %>
       <% end %>
-      <% if @event.card_grant_setting.present? %>
+      <% if @event.plan.card_grants_enabled? %>
         <%= settings_tab active: @settings_tab == "card_grants" do %>
           <%= link_to "Card grants", edit_event_path(@event, tab: "card_grants"), data: { turbo: true, turbo_action: "advance" } %>
         <% end %>
@@ -51,7 +51,7 @@
   <%= render "events/settings/donations", event: @event, frame: @frame %>
 <% elsif @settings_tab == "reimbursements" && @event.approved? && @event.plan.reimbursements_enabled? %>
   <%= render "events/settings/reimbursements", event: @event, frame: @frame %>
-<% elsif @settings_tab == "card_grants" && @event.approved? && @event.card_grant_setting.present? %>
+<% elsif @settings_tab == "card_grants" && @event.approved? && @event.plan.card_grants_enabled? %>
   <%= render "events/settings/card_grants", event: @event %>
 <% elsif @settings_tab == "tags" %>
   <%= render "events/settings/tags", event: @event %>

@@ -62,7 +62,7 @@ class HcbCodePolicy < ApplicationPolicy
   private
 
   def present_in_events?
-    record.events.select { |e| e.try(:users).try(:include?, user) }.present?
+    record.events.any? { |event| OrganizerPosition.role_at_least?(user, event, :reader) }
   end
 
   # if users have permissions greater than or equal to member in events

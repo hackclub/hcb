@@ -49,6 +49,12 @@ class UsersController < ApplicationController
     redirect_to params[:return_to] || root_path, flash: { info: "Welcome back, 007. You're no longer impersonating #{impersonated_user.name}" }
   end
 
+  def toggle_pretend_is_not_admin
+    authorize current_user
+    current_user.update(pretend_is_not_admin: !current_user.pretend_is_not_admin)
+    head :ok
+  end
+
   def webauthn_options
     return head :not_found if !params[:email]
 
@@ -466,7 +472,7 @@ class UsersController < ApplicationController
             :address_postal_code,
             :recipient_country,
             :currency,
-          ] + WiseTransfer.recipient_information_accessors
+          ] + User::PayoutMethod::WiseTransfer.recipient_information_accessors
         }
       end
 

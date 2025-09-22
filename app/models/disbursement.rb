@@ -114,7 +114,7 @@ class Disbursement < ApplicationRecord
       memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
       css_class: "transaction--fancy",
       icon: "sam",
-      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::ARGOSY_GRANT_FUND && d.created_at > Date.new(2024, 9, 1) }
+      qualifier: ->(d) { d.source_event_id.in?([EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025]) && d.created_at > Date.new(2024, 9, 1) }
     },
     first_transparency_grant: {
       title: "FIRST® Transparency grant",

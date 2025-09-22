@@ -1,0 +1,34 @@
+<%# locals: (event:, perks_available:, active_teenagers_count:) %>
+
+<div class="card pb0 mb3 promo-robotics" id="robotics-fee-waiver">
+  <div class="card__banner card__banner--top flex justify-between items-center">
+    <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6a095a19c706097e37e4d2f78333610ffb4cc6cf_first-icon.png" height="36px" class="mr2">
+      Fee Waiver
+    </h3>
+    <% if !(event.robotics_team? || event.affiliations.robotics.any?) %>
+      <% fee_waiver_ineligible_reason = "Organization does not have a robotics affiliation or tag" %>
+    <% elsif !event.plan.eligible_for_perks? %>
+      <% fee_waiver_ineligible_reason = "Perks are not available for HQ organizations" %>
+    <% elsif !perks_available %>
+      <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
+    <% elsif active_teenagers_count < 5 %>
+      <% fee_waiver_ineligible_reason = "Organization must have 5 or more active teenagers" %>
+    <% end %>
+
+    <% if fee_waiver_ineligible_reason %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="<%= fee_waiver_ineligible_reason %>">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% else %>
+      <%= link_to "Apply",
+        perks_available ? fillout_form("8NZy8a2ui9us") : root_path,
+        class: "btn",
+        target: :_blank %>
+    <% end %>
+  </div>
+  <h3 class="mb0 mt0">Raise some money this season with zero fees on HCB!</h3>
+  <p>
+    Are you a teen-led robotics team? We’d love to waive all of your HCB fees till September 30th! Have 5 active teenagers on your HCB account, and we’ll waive all fees!
+  </p>
+</div>

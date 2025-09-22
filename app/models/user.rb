@@ -100,7 +100,7 @@ class User < ApplicationRecord
   has_many :event_follows, class_name: "Event::Follow"
   has_many :followed_events, through: :event_follows, source: :event
 
-  has_many :managed_events, inverse_of: :point_of_contact
+  has_many :managed_events, inverse_of: :point_of_contact, class_name: "Event"
 
   has_many :event_groups, class_name: "Event::Group"
 
@@ -151,6 +151,8 @@ class User < ApplicationRecord
   include HasMetrics
 
   include HasTasks
+
+  before_update { self.teenager = teenager? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -206,9 +208,10 @@ class User < ApplicationRecord
     end
   end
 
-  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
+  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
+  scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
   # a auditor is an admin who can only view things.
@@ -357,11 +360,11 @@ class User < ApplicationRecord
   end
 
   def last_seen_at
-    user_sessions.maximum(:last_seen_at)
+    user_sessions.not_impersonated.maximum(:last_seen_at)
   end
 
   def last_login_at
-    user_sessions.maximum(:created_at)
+    user_sessions.not_impersonated.maximum(:created_at)
   end
 
   def email_charge_notifications_enabled?
@@ -462,6 +465,10 @@ class User < ApplicationRecord
     return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
 
     true
+  end
+
+  def managed_active_teenagers_count
+    User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
   private

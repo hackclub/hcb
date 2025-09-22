@@ -119,6 +119,7 @@ Rails.application.routes.draw do
     collection do
       get "auth", to: "logins#new"
       get "webauthn/auth_options", to: "users#webauthn_options"
+      post "toggle_pretend_is_not_admin", to: "users#toggle_pretend_is_not_admin"
 
       # SMS Auth
       post "start_sms_auth_verification", to: "users#start_sms_auth_verification"
@@ -255,6 +256,7 @@ Rails.application.routes.draw do
       post "referral_program_create", to: "admin#referral_program_create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
     end
 
     member do
