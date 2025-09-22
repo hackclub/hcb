@@ -13,6 +13,9 @@ RSpec.describe UsersController do
 
         initial_session = sign_in(admin_user)
 
+        # This is a normal session which should last for the admin user's session_validity_preference
+        expect(initial_session.expiration_at).to eq(admin_user.session_validity_preference.from_now)
+
         post(:impersonate, params: { id: impersonated_user.id })
         expect(response).to redirect_to(root_path)
         expect(flash[:info]).to eq("You're now impersonating Impersonated User.")
