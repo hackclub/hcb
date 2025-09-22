@@ -127,11 +127,17 @@
                 <%= inline_icon "send" %>
                 Submit & request review
                 <% button_hint = capture do %>
-                  <% if report.mismatched_currency? %>
-                    <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
-                  <% else %>
-                    <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
-                  <% end %>
+                  <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
+                <% end %>
+              </div>
+            </div>
+          <% elsif report.mismatched_currency? %>
+            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
+              <div class="btn bg-info disabled">
+                <%= inline_icon "send" %>
+                Submit & request review
+                <% button_hint = capture do %>
+                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
                 <% end %>
               </div>
             </div>
