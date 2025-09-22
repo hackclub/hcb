@@ -77,8 +77,9 @@ class UserSession < ApplicationRecord
   def touch_last_seen_at
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
-    update_columns(last_seen_at: Time.now)
-    update_columns(expiration_at: Time.now + user.session_validity_preference) unless impersonated?
+    updates = { last_seen_at: Time.now }
+    updates[:expiration_at] = Time.now + user.session_validity_preference unless impersonated?
+    update_columns(**updates) 
   end
 
   def expired?
