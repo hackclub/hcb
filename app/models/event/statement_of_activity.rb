@@ -137,18 +137,6 @@ class Event
       io.string
     end
 
-    private
-
-    attr_reader(:start_date_param, :end_date_param)
-
-    def transactions
-      CanonicalTransaction
-        .joins(:canonical_event_mapping)
-        .where(canonical_event_mapping: { event_id: events.map(&:id), subledger_id: nil })
-        .where("date between ? AND ?", start_date, end_date)
-        .strict_loading
-    end
-
     memo_wise def events
       if event_group
         event_group.events.to_a
@@ -160,6 +148,18 @@ class Event
       else
         [event]
       end
+    end
+
+    private
+
+    attr_reader(:start_date_param, :end_date_param)
+
+    def transactions
+      CanonicalTransaction
+        .joins(:canonical_event_mapping)
+        .where(canonical_event_mapping: { event_id: events.map(&:id), subledger_id: nil })
+        .where("date between ? AND ?", start_date, end_date)
+        .strict_loading
     end
 
   end

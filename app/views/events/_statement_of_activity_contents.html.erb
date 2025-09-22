@@ -54,14 +54,14 @@
   spent <%= render_money statement_of_activity.total_expense.abs %>.
 </p>
 
-<% if statement_of_activity.event_group %>
+<% if statement_of_activity.event_group || statement_of_activity.include_descendants %>
   <details>
     <summary>Included events</summary>
-    <% if statement_of_activity.event_group.events.empty? %>
+    <% if statement_of_activity.event_group && statement_of_activity.events.empty? %>
       <p>This group does not have any associated events</p>
     <% else %>
       <ul>
-        <% statement_of_activity.event_group.events.each do |event| %>
+        <% statement_of_activity.events.each do |event| %>
           <li>
             <%= link_to(event.name, event_path(event)) %>
           </li>
