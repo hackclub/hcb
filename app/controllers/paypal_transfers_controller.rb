@@ -19,12 +19,16 @@ class PaypalTransfersController < ApplicationController
 
     if @paypal_transfer.save
       if paypal_transfer_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: paypal_transfer_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @paypal_transfer.local_hcb_code
-        ).run!
+        begin
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: paypal_transfer_params[:file],
+            upload_method: :transfer_create_page,
+            receiptable: @paypal_transfer.local_hcb_code
+          ).run!
+        rescue ActiveRecord::RecordInvalid => e
+          return redirect_to url_for(@paypal_transfer.local_hcb_code), flash: { info: "PayPal transfer successfully submitted, however, the receipt file was invalid." }
+        end
       end
       redirect_to url_for(@paypal_transfer.local_hcb_code), flash: { success: "Your PayPal transfer has been sent!" }
     else
