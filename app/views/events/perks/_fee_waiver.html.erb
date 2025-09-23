@@ -25,7 +25,7 @@
     </div>
     <h3 class="mb0 mt0">Raise some money this month with zero fees on HCB!</h3>
     <p>
-      Are you a teen-led organization? We’d love to waive all of your HCB fees till September 30th! Fee waiver status updates nightly.
+      Are you a teen-led organization? We’d love to waive all of your HCB fees till <%= Date.current.end_of_month.strftime("%B %e, %Y") %>! Fee waiver status updates nightly.
     </p>
     <table class="mb2">
       <tr class="<%= "card__darker" if active_teenagers_count >= 0 && active_teenagers_count <= 4 %>">
