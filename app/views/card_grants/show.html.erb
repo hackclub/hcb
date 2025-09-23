@@ -65,7 +65,7 @@
 
 <hr>
 
-<% unless @card_grant.pending_invite? %>
+<% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
   <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
 <% end %>
 
