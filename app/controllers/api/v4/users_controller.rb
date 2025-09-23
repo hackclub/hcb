@@ -46,7 +46,7 @@ module Api
 
       def beacon_config
         render json: {
-          signature: OpenSSL::HMAC.hexdigest("sha256", Credentials.fetch(:HELPSCOUT, :BEACON_SECRET_KEY) || "", current_user&.email || "")
+          signature: OpenSSL::HMAC.hexdigest("sha256", Credentials.fetch(:HELPSCOUT, :BEACON_SECRET_KEY), current_user.email)
         }
       end
 
