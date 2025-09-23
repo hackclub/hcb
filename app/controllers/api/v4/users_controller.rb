@@ -48,6 +48,7 @@ module Api
           signature: OpenSSL::HMAC.hexdigest("sha256", Credentials.fetch(:HELPSCOUT, :BEACON_SECRET_KEY) || "", current_user&.email || "")
         }
       end
+
     end
   end
 end
