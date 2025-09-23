@@ -11,7 +11,7 @@
       <% elsif !perks_available %>
         <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
       <% end %>
-  
+
       <% if fee_waiver_ineligible_reason %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="<%= fee_waiver_ineligible_reason %>">
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
