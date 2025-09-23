@@ -805,7 +805,7 @@ Rails.application.routes.draw do
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
-    get "card_grants/overview", to: "card_grants#index", as: :card_grant_overview
+    get "card_grants", to: "card_grants#index", as: :card_grant_overview
     get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
     get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
 

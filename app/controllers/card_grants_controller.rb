@@ -11,8 +11,6 @@ class CardGrantsController < ApplicationController
 
   def index
     authorize @event, :card_grant_overview?
-
-    render "events/card_grants/overview"
   end
 
   def card_index
@@ -23,8 +21,6 @@ class CardGrantsController < ApplicationController
 
     @card_grants = @event.card_grants.order(created_at: :desc)
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
-
-    render "events/card_grants/card_overview"
   end
 
   def transaction_index
@@ -36,8 +32,6 @@ class CardGrantsController < ApplicationController
     @all_stripe_cards = @event.stripe_cards.where.associated(:card_grant)
     @hcb_codes = HcbCode.where(hcb_code: @all_stripe_cards.flat_map(&:all_hcb_codes)).order(created_at: :desc)
     @paginated_hcb_codes = @hcb_codes.page(transactions_page).per(transactions_per_page)
-
-    render "events/card_grants/transaction_overview"
   end
 
   def new
