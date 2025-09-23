@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -10,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_05_005653) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_11_173917) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1611,6 +1613,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_005653) do
     t.string "program", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -1851,7 +1854,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_005653) do
     t.string "background_image_url"
     t.string "login_header_text"
     t.text "login_body_text"
-    t.string "login_text_color", default: "#ffffff"
+    t.string "login_text_color"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -2067,6 +2070,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_005653) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_subledgers_on_event_id"
+  end
+
+  create_table "subscriptions", force: :cascade do |t|
+    t.string "merchant"
+    t.string "card"
+    t.json "hcb_codes"
+    t.string "last_hcb_code"
+    t.decimal "average_date_difference"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merchant", "card"], name: "index_subscriptions_on_merchant_and_card", unique: true
   end
 
   create_table "suggested_pairings", force: :cascade do |t|
