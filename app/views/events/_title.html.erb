@@ -8,7 +8,7 @@
   <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none gap-2 text-inherit event-title -ml-4 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
     <h3 class="my-0 -mb-1">
       <%= @event.name %>
-      <%= inline_icon "down-caret", class: "align-middle event-title-dropdown-icon -mr-4 -ml-1" if show_org_switcher? %>
+      <%= inline_icon "down-caret", class: "align-middle event-title-dropdown-icon -mr-4" if show_org_switcher? %>
     </h3>
   <% end %>
   <% if show_org_switcher? %>
