@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_23_195446) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_23_204721) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1016,6 +1016,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_23_195446) do
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
     t.boolean "fee_waiver_eligible", default: false, null: false
+    t.boolean "fee_waiver_applied", default: false, null: false
     t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
