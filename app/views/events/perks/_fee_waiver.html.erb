@@ -7,11 +7,9 @@
         Fee Waiver
       </h3>
       <% if !event.plan.eligible_for_perks? %>
-        <% fee_waiver_ineligible_reason = "Perks are not available for HQ organizations" %>
+        <% fee_waiver_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
       <% elsif !perks_available %>
-        <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be on demo mode" %>
-      <% elsif active_teenagers_count < 5 %>
-        <% fee_waiver_ineligible_reason = "Organization must have 5 or more active teenagers" %>
+        <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
       <% end %>
   
       <% if fee_waiver_ineligible_reason %>
@@ -19,15 +17,29 @@
           <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
         </div>
       <% else %>
-        <%= link_to "Apply",
-          perks_available ? fillout_form("8NZy8a2ui9us") : root_path,
-          class: "btn",
-          target: :_blank %>
+        <%= link_to "#{event.fee_waiver_eligible ? "Opt-out" : "Opt-in"}",
+          event_toggle_fee_waiver_eligible_path,
+          method: :post,
+          class: "btn promo-premium-header bg-clip-padding" %>
       <% end %>
     </div>
-    <h3 class="mb0 mt0">Raise some money this season with zero fees on HCB!</h3>
+    <h3 class="mb0 mt0">Raise some money this month with zero fees on HCB!</h3>
     <p>
-      Are you a teen-led robotics team? We’d love to waive all of your HCB fees till September 30th! Have 5 active teenagers on your HCB account, and we’ll waive all fees!
+      Are you a teen-led organization? We’d love to waive all of your HCB fees till September 30th! Fee waiver status updates nightly.
     </p>
+    <table class="mb2">
+      <tr class="<%= "card__darker" if active_teenagers_count >= 0 && active_teenagers_count <= 4 %>">
+        <td>0-4 active teenagers</td>
+        <td>7.0% fee</td>
+      </tr>
+      <tr class="<%= "card__darker" if active_teenagers_count >= 5 && active_teenagers_count <= 9 %>">
+        <td>5-9 active teenagers</td>
+        <td>3.5% fee</td>
+      </tr>
+      <tr class="<%= "card__darker" if active_teenagers_count > 10 %>">
+        <td>10+ active teenagers</td>
+        <td>0.0% fee</td>
+      </tr>
+    </table>
   </div>
 <% end %>
