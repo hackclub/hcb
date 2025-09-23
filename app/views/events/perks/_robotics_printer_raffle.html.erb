@@ -8,7 +8,7 @@
         3D Printer Raffle
       </h3>
       <% if event.robotics_team? || event.affiliations.robotics.any? %>
-        <span class="btn disabled bg-clip-padding">Entered</span>
+        <span class="btn disabled bg-clip-padding"><%= active_teenagers_count %> <%= "entry".pluralize(active_teenagers_count) %></span>
       <% else %>
         <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a robotics team or have a robotics affiliation.">
           <span class="btn disabled bg-clip-padding">Ineligible</span>
