@@ -20,6 +20,8 @@ RSpec.describe("session expiry", type: :controller) do
       session = sign_in(user)
       initial_expiry = user.session_validity_preference.seconds.from_now
 
+      expect(initial_expiry).to eq(3.days.from_now)
+
       get(:index)
       expect(response).to have_http_status(:ok)
       expect(session.reload.expiration_at).to eq(initial_expiry)
@@ -44,6 +46,19 @@ RSpec.describe("session expiry", type: :controller) do
       travel_to(updated_expiry + 1.second)
       get(:index)
       expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: request.original_url))
+    end
+  end
+
+  it "caps the maximum session length to 2 weeks" do
+    freeze_time do
+      user = create(:user, session_validity_preference: SessionsHelper::SESSION_DURATION_OPTIONS.fetch("2 weeks"))
+      session = sign_in(user)
+      initial_expiry = user.session_validity_preference.seconds.from_now
+
+      travel(1.week)
+      get(:index)
+      expect(response).to have_http_status(:ok)
+      expect(session.reload.expiration_at).to eq(initial_expiry)
     end
   end
 end
