@@ -1004,7 +1004,7 @@ DEPENDENCIES
   yellow_pages!
 
 RUBY VERSION
-   ruby 3.3.7p123
+   ruby 3.4.5p51
 
 BUNDLED WITH
    2.5.22

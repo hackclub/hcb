@@ -410,6 +410,7 @@ class UsersController < ApplicationController
       :profile_picture,
       :pretend_is_not_admin,
       :sessions_reported,
+      :session_validity_preference,
       :receipt_report_option,
       :birthday,
       :seasonal_themes_enabled,
@@ -472,7 +473,7 @@ class UsersController < ApplicationController
             :address_postal_code,
             :recipient_country,
             :currency,
-          ] + WiseTransfer.recipient_information_accessors
+          ] + User::PayoutMethod::WiseTransfer.recipient_information_accessors
         }
       end
 

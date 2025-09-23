@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_04_215031) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_05_005653) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2361,6 +2361,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_04_215031) do
     t.boolean "teenager"
     t.integer "creation_method"
     t.boolean "cards_locked", default: false, null: false
+    t.integer "session_validity_preference", default: 259200, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end

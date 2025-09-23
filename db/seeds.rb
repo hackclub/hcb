@@ -173,15 +173,22 @@ OrganizerPositionInvite.find_or_create_by!(
 )
 
 # ARGOSY_GRANT_FUND_2025
-argosy_grant_fund_event = Event.create_with(
+argosy_grant_fund_2025_event = Event.create_with(
   name: "Argosy Foundation Grant Fund",
-  slug: "argosy-foundation-grant",
+  slug: "argosy-hardship-rookie-grant-2025-26-season",
   can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
 ).find_or_create_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025)
 
+argosy_grant_fund_2025_event.plan.update(type: Event::Plan::FeeWaived)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: argosy_grant_fund_2025_event,
+  user:,
+  sender: user,
+)
 
 # FIRST_TRANSPARENCY_GRANT_FUND
 first_transparency_grant_fund_event = Event.create_with(
