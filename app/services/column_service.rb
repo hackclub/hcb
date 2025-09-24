@@ -51,6 +51,8 @@ class ColumnService
     reports = get(
       "/reporting",
       type: "bank_account_transaction",
+      # We don't need to paginate here as there is one report per day and we
+      # check that our date range does not exceed 100 days.
       limit: 100,
       from_date: from_date.iso8601,
       to_date: to_date.iso8601,
