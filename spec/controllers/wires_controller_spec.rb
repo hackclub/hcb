@@ -33,6 +33,12 @@ RSpec.describe WiresController do
 
       sign_in(user)
 
+      stub_request(:get, "https://api.column.com/institutions/NOSCCATT")
+        .to_return_json(
+          status: 200,
+          body: { country_code: "CA" }
+        )
+
       post(
         :create,
         params: {
