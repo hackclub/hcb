@@ -9,11 +9,11 @@
     </tr>
   </thead>
   <tbody>
-    <% User.admin.find_each do |user| %>
+    <% User.admin.sort_by { |u| -u.managed_active_teenagers_count }.each do |user| %>
       <tr>
-        <td><%= user.name %></td>
+        <td><%= user_mention user %></td>
         <td><%= user.managed_events.count %></td>
-        <td><%= User.active_teenager.joins(organizer_positions: :event).where(events: { id: user.managed_events }).distinct.count %></td>
+        <td><%= user.managed_active_teenagers_count %></td>
       </tr>
     <% end %>
   </tbody>

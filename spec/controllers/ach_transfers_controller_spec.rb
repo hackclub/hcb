@@ -17,9 +17,8 @@ describe AchTransfersController do
 
   describe "validate_routing_number" do
     before do
-      # janky way of signing in for tests, we basically override the call in sessions_helper that checks for current_user to return this test user
       user = create(:user)
-      allow(controller).to receive(:current_user).and_return(user)
+      sign_in(user)
     end
 
     it "doesn't perform a lookup when routing number is invalid" do

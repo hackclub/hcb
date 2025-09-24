@@ -119,6 +119,7 @@ Rails.application.routes.draw do
     collection do
       get "auth", to: "logins#new"
       get "webauthn/auth_options", to: "users#webauthn_options"
+      post "toggle_pretend_is_not_admin", to: "users#toggle_pretend_is_not_admin"
 
       # SMS Auth
       post "start_sms_auth_verification", to: "users#start_sms_auth_verification"
@@ -644,6 +645,8 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
+          resources :invoices, only: [:index]
+          resources :sponsors, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -681,6 +684,10 @@ Rails.application.routes.draw do
             post "cancel"
           end
         end
+
+        resources :invoices, only: [:show, :create]
+
+        resources :sponsors, only: [:show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
