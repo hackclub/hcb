@@ -2,8 +2,34 @@
 
 require "rails_helper"
 
-RSpec.describe Donation, type: :modal do
+RSpec.describe Donation, type: :model do
   include ActiveJob::TestHelper
+
+  before do
+    expect(StripeService::Customer).to(
+      receive(:create)
+        .and_return(
+          Stripe::Customer.construct_from(
+            id: "cus_#{SecureRandom.alphanumeric(10)}"
+          )
+        )
+        .at_least(:once)
+    )
+
+    expect(StripeService::PaymentIntent).to(
+      receive(:create)
+        .and_return(
+          Stripe::PaymentIntent.construct_from(
+            id: "pi_#{SecureRandom.alphanumeric(10)}",
+            amount: 12_34,
+            amount_received: 0,
+            status: "processing",
+            client_secret: "pi_#{SecureRandom.alphanumeric(20)}"
+          )
+        )
+        .at_least(:once)
+    )
+  end
 
   it "is valid" do
     donation = create(:donation)
