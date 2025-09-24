@@ -24,6 +24,12 @@ RSpec.describe ReceiptBinMailbox do
     )
   end
 
+  before do
+    extract_service = instance_double(ReceiptService::Extract)
+    expect(extract_service).to receive(:run!).and_return(nil)
+    expect(ReceiptService::Extract).to receive(:new).and_return(extract_service)
+  end
+
   context "with generic addresses" do
     it "finds the user based on the from address" do
       user = create(:user, email: "test@example.com")
