@@ -178,7 +178,11 @@ class Wire < ApplicationRecord
     return -1 * local_hcb_code.amount_cents unless local_hcb_code.nil? || local_hcb_code.no_transactions?
 
     eu_bank = EuCentralBank.new
-    eu_bank.update_rates
+    if Rails.env.test?
+      eu_bank.update_rates(Rails.root.join("spec/fixtures/files/eurofxref-daily.xml"))
+    else
+      eu_bank.update_rates
+    end
     eu_bank.exchange(amount_cents, currency, "USD").cents
   end
 
