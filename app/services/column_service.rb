@@ -58,14 +58,6 @@ class ColumnService
       to_date: to_date.iso8601,
     )["reports"].select { |r| r["from_date"] == r["to_date"] && r["row_count"]&.>(0) }
 
-    document_ids = reports.pluck "json_document_id"
-
-    dates = reports.pluck "from_date"
-
-    # if (from_date.to_date..to_date.to_date).reject { |date| dates.include?(date.to_date.iso8601) }.any?
-    #  raise StandardError.new("Missing Column reports for #{from_date.to_date.iso8601} to #{to_date.to_date.iso8601}")
-    # end
-
     reports.to_h do |report|
       url = get("/documents/#{report["json_document_id"]}")["url"]
       transactions = JSON.parse(Faraday.get(url).body).select { |t| t["bank_account_id"] == bank_account && t["available_amount"].present? && t["available_amount"] != 0 }
