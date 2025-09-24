@@ -40,13 +40,20 @@ class ColumnService
   end
 
   def self.transactions(from_date: 1.week.ago, to_date: Date.today, bank_account: Accounts::FS_MAIN)
+    from_date = from_date.to_date
+    to_date = to_date.to_date
+
+    if (to_date - from_date).to_i > 100
+      raise ArgumentError, "cannot fetch transactions for a range of more than 100 days"
+    end
+
     # 1: fetch daily reports from Column
     reports = get(
       "/reporting",
       type: "bank_account_transaction",
       limit: 100,
-      from_date: from_date.to_date.iso8601,
-      to_date: to_date.to_date.iso8601,
+      from_date: from_date.iso8601,
+      to_date: to_date.iso8601,
     )["reports"].select { |r| r["from_date"] == r["to_date"] && r["row_count"]&.>(0) }
 
     document_ids = reports.pluck "json_document_id"
