@@ -28,11 +28,11 @@
       Are you a teen-led organization? We’d love to waive all of your HCB fees till <%= Date.current.end_of_month.strftime("%B %e, %Y") %>! Fee waiver status updates nightly.
     </p>
     <table class="mb2">
-      <tr class="<%= "card__darker" if active_teenagers_count >= 0 && active_teenagers_count <= 4 %>">
+      <tr class="<%= "card__darker" if active_teenagers_count.between?(0, 4) %>">
         <td>0-4 active teenagers</td>
         <td>7.0% fee</td>
       </tr>
-      <tr class="<%= "card__darker" if active_teenagers_count >= 5 && active_teenagers_count <= 9 %>">
+      <tr class="<%= "card__darker" if active_teenagers_count.between?(5, 9) %>">
         <td>5-9 active teenagers</td>
         <td>3.5% fee</td>
       </tr>
