@@ -3,7 +3,13 @@
 <div class="flex justify-between items-center gap-4 my-4">
   <h1 class="border-b-0 flex-grow m-0 p-0">Statement of Activity</h1>
 
-  <%= link_to({ format: :xlsx, **params.permit(:include_descendants) }, class: "btn") do %>
+  <%= link_to(
+        {
+          format: :xlsx,
+          **params.permit(:include_descendants, :start, :end)
+        },
+        class: "btn"
+      ) do %>
     <%= inline_icon "download" %>
     <small>Download XLSX</small>
   <% end %>
