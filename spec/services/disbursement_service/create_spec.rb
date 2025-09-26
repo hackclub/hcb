@@ -133,6 +133,22 @@ RSpec.describe DisbursementService::Create do
     expect(disbursement).to be_a(Disbursement)
     expect(disbursement.source_transaction_category.slug).to eq("donations")
     expect(disbursement.destination_transaction_category.slug).to eq("fundraising")
+
+    expect(
+      disbursement
+        .raw_pending_outgoing_disbursement_transaction
+        .canonical_pending_transaction
+        .category
+        .slug
+    ).to eq("donations")
+
+    expect(
+      disbursement
+        .raw_pending_incoming_disbursement_transaction
+        .canonical_pending_transaction
+        .category
+        .slug
+    ).to eq("fundraising")
   end
 
 end
