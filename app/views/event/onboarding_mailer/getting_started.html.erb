@@ -1,0 +1,56 @@
+<h1 style="color: #ec3750; margin-bottom: 1rem;">Get Started on HCB</h1>
+
+<p>Hey <%= @user.name %>! 👋</p>
+
+<p>
+  Welcome to HCB, Hack Club's fiscal sponsorship program! We're excited to help
+  you get started with <b><%= @event.name %></b>. To best make use of your HCB,
+  we've included three simple steps to get started!
+</p>
+
+<%= render "application_mailer/fancy_list" do %>
+  <%= render "application_mailer/fancy_list/item",
+             title: "Add an event logo",
+             link: edit_event_url(@event, "details"),
+             image: "/assets/logo.gif" do %>
+    Upload a high-quality logo for your event or project. This will be
+    displayed on your HCB page and help create a strong visual identity.
+  <% end %>
+
+  <%= render "application_mailer/fancy_list/item",
+             title: "Add a transparcency message",
+             link: edit_event_url(@event, "details"),
+             image: "/assets/bio.gif" do %>
+    Write a brief description of your organization or project. This helps
+    potential donors understand your goals and mission, and is shown to them
+    when they visit your HCB page!
+  <% end %>
+
+  <%= render "application_mailer/fancy_list/item",
+             title: "Set up your donations page",
+             link: edit_event_url(@event, "donations") do %>
+    Add a project description, and a banner to your donations page - you
+    can also allow donors to give anonymously, and to cover your fees!
+  <% end %>
+<% end %>
+
+<p>
+  To get started, log in to your HCB dashboard at
+  <a href="https://hcb.hackclub.com" style="color: #ec3750;">hcb.hackclub.com</a>.
+</p>
+
+<p>
+  If you need any assistance or have questions, don't hesitate to reach out to
+  the team, either by replying to this email, or sending an email to
+  <%= mail_to ApplicationMailer::OPERATIONS_EMAIL, nil, style: "color: #ec3750;" %>
+</p>
+
+<p>
+  We're looking forward to seeing your project come to life on HCB!
+</p>
+
+<p>
+  Warmly,
+  <br>
+  The HCB Team
+</p>
