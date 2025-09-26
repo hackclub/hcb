@@ -85,7 +85,9 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: @source_event.plan.front_disbursements_enabled?
+      fronted: @source_event.plan.front_disbursements_enabled?,
+      source_transaction_category_slug: disbursement_params[:source_transaction_category_slug].presence,
+      destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
     ).run
 
     if disbursement_params[:file]
@@ -169,7 +171,14 @@ class DisbursementsController < ApplicationController
       :scheduled_on,
       { file: [] }
     ]
-    attributes << :should_charge_fee if admin_signed_in?
+
+    if admin_signed_in?
+      attributes.push(
+        :should_charge_fee,
+        :source_transaction_category_slug,
+        :destination_transaction_category_slug
+      )
+    end
 
     params.require(:disbursement).permit(attributes)
   end

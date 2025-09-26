@@ -21,7 +21,9 @@ module DisbursementService
       source_subledger_id: nil,
       should_charge_fee: false,
       skip_auto_approve: false,
-      fronted: false
+      fronted: false,
+      source_transaction_category_slug: nil,
+      destination_transaction_category_slug: nil
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -37,6 +39,8 @@ module DisbursementService
       @should_charge_fee = should_charge_fee
       @skip_auto_approve = skip_auto_approve
       @fronted = fronted
+      @source_transaction_category_slug = source_transaction_category_slug
+      @destination_transaction_category_slug = destination_transaction_category_slug
     end
 
     def run
@@ -95,6 +99,8 @@ module DisbursementService
         amount: amount_cents,
         requested_by:,
         should_charge_fee: @should_charge_fee,
+        source_transaction_category:,
+        destination_transaction_category:
       }
     end
 
@@ -116,6 +122,18 @@ module DisbursementService
 
     def destination_event
       @destination_event ||= Event.find(@destination_event_id)
+    end
+
+    def source_transaction_category
+      return if @source_transaction_category_slug.blank?
+
+      @source_transaction_category ||= TransactionCategory.find_or_create_by!(slug: @source_transaction_category_slug)
+    end
+
+    def destination_transaction_category
+      return if @destination_transaction_category_slug.blank?
+
+      @destination_transaction_category ||= TransactionCategory.find_or_create_by!(slug: @destination_transaction_category_slug)
     end
 
   end
