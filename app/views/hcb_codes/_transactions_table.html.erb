@@ -1,0 +1,73 @@
+<%# locals: (canonical_transactions: [], canonical_pending_transactions: [], t_transaction: nil) %>
+
+<table>
+  <thread>
+    <tr>
+      <th>ID</th>
+      <th>TYPE</th>
+      <th>DATE</th>
+      <th>MEMO</th>
+      <th>AMOUNT</th>
+      <th>CATEGORY</th>
+      <th></th>
+    </tr>
+  </thread>
+  <tbody>
+    <% canonical_transactions.to_a.concat(canonical_pending_transactions.to_a).each do |transaction| %>
+      <tr>
+        <td>
+          <%= transaction.id %>
+        </td>
+        <td>
+          <% if transaction.is_a?(CanonicalPendingTransaction) %>
+            PENDING
+          <% else %>
+            SETTLED
+          <% end %>
+        </td>
+        <td>
+          <%= transaction.date %>
+        </td>
+        <td>
+          <%= transaction.memo %>
+        </td>
+        <td>
+          <%= transaction.amount %>
+        </td>
+        <td>
+          <%= render(
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: transaction }
+              ) %>
+        </td>
+        <td>
+          <% if transaction.is_a?(CanonicalPendingTransaction) %>
+            <%= link_to("view", canonical_pending_transaction_path(transaction)) %>
+          <% else %>
+            <%= link_to("view", canonical_transaction_path(transaction)) %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+
+    <% if t_transaction %>
+      <tr>
+        <td>
+          OLD
+        </td>
+        <td>
+          <%= t_transaction.date %>
+        </td>
+        <td>
+          <%= t_transaction.memo %>
+        </td>
+        <td>
+          <%= render_money_amount(t_transaction.amount) %>
+        </td>
+        <td>
+          <%= link_to("view", @hcb_code.t_transaction) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

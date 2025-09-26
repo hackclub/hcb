@@ -18,100 +18,22 @@
 
       </tr>
     </table>
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>TYPE</th>
-        <th>DATE</th>
-        <th>MEMO</th>
-        <th>AMOUNT</th>
-        <th>CATEGORY</th>
-        <th></th>
-      </tr>
-      <% @hcb_code
-           .canonical_pending_transactions
-           .preload(:category)
-           .strict_loading
-           .each do |ct| %>
-        <tr>
-          <td>
-            <%= ct.id %>
-          </td>
-          <td>
-            PENDING
-          </td>
-          <td>
-            <%= ct.date %>
-          </td>
-          <td>
-            <%= ct.memo %>
-          </td>
-          <td>
-            <%= ct.amount %>
-          </td>
-          <td>
-            <%= render(
-                  partial: "transaction_category_form",
-                  locals: { model: ct }
-                ) %>
-          </td>
-          <td>
-            <%= link_to "view", "/canonical_pending_transactions/#{ct.id}" %>
-          </td>
-        </tr>
-      <% end %>
-
-      <% @hcb_code
-           .canonical_transactions
-           .preload(:category)
-           .strict_loading
-           .each do |ct| %>
-        <tr>
-          <td>
-            <%= ct.id %>
-          </td>
-          <td>
-            SETTLED
-          </td>
-          <td>
-            <%= ct.date %>
-          </td>
-          <td>
-            <%= ct.memo %>
-          </td>
-          <td>
-            <%= ct.amount %>
-          </td>
-          <td>
-            <%= render(
-                  partial: "transaction_category_form",
-                  locals: { model: ct }
-                ) %>
-          </td>
-          <td>
-            <%= link_to "view", "/transactions/#{ct.id}" %>
-          </td>
-        </tr>
-      <% end %>
-
-      <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? && @hcb_code.ach_transfer.t_transaction.present? %>
-        <td>
-          OLD
-        </td>
-        <td>
-          <%= @hcb_code.ach_transfer.t_transaction.date %>
-        </td>
-        <td>
-          <%= @hcb_code.ach_transfer.t_transaction.memo %>
-        </td>
-        <td>
-          <%= render_money_amount @hcb_code.ach_transfer.t_transaction.amount %>
-        </td>
-        <td>
-          <%= link_to "view", @hcb_code.ach_transfer.t_transaction %>
-        </td>
-      <% end %>
-
-    </table>
+    <%= render(
+          partial: "transactions_table",
+          locals: {
+            canonical_transactions:
+              @hcb_code
+                .canonical_pending_transactions
+                .preload(:category)
+                .strict_loading,
+            canonical_pending_transactions:
+              @hcb_code
+                .canonical_transactions
+                .preload(:category)
+                .strict_loading
+                .to_a,
+            t_transaction: @hcb_code.ach_transfer&.t_transaction
+          }
+        ) %>
   <% end %>
 <% end %>
