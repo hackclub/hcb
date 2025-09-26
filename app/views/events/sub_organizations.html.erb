@@ -4,6 +4,9 @@
 
 <h1 class="heading flex">
   <span class="flex-grow">Sub-organizations</span>
+  <%= pop_icon_to "download",
+                  {format: :csv},
+                  class: "align-middle tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
   <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
     <%= inline_icon "plus" %>
     Create a subsidiary

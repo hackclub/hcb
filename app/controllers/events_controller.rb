@@ -819,13 +819,34 @@ class EventsController < ApplicationController
   def sub_organizations
     authorize @event
 
-    search = params[:q] || params[:search]
+    respond_to do |format|
+      format.html do
+        search = params[:q] || params[:search]
 
-    relation = @event.subevents
-    relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
-    relation = relation.order(created_at: :desc)
+        relation = @event.subevents
+        relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+        relation = relation.order(created_at: :desc)
 
-    @sub_organizations = relation
+        @sub_organizations = relation
+      end
+
+      # CSV export intentionally does not consider filters
+      format.csv do
+        csv = CSV.generate(headers: true) do |csv|
+          # We include the public ID because our partners iterate this CSV to
+          # access organizations via the V3 API. The public ID serves has a
+          # robust, immutable identifier compared to slugs.
+          csv << %w[ID Name Slug Balance]
+
+          @event.subevents.find_each do |e|
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0]
+          end
+        end
+
+        send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
+      end
+    end
+
   end
 
   def create_sub_organization
