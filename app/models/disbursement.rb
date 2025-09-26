@@ -78,6 +78,9 @@ class Disbursement < ApplicationRecord
   has_one :raw_pending_incoming_disbursement_transaction
   has_one :raw_pending_outgoing_disbursement_transaction
 
+  belongs_to(:source_transaction_category, class_name: "TransactionCategory", optional: true)
+  belongs_to(:destination_transaction_category, class_name: "TransactionCategory", optional: true)
+
   has_one :card_grant, required: false
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
