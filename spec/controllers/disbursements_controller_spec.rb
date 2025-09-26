@@ -78,4 +78,88 @@ RSpec.describe DisbursementsController do
       expect(disbursement.destination_transaction_category.slug).to eq("fundraising")
     end
   end
+
+  describe "#set_transaction_categories" do
+    it "allows categories to be set by admins" do
+      admin = create(:user, :make_admin)
+      disbursement = create(:disbursement)
+
+      sign_in(admin)
+
+      post(
+        :set_transaction_categories,
+        params: {
+          disbursement_id: disbursement.id,
+          disbursement: {
+            source_transaction_category_slug: "donations",
+            destination_transaction_category_slug: "fundraising",
+          }
+        },
+        format: :html
+      )
+
+      expect(response).to redirect_to(disbursement_path(disbursement))
+
+      disbursement.reload
+      expect(disbursement.source_transaction_category.slug).to eq("donations")
+      expect(disbursement.destination_transaction_category.slug).to eq("fundraising")
+    end
+
+    it "clears the categories if the param is blank" do
+      admin = create(:user, :make_admin)
+      disbursement = create(
+        :disbursement,
+        source_transaction_category: TransactionCategory.find_or_create_by!(slug: "donations"),
+        destination_transaction_category: TransactionCategory.find_or_create_by!(slug: "fundraising"),
+      )
+
+      sign_in(admin)
+
+      post(
+        :set_transaction_categories,
+        params: {
+          disbursement_id: disbursement.id,
+          disbursement: {
+            source_transaction_category_slug: "",
+            destination_transaction_category_slug: "",
+          }
+        },
+        format: :html
+      )
+
+      expect(response).to redirect_to(disbursement_path(disbursement))
+
+      disbursement.reload
+      expect(disbursement.source_transaction_category).to be_nil
+      expect(disbursement.destination_transaction_category).to be_nil
+    end
+
+    it "allows one category to be set without affecting the other" do
+      admin = create(:user, :make_admin)
+      disbursement = create(
+        :disbursement,
+        source_transaction_category: TransactionCategory.find_or_create_by!(slug: "donations"),
+        destination_transaction_category: TransactionCategory.find_or_create_by!(slug: "fundraising"),
+      )
+
+      sign_in(admin)
+
+      post(
+        :set_transaction_categories,
+        params: {
+          disbursement_id: disbursement.id,
+          disbursement: {
+            destination_transaction_category_slug: "rent",
+          }
+        },
+        format: :html
+      )
+
+      expect(response).to redirect_to(disbursement_path(disbursement))
+
+      disbursement.reload
+      expect(disbursement.source_transaction_category.slug).to eq("donations")
+      expect(disbursement.destination_transaction_category.slug).to eq("rent")
+    end
+  end
 end
