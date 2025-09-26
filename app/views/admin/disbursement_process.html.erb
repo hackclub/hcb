@@ -10,6 +10,14 @@
 <table class="table--autosize">
   <tbody>
     <tr>
+      <td class="text-right">HCB Code:</td>
+      <td>
+        <% if @disbursement.local_hcb_code %>
+          <%= link_to(@disbursement.hcb_code, @disbursement.local_hcb_code) %>
+        <% end %>
+      </td>
+    </tr>
+    <tr>
       <td class="text-right">From:</td>
       <td>
         <%= link_to @disbursement.source_event.name, @disbursement.source_event %>
