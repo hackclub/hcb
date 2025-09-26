@@ -1,6 +1,6 @@
 <%= link_to disbursements_admin_index_path, class: "btn btn-small bg-muted" do %>
-    <%= inline_icon "view-back" %>
-    Back to disbursements
+  <%= inline_icon "view-back" %>
+  Back to disbursements
 <% end %>
 
 <h1>Process Disbursement #<%= @disbursement.id %></h1>
@@ -10,33 +10,33 @@
 <table class="table--autosize">
   <tbody>
     <tr>
-      <td style="text-align: right;">From:</td>
+      <td class="text-right">From:</td>
       <td>
         <%= link_to @disbursement.source_event.name, @disbursement.source_event %>
         <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.source_event.financially_frozen? %>
       </td>
     </tr>
     <tr>
-      <td style="text-align: right;">To:</td>
+      <td class="text-right">To:</td>
       <td>
         <%= link_to @disbursement.destination_event.name, @disbursement.destination_event %>
         <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.destination_event.financially_frozen? %>
       </td>
     </tr>
     <tr>
-      <td style="text-align: right;">Amount:</td>
+      <td class="text-right">Amount:</td>
       <td><%= render_money @disbursement.amount %></td>
     </tr>
     <tr>
-      <td style="text-align: right;">Memo:</td>
+      <td class="text-right">Memo:</td>
       <td><%= @disbursement.name %></td>
     </tr>
     <tr>
-      <td style="text-align: right;">Requested by:</td>
+      <td class="text-right">Requested by:</td>
       <td><%= user_mention @disbursement.requested_by %></td>
     </tr>
     <tr>
-      <td style="text-align: right;">
+      <td class="text-right">
         <% if @disbursement.rejected? %>
           Rejected by:
         <% else %>
@@ -47,40 +47,40 @@
         <% if @disbursement.fulfilled_by.nil? %>
           N/A <span class="muted italic">(This could be you!✨)</span>
         <% else %>
-        <div>
-          <%= user_mention @disbursement.fulfilled_by %>
+          <div>
+            <%= user_mention @disbursement.fulfilled_by %>
           </div>
         <% end %>
       </td>
     </tr>
   </tbody>
 </table>
-<br>
-<hr>
+
+<hr class="mt4">
+
 <h3>Instructions</h3>
 
 <% if @disbursement.rejected? || @disbursement.pending? %>
   <p>Nothing more to do here. ✨</p>
 <% else %>
+  <p>This is a human review check.</p>
 
-    <p>This is a human review check.</p>
+  <% if @disbursement.scheduled_on.present? %>
+    <br>
+    <small>When approved, this disbursement will automatically send on <%= @disbursement.scheduled_on.strftime("%Y-%m-%d") %>.</small>
+  <% end %>
 
-    <% if @disbursement.scheduled_on.present? %>
-      <br>
-      <small>When approved, this disbursement will automatically send on <%= @disbursement.scheduled_on.strftime("%Y-%m-%d") %>.</small>
-    <% end %>
+  <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
+    <%= form.submit "Approve disbursement" %>
+  <% end %>
 
-    <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
-      <%= form.submit "Approve disbursement" %>
-    <% end %>
-
-    <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
-      <div class="field">
-        <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-        <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
-      </div>
-      <%= form.submit "Reject disbursement",
-        class: "admin-bg-orange",
-        data: { confirm: "Are you sure you want to reject this disbursement?" } %>
-    <% end %>
+  <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+    <div class="field">
+      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+    </div>
+    <%= form.submit "Reject disbursement",
+      class: "admin-bg-orange",
+      data: { confirm: "Are you sure you want to reject this disbursement?" } %>
+  <% end %>
 <% end %>
