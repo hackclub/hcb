@@ -1,4 +1,13 @@
-<%# locals: (model:, url:, admin_context: false) %>
+<%# locals: (model:, admin_context: false) %>
+
+<% url = case model
+         when CanonicalTransaction
+           set_category_canonical_transaction_path(model)
+         when CanonicalPendingTransaction
+           set_category_canonical_pending_transaction_path(model)
+         else
+           raise(ArgumentError, "unsupported model class: #{model.class.name.inspect}")
+         end %>
 
 <%= form_for(
       model,

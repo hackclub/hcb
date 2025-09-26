@@ -52,10 +52,7 @@
           <td>
             <%= render(
                   partial: "transaction_category_form",
-                  locals: {
-                    model: ct,
-                    url: set_category_canonical_pending_transaction_path(ct)
-                  }
+                  locals: { model: ct }
                 ) %>
           </td>
           <td>
@@ -88,10 +85,7 @@
           <td>
             <%= render(
                   partial: "transaction_category_form",
-                  locals: {
-                    model: ct,
-                    url: set_category_canonical_transaction_path(ct)
-                  }
+                  locals: { model: ct }
                 ) %>
           </td>
           <td>
