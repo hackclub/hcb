@@ -226,6 +226,10 @@ class Disbursement < ApplicationRecord
     @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
   end
 
+  def transactions_helper
+    @transactions_helper ||= Disbursement::TransactionsHelper.new(self)
+  end
+
   def processed?
     in_transit? || deposited?
   end
