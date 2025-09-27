@@ -5,6 +5,9 @@ require "rails_helper"
 RSpec.describe ReceiptBinMailbox do
   include ActionMailbox::TestHelper
   include ActionMailer::TestHelper
+  # The helpers above expect a tagged_logger method to be present
+  # See https://github.com/rspec/rspec-rails/issues/2545
+  attr_reader(:tagged_logger)
 
   def receive_email(to:, from:, cc: nil)
     receive_inbound_email_from_mail(
@@ -19,6 +22,12 @@ RSpec.describe ReceiptBinMailbox do
         "logo.png" => File.read(Rails.root.join("public/logo.png"))
       }
     )
+  end
+
+  before do
+    extract_service = instance_double(ReceiptService::Extract)
+    expect(extract_service).to receive(:run!).and_return(nil)
+    expect(ReceiptService::Extract).to receive(:new).and_return(extract_service)
   end
 
   context "with generic addresses" do
