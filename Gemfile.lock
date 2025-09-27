@@ -789,8 +789,8 @@ GEM
     statsd-instrument (3.9.9)
     stringio (3.1.7)
     stripe (11.7.0)
-    strong_migrations (1.8.0)
-      activerecord (>= 5.2)
+    strong_migrations (2.5.0)
+      activerecord (>= 7.1)
     suo (0.4.0)
       dalli
       msgpack
@@ -987,7 +987,7 @@ DEPENDENCIES
   stackprof
   statsd-instrument (~> 3.9)
   stripe (= 11.7.0)
-  strong_migrations (~> 1)
+  strong_migrations (~> 2)
   terser (~> 1.2)
   turbo-rails (~> 2.0.13)
   twilio-ruby
