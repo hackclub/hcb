@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class DisbursementsController < ApplicationController
+  include TurboStreamFlash
+
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
   def show
@@ -86,7 +88,9 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: @source_event.plan.front_disbursements_enabled?
+      fronted: @source_event.plan.front_disbursements_enabled?,
+      source_transaction_category_slug: disbursement_params[:source_transaction_category_slug].presence,
+      destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
     ).run
 
     if disbursement_params[:file]
@@ -130,6 +134,49 @@ class DisbursementsController < ApplicationController
     redirect_to @disbursement.local_hcb_code
   end
 
+  def set_transaction_categories
+    @disbursement = Disbursement.find(params[:disbursement_id])
+    authorize @disbursement
+
+    category_params =
+      params
+      .require(:disbursement)
+      .permit(:source_transaction_category_slug, :destination_transaction_category_slug )
+
+    updates = {}
+
+    [:source_transaction_category, :destination_transaction_category].each do |field|
+      param = "#{field}_slug"
+      next unless category_params.key?(param)
+
+      slug = category_params[param]
+
+      updates[field] =
+        if slug.blank?
+          nil
+        else
+          TransactionCategory.find_or_initialize_by(slug:)
+        end
+    end
+
+    @disbursement.update!(updates)
+
+    message = "Transaction category was successfully updated."
+
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[:success] = message
+        update_flash_via_turbo_stream(use_admin_layout: true)
+      end
+      format.html do
+        redirect_to(
+          disbursement_path(@disbursement),
+          flash: { success: message }
+        )
+      end
+    end
+  end
+
   def mark_fulfilled
     @disbursement = Disbursement.find(params[:disbursement_id])
     authorize @disbursement
@@ -170,7 +217,14 @@ class DisbursementsController < ApplicationController
       :scheduled_on,
       { file: [] }
     ]
-    attributes << :should_charge_fee if admin_signed_in?
+
+    if admin_signed_in?
+      attributes.push(
+        :should_charge_fee,
+        :source_transaction_category_slug,
+        :destination_transaction_category_slug
+      )
+    end
 
     params.require(:disbursement).permit(attributes)
   end
