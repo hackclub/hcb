@@ -6,13 +6,11 @@
 
 .stripe-card,
 .emburse-card {
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   flex-direction: column;
   width: 100%;
-  width: #{13 * 1.75}rem;
-  height: #{8 * 1.75}rem;
+  aspect-ratio: 364 / 224;
   padding: 1.5rem;
   position: relative;
   background-repeat: no-repeat;
@@ -23,7 +21,9 @@
   color: $white;
   text-align: left;
   border-radius: 12px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
   transition: 0.25s ease-out transform;
   transform: scale(1);
   transform-style: preserve-3d;
@@ -56,8 +56,14 @@
   &:focus,
   &:hover {
     box-shadow:
-      0 6px 12px 0 rgba(0, 0, 0, 0.25),
-      0 18px 36px 0 rgba(0, 0, 0, 0.25);
+      0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+
+  @media (max-width: 1024px) {
+    & {
+      margin: 0 auto;
+    }
   }
 }
 
@@ -108,8 +114,8 @@
   &:focus,
   &:hover {
     box-shadow:
-      0 6px 12px 0 rgba(0, 0, 0, 0.25),
-      0 18px 36px 0 rgba(0, 0, 0, 0.25);
+      0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   &.frozen:before {
