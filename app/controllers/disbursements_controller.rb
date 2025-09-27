@@ -89,6 +89,15 @@ class DisbursementsController < ApplicationController
       fronted: @source_event.plan.front_disbursements_enabled?
     ).run
 
+    if params[:receipts].present?
+      params[:receipts].each do |receipt_id|
+        receipt = Receipt.find(receipt_id)
+        authorize receipt, :link?
+
+        receipt.update!(receiptable: disbursement.local_hcb_code)
+      end
+    end
+
     if disbursement_params[:file]
       ::ReceiptService::Create.new(
         uploader: current_user,
