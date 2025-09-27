@@ -154,6 +154,10 @@ class Event < ApplicationRecord
     Event.where(id: ancestor_ids)
   end
 
+  def descendants
+    Event.where(id: descendant_ids)
+  end
+
   def descendant_total_balance_cents
     subevents.to_a.sum(&:balance_available_v2_cents)
   end
