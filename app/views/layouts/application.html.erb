@@ -120,7 +120,7 @@
       </div>
     <% end %>
 
-    <% if @event && !@event&.demo_mode? && @event&.robotics_team? && organizer_signed_in? && !@hide_promotional_banner && Date.current.month < 10 %>
+    <% if !@event&.demo_mode? && (@event&.robotics_team? || @event&.affiliations&.robotics&.any?) && organizer_signed_in? && !@hide_promotional_banner && Date.current.month < 10 %>
       <div class="w-100s px3 promo-robotics-raffle card--hover flex flex-row items-center" data-behavior="hide_iframe">
         <div class="flex flex-col flex-grow">
           <p class="h3 font-medium text-center text-balance mt2 mb0 white">

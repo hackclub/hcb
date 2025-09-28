@@ -9,12 +9,12 @@ RSpec.describe Admin::EventGroupsController do
   describe "#index" do
     it "renders a list of groups along with their owners and events" do
       orpheus = create(:user, :make_admin, full_name: "Orpheus Dinosaur")
-      scrapyard = Event::Group.create!(user: orpheus, name: "Scrapyard")
+      scrapyard = create(:event_group, user: orpheus, name: "Scrapyard")
       scrapyard.memberships.create!(event: create(:event, name: "Scrapyard Vermont"))
       scrapyard.memberships.create!(event: create(:event, name: "Scrapyard London"))
 
       barney = create(:user, :make_admin, full_name: "Barney Dinosaur")
-      daydream = Event::Group.create!(user: barney, name: "Daydream")
+      daydream = create(:event_group, user: barney, name: "Daydream")
       daydream.memberships.create!(event: create(:event, name: "Daydream Ottawa"))
 
       sign_in(orpheus)
