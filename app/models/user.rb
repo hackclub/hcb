@@ -160,6 +160,8 @@ class User < ApplicationRecord
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
+  after_update_commit :send_onboarded_email, if: -> { full_name_previously_changed? && full_name_before_last_save.blank? && full_name.present? }
+
   after_update :queue_sync_with_loops_job
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
@@ -537,6 +539,10 @@ class User < ApplicationRecord
     if needs_to_enable_2fa?
       errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
+  end
+
+  def send_onboarded_email
+    UserSessionMailer.onboarded(user: self).deliver_later
   end
 
 end

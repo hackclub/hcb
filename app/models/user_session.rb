@@ -55,9 +55,7 @@ class UserSession < ApplicationRecord
   scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
 
   after_create_commit do
-    if user.user_sessions.size == 1
-      UserSessionMailer.first_login(user:).deliver_later
-    elsif fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
+    if user.user_sessions.size > 1 && fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
       UserSessionMailer.new_login(user_session: self).deliver_later
     end
   end
