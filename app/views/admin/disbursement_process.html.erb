@@ -78,25 +78,37 @@
 <h4>Destination transactions</h4>
 
 <% if @disbursement.transactions_helper.settled_destination.empty? && @disbursement.transactions_helper.pending_destination.empty? %>
-  <%= form_for(
-        @disbursement,
-        url: disbursement_set_transaction_categories_path(@disbursement),
-        method: :post,
-        data: { controller: "form" },
-        html: { class: "m-0" }
-      ) do |f| %>
+  <p>Destination transactions for this disbursement have not been created yet. Once created, they will have the following properties:</p>
 
-    <%= select_tag(
-          f.field_name(:destination_transaction_category_slug),
-          options_for_select(
-            TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
-            @disbursement.destination_transaction_category&.slug,
-          ),
-          include_blank: "None",
-          data: { action: "change->form#submit" },
-          class: "m-0"
-        ) %>
-  <% end %>
+  <table class="table--autosize no-stripes">
+    <tr>
+      <td class="text-right">
+        Category:
+      </td>
+      <td>
+        <%= form_for(
+              @disbursement,
+              url: disbursement_set_transaction_categories_path(@disbursement),
+              method: :post,
+              data: { controller: "form" },
+              html: { class: "m-0" }
+            ) do |f| %>
+
+          <%= select_tag(
+                f.field_name(:destination_transaction_category_slug),
+                options_for_select(
+                  TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
+                  @disbursement.destination_transaction_category&.slug,
+                ),
+                include_blank: "None",
+                data: { action: "change->form#submit" },
+                class: "m-0"
+              ) %>
+        <% end %>
+      </td>
+    </tr>
+  </table>
+
 <% else %>
   <%= render(
         partial: "hcb_codes/transactions_table",
