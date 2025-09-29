@@ -6,4 +6,5 @@ class UserMailerPreview < ActionMailer::Preview
 
     UserMailer.onboarded(user:)
   end
+
 end
