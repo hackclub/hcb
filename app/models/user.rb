@@ -542,7 +542,7 @@ class User < ApplicationRecord
   end
 
   def send_onboarded_email
-    UserSessionMailer.onboarded(user: self).deliver_later
+    UserMailer.onboarded(user: self).deliver_later
   end
 
 end

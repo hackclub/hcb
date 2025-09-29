@@ -8,10 +8,6 @@ class UserSessionMailer < ApplicationMailer
     mail to: @user.email, subject: "New login to your HCB account"
   end
 
-  def onboarded(user:)
-    @user = user
 
-    mail to: @user.email, subject: "Welcome to HCB!"
-  end
 
 end

@@ -7,10 +7,6 @@ class UserSessionMailerPreview < ActionMailer::Preview
     UserSessionMailer.new_login(user_session:)
   end
 
-  def onboarded
-    user = User.last
 
-    UserSessionMailer.onboarded(user:)
-  end
 
 end
