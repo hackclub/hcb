@@ -18,6 +18,12 @@ class WiseTransfersController < ApplicationController
 
     authorize @wise_transfer
 
+    # WISE TRANSFERS ARE DISABLED RIGHT NOW
+    flash[:error] = "Wise Transfers are currently under maintenance. Please choose another transfer method."
+    return redirect_to event_transfers_path(@event)
+
+    # rubocop:disable Lint/UnreachableCode
+
     if @wise_transfer.amount_cents > 500_00
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
@@ -35,6 +41,8 @@ class WiseTransfersController < ApplicationController
     else
       render "new", status: :unprocessable_entity
     end
+
+    #rubocop:enable Lint/UnreachableCode
   end
 
   def approve
