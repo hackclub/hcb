@@ -21,12 +21,13 @@ class User
         }
 
         validate do
-          if User::PayoutMethod::DISABLED_METHODS.include?(self.class)
-            errors.add(:base, "#{title_kind} is currently unavailable. Please choose another method.")
+          if User::PayoutMethod::UNSUPPORTED_METHODS.include?(self.class)
+            errors.add(:base, "#{self.unsupported_details[:reason]} Please choose another method.")
           end
         end
 
         delegate :unsupported?, to: :class
+        delegate :unsupported_details, to: :class
       end
 
       class_methods do
