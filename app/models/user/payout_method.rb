@@ -2,7 +2,13 @@
 
 class User
   module PayoutMethod
-
+    ALL_METHODS = [
+      User::PayoutMethod::AchTransfer,
+      User::PayoutMethod::Check,
+      User::PayoutMethod::PaypalTransfer,
+      User::PayoutMethod::Wire,
+      User::PayoutMethod::WiseTransfer,
+    ].freeze
     UNSUPPORTED_METHODS = {
       User::PayoutMethod::PaypalTransfer => {
         status_badge: "Unavailable",
@@ -13,6 +19,7 @@ class User
         reason: "Wise Transfers are currently under maintenance."
       }
     }.freeze
+    SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
 
     def kind
       "unknown"

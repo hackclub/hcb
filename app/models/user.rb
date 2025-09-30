@@ -525,8 +525,15 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire) || payout_method.is_a?(User::PayoutMethod::WiseTransfer)
-      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, Wise transfer, or ACH transfer")
+    if payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
+      # I'm using `try` here in the slim chance that `payout_method` is some
+      # random model and doesn't include `User::PayoutMethod::Shared`.
+      if payout_method.try(:unsupported?)
+        reason = payout_method.unsupported_details[:reason]
+        errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
+      else
+        errors.add(:payout_method, "is invalid. Please choose another option.")
+      end
     end
   end
 
