@@ -19,6 +19,24 @@ class User
           Reimbursement::PayoutHolding.where(report: user.reimbursement_reports).failed.each(&:mark_settled!)
           Employee::Payment.where(employee: user.jobs).failed.each(&:mark_approved!)
         }
+
+        validate do
+          if User::PayoutMethod::DISABLED_METHODS.include?(self.class)
+            errors.add(:base, "#{title_kind} is currently unavailable. Please choose another method.")
+          end
+        end
+
+        delegate :unsupported?, to: :class
+      end
+
+      class_methods do
+        def unsupported?
+          self.in?(User::PayoutMethod::UNSUPPORTED_METHODS.keys)
+        end
+
+        def unsupported_details
+          User::PayoutMethod::UNSUPPORTED_METHODS[self]
+        end
       end
     end
   end
