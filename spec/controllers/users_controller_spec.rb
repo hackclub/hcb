@@ -4,6 +4,7 @@ require "rails_helper"
 
 RSpec.describe UsersController do
   include SessionSupport
+  include TwilioSupport
 
   describe "#impersonate" do
     it "allows admins to switch to an impersonated session" do
@@ -56,6 +57,7 @@ RSpec.describe UsersController do
       )
       user.update!(phone_number_verified: true)
       Flipper.enable(:sudo_mode_2015_07_21, user)
+      stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
       sign_in(user)
 
       travel_to(3.hours.from_now)
@@ -78,8 +80,8 @@ RSpec.describe UsersController do
           id: user.id,
           user: { use_two_factor_authentication: false },
           _sudo: {
-            submit_method: "email",
-            login_code: user.login_codes.last.code,
+            submit_method: "sms",
+            login_code: "123456",
             login_id: user.logins.last.hashid,
           }
         }

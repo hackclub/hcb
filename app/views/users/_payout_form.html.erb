@@ -99,7 +99,7 @@
 
         <div class="field">
           <%= form.label :currency, "Currency" %>
-          <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+          <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { "@change" => "currency = $event.target.value;" } %>
         </div>
 
         <%= form.hidden_field :wise_recipient_id, value: "" %>

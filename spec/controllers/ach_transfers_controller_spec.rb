@@ -28,15 +28,28 @@ describe AchTransfersController do
     end
 
     it "handles unknown routing numbers" do
+      stub_request(:get, "https://api.column.com/institutions/123456789")
+        .to_return(status: 400)
+
       get :validate_routing_number, params: { value: "123456789" }
 
-      expect(response.body).to match(/"valid":false/)
+      expect(response.parsed_body).to eq({ "valid" => false, "hint" => "Bank not found for this routing number." })
     end
 
     it "returns bank name" do
+      stub_request(:get, "https://api.column.com/institutions/083000137")
+        .to_return_json(
+          status: 200,
+          body: {
+            routing_number_type: "aba",
+            ach_eligible: true,
+            full_name: "JPMORGAN CHASE BANK, NA",
+          }
+        )
+
       get :validate_routing_number, params: { value: "083000137" }
 
-      expect(response.body).to eq({ valid: true, hint: "Jpmorgan Chase Bank, Na" }.to_json)
+      expect(response.parsed_body).to eq({ "valid" => true, "hint" => "Jpmorgan Chase Bank, Na" })
     end
   end
 
