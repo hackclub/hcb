@@ -42,7 +42,7 @@ class WiseTransfersController < ApplicationController
       render "new", status: :unprocessable_entity
     end
 
-    #rubocop:enable Lint/UnreachableCode
+    # rubocop:enable Lint/UnreachableCode
   end
 
   def approve
