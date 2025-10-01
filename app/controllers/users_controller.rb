@@ -336,7 +336,7 @@ class UsersController < ApplicationController
       end
 
       if @user.payout_method&.errors&.any?
-        flash.now[:error] = @user.payout_method.errors.first.full_message
+        flash.now[:error] = @user.payout_method.errors.full_messages.to_sentence
         render :edit_payout, status: :unprocessable_entity
         return
       end
