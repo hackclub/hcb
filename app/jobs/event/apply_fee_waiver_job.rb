@@ -4,26 +4,47 @@ class Event
   class ApplyFeeWaiverJob < ApplicationJob
     queue_as :low
 
+    MONTH_LOCK = 11 # 👈 Move this to a constant as it doesn't change
+
     def perform
-      month_lock = 11
       Event.find_each do |event|
-        active_teen_count = event.users.active_teenager.count
-        if active_teen_count >= 5 && active_teen_count <= 9 && event.fee_waiver_eligible && Date.current.month < month_lock
-          event.plan.update!(type: Event::Plan::Standard::ThreePointFive)
-          event.update!(fee_waiver_applied: true)
-        end
-
-        if active_teen_count >= 10 && event.fee_waiver_eligible && Date.current.month < month_lock
-          event.plan.update!(type: Event::Plan::Standard::FeeWaived)
-          event.update!(fee_waiver_applied: true)
-        end
-
-        if (!event.fee_waiver_eligible || active_teen_count < 5 || Date.current.month >= month_lock) && event.fee_waiver_applied
-          event.plan.update!(type: Event::Plan::Standard)
-          event.update!(fee_waiver_applied: false)
-        end
+        process_event(event) # 👈 Move this logic to a method so we can use return
       end
     end
+
+    private
+
+    def process_event(event)
+      active_teen_count = event.users.active_teenager.count
+
+      # 👇 Combine two of the branches as they share a lot of logic
+      if active_teen_count >= 5 && event.fee_waiver_eligible && Date.current.month < MONTH_LOCK
+        plan_type = # 👈 This is the only thing that changes between the branches so let's make that obvious
+          if active_teen_count >= 10
+            Event::Plan::Standard::FeeWaived
+          else
+            Event::Plan::Standard::ThreePointFive
+          end
+
+        # 👇 These two operations need to happen together so let's wrap them in a transaction
+        ActiveRecord::Base.transaction do
+          event.plan.update!(type: plan_type)
+          event.update!(fee_waiver_applied: true)
+        end
+
+        return # 👈 Make it clear there's nothing left to do
+      end
+
+      # 👇 Move this conditional into a guard
+      return unless event.fee_waiver_applied
+
+      # 👇 These two operations need to happen together so let's wrap them in a transaction
+      ActiveRecord::Base.transaction do
+        event.plan.update!(type: Event::Plan::Standard)
+        event.update!(fee_waiver_applied: false)
+      end
+    end
+
 
   end
 
