@@ -32,7 +32,7 @@ class User
 
       class_methods do
         def unsupported?
-          self.in?(User::PayoutMethod::UNSUPPORTED_METHODS.keys)
+          User::PayoutMethod::UNSUPPORTED_METHODS.key?(self)
         end
 
         def unsupported_details
