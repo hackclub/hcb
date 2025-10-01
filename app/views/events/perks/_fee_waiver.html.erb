@@ -1,6 +1,6 @@
 <%# locals: (event:, perks_available:, active_teenagers_count:) %>
 
-<% if Date.current.month < 11 %>
+<% if Date.current < Date.new(2025, 11, 1) %>
   <div class="card pb0 mb3 promo-robotics" id="fee-waiver">
     <div class="card__banner card__banner--top flex justify-between items-center">
       <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
