@@ -33,6 +33,12 @@ RSpec.describe WiresController do
 
       sign_in(user)
 
+      stub_request(:get, "https://api.column.com/institutions/NOSCCATT")
+        .to_return_json(
+          status: 200,
+          body: { country_code: "CA" }
+        )
+
       post(
         :create,
         params: {
@@ -83,6 +89,12 @@ RSpec.describe WiresController do
       expect(event.wires).to be_empty
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("Confirm Access")
+
+      stub_request(:get, "https://api.column.com/institutions/NOSCCATT")
+        .to_return_json(
+          status: 200,
+          body: { country_code: "CA" }
+        )
 
       post(
         :create,

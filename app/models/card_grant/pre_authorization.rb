@@ -183,6 +183,13 @@ class CardGrant
       end
 
       broadcast_refresh_to self
+    rescue Faraday::Error => e
+      # Modify the original exception to append the response body to the message
+      # so these are easier to debug
+      raise(e.exception(<<~MSG))
+        #{e.message}
+        \tresponse_body: #{e.response_body.inspect}
+      MSG
     end
 
     def unauthorized?

@@ -104,6 +104,16 @@
                 <% end %>
               <% end %>
             <% end %>
+          <% elsif report.mismatched_currency? %>
+            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
+              <div class="btn bg-info disabled">
+                <%= inline_icon "send" %>
+                Submit & request review
+                <% button_hint = capture do %>
+                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
+                <% end %>
+              </div>
+            </div>
           <% elsif admin_signed_in? %>
             <%= link_to payouts_user_path(user), class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" }  do %>
               <%= inline_icon "profile" %>

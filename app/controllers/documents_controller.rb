@@ -44,6 +44,7 @@ class DocumentsController < ApplicationController
   def show
     # For common documents (event_id: nil), redirect non-admin users to the download URL
     if @document.common? && !admin_signed_in?
+      authorize @document, :download?
       redirect_to document_download_path(@document)
       return
     end

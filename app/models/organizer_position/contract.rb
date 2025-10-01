@@ -126,7 +126,7 @@ class OrganizerPosition
       raise ArgumentError, "can only send contracts when pending" unless pending?
 
       payload = {
-        template_id: 487784,
+        template_id: organizer_position_invite.event.plan.contract_docuseal_template_id,
         send_email: false,
         order: "preserved",
         submitters: [

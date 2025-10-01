@@ -1,23 +1,47 @@
 <%# locals: (statement_of_activity:) %>
 
-<div class="flex justify-between items-center gap-4">
-  <h1 class="border-b-0 flex-grow">Statement of Activity</h1>
+<h1 class="border-b-0">Statement of Activity</h1>
 
-  <%= form_with(method: :get, data: { controller: "form" }, class: "mb-0") do |form| %>
+<div class="flex gap-4 items-center">
+  <%= form_with(
+        method: :get,
+        data: { controller: "form" },
+        class: "mb-0 flex-grow flex items-center gap-4"
+      ) do |form| %>
     <div class="flex gap-2 items-center w-fit text-nowrap">
-      From
+      <%= form.label(:start, "From") %>
       <%= form.date_field :start, value: statement_of_activity.start_date, data: { action: "change->form#submit" }, class: "mb-0" %>
-      To
+      <%= form.label(:end, "To") %>
       <%= form.date_field :end, value: statement_of_activity.end_date, data: { action: "change->form#submit" }, class: "mb-0" %>
+    </div>
+
+    <div>
+      <% if statement_of_activity.supports_descendants? %>
+        <%= form.check_box(
+              :include_descendants,
+              checked: statement_of_activity.include_descendants,
+              include_hidden: false,
+              data: { action: "change->form#submit" },
+              class: "mb-0"
+            ) %>
+        <%= form.label(:include_descendants, "Include descendants", class: "inline") %>
+      <% end %>
     </div>
   <% end %>
 
-  <%= link_to({ format: :xlsx }, class: "btn") do %>
+  <%= link_to(
+        {
+          format: :xlsx,
+          **params.permit(:include_descendants, :start, :end)
+        },
+        class: "btn btn-small"
+      ) do %>
     <%= inline_icon "download" %>
     <small>Download XLSX</small>
   <% end %>
 </div>
-<hr class="mt-0">
+
+<hr class="my-4">
 
 <p>
   From <%= statement_of_activity.start_date.strftime("%B %-d, %Y") %>
@@ -26,6 +50,9 @@
     the <strong><%= statement_of_activity.event_group.name %></strong> event group
   <% else %>
     <strong><%= link_to statement_of_activity.event.name, statement_of_activity.event %></strong>
+    <% if statement_of_activity.include_descendants %>
+      and its descendants
+    <% end %>
   <% end %>
   had a change in net assets
   of <%= render_money statement_of_activity.net_asset_change %>;
@@ -33,14 +60,14 @@
   spent <%= render_money statement_of_activity.total_expense.abs %>.
 </p>
 
-<% if statement_of_activity.event_group %>
+<% if statement_of_activity.event_group || statement_of_activity.include_descendants %>
   <details>
     <summary>Included events</summary>
-    <% if statement_of_activity.event_group.events.empty? %>
+    <% if statement_of_activity.event_group && statement_of_activity.events.empty? %>
       <p>This group does not have any associated events</p>
     <% else %>
       <ul>
-        <% statement_of_activity.event_group.events.each do |event| %>
+        <% statement_of_activity.events.each do |event| %>
           <li>
             <%= link_to(event.name, event_path(event)) %>
           </li>
@@ -69,7 +96,7 @@
       <% category = TransactionCategory::Definition::ALL[category_slug] %>
       <tr>
         <td title="<%= category&.slug %>"><%= category&.label || "Uncategorized" %></td>
-        <td><%= render_money amount_cents_sum.abs %></td>
+        <td><%= render_money amount_cents_sum %></td>
       </tr>
     <% end %>
   <% end %>

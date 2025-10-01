@@ -15,6 +15,7 @@ else
 end
 
 json.total_spent_cents stripe_card.total_spent if expand?(:total_spent_cents)
+json.balance_available stripe_card.balance_available if expand?(:balance_available)
 
 json.organization stripe_card.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
 json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  if expand?(:user)
