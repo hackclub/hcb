@@ -116,12 +116,13 @@ RSpec.describe UsersController do
     end
 
     it "does not allow saving an unsupported payout method" do
+      reason = "Due to integration issues, transfers via PayPal are currently unavailable in tests."
       stub_const(
         "User::PayoutMethod::UNSUPPORTED_METHODS",
         {
           User::PayoutMethod::PaypalTransfer => {
             status_badge: "Unavailable",
-            reason: "Due to integration issues, transfers via PayPal are currently unavailable."
+            reason:
           },
         }
       )
@@ -143,7 +144,7 @@ RSpec.describe UsersController do
       )
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include("Payout method is invalid. Due to integration issues, transfers via PayPal are currently unavailable. Please choose another option.")
+      expect(flash.to_h).to eq("error" => "#{reason} Please choose another method.")
       expect(user.reload.payout_method_type).to eq(nil)
     end
   end
