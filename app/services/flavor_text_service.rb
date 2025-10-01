@@ -105,7 +105,8 @@ class FlavorTextService
       "🧛",
       "🎃",
       "Pumpkin spice is the pumpkin spice of life.",
-      "Happy Easter - Oh wait wrong holiday."
+      "Happy Easter - Oh wait wrong holiday.",
+      "<a href='https://www.youtube.com/watch?v=PmzwhVE5Ly4' target='_blank' style='color: inherit'>ITS A SPOOKY MONTH!</a>".html_safe,
     ]
   end
 
