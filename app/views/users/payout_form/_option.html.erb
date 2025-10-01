@@ -8,7 +8,7 @@
   <%= yield %><%# in case you wanna add more flare to a specific option %>
 
   <% if model.unsupported? %>
-    <div class="badge bg-warning m1 mt0" style="width: fit-content;"><%= model.unsupported_details[:status_badge] %></div>
+    <div class="badge bg-warning m1 mt0 w-fit"><%= model.unsupported_details[:status_badge] %></div>
     <small><%= model.unsupported_details[:reason] %></small>
   <% else %>
     <small><%= description %></small>
