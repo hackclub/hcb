@@ -264,6 +264,7 @@ GEM
       dry-inflector (~> 1.0)
       dry-logic (~> 1.4)
       zeitwerk (~> 2.6)
+    ed25519 (1.4.0)
     email_reply_parser (0.5.11)
     erb (5.0.2)
     erb_lint (0.9.0)
@@ -901,6 +902,7 @@ DEPENDENCIES
   doorkeeper (~> 5.8)
   doorkeeper-device_authorization_grant
   dotenv-rails
+  ed25519
   email_reply_parser
   erb_lint
   eu_central_bank
