@@ -676,6 +676,7 @@ Rails.application.routes.draw do
 
         resources :card_grants, only: [:show, :update] do
           member do
+            post "activate"
             post "topup"
             post "withdraw"
             post "cancel"
