@@ -4,7 +4,7 @@ class Event
   class ApplyFeeWaiverJob < ApplicationJob
     queue_as :low
 
-    MONTH_LOCK = 11 # 👈 Move this to a constant as it doesn't change
+    DATE_LOCK = Date.new(2025, 11, 1) # 👈 Move this to a constant as it doesn't change
 
     def perform
       Event.find_each do |event|
@@ -18,7 +18,7 @@ class Event
       active_teen_count = event.users.active_teenager.count
 
       # 👇 Combine two of the branches as they share a lot of logic
-      if active_teen_count >= 5 && event.fee_waiver_eligible && Date.current.month < MONTH_LOCK
+      if active_teen_count >= 5 && event.fee_waiver_eligible && Date.current < DATE_LOCK
         plan_type = # 👈 This is the only thing that changes between the branches so let's make that obvious
           if active_teen_count >= 10
             Event::Plan::Standard::FeeWaived
