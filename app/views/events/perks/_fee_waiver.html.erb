@@ -19,7 +19,6 @@
       <% else %>
         <%= button_to (event.fee_waiver_eligible ? "Opt-out" : "Opt-in").to_s,
           event_toggle_fee_waiver_eligible_path,
-          method: :post,
           class: "btn promo-premium-header bg-clip-padding" %>
       <% end %>
     </div>
