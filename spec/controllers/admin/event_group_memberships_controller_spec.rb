@@ -12,7 +12,7 @@ RSpec.describe Admin::EventGroupMembershipsController do
       sign_in(user)
 
       event = create(:event)
-      group = Event::Group.create!(user:, name: "Scrapyard")
+      group = create(:event_group, user:)
       membership = Event::GroupMembership.create!(group:, event:)
 
       delete(:destroy, params: { event_group_id: group.id, id: membership.id })

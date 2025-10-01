@@ -1,6 +1,6 @@
 <%# locals: (event:, active_teenagers_count:) %>
 
-<% if Date.current.month < 12 %>
+<% if Date.current < Date.new(2025, 11, 1) %>
   <div class="mb3 rounded-xl">
     <div class="card pb0" id="robotics-printer-raffle">
       <div class="card__banner card__banner--top flex justify-between items-center promo-robotics-raffle">
@@ -9,7 +9,7 @@
           3D Printer Raffle
         </h3>
         <% if event.robotics_team? || event.affiliations.robotics.any? %>
-          <span class="btn disabled bg-clip-padding">Entered</span>
+          <span class="btn disabled bg-clip-padding"><%= pluralize(active_teenagers_count, "ticket") %></span>
         <% else %>
           <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a robotics team or have a robotics affiliation.">
             <span class="btn disabled bg-clip-padding">Ineligible</span>

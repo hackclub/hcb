@@ -46,19 +46,20 @@ class DisbursementsController < ApplicationController
     )
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
+    user_accesible_events = Event.where(id: current_user.events.pluck(:id) + current_user.events.collect(&:descendant_ids).flatten)
 
     @allowed_source_events = if admin_signed_in?
                                Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
-                               current_user.events.not_hidden.filter_demo_mode(false)
+                               user_accesible_events.not_hidden.filter_demo_mode(false)
                              end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
     @allowed_destination_events = if admin_signed_in?
                                     Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    allowed_destination_event_ids = current_user.events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
+                                    allowed_destination_event_ids = user_accesible_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
                                     Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
                                   else
-                                    current_user.events.not_hidden.filter_demo_mode(false)
+                                    user_accesible_events.not_hidden.filter_demo_mode(false)
                                   end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
 
     authorize @disbursement

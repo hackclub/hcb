@@ -4,9 +4,14 @@ class Event
   class StatementOfActivity
     prepend MemoWise
 
-    attr_reader(:event, :event_group)
+    attr_reader(:event, :event_group, :include_descendants)
 
-    def initialize(event_or_event_group, start_date_param: nil, end_date_param: nil)
+    def initialize(
+      event_or_event_group,
+      start_date_param: nil,
+      end_date_param: nil,
+      include_descendants: false
+    )
       @event_group, @event = nil
 
       case event_or_event_group
@@ -20,6 +25,11 @@ class Event
 
       @start_date_param = start_date_param
       @end_date_param = end_date_param
+      @include_descendants = include_descendants
+    end
+
+    def supports_descendants?
+      event.present?
     end
 
     memo_wise def start_date
@@ -127,6 +137,19 @@ class Event
       io.string
     end
 
+    memo_wise def events
+      if event_group
+        event_group.events.to_a
+      elsif include_descendants
+        [
+          event,
+          *Event.where(id: event.descendant_ids).to_a
+        ]
+      else
+        [event]
+      end
+    end
+
     private
 
     attr_reader(:start_date_param, :end_date_param)
@@ -137,14 +160,6 @@ class Event
         .where(canonical_event_mapping: { event_id: events.map(&:id), subledger_id: nil })
         .where("date between ? AND ?", start_date, end_date)
         .strict_loading
-    end
-
-    memo_wise def events
-      if event_group
-        event_group.events.to_a
-      else
-        [event]
-      end
     end
 
   end

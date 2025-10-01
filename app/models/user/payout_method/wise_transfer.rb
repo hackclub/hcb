@@ -27,6 +27,8 @@ class User
 
       include HasWiseRecipient
 
+      validates_presence_of :address_line1, :address_city, :address_state, :address_postal_code, :recipient_country, :currency
+
       def kind
         "wise_transfer"
       end
