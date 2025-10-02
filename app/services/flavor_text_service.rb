@@ -11,7 +11,7 @@ class FlavorTextService
     @random = Random.new(@seed)
   end
 
-  def generate
+  def sample
     return development_flavor_texts.sample(random: @random) if @env == "development"
     return holiday_flavor_texts.sample(random: @random) if winter?
     return @random.rand > 0.5 ? spooky_flavor_texts.sample(random: @random) : flavor_texts.sample(random: @random) if fall? # ~50% chance of spookiness
@@ -20,11 +20,16 @@ class FlavorTextService
     in_frc_team = @user&.events&.robotics_team&.any?
 
     if in_frc_team
-      flavor_text = (flavor_texts + frc_flavor_texts).sample(random: @random)
+      (flavor_texts + frc_flavor_texts).sample(random: @random)
     else
-      flavor_text = flavor_texts.sample(random: @random)
+      flavor_texts.sample(random: @random)
     end
+  end
+
+  def generate
+    flavor_text = sample
     flavor_text = flavor_text.call if flavor_text.respond_to? :call
+
     flavor_text
   end
 
