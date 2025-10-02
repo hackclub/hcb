@@ -34,12 +34,6 @@ class DocusealController < ActionController::Base
         document.save!
         contract.update(document:)
         contract.mark_signed!
-
-        # Unfreeze the event if this is the first signed contract
-        event = contract.organizer_position_invite.event
-        if event.organizer_position_contracts.signed.count == 1
-          event.update!(financially_frozen: false)
-        end
       elsif params[:event_type] == "form.declined"
         contract.mark_voided!
       elsif cosigner.present? && cosigner["status"] != "completed"
