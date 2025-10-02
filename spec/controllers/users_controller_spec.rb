@@ -114,5 +114,38 @@ RSpec.describe UsersController do
       expect(response).to have_http_status(:found)
       expect(user.reload.use_two_factor_authentication).to eq(false)
     end
+
+    it "does not allow saving an unsupported payout method" do
+      reason = "Due to integration issues, transfers via PayPal are currently unavailable in tests."
+      stub_const(
+        "User::PayoutMethod::UNSUPPORTED_METHODS",
+        {
+          User::PayoutMethod::PaypalTransfer => {
+            status_badge: "Unavailable",
+            reason:
+          },
+        }
+      )
+
+      user = create(:user)
+      sign_in(user)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: {
+            payout_method_type: "User::PayoutMethod::PaypalTransfer",
+            payout_method_attributes: {
+              recipient_email: "gary@hackclub.com"
+            }
+          }
+        }
+      )
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(flash.to_h).to eq("error" => "#{reason} Please choose another method.")
+      expect(user.reload.payout_method_type).to eq(nil)
+    end
   end
 end

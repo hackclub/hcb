@@ -109,8 +109,8 @@ module Reimbursement
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
             user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
-              expenses.any? && !missing_receipts? && user.payout_method.class != User::PayoutMethod::PaypalTransfer &&
-              !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } && !mismatched_currency?
+              expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
+              !mismatched_currency? && payout_method_allowed?
           end
         end
         after do
@@ -416,6 +416,10 @@ module Reimbursement
       )
 
       mark_reimbursed!
+    end
+
+    def payout_method_allowed?
+      user.payout_method.present? && !user.payout_method.unsupported?
     end
 
   end

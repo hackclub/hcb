@@ -407,7 +407,7 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
-  validate :contract_signed, unless: :demo_mode?
+  validate :contract_signed, unless: -> { demo_mode? || financially_frozen? }
 
   validates :name, presence: true
   before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
