@@ -526,7 +526,7 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    if payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
+    if payout_method_type_changed? && payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
       # I'm using `try` here in the slim chance that `payout_method` is some
       # random model and doesn't include `User::PayoutMethod::Shared`.
       if payout_method.try(:unsupported?)
