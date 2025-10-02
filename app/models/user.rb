@@ -30,6 +30,7 @@
 #  use_two_factor_authentication :boolean          default(FALSE)
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
+#  discord_id                    :string
 #  payout_method_id              :bigint
 #  webauthn_id                   :string
 #

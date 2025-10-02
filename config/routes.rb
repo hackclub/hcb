@@ -705,7 +705,10 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+
   post "discord/webhook", to: "discord#webhook"
+  get "discord/link", to: "discord#link"
+  post "discord/create_link", to: "discord#create_link"
 
   post "extract/invoice", to: "extraction#invoice"
 
