@@ -243,13 +243,9 @@
               <% turbo_confirm = "⚠️ WARNING: Approving this reimbursement will make the event balance negative. This organization does not have sufficient funds to fulfill this request. Are you sure you want to proceed?" %>
             <% end %>
             <% if report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
-              <%= link_to "#", class: "btn bg-info mb-2", data: { behavior: "modal_trigger", modal: "convert_to_wise_transfer" }, id: "submit_button" do %>
+              <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "convert_to_wise_transfer" }, id: "submit_button" do %>
                 <%= inline_icon "wise" %>
-                Approve & process as standard Wise transfer
-              <% end %>
-              <%= link_to "#", class: "btn bg-error", data: { behavior: "modal_trigger", modal: "wise_approval" }, id: "submit_button" do %>
-                <%= inline_icon "important" %>
-                Risky: Process as reimbursement report
+                Convert to standard Wise transfer
               <% end %>
               <section data-behavior="modal" role="dialog" id="convert_to_wise_transfer" class="modal modal--scroll modal--wide bg-snow">
                 <%= modal_header "Convert this report to a standard Wise transfer" %>
@@ -265,7 +261,17 @@
                   <li>Close this reimbursement report without marking it as reimbursed</li>
                 </ul>
 
-                <%= link_to "Convert to Wise transfer", reimbursement_report_convert_to_wise_transfer_path(report), class: "btn btn-large bg-info", method: :post %>
+                <div class="flex flex-row items-center justify-between mt-6">
+                  <%= link_to reimbursement_report_convert_to_wise_transfer_path(report), class: "btn btn-large bg-info", method: :post do %>
+                    <%= inline_icon "wise" %>
+                    Convert to Wise transfer
+                  <% end %>
+
+                  <%= link_to "#", class: "btn bg-error tooltipped tooltipped--n", "aria-label": "Don't do this without checking with engineering first!", data: { behavior: "modal_trigger", modal: "wise_approval" }, id: "submit_button" do %>
+                    <%= inline_icon "important" %>
+                    Risky: Process as reimbursement report
+                  <% end %>
+                </div>
               </section>
               <section data-behavior="modal" role="dialog" id="wise_approval" class="modal modal--scroll modal--wide bg-snow">
                 <%= modal_header "Approve & send Wise reimbursement" %>
