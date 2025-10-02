@@ -152,8 +152,8 @@ module Reimbursement
 
       event :mark_rejected do
         transitions from: [:draft, :submitted, :reimbursement_requested], to: :rejected
-        after do
-          ReimbursementMailer.with(report: self).rejected.deliver_later
+        after do |skip_mailer = false|
+          ReimbursementMailer.with(report: self).rejected.deliver_later unless skip_mailer
         end
       end
 
@@ -348,6 +348,48 @@ module Reimbursement
 
     def wise_transfer_may_exceed_balance?
       !::Shared::AmpleBalance.ample_balance?(wise_transfer_quote_amount.cents, event)
+    end
+
+    def convert_to_wise_transfer!(as: User.system_user)
+      raise "Can only convert reports in 'Reimbursement Requested' state" unless reimbursement_requested?
+
+      ActiveRecord::Base.transaction do
+        wise_transfer = WiseTransfer.create!(
+          user: as,
+          event:,
+          amount:,
+          currency:,
+          payment_for: name,
+          recipient_name: user.full_name,
+          recipient_email: user.email,
+          address_city: user.payout_method.address_city,
+          address_line1: user.payout_method.address_line1,
+          address_line2: user.payout_method.address_line2,
+          address_postal_code: user.payout_method.address_postal_code,
+          address_state: user.payout_method.address_state,
+          bank_name: user.payout_method.bank_name,
+          recipient_country: user.payout_method.recipient_country,
+          recipient_information: user.payout_method.recipient_information,
+        )
+
+        comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
+        wise_transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
+
+        expenses.each do |expense|
+          expense.receipts.each do |receipt|
+            ::ReceiptService::Create.new(
+              receiptable: wise_transfer.local_hcb_code,
+              uploader: as,
+              attachments: [receipt.file.blob],
+              upload_method: :duplicate
+            ).run!
+          end
+        end
+
+        mark_rejected!(true) # skip mailer
+
+        wise_transfer
+      end
     end
 
     private
