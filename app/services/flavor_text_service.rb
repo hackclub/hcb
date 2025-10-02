@@ -528,7 +528,7 @@ class FlavorTextService
   end
 
   private
-  
+
   def sample
     return development_flavor_texts.sample(random: @random) if @env == "development"
     return holiday_flavor_texts.sample(random: @random) if winter?
