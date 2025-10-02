@@ -34,6 +34,7 @@
       my_cards_path,
       tooltip: "See all your cards",
       icon: "card",
+      async_badge: my_cards_icon_path,
       selected: local_assigns[:selected] == :cards %>
     <%= dock_item "Receipts",
       my_inbox_path,
@@ -81,6 +82,7 @@
       my_cards_path,
       tooltip: "See all your cards",
       icon: "card",
+      async_badge: my_cards_icon_path,
       selected: local_assigns[:selected] == :cards %>
     <%= dock_item "Receipts",
       my_inbox_path,
