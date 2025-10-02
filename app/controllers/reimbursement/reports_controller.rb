@@ -109,6 +109,15 @@ module Reimbursement
       flash[:error] = e.message
     end
 
+    def convert_to_wise_transfer
+      authorize @report
+
+      wise_transfer = @report.convert_to_wise_transfer!(as: current_user)
+
+      flash[:success] = "Report successfully converted to Wise transfer."
+      redirect_to wise_transfer_process_admin_path(wise_transfer)
+    end
+
     def finished
     end
 
