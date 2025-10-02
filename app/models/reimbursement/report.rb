@@ -152,7 +152,7 @@ module Reimbursement
 
       event :mark_rejected do
         transitions from: [:draft, :submitted, :reimbursement_requested], to: :rejected
-        after do |skip_mailer = false|
+        after do |skip_mailer: false|
           ReimbursementMailer.with(report: self).rejected.deliver_later unless skip_mailer
         end
       end
@@ -386,7 +386,7 @@ module Reimbursement
           end
         end
 
-        mark_rejected!(true) # skip mailer
+        mark_rejected!(skip_mailer: true)
 
         wise_transfer
       end
