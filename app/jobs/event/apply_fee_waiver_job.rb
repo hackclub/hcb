@@ -25,9 +25,11 @@ class Event
             Event::Plan::Standard::ThreePointFive
           end
 
-        ActiveRecord::Base.transaction do
-          event.plan.mark_inactive!(plan_type)
-          event.update!(fee_waiver_applied: true)
+        unless event.plan.type == plan_type
+          ActiveRecord::Base.transaction do
+            event.plan.mark_inactive!(plan_type)
+            event.update!(fee_waiver_applied: true)
+          end
         end
 
         return
