@@ -21,6 +21,11 @@
         <td>
           <% if transaction.is_a?(CanonicalPendingTransaction) %>
             PENDING
+            <% if transaction.declined? %>
+              (declined)
+            <% elsif transaction.settled? %>
+              (settled)
+            <% end %>
           <% else %>
             SETTLED
           <% end %>
