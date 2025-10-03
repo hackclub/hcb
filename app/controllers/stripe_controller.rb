@@ -36,10 +36,10 @@ class StripeController < ActionController::Base
     service = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event)
     approved = service.run
 
-    if approved && service.event.plan.receipts_required?
+    if approved
       user = service.card.user
       ::User::UpdateCardLockingJob.perform_later(user:)
-      ::User::SendCardLockingNotificationJob.perform_later(user:)
+      ::User::SendCardLockingNotificationJob.perform_later(user:, event:)
     end
 
     response.set_header "Stripe-Version", "2022-08-01"
