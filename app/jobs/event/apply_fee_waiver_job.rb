@@ -26,7 +26,7 @@ class Event
           end
 
         ActiveRecord::Base.transaction do
-          event.plan.update!(type: plan_type)
+          event.plan.mark_inactive!(plan_type)
           event.update!(fee_waiver_applied: true)
         end
 
@@ -36,7 +36,7 @@ class Event
       return unless event.fee_waiver_applied
 
       ActiveRecord::Base.transaction do
-        event.plan.update!(type: Event::Plan::Standard)
+        event.plan.mark_inactive!(Event::Plan::Standard)
         event.update!(fee_waiver_applied: false)
       end
     end
