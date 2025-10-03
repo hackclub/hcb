@@ -19,6 +19,8 @@
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
 #  donation_tiers_enabled                       :boolean          default(FALSE), not null
+#  fee_waiver_applied                           :boolean          default(FALSE), not null
+#  fee_waiver_eligible                          :boolean          default(FALSE), not null
 #  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
