@@ -32,7 +32,7 @@ RSpec.describe Api::V4::CardGrantsController do
       # response value unpredictable.
       allow_any_instance_of(UsersHelper).to receive(:gravatar_url).and_return("https://gravatar.com/avatar/stubbed")
 
-      post(:create, params: { event_id: event.friendly_id, **card_grant_params }, as: :json)
+      post(:create, params: { event_id: event.friendly_id, **card_grant_params, expand: "disbursements" }, as: :json)
 
       expect(response).to have_http_status(:created)
       card_grant = event.card_grants.sole

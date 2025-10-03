@@ -8,7 +8,7 @@
         <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>" x-on:change="<%= field[:key] %> = <%= field[:type] == :check_box ? "$event.target.checked" : "$event.target.value" %>" <% if field[:conditional] %> x-show="<%= field[:conditional] %>" <% end %>>
           <%= form.label field[:key], field[:label], (field[:label_options] || {}) %>
           <% if field[:type] == :select %>
-            <%= form.select field[:key], options_for_select(field[:options].to_a), disabled: "", selected: "", prompt: "Select one...", "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
+            <%= form.select field[:key], options_for_select(field[:options].to_a), disabled: "", prompt: "Select one...", "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
           <% else %>
             <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}") %>
           <% end %>

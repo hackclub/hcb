@@ -530,6 +530,7 @@ Rails.application.routes.draw do
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
       post "request_reimbursement"
+      post "convert_to_wise_transfer"
       post "admin_approve"
       post "admin_send_wise_transfer"
       post "reverse"
@@ -645,6 +646,8 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
+          resources :invoices, only: [:index]
+          resources :sponsors, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -682,6 +685,10 @@ Rails.application.routes.draw do
             post "cancel"
           end
         end
+
+        resources :invoices, only: [:show, :create]
+
+        resources :sponsors, only: [:show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 

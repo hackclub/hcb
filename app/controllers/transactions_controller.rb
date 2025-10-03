@@ -18,10 +18,6 @@ class TransactionsController < ApplicationController
       @transaction = Transaction.with_deleted.find(params[:id])
       @event = @transaction.event
 
-      @commentable = @transaction
-      @comments = @commentable.comments
-      @comment = Comment.new
-
       authorize @transaction
 
       render :show_deprecated

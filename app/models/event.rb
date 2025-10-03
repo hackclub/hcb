@@ -154,6 +154,10 @@ class Event < ApplicationRecord
     Event.where(id: ancestor_ids)
   end
 
+  def descendants
+    Event.where(id: descendant_ids)
+  end
+
   def descendant_total_balance_cents
     subevents.to_a.sum(&:balance_available_v2_cents)
   end
@@ -403,7 +407,7 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
-  validate :contract_signed, unless: :demo_mode?
+  validate :contract_signed, unless: -> { demo_mode? || financially_frozen? }
 
   validates :name, presence: true
   before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
@@ -425,7 +429,7 @@ class Event < ApplicationRecord
   end
 
   before_validation do
-    build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
+    build_plan(type: fallback_plan_class) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -980,6 +984,20 @@ class Event < ApplicationRecord
     if outcome != :halted
       errors.add(:parent, "max depth exceeded")
     end
+  end
+
+  def fallback_plan_class
+    if parent
+      if parent.config&.subevent_plan.present?
+        return parent.config.subevent_plan.constantize
+      end
+
+      if parent.plan
+        return parent.plan.class
+      end
+    end
+
+    Event::Plan::Standard
   end
 
 end
