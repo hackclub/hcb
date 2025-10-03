@@ -20,9 +20,9 @@ class Event
       if active_teen_count >= 5 && event.fee_waiver_eligible && Date.current < DATE_LOCK
         plan_type =
           if active_teen_count >= 10
-            Event::Plan::Standard::FeeWaived
+            Event::Plan::FeeWaived
           else
-            Event::Plan::Standard::ThreePointFive
+            Event::Plan::ThreePointFive
           end
 
         unless event.plan.instance_of?(plan_type)
