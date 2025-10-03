@@ -353,6 +353,11 @@ module Reimbursement
     def convert_to_wise_transfer!(as: User.system_user)
       raise "Can only convert reports in 'Reimbursement Requested' state" unless reimbursement_requested?
 
+      account_holder =
+        if user.payout_method.respond_to?(:account_holder)
+          user.payout_method.account_holder.presence
+        end
+
       ActiveRecord::Base.transaction do
         wise_transfer = WiseTransfer.create!(
           user: as,
@@ -360,7 +365,7 @@ module Reimbursement
           amount:,
           currency:,
           payment_for: name,
-          recipient_name: user.full_name,
+          recipient_name: account_holder || user.full_name,
           recipient_email: user.email,
           address_city: user.payout_method.address_city,
           address_line1: user.payout_method.address_line1,
