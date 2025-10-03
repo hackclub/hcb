@@ -21,8 +21,9 @@
 class User
   module PayoutMethod
     class WiseTransfer < ApplicationRecord
+      include Shared
+
       self.table_name = "user_payout_method_wise_transfers"
-      has_one :user, inverse_of: :payout_method, as: :payout_method
       has_encrypted :recipient_information, type: :json
 
       include HasWiseRecipient

@@ -79,6 +79,7 @@ module EventService
         can_front_balance: @can_front_balance,
         point_of_contact_id: @point_of_contact_id,
         demo_mode: @demo_mode,
+        financially_frozen: true,
         parent: @parent_event,
         plan: Event::Plan.new(type: @plan)
       }.tap do |hash|
