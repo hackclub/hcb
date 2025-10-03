@@ -8,7 +8,6 @@
 
 <%# Perks for organizations ran by teenagers %>
 <% if @event.organized_by_teenagers? || @active_teenagers_count > 0 %>
-  <%= render "events/perks/premium_jukebox", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
   <%= render "events/perks/premium_pins", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
   <%= render "events/perks/premium_domains", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
 
