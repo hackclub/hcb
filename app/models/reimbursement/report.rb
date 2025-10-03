@@ -409,7 +409,7 @@ module Reimbursement
       expense_payouts = []
 
       expenses.approved.each do |expense|
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents * expense.conversion_rate, event: expense.report.event, expense:)
+        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: (-expense.amount_cents * expense.conversion_rate).floor, event: expense.report.event, expense:)
       end
 
       return if expense_payouts.empty?
