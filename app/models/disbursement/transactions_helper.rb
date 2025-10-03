@@ -36,7 +36,6 @@ class Disbursement
       @grouped_canonical_transactions ||=
         @disbursement
         .canonical_transactions
-        .strict_loading
         .preload(:canonical_event_mapping)
         .group_by do |ct|
           [
@@ -50,7 +49,6 @@ class Disbursement
       @grouped_canonical_pending_transactions ||=
         @disbursement
         .canonical_pending_transactions
-        .strict_loading
         .preload(:canonical_pending_event_mapping)
         .group_by do |cpt|
           [
