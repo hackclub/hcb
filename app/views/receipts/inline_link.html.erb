@@ -1,0 +1,7 @@
+<%= turbo_frame_tag :inline_link do %>
+  <div data-controller="receipt-select" id="receipt-select-container">
+    <%= render "receipts/link_form", receipts: @receipts do %>
+      <button disabled type="button" class="btn bg-success" data-action="receipt-input#addReceipt" data-receipt-select-target="confirm">Add</button>
+    <% end %>
+  </div>
+<% end %>

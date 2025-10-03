@@ -56,6 +56,15 @@ class AchTransfersController < ApplicationController
     end
 
     if @ach_transfer.save
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
+          receipt = Receipt.find(receipt_id)
+          authorize receipt, :link?
+
+          receipt.update!(receiptable: @ach_transfer.local_hcb_code)
+        end
+      end
+
       if ach_transfer_params[:file]
         ::ReceiptService::Create.new(
           uploader: current_user,

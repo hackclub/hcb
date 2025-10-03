@@ -1,0 +1,56 @@
+<%# locals: (form:, disabled: false, required: false, extraction: false) %>
+
+<div class="py-2" data-controller="receipt-input" data-receipt-input-receipt-select-outlet="#receipt-select-container" <%= "data-receipt-input-extraction-outlet=#extraction-form" if extraction %>>
+  <p class="mt-2 mb-1 semibold">Attach a receipt / invoice <%= "(optional)" unless required %></p>
+
+  <div data-receipt-input-target="list" class="receipt-input__list empty:m-0"></div>
+
+  <div class="flex gap-5 h-8">
+    <div class="field w-fit field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+      <%= form.label :file, "Upload file", class: "field--fileupload__label", data: {
+            action: "
+          dragover@window->file-drop#dragover
+          drop@window->file-drop#drop
+          dragenter@window->file-drop#dragenter
+          dragleave@window->file-drop#dragleave
+        "
+          } %>
+      <%= form.file_field :file,
+          multiple: true,
+          include_hidden: false,
+          required: false,
+          accept: "image/*,image/heic,.pdf",
+          style: "margin: 8px 0px",
+          class: "!hidden",
+          data: {
+            "file-drop-target"     => "fileInput",
+            "receipt-input-target" => "fileInput",
+            "action"               => "#{"change->extraction#upload " if extraction}change->receipt-input#addFile"
+          },
+          disabled: %>
+    </div>
+
+    <button type="button" class="field--fileupload__label bg-transparent" data-action="receipt-input#toggleBin">
+      <span>Select from Receipt Bin</span>
+    </button>
+
+    <button type="button" class="field--fileupload__label bg-transparent !text-primary border-primary hidden" data-action="receipt-input#clear" data-receipt-input-target="clearButton">
+      <span>Clear</span>
+    </button>
+  </div>
+
+  <section class="card mt2 hidden" data-receipt-input-target="bin">
+    <header class="pb2" style="z-index: 1000;<% if local_assigns[:popover] %> padding-top: 1rem;<% end %>">
+      <%= pop_icon_to "view-close", nil, class: "modal__close muted m1", tabindex: 0, data: { action: "receipt-input#toggleBin" } %>
+      <h2 class="mt0 mb0 pb0 border-none">Select receipt</h2>
+    </header>
+    <%= turbo_frame_tag :inline_link, src: inline_link_receipts_path %>
+  </section>
+
+  <% if required %>
+    <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+  <% end %>
+
+  <div data-receipt-input-target="receiptsInputContainer">
+  </div>
+</div>

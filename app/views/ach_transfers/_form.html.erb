@@ -8,6 +8,7 @@
   url: event_ach_transfers_path(ach_transfer.event),
   data: { controller: "input extraction", extraction_target: "form" },
   html: {
+    id: "extraction-form",
     "x-data" => "ach(#{{
       payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
       editing: ach_transfer.account_number.present?,
@@ -138,31 +139,7 @@
     <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
   </div>
 
-  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
-  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-          action: "
-        dragover@window->file-drop#dragover
-        drop@window->file-drop#drop
-        dragenter@window->file-drop#dragenter
-        dragleave@window->file-drop#dragleave
-      "
-        } %>
-    <%= form.file_field :file,
-        multiple: true,
-        include_hidden: false,
-        required: false,
-        accept: "image/*,image/heic,.pdf",
-        style: "margin: 8px 0px",
-        class: "field--fileupload__field",
-        data: {
-          "file-drop-target" => "fileInput",
-          "action" => "change->extraction#upload"
-        },
-        disabled: %>
-    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
-  </div>
-  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+  <%= render "receipts/receipt_input", form:, disabled:, required: true, extraction: true %>
 
   <% admin_tool do %>
     <div class="field">

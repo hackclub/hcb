@@ -18,6 +18,15 @@ class PaypalTransfersController < ApplicationController
     authorize @paypal_transfer
 
     if @paypal_transfer.save
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
+          receipt = Receipt.find(receipt_id)
+          authorize receipt, :link?
+
+          receipt.update!(receiptable: @paypal_transfer.local_hcb_code)
+        end
+      end
+
       if paypal_transfer_params[:file]
         ::ReceiptService::Create.new(
           uploader: current_user,

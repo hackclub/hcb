@@ -29,6 +29,15 @@ class WiseTransfersController < ApplicationController
     end
 
     if @wise_transfer.save
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
+          receipt = Receipt.find(receipt_id)
+          authorize receipt, :link?
+
+          receipt.update!(receiptable: @wise_transfer.local_hcb_code)
+        end
+      end
+
       if wise_transfer_params[:file]
         ::ReceiptService::Create.new(
           uploader: current_user,

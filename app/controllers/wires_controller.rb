@@ -25,6 +25,15 @@ class WiresController < ApplicationController
     end
 
     if @wire.save
+      if params[:receipts].present?
+        params[:receipts].each do |receipt_id|
+          receipt = Receipt.find(receipt_id)
+          authorize receipt, :link?
+
+          receipt.update!(receiptable: @wire.local_hcb_code)
+        end
+      end
+
       if wire_params[:file]
         ::ReceiptService::Create.new(
           uploader: current_user,
