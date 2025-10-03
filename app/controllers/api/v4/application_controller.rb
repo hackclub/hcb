@@ -57,6 +57,12 @@ module Api
         end
       end
 
+      def require_trusted_oauth_app!
+        unless current_token&.application&.trusted?
+          render json: { error: "not_authorized" }, status: :forbidden
+        end
+      end
+
       def check_restricted_scopes!
         # only check scopes for tokens that have the "restricted" scope so as not to break existing apps
         # this can roll out to all tokens later
