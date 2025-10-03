@@ -19,6 +19,20 @@ class EventsController < ApplicationController
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
+  def ledger_filters
+    filters = []
+    filters << { key: "tag", label: "Tags", type: "tag_select" } if @event.tags.size > 0
+    filters << { key: "user", label: "User", type: "user_select" }
+    filters << { key: "type", label: "Type", type: "select", options: [["ACH transfer", "ach_transfer"], "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", ["HCB transfer", "hcb_transfer"], "invoice", "mailed_check", ["PayPal transfer", "paypal_transfer"], "refund", "reimbursement", "wire"] }
+    filters << { key_base: "date", label: "Date", type: "date_range" }
+    filters << { key_base: "amount", label: "Amount", type: "amount_range" }
+    filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
+    filters << { key: "merchant", label: "Merchant", type: "merchant_select" }
+    filters << { key: "receipts", label: "Receipts", type: "select", options: %w[all missing] }
+
+    filters
+  end
+
   # GET /events
   def index
     authorize Event
@@ -172,6 +186,29 @@ class EventsController < ApplicationController
       @popover = flash[:popover]
       flash.delete(:popover)
     end
+
+    @filters = ledger_filters
+  end
+
+  def user_select
+    authorize @event
+    @search = params[:search] || ""
+
+    users_relation = @event.users.where("full_name ILIKE ?", "%#{@search}%").order("full_name ASC")
+    page = (params[:page] || 1).to_i
+    @users = Kaminari.paginate_array(users_relation.to_a).page(page).per(20)
+
+    render partial: "events/filters/user_select", locals: { users: @users }
+  end
+
+  def tag_select
+    authorize @event
+    @search = params[:search] || ""
+    tags_relation = @event.tags.where("label ILIKE ?", "%#{@search}%").order("label ASC")
+    page = (params[:page] || 1).to_i
+    @tags = Kaminari.paginate_array(tags_relation.to_a).page(page).per(20)
+
+    render partial: "events/filters/tag_select", locals: { tags: @tags }
   end
 
   def ledger
@@ -239,6 +276,8 @@ class EventsController < ApplicationController
       @transactions = Kaminari.paginate_array(@transactions).page(params[:page]).per(params[:per] || 75)
       @mock_total = @transactions.sum(&:amount_cents)
     end
+
+    @filters = ledger_filters
 
     render layout: false
   end
@@ -1103,6 +1142,7 @@ class EventsController < ApplicationController
     authorize @event
 
     @merchant = params[:merchant]
+    @search = params[:search]
 
     merchants_hash = {}
 
@@ -1114,7 +1154,12 @@ class EventsController < ApplicationController
       end
     end
 
-    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+    filtered_merchants = @search.present? ? merchants_hash.select { |_, m| m[:name].downcase.include?(@search.downcase) } : merchants_hash
+    @merchants = filtered_merchants.map { |id, m| { id:, name: m[:name], count: m[:count] } }.sort_by { |m| -m[:count] }
+
+    page = (params[:page] || 1).to_i
+    per_page = (params[:per] || 20).to_i
+    @merchants = Kaminari.paginate_array(@merchants).page(page).per(per_page)
   end
 
   private
@@ -1256,8 +1301,8 @@ class EventsController < ApplicationController
     @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
     @type = params[:type]
-    @start_date = params[:start].presence
-    @end_date = params[:end].presence
+    @start_date = params[:date_after].presence
+    @end_date = params[:date_before].presence
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
