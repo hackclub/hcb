@@ -12,7 +12,7 @@ module Discord
         c.response :raise_error
       end
 
-      response = conn.put("/api/v10/applications/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/commands", commands)
+      response = conn.put("/api/v10/applications/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/commands", ::Discord::RegisterCommandsJob.commands)
 
       raw_response = response.body
 
@@ -26,7 +26,7 @@ module Discord
       MSG
     end
 
-    def commands
+    def self.commands
       [
         {
           name: "ping",

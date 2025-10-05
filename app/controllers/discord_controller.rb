@@ -22,9 +22,23 @@ class DiscordController < ApplicationController
   end
 
   def interaction
-    puts "ACKing"
+    puts "Received Discord interaction"
 
-    render json: { type: 1 } # ACK the interaction
+    if params[:type] == 1
+      puts "Responding to PING"
+      render json: { type: 1 } and return
+    end
+
+    if params[:type] == 2
+      command_name = params[:data][:name]
+      if command_name.in?(::Discord::RegisterCommandsJob.commands.pluck(:name))
+        return send("#{command_name}_command")
+      end
+
+      render json: { type: 4, data: { content: "Unknown command" } } and return
+    end
+
+    Rails.error.unexpected "🚨 Unknown payload received from Discord on interaction webhook: #{params.inspect}"
   end
 
   def link
@@ -60,6 +74,26 @@ class DiscordController < ApplicationController
       head :unauthorized
       return
     end
+  end
+
+  def ping_command
+    render json: { type: 4, data: { content: "Pong!" } } and return
+  end
+
+  def link_command
+    render json: { type: 4, data: { content: "The /link command is currently under construction" } } and return
+  end
+
+  def balance_command
+    render json: { type: 4, data: { content: "Your balance: $67,000" } } and return
+  end
+
+  def transactions_command
+
+  end
+
+  def reimburse_command
+
   end
 
 end
