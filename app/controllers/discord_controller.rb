@@ -26,23 +26,33 @@ class DiscordController < ApplicationController
 
     if params[:type] == 1
       puts "Responding to PING"
-      render json: { type: 1 } and return
+      render json: { type: 1 }
+
+    elsif params[:type] == 2
+      render json: { type: 5 }
+      ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h)
+
+    else
+      Rails.error.unexpected "🚨 Unknown payload received from Discord on interaction webhook: #{params.inspect}"
     end
-
-    if params[:type] == 2
-      command_name = params[:data][:name]
-      if command_name.in?(::Discord::RegisterCommandsJob.commands.pluck(:name))
-        return send("#{command_name}_command")
-      end
-
-      render json: { type: 4, data: { content: "Unknown command" } } and return
-    end
-
-    Rails.error.unexpected "🚨 Unknown payload received from Discord on interaction webhook: #{params.inspect}"
   end
 
   def link
     @discord_id = params[:discord_id]
+
+    conn = Faraday.new url: "https://discord.com" do |c|
+      c.request :json
+      c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
+      c.response :json
+      c.response :raise_error
+    end
+
+    response = conn.get("/api/v10/users/#{@discord_id}")
+
+    @raw_response = response.body
+
+    puts @raw_response
+
 
     @discord_user = bot.user(@discord_id)
   end
@@ -74,26 +84,6 @@ class DiscordController < ApplicationController
       head :unauthorized
       return
     end
-  end
-
-  def ping_command
-    render json: { type: 4, data: { content: "Pong!" } } and return
-  end
-
-  def link_command
-    render json: { type: 4, data: { content: "The /link command is currently under construction" } } and return
-  end
-
-  def balance_command
-    render json: { type: 4, data: { content: "Your balance: $67,000" } } and return
-  end
-
-  def transactions_command
-
-  end
-
-  def reimburse_command
-
   end
 
 end
