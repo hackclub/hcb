@@ -5,8 +5,7 @@ require "rails_helper"
 RSpec.describe Event::GroupMembership do
   it "cannot contain duplicate entries" do
     event = create(:event)
-    user = create(:user)
-    group = Event::Group.create!(user:, name: "Scrapyard")
+    group = create(:event_group)
 
     _existing = described_class.create!(group:, event:)
 

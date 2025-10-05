@@ -7,7 +7,7 @@
 
         <div class="field">
           <%= form.label :merchant_lock, "Update approved merchants" %>
-          <%= form.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: @event.card_grant_setting.merchant_lock.join(", ") %>
+          <%= form.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: @card_grant.merchant_lock.join(", ") %>
           <p class="h5 muted mt0 mb1">
             Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
           </p>
@@ -15,13 +15,13 @@
 
         <div class="field">
           <%= form.label :category_lock, "Update category lock" %>
-          <%= form.text_field :category_lock, placeholder: "fast_food_restaurants", value: @event.card_grant_setting.category_lock.join(", ") %>
+          <%= form.text_field :category_lock, placeholder: "fast_food_restaurants", value: @card_grant.category_lock.join(", ") %>
           <p class="h5 muted mt0 mb1">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to lock all card grants issued from this event to.</p>
         </div>
 
         <div class="field">
           <%= form.label :keyword_lock, "Update merchant name lock" %>
-          <%= form.text_field :keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z", value: @event.card_grant_setting.keyword_lock %>
+          <%= form.text_field :keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z", value: @card_grant.keyword_lock %>
           <p class="h5 muted mt0 mb1">Provide a <a href="https://rubular.com">Ruby regular expression</a> string for us to match the merchant name to.</p>
         </div>
         <p class="h4 mb-0 muted">These locks work in tandem:</p>

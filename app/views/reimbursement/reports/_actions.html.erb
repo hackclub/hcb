@@ -65,13 +65,13 @@
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <%= link_to "#", class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "request_changes" }, id: "request_changes_button" do %>
+            <button class="btn bg-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
                 <span class="bold">Your next step:</span> approve individual expenses and reimburse the report. Or, return the report to <%= report.user.first_name %>.
               <% end %>
-            <% end %>
+            </button>
           <% end %>
         </div>
       <% end %>
@@ -86,7 +86,7 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex justify-end">
-        <% if !user.payout_method.present? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer) || report.mismatched_currency? %>
+        <% if !user.payout_method.present? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
@@ -96,22 +96,32 @@
                   <span class="bold warning">Warning</span>: your report is is in <%= report.currency %>, but your payouts are configured for <%= user.payout_method.currency %>.
                 <% else %>
                   <span class="bold">Your next step:</span> before you can be reimbursed, you need to
-                  <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
-                    update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                  <% if user.payout_method.present? && user.payout_method.unsupported? %>
+                    update your payout information. <%= user.payout_method.unsupported_details[:reason] %>
                   <% else %>
                     provide HCB your payout information.
                   <% end %>
                 <% end %>
               <% end %>
             <% end %>
+          <% elsif report.mismatched_currency? %>
+            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
+              <div class="btn bg-info disabled">
+                <%= inline_icon "send" %>
+                Submit & request review
+                <% button_hint = capture do %>
+                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.payout_method.currency %>.
+                <% end %>
+              </div>
+            </div>
           <% elsif admin_signed_in? %>
             <%= link_to payouts_user_path(user), class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" }  do %>
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s Payout Information
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
-                <% if user.payout_method.present? && user.payout_method.class == User::PayoutMethod::PaypalTransfer %>
-                  update your payout information. Due to integration issues, transfers via PayPal are currently unavailable.
+                <% if user.payout_method.present? && user.payout_method.unsupported? %>
+                  update your payout information. <%= user.payout_method.unsupported_details[:reason] %>
                 <% else %>
                   add their payout information.
                 <% end %>
@@ -184,13 +194,13 @@
             <% end %>
           <% end %>
         <% elsif report.draft? %>
-          <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "submit" }, id: "submit_button" do %>
+          <button class="btn bg-info" id="submit_button" data-behavior="modal_trigger" data-modal="submit">
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
               <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
             <% end %>
-          <% end %>
+          </button>
         <% elsif report.submitted? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && policy(report).request_reimbursement? %>
           <% button_hint = capture do %>
             <span class="bold warning">Warning</span>: this report is quoted to cost <%= render_money report.wise_transfer_quote_amount %> USD, which is beyond your balance.
@@ -233,10 +243,36 @@
               <% turbo_confirm = "⚠️ WARNING: Approving this reimbursement will make the event balance negative. This organization does not have sufficient funds to fulfill this request. Are you sure you want to proceed?" %>
             <% end %>
             <% if report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
-              <%= link_to "#", class: "btn bg-info", data: { behavior: "modal_trigger", modal: "wise_approval" }, id: "submit_button" do %>
-                <%= inline_icon "thumbsup" %>
-                Approve & send Wise reimbursement
-              <% end %>
+              <button class="btn bg-info" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
+                <%= inline_icon "wise" %>
+                Convert to standard Wise transfer
+              </button>
+              <section data-behavior="modal" role="dialog" id="convert_to_wise_transfer" class="modal modal--scroll modal--wide bg-snow">
+                <%= modal_header "Convert this report to a standard Wise transfer" %>
+
+                Because of ongoing disruptions with Wise and side effects with HCB's reimbursement system, it's recommended to convert this reimbursement report into a standard Wise transfer and sending funds directly from <%= report.event.name %>.
+
+                <p>Doing this will:</p>
+
+                <ul>
+                  <li>Copy over the <%= report.currency %> amount for this report before fees</li>
+                  <li>Copy over all attachments from expenses on this report</li>
+                  <li>Add necessary comments associating this report with the Wise transfer</li>
+                  <li>Close this reimbursement report without marking it as reimbursed</li>
+                </ul>
+
+                <div class="flex flex-row items-center justify-between mt-6">
+                  <%= link_to reimbursement_report_convert_to_wise_transfer_path(report), class: "btn btn-large bg-info", method: :post do %>
+                    <%= inline_icon "wise" %>
+                    Convert to Wise transfer
+                  <% end %>
+
+                  <button class="btn bg-error tooltipped tooltipped--n" aria-label="Don't do this without checking with engineering first!" data-behavior="modal_trigger" data-modal="wise_approval" id="submit_button">
+                    <%= inline_icon "important" %>
+                    Risky: Process as reimbursement report
+                  </button>
+                </div>
+              </section>
               <section data-behavior="modal" role="dialog" id="wise_approval" class="modal modal--scroll modal--wide bg-snow">
                 <%= modal_header "Approve & send Wise reimbursement" %>
 
@@ -301,6 +337,7 @@
                   </div>
 
                   <%= form.submit "Approve report" %>
+                  <p class="muted text-xs">🚧 Warning: this is risky—do not do this without checking with engineering first.</p>
                 <% end %>
               </section>
             <% else %>

@@ -9,7 +9,7 @@ FactoryBot.define do
     end
 
     after(:create) do |event, context|
-      event.plan.update(type: context.plan_type)
+      event.plan.update!(type: context.plan_type) if context.plan_type.present?
 
       context.organizers.each do |user|
         create(:organizer_position, event:, user:)
