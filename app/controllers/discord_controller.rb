@@ -24,11 +24,11 @@ class DiscordController < ApplicationController
   def interaction
     puts "Received Discord interaction"
 
-    if params[:type] == 1
+    if params[:type] == 1 # PING
       puts "Responding to PING"
       render json: { type: 1 }
 
-    elsif params[:type] == 2
+    elsif params[:type] == 2 # application command
       render json: { type: 5 }
       ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h)
 

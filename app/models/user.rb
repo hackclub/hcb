@@ -475,6 +475,18 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  def linked_discord_account?
+    discord_id.present?
+  end
+
+  def discord_account
+    return unless discord_id.present?
+
+    @discord_bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
+
+    @discord_account ||= @discord_bot.user(discord_id)
+  end
+
   private
 
   def update_stripe_cardholder

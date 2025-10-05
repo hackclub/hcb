@@ -6,6 +6,7 @@ module Discord
 
     def perform(interaction)
       @interaction = interaction
+      @user_id = interaction.dig(:member, :user, :id) || interaction.dig(:user, :id)
 
       command_name = interaction[:data][:name]
 
@@ -38,15 +39,15 @@ module Discord
     private
 
     def ping_command
-      render json: { type: 4, data: { content: "Pong!" } } and return
+      respond content: "Pong!"
     end
 
     def link_command
-      respond content: "Go here: #{Rails.application.routes.url_helpers.discord_link_url(discord_id: @interaction[:user])}"
+      respond content: "Go here: #{Rails.application.routes.url_helpers.discord_link_url(discord_id: @user_id)}"
     end
 
     def balance_command
-      render json: { type: 4, data: { content: "Your balance: $67,000" } } and return
+      respond content: "Your balance: $67,000"
     end
 
     def transactions_command
@@ -54,15 +55,17 @@ module Discord
     end
 
     def reimburse_command
-
+      respond content: "Debugger", embeds: [
+        {
+          title: "Debugger",
+          description: "```\n#{JSON.pretty_generate(@interaction)[0..4085]}\n```",
+          color: 0xCC0100,
+        }
+      ]
     end
 
     def respond(**body)
       puts "HIJ>response method called"
-
-      if body[:content].present? && body[:content].length > 2000
-        body[:content] = body[:content][0..1995] + "..."
-      end
 
       conn = Faraday.new url: "https://discord.com" do |c|
         c.request :json
