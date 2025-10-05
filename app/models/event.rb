@@ -38,6 +38,8 @@
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
+#  discord_channel_id                           :string
+#  discord_guild_id                             :string
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
 #  parent_id                                    :bigint
@@ -45,6 +47,8 @@
 #
 # Indexes
 #
+#  index_events_on_discord_channel_id   (discord_channel_id) UNIQUE
+#  index_events_on_discord_guild_id     (discord_guild_id) UNIQUE
 #  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
@@ -884,6 +888,10 @@ class Event < ApplicationRecord
     @point_of_contact_history ||= versions
                                   .filter_map { |v| v.changeset["point_of_contact_id"].presence }
                                   .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
+  end
+
+  def linked_discord_guild?
+    discord_guild_id.present?
   end
 
   private

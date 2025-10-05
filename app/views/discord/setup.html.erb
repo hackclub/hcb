@@ -1,0 +1,48 @@
+<% title "Setup your Discord server" %>
+
+<% page_xs %>
+<% no_app_shell if params[:no_app_shell] %>
+<%
+  if params[:theme] == "dark"
+    @dark = true
+  elsif params[:theme] == "light"
+    @dark = false
+  end
+%>
+<% @hide_footer = true %>
+
+<div class="flex justify-center mt5">
+  <img class="w-20 h-20 mx-auto center rounded-lg" src=<%= @raw_gd_response["icon"] != nil ? "https://cdn.discordapp.com/icons/#{@raw_gd_response["id"]}/#{@raw_gd_response["icon"]}.png?animated=true" : "https://cdn.discordapp.com/embed/avatars/#{Random.rand(6)}.png" %>>
+</div>
+<h2 class="border-none center regular mb2">Choose an organization to connect to the channel  <strong><%= @raw_ch_response["name"] %></strong> in <strong><%= @raw_gd_response["name"] %></strong>.</h2>
+
+<section class="mb2">
+  <div class="flex items-start">
+    <span class="muted mr2"><%= inline_icon "important" %></span>
+
+    <p class="mt0">HCB will send notifications about your organization to the channel you ran the command in.</p>
+  </div>
+</section>
+
+<div class="flex items-center justify-center g1">
+  <%= form_with url: discord_create_server_link_path, method: :post, class: "flex items-center justify-center g1" do |f| %>
+    <select name="event_id" class="form-select">
+      <% current_user.organizer_positions.each do |position| %>
+        <option value="<%= position.event.id %>"><%= position.event.name %></option>
+      <% end %>
+    </select>
+    <%= f.hidden_field :guild_id, value: @guild_id %>
+    <%= f.hidden_field :channel_id, value: @channel_id %>
+    <%= f.submit "Connect", class: "btn bg-success h2" %>
+  <% end %>
+</div>
+
+<div class="flex items-center justify-center g1 mt-2">
+  <%= link_to "Cancel", root_path, class: "btn bg-muted" %>
+</div>
+
+<div class="center mt2">
+  <div class="flex items-center justify-center muted">Signed in as <%= user_mention current_user, class: "ml1" %></div>
+
+  <%= link_to "Switch accounts", auth_users_path(return_to: request.fullpath), class: "center" %>
+</div>

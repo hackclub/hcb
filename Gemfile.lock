@@ -1001,6 +1001,7 @@ DEPENDENCIES
   redcarpet
   redis (~> 5.4)
   relaxed-rubocop
+  reverse_markdown
   rinku
   rotp
   rounding

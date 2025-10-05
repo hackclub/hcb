@@ -41,6 +41,12 @@ module Discord
           options: [],
         },
         {
+          name: "setup",
+          type: 1,
+          description: "Connect your Discord server to your HCB organization",
+          options: [],
+        },
+        {
           name: "balance",
           type: 1,
           description: "Check your organization's balance on HCB",
@@ -56,6 +62,12 @@ module Discord
           name: "reimburse",
           type: 1,
           description: "Open a new reimbursement report on HCB",
+          options: [],
+        },
+        {
+          name: "missing-receipts",
+          type: 1,
+          description: "List transactions missing receipts",
           options: [],
         }
       ]

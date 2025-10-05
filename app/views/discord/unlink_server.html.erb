@@ -1,4 +1,4 @@
-<% title "Link your Discord account" %>
+<% title "Unlink Discord server" %>
 
 <% page_xs %>
 <% no_app_shell if params[:no_app_shell] %>
@@ -12,21 +12,20 @@
 <% @hide_footer = true %>
 
 <div class="flex justify-center mt5">
-  <img class="w-20 h-20 mx-auto center rounded-lg" src=<%= @discord_user.avatar_url%>>
+  <img class="w-20 h-20 mx-auto center rounded-lg" src=<%= @raw_gd_response["icon"] != nil ? "https://cdn.discordapp.com/icons/#{@raw_gd_response["id"]}/#{@raw_gd_response["icon"]}.png?animated=true" : "https://cdn.discordapp.com/embed/avatars/#{Random.rand(6)}.png" %>>
 </div>
-
-<h2 class="border-none center regular mb2">Connect Discord user <strong><%= @discord_user.username %></strong> to your HCB account?</h2>
+<h2 class="border-none center regular mb2">Unlink <strong><%= @event.name %></strong> from <strong><%= @raw_gd_response["name"] %></strong>?</h2>
 
 <section class="mb2">
   <div class="flex items-start">
     <span class="muted mr2"><%= inline_icon "important" %></span>
 
-    <p class="mt0">This Discord user will be able to see information about your organizations, but it cannot take any action on its own.</p>
+    <p class="mt0">Your Discord server will no longer receive notifications for the organization <%= @event.name %>.</p>
   </div>
 </section>
 
 <div class="flex items-center justify-center g1">
-  <%= button_to "Connect", discord_create_link_path, class: "btn bg-success h2", params: { discord_id: @discord_id } %>
+  <%= button_to "Unlink", discord_unlink_server_path, class: "btn bg-error h2", params: { guild_id: @guild_id } %>
   <%= link_to "Cancel", root_path, class: "btn bg-muted" %>
 </div>
 

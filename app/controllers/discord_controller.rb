@@ -53,7 +53,6 @@ class DiscordController < ApplicationController
 
     puts @raw_response
 
-
     @discord_user = bot.user(@discord_id)
   end
 
@@ -61,6 +60,87 @@ class DiscordController < ApplicationController
     current_user.update!(discord_id: params[:discord_id])
 
     flash[:success] = "Successfully linked Discord account"
+    redirect_to root_path
+  end
+
+  def setup
+    @guild_id = params[:guild_id]
+    @channel_id = params[:channel_id]
+
+    conn = Faraday.new url: "https://discord.com" do |c|
+      c.request :json
+      c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
+      c.response :json
+      c.response :raise_error
+    end
+
+    ch_response = conn.get("/api/v10/channels/#{@channel_id}")
+
+    @raw_ch_response = ch_response.body
+
+    gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
+
+    @raw_gd_response = gd_response.body
+
+    puts @raw_ch_response
+
+    puts @raw_gd_response
+  end
+
+  def create_server_link
+    event = Event.find(params[:event_id])
+    unless current_user.organizer_positions.exists?(event:)
+      flash[:error] = "We could not link the selected organization to your Discord server"
+      redirect_to root_path and return
+    end
+
+    event.update!(discord_guild_id: params[:guild_id], discord_channel_id: params[:channel_id])
+
+    bot.send_message(params[:channel_id], "The HCB organization #{event.name} has been successfully linked to this Discord server! Notifications and announcements will be sent in this channel, <\##{params[:channel_id]}>.")
+    flash[:success] = "Successfully linked the organization #{event.name} to your Discord server"
+    redirect_to root_path
+  rescue => e
+    Rails.error.report("Exception linking discord server: #{e}")
+    flash[:error] = "We could not link the selected organization to your Discord server"
+    redirect_to root_path
+  end
+
+  def unlink_server
+    @guild_id = params[:guild_id]
+
+    conn = Faraday.new url: "https://discord.com" do |c|
+      c.request :json
+      c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
+      c.response :json
+      c.response :raise_error
+    end
+
+    gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
+
+    @raw_gd_response = gd_response.body
+
+    @event = Event.find_by(discord_guild_id: @guild_id)
+
+    puts @raw_gd_response
+  end
+
+  def unlink_server
+    event = Event.find_by(discord_guild_id: params[:guild_id])
+    unless current_user.organizer_positions.exists?(event:)
+      flash[:error] = "We could not unlink your organization from your Discord server"
+      redirect_to root_path and return
+    end
+
+    cid = event.discord_channel_id
+
+    event.update!(discord_guild_id: nil, discord_channel_id: nil)
+
+    bot.send_message(cid, "The HCB organization #{event.name} has been unlinked from this Discord server, and notifications/announcements will no longer be sent here.")
+    flash[:success] = "Successfully unlinked the organization #{event.name} from your Discord server"
+    redirect_to root_path
+  rescue => e
+    Rails.error.report("Exception linking discord server: #{e}")
+    flash[:error] = "We could not unlink your organization from your Discord server"
     redirect_to root_path
   end
 

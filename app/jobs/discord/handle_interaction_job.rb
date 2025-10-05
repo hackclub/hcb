@@ -6,15 +6,22 @@ module Discord
 
     def perform(interaction)
       @interaction = interaction
-      @user_id = interaction.dig(:member, :user, :id) || interaction.dig(:user, :id)
 
-      command_name = interaction[:data][:name]
+      @user_id = @interaction.dig(:member, :user, :id) || @interaction.dig(:user, :id)
+      @guild_id = @interaction.dig(:guild, :id)
+      @channel_id = @interaction.dig(:channel, :id)
+      @permissions = @interaction.dig(:member, :permissions)&.to_i
+
+      @current_user = User.find_by(discord_id: @user_id) if @user_id
+      @current_event = Event.find_by(discord_guild_id: @guild_id) if @guild_id
+
+      command_name = @interaction.dig(:data, :name)
 
       unless command_name.in?(::Discord::RegisterCommandsJob.commands.pluck(:name))
         respond content: "Unknown command: #{command_name}" and return
       end
 
-      return send("#{command_name}_command")
+      return send("#{command_name.gsub("-", "_")}_command")
     rescue => e
       if Rails.env.development?
         backtrace = e.backtrace.join("\n")
@@ -43,15 +50,42 @@ module Discord
     end
 
     def link_command
-      respond content: "Go here: #{Rails.application.routes.url_helpers.discord_link_url(discord_id: @user_id)}"
+      if @current_event.present? && @current_user.present?
+        respond content: "HCB has already been setup for this Discord server!", embeds: linking_embed
+      elsif !@current_event.present? && @current_user.present?
+        respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:", components: button_to("Set up HCB on this server", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id)), embeds: linking_embed
+      elsif @current_event.present? && !@current_user.present?
+        respond content: "HCB has already been setup for this Discord server, but your Discord account isn't linked to your HCB account yet:", components: button_to("Link Discord account", url_helpers.discord_link_url(discord_id: @user_id)), embeds: linking_embed
+      else
+        respond content: "Link your HCB account, and then connect this Discord server to an HCB organization:", components: [button_to("Link Discord account", url_helpers.discord_link_url(discord_id: @user_id)), button_to("Set up HCB on this server", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id))], embeds: linking_embed
+      end
+    end
+
+    def setup_command
+      link_command
     end
 
     def balance_command
-      respond content: "Your balance: $67,000"
+      return require_linked_event unless @current_event
+
+      respond embeds: [
+        {
+          title: "#{@current_event.name}'s balance is #{ApplicationController.helpers.render_money @current_event.balance_available_v2_cents}",
+          color:
+        }
+      ], components: button_to("View on HCB", url_helpers.my_inbox_url)
     end
 
     def transactions_command
+      return require_linked_event unless @current_event
 
+      respond content: "Debugger", embeds: [
+        {
+          title: "Debugger",
+          description: "```\n#{JSON.pretty_generate(@interaction)[0..4085]}\n```",
+          color: 0xCC0100,
+        }
+      ]
     end
 
     def reimburse_command
@@ -62,6 +96,72 @@ module Discord
           color: 0xCC0100,
         }
       ]
+    end
+
+    def missing_receipts_command
+      return require_linked_user unless @current_user
+
+      respond embeds: [
+        {
+          title: "You have #{@current_user.transactions_missing_receipt_count} transactions missing receipts",
+          color:,
+        }
+      ], components: button_to("View on HCB", url_helpers.my_inbox_url)
+    end
+
+    def require_linked_user
+      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed
+    end
+
+    def linking_embed
+      server_name = bot.server(@guild_id)&.name if @guild_id.present?
+      user_name = bot.user(@user_id)&.username if @user_id.present?
+
+      guild_setup_cta = can_manage_guild? ? link_to("Set up here", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id)) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
+
+      [
+        {
+          title: "Set up HCB on Discord",
+          color:,
+          fields: [
+            {
+              name: "Discord Account (`@#{user_name}`) ↔ Your HCB Account",
+              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@current_user.present? ? "✅ Linked to #{@current_user.preferred_name.presence || @current_user.first_name} on HCB" : "❌ Not linked. #{link_to("Set up here", url_helpers.discord_link_url(discord_id: @user_id))}"}\n",
+            },
+            (if @guild_id.present?
+               {
+                 name: "\nDiscord Server (#{server_name}) ↔ HCB Organization",
+                 value: "Allows you to see your organization's balance, see transactions, and get notifications on Discord.\n\n#{@current_event.present? ? "✅ Connected to #{link_to(@current_event.name, url_helpers.event_url(@current_event.slug))} on HCB (#{link_to("disconnect", url_helpers.discord_unlink_server_url(guild_id: @guild_id))})" : "❌ Not connected. #{guild_setup_cta}"}"
+               }
+             end)
+          ].compact
+        }
+      ]
+    end
+
+    def require_linked_event
+      respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed
+    end
+
+    def button_to(label, url)
+      [
+        {
+          type: 1,
+          components: [
+            {
+              type: 2,
+              url:,
+              label:,
+              style: 5,
+              emoji: { id: "1424492375295791185" }
+            }
+          ]
+        }
+      ]
+    end
+
+    def link_to(label, url)
+      "[#{label}](#{url})"
     end
 
     def respond(**body)
@@ -84,6 +184,26 @@ module Discord
         #{e.message}
         \tresponse_body: #{e.response_body.inspect}
       MSG
+    end
+
+    def color
+      if Rails.env.development?
+        0x33d6a6
+      else
+        0xec3750
+      end
+    end
+
+    def bot
+      @bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
+    end
+
+    def can_manage_guild?
+      @permissions & 0x0000000000000020 == 0x0000000000000020
+    end
+
+    def url_helpers
+      Rails.application.routes.url_helpers
     end
 
   end
