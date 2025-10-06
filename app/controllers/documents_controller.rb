@@ -24,7 +24,7 @@ class DocumentsController < ApplicationController
   def new
     # documents whose event_id is nil is shared across
     # all events
-    @document = Document.new(event: @event || nil)
+    @document = Document.new(event: @event.presence)
     authorize @document
   end
 
@@ -42,6 +42,13 @@ class DocumentsController < ApplicationController
   end
 
   def show
+    # For common documents (event_id: nil), redirect non-admin users to the download URL
+    if @document.common? && !admin_signed_in?
+      authorize @document, :download?
+      redirect_to document_download_path(@document)
+      return
+    end
+
     authorize @document
   end
 

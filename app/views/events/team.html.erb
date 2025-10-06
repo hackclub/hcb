@@ -51,7 +51,7 @@
 <% end %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(mode: false, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
     <%= render "search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>
@@ -61,7 +61,7 @@
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
     <% end %>
     <% if auditor_signed_in? %>
-      <%= link_to "Active teens", "?filter=active_teens#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teens", role: "tab" %>
+      <%= link_to "Active teenagers", "?filter=active_teenagers#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teenagers", role: "tab" %>
     <% end %>
   </div>
 </div>

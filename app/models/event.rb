@@ -154,12 +154,19 @@ class Event < ApplicationRecord
     Event.where(id: ancestor_ids)
   end
 
+  def descendants
+    Event.where(id: descendant_ids)
+  end
+
   def descendant_total_balance_cents
     subevents.to_a.sum(&:balance_available_v2_cents)
   end
 
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
+
+  MAX_PARENT_DEPTH = 50
+  validate(:parent_id_is_acyclical)
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
@@ -290,11 +297,13 @@ class Event < ApplicationRecord
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
-  has_many :event_follows, class_name: "Event::Follow"
+  has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
+
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -398,7 +407,7 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
-  validate :contract_signed, unless: :demo_mode?
+  validate :contract_signed, unless: -> { demo_mode? || financially_frozen? }
 
   validates :name, presence: true
   before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
@@ -420,7 +429,7 @@ class Event < ApplicationRecord
   end
 
   before_validation do
-    build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
+    build_plan(type: fallback_plan_class) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -439,11 +448,13 @@ class Event < ApplicationRecord
 
   comma do
     id
+    created_at
     name
     revenue_fee
-    slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
-    is_public "transparent"
+    slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
+    is_public "Transparent"
+    users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
   CUSTOM_SORT = Arel.sql(
@@ -846,11 +857,27 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails
-    emails = users.map(&:email_address_with_name)
+  def organizer_contact_emails(only_managers: false)
+    included_users = only_managers ? managers : users
+
+    emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
 
     emails
+  end
+
+  def merchants
+    settled_merchants = canonical_transactions.map do |ct|
+      rst = ct.raw_stripe_transaction
+      stripe_transaction_merchant(rst) if rst.present?
+    end.select(&:present?)
+
+    pending_merchants = canonical_pending_transactions.map do |cpt|
+      rpst = cpt.raw_pending_stripe_transaction
+      stripe_transaction_merchant(rpst) if rpst.present?
+    end.select(&:present?)
+
+    settled_merchants.concat(pending_merchants)
   end
 
   def point_of_contact_history
@@ -924,6 +951,53 @@ class Event < ApplicationRecord
     if is_public_changed?(to: true)
       config.update(generate_monthly_announcement: true)
     end
+  end
+
+  def stripe_transaction_merchant(transaction)
+    merchant_data = transaction.stripe_transaction["merchant_data"]
+    yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+    { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
+  end
+
+  def parent_id_is_acyclical
+    return unless parent_id.present? && parent_id_changed?
+
+    current_event = self
+    visited_event_ids = Set.new
+
+    visited_event_ids << id if id.present?
+
+    outcome = 1.upto(MAX_PARENT_DEPTH) do
+      if current_event.parent
+        if visited_event_ids.add?(current_event.parent_id)
+          current_event = current_event.parent
+          next
+        else
+          errors.add(:parent, "is cyclical")
+          break :halted
+        end
+      else
+        break :halted
+      end
+    end
+
+    if outcome != :halted
+      errors.add(:parent, "max depth exceeded")
+    end
+  end
+
+  def fallback_plan_class
+    if parent
+      if parent.config&.subevent_plan.present?
+        return parent.config.subevent_plan.constantize
+      end
+
+      if parent.plan
+        return parent.plan.class
+      end
+    end
+
+    Event::Plan::Standard
   end
 
 end

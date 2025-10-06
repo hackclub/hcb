@@ -46,6 +46,7 @@ class HcbCodesController < ApplicationController
       @frame = true
       @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
       @transaction_show_author_img = params[:transaction_show_author_img].nil? ? false : params[:transaction_show_author_img]
+      @ledger_instance = params[:ledger_instance]
 
       render :show, layout: false
     else

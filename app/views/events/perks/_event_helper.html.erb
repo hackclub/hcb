@@ -1,0 +1,47 @@
+<%# locals: (event:, perks_available:) %>
+
+<div class="card pb0 mb3 <%= "muted" unless event.country_US? && perks_available %>" id="event-helper">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-event-helper">
+    <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
+    <%= link_to perks_available ? (event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
+      perks_available ? fillout_form("hDJYyLd7qNus", { "Event Name" => event.name, "Bank URL" => event_url(event), "Submitter Name" => current_user.name, "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
+      class: "btn #{"disabled" unless perks_available && event.country_US?}",
+      target: :_blank %>
+  </div>
+
+  <p>
+    <%= link_to "The Event Helper", "https://www.theeventhelper.com/", class: ("disabled" unless perks_available).to_s, target: :_blank %>
+    is partnering with HCB to create a simplified way for your team to
+    purchase event insurance. Just apply with your event details to receive a quote from the HCB team.
+    All costs are directly from The Event Helper, we don't charge a fee on top.
+  </p>
+
+  <h3 class="mb0 mt0">Approximate Insurance Estimates</h3>
+  <p class="italic muted mt0 mb0">
+    All costs are from The Event Helper directly—we don't charge you a fee on top. Estimates are for a two-day event.
+  </p>
+  <table class="mb2">
+    <tr>
+      <td>100 people</td>
+      <td>around $125</td>
+    </tr>
+    <tr>
+      <td>250 people</td>
+      <td>around $140</td>
+    </tr>
+    <tr>
+      <td>500 people</td>
+      <td>around $200</td>
+    </tr>
+    <tr>
+      <td>1,000 people</td>
+      <td>around $250</td>
+    </tr>
+  </table>
+
+  <section class="card__banner card__darker secondary border-top">
+    <p class="my0">
+      The Event Helper can only provide policies for 🇺🇸 US events.
+    </p>
+  </section>
+</div>

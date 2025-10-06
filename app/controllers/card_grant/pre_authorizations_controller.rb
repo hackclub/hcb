@@ -59,7 +59,10 @@ class CardGrant
         end
       end
 
-      @pre_authorization.update!(product_url: pre_authorization_params[:product_url])
+      unless @pre_authorization.update(product_url: pre_authorization_params[:product_url])
+        flash[:error] = @pre_authorization.errors.full_messages.to_sentence
+        return redirect_to card_grant_pre_authorizations_path(@card_grant)
+      end
 
       if @pre_authorization.product_url.blank? || !@pre_authorization.screenshots.attached?
         flash[:error] = "Please provide a product link and upload a screenshot before submitting."

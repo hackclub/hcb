@@ -1,11 +1,8 @@
-<%# locals: (hcb_code: nil, event: nil, is_email: false, block: nil) %>
+<%# locals: (block:, is_email: false, event:, hcb_code: nil) %>
 
 <%= render "announcements/blocks/block_shell", block:, type: "hcbCode", is_email: do %>
   <% if hcb_code.nil? %>
-    <p>This transaction cannot be displayed</p>
-    <% unless is_email %>
-      <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
-    <% end %>
+    <p class="!my-auto">This transaction cannot be displayed</p>
   <% else %>
     <% if is_email %>
       <p>
@@ -24,7 +21,6 @@
         </i>
       </p>
     <% else %>
-      <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
       <p class="font-bold m0 flex items-center g2">
         <%= format_date hcb_code.date %>
         <% if hcb_code.canonical_transactions.none? %>

@@ -45,11 +45,7 @@
       <td>
         <%= render(
               partial: "hcb_codes/transaction_category_form",
-              locals: {
-                model: @canonical_transaction,
-                url: set_category_canonical_transaction_path(@canonical_transaction),
-                admin_context: true
-              }
+              locals: { model: @canonical_transaction, admin_context: true }
             ) %>
       </td>
     </tr>
@@ -120,7 +116,7 @@
 
   <% @hcb_code = @canonical_transaction.local_hcb_code %>
   <div style="margin-left: -2rem;" class="mt2">
-    <%= render "receipts/list_v2" %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   </div>
 
   <div style="width: 250px;">

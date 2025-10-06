@@ -12,19 +12,9 @@ class FlavorTextService
   end
 
   def generate
-    return development_flavor_texts.sample(random: @random) if @env == "development"
-    return holiday_flavor_texts.sample(random: @random) if winter?
-    return @random.rand > 0.5 ? spooky_flavor_texts.sample(random: @random) : flavor_texts.sample(random: @random) if fall? # ~50% chance of spookiness
-    return birthday_flavor_texts.sample(random: @random) if @user&.birthday?
-
-    in_frc_team = @user&.events&.robotics_team&.any?
-
-    if in_frc_team
-      flavor_text = (flavor_texts + frc_flavor_texts).sample(random: @random)
-    else
-      flavor_text = flavor_texts.sample(random: @random)
-    end
+    flavor_text = sample
     flavor_text = flavor_text.call if flavor_text.respond_to? :call
+
     flavor_text
   end
 
@@ -105,7 +95,8 @@ class FlavorTextService
       "🧛",
       "🎃",
       "Pumpkin spice is the pumpkin spice of life.",
-      "Happy Easter - Oh wait wrong holiday."
+      "Happy Easter - Oh wait wrong holiday.",
+      "<a href='https://www.youtube.com/watch?v=PmzwhVE5Ly4' target='_blank' style='color: inherit'>ITS A SPOOKY MONTH!</a>".html_safe,
     ]
   end
 
@@ -503,7 +494,7 @@ class FlavorTextService
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
       "Wanna&nbsp;<a href='#{Rails.configuration.constants.github_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
       "everyone's favorite money thing!",
-      -> { "#{UserSession.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
+      -> { "#{UserSession.not_impersonated.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
       "We Column like we see 'em!",
       "Raccoon-tested, dinosaur-approved.",
       "original recipe!",
@@ -537,6 +528,21 @@ class FlavorTextService
   end
 
   private
+
+  def sample
+    return development_flavor_texts.sample(random: @random) if @env == "development"
+    return holiday_flavor_texts.sample(random: @random) if winter?
+    return @random.rand > 0.5 ? spooky_flavor_texts.sample(random: @random) : flavor_texts.sample(random: @random) if fall? # ~50% chance of spookiness
+    return birthday_flavor_texts.sample(random: @random) if @user&.birthday?
+
+    in_frc_team = @user&.events&.robotics_team&.any?
+
+    if in_frc_team
+      (flavor_texts + frc_flavor_texts).sample(random: @random)
+    else
+      flavor_texts.sample(random: @random)
+    end
+  end
 
   # Used by `SeasonalHelper`
   def current_user

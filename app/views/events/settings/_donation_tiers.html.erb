@@ -1,4 +1,8 @@
-<% if @frame %>
+<%# locals: (event:, frame:) %>
+
+<% disabled = !policy(event).update? %>
+
+<% if frame %>
   <div class="menu__divider m-0 my-8"></div>
 <% end %>
 <div data-controller="donation-tier-form" class="card mt-4">
@@ -16,7 +20,7 @@
           <%= form.check_box :donation_tiers_enabled,
             data: { "donation-tier-form-target": "checkbox" },
             disabled:,
-            checked: @event.donation_tiers_enabled,
+            checked: event.donation_tiers_enabled,
             onchange: "this.closest('form').requestSubmit();",
             switch: true %>
           <span class="slider"></span>

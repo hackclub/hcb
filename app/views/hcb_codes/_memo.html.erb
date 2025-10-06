@@ -33,6 +33,8 @@
       <% contents = capture do %>
         <span class="<%= "renamed" if renamed %>"
               data-controller="navigation"
+              title="<%= hcb_code.memo %>"
+              style="flex-grow: 1"
               data-action="click->navigation#navigateOnShiftClick"
               data-navigation-location-param="<%= edit_hcb_code_path(hcb_code, inline: true, prepended_to_memo:, location:, ledger_instance:) %>"
               data-navigation-frame-param="<%= "#{location}:#{ActionView::RecordIdentifier.dom_id(hcb_code)}:memo" %>">
