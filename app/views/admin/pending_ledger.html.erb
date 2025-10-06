@@ -53,11 +53,7 @@
         <td>
           <%= render(
                 partial: "hcb_codes/transaction_category_form",
-                locals: {
-                  model: cpt,
-                  url: set_category_canonical_pending_transaction_path(cpt),
-                  admin_context: true
-                }
+                locals: { model: cpt, admin_context: true }
               ) %>
         </td>
         <td>

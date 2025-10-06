@@ -4,32 +4,16 @@
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
     <div class="field field--options" style="max-width: none;">
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::AchTransfer" %>
-      <%= form.label :payout_method_type, value: "User::PayoutMethod::AchTransfer" do %>
-        <%= inline_icon "payment-transfer", size: 28 %>
-        <strong>ACH transfer</strong>
-        <small>(1-3 biz. days)</small>
-      <% end %>
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::Check" %>
-      <%= form.label :payout_method_type, value: "User::PayoutMethod::Check" do %>
-        <%= inline_icon "email", size: 28 %>
-        <strong>Mailed check</strong>
-        <small>(10-12 biz. days)</small>
-      <% end %>
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::Wire" %>
-      <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
-        <%= inline_icon "web", size: 28 %>
-        <strong>International wire</strong>
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::AchTransfer, title: "ACH transfer", description: "(1-3 biz. days)", icon: "payment-transfer" %>
+
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Check, title: "Mailed check", description: "(10-12 biz. days)", icon: "email" %>
+
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Wire, title: "International wire", description: "(1-5 biz. days)", icon: "web" do %>
         <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-        <small>(1-5 biz. days)</small>
       <% end %>
+
       <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
-        <%= form.radio_button :payout_method_type, "User::PayoutMethod::WiseTransfer" %>
-        <%= form.label :payout_method_type, value: "User::PayoutMethod::WiseTransfer" do %>
-          <%= inline_icon "wise", size: 28 %>
-          <strong>Wise transfer</strong>
-          <small>(1-3 biz. days)</small>
-        <% end %>
+        <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "(1-3 biz. days)", icon: "wise" %>
       <% end %>
     </div>
   </fieldset>
@@ -99,7 +83,7 @@
 
         <div class="field">
           <%= form.label :currency, "Currency" %>
-          <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+          <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { "@change" => "currency = $event.target.value;" } %>
         </div>
 
         <%= form.hidden_field :wise_recipient_id, value: "" %>

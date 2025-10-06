@@ -113,8 +113,8 @@
       <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
         <% if defined?(@frame) && @frame %>
           <details>
-            <summary class="inline-flex select-none">
-              <%= country_to_emoji @hcb_code.stripe_merchant["country"] %>
+            <summary class="inline-flex no-select">
+              <%= country_to_emoji(@hcb_code.stripe_merchant["country"]) if @hcb_code.stripe_merchant["country"] %>
               <%= humanized_merchant_name @hcb_code.stripe_merchant %>
               <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
             </summary>
@@ -161,10 +161,12 @@
                   <span><%= @hcb_code.stripe_merchant["state"]&.upcase %></span>
                 </p>
               <% end %>
-              <p>
-                <strong>Country</strong>
-                <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
-              </p>
+              <% if @hcb_code.stripe_merchant["country"] %>
+                <p>
+                  <strong>Country</strong>
+                  <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+                </p>
+              <% end %>
               <p>
                 <strong>Merchant ID</strong>
                 <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
@@ -178,7 +180,7 @@
         <% else %>
           <action data-behavior="modal_trigger" data-modal="merchant_details_<%= instance %>" class="pointer" tabindex="0">
             <span class="inline-flex">
-              <%= country_to_emoji @hcb_code.stripe_merchant["country"] %>
+              <%= country_to_emoji(@hcb_code.stripe_merchant["country"]) if @hcb_code.stripe_merchant["country"] %>
               <%= humanized_merchant_name @hcb_code.stripe_merchant %>
               <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
             </span>
@@ -317,7 +319,7 @@
         </p>
         <p>
           <strong>Country</strong>
-          <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+          <span><%= @hcb_code.stripe_merchant["country"] ? country_to_emoji(@hcb_code.stripe_merchant["country"]) : "Unknown" %></span>
         </p>
         <p>
           <strong>Merchant ID</strong>

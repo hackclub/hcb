@@ -457,6 +457,7 @@ Rails.application.routes.draw do
     post "mark_fulfilled"
     post "reject"
     post "cancel"
+    post "set_transaction_categories"
     get "confirmation", to: "disbursements#transfer_confirmation_letter"
   end
 
@@ -530,6 +531,7 @@ Rails.application.routes.draw do
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
       post "request_reimbursement"
+      post "convert_to_wise_transfer"
       post "admin_approve"
       post "admin_send_wise_transfer"
       post "reverse"
