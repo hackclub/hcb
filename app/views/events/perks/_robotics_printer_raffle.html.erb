@@ -18,7 +18,7 @@
       </div>
 
       <p>
-        Is your organization a high-school robotics team? Get an entry into a raffle for a Bambu Lab A1 from now until September 30th for each active teenager in your organization!
+        Is your organization a high-school robotics team? Get an entry into a raffle for a Bambu Lab A1 from now until <%= Date.current.end_of_month.strftime("%B %e, %Y") %> for each active teenager in your organization!
       </p>
       <section class="card__banner card__darker secondary border-top italic">
         You currently have <%= number_to_human(active_teenagers_count) %> active teenagers in your organization!

@@ -39,7 +39,7 @@ module Reimbursement
     end
 
     def convert_to_wise_transfer?
-      admin
+      admin && !record.event.financially_frozen?
     end
 
     def request_changes?
