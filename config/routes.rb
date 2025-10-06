@@ -797,6 +797,7 @@ Rails.application.routes.draw do
     put "toggle_hidden"
     post "claim_point_of_contact"
     post "create_sub_organization"
+    post "toggle_fee_waiver_eligible"
 
     post "remove_header_image"
     post "remove_background_image"

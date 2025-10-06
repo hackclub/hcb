@@ -400,6 +400,14 @@ class EventsController < ApplicationController
     redirect_to root_path
   end
 
+  def toggle_fee_waiver_eligible
+    authorize @event
+
+    @event.update!(fee_waiver_eligible: !@event.fee_waiver_eligible)
+
+    redirect_back fallback_location: event_promotions_path(@event)
+  end
+
   def emburse_card_overview
     authorize @event
     @emburse_cards = @event.emburse_cards.includes(user: [:profile_picture_attachment])

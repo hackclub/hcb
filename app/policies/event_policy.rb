@@ -69,6 +69,8 @@ class EventPolicy < ApplicationPolicy
 
   alias disable_feature? update?
 
+  alias toggle_fee_waiver_eligible? update?
+
   def validate_slug?
     admin_or_member?
   end

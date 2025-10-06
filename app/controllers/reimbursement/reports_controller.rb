@@ -225,7 +225,7 @@ module Reimbursement
 
             conversion_rate = (wise_total_without_fees_cents / @report.amount_to_reimburse_cents).round(4)
             @report.update(conversion_rate:)
-            approved_amount_usd_cents = @report.expenses.approved.sum { |expense| expense.amount_cents * expense.conversion_rate }
+            approved_amount_usd_cents = @report.expenses.approved.sum { |expense| (expense.amount_cents * expense.conversion_rate).floor }
             fee_expense_value = (wise_total_including_fees_cents - approved_amount_usd_cents.to_f) / 100
 
             @report.expenses.create!(
