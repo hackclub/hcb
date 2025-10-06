@@ -124,7 +124,7 @@ class DiscordController < ApplicationController
     puts @raw_gd_response
   end
 
-  def unlink_server
+  def unlink_server_action
     event = Event.find_by(discord_guild_id: params[:guild_id])
     unless current_user.organizer_positions.exists?(event:)
       flash[:error] = "We could not unlink your organization from your Discord server"

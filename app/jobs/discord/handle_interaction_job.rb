@@ -26,7 +26,7 @@ module Discord
       if Rails.env.development?
         backtrace = e.backtrace.join("\n")
         if backtrace.length > 4_000
-          backtrace = backtrace[0..4_000] + "..."
+          backtrace = "#{backtrace[0..4_000]}..."
         end
 
         respond content: "**That didn't work!**\nWe're going to debug what went wrong.", embeds: [

@@ -714,6 +714,7 @@ Rails.application.routes.draw do
   post "discord/create_link", to: "discord#create_link"
   get "discord/setup", to: "discord#setup"
   get "discord/unlink_server", to: "discord#unlink_server"
+  post "discord/unlink_server", to: "discord#unlink_server_action"
   post "discord/create_server_link", to: "discord#create_server_link"
 
   post "extract/invoice", to: "extraction#invoice"

@@ -12,7 +12,7 @@
 <% @hide_footer = true %>
 
 <div class="flex justify-center mt5">
-  <img class="w-20 h-20 mx-auto center rounded-lg" src=<%= @raw_gd_response["icon"] != nil ? "https://cdn.discordapp.com/icons/#{@raw_gd_response["id"]}/#{@raw_gd_response["icon"]}.png?animated=true" : "https://cdn.discordapp.com/embed/avatars/#{Random.rand(6)}.png" %>>
+  <img class="w-20 h-20 mx-auto center rounded-lg" src=<%= !@raw_gd_response["icon"].nil? ? "https://cdn.discordapp.com/icons/#{@raw_gd_response["id"]}/#{@raw_gd_response["icon"]}.png?animated=true" : "https://cdn.discordapp.com/embed/avatars/#{Random.rand(6)}.png" %>>
 </div>
 <h2 class="border-none center regular mb2">Unlink <strong><%= @event.name %></strong> from <strong><%= @raw_gd_response["name"] %></strong>?</h2>
 
