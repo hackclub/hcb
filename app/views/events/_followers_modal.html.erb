@@ -8,16 +8,15 @@
         <span class="w-full flex gap-2 items-center align-middle">
           <%= user_mention event_follow.user %>
           <div class="flex-grow"></div>
-          <% if policy(event_follow).destroy? %>
-            <%= pop_icon_to "member-remove",
-                            follow_path(event_follow),
-                            class: "error",
-                            data: {
-                              turbo_frame: "_top",
-                              turbo_method: :delete,
-                              turbo_confirm: "Are you sure you want to remove this follower?",
-                            } %>
-          <% end %>
+          <%= pop_icon_to "member-remove",
+                          follow_path(event_follow),
+                          class: "error",
+                          data: {
+                            turbo_frame: "_top",
+                            turbo_method: :delete,
+                            turbo_confirm: "Are you sure you want to remove this follower?",
+                          },
+                          disabled: !policy(event_follow).destroy? %>
         </span>
       </li>
     <% end %>

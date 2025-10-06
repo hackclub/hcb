@@ -22,6 +22,7 @@ $mono:
 @import 'components/receipts';
 @import 'components/modals';
 @import 'components/tooltips';
+@import 'kbar';
 
 @import 'components/buttons';
 @import 'components/steps';
@@ -926,7 +927,7 @@ form:has(> #admin-logout-button) {
 }
 
 #flash-container {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   right: 0;
   width: 50ch;

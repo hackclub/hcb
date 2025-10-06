@@ -18,6 +18,12 @@ class WiseTransfersController < ApplicationController
 
     authorize @wise_transfer
 
+    # WISE TRANSFERS ARE DISABLED RIGHT NOW
+    flash[:error] = "Wise Transfers are currently under maintenance. Please choose another transfer method."
+    return redirect_to event_transfers_path(@event)
+
+    # rubocop:disable Lint/UnreachableCode
+
     if @wise_transfer.amount_cents > 500_00
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
@@ -35,6 +41,8 @@ class WiseTransfersController < ApplicationController
     else
       render "new", status: :unprocessable_entity
     end
+
+    # rubocop:enable Lint/UnreachableCode
   end
 
   def approve
@@ -66,13 +74,16 @@ class WiseTransfersController < ApplicationController
   def mark_sent
     authorize @wise_transfer
 
-    @wise_transfer.mark_sent!
+    @wise_transfer.assign_attributes(wise_transfer_params)
 
-    if @wise_transfer.update(wise_transfer_params)
-      redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "Marked as sent." }
-    else
-      redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { error: @wise_transfer.errors.full_messages.to_sentence }
+    begin
+      @wise_transfer.mark_sent!
+      flash[:success] = "Marked as sent."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.record.errors.full_messages.to_sentence
     end
+
+    redirect_to(wise_transfer_process_admin_path(@wise_transfer))
   end
 
   def reject

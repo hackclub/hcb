@@ -79,6 +79,7 @@ Rails.application.routes.draw do
     get "inbox", to: "my#inbox", as: :my_inbox
     get "activities", to: "my#activities", as: :my_activities
     post "toggle_admin_activities", to: "my#toggle_admin_activities", as: :toggle_admin_activities
+    post "hide_promotional_banner", to: "my#hide_promotional_banner", as: :hide_promotional_banner
     get "tasks", to: "my#tasks", as: :my_tasks
     get "reimbursements", to: "my#reimbursements", as: :my_reimbursements
     get "reimbursements_icon", to: "my#reimbursements_icon", as: :my_reimbursements_icon
@@ -118,6 +119,7 @@ Rails.application.routes.draw do
     collection do
       get "auth", to: "logins#new"
       get "webauthn/auth_options", to: "users#webauthn_options"
+      post "toggle_pretend_is_not_admin", to: "users#toggle_pretend_is_not_admin"
 
       # SMS Auth
       post "start_sms_auth_verification", to: "users#start_sms_auth_verification"
@@ -254,6 +256,7 @@ Rails.application.routes.draw do
       post "referral_program_create", to: "admin#referral_program_create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
     end
 
     member do
@@ -285,6 +288,7 @@ Rails.application.routes.draw do
   end
 
   namespace :admin do
+    root to: redirect("/admin/events")
     namespace :ledger_audits do
       resources :tasks, only: [:index, :show, :create] do
         post :reviewed
@@ -299,6 +303,16 @@ Rails.application.routes.draw do
     end
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
+    end
+    resources(:event_groups, only: [:index, :create, :destroy]) do
+      collection do
+        get("events/:event_id", as: :event, to: "event_groups#event")
+        patch("events/:event_id", to: "event_groups#update_event")
+      end
+      member do
+        get(:statement_of_activity)
+      end
+      resources(:event_group_memberships, path: "memberships", only: [:destroy])
     end
   end
 
@@ -443,6 +457,7 @@ Rails.application.routes.draw do
     post "mark_fulfilled"
     post "reject"
     post "cancel"
+    post "set_transaction_categories"
     get "confirmation", to: "disbursements#transfer_confirmation_letter"
   end
 
@@ -516,13 +531,17 @@ Rails.application.routes.draw do
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
       post "request_reimbursement"
+      post "convert_to_wise_transfer"
       post "admin_approve"
+      post "admin_send_wise_transfer"
       post "reverse"
       post "approve_all_expenses"
       post "request_changes"
       post "reject"
       post "submit"
+      post "update_currency"
       post "draft"
+      get "wise_transfer_quote"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"
@@ -556,6 +575,7 @@ Rails.application.routes.draw do
   get "security", to: "static_pages#security"
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
+  get "admin_tools", to: "static_pages#admin_tools"
   get "audit", to: "admin#audit"
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
@@ -597,6 +617,7 @@ Rails.application.routes.draw do
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
   end
+  use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
   namespace :api do
     namespace :v4 do
@@ -626,6 +647,8 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
+          resources :invoices, only: [:index]
+          resources :sponsors, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -663,6 +686,10 @@ Rails.application.routes.draw do
             post "cancel"
           end
         end
+
+        resources :invoices, only: [:show, :create]
+
+        resources :sponsors, only: [:show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
@@ -741,7 +768,7 @@ Rails.application.routes.draw do
   end
 
   namespace "announcements" do
-    resources :blocks, only: [:create, :show] do
+    resources :blocks, only: [:create, :edit, :update, :show] do
       member do
         post "refresh"
       end
@@ -766,6 +793,7 @@ Rails.application.routes.draw do
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
     get "ledger"
+    get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
     post "create_sub_organization"
@@ -796,6 +824,7 @@ Rails.application.routes.draw do
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
     get "statements"
+    get "statement_of_activity"
     get "promotions"
     get "reimbursements"
     get "employees"
@@ -818,6 +847,7 @@ Rails.application.routes.draw do
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
     get "verification_letter", to: "documents#verification_letter"
     resources :invoices, only: [:new, :create, :index]
+    resources :affiliations, only: [:create, :update, :destroy], controller: "event/affiliations"
     resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
 
@@ -848,6 +878,7 @@ Rails.application.routes.draw do
         post "cancel"
         post "convert_to_reimbursement_report"
         post "toggle_one_time_use"
+        post "disable_pre_authorization"
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"

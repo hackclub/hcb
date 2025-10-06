@@ -24,7 +24,7 @@ module Api
 
         @comment.save!
 
-        render "show"
+        render "show", status: :created
       end
 
     end

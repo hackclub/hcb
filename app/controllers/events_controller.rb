@@ -198,6 +198,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      merchant: @merchant,
       order_by: @order_by.to_sym
     ).run
 
@@ -279,8 +280,8 @@ class EventsController < ApplicationController
       @filter = "manager"
     when "readers"
       @filter = "reader"
-    when "active_teens"
-      @filter = "active_teens" if auditor_signed_in?
+    when "active_teenagers"
+      @filter = "active_teenagers" if auditor_signed_in?
     end
 
     @q = params[:q] || ""
@@ -292,7 +293,7 @@ class EventsController < ApplicationController
                            .joins(:user)
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
-    if @filter == "active_teens"
+    if @filter == "active_teenagers"
       @all_positions = @all_positions.select { |op| op.user.teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
@@ -323,6 +324,9 @@ class EventsController < ApplicationController
     authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @affiliations = @event.affiliations if @settings_tab == "affiliations"
+
+    CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
 
     render :edit, layout: !@frame
   end
@@ -418,9 +422,7 @@ class EventsController < ApplicationController
     end
     @announcements = @all_announcements.page(params[:page]).per(10)
 
-    if @event.config.generate_monthly_announcement
-      @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
-    end
+    @monthly_announcement = Announcement.monthly_for(Date.today).where(event: @event).first
   end
 
   before_action(only: :feed) { request.format = :atom }
@@ -770,6 +772,9 @@ class EventsController < ApplicationController
 
   def promotions
     authorize @event
+
+    @active_teenagers_count = @event.users.active_teenager.count
+    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
   end
 
   def reimbursements
@@ -814,13 +819,34 @@ class EventsController < ApplicationController
   def sub_organizations
     authorize @event
 
-    search = params[:q] || params[:search]
+    respond_to do |format|
+      format.html do
+        search = params[:q] || params[:search]
 
-    relation = @event.subevents
-    relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
-    relation = relation.order(created_at: :desc)
+        relation = @event.subevents
+        relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+        relation = relation.order(created_at: :desc)
 
-    @sub_organizations = relation
+        @sub_organizations = relation
+      end
+
+      # CSV export intentionally does not consider filters
+      format.csv do
+        csv = CSV.generate(headers: true) do |csv|
+          # We include the public ID because our partners iterate this CSV to
+          # access organizations via the V3 API. The public ID serves has a
+          # robust, immutable identifier compared to slugs.
+          csv << %w[ID Name Slug Balance]
+
+          @event.subevents.find_each do |e|
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0]
+          end
+        end
+
+        send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
+      end
+    end
+
   end
 
   def create_sub_organization
@@ -917,6 +943,29 @@ class EventsController < ApplicationController
 
     @start_date = (@event.activated_at || @event.created_at).beginning_of_month.to_date
     @end_date = Date.today.prev_month.beginning_of_month.to_date
+  end
+
+  def statement_of_activity
+    authorize @event
+
+    @statement_of_activity = Event::StatementOfActivity.new(
+      @event,
+      start_date_param: params[:start],
+      end_date_param: params[:end],
+      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants]),
+    )
+
+    respond_to do |format|
+      format.html
+      format.xlsx do
+        send_data(
+          @statement_of_activity.xlsx,
+          filename: "#{@event.name} - Statement of Activity.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: "attachment"
+        )
+      end
+    end
   end
 
   def termination
@@ -1050,11 +1099,29 @@ class EventsController < ApplicationController
     { settled_transactions:, pending_transactions: }
   end
 
+  def merchants_filter
+    authorize @event
+
+    @merchant = params[:merchant]
+
+    merchants_hash = {}
+
+    @event.merchants.each do |merchant|
+      if merchants_hash.key?(merchant[:id])
+        merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
+      else
+        merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+      end
+    end
+
+    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+  end
+
   private
 
   # Only allow a trusted parameter "white list" through.
   def event_params
-    result_params = params.require(:event).permit(
+    permitted_params = [
       :name,
       :short_name,
       :description,
@@ -1090,26 +1157,34 @@ class EventsController < ApplicationController
       :stripe_card_shipping_type,
       :plan,
       :financially_frozen,
-      card_grant_setting_attributes: [
-        :merchant_lock,
-        :category_lock,
-        :keyword_lock,
-        :invite_message,
-        :banned_merchants,
-        :banned_categories,
-        :expiration_preference,
-        :reimbursement_conversions_enabled,
-        :pre_authorization_required
-      ],
-      config_attributes: [
-        :id,
-        :anonymous_donations,
-        :cover_donation_fees,
-        :contact_email,
-        :generate_monthly_announcement,
-        :subevent_plan
-      ]
-    )
+      {
+        card_grant_setting_attributes: [
+          :merchant_lock,
+          :category_lock,
+          :keyword_lock,
+          :invite_message,
+          :banned_merchants,
+          :banned_categories,
+          :expiration_preference,
+          :reimbursement_conversions_enabled,
+          :pre_authorization_required
+        ],
+        config_attributes: [
+          :id,
+          :anonymous_donations,
+          :cover_donation_fees,
+          :contact_email,
+          :generate_monthly_announcement,
+          :subevent_plan
+        ]
+      }
+    ]
+
+    if Flipper.enabled?(:parent_event_assignment_2025_09_18, current_user)
+      permitted_params << :parent_id
+    end
+
+    result_params = params.require(:event).permit(*permitted_params)
 
     # convert whatever the user inputted into something that is a legal slug
     result_params[:slug] = ActiveSupport::Inflector.parameterize(user_event_params[:slug]) if result_params[:slug]
@@ -1186,10 +1261,17 @@ class EventsController < ApplicationController
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
+    @merchant = params[:merchant]
     @direction = params[:direction]
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+    if @merchant
+      merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
+
+      @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
   end
 
   def _show_pending_transactions
@@ -1208,6 +1290,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      merchant: @merchant,
       order_by: @order_by&.to_sym || "date"
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!

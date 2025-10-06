@@ -19,7 +19,7 @@ class ApplicationController < ActionController::Base
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.touch_last_seen_at }
+  before_action { current_session&.update_session_timestamps }
 
   # This cookie is used for Safari PWA prompts
   before_action do
@@ -27,6 +27,10 @@ class ApplicationController < ActionController::Base
 
     @first_visit = cookies[:first_visit] != "1"
     cookies.permanent[:first_visit] = 1
+  end
+
+  before_action do
+    @hide_promotional_banner = cookies[:hide_robotics_raffle_banner] == "1"
   end
 
   before_action do
@@ -51,6 +55,8 @@ class ApplicationController < ActionController::Base
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  rescue_from ActionView::MissingTemplate, with: :not_found
 
   rescue_from Rack::Timeout::RequestTimeoutException do
     respond_to do |format|

@@ -74,7 +74,6 @@ class StripeCard < ApplicationRecord
   scope :frozen, -> { where(stripe_status: "inactive", initially_activated: true) }
   scope :active, -> { where(stripe_status: "active") }
   scope :inactive, -> { where(stripe_status: "inactive", initially_activated: false) }
-  scope :physical_shipping, -> { physical.includes(:user, :event).reject { |c| c.stripe_obj[:shipping][:status] == "delivered" } }
   scope :platinum, -> { where(is_platinum_april_fools_2023: true) }
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
@@ -85,7 +84,7 @@ class StripeCard < ApplicationRecord
   belongs_to :last_frozen_by, class_name: "User", optional: true
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
   belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
-  validates_presence_of :stripe_card_personalization_design_id, unless: -> { self.virtual? }
+  validates_presence_of :stripe_card_personalization_design_id, unless: -> { self.virtual? }, on: :create
   has_one :replacement, class_name: "StripeCard", foreign_key: :replacement_for_id
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
@@ -129,6 +128,13 @@ class StripeCard < ApplicationRecord
 
   before_save do
     self.canceled_at = Time.now if stripe_status_changed?(to: "canceled")
+  end
+
+  def self.cards_in_shipping
+    physical.where.not(stripe_status: "canceled")
+            .where(initially_activated: false)
+            .includes(:user, :event)
+            .reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.shipping_eta&.past? }
   end
 
   def full_card_number
@@ -381,8 +387,8 @@ class StripeCard < ApplicationRecord
     Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
   end
 
-  def ephemeral_key(nonce:)
-    Stripe::EphemeralKey.create({ nonce:, issuing_card: stripe_id }, { stripe_version: "2020-03-02" })
+  def ephemeral_key(nonce:, stripe_version: "2020-03-02")
+    Stripe::EphemeralKey.create({ nonce:, issuing_card: stripe_id }, { stripe_version: })
   end
 
   private
