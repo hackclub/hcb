@@ -15,7 +15,6 @@ class StaticPagesController < ApplicationController
   def index
     if signed_in?
       @service = StaticPageService::Index.new(current_user:)
-      @user = params[:id] ? User.friendly.find(params[:id]) : current_user
 
       @events = @service.events
 
