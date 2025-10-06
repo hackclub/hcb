@@ -11,7 +11,7 @@
 
   <div class="flex-grow"></div>
 
-  <%= link_to @wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
+  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0", target: "_blank") do %>
     <%= inline_icon "wise" %>
     Open Wise
   <% end %>
@@ -140,18 +140,18 @@
 
     <% if @wise_transfer.pending? %>
       <fieldset class="px-6 py-3">
-        <legend style="padding: 0px 8px">Approve</legend>
+        <legend class="py-0 px-2">Approve</legend>
         <p>For this approval check, you're only looking at the transfer purpose and documentation. The balance check will be done after it is approved.</p>
         <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post %>
 
       </fieldset>
 
       <fieldset class="px-6 py-3">
-        <legend style="padding: 0px 8px">Reject</legend>
+        <legend class="py-0 px-2">Reject</legend>
         <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-            <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+            <%= form.text_area :comment, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
           <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
           <small>(This requires you to communicate to the organizer about the reason why.)</small>
@@ -159,61 +159,71 @@
 
       </fieldset>
     <% elsif @wise_transfer.approved? %>
-      <fieldset class="px-6 py-3" x-data="{ amount: null, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
-        <legend style="padding: 0px 8px">Send</legend>
-            <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
-              <div class="mb-2">
-                <%= form.label :usd_amount, "Amount (USD)", class: "bold mb1" %> <br>
-                $ <%= form.number_field :usd_amount,
-                  placeholder: "500.00",
-                  step: 0.01,
-                  required: true,
-                  class: "mb-0",
-                  "@change": "amount = +$event.target.value * 100",
-                  "@keyup": "amount = +$event.target.value * 100",
-                  data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
-              </div>
-              <div class="mb-2">
-                <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %> <br>
-                <%= form.text_field(
-                      :wise_recipient_id,
-                      style: "width: 400px;",
-                      disabled: @wise_transfer.usd_amount_cents.nil?,
-                      placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    ) %>
-              </div>
-              <p x-show="amount && balance >= amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
-                <%= inline_icon "checkmark", class: "text-green" %>
-                Sufficient funds available
-              </p>
-              <p x-show="amount && balance < amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
-                <%= inline_icon "important", class: "text-red" %>
-                Insufficient funds, please reject this transfer
-              </p>
-              <div class="flex flex-row justify-start items-center gap-3 mb-4 mt-2">
-                <%= form.submit "🏦 Update amount", class: "mb-0" %>
-                <em class="m-0"><small class="m-0">This will update the pending amount</small></em>
-              </div>
-            <% end %>
+      <fieldset class="px-6 py-3">
+        <legend class="py-0 px-2">Metadata</legend>
 
-          <%= form_with(model: @wise_transfer, local: true, url: mark_sent_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
-            <div class="mb-2">
-              <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
-              <%= form.text_field :wise_id, style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
-            </div>
-            <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>
-          <% end %>
+        <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
+          <div class="mb-2">
+            <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %> <br>
+            <%= form.text_field(
+                  :wise_recipient_id,
+                  class: "w-[400px]",
+                  placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                ) %>
+          </div>
+
+          <%= form.submit "Save", class: "mb-0" %>
+        <% end %>
+      </fieldset>
+
+      <fieldset class="px-6 py-3" x-data="{ amount: null, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
+        <legend class="py-0 px-2">Send</legend>
+
+        <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
+          <div class="mb-2">
+            <%= form.label :usd_amount, "Amount (USD)", class: "bold mb1" %> <br>
+            $ <%= form.number_field :usd_amount,
+              placeholder: "500.00",
+              step: 0.01,
+              required: true,
+              "@change": "amount = +$event.target.value * 100",
+              "@keyup": "amount = +$event.target.value * 100",
+              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+          </div>
+          <p x-show="amount && balance >= amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
+            <%= inline_icon "checkmark", class: "text-green" %>
+            Sufficient funds available
+          </p>
+          <p x-show="amount && balance < amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
+            <%= inline_icon "important", class: "text-red" %>
+            Insufficient funds, please reject this transfer
+          </p>
+          <div class="flex flex-row justify-start items-center gap-3 mb-4 mt-2">
+            <%= form.submit "🏦 Update amount", class: "mb-0" %>
+            <em class="m-0"><small class="m-0">This will update the pending amount</small></em>
+          </div>
+        <% end %>
+
+        <hr>
+
+        <%= form_with(model: @wise_transfer, local: true, url: mark_sent_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
+          <div class="mb-2">
+            <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
+            <%= form.text_field :wise_id, class: "w-[400px]", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+          </div>
+          <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>
+        <% end %>
 
       </fieldset>
 
       <fieldset class="px-6 py-3">
-        <legend style="padding: 0px 8px">Reject</legend>
+        <legend class="py-0 px-2">Reject</legend>
         <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
 
         <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-            <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+            <%= form.text_area :comment, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
           <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
         <% end %>
@@ -228,11 +238,11 @@
 
     <% if @wise_transfer.may_mark_failed? %>
       <fieldset class="px-6 py-3">
-        <legend style="padding: 0px 8px">Fail</legend>
+        <legend class="py-0 px-2">Fail</legend>
         <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label "Failure reason", class: "bold mb1" %> <br>
-            <%= form.text_area :reason, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+            <%= form.text_area :reason, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
           <%= form.submit "Mark failed", data: { confirm: "Mark as failed?" } %>
         <% end %>

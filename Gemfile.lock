@@ -471,7 +471,7 @@ GEM
       activesupport (>= 4)
       railties (>= 4)
       request_store (~> 1.0)
-    loofah (2.24.0)
+    loofah (2.24.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     mail (2.8.1)
@@ -521,7 +521,7 @@ GEM
       net-protocol
     nio4r (2.7.4)
     nkf (0.2.0)
-    nokogiri (1.18.9)
+    nokogiri (1.18.10)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     observer (0.1.2)
@@ -805,7 +805,7 @@ GEM
       openssl (> 2.0)
       openssl-signature_algorithm (~> 1.0)
     trailblazer-option (0.1.2)
-    turbo-rails (2.0.13)
+    turbo-rails (2.0.17)
       actionpack (>= 7.1.0)
       railties (>= 7.1.0)
     twilio-ruby (7.5.0)
@@ -989,7 +989,7 @@ DEPENDENCIES
   stripe (= 11.7.0)
   strong_migrations (~> 1)
   terser (~> 1.2)
-  turbo-rails (~> 2.0.13)
+  turbo-rails (~> 2.0.17)
   twilio-ruby
   validates_email_format_of
   validates_zipcode
