@@ -79,13 +79,33 @@ module Discord
     def transactions_command
       return require_linked_event unless @current_event
 
-      respond content: "Debugger", embeds: [
+      transactions = @current_event.canonical_pending_transactions.order(created_at: :desc).limit(4)
+
+      if transactions.length == 0
+        respond embeds: [
+          {
+            title: "Recent transactions for #{@current_event.name}",
+            description: "No transactions yet...",
+            color:,
+          }
+        ]
+        return
+      end
+
+      transaction_fields = transactions.map do |transaction|
         {
-          title: "Debugger",
-          description: "```\n#{JSON.pretty_generate(@interaction)[0..4085]}\n```",
-          color: 0xCC0100,
+          name: "\"#{transaction.smart_memo}\" for #{ApplicationController.helpers.render_money(transaction.amount_cents)}",
+          value: "On #{transaction.created_at.strftime('%B %d, %Y')} - #{link_to("Details", url_helpers.hcb_code_url(transaction.local_hcb_code.hashid))}"
         }
-      ]
+      end
+
+      respond embeds: [
+        {
+          title: "Recent transactions for #{@current_event.name}",
+          fields: transaction_fields,
+          color:,
+        }
+      ], components: button_to("Go to HCB", url_helpers.event_url(@current_event.slug))
     end
 
     def reimburse_command
