@@ -187,7 +187,7 @@ class DiscordController < ApplicationController
     cid = event.discord_channel_id
 
     if event.update(discord_guild_id: nil, discord_channel_id: nil)
-      bot.send_message(cid, "The HCB organization #{event.name} has been unlinked from this Discord server, and notifications/announcements will no longer be sent here.")
+      bot.send_message(cid, "The HCB organization #{event.name} has been unlinked from this Discord server by #{current_user.name}, and notifications/announcements will no longer be sent here.")
       flash[:success] = "Successfully unlinked the organization #{event.name} from your Discord server"
     else
       flash[:error] = event.errors.full_messages.to_sentence
@@ -219,6 +219,10 @@ class DiscordController < ApplicationController
       head :unauthorized
       return
     end
+  end
+
+  def message_verifier
+
   end
 
 end
