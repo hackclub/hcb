@@ -10,6 +10,12 @@ class DiscordController < ApplicationController
   skip_after_action :verify_authorized
 
   def webhook
+    if params[:type] == 0
+      # This is Discord's health check on our server. No need to do anything besides return a 204.
+      # If type is 1, then it's an event we need to handle.
+      head :no_content
+      return
+    end
     # Webhook event where the bot was added to a server
     # `event.data.interaction_type`:
     #   - `0`: Bot was added to server
