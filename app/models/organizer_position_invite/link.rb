@@ -31,6 +31,10 @@ class OrganizerPositionInvite
 
     EXPIRATION_SECONDS = 30.days
 
+    belongs_to :event
+    belongs_to :creator, class_name: "User"
+    belongs_to :deactivator, class_name: "User"
+
     scope :active, -> { where(deactivated_at: nil) }
     scope :usable, -> { active.where("? <= created_at + expires_in", Time.now) }
 
