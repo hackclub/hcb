@@ -20,7 +20,11 @@
   <div class="flex items-start">
     <span class="muted mr2"><%= inline_icon "important" %></span>
 
-    <p class="mt0">HCB will send notifications about your organization to the channel you ran the command in.</p>
+    <p class="mt0">
+      HCB will send notifications about your organization to the <strong><%= @raw_ch_response["name"] %></strong>.
+      <br />
+      <small>Want to choose a different channel? Re-run the <code>/link</code> command in your desired channel.</small>
+    </p>
   </div>
 </section>
 
