@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "ed25519"
-require "discordrb"
-
 class DiscordController < ApplicationController
   protect_from_forgery except: [:webhook, :interaction]
   skip_before_action :signed_in_user, only: [:webhook, :interaction]
