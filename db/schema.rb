@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_26_160925) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_07_015747) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1536,6 +1536,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_26_160925) do
     t.boolean "is_signee", default: false
     t.integer "role", default: 100, null: false
     t.integer "initial_control_allowance_amount_cents"
+    t.bigint "approver_id"
+    t.string "invite_method"
+    t.index ["approver_id"], name: "index_organizer_position_invites_on_approver_id"
     t.index ["event_id"], name: "index_organizer_position_invites_on_event_id"
     t.index ["organizer_position_id"], name: "index_organizer_position_invites_on_organizer_position_id"
     t.index ["sender_id"], name: "index_organizer_position_invites_on_sender_id"
