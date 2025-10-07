@@ -2,26 +2,20 @@
 
 module Discord
   class ProcessNotificationJob < ApplicationJob
+    include UsersHelper
+
     queue_as :low
 
     def perform(public_activity_id)
       @activity = PublicActivity::Activity.find(public_activity_id)
       @event = @activity.event
-
-      user_avatar_url = nil
-      timestamp = nil
-      user_name = nil
+      @user = @activity.owner
 
       discord_scrubber = Loofah::Scrubber.new do |node|
-        if node.name == "span" && node[:class].present? && node[:class].include?("muted")
-          user_name ||= node.text.strip
-        end
         if node.name == "img"
-          user_avatar_url = node[:src]
           node.remove
         end
         if node["data-timestamp-time-value".to_sym].present?
-          timestamp = node["data-timestamp-time-value".to_sym]
           node.remove
         end
         node.remove if node.name == "svg"
@@ -35,7 +29,12 @@ module Discord
 
       text = ReverseMarkdown.convert(html)[0..4000]
 
-      bot.send_message(@event.discord_channel_id, nil, false, { description: text, timestamp: Time.at((timestamp.to_i / 1000).to_i).iso8601, author: { name: user_name, icon_url: user_avatar_url }, color: })
+      bot.send_message(@event.discord_channel_id, nil, false, {
+                         description: text,
+                         timestamp: @activity.created_at.iso8601,
+                         author: { name: @user.name, icon_url: profile_picture_for(@activity.owner) },
+                         color:
+                       })
     end
 
     private
