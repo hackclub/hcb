@@ -25,7 +25,7 @@
 </section>
 
 <div class="flex items-center justify-center g1">
-  <%= button_to "Unlink", discord_unlink_server_path, class: "btn bg-error h2", params: { guild_id: @guild_id } %>
+  <%= button_to "Unlink", discord_unlink_server_path, class: "btn bg-error h2", params: { signed_message: @signed_message } %>
   <%= link_to "Cancel", root_path, class: "btn bg-muted" %>
 </div>
 

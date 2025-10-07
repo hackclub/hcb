@@ -44,8 +44,15 @@ class DiscordController < ApplicationController
   end
 
   def link
-    @discord_id = params[:discord_id]
+    @signed_message = params[:signed_message]
     authorize nil, policy_class: DiscordPolicy
+
+    h, time = Rails.application.message_verifier(:link_discord_account).verify(@signed_message)
+
+    if !time.future || !h
+      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
+      return redirect_to root_path
+    end
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -62,16 +69,34 @@ class DiscordController < ApplicationController
   end
 
   def create_link
-    current_user.update!(discord_id: params[:discord_id])
+    signed_message = params[:signed_message]
+
+    h, time = Rails.application.message_verifier(:link_discord_account).verify(signed_message)
+
+    if !time.future || !h
+      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
+      return redirect_to root_path
+    end
+
+    current_user.update!(discord_id: h[:discord_id])
 
     flash[:success] = "Successfully linked Discord account"
     redirect_to root_path
   end
 
   def setup
-    @guild_id = params[:guild_id]
-    @channel_id = params[:channel_id]
+    @signed_message = params[:signed_message]
     authorize nil, policy_class: DiscordPolicy
+
+    h, time = Rails.application.message_verifier(:link_server).verify(signed_message)
+
+    if !time.future || !h
+      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
+      return redirect_to root_path
+    end
+
+    @guild_id = h[:guild_id]
+    @channel_id = h[:channel_id]
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -90,13 +115,21 @@ class DiscordController < ApplicationController
   end
 
   def create_server_link
+    signed_message = params[:signed_message]
     event = Event.find(params[:event_id])
+
     authorize event, policy_class: DiscordPolicy
 
+    h, time = Rails.application.message_verifier(:link_server).verify(signed_message)
 
-    event.update!(discord_guild_id: params[:guild_id], discord_channel_id: params[:channel_id])
+    if !time.future || !h
+      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
+      return redirect_to root_path
+    end
 
-    bot.send_message(params[:channel_id], "The HCB organization #{event.name} has been successfully linked to this Discord server! Notifications and announcements will be sent in this channel, <\##{params[:channel_id]}>.")
+    event.update!(discord_guild_id: h[:guild_id], discord_channel_id: h[:channel_id])
+
+    bot.send_message(h[:channel_id], "The HCB organization #{event.name} has been successfully linked to this Discord server! Notifications and announcements will be sent in this channel, <\##{h[:channel_id]}>.")
     flash[:success] = "Successfully linked the organization #{event.name} to your Discord server"
     redirect_to root_path
   rescue => e
@@ -106,7 +139,16 @@ class DiscordController < ApplicationController
   end
 
   def unlink_server
-    @guild_id = params[:guild_id]
+    @signed_message = params[:signed_message]
+
+    h, time = Rails.application.message_verifier(:unlink_server).verify(@signed_message)
+
+    if !time.future || !h
+      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
+      return redirect_to root_path
+    end
+
+    @guild_id = h[:guild_id]
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -125,7 +167,16 @@ class DiscordController < ApplicationController
   end
 
   def unlink_server_action
-    event = Event.find_by(discord_guild_id: params[:guild_id])
+    signed_message = params[:signed_message]
+
+    h, time = Rails.application.message_verifier(:unlink_server).verify(signed_message)
+
+    if !time.future || !h
+      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
+      return redirect_to root_path
+    end
+
+    event = Event.find_by(discord_guild_id: h[:guild_id])
     authorize event, policy_class: DiscordPolicy
 
     cid = event.discord_channel_id

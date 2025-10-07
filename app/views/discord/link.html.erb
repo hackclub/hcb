@@ -26,7 +26,7 @@
 </section>
 
 <div class="flex items-center justify-center g1">
-  <%= button_to "Connect", discord_create_link_path, class: "btn bg-success h2", params: { discord_id: @discord_id } %>
+  <%= button_to "Connect", discord_create_link_path, class: "btn bg-success h2", params: { signed_message: @signed_message } %>
   <%= link_to "Cancel", root_path, class: "btn bg-muted" %>
 </div>
 

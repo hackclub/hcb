@@ -50,14 +50,17 @@ module Discord
     end
 
     def link_command
+      account_link_signed = Rails.application.message_verifier(:link_discord_account).generate([{ discord_id: @user_id }, 15.minutes.from_now])
+      server_link_signed = Rails.application.message_verifier(:link_server).generate([{ guild_id: @guild_id, channel_id: @channel_id }, 15.minutes.from_now])
+      server_unlink_signed = Rails.application.message_verifier(:unlink_server).generate([{ guild_id: @guild_id }, 15.minutes.from_now])
       if @current_event.present? && @user.present?
-        respond content: "HCB has already been setup for this Discord server!", embeds: linking_embed
+        respond content: "HCB has already been setup for this Discord server!", embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       elsif !@current_event.present? && @user.present?
-        respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:", components: button_to("Set up HCB on this server", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id)), embeds: linking_embed
+        respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:", components: button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       elsif @current_event.present? && !@user.present?
-        respond content: "HCB has already been setup for this Discord server, but your Discord account isn't linked to your HCB account yet:", components: button_to("Link Discord account", url_helpers.discord_link_url(discord_id: @user_id)), embeds: linking_embed
+        respond content: "HCB has already been setup for this Discord server, but your Discord account isn't linked to your HCB account yet:", components: button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       else
-        respond content: "Link your HCB account, and then connect this Discord server to an HCB organization:", components: [button_to("Link Discord account", url_helpers.discord_link_url(discord_id: @user_id)), button_to("Set up HCB on this server", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id))], embeds: linking_embed
+        respond content: "Link your HCB account, and then connect this Discord server to an HCB organization:", components: [button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed))], embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       end
     end
 
@@ -133,11 +136,11 @@ module Discord
       respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed
     end
 
-    def linking_embed
+    def linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       server_name = bot.server(@guild_id)&.name if @guild_id.present?
       user_name = bot.user(@user_id)&.username if @user_id.present?
 
-      guild_setup_cta = can_manage_guild? ? link_to("Set up here", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id)) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
+      guild_setup_cta = can_manage_guild? ? link_to("Set up here", url_helpers.discord_setup_url(signed_message: server_link_signed)) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
 
       [
         {
@@ -146,12 +149,12 @@ module Discord
           fields: [
             {
               name: "Discord Account (`@#{user_name}`) ↔ Your HCB Account",
-              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@user.present? ? "✅ Linked to #{@user.preferred_name.presence || @user.first_name} on HCB" : "❌ Not linked. #{link_to("Set up here", url_helpers.discord_link_url(discord_id: @user_id))}"}\n",
+              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@current_user.present? ? "✅ Linked to #{@current_user.preferred_name.presence || @current_user.first_name} on HCB" : "❌ Not linked. #{link_to("Set up here", url_helpers.discord_link_url(signed_message: account_link_signed))}"}\n",
             },
             (if @guild_id.present?
                {
                  name: "\nDiscord Server (#{server_name}) ↔ HCB Organization",
-                 value: "Allows you to see your organization's balance, see transactions, and get notifications on Discord.\n\n#{@current_event.present? ? "✅ Connected to #{link_to(@current_event.name, url_helpers.event_url(@current_event.slug))} on HCB (#{link_to("disconnect", url_helpers.discord_unlink_server_url(guild_id: @guild_id))})" : "❌ Not connected. #{guild_setup_cta}"}"
+                 value: "Allows you to see your organization's balance, see transactions, and get notifications on Discord.\n\n#{@current_event.present? ? "✅ Connected to #{link_to(@current_event.name, url_helpers.event_url(@current_event.slug))} on HCB (#{link_to("disconnect", url_helpers.discord_unlink_server_url(signed_message: server_unlink_signed))})" : "❌ Not connected. #{guild_setup_cta}"}"
                }
              end)
           ].compact
