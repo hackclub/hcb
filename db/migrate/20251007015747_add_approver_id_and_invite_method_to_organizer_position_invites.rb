@@ -3,6 +3,6 @@ class AddApproverIdAndInviteMethodToOrganizerPositionInvites < ActiveRecord::Mig
 
   def change
     add_column :organizer_position_invites, :approver_id, :bigint
-    add_column :organizer_position_invites, :invite_method, :string
+    add_column :organizer_position_invites, :invite_method, :string, null: false, default: "direct"
   end
 end

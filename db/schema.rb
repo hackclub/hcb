@@ -1537,8 +1537,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_021714) do
     t.integer "role", default: 100, null: false
     t.integer "initial_control_allowance_amount_cents"
     t.bigint "approver_id"
-    t.string "invite_method"
-    t.index ["approver_id"], name: "index_organizer_position_invites_on_approver_id"
+    t.string "invite_method", default: "direct", null: false
     t.index ["event_id"], name: "index_organizer_position_invites_on_event_id"
     t.index ["organizer_position_id"], name: "index_organizer_position_invites_on_organizer_position_id"
     t.index ["sender_id"], name: "index_organizer_position_invites_on_sender_id"
@@ -2587,7 +2586,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_021714) do
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"
   add_foreign_key "organizer_position_invites", "users"
-  add_foreign_key "organizer_position_invites", "users", column: "approver_id", validate: false
   add_foreign_key "organizer_position_invites", "users", column: "sender_id"
   add_foreign_key "organizer_position_spending_control_allowances", "organizer_position_spending_controls"
   add_foreign_key "organizer_position_spending_control_allowances", "users", column: "authorized_by_id"

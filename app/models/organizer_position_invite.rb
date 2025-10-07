@@ -9,7 +9,7 @@
 #  cancelled_at                           :datetime
 #  initial                                :boolean          default(FALSE)
 #  initial_control_allowance_amount_cents :integer
-#  invite_method                          :string
+#  invite_method                          :string           default("direct"), not null
 #  is_signee                              :boolean          default(FALSE)
 #  rejected_at                            :datetime
 #  role                                   :integer          default("manager"), not null
@@ -24,7 +24,6 @@
 #
 # Indexes
 #
-#  index_organizer_position_invites_on_approver_id            (approver_id)
 #  index_organizer_position_invites_on_event_id               (event_id)
 #  index_organizer_position_invites_on_organizer_position_id  (organizer_position_id)
 #  index_organizer_position_invites_on_sender_id              (sender_id)
@@ -33,7 +32,6 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (approver_id => users.id)
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (organizer_position_id => organizer_positions.id)
 #  fk_rails_...  (sender_id => users.id)
