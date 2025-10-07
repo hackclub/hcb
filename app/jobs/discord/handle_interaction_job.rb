@@ -29,7 +29,7 @@ module Discord
           backtrace = "#{backtrace[0..4_000]}..."
         end
 
-        respond content: "**That didn't work!**\nWe're going to debug what went wrong.", embeds: [
+        respond content: "**That didn't work!**\nYou're in development. Here's the backtrace:", embeds: [
           {
             title: e.message,
             description: "```\n#{backtrace}\n```",
