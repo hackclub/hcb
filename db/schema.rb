@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_07_021714) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_07_031602) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1521,6 +1521,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_021714) do
     t.index ["submitted_by_id"], name: "index_organizer_position_deletion_requests_on_submitted_by_id"
   end
 
+  create_table "organizer_position_invite_links", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "creator_id", null: false
+    t.datetime "deactivated_at"
+    t.bigint "deactivator_id"
+    t.integer "expires_in"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_organizer_position_invite_links_on_creator_id"
+    t.index ["deactivator_id"], name: "index_organizer_position_invite_links_on_deactivator_id"
+    t.index ["event_id"], name: "index_organizer_position_invite_links_on_event_id"
+  end
+
   create_table "organizer_position_invites", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.bigint "user_id", null: false
@@ -2583,6 +2596,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_021714) do
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "closed_by_id"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "submitted_by_id"
+  add_foreign_key "organizer_position_invite_links", "events"
+  add_foreign_key "organizer_position_invite_links", "users", column: "creator_id"
+  add_foreign_key "organizer_position_invite_links", "users", column: "deactivator_id"
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"
   add_foreign_key "organizer_position_invites", "users"
