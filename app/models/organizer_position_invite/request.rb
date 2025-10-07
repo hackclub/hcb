@@ -26,7 +26,7 @@ class OrganizerPositionInvite
     include Hashid::Rails
     include AASM
 
-    belongs_to :link, class_name: "OrganizerPositionInvite::Link", foreign_key: "organizer_position_invite_link_id"
+    belongs_to :link, class_name: "OrganizerPositionInvite::Link", foreign_key: "organizer_position_invite_link_id", inverse_of: :requests
     belongs_to :requester, class_name: "User"
 
     aasm timestamps: true do
