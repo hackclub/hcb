@@ -31,6 +31,7 @@ module Referral
       attributions.joins(:user)
                   .where("EXTRACT(EPOCH FROM (referral_attributions.created_at - users.created_at)) < 60*60")
                   .map(&:user)
+                  .uniq
     end
 
   end

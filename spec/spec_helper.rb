@@ -100,6 +100,6 @@ RSpec.configure do |config|
   #   # as the one that triggered the failure.
   #   Kernel.srand config.seed
 
-  # Allow the test suite to make external web requests
-  WebMock.allow_net_connect!
+  # Uncomment to allow the test suite to make network calls
+  # WebMock.allow_net_connect!
 end

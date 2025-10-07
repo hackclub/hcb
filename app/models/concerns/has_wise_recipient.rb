@@ -8,7 +8,7 @@ module HasWiseRecipient
     has_country_enum(field: :recipient_country)
 
     validate do
-      if POSTAL_CODE_FORMATS[recipient_country.to_sym] && !address_postal_code.match(POSTAL_CODE_FORMATS[recipient_country.to_sym])
+      if POSTAL_CODE_FORMATS[recipient_country&.to_sym] && !address_postal_code.match(POSTAL_CODE_FORMATS[recipient_country.to_sym])
         errors.add(:address_postal_code, "does not meet the required format for this country")
       end
     end
@@ -113,7 +113,7 @@ module HasWiseRecipient
       fields.collect{ |field| field[:key] }.uniq
     end
 
-    store_accessor :recipient_information, *self.recipient_information_accessors
+    store(:recipient_information, accessors: self.recipient_information_accessors)
   end
 
   # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details

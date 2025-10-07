@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_11_173917) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_26_160925) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -642,12 +642,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_173917) do
     t.bigint "source_subledger_id"
     t.date "scheduled_on"
     t.boolean "should_charge_fee", default: false
+    t.bigint "source_transaction_category_id"
+    t.bigint "destination_transaction_category_id"
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
+    t.index ["destination_transaction_category_id"], name: "index_disbursements_on_destination_transaction_category_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
     t.index ["requested_by_id"], name: "index_disbursements_on_requested_by_id"
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
+    t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
   end
 
   create_table "document_downloads", force: :cascade do |t|
@@ -1015,6 +1019,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_173917) do
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
+    t.boolean "fee_waiver_eligible", default: false, null: false
+    t.boolean "fee_waiver_applied", default: false, null: false
     t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
@@ -2375,6 +2381,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_173917) do
     t.boolean "teenager"
     t.integer "creation_method"
     t.boolean "cards_locked", default: false, null: false
+    t.integer "session_validity_preference", default: 259200, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end
@@ -2514,6 +2521,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_173917) do
   add_foreign_key "comment_reactions", "users", column: "reactor_id"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
+  add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
+  add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
   add_foreign_key "disbursements", "users", column: "requested_by_id"
   add_foreign_key "document_downloads", "documents"
