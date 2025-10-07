@@ -6,7 +6,7 @@
 #
 #  id             :bigint           not null, primary key
 #  deactivated_at :datetime
-#  expires_in     :integer
+#  expires_in     :integer          default(2592000), not null
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  creator_id     :bigint           not null
@@ -29,18 +29,12 @@ class OrganizerPositionInvite
   class Link < ApplicationRecord
     include Hashid::Rails
 
-    EXPIRATION_SECONDS = 30.days
-
     belongs_to :event
     belongs_to :creator, class_name: "User"
     belongs_to :deactivator, class_name: "User"
 
     scope :active, -> { where(deactivated_at: nil) }
     scope :usable, -> { active.where("? <= created_at + expires_in", Time.now) }
-
-    before_create do
-      self.expires_in = EXPIRATION_SECONDS
-    end
 
     def deactivated?
       deactivated_at.present?

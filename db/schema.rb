@@ -1526,7 +1526,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
     t.bigint "creator_id", null: false
     t.datetime "deactivated_at"
     t.bigint "deactivator_id"
-    t.integer "expires_in"
+    t.integer "expires_in", default: 2592000, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_organizer_position_invite_links_on_creator_id"

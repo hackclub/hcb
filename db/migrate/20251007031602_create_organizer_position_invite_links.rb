@@ -5,7 +5,7 @@ class CreateOrganizerPositionInviteLinks < ActiveRecord::Migration[7.2]
       t.references :creator, null: false, foreign_key: { to_table: :users }
       t.datetime :deactivated_at
       t.references :deactivator, foreign_key: { to_table: :users }
-      t.integer :expires_in
+      t.integer :expires_in, null: false, default: 60 * 60 * 24 * 30
 
       t.timestamps
     end
