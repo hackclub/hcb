@@ -32,7 +32,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features
+        Event::Plan.available_features - %w[promotions]
       end
 
       def exempt_from_wire_minimum?
@@ -53,10 +53,6 @@ class Event
         return 14 if date < Date.new(2025, 4, 11) # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743055747682219
 
         35 # custom rate for HQ events
-      end
-
-      def eligible_for_perks?
-        false
       end
 
     end

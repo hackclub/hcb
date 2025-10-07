@@ -782,7 +782,7 @@ class EventsController < ApplicationController
     authorize @event
 
     @active_teenagers_count = @event.users.active_teenager.count
-    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
+    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
   end
 
   def reimbursements
