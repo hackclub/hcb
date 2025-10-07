@@ -38,7 +38,7 @@ class DiscordController < ApplicationController
       render json: { type: 1 }
 
     elsif params[:type] == 2 # application command
-      render json: { type: 5 }
+      render json: { type: 5 } # Acknowledge interaction & will edit response later
       ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h)
 
     else
