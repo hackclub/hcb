@@ -33,7 +33,7 @@ class OrganizerPositionInvite
     belongs_to :creator, class_name: "User"
     belongs_to :deactivator, class_name: "User"
 
-    has_many :requests, class_name: "OrganizerPositionInvite::Request", foreign_key: :link_id, dependent: :destroy
+    has_many :requests, class_name: "OrganizerPositionInvite::Request", dependent: :destroy
 
     scope :active, -> { where(deactivated_at: nil) }
     scope :usable, -> { active.where("? <= created_at + expires_in", Time.now) }
