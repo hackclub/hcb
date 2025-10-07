@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_07_015747) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_07_021714) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2587,6 +2587,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_015747) do
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"
   add_foreign_key "organizer_position_invites", "users"
+  add_foreign_key "organizer_position_invites", "users", column: "approver_id", validate: false
   add_foreign_key "organizer_position_invites", "users", column: "sender_id"
   add_foreign_key "organizer_position_spending_control_allowances", "organizer_position_spending_controls"
   add_foreign_key "organizer_position_spending_control_allowances", "users", column: "authorized_by_id"

@@ -33,6 +33,7 @@
 #
 # Foreign Keys
 #
+#  fk_rails_...  (approver_id => users.id)
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (organizer_position_id => organizer_positions.id)
 #  fk_rails_...  (sender_id => users.id)
