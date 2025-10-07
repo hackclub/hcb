@@ -58,7 +58,7 @@ module Discord
       elsif !@current_event.present? && @user.present?
         respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:", components: button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       elsif @current_event.present? && !@user.present?
-        respond content: "HCB has already been setup for this Discord server, but your Discord account isn't linked to your HCB account yet:", components: button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
+        respond content: "This Discord server is connected to #{@current_event.name} on HCB. HCB is the platform your team uses to manage its finances. Finish your setup by linking your Discord account to HCB:", components: button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       else
         respond content: "Link your HCB account, and then connect this Discord server to an HCB organization:", components: [button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed))], embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       end
