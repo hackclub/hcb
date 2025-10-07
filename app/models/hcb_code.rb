@@ -502,9 +502,10 @@ class HcbCode < ApplicationRecord
 
     return false unless event&.plan&.receipts_required?
 
-    [:card_charge, :wise_transfer].include?(type) ||
-      # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check, :paypal_transfer, :wire].include?(type) && created_at > Time.utc(2024, 2, 1))
+    # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
+    return false if [:ach, :check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
+
+    true
   end
 
   def receipt_optional?
