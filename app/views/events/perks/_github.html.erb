@@ -1,0 +1,35 @@
+<%# locals: (event:, perks_available:) %>
+
+<div class="card mb3" id="github">
+  <div class="card__banner card__banner--top flex justify-between items-center" style="background-color:#eee">
+    <%= image_tag "github.png", width: 170 %>
+    <%= link_to "Expired",
+      perks_available ? "https://hack.af/grant?prefill_Event%20Name=#{event.name}" : root_path,
+      class: "btn disabled" %>
+  </div>
+
+  <p class="muted">
+    GitHub is supporting high school hackathons on HCB with up to $500 in grants, growing with attendance.
+    Be sure to include GitHub in your list of sponsors or sponsor logos for your event!
+  </p>
+
+  <h3 class="mb0 muted">High school hackathons</h3>
+  <table class="muted">
+    <tr>
+      <th>Attendees</th>
+      <th>Credit</th>
+    </tr>
+    <tr>
+      <td>Up to 50</td>
+      <td>$100</td>
+    </tr>
+    <tr>
+      <td>Up to 200</td>
+      <td>$250</td>
+    </tr>
+    <tr>
+      <td>Above 200</td>
+      <td>$500</td>
+    </tr>
+  </table>
+</div>

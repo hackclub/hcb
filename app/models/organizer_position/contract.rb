@@ -71,6 +71,11 @@ class OrganizerPosition
         transitions from: [:pending, :sent], to: :signed
         after do
           organizer_position_invite.deliver
+          # Unfreeze the event if this is the first signed contract
+          event = organizer_position_invite.event
+          if event.organizer_position_contracts.signed.count == 1
+            event.update!(financially_frozen: false)
+          end
         end
       end
 
@@ -116,11 +121,17 @@ class OrganizerPosition
       "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Cosigner" }[0]["slug"]}"
     end
 
+    def pending_signee_information
+      return docuseal_pending_signee_information if sent_with_docuseal?
+
+      nil
+    end
+
     def send_using_docuseal!
       raise ArgumentError, "can only send contracts when pending" unless pending?
 
       payload = {
-        template_id: 487784,
+        template_id: organizer_position_invite.event.plan.contract_docuseal_template_id,
         send_email: false,
         order: "preserved",
         submitters: [
@@ -219,6 +230,24 @@ class OrganizerPosition
       end
     end
 
+    def docuseal_pending_signee_information
+      return nil unless sent_with_docuseal?
+
+      submitters = docuseal_document["submitters"]
+      signee = submitters.find { |s| s["role"] == "Contract Signee" }
+      cosigner = submitters.find { |s| s["role"] == "Cosigner" }
+      hcb_signer = submitters.find { |s| s["role"] == "HCB" }
+
+      if signee && signee["status"] != "completed"
+        { role: "Contract Signee", label: "You", email: signee["email"] }
+      elsif cosigner && cosigner["status"] != "completed"
+        { role: "Cosigner", label: "Your parent/legal guardian", email: cosigner["email"] }
+      elsif hcb_signer && hcb_signer["status"] != "completed"
+        { role: "HCB", label: "HCB point of contact", email: hcb_signer["email"] }
+      else
+        nil
+      end
+    end
 
   end
 

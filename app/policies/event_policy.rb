@@ -69,6 +69,8 @@ class EventPolicy < ApplicationPolicy
 
   alias disable_feature? update?
 
+  alias toggle_fee_waiver_eligible? update?
+
   def validate_slug?
     admin_or_member?
   end
@@ -146,7 +148,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def promotions?
-    auditor_or_reader? && record.plan.promotions_enabled?
+    auditor_or_reader?
   end
 
   def reimbursements_pending_review_icon?
@@ -162,7 +164,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def sub_organizations?
-    auditor_or_reader? && (record.subevents_enabled? || record.subevents.any?)
+    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
   end
 
   def create_sub_organization?

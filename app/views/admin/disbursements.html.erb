@@ -61,10 +61,16 @@
           <% end %>
         </td>
         <td>
-          <% if disbursement.reviewing? %>
-            <%= link_to "Process", disbursement_process_admin_path(disbursement) %>
-          <% elsif disbursement.pending? %>
+          <% if disbursement.pending? %>
             AUTOMATED
+          <% end %>
+
+          <%= link_to(disbursement_process_admin_path(disbursement)) do %>
+            <% if disbursement.reviewing? %>
+              Process
+            <% else %>
+              View
+            <% end %>
           <% end %>
         </td>
       </tr>
