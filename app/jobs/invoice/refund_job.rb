@@ -4,7 +4,7 @@ class Invoice
   class RefundJob < ApplicationJob
     queue_as :default
     def perform(invoice, amount, requested_by, reason = nil)
-      return if invoice.refunded?
+      return if invoice.refunded_v2?
 
       if invoice.canonical_transactions.any?
         InvoiceService::Refund.new(invoice_id: invoice.id, amount:, reason:).run

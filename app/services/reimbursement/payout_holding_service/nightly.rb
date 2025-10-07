@@ -35,6 +35,7 @@ module Reimbursement
                 wire.save!
                 wire.send_wire!
               rescue
+                wire.mark_rejected!
                 payout_holding.mark_failed!
                 reason = "There was an error creating the wire transfer."
                 reason = wire.errors.full_messages.join(", ") if wire.errors.any?

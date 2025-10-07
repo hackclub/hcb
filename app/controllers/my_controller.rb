@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed, :hide_promotional_banner] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
 
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
 
@@ -17,11 +17,6 @@ class MyController < ApplicationController
   def toggle_admin_activities
     cookies[:admin_activities] = cookies[:admin_activities] == "everyone" ? "myself" : "everyone"
     redirect_to my_activities_url
-  end
-
-  def hide_promotional_banner
-    cookies.permanent[:hide_robotics_raffle_banner] = 1
-    redirect_back_or_to root_path
   end
 
   def cards
