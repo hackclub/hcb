@@ -708,8 +708,8 @@ Rails.application.routes.draw do
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
 
-  post "discord/webhook", to: "discord#webhook"
-  post "discord/interaction", to: "discord#interaction"
+  post "discord/event_webhook", to: "discord#event_webhook"
+  post "discord/interaction_webhook", to: "discord#interaction_webhook"
   get "discord/link", to: "discord#link"
   post "discord/create_link", to: "discord#create_link"
   get "discord/setup", to: "discord#setup"

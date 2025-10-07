@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 class DiscordController < ApplicationController
-  protect_from_forgery except: [:webhook, :interaction]
-  skip_before_action :signed_in_user, only: [:webhook, :interaction]
-  before_action :verify_discord_signature, only: [:webhook, :interaction]
-  skip_after_action :verify_authorized, only: [:webhook, :interaction, :link]
+  protect_from_forgery except: [:event_webhook, :interaction_webhook]
+  skip_before_action :signed_in_user, only: [:event_webhook, :interaction_webhook]
+  before_action :verify_discord_signature, only: [:event_webhook, :interaction_webhook]
+  skip_after_action :verify_authorized, only: [:event_webhook, :interaction_webhook, :link]
 
-  def webhook
+  def event_webhook
     if params[:type] == 0
       # This is Discord's health check on our server. No need to do anything besides return a 204.
       # If type is 1, then it's an event we need to handle.
@@ -27,7 +27,7 @@ class DiscordController < ApplicationController
     head :no_content
   end
 
-  def interaction
+  def interaction_webhook
     puts "Received Discord interaction"
 
     if params[:type] == 1 # PING
