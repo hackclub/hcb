@@ -61,8 +61,6 @@ class DiscordController < ApplicationController
 
     @raw_response = response.body
 
-    puts @raw_response
-
     @discord_user = bot.user(@discord_id)
   end
 
@@ -92,10 +90,6 @@ class DiscordController < ApplicationController
     gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
 
     @raw_gd_response = gd_response.body
-
-    puts @raw_ch_response
-
-    puts @raw_gd_response
   end
 
   def create_server_link
@@ -131,8 +125,6 @@ class DiscordController < ApplicationController
     @event = Event.find_by(discord_guild_id: @guild_id)
 
     authorize @event, policy_class: DiscordPolicy
-
-    puts @raw_gd_response
   end
 
   def unlink_server_action
