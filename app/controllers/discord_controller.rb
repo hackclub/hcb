@@ -11,7 +11,10 @@ class DiscordController < ApplicationController
 
   def webhook
     # Webhook event where the bot was added to a server
-    if (params[:type] = 1) && (params[:event][:type] = "APPLICATION_AUTHORIZED") && params[:event][:data][:integration_type] = 0
+    # `event.data.interaction_type`:
+    #   - `0`: Bot was added to server
+    #   - `1`: Bot was added to user
+    if (params[:event][:type] == "APPLICATION_AUTHORIZED") && params[:event][:data][:integration_type] == 0
       user_id = params[:event][:data][:user][:id]
 
       channel = bot.pm_channel(user_id)
