@@ -27,8 +27,8 @@
 <div class="flex items-center justify-center g1">
   <%= form_with url: discord_create_server_link_path, method: :post, class: "flex items-center justify-center g1" do |f| %>
     <select name="event_id" class="form-select">
-      <% current_user.organizer_positions.each do |position| %>
-        <option value="<%= position.event.id %>"><%= position.event.name %></option>
+      <% current_user.events.each do |event| %>
+        <option value="<%= event.id %>"><%= event.name %></option>
       <% end %>
     </select>
     <%= f.hidden_field :guild_id, value: @guild_id %>
