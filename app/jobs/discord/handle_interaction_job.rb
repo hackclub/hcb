@@ -64,10 +64,6 @@ module Discord
       end
     end
 
-    def setup_command
-      link_command
-    end
-
     def balance_command
       return require_linked_event unless @current_event
 
