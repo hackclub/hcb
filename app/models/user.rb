@@ -134,6 +134,7 @@ class User < ApplicationRecord
   has_many :wise_transfers
 
   has_one_attached :profile_picture
+  validates :profile_picture, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
 
   has_many :w9s, class_name: "W9", as: :entity
 
