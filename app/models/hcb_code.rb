@@ -504,7 +504,7 @@ class HcbCode < ApplicationRecord
 
     (type == :card_charge) ||
       # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check, :paypal_transfer, :wire, :wise_transfer].include?(type) && created_at > Time.utc(2024, 2, 1))
+      ([:ach, :check, :paypal_transfer, :wire].include?(type) && created_at > Time.utc(2024, 2, 1))
   end
 
   def receipt_optional?
