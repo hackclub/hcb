@@ -71,6 +71,11 @@ class OrganizerPosition
         transitions from: [:pending, :sent], to: :signed
         after do
           organizer_position_invite.deliver
+          # Unfreeze the event if this is the first signed contract
+          event = organizer_position_invite.event
+          if event.organizer_position_contracts.signed.count == 1
+            event.update!(financially_frozen: false)
+          end
         end
       end
 

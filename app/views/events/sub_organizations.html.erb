@@ -4,6 +4,9 @@
 
 <h1 class="heading flex">
   <span class="flex-grow">Sub-organizations</span>
+  <%= pop_icon_to "download",
+                  { format: :csv },
+                  class: "align-middle tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
   <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
     <%= inline_icon "plus" %>
     Create a subsidiary
@@ -43,17 +46,17 @@
 
       <div class="field">
         <%= form.label :name, "Project name", class: "bold" %>
-        <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project" %>
+        <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project", value: params[:name] %>
       </div>
 
       <div class="field">
         <%= form.label :email, "Organizer email", class: "bold" %>
-        <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}" %>
+        <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}", value: params[:email] %>
       </div>
 
       <div class="field">
         <%= form.label :cosigner_email, "Co-signer email", class: "bold" %>
-        <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18" %>
+        <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18", value: params[:cosigner_email] %>
       </div>
 
       <small class="muted mt-0 mb-4">This project will be created on the <strong><%= @event.plan.label %></strong> plan</small>

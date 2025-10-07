@@ -6,7 +6,7 @@ ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", git: "https://github.com/rails/rails.git", branch: "7-2-stable"
+gem "rails", "~> 7.2"
 
 gem "puma", "~> 6.6" # app server
 
@@ -25,7 +25,7 @@ gem "jsbundling-rails", "~> 1.3"
 gem "terser", "~> 1.2" # JS compressor
 gem "jquery-rails"
 gem "react-rails"
-gem "turbo-rails", "~> 2.0.13"
+gem "turbo-rails", "~> 2.0.17"
 
 gem "invisible_captcha"
 gem "local_time" # client-side timestamp converter for cache-safe rendering

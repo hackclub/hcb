@@ -91,7 +91,9 @@
                   <span class="muted; margin-right: -0.25em;">
                     <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
                   </span>
-                  <span class="align-middle"><%= item.event %>d this report</span>
+                  <span class="align-middle">
+                    <%= item.event %><%= item.event.ends_with?("e") ? "d" : "ed" %> this report
+                  </span>
                   <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
                     <%= time_ago_in_words item.created_at %> ago</span>
                 </div>

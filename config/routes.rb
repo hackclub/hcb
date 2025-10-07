@@ -79,7 +79,6 @@ Rails.application.routes.draw do
     get "inbox", to: "my#inbox", as: :my_inbox
     get "activities", to: "my#activities", as: :my_activities
     post "toggle_admin_activities", to: "my#toggle_admin_activities", as: :toggle_admin_activities
-    post "hide_promotional_banner", to: "my#hide_promotional_banner", as: :hide_promotional_banner
     get "tasks", to: "my#tasks", as: :my_tasks
     get "reimbursements", to: "my#reimbursements", as: :my_reimbursements
     get "reimbursements_icon", to: "my#reimbursements_icon", as: :my_reimbursements_icon
@@ -457,6 +456,7 @@ Rails.application.routes.draw do
     post "mark_fulfilled"
     post "reject"
     post "cancel"
+    post "set_transaction_categories"
     get "confirmation", to: "disbursements#transfer_confirmation_letter"
   end
 
@@ -530,6 +530,7 @@ Rails.application.routes.draw do
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
       post "request_reimbursement"
+      post "convert_to_wise_transfer"
       post "admin_approve"
       post "admin_send_wise_transfer"
       post "reverse"
@@ -645,6 +646,8 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
+          resources :invoices, only: [:index]
+          resources :sponsors, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -682,6 +685,10 @@ Rails.application.routes.draw do
             post "cancel"
           end
         end
+
+        resources :invoices, only: [:show, :create]
+
+        resources :sponsors, only: [:show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
@@ -789,6 +796,7 @@ Rails.application.routes.draw do
     put "toggle_hidden"
     post "claim_point_of_contact"
     post "create_sub_organization"
+    post "toggle_fee_waiver_eligible"
 
     post "remove_header_image"
     post "remove_background_image"

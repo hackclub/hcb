@@ -22,6 +22,7 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
+#  session_validity_preference   :integer          default(259200), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean
@@ -152,7 +153,7 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_create { self.teenager = teenager? }
+  before_update { self.teenager = teenager? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -175,6 +176,8 @@ class User < ApplicationRecord
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
+
+  validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
   validate :profile_picture_format
 
@@ -208,7 +211,7 @@ class User < ApplicationRecord
     end
   end
 
-  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { last_seen_at: ago.. }).distinct }
+  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
@@ -360,11 +363,11 @@ class User < ApplicationRecord
   end
 
   def last_seen_at
-    user_sessions.maximum(:last_seen_at)
+    user_sessions.not_impersonated.maximum(:last_seen_at)
   end
 
   def last_login_at
-    user_sessions.maximum(:created_at)
+    user_sessions.not_impersonated.maximum(:created_at)
   end
 
   def email_charge_notifications_enabled?
@@ -522,8 +525,15 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire) || payout_method.is_a?(User::PayoutMethod::WiseTransfer)
-      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, Wise transfer, or ACH transfer")
+    if payout_method_type_changed? && payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
+      # I'm using `try` here in the slim chance that `payout_method` is some
+      # random model and doesn't include `User::PayoutMethod::Shared`.
+      if payout_method.try(:unsupported?)
+        reason = payout_method.unsupported_details[:reason]
+        errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
+      else
+        errors.add(:payout_method, "is invalid. Please choose another option.")
+      end
     end
   end
 

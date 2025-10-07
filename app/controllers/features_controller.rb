@@ -32,7 +32,8 @@ class FeaturesController < ApplicationController
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
     end
-    redirect_back fallback_location: @actor
+
+    redirect_to(actor_features_index(@actor))
   end
 
   def disable_feature
@@ -61,8 +62,11 @@ class FeaturesController < ApplicationController
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
     end
-    redirect_back fallback_location: @actor
+
+    redirect_to(actor_features_index(@actor))
   end
+
+  private
 
   def set_actor_and_feature
     if params[:event_id]
@@ -74,6 +78,21 @@ class FeaturesController < ApplicationController
     end
     @feature = params[:feature]
     authorize @actor
+  end
+
+  def actor_features_index(actor)
+    case actor
+    when Event
+      edit_event_path(actor, tab: :features)
+    when User
+      if actor == current_user
+        settings_previews_path
+      else
+        previews_user_path(actor)
+      end
+    else
+      root_path
+    end
   end
 
 end
