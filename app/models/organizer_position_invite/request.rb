@@ -39,5 +39,7 @@ class OrganizerPositionInvite
         transitions from: :pending, to: :denied
       end
     end
+
   end
+
 end

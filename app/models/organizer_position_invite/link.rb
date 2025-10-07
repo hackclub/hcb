@@ -39,6 +39,7 @@ class OrganizerPositionInvite
     def deactivated?
       deactivated_at.present?
     end
+
   end
 
 end
