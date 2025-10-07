@@ -23,6 +23,8 @@
 #
 class OrganizerPositionInvite
   class Request < ApplicationRecord
+    include Hashid::Rails
+
     belongs_to :link, class_name: "OrganizerPositionInvite::Link", foreign_key: "organizer_position_invite_link_id"
 		belongs_to :requester, class_name: "User"
 

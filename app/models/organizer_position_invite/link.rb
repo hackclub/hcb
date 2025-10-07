@@ -27,6 +27,8 @@
 #
 class OrganizerPositionInvite
   class Link < ApplicationRecord
+    include Hashid::Rails
+
     EXPIRATION_SECONDS = 30.days
 
     scope :active, -> { where(deactivated_at: nil) }
