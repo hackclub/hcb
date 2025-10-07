@@ -7,7 +7,7 @@ class DiscordController < ApplicationController
   protect_from_forgery except: [:webhook, :interaction]
   skip_before_action :signed_in_user, only: [:webhook, :interaction]
   before_action :verify_discord_signature, only: [:webhook, :interaction]
-  skip_after_action :verify_authorized
+  skip_after_action :verify_authorized, only: [:webhook, :interaction, :link]
 
   def webhook
     if params[:type] == 0
@@ -48,6 +48,7 @@ class DiscordController < ApplicationController
 
   def link
     @discord_id = params[:discord_id]
+    authorize nil, policy_class: DiscordPolicy
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -75,6 +76,7 @@ class DiscordController < ApplicationController
   def setup
     @guild_id = params[:guild_id]
     @channel_id = params[:channel_id]
+    authorize nil, policy_class: DiscordPolicy
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -98,10 +100,8 @@ class DiscordController < ApplicationController
 
   def create_server_link
     event = Event.find(params[:event_id])
-    unless current_user.organizer_positions.exists?(event:)
-      flash[:error] = "We could not link the selected organization to your Discord server"
-      redirect_to root_path and return
-    end
+    authorize event, policy_class: DiscordPolicy
+
 
     event.update!(discord_guild_id: params[:guild_id], discord_channel_id: params[:channel_id])
 
@@ -130,15 +130,14 @@ class DiscordController < ApplicationController
 
     @event = Event.find_by(discord_guild_id: @guild_id)
 
+    authorize @event, policy_class: DiscordPolicy
+
     puts @raw_gd_response
   end
 
   def unlink_server_action
     event = Event.find_by(discord_guild_id: params[:guild_id])
-    unless current_user.organizer_positions.exists?(event:)
-      flash[:error] = "We could not unlink your organization from your Discord server"
-      redirect_to root_path and return
-    end
+    authorize event, policy_class: DiscordPolicy
 
     cid = event.discord_channel_id
 
