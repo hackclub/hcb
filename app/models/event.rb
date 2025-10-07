@@ -428,7 +428,7 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
-  validate :discord_guild_id, :discord_channel_id, uniqueness: true
+  validate :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }
 
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
