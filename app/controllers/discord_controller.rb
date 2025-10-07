@@ -32,7 +32,7 @@ class DiscordController < ApplicationController
 
     if params[:type] == 1 # PING
       puts "Responding to PING"
-      render json: { type: 1 }
+      render json: { type: 1 } # PONG
 
     elsif params[:type] == 2 # application command
       render json: { type: 5 } # Acknowledge interaction & will edit response later
