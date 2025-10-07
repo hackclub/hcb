@@ -164,20 +164,18 @@ module Discord
     end
 
     def button_to(label, url)
-      [
-        {
-          type: 1,
-          components: [
-            {
-              type: 2,
-              url:,
-              label:,
-              style: 5,
-              emoji: { id: "1424492375295791185" }
-            }
-          ]
-        }
-      ]
+      {
+        type: 1,
+        components: [
+          {
+            type: 2,
+            url:,
+            label:,
+            style: 5,
+            emoji: { id: "1424492375295791185" }
+          }
+        ]
+      }
     end
 
     def link_to(label, url)
@@ -186,6 +184,10 @@ module Discord
 
     def respond(**body)
       puts "HIJ>response method called"
+
+      if body[:components].present? && !body[:components].is_a?(Array)
+        body[:components] = [body[:components]]
+      end
 
       conn = Faraday.new url: "https://discord.com" do |c|
         c.request :json
