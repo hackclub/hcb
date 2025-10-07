@@ -12,7 +12,7 @@ module Discord
       @channel_id = @interaction.dig(:channel, :id)
       @permissions = @interaction.dig(:member, :permissions)&.to_i
 
-      @current_user = User.find_by(discord_id: @user_id) if @user_id
+      @user = User.find_by(discord_id: @user_id) if @user_id
       @current_event = Event.find_by(discord_guild_id: @guild_id) if @guild_id
 
       command_name = @interaction.dig(:data, :name)
@@ -50,11 +50,11 @@ module Discord
     end
 
     def link_command
-      if @current_event.present? && @current_user.present?
+      if @current_event.present? && @user.present?
         respond content: "HCB has already been setup for this Discord server!", embeds: linking_embed
-      elsif !@current_event.present? && @current_user.present?
+      elsif !@current_event.present? && @user.present?
         respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:", components: button_to("Set up HCB on this server", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id)), embeds: linking_embed
-      elsif @current_event.present? && !@current_user.present?
+      elsif @current_event.present? && !@user.present?
         respond content: "HCB has already been setup for this Discord server, but your Discord account isn't linked to your HCB account yet:", components: button_to("Link Discord account", url_helpers.discord_link_url(discord_id: @user_id)), embeds: linking_embed
       else
         respond content: "Link your HCB account, and then connect this Discord server to an HCB organization:", components: [button_to("Link Discord account", url_helpers.discord_link_url(discord_id: @user_id)), button_to("Set up HCB on this server", url_helpers.discord_setup_url(guild_id: @guild_id, channel_id: @channel_id))], embeds: linking_embed
@@ -119,11 +119,11 @@ module Discord
     end
 
     def missing_receipts_command
-      return require_linked_user unless @current_user
+      return require_linked_user unless @user
 
       respond embeds: [
         {
-          title: "You have #{@current_user.transactions_missing_receipt_count} transactions missing receipts",
+          title: "You have #{@user.transactions_missing_receipt_count} transactions missing receipts",
           color:,
         }
       ], components: button_to("View on HCB", url_helpers.my_inbox_url)
@@ -146,7 +146,7 @@ module Discord
           fields: [
             {
               name: "Discord Account (`@#{user_name}`) ↔ Your HCB Account",
-              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@current_user.present? ? "✅ Linked to #{@current_user.preferred_name.presence || @current_user.first_name} on HCB" : "❌ Not linked. #{link_to("Set up here", url_helpers.discord_link_url(discord_id: @user_id))}"}\n",
+              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@user.present? ? "✅ Linked to #{@user.preferred_name.presence || @user.first_name} on HCB" : "❌ Not linked. #{link_to("Set up here", url_helpers.discord_link_url(discord_id: @user_id))}"}\n",
             },
             (if @guild_id.present?
                {
