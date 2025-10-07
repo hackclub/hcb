@@ -2,10 +2,10 @@
 
 class OrganizerPositionInvite
   class RequestsController < ApplicationController
-    before_action :set_request, except: [:create]
+    before_action :set_request, except: :create
 
     def create
-      OrganizerPositionInvite::Request.create!(requester: current_user, organizer_position_invite_link_id: params[:organizer_position_invite_link_id])
+      OrganizerPositionInvite::Request.create!(requester: current_user, organizer_position_invite_link_id: params[:id])
     end
 
     def approve
@@ -21,11 +21,13 @@ class OrganizerPositionInvite
 
       else
         flash[:error] = service.model.errors.full_messages.to_sentence
-        redirect_back_or_to event_team_path(@event)
+        redirect_back_or_to event_team_path(link.event)
       end
     end
 
     def deny
+      authorize @request
+
       @request.deny
     end
 

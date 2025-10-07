@@ -46,6 +46,11 @@ class OrganizerPositionInvite
       deactivated_at.present?
     end
 
+    def deactivate(user:)
+      deactivated_at = Time.now
+      deactivator = user
+    end
+
   end
 
 end
