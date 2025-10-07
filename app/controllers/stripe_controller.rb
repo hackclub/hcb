@@ -39,7 +39,7 @@ class StripeController < ActionController::Base
     if approved
       user = service.card.user
       ::User::UpdateCardLockingJob.perform_later(user:)
-      ::User::SendCardLockingNotificationJob.perform_later(user:, event:)
+      ::User::SendCardLockingNotificationJob.perform_later(user:, event: service.event)
     end
 
     response.set_header "Stripe-Version", "2022-08-01"
