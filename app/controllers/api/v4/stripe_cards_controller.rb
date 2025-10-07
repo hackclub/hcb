@@ -3,9 +3,12 @@
 module Api
   module V4
     class StripeCardsController < ApplicationController
+      include SetEvent
+
       def index
         if params[:event_id].present?
-          @event = authorize(Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]), :card_overview?)
+          set_api_event
+          authorize @event, :card_overview?
           @stripe_cards = @event.stripe_cards.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
@@ -64,11 +67,7 @@ module Api
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?
 
-        render :show
-
-      rescue => e
-        Rails.error.report e
-        render json: { error: "internal_server_error" }, status: :internal_server_error
+        render :show, status: :created, location: api_v4_stripe_card_path(@stripe_card)
       end
 
       def update

@@ -32,7 +32,7 @@ class Event
       end
 
       def contract_docuseal_template_id
-        1711777
+        1766872
       end
 
     end

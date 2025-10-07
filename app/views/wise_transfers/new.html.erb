@@ -1,4 +1,4 @@
-<% disabled = !policy(@event).create_transfer? %>
+<% disabled = !policy(@event).create_transfer? || true %>
 
 <% title "Send a Wise transfer" %>
 <%= render "events/nav", selected: :transfers %>
@@ -9,6 +9,10 @@
 <% end %>
 
 <h1>Send a Wise transfer</h1>
+
+<%= render "callout", type: "warning", icon: "wise", title: "Wise Transfers are currently under maintenance." do %>
+  Please choose another transfer method.
+<% end %>
 
 <%= render "callout",
     type: "info",

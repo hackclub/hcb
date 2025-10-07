@@ -399,6 +399,14 @@ class EventsController < ApplicationController
     redirect_to root_path
   end
 
+  def toggle_fee_waiver_eligible
+    authorize @event
+
+    @event.update!(fee_waiver_eligible: !@event.fee_waiver_eligible)
+
+    redirect_back fallback_location: event_promotions_path(@event)
+  end
+
   def emburse_card_overview
     authorize @event
     @emburse_cards = @event.emburse_cards.includes(user: [:profile_picture_attachment])
@@ -774,7 +782,11 @@ class EventsController < ApplicationController
     authorize @event
 
     @active_teenagers_count = @event.users.active_teenager.count
-    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
+
+    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
+
+    # I'm so sorry, this is awful & temporary
+    @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025)
   end
 
   def reimbursements
@@ -819,13 +831,34 @@ class EventsController < ApplicationController
   def sub_organizations
     authorize @event
 
-    search = params[:q] || params[:search]
+    respond_to do |format|
+      format.html do
+        search = params[:q] || params[:search]
 
-    relation = @event.subevents
-    relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
-    relation = relation.order(created_at: :desc)
+        relation = @event.subevents
+        relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+        relation = relation.order(created_at: :desc)
 
-    @sub_organizations = relation
+        @sub_organizations = relation
+      end
+
+      # CSV export intentionally does not consider filters
+      format.csv do
+        csv = CSV.generate(headers: true) do |csv|
+          # We include the public ID because our partners iterate this CSV to
+          # access organizations via the V3 API. The public ID serves has a
+          # robust, immutable identifier compared to slugs.
+          csv << %w[ID Name Slug Balance]
+
+          @event.subevents.find_each do |e|
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0]
+          end
+        end
+
+        send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
+      end
+    end
+
   end
 
   def create_sub_organization
@@ -927,7 +960,12 @@ class EventsController < ApplicationController
   def statement_of_activity
     authorize @event
 
-    @statement_of_activity = Event::StatementOfActivity.new(@event, start_date_param: params[:start], end_date_param: params[:end])
+    @statement_of_activity = Event::StatementOfActivity.new(
+      @event,
+      start_date_param: params[:start],
+      end_date_param: params[:end],
+      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants]),
+    )
 
     respond_to do |format|
       format.html
@@ -1098,7 +1136,7 @@ class EventsController < ApplicationController
 
   # Only allow a trusted parameter "white list" through.
   def event_params
-    result_params = params.require(:event).permit(
+    permitted_params = [
       :name,
       :short_name,
       :description,
@@ -1134,26 +1172,34 @@ class EventsController < ApplicationController
       :stripe_card_shipping_type,
       :plan,
       :financially_frozen,
-      card_grant_setting_attributes: [
-        :merchant_lock,
-        :category_lock,
-        :keyword_lock,
-        :invite_message,
-        :banned_merchants,
-        :banned_categories,
-        :expiration_preference,
-        :reimbursement_conversions_enabled,
-        :pre_authorization_required
-      ],
-      config_attributes: [
-        :id,
-        :anonymous_donations,
-        :cover_donation_fees,
-        :contact_email,
-        :generate_monthly_announcement,
-        :subevent_plan
-      ]
-    )
+      {
+        card_grant_setting_attributes: [
+          :merchant_lock,
+          :category_lock,
+          :keyword_lock,
+          :invite_message,
+          :banned_merchants,
+          :banned_categories,
+          :expiration_preference,
+          :reimbursement_conversions_enabled,
+          :pre_authorization_required
+        ],
+        config_attributes: [
+          :id,
+          :anonymous_donations,
+          :cover_donation_fees,
+          :contact_email,
+          :generate_monthly_announcement,
+          :subevent_plan
+        ]
+      }
+    ]
+
+    if Flipper.enabled?(:parent_event_assignment_2025_09_18, current_user)
+      permitted_params << :parent_id
+    end
+
+    result_params = params.require(:event).permit(*permitted_params)
 
     # convert whatever the user inputted into something that is a legal slug
     result_params[:slug] = ActiveSupport::Inflector.parameterize(user_event_params[:slug]) if result_params[:slug]
