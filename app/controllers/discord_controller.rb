@@ -4,7 +4,7 @@ class DiscordController < ApplicationController
   protect_from_forgery except: [:event_webhook, :interaction_webhook]
   skip_before_action :signed_in_user, only: [:event_webhook, :interaction_webhook]
   before_action :verify_discord_signature, only: [:event_webhook, :interaction_webhook]
-  skip_after_action :verify_authorized, only: [:event_webhook, :interaction_webhook, :link]
+  skip_after_action :verify_authorized, only: [:event_webhook, :interaction_webhook]
 
   def event_webhook
     if params[:type] == 0
