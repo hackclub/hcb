@@ -7,7 +7,8 @@
     outline: none;
 
     &:not(.menu__toggle--arrowless):after {
-      bottom: -1px;
+      bottom: -15px;
+      animation: menu-arrow 0.15s ease forwards;
       left: 50%;
       transform: translateX(-50%);
       border: solid transparent;
@@ -22,9 +23,18 @@
     }
 
     &:not(.menu__toggle--arrowless):after {
-      border-bottom-color: map-get($palette, white);
+      border-bottom-color: lighten(map-get($palette, smoke), 1%);
       border-width: 10px;
     }
+  }
+}
+
+@keyframes menu-arrow {
+  from {
+    bottom: -27px;
+  }
+  to {
+    bottom: -15px;
   }
 }
 
@@ -40,6 +50,7 @@
   box-shadow: var(--shadow-menu);
   overflow: auto;
   z-index: 301;
+  margin-top: 10px;
 
   input[type='submit'].menu__action,
   button.menu__action {
