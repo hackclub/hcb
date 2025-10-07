@@ -78,10 +78,13 @@ class DiscordController < ApplicationController
       return redirect_to root_path
     end
 
-    current_user.update!(discord_id: h[:discord_id])
+    if current_user.update(discord_id: h[:discord_id])
+      flash[:success] = "Successfully linked Discord account"
+    else
+      flash[:error] = current_user.errors.full_messages.to_sentence
+    end
+    redirect_to edit_user_path(current_user)
 
-    flash[:success] = "Successfully linked Discord account"
-    redirect_to root_path
   end
 
   def setup
@@ -127,15 +130,17 @@ class DiscordController < ApplicationController
       return redirect_to root_path
     end
 
-    event.update!(discord_guild_id: h[:guild_id], discord_channel_id: h[:channel_id])
-
-    bot.send_message(h[:channel_id], "The HCB organization #{event.name} has been successfully linked to this Discord server! Notifications and announcements will be sent in this channel, <\##{h[:channel_id]}>.")
-    flash[:success] = "Successfully linked the organization #{event.name} to your Discord server"
-    redirect_to root_path
+    if event.update(discord_guild_id: h[:guild_id], discord_channel_id: h[:channel_id])
+      bot.send_message(h[:channel_id], "The HCB organization #{event.name} has been successfully linked to this Discord server! Notifications and announcements will be sent in this channel, <\##{h[:channel_id]}>.")
+      flash[:success] = "Successfully linked the organization #{event.name} to your Discord server"
+    else
+      flash[:error] = event.errors.full_messages.to_sentence
+    end
   rescue => e
     Rails.error.report("Exception linking discord server: #{e}")
     flash[:error] = "We could not link the selected organization to your Discord server"
-    redirect_to root_path
+  ensure
+    redirect_to edit_event_path(event)
   end
 
   def unlink_server
@@ -181,15 +186,17 @@ class DiscordController < ApplicationController
 
     cid = event.discord_channel_id
 
-    event.update!(discord_guild_id: nil, discord_channel_id: nil)
-
-    bot.send_message(cid, "The HCB organization #{event.name} has been unlinked from this Discord server, and notifications/announcements will no longer be sent here.")
-    flash[:success] = "Successfully unlinked the organization #{event.name} from your Discord server"
-    redirect_to root_path
+    if event.update(discord_guild_id: nil, discord_channel_id: nil)
+      bot.send_message(cid, "The HCB organization #{event.name} has been unlinked from this Discord server, and notifications/announcements will no longer be sent here.")
+      flash[:success] = "Successfully unlinked the organization #{event.name} from your Discord server"
+    else
+      flash[:error] = event.errors.full_messages.to_sentence
+    end
   rescue => e
     Rails.error.report("Exception linking discord server: #{e}")
     flash[:error] = "We could not unlink your organization from your Discord server"
-    redirect_to root_path
+  ensure
+    redirect_to edit_event_path(event)
   end
 
   private
