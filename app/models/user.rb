@@ -196,9 +196,10 @@ class User < ApplicationRecord
   end
 
   SYSTEM_USER_EMAIL = "bank@hackclub.com"
+  SYSTEM_USER_ID = 2891
 
   def self.system_user
-    User.find_by!(email: SYSTEM_USER_EMAIL)
+    User.find!(SYSTEM_USER_ID)
   end
 
   after_save do
