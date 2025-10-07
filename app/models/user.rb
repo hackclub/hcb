@@ -476,7 +476,7 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
-  def linked_discord_account?
+  def has_discord_account?
     discord_id.present?
   end
 

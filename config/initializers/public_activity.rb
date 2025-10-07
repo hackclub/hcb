@@ -40,7 +40,7 @@ class PublicActivity::Activity
           streams << [user, Event.find(event_id), "activities"]
         end
 
-        ::Discord::ProcessNotificationJob.perform_later(self.id) if event.linked_discord_guild?
+        ::Discord::ProcessNotificationJob.perform_later(self.id) if event.has_discord_guild?
       end
 
       if recipient.is_a?(User)

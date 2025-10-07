@@ -892,7 +892,7 @@ class Event < ApplicationRecord
                                   .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
   end
 
-  def linked_discord_guild?
+  def has_discord_guild?
     discord_guild_id.present?
   end
 
