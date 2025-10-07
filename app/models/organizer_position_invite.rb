@@ -97,6 +97,11 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
+  enum invite_method: {
+    direct: "direct",
+    link: "link"
+  }
+
   def organizer_position_contract
     organizer_position_contracts.where.not(aasm_state: :voided).last
   end
