@@ -23,7 +23,7 @@ class OrganizerPositionInvite
     def manager?
       OrganizerPosition.find_by(user:, event: record.event)&.manager?
     end
-  
+
     def admin_or_manager?
       admin? || manager?
     end
