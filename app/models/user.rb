@@ -185,6 +185,8 @@ class User < ApplicationRecord
 
   validate(:admins_cannot_disable_2fa, on: :update)
 
+  validate :discord_id, uniqueness: true
+
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
   enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications
