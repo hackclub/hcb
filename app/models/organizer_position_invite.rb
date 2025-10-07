@@ -9,14 +9,12 @@
 #  cancelled_at                           :datetime
 #  initial                                :boolean          default(FALSE)
 #  initial_control_allowance_amount_cents :integer
-#  invite_method                          :string           default("direct"), not null
 #  is_signee                              :boolean          default(FALSE)
 #  rejected_at                            :datetime
 #  role                                   :integer          default("manager"), not null
 #  slug                                   :string
 #  created_at                             :datetime         not null
 #  updated_at                             :datetime         not null
-#  approver_id                            :bigint
 #  event_id                               :bigint           not null
 #  organizer_position_id                  :bigint
 #  sender_id                              :bigint
@@ -94,15 +92,6 @@ class OrganizerPositionInvite < ApplicationRecord
       user == sender ? accept : deliver
     end
   end
-
-  before_create do
-    self.approver_id = sender_id if invite_method == :direct
-  end
-
-  enum invite_method: {
-    direct: "direct",
-    link: "link"
-  }
 
   def organizer_position_contract
     organizer_position_contracts.where.not(aasm_state: :voided).last
