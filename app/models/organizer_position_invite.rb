@@ -95,6 +95,10 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
+  before_create do
+    self.approver_id = sender_id if invite_method == :direct
+  end
+
   enum invite_method: {
     direct: "direct",
     link: "link"
