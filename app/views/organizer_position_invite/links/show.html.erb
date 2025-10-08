@@ -16,6 +16,6 @@
   <% end %>
 
   <div class="flex justify-center items-center flex-wrap mt3">
-    <%= link_to "Request to join", event_invite_requests_path(@link), method: :post, class: "btn bg-success h2 m1" %>
+    <%= link_to "Request to join", event_invite_requests_path(@link.event), method: :post, class: "btn bg-success h2 m1" %>
   </div>
 </main>

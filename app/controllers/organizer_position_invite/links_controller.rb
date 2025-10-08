@@ -15,6 +15,8 @@ class OrganizerPositionInvite
     def show
       authorize @link
 
+      redirect_to event_path(@link.event) if @link.event.users.include?(current_user)
+
       @organizers = @link.event.organizer_positions
     end
 

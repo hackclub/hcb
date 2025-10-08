@@ -5,7 +5,9 @@ class OrganizerPositionInvite
     before_action :set_request, except: :create
 
     def create
-      OrganizerPositionInvite::Request.create!(requester: current_user, organizer_position_invite_link_id: params[:id])
+      OrganizerPositionInvite::Request.create!(requester: current_user, organizer_position_invite_link: OrganizerPositionInvite::Link.find_by_hashid!(params[:id]))
+
+      redirect_to root_path
     end
 
     def approve
