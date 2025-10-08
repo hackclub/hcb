@@ -219,6 +219,7 @@ module Discord
         {
           title: "Reimbursement reports for #{@user.preferred_name.presence || @user.first_name}",
           fields: report_fields,
+          description: reimbursement_reports.empty? ? "No reimbursement reports yet" : nil,
           color:,
         }
       ], components: [
