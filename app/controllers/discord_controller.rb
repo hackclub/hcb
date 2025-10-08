@@ -42,7 +42,6 @@ class DiscordController < ApplicationController
       ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h)
     elsif params[:type] == 3 # message component
       render json: ::Discord::HandleInteractionJob.perform_now(params.to_unsafe_h)
-    # Acknowledge interaction & will edit response later
     else
       Rails.error.unexpected "🚨 Unknown payload received from Discord on interaction webhook: #{params.inspect}"
     end
@@ -132,7 +131,6 @@ class DiscordController < ApplicationController
 
     authorize @event, policy_class: DiscordPolicy
   end
-
 
   def unlink_server_action
     @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :unlink_server)
