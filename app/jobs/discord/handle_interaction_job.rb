@@ -64,6 +64,10 @@ module Discord
       end
     end
 
+    def setup_command
+      link_command # these do the same thing—it just makes it easier for users if they're two different commands
+    end
+
     def balance_command
       return require_linked_event unless @current_event
 
