@@ -779,9 +779,9 @@ Rails.application.routes.draw do
     resources :links, path: "invite_links", only: :show do
       member do
         post "deactivate"
-      end
     end
-    
+
+    resources :requests, path: "invite_requests", only: [] do
     resources :requests, path: "invite_requests", only: [] do
       member do
         post "approve"
