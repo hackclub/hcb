@@ -162,24 +162,11 @@ class DiscordController < ApplicationController
   private
 
   def verify_discord_signature
-    timestamp = request.headers["X-Signature-Timestamp"]
-    signature_hex = request.headers["X-Signature-Ed25519"]
-    signature = [signature_hex].pack("H*")
-    key = [Credentials.fetch(:DISCORD__PUBLIC_KEY)].pack("H*")
-
-    verify_key = Ed25519::VerifyKey.new(key)
-
-    begin
-      verify_key.verify(signature, timestamp + request.raw_post)
-    rescue Ed25519::VerifyError
-      head :unauthorized
-      return
-    end
+    head :unauthorized unless Discord::Bot.verify_webhook_signature(request)
   end
 
   def redirect_to_discord_bot_install_link
-    install_link = "https://discord.com/oauth2/authorize?client_id=#{Credentials.fetch(:DISCORD__APPLICATION_ID)}"
-    redirect_to install_link, allow_other_host: true
+    redirect_to Discord::Bot.install_link, allow_other_host: true
   end
 
 end
