@@ -17,7 +17,7 @@ module Discord
 
       command_name = @interaction.dig(:data, :name)
 
-      unless command_name.in?(::Discord::RegisterCommandsJob.commands.pluck(:name))
+      unless ::Discord::RegisterCommandsJob.command(command_name).present?
         respond content: "Unknown command: #{command_name}" and return
       end
 
@@ -56,11 +56,11 @@ module Discord
       if @current_event.present? && @user.present?
         respond content: "HCB has already been setup for this Discord server!", embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       elsif !@current_event.present? && @user.present?
-        respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:", components: button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:), ephemeral: true
+        respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:", components: button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       elsif @current_event.present? && !@user.present?
-        respond content: "This Discord server is connected to #{@current_event.name} on HCB. HCB is the platform your team uses to manage its finances. Finish your setup by linking your Discord account to HCB:", components: button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:), ephemeral: true
+        respond content: "This Discord server is connected to #{@current_event.name} on HCB. HCB is the platform your team uses to manage its finances. Finish your setup by linking your Discord account to HCB:", components: button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       else
-        respond content: "Link your HCB account, and then connect this Discord server to an HCB organization:", components: [button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed))], embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:), ephemeral: true
+        respond content: "Link your HCB account, and then connect this Discord server to an HCB organization:", components: [button_to("Link Discord account", url_helpers.discord_link_url(signed_message: account_link_signed)), button_to("Set up HCB on this server", url_helpers.discord_setup_url(signed_message: server_link_signed))], embeds: linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
       end
     end
 
@@ -125,11 +125,11 @@ module Discord
           title: "You have #{@user.transactions_missing_receipt_count} transactions missing receipts",
           color:,
         }
-      ], ephemeral: true, components: button_to("View on HCB", url_helpers.my_inbox_url)
+      ], components: button_to("View on HCB", url_helpers.my_inbox_url)
     end
 
     def require_linked_user
-      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed, ephemeral: true
+      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed
     end
 
     def linking_embed(account_link_signed:, server_link_signed:, server_unlink_signed:)
@@ -159,7 +159,7 @@ module Discord
     end
 
     def require_linked_event
-      respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed, ephemeral: true
+      respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed
     end
 
     def button_to(label, url)

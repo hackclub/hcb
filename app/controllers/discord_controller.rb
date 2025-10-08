@@ -35,7 +35,8 @@ class DiscordController < ApplicationController
       render json: { type: 1 } # PONG
 
     elsif params[:type] == 2 # application command
-      render json: { type: 5 } # Acknowledge interaction & will edit response later
+      ephemeral = ::Discord::RegisterCommandsJob.command(params.dig(:data, :name))&.dig(:meta, :ephemeral) || false
+      render json: { type: 5, data: { flags: ephemeral ? 1 << 6 : 0 } } # Acknowledge interaction & will edit response later
       ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h)
 
     else

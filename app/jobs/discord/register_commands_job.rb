@@ -12,7 +12,7 @@ module Discord
         c.response :raise_error
       end
 
-      response = conn.put("/api/v10/applications/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/commands", ::Discord::RegisterCommandsJob.commands)
+      response = conn.put("/api/v10/applications/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/commands", ::Discord::RegisterCommandsJob.commands_for_discord)
 
       raw_response = response.body
 
@@ -33,44 +33,59 @@ module Discord
           type: 1,
           description: "Test the bot's responsiveness",
           options: [],
+          meta: { ephemeral: false },
         },
         {
           name: "link",
           type: 1,
           description: "Link your Discord account to your HCB account",
           options: [],
+          meta: { ephemeral: true },
         },
         {
           name: "setup",
           type: 1,
           description: "Connect your Discord server to your HCB organization",
           options: [],
+          meta: { ephemeral: true },
         },
         {
           name: "balance",
           type: 1,
           description: "Check your organization's balance on HCB",
           options: [],
+          meta: { ephemeral: false },
         },
         {
           name: "transactions",
           type: 1,
           description: "View your organization's recent transactions on HCB",
           options: [],
+          meta: { ephemeral: false },
         },
         {
           name: "reimburse",
           type: 1,
           description: "Open a new reimbursement report on HCB",
           options: [],
+          meta: { ephemeral: false },
         },
         {
           name: "missing-receipts",
           type: 1,
           description: "List transactions missing receipts",
           options: [],
+          meta: { ephemeral: false },
         }
       ]
+    end
+
+    def self.commands_for_discord
+      commands.map { |command| command.except(:meta) }
+    end
+
+    def self.command(name)
+      ::Discord::RegisterCommandsJob.commands.find { |command| command[:name] == name }
     end
 
   end
