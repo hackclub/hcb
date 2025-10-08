@@ -285,7 +285,7 @@ class Event < ApplicationRecord
 
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_invite_links, class_name: "OrganizerPositionInvite::Link"
-	has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", through: :organizer_position_invite_links, source: :event
+  has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", through: :organizer_position_invite_links, source: :event
   has_many :organizer_positions, dependent: :destroy
 
   def ancestor_organizer_positions
