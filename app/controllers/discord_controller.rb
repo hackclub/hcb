@@ -107,20 +107,10 @@ class DiscordController < ApplicationController
     @guild_id = h[:guild_id]
     @channel_id = h[:channel_id]
 
-    conn = Faraday.new url: "https://discord.com" do |c|
-      c.request :json
-      c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
-      c.response :json
-      c.response :raise_error
-    end
+    @guild = bot.server(@guild_id)
+    @channel = bot.channel(@channel_id)
 
-    ch_response = conn.get("/api/v10/channels/#{@channel_id}")
-    @raw_ch_response = ch_response.body
-
-    gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
-    @raw_gd_response = gd_response.body
-
-    redirect_to install_link if @raw_ch_response.nil? || @raw_gd_response.nil?
+    redirect_to install_link if @guild.nil? || @channel.nil?
   end
 
   def create_server_link
