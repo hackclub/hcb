@@ -17,19 +17,26 @@
   resolved "https://registry.yarnpkg.com/@alpinejs/persist/-/persist-3.15.0.tgz#b6b2cd51246af8c730d3bdd09844bd1b381cc786"
   integrity sha512-SmW1DWn9FRflfPqZZtpTq+2uXDq/ohbSiKmYg6HXX1UxQnsaSkTT0HT72SQcbqOC3WmIUF28CberBnwiWoqmpw==
 
-"@appsignal/javascript@=1.6.0", "@appsignal/javascript@^1.5.0":
+"@appsignal/javascript@=1.6.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@appsignal/javascript/-/javascript-1.6.0.tgz#cce05f14f8a5b950c10b6fdf60e3abf55b402111"
   integrity sha512-QQjPTU9dJ22NfHo/MVgZ88DLTQTCiR8sFZ/nMBUJhki2IdXWgwH38/cjqLf/Clv0o/zLh7swDGjBYw2d8pUfow==
   dependencies:
     tslib "^2.3.0"
 
-"@appsignal/plugin-breadcrumbs-console@^1.1.36":
-  version "1.1.36"
-  resolved "https://registry.yarnpkg.com/@appsignal/plugin-breadcrumbs-console/-/plugin-breadcrumbs-console-1.1.36.tgz#2ec0a6ee01770e82eaa546f05973dd19a1d5364e"
-  integrity sha512-yUJ1J8epkGEmPu/jlKeHegHv0OEaOm8mhieEGjqG3B+RL/7KW2wr4C/TjL5R7WNiWEGdHM9/nSzx7QStOtJp3w==
+"@appsignal/javascript@=1.6.1", "@appsignal/javascript@^1.5.0":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@appsignal/javascript/-/javascript-1.6.1.tgz#091bac411e587d7d432edcb6fd9e0e44b0993f6f"
+  integrity sha512-jRVkTYsLC7tM5no6V2Fw2Vc325KRKductkEEHzXTS+upZdBgzkxeTQ1MjuPcfN73vUEplaaP6tMkqv7Ids6frg==
   dependencies:
-    "@appsignal/javascript" "=1.6.0"
+    tslib "^2.3.0"
+
+"@appsignal/plugin-breadcrumbs-console@^1.1.37":
+  version "1.1.37"
+  resolved "https://registry.yarnpkg.com/@appsignal/plugin-breadcrumbs-console/-/plugin-breadcrumbs-console-1.1.37.tgz#9ae5f2ef9715ff8105916f3589769a4302e6f3e2"
+  integrity sha512-l8TKLJd6GScUWrlLaBysdT8Q3PyaO1RQjkmCMolN3aCNxTx4C9zw3f+CIlRITaW2sTd8LRN1NV6ee3VEMaT6nQ==
+  dependencies:
+    "@appsignal/javascript" "=1.6.1"
 
 "@appsignal/plugin-path-decorator@^1.0.17":
   version "1.0.17"
