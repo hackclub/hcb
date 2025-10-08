@@ -11,4 +11,8 @@ module Discord
   def self.message_verifier
     @message_verifier ||= Rails.application.message_verifier("discord")
   end
+
+  def self.random_avatar
+    "https://cdn.discordapp.com/embed/avatars/#{Random.rand(6)}.png"
+  end
 end

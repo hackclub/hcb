@@ -12,7 +12,7 @@
 <% @hide_footer = true %>
 
 <div class="flex justify-center mt5">
-  <img class="w-20 h-20 mx-auto center rounded-lg" src="<%= @guild.icon_url %>">
+  <img class="w-20 h-20 mx-auto center rounded-lg" src="<%= @guild.icon_url || Discord.random_avatar %>">
 </div>
 <h2 class="border-none center regular mb2">Choose an organization to connect to the channel  <strong>#<%= @channel.name %></strong> in <strong><%= @guild.name %></strong>.</h2>
 
