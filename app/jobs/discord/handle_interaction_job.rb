@@ -150,6 +150,7 @@ module Discord
     end
 
     TRANSACTION_LIMIT = 10
+
     def transactions_command
       return require_linked_event unless @current_event
 
@@ -175,8 +176,10 @@ module Discord
       end
 
       transaction_fields = transactions.map do |transaction|
+        name = "\"#{transaction.local_hcb_code.memo}\" for #{ApplicationController.helpers.render_money(transaction.amount_cents)}"
+        name.prepend "[PENDING] " if transaction.is_a?(CanonicalPendingTransaction)
         {
-          name: "\"#{transaction.local_hcb_code.memo}\" for #{ApplicationController.helpers.render_money(transaction.amount_cents)}",
+          name:,
           value: "On #{transaction.date.strftime('%B %d, %Y')} - #{link_to("Details", url_helpers.hcb_code_url(transaction.local_hcb_code.hashid))}"
         }
       end
