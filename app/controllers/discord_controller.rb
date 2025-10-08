@@ -96,7 +96,12 @@ class DiscordController < ApplicationController
 
     @guild = Discord::Bot.bot.server(@guild_id)
     @channel = Discord::Bot.bot.channel(@channel_id)
-    # TODO: verify channel is inside guilde. @rluodev
+
+    return redirect_to_discord_bot_install_link if @guild.nil? || @channel.nil?
+
+    if @guild.id != @channel.guild_id
+      raise StandardError.new "channel #{@channel.id} says it's in guild #{@channel.guild_id}, but we have guild #{@guild.id}!"
+    end
 
     if event.update(discord_guild_id: @guild_id, discord_channel_id: @channel_id)
       Discord::Bot.bot.send_message(@channel_id, "The HCB organization #{event.name} has been successfully linked to this Discord server by #{current_user.name}! Notifications and announcements will be sent in this channel, <\##{@channel_id}>.")
@@ -105,10 +110,14 @@ class DiscordController < ApplicationController
       flash[:error] = event.errors.full_messages.to_sentence
     end
   rescue => e
-    Rails.error.report("Exception linking discord server: #{e}")
+    Rails.error.unexpected("Exception linking discord server: #{e.message}")
     flash[:error] = "We could not link the selected organization to your Discord server"
   ensure
-    redirect_to edit_event_path(event) if event.present?
+    if event.present?
+      redirect_to edit_event_path(event)
+    else
+      redirect_to root_path
+    end
   end
 
   def unlink_server
@@ -125,7 +134,7 @@ class DiscordController < ApplicationController
   def unlink_server_action
     @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :unlink_server)
 
-    event = Event.find_by(discord_guild_id: @guild_id)
+    event = Event.find_by!(discord_guild_id: @guild_id)
     authorize event, policy_class: DiscordPolicy
 
     cid = event.discord_channel_id
@@ -137,10 +146,14 @@ class DiscordController < ApplicationController
       flash[:error] = event.errors.full_messages.to_sentence
     end
   rescue => e
-    Rails.error.report("Exception linking discord server: #{e}")
+    Rails.error.unexpected("Exception linking discord server: #{e.message}")
     flash[:error] = "We could not unlink your organization from your Discord server"
   ensure
-    redirect_to edit_event_path(event)
+    if event.present?
+      redirect_to edit_event_path(event)
+    else
+      redirect_to root_path
+    end
   end
 
   private
