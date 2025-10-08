@@ -69,7 +69,7 @@ class DiscordController < ApplicationController
 
     @discord_user = bot.user(@discord_id)
 
-    return redirect_to(install_link, allow_other_host: true) if @discord_user.nil?
+    redirect_to(install_link, allow_other_host: true) if @discord_user.nil?
   end
 
   def create_link
@@ -98,7 +98,7 @@ class DiscordController < ApplicationController
     @guild = bot.server(@guild_id)
     @channel = bot.channel(@channel_id)
 
-    return redirect_to(install_link, allow_other_host: true) if @guild.nil? || @channel.nil?
+    redirect_to(install_link, allow_other_host: true) if @guild.nil? || @channel.nil?
   end
 
   def create_server_link
