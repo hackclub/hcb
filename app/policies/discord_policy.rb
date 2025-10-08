@@ -10,7 +10,7 @@ class DiscordPolicy < ApplicationPolicy
   end
 
   def create_link?
-    OrganizerPosition.role_at_least?(user, record, :manager)
+    true
   end
 
   def unlink_server_action?
@@ -22,7 +22,7 @@ class DiscordPolicy < ApplicationPolicy
   end
 
   def setup?
-    true
+    OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
 end

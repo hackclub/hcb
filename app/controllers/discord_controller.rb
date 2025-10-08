@@ -50,11 +50,11 @@ class DiscordController < ApplicationController
   end
 
   def link
+    authorize nil, policy_class: DiscordPolicy
     @signed_discord_id = params[:signed_discord_id]
     redirect_to(install_link, allow_other_host: true) if @signed_discord_id.nil?
 
     @discord_id = Discord.verify_signed(@signed_discord_id, purpose: :link_user)
-    authorize nil, policy_class: DiscordPolicy
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -74,6 +74,7 @@ class DiscordController < ApplicationController
 
   def create_link
     discord_id = Discord.verify_signed(params[:signed_discord_id], purpose: :link_user)
+    authorize nil, policy_class: DiscordPolicy
 
     if current_user.update(discord_id:)
       flash[:success] = "Successfully linked Discord account"
