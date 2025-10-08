@@ -47,7 +47,7 @@ class DiscordController < ApplicationController
     @signed_message = params[:signed_message]
     authorize nil, policy_class: DiscordPolicy
 
-    redirect_to install_link if @signed_message.nil?
+    return redirect_to(install_link, allow_other_host: true) if @signed_message.nil?
 
     h, time = Rails.application.message_verifier(:link_discord_account).verify(@signed_message)
 
@@ -69,7 +69,7 @@ class DiscordController < ApplicationController
 
     @discord_user = bot.user(@discord_id)
 
-    redirect_to install_link if @discord_user.nil?
+    return redirect_to(install_link, allow_other_host: true) if @discord_user.nil?
   end
 
   def create_link
@@ -95,7 +95,7 @@ class DiscordController < ApplicationController
     @signed_message = params[:signed_message]
     authorize nil, policy_class: DiscordPolicy
 
-    redirect_to install_link if @signed_message.nil?
+    return redirect_to(install_link, allow_other_host: true) if @signed_message.nil?
 
     h, time = Rails.application.message_verifier(:link_server).verify(signed_message)
 
@@ -110,7 +110,7 @@ class DiscordController < ApplicationController
     @guild = bot.server(@guild_id)
     @channel = bot.channel(@channel_id)
 
-    redirect_to install_link if @guild.nil? || @channel.nil?
+    return redirect_to(install_link, allow_other_host: true) if @guild.nil? || @channel.nil?
   end
 
   def create_server_link
