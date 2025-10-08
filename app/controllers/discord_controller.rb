@@ -47,6 +47,8 @@ class DiscordController < ApplicationController
     @signed_message = params[:signed_message]
     authorize nil, policy_class: DiscordPolicy
 
+    redirect_to install_link if @signed_message.nil?
+
     h, time = Rails.application.message_verifier(:link_discord_account).verify(@signed_message)
 
     if !time.future || !h
@@ -65,7 +67,7 @@ class DiscordController < ApplicationController
 
     @raw_response = response.body
 
-    @discord_user = bot.user(@discord_id) if @discord_id.present?
+    @discord_user = bot.user(@discord_id)
 
     redirect_to install_link if @discord_user.nil?
   end
@@ -93,6 +95,8 @@ class DiscordController < ApplicationController
     @signed_message = params[:signed_message]
     authorize nil, policy_class: DiscordPolicy
 
+    redirect_to install_link if @signed_message.nil?
+
     h, time = Rails.application.message_verifier(:link_server).verify(signed_message)
 
     if !time.future || !h
@@ -110,15 +114,11 @@ class DiscordController < ApplicationController
       c.response :raise_error
     end
 
-    if @channel_id.present?
-      ch_response = conn.get("/api/v10/channels/#{@channel_id}")
-      @raw_ch_response = ch_response.body
-    end
+    ch_response = conn.get("/api/v10/channels/#{@channel_id}")
+    @raw_ch_response = ch_response.body
 
-    if @guild_id.present?
-      gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
-      @raw_gd_response = gd_response.body
-    end
+    gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
+    @raw_gd_response = gd_response.body
 
     redirect_to install_link if @raw_ch_response.nil? || @raw_gd_response.nil?
   end
