@@ -2,7 +2,7 @@
 
 module Discord
   class HandleInteractionJob < ApplicationJob
-    queue_as :high
+    queue_as :critical
 
     def perform(interaction)
       @interaction = interaction
