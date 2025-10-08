@@ -101,7 +101,7 @@ class DiscordController < ApplicationController
 
     return redirect_to_discord_bot_install_link if @guild.nil? || @channel.nil?
 
-    if @guild.id != @channel.guild_id
+    if @guild.id != @channel.server.id
       raise StandardError.new "channel #{@channel.id} says it's in guild #{@channel.guild_id}, but we have guild #{@guild.id}!"
     end
 
