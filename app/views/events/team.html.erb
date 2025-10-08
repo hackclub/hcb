@@ -102,15 +102,29 @@
   <% end %>
 <% end %>
 
-<% if @pending.any? %>
+<% if @invites.any? %>
   <h2 class="flex items-center mt3 mb2">
     Pending invitations
-    <%= badge_for @pending.size, class: "bg-muted" %>
+    <%= badge_for @invites.size, class: "bg-muted" %>
   </h2>
 
   <div class="flex flex-col" style="gap: 0.5rem">
-    <%= render partial: "organizer_position_invites/organizer_position_invite", collection: @pending %>
+    <%= render partial: "organizer_position_invites/organizer_position_invite", collection: @invites %>
   </div>
+<% end %>
+
+<% if @invite_requests.any? %>
+  <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending join requests</h2>
+  <ul class="grid grid--narrow text-left w-full mt-2">
+    <% @invite_requests.each do |invite_request| %>
+      <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+        <span>
+          <%= status_badge "info" %>
+          <%= user_mention invite_request.requester.name %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
 <% end %>
 
 <% admin_tool("mt2") do %>
