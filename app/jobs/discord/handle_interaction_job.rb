@@ -90,7 +90,16 @@ module Discord
     def reimburse_component
       return require_linked_user unless @user
 
-      respond content: "FOO!", flags: 1 << 6
+      report = @user.reimbursement_reports.create!(name: "Reimbursement report from Discord")
+
+      respond content: "Your new reimbursement report has been created!", embeds: [
+        {
+          title: report.name,
+          description: "Start by adding expenses",
+          color:,
+          url: url_helpers.reimbursement_report_url(report)
+        }
+      ], components: button_to("View on HCB", url_helpers.reimbursement_report_url(report)), flags: 1 << 6
     end
 
     def setup_component
@@ -291,10 +300,6 @@ module Discord
     end
 
     def respond(**body)
-      unless @responded
-        return { type: 4, data: body }
-      end
-
       if body[:components].present?
         if !body[:components].is_a?(Array)
           body[:components] = [body[:components]]
@@ -310,6 +315,9 @@ module Discord
         end
       end
 
+      unless @responded
+        return { type: 4, data: body }
+      end
 
       response = Discord::Bot.faraday_connection.patch("/api/v10/webhooks/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/#{@interaction[:token]}/messages/@original", body)
 

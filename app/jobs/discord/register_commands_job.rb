@@ -61,7 +61,7 @@ module Discord
           type: Discordrb::ApplicationCommand::TYPES[:chat_input],
           description: "Open a new reimbursement report on HCB",
           options: [],
-          meta: { ephemeral: false },
+          meta: { ephemeral: true },
         },
         {
           name: "missing-receipts",
