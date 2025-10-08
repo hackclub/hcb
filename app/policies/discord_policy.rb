@@ -22,7 +22,7 @@ class DiscordPolicy < ApplicationPolicy
   end
 
   def setup?
-    OrganizerPosition.role_at_least?(user, record, :manager)
+    true
   end
 
 end
