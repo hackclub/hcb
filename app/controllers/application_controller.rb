@@ -30,10 +30,6 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
-    @hide_promotional_banner = cookies[:hide_robotics_raffle_banner] == "1"
-  end
-
-  before_action do
     # Disallow indexing
     response.set_header("X-Robots-Tag", "noindex")
   end

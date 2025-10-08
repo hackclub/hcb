@@ -79,7 +79,6 @@ Rails.application.routes.draw do
     get "inbox", to: "my#inbox", as: :my_inbox
     get "activities", to: "my#activities", as: :my_activities
     post "toggle_admin_activities", to: "my#toggle_admin_activities", as: :toggle_admin_activities
-    post "hide_promotional_banner", to: "my#hide_promotional_banner", as: :hide_promotional_banner
     get "tasks", to: "my#tasks", as: :my_tasks
     get "reimbursements", to: "my#reimbursements", as: :my_reimbursements
     get "reimbursements_icon", to: "my#reimbursements_icon", as: :my_reimbursements_icon
