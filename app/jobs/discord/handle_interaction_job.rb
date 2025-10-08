@@ -97,10 +97,19 @@ module Discord
       ], components: button_to("View on HCB", url_helpers.my_inbox_url)
     end
 
+    TRANSACTION_LIMIT = 10
     def transactions_command
       return require_linked_event unless @current_event
 
-      transactions = @current_event.canonical_pending_transactions.order(created_at: :desc).limit(4)
+      pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: @event.id).run
+      PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
+
+      remaining_limit = [TRANSACTION_LIMIT - pending_transactions.size, 0].max
+
+      settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run.first(remaining_limit)
+      TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: settled_transactions, event: @event).run!
+
+      transactions = pending_transactions + settled_transactions
 
       if transactions.length == 0
         respond embeds: [
@@ -115,8 +124,8 @@ module Discord
 
       transaction_fields = transactions.map do |transaction|
         {
-          name: "\"#{transaction.smart_memo}\" for #{ApplicationController.helpers.render_money(transaction.amount_cents)}",
-          value: "On #{transaction.created_at.strftime('%B %d, %Y')} - #{link_to("Details", url_helpers.hcb_code_url(transaction.local_hcb_code.hashid))}"
+          name: "\"#{transaction.local_hcb_code.memo}\" for #{ApplicationController.helpers.render_money(transaction.amount_cents)}",
+          value: "On #{transaction.date.strftime('%B %d, %Y')} - #{link_to("Details", url_helpers.hcb_code_url(transaction.local_hcb_code.hashid))}"
         }
       end
 
