@@ -17,7 +17,7 @@ class OrganizerPositionInvite
 
       if service.run
         @invite.accept
-        @request.approve
+        @request.approve!
 
       else
         flash[:error] = service.model.errors.full_messages.to_sentence
@@ -28,13 +28,13 @@ class OrganizerPositionInvite
     def deny
       authorize @request
 
-      @request.deny
+      @request.deny!
     end
 
     private
 
     def set_request
-      @request = OrganizerPositionInvite::Request.find_by_hashid(params[:request_id])
+      @request = OrganizerPositionInvite::Request.find_by_hashid(params[:id])
     end
 
   end

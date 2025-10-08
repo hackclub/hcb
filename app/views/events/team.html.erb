@@ -132,9 +132,27 @@
   <ul class="grid grid--narrow text-left w-full mt-2">
     <% @invite_requests.each do |invite_request| %>
       <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
-        <span>
-          <%= status_badge "info" %>
-          <%= user_mention invite_request.requester.name %>
+        <span class="w-full flex gap-2 items-center align-middle">
+          <%= user_mention invite_request.requester %>
+          <div class="flex-grow"></div>
+          <%= pop_icon_to "checkmark",
+                approve_request_path(invite_request),
+                class: "success tooltipped tooltipped--w h-8 w-8",
+                data: {
+                  turbo_method: :post,
+                  turbo_confirm: "Are you sure you want to approve this join request?",
+                },
+                'aria-label': "Approve",
+                disabled: !policy(invite_request).approve? %>
+          <%= pop_icon_to "forbidden",
+                deny_request_path(invite_request),
+                class: "error tooltipped tooltipped--w h-8 w-8",
+                data: {
+                  turbo_method: :post,
+                  turbo_confirm: "Are you sure you want to deny this join request?",
+                },
+                'aria-label': "Deny",
+                disabled: !policy(invite_request).deny? %>
         </span>
       </li>
     <% end %>

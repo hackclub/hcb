@@ -8,8 +8,10 @@
       <li class="overflow-visible card flex flex-row justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">
             <div class="flex flex-col">
-              <p class="my-0"><%= link_to link_url(link), link_url(link) %></p>
-              <p class="my-0 italic">Expires in <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %></p>
+              <p class="my-0 font-bold"><%= link_to link_url(link), link_url(link) %></p>
+              <p class="my-0">Created by <%= user_mention link.creator %> on <%= link.created_at.strftime("%B %e, %Y") %></p>
+              <p class="my-0">Expires in <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %></p>
+              <p class="my-0">Used <%= pluralize(link.requests.size, "times") %></p>
             </div>
             <div class="flex-grow"></div>
             <%= pop_icon_to "delete",
