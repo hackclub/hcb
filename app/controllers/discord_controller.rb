@@ -53,18 +53,6 @@ class DiscordController < ApplicationController
     redirect_to_discord_bot_install_link and return if @signed_discord_id.nil?
 
     @discord_id = Discord.verify_signed(@signed_discord_id, purpose: :link_user)
-
-    conn = Faraday.new url: "https://discord.com" do |c|
-      c.request :json
-      c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
-      c.response :json
-      c.response :raise_error
-    end
-
-    response = conn.get("/api/v10/users/#{@discord_id}")
-
-    @raw_response = response.body
-
     @discord_user = bot.user(@discord_id)
 
     redirect_to_discord_bot_install_link if @discord_user.nil?
