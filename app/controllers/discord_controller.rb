@@ -26,8 +26,8 @@ class DiscordController < ApplicationController
     if (params[:event][:type] == "APPLICATION_AUTHORIZED") && params[:event][:data][:integration_type] == 0
       user_id = params[:event][:data][:user][:id]
 
-      channel = bot.pm_channel(user_id)
-      bot.send_message(channel, "Welcome to HCB! Link your Discord account to your HCB account by going to #{discord_link_url(discord_id: user_id)}")
+      channel = Discord::Bot.bot.pm_channel(user_id)
+      Discord::Bot.bot.send_message(channel, "Welcome to HCB! Link your Discord account to your HCB account by going to #{discord_link_url(discord_id: user_id)}")
     end
 
     head :no_content
@@ -53,7 +53,7 @@ class DiscordController < ApplicationController
     redirect_to_discord_bot_install_link and return if @signed_discord_id.nil?
 
     @discord_id = Discord.verify_signed(@signed_discord_id, purpose: :link_user)
-    @discord_user = bot.user(@discord_id)
+    @discord_user = Discord::Bot.bot.user(@discord_id)
 
     redirect_to_discord_bot_install_link if @discord_user.nil?
   end
@@ -81,8 +81,8 @@ class DiscordController < ApplicationController
     @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :link_server)
     @channel_id = Discord.verify_signed(@signed_channel_id, purpose: :link_server)
 
-    @guild = bot.server(@guild_id)
-    @channel = bot.channel(@channel_id)
+    @guild = Discord::Bot.bot.server(@guild_id)
+    @channel = Discord::Bot.bot.channel(@channel_id)
 
     redirect_to_discord_bot_install_link if @guild.nil? || @channel.nil?
   end
@@ -95,7 +95,7 @@ class DiscordController < ApplicationController
     @channel_id = Discord.verify_signed(params[:signed_channel_id], purpose: :link_server)
 
     if event.update(discord_guild_id: @guild_id, discord_channel_id: @channel_id)
-      bot.send_message(@channel_id, "The HCB organization #{event.name} has been successfully linked to this Discord server by #{current_user.name}! Notifications and announcements will be sent in this channel, <\##{@channel_id}>.")
+      Discord::Bot.bot.send_message(@channel_id, "The HCB organization #{event.name} has been successfully linked to this Discord server by #{current_user.name}! Notifications and announcements will be sent in this channel, <\##{@channel_id}>.")
       flash[:success] = "Successfully linked the organization #{event.name} to your Discord server"
     else
       flash[:error] = event.errors.full_messages.to_sentence
@@ -111,7 +111,7 @@ class DiscordController < ApplicationController
     @signed_guild_id = params[:signed_guild_id]
     @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :unlink_server)
 
-    @guild = bot.server(@guild_id)
+    @guild = Discord::Bot.bot.server(@guild_id)
     @event = Event.find_by(discord_guild_id: @guild_id)
 
     authorize @event, policy_class: DiscordPolicy
@@ -127,7 +127,7 @@ class DiscordController < ApplicationController
     cid = event.discord_channel_id
 
     if event.update(discord_guild_id: nil, discord_channel_id: nil)
-      bot.send_message(cid, "The HCB organization #{event.name} has been unlinked from this Discord server by #{current_user.name}, and notifications/announcements will no longer be sent here.")
+      Discord::Bot.bot.send_message(cid, "The HCB organization #{event.name} has been unlinked from this Discord server by #{current_user.name}, and notifications/announcements will no longer be sent here.")
       flash[:success] = "Successfully unlinked the organization #{event.name} from your Discord server"
     else
       flash[:error] = event.errors.full_messages.to_sentence
@@ -140,10 +140,6 @@ class DiscordController < ApplicationController
   end
 
   private
-
-  def bot
-    @bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
-  end
 
   def verify_discord_signature
     timestamp = request.headers["X-Signature-Timestamp"]

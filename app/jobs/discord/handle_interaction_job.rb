@@ -155,8 +155,8 @@ module Discord
     end
 
     def linking_embed
-      server_name = bot.server(@guild_id)&.name if @guild_id.present?
-      user_name = bot.user(@user_id)&.username if @user_id.present?
+      server_name = Discord::Bot.bot.server(@guild_id)&.name if @guild_id.present?
+      user_name = Discord::Bot.bot.user(@user_id)&.username if @user_id.present?
 
       guild_setup_cta = can_manage_guild? ? link_to("Set up here", generate_discord_setup_url) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
 
@@ -233,10 +233,6 @@ module Discord
       else
         0xec3750
       end
-    end
-
-    def bot
-      @bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
     end
 
     def can_manage_guild?

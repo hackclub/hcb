@@ -29,19 +29,15 @@ module Discord
 
       text = ReverseMarkdown.convert(html)[0..4000]
 
-      bot.send_message(@event.discord_channel_id, nil, false, {
-                         description: text,
-                         timestamp: @activity.created_at.iso8601,
-                         author: { name: @user.name, icon_url: profile_picture_for(@activity.owner) },
-                         color:
-                       })
+      Discord::Bot.bot.send_message(@event.discord_channel_id, nil, false, {
+                                      description: text,
+                                      timestamp: @activity.created_at.iso8601,
+                                      author: { name: @user.name, icon_url: profile_picture_for(@activity.owner) },
+                                      color:
+                                    })
     end
 
     private
-
-    def bot
-      @bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
-    end
 
     def color
       if Rails.env.development?
