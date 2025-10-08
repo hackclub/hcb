@@ -6,6 +6,11 @@ class DiscordController < ApplicationController
   before_action :verify_discord_signature, only: [:event_webhook, :interaction_webhook]
   skip_after_action :verify_authorized, only: [:event_webhook, :interaction_webhook]
 
+  rescue_from ActiveSupport::MessageVerifier::InvalidSignature do |e|
+    Rails.error.report(e)
+    flash[:error] = "The link you used appears to be invalid or has expired. Please try re-running /link in the Discord server."
+  end
+
   def event_webhook
     if params[:type] == 0
       # This is Discord's health check on our server. No need to do anything besides return a 204.
@@ -45,17 +50,11 @@ class DiscordController < ApplicationController
   end
 
   def link
-    @signed_message = params[:signed_message]
+    @signed_discord_id = params[:signed_discord_id]
+    redirect_to(install_link, allow_other_host: true) if @signed_discord_id.nil?
+
+    @discord_id = Discord.verify_signed(@signed_discord_id, purpose: :link_user)
     authorize nil, policy_class: DiscordPolicy
-
-    return redirect_to(install_link, allow_other_host: true) if @signed_message.nil?
-
-    h, time = Rails.application.message_verifier(:link_discord_account).verify(@signed_message)
-
-    if !time.future || !h
-      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
-      return redirect_to root_path
-    end
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -74,16 +73,9 @@ class DiscordController < ApplicationController
   end
 
   def create_link
-    signed_message = params[:signed_message]
+    discord_id = Discord.verify_signed(params[:signed_discord_id], purpose: :link_user)
 
-    h, time = Rails.application.message_verifier(:link_discord_account).verify(signed_message)
-
-    if !time.future || !h
-      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
-      return redirect_to root_path
-    end
-
-    if current_user.update(discord_id: h[:discord_id])
+    if current_user.update(discord_id:)
       flash[:success] = "Successfully linked Discord account"
     else
       flash[:error] = current_user.errors.full_messages.to_sentence
@@ -93,20 +85,14 @@ class DiscordController < ApplicationController
   end
 
   def setup
-    @signed_message = params[:signed_message]
     authorize nil, policy_class: DiscordPolicy
 
-    return redirect_to(install_link, allow_other_host: true) if @signed_message.nil?
+    @signed_guild_id = params[:signed_guild_id]
+    @signed_channel_id = params[:signed_channel_id]
+    redirect_to(install_link, allow_other_host: true) if @signed_guild_id.nil? || @signed_channel_id.nil?
 
-    h, time = Rails.application.message_verifier(:link_server).verify(signed_message)
-
-    if !time.future || !h
-      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
-      return redirect_to root_path
-    end
-
-    @guild_id = h[:guild_id]
-    @channel_id = h[:channel_id]
+    @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :link_server)
+    @channel_id = Discord.verify_signed(@signed_channel_id, purpose: :link_server)
 
     @guild = bot.server(@guild_id)
     @channel = bot.channel(@channel_id)
@@ -115,20 +101,14 @@ class DiscordController < ApplicationController
   end
 
   def create_server_link
-    signed_message = params[:signed_message]
     event = Event.find(params[:event_id])
-
     authorize event, policy_class: DiscordPolicy
 
-    h, time = Rails.application.message_verifier(:link_server).verify(signed_message)
+    @guild_id = Discord.verify_signed(params[:signed_discord_id], purpose: :link_server)
+    @channel_id = Discord.verify_signed(params[:signed_channel_id], purpose: :link_server)
 
-    if !time.future || !h
-      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
-      return redirect_to root_path
-    end
-
-    if event.update(discord_guild_id: h[:guild_id], discord_channel_id: h[:channel_id])
-      bot.send_message(h[:channel_id], "The HCB organization #{event.name} has been successfully linked to this Discord server! Notifications and announcements will be sent in this channel, <\##{h[:channel_id]}>.")
+    if event.update(discord_guild_id: @guild_id, discord_channel_id: @channel_id)
+      bot.send_message(@channel_id, "The HCB organization #{event.name} has been successfully linked to this Discord server! Notifications and announcements will be sent in this channel, <\##{@channel_id}>.")
       flash[:success] = "Successfully linked the organization #{event.name} to your Discord server"
     else
       flash[:error] = event.errors.full_messages.to_sentence
@@ -141,16 +121,8 @@ class DiscordController < ApplicationController
   end
 
   def unlink_server
-    @signed_message = params[:signed_message]
-
-    h, time = Rails.application.message_verifier(:unlink_server).verify(@signed_message)
-
-    if !time.future || !h
-      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
-      return redirect_to root_path
-    end
-
-    @guild_id = h[:guild_id]
+    @signed_guild_id = params[:signed_guild_id]
+    @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :unlink_server)
 
     conn = Faraday.new url: "https://discord.com" do |c|
       c.request :json
@@ -169,16 +141,9 @@ class DiscordController < ApplicationController
   end
 
   def unlink_server_action
-    signed_message = params[:signed_message]
+    @guild_id = Discord.verify_signed(params[:signed_discord_id], purpose: :unlink_server)
 
-    h, time = Rails.application.message_verifier(:unlink_server).verify(signed_message)
-
-    if !time.future || !h
-      flash[:error] = "The link you used appears to be invalid. Please restart the linking process."
-      return redirect_to root_path
-    end
-
-    event = Event.find_by(discord_guild_id: h[:guild_id])
+    event = Event.find_by(discord_guild_id: @guild_id)
     authorize event, policy_class: DiscordPolicy
 
     cid = event.discord_channel_id

@@ -35,7 +35,8 @@
         <option value="<%= event.id %>"><%= event.name %></option>
       <% end %>
     </select>
-    <%= f.hidden_field :signed_message, value: @signed_message %>
+    <%= f.hidden_field :signed_guild_id, value: @signed_guild_id %>
+    <%= f.hidden_field :signed_channel_id, value: @signed_channel_id %>
     <%= f.submit "Connect", class: "btn bg-success h2" %>
   <% end %>
 </div>
