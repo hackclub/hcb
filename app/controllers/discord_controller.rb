@@ -111,17 +111,7 @@ class DiscordController < ApplicationController
     @signed_guild_id = params[:signed_guild_id]
     @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :unlink_server)
 
-    conn = Faraday.new url: "https://discord.com" do |c|
-      c.request :json
-      c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
-      c.response :json
-      c.response :raise_error
-    end
-
-    gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
-
-    @raw_gd_response = gd_response.body
-
+    @guild = bot.server(@guild_id)
     @event = Event.find_by(discord_guild_id: @guild_id)
 
     authorize @event, policy_class: DiscordPolicy
