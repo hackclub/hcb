@@ -101,13 +101,13 @@ module Discord
     def transactions_command
       return require_linked_event unless @current_event
 
-      pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: @event.id).run
-      PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
+      pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: @current_event.id).run
+      PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @current_event).run!
 
       remaining_limit = [TRANSACTION_LIMIT - pending_transactions.size, 0].max
 
-      settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run.first(remaining_limit)
-      TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: settled_transactions, event: @event).run!
+      settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @current_event.id).run.first(remaining_limit)
+      TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: settled_transactions, event: @current_event).run!
 
       transactions = pending_transactions + settled_transactions
 
