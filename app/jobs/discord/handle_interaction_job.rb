@@ -4,8 +4,8 @@ module Discord
   class HandleInteractionJob < ApplicationJob
     queue_as :critical
 
-    def perform(interaction)
-      puts "interact"
+    def perform(interaction, responded: true)
+      @responded = responded
       @interaction = interaction
 
       @user_id = @interaction.dig(:member, :user, :id) || @interaction.dig(:user, :id)
@@ -85,6 +85,16 @@ module Discord
           ]
         }
       }
+    end
+
+    def reimburse_component
+      return require_linked_user unless @user
+
+      respond content: "FOO!", flags: 1 << 6
+    end
+
+    def setup_component
+      respond embeds: linking_embed, flags: 1 << 6
     end
 
     def ping_command
@@ -180,13 +190,28 @@ module Discord
       ], components: button_to("Go to HCB", url_helpers.event_url(@current_event.slug))
     end
 
+    REIMBURSEMENT_REPORT_LIMIT = 10
     def reimburse_command
-      respond content: "Debugger", embeds: [
+      return require_linked_user unless @user
+
+      reimbursement_reports = @user.reimbursement_reports.first(REIMBURSEMENT_REPORT_LIMIT)
+
+      report_fields = reimbursement_reports.map do |report|
         {
-          title: "Debugger",
-          description: "```\n#{JSON.pretty_generate(@interaction)[0..4085]}\n```",
-          color: 0xCC0100,
+          name: "\"#{report.name}\" - #{report.status_text} (#{report.amount.format})",
+          value: "Created on #{report.created_at.strftime('%B %d, %Y')} - #{link_to("Details", url_helpers.reimbursement_report_url(report))}"
         }
+      end
+
+      respond embeds: [
+        {
+          title: "Reimbursement reports for #{@user.preferred_name.presence || @user.first_name}",
+          fields: report_fields,
+          color:,
+        }
+      ], components: [
+        button_to("Create new report", "reimburse:new", style: 3),
+        button_to("View on HCB", url_helpers.my_reimbursements_url),
       ]
     end
 
@@ -202,7 +227,9 @@ module Discord
     end
 
     def require_linked_user
-      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed
+      return respond content: "This command requires you to link this Discord server to HCB", components: button_to("Set up HCB", "setup") if @responded
+
+      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed, flags: 1 << 6
     end
 
     def linking_embed
@@ -232,22 +259,28 @@ module Discord
     end
 
     def require_linked_event
-      respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed
+      return respond content: "This command requires you to link this Discord server to HCB", components: button_to("Set up HCB", "setup") if @responded
+
+      respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed, flags: 1 << 6
     end
 
-    def button_to(label, url)
-      {
-        type: 1,
-        components: [
-          {
-            type: 2,
-            url:,
-            label:,
-            style: 5,
-            emoji: { id: "1424492375295791185" }
-          }
-        ]
-      }
+    def button_to(label, url_or_custom_id, **options)
+      if url_or_custom_id.start_with?("http")
+        {
+          type: 2,
+          url: url_or_custom_id,
+          label:,
+          style: 5,
+          emoji: { id: "1424492375295791185" }
+        }
+      else
+        {
+          type: 2,
+          custom_id: url_or_custom_id,
+          label: label,
+          style: 1,
+        }.merge(options || {})
+      end
     end
 
     def link_to(label, url)
@@ -255,9 +288,25 @@ module Discord
     end
 
     def respond(**body)
-      if body[:components].present? && !body[:components].is_a?(Array)
-        body[:components] = [body[:components]]
+      unless @responded
+        return { type: 4, data: body }
       end
+
+      if body[:components].present?
+        if !body[:components].is_a?(Array)
+          body[:components] = [body[:components]]
+        end
+
+        if body[:components].any? && body[:components].first[:type] != 1
+          body[:components] = [
+            {
+              type: 1,
+              components: body[:components]
+            }
+          ]
+        end
+      end
+
 
       response = Discord::Bot.faraday_connection.patch("/api/v10/webhooks/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/#{@interaction[:token]}/messages/@original", body)
 

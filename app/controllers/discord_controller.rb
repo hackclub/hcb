@@ -40,9 +40,9 @@ class DiscordController < ApplicationController
     when 2 # application command
       ephemeral = ::Discord::RegisterCommandsJob.command(params.dig(:data, :name))&.dig(:meta, :ephemeral) || false
       render json: { type: 5, data: { flags: ephemeral ? 1 << 6 : 0 } } # Acknowledge interaction & will edit response later
-      ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h)
+      ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h, responded: true)
     when 3 # message component
-      render json: ::Discord::HandleInteractionJob.perform_now(params.to_unsafe_h)
+      render json: ::Discord::HandleInteractionJob.perform_now(params.to_unsafe_h, responded: false)
     else
       Rails.error.unexpected "🚨 Unknown payload received from Discord on interaction webhook: #{params.inspect}"
     end
