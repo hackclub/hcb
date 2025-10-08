@@ -185,7 +185,7 @@ class User < ApplicationRecord
 
   validate(:admins_cannot_disable_2fa, on: :update)
 
-  validates :discord_id, uniqueness: { message: "is already linked to another user. Please contact hcb@hackclub.com if this is unexpected." }
+  validates :discord_id, uniqueness: { message: "is already linked to another user. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
