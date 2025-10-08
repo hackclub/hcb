@@ -4,6 +4,15 @@ module Discord
       @bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
     end
 
+    def self.faraday_connection
+      @faraday_connection ||= Faraday.new url: "https://discord.com" do |c|
+        c.request :json
+        c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
+        c.response :json
+        c.response :raise_error
+      end
+    end
+
     def self.verify_webhook_signature(request)
       timestamp = request.headers["X-Signature-Timestamp"]
       signature_hex = request.headers["X-Signature-Ed25519"]

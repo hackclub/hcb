@@ -259,14 +259,7 @@ module Discord
         body[:components] = [body[:components]]
       end
 
-      conn = Faraday.new url: "https://discord.com" do |c|
-        c.request :json
-        c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
-        c.response :json
-        c.response :raise_error
-      end
-
-      response = conn.patch("/api/v10/webhooks/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/#{@interaction[:token]}/messages/@original", body)
+      response = Discord::Bot.faraday_connection.patch("/api/v10/webhooks/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/#{@interaction[:token]}/messages/@original", body)
 
       response.body
     rescue Faraday::Error => e

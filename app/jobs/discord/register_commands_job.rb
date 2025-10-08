@@ -5,14 +5,7 @@ module Discord
     queue_as :low
 
     def perform
-      conn = Faraday.new url: "https://discord.com" do |c|
-        c.request :json
-        c.request :authorization, "Bot", -> { Credentials.fetch(:DISCORD__BOT_TOKEN) }
-        c.response :json
-        c.response :raise_error
-      end
-
-      response = conn.put("/api/v10/applications/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/commands", ::Discord::RegisterCommandsJob.commands_for_discord)
+      response = Discord::Bot.faraday_connection.put("/api/v10/applications/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/commands", ::Discord::RegisterCommandsJob.commands_for_discord)
 
       raw_response = response.body
 
