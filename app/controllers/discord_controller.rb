@@ -65,7 +65,9 @@ class DiscordController < ApplicationController
 
     @raw_response = response.body
 
-    @discord_user = bot.user(@discord_id)
+    @discord_user = bot.user(@discord_id) if @discord_id.present?
+
+    redirect_to install_link if @discord_user.nil?
   end
 
   def create_link
@@ -108,13 +110,17 @@ class DiscordController < ApplicationController
       c.response :raise_error
     end
 
-    ch_response = conn.get("/api/v10/channels/#{@channel_id}")
+    if @channel_id.present?
+      ch_response = conn.get("/api/v10/channels/#{@channel_id}")
+      @raw_ch_response = ch_response.body
+    end
 
-    @raw_ch_response = ch_response.body
+    if @guild_id.present?
+      gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
+      @raw_gd_response = gd_response.body
+    end
 
-    gd_response = conn.get("/api/v10/guilds/#{@guild_id}")
-
-    @raw_gd_response = gd_response.body
+    redirect_to install_link if @raw_ch_response.nil? || @raw_gd_response.nil?
   end
 
   def create_server_link
@@ -223,6 +229,10 @@ class DiscordController < ApplicationController
 
   def message_verifier
 
+  end
+
+  def install_link
+    "https://discord.com/oauth2/authorize?client_id=#{Credentials.fetch(:DISCORD__APPLICATION_ID)}"
   end
 
 end
