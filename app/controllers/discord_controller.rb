@@ -8,7 +8,7 @@ class DiscordController < ApplicationController
 
   rescue_from ActiveSupport::MessageVerifier::InvalidSignature do |e|
     Rails.error.report(e)
-    flash[:error] = "The link you used appears to be invalid or has expired. Please try re-running /link in the Discord server."
+    flash[:error] = "The link you used has expired or appears to be invalid. Please try re-running the command in Discord."
     redirect_back_or_to root_path
   end
 
