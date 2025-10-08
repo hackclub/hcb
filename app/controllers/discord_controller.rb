@@ -63,6 +63,8 @@ class DiscordController < ApplicationController
     discord_id = Discord.verify_signed(params[:signed_discord_id], purpose: :link_user)
     authorize nil, policy_class: DiscordPolicy
 
+    redirect_to_discord_bot_install_link unless Discord::Bot.bot.user(discord_id).present?
+
     if current_user.update(discord_id:)
       flash[:success] = "Successfully linked Discord account"
     else
