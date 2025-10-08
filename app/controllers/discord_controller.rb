@@ -105,7 +105,7 @@ class DiscordController < ApplicationController
     event = Event.find(params[:event_id])
     authorize event, policy_class: DiscordPolicy
 
-    @guild_id = Discord.verify_signed(params[:signed_discord_id], purpose: :link_server)
+    @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :link_server)
     @channel_id = Discord.verify_signed(params[:signed_channel_id], purpose: :link_server)
 
     if event.update(discord_guild_id: @guild_id, discord_channel_id: @channel_id)
