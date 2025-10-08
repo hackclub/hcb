@@ -379,7 +379,7 @@ class Donation < ApplicationRecord
     return false unless event.donation_goal.present?
     return false unless event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents
     # this prevents us from sending the email after the organization has already reached the goal
-    return false if (event.donation_goal.progress_amount_cents - amount_cents) >= event.donation_goal.amount_cents
+    return false if (event.donation_goal.progress_amount_cents - amount) >= event.donation_goal.amount_cents
 
     true
   end
