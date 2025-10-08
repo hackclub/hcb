@@ -115,7 +115,7 @@
     <% if @requests.any? %>
       <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending join requests</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
-        <% @requests.each do |invite| %>
+        <% @requests.each do |request| %>
           <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
             <span>
               <%= status_badge "info" %>
