@@ -119,7 +119,7 @@ class DiscordController < ApplicationController
     Rails.error.report("Exception linking discord server: #{e}")
     flash[:error] = "We could not link the selected organization to your Discord server"
   ensure
-    redirect_to edit_event_path(event)
+    redirect_to edit_event_path(event) if event.present?
   end
 
   def unlink_server
