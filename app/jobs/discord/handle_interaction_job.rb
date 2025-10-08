@@ -206,7 +206,7 @@ module Discord
     def reimburse_command
       return require_linked_user unless @user
 
-      reimbursement_reports = @user.reimbursement_reports.first(REIMBURSEMENT_REPORT_LIMIT)
+      reimbursement_reports = @user.reimbursement_reports.order(created_at: :desc).limit(REIMBURSEMENT_REPORT_LIMIT)
 
       report_fields = reimbursement_reports.map do |report|
         {
