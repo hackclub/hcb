@@ -53,7 +53,7 @@ class DiscordController < ApplicationController
   def link
     authorize nil, policy_class: DiscordPolicy
     @signed_discord_id = params[:signed_discord_id]
-    redirect_to(install_link, allow_other_host: true) if @signed_discord_id.nil?
+    redirect_to_discord_bot_install_link and return if @signed_discord_id.nil?
 
     @discord_id = Discord.verify_signed(@signed_discord_id, purpose: :link_user)
 
@@ -70,7 +70,7 @@ class DiscordController < ApplicationController
 
     @discord_user = bot.user(@discord_id)
 
-    redirect_to(install_link, allow_other_host: true) if @discord_user.nil?
+    redirect_to_discord_bot_install_link if @discord_user.nil?
   end
 
   def create_link
@@ -91,7 +91,7 @@ class DiscordController < ApplicationController
 
     @signed_guild_id = params[:signed_guild_id]
     @signed_channel_id = params[:signed_channel_id]
-    redirect_to(install_link, allow_other_host: true) if @signed_guild_id.nil? || @signed_channel_id.nil?
+    redirect_to_discord_bot_install_link and return if @signed_guild_id.nil? || @signed_channel_id.nil?
 
     @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :link_server)
     @channel_id = Discord.verify_signed(@signed_channel_id, purpose: :link_server)
@@ -99,7 +99,7 @@ class DiscordController < ApplicationController
     @guild = bot.server(@guild_id)
     @channel = bot.channel(@channel_id)
 
-    redirect_to(install_link, allow_other_host: true) if @guild.nil? || @channel.nil?
+    redirect_to_discord_bot_install_link if @guild.nil? || @channel.nil?
   end
 
   def create_server_link
@@ -186,12 +186,9 @@ class DiscordController < ApplicationController
     end
   end
 
-  def message_verifier
-
-  end
-
-  def install_link
-    "https://discord.com/oauth2/authorize?client_id=#{Credentials.fetch(:DISCORD__APPLICATION_ID)}"
+  def redirect_to_discord_bot_install_link
+    install_link = "https://discord.com/oauth2/authorize?client_id=#{Credentials.fetch(:DISCORD__APPLICATION_ID)}"
+    redirect_to install_link, allow_other_host: true
   end
 
 end
