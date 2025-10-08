@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Discord
   MESSAGE_EXPIRATION = 15.minutes
 

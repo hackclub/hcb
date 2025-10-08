@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Discord
   module Bot
     def self.bot

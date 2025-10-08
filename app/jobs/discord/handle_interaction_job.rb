@@ -68,7 +68,7 @@ module Discord
     end
 
     def generate_discord_unlink_server_url
-      @generate_discord_unlink_url ||= url_helpers.discord_unlink_server_url(signed_guild_id: Discord.generate_signed(@guild_id, purpose: :unlink_server))
+      @generate_discord_unlink_server_url ||= url_helpers.discord_unlink_server_url(signed_guild_id: Discord.generate_signed(@guild_id, purpose: :unlink_server))
     end
 
     def ping_component
