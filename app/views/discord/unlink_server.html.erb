@@ -2,13 +2,6 @@
 
 <% page_xs %>
 <% no_app_shell if params[:no_app_shell] %>
-<%
-  if params[:theme] == "dark"
-    @dark = true
-  elsif params[:theme] == "light"
-    @dark = false
-  end
-%>
 <% @hide_footer = true %>
 
 <div class="flex justify-center mt5">
