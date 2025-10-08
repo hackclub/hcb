@@ -5,6 +5,7 @@ module Discord
     queue_as :critical
 
     def perform(interaction)
+      puts "interact"
       @interaction = interaction
 
       @user_id = @interaction.dig(:member, :user, :id) || @interaction.dig(:user, :id)
@@ -15,13 +16,8 @@ module Discord
       @user = User.find_by(discord_id: @user_id) if @user_id
       @current_event = Event.find_by(discord_guild_id: @guild_id) if @guild_id
 
-      command_name = @interaction.dig(:data, :name)
-
-      unless ::Discord::RegisterCommandsJob.command(command_name).present?
-        respond content: "Unknown command: #{command_name}" and return
-      end
-
-      return send("#{command_name.gsub("-", "_")}_command")
+      return command_router if @interaction[:type] == 2
+      return component_router if @interaction[:type] == 3
     rescue => e
       if Rails.env.development?
         backtrace = e.backtrace.join("\n")
@@ -45,6 +41,24 @@ module Discord
 
     private
 
+    def command_router
+      @command_name = @interaction.dig(:data, :name)
+
+      unless ::Discord::RegisterCommandsJob.command(@command_name).present?
+        respond content: "Unknown command: #{@command_name}" and return
+      end
+
+      send("#{@command_name.gsub("-", "_")}_command")
+    end
+
+    def component_router
+      custom_id = @interaction.dig(:data, :custom_id)
+
+      @interaction_name, @params = custom_id.split(":", 2)
+
+      send("#{@interaction_name.gsub("-", "_")}_component")
+    end
+
     def generate_discord_link_url
       @generate_discord_link_url ||= url_helpers.discord_link_url(signed_discord_id: Discord.generate_signed(@user_id, purpose: :link_user))
     end
@@ -57,8 +71,36 @@ module Discord
       @generate_discord_unlink_url ||= url_helpers.discord_unlink_server_url(signed_guild_id: Discord.generate_signed(@guild_id, purpose: :unlink_server))
     end
 
+    def ping_component
+      {
+        "type": 9,
+        "data": {
+          "custom_id": "ping_modal",
+          "title": "Ping",
+          "components": [
+            {
+              "type": 10,
+              "content": "Pong! 🏓",
+            },
+          ]
+        }
+      }
+    end
+
     def ping_command
-      respond content: "Pong! 🏓"
+      respond content: "Pong! 🏓", components: [
+        {
+          type: 1,
+          components: [
+            {
+              type: 2,
+              label: "Ping",
+              style: 1,
+              custom_id: "ping"
+            }
+          ]
+        }
+      ]
     end
 
     def link_command
