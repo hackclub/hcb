@@ -46,7 +46,7 @@ module Discord
     private
 
     def ping_command
-      respond content: "Pong!"
+      respond content: "Pong! 🏓"
     end
 
     def link_command
