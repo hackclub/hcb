@@ -142,7 +142,7 @@ class DiscordController < ApplicationController
   end
 
   def unlink_server_action
-    @guild_id = Discord.verify_signed(params[:signed_discord_id], purpose: :unlink_server)
+    @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :unlink_server)
 
     event = Event.find_by(discord_guild_id: @guild_id)
     authorize event, policy_class: DiscordPolicy
