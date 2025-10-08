@@ -94,6 +94,10 @@ class DiscordController < ApplicationController
     @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :link_server)
     @channel_id = Discord.verify_signed(params[:signed_channel_id], purpose: :link_server)
 
+    @guild = Discord::Bot.bot.server(@guild_id)
+    @channel = Discord::Bot.bot.channel(@channel_id)
+    # TODO: verify channel is inside guilde. @rluodev
+
     if event.update(discord_guild_id: @guild_id, discord_channel_id: @channel_id)
       Discord::Bot.bot.send_message(@channel_id, "The HCB organization #{event.name} has been successfully linked to this Discord server by #{current_user.name}! Notifications and announcements will be sent in this channel, <\##{@channel_id}>.")
       flash[:success] = "Successfully linked the organization #{event.name} to your Discord server"
