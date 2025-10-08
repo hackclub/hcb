@@ -34,10 +34,7 @@ class DiscordController < ApplicationController
   end
 
   def interaction_webhook
-    puts "Received Discord interaction"
-
     if params[:type] == 1 # PING
-      puts "Responding to PING"
       render json: { type: 1 } # PONG
 
     elsif params[:type] == 2 # application command

@@ -204,8 +204,6 @@ module Discord
     end
 
     def respond(**body)
-      puts "HIJ>response method called"
-
       if body[:components].present? && !body[:components].is_a?(Array)
         body[:components] = [body[:components]]
       end
