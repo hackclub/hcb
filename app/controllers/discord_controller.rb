@@ -9,6 +9,7 @@ class DiscordController < ApplicationController
   rescue_from ActiveSupport::MessageVerifier::InvalidSignature do |e|
     Rails.error.report(e)
     flash[:error] = "The link you used appears to be invalid or has expired. Please try re-running /link in the Discord server."
+    redirect_back_or_to root_path
   end
 
   def event_webhook
@@ -140,6 +141,7 @@ class DiscordController < ApplicationController
 
     authorize @event, policy_class: DiscordPolicy
   end
+
 
   def unlink_server_action
     @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :unlink_server)
