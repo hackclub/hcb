@@ -31,20 +31,18 @@ class OrganizerPositionInvite
 
     belongs_to :event
     belongs_to :creator, class_name: "User"
-    belongs_to :deactivator, class_name: "User"
+    belongs_to :deactivator, class_name: "User", optional: true
 
     has_many :requests, class_name: "OrganizerPositionInvite::Request", dependent: :destroy
 
-    scope :active, -> { where(deactivated_at: nil) }
-    scope :usable, -> { active.where("? <= created_at + expires_in", Time.now) }
+    scope :active, -> { where(deactivated_at: nil).where("? <= created_at + expires_in * interval '1 sec'", Time.now) }
 
     def deactivated?
       deactivated_at.present?
     end
 
     def deactivate(user:)
-      deactivated_at = Time.now
-      deactivator = user
+      update!(deactivated_at: Time.now, deactivator: user)
     end
 
   end

@@ -869,11 +869,13 @@ Rails.application.routes.draw do
 
     scope module: "organizer_position_invite" do
       resources :links,
-                only: [:new, :create],
-                path: "invite_links"
+                only: [:new, :create, :index],
+                path: "invite_links",
+                as: :invite_links
       resources :requests,
                 only: [:create],
-                path: "invite_requests"
+                path: "invite_requests",
+                as: :invite_requests
     end
 
     namespace :donation do

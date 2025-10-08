@@ -2,8 +2,16 @@
 
 class OrganizerPositionInvite
   class LinkPolicy < ApplicationPolicy
+    def index?
+      admin_or_manager?
+    end
+
     def show?
       true
+    end
+
+    def new?
+      admin_or_manager?
     end
 
     def create?

@@ -315,7 +315,8 @@ class EventsController < ApplicationController
     end
 
     @invites = @event.organizer_position_invites.pending.includes(:sender)
-    @invite_requests = @event.organizer_position_invite_requests
+    @invite_requests = @event.organizer_position_invite_requests.pending
+    @invite_links = @event.organizer_position_invite_links.active
   end
 
   # GET /events/1/edit
