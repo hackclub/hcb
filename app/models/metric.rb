@@ -79,7 +79,7 @@ class Metric < ApplicationRecord
   end
 
   def self.year
-    2024
+    2025
   end
 
 end
