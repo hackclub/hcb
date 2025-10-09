@@ -19,8 +19,6 @@ module Api
       end
 
       def create
-        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
-
         sent_by = current_user
 
         if current_user.admin? && params[:sent_by_email].present?
