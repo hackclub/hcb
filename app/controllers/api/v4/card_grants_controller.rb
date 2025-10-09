@@ -22,7 +22,7 @@ module Api
         sent_by = current_user
 
         if current_user.admin? && params[:sent_by_email].present?
-          found_user = User.find_by(email: params[:sent_by_email].strip.downcase)
+          found_user = User.find_by(email: params[:sent_by_email])
 
           if found_user.nil?
             skip_authorization
