@@ -418,7 +418,8 @@ class UsersController < ApplicationController
       :comment_notifications,
       :charge_notifications,
       :use_sms_auth,
-      :use_two_factor_authentication
+      :use_two_factor_authentication,
+      :discord_id
     ]
 
     if @user.stripe_cardholder

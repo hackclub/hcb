@@ -226,16 +226,6 @@
         </div>
 
         <% unless @onboarding %>
-          <% if @user.has_discord_account? %>
-            <div class="card max-w-6xl">
-              <p class="medium">Connected Discord account</p>
-              <p class="h5 muted mt-0 mb-3">
-                You've set up the HCB discord bot
-              </p>
-              <p>@<%= @user.discord_account.username %></p>
-            </div>
-          <% end %>
-
           <fieldset>
             <legend class="medium">Share usage data with HCB</legend>
             <p class="h5 muted mt-0 mb-3">
@@ -255,6 +245,27 @@
               <% end %>
             </div>
           </fieldset>
+
+          <% if @user.has_discord_account? %>
+            <p class="medium mb-0">Connected Discord account</p>
+
+            <p class="h5 muted mt-0 mb-3">
+              You've linked your HCB account to Discord. This allows you to use the HCB <%= link_to "Discord bot", "https://hcb.gg/discord", target: :_blank %> to check your balance, view recent transactions, open reimbursement reports, and more.
+            </p>
+
+            <div class="card max-w-2xl">
+              <div class="flex flex-row items-center justify-start gap-2" id="discord-integration">
+                <%= image_tag @user.discord_account.avatar_url, class: "w-10 h-10 rounded-full" if @user.discord_account.avatar_url.present? %>
+                <p class="my-0">@<%= @user.discord_account.username %></p>
+                <span class="flex-grow"></span>
+                <%= pop_icon_to "delete", "javascript:void(0);", class: "tooltipped tooltipped--w error", "aria-label": "Remove Discord integration", onclick: "document.getElementById('discord-integration').style.display = 'none'; document.getElementById('discord-integration-removed').style.display = 'block'; document.getElementById('user_discord_id').value = '';" %>
+              </div>
+              <div id="discord-integration-removed" class="hidden">
+                <p class="my-0">Your Discord account will be removed. Save your changes for this to take effect.</p>
+              </div>
+              <%= form.hidden_field :discord_id, value: @user.discord_id %>
+            </div>
+          <% end %>
         <% end %>
 
         <div class="actions flex">
