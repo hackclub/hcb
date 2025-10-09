@@ -33,10 +33,14 @@ class PublicActivity::Activity
       streams = []
 
       if event_id
-        Event.find(event_id).users.each do |user|
+        event = Event.find(event_id)
+
+        event.users.each do |user|
           streams << [user, "activities"]
           streams << [user, Event.find(event_id), "activities"]
         end
+
+        ::Discord::ProcessNotificationJob.perform_later(self.id) if event.has_discord_guild?
       end
 
       if recipient.is_a?(User)
