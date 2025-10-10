@@ -13,11 +13,13 @@ class OrganizerPositionInvite
     end
 
     def approve
-      service = OrganizerPositionInviteService::Create.new(event: link.event, sender: link.creator, user_email: requester.email, is_signee: false, role: params[:role], enable_spending_controls: params[:enable_spending_controls], initial_control_allowance_amount: params[:initial_control_allowance_amount])
+      authorize @request
+
+      link = @request.link
+
+      service = OrganizerPositionInviteService::Create.new(event: link.event, sender: link.creator, user_email: @request.requester.email, is_signee: false, role: params[:role] || :reader, enable_spending_controls: params[:enable_spending_controls] || false, initial_control_allowance_amount: params[:initial_control_allowance_amount] || 0)
 
       @invite = service.model
-
-      authorize @invite
 
       if service.run
         @invite.accept
