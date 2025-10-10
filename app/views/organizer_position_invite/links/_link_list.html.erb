@@ -14,7 +14,7 @@
               <p class="my-0">Used <%= pluralize(link.requests.size, "times") %></p>
             </div>
             <div class="flex-grow"></div>
-            <%= pop_icon_to "delete",
+            <%= pop_icon_to "view-close-small",
                             deactivate_link_path(link),
                             class: "error tooltipped",
                             data: {
