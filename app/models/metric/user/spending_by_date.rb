@@ -26,21 +26,21 @@ class Metric
 
         stripe_transactions_subquery = RawStripeTransaction.select("date(date_posted) AS transaction_date, SUM(amount_cents) * -1 AS amount")
                                                            .where("raw_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", StripeCardholder.select(:stripe_id).where(user_id: user.id))
-                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
+                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year)
                                                            .group("date(date_posted)")
 
         ach_transfers_subquery = AchTransfer.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                            .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                                            .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                             .where(creator_id: user.id)
                                             .group("date(created_at)")
 
         increase_checks_subquery = IncreaseCheck.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                                .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                                                .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                                 .where(user_id: user.id)
                                                 .group("date(created_at)")
 
         checks_subquery = Check.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                               .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                               .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                .where(creator_id: user.id)
                                .group("date(created_at)")
 
@@ -62,7 +62,7 @@ class Metric
         SQL
 
         hash = {}
-        (Date.new(2024, 1, 1)..Date.new(2024, 12, 31)).each do |date|
+        (Date.new(Metric.year, 1, 1)..Date.new(Metric.year, 12, 31)).each do |date|
           hash[date.to_s] = 0
         end
 
