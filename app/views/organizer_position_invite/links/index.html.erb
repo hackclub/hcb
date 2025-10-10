@@ -1,0 +1,6 @@
+<% title "Invite links for #{@event.name}" %>
+<%= render "events/nav", selected: :team %>
+
+<h1 class="heading">Invite links</h1>
+
+<%= render partial: "link_list", locals: { event: @event, invite_links: @invite_links } %>

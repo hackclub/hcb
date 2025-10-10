@@ -1,0 +1,31 @@
+<%# locals: (event:, invite_links:) %>
+
+<% if invite_links.empty? %>
+  <p><%= event.name %> does not currently have any active invite links</p>
+<% else %>
+  <ul class="grid grid-cols-1 text-left w-full mt-2">
+    <% invite_links.each do |link| %>
+      <li class="overflow-visible card flex flex-row justify-between items-center gap-2">
+        <span class="w-full flex gap-2 items-center align-middle">
+            <div class="flex flex-col">
+              <p class="my-0 font-bold"><%= link_to link_url(link), link_url(link) %></p>
+              <p class="my-0">Created by <%= user_mention link.creator %> on <%= link.created_at.strftime("%B %e, %Y") %></p>
+              <p class="my-0">Expires in <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %></p>
+              <p class="my-0">Used <%= pluralize(link.requests.size, "times") %></p>
+            </div>
+            <div class="flex-grow"></div>
+            <%= pop_icon_to "view-close-small",
+                            deactivate_link_path(link),
+                            class: "error tooltipped",
+                            data: {
+                              turbo_frame: "_top",
+                              turbo_method: :post,
+                              turbo_confirm: "Are you sure you want to deactivate this invite link?",
+                            },
+                            "aria-label": "Deactivate invite link",
+                            disabled: !policy(link).deactivate? %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

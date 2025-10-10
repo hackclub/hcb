@@ -784,6 +784,21 @@ Rails.application.routes.draw do
     end
   end
 
+  scope module: "organizer_position_invite" do
+    resources :links, path: "invite_links", only: :show do
+      member do
+        post "deactivate"
+      end
+    end
+
+    resources :requests, path: "invite_requests", only: [:create] do
+      member do
+        post "approve"
+        post "deny"
+      end
+    end
+  end
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
@@ -849,9 +864,6 @@ Rails.application.routes.draw do
     resources :wires, only: [:new, :create]
     resources :wise_transfers, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
-    resources :organizer_position_invites,
-              only: [:new, :create],
-              path: "invites"
     resources :g_suites, only: [:new, :create, :edit, :update]
     resources :documents, only: [:index]
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
@@ -860,6 +872,16 @@ Rails.application.routes.draw do
     resources :affiliations, only: [:create, :update, :destroy], controller: "event/affiliations"
     resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
+    resources :organizer_position_invites,
+              only: [:new, :create],
+              path: "invites"
+
+    scope module: "organizer_position_invite" do
+      resources :links,
+                only: [:new, :create, :index],
+                path: "invite_links",
+                as: :invite_links
+    end
 
     namespace :donation do
       resource :goals, only: [:create, :update]
