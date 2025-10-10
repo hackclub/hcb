@@ -20,6 +20,11 @@ class OrganizerPositionInvite
         redirect_to event_path(@link.event)
       end
 
+      if @link.event.organizer_position_invite_requests.pending.where(requester: current_user).any?
+        flash[:success] = "You already have a request to join #{@link.event.name}!"
+        redirect_to root_path
+      end
+
       @organizers = @link.event.organizer_positions
     end
 
