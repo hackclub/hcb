@@ -30,6 +30,8 @@
 class CardGrant
   class PreAuthorization < ApplicationRecord
     has_many_attached :screenshots, dependent: :destroy
+    validates :screenshots, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["screenshots"].present? }
+
     belongs_to :card_grant
     has_one :event, through: :card_grant
     has_one :user, through: :card_grant

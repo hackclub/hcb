@@ -8,7 +8,7 @@
           <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7eb839cffb744ac3d23d6980945e3dac0903e9d8_drukarka-3d-bambu-lab-a1-578982107-removebg-preview.png" height="72px" class="mr2">
           3D Printer Raffle
         </h3>
-        <% if event.robotics_team? || event.affiliations.robotics.any? %>
+        <% if event.robotics_team? || event.affiliations.robotics.any? || @is_argosy %>
           <span class="btn disabled bg-clip-padding"><%= pluralize(active_teenagers_count, "ticket") %></span>
         <% else %>
           <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a robotics team or have a robotics affiliation.">

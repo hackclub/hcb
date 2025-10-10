@@ -7,7 +7,7 @@
       <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
     </h3>
 
-    <% if !event.plan.eligible_for_perks? %>
+    <% if !event.plan.promotions_enabled? %>
       <% domains_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
     <% elsif !perks_available %>
       <% domains_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>

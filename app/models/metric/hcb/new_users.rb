@@ -24,7 +24,7 @@ class Metric
 
       def calculate
         organizers.or(card_grant_recipients).or(reimbursement_report_users)
-                  .where("EXTRACT(YEAR FROM users.created_at) = ?", 2024)
+                  .where("EXTRACT(YEAR FROM users.created_at) = ?", Metric.year)
                   .count
       end
 

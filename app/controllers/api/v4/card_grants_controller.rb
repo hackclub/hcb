@@ -19,7 +19,20 @@ module Api
       end
 
       def create
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+        sent_by = current_user
+
+        if current_user.admin? && params[:sent_by_email].present?
+          found_user = User.find_by(email: params[:sent_by_email])
+
+          if found_user.nil?
+            skip_authorization
+            return render json: { error: "invalid_user", messages: "User with email '#{params[:sent_by_email]}' not found" }, status: :bad_request
+          end
+
+          sent_by = found_user
+        end
+
+        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:))
 
         authorize @card_grant
 
@@ -53,6 +66,8 @@ module Api
 
         render :show, status: :created, location: api_v4_card_grant_path(@card_grant)
       end
+
+      require_oauth2_scope "card_grants:write", :create
 
       def show
         @card_grant = CardGrant.find_by_public_id!(params[:id])
