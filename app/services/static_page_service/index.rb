@@ -22,7 +22,7 @@ module StaticPageService
       @current_user.organizer_position_invites.pending
     end
 
-    def requests
+    def invite_requests
       @current_user.organizer_position_invite_requests.pending
     end
 
