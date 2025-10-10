@@ -791,7 +791,7 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :requests, path: "invite_requests", only: [] do
+    resources :requests, path: "invite_requests", only: [:create] do
       member do
         post "approve"
         post "deny"
@@ -881,10 +881,6 @@ Rails.application.routes.draw do
                 only: [:new, :create, :index],
                 path: "invite_links",
                 as: :invite_links
-      resources :requests,
-                only: [:create],
-                path: "invite_requests",
-                as: :invite_requests
     end
 
     namespace :donation do

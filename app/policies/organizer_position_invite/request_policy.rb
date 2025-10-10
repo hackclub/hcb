@@ -2,10 +2,6 @@
 
 class OrganizerPositionInvite
   class RequestPolicy < ApplicationPolicy
-    def create?
-      true
-    end
-
     def approve?
       admin_or_manager?
     end
