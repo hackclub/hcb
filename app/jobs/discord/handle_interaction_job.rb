@@ -258,7 +258,7 @@ module Discord
           fields: [
             {
               name: "Discord Account (`@#{user_name}`) ↔ Your HCB Account",
-              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@user.present? ? "✅ Linked to #{@user.preferred_name.presence || @user.first_name} on HCB" : "❌ Not linked. #{link_to("Set up here", generate_discord_link_url)}"}\n",
+              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@user.present? ? "✅ Linked to #{@user.preferred_name.presence || @user.first_name} on HCB (#{link_to("disconnect", url_helpers.discord_unlink_user_url)})" : "❌ Not linked. #{link_to("Set up here", generate_discord_link_url)}"}\n",
             },
             (if @guild_id.present?
                {

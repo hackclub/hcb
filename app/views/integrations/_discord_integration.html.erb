@@ -1,0 +1,27 @@
+<%# locals: (active:, unlink_path:, disabled:) %>
+
+<div class="card pb0 mb3">
+  <div class="card__banner card__banner--top flex justify-between items-center integration-discord">
+    <h3 class="h1 pt2 pb2 my0">Discord</h3>
+    <% if active %>
+      <%= link_to(
+            "Unlink",
+            unlink_path,
+            data: { turbo_frame: "_top" },
+            class: "btn bg-error",
+            disabled:
+          ) %>
+    <% else %>
+      <%= link_to(
+            "Setup",
+            "#",
+            data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "discord_integration" },
+            class: "btn bg-info",
+            disabled:
+          ) %>
+    <% end %>
+  </div>
+  <p>
+    Install the HCB Discord bot to check your balance, view recent transactions, open reimbursement reports, and more from your team's Discord server!
+  </p>
+</div>

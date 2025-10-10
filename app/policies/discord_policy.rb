@@ -25,4 +25,12 @@ class DiscordPolicy < ApplicationPolicy
     true
   end
 
+  def unlink_user?
+    true
+  end
+
+  def unlink_user_action?
+    true
+  end
+
 end

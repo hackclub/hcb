@@ -1,0 +1,21 @@
+.integration-discord {
+  color: white;
+
+  background-color: #f5f5f5;
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(245, 246, 252, 0.25),
+      rgba(248, 248, 248, 0.05)
+    ),
+    url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/03659550ddee837a06c9c3281fba0f02aadbcb8a_discord-banner.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+html[data-dark='true'] {
+  .integration-discord {
+    background-color: #363a44;
+  }
+}

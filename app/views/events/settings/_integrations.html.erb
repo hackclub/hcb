@@ -1,0 +1,15 @@
+<%# locals: (event:) %>
+
+<% disabled = !policy(current_user).update? %>
+
+<%= render "integrations/discord_integration", active: event.has_discord_guild?, unlink_path: discord_unlink_server_path(signed_guild_id: Discord.generate_signed(event.discord_guild_id, purpose: :unlink_server)), disabled: %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="discord_integration">
+  <%= modal_header "Setup Discord integration" %>
+
+  <ol>
+    <li>Create a channel for HCB in your team's Discord server - we recommend calling it #finance</li>
+    <li><%= link_to "Click this link to add the bot", Discord::Bot.install_link, target: "_blank" %></li>
+    <li>Run /link in the channel you created for HCB</li>
+  </ol>
+</section>

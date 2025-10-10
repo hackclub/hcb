@@ -25,6 +25,9 @@
       <span class="xs-capitalize">previews</span>
     <% end %>
   <% end %>
+  <%= settings_tab active: active == "integrations" do %>
+    <%= link_to "Integrations", @user == current_user ? settings_integrations_path : integrations_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
+  <% end %>
   <% admin_tool("py0 px2 overflow-hidden", override_pretend: true) do %>
     <%= settings_tab active: active == "admin" do %>
       <%= link_to "Admin", @user == current_user ? settings_admin_path : admin_user_path(@user), data: { turbo: true, turbo_action: "advance" } %>
