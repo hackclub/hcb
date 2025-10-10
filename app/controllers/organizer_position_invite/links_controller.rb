@@ -15,8 +15,10 @@ class OrganizerPositionInvite
     def show
       authorize @link
 
-      redirect_to event_path(@link.event) if @link.event.users.include?(current_user)
-      flash[:success] = "You already have access to #{@link.event.name}!"
+      if @link.event.users.include?(current_user)
+        flash[:success] = "You already have access to #{@link.event.name}!"
+        redirect_to event_path(@link.event)
+      end
 
       @organizers = @link.event.organizer_positions
     end
