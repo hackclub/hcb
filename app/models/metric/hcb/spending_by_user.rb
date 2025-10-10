@@ -32,20 +32,20 @@ class Metric
             FROM "raw_stripe_transactions"
             WHERE raw_stripe_transactions.stripe_transaction->>\'cardholder\' IN (
                 SELECT stripe_id FROM "stripe_cardholders" WHERE user_id = users.id
-            ) AND EXTRACT(YEAR FROM date_posted) = ' + Metric.year + '
+            ) AND EXTRACT(YEAR FROM date_posted) = ' + Metric.year.to_s + '
 
             UNION ALL
 
             SELECT SUM(amount) AS dollars_spent
             FROM "ach_transfers"
-            WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year + '
+            WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
             AND creator_id = users.id
 
             UNION ALL
 
             SELECT SUM(amount) AS dollars_spent
             FROM "disbursements"
-            WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year + '
+            WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
             AND requested_by_id = users.id
 
             UNION ALL
@@ -54,12 +54,12 @@ class Metric
             FROM (
                 SELECT amount
                 FROM "increase_checks"
-                WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year + '
+                WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
                 AND user_id IN (users.id)
                 UNION ALL
                 SELECT amount
                 FROM "checks"
-                WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year + '
+                WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
                 AND creator_id IN (users.id)
             ) AS combined_table
         ) AS combined_result)
