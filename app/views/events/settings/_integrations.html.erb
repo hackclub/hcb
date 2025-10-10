@@ -1,0 +1,40 @@
+<%# locals: (event:) %>
+
+<% disabled = !policy(current_user).update? %>
+
+<div class="card pb0 mb3">
+  <div class="card__banner card__banner--top flex justify-between items-center integration-discord">
+    <h3 class="h1 pt2 pb2 my0">Discord</h3>
+    <% if event.has_discord_guild? %>
+      <%= link_to(
+            "Unlink",
+            discord_unlink_server_path(signed_guild_id: Discord.generate_signed(event.discord_guild_id, purpose: :unlink_server)),
+            data: { turbo_frame: "_top" },
+            class: "btn bg-error",
+            disabled:
+          ) %>
+    <% else %>
+      <%= link_to(
+            "Setup",
+            Discord::Bot.install_link,
+            data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "discord_integration" },
+            class: "btn bg-info",
+            disabled:
+          ) %>
+    <% end %>
+  </div>
+  <p>
+    Install the HCB Discord bot to check your balance, view recent transactions, open reimbursement reports, and more from your team's Discord server!
+  </p>
+</div>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="discord_integration">
+  <%= modal_header "Setup Discord integration" %>
+
+  <ol>
+    <li>Create a channel for HCB in your team's Discord server - we recommend calling it #finance</li>
+    <li><%= link_to "Click this link to add the bot", Discord::Bot.install_link, target: "_blank" %></li>
+    <li>Run /link in the channel you created for HCB</li>
+  </ol>
+</section>
+
