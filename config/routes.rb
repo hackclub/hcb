@@ -145,6 +145,7 @@ Rails.application.routes.draw do
       get "previews", to: "users#edit_featurepreviews"
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"
+      get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
       get "admin_details", to: "users#admin_details"
 

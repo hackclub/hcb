@@ -1,6 +1,6 @@
 <% title "Account settings" %>
 <% page_md %>
-<% disabled = !policy(current_user).update? %>
+<% disabled = !policy(@user).update? %>
 
 <%= render "users/nav", selected: :settings %>
 
@@ -10,7 +10,7 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_nav", active: "integrations" %>
   <section>
-    <%= render "integrations/discord_integration", active: current_user.has_discord_account?, unlink_path: discord_unlink_user_path, disabled: %>
+    <%= render "integrations/discord_integration", active: @user.has_discord_account?, unlink_path: discord_unlink_user_path, disabled: %>
 
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="discord_integration">
       <%= modal_header "Setup Discord integration" %>

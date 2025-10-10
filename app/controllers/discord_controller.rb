@@ -141,7 +141,7 @@ class DiscordController < ApplicationController
     Rails.error.unexpected("Exception unlinking discord user: #{e.message}")
     flash[:error] = "We could not unlink your Discord user"
   ensure
-    redirect_to integrations_user_path(@user)
+    redirect_to root_path
   end
 
   def unlink_server
