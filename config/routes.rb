@@ -73,6 +73,7 @@ Rails.application.routes.draw do
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
     get "settings/admin", to: "users#edit_admin"
+    get "settings/integrations", to: "users#edit_integrations"
     get "payroll", to: "my#payroll", as: :my_payroll
 
     get "feed", to: "my#feed", as: :my_feed
@@ -714,6 +715,8 @@ Rails.application.routes.draw do
   get "discord/setup", to: "discord#setup"
   get "discord/unlink_server", to: "discord#unlink_server"
   post "discord/unlink_server", to: "discord#unlink_server_action"
+  get "discord/unlink_user", to: "discord#unlink_user"
+  post "discord/unlink_user", to: "discord#unlink_user_action"
   post "discord/create_server_link", to: "discord#create_server_link"
 
   post "extract/invoice", to: "extraction#invoice"

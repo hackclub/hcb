@@ -123,6 +123,27 @@ class DiscordController < ApplicationController
     end
   end
 
+  def unlink_user
+    @user = Discord::Bot.bot.user(current_user.discord_id)
+
+    authorize nil, policy_class: DiscordPolicy
+  end
+
+  def unlink_user_action
+    authorize nil, policy_class: DiscordPolicy
+
+    if current_user.update(discord_id: nil)
+      flash[:success] = "Successfully unlinked your Discord user"
+    else
+      flash[:error] = event.errors.full_messages.to_sentence
+    end
+  rescue => e
+    Rails.error.unexpected("Exception unlinking discord user: #{e.message}")
+    flash[:error] = "We could not unlink your Discord user"
+  ensure
+    redirect_to integrations_user_path(@user)
+  end
+
   def unlink_server
     @signed_guild_id = params[:signed_guild_id]
     @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :unlink_server)
@@ -148,7 +169,7 @@ class DiscordController < ApplicationController
       flash[:error] = event.errors.full_messages.to_sentence
     end
   rescue => e
-    Rails.error.unexpected("Exception linking discord server: #{e.message}")
+    Rails.error.unexpected("Exception unlinking discord server: #{e.message}")
     flash[:error] = "We could not unlink your organization from your Discord server"
   ensure
     if event.present?
