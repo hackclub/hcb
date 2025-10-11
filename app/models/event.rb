@@ -40,6 +40,8 @@
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
+#  discord_channel_id                           :string
+#  discord_guild_id                             :string
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
 #  parent_id                                    :bigint
@@ -47,6 +49,8 @@
 #
 # Indexes
 #
+#  index_events_on_discord_channel_id   (discord_channel_id) UNIQUE
+#  index_events_on_discord_guild_id     (discord_guild_id) UNIQUE
 #  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
@@ -389,15 +393,19 @@ class Event < ApplicationRecord
 
   has_one_attached :donation_header_image
   validates :donation_header_image, content_type: [:png, :jpeg]
+  validates :donation_header_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
   validates :background_image, content_type: [:png, :jpeg, :gif]
+  validates :background_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
+  validates :logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["logo"].present? }
 
   has_one_attached :stripe_card_logo
   validates :stripe_card_logo, content_type: [:png, :jpeg]
+  validates :stripe_card_logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
 
   include HasMetrics
 
@@ -423,6 +431,8 @@ class Event < ApplicationRecord
   validates :website, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { website.present? }
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
+
+  validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
@@ -886,6 +896,10 @@ class Event < ApplicationRecord
     @point_of_contact_history ||= versions
                                   .filter_map { |v| v.changeset["point_of_contact_id"].presence }
                                   .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
+  end
+
+  def has_discord_guild?
+    discord_guild_id.present?
   end
 
   private

@@ -26,6 +26,22 @@
     color: map-get($palette, info);
     font-weight: 700;
   }
+
+  &:first-child {
+    margin-left: 0.2rem;
+  }
+
+  &.bordered {
+    font-family: inherit;
+    color: inherit;
+    border-bottom: 2px solid transparent;
+    padding: 0.5rem 0.7rem;
+
+    &.active {
+      border-color: map-get($palette, primary);
+      color: map-get($palette, primary);
+    }
+  }
 }
 
 .menu__divider--filter-tab {

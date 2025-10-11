@@ -30,7 +30,7 @@ class Metric
           LEFT JOIN "event_plans" ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'
           LEFT JOIN "disbursements" ON canonical_transactions.hcb_code = CONCAT('HCB-500-', disbursements.id)
           WHERE amount_cents > 0
-          AND date_part('year', date) = 2024
+          AND date_part('year', date) = #{Metric.year}
           #{Event::Plan.that(:omit_stats).map(&:name).map { |p| "AND event_plans.type != '#{p}'" }.join(' ')}
           AND (disbursements.id IS NULL or disbursements.should_charge_fee = true)
           AND NOT (

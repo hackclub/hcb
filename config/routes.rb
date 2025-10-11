@@ -635,6 +635,7 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
+          get :beacon_config
         end
 
         resources :users, only: [:show] do
@@ -706,6 +707,15 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+
+  post "discord/event_webhook", to: "discord#event_webhook"
+  post "discord/interaction_webhook", to: "discord#interaction_webhook"
+  get "discord/link", to: "discord#link"
+  post "discord/create_link", to: "discord#create_link"
+  get "discord/setup", to: "discord#setup"
+  get "discord/unlink_server", to: "discord#unlink_server"
+  post "discord/unlink_server", to: "discord#unlink_server_action"
+  post "discord/create_server_link", to: "discord#create_server_link"
 
   post "extract/invoice", to: "extraction#invoice"
 

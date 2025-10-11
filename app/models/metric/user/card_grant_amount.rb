@@ -23,7 +23,7 @@ class Metric
       include Subject
 
       def calculate
-        user.card_grants.where("EXTRACT(YEAR FROM created_at) = ?", 2024).sum(:amount_cents)
+        user.card_grants.where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:amount_cents)
       end
 
     end
