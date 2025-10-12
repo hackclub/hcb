@@ -101,6 +101,7 @@ gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
+gem "reverse_markdown" # public activity to discord
 
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
@@ -225,3 +226,6 @@ gem "pstore"
 gem "bcrypt", "~> 3.1.7"
 
 gem "prosemirror_to_html"
+
+gem "ed25519"
+gem "discordrb"

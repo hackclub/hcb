@@ -1,6 +1,29 @@
 {
   "ignored_warnings": [
     {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "1360a946f072d41cb61d7e5da98ab675508c58b018ed2949230e3a537ca63dd0",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/metric/hcb/total_raised.rb",
+      "line": 34,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.execute(\"SELECT SUM(amount_cents) as amount_cents FROM \\\"canonical_transactions\\\"\\nLEFT JOIN \\\"canonical_event_mappings\\\" ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id\\nLEFT JOIN \\\"events\\\" ON canonical_event_mappings.event_id = events.id\\nLEFT JOIN \\\"event_plans\\\" ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'\\nLEFT JOIN \\\"disbursements\\\" ON canonical_transactions.hcb_code = CONCAT('HCB-500-', disbursements.id)\\nWHERE amount_cents > 0\\nAND date_part('year', date) = #{2025}\\n#{Event::Plan.that(:omit_stats).map(&:name).map do\n \"AND event_plans.type != '#{p}'\"\n end.join(\" \")}\\nAND (disbursements.id IS NULL or disbursements.should_charge_fee = true)\\nAND NOT (\\n  canonical_transactions.hcb_code ILIKE 'HCB-300%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-310%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-350%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-400%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-401%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-600%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-601%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-710%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-712%'\\n)\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TotalRaised",
+        "method": "calculate"
+      },
+      "user_input": "Event::Plan.that(:omit_stats)",
+      "confidence": "High",
+      "cwe_id": [
+        89
+      ],
+      "note": "The value is determined in Metric.year and is not dangerous"
+    },
+    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 2,
       "fingerprint": "154fc5e6dd75905b4d439027dc586e15421a58a265d590f753ce34b81d23095e",
@@ -464,8 +487,31 @@
         79
       ],
       "note": "Domain is validated to not have a javascript: url scheme & dns_check_url is injecting that domain in a https url"
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "f90eb66c77db0dbe90ae47634a8c3ece1ddd9cf5bbccf6f5726535c0d58f01b1",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/metric/hcb/total_raised.rb",
+      "line": 34,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.execute(\"SELECT SUM(amount_cents) as amount_cents FROM \\\"canonical_transactions\\\"\\nLEFT JOIN \\\"canonical_event_mappings\\\" ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id\\nLEFT JOIN \\\"events\\\" ON canonical_event_mappings.event_id = events.id\\nLEFT JOIN \\\"event_plans\\\" ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'\\nLEFT JOIN \\\"disbursements\\\" ON canonical_transactions.hcb_code = CONCAT('HCB-500-', disbursements.id)\\nWHERE amount_cents > 0\\nAND date_part('year', date) = #{2024}\\n#{Event::Plan.that(:omit_stats).map(&:name).map do\n \"AND event_plans.type != '#{p}'\"\n end.join(\" \")}\\nAND (disbursements.id IS NULL or disbursements.should_charge_fee = true)\\nAND NOT (\\n  canonical_transactions.hcb_code ILIKE 'HCB-300%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-310%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-350%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-400%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-401%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-600%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-601%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-710%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-712%'\\n)\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "TotalRaised",
+        "method": "calculate"
+      },
+      "user_input": "Event::Plan.that(:omit_stats)",
+      "confidence": "High",
+      "cwe_id": [
+        89
+      ],
+      "note": "This value is hardcoded and will only ever be a year"
     }
   ],
-  "updated": "2025-09-22 17:03:25 -0400",
+  "updated": "2025-10-08 15:13:59 -0700",
   "brakeman_version": "6.2.2"
 }

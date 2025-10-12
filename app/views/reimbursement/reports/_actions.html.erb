@@ -242,6 +242,11 @@
               <% end %>
               <% turbo_confirm = "⚠️ WARNING: Approving this reimbursement will make the event balance negative. This organization does not have sufficient funds to fulfill this request. Are you sure you want to proceed?" %>
             <% end %>
+            <% if report.event.financially_frozen? %>
+              <% button_hint = capture do %>
+                <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
+              <% end %>
+            <% end %>
             <% if report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "wise" %>

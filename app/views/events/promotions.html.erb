@@ -7,15 +7,13 @@
 </h1>
 
 <%# Perks for organizations ran by teenagers %>
-<% if @event.organized_by_teenagers? || @active_teenagers_count > 0 %>
+<% if @event.organized_by_teenagers? || @active_teenagers_count > 0 || @is_argosy %>
+  <%= render "events/perks/robotics_printer_raffle", event: @event, active_teenagers_count: @active_teenagers_count %>
+
   <%= render "events/perks/premium_pins", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
   <%= render "events/perks/premium_domains", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
 
-  <% if Date.current.month < 10 %>
-    <%= render "events/perks/robotics_fee_waiver", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
-  <% end %>
-
-  <%= render "events/perks/robotics_printer_raffle", event: @event, active_teenagers_count: @active_teenagers_count %>
+  <%= render "events/perks/fee_waiver", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
 
   <%= render "events/perks/hackathons_page", event: @event, perks_available: @perks_available %>
 
