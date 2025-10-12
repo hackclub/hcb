@@ -29,7 +29,7 @@
 
 <%# Demo mode callout thing %>
 <% if organizer_signed_in? && @event.demo_mode && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-  <div class="card border b--info pb0 mb-4" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
+  <div class="card border b--info pb0 mb-4" style="text-wrap: pretty;" id="playground-callout">
     <p class="mt0">
       <strong>Welcome to Playground Mode</strong>
       <br>
@@ -55,7 +55,7 @@
 <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
   <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) || show_mock_data? %>
     <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
-      <div class="stat statset__wide" data-tour-step="balance">
+      <div class="stat statset__wide">
         <span class="stat__label">Account balance</span>
         <% if @event.fee_balance_v2_cents < 0
              # this event has a fee credit (owes negative fees) %>
@@ -76,7 +76,7 @@
       data-controller="balance-graph"
       data-balance-graph-available-value="<%= @event.balance_available_v2_cents %>"
       data-balance-graph-slug-value="<%= @event.slug %>">
-      <div class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="stat">
+      <div class="stat statset__wide" data-balance-graph-target="stat">
         <span class="stat__label" data-balance-graph-target="label">Account balance</span>
         <% if @event.fee_balance_v2_cents < 0
              # this event has a fee credit (owes negative fees) %>
@@ -90,7 +90,7 @@
         <% end %>
       </div>
 
-      <div data-nosnippet style="position: absolute; top: 0px; left: 0px; visibility: hidden;" aria-hidden="true" class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="size">
+      <div data-nosnippet style="position: absolute; top: 0px; left: 0px; visibility: hidden;" aria-hidden="true" class="stat statset__wide" data-balance-graph-target="size">
         <span class="stat__label">Account balance</span>
         <% if @event.fee_balance_v2_cents < 0
              # this event has a fee credit (owes negative fees) %>
@@ -122,7 +122,7 @@
               +<%= @event.organizer_positions.count - 5 %>
             <% end %>
           <% end %>
-          <%= pop_icon_to "member-add", event_team_path(@event), class: "ml1", data: { "tour-step" => "invite" } %>
+          <%= pop_icon_to "member-add", event_team_path(@event), class: "ml1" %>
         <% else %>
           <p class="slate bold h3 mr2">No team members yet</p>
           <%= pop_icon_to "member-add", event_team_path(@event) %>

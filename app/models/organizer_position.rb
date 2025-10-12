@@ -38,7 +38,6 @@ class OrganizerPosition < ApplicationRecord
 
   has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
-  has_many :tours, as: :tourable, dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
 
@@ -46,13 +45,6 @@ class OrganizerPosition < ApplicationRecord
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
 
   alias_attribute :signee, :is_signee
-
-  def tourable_options
-    {
-      demo: event.demo_mode?,
-      initial: initial?
-    }
-  end
 
   def self.role_at_least?(user, event, role)
     return false unless event.present? && role.present?

@@ -31,7 +31,7 @@
         </p>
       </div>
       <% if policy(@event).can_invite_user? %>
-        <%= link_to "Invite", event_team_path(@event), class: "btn", data: { "tour-step" => "invite", behavior: "modal_trigger", "modal": "invite_member" } %>
+        <%= link_to "Invite", event_team_path(@event), class: "btn", data: { behavior: "modal_trigger", "modal": "invite_member" } %>
       <% end %>
     </div>
   </div>

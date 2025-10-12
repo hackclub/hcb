@@ -49,14 +49,12 @@
         event_donation_overview_path(event_id: @event.slug),
         tooltip: "Receive donations online",
         icon: "support",
-        data: { tour_step: "donations" },
         selected: local_assigns[:selected] == :donations %>
     <% elsif @event.donation_page_available? %>
       <%= dock_item "Donate",
         start_donation_donations_path(event_name: @event.slug),
         tooltip: "Support this organization",
         icon: "support",
-        data: { tour_step: "donations" },
         selected: local_assigns[:selected] == :donations %>
     <% end %>
     <%= dock_item "Invoices",
@@ -82,7 +80,6 @@
       event_cards_overview_path(event_id: @event.slug),
       tooltip: "Manage team HCB cards",
       icon: "card",
-      data: { tour_step: "cards" },
       selected: local_assigns[:selected] == :cards if policy(@event).card_overview? %>
     <%= dock_item "Transfers",
       event_transfers_path(event_id: @event.slug),
@@ -111,7 +108,6 @@
                 event_promotions_path(event_id: @event.slug),
                 tooltip: (!policy(@event).promotions? ? "Your organization isn't eligible for promos and discounts." : "Receive promos & discounts"),
                 icon: "shirt",
-                data: { tour_step: "perks" },
                 disabled: !policy(@event).promotions?,
                 selected: local_assigns[:selected] == :promotions
         end %>
@@ -151,7 +147,7 @@
       icon: "transactions",
       selected: local_assigns[:selected] == :transactions if policy(@event).transactions? %>
     <% if policy(@event).donation_overview? || policy(@event).invoices? || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
-      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="receive">
+      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle">
         <div class="line-height-0 relative"><%= inline_icon "support", size: 32, class: "primary" %></div>
         <span class="line-height-3">Receive</span>
 
@@ -170,7 +166,7 @@
       </button>
     <% end %>
     <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? %>
-      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:cards, :transfers] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="spend">
+      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:cards, :transfers] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle">
         <div class="line-height-0 relative"><%= inline_icon "card", size: 32, class: "primary" %></div>
         <span class="line-height-3">Spend</span>
 

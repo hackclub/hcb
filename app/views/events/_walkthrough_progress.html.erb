@@ -1,9 +1,9 @@
   <% steps = local_assigns[:steps] || [
-    { name: "Home", completed: true },
-    { name: "Announcements", completed: true },
-    { name: "Donations", completed: true },
-    { name: "Check deposits", completed: false }
-  ] %>
+       { name: "Home", completed: true },
+       { name: "Announcements", completed: true },
+       { name: "Donations", completed: true },
+       { name: "Check deposits", completed: false }
+     ] %>
 <div data-behavior="modal_trigger" data-modal="walkthrough_modal" style="border-width:2px;border-style:solid" class="cursor-pointer flex border-gray-200 bg-white p-0 pr-3 rounded-xl -mx-2">
   <div class="flex items-center w-full">
     <svg width="77" height="77" viewBox="-9.625 -9.625 96.25 96.25" version="1.1" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-90deg)">
@@ -21,7 +21,6 @@
       <%= inline_icon "view-forward", class: "opacity-60" %>
   </div>
 </div>
-
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="walkthrough_modal">
   <header>

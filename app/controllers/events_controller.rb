@@ -9,9 +9,9 @@ class EventsController < ApplicationController
   include Rails::Pagination
   before_action :set_event, except: [:index, :new, :create]
   before_action :set_transaction_filters, only: [:transactions, :ledger]
-  before_action except: [:show, :index] do
-    render_back_to_tour @organizer_position, :welcome, event_path(@event)
-  end
+  # before_action except: [:show, :index] do
+  #   render_back_to_tour @organizer_position, :welcome, event_path(@event)
+  # end
   skip_before_action :signed_in_user
   before_action :set_mock_data
   before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
@@ -149,8 +149,6 @@ class EventsController < ApplicationController
   end
 
   def transactions
-    render_tour @organizer_position, :welcome
-
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
     if maybe_pending_invite.present?

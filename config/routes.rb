@@ -725,13 +725,6 @@ Rails.application.routes.draw do
   get "admin_search", to: redirect("/admin/users")
   post "admin_search", to: redirect("/admin/users")
 
-  resources :tours, only: [] do
-    member do
-      post "mark_complete"
-      post "set_step"
-    end
-  end
-
   resources :recurring_donations, only: [:show, :edit, :update], path: "recurring" do
     member do
       post "cancel"
