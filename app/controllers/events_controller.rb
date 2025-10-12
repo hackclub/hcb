@@ -19,16 +19,18 @@ class EventsController < ApplicationController
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
-  WALKTHROUGH_STEPS = [
-    {
-      key: "ledger",
-      page: event_transactions_path(@event.slug),
-      steps: [
-        { attachTo: "balance", intro: "This is your organization's current balance." },
-        { attachTo: "filter-bar", intro: "Search transactions and narrow results down with filters." },
-      ]
-    }
-  ]
+  def walkthrough_steps
+    [
+      {
+        key: "ledger",
+        page: event_transactions_path(event_id: @event.slug),
+        steps: [
+          { attachTo: "balance", intro: "This is your organization's current balance." },
+          { attachTo: "filter-bar", intro: "Search transactions and narrow results down with filters." },
+        ]
+      }
+    ]
+  end
 
   # GET /events
   def index
