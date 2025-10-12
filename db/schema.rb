@@ -1019,12 +1019,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_05_204939) do
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
+    t.boolean "fee_waiver_eligible", default: false, null: false
+    t.boolean "fee_waiver_applied", default: false, null: false
     t.string "discord_guild_id"
     t.string "discord_channel_id"
     t.index ["discord_channel_id"], name: "index_events_on_discord_channel_id", unique: true
     t.index ["discord_guild_id"], name: "index_events_on_discord_guild_id", unique: true
-    t.boolean "fee_waiver_eligible", default: false, null: false
-    t.boolean "fee_waiver_applied", default: false, null: false
     t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
@@ -2080,6 +2080,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_05_204939) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_subledgers_on_event_id"
+  end
+
+  create_table "subscriptions", force: :cascade do |t|
+    t.string "merchant"
+    t.string "card"
+    t.json "hcb_codes"
+    t.string "last_hcb_code"
+    t.decimal "average_date_difference"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merchant", "card"], name: "index_subscriptions_on_merchant_and_card", unique: true
   end
 
   create_table "suggested_pairings", force: :cascade do |t|
