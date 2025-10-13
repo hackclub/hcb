@@ -29,12 +29,14 @@ module Discord
 
       text = ReverseMarkdown.convert(html)[0..4000]
 
-      Discord::Bot.bot.send_message(@event.discord_channel_id, nil, false, {
-                                      description: text,
-                                      timestamp: @activity.created_at.iso8601,
-                                      author: { name: @user.name, icon_url: profile_picture_for(@activity.owner) },
-                                      color:
-                                    })
+      message = Discord::Bot.bot.send_message(@event.discord_channel_id, nil, false, {
+                                                description: text,
+                                                timestamp: @activity.created_at.iso8601,
+                                                author: { name: @user.name, icon_url: profile_picture_for(@activity.owner) },
+                                                color:
+                                              })
+
+      @activity.update(discord_message_id: message.id.to_s)
     end
 
     private
