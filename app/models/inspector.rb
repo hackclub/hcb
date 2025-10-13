@@ -26,6 +26,7 @@ module Inspector
   end
 
   def self.find_object(resource, id)
+    return nil unless resource.in?(resource_types)
     klass = resource.constantize
 
     object = klass.find_by(id: id)
