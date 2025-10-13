@@ -1,12 +1,23 @@
-<% title "Disbursement to #{@disbursement.event.name}" %>
+<% title "Transfer to #{@disbursement.event.name}" %>
 <% page_sm %>
 <% render "events/nav" %>
 
-<% admin_tool("mt3 mb0") do %>
+<% admin_tool("mt3") do %>
   <%= link_to "All disbursements", disbursements_admin_index_path, class: "breadcrumb" %>
 <% end %>
 
-<% admin_tool do %>
+<% if @disbursement.local_hcb_code %>
+  <% admin_tool("mt1") do %>
+    <p>
+      <strong>HCB Code:</strong>
+      <span>
+        <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
+      </span>
+    </p>
+  <% end %>
+<% end %>
+
+<% admin_tool("mt1") do %>
   <ul>
     <li>
       v2
@@ -40,7 +51,7 @@
 <article class="card max-width-2 mx-auto mt3">
   <section class="mb2">
     <h2 class="mt0 mb0 heading">
-      <span class="flex-auto mb1">Disbursement to <%= @disbursement.event.name %></span>
+      <span class="flex-auto mb1">Transfer to <%= @disbursement.event.name %></span>
       <span class="badge h4 md-right ml0 mb1 bg-<%= @disbursement.state %>">
         <%= @disbursement.state_text %>
       </span>
@@ -48,12 +59,12 @@
 
     <section class="details">
       <p>
-        <strong>Source event</strong>
+        <strong>Source</strong>
         <%= link_to @disbursement.source_event.name, @disbursement.source_event %>
       </p>
 
       <p>
-        <strong>Destination event</strong>
+        <strong>Destination</strong>
         <%= link_to @disbursement.event.name, @disbursement.event %>
       </p>
 
@@ -72,17 +83,31 @@
         <%= format_datetime @disbursement.created_at %>
       </p>
 
-    <% if @disbursement.fulfilled? %>
-      <p>
-        <strong>Confirmation letter</strong>
-          <span class="muted">
-            <a href="/disbursements/<%= @disbursement.id %>/confirmation.pdf" target="_blank">
-            <%= organizer_signed_in? ? "View confirmation letter" : "Sign in to view" %>
-            </a>
-          </span>
-      </p>
-    <% end %>
+      <% if @hcb_code.disbursement.scheduled_on.present? %>
+        <% admin_tool("", "p") do %>
+          <strong>Scheduled for</strong>
+          <%= @disbursement.scheduled_on.strftime("%B %e, %Y") %>
+        <% end %>
+      <% end %>
+
+      <% if @disbursement.fulfilled? %>
+        <p>
+          <strong>Confirmation letter</strong>
+            <span class="muted">
+              <a href="/disbursements/<%= @disbursement.id %>/confirmation.pdf" target="_blank">
+              <%= organizer_signed_in? ? "View confirmation letter" : "Sign in to view" %>
+              </a>
+            </span>
+        </p>
+      <% end %>
+
     </section>
+
+    <% if @disbursement.scheduled? %>
+      <% admin_tool("mt2") do %>
+        <%= button_to "Cancel transfer", disbursement_cancel_path(@disbursement), class: "btn bg-error" %>
+      <% end %>
+    <% end %>
 
     <% if @disbursement.pending? %>
       <% admin_tool("mt2") do %>
@@ -95,7 +120,7 @@
 
 <% if @hcb_code %>
   <h2>Receipts</h2>
-  <%= render "receipts/list_v2" %>
+  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @hcb_code,
         enable_linking: true,

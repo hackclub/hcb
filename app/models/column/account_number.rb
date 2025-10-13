@@ -41,7 +41,7 @@ module Column
     private
 
     def create_column_account_number
-      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})")
+      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})", idempotency_key: self.id.to_s)
 
       self.column_id = account_number["id"]
       self.account_number = account_number["account_number"]
@@ -50,7 +50,7 @@ module Column
     end
 
     def event_is_not_demo_mode
-      errors.add(:base, "Can't create an account number for a Playground Mode org") if event.demo_mode? || event.outernet_guild?
+      errors.add(:base, "Can't create an account number for a Playground Mode org") if event.demo_mode?
     end
 
   end

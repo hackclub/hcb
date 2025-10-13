@@ -17,12 +17,12 @@ class HcbCodesController < ApplicationController
         model = route[:controller].classify.constantize
         object = model.find(route[:id])
         event = model == Event ? object : object.event
-        raise StandardError unless @hcb_code.events.include? event
+        raise StandardError unless @hcb_code.events.include?(event) && current_user.events.include?(event)
 
         event
       rescue
         @hcb_code.events.min_by do |e|
-          [e.users.include?(current_user), e.is_public?].map { |b| b ? 0 : 1 }
+          e.users.include?(current_user) ? 0 : 1
         end
       rescue
         @hcb_code.event
@@ -40,8 +40,14 @@ class HcbCodesController < ApplicationController
       @show_ach_details = true
     end
 
+    @reverse_receipt_id = params[:reverse]
+
     if params[:frame]
       @frame = true
+      @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
+      @transaction_show_author_img = params[:transaction_show_author_img].nil? ? false : params[:transaction_show_author_img]
+      @ledger_instance = params[:ledger_instance]
+
       render :show, layout: false
     else
       @frame = false
@@ -78,7 +84,7 @@ class HcbCodesController < ApplicationController
     authorize @hcb_code
 
     if params[:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location] }
+      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
     end
 
     @frame = turbo_frame_request?
@@ -87,9 +93,11 @@ class HcbCodesController < ApplicationController
 
   def pin
     @hcb_code = HcbCode.find(params[:id])
-    @event = @hcb_code.event
+    param_event = Event.friendly.find_by_friendly_id(params[:event])
+    @event = param_event ? @hcb_code.events.find_by(id: param_event.id) : @hcb_code.event
 
     authorize @hcb_code
+    authorize @event
 
     # Handle unpinning
     if (@pin = HcbCode::Pin.find_by(event: @event, hcb_code: @hcb_code))
@@ -113,17 +121,23 @@ class HcbCodesController < ApplicationController
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
 
     authorize @hcb_code
-    hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location)
+    hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location, :ledger_instance)
     hcb_code_params[:memo] = hcb_code_params[:memo].presence
 
     @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: hcb_code_params[:memo]) }
     @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: hcb_code_params[:memo]) }
 
     if params[:hcb_code][:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], renamed: true }
+      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
-    redirect_to @hcb_code
+    if @hcb_code.card_grant?
+      @card_grant = @hcb_code.card_grant
+      @event = @card_grant.event
+      return render partial: "card_grants/details", locals: { card_grant: @card_grant }
+    else
+      redirect_to @hcb_code
+    end
   end
 
   def comment
@@ -165,7 +179,7 @@ class HcbCodesController < ApplicationController
     cpt = @hcb_code.canonical_pending_transactions.first
 
     if cpt
-      CanonicalPendingTransactionJob::SendTwilioReceiptMessage.perform_now(cpt_id: cpt.id, user_id: current_user.id)
+      CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_now(cpt_id: cpt.id, user_id: current_user.id)
       flash[:success] = "SMS queued for delivery!"
     else
       flash[:error] = "This transaction doesn't support SMS notifications."
@@ -186,6 +200,16 @@ class HcbCodesController < ApplicationController
     else
       redirect_to @hcb_code, flash: { error: error_reason }
     end
+  end
+
+  def receipt_status
+    @hcb_code = HcbCode.find(params[:id])
+    @secret = params[:s]
+
+    authorize @hcb_code
+
+  rescue Pundit::NotAuthorizedError
+    raise unless HcbCode.find_signed(@secret, purpose: :receipt_status) == @hcb_code
   end
 
   def toggle_tag

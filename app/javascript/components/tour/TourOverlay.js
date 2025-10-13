@@ -12,9 +12,7 @@ const tours = {
     if (options.initial || options.demo) {
       steps.push({
         attachTo: 'invite',
-        text: `Invite ${
-          options.category == 'robotics team' ? 'teammates' : 'others'
-        } to your ${
+        text: `Invite others to your ${
           options.demo ? 'demo' : 'new'
         } organization. It's like multiplayer banking!`,
         placement: isMobile ? 'bottom' : 'right',
@@ -24,31 +22,29 @@ const tours = {
     if (!options.demo) {
       steps.push({
         attachTo: isMobile ? 'spend' : 'cards',
-        text: 'Instantly issue a virtual debit card for yourself. Gotta spend that 💸!',
+        text: 'Instantly issue a virtual HCB card for yourself. Gotta spend that 💸!',
         placement: isMobile ? 'top' : 'right',
         strategy: 'fixed',
       })
 
-      if (options.category != 'outernet guild') {
+      steps.push({
+        attachTo: isMobile ? 'receive' : 'donations',
+        text: 'Share your donation form with others and embed it on your website.',
+        placement: isMobile ? 'top-end' : 'right',
+        strategy: 'fixed',
+      })
+
+      if (!isMobile) {
         steps.push({
-          attachTo: isMobile ? 'receive' : 'donations',
-          text: 'Share your donation form with others and embed it on your website.',
-          placement: isMobile ? 'top-end' : 'right',
+          attachTo: 'perks',
+          text: 'Get access to free tools for things like sending newsletters and managing team passwords. Stickers included.',
           strategy: 'fixed',
         })
-
-        if (!isMobile) {
-          steps.push({
-            attachTo: 'perks',
-            text: 'Get access to free tools for things like sending newsletters and managing team passwords. Stickers included.',
-            strategy: 'fixed',
-          })
-        }
       }
     } else {
       steps.push({
-        attachTo: 'activate_account',
-        text: "You're in Playground Mode— click here to activate your account when you're ready.",
+        attachTo: 'playground_mode',
+        text: "You're in Playground Mode— a HCB staff member will reach out shortly to get you set up.",
         placement: 'bottom',
       })
     }

@@ -1,0 +1,40 @@
+<% title "Your payroll" %>
+<% page_md %>
+<%= render "users/nav", selected: :payroll %>
+
+<h1 class="heading">
+  <span>
+    Payroll
+  </span>
+
+  <% if @payout_method.present? %>
+    <%= link_to settings_payouts_path, class: "btn bg-muted" do %>
+      <%= inline_icon @payout_method.icon %>
+      Payout settings
+    <% end %>
+  <% else %>
+    <%= link_to settings_payouts_path, class: "btn bg-warning" do %>
+      <%= inline_icon "payment-docs" %>
+      Configure payouts
+    <% end %>
+  <% end %>
+
+  <% if @jobs.onboarded.any? %>
+    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_employee_payment" } do %>
+      <%= inline_icon "plus" %>
+      Submit invoice
+    <% end %>
+  <% end %>
+</h1>
+
+<% if @jobs.onboarding.any? %>
+  <%= render "callout", type: "info", title: "Congrats on the new #{@jobs.onboarding.size > 1 ? "jobs" : "job with #{@jobs.onboarding.first.event.name}"}!" do %>
+    <div>
+      <span class="bold">You will only be able to submit invoices after being onboarded.</span> To complete your onboarding, please email a W-9 or W-8 BEN to <%= mail_to "hr@hackclub.com" %>. After receiving your W-9 or W-8 BEN, please give us approximately 2 business days to review and finalize your onboarding. We will email you once this process is complete.
+    </div>
+  <% end %>
+<% end %>
+
+<%= render "employees/payments", payments: current_user.job_payments, show_stats: true %>
+
+<%= render "employee/payments/new", jobs: @jobs %>

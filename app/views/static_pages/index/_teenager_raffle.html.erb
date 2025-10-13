@@ -1,0 +1,44 @@
+<% raffle_program = "teenager-raffle-#{Date.current.strftime("%m-%Y")}" %>
+<%= render "raffles/raffle_modal", id: "join_teenager_raffle", program: raffle_program %>
+
+<% if current_user.teenager? && Date.current < Date.new(2025, 11, 1) %>
+  <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
+
+  <% current_month = Date.current.strftime("%B") %>
+  <% next_month = Date.current.next_month.strftime("%B") %>
+
+  <% @raffle_card = capture do %>
+    <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/38be05dd4accefb1708c06ba6f99401b4265e7a1_image.png')">
+      <div class="flex gap-2 items-center mb-4">
+        <span>🎟️</span>
+        <strong class="text-xl leading-tight">
+          Join the <%= current_month %> raffle
+        </strong>
+      </div>
+      <div class="flex gap-2 md:gap-6 flex-col md:flex-row w-full">
+        <p class="m-0 text-balance">
+          HCB is raffling away a 13-inch MacBook Air! Join the raffle for your chance to win!
+          For teenagers only. Raffle winners will be selected
+          on <%= Date.current.end_of_month.strftime("%B %e, %Y") %>.
+          <% if already_joined %>
+            <span class="italic block mt-2 text-sm">
+              You have already joined the raffle this month. Remember to check
+              back in <%= next_month %> for the next raffle!
+            </span>
+          <% end %>
+        </p>
+        <div class="flex gap-2">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/9ef010a890d7c554a6da9328d62f9a592df9ae5d_laptop-removebg-preview.png" height="150" width="150" class="rounded align-bottom object-cover tooltipped tooltipped--w" alt="13-inch MacBook Air" aria-label="13-inch MacBook Air">
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if already_joined %>
+    <%= @raffle_card %>
+  <% else %>
+    <%= link_to new_raffle_path(program: raffle_program), class: "w-full no-underline text-inherit", data: { behavior: "modal_trigger", modal: "join_teenager_raffle" } do %>
+      <%= @raffle_card %>
+    <% end %>
+  <% end %>
+<% end %>

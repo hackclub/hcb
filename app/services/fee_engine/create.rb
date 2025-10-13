@@ -13,7 +13,7 @@ module FeeEngine
 
       reason = determine_reason
 
-      event_sponsorship_fee = @canonical_event_mapping.event.sponsorship_fee
+      event_sponsorship_fee = @canonical_event_mapping.event.revenue_fee
 
       amount_cents_as_decimal = BigDecimal(@canonical_event_mapping.canonical_transaction.amount_cents.to_s) * BigDecimal(event_sponsorship_fee.to_s)
       amount_cents_as_decimal = 0 if reason != :revenue
@@ -36,11 +36,12 @@ module FeeEngine
 
       reason = :revenue if canonical_transaction.amount_cents > 0
 
-      reason = :hack_club_fee if canonical_transaction.likely_hack_club_fee?
-
       reason = :revenue_waived if canonical_transaction.likely_check_clearing_dda? # this typically has a negative balancing transaction with it
       reason = :revenue_waived if canonical_transaction.likely_card_transaction_refund? # sometimes a user is issued a refund on a transaction
-      reason = :revenue_waived if canonical_transaction.local_hcb_code.ach_transfer? # outgoing ACH transfers are sometimes returned to the account upon failure
+
+      reason = :transfer_returned if canonical_transaction.local_hcb_code.ach_transfer? # outgoing ACH transfers are sometimes returned to the account upon failure
+      reason = :transfer_returned if canonical_transaction.local_hcb_code.wire? # outgoing wires are sometimes returned to the account upon failure
+      reason = :transfer_returned if canonical_transaction.local_hcb_code.reimbursement_payout_holding? # payout holdings are sometimes returned to the account upon failure
 
       # don't run fee if other transactions in it's HCB Code have fees waived
       reason = :revenue_waived if canonical_transaction.local_hcb_code.canonical_transactions.includes(:fee).any? { |ct| ct.fee&.revenue_waived? }
@@ -49,6 +50,8 @@ module FeeEngine
       reason = :revenue_waived if canonical_transaction.likely_account_verification_related? # Waive fees on account verification transactions from platforms like Venmo
 
       reason = :donation_refunded if canonical_transaction.local_hcb_code.donation&.refunded?
+
+      reason = :hack_club_fee if canonical_transaction.likely_hack_club_fee? # this should come after the fee_waived? line: https://github.com/hackclub/hcb/pull/8485
 
       reason
     end

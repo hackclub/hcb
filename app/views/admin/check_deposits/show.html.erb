@@ -63,4 +63,11 @@
       <%= form.submit "Process" %>
     <% end %>
   </li>
+
+  <h3>Something gone wrong? Reject the check here:</h3>
+
+  <%= form_with url: reject_admin_check_deposit_path, class: "mt2" do |form| %>
+    <%= form.select :reason, CheckDeposit.rejection_descriptions.invert, { prompt: "Select a reason" } %>
+    <%= form.submit "Process" %>
+  <% end %>
 </ol>

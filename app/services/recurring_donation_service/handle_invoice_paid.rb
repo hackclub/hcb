@@ -26,6 +26,7 @@ module RecurringDonationService
         event: recurring_donation.event,
         stripe_payment_intent_id: @stripe_invoice.payment_intent,
         anonymous: recurring_donation.anonymous,
+        tax_deductible: recurring_donation.tax_deductible,
         fee_covered: recurring_donation.fee_covered
       )
 

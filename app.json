@@ -22,10 +22,10 @@
     "REDIS_URL": {
       "required": true
     },
-    "REDIS_CACHE_URL": {
+    "SECRET_KEY_BASE": {
       "required": true
     },
-    "SECRET_KEY_BASE": {
+    "DOPPLER_TOKEN": {
       "required": true
     }
   },

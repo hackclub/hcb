@@ -12,7 +12,7 @@ function changeCode(id) {
 
 function saveActiveQRCodeAsImage() {
   document.getElementById("downloadButton").innerText = "Downloading...";
-  const activeQRCode = document.querySelector(".qrCode--active");
+  const activeQRCode = document.querySelector("qr-code.\\!block");
   if (!activeQRCode) {
     return;
   }

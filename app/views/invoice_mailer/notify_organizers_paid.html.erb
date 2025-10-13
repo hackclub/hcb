@@ -16,12 +16,18 @@
 
 <p>
   <% if can_front_balance %>
-      The funds (<strong><%= render_money @invoice.item_amount %></strong>) are now available to spend.
+      The funds (<strong><%= render_money @invoice.amount_paid %></strong>) are now available to spend.
   <% else %>
-    The funds (<strong><%= render_money @invoice.item_amount %></strong>) will be available on approximately <strong><%= @invoice.payout.arrival_date.to_date %></strong>.
+    The funds (<strong><%= render_money @invoice.amount_paid %></strong>) will be available on approximately <strong><%= @invoice.payout.arrival_date.to_date %></strong>.
   <% end %>
   Please don't hesitate to reach out to us if you have any questions!
 </p>
+
+<% unless @invoice.amount_paid == @invoice.item_amount %>
+  <p>
+    <%= @invoice.sponsor.name %> sent <%= render_money @invoice.item_amount - @invoice.amount_paid %> less than they were invoiced for. Please reach out to them to collect the remaining balance via a new invoice.
+  </p>
+<% end %>
 
 <p>
   Yours truly,<br>

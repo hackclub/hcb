@@ -1,16 +1,26 @@
 <!-- start text/html -->
-<!--
-     Above is a magic comment that tells Premailer to ignore this section when
-     generating the text part.
-     https://github.com/premailer/premailer/pull/244
--->
+<%#
+  Above is a magic comment that tells Premailer to ignore this section when
+  generating the text part.
+  https://github.com/premailer/premailer/pull/244
+%>
 <div class="section" style="text-align: left;">
-  <a
-    href="<%= Rails.application.routes.url_helpers.root_url %>"
-    target="_blank">
-    <img
-      src="<%= Rails.application.routes.url_helpers.root_url %>brand/hcb-icon-icon-original.png"
-      style="width: 2.5rem">
-  </a>
+  <% if @announcement.present? %>
+    <a
+      href="<%= Rails.application.routes.url_helpers.event_announcement_overview_url(@announcement.event) %>"
+      target="_blank">
+      <img
+        src="<%= @announcement.event.logo.present? ? Rails.application.routes.url_helpers.url_for(@announcement.event.logo) : Rails.application.routes.url_helpers.root_url + "brand/hcb-icon-icon-original.png" %>"
+        style="height: 2.5rem; max-width: 80%" height="40">
+    </a>
+  <% else %>
+    <a
+      href="<%= Rails.application.routes.url_helpers.root_url %>"
+      target="_blank">
+      <img
+        src="<%= Rails.application.routes.url_helpers.root_url %>brand/hcb-icon-icon-original.png"
+        style="height: 2.5rem" height="40">
+    </a>
+  <% end %>
 </div>
 <!-- end text/html -->

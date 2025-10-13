@@ -14,12 +14,16 @@ module Api
         @orgs ||= paginate(Event.indexable.order(created_at: :asc))
       end
 
+      def activities
+        @activities ||= paginate(PublicActivity::Activity.joins("LEFT JOIN \"events\" ON activities.event_id = events.id OR (activities.recipient_id = events.id AND recipient_type = 'Event')").where({ events: { is_public: true, is_indexable: true } }).order(created_at: :desc))
+      end
+
       def org
         @org ||=
           begin
             id = params[:organization_id]
             event ||= Event.transparent.find_by_public_id id # by public id (ex. org_1234). Will NOT error if not found
-            event ||= Event.transparent.friendly.find id # by slug or numeric id. Will error if not found
+            event ||= Event.transparent.friendly.find_by_friendly_id id # by slug. Will error if not found
           end
       rescue ActiveRecord::RecordNotFound
         error!({ message: "Organization not found." }, 404)
@@ -157,6 +161,16 @@ module Api
         error!({ message: "Card not found." }, 404)
       end
 
+      def activity
+        @activity ||=
+          begin
+            id = params[:activity_id]
+            PublicActivity::Activity.find_by_public_id!(id)
+          end
+      rescue ActiveRecord::RecordNotFound
+        error!({ message: "Activity not found." }, 404)
+      end
+
       # FOR TYPE EXPANSION
       def type_expansion(expand: [], hide: [])
         {
@@ -207,14 +221,14 @@ module Api
     end
     get :git do
       {
-        commit_time: ApplicationHelper.commit_time,
-        commit_hash: ApplicationHelper.commit_hash
+        commit_time: Build.timestamp,
+        commit_hash: Build.commit_hash
       }
     end
 
     desc "Return a list of transparent organizations" do
       summary "Get a list of transparent organizations"
-      detail "Returns a list of organizations in <a href='https://changelog.hcb.hackclub.com/transparent-finances-(optional-feature)-151427'><strong>Transparency Mode</strong></a> that have opted in to public listing."
+      detail "Returns a list of organizations in <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'><strong>Transparency Mode</strong></a> that have opted in to public listing."
       failure [[404]]
       is_array true
       produces ["application/json"]
@@ -231,10 +245,29 @@ module Api
       present orgs, with: Api::Entities::Organization, **type_expansion(expand: %w[organization user])
     end
 
+    desc "Return a list of recent activities" do
+      summary "Get a list of recent activities on transparent HCB organizations"
+      detail "Returns a list of recent activities from all HCB organizations that are in <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'><strong>Transparency Mode</strong></a> and have opted in to public listing."
+      failure [[404]]
+      is_array true
+      produces ["application/json"]
+      consumes ["application/json"]
+      success Entities::Activity
+      tags ["Activities"]
+      nickname "list-activities"
+    end
+    params do
+      use :pagination, per_page: 50, max_per_page: 100
+      use :expand
+    end
+    get :activities do
+      present activities, with: Api::Entities::Activity, **type_expansion(expand: %w[organization transaction])
+    end
+
     resource :organizations do
       desc "Return a transparent organization" do
         summary "Get a single organization"
-        detail "The organization must be in <a href='https://changelog.hcb.hackclub.com/transparent-finances-(optional-feature)-151427'><strong>Transparency Mode</strong></a>."
+        detail "The organization must be in <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'><strong>Transparency Mode</strong></a>."
         produces ["application/json"]
         consumes ["application/json"]
         success Entities::Organization
@@ -620,6 +653,28 @@ module Api
       end
     end
 
+    resource :activities do
+      desc "Return a single activity" do
+        summary "Get a single activity"
+        detail ""
+        produces ["application/json"]
+        consumes ["application/json"]
+        success Entities::Activity
+        failure [[404, "Activity not found. Check the ID.", Entities::ApiError]]
+        tags ["Activities"]
+        nickname "get-a-single-activity"
+      end
+      params do
+        requires :activity_id, type: String, desc: "Activity ID"
+        use :expand
+      end
+      route_param :activity_id do
+        get do
+          present activity, with: Api::Entities::Activity, **type_expansion(expand: %w[organization transaction])
+        end
+      end
+    end
+
     # Handle validation errors
     rescue_from Grape::Exceptions::ValidationErrors do |e|
       error!({ message: e.message }, 400)
@@ -638,7 +693,7 @@ module Api
       error!({ message: "Not authorized." }, 403)
     end
     rescue_from :all do |e|
-      Airbrake.notify(e)
+      Rails.error.report(e, handled: false, severity: :error, context: "api")
 
       # Provide error message in api response ONLY in development mode
       msg = if Rails.env.development?
@@ -653,7 +708,7 @@ module Api
       info: {
         title: "The HCB API",
         description: "The HCB API is an unauthenticated REST API that allows you to read public information
-                      from organizations with <a href='https://changelog.hcb.hackclub.com/transparent-finances-(optional-feature)-151427'>Transparency Mode</a>
+                      from organizations with <a href='https://blog.hcb.hackclub.com/posts/transparent-finances-optional-feature-151427'>Transparency Mode</a>
                       enabled.
                       <br><br><strong>Questions or suggestions?</strong>
                       <br>Reach us in the #hcb channel on the <a href='https://hackclub.com/slack'>Hack Club Slack</a>
@@ -674,6 +729,7 @@ module Api
         Entities::Invoice,
         Entities::Card,
         Entities::User,
+        Entities::Activity,
         Entities::ApiError
       ],
       array_use_braces: true,
@@ -704,6 +760,9 @@ module Api
         },
         {
           name: "Cards"
+        },
+        {
+          name: "Activities"
         }
       ]
     )

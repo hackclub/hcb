@@ -9,16 +9,20 @@ $font-family:
   Ubuntu,
   'Helvetica Neue',
   sans-serif;
-$mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+$mono:
+  ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
 
 @import 'variables';
 @import 'basscss';
 @import 'space';
 @import 'utilities';
 @import 'components/badges';
+@import 'dark';
+@import 'components/menus';
 @import 'components/receipts';
 @import 'components/modals';
 @import 'components/tooltips';
+@import 'kbar';
 
 @import 'components/buttons';
 @import 'components/steps';
@@ -112,9 +116,9 @@ html {
 /* ---------------------------------------------------------------------------------------------- */
 
 :root {
-  --hcb-font-sans: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue',
-    sans-serif;
+  --hcb-font-sans:
+    ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
   --hcb-font-mono: 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 }
 
@@ -190,7 +194,7 @@ figure,
 form,
 input,
 iframe,
-img,
+*:not(.mention) > img,
 meter,
 nav,
 ol,
@@ -510,13 +514,19 @@ th {
   padding: 0.5rem;
 }
 
-th {
+thead th {
   background: var(--hcb-bg-2);
 }
 
 tr:nth-child(even) {
   /* Set every other cell slightly darker. Improves readability. */
   background: var(--hcb-bg-2);
+}
+
+table.no-stripes {
+  tr:nth-child(even) {
+    background: inherit;
+  }
 }
 
 table caption {
@@ -904,6 +914,74 @@ summary {
 }
 form:has(> #admin-logout-button) {
   margin: 0px;
+}
+
+@keyframes flash-slide-in {
+  from {
+    translate: 0 calc(100% + var(--flash-offset, 0));
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+#flash-container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 50ch;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+
+  article.flash {
+    --flash-offset: 1rem;
+    border: 1px solid var(--hcb-bg-3);
+    border-top: 3px solid var(--hcb-accent);
+    border-radius: 4px;
+    background: var(--hcb-bg-1);
+    padding: 1rem;
+    margin: 0 var(--flash-offset) var(--flash-offset) 0;
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 2px hsl(240 3.8% 46.1% / 12%);
+    animation-duration: 0.5s;
+    animation-name: flash-slide-in;
+    z-index: 999;
+
+    &.flash--success {
+      border-top-color: var(--hcb-accent-active);
+    }
+
+    &.flash--error {
+      border-top-color: var(--hcb-primary);
+    }
+
+    &.flash--dismissed {
+      translate: 0 calc(100% + var(--flash-offset));
+      display: none;
+      transition-property: translate display;
+      transition-duration: 0.5s;
+      transition-behavior: allow-discrete;
+    }
+
+    .flash--content {
+      flex: 1;
+    }
+  }
+
+  .flash--close-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+  }
 }
 
 @tailwind base;

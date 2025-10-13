@@ -5,13 +5,11 @@ require "rails_helper"
 RSpec.describe GSuiteMailer, type: :mailer do
   let(:g_suite) { create(:g_suite) }
 
-  let(:recipient) { "email@mailinator.com" }
-
   describe "#notify_of_configuring" do
-    let(:mailer) { GSuiteMailer.with(g_suite_id: g_suite.id, recipient:).notify_of_configuring }
+    let(:mailer) { GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_configuring }
 
     it "renders to" do
-      expect(mailer.to).to eql([recipient])
+      expect(mailer.to).to eql(g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email))
     end
 
     it "renders subject" do
@@ -25,10 +23,10 @@ RSpec.describe GSuiteMailer, type: :mailer do
   end
 
   describe "#notify_of_verified" do
-    let(:mailer) { GSuiteMailer.with(g_suite_id: g_suite.id, recipient:).notify_of_verified }
+    let(:mailer) { GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_verified }
 
     it "renders to" do
-      expect(mailer.to).to eql([recipient])
+      expect(mailer.to).to eql(g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email))
     end
 
     it "renders subject" do

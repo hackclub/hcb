@@ -35,6 +35,9 @@ class OrganizerPosition
 
         validate :balance_is_positive, on: :create
         validate :balance_is_non_zero, on: :create
+        validates :amount_cents, numericality: { less_than_or_equal_to: 999_999_99 }
+
+        after_create :notify_organizer
 
         private
 
@@ -44,6 +47,10 @@ class OrganizerPosition
 
         def balance_is_non_zero
           errors.add(:allowance, "must be nonzero") if amount_cents.zero?
+        end
+
+        def notify_organizer
+          ControlsMailer.with(allowance: self).new_allowance.deliver_later
         end
 
       end

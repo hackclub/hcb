@@ -6,8 +6,8 @@
 
 .tag__preview {
   @extend .tag-darker;
-  width: 0.7rem;
-  height: 0.7rem;
+  width: 1.75rem;
+  height: 1.75rem;
   flex-shrink: 0;
   border-radius: 100%;
   margin-right: 0.5rem;
@@ -50,6 +50,10 @@
 
 .tags__radio input[type='radio']:focus + .radio__control {
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.tags:has(> div) {
+  margin-top: 4px;
 }
 
 $colors: (

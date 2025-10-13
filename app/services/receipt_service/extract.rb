@@ -14,7 +14,7 @@ module ReceiptService
       return if @receipt.user.receipts.where(created_at: 1.hour.ago, data_extracted: true).count > 50 ||
                 (@receipt.receiptable.present? && @receipt.receiptable.receipts.where(data_extracted: true).count > 5)
 
-      @textual_content = @receipt.textual_content || @receipt.extract_textual_content!
+      @textual_content = @receipt.textual_content || @receipt.extract_textual_content![:text]
       if @textual_content.nil?
         @receipt.update(data_extracted: true)
         return
@@ -25,6 +25,7 @@ module ReceiptService
 
         subtotal_amount_cents
         total_amount_cents // the amount likely to be charged to a credit card
+        currency // 3-digit ISO 4217 currency code
         card_last_four
         date // in the format of YYYY-MM-DD
         merchant_url // URL for merchant's primary website including https, if available
@@ -37,7 +38,7 @@ module ReceiptService
 
       conn = Faraday.new url: "https://api.openai.com" do |f|
         f.request :json
-        f.request :authorization, "Bearer", -> { Rails.application.credentials.openai.api_key }
+        f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
         f.response :raise_error
         f.response :json
       end
@@ -51,7 +52,7 @@ module ReceiptService
                                },
                                {
                                  role: "user",
-                                 content: @textual_content
+                                 content: @textual_content.truncate(80_000, omission: "...#{@textual_content.last(40_000)}")
                                }
                              ]
                            })
@@ -77,8 +78,13 @@ module ReceiptService
         suggested_memo: data.transaction_memo,
         extracted_subtotal_amount_cents: data.subtotal_amount_cents&.to_i,
         extracted_total_amount_cents: data.total_amount_cents&.to_i,
+        extracted_currency: data.currency&.upcase,
         extracted_card_last4: data.card_last_four,
-        extracted_date: data.date&.to_date,
+        extracted_date: begin
+          data.date&.to_date
+        rescue Date::Error
+          nil
+        end,
         extracted_merchant_name: data.merchant_name,
         extracted_merchant_url: data.merchant_url,
         extracted_merchant_zip_code: data.merchant_zip_code,

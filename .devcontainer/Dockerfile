@@ -1,4 +1,4 @@
-ARG VARIANT="3.2-bookworm"
+ARG VARIANT="3.4-bookworm"
 FROM mcr.microsoft.com/devcontainers/ruby:${VARIANT}
 # Install Rails
 RUN su vscode -c "gem install rails webdrivers"
@@ -23,4 +23,5 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libgirepository1.0-dev \
     libpoppler-glib-dev \
     libcairo-gobject2 \
-    yarn
+    yarn \
+    imagemagick

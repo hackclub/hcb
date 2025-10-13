@@ -2,6 +2,7 @@
 
 <%= form_with local: true, url: ledger_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "mr2" %>
+  <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "mr2" %>
 
   <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, class: "mr2", style: "max-width: 250px" }) %>
 

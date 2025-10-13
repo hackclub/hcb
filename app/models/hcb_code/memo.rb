@@ -12,7 +12,6 @@ class HcbCode
         return disbursement_memo(event:) if disbursement?
         return invoice_memo if invoice?
         return donation_memo if donation?
-        return partner_donation_memo if partner_donation?
         return bank_fee_memo if bank_fee?
         return reimbursement_payout_holding_memo if reimbursement_payout_holding?
         return reimbursement_expense_payout_memo if reimbursement_expense_payout?
@@ -24,10 +23,11 @@ class HcbCode
         return increase_check_memo if increase_check?
         return check_deposit_memo if check_deposit?
         return fee_revenue_memo if fee_revenue?
-        return ach_payment_memo if ach_payment?
-        return grant_memo if grant?
         return outgoing_fee_reimbursement_memo if outgoing_fee_reimbursement?
-        return yellowpages_memo if stripe_card? && yellowpages_memo
+        return stripe_card_memo if stripe_card? && stripe_card_memo
+        return wire_memo if wire?
+        return wise_transfer_memo if wise_transfer?
+        return stripe_service_fee_memo if stripe_service_fee?
 
         ct.try(:smart_memo) || pt.try(:smart_memo) || ""
       end
@@ -37,54 +37,50 @@ class HcbCode
       end
 
       def card_grant_memo
-        "Grant to #{disbursement.card_grant.user.name}"
+        "Grant to #{disbursement.card_grant.user.name}".strip
       end
 
       def disbursement_memo(event: nil)
         return disbursement.special_appearance_memo if disbursement.special_appearance_memo
 
         if event == disbursement.source_event
-          "Transfer to #{disbursement.destination_event.name}".strip.upcase
+          "Transfer to #{disbursement.destination_event.name}".strip
         elsif event == disbursement.destination_event
-          "Transfer from #{disbursement.source_event.name}".strip.upcase
+          "Transfer from #{disbursement.source_event.name}".strip
         else
-          "Transfer from #{disbursement.source_event.name} to #{disbursement.destination_event.name}".strip.upcase
+          "Transfer from #{disbursement.source_event.name} to #{disbursement.destination_event.name}".strip
         end
 
       end
 
       def invoice_memo
-        "Invoice to #{invoice.smart_memo}"
+        "Invoice to #{invoice.smart_memo}".strip
       end
 
       def donation_memo
-        "Donation from #{donation.smart_memo}#{donation.refunded? ? " (REFUNDED)" : ""}"
-      end
-
-      def partner_donation_memo
-        "Donation from #{partner_donation.smart_memo}#{partner_donation.refunded? ? " (REFUNDED)" : ""}"
+        "Donation from #{donation.smart_memo}#{donation.refunded? ? " (refunded)" : ""}".strip
       end
 
       def bank_fee_memo
         if bank_fee.amount_cents.negative? && bank_fee.fee_revenue.present?
-          return "FISCAL SPONSORSHIP FOR #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} TO #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
+          return "Fiscal sponsorship fee for #{bank_fee.fee_revenue.start.strftime("%-m/%-d")} to #{bank_fee.fee_revenue.end.strftime("%-m/%-d")}"
         elsif bank_fee.amount_cents.negative?
-          return "FISCAL SPONSORSHIP"
+          return "Fiscal sponsorship"
         else
-          return "FISCAL SPONSORSHIP FEE CREDIT"
+          return "Fiscal sponsorship fee credit"
         end
       end
 
       def ach_transfer_memo
-        "ACH to #{ach_transfer.smart_memo}"
+        "ACH to #{ach_transfer.smart_memo}".strip
       end
 
       def check_memo
-        "Check to #{check.smart_memo}"
+        "Check to #{check.smart_memo}".strip
       end
 
       def increase_check_memo
-        "Check to #{increase_check.recipient_name}".upcase
+        "Check to #{increase_check.recipient_name}".strip
       end
 
       def check_deposit_memo
@@ -92,15 +88,7 @@ class HcbCode
       end
 
       def fee_revenue_memo
-        "Fee revenue from #{fee_revenue.start.strftime("%b %e")} to #{fee_revenue.end.strftime("%b %e")}"
-      end
-
-      def ach_payment_memo
-        "Bank transfer"
-      end
-
-      def grant_memo
-        "Grant to #{canonical_pending_transactions.first.grant.recipient_organization}"
+        "Fee revenue for #{fee_revenue.start.strftime("%-m/%-d")} to #{fee_revenue.end.strftime("%-m/%-d")}"
       end
 
       def outgoing_fee_reimbursement_memo
@@ -119,8 +107,20 @@ class HcbCode
         "Payout transfer for reimbursement report #{reimbursement_payout_transfer.reimbursement_payout_holding.report.hashid}"
       end
 
-      def yellowpages_memo
-        YellowPages::Merchant.lookup_name(network_id: stripe_merchant["network_id"])
+      def stripe_card_memo
+        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
+      end
+
+      def stripe_service_fee_memo
+        stripe_service_fee.stripe_description
+      end
+
+      def wire_memo
+        "Wire to #{wire.recipient_name}"
+      end
+
+      def wise_transfer_memo
+        "Wise transfer to #{wise_transfer.recipient_name}"
       end
 
     end

@@ -45,7 +45,7 @@
   box-sizing: content-box;
   margin-bottom: -2px;
 
-  background-color: rgba($red, 0.2);
+  background-color: rgba(map-get($palette, ai), 0.2);
 
   &,
   &:not(.receipt--pairing) {
@@ -97,7 +97,7 @@
   }
 
   &.receipt--pairing .receipt__icon--star {
-    background: $red;
+    background: map-get($palette, ai);
     display: block;
     transform: translateX(0px);
     transition: all 0.2s ease-in-out;
@@ -137,8 +137,13 @@
 }
 
 .modal--popover--receipt-expanded
-  > :not(.receipt--expanded):not(header):not(#receipts_list),
-.modal--popover--receipt-expanded > #receipts_list > :not(.receipt--expanded) {
+  > turbo-frame
+  > :not(.receipt--expanded):not(header):not(.receipts_list),
+.modal--popover--receipt-expanded > .receipts_list > :not(.receipt--expanded),
+.modal--popover--receipt-expanded
+  > turbo-frame
+  > .receipts_list
+  > :not(.receipt--expanded) {
   display: none !important;
 }
 

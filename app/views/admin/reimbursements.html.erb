@@ -46,7 +46,7 @@
             None
           <% end %>
         </td>
-        <td>
+        <td class="max-width-2">
           <%= link_to reimbursement_report_path(report) do %>
             <%= report.name %>
           <% end %>
@@ -54,7 +54,7 @@
         <td>
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
-        <td class="w-24"><%= render_money(report.amount) %></td>
+        <td class="w-24"><%= report.amount.format %></td>
         <td><%= report.admin_status_text %></td>
         <td>
           <%= link_to "View", reimbursement_report_path(report) %>
@@ -65,5 +65,3 @@
 </table>
 
 <%= paginate @reports %>
-
-<%= turbo_frame_tag :reimbursement_status, src: reimbursements_status_admin_index_path, target: "_top" %>

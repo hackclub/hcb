@@ -25,7 +25,7 @@
 class WebauthnCredential < ApplicationRecord
   belongs_to :user
 
-  enum :authenticator_type, [:platform, :cross_platform]
+  enum :authenticator_type, { platform: 0, cross_platform: 1 }
 
   validates :name, presence: true
   validates :webauthn_id, presence: true

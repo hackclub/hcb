@@ -1,11 +1,10 @@
 <% renderable_amount_cents = @hcb_code.stripe_atm_fee ? @hcb_code.amount_cents.abs - @hcb_code.stripe_atm_fee : @hcb_code.amount_cents.abs %>
 
-<% title "#{render_money(renderable_amount_cents)} #{@hcb_code.stripe_refund? ? "refund" : @hcb_code.stripe_cash_withdrawal? ? "withdrawal" : "charge"} for #{@hcb_code.memo}" %>
 <% instance = @hcb_code.hashid %>
 
 <% admin_tool("mt1") do %>
   <%= link_to "View on Stripe", @hcb_code.stripe_auth_dashboard_url, class: "btn bg-accent" %>
-  <%= link_to "Flag Transaction", admin_ledger_audits_tasks_path(hcb_code: @hcb_code.id), method: :post, class: "btn bg-error" %>
+  <%= link_to "Flag transaction", admin_ledger_audits_tasks_path(hcb_code: @hcb_code.id), method: :post, class: "btn bg-error" %>
 <% end %>
 
 <% @hcb_code.canonical_pending_transactions.each do |pt| %>
@@ -16,44 +15,19 @@
 <%= render partial: "admin_viewer", locals: { record: pt } %>
 <% end %>
 
-<div class="mt2 mb3">
 <article class="card pb0 mt3 mb1">
-
-  <h2 class="h2 mt0 mx0 border-none flex items-center justify-between" style="gap: 8px">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span class="flex-auto">
-      <%= turbo_frame_tag @hcb_code, class: "flex items-center" do %>
-        <%= pop_icon_to "edit",
-            edit_hcb_code_path(@hcb_code),
-            class: "mr2 align-middle", "aria-label": "Rename transaction",
-            data: { turbo: true } %>
-
-        <span class="align-middle"
-              data-controller="navigation"
-              data-action="dblclick->navigation#navigate"
-              data-navigation-location-param="<%= edit_hcb_code_path(@hcb_code) %>"
-              data-navigation-frame-param="<%= dom_id(@hcb_code) %>">
-          <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
-            <span>
-              <%= render_money(renderable_amount_cents) %>
-            </span>
-            <span class="regular muted">
-              withdrawal from
-            </span>
-            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
-          <% else %>
-            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
-            <span class="regular muted"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
-            <%= render_money(renderable_amount_cents) %>
-          <% end %>
+      <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
+        <span class="regular muted">
+          Withdrawal from
         </span>
-
-        <%= render "hcb_codes/memo_stream", hcb_code: @hcb_code %>
-
-        <span style="flex-grow: 1;"></span>
-
-        <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: @hcb_code } if Flipper.enabled?(:ai_memos_2024_06_20, current_user) %>
+      <% else %>
+        <span class="regular muted">Purchase at </span>
+        <%= humanized_merchant_name @hcb_code.stripe_merchant %>
+        <span class="regular muted"> <%= @hcb_code.stripe_refund? ? "refunded" : "for" %> </span>
+        <span class="regular"><%= render_money(renderable_amount_cents) %></span>
       <% end %>
-    </span>
 
       <% if @hcb_code.pt && !@hcb_code.pt.settled? %>
         <% if @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed" %>
@@ -62,10 +36,12 @@
             <%= inline_icon :info, size: 20 %>
           </span>
         <% elsif @hcb_code.pt.declined? %>
-          <span class="badge h4 md-right bg-accent">
-            Declined
-            <%= inline_icon :info, size: 20 %>
-          </span>
+          <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
+            <span class="badge h4 md-right bg-accent">
+              Declined
+              <%= inline_icon :info, size: 20 %>
+            </span>
+          </action>
         <% else %>
           <span class="badge h4 md-right bg-muted">
             Pending
@@ -80,137 +56,191 @@
           <%= inline_icon :info, size: 20 %>
         </span>
       <% end %>
-      <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>
-    </h2>
+    </span>
+  <% end %>
 
-    <section class="card__banner card__darker details-horiz border-top border-bottom">
-      <p>
-        <strong>Card</strong>
-        <%= stripe_card_mention @hcb_code.stripe_card %>
-      </p>
-      <p>
-        <strong><%= @hcb_code.stripe_refund? ? "Refunded to" : "Spender" %></strong>
-        <%= link_to @hcb_code.stripe_card do %>
-          <%= user_mention @hcb_code.stripe_card.user %>
-        <% end %>
-      </p>
-      <% if @hcb_code.stripe_atm_fee %>
-        <p>
-          <strong>ATM Fee</strong>
-          <span><%= render_money @hcb_code.stripe_atm_fee %></span>
-        </p>
+  <section class="card__banner card__darker details-horiz border-top border-bottom">
+    <p>
+      <strong>Card</strong>
+      <%= stripe_card_mention @hcb_code.stripe_card %>
+    </p>
+    <p>
+      <strong><%= @hcb_code.stripe_refund? ? "Refunded to" : "Spender" %></strong>
+      <%= link_to @hcb_code.stripe_card do %>
+        <%= user_mention @hcb_code.stripe_card.user %>
       <% end %>
+    </p>
+    <% if @hcb_code.stripe_atm_fee %>
       <p>
-        <strong><%= @hcb_code.stripe_refund? ? "Refunded" : "Spent" %></strong>
-        <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.ct.raw_stripe_transaction.stripe_transaction["created"]) %>
+        <strong>ATM fee</strong>
+        <span><%= render_money @hcb_code.stripe_atm_fee %></span>
       </p>
-      <% unless @hcb_code.ct.nil? || @hcb_code.pt.nil? %>
-        <p>
-          <strong>Settled after</strong>
-          <span title="<%= Time.at(@hcb_code.ct.raw_stripe_transaction.stripe_transaction["created"]).strftime("%B %e, %Y %l:%M%P") %>">
-          <%= distance_of_time_in_words @hcb_code.pt.raw_pending_stripe_transaction.created_at, @hcb_code.ct.created_at %>
-          </span>
-        </p>
-      <% end %>
-    </section>
+    <% end %>
+    <p>
+      <strong><%= @hcb_code.stripe_refund? ? "Refunded" : "Spent" %></strong>
+      <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]) %>
+    </p>
+    <% unless @hcb_code.ct.nil? || @hcb_code.pt.nil? %>
+      <p>
+        <strong>Settled after</strong>
+        <span title="<%= Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]).strftime("%B %e, %Y %l:%M%P") %>">
+        <%= distance_of_time_in_words @hcb_code.pt.raw_pending_stripe_transaction.created_at, @hcb_code.ct.created_at %>
+        </span>
+      </p>
+    <% end %>
+  </section>
 
-    <section class="details details--wide pt2 pb2 details--tall">
-      <% if @hcb_code.pt&.declined? %>
-        <% reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]["reason"] %>
-        <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
-        <p>
+  <section class="details pt2 pb2 details--wide details--tall">
+    <% if @hcb_code.pt&.declined? && @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") != "reversed" %>
+      <% reason = @hcb_code.pt.decline_reason %>
+      <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
+      <p>
         <strong>Declined</strong>
-        <span>
-          <% if reason == "card_inactive" && !@hcb_code.stripe_card.initially_activated? %>
-            <em>This transaction was declined by HCB as this card isn't activated.</em>
-          <% elsif reason == "card_inactive" %>
-            <em>This transaction was declined by HCB as this card is frozen.</em>
-          <% elsif reason == "suspected_fraud" || reason == "verification_failed" %>
-            <em>This transaction was declined by HCB due to failed suspected fraud / failed checks.</em>
-          <% elsif reason == "webhook_declined" && webhook_declined_reason == "merchant_not_allowed" %>
-            <em>This transaction was declined by HCB because this merchant is not allowed.</em>
-          <% elsif reason == "webhook_declined" && webhook_declined_reason == "cash_withdrawals_not_allowed" %>
-            <em>This transaction was declined by HCB because cash withdrawals were not enabled on the card.</em>
-          <% elsif reason == "webhook_declined" %>
-            <em>This transaction was declined by HCB due to insufficient funds.</em>
-          <% else %>
-            <em>This transaction was declined.</em>
-          <% end %>
-        </span>
-        </p>
-      <% end %>
-      <% if @hcb_code.pt&.unsettled? %>
-      <p>
-      <strong>Pending</strong>
-      <span><em>This transaction is still pending, the amount may be more or less than shown here.</em></span>
-      </p>
-      <% end %>
-      <div>
-        <span style="height: 100%;">
-          <strong>Merchant</strong>
-        </span>
-        <% if organizer_signed_in? %>
-          <% if defined?(@frame) && @frame %>
-            <details>
-              <summary class="inline-flex no-select">
-                <%= country_to_emoji @hcb_code.stripe_merchant["country"] %>
-                <%= humanized_merchant_name @hcb_code.stripe_merchant %>
-                <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
-              </summary>
+        <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
 
-              <div class="details mb2 mt2">
-                <p>
-                  <strong>Name</strong>
-                  <span>
-                    <%= humanized_merchant_name @hcb_code.stripe_merchant %>
-                  </span>
-                </p>
-                <p>
-                  <strong>Category</strong>
-                  <span>
-                    <%= @hcb_code.stripe_merchant["category"].humanize.capitalize %>
-                  </span>
-                </p>
-                <p>
-                  <strong>Currency</strong>
-                  <span>
-                  <%= @hcb_code.stripe_merchant_currency.upcase %>
-                  </span>
-                </p>
-                <% if is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :phone %>
-                  <p>
-                    <strong>Phone</strong>
-                    <span><%= @hcb_code.stripe_merchant["city"] %></span>
-                  </p>
-                <% elsif is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :city %>
-                  <p>
-                    <strong>City</strong>
-                    <span><%= @hcb_code.stripe_merchant["city"].humanize %></span>
-                  </p>
+          <%= render partial: "hcb_codes/decline_reason", locals: {
+                hcb_code: @hcb_code,
+                include_troubleshooting: false,
+                include_external: true
+              } %>
+        </action>
+      </p>
+    <% end %>
+    <div>
+      <span style="height: 100%;">
+        <strong>Merchant</strong>
+      </span>
+      <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
+        <% if defined?(@frame) && @frame %>
+          <details>
+            <summary class="inline-flex no-select">
+              <%= country_to_emoji(@hcb_code.stripe_merchant["country"]) if @hcb_code.stripe_merchant["country"] %>
+              <%= humanized_merchant_name @hcb_code.stripe_merchant %>
+              <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
+            </summary>
+
+            <div class="details mb2 mt2">
+              <p>
+                <strong>Name</strong>
+                <span>
+                  <%= humanized_merchant_name @hcb_code.stripe_merchant %>
+                </span>
+              </p>
+              <p>
+                <strong>Category</strong>
+                <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
+                  <%= humanized_category @hcb_code.stripe_merchant %>
                 <% end %>
+              </p>
+              <p>
+                <strong>Currency</strong>
+                <span>
+                <%= @hcb_code.stripe_merchant_currency.upcase %>
+                </span>
+              </p>
+              <% if is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :phone %>
+                <p>
+                  <strong>Phone</strong>
+                  <span><%= @hcb_code.stripe_merchant["city"] %></span>
+                </p>
+              <% elsif is_city_or_phone?(@hcb_code.stripe_merchant["city"]) == :city %>
+                <p>
+                  <strong>City</strong>
+                  <span><%= @hcb_code.stripe_merchant["city"].humanize %></span>
+                </p>
+              <% end %>
+              <% if @hcb_code.stripe_merchant["postal_code"] %>
                 <p>
                   <strong>Zip</strong>
-                  <span><%= @hcb_code.stripe_merchant["postal_code"] or "Unknown" %></span>
+                  <span><%= @hcb_code.stripe_merchant["postal_code"] %></span>
                 </p>
+              <% end %>
+              <% if @hcb_code.stripe_merchant["state"] %>
                 <p>
                   <strong>State</strong>
-                  <span><%= @hcb_code.stripe_merchant["state"]&.upcase or "Unknown" %></span>
+                  <span><%= @hcb_code.stripe_merchant["state"]&.upcase %></span>
                 </p>
+              <% end %>
+              <% if @hcb_code.stripe_merchant["country"] %>
                 <p>
                   <strong>Country</strong>
                   <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
                 </p>
-              </div>
-              <p class="my0 muted">
-                Details are provided by the merchant and not guaranteed to be correct.
+              <% end %>
+              <p>
+                <strong>Merchant ID</strong>
+                <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
               </p>
+            </div>
+            <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+            <p class="muted">
+              Details are provided by the merchant and not guaranteed to be correct.
+            </p>
+          </details>
+        <% else %>
+          <action data-behavior="modal_trigger" data-modal="merchant_details_<%= instance %>" class="pointer" tabindex="0">
+            <span class="inline-flex">
+              <%= country_to_emoji(@hcb_code.stripe_merchant["country"]) if @hcb_code.stripe_merchant["country"] %>
+              <%= humanized_merchant_name @hcb_code.stripe_merchant %>
+              <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
+            </span>
+          </action>
+        <% end %>
+      <% else %>
+        <span><strong>Sign in to view</strong></span>
+      <% end %>
+    </div>
+    <% if @hcb_code.pt.present? %>
+      <div>
+        <span style="height: 100%;">
+          <strong>Charge method</strong>
+        </span>
+      <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
+        <% if defined?(@frame) && @frame %>
+            <details>
+              <summary class="inline-flex no-select">
+                <%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
+                <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
+              </summary>
+              <% @verification_data = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
+
+              <article class="details-horiz mt2 mb1">
+
+                <div class="mt1 md-mt0" style="width: 100%;">
+                  <p class="details__simulated">
+                    <%= stripe_verification_check_badge "address_line1" %>
+                    <span>Address check</span>
+                  </p>
+                  <p class="details__simulated">
+                    <%= stripe_verification_check_badge "address_postal_code" %>
+                    <span>ZIP check</span>
+                  </p>
+                </div>
+
+                <div class="mt1 md-mt0" style="width: 100%;">
+                  <p class="details__simulated">
+                    <%= stripe_verification_check_badge "expiry" %>
+                    <span>Expiry check</span>
+                  </p>
+                  <p class="details__simulated">
+                    <%= stripe_verification_check_badge "cvc" %>
+                    <span>CVC check</span>
+                  </p>
+                </div>
+              </article>
+
+              <% if @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] == "contactless" && !@hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["wallet"].nil? %>
+                <p class="details__simulated">
+                  <strong>Wallet</strong>
+                  <span class="pl1"><%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["wallet"].titleize %></span>
+                </p>
+              <% end %>
             </details>
           <% else %>
-            <action data-behavior="modal_trigger" data-modal="merchant_details_<%= instance %>" class="pointer" tabindex="0">
-              <span class="inline-flex">
-                <%= country_to_emoji @hcb_code.stripe_merchant["country"] %>
-                <%= humanized_merchant_name @hcb_code.stripe_merchant %>
-                <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
+            <action data-behavior="modal_trigger" data-modal="verification_details_<%= instance %>" class="pointer" tabindex="0">
+              <span>
+              <%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
+              <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
               </span>
             </action>
           <% end %>
@@ -218,91 +248,34 @@
           <span><strong>Sign in to view</strong></span>
         <% end %>
       </div>
-      <% if @hcb_code.pt.present? %>
-        <div>
-          <span style="height: 100%;">
-            <strong>Charge method</strong>
-          </span>
-          <% if organizer_signed_in? %>
-            <% if defined?(@frame) && @frame %>
-              <details>
-                <summary class="inline-flex no-select">
-                  <%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
-                  <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
-                </summary>
-                <% @verification_data = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
-
-                <article class="details-horiz mt2 mb1">
-
-                  <div class="mt1 md-mt0" style="width: 100%;">
-                    <p class="details__simulated">
-                      <%= stripe_verification_check_badge "address_line1" %>
-                      <span>Address check</span>
-                    </p>
-                    <p class="details__simulated">
-                      <%= stripe_verification_check_badge "address_postal_code" %>
-                      <span>Zip check</span>
-                    </p>
-                  </div>
-
-                  <div class="mt1 md-mt0" style="width: 100%;">
-                    <p class="details__simulated">
-                      <%= stripe_verification_check_badge "expiry" %>
-                      <span>Expiry check</span>
-                    </p>
-                    <p class="details__simulated">
-                      <%= stripe_verification_check_badge "cvc" %>
-                      <span>CVC check</span>
-                    </p>
-                  </div>
-                </article>
-
-                <% if @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"] == "contactless" && !@hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["wallet"].nil? %>
-                  <p class="details__simulated">
-                    <strong>Wallet</strong>
-                    <span class="pl1"><%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["wallet"].titleize %></span>
-                  </p>
-                <% end %>
-              </details>
-            <% else %>
-              <action data-behavior="modal_trigger" data-modal="verification_details_<%= instance %>" class="pointer" tabindex="0">
-                <span>
-                <%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
-                <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
-                </span>
-              </action>
-            <% end %>
-          <% else %>
-            <span><strong>Sign in to view</strong></span>
-          <% end %>
-        </div>
-        <% if @hcb_code.personal_transaction.present? %>
-          <p>
-            <strong>Repaid by</strong>
-            <%= link_to @hcb_code.personal_transaction.invoice.local_hcb_code.memo, @hcb_code.personal_transaction.invoice %>
-          </p>
-        <% end %>
-        <% if @hcb_code.card.card_grant.present? %>
-          <p>
-            <strong>Merchant ID</strong>
-            <%= @hcb_code.stripe_merchant["network_id"] %>
-          </p>
-          <p>
-            <strong>Category</strong>
-            <%= @hcb_code.stripe_merchant["category"]&.humanize %>
-          </p>
-        <% end %>
+      <% if @hcb_code.personal_transaction.present? %>
+        <p>
+          <strong>Repaid by</strong>
+          <%= link_to @hcb_code.personal_transaction.invoice.local_hcb_code.memo, @hcb_code.personal_transaction.invoice %>
+        </p>
       <% end %>
-      <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
-    </section>
+      <% if @hcb_code.card.card_grant.present? %>
+        <p>
+          <strong>Merchant ID</strong>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
+        </p>
+        <p>
+          <strong>Category</strong>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
+            <%= humanized_category @hcb_code.stripe_merchant %> (<%= @hcb_code.stripe_merchant["category"] %>)
+          <% end %>
+        </p>
+      <% end %>
+    <% end %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  </section>
 
-    <%= render "hcb_codes/stripe_card_receipts" %>
+  <%= render "hcb_codes/stripe_card_receipts" %>
 
-  </article>
-</div>
+</article>
 
 <% unless defined?(@frame) && @frame %>
-  <% if organizer_signed_in? %>
+  <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="merchant_details_<%= instance %>">
       <%= modal_header "Merchant details" %>
 
@@ -315,9 +288,9 @@
         </p>
         <p>
           <strong>Category</strong>
-          <span>
-            <%= @hcb_code.stripe_merchant["category"].humanize.capitalize %>
-          </span>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["category"], class: "w-fit", tooltip_direction: "s") do %>
+            <%= humanized_category @hcb_code.stripe_merchant %>
+          <% end %>
         </p>
         <p>
           <strong>Currency</strong>
@@ -346,14 +319,29 @@
         </p>
         <p>
           <strong>Country</strong>
-          <span><%= country_to_emoji @hcb_code.stripe_merchant["country"] %></span>
+          <span><%= @hcb_code.stripe_merchant["country"] ? country_to_emoji(@hcb_code.stripe_merchant["country"]) : "Unknown" %></span>
+        </p>
+        <p>
+          <strong>Merchant ID</strong>
+          <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
-      <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
+      <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+      <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">
           Details are provided by the merchant and not guaranteed to be correct.
         </p>
       </article>
+    </section>
+
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
+      <%= modal_header "Transaction declined" %>
+
+      <%= render partial: "hcb_codes/decline_reason", locals: {
+            hcb_code: @hcb_code,
+            include_troubleshooting: true,
+            include_external: true
+          } %>
     </section>
   <% end %>
 
@@ -385,7 +373,7 @@
           </p>
           <p class="details__simulated">
             <%= stripe_verification_check_badge "address_postal_code" %>
-            <span>Zip check</span>
+            <span>ZIP check</span>
           </p>
         </div>
 

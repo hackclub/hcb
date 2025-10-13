@@ -8,29 +8,23 @@ class FeaturesController < ApplicationController
     transactions_background_2024_06_05: %w[🌈 🔴 🟢],
     rename_on_homepage_2023_12_06: %w[🖊️ ⚡ ⌨️],
     command_bar_2024_02_05: %w[🔍 🔎 ✨ 💸],
-    transaction_tags_2022_07_29: %w[🏷️],
     user_permissions_2024_03_09: %w[📛 🧑‍💼 🪪 🎉],
-    anonymous_donations_2024_01_29: %w[🫂 💳 🤑],
     recently_on_hcb_2024_05_23: %w[👀 🤑 🙈],
-    cover_my_fee_2024_06_25: %w[🙏 ❤️ 💳],
     spending_controls_2024_06_03: %w[✅ ❌ 💷],
-    ai_memos_2024_06_20: %w[✨ 🔮 🪄],
-    cash_withdrawals_2024_08_07: %w[💵 💴 💶 💷],
+    two_factor_authentication_2024_05_22: %w[🔒],
+    totp_2024_06_13: %w[🔒 ⏰],
+    event_home_page_redesign_2024_09_21: %w[🏠 📊 📉 💸],
+    card_logos_2024_08_27: %w[🌈 💳 📸],
+    donation_tiers_2025_06_24: %w[💖 🥇 🥈 🥉],
+    sudo_mode_2015_07_21: %w[🔐 🔒 🔑 🔓]
   }.freeze
 
+  before_action :set_actor_and_feature
+
   def enable_feature
-    actor = if params[:event_id]
-              Event.find(params[:event_id])
-            elsif params[:stripe_card_id]
-              StripeCard.find(params[:stripe_card_id])
-            else
-              current_user
-            end
-    feature = params[:feature]
-    authorize actor
-    if FEATURES.key?(feature.to_sym) || current_user.admin?
-      if Flipper.enable_actor(feature, actor)
-        confetti!(emojis: FEATURES[feature.to_sym])
+    if FEATURES.key?(@feature.to_sym) || admin_signed_in?
+      if Flipper.enable_actor(@feature, @actor)
+        confetti!(emojis: FEATURES[@feature.to_sym])
         flash[:success] = "You've opted into this beta; let us know if you have any feedback."
       else
         flash[:error] = "Error while opting into this beta. Please contact us or try again."
@@ -38,32 +32,28 @@ class FeaturesController < ApplicationController
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
     end
-    redirect_back fallback_location: actor
+
+    redirect_to(actor_features_index(@actor))
   end
 
   def disable_feature
-    actor = if params[:event_id]
-              Event.find(params[:event_id])
-            elsif params[:stripe_card_id]
-              StripeCard.find(params[:stripe_card_id])
-            else
-              current_user
-            end
-    feature = params[:feature]
-    authorize actor
-    if FEATURES.key?(feature.to_sym) || current_user.admin?
-      if Flipper.disable_actor(feature, actor)
-        # If it's the user permissions feature, make all the users & invites in the org managers.
-        if feature == "user_permissions_2024_03_09" && actor.is_a?(Event)
-          # Disable all spending controls
-          actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
-          Flipper.disable_actor("spending_controls_2024_06_03", actor)
+    if @feature == "sudo_mode_2015_07_21"
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
-          actor.organizer_positions.update_all(role: :manager)
-          actor.organizer_position_invites.pending.update_all(role: :manager)
-        elsif feature == "spending_controls_2024_06_03" && actor.is_a?(Event)
+    if FEATURES.key?(@feature.to_sym) || admin_signed_in?
+      if Flipper.disable_actor(@feature, @actor)
+        # If it's the user permissions feature, make all the users & invites in the org managers.
+        if @feature == "user_permissions_2024_03_09" && @actor.is_a?(Event)
+          # Disable all spending controls
+          @actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
+          Flipper.disable_actor("spending_controls_2024_06_03", @actor)
+
+          @actor.organizer_positions.update_all(role: :manager)
+          @actor.organizer_position_invites.pending.update_all(role: :manager)
+        elsif @feature == "spending_controls_2024_06_03" && @actor.is_a?(Event)
           # Disable all controls
-          actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
+          @actor.organizer_positions.each { |op| op.active_spending_control&.deactivate }
         end
         flash[:success] = "You've opted out of this beta; please let us know if you had any feedback."
       else
@@ -72,7 +62,37 @@ class FeaturesController < ApplicationController
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
     end
-    redirect_back fallback_location: actor
+
+    redirect_to(actor_features_index(@actor))
+  end
+
+  private
+
+  def set_actor_and_feature
+    if params[:event_id]
+      @actor = Event.find(params[:event_id])
+    elsif params[:user_id]
+      @actor = User.find(params[:user_id])
+    else
+      @actor = current_user
+    end
+    @feature = params[:feature]
+    authorize @actor
+  end
+
+  def actor_features_index(actor)
+    case actor
+    when Event
+      edit_event_path(actor, tab: :features)
+    when User
+      if actor == current_user
+        settings_previews_path
+      else
+        previews_user_path(actor)
+      end
+    else
+      root_path
+    end
   end
 
 end

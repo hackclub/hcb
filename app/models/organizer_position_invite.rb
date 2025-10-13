@@ -69,7 +69,7 @@ class OrganizerPositionInvite < ApplicationRecord
   friendly_id :slug_candidates, use: :slugged
 
   scope :pending, -> { where(accepted_at: nil, rejected_at: nil, cancelled_at: nil) }
-  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include cancelled invites so that we can assign users to them
+  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include canceled invites so that we can assign users to them
   scope :pending_assign, -> { where(accepted_at: nil, rejected_at: nil) }
 
   belongs_to :event
@@ -77,6 +77,7 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :sender, class_name: "User"
 
   belongs_to :organizer_position, optional: true
+  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract", dependent: :destroy
 
   validate :not_already_organizer
   validate :not_already_invited, on: :create
@@ -85,8 +86,19 @@ class OrganizerPositionInvite < ApplicationRecord
 
   validate :initial_control_allowance_amount_cents_nil_for_non_members
 
+  after_create_commit :autofollow_event
   after_create_commit do
-    user == sender ? accept : deliver
+    unless pending_signature?
+      user == sender ? accept : deliver
+    end
+  end
+
+  def organizer_position_contract
+    organizer_position_contracts.where.not(aasm_state: :voided).last
+  end
+
+  def pending_signature?
+    is_signee && organizer_position_contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -101,6 +113,11 @@ class OrganizerPositionInvite < ApplicationRecord
 
     if accepted?
       self.errors.add(:base, "already accepted!")
+      return false
+    end
+
+    if pending_signature?
+      self.errors.add(:base, "requires a signed contract!")
       return false
     end
 
@@ -124,9 +141,14 @@ class OrganizerPositionInvite < ApplicationRecord
         # Create allowance
         organizer_position.active_spending_control.allowances.create!(authorized_by_id: sender_id, amount_cents: initial_control_allowance_amount_cents, memo: "Initial allowance") unless initial_control_allowance_amount_cents.zero?
       end
-
-      true
     end
+
+    # Don't send mailer if this is the first organizer
+    if self.event.users.size > 1
+      OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+    end
+
+    true
   end
 
   def accepted?
@@ -202,6 +224,15 @@ class OrganizerPositionInvite < ApplicationRecord
     if role == "manager" && initial_control_allowance_amount_cents.present?
       self.errors.add(:user, "can not set an initial control allowance for a manager")
     end
+  end
+
+  def autofollow_event
+    if event.announcements.any? && !event.followers.include?(user:)
+      event.event_follows.create!(user:)
+    end
+
+  rescue ActiveRecord::RecordNotUnique
+    # Do nothing. The user already follows this event.
   end
 
 end

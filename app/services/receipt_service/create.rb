@@ -14,7 +14,7 @@ module ReceiptService
         @receiptable&.update(marked_no_or_lost_receipt_at: nil)
       end
 
-      @attachments.map do |attachment|
+      @attachments&.map do |attachment|
         receipt = Receipt.create!(attrs(attachment))
         if Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(@upload_method.to_s)
           ::ReceiptService::Suggest.new(receipt:).run!
@@ -29,7 +29,7 @@ module ReceiptService
     def attrs(attachment)
       {
         file: attachment,
-        uploader: @uploader,
+        user: @uploader,
         upload_method: @upload_method,
         receiptable: @receiptable # Receiptable may be nil
       }

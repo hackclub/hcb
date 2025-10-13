@@ -2,7 +2,7 @@
 
 class TwilioController < ActionController::Base
   protect_from_forgery except: :webhook
-  before_action :set_attachments, :set_user, :set_receiptable
+  before_action :set_attachments, :set_user, :set_receiptable, :set_reimbursement_report
 
   def webhook
     return reply_with(<<~MSG.squish) if @user.nil?
@@ -12,14 +12,9 @@ class TwilioController < ActionController::Base
     MSG
 
     if reimbursement?
-      @report = @user.reimbursement_reports.create(inviter: @user)
+      @report ||= @user.reimbursement_reports.create(inviter: @user)
       @receiptable = @report.expenses.create!(amount_cents: 0)
     end
-
-    return reply_with(<<~MSG.squish) unless Flipper.enabled?(:receipt_bin_2023_04_07, @user) || @receiptable
-      Hey! Looking to upload receipts? Make sure the Receipt Bin feature preview
-      is enabled on your account (https://hcb.hackclub.com/my/settings/previews).
-    MSG
 
     return reply_with(<<~MSG.squish) if @attachments.none?
       Hey! Are you trying to upload receipts? We couldn't find any attachments in your message.#{' '}
@@ -37,12 +32,14 @@ class TwilioController < ActionController::Base
       @receiptable.update(memo: receipts.first.suggested_memo, value: receipts.first.extracted_total_amount_cents.to_f / 100)
     end
 
-    if reimbursement?
-      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to a new reimbursement report: #{reimbursement_report_url(@report)}!")
+    if reimbursement? && @report.previously_new_record?
+      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to a new reimbursement report! #{reimbursement_report_url(@report)}")
+    elsif reimbursement?
+      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to your report named: #{@report.name}! #{reimbursement_report_url(@report)}")
     elsif @receiptable
-      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@receiptable.memo} (#{hcb_code_url(@receiptable)})!")
+      reply_with("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@receiptable.memo}! #{hcb_code_url(@receiptable)}")
     else
-      reply_with("Added #{receipts.count} #{"receipt".pluralize(receipts.count)} to your Receipt Bin (https://hcb.hackclub.com/my/inbox)!")
+      reply_with("Added #{receipts.count} #{"receipt".pluralize(receipts.count)} to your Receipt Bin! https://hcb.hackclub.com/my/inbox")
     end
   end
 
@@ -69,7 +66,7 @@ class TwilioController < ActionController::Base
 
     @attachments = (0..num_media - 1).map do |i|
       uri = URI.parse(params["MediaUrl#{i}"])
-      break unless uri.scheme == "http" || uri.scheme == "https"
+      break unless ["http", "https"].include?(uri.scheme)
 
       {
         filename: "SMS_#{Time.now.strftime("%Y-%m-%d-%H:%M")}",
@@ -93,6 +90,11 @@ class TwilioController < ActionController::Base
                                     .where("twilio_messages.to" => params["From"])
                                     .where.not(hcb_code: nil)
                                     .last&.hcb_code
+  end
+
+  # if we are inheriting a recently created report
+  def set_reimbursement_report
+    @report = @user&.reimbursement_reports&.where(event_id: nil, updated_at: 24.hours.ago..)&.order(created_at: :desc)&.first
   end
 
   def reimbursement?

@@ -9,6 +9,8 @@ module PendingEventMappingEngine
 
       settle_canonical_pending_increase_check!
 
+      settle_canonical_pending_wire!
+
       settle_canonical_pending_check_deposit!
       decline_canonical_pending_check_deposit!
 
@@ -33,9 +35,6 @@ module PendingEventMappingEngine
       map_canonical_pending_bank_fee!
       settle_canonical_pending_bank_fee_hcb_code!
 
-      map_canonical_pending_partner_donation!
-      settle_canonical_pending_partner_donation_hcb_code!
-
       map_canonical_pending_outgoing_disbursement!
       settle_canonical_pending_outgoing_disbursement_hcb_code!
       decline_canonical_pending_outgoing_disbursement!
@@ -44,9 +43,8 @@ module PendingEventMappingEngine
       settle_canonical_pending_incoming_disbursement_hcb_code!
       decline_canonical_pending_incoming_disbursement!
 
-      settle_canonical_pending_ach_payment!
-
       settle_canonical_pending_expense_payout!
+      settle_canonical_pending_payout_holding!
 
       true
     end
@@ -93,6 +91,15 @@ module PendingEventMappingEngine
       CanonicalPendingTransaction.unsettled.increase_check.find_each(batch_size: 100) do |cpt|
         if cpt.local_hcb_code.ct
           CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+        end
+      end
+    end
+
+    def settle_canonical_pending_wire!
+      CanonicalPendingTransaction.unsettled.wire.find_each(batch_size: 100) do |cpt|
+        if cpt.local_hcb_code.ct
+          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+          cpt.wire.mark_deposited!
         end
       end
     end
@@ -153,10 +160,6 @@ module PendingEventMappingEngine
       # ::PendingEventMappingEngine::Decline::Donation.new.run
     end
 
-    def map_canonical_pending_partner_donation!
-      ::PendingEventMappingEngine::Map::PartnerDonation.new.run
-    end
-
     def map_canonical_pending_invoice!
       ::PendingEventMappingEngine::Map::Invoice.new.run
     end
@@ -181,16 +184,16 @@ module PendingEventMappingEngine
       ::PendingEventMappingEngine::Settle::BankFeeHcbCode.new.run
     end
 
-    def settle_canonical_pending_partner_donation_hcb_code!
-      ::PendingEventMappingEngine::Settle::PartnerDonationHcbCode.new.run
-    end
-
-    def settle_canonical_pending_ach_payment!
-      ::PendingEventMappingEngine::Settle::AchPayment.new.run
-    end
-
     def settle_canonical_pending_expense_payout!
       CanonicalPendingTransaction.unsettled.reimbursement_expense_payout.find_each(batch_size: 100) do |cpt|
+        if (ct = cpt.local_hcb_code.ct)
+          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
+        end
+      end
+    end
+
+    def settle_canonical_pending_payout_holding!
+      CanonicalPendingTransaction.unsettled.reimbursement_payout_holding.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
           CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
         end

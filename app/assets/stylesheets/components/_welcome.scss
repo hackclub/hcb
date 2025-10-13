@@ -84,3 +84,12 @@
     }
   }
 }
+
+@media (max-width: 48em) {
+  .welcome {
+    justify-content: flex-start;
+    padding: 8px;
+    padding-top: 36px;
+    overflow-y: scroll;
+  }
+}

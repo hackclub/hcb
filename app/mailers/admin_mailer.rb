@@ -2,11 +2,12 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
+  default to: -> { Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL) }
 
-  def opdr_notification
-    @opdr = params[:opdr]
+  def cash_withdrawal_notification
+    @hcb_code = params[:hcb_code]
 
-    mail to:, subject: "[OPDR] #{@opdr.event.name} / #{@opdr.organizer_position.user.name}"
+    mail subject: "[#{ApplicationController.helpers.render_money(@hcb_code.amount)} WITHDRAWN] #{@hcb_code.event.name} / #{@hcb_code.stripe_card.user.name}"
   end
 
   def reminders
@@ -67,15 +68,36 @@ class AdminMailer < ApplicationMailer
       end
     end
 
+    CheckDeposit.manual_submission_required.find_each do |check_deposit|
+      @tasks << {
+        url: admin_check_deposit_url(check_deposit),
+        label: "[Check Deposit] #{ApplicationController.helpers.render_money check_deposit.amount} for #{check_deposit.event.name} (Submitted by #{check_deposit.created_by&.name || "Unknown User"})"
+      }
+    end
+
     return if @tasks.none?
 
-    mail to:, subject: "24 Hour Reminders for the Operations Team"
+    mail subject: "24 Hour Reminders for the Operations Team"
   end
 
-  private
+  def weekly_ysws_event_summary
+    @events = params[:events]
+    mail(
+      to: ["zach@hackclub.com", "max@hackclub.com"],
+      cc: "hcb@hackclub.com",
+      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
+    )
+  end
 
-  def to
-    "hcb-promotions-aaaafacn32rulnb3zkd3h75afm@hackclub.slack.com"
+  def blocked_authorization
+    @stripe_card = params.fetch(:stripe_card)
+    @event = @stripe_card.event
+    @merchant_category = params.fetch(:merchant_category)
+
+    mail(
+      to: OPERATIONS_EMAIL,
+      subject: "#{@event.name}: Stripe card authorization blocked"
+    )
   end
 
 end

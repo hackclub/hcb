@@ -1,0 +1,10 @@
+<turbo-frame id="edit_balance_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
+  <%= form_with(url: withdraw_event_card_grant_path(id: @card_grant.hashid, event_id: @event.slug), class: "flex flex-row justify-start items-center gap-3") do |form| %>
+          <%= pop_icon_to "view-close", edit_balance_event_card_grant_path(@card_grant),
+                              data: { turbo: true },
+                              disabled: !policy(@card_grant).topup? do %>
+          <% end %>
+          <%= form.number_field :amount, placeholder: "500.00", required: true, step: 0.01, min: 0, style: "width: " %>
+        <%= form.submit("Withdraw", class: "bg-warning", data: { turbo: true, turbo_frame: "_top" }) %>
+      <% end %>
+</turbo-frame>

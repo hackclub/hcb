@@ -17,6 +17,9 @@
   );
   background-attachment: fixed;
   color: $black;
+  > td > .author {
+    display: none;
+  }
 }
 
 .transaction--icy {
@@ -76,15 +79,20 @@ html[data-dark='true'] {
   span:not(.badge):not(.list-badge):first-of-type {
     max-width: 100%;
     overflow: hidden;
-    text-overflow: ellipsis;
 
     @media screen and (max-width: 32em) {
       max-width: 32ch; // reduce character count on mobile
     }
-  }
 
-  + td {
-    text-align: right; // right-align amount
+    &:not(:has(span)) {
+      display: inline-block;
+      vertical-align: top;
+      text-overflow: ellipsis;
+    }
+
+    &.memo-underline > span:hover {
+      text-decoration: underline;
+    }
   }
 
   .add-tag-badge {
@@ -97,11 +105,20 @@ html[data-dark='true'] {
     line-height: 1.3;
     padding: 0.25rem 0.625rem;
   }
+
+  .suggested_tag {
+    max-width: 0px;
+  }
 }
 
 .transaction:hover .add-tag-badge,
 .add-tag-badge[aria-expanded='true'] {
   visibility: visible;
+}
+
+.transaction:hover .suggested_tag,
+.suggested_tag[aria-expanded='true'] {
+  max-width: 125px;
 }
 
 [class^='transaction--']:target {
@@ -112,6 +129,7 @@ html[data-dark='true'] {
   padding-top: 0;
   padding-bottom: 0;
   line-height: 0;
+  color: map-get($palette, muted);
 
   img,
   svg {
@@ -144,7 +162,8 @@ html[data-dark='true'] {
 }
 
 .transaction:has(.renaming) {
-  background-image: linear-gradient(90deg, $orange 50%, transparent 50%),
+  background-image:
+    linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(0deg, $orange 50%, transparent 50%),
     linear-gradient(0deg, $orange 50%, transparent 50%);

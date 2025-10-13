@@ -58,9 +58,5 @@ html[data-dark='true'] {
     & .event_settings__logo--edit {
       background-color: lighten($darkless, 5%) !important;
     }
-    & > .event_settings__banner--logo {
-      border-color: $darkless;
-      background-color: lighten($darkless, 10%);
-    }
   }
 }

@@ -1,8 +1,6 @@
 <% @invoice = @hcb_code.invoice %>
 <% @sponsor = @invoice.sponsor %>
 
-<% title "#{render_money @invoice.item_amount} invoice from #{@invoice.event.name}" %>
-
 <%= render partial: "admin_viewer", locals: { record: @invoice } %>
 
 <% admin_tool("mt3") do %>
@@ -12,7 +10,7 @@
   <% end %>
 <% end %>
 
-<% if current_user&.admin? %>
+<% if admin_signed_in? %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
     <%= modal_header "Issue refund" %>
     <%= form_with url: refund_invoice_path(id: @invoice.id) do |form| %>
@@ -31,7 +29,7 @@
   </section>
 <% end %>
 
-<% if @invoice.void_v2? %>
+<% if @invoice.void_v2? && !@invoice.manually_marked_as_paid? %>
   <div class="banner banner--archived mt3">
     <span class="bold block mb1">This invoice was voided by <%= user_mention @invoice.voided_by %> on <%= format_date @invoice.void_v2_at %>.</span>
     <span class="block">It will only display in the Voided tab<span class="xs-hide"> on the Invoices page</span>.</span>
@@ -45,7 +43,7 @@
 <% end %>
 
 <article class="card pb0 mt3 mb1">
-  <h2 class="h2 mt0 mx0 border-none flex items-center justify-between" style="gap: 8px">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <%= @sponsor.name %>
       <span class="regular muted"> invoiced for </span>
@@ -65,8 +63,7 @@
         <%= inline_icon @invoice.state_icon, size: 20 if @invoice.state_icon %>
       </span>
     </span>
-    <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>
-  </h2>
+  <% end %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
@@ -79,7 +76,7 @@
     </p>
   </section>
   <!-- recipient info -->
-  <section class="details details--wide pt2 pb2 details--tall">
+  <section class="details pt2 pb2 details--wide details--tall">
     <% if @invoice.open_v2? %>
       <p>
         <strong>Due date</strong>
@@ -95,14 +92,10 @@
         </span>
       </p>
     <% end %>
-    <p>
-      <strong>Transaction memo</strong>
-      <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
-    </p>
     <% if @invoice.personal_transaction.present? %>
       <p>
         <strong>Repayment for</strong>
-        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code.url %>
+        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code %>
       </p>
     <% end %>
     <p>
@@ -116,9 +109,11 @@
     <p>
       <strong>Payment methods</strong>
       <span class="flex">
-        <span class="bg-smoke slate tooltipped tooltipped--s inline-flex rounded mr2" aria-label="Credit or debit cards" style="padding: 4px;">
-          <%= inline_icon "card", size: 24 %>
-        </span>
+        <% unless @invoice.item_amount >= Invoice::MAX_CARD_AMOUNT %>
+          <span class="bg-smoke slate tooltipped tooltipped--s inline-flex rounded mr2" aria-label="Credit or debit cards" style="padding: 4px;">
+            <%= inline_icon "card", size: 24 %>
+          </span>
+        <% end %>
         <span class="bg-smoke slate tooltipped tooltipped--s inline-flex rounded" aria-label="ACH credit transfers and domestic wires">
           <%= inline_icon "bank-account", size: 32 %>
         </span>
@@ -145,22 +140,34 @@
     </p>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
+  <% width_css_class = @invoice.deposited? ? @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 : @invoice.event.revenue_fee != 0 ? "w-64" : "w-8" %>
   <section class="card__banner card__darker details details--wide border-top md-pl0 md-pr0">
     <table>
     <thead>
       <tr>
         <td>Description</td>
-        <td>Amount</td>
+        <td class="<%= width_css_class %>">Amount</td>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td style="white-space: normal"><%= @invoice.item_description %></td>
-        <td><%= render_money @invoice.item_amount %></td>
+        <td class="<%= width_css_class %>"><%= render_money @invoice.item_amount %></td>
       </tr>
       <tr class="border-none">
         <td class="right-align pr1"><strong>Total</strong></td>
-        <td><strong><%= render_money @invoice.item_amount %></strong></td>
+        <td class="<%= width_css_class %>">
+          <strong><%= render_money @invoice.item_amount %></strong>
+          <% if @invoice.deposited? && @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 %>
+            <small class="muted ml1">
+              (<%= render_money Money.from_cents(@invoice.item_amount - @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal }) %> after fees)
+            </small>
+          <% elsif @invoice.deposited? == false && @invoice.event.revenue_fee != 0 %>
+            <small class="muted ml1">
+              (<%= render_money @invoice.item_amount * (1 - @invoice.event.revenue_fee) %> after fees)
+            </small>
+          <% end %>
+        </td>
       </tr>
     </tbody>
     </table>
@@ -202,7 +209,9 @@
     <h2 class="h2 mt0 border-none">
       <%= @sponsor.name %>
       <span class="regular muted"> paid </span>
-      <span class="regular"><%= render_money @hcb_code.amount %></span>
+      <% unless @invoice.manually_marked_as_paid? %>
+        <span class="regular"><%= render_money @invoice.amount_paid %></span>
+      <% end %>
     </h2>
     <section class="card__banner card__darker details-horiz border-top border-bottom">
       <% if @invoice.payment_method_type == 'card' %>
@@ -279,7 +288,7 @@
             +<%= invoice_payment_processor_fee %>
             <span class="muted">
               <% "Pending " unless @invoice&.fee_reimbursement&.t_transaction %>
-              (<%= link_to "learn more", "https://changelog.hcb.hackclub.com/we're-making-payment-processing-fees-disappear-101088" %>)
+              (<%= link_to "learn more", "https://blog.hcb.hackclub.com/posts/were-making-payment-processing-fees-disappear-101088" %>)
             </span>
           </span>
         </p>
@@ -291,11 +300,22 @@
       <% if @invoice.event.can_front_balance? %>
         <section class="card__banner card__darker secondary border-top">
           <p class="my0 italic">
+            <% if @hcb_code.fee_waived? %>
+              Fees were waived on this transaction — enjoy!
+            <% end %>
             The funds from this invoice payment are immediately reflected in your account balance.
-            (<a href="https://changelog.hcb.hackclub.com/instant-deposits-238700">learn more</a>)
+            (<a href="https://blog.hcb.hackclub.com/posts/oh-yeah-deposits-are-instant-now-238700">learn more</a>)
           </p>
         </section>
       <% end %>
+    <% end %>
+
+    <% if (@invoice.deposited? || !@invoice.event.can_front_balance?) && @hcb_code.fee_waived? %>
+      <section class="card__banner card__darker secondary border-top">
+        <p class="my0 italic">
+          Fees were waived on this transaction — enjoy!
+        </p>
+      </section>
     <% end %>
 
   </article>

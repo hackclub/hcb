@@ -2,5 +2,5 @@
 
 Rails.application.configure do
   # Verify Twilio webhooks
-  config.middleware.use Rack::TwilioWebhookAuthentication, Rails.application.credentials.twilio[:auth_token], "/twilio/webhook"
+  config.middleware.use Rack::TwilioWebhookAuthentication, Credentials.fetch(:TWILIO, :AUTH_TOKEN), "/twilio/webhook"
 end

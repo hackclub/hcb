@@ -1,5 +1,5 @@
 <% if !organizer_signed_in? && @event&.is_public && !@event&.public_message.blank? %>
   <section class="card border b--info mt2 mb2 pb0 pt0 public-message">
-    <%== MarkdownService.instance.renderer.render @event.public_message %>
+    <%= sanitize(MarkdownService.instance.renderer.render(@event.public_message), scrubber: MarkdownScrubber.new) %>
   </section>
 <% end %>

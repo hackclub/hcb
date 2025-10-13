@@ -65,7 +65,7 @@ module StripeCardService
     end
 
     def formatted_stripe_shipping_address_line2
-      @stripe_shipping_address_line2.present? ? @stripe_shipping_address_line2 : nil
+      @stripe_shipping_address_line2.presence
     end
 
     def create_remote_stripe_card!
@@ -76,6 +76,8 @@ module StripeCardService
       attrs = {
         cardholder: stripe_cardholder.stripe_id,
         type: @card_type,
+        # https://heroku-app97991095.airbrake.io/projects/288439/groups/3892032265003954513 for context behind regex.
+        second_line: event.short_name(length: 24).gsub(/\s/, " ").gsub(/[^a-zA-Z0-9\/\-&:().' ]/, "").strip,
         currency: "usd",
         status: "active",
         spending_controls: {

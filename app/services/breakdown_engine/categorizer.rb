@@ -42,7 +42,6 @@ module BreakdownEngine
       when *communication then "Communication"
       when *misc then @category.humanize
       else
-        Airbrake.notify("Unknown category detected: #{@category}")
         @category
       end
     end

@@ -24,4 +24,9 @@ class HcbCodeTag < ApplicationRecord
   belongs_to :tag
   has_one :event, through: :tag
 
+  after_create_commit {
+    HcbCode::Tag::Suggestion.suggested.find_by(hcb_code_id:, tag_id:)&.mark_accepted!
+    HcbCode::Tag::Suggestion.where(hcb_code_id:).suggested.each(&:mark_rejected!)
+  }
+
 end

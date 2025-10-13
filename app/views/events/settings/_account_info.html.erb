@@ -1,9 +1,11 @@
-<p>
-  <%= @event.name %> is on the <strong><%= @event.plan_name %></strong> plan, with a <strong><%= number_to_percentage(@event.sponsorship_fee_in_database * 100, significant: true, strip_insignificant_zeros: true) %></strong> fee on revenue.
+<%# locals: (event:) %>
 
-  <% if @event.high_school_hackathon? && @event.sponsorship_fee == 0 %>
+<p>
+  <%= event.name %> is on the <strong><%= event.plan.label %></strong> plan.
+
+  <% if event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
     The <strong><a
-          href="https://changelog.hcb.hackclub.com/bank-now-provides-free-durian-241524">fee waiver</a> expires
+          href="https://blog.hcb.hackclub.com/posts/hackathon-grants-and-0-fee-241524">fee waiver</a> expires
       </strong>
       December 31st, 2024.
     </p>

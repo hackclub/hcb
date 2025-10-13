@@ -2,12 +2,16 @@
 
 module DonationService
   class Refund
-    def initialize(donation_id:, amount:)
+    def initialize(donation_id:, amount:, reason: nil)
       @donation_id = donation_id
       @amount = amount
+      @reason = reason
     end
 
     def run
+      raise ArgumentError, "the donation must have settled" unless donation.canonical_transactions.any?
+      raise ArgumentError, "the donation has already been refunded" if donation.refunded?
+
       ActiveRecord::Base.transaction do
         # 1. Mark refunded
         donation.mark_refunded!
@@ -24,7 +28,7 @@ module DonationService
         end
 
         # 4. Process remotely
-        ::StripeService::Refund.create(payment_intent: payment_intent_id, amount: @amount)
+        ::StripeService::Refund.create(payment_intent: payment_intent_id, amount: @amount, reason: @reason)
 
         # 5. Create top-up on Stripe. Located in `StripeController#handle_charge_refunded`
       end

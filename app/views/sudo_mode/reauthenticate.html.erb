@@ -1,0 +1,128 @@
+<% content_for(:container_class, "container--sm py-20") %>
+
+<%#
+  If sudo mode is triggered from within a Turbo frame, the default behaviour
+  would be to render the response within that frame. This meta tag tells Turbo
+  to treat it as a full page navigation.
+  https://turbo.hotwired.dev/handbook/frames#%E2%80%9Cbreaking-out%E2%80%9D-from-a-frame
+
+  Note that we only do this for GET requests as in the case of a POST this
+  results in a subsequent GET request being made to the same path, which breaks
+  the interception flow (and often results in a 404).
+%>
+<% if break_out_of_turbo_frame %>
+  <% content_for(:head) do %>
+    <meta name="turbo-visit-control" content="reload">
+  <% end %>
+<% end %>
+
+<div class="flex">
+  <%= render(partial: "application/logo") %>
+</div>
+
+<%= render("logins/header", label: "Hack Club") do %>
+  Confirm Access
+<% end %>
+
+<%= user_mention(current_user, class: "badge bg-muted pl-1 m-0 tooltipped") %>
+
+<%= form_tag(
+      form_action,
+      method: form_method,
+      data: {
+        controller: ("webauthn-reauth" if default_factor == :webauthn),
+        webauthn_reauth_options_url_value: webauthn_auth_options_users_path(email: current_user.email),
+      }
+    ) do %>
+  <% forwarded_params.each do |name, values| %>
+    <% values.each do |value| %>
+      <%= hidden_field_tag(name, value) %>
+    <% end %>
+  <% end %>
+
+  <%= hidden_field_tag("_sudo[login_id]", login.hashid) %>
+
+  <% code_field = ->(placeholder:) {
+       text_field_tag(
+         "_sudo[login_code]",
+         nil,
+         placeholder:,
+         required: true,
+         autofocus: true,
+         autocomplete: "one-time-code",
+         inputmode: "numeric",
+       )
+     } %>
+
+  <% case default_factor %>
+  <% when :email %>
+    <p>
+      For additional security, we've just sent a login code to <%= mail_to(current_user.email, target: "_blank") %>
+    </p>
+
+    <%= code_field.call(placeholder: "Enter your login code") %>
+
+    <p class="h5 muted"><em>Make sure to check your spam folder</em></p>
+  <% when :sms %>
+    <p>
+      For additional security, we've just sent a login code to your phone number ending in <%= current_user.phone_number.last(4) %>
+    </p>
+
+    <%= code_field.call(placeholder: "Enter your login code") %>
+  <% when :totp %>
+    <p>
+      For additional security, please enter the code from your authenticator app.
+    </p>
+
+    <%= code_field.call(placeholder: "Enter your one-time password") %>
+  <% when :webauthn %>
+    <p>
+      For additional security, please authenticate with your security key.
+    </p>
+
+    <div class="error-card hidden" data-webauthn-reauth-target="errorCard"></div>
+
+    <%= hidden_field_tag(
+          "_sudo[webauthn_response]",
+          nil,
+          data: { webauthn_reauth_target: "responseInput" }
+        ) %>
+  <% end %>
+
+  <%= button_tag(
+        "Continue",
+        type: "submit",
+        name: "_sudo[submit_method]",
+        value: default_factor,
+        class: "btn mt-4",
+        data: { webauthn_reauth_target: "continueButton" }
+      ) %>
+
+  <% if additional_factors.present? %>
+    <p>Having problems?</p>
+    <ul>
+      <% additional_factors.each do |factor| %>
+        <li>
+          <%= button_tag(
+                type: "submit",
+                formnovalidate: true,
+                name: "_sudo[switch_method]",
+                value: factor.to_s,
+                class: "link-button"
+              ) do %>
+            <% case factor %>
+            <% when :email %>
+              Get a login code by email
+            <% when :sms %>
+              Get a login code by SMS
+            <% when :totp %>
+              Use a one-time password
+            <% when :webauthn %>
+              Use your security key
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

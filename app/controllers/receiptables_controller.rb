@@ -5,6 +5,8 @@ class ReceiptablesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
 
   def mark_no_or_lost
+    authorize @receiptable, policy_class: ReceiptablePolicy
+
     if @receiptable.no_or_lost_receipt!
       flash[:success] = "Marked no/lost receipt on that transaction."
       redirect_to @receiptable
@@ -16,9 +18,14 @@ class ReceiptablesController < ApplicationController
 
   private
 
+  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+                          EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage, Reimbursement::Expense::Fee,
+                          Api::Models::CardCharge].index_by(&:to_s).freeze
+
   def set_receiptable
-    @klass = params[:receiptable_type].camelize.constantize
-    # raise ArgumentError, "Class is not receiptable" unless @klass.included_modules.include?(Receiptable)?
+    return unless RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
+
+    @klass = RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
     @receiptable = @klass.find(params[:receiptable_id])
   end
 

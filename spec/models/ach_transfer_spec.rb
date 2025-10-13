@@ -55,4 +55,29 @@ RSpec.describe AchTransfer, type: :model do
       }.to change(recipient, :account_number).from(original_account_number).to(new_account_number)
     end
   end
+
+  describe "invoiced_at validation" do
+    it "allows invoiced_at to be nil" do
+      ach_transfer = build(:ach_transfer, event:, invoiced_at: nil)
+      expect(ach_transfer).to be_valid
+    end
+
+    it "allows invoiced_at to be on the same day as creation" do
+      ach_transfer = build(:ach_transfer, event:, invoiced_at: Date.current)
+      expect(ach_transfer).to be_valid
+    end
+
+    it "allows invoiced_at to be before the creation date" do
+      ach_transfer = build(:ach_transfer, event:, invoiced_at: 1.day.ago.to_date)
+      expect(ach_transfer).to be_valid
+    end
+
+    it "rejects invoiced_at when it's after the creation date" do
+      future_date = 1.day.from_now.to_date
+      ach_transfer = build(:ach_transfer, event:, invoiced_at: future_date)
+
+      expect(ach_transfer).not_to be_valid
+      expect(ach_transfer.errors[:invoiced_at]).to include("cannot be after the transfer creation date")
+    end
+  end
 end

@@ -42,7 +42,7 @@ class FeeRelationship < ApplicationRecord
     return if self.fee_amount
 
     amount = self.t_transaction.amount
-    fee = self.event.sponsorship_fee
+    fee = self.event.revenue_fee
 
     if amount > 0 && self.fee_applies
       self.fee_amount = fee * amount

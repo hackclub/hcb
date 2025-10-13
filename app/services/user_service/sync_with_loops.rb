@@ -3,25 +3,33 @@
 module UserService
   class SyncWithLoops
     def initialize(user_id:, queue: Limiter::RateQueue.new(2, interval: 1), new_user: false)
-      @user = User.find(user_id)
+      @user = User.includes(:events).find(user_id)
       @queue = queue
       @new_user = new_user
       @contact_details = contact_details
     end
 
     def run
+      return if @user.onboarding?
+
       body = {
         email: @user.email,
-        firstName: @user.first_name(legal: true),
-        lastName: @user.last_name(legal: true),
+        firstName: @user.first_name,
+        lastName: @user.last_name,
         hcbSignedUpAt: format_unix(@user.created_at),
         birthday: format_unix(@user.birthday),
         hcbLastSeenAt: format_unix(@user.last_seen_at),
         hcbLastLoginAt: format_unix(@user.last_login_at),
+        hcbHasActiveOrg: @user.events.active.any?,
+        hcbHasCardGrant: @user.card_grants.any?,
+        mailingLists: {
+          # https://loops.so/docs/contacts/mailing-lists#api
+          Credentials.fetch(:LOOPS, :MAILING_LIST) => true
+        }
       }.compact_blank
 
-      body[:userGroup] = "Hack Clubber" if @user.teenager?
-      body[:subscribed] = true if @new_user || @contact_details.nil?
+      body[:userGroup] = @user.teenager? || @user.events.organized_by_teenagers.any? ? "Hack Clubber" : "HCB Adult"
+      body[:subscribed] = true if @contact_details.nil?
       body[:source] = "HCB" if @contact_details.nil?
 
       body.merge!(billing_address)
@@ -47,18 +55,27 @@ module UserService
     end
 
     def contact_details
-      @queue.shift
-      conn = Faraday.new(url: "https://app.loops.so/")
+      begin
+        @queue.shift
+        conn = Faraday.new(url: "https://app.loops.so/")
 
-      resp = conn.send(:get) do |req|
-        req.url("api/v1/contacts/find")
-        req.headers["Authorization"] = "Bearer #{Rails.application.credentials.loops_key}"
-        req.params[:email] = @user.email
+        resp = conn.send(:get) do |req|
+          req.url("api/v1/contacts/find")
+          req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
+          req.params[:email] = @user.email
+        end
+
+        return nil if resp.body.strip == "[]"
+
+        JSON[resp.body][0]
+      rescue => e
+        Rails.error.unexpected(
+          "Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops.",
+          handled: false,
+          severity: :error
+        )
+        raise e
       end
-
-      return nil if resp.body.strip == "[]"
-
-      JSON[resp.body][0]
     end
 
     def update(body:)
@@ -69,7 +86,7 @@ module UserService
         req.url("api/v1/contacts/update")
         req.body = body.to_json
         req.headers["Content-Type"] = "application/json"
-        req.headers["Authorization"] = "Bearer #{Rails.application.credentials.loops_key}"
+        req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
       end
 
     end

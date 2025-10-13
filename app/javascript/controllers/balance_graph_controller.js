@@ -5,10 +5,11 @@ export default class extends Controller {
   static targets = ['graph', 'stat', 'balance', 'label', 'sizing', 'size']
   static values = {
     available: Number,
+    slug: String,
   }
   renderBalance(amount) {
     return (
-      ' ' +
+      '$' +
       (amount / 100)
         .toLocaleString('en-US', {
           style: 'currency',
@@ -18,7 +19,19 @@ export default class extends Controller {
     )
   }
   connect() {
-    fetch(window.location.pathname + '/balance_by_date')
+    const getDates = (start, end) => {
+      const arr = []
+      for (
+        const day = new Date(start);
+        day <= new Date(end);
+        day.setDate(day.getDate() + 1)
+      ) {
+        arr.push(new Date(day))
+      }
+      return arr
+    }
+
+    fetch(`/${this.slugValue}/balance_by_date`)
       .then(r => r.json())
       .then(jsonData => {
         const { balanceTrend, balanceByDate: rawBalanceByDate } = jsonData
@@ -42,6 +55,19 @@ export default class extends Controller {
               ? this.availableValue
               : parseFloat(balanceByDate[date])
 
+          const mostRecentDate = balances[balances.length - 1]?.date
+          const range = getDates(new Date(date), new Date(mostRecentDate))
+          range.pop()
+          range.shift()
+          range.reverse()
+          for (const d of range) {
+            const date = d.toISOString().split('T')[0]
+            balances.push({
+              date,
+              value: value,
+            })
+          }
+
           balances.push({
             date,
             value,
@@ -53,11 +79,12 @@ export default class extends Controller {
         this.sizingTarget.textContent = this.renderBalance(maxBalance)
         this.graphTarget.setAttribute(
           'width',
-          `${this.sizeTarget.clientWidth + 18}px`
+          this.graphTarget.getBoundingClientRect().width + 'px'
         )
-        this.statTarget.style.minWidth = `${this.sizeTarget.clientWidth + 24}px`
+        this.statTarget.style.minWidth =
+          this.graphTarget.getBoundingClientRect().width + 'px'
         this.graphTarget.classList.add(`sparkline--${balanceTrend}`)
-        sparkline(this.graphTarget, balances.reverse(), {
+        sparkline(this.graphTarget, balances.slice(0, 365).reverse(), {
           interactive: true,
           onmousemove: this.update.bind(this),
           onmouseout: this.clear.bind(this),
@@ -76,6 +103,6 @@ export default class extends Controller {
   }
   clear() {
     this.labelTarget.textContent = 'Account balance'
-    this.balanceTarget.textContent = this.renderBalance(this.availableValue)
+    this.balanceTarget.textContent = this.initial.balance
   }
 }

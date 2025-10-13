@@ -1,33 +1,30 @@
-<footer class="[&_*]:transition-colors [&_*]:text-muted/50 [&:hover_*]:text-muted/80 [&_a:hover]:text-muted">
-  <p class="center mt-12">
-    <%= help_message if current_user %>
+<footer class="[&_*]:transition-colors [&_*]:text-muted/50 [&:hover_*]:text-muted/80 [&_a:hover]:text-muted [&_.footer-extras]:transition-opacity [&_.footer-extras]:invisible [&:hover_.footer-extras]:visible py-2 mt-10">
+  <p class="text-center">
+    <%= help_message if current_user && local_assigns[:help_message] != false %>
   </p>
 
-  <p class="text-center space-x-2 *:inline-block">
-    <%= link_to "HCB FAQs", faq_path %>
-    <span>&middot;</span>
-    <%= link_to "Brand Guidelines", branding_path %>
-    <span>&middot;</span>
-    <%= link_to "HCB APIs", v3_path %>
-    <% if current_user&.events&.not_demo_mode&.any? %>
-      <span>&middot;</span>
-      <%= link_to "Share Feedback", "https://hack.af/bank-userfeedback?prefill_Name=#{current_user&.name}&prefill_Email=#{current_user&.email}&prefill_Organization=#{current_user&.events&.first&.name}", target: :_blank %>
-    <% end %>
-  </p>
+  <% unless Rails.env.production? %>
+    <% @sql_count = QueryCount::Counter.counter %>
+    <% @sql_cached_count = QueryCount::Counter.counter_cache %>
+    <p class="text-center text-xs">
+      Loaded using <%= @sql_count %> unique
+      SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %>
+      cached). Running on Rails <%= Rails::VERSION::STRING %> with
+      Ruby <%= RUBY_VERSION %>.
+    </p>
+  <% end %>
 
-  <p class="text-center text-xs">
-    <% if commit_hash.present? %>
-      <% if commit_duration.present? %>
-        Build <em aria-label="<%= commit_hash %>" class="tooltipped tooltipped--n tooltipped--lg"><%= commit_name %></em>
-        from <%= commit_duration %> ago.
-      <% else %>
-        Build <em aria-label="<%= commit_hash %>" class="tooltipped tooltipped--n tooltipped--lg"><%= commit_name %></em>.
-      <% end %>
+  <p class="footer-extras text-xs flex justify-center gap-1">
+    <% if Build.commit_hash.present? %>
+      <span class="tooltipped tooltipped--n tooltipped--xl underline" aria-label="Build <%= Build.commit_name %>">
+        <%= Build.age.present? ? "Last built #{Build.age} ago" : "Build info" %>
+      </span>
+      •
     <% end %>
-    <% unless Rails.env.production? %>
-      <% @sql_count = QueryCount::Counter.counter %>
-      <% @sql_cached_count = QueryCount::Counter.counter_cache %>
-      Loaded using <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %> cached). Running on Rails <%= Rails::VERSION::STRING %>.
-    <% end %>
+    <%= link_to "Security", security_path %>
+    •
+    <%= link_to "API docs", docs_api_index_path %>
+    •
+    <%= link_to "Open source", Rails.configuration.constants.github_url %>
   </p>
 </footer>

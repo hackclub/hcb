@@ -31,6 +31,9 @@ module Reimbursement
     include AASM
     include HasBookTransfer
 
+    include PublicIdentifiable
+    set_public_id_prefix :rep
+
     belongs_to :event
     belongs_to :expense, foreign_key: "reimbursement_expenses_id", inverse_of: :expense_payout
     belongs_to :payout_holding, optional: true, foreign_key: "reimbursement_payout_holdings_id", inverse_of: :expense_payouts
@@ -71,6 +74,12 @@ module Reimbursement
       end
     end
 
+    validate do
+      if Reimbursement::ExpensePayout.where(reimbursement_expenses_id:).excluding(self).any?
+        errors.add(:base, "A reimbursement expense can only have one expense payout.")
+      end
+    end
+
     def state
       return :success if settled?
       return :info if in_transit?
@@ -92,11 +101,14 @@ module Reimbursement
 
         mark_reversed!
 
+        canonical_pending_transaction.decline!
+
         # these are reversed because this is reverse!
         sender_bank_account_id = ColumnService::Accounts.id_of(book_transfer_receiving_account)
         receiver_bank_account_id = ColumnService::Accounts.id_of(book_transfer_originating_account)
 
         ColumnService.post "/transfers/book",
+                           idempotency_key: "#{self.public_id}_reversed",
                            amount: amount_cents.abs,
                            currency_code: "USD",
                            sender_bank_account_id:,

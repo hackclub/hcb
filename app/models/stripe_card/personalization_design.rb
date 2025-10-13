@@ -30,7 +30,7 @@ class StripeCard
     has_paper_trail
 
     include HasStripeDashboardUrl
-    has_stripe_dashboard_url "issuing/personalization-designs/", :stripe_id
+    has_stripe_dashboard_url "issuing/personalization-designs", :stripe_id
 
     include PgSearch::Model
     pg_search_scope :search, against: :stripe_name
@@ -62,7 +62,7 @@ class StripeCard
       puts "syncing from stripe"
       self.stripe_id = stripe_obj[:id]
       self.stripe_status = stripe_obj[:status]
-      if stripe_status == "inactive" || stripe_status == "rejected"
+      if ["inactive", "rejected"].include?(stripe_status)
         self.stale = true
       end
       self.stripe_carrier_text = stripe_obj[:carrier_text]

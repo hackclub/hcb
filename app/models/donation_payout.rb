@@ -103,7 +103,7 @@ class DonationPayout < ApplicationRecord
 
   def stripe_payout_params
     {
-      amount: self.donation.payout_creation_balance_net,
+      amount: self.donation.payout_creation_balance_net + self.donation.payout_creation_balance_stripe_fee,
       currency: "usd",
       description: self.description,
       destination: self.stripe_destination_id,

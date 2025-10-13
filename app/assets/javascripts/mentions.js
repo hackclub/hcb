@@ -8,7 +8,7 @@ function loadTextExpander() {
       suggestions.hidden = false
       count = 0
       for (const suggestion of suggestions.children) {
-        if (!suggestion.dataset.search.match(text)) {
+        if (!suggestion.dataset.search.toLowerCase().match(text.toLowerCase())) {
           suggestion.classList.add("display-none")
         } else {
           suggestion.classList.remove("display-none")

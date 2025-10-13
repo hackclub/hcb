@@ -30,7 +30,7 @@ class Comment
     validates :emoji, presence: true
     validates :emoji, uniqueness: { scope: [:reactor_id, :comment_id], message: "has already been used for this comment" }
 
-    EMOJIS = %w[👍 👎 😄 🎉 😔 ❤️ 🚀 👀].freeze
+    EMOJIS = %w[👍 👎 😄 🎉 😔 ❤️ 🚀 👀 💀].freeze
 
     validates_inclusion_of :emoji, in: EMOJIS, on: :create
 

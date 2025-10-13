@@ -58,7 +58,10 @@ export default class extends Controller {
     this.cleanup = autoUpdate(
       this.toggleTarget,
       this.content,
-      this.computePosition.bind(this, false)
+      this.computePosition.bind(this, false),
+      {
+        elementResize: false, // See https://github.com/hackclub/hcb/issues/8588
+      }
     )
   }
 
@@ -112,9 +115,10 @@ export default class extends Controller {
         flip({ padding: 5 }),
         size({
           padding: 5,
-          apply({ availableHeight, elements }) {
+          apply({ availableHeight, availableWidth, elements }) {
             Object.assign(elements.floating.style, {
               maxHeight: `${availableHeight}px`,
+              maxWidth: `${availableWidth}px`,
             })
           },
         }),

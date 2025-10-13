@@ -5,6 +5,31 @@ class EventPolicy < ApplicationPolicy
     user.present?
   end
 
+  # Event homepage
+  def show?
+    is_public || auditor_or_reader?
+  end
+
+  def show_in_v4?
+    auditor_or_reader?
+  end
+
+  # Turbo frames for the event homepage (show)
+  alias_method :team_stats?, :show?
+  alias_method :recent_activity?, :show?
+  alias_method :money_movement?, :show?
+  alias_method :balance_transactions?, :show?
+  alias_method :merchants_chart?, :show?
+  alias_method :categories_chart?, :show?
+  alias_method :top_categories?, :show?
+  alias_method :tags_chart?, :show?
+  alias_method :users_chart?, :show?
+  alias_method :transaction_heatmap?, :show?
+
+  alias_method :transactions?, :show?
+  alias_method :ledger?, :transactions?
+  alias_method :merchants_filter?, :transactions?
+
   def toggle_hidden?
     user&.admin?
   end
@@ -17,35 +42,37 @@ class EventPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def show?
-    is_public || admin_or_user?
-  end
-
-  def breakdown?
-    (admin_or_user? && Flipper.enabled?(:breakdown_2024_06_18, record)) || user&.admin?
-  end
-
   def balance_by_date?
-    is_public || admin_or_user?
-  end
-
-  # NOTE(@lachlanjc): this is bad, I’m sorry.
-  # This is the StripeCardsController#shipping method when rendered on the event
-  # card overview page. This should be moved out of here.
-  def shipping?
-    admin_or_user?
-  end
-
-  def by_airtable_id?
-    user&.admin?
+    is_public || auditor_or_reader?
   end
 
   def edit?
-    admin_or_user?
+    auditor_or_member?
+  end
+
+  # pinning a transaction to an event
+  def pin?
+    admin_or_member?
   end
 
   def update?
     admin_or_manager?
+  end
+
+  alias remove_header_image? update?
+
+  alias remove_background_image? update?
+
+  alias remove_logo? update?
+
+  alias enable_feature? update?
+
+  alias disable_feature? update?
+
+  alias toggle_fee_waiver_eligible? update?
+
+  def validate_slug?
+    admin_or_member?
   end
 
   def destroy?
@@ -53,15 +80,23 @@ class EventPolicy < ApplicationPolicy
   end
 
   def team?
-    is_public || admin_or_user?
+    is_public || auditor_or_reader?
+  end
+
+  def announcement_overview?
+    is_public || record.announcements.published.any? || auditor_or_reader?
+  end
+
+  def feed?
+    announcement_overview?
   end
 
   def emburse_card_overview?
-    is_public || admin_or_user?
+    is_public || auditor_or_reader?
   end
 
   def card_overview?
-    is_public || admin_or_user?
+    show? && record.approved? && record.plan.cards_enabled?
   end
 
   def new_stripe_card?
@@ -69,28 +104,23 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_stripe_card?
-    admin_or_user? && is_not_demo_mode?
+    admin_or_member? && is_not_demo_mode?
   end
 
   def documentation?
-    is_public || admin_or_user?
+    auditor_or_reader? && record.plan.documentation_enabled?
   end
 
   def statements?
-    is_public || admin_or_user?
+    show?
   end
 
-  def demo_mode_request_meeting?
-    admin_or_manager? && record.demo_mode? && record.demo_mode_request_meeting_at.nil?
-  end
-
-  # (@eilla1) these pages are for the wip resources page and should be moved later
-  def connect_gofundme?
-    is_public || admin_or_user?
+  def statement_of_activity?
+    show? && auditor?
   end
 
   def async_balance?
-    is_public || admin_or_user?
+    show?
   end
 
   def create_transfer?
@@ -101,72 +131,56 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager? && !record.demo_mode?
   end
 
-  def sell_merch?
-    is_public || admin_or_user?
-  end
-
   def g_suite_overview?
-    admin_or_user? && is_not_demo_mode? && !record.hardware_grant?
+    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
-    admin_or_manager? && is_not_demo_mode? && !record.hardware_grant?
+    admin_or_manager? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
-    admin_or_user? && is_not_demo_mode? && !record.hardware_grant?
+    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
   end
 
   def transfers?
-    is_public || admin_or_user?
+    show? && record.plan.transfers_enabled?
   end
 
   def promotions?
-    (is_public || admin_or_user?) && !record.hardware_grant? && !record.outernet_guild?
+    auditor_or_reader?
   end
 
   def reimbursements_pending_review_icon?
-    is_public || admin_or_user?
+    show?
   end
 
   def reimbursements?
-    admin_or_user?
+    auditor_or_reader? && record.plan.reimbursements_enabled?
   end
 
-  def expensify?
-    admin_or_user?
+  def employees?
+    auditor_or_reader?
+  end
+
+  def sub_organizations?
+    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
+  end
+
+  def create_sub_organization?
+    admin_or_manager? && record.subevents_enabled?
   end
 
   def donation_overview?
-    is_public || admin_or_user?
+    show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
-  def partner_donation_overview?
-    is_public || admin_or_user?
-  end
-
-  def remove_header_image?
-    admin_or_manager?
-  end
-
-  def remove_background_image?
-    admin_or_manager?
-  end
-
-  def remove_logo?
-    admin_or_manager?
-  end
-
-  def enable_feature?
-    admin_or_manager?
-  end
-
-  def disable_feature?
-    admin_or_manager?
+  def invoices?
+    show? && record.approved? && record.plan.invoices_enabled?
   end
 
   def account_number?
-    admin_or_manager?
+    (auditor? || member?) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -178,19 +192,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def audit_log?
-    user.admin?
-  end
-
-  def validate_slug?
-    admin_or_user?
+    user.auditor?
   end
 
   def termination?
-    user&.admin?
-  end
-
-  def finish_signee_backfill?
-    user&.admin?
+    user&.auditor?
   end
 
   def can_invite_user?
@@ -211,12 +217,44 @@ class EventPolicy < ApplicationPolicy
 
   private
 
-  def admin_or_user?
-    user&.admin? || record.users.include?(user)
+  def admin_or_member?
+    admin? || member?
+  end
+
+  def auditor_or_reader?
+    auditor? || reader?
+  end
+
+  def auditor_or_member?
+    auditor? || member?
+  end
+
+  def admin?
+    user&.admin?
+  end
+
+  def auditor?
+    user&.auditor?
+  end
+
+  def reader?
+    OrganizerPosition.role_at_least?(user, record, :reader)
+  end
+
+  def member?
+    OrganizerPosition.role_at_least?(user, record, :member)
+  end
+
+  def manager?
+    OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record)&.manager?
+    admin? || manager?
+  end
+
+  def admin_or_reader?
+    admin? || reader?
   end
 
   def is_not_demo_mode?

@@ -25,7 +25,7 @@ module PayoutService
       private
 
       def payout
-        @payout ||= ::InvoicePayout.new(invoice:, amount: invoice.payout_creation_balance_net)
+        @payout ||= ::InvoicePayout.new(invoice:, amount: invoice.payout_creation_balance_net + invoice.payout_creation_balance_stripe_fee)
       end
 
       def fee_reimbursement

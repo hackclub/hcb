@@ -32,6 +32,7 @@ class Comment < ApplicationRecord
   belongs_to :user
 
   has_one_attached :file
+  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
 
   has_paper_trail skip: [:content] # ciphertext columns will still be tracked
   has_encrypted :content
@@ -49,13 +50,14 @@ class Comment < ApplicationRecord
   scope :edited, -> { joins(:versions).where("has_untracked_edit IS TRUE OR versions.event = 'update' OR versions.event = 'destroy'") }
   scope :has_attached_file, -> { joins(:file_attachment) }
 
-  enum action: {
+  enum :action, {
     commented: 0,
-    changes_requested: 1 # used by reimbursements
+    changes_requested: 1, # used by reimbursements
+    rejected_transfer: 2
   }
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.admin_only? ? nil : record.commentable.try(:event)&.id }, only: [:create, :update, :destroy]
+  tracked owner: proc{ |controller, record| controller&.current_user || record&.user }, event_id: proc { |controller, record| record.admin_only? ? nil : record.commentable.try(:event)&.id }, only: [:create, :update, :destroy]
 
   after_create_commit :send_notification_email
 
@@ -86,6 +88,8 @@ class Comment < ApplicationRecord
 
   def action_text
     return "requested changes" if changes_requested?
+
+    return "rejected this transfer and commented" if rejected_transfer?
 
     return "commented"
   end

@@ -28,6 +28,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CheckDeposit < ApplicationRecord
+  include Freezable
   has_paper_trail
 
   REJECTION_DESCRIPTIONS = {
@@ -52,27 +53,44 @@ class CheckDeposit < ApplicationRecord
     CheckDepositMailer.with(check_deposit: self).rejected.deliver_later
   end
 
-  after_update if: -> { increase_status_previously_changed?(to: "submitted") } do
+  after_update if: -> { increase_status_previously_changed?(to: "deposited") } do
     canonical_pending_transaction.update(fronted: true)
     CheckDepositMailer.with(check_deposit: self).deposited.deliver_later
   end
 
+  after_update if: -> { increase_status_previously_changed?(to: "returned") } do
+    canonical_pending_transaction.decline!
+    local_hcb_code.canonical_transactions.each do |ct|
+      fee = ct.fee
+      fee.amount_cents_as_decimal = 0
+      fee.reason = :transfer_returned
+      fee.save!
+    end
+    CheckDepositMailer.with(check_deposit: self).returned.deliver_later
+  end
+
   has_one_attached :front
   has_one_attached :back
+  validates :front, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["front"].present? }
+  validates :back, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["back"].present? }
 
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true
-  validates :front, attached: true, processable_image: true
-  validates :back, attached: true, processable_image: true
+  validates :front, attached: true, content_type: [:png, :jpeg], on: :create
+  validates :back, attached: true, content_type: [:png, :jpeg], on: :create
   validates_uniqueness_of :column_id, allow_nil: true
 
   scope :unprocessed, -> { where(increase_id: nil, column_id: nil) }
 
   enum :increase_status, {
-    pending: "pending",
-    submitted: "submitted",
-    rejected: "rejected",
+    pending: "pending", # when check deposit created
+    submitted: "submitted", # when ProcessColumnCheckDepositJob runs successfully
+    manual_submission_required: "manual_submission_required", # when ProcessColumnCheckDepositJob fails
+    rejected: "rejected", # if an admin can't manually submit it.
     returned: "returned",
+    deposited: "deposited"
   }, default: :pending
+
+  alias_attribute :status, :increase_status
 
   enum :rejection_reason, {
     incomplete_image: "incomplete_image",
@@ -105,32 +123,37 @@ class CheckDeposit < ApplicationRecord
     return :muted if column_id.nil? && increase_id.nil?
     return :success if local_hcb_code.ct.present?
 
-    if pending?
+    if pending? || manual_submission_required?
       :info
     elsif rejected? || returned?
       :error
-    elsif submitted?
+    elsif deposited? || local_hcb_code.ct.present?
       :success
+    elsif submitted?
+      :info
     end
   end
 
   def state_text
-    return "Pending submission" if column_id.nil? && increase_id.nil?
-    return "Deposited" if local_hcb_code.ct.present?
-
-    if pending?
+    if pending? || manual_submission_required?
       "Processing"
     elsif rejected?
       "Rejected"
     elsif returned?
       "Returned"
-    elsif submitted?
+    elsif deposited? || local_hcb_code.ct.present?
       "Deposited"
+    elsif submitted?
+      "Submitted"
     end
   end
 
   def rejection_description
     REJECTION_DESCRIPTIONS[rejection_reason] || "This check deposit was rejected."
+  end
+
+  def self.rejection_descriptions
+    REJECTION_DESCRIPTIONS
   end
 
   def submitted_to_column_at
@@ -140,9 +163,15 @@ class CheckDeposit < ApplicationRecord
   end
 
   def estimated_arrival_date
+    # [@garyhtou] As of 2024-10-22, it takes a median of 7.07 days for a check
+    # to deposit from the time it's submitted to Column to when the canonical
+    # transaction is created.
+    # Average 6.8 days. Min 4.5 days. Max 10.4 days.
+
     estimated = submitted_to_column_at&.+(1.week)&.to_date
     return nil if estimated.nil?
-    return nil if Date.today >= estimated
+    # Continue to show the estimate up until we're 2 days past due
+    return nil if estimated.before?(2.days.ago)
 
     estimated
   end

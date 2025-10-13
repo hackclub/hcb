@@ -6,6 +6,7 @@
 #
 #  id                        :bigint           not null, primary key
 #  aasm_state                :string
+#  account_number_bidx       :string
 #  account_number_ciphertext :text
 #  amount                    :integer
 #  approved_at               :datetime
@@ -13,12 +14,14 @@
 #  company_entry_description :string
 #  company_name              :string
 #  confirmation_number       :text
+#  invoiced_at               :date
 #  payment_for               :text
 #  recipient_email           :string
 #  recipient_name            :string
 #  recipient_tel             :string
 #  rejected_at               :datetime
-#  routing_number            :string
+#  routing_number_bidx       :string
+#  routing_number_ciphertext :text
 #  same_day                  :boolean          default(FALSE), not null
 #  scheduled_arrival_date    :datetime
 #  scheduled_on              :date
@@ -34,12 +37,14 @@
 #
 # Indexes
 #
+#  index_ach_transfers_on_account_number_bidx   (account_number_bidx)
 #  index_ach_transfers_on_column_id             (column_id) UNIQUE
 #  index_ach_transfers_on_creator_id            (creator_id)
 #  index_ach_transfers_on_event_id              (event_id)
 #  index_ach_transfers_on_increase_id           (increase_id) UNIQUE
 #  index_ach_transfers_on_payment_recipient_id  (payment_recipient_id)
 #  index_ach_transfers_on_processor_id          (processor_id)
+#  index_ach_transfers_on_routing_number_bidx   (routing_number_bidx)
 #
 # Foreign Keys
 #
@@ -47,8 +52,11 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class AchTransfer < ApplicationRecord
-  has_paper_trail skip: [:account_number] # ciphertext columns will still be tracked
+  has_paper_trail skip: [:account_number, :routing_index] # ciphertext columns will still be tracked
   has_encrypted :account_number
+  blind_index :account_number
+  has_encrypted :routing_number
+  blind_index :routing_number
   monetize :amount, as: "amount_money"
 
   include PublicIdentifiable
@@ -56,6 +64,13 @@ class AchTransfer < ApplicationRecord
 
   include AASM
   include Commentable
+  include Payoutable
+  include Payment
+  include Freezable
+
+  def payment_recipient_attributes
+    %i[bank_name account_number routing_number]
+  end
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "ach_transfers.created_at"
@@ -66,7 +81,6 @@ class AchTransfer < ApplicationRecord
   belongs_to :creator, class_name: "User", optional: true
   belongs_to :processor, class_name: "User", optional: true
   belongs_to :event
-  belongs_to :payment_recipient, optional: true
 
   validates :amount, numericality: { greater_than: 0, message: "must be greater than 0" }
 
@@ -79,6 +93,7 @@ class AchTransfer < ApplicationRecord
   validates :bank_name, presence: true, on: :create, unless: :payment_recipient
 
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
+  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
   validates_presence_of :recipient_email, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
   validate on: :create do
@@ -88,18 +103,33 @@ class AchTransfer < ApplicationRecord
   end
   validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
   validates :company_name, length: { maximum: 16 }, allow_blank: true
-  validate { errors.add(:base, "Recipient must be in the same org") if payment_recipient && event != payment_recipient.event }
+  # validates :invoiced_at, presence: true, on: :create
+  validates(
+    :invoiced_at,
+    comparison: {
+      less_than_or_equal_to: ->(ach_transfer) { ach_transfer.created_at || Date.today },
+      message: "cannot be after the transfer creation date"
+    },
+    allow_nil: true,
+    on: :create
+  )
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
-  has_one :grant, required: false
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
-  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false, foreign_key: "ach_transfers_id"
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
 
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
+
+  scope :realtime, -> { where("column_id ILIKE 'rttr%'") }
+
+  after_initialize do
+    self.same_day = true
+  end
 
   aasm whiny_persistence: true do
     state :pending, initial: true
@@ -112,6 +142,7 @@ class AchTransfer < ApplicationRecord
     event :mark_in_transit do
       after do
         AchTransferMailer.with(ach_transfer: self).notify_recipient.deliver_later if self.send_email_notification
+        employee_payment.mark_paid! if employee_payment.present?
       end
       transitions from: [:pending, :deposited, :scheduled], to: :in_transit
     end
@@ -121,6 +152,7 @@ class AchTransfer < ApplicationRecord
         canonical_pending_transaction&.decline!
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
       transitions from: [:pending, :scheduled], to: :rejected
     end
@@ -138,6 +170,8 @@ class AchTransfer < ApplicationRecord
         if reimbursement_payout_holding.present?
           ReimbursementMailer.with(reimbursement_payout_holding:, reason:).ach_failed.deliver_later
           reimbursement_payout_holding.mark_failed!
+        elsif employee_payment.present?
+          employee_payment.mark_failed!(reason:)
         else
           AchTransferMailer.with(ach_transfer: self, reason:).notify_failed.deliver_later
         end
@@ -148,14 +182,10 @@ class AchTransfer < ApplicationRecord
   end
 
   before_validation { self.recipient_name = recipient_name.presence&.strip }
-  before_validation :set_fields_from_payment_recipient, if: -> { payment_recipient.present? }, on: :create
-  before_create :create_payment_recipient, if: -> { payment_recipient_id.nil? }
 
   before_validation do
-    company_name = event.name[0...16] if company_name.blank?
+    self.company_name = "HCB (Hack Club)" # Column requires "Hack Club" to be included in the company_name for all outgoing ACHs
   end
-
-  after_create :update_payment_recipient
 
   # Eagerly create HcbCode object
   after_create :local_hcb_code
@@ -173,8 +203,7 @@ class AchTransfer < ApplicationRecord
   def send_ach_transfer!
     return unless may_mark_in_transit?
 
-    account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,
@@ -183,6 +212,7 @@ class AchTransfer < ApplicationRecord
       type: "CREDIT",
       entry_class_code: "PPD",
       counterparty: {
+        name: recipient_name,
         account_number:,
         routing_number:,
       },
@@ -199,20 +229,57 @@ class AchTransfer < ApplicationRecord
     save!
   end
 
+  def send_realtime_transfer!
+    return unless may_mark_in_transit?
+
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
+
+    column_counterparty = ColumnService.post("/counterparties", {
+      idempotency_key: self.id.to_s,
+      account_number:,
+      routing_number:
+    }.compact_blank)
+
+    column_realtime_transfer = ColumnService.post("/transfers/realtime", {
+      idempotency_key: self.id.to_s,
+      amount:,
+      currency_code: "USD",
+      counterparty_id: column_counterparty["id"],
+      description: payment_for,
+      account_number_id:,
+    }.compact_blank)
+
+    mark_in_transit
+    self.column_id = column_realtime_transfer["id"]
+
+    save!
+  end
+
+  def realtime?
+    column_id&.starts_with?("rttr")
+  end
+
+  # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
+  def reverse!(reason)
+    raise ArgumentError, "must have been sent" unless column_id
+
+    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: "reverse_#{self.id}"
+  end
+
   def pending_expired?
     local_hcb_code.has_pending_expired?
   end
 
-  def approve!(processed_by = nil)
+  def approve!(processed_by = nil, send_realtime: false)
     if scheduled_on.present?
       mark_scheduled!
+    elsif send_realtime
+      send_realtime_transfer!
     else
       send_ach_transfer!
     end
 
     update!(processor: processed_by) if processed_by.present?
-
-    grant.mark_fulfilled! if grant.present?
   end
 
   def status
@@ -262,7 +329,7 @@ class AchTransfer < ApplicationRecord
   end
 
   def smart_memo
-    recipient_name.to_s.upcase
+    recipient_name.to_s
   end
 
   def canonical_transactions
@@ -282,6 +349,9 @@ class AchTransfer < ApplicationRecord
 
     now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
 
+    return scheduled_on if scheduled_on.present?
+    return now if realtime?
+
     if same_day? && now.workday?
       return now.change(hour: 10, minute: 0, second: 0) if now < now.change(hour: 7, min: 15, sec: 0)
       return now.change(hour: 14, minute: 0, second: 0) if now < now.change(hour: 11, min: 30, sec: 0)
@@ -299,35 +369,6 @@ class AchTransfer < ApplicationRecord
     if scheduled_on.present? && scheduled_on.before?(Date.today)
       errors.add(:scheduled_on, "must be in the future")
     end
-  end
-
-  def set_fields_from_payment_recipient
-    self.account_number  ||= payment_recipient&.account_number
-    self.routing_number  ||= payment_recipient&.routing_number
-    self.bank_name       ||= payment_recipient&.bank_name
-    self.recipient_name  ||= payment_recipient&.name
-    self.recipient_email ||= payment_recipient&.email
-  end
-
-  def create_payment_recipient
-    create_payment_recipient!(
-      event:,
-      name: recipient_name,
-      email: recipient_email,
-      account_number:,
-      routing_number:,
-      bank_name:,
-    )
-  end
-
-  def update_payment_recipient
-    payment_recipient.update!(
-      name: recipient_name,
-      email: recipient_email,
-      account_number:,
-      routing_number:,
-      bank_name:,
-    )
   end
 
 end

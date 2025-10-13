@@ -1,6 +1,6 @@
 <% content_for(:nav) do %>
   <h1 class="flex items-center xs-hide border-none h1 mt0 mb0 pt2">
-    <%= avatar_for current_user, 36, { class: "mr1" } %>
+    <%= avatar_for current_user, size: 36, class: "mr1" %>
     <%= current_user.initial_name %>
   </h1>
 
@@ -8,10 +8,10 @@
     <button
       class="btn h-10 bg-none bg-smoke shadow-none w-100 justify-start mt1 px-3 hover:shadow-none display-none-not-important md:flex"
       style="border-radius: 8px"
-      id="command_bar_trigger">
+      data-behavior="command_bar_trigger">
       <span class="flex-grow text-left font-medium">Jump to...</span>
-      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md mr-2 text-sm">
-        ⌘
+      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-2 text-sm">
+        <%= request.user_agent.to_s.upcase.include?("MAC") ? "⌘" : "Ctrl" %>
       </span>
       <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md text-sm">
         K
@@ -19,7 +19,59 @@
     </button>
   </div>
 
-  <nav class="dock font-medium mt1">
+  <nav class="dock dock--desktop font-medium mt1">
+    <%= dock_item "Home",
+      root_path,
+      tooltip: "See all your organizations",
+      icon: "home",
+      selected: local_assigns[:selected] == :home %>
+    <%= dock_item "Feed",
+      my_feed_path,
+      tooltip: "See announcements for organizations you're following",
+      icon: "announcement",
+      selected: local_assigns[:selected] == :feed %>
+    <%= dock_item "Cards",
+      my_cards_path,
+      tooltip: "See all your cards",
+      icon: "card",
+      selected: local_assigns[:selected] == :cards %>
+    <%= dock_item "Receipts",
+      my_inbox_path,
+      tooltip: "See transactions awaiting receipts",
+      icon: "payment-docs",
+      async_badge: my_missing_receipts_icon_path,
+      selected: local_assigns[:selected] == :receipts %>
+    <%= dock_item "Reimbursements",
+      my_reimbursements_path,
+      tooltip: "See expense reimbursements",
+      icon: "attachment",
+      async_badge: my_reimbursements_icon_path,
+      selected: local_assigns[:selected] == :reimbursements %>
+    <%= dock_item "Pay",
+      my_payroll_path,
+      tooltip: "Submit invoices & get paid",
+      icon: "person-badge",
+      selected: local_assigns[:selected] == :payroll if current_user.jobs.any? %>
+    <%= dock_item "Settings",
+      my_settings_path,
+      tooltip: "Edit account settings",
+      icon: "settings",
+      selected: local_assigns[:selected] == :settings %>
+    <% if @first_visit %>
+      <div class="pwa__prompt" style="position: relative">
+        <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">
+          <%= inline_icon "private-fill", size: 24, class: "pwa__prompt__icon" %>
+        </div>
+        <b>Looking for a mobile app?</b>
+        <br>
+        Click <%= inline_icon "share", size: 18, class: "pwa__prompt__icon" %>
+        and then <%= inline_icon "plus", size: 18, class: "pwa__prompt__icon" %>
+        <i>Add To Home Screen</i>.
+      </div>
+    <% end %>
+  </nav>
+
+  <nav class="dock dock--mobile font-medium mt1">
     <%= dock_item "Home",
       root_path,
       tooltip: "See all your organizations",
@@ -42,11 +94,6 @@
       icon: "attachment",
       async_badge: my_reimbursements_icon_path,
       selected: local_assigns[:selected] == :reimbursements %>
-    <%= dock_item "Settings",
-      my_settings_path,
-      tooltip: "Edit account settings",
-      icon: "settings",
-      selected: local_assigns[:selected] == :settings %>
     <% if @first_visit %>
       <div class="pwa__prompt" style="position: relative">
         <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">
@@ -59,35 +106,55 @@
         <i>Add To Home Screen</i>.
       </div>
     <% end %>
+    <button class="dock__item bg-transparent border-none menu__toggle" data-behavior="menu_toggle">
+      <div class="line-height-0 relative"><%= inline_icon "more", size: 32, class: "primary" %></div>
+      <span class="line-height-3">More</span>
+
+      <div class="menu__content" data-behavior="menu_content">
+        <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
+        <div class="menu__divider"></div>
+        <%= link_to "Feed", my_feed_path if current_user.followed_events.any? %>
+        <%= link_to "Pay", my_payroll_path if current_user.jobs.any? %>
+        <%= link_to "Settings", my_settings_path %>
+      </div>
+    </button>
   </nav>
 
-  <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
+  <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
+    <div id="bank-wrapped-dialog" style="display: none;">
+      <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background: url('https://cloud-7sn7fc3g0-hack-club-bot.vercel.app/0frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
+        <span class="flex-auto flex justify-between items-center">
+          <span>Check out your <a href="/wrapped" target="_blank" class="primary nowrap" style="color: white;" id="bank-wrapped-link"><strong>HCB Wrapped</strong></a> for 2024!</span>
+        </span>
+        <svg onclick="(localStorage.setItem('hide_hcb_wrapped_2024', 'true'), document.getElementById('bank-wrapped-dialog').remove())" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="view-close" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="pointer" style=""><g><path d="M11.121,9.707c-0.39,-0.391 -1.024,-0.391 -1.414,0c-0.391,0.39 -0.391,1.024 0,1.414l4.95,4.95l-4.95,4.95c-0.391,0.39 -0.391,1.023 0,1.414c0.39,0.39 1.024,0.39 1.414,0l4.95,-4.95l4.95,4.95c0.39,0.39 1.023,0.39 1.414,0c0.39,-0.391 0.39,-1.024 0,-1.414l-4.95,-4.95l4.95,-4.95c0.39,-0.39 0.39,-1.024 0,-1.414c-0.391,-0.391 -1.024,-0.391 -1.414,0l-4.95,4.95l-4.95,-4.95Z"></path></g></svg>
+      </article>
+    </div>
+
+    <script>
+      if (localStorage.getItem('hide_hcb_wrapped_2024') !== 'true') {
+        document.getElementById('bank-wrapped-dialog').style.display = 'block';
+      }
+    </script>
+  <% end %>
+
+  <% if (current_user.teenager? && current_user.only_card_grant_user?) %>
+    <%= render partial: "users/card_grant_conversion_callout" %>
+  <% end %>
+
+  <% if @activities %>
     <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
       <span class="flex items-center w-100">
-          <span class="flex-grow">Recent Activity</span>
-          <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
-            👤 <%= User.currently_online.count %>
+          <span class="flex-grow">Recent activity</span>
+          <% if auditor_signed_in? %>
+            <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :post } do %>
+              <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
+                👤 <%= User.currently_online.count %>
+              <% end %>
+            <% end %>
           <% end %>
       </span>
     </h4>
   <% end %>
 
-  <%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
-
-  <% if current_user.events.not_demo_mode.funded.exists? && Flipper.enabled?(:bank_wrapped, current_user) %>
-    <div id="bank-wrapped-dialog" style="display: none;">
-      <article role="alertdialog" class="flash flex items-center mt3 mb2 mx-auto shrink-none">
-        <span class="flex-auto flex justify-between items-center">
-          <span>🎁 Check out your <a href="/wrapped" target="_blank" class="primary nowrap">HCB Wrapped</a> for 2023!</span>
-        </span>
-        <svg onclick="(localStorage.setItem('hide_hcb_wrapped_2023', 'true'), document.getElementById('bank-wrapped-dialog').remove())" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="view-close" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="pointer" style=""><g><path d="M11.121,9.707c-0.39,-0.391 -1.024,-0.391 -1.414,0c-0.391,0.39 -0.391,1.024 0,1.414l4.95,4.95l-4.95,4.95c-0.391,0.39 -0.391,1.023 0,1.414c0.39,0.39 1.024,0.39 1.414,0l4.95,-4.95l4.95,4.95c0.39,0.39 1.023,0.39 1.414,0c0.39,-0.391 0.39,-1.024 0,-1.414l-4.95,-4.95l4.95,-4.95c0.39,-0.39 0.39,-1.024 0,-1.414c-0.391,-0.391 -1.024,-0.391 -1.414,0l-4.95,4.95l-4.95,-4.95Z"></path></g></svg>
-      </article>
-    </div>
-
-    <script>
-      if (localStorage.getItem('hide_hcb_wrapped_2023') !== 'true') {
-        document.getElementById('bank-wrapped-dialog').style.display = 'block';
-      }
-    </script>
-  <% end %>
+  <%= render partial: "my/activities" if @activities %>
 <% end %>

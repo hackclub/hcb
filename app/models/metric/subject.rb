@@ -13,7 +13,7 @@ class Metric
         self.subject_model.name.underscore
       end
 
-      alias_attribute subject_name, :subject
+      alias_method subject_name, :subject
       alias_attribute "#{subject_name}_id", :subject_id
     end
   end

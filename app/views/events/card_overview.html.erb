@@ -1,7 +1,7 @@
 <% title "Cards for #{@event.name}" %>
 <% page_md %>
 <%= render "nav", selected: :cards %>
-<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
+<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
 <% @no_cards = @event.stripe_cards.count == 0 %>
 
 <% if current_user.try(:full_name).try(:blank?) %>
@@ -18,7 +18,7 @@
   <h1 class="flex heading items-center">
     <span class="flex-grow flex items-center flex-1">
       Cards
-      <%= badge_for @event.stripe_cards.count, class: "bg-muted" if !@no_cards %>
+      <%= badge_for @event.stripe_cards.active.on_main_ledger.count, class: "bg-muted" if !@no_cards %>
     </span>
 
     <% if !@no_cards %>
@@ -34,13 +34,18 @@
     <% end %>
   </h1>
 
+  <%= render "filter_cards" if @has_filter %>
+
   <% if control = @organizer_position&.active_spending_control %>
     <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
     <%= render "callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
       <ul class="m0">
         <li>Spending controls are enabled for this organization.</li>
         <li>Since you're a <%= @organizer_position.role %>, you must request allowances to spend money.</li>
-        <li>Managers can issue allowances from <%= link_to "your spending controls page", event_organizer_position_spending_controls_path(organizer_position_id: @organizer_position) %>, which can be accessed from the <%= link_to "team page", event_team_path(@event) %>.</li>
+        <li>Managers can issue allowances
+          from <%= link_to "your spending controls page", event_organizer_position_spending_controls_path(organizer_position_id: @organizer_position) %>
+          , which can be accessed from the <%= link_to "team page", event_team_path(@event) %>.
+        </li>
       </ul>
     <% end %>
   <% end %>
@@ -52,7 +57,7 @@
     </section>
   <% end %>
 
-  <% if params[:view] == "list" %>
+  <% if @view == "list" %>
     <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
   <% else %>
     <article class="mixed-grid grid--spacious">
