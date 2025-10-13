@@ -204,7 +204,7 @@ class User < ApplicationRecord
   SYSTEM_USER_ID = 2891
 
   def self.system_user
-    User.find!(SYSTEM_USER_ID)
+    User.find(SYSTEM_USER_ID)
   end
 
   after_save do
