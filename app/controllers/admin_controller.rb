@@ -1404,6 +1404,36 @@ class AdminController < Admin::BaseController
   def active_teenagers_leaderboard
   end
 
+  def inspect_resource
+    if params[:resource].blank? && params[:type].blank? && params[:resource_type].present? && params[:resource_id].present?
+      return redirect_to inspect_resource_admin_index_path(resource: params[:resource_type], id: params[:resource_id])
+    end
+
+    @resource_type = params[:resource]
+    @resource_id = params[:id]
+
+    Zeitwerk::Loader.eager_load_all
+
+    # get all named classes extending ApplicationRecord
+    @all_resource_types = ObjectSpace.each_object(Class).select { |c| c < ApplicationRecord }.select(&:name).map(&:name)
+    @associations = {}
+
+    begin
+      @resource = Inspector.find_object(@resource_type, @resource_id)
+
+      if @resource.nil?
+        flash.now[:error] = "Resource not found." and return
+      end
+
+    rescue NameError
+      flash.now[:error] = "Invalid resource type."
+    rescue ActiveRecord::RecordNotFound => e
+      flash.now[:error] = "Resource not found."
+    ensure
+      @associations = Inspector.find_relations(@resource) if @resource.present?
+    end
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)

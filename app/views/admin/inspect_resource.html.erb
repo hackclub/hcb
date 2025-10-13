@@ -1,0 +1,21 @@
+<%= turbo_frame_tag "inspect_frame" do %>
+
+  <%= form_with url: inspect_admin_index_path, method: :get, local: true, data: { turbo_frame: "inspect_frame" }, class: "flex flex-row items-center gap-2 mb-3 border border-smoke border-b-1 rounded-xl" do |form| %>
+    <%= form.select :resource_type, options_for_select(@all_resource_types, @resource_type), {}, { class: "mb-0 !border-none !bg-transparent" } %>
+    <div class="flex-shrink-0 h-[30px] w-[1px] border-left border-smoke border-b-1"></div>
+    <%= form.text_field :resource_id, value: @resource_id, class: "mb-0 !border-none !bg-transparent flex-grow", style: "max-width: unset!important" %>
+    <div>
+      <%= form.submit "Inspect", class: "!bg-steel hover:!bg-slate !text-sm p-1 mr-0.5 !rounded-[9px] !transform-none", style: "background-image: none!important; box-shadow: none!important; transition: all 100ms!important;" %>
+    </div>
+  <% end %>
+
+  <div class="[&_pre]:m-0 [&_pre]:rounded-xl">
+    <%== ap @resource %>
+  </div>
+
+  <div class="flex flex-row gap-2">
+    <% @associations.map do |class_name, id| %>
+      <%= link_to "Inspect #{class_name} ##{id} →", inspect_resource_admin_index_path(resource: class_name, id: id), data: { turbo_frame: "inspect_frame" }, class: "btn !bg-steel hover:!bg-slate !text-sm p-2 mr-0.5 !rounded-[9px] !transform-none mt-3", style: "background-image: none!important; box-shadow: none!important; transition: all 100ms!important;" %>
+    <% end %>
+  </div>
+<% end %>
