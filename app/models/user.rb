@@ -30,13 +30,15 @@
 #  use_two_factor_authentication :boolean          default(FALSE)
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
+#  discord_id                    :string
 #  payout_method_id              :bigint
 #  webauthn_id                   :string
 #
 # Indexes
 #
-#  index_users_on_email  (email) UNIQUE
-#  index_users_on_slug   (slug) UNIQUE
+#  index_users_on_discord_id  (discord_id) UNIQUE
+#  index_users_on_email       (email) UNIQUE
+#  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
@@ -134,6 +136,7 @@ class User < ApplicationRecord
   has_many :wise_transfers
 
   has_one_attached :profile_picture
+  validates :profile_picture, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
 
   has_many :w9s, class_name: "W9", as: :entity
 
@@ -183,6 +186,8 @@ class User < ApplicationRecord
 
   validate(:admins_cannot_disable_2fa, on: :update)
 
+  validates :discord_id, uniqueness: { message: "is already linked to another user. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
+
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
   enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications
@@ -196,9 +201,10 @@ class User < ApplicationRecord
   end
 
   SYSTEM_USER_EMAIL = "bank@hackclub.com"
+  SYSTEM_USER_ID = 2891
 
   def self.system_user
-    User.find_by!(email: SYSTEM_USER_EMAIL)
+    User.find(SYSTEM_USER_ID)
   end
 
   after_save do
@@ -472,6 +478,18 @@ class User < ApplicationRecord
 
   def managed_active_teenagers_count
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
+  end
+
+  def has_discord_account?
+    discord_id.present?
+  end
+
+  def discord_account
+    return unless discord_id.present?
+
+    @discord_bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
+
+    @discord_account ||= @discord_bot.user(discord_id)
   end
 
   private

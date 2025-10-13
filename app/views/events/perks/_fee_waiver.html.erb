@@ -6,7 +6,7 @@
       <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
         Fee Waiver
       </h3>
-      <% if !event.plan.eligible_for_perks? %>
+      <% if !event.plan.promotions_enabled? %>
         <% fee_waiver_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
       <% elsif !perks_available %>
         <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
@@ -35,7 +35,7 @@
         <td>5-9 active teenagers</td>
         <td>3.5% fee</td>
       </tr>
-      <tr class="<%= "card__darker" if active_teenagers_count > 10 %>">
+      <tr class="<%= "card__darker" if active_teenagers_count >= 10 %>">
         <td>10+ active teenagers</td>
         <td>0.0% fee</td>
       </tr>

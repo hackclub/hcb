@@ -45,7 +45,7 @@ class Metric
         )
                             .joins("LEFT JOIN canonical_transactions ct ON raw_stripe_transactions.id = ct.transaction_source_id AND ct.transaction_source_type = 'RawStripeTransaction'")
                             .joins("LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id")
-                            .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
+                            .where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year)
                             .where("event_mapping.event_id = ?", event.id)
                             .group(
                               "CASE
