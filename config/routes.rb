@@ -635,6 +635,7 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
+          get :beacon_config
         end
 
         resources :users, only: [:show] do
@@ -680,6 +681,7 @@ Rails.application.routes.draw do
 
         resources :card_grants, only: [:show, :update] do
           member do
+            post "activate"
             post "topup"
             post "withdraw"
             post "cancel"
