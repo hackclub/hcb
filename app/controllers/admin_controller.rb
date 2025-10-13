@@ -1404,11 +1404,11 @@ class AdminController < Admin::BaseController
   def active_teenagers_leaderboard
   end
 
-  def inspect_resource
-    if params[:resource].blank? && params[:type].blank? && params[:resource_type].present? && params[:resource_id].present?
-      return redirect_to inspect_resource_admin_index_path(resource: params[:resource_type], id: params[:resource_id])
-    end
+  def inspect
+    redirect_to inspect_resource_admin_index_path(resource: params[:resource_type], id: params[:resource_id])
+  end
 
+  def inspect_resource
     @resource_type = params[:resource]
     @resource_id = params[:id]
 
