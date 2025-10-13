@@ -32,6 +32,18 @@ module ReceiptService
         if @receipt.receiptable.nil?
           content = turbo_stream_action_tag(:refresh_suggested_pairings)
           Turbo::StreamsChannel.broadcast_action_to([@receipt.user, :receipt_bin], action: :refresh_suggested_pairings)
+
+          if @receipt.email_receipt_bin? && pair = @receipt.suggested_pairings
+                                                           .unreviewed
+                                                           .where("distance <= ?", 20)
+                                                           .order(:receipt_id, distance: :asc)
+                                                           .select("DISTINCT ON (receipt_id) suggested_pairings.*")
+                                                           .select { |pairing| pairing.hcb_code.missing_receipt? }
+                                                           .first
+            pair.mark_accepted!
+
+            return pair
+          end
         end
 
         pairings
@@ -41,9 +53,11 @@ module ReceiptService
     def distance(hcb_code)
       return if @extracted.nil?
 
+      merchant_amount = hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("merchant_amount")
+
       distances = {
         amount_cents: {
-          value: @extracted.extracted_total_amount_cents && (hcb_code.amount_cents.abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
+          value: @extracted.extracted_total_amount_cents && ((merchant_amount || hcb_code.amount_cents).abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
           weight: 200,
         },
         card_last_four: {

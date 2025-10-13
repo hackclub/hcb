@@ -17,6 +17,11 @@ if expand?(:balance_cents)
   json.fee_balance_cents event.fronted_fee_balance_v2_cents
 end
 
+if expand?(:reporting)
+  json.total_spent_cents event.total_spent_cents
+  json.total_raised_cents event.total_raised
+end
+
 if policy(event).account_number? && expand?(:account_number)
   json.account_number event.account_number
   json.routing_number event.routing_number
@@ -27,6 +32,6 @@ if expand?(:users)
   json.users event.organizer_positions.includes(:user).order(created_at: :desc) do |op|
     json.partial! "api/v4/users/user", user: op.user
     json.joined_at op.created_at
-    json.role op.role if Flipper.enabled?(:user_permissions_2024_03_09, event)
+    json.role op.role
   end
 end

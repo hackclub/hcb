@@ -79,10 +79,19 @@ html[data-dark='true'] {
   span:not(.badge):not(.list-badge):first-of-type {
     max-width: 100%;
     overflow: hidden;
-    text-overflow: ellipsis;
 
     @media screen and (max-width: 32em) {
       max-width: 32ch; // reduce character count on mobile
+    }
+
+    &:not(:has(span)) {
+      display: inline-block;
+      vertical-align: top;
+      text-overflow: ellipsis;
+    }
+
+    &.memo-underline > span:hover {
+      text-decoration: underline;
     }
   }
 
@@ -153,7 +162,8 @@ html[data-dark='true'] {
 }
 
 .transaction:has(.renaming) {
-  background-image: linear-gradient(90deg, $orange 50%, transparent 50%),
+  background-image:
+    linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(0deg, $orange 50%, transparent 50%),
     linear-gradient(0deg, $orange 50%, transparent 50%);

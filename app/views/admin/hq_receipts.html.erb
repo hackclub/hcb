@@ -30,7 +30,7 @@
             <details class="mb0" style="background: #ff8c3830;">
               <summary>
                 <%= user.transactions_missing_receipt.count %>
-                <%= "Transaction".pluralize(user.transactions_missing_receipt.count) %> Missing Receipts
+                <%= "Transaction".pluralize(user.transactions_missing_receipt.count) %> missing receipts
               </summary>
               <ul>
                 <% user.transactions_missing_receipt.each do | txn | %>
@@ -42,7 +42,7 @@
               </ul>
             </details>
           <% else %>
-            0 Transactions Missing Receipts
+            0 Transactions missing receipts
           <% end %>
         </td>
       </tr>

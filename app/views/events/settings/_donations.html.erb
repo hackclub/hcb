@@ -1,5 +1,11 @@
+<%# locals: (event:, frame:) %>
+
+<% turbo_page_requires_reload %>
+
+<% disabled = !policy(event).update? %>
+
 <%= turbo_frame_tag :donations_settings do %>
-  <%= form_with(model: event, local: true, class: @frame ? "" : "card") do |form| %>
+  <%= form_with(model: event, local: true, class: frame ? "" : "card") do |form| %>
     <%= form_errors event, "organization" %>
     <% unless event.unapproved? %>
       <div data-controller="accordion">
@@ -8,8 +14,8 @@
           <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
             <%= form.label :donation_page_enabled do %>
               <%= form.check_box :donation_page_enabled,
-                data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
-                disabled: !policy(event).update?,
+                data: { action: "change->accordion#toggle", accordion_target: "checkbox" },
+                disabled:,
                 switch: true %>
               <span class="slider"></span>
             <% end %>
@@ -19,33 +25,97 @@
           <div class="menu__divider m-0 mb-4"></div>
           <div class="field">
             <%= form.label :donation_page_message, "Message to show on donation page" %>
-            <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: !policy(event).update? %>
+            <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: %>
             <%= inline_icon "markdown", size: 32, class: "muted right" %>
           </div>
           <div class="field">
             <%= form.label :donation_thank_you_message, "Thank you message to donors" %>
-            <%= form.text_area :donation_thank_you_message, class: "w-100 fit", disabled: !policy(event).update? %>
+            <%= form.text_area :donation_thank_you_message, class: "w-100 fit", disabled: %>
             <%= inline_icon "markdown", size: 32, class: "muted right" %>
           </div>
           <div class="field">
             <%= form.label :donation_reply_to_email, "Reply-to email for donation receipts" %>
-            <%= form.text_field :donation_reply_to_email, type: "email", placeholder: "fiona@hackclub.com", class: "w-100 fit", disabled: !policy(event).update? %>
+            <%= form.text_field :donation_reply_to_email, type: "email", placeholder: "fiona@hackclub.com", class: "w-100 fit", disabled: %>
           </div>
           <%= form.fields_for :config do |config| %>
             <div class="field field--checkbox">
-              <%= config.check_box :anonymous_donations, disabled: !policy(event).update?, switch: true %>
+              <%= config.check_box :anonymous_donations, disabled:, switch: true %>
               <%= config.label :anonymous_donations, "Allow donors to donate anonymously" %>
             </div>
             <% if event.revenue_fee > 0 %>
               <div class="field field--checkbox">
-                <%= config.check_box :cover_donation_fees, disabled: !policy(event).update?, switch: true %>
+                <%= config.check_box :cover_donation_fees, disabled:, switch: true %>
                 <%= config.label :cover_donation_fees, "Allow donors to cover your donation fees" %>
               </div>
             <% end %>
           <% end %>
         </div>
+        <%= form.submit "Update", disabled:, data: { turbo_frame: frame ? "_top" : "" } %>
       </div>
-      <%= form.submit "Update", class: ("disabled" unless policy(event).update?), data: { turbo_frame: @frame ? "_top" : "" } %>
     <% end %>
+  <% end %>
+
+  <%= form_with(url: event_donation_goals_path(event), local: true, method: event.donation_goal ? :patch : :post, class: frame ? "" : "card mt-4") do |form| %>
+    <% if frame %>
+      <div class="menu__divider m-0 my-8"></div>
+    <% end %>
+    <div data-controller="accordion">
+      <div class="field field--checkbox mb0">
+        <span style="font-weight: 700">Enable donation goals</span>
+        <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+          <%= form.label :donation_goal_enabled do %>
+            <%= form.check_box :donation_goal_enabled,
+              data: { action: "change->accordion#toggle", accordion_target: "checkbox" },
+              disabled:,
+              checked: event.donation_goal.present?,
+              onchange: event.donation_goal && "!this.checked && (!confirm('Remove donation goal?') ? (this.checked = true) : this.closest('form').requestSubmit())",
+              switch: true %>
+            <span class="slider"></span>
+          <% end %>
+        </div>
+      </div>
+      <div data-accordion-target="content" class="rounded-xl">
+        <div class="field">
+          <label for="donation_goal">Goal amount</label>
+          <span class="muted mb-2 block">
+            <% if event.donation_goal&.amount_cents %>
+              <turbo-frame id="donation_goal_time">
+                <span class="muted mb-2 block">
+                  A progress bar on your donation page will track donations made after
+                  <strong id="time">
+                    <%= local_time event.donation_goal.tracking_since %>.
+                  </strong>
+                  <% if organizer_signed_in?(as: :manager) %>
+                    <label class="inline underline color-inherit cursor-pointer">
+                      <input type="checkbox" name="reset_donation_goal" class="hidden" onclick="if(confirm('Are you sure you want to reset the goal\'s start date to the current time?')) this.closest('form').requestSubmit();">
+                      Reset
+                    </label>
+                  <% end %>
+                </span>
+              </turbo-frame>
+            <% end %>
+          </span>
+
+          <div class="flex items-center gap-2">
+            <div class="bg-snow dark:bg-dark flex items-center border rounded-lg muted flex-1 dark:!border-dark">
+              <span class="px-3">$</span>
+              <%= form.number_field :amount_cents, placeholder: "1000",
+                                                   class: "w-100 fit !border-none !bg-transparent !text-black dark:!text-white !pl-0",
+                                                   step: "1",
+                                                   value: (event.donation_goal.amount_cents / 100 if event.donation_goal.present?),
+                                                   disabled:,
+                                                   data: {
+                                                     action: "input->donation#update",
+                                                   } %>
+            </div>
+            <%= form.submit "Update", disabled:, data: { turbo_frame: frame ? "_top" : "" } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if Flipper.enabled?(:donation_tiers_2025_06_24, event) %>
+    <%= render "events/settings/donation_tiers", event:, frame: %>
   <% end %>
 <% end %>

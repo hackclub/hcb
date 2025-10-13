@@ -17,6 +17,7 @@ module Admin
           .includes(:canonical_pending_declined_mapping)
           .where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
           .where.not(hcb_codes: { hcb_code: nil })
+          .where.not(events: { id: Event::Plan::SalaryAccount.active.pluck(:event_id) })
           .where(created_at: 1.week.ago..)
           .order("RANDOM()")
           .limit(100)

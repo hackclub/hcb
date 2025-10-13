@@ -2,7 +2,7 @@
 <% page_sm %>
 
 <div class="absolute top-0 right-0 m2">
-  <%= render partial: "application/theme_toggle", locals: { top: true, tooltip_location: "w" } %>
+  <%= render partial: "application/theme_toggle", locals: { top: true } %>
 </div>
 
 <%= content_for(:header) do %>
@@ -35,13 +35,20 @@
   <div class="donations-header-image py-20"
        <% if @has_header_image %> style="background: linear-gradient(rgba(23, 23, 29, 0.3), rgba(23, 23, 29, 0.9)),  url('<%= url_for @event.donation_header_image %>'); background-position: center; background-size: cover; background-repeat: no-repeat;"
        <% end %>>
-    <h1 class="mt-0 mb0 border-none center <%= "smoke drop-shadow-lg" if @has_header_image %>">
-      <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
-      <div class="flex justify-center items-center mt1">
-        <%= render "donations/logo" %>
-        <span class="ml2"><%= @event.name %></span>
+    <div class="container flex flex-col sm:flex-row items-center justify-center <%= "sm:justify-start px-5" if yield.present? %>">
+      <div>
+        <h1 class="mt-0 mb0 border-none text-center <%= "sm:text-left" if yield.present? %> <%= "smoke drop-shadow-lg" if @has_header_image %>">
+          <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
+          <div class="flex justify-center items-center mt1">
+            <%= render "donations/logo" %>
+            <span class="ml2"><%= @event.name %></span>
+          </div>
+        </h1>
       </div>
-    </h1>
+      <% if yield.present? %>
+        <%= yield %>
+      <% end %>
+    </div>
   </div>
 
   <% if @background.present? %>
@@ -55,8 +62,6 @@
   <% end %>
 <% end %>
 
-<% if Rails.env.production? %>
-  <%= render "application/fullstory" unless current_user && current_user.sessions_reported == false %>
-<% end %>
+<%= render "application/fullstory" %>
 
 <%= render "application/flash" %>

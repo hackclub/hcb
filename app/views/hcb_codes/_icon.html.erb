@@ -17,6 +17,9 @@
   <% elsif tx.local_hcb_code.wire? %>
     <% label = "Wire" %>
     <% icon = inline_icon "web" %>
+  <% elsif tx.local_hcb_code.wise_transfer? %>
+    <% label = "Wise transfer" %>
+    <% icon = inline_icon "wise" %>
   <% elsif tx.local_hcb_code.check_deposit? %>
     <% label = "Check deposit" %>
     <% icon = inline_icon "cheque" %>
@@ -52,9 +55,6 @@
   <% elsif tx.local_hcb_code.card_grant? %>
     <% label = "Outgoing grant" %>
     <% icon = inline_icon "bag" %>
-  <% elsif tx.try(:grant_id) %>
-    <% label = "Outgoing grant" %>
-    <% icon = inline_icon "idea" %>
   <% elsif tx.local_hcb_code.disbursement? %>
     <% if tx.amount.negative? %>
       <% label = "Outgoing transfer" %>

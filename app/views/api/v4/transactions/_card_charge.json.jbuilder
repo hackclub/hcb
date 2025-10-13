@@ -9,6 +9,7 @@ json.merchant do
   json.name merchant_data["name"]
   json.smart_name humanized_merchant_name(merchant_data) rescue nil
   json.country merchant_data["country"]
+  json.network_id merchant_data["network_id"]
 end
 
 json.charge_method stripe_authorization&.dig("authorization_method")

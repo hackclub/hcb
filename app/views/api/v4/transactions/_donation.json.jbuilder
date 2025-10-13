@@ -14,5 +14,6 @@ json.attribution do
   json.utm_term donation.utm_term
   json.utm_content donation.utm_content
 end
+json.message donation.message
 json.donated_at donation.donated_at
 json.refunded donation.refunded?

@@ -14,11 +14,11 @@ class StripeController < ActionController::Base
       StatsD.measure("StripeController.#{method}") { self.send method, event }
     rescue JSON::ParserError => e
       head :bad_request
-      notify_airbrake(e)
+      Rails.error.report(e)
       return
     rescue NoMethodError => e
       puts e
-      notify_airbrake(e)
+      Rails.error.report(e)
       head :ok # success so that stripe doesn't retry (method is unsupported by HCB)
       return
     rescue Stripe::SignatureVerificationError
@@ -33,7 +33,14 @@ class StripeController < ActionController::Base
     # fire-and-forget update to grafana dashboard
     StatsD.increment("stripe_webhook_authorization", 1)
 
-    approved = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event).run
+    service = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event)
+    approved = service.run
+
+    if approved
+      user = service.card.user
+      ::User::UpdateCardLockingJob.perform_later(user:)
+      ::User::SendCardLockingNotificationJob.perform_later(user:, event: service.card.event)
+    end
 
     response.set_header "Stripe-Version", "2022-08-01"
 
@@ -46,7 +53,7 @@ class StripeController < ActionController::Base
     auth_id = event[:data][:object][:id]
 
     # put the transaction on the pending ledger in almost realtime
-    ::StripeAuthorizationJob::CreateFromWebhook.perform_later(auth_id)
+    ::StripeAuthorization::CreateFromWebhookJob.perform_later(auth_id)
 
     head :ok
   end
@@ -58,7 +65,9 @@ class StripeController < ActionController::Base
     StatsD.increment("stripe_webhook_timeout", 1) if is_closed && has_timeout
 
     rpst = PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction: event[:data][:object]).run
-    PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
+
+    # this has been commented out due to a suspected race condition
+    # PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
 
     head :ok
   end
@@ -160,18 +169,19 @@ class StripeController < ActionController::Base
 
       donation = Donation.find_by(stripe_payment_intent_id: dispute[:payment_intent])
 
-      return notify_airbrake("Received charge dispute on nonexistent donation") if donation.nil?
+      return Rails.error.unexpected("Received charge dispute on nonexistent donation") if donation.nil?
 
       # Let's un-front the transaction.
       donation.canonical_pending_transactions.update_all(fronted: false)
     else
-      # It's an invoice
+      # It's an invoice or a recurring donation
 
       invoice = Invoice.find_by(stripe_charge_id: dispute[:charge])
+      donation = Donation.find_by(stripe_payment_intent_id: dispute[:payment_intent])
 
-      return notify_airbrake("Received charge dispute on nonexistent invoice") if invoice.nil?
+      return Rails.error.unexpected("Received charge dispute on nonexistent invoice or recurring donation") if invoice.nil? && donation.nil?
 
-      invoice.canonical_pending_transactions.update_all(fronted: false)
+      (invoice || donation).canonical_pending_transactions.update_all(fronted: false)
     end
 
     head :ok
@@ -297,14 +307,14 @@ class StripeController < ActionController::Base
         }
       )
     elsif dispute["status"] != "won"
-      Airbrake.notify("Dispute with funds reinstated but without a win: #{dispute["id"]}")
+      Rails.error.unexpected "Dispute with funds reinstated but without a win: #{dispute["id"]}"
     elsif dispute["currency"] != "usd"
-      Airbrake.notify("Dispute with funds reinstated but non-USD currency. Must be manually handled.")
+      Rails.error.unexpected "Dispute with funds reinstated but non-USD currency. Must be manually handled."
     end
   end
 
   def handle_refund_failed(event)
-    Airbrake.notify("Refund failed on Stripe: #{event}.")
+    Rails.error.unexpected "Refund failed on Stripe: #{event}."
   end
 
 end

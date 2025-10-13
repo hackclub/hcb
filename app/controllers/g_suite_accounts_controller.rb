@@ -27,8 +27,10 @@ class GSuiteAccountsController < ApplicationController
       ).run
 
       flash[:success] = "Google Workspace account created."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
 
       flash[:error] = e.message
     end

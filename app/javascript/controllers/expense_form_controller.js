@@ -108,7 +108,7 @@ export default class extends Controller {
 
   #memoInput() {
     if (this.enabledValue) {
-      this.memoFieldTarget.focus()
+      // this.memoFieldTarget.focus()
     }
   }
 
@@ -171,6 +171,8 @@ export default class extends Controller {
     fieldWrapper.appendChild(field)
     fieldWrapper.classList.add('tooltipped', 'tooltipped--n')
     fieldWrapper.setAttribute('aria-label', label)
+
+    window.attachTooltipListener()
   }
 
   #removeTooltip(field) {

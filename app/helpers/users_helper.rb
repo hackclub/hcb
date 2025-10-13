@@ -20,12 +20,14 @@ module UsersHelper
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
       default_image
-    elsif Rails.env.production? && (user.is_a?(User) && user&.profile_picture&.attached?)
-      Rails.application.routes.url_helpers.url_for(user.profile_picture.variant(
-                                                     thumbnail: "#{size * 2}x#{size * 2}^",
-                                                     gravity: "center",
-                                                     extent: "#{size * 2}x#{size * 2}"
-                                                   ))
+    elsif Rails.env.production? && user.is_a?(User) && user.profile_picture&.persisted?
+      Rails.application.routes.url_helpers.url_for(
+        user.profile_picture.variant(
+          thumbnail: "#{size * 2}x#{size * 2}^",
+          gravity: "center",
+          extent: "#{size * 2}x#{size * 2}"
+        )
+      )
     else
       gravatar_url(user.email, user.initials, user.id, size * 2)
     end
@@ -58,7 +60,7 @@ module UsersHelper
     ]
   end
 
-  def avatar_for(user, size = 24, options = {}, click_to_mention: false, default_image: nil)
+  def avatar_for(user, size: 24, click_to_mention: false, default_image: nil, **options)
     src = profile_picture_for(user, size, default_image:)
     current_user = defined?(current_user) ? current_user : nil
 
@@ -76,14 +78,14 @@ module UsersHelper
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
-  def user_mention(user, options = {}, default_name = "No User", click_to_mention: false, comment_mention: false, default_image: nil)
+  def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
-    current_user = defined?(current_user) ? current_user : nil
-    avi = avatar_for(user, 24, options[:avatar] || {}, click_to_mention:, default_image:)
+    viewer = defined?(current_user) ? current_user : nil
+    avi = avatar_for(user, click_to_mention:, default_image:, **options[:avatar])
 
     klasses = ["mention"]
-    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.admin? && !options[:disable_tooltip]
-    klasses << %w[mention--current-user tooltipped tooltipped--n] if current_user && (user&.id == current_user.id) && !options[:disable_tooltip]
+    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
+    klasses << %w[mention--current-user tooltipped tooltipped--n] if viewer && (user&.id == viewer.id) && !options[:disable_tooltip]
     klasses << %w[badge bg-muted ml0] if comment_mention
     klasses << options[:class] if options[:class]
     klass = klasses.uniq.join(" ")
@@ -92,13 +94,15 @@ module UsersHelper
                    options[:aria_label]
                  elsif user.nil?
                    "No user found"
-                 elsif user.id == current_user&.id
+                 elsif user.id == viewer&.id
                    current_user_flavor_text.sample
                  elsif user.admin?
                    "#{user.name} is an admin"
+                 elsif user.auditor?
+                   "#{user.name} is an auditor"
                  end
 
-    content = if user&.admin? && !options[:hide_avatar]
+    content = if user&.auditor? && !options[:hide_avatar]
                 bolt = inline_icon "admin-badge", size: 20
                 avi + bolt + name
               elsif options[:hide_avatar]
@@ -107,11 +111,18 @@ module UsersHelper
                 avi + name
               end
 
+    unless user.nil?
+      link = content_tag :span, (inline_icon "link", size: 16), onclick: "window.open(`#{admin_user_url(user)}`, '_blank').focus()", class: "mention__link"
+      email = content_tag :span, (inline_icon "email", size: 16), onclick: "window.open(`mailto:#{user.email}`, '_blank').focus()", class: "mention__link"
+
+      content = content + email + link if viewer&.auditor?
+    end
+
     content_tag :span, content, class: klass, 'aria-label': aria_label
   end
 
   def admin_tool(class_name = "", element = "div", override_pretend: false, **options, &block)
-    return unless current_user&.admin? || (override_pretend && current_user&.admin_override_pretend?)
+    return unless current_user&.auditor? || (override_pretend && current_user&.admin_override_pretend?)
 
     concat content_tag(element, class: "admin-tools #{class_name}", **options, &block)
   end
@@ -124,7 +135,7 @@ module UsersHelper
     admin_tool(*args, **options, &block)
   end
 
-  def creator_bar(object, options = {})
+  def creator_bar(object, **options)
     creator = if defined?(object.creator)
                 object.creator
               elsif defined?(object.sender)
@@ -132,7 +143,7 @@ module UsersHelper
               else
                 object.user
               end
-    mention = user_mention(creator, options, default_name = "Anonymous User")
+    mention = user_mention(creator, default_name: "Anonymous User", **options)
     content_tag :div, class: "comment__name" do
       mention + relative_timestamp(object.created_at, prefix: options[:prefix], class: "h5 muted")
     end

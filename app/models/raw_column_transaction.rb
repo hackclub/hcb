@@ -20,11 +20,20 @@ class RawColumnTransaction < ApplicationRecord
   after_create :canonize, if: -> { canonical_transaction.nil? }
 
   def canonize
-    create_canonical_transaction!(
+    ct = create_canonical_transaction!(
       amount_cents:,
       memo:,
       date: date_posted,
     )
+
+    raw_pending_column_transaction = RawPendingColumnTransaction.find_by(column_id: column_transaction["transaction_id"])
+
+    if raw_pending_column_transaction&.canonical_pending_transaction
+      CanonicalPendingTransactionService::Settle.new(
+        canonical_transaction: ct,
+        canonical_pending_transaction: raw_pending_column_transaction.canonical_pending_transaction
+      ).run!
+    end
   end
 
   def memo
@@ -47,6 +56,10 @@ class RawColumnTransaction < ApplicationRecord
       return wire["originator_name"]
     elsif transaction_id.start_with? "ipay_"
       return "INTEREST"
+    elsif transaction_id.start_with? "rttr_"
+      realtime = ColumnService.get "/transfers/realtime/#{transaction_id}"
+
+      return realtime["description"]
     end
     raise
   rescue
@@ -75,6 +88,8 @@ class RawColumnTransaction < ApplicationRecord
       ColumnService.get "/transfers/wire/#{transaction_id}"
     elsif transaction_id.start_with? "swft_"
       ColumnService.get "/transfers/international-wire/#{transaction_id}"
+    elsif transaction_id.start_with? "rttr_"
+      ColumnService.get "/transfers/realtime/#{transaction_id}"
     else
       nil
     end

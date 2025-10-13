@@ -28,14 +28,14 @@ class Metric
           JOIN "hcb_codes" on commentable_type = 'HcbCode' and hcb_codes.id = commentable_id
           LEFT JOIN "ach_transfers" on hcb_codes.hcb_code = CONCAT('HCB-300-', ach_transfers.id)
           LEFT JOIN "checks" on hcb_codes.hcb_code = CONCAT('HCB-400-', checks.id)
-          LEFT JOIN "increase_checks" on hcb_codes.hcb_code = CONCAT('HCB-402-', increase_checks.id)
+          LEFT JOIN "increase_checks" on hcb_codes.hcb_code = CONCAT('HCB-401-', increase_checks.id)
           LEFT JOIN "disbursements" on hcb_codes.hcb_code = CONCAT('HCB-500-', disbursements.id)
           LEFT JOIN "canonical_transactions" on hcb_codes.hcb_code = canonical_transactions.hcb_code
           LEFT JOIN "raw_stripe_transactions" on canonical_transactions.transaction_source_type = 'RawStripeTransaction' and canonical_transactions.transaction_source_id = raw_stripe_transactions.id
           LEFT JOIN "stripe_cardholders" on raw_stripe_transactions.stripe_transaction->>'cardholder' = stripe_cardholders.stripe_id
           LEFT JOIN "paypal_transfers" on hcb_codes.hcb_code = CONCAT('HCB-350-', paypal_transfers.id)
           WHERE
-              comments.created_at >= '2024-01-01'
+              comments.created_at >= '#{Metric.year}-01-01'
               AND CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) != '' AND CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) != CAST(comments.user_id as text)
               AND (CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) = '#{user.id}' OR comments.user_id = #{user.id})
               AND comments.user_id != 2891 -- This is the HCB user for automated comments

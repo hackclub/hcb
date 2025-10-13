@@ -30,7 +30,7 @@ class GSuiteAliasesController < ApplicationController
 
       flash[:success] = "Google Workspace alias deleted."
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
 
       flash[:error] = e.message
     end

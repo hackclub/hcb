@@ -37,20 +37,6 @@ class ReimbursementMailer < ApplicationMailer
     end
   end
 
-  def expense_approved
-    @report = params[:report]
-    @expense = params[:expense]
-
-    mail to: @report.user.email_address_with_name, subject: "An update on your reimbursement for #{@expense.memo}", from: hcb_email_with_name_of(@report.event)
-  end
-
-  def expense_unapproved
-    @report = params[:report]
-    @expense = params[:expense]
-
-    mail to: @report.user.email_address_with_name, subject: "An update on your reimbursement for #{@expense.memo}", from: hcb_email_with_name_of(@report.event)
-  end
-
   def ach_failed
     @payout_holding = params[:reimbursement_payout_holding]
     @report = @payout_holding.report
@@ -59,11 +45,26 @@ class ReimbursementMailer < ApplicationMailer
     mail subject: "[Reimbursements] ACH transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
+  def wire_failed
+    @payout_holding = params[:reimbursement_payout_holding]
+    @report = @payout_holding.report
+    @reason = params[:reason]
+
+    mail subject: "[Reimbursements] Wire transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
+  end
+
   def paypal_transfer_failed
     @payout_holding = params[:reimbursement_payout_holding]
     @report = @payout_holding.report
 
     mail subject: "[Reimbursements] PayPal transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
+  end
+
+  def expenses_approved
+    @report = params[:report]
+    @expenses = params[:expenses]
+
+    mail subject: "[Reimbursements] Expenses approved for #{@report.name}", to: @report.user.email_address_with_name
   end
 
 end

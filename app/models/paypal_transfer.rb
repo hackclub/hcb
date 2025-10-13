@@ -34,12 +34,14 @@ class PaypalTransfer < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
 
   include AASM
+  include Payoutable
 
   belongs_to :event
   belongs_to :user
 
   has_one :canonical_pending_transaction
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :paypal_transfer, required: false
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
 
   monetize :amount_cents, as: "amount"
 
@@ -51,7 +53,7 @@ class PaypalTransfer < ApplicationRecord
   end
 
   after_create do
-    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "PayPal transfer to #{recipient_name}".strip.upcase, date: created_at)
+    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "PayPal transfer to #{recipient_name}".strip, date: created_at)
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -63,6 +65,9 @@ class PaypalTransfer < ApplicationRecord
 
     event :mark_approved do
       transitions from: :pending, to: :approved
+      after do
+        employee_payment.mark_paid! if employee_payment.present?
+      end
     end
 
     event :mark_rejected do
@@ -74,6 +79,7 @@ class PaypalTransfer < ApplicationRecord
       after do
         canonical_pending_transaction.decline!
         create_activity(key: "paypal_transfer.rejected")
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
       end
     end
 
@@ -85,6 +91,8 @@ class PaypalTransfer < ApplicationRecord
         if reimbursement_payout_holding.present?
           ReimbursementMailer.with(reimbursement_payout_holding:).paypal_transfer_failed.deliver_later
           reimbursement_payout_holding.mark_failed!
+        elsif employee_payment.present?
+          employee_payment.mark_failed!(reason: "The PayPal account information was invalid.")
         end
       end
     end

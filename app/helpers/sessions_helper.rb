@@ -2,13 +2,20 @@
 
 module SessionsHelper
   SESSION_DURATION_OPTIONS = {
-    "1 hour"  => 1.hour.to_i,
-    "1 day"   => 1.day.to_i,
-    "3 days"  => 3.days.to_i,
-    "7 days"  => 7.days.to_i,
-    "14 days" => 14.days.to_i,
-    "30 days" => 30.days.to_i
+    "15 minutes" => 15.minutes.to_i,
+    "1 hour"     => 1.hour.to_i,
+    "6 hours"    => 6.hours.to_i,
+    "1 day"      => 1.day.to_i,
+    "3 days"     => 3.days.to_i,
+    "1 week"     => 1.week.to_i,
+    "2 weeks"    => 2.weeks.to_i,
   }.freeze
+
+  # For security reasons we severely restrict the duration of impersonated
+  # sessions
+  IMPERSONATED_SESSION_DURATION = SESSION_DURATION_OPTIONS.fetch("1 hour")
+
+  class AccountLockedError < StandardError; end
 
   def impersonate_user(user)
     sign_out
@@ -24,8 +31,14 @@ module SessionsHelper
   # DEPRECATED - begin to start deprecating and ultimately replace with sign_in_and_set_cookie
   def sign_in(user:, fingerprint_info: {}, impersonate: false, webauthn_credential: nil)
     session_token = SecureRandom.urlsafe_base64
-    expiration_at = Time.now + user.session_duration_seconds
-    cookies.encrypted[:session_token] = { value: session_token, expires: expiration_at }
+    session_duration =
+      if impersonate
+        IMPERSONATED_SESSION_DURATION
+      else
+        user.session_validity_preference
+      end
+    expiration_at = session_duration.seconds.from_now
+    cookies.encrypted[:session_token] = { value: session_token }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
       session_token:,
@@ -40,6 +53,8 @@ module SessionsHelper
 
     if impersonate
       user_session.impersonated_by = current_user
+    else
+      raise(AccountLockedError, "Your HCB account has been locked.") if user.locked?
     end
 
     user_session.save!
@@ -50,6 +65,10 @@ module SessionsHelper
 
   def signed_in?
     !current_user.nil?
+  end
+
+  def auditor_signed_in?
+    signed_in? && current_user&.auditor?
   end
 
   def admin_signed_in?
@@ -66,15 +85,16 @@ module SessionsHelper
     @current_user = user
   end
 
-  def organizer_signed_in?(event = @event, as: :member)
+  def organizer_signed_in?(event = @event, as: :reader)
     run = ->(inner_event:, inner_as:) do
-      next true if admin_signed_in?
+      next true if auditor_signed_in? && as == :reader
+      next true if admin_signed_in? && as == :member
       next false unless signed_in? && inner_event.present?
 
       required_role_num = OrganizerPosition.roles[inner_as]
       raise ArgumentError, "invalid role #{inner_as}" unless required_role_num.present?
 
-      valid_position = inner_event.organizer_positions.find do |op|
+      valid_position = inner_event.ancestor_organizer_positions.find do |op|
         next false unless op.user == current_user
 
         role_num = OrganizerPosition.roles[op.role]
@@ -114,16 +134,16 @@ module SessionsHelper
   def signed_in_user
     unless signed_in?
       if request.fullpath == "/"
-        redirect_to auth_users_path
+        redirect_to auth_users_path(require_reload: true)
       else
-        redirect_to auth_users_path(return_to: request.original_url)
+        redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
       end
     end
   end
 
   def signed_in_admin
-    unless admin_signed_in?
-      redirect_to auth_users_path, flash: { error: "You’ll need to sign in as an admin." }
+    unless auditor_signed_in?
+      redirect_to auth_users_path(require_reload: true), flash: { error: "You’ll need to sign in as an admin." }
     end
   end
 
@@ -143,5 +163,24 @@ module SessionsHelper
       &.user_sessions
       &.where&.not(id: current_session.id)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+  end
+
+  def sudo_mode?
+    current_session&.sudo_mode?
+  end
+
+  # Intercepts the request and renders a reauthentication form if the user does
+  # not have sudo mode.
+  #
+  # It can either be used as a `before_action` callback or as part of an action
+  # implementation if you only want to require sudo mode in specific cases. In
+  # the latter scenario, you _MUST_ check the return value and only proceed if
+  # it is `true`.
+  #
+  # @return [Boolean] whether sudo mode was obtained and the controller action can proceed
+  def enforce_sudo_mode
+    return true if sudo_mode?
+
+    SudoModeHandler.new(controller_instance: self).call
   end
 end

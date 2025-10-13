@@ -63,6 +63,8 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include Freezable
+  include UsersHelper
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -91,11 +93,14 @@ class Donation < ApplicationRecord
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
 
+  normalizes :email, with: ->(email) { email.strip.downcase }
+
   scope :succeeded, -> { where(status: "succeeded") }
   scope :missing_payout, -> { where(payout_id: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
   scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
+  scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -266,7 +271,7 @@ class Donation < ApplicationRecord
   end
 
   def smart_memo
-    anonymous? ? "ANONYMOUS DONOR" : name.to_s.upcase
+    anonymous? ? "Anonymous Donor" : name.to_s
   end
 
   def hcb_code
@@ -335,6 +340,10 @@ class Donation < ApplicationRecord
     "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
   end
 
+  def avatar(size = 128)
+    gravatar_url(email, name, email.sum, size) unless anonymous?
+  end
+
   private
 
   def raw_pending_donation_transaction
@@ -356,15 +365,29 @@ class Donation < ApplicationRecord
     else
       DonationMailer.with(donation: self).notification.deliver_later
     end
+
+    if reached_donation_goal?
+      EventMailer.with(event:).donation_goal_reached.deliver_later
+    end
   end
 
   def first_donation?
     self.event.donations.succeeded.size == 1
   end
 
-  def create_payment_intent_attrs
+  def reached_donation_goal?
+    return false unless event.donation_goal.present?
+    return false unless event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents
+    # this prevents us from sending the email after the organization has already reached the goal
+    return false if (event.donation_goal.progress_amount_cents - amount) >= event.donation_goal.amount_cents
+
+    true
+  end
+
+  def create_payment_intent_attrs(customer)
     {
       amount:,
+      customer: customer.id,
       currency: "usd",
       statement_descriptor: "HCB",
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
@@ -373,7 +396,8 @@ class Donation < ApplicationRecord
   end
 
   def create_stripe_payment_intent
-    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs)
+    customer = StripeService::Customer.create(email:, name:)
+    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs(customer))
 
     self.stripe_payment_intent_id = payment_intent.id
 
@@ -385,12 +409,12 @@ class Donation < ApplicationRecord
   end
 
   def trim_utm_referrer_fields
-    self.referrer = referrer&.strip&.truncate(500)
-    self.utm_source = utm_source&.strip&.truncate(500)
-    self.utm_medium = utm_medium&.strip&.truncate(500)
-    self.utm_campaign = utm_campaign&.strip&.truncate(500)
-    self.utm_term = utm_term&.strip&.truncate(500)
-    self.utm_content = utm_content&.strip&.truncate(500)
+    self.referrer = referrer&.presence&.strip&.truncate(500)
+    self.utm_source = utm_source&.presence&.strip&.truncate(500)
+    self.utm_medium = utm_medium&.presence&.strip&.truncate(500)
+    self.utm_campaign = utm_campaign&.presence&.strip&.truncate(500)
+    self.utm_term = utm_term&.presence&.strip&.truncate(500)
+    self.utm_content = utm_content&.presence&.strip&.truncate(500)
   end
 
 end

@@ -1,0 +1,44 @@
+<%# locals: (block:, is_email: false, event:, hcb_code: nil) %>
+
+<%= render "announcements/blocks/block_shell", block:, type: "hcbCode", is_email: do %>
+  <% if hcb_code.nil? %>
+    <p class="!my-auto">This transaction cannot be displayed</p>
+  <% else %>
+    <% if is_email %>
+      <p>
+        <strong><%= hcb_code.memo %></strong><br>
+        <i>
+          <% if hcb_code.canonical_transactions.none? %>
+            <% if hcb_code.pt&.declined? %>
+              Declined transaction
+            <% else %>
+              Pending transaction
+            <% end %>
+          <% else %>
+            Transaction
+          <% end %>
+          for <%= render_money hcb_code.amount_cents_by_event(event) %> on <%= format_date hcb_code.date %>
+        </i>
+      </p>
+    <% else %>
+      <p class="font-bold m0 flex items-center g2">
+        <%= format_date hcb_code.date %>
+        <% if hcb_code.canonical_transactions.none? %>
+          <% if hcb_code.pt&.declined? %>
+            <%= badge_for "Declined", class: "bg-error m0 mr1" %>
+          <% else %>
+            <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
+          <% end %>
+        <% end %>
+      </p>
+      <p class="mt1 mb1 line-height-3 h3">
+        <%= hcb_code.memo %>
+      </p>
+      <footer class="flex items-center justify-between -mb-1 gap-2 w-full">
+        <span class="m0 muted">
+          <%= render_money hcb_code.amount_cents_by_event(event) %>
+        </span>
+      </footer>
+    <% end %>
+  <% end %>
+<% end %>

@@ -26,30 +26,43 @@ class Metric
 
         stripe_transactions_subquery = RawStripeTransaction.select("date(date_posted) AS transaction_date, SUM(amount_cents) * -1 AS amount")
                                                            .where("raw_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", StripeCardholder.select(:stripe_id).where(user_id: user.id))
-                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
+                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year)
                                                            .group("date(date_posted)")
 
         ach_transfers_subquery = AchTransfer.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                            .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                                            .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                             .where(creator_id: user.id)
                                             .group("date(created_at)")
 
         increase_checks_subquery = IncreaseCheck.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                                .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                                                .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                                 .where(user_id: user.id)
                                                 .group("date(created_at)")
 
         checks_subquery = Check.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                               .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                               .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                .where(creator_id: user.id)
                                .group("date(created_at)")
 
-        combined_result_subquery = Arel.sql("(#{stripe_transactions_subquery.to_sql} UNION ALL #{ach_transfers_subquery.to_sql} UNION ALL #{increase_checks_subquery.to_sql} UNION ALL #{checks_subquery.to_sql}) AS combined_table")
+        combined_result_subquery = <<~SQL
+          (#{stripe_transactions_subquery.to_sql}
+          UNION ALL
+          #{ach_transfers_subquery.to_sql}
+          UNION ALL
+          #{increase_checks_subquery.to_sql}
+          UNION ALL
+          #{checks_subquery.to_sql}) AS combined_table
+        SQL
 
-        final_result = Arel.sql("SELECT date(transaction_date) AS transaction_date, SUM(amount) AS amount FROM #{combined_result_subquery} GROUP BY date(transaction_date) ORDER BY date(transaction_date) ASC")
+        final_result = <<~SQL
+          SELECT DATE(transaction_date) AS transaction_date, SUM(amount) AS amount
+          FROM #{combined_result_subquery}
+          GROUP BY DATE(transaction_date)
+          ORDER BY DATE(transaction_date) ASC
+        SQL
 
         hash = {}
-        (Date.new(2024, 1, 1)..Date.new(2024, 12, 31)).each do |date|
+        (Date.new(Metric.year, 1, 1)..Date.new(Metric.year, 12, 31)).each do |date|
           hash[date.to_s] = 0
         end
 

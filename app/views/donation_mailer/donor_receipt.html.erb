@@ -1,12 +1,14 @@
+<% payment_term = @donation.tax_deductible ? "donation" : "payment" %>
+
 <p>Hi <%= @donation.name(show_anonymous: true) %>,</p>
 
 <% if @donation.recurring? %>
 <p>
-  Your <% "anonymous " if @donation.anonymous? %>donation of <%= render_money @donation.recurring_donation.amount %> per month to <%= @donation.event.name %> has <%= @initial_recurring_donation ? "been started" : "renewed" %> and your card has been charged <%= render_money @donation.amount %>. Please consider this email a receipt for your gift  for the month of <strong><%= @donation.created_at.strftime("%B %Y") %></strong>.
+  Your <%= "anonymous" if @donation.anonymous? %> <%= payment_term %> of <%= render_money @donation.recurring_donation.amount %> per month to <%= @donation.event.name %> has <%= @initial_recurring_donation ? "been started" : "renewed" %> and your card has been charged <%= render_money @donation.amount %>. Please consider this email a receipt for your gift for the month of <strong><%= @donation.created_at.strftime("%B %Y") %></strong>.
 </p>
 <% else %>
 <p>
-  Thank you for your generous <% "anonymous " if @donation.anonymous? %>donation of <%= render_money @donation.amount %> to <%= @donation.event.name %>. Please consider this email a receipt for your gift.
+  Thank you for your generous <%= "anonymous " if @donation.anonymous? %> <%= payment_term %> of <%= render_money @donation.amount %> to <%= @donation.event.name %>. Please consider this email a receipt for your gift.
 </p>
 <% end %>
 
@@ -27,7 +29,10 @@
 </p>
 
 <% if @donation.recurring? %>
-<p>To cancel your donation or update your payment details, click <%= link_to "this link", recurring_donation_url(@donation.recurring_donation.url_hash) %>.</p>
+  <p>
+    To cancel your <%= payment_term %> or update your payment details, click
+    <%= link_to "this link", recurring_donation_url(@donation.recurring_donation.url_hash) %>.
+  </p>
 <% end %>
 
 <p>If you have any questions or concerns, please reply directly to this email and our financial operations team will assist.</p>

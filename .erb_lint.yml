@@ -1,0 +1,77 @@
+EnableDefaultLinters: true
+exclude:
+  - app/views/grants/_activate_form.html.erb
+  - app/views/ach_transfers/_form.html.erb # erb-lint _really_ doesn't like Alpine
+  - app/views/wires/new_v2.html.erb # erb-lint _really_ doesn't like Alpine
+  - app/views/increase_checks/new_v2.html.erb # erb-lint _really_ doesn't like Alpine
+  - app/views/doorkeeper/authorizations/new.html.erb
+linters:
+  ErbSafety:
+    enabled: true
+    exclude:
+      - 'app/views/kaminari/**'
+      - 'app/views/admin/transaction.html.erb'
+  RequireInputAutocomplete:
+    enabled: false
+  Rubocop:
+    enabled: true
+    rubocop_config:
+      inherit_from:
+        - .rubocop.yml
+
+      # |
+      # v Rules that tend to be broken/flaky inside views (e.g. Style/FrozenStringLiteralComment)
+      Layout/InitialIndentation:
+        Enabled: false
+      Layout/LineLength:
+        Enabled: false
+      Layout/TrailingEmptyLines:
+        Enabled: false
+      Layout/TrailingWhitespace:
+        Enabled: false
+      Naming/FileName:
+        Enabled: false
+      Style/FrozenStringLiteralComment:
+        Enabled: false
+      Lint/UselessAssignment:
+        Enabled: false
+      # ^
+
+      Style/MultilineIfModifier:
+        Enabled: false
+      Layout/ArgumentAlignment:
+        Enabled: false
+      Naming/VariableNumber:
+        Enabled: false
+      Style/NegatedUnless:
+        Enabled: false
+      Style/MultilineTernaryOperator:
+        Enabled: false
+      Style/NestedTernaryOperator:
+        Enabled: false
+      Style/StringConcatenation:
+        Enabled: false
+
+      Rails/LinkToBlank:
+        Enabled: false
+      Rails/OutputSafety:
+        Enabled: false
+      Rails/Presence:
+        Enabled: false
+      Rails/Present:
+        Enabled: false
+  DeprecatedClasses:
+    enabled: true
+    rule_set:
+      - deprecated: ['circle']
+        suggestion: 'Use rounded-full instead'
+      - deprecated: ['flex-column']
+        suggestion: 'Use flex-col instead'
+      - deprecated: ['mono']
+        suggestion: 'Use font-mono instead'
+      - deprecated: ['rounded-top', 'rounded-bottom']
+        suggestion: 'Use rounded-t/rounded-b instead'
+      - deprecated: ['strikethrough']
+        suggestion: 'Use line-through instead'
+      - deprecated: ['sans']
+        suggestion: 'Use font-sans instead'

@@ -1,0 +1,31 @@
+<p>Hi all,</p>
+
+<p>
+  Here's your weekly summary of new YSWS organizations:
+</p>
+
+<ul>
+  <% @events.each do |event| %>
+    <li>
+      <%= link_to event.name, event_url(event) %>
+      <ul>
+        <% event.organizer_positions.each do |op| %>
+          <li>
+            <%= op.user.name %> (<%= op.user.email %>) - <%= op.role.titleize %>
+          </li>
+        <% end %>
+        <% event.organizer_position_invites.pending.each do |opi| %>
+          <li>
+            Invite: <%= opi.user.name %> (<%= opi.user.email %>) - <%= opi.role.titleize %>
+          </li>
+        <% end %>
+      </ul>
+    </li>
+    <br>
+  <% end %>
+</ul>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

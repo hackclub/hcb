@@ -230,4 +230,25 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#use_two_factor_authentication" do
+    it "cannot be disabled by admins" do
+      user = create(:user, :make_admin, use_two_factor_authentication: true)
+
+      expect(user.update(use_two_factor_authentication: false)).to eq(false)
+      expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
+    end
+
+    it "cannot be disabled by admins pretending not to be admins" do
+      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true)
+
+      expect(user.update(use_two_factor_authentication: false)).to eq(false)
+      expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
+    end
+
+    it "can be disabled by regular users" do
+      user = create(:user, use_two_factor_authentication: true)
+
+      expect(user.update(use_two_factor_authentication: false)).to eq(true)
+    end
+  end
 end

@@ -81,6 +81,10 @@ module TransactionEngine
         @canonical_transaction.column_transaction_type&.start_with?("ach.outgoing_transfer")
       end
 
+      def column_realtime_transfer?
+        @canonical_transaction.column_transaction_type&.start_with?("realtime.outgoing_transfer")
+      end
+
       def column_wire?
         @canonical_transaction.column_transaction_type&.start_with?("swift.outgoing_transfer")
       end

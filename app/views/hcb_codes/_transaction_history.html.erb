@@ -13,7 +13,7 @@
     </thead>
     <tbody>
       <% @hcb_code.canonical_transactions.each do |ct| %>
-        <% if current_user.admin? || ct.event.try(:users).try(:include?, current_user) %>
+        <% if auditor_signed_in? || ct.event.try(:users).try(:include?, current_user) %>
           <tr>
             <td><%= format_date ct.date %></td>
             <td><%= ct.smart_memo %></td>
@@ -21,7 +21,7 @@
             <td>
               <%= pop_icon_to "edit",
                   edit_canonical_transaction_path(ct),
-                  class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in? %>
+                  class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
             </td>
           </tr>
         <% end %>

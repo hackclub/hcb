@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-ARG RUBY_VERSION=3.3.6
+ARG RUBY_VERSION=3.4.5
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -26,9 +26,7 @@ RUN apt-get update -qq && \
       libgirepository-1.0-1 \
       libpoppler-glib-dev \
       # OCR
-      tesseract-ocr \
-      # PDF generation
-      wkhtmltopdf && \
+      tesseract-ocr && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment
@@ -96,15 +94,17 @@ RUN rm -rf node_modules
 # Final stage for app image
 FROM base
 
-# Copy built artifacts: gems, application
-COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
-COPY --from=build /app /app
+# Add build timestamp
+RUN date +%s > .build-timestamp
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails log tmp storage db
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
 USER 1000:1000
+
+# Copy built artifacts: gems, application
+COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
+COPY --chown=rails:rails --from=build /app /app
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["./bin/docker-entrypoint"]

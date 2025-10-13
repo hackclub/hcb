@@ -61,6 +61,8 @@ module.exports = {
         snow: '#f9fafc',
         darkless: '#252429',
         dark: '#17171d',
+        darker: '#121217',
+        black: '#1f2d3d',
         primary: '#ec3750',
         red: "#ec3750",
         orange: "#ff8c37",

@@ -33,7 +33,7 @@ class Metric
           "SUM(raw_stripe_transactions.amount_cents) * -1 AS amount_spent"
         )
                             .joins("JOIN stripe_cardholders on raw_stripe_transactions.stripe_transaction->>'cardholder' = stripe_cardholders.stripe_id")
-                            .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
+                            .where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year)
                             .where(stripe_cardholders: { user_id: user.id })
                             .group(
                               "raw_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id'",

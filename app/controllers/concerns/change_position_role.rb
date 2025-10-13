@@ -24,7 +24,7 @@ module ChangePositionRole
       end
 
     rescue => e
-      Airbrake.notify(e)
+      Rails.error.report(e)
       flash[:error] = position&.errors&.full_messages&.to_sentence.presence || "Failed to change the role."
     ensure
       redirect_back(fallback_location: event_team_path(position.event))
