@@ -28,6 +28,7 @@
       <th>Amount</th>
       <th>HCB Code</th>
       <th>Event</th>
+      <th>Category</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -49,6 +50,12 @@
         <td><%= cpt.amount %></td>
         <td><%= cpt.hcb_code %></td>
         <td><%= cpt.event.try(:id) %></td>
+        <td>
+          <%= render(
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: cpt, admin_context: true }
+              ) %>
+        </td>
         <td>
           <%#= link_to "Process", transaction_admin_path(cpt) unless cpt.event.present? %>
           <%#= link_to "View", transaction_admin_path(cpt) if cpt.event.present? %>

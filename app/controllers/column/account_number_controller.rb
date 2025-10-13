@@ -18,7 +18,7 @@ module Column
       end
 
     rescue Faraday::Error => e
-      notify_airbrake(e)
+      Rails.error.report(e)
       redirect_to account_number_event_path(@event), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
 
     end

@@ -13,7 +13,7 @@
 
 <h1 class="heading pb2">
   <%= @document.name %>
-  <% if (@document.user == current_user) || current_user.admin? %>
+  <% if (@document.user == current_user) || auditor_signed_in? %>
     <div class="flex items-center mt2" style="gap: 6px">
       <%= link_to document_download_path(@document), target: :_blank, class: "btn" do %>
         <%= inline_icon "download" %>
@@ -40,21 +40,25 @@
     <strong>Added by</strong> <%= user_mention @document.user %>
   </p>
 
+  <p>
+    <strong>Category</strong> <%= @document.category.humanize %>
+  </p>
+
 </section>
 
-<% admin_tool do %>
-  <%= turbo_frame_tag :downloads do %>
-    <% if @downloads.any? %>
-      <h2 class="my0">Download history</h2>
-      <ul class="list list--unlinked">
-        <% @downloads.each do |download| %>
-          <li>
-            <%= user_mention download.user %>
-            <%= content_tag :span, download.created_at %>
-          </li>
-        <% end %>
-        <%= paginate @downloads %>
-      </ul>
+<% if @downloads.any? %>
+  <% admin_tool do %>
+    <%= turbo_frame_tag :downloads do %>
+        <h2 class="my0">Download history</h2>
+        <ul class="list list--unlinked">
+          <% @downloads.each do |download| %>
+            <li>
+              <%= user_mention download.user %>
+              <%= content_tag :span, download.created_at %>
+            </li>
+          <% end %>
+          <%= paginate @downloads %>
+        </ul>
     <% end %>
   <% end %>
 <% end %>

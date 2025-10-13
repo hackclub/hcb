@@ -58,23 +58,23 @@ module ApplicationHelper
     content_tag(:span, content.join.html_safe)
   end
 
-  def blankslate(text, options = {})
+  def blankslate(text, **options)
     other_options = options.except(:class)
     content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
   end
 
-  def list_badge_for(count, item, glyph, options = { optional: false, required: false })
-    return nil if options[:optional] && count == 0
+  def list_badge_for(count, item, glyph, optional: false, required: false, **options)
+    return nil if optional && count == 0
 
     icon = inline_icon(glyph, size: 20, 'aria-hidden': true)
 
     content_tag(:span,
                 icon + count.to_s,
                 'aria-label': pluralize(count, item),
-                class: "list-badge tooltipped tooltipped--w #{options[:required] && count == 0 ? 'b--warning warning' : ''} #{options[:class]}")
+                class: "list-badge tooltipped tooltipped--w #{required && count == 0 ? 'b--warning warning' : ''} #{options[:class]}")
   end
 
-  def badge_for(value, options = {})
+  def badge_for(value, **options)
     content_tag :span, value, class: "badge #{options[:class]} #{'bg-muted' if [0, "Pending"].include?(value)}"
   end
 
@@ -86,9 +86,9 @@ module ApplicationHelper
     status_badge(type) if condition
   end
 
-  def pop_icon_to(icon, url, options = { class: "info" })
-    link_to url, options.merge(class: "pop #{options[:class]}") do
-      inline_icon icon, size: options[:icon_size] || 28
+  def pop_icon_to(icon, url, icon_size: 28, **options)
+    link_to url, options.merge(class: "pop #{options[:class] || "info"}") do
+      inline_icon icon, size: icon_size
     end
   end
 
@@ -139,11 +139,11 @@ module ApplicationHelper
         inline_icon "view-back", size: 40
       end) +
         (content_tag :div, class: "carousel__items" do
-          (content.map.with_index do |item, index|
+          content.map.with_index do |item, index|
             content_tag :div, class: "carousel__item #{index == current_slide ? 'carousel__item--active' : ''}" do
               block.call(item, index)
             end
-          end).join.html_safe
+          end.join.html_safe
         end) +
         (content_tag :button, class: "carousel__button carousel__button--right pop", data: { "carousel-target": "right" } do
           inline_icon "view-back", size: 40
@@ -151,7 +151,7 @@ module ApplicationHelper
     end
   end
 
-  def relative_timestamp(time, options = {})
+  def relative_timestamp(time, **options)
     content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
   end
 
@@ -163,7 +163,7 @@ module ApplicationHelper
     content_tag :pre, pp(item.attributes.to_yaml)
   end
 
-  def inline_icon(filename, options = {})
+  def inline_icon(filename, **options)
     # cache parsed SVG files to reduce file I/O operations
     @icon_svg_cache ||= {}
     if !@icon_svg_cache.key?(filename)
@@ -226,7 +226,7 @@ module ApplicationHelper
 
   def format_date(date)
     if date.nil?
-      Airbrake.notify("Hey! date is nil here")
+      Rails.error.unexpected "Hey! date is nil here"
       return nil
     end
 
@@ -267,46 +267,6 @@ module ApplicationHelper
 
   def title(text)
     content_for :title, text
-  end
-
-  def commit_name
-    @short_hash ||= commit_hash[0...7]
-    @commit_name ||= begin
-      if commit_dirty?
-        "#{@short_hash}-dirty"
-      else
-        @short_hash
-      end
-    end
-  end
-
-  def commit_dirty?
-    ::Util.commit_dirty?
-  end
-
-  def commit_hash
-    ::Util.commit_hash
-  end
-
-  def commit_time
-    @commit_time ||= begin
-      heroku_time = ENV["HEROKU_RELEASE_CREATED_AT"]
-      git_time = `git log -1 --format=%at 2> /dev/null`.chomp
-
-      return nil if heroku_time.blank? && git_time.blank?
-
-      heroku_time.blank? ? git_time.to_i : Time.parse(heroku_time)
-    end
-
-    @commit_time
-  end
-
-  def commit_duration
-    @commit_duration ||= begin
-      return nil if commit_time.nil?
-
-      distance_of_time_in_words Time.at(commit_time), Time.now
-    end
   end
 
   def admin_inspectable_attributes(record)
@@ -395,14 +355,62 @@ module ApplicationHelper
     name + (name.ends_with?("s") ? "'" : "'s")
   end
 
-  def error_boundary(fallback: nil, fallback_text: nil, &block)
+  def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
     block.call
   rescue => e
-    Rails.error.report(e)
+    Rails.error.report(e) unless e.in?(ignored_errors)
 
     return content_tag(:p, fallback_text || "That didn't work, sorry.") unless fallback
 
     fallback
+  end
+
+  # Link to a User-generated content that we can't trust. User-provided URIs may
+  # contain XSS (https://brakemanscanner.org/docs/warning_types/link_to_href/).
+  #
+  # This method is almost compatible with `link_to`, except that the second
+  # positional argument must be a string, and it doesn't support the block form.
+  def ugc_link_to(name, string, *options)
+    begin
+      uri = URI.parse(string)
+    rescue URI::InvalidURIError
+      # no op
+    end
+    parse_failure = uri.nil?
+    safe = uri&.scheme.nil? || uri&.scheme&.in?(%w[http https])
+
+    if parse_failure || !safe
+      # Could be either an invalid URI, or a non http/https link (such as
+      # javascript XSS attack). Either way, we don't want to link to it.
+      return capture { content_tag(:a, name, *options) } # empty href
+    end
+
+    # The link is safe, render it like normal
+    capture { link_to(name, uri.to_s, *options) }
+  end
+
+  def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
+    return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
+      (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
+        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}", **options[:button_options] do
+          (inline_icon options[:button_icon]) +
+          (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
+        end) +
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+          inline_icon "down-caret", class: "!mr-0"
+        end)
+      end) +
+      (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
+        content_tag :div do
+          options[:options].map.with_index do |option, index|
+            (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
+            (options[:form].label options[:name], value: option[1] do
+              (tag.strong option[0]) + (tag.p option[2])
+            end)
+          end.join.html_safe
+        end
+      end)
+    end
   end
 
 end

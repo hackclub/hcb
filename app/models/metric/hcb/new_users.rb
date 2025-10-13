@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module Hcb
@@ -23,7 +24,7 @@ class Metric
 
       def calculate
         organizers.or(card_grant_recipients).or(reimbursement_report_users)
-                  .where("EXTRACT(YEAR FROM users.created_at) = ?", 2024)
+                  .where("EXTRACT(YEAR FROM users.created_at) = ?", Metric.year)
                   .count
       end
 

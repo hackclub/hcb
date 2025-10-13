@@ -13,7 +13,7 @@ Doorkeeper.configure do
   access_token_class "::ApiToken"
   access_token_generator "::ApiToken"
 
-  access_token_expires_in nil
+  access_token_expires_in 2.hours
 
   # If you didn't skip applications controller from Doorkeeper routes in your application routes.rb
   # file then you need to declare this block in order to restrict access to the web interface for
@@ -166,8 +166,8 @@ Doorkeeper.configure do
   # `client` - the OAuth client application (see Doorkeeper::OAuth::Client)
   # `grant_type` - the grant type of the request (see Doorkeeper::OAuth)
   # `scopes` - the requested scopes (see Doorkeeper::OAuth::Scopes)
-  #
-  # use_refresh_token
+
+  use_refresh_token
 
   # Provide support for an owner to be assigned to each registered application (disabled by default)
   # Optional parameter confirmation: true (default: false) if you want to enforce ownership of
@@ -225,7 +225,7 @@ Doorkeeper.configure do
   #
   # force_ssl_in_redirect_uri !Rails.env.development?
   #
-  # force_ssl_in_redirect_uri { |uri| uri.host != 'localhost' }
+  force_ssl_in_redirect_uri { |uri| uri.host != "localhost" }
 
   # Specify what redirect URI's you want to block during Application creation.
   # Any redirect URI is allowed by default.
@@ -298,7 +298,7 @@ Doorkeeper.configure do
   #   https://datatracker.ietf.org/doc/html/rfc6819#section-4.4.2
   #   https://datatracker.ietf.org/doc/html/rfc6819#section-4.4.3
   #
-  # grant_flows %w[authorization_code client_credentials]
+  grant_flows %w[authorization_code client_credentials device_code]
 
   # Allows to customize OAuth grant flows that +each+ application support.
   # You can configure a custom block (or use a class respond to `#call`) that must

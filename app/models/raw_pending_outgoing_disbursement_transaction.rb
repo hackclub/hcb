@@ -31,7 +31,7 @@ class RawPendingOutgoingDisbursementTransaction < ApplicationRecord
   end
 
   def memo
-    "Outgoing Transfer".strip.upcase
+    "Outgoing transfer"
   end
 
   def likely_event_id

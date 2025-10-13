@@ -109,6 +109,8 @@ class Invoice < ApplicationRecord
   extend FriendlyId
   include AASM
 
+  include Freezable
+
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
@@ -146,10 +148,12 @@ class Invoice < ApplicationRecord
 
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
+  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment0"].present? }
 
   aasm timestamps: true do
     state :open_v2, initial: true
     state :paid_v2
+    state :deposited_v2
     state :void_v2
     state :refunded_v2
 
@@ -158,6 +162,10 @@ class Invoice < ApplicationRecord
       after do
         create_activity(key: "invoice.paid", owner: nil)
       end
+    end
+
+    event :mark_deposited do
+      transitions from: :paid_v2, to: :deposited_v2
     end
 
     event :mark_void do
@@ -170,7 +178,7 @@ class Invoice < ApplicationRecord
   end
 
   enum :status, {
-    draft: "draft", # only 3 invoices [203, 204, 128] leftover from when drafts existed
+    draft: "draft", # no invoices use this status anymore
     open: "open",
     paid: "paid",
     void: "void"
@@ -183,6 +191,12 @@ class Invoice < ApplicationRecord
   validates :item_amount, numericality: { greater_than_or_equal_to: 100, message: "must be at least $1" }
 
   before_create :set_defaults
+
+  after_create_commit -> {
+    unless OrganizerPosition.find_by(user: creator, event: event)&.manager?
+      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
+    end
+  }
 
   # Stripe syncing…
   before_destroy :close_stripe_invoice
@@ -200,11 +214,11 @@ class Invoice < ApplicationRecord
   end
 
   def payout_transaction
-    self&.payout&.t_transaction
+    self.payout&.t_transaction
   end
 
   def completed_deprecated?
-    (payout_transaction && !self&.fee_reimbursement) || (payout_transaction && self&.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
+    (payout_transaction && !self.fee_reimbursement) || (payout_transaction && self.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
   end
 
   def archived?
@@ -275,13 +289,17 @@ class Invoice < ApplicationRecord
     self.starting_balance = inv.starting_balance
     self.statement_descriptor = inv.statement_descriptor
     self.status = inv.status
-    self.stripe_charge_id = inv&.charge&.id
+    if inv&.charge.is_a?(String)
+      self.stripe_charge_id = inv.charge
+    else
+      self.stripe_charge_id = inv&.charge&.id
+      # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
+      self.payment_method_type = type = inv&.charge&.payment_method_details&.type
+    end
     self.subtotal = inv.subtotal
     self.tax = inv.tax
     # self.tax_percent = inv.tax_percent
     self.total = inv.total
-    # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
-    self.payment_method_type = type = inv&.charge&.payment_method_details&.type
     return unless self.payment_method_type
 
     details = inv&.charge&.payment_method_details&.[](self.payment_method_type)
@@ -307,7 +325,7 @@ class Invoice < ApplicationRecord
   end
 
   def arrival_date
-    arrival = self&.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and Bank processing time
     arrival + 1.day
@@ -343,7 +361,7 @@ class Invoice < ApplicationRecord
   end
 
   def smart_memo
-    sponsor.name.upcase
+    sponsor.name
   end
 
   def hcb_code

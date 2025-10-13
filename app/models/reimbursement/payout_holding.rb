@@ -14,6 +14,8 @@
 #  increase_check_id        :bigint
 #  paypal_transfer_id       :bigint
 #  reimbursement_reports_id :bigint           not null
+#  wire_id                  :bigint
+#  wise_transfer_id         :bigint
 #
 # Indexes
 #
@@ -21,17 +23,24 @@
 #  index_reimbursement_payout_holdings_on_increase_check_id         (increase_check_id)
 #  index_reimbursement_payout_holdings_on_paypal_transfer_id        (paypal_transfer_id)
 #  index_reimbursement_payout_holdings_on_reimbursement_reports_id  (reimbursement_reports_id)
+#  index_reimbursement_payout_holdings_on_wire_id                   (wire_id)
+#  index_reimbursement_payout_holdings_on_wise_transfer_id          (wise_transfer_id)
 #
 module Reimbursement
   class PayoutHolding < ApplicationRecord
     include AASM
     include HasBookTransfer
 
+    include PublicIdentifiable
+    set_public_id_prefix :rph
+
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
     belongs_to :ach_transfer, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :increase_check, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :paypal_transfer, optional: true, inverse_of: :reimbursement_payout_holding
+    belongs_to :wire, optional: true, inverse_of: :reimbursement_payout_holding
+    belongs_to :wise_transfer, optional: true, inverse_of: :reimbursement_payout_holding
 
     after_create :set_and_create_hcb_code
     belongs_to :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode", inverse_of: :reimbursement_payout_holding, optional: true
@@ -85,7 +94,7 @@ module Reimbursement
     end
 
     def payout_transfer
-      ach_transfer || increase_check || paypal_transfer
+      ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
     end
 
     def reverse!
@@ -94,6 +103,7 @@ module Reimbursement
       raise ArgumentError, "ACH must have been rejected / failed" unless ach_transfer.nil? || ach_transfer.failed? || ach_transfer.rejected?
       raise ArgumentError, "PayPal transfer must have been rejected" unless paypal_transfer.nil? || paypal_transfer.rejected?
       raise ArgumentError, "a check is present" if increase_check.present?
+      raise ArgumentError, "must have settled expense payouts" unless expense_payouts.all? { |ep| ep.settled? }
 
       ActiveRecord::Base.transaction do
 
@@ -106,6 +116,7 @@ module Reimbursement
         receiver_bank_account_id = ColumnService::Accounts.id_of(book_transfer_originating_account)
 
         ColumnService.post "/transfers/book",
+                           idempotency_key: "#{self.public_id}_reversed",
                            amount: amount_cents.abs,
                            currency_code: "USD",
                            sender_bank_account_id:,

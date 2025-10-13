@@ -2,14 +2,14 @@
 <% page_sm %>
 
 <div class="absolute top-0 right-0 m2">
-  <%= render partial: "application/theme_toggle", locals: { top: true, tooltip_location: "w" } %>
+  <%= render partial: "application/theme_toggle", locals: { top: true } %>
 </div>
 
 <%= content_for(:header) do %>
   <% if organizer_signed_in? %>
     <div class="flex items-center m2 absolute z-10 top-0 left-0">
       <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
-        <%= form.file_field :donation_header_image, required: true, class: "display-none", data: { action: "change->form#submit" } %>
+        <%= form.file_field :donation_header_image, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :donation_header_image do %>
           <div
             role="button"
@@ -35,13 +35,20 @@
   <div class="donations-header-image py-20"
        <% if @has_header_image %> style="background: linear-gradient(rgba(23, 23, 29, 0.3), rgba(23, 23, 29, 0.9)),  url('<%= url_for @event.donation_header_image %>'); background-position: center; background-size: cover; background-repeat: no-repeat;"
        <% end %>>
-    <h1 class="mt-0 mb0 border-none center <%= "smoke drop-shadow-lg" if @has_header_image %>">
-      <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
-      <div class="flex justify-center items-center mt1">
-        <%= render "donations/logo" %>
-        <span class="ml2"><%= @event.name %></span>
+    <div class="container flex flex-col sm:flex-row items-center justify-center <%= "sm:justify-start px-5" if yield.present? %>">
+      <div>
+        <h1 class="mt-0 mb0 border-none text-center <%= "sm:text-left" if yield.present? %> <%= "smoke drop-shadow-lg" if @has_header_image %>">
+          <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
+          <div class="flex justify-center items-center mt1">
+            <%= render "donations/logo" %>
+            <span class="ml2"><%= @event.name %></span>
+          </div>
+        </h1>
       </div>
-    </h1>
+      <% if yield.present? %>
+        <%= yield %>
+      <% end %>
+    </div>
   </div>
 
   <% if @background.present? %>
@@ -54,5 +61,7 @@
     </style>
   <% end %>
 <% end %>
+
+<%= render "application/fullstory" %>
 
 <%= render "application/flash" %>

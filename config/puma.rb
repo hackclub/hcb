@@ -44,10 +44,5 @@ preload_app! unless ENV.fetch("RAILS_ENV", "development") == "development"
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
 
-# Heroku Barnes config for Puma
-# https://github.com/heroku/barnes
-require "barnes"
-before_fork do
-  # worker configuration
-  Barnes.start
-end
+# Report stats to AppSignal
+plugin :appsignal

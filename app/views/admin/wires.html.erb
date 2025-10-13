@@ -20,6 +20,8 @@
       <th class="w-32">Date</th>
       <th>Event</th>
       <th>Recipient</th>
+      <th>Sent by</th>
+      <th>Sent with Column</th>
       <th class="w-32">Amount</th>
       <th>Status</th>
       <th class="w-24">Actions</th>
@@ -32,6 +34,8 @@
         <td><%= wire.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= wire.event.name %></td>
         <td><%= wire.recipient_name %></td>
+        <td><%= wire.last_user_change_to(aasm_state: :approved)&.name || "None / unknown" %></td>
+        <td><%= wire.column_id.present? ? "TRUE" : "FALSE" %></td>
         <td><%= Money.from_cents(wire.amount_cents, wire.currency).format %></td>
         <td><%= wire.aasm.human_state %></td>
         <td>

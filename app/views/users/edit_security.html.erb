@@ -61,11 +61,11 @@
       <div class="card border b--info mt0 mb3">
         <% if @user.totp.present? %>
           <p>
-            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :POST } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :POST } %>
+            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
           </p>
         <% else %>
           <p>
-            You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :POST } %> to setup your TOTP.
+            You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %> to setup your TOTP.
           </p>
         <% end %>
       </div>
@@ -92,22 +92,64 @@
       Sign in to HCB using your fingerprint or a hardware security key.
     </div>
   <% end %>
+  <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="backup-codes">
+    <legend class="flex flex-row justify-start items-center">
+      <span class="h2 bold">Backup codes</span>
+    </legend>
+    <div class="flex flex-row gap-x-2">
+      <% if @user.backup_codes_enabled? %>
+        <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your current codes immediately." } do %>
+          <%= inline_icon "minus", size: home_action_size %>
+          Disable backup codes
+        <% end %>
+      <% end %>
+      <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'" do %>
+        <%= inline_icon "plus", size: home_action_size %>
+        <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
+      <% end %>
+    </div>
+  </div>
+  <%= turbo_frame_tag :backup_codes_card do %>
+    <div class="card border b--info mb3">
+      <% if @user.backup_codes_enabled? %>
+        <p>
+          You last generated a set of 10 backup codes on <span class="font-bold"><%= @user.backup_codes.where(aasm_state: [:active, :used]).maximum(:created_at).strftime("%B %e, %Y") %></span>, of which <span class="font-bold"><%= @user.backup_codes.active.size %></span> are still valid. If you'd like to regenerate your backup codes, click the button above to do so. Generating a new set of codes will invalidate your current codes.
+        </p>
+      <% else %>
+        <p>
+          You haven't generated any backup codes yet. We highly recommend doing so in case you lose access to your other two-factor authentication methods. Click the button above to generate a set of 10 backup codes.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
   <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2">
     <legend class="flex flex-row justify-start items-center">
       <span class="h2 bold">Sessions</span>
       <%= badge_for @all_sessions.count, class: "bg-muted" %>
     </legend>
-    <%= link_to logout_all_users_path, method: :delete,
-            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= 1 do %>
+    <%= link_to logout_all_user_path(@user), method: :delete,
+            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) do %>
       <%= inline_icon "door-leave", size: home_action_size %>
       Sign out everywhere else
     <% end %>
   </div>
+
+  <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
+    <div class="field">
+      <%= form.label :session_validity_preference, "Sign me out after" %>
+      <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, selected: @user.session_validity_preference %>
+    </div>
+
+    <div class="submit">
+      <%= form.submit "Save" %>
+    </div>
+  <% end %>
+
   <div class="grid grid--split">
     <% @all_sessions.each do |session| %>
       <% if session.is_a? UserSession %>
         <%= render "user_session", session: %>
-      <% elsif session.is_a? ApiToken %>
+      <% elsif session.respond_to? :authorization_count %>
         <%= render "oauth_authorization", authorization: session %>
       <% end %>
     <% end %>
@@ -122,7 +164,7 @@
       <% @expired_sessions.each do |session| %>
         <% if session.is_a? UserSession %>
           <%= render "user_session", session: %>
-        <% elsif session.is_a? ApiToken %>
+        <% elsif session.respond_to? :authorization_count %>
           <%= render "oauth_authorization", authorization: session %>
         <% end %>
       <% end %>

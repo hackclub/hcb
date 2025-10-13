@@ -14,6 +14,7 @@
         expense card mt2 pt0 border
         b--<%= expense.status_color %>
         <%= "translucent" if expense.rejected? && !expense.report.rejected? %>
+        <%= "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]" if expense.is_fee? %>
       "
       data-expense-form-target="card"
       <% if new %>
@@ -26,13 +27,17 @@
               #<%= expense.expense_number %>
             </code>
           <% else %>
-            <code
-              data-behavior="mention"
-              data-mention-title="<%= expense.memo %>"
-              class="bg-white tooltipped tooltipped--e pointer click_to_mention"
-              aria-label="Click to reference in comment">
-              #<%= expense.expense_number %>
-            </code>
+            <% if expense.is_fee? %>
+              <%= inline_icon "wise", size: 26 %>
+            <% else %>
+              <code
+                data-behavior="mention"
+                data-mention-title="<%= expense.memo %>"
+                class="bg-white tooltipped tooltipped--e pointer click_to_mention"
+                aria-label="Click to reference in comment">
+                #<%= expense.expense_number %>
+              </code>
+            <% end %>
           <% end %>
           <div style="flex-grow: 1" data-expense-form-target="memo" class="bold <%= "muted" unless expense.memo.presence %>">
             <%= expense.card_label.presence || "Untitled Expense" %>
@@ -43,9 +48,9 @@
             <% else %>
               Approval removed by
             <% end %>
-            <%= user_mention expense.approved_by, { avatar: { style: "vertical-align: sub;" }, disable_tooltip: true }, "Unknown User" %>
+            <%= user_mention expense.approved_by, avatar: { style: "vertical-align: sub;" }, disable_tooltip: true, default_name: "Unknown User" %>
           <% end %>
-          <% unless expense.report.reimbursed? %>
+          <% unless expense.report.reimbursed? || expense.is_fee? %>
             <button class="edit-or-save pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is read-only. #{"Mark it as a draft to edit." unless expense.report.closed? || read_only}" %>">
               <% if expense.report.locked? || read_only %>
                 <%= inline_icon "private" %>
@@ -63,7 +68,7 @@
                   "aria-label": "More Options",
                   color: "muted",
                   data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
-              <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content" style="z-index: 999;">
+              <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
                 <% unless expense.is_standard? %>
                   <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense", value: 0 }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
                     <%= inline_icon "payment-docs", size: 24 %>
@@ -96,33 +101,33 @@
     <div class="lightbox" data-expense-form-target="lightbox"></div>
   </div>
   <section data-behavior="modal" role="dialog" id="move_<%= expense.id %>" class="modal modal--scroll bg-snow">
-    <%= modal_header "Move Expense" %>
+    <%= modal_header "Move expense" %>
     <%= form_with(model: expense.becomes(Reimbursement::Expense), class: "mb3 mt1", style: "max-width: 600px;", html: { "x-data" => "{reportId: null, eventId: null}" }, local: true, data: { turbo: false }) do |form| %>
       <div class="field event-select-target">
-        <%= form.label :reimbursement_report_id, "Move To A Pre-Existing Report", class: "mt2 bold" %>
+        <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
         <%= form.select(:reimbursement_report_id,
-            current_user.admin? ?
-              Reimbursement::Report.all.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
+            admin_signed_in? ?
+              (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
             current_user == expense.report.user ?
               current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
               expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
-            { prompt: "Select a report…", required: true, include_blank: "Select a report..." }, "x-model": "reportId") %>
+            { prompt: "Select a report…", required: false, include_blank: "Select a report..." }, "x-model": "reportId") %>
         <% unless admin_signed_in? %>
           <span class="muted mt1">You can transfer an expense to any report of yours.</span>
         <% end %>
       </div>
       <div class="field event-select-target">
-        <%= form.label :event_id, "Create A New Report", class: "mt2 bold" %>
-        <%= form.select(:event_id,
-            current_user.admin? ?
-              Event.all.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
-              current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
-            { prompt: "Select an event…", required: true }, "x-model": "eventId") %>
+        <%= form.label :event_id, "Create a new report", class: "mt2 bold" %>
+        <%= form.select(
+              :event_id,
+            current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
+            { prompt: "Select an event…", required: false }, "x-model": "eventId"
+            ) %>
         <% unless admin_signed_in? %>
           <span class="muted mt1">You can transfer an expense to any report of yours.</span>
         <% end %>
       </div>
-      <%= form.submit "Update Expense", class: "mt2", 'x-show': "reportId || eventId", 'x-transition.duration.500ms': "" %>
+      <%= form.submit "Update expense", class: "mt2", 'x-show': "reportId || eventId", 'x-transition.duration.500ms': "" %>
     <% end %>
   </section>
 <% end %>

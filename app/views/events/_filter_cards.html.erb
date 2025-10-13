@@ -1,7 +1,7 @@
 <div class="flex items-center filter-menu">
   <%= render partial: "filter_cards_menu" %>
 
-  <% if @status || @user_id %>
+  <% if @status || @user %>
     <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
       <%= inline_icon "view-close", size: 28 %>
     <% end %>
@@ -27,9 +27,11 @@
       </div>
     <% end %>
 
-    <% if @user_id %>
+    <% if @user %>
       <div class="badge badge-large bg-muted">
-        User: <%= User.find(@user_id).name %>
+        <%= avatar_for @user, size: 18 %>
+        <%= @user.name %>
+
         <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
           <%= inline_icon "view-close", size: 20 %>
         <% end %>

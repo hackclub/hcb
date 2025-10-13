@@ -13,10 +13,26 @@
   </div>
 <% end %>
 
+<details class="mt2">
+  <summary>Export all event balances</summary>
+  <%= form_with(url: request_balance_export_admin_index_path, method: :post) do |form| %>
+    <p class="bold mb0 mt0">
+      Up until...
+    </p>
+    <p>
+      <%= form.date_field :end_date, class: "border mb1", value: nil %>
+    </p>
+    <p>
+      <%= form.submit "Export balances (all events)" %>
+    </p>
+  <% end %>
+</details>
+
 <div class="flex items-center mb2">
   <div class="flex-grow">
     <%= page_entries_info @events, entry_name: "organizations" %>.
     <%= link_to "Create a new organization", event_new_admin_index_path %>.
+    <%= link_to "Create a new organization from Airtable", event_new_from_airtable_admin_index_path %>.
   </div>
   <%= paginate @events %>
 </div>
@@ -32,6 +48,7 @@
       <th>Fee</th>
       <th>Country</th>
       <th>Status</th>
+      <th>Active teenagers</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -77,9 +94,13 @@
           <% end %>
         </td>
         <td>
+          <%= event.users.active_teenager.count %>
+        </td>
+        <td>
           <%= link_to "Process", event_process_admin_path(event) if event.pending? || event.unapproved? %>
-          <%= link_to "Edit", edit_event_path(event, anchor: :admin_settings) unless event.pending? || event.unapproved? %>
+          <%= link_to "Edit", edit_event_path(event, tab: "admin") unless event.pending? || event.unapproved? %>
           <%= link_to "Review", event_process_admin_path(event) unless event.pending? || event.unapproved? %>
+          <%= render(partial: "event_groups_link", locals: { event: }) %>
         </td>
       </tr>
     <% end %>

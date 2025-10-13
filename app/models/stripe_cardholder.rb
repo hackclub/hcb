@@ -125,12 +125,12 @@ class StripeCardholder < ApplicationRecord
 
     # Remove invalid characters
     requirements = <<~REQ.squish
-      First and Last names must contain at least 1 letter, and may not
+      First and last names must contain at least 1 letter, and may not
       contain any numbers, non-latin letters, or special characters except
       periods, commas, hyphens, spaces, and apostrophes.
     REQ
     name = name.gsub(/[^a-zA-Z.,\-\s']/, "").strip
-    raise ArgumentError, requirements if name.gsub(/[^a-z]/i, "").blank?
+    raise Errors::StripeInvalidNameError, requirements if name.gsub(/[^a-z]/i, "").blank?
 
     name
   end
@@ -173,7 +173,7 @@ class StripeCardholder < ApplicationRecord
   def stripe_obj
     @stripe_obj ||= StripeService::Issuing::Cardholder.retrieve(stripe_id)
   rescue => e
-    Airbrake.notify(e)
+    Rails.error.report(e)
 
     { status: "active", requirements: {} } # https://stripe.com/docs/api/issuing/cardholders/object
   end

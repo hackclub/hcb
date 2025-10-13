@@ -1,9 +1,9 @@
 <h2 class="flex items-center">
-  <span style="flex-grow: 1">Conversation</span>
+  <span style="flex-grow: 1">Timeline</span>
 </h2>
 <article>
   <ul class="list-reset comments mb5">
-    <% versions = @report.versions.select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
+    <% versions = @report.versions.includes([:item]).select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
     <% comments = policy_scope(@report.comments) %>
     <% (versions + comments).sort_by(&:created_at).each do |item| %>
       <% if item.instance_of?(Comment) %>
@@ -11,6 +11,20 @@
           <%= render "comments/item", comment: item %>
         </div>
       <% else %>
+        <% reimbursed_change_text = capture do %>
+          <%= error_boundary fallback_text: "initiated a transfer" do %>
+            <% raw_text = render_money(@report.amount_cents) + " " + @report.transfer_text %>
+            <% payout_transfer_url = hcb_code_path(@report.payout_holding&.payout_transfer&.local_hcb_code) if @report.payout_holding&.payout_transfer&.local_hcb_code %>
+
+            <%= @report.initiated_transfer_text %> a
+            <% if payout_transfer_url && policy(@report.payout_holding&.payout_transfer&.local_hcb_code).show? %>
+              <%= link_to raw_text, payout_transfer_url, target: :_blank %>
+            <% else %>
+              <%= raw_text %>
+            <% end %>
+            to <%= @report.user.name %>
+          <% end %>
+        <% end %>
         <% changes = {
              "submitted"               => ["send", "info", "submitted this report"],
              "rejected"                => ["thumbsdown", "error", "rejected this report"],
@@ -18,8 +32,8 @@
              "reimbursement_approved"  => ["admin", "warning", "approved this report on behalf of the HCB team"],
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
              "draft_created"           => ["plus", "success", "created this draft report"],
-             "reimbursed"              => ["payment-transfer", "purple", "#{@report.initiated_transfer_text} a #{render_money @report.amount_cents} #{@report.transfer_text} to #{@report.user.name}"],
-             "reversed"                => ["sad", "warning", "cancelled this reimbursement"],
+             "reimbursed"              => ["payment-transfer", "purple", reimbursed_change_text],
+             "reversed"                => ["sad", "warning", "canceled this reimbursement"],
            } %>
         <% state_change = item.changeset["aasm_state"]&.second %>
         <% if state_change %>
@@ -47,7 +61,7 @@
                 </div>
                 <div class="conversation_item_text">
                   <span class="muted" style="margin-right: -0.25em;">
-                    <%= user_mention whodunnit, { avatar: { style: "vertical-align: sub;" } }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                    <%= user_mention whodunnit, avatar: { style: "vertical-align: sub;" }, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
                   </span>
                   <% if state_change == "reimbursement_requested" %>
                     <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
@@ -66,32 +80,37 @@
             </li>
           <% end %>
         <% else %>
-          <li class="conversation_item mt2" style="margin-bottom: 24px;">
-            <div class="flex flex-row items-center" style="gap: 16px">
-              <div class="pop bg-smoke-important no_hover relative z2">
-                <%= inline_icon "post", width: 30 %>
+          <% changes = item.changeset.excluding("updated_at", "conversion_rate").select { |field, changes| changes.any?(&:present?) } %>
+          <% unless item.event == "update" && changes.empty? %>
+            <li class="conversation_item mt2" style="margin-bottom: 24px;">
+              <div class="flex flex-row items-center" style="gap: 16px">
+                <div class="pop bg-smoke-important no_hover relative z2">
+                  <%= inline_icon "post", width: 30 %>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px">
+                  <span class="muted; margin-right: -0.25em;">
+                    <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                  </span>
+                  <span class="align-middle">
+                    <%= item.event %><%= item.event.ends_with?("e") ? "d" : "ed" %> this report
+                  </span>
+                  <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
+                    <%= time_ago_in_words item.created_at %> ago</span>
+                </div>
               </div>
-              <div style="display: flex; align-items: center; gap: 4px">
-                <span class="muted; margin-right: -0.25em;">
-                  <%= user_mention User.find_by(id: item.whodunnit), { hide_avatar: true }, "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
-                </span>
-                <span class="align-middle"><%= item.event %>d this report</span>
-                <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
-                  <%= time_ago_in_words item.created_at %> ago</span>
-              </div>
-            </div>
-            <% if item.event == "update" %>
-              <ul class="list-reset" style="margin-left: 52px;">
-                <% item.changeset.excluding("updated_at").select { |field, changes| changes.any?(&:present?) }.each do |field, changes| %>
-                  <li>
-                    <strong class="muted"><%= render_audit_log_field(field) %>:</strong>
-                    <%= render_audit_log_value(field, changes[0], color: "primary") %> →
-                    <%= render_audit_log_value(field, changes[1], color: "success") %>
-                  </li>
-                <% end %>
-              </ul>
-            <% end %>
-          </li>
+              <% if item.event == "update" %>
+                <ul class="list-reset" style="margin-left: 52px;">
+                  <% changes.each do |field, changes| %>
+                    <li>
+                      <strong class="muted"><%= render_audit_log_field(field) %>:</strong>
+                      <%= render_audit_log_value(field, changes[0], color: "primary") %> →
+                      <%= render_audit_log_value(field, changes[1], color: "success") %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+            </li>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

@@ -25,6 +25,13 @@ module DonationService
           name: d.name,
           email: d.email,
           amount_cents: d.amount,
+          message: d.message,
+          referrer: d.referrer,
+          utm_source: d.utm_source,
+          utm_medium: d.utm_medium,
+          utm_campaign: d.utm_campaign,
+          utm_term: d.utm_term,
+          utm_content: d.utm_content,
           recurring: d.recurring?
         }
       end

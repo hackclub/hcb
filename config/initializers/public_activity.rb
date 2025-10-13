@@ -14,6 +14,10 @@ class PublicActivity::Activity
       .or(where(recipient_type: "Event", recipient_id: event.id))
   }
 
+  scope :before, ->(time) {
+    where(created_at: ..time)
+  }
+
   include Turbo::Broadcastable
 
   include PublicIdentifiable
@@ -25,14 +29,18 @@ class PublicActivity::Activity
     # i don't want it to break other features
     # as it's non-critical, hence this.
     # - @sampoder
-    begin
+    Rails.error.handle do
       streams = []
 
       if event_id
-        Event.find(event_id).users.each do |user|
+        event = Event.find(event_id)
+
+        event.users.each do |user|
           streams << [user, "activities"]
           streams << [user, Event.find(event_id), "activities"]
         end
+
+        ::Discord::ProcessNotificationJob.perform_later(self.id) if event.has_discord_guild?
       end
 
       if recipient.is_a?(User)
@@ -59,8 +67,6 @@ class PublicActivity::Activity
           locals: { activity: self, current_user: stream.first }
         )
       end
-    rescue => e
-      Airbrake.notify(e)
     end
 
   }

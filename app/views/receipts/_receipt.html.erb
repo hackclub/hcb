@@ -30,7 +30,6 @@
     <span>
       <div class="receipt__icon"></div>
       <span style="display: inline-grid; border-radius: 0.5rem;">
-        <div class="receipt__icon--check">✓</div>
         <div class="receipt__icon--star tooltipped tooltipped--n" aria-label="Suggested receipt">
           <%= inline_icon "rep", size: "36", style: "margin: -5px;" %>
         </div>
@@ -64,7 +63,7 @@
       <iframe src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
     <% end %>
     <% end %>
-    <% if defined?(delete_on_hover) && delete_on_hover %>
+    <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
       <%= pop_icon_to "view-close",
               { controller: "/receipts", action: :destroy, id: receipt.id, popover: local_assigns[:popover] },
               method: :delete,
@@ -78,11 +77,11 @@
 
   <% unless defined?(hide_info) %>
     <footer class="flex items-center flex-row mt1" style="border-top: none;">
-      <%= relative_timestamp receipt.created_at, prefix: "#{receipt.user == current_user ? "you" : ""} added ", suffix: receipt.user == current_user || receipt.user.nil? ? "" : " by #{receipt.user.first_name}", class: defined?(selectable) ? "h5" : "h5 muted" %>
+      <%= relative_timestamp receipt.created_at, prefix: "#{receipt.user == current_user ? "you" : ""} added #{"and matched with AI " if receipt.user == current_user && receipt.suggested_pairings.accepted.any?}", suffix: receipt.user == current_user || receipt.user.nil? ? "" : " by #{receipt.user.first_name}", class: defined?(selectable) ? "h5" : "h5 muted" %>
 
       <span style="flex-grow: 1;"></span>
 
-      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user %>
+      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user&.events&.any? %>
         <%= pop_icon_to "attachment",
             "#",
             data: {
@@ -93,9 +92,20 @@
             class: "info tooltipped tooltipped--w mr1",
             'aria-label': "Get reimbursed for this" %>
       <% end %>
-      <% if defined?(show_delete_button) %>
+      <% if defined?(show_receipt_bin_button) %>
+        <%= pop_icon_to "payment-docs",
+            reverse_receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion]) }.compact),
+            data: {
+              behavior: "modal_ignore",
+              turbo_method: :post,
+            },
+            size: 24,
+            class: "warning tooltipped tooltipped--w mr1",
+            'aria-label': "Move to Receipt Bin" %>
+      <% end %>
+      <% if defined?(show_delete_button) && policy(receipt).destroy? %>
         <%= pop_icon_to "view-close",
-            receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion]) }.compact),
+            receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion] || local_assigns[:popover]), show_receipt_button: local_assigns[:show_receipt_button], show_author_img: local_assigns[:show_author_img], ledger_instance: @ledger_instance }.compact),
             data: {
               behavior: "modal_ignore",
               turbo_method: :delete,

@@ -4,16 +4,6 @@
 # reach out to Max Wofford (max@hackclub.com) if you have any questions or issues
 
 echo "
-$(tput setaf 9)HCB:$(tput sgr0) Step 0/7: Checking for config/credentials/production.key"
-
-if [ ! -e ./config/credentials/production.key ]; then
-    echo "No config/credentials/production.key found; please get one from a HCB dev team member."
-    exit 0
-fi
-
-echo "$(tput setaf 9)HCB:$(tput sgr0) $(tput setaf 10)Done$(tput sgr0)"
-
-echo "
 $(tput setaf 9)HCB:$(tput sgr0) Step 1/7: Install Heroku (Quiet)"
 if ! command -v heroku &> /dev/null
 then

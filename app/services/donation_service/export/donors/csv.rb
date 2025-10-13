@@ -25,7 +25,7 @@ module DonationService
         def donors
           query = <<-SQL
             WITH all_donations AS (
-              SELECT COALESCE(d.name, rd.name) as name, COALESCE(d.email, rd.email) as email, d.amount as amount_cents, d.created_at
+              SELECT COALESCE(d.name, rd.name) as name, COALESCE(d.email, rd.email) as email, d.amount as amount_cents, d.created_at, rd.id as recurring_donation_id
                 FROM "donations" d
                 LEFT OUTER JOIN "recurring_donations" rd on d.recurring_donation_id = rd.id
                 WHERE d.aasm_state = 'deposited'
@@ -36,12 +36,12 @@ module DonationService
               FROM all_donations
             ),
             donors AS (
-              SELECT email, sum(amount_cents) as total_amount_cents
+              SELECT email, sum(amount_cents) as total_amount_cents, MAX(recurring_donation_id) as latest_recurring_donation_id
               FROM all_donations
               GROUP BY email
             )
 
-            SELECT latest_name, d.email, total_amount_cents
+            SELECT latest_name, d.email, total_amount_cents, latest_recurring_donation_id
             FROM donors d
             LEFT OUTER JOIN latest_names l on d.email = l.email
           SQL
@@ -50,11 +50,16 @@ module DonationService
         end
 
         def headers
-          %w[name email total_amount_cents]
+          %w[name email total_amount_cents recurring]
         end
 
         def row(donor)
-          [donor["latest_name"], donor["email"], donor["total_amount_cents"]]
+          [
+            donor["latest_name"],
+            donor["email"],
+            donor["total_amount_cents"],
+            donor["latest_recurring_donation_id"].present? && (RecurringDonation.where(email: donor["email"], event_id: @event.id).active.any? ? "ACTIVE" : "INACTIVE")
+          ]
         end
 
       end

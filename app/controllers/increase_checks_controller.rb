@@ -10,6 +10,10 @@ class IncreaseChecksController < ApplicationController
     @check = @event.increase_checks.build
 
     authorize @check
+
+    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
+      return render :new_v2
+    end
   end
 
   def create
@@ -18,6 +22,10 @@ class IncreaseChecksController < ApplicationController
     @check = @event.increase_checks.build(check_params.except(:file).merge(user: current_user))
 
     authorize @check
+
+    if @check.amount > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
     if @check.save
       if check_params[:file]
@@ -28,7 +36,7 @@ class IncreaseChecksController < ApplicationController
           receiptable: @check.local_hcb_code
         ).run!
       end
-      redirect_to @check.local_hcb_code.url, flash: { success: "Your check has been sent!" }
+      redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
       render "new", status: :unprocessable_entity
     end
@@ -72,6 +80,7 @@ class IncreaseChecksController < ApplicationController
       :recipient_email,
       :send_email_notification,
       :address_zip,
+      :payment_recipient_id,
       file: []
     )
   end

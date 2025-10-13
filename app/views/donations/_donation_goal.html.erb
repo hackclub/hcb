@@ -1,0 +1,15 @@
+<% if (donation_goal = @event.donation_goal).present? %>
+  <div class="card max-w-sm mx-auto my-8">
+    <span class="text-xl font-bold">
+      <%= render_money_short donation_goal.progress_amount_cents %>
+    </span>
+    <span class="opacity-60">raised of</span>
+    <span class="font-bold">
+      <%= render_money_short donation_goal.amount_cents %>
+    </span>
+    <span class="opacity-60">goal.</span>
+    <div class="h-3 bg-gray-200 dark:bg-neutral-700 rounded mt-2 overflow-hidden">
+      <div class="h-full bg-primary rounded" style="width: <%= (donation_goal.progress_amount_cents.to_f / donation_goal.amount_cents) * 100 %>%;"></div>
+    </div>
+  </div>
+<% end %>

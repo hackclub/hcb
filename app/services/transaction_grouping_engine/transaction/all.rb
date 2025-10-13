@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, merchant: nil, order_by: :date)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -15,6 +15,8 @@ module TransactionGroupingEngine
         @end_date = end_date&.to_datetime
         @user = user
         @missing_receipts = missing_receipts
+        @merchant = merchant
+        @order_by = order_by
       end
 
       def run
@@ -101,8 +103,14 @@ module TransactionGroupingEngine
         ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user.stripe_cardholder.stripe_id])
       end
 
-      def user_joins_for(type)
-        return "" unless @user.present?
+      def merchant_modifier
+        return "" unless @merchant.present?
+
+        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id' = ?", @merchant])
+      end
+
+      def stripe_joins_for(type)
+        return "" unless @user.present? || @merchant.present?
 
         type = type.to_s
 
@@ -139,7 +147,7 @@ module TransactionGroupingEngine
         end
 
         conditions << "q1.amount_cents < 0" if @expenses
-        conditions << "q1.amount_cents >= 0" if @revenue
+        conditions << "q1.amount_cents > 0" if @revenue
 
         if @minimum_amount
           conditions << "ABS(q1.amount_cents) >= :min_cents"
@@ -188,6 +196,8 @@ module TransactionGroupingEngine
       end
 
       def canonical_transactions_grouped_sql
+        order_by_mapped_at = @order_by == :mapped_at
+
         pt_group_sql = <<~SQL
           select
             array_agg(pt.id) as pt_ids
@@ -195,9 +205,11 @@ module TransactionGroupingEngine
             ,coalesce(pt.hcb_code, cast(pt.id as text)) as hcb_code
             ,sum(pt.amount_cents) as amount_cents
             ,sum(pt.amount_cents / 100.0)::float as amount
+            #{order_by_mapped_at ? ",max(cpem.created_at) as mapped_at" : ""}
           from
             canonical_pending_transactions pt
-          #{user_joins_for :pt}
+          #{order_by_mapped_at ? "left join canonical_pending_event_mappings cpem on cpem.canonical_pending_transaction_id = pt.id" : ""}
+          #{stripe_joins_for :pt}
           where
             fronted = true -- only included fronted pending transactions
             and
@@ -207,7 +219,7 @@ module TransactionGroupingEngine
               from
                 canonical_pending_event_mappings cpem
               where
-                cpem.event_id = :event_id
+                #{ActiveRecord::Base.sanitize_sql_for_conditions(["cpem.event_id = ?", @event_id])}
                 and cpem.subledger_id is null
               except ( -- hide pending transactions that have either settled or been declined.
                 select
@@ -226,10 +238,13 @@ module TransactionGroupingEngine
               select *
               from canonical_transactions ct
               inner join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id
-              where ct.hcb_code = pt.hcb_code and cem.event_id = :event_id
+              where
+                ct.hcb_code = pt.hcb_code
+                and #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
             )
             #{search_modifier_for :pt}
             #{user_modifier}
+            #{merchant_modifier}
           group by
             coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
         SQL
@@ -241,9 +256,11 @@ module TransactionGroupingEngine
             ,coalesce(ct.hcb_code, cast(ct.id as text)) as hcb_code
             ,sum(ct.amount_cents) as amount_cents
             ,sum(ct.amount_cents / 100.0)::float as amount
+            #{order_by_mapped_at ? ",max(cem.created_at) as mapped_at" : ""}
           from
             canonical_transactions ct
-          #{user_joins_for :ct}
+          #{order_by_mapped_at ? "left join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id" : ""}
+          #{stripe_joins_for :ct}
           where
             ct.id in (
               select
@@ -251,11 +268,12 @@ module TransactionGroupingEngine
               from
                 canonical_event_mappings cem
               where
-                cem.event_id = :event_id
+                #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
                 and cem.subledger_id is null
             )
             #{search_modifier_for :ct}
             #{user_modifier}
+            #{merchant_modifier}
           group by
             coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
         SQL
@@ -296,13 +314,14 @@ module TransactionGroupingEngine
           )
         SQL
 
-        q = <<~SQL
+        <<~SQL
           select
             q1.ct_ids -- ct_ids and pt_ids in this query are mutually exclusive
             ,q1.pt_ids
             ,q1.hcb_code
             ,q1.amount_cents
             ,q1.amount::float
+            #{order_by_mapped_at ? ",q1.mapped_at" : ""}
             ,(#{date_select}) as date
             ,(#{canonical_pending_transaction_ids_select}) as canonical_pending_transaction_ids
             ,(#{canonical_pending_transactions_select}) as canonical_pending_transactions
@@ -313,10 +332,8 @@ module TransactionGroupingEngine
             #{ct_group_sql}
           ) q1
           #{modifiers}
-          order by date desc, pt_ids[1] desc, ct_ids[1] desc
+          order by #{order_by_mapped_at ? "mapped_at" : "date"} desc, pt_ids[1] desc, ct_ids[1] desc
         SQL
-
-        ActiveRecord::Base.sanitize_sql_array([q, { event_id: @event_id }])
       end
 
       def canonical_transactions_grouped

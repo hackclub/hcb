@@ -125,7 +125,7 @@ class FeeReimbursement < ApplicationRecord
   end
 
   def canonical_transaction
-    @canonical_transaction ||= event.canonical_transactions.where("memo ilike '#{transaction_memo}%' and date >= ?", created_at - 1.day).first
+    @canonical_transaction ||= event.canonical_transactions.where("memo ilike ? and date >= ?", "#{sanitize_sql_like(transaction_memo)}%", created_at - 1.day).first
   end
 
 end

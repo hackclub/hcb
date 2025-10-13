@@ -5,7 +5,6 @@
 # Table name: user_sessions
 #
 #  id                       :bigint           not null, primary key
-#  deleted_at               :datetime
 #  device_info              :string
 #  expiration_at            :datetime         not null
 #  fingerprint              :string
@@ -14,14 +13,14 @@
 #  latitude                 :decimal(, )
 #  longitude                :decimal(, )
 #  os_info                  :string
-#  peacefully_expired       :boolean
 #  session_token_bidx       :string
 #  session_token_ciphertext :text
+#  signed_out_at            :datetime
 #  timezone                 :string
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  impersonated_by_id       :bigint
-#  user_id                  :bigint
+#  user_id                  :bigint           not null
 #  webauthn_credential_id   :bigint
 #
 # Indexes
@@ -41,51 +40,24 @@ class UserSession < ApplicationRecord
   has_encrypted :session_token
   blind_index :session_token
 
-  acts_as_paranoid
-
   belongs_to :user
   belongs_to :impersonated_by, class_name: "User", optional: true
   belongs_to :webauthn_credential, optional: true
+  has_many(:logins)
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| record.user }, recipient: proc { |controller, record| record.user }, only: [:create]
+  tracked owner: proc{ |controller, record| record.impersonated_by || record.user }, recipient: proc { |controller, record| record.impersonated_by || record.user }, only: [:create]
 
   scope :impersonated, -> { where.not(impersonated_by_id: nil) }
   scope :not_impersonated, -> { where(impersonated_by_id: nil) }
-
-  # PEACEFUL VS UNPEACEFUL EXPIRATIONS
-  # This is used to help determine if a user session's data (ip, etc.) can be
-  # "trusted". Trusted sessions (peaceful sessions) are then used to determine
-  # whether to relax or strength security measures for a user.
-  #
-  # Example use case:
-  #   Only allow a user to use a magic login link IF the browser's IP was
-  #   previously used by a trusted session.
-  #
-  # Implementation details:
-  #   Sessions are considered unpeaceful if there is a chance the session may
-  #   have been hijacked. These peaceful/unpeaceful classifications should be
-  #   taken with a grain of salt since they're speculations and will have a lot
-  #   of false "unpeaceful" sessions. So, it's probably best to use peaceful
-  #   sessions to relax security measures, rather than use unpeaceful sessions
-  #   to strengthen them.
-  #
-  #   - Peaceful
-  #     - Normal sign out of current session
-  #     - Normal time-based expiration
-  #   - Unpeaceful
-  #     - Sign out of all sessions
-  #     - Sign out of a specific session
-  #
-  #
-  # In order to use the following `peacefully_expired` scopes, you should also
-  # use `act_as_paranoid`'s `only_deleted` scope since theoretically, a session
-  # can only be peacefully_expired once it has been deleted.
-  scope :peacefully_expired, -> { where(peacefully_expired: true) }
-  scope :not_peacefully_expired, -> { where.not(peacefully_expired: true) }
+  scope :expired, -> { where("expiration_at <= ?", Time.now) }
+  scope :not_expired, -> { where("expiration_at > ?", Time.now) }
+  scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
 
   after_create_commit do
-    if fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
+    if user.user_sessions.size == 1
+      UserSessionMailer.first_login(user:).deliver_later
+    elsif fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
       UserSessionMailer.new_login(user_session: self).deliver_later
     end
   end
@@ -100,24 +72,46 @@ class UserSession < ApplicationRecord
     !impersonated_by.nil?
   end
 
-  def set_as_peacefully_expired
-    # Don't let this raise exceptions, otherwise users can't sign out
-    begin
-      update(peacefully_expired: true)
-    rescue => e
-      Airbrake.notify e, session: self
-      Rails.logger.error "Error setting session as peacefully expired: #{e.message}"
-    end
-
-    # Return self to allow chaining
-    self
-  end
-
   LAST_SEEN_AT_COOLDOWN = 5.minutes
-  def touch_last_seen_at
+
+  MAX_SESSION_DURATION = 2.weeks
+
+  def update_session_timestamps
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
-    update_columns(last_seen_at: Time.now)
+    updates = { last_seen_at: Time.now }
+    updates[:expiration_at] = [created_at + MAX_SESSION_DURATION, user.session_validity_preference.seconds.from_now].min unless impersonated?
+    update_columns(**updates)
+  end
+
+  def expired?
+    expiration_at <= Time.now
+  end
+
+  SUDO_MODE_TTL = 2.hours
+
+  # Determines whether the user can perform a sensitive action without
+  # reauthenticating.
+  #
+  # @return [Boolean]
+  def sudo_mode?
+    return true unless Flipper.enabled?(:sudo_mode_2015_07_21, user)
+
+    return false if last_authenticated_at.nil?
+
+    last_authenticated_at >= SUDO_MODE_TTL.ago
+  end
+
+  def clear_metadata!
+    update!(
+      device_info: nil,
+      latitude: nil,
+      longitude: nil,
+    )
+  end
+
+  def last_reauthenticated_at
+    logins.complete.reauthentication.max_by(&:created_at)&.created_at
   end
 
   private
@@ -126,6 +120,14 @@ class UserSession < ApplicationRecord
     if user.locked? && !impersonated?
       errors.add(:user, "Your HCB account has been locked.")
     end
+  end
+
+  # The last time the user went through a login flow. Used to determine whether
+  # sensitive actions can be performed.
+  #
+  # @return [ActiveSupport::TimeWithZone, nil]
+  def last_authenticated_at
+    logins.complete.max_by(&:created_at)&.created_at
   end
 
 end

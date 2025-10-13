@@ -25,10 +25,6 @@
       border-bottom-color: map-get($palette, white);
       border-width: 10px;
     }
-
-    &.tooltipped:after {
-      content: initial;
-    }
   }
 }
 
@@ -44,7 +40,7 @@
     0 -2px 4px rgba(0, 0, 0, 0.0625),
     0 6px 12px rgba(0, 0, 0, 0.125);
   overflow: auto;
-  z-index: 6;
+  z-index: 301;
 
   input[type='submit'].menu__action,
   button.menu__action {

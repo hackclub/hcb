@@ -1,18 +1,20 @@
-<% disabled = !policy(@event).create_transfer? %>
+<%# locals: (ach_transfer:) %>
+
+<% disabled = !policy(ach_transfer.event).create_transfer? %>
 
 <%= form_with(
-  model: @ach_transfer,
+  model: ach_transfer,
   local: true,
-  url: event_ach_transfers_path(@event),
-  data: { controller: "input" },
+  url: event_ach_transfers_path(ach_transfer.event),
+  data: { controller: "input extraction", extraction_target: "form" },
   html: {
     "x-data" => "ach(#{{
-      payment_recipient: (@ach_transfer.payment_recipient.to_safe_hash if @ach_transfer.payment_recipient&.event&.== @event),
-      editing: @ach_transfer.account_number.present?,
+      payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
+      editing: ach_transfer.account_number.present?,
     }.to_json})"
   }) do |form| %>
 
-  <%= form_errors(@ach_transfer, "ACH transfer", "We couldn't send this") %>
+  <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
 
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
@@ -21,7 +23,7 @@
   <% end %>
 
   <div class="field" id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
-    <%= form.label :recipient_name %>
+    <%= form.label :recipient_name, "Recipient's legal name" %>
     <%= form.text_field :recipient_name,
                         placeholder: "Max Kern",
                         required: true,
@@ -29,6 +31,7 @@
                         role: "combobox",
                         "aria-controls": "payment-recipient-search",
                         data: {
+                          extraction_field: "seller_name",
                           action: "
                             keydown.enter->text-filter#selectFirst
 
@@ -43,10 +46,10 @@
                         },
                         "x-ref" => "name_input",
                         "@input" => "payment_recipient = null" %>
-    <span class="muted">This is only for your reference— it doesn't need to match the name on the recipient's bank account.</span>
-    <% if organizer_signed_in? && @event.payment_recipients.any? %>
+    <span class="muted">This may be used for tax purposes; it should match the name on the recipient's bank account.</span>
+    <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
       <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
-        <% @event.payment_recipients.each do |payment_recipient| %>
+        <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
           <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
             <button
               type="button"
@@ -57,7 +60,7 @@
               <span class="truncate"><%= payment_recipient.name %></span>
               <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
             </button>
-            <%= link_to event_payment_recipient_path(@event, payment_recipient), data: { turbo_method: "delete", turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
+            <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
               <%= inline_icon "view-close", size: 24, class: "align-middle" %>
             <% end %>
           </div>
@@ -78,12 +81,12 @@
       <div>
         <div class="field">
           <%= form.label :recipient_email %>
-          <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+          <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, data: { extraction_field: "seller_email" } %>
         </div>
 
         <div class="field">
           <%= form.label :bank_name %>
-          <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true, disabled: %>
+          <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
         </div>
 
         <div
@@ -92,13 +95,13 @@
           data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>"
         >
           <%= form.label :routing_number %>
-          <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask", data: { action: "input->external-validation#validate" } %>
+          <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
           <span class="muted" data-external-validation-target="hint"></span>
         </div>
 
         <div class="field">
           <%= form.label :account_number %>
-          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask" %>
+          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask", data: { extraction_field: "account_number" } %>
         </div>
       </div>
     </template>
@@ -120,8 +123,14 @@
   <div class="field">
     <div class="flex items-center">
       <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+      <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
     </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :invoiced_at, "Invoice date" %>
+    <%= form.date_field :invoiced_at, disabled:, max: Date.current %>
+    <span class="muted">When were you invoiced for this payment?</span>
   </div>
 
   <div class="field field--checkbox">
@@ -147,7 +156,8 @@
         style: "margin: 8px 0px",
         class: "field--fileupload__field",
         data: {
-          "file-drop-target" => "fileInput"
+          "file-drop-target" => "fileInput",
+          "action" => "change->extraction#upload"
         },
         disabled: %>
     <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
@@ -164,7 +174,7 @@
     <p class="h5 muted mt0 mb1">See <%= link_to "this page", "https://column.com/docs/ach/timing", target: "_blank" %> for ACH timing details.</p>
   <% end %>
 
-  <div class="actions tooltipped tooltipped--n inline-block" aria-label="ACH transfers can't be cancelled">
+  <div class="actions tooltipped tooltipped--n inline-block" aria-label="ACH transfers can't be canceled">
     <%= form.submit "Transfer money now", class: "btn", disabled: %>
   </div>
 <% end %>

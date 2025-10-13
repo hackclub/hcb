@@ -4,7 +4,7 @@
   <% else %>
     <fieldset>
       <legend class="heading h2 pt2 pb2">Which organization?</legend>
-      <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
+      <%= form.select :event_id, current_user.events.not_demo_mode.where.not(id: current_user.reader_events).pluck(:name, :id) %>
     </fieldset>
   <% end %>
   <fieldset>
@@ -77,26 +77,28 @@
     </div>
 
     <% designs = [@event&.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact %>
-    <% designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.admin? %>
+    <% designs += StripeCard::PersonalizationDesign.unlisted.available if auditor_signed_in? %>
     <% if designs.any? %>
-      <% if Flipper.enabled?(:stripe_card_personalization_designs_2024_08_19, current_user) || (@event && Flipper.enabled?(:card_logos_2024_08_27, @event)) %>
-        <h2 class="grid__fill">Card design</h2>
-        <div class="field field--options" style="max-width: unset;">
-          <% designs.each do |design| %>
-            <%= form.radio_button :stripe_card_personalization_design_id, design.id %>
-              <%= form.label :stripe_card_personalization_design_id, value: design.id, style: "align-items: center; justify-content: start; padding: 0px; gap: 1rem; #{"background: rgba(241, 196, 15, 0.125)!important;" if design.unlisted?}", class: ("admin-tools" if design.unlisted?).to_s do %>
-              <span style="padding-top: 1rem; text-wrap: balance" class="bold">
-                <%= design.name_without_id %>
-              </span>
-              <div style="display: flex; flex-direction: row; justify-content: start; width: 100%;">
-                <div class="stripe-card--<%= design.color %>" style="display: flex; justify-content: end; align-items: center; width: 80%; border-radius: 0px 12px; padding: 1.5rem; padding-top: 1.5rem; padding-left: 0.5rem;">
-                  <%= image_tag design.logo, alt: design.name_without_id, style: "max-width: 100%; object-fit: contain; width: 100%; height: auto; aspect-ratio: 5 / 1; object-position: right;" %>
+      <h2 class="grid__fill">Card design</h2>
+      <div class="field field--options" style="max-width: unset;">
+        <% designs.each do |design| %>
+          <%= form.radio_button :stripe_card_personalization_design_id, design.id %>
+            <%= form.label :stripe_card_personalization_design_id, value: design.id, style: "align-items: center; justify-content: start; padding: 0px; gap: 1rem; #{"background: rgba(241, 196, 15, 0.125)!important;" if design.unlisted?}", class: ("admin-tools" if design.unlisted?).to_s do %>
+            <span style="padding-top: 1rem; text-wrap: balance" class="bold">
+              <%= design.name_without_id %>
+            </span>
+            <div style="display: flex; flex-direction: row; justify-content: start; width: 100%;">
+              <div class="stripe-card--<%= design.color %>" style="display: flex; justify-content: end; align-items: center; width: 80%; border-radius: 0px 12px; padding: 1.5rem; padding-top: 1.5rem; padding-left: 0.5rem;">
+                <div class="stripe-card__personalization_image_wrapper">
+                  <div class="stripe-card__personalization_inner_image_wrapper">
+                    <%= image_tag design.logo, alt: design.name_without_id, class: "stripe-card__personalization-image" %>
+                  </div>
                 </div>
               </div>
-            <% end %>
+            </div>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     <% end %>
   </section>
 

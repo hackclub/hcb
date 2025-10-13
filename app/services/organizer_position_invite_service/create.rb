@@ -51,7 +51,7 @@ module OrganizerPositionInviteService
 
     def find_or_create_user
       # Create the invited user now if it doesn't exist
-      @model.user = User.find_or_create_by!(email: @user_email)
+      @model.user = User.create_with(creation_method: :organizer_position_invite).find_or_create_by!(email: @user_email)
     end
 
   end

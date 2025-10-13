@@ -38,6 +38,16 @@
         <td><%= link_to @paypal_transfer.reimbursement_payout_holding.report.name, @paypal_transfer.reimbursement_payout_holding.report %></td>
       </tr>
     <% end %>
+    <% if @paypal_transfer.employee_payment.present? %>
+      <tr>
+        <td style="text-align: right;">Employee:</td>
+        <td><%= @paypal_transfer.employee_payment.employee.user.name %></td>
+      </tr>
+      <tr>
+        <td style="text-align: right;">Event:</td>
+        <td><%= @paypal_transfer.employee_payment.employee.event.name %></td>
+      </tr>
+    <% end %>
     <tr>
       <td style="text-align: right;">Amount:</td>
       <td><%= render_money @paypal_transfer.amount %></td>
@@ -56,7 +66,7 @@
 <% end %>
 
 <% if @paypal_transfer.may_mark_rejected? %>
-  <%= form_with(model: nil, local: true, url: reject_paypal_transfer_path(@paypal_transfer), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: reject_paypal_transfer_path(@paypal_transfer), method: :post) do |form| %>
     <div class="field">
       <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>

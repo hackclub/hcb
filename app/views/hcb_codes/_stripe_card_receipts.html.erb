@@ -1,22 +1,22 @@
 <% unless @hcb_code.stripe_refund? %>
   <% if @hcb_code.receipts.any? %>
-    <p class="card__banner bg-success white bold flex items-center mt0 mb0" id="stripe_card_receipts">
+    <p class="card__banner bg-success white bold flex items-center mt0 mb0" id="<%= @ledger_instance %>_stripe_card_receipts">
       <%= inline_icon "checkmark", size: 24, class: "mr2" %>
       <%= pluralize @hcb_code.receipts.count, "receipt" %>
       added
     </p>
   <% elsif @hcb_code.no_or_lost_receipt? %>
-    <p class="card__banner bg-muted white bold flex items-center mt0 mb0" id="stripe_card_receipts">
+    <p class="card__banner bg-muted white bold flex items-center mt0 mb0" id="<%= @ledger_instance %>_stripe_card_receipts">
       <%= inline_icon "view-close", size: 24, class: "mr2" %>
       Marked no/lost receipt
     </p>
   <% elsif @hcb_code.pt&.declined? %>
-    <p class="card__banner bg-muted white bold flex items-center mt0 mb0" id="stripe_card_receipts">
+    <p class="card__banner bg-muted white bold flex items-center mt0 mb0" id="<%= @ledger_instance %>_stripe_card_receipts">
       <%= inline_icon "important", size: 24, class: "mr2" %>
       This transaction has no receipt
     </p>
-  <% else %>
-    <p class="card__banner bg-pending slate bold flex items-center mt0 mb0" id="stripe_card_receipts">
+  <% elsif @hcb_code.receipt_required? %>
+    <p class="card__banner bg-pending slate bold flex items-center mt0 mb0" id="<%= @ledger_instance %>_stripe_card_receipts">
       <%= inline_icon "important", size: 24, class: "mr2" %>
       This transaction is missing a receipt
     </p>

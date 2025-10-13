@@ -7,6 +7,7 @@
 #  id                              :bigint           not null, primary key
 #  data_extracted                  :boolean          default(FALSE), not null
 #  extracted_card_last4_ciphertext :text
+#  extracted_currency              :string
 #  extracted_date                  :datetime
 #  extracted_merchant_name         :string
 #  extracted_merchant_url          :string
@@ -39,6 +40,9 @@ class Receipt < ApplicationRecord
   blind_index :textual_content
   has_encrypted :extracted_card_last4
 
+  monetize :extracted_subtotal_amount_cents, as: "extracted_subtotal_amount", with_model_currency: :extracted_currency, allow_nil: true
+  monetize :extracted_total_amount_cents, as: "extracted_total_amount", with_model_currency: :extracted_currency, allow_nil: true
+
   include StripeAuthorizationsHelper
 
   include PublicIdentifiable
@@ -59,13 +63,16 @@ class Receipt < ApplicationRecord
   # - @sampoder
   PREPROCESSED_SIZES = ["1024x1024"].freeze
 
+  CARD_LOCKING_START_DATE = Date.new(2025, 6, 13)
+
   has_one_attached :file do |attachable|
     PREPROCESSED_SIZES.each do |resize|
       attachable.variant(resize.to_sym, resize:, preprocessed: true)
     end
   end
 
-  validates :file, attached: true
+  validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
+  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -73,18 +80,23 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin email_hcb_code email_reimbursement sms_reimbursement].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt
     # and to suggest pairings
     unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
       # certain interfaces run suggestions synchronously
-      # ReceiptJob::ExtractTextualContent.perform_later(self)
+      # Receipt::ExtractTextualContentJob.perform_later(self)
       # see https://github.com/hackclub/hcb/issues/7123
-      ReceiptJob::SuggestPairings.perform_later(self)
+      Receipt::SuggestPairingsJob.perform_later(self)
     end
   end
+
+  after_commit do
+    User::UpdateCardLockingJob.perform_later(user:)
+  end
+
   validate :has_owner
 
   enum :upload_method, {
@@ -107,7 +119,9 @@ class Receipt < ApplicationRecord
     transaction_popover: 16,
     transaction_popover_drag_and_drop: 17,
     email_reimbursement: 18,
-    sms_reimbursement: 19
+    sms_reimbursement: 19,
+    employee_payment: 20,
+    duplicate: 21
   }
 
   enum :textual_content_source, {
@@ -159,7 +173,7 @@ class Receipt < ApplicationRecord
   rescue => e
     # "ArgumentError: string contains null byte" is a known error
     unless e.is_a?(ArgumentError) && e.message.include?("string contains null byte")
-      Airbrake.notify(e, receipt_id: id)
+      Rails.error.report(e, context: { receipt_id: id })
     end
 
     # Since text extraction can be a resource intensive operation, saving an

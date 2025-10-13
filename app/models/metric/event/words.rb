@@ -14,7 +14,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                               (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
 #
 class Metric
   module Event
@@ -24,12 +25,12 @@ class Metric
       def calculate
         # 1. Get memos from event
         transactions = event.canonical_transactions
-                            .where("EXTRACT(YEAR FROM date) = 2024")
+                            .where("EXTRACT(YEAR FROM date) = #{Metric.year}")
                             .select("COALESCE(custom_memo, memo) as memo, hcb_code")
                             .to_h { |r| [r.hcb_code, r.memo] }
 
         event.canonical_pending_transactions
-             .where("EXTRACT(YEAR FROM date) = 2024")
+             .where("EXTRACT(YEAR FROM date) = #{Metric.year}")
              .select("COALESCE(custom_memo, memo) as memo, hcb_code")
              .each { |r| transactions[r.hcb_code] ||= r.memo }
 

@@ -16,11 +16,20 @@ import { RenderResults } from './results'
 import { generateResultActions } from './search/results'
 import Icon from '@hackclub/icons'
 
-export default function CommandBar({ admin = false, adminUrls = {} }) {
+export default function CommandBar({
+  admin = false,
+  admin_override_pretend = false,
+  adminUrls = {},
+}) {
   return (
     <div style={{ position: 'relative', zIndex: '1000' }}>
       <KBarProvider
-        actions={[...initalActions, ...(admin ? adminActions(adminUrls) : [])]}
+        actions={[
+          ...initalActions,
+          ...(admin || admin_override_pretend
+            ? adminActions(adminUrls, !admin && admin_override_pretend)
+            : []),
+        ]}
         options={{
           disableScrollbarManagement: true,
           disableDocumentLock: true,
@@ -28,7 +37,9 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
       >
         <ButtonTrigger />
         <KBarPortal>
-          <KBarPositioner style={{ zIndex: 1000 }}>
+          <KBarPositioner
+            style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}
+          >
             <SearchAndResults />
           </KBarPositioner>
         </KBarPortal>
@@ -39,11 +50,13 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
 
 const ButtonTrigger = () => {
   const { query } = useKBar()
-  if (document.getElementById('command_bar_trigger')) {
-    document.getElementById('command_bar_trigger').onclick = function () {
-      query.toggle()
-    }
-  }
+  document
+    .querySelectorAll(`[data-behavior="command_bar_trigger"]`)
+    .forEach(trigger => {
+      trigger.onclick = function () {
+        query.toggle()
+      }
+    })
 }
 
 const animatorStyle = {
@@ -56,6 +69,7 @@ const animatorStyle = {
   boxShadow: '0px 6px 20px rgb(0 0 0 / 20%)',
   fontFamily: `ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 
                Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif`,
+  border: '1px solid var(--kbar-border)',
 }
 
 function SearchAndResults() {

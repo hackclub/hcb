@@ -31,7 +31,7 @@ module InvoicesHelper
   def invoice_payment_processor_fee(humanized = true, invoice = @invoice)
     fee = if invoice.manually_marked_as_paid?
             0
-          elsif invoice.paid_at < Date.new(2024, 8, 21)
+          elsif invoice&.paid_at&.< Date.new(2024, 8, 21)
             invoice.item_amount - invoice.payout.amount
           else
             invoice.payout_creation_balance_stripe_fee
@@ -83,7 +83,7 @@ module InvoicesHelper
   end
 end
 
-def invoice_payment_method_mention(invoice = @invoice, options = {})
+def invoice_payment_method_mention(invoice = @invoice, **options)
   return "–" unless invoice&.manually_marked_as_paid? || invoice&.payment_method_type
 
   if invoice.manually_marked_as_paid?
@@ -167,7 +167,7 @@ end
 def invoice_payout_datetime(invoice = @invoice)
   date = nil
   title = nil
-  if (invoice.paid_v2? && invoice.deposited?) && invoice.payout.present?
+  if invoice.paid_v2? && invoice.deposited? && invoice.payout.present?
     title = "Funds available since "
     date = @hcb_code.canonical_transactions.pluck(:date).max
   elsif invoice.payout_creation_queued_at && invoice.payout.nil?

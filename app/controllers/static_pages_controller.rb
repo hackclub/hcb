@@ -4,18 +4,34 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :faq, :roles]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :faq, :roles]
+  skip_before_action :signed_in_user, only: [:branding, :roles, :security]
+  skip_before_action :redirect_to_onboarding, only: [:branding, :roles, :security]
+
+  after_action only: [:index, :branding, :security] do
+    # Allow indexing home and branding pages
+    response.delete_header("X-Robots-Tag")
+  end
 
   def index
     if signed_in?
       @service = StaticPageService::Index.new(current_user:)
 
       @events = @service.events
+
+      featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
+
+      @featured_events = featured_event_ids.map do |id|
+        Event.find_by_public_id(id)
+      end.select do |event|
+        event&.is_public? && event.is_indexable?
+      end.sample(6)
+
+      @latest_hcb_announcement = Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK).announcements.published.order(published_at: :desc).first
+
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
 
-      if admin_signed_in? && cookies[:admin_activities] == "everyone"
+      if auditor_signed_in? && cookies[:admin_activities] == "everyone"
         @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
       else
         @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
@@ -26,9 +42,15 @@ class StaticPagesController < ApplicationController
       @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
 
     end
-    if admin_signed_in?
-      @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
+  end
+
+  def admin_tools
+    unless auditor_signed_in?
+      redirect_to(root_path, flash: { error: "You are not authorized to visit this page." })
+      return
     end
+
+    @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
   end
 
   def branding
@@ -44,6 +66,8 @@ class StaticPagesController < ApplicationController
     ]
     @event_name = signed_in? && current_user.events.first&.name || "Hack Pennsylvania"
     @event_slug = signed_in? && current_user.events.first&.slug || "hack-pennsylvania"
+
+    render layout: "docs"
   end
 
   def roles
@@ -60,27 +84,27 @@ class StaticPagesController < ApplicationController
       Transfers: {
         Checks: {
           "Send a mailed check": :manager,
-          "View a mailed check": :member,
+          "View a mailed check": :reader,
         },
-        "Check Deposit": {
+        "Check deposits": {
           "Deposit a check": :member,
-          "View a check deposit": :member,
+          "View a check deposit": :reader,
           "View images of a check deposit": :manager,
           _preface: "For depositing a check by taking a picture of it"
         },
-        "ACH Transfers": {
+        "ACH transfers": {
           "Send an ACH Transfer": :manager,
           "Cancel an ACH Transfer": :manager,
-          "View an ACH Transfer": :member,
+          "View an ACH Transfer": :reader,
           "View recipient's payment details": :manager,
         },
-        "Account & Routing numbers": {
+        "Account & routing numbers": {
           "View the organization's account & routing numbers": :manager
         },
-        "HCB Transfers": {
-          "Create an HCB Transfer": :manager,
-          "Cancel an HCB Transfer": :manager,
-          "View an HCB Transfer": :member
+        "HCB transfers": {
+          "Create a HCB Transfer": :manager,
+          "Cancel a HCB Transfer": :manager,
+          "View a HCB Transfer": :reader
         },
         _preface: "As a general rule, only managers can create/modify financial transfers"
       },
@@ -91,27 +115,40 @@ class StaticPagesController < ApplicationController
         "Rename your own card": :member,
         "Rename another user's card": :manager,
         "View another user's card number": :manager,
-        "View card expiration date": :member,
-        "View card billing address": :member,
+        "View card expiration date": :reader,
+        "View card billing address": :reader,
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,
-        "View reimbursement reports": :member,
+        "View reimbursement reports": :reader,
         "Review, approve, and reject reports": :manager,
+      },
+      Announcements: {
+        "Create or delete an announcement": :manager,
+        "Publish an announcement": :manager,
+        "View announcements": :reader,
+        "View followers": :reader,
+        "Remove followers": :manager
       },
       "Google Workspace": {
         "Create an account": :manager,
         "Suspend an account": :manager,
         "Reset an account's password": :manager,
       },
+      Documents: {
+        "View documents": :reader
+      },
       "Settings": {
-        "View settings": :member,
+        "View settings": :reader,
         "Edit settings": :manager,
       }
     }
+
+    render layout: "docs"
   end
 
-  def faq
+  def security
+    render layout: "docs"
   end
 
   def suggested_pairings
@@ -141,7 +178,7 @@ class StaticPagesController < ApplicationController
     redirect_back
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash[:error] = e.message
     return redirect_to params[:redirect_url] if params[:redirect_url]

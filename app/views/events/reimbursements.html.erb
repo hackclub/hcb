@@ -4,23 +4,28 @@
 
 <h1 class="heading flex gap-2 md:gap-4 text-3xl md:text-5xl border-0 md:border">
   <span class="flex-grow">Reimbursements</span>
+  <%= pop_icon_to "download",
+                  reimbursements_exports_path(@event, format: :csv),
+                  class: "tooltipped tooltipped--s", "aria-label": "Download CSV export" %>
   <%= pop_icon_to "settings",
       edit_event_path(@event, tab: "reimbursements"),
       data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" %>
+      class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" if organizer_signed_in?(as: :member) %>
   <% if @event.public_reimbursement_page_available? %>
     <%= pop_icon_to "external",
         reimbursement_start_reimbursement_report_url(@event),
         target: "_blank",
         class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
   <% end %>
-  <%= pop_icon_to "plus",
-        "#",
-        class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
-        "aria-label": "New report",
-        data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
-  <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
-      <%= inline_icon "plus" %> New
+  <% if organizer_signed_in?(as: :member) %>
+    <%= pop_icon_to "plus",
+          "#",
+          class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
+          "aria-label": "New report",
+          data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
+    <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
+        <%= inline_icon "plus" %> New
+    <% end %>
   <% end %>
 </h1>
 
@@ -42,24 +47,13 @@
 </div>
 
 <div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb2">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <div class="input input-group max-w-none" tabindex="0">
-      <%= inline_icon "search" %>
-      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
-      <% if params[:q] && params[:q] != "" %>
-        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
-          <%= inline_icon "view-close", size: 24 %>
-        </button>
-      <% end %>
-    </div>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "search", form: %>
   <% end %>
-  <div style="text-align: center;">
-    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["reimbursed", "pending", "rejected"].include?(params[:filter]), role: "tab" %>
-    <%= link_to "Pending", "?filter=pending", class: "filterbar__item", "aria-selected": params[:filter] == "pending", role: "tab" %>
-    <%= link_to "Reimbursed", "?filter=reimbursed", class: "filterbar__item", "aria-selected": params[:filter] == "reimbursed", role: "tab" %>
-    <%= link_to "Rejected", "?filter=rejected", class: "filterbar__item", "aria-selected": params[:filter] == "rejected", role: "tab" %>
-  </div>
+  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
+
+<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <% if @reports.blank? %>
   <%= blankslate "No reports found!" %>
@@ -94,7 +88,7 @@
                <%= user_mention report.user %>
             </td>
             <td class="right-align">
-               <%= render_money report.amount_cents %>
+               <%= report.amount.format %>
             </td>
           </tr>
         <% end %>
