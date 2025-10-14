@@ -7,39 +7,55 @@ class Disbursement
     end
 
     def settled_source
-      canonical_transactions_by_event.fetch(@disbursement.source_event, [])
+      grouped_canonical_transactions.fetch(source_key, [])
     end
 
     def settled_destination
-      canonical_transactions_by_event.fetch(@disbursement.destination_event, [])
+      grouped_canonical_transactions.fetch(destination_key, [])
     end
 
     def pending_source
-      canonical_pending_transactions_by_event.fetch(@disbursement.source_event, [])
+      grouped_canonical_pending_transactions.fetch(source_key, [])
     end
 
     def pending_destination
-      canonical_pending_transactions_by_event.fetch(@disbursement.destination_event, [])
+      grouped_canonical_pending_transactions.fetch(destination_key, [])
     end
 
     private
 
-    def canonical_transactions_by_event
-      @canonical_transactions_by_event ||=
-        @disbursement
-        .canonical_transactions
-        .strict_loading
-        .preload(:event)
-        .group_by(&:event)
+    def source_key
+      [@disbursement.source_event_id, @disbursement.source_subledger_id]
     end
 
-    def canonical_pending_transactions_by_event
-      @canonical_pending_transactions_by_event ||=
+    def destination_key
+      [@disbursement.event_id, @disbursement.destination_subledger_id]
+    end
+
+    def grouped_canonical_transactions
+      @grouped_canonical_transactions ||=
+        @disbursement
+        .canonical_transactions
+        .preload(:canonical_event_mapping)
+        .group_by do |ct|
+          [
+            ct.canonical_event_mapping.event_id,
+            ct.canonical_event_mapping.subledger_id
+          ]
+        end
+    end
+
+    def grouped_canonical_pending_transactions
+      @grouped_canonical_pending_transactions ||=
         @disbursement
         .canonical_pending_transactions
-        .strict_loading
-        .preload(:event)
-        .group_by(&:event)
+        .preload(:canonical_pending_event_mapping)
+        .group_by do |cpt|
+          [
+            cpt.canonical_pending_event_mapping.event_id,
+            cpt.canonical_pending_event_mapping.subledger_id
+          ]
+        end
     end
 
   end
