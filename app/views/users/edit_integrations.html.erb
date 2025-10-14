@@ -10,13 +10,11 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_nav", active: "integrations" %>
   <section>
-    <%= render "integrations/discord_integration", active: @user.has_discord_account?, unlink_path: discord_unlink_user_path, disabled: %>
-
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="discord_integration">
+    <%= render "integrations/discord_integration", active: @user.has_discord_account?, unlink_path: discord_unlink_user_path, disabled: do %>
       <%= modal_header "Setup Discord integration" %>
 
       <p><strong>If your team is already using the HCB Discord integration,</strong> run /link in your team's Discord server.</p>
       <p><strong>If your team isn't using the HCB Discord integration yet,</strong> organization managers can set it up in the organization settings tab.</p>
-    </section>
+    <% end %>
   </section>
 </turbo-frame>
