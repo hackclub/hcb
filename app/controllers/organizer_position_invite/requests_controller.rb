@@ -27,8 +27,10 @@ class OrganizerPositionInvite
       @invite = service.model
 
       if service.run
-        @invite.accept
-        @request.approve!
+        ActiveRecord::Base.transaction do
+          @invite.accept
+          @request.approve!
+        end
 
         redirect_back_or_to event_team_path(link.event)
       else
