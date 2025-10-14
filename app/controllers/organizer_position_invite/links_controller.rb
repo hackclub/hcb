@@ -17,7 +17,12 @@ class OrganizerPositionInvite
 
       if @link.event.users.include?(current_user)
         flash[:success] = "You already have access to #{@link.event.name}!"
-        redirect_to event_path(@link.event)
+        redirect_to event_path(@link.event) and return
+      end
+
+      if (pending_invite = @link.event.organizer_position_invites.pending.find_by(user: current_user))
+        flash[:success] = { text: "You already have an invitation to #{@link.event.name}!", link: organizer_position_invite_path(pending_invite), link_text: "Accept invite" }
+        redirect_to root_path and return
       end
 
       if @link.event.organizer_position_invite_requests.pending.where(requester: current_user).any?
