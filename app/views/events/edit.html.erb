@@ -64,5 +64,6 @@
 <% elsif @settings_tab == "admin" && auditor_signed_in? %>
   <%= render "events/settings/admin", event: @event %>
 <% else %>
+  <%= render "events/settings/account_info", event: @event %>
   <%= render "events/settings/details", event: @event %>
 <% end %>

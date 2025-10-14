@@ -2,10 +2,10 @@
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="share_donation_page">
   <div data-controller="tabs" data-tabs-default-tab-value="link">
-    <header class="pb-2">
+    <header class="pb-8">
       <%= modal_close %>
       <h2 class="mt-0 mb-4">Share</h2>
-      <div class="flex -mb-[13px] -mx-[35px] px-[23px]" style="border-bottom: 2px solid rgba(200, 200, 200, 0.3);">
+      <div class="flex -mx-[35px] px-[23px]">
         <button id="link" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Link</button>
         <button id="qr" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">QR code</button>
         <% if @event.is_public? %>
