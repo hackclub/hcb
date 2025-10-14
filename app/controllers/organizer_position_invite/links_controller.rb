@@ -44,7 +44,7 @@ class OrganizerPositionInvite
     end
 
     def create
-      expires_in = (params[:expires_on].to_datetime - DateTime.now).to_f * 24 * 60 * 60 if params[:expires_on].present?
+      expires_in = ActiveSupport::Duration.build(params[:expires_on].to_time - Time.now).seconds.to_i if params[:expires_on].present?
       @link = @event.organizer_position_invite_links.build({ creator: current_user, expires_in: }.compact)
 
       authorize @link
