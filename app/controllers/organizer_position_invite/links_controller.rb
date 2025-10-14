@@ -33,7 +33,7 @@ class OrganizerPositionInvite
 
       if @link.event.organizer_position_invite_requests.pending.where(requester: current_user).any?
         flash[:success] = "You already requested to join! Ask a manager of #{@link.event.name} to accept your request."
-        redirect_to root_path
+        redirect_to root_path and return
       end
 
       @organizers = @link.event.organizer_positions

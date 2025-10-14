@@ -5,6 +5,7 @@ class OrganizerPositionInvite
     def create?
       record.requester == user && record.link.active?
     end
+
     def approve?
       admin_or_manager?
     end
