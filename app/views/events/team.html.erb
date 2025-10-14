@@ -32,7 +32,7 @@
           data: { behavior: "modal_trigger", modal: "view_invite_links" } do %>
           View active invite links
         <% end %>
-        <%= link_to start_donation_donations_url(@event),
+        <%= link_to new_event_invite_link_path(@event),
           data: { behavior: "modal_trigger", modal: "new_invite_link" } do %>
           Create new invite link
         <% end %>
