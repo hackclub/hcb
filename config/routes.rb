@@ -72,8 +72,8 @@ Rails.application.routes.draw do
     get "settings/previews", to: "users#edit_featurepreviews"
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
-    get "settings/admin", to: "users#edit_admin"
     get "settings/integrations", to: "users#edit_integrations"
+    get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
 
     get "feed", to: "my#feed", as: :my_feed
