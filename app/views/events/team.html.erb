@@ -30,7 +30,7 @@
       <div class="menu__content" data-behavior="menu_content">
         <%= link_to event_invite_links_path(event_id: @event.slug),
           data: { behavior: "modal_trigger", modal: "view_invite_links" } do %>
-          View active invite links
+          View invite links
         <% end %>
         <%= link_to new_event_invite_link_path(@event),
           data: { behavior: "modal_trigger", modal: "new_invite_link" } do %>
