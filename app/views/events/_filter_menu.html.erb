@@ -116,7 +116,7 @@
           <% end %>
         </div>
         <div data-tabs-target="tab" id="category">
-          <% TransactionCategory.find_each do |category| %>
+          <% TransactionCategory.order(slug: :asc).each do |category| %>
             <div class="flex items-center">
               <%= link_to(category.definition.label, event_ledger_path(@event, upsert_query_params(category: category.slug)), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_prefetch: "false" }) %>
             </div>
