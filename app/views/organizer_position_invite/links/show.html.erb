@@ -1,9 +1,11 @@
 <% title "Request to join #{@link.event.name}" %>
 
-<main class="center max-width-3 card mt4 md-p3 mx-auto">
-  <h1 class="mt0"><%= @link.event.name %></h1>
+<main class="center max-width-3 card my-5 md-p3 mx-auto">
+  <p class="muted caps bold mb1">
+    <%= user_mention @link.creator %> invited you to join
+  </p>
 
-  <p class="muted caps bold mt3">Request to join</p>
+  <h1 class="mt0"><%= @link.event.name %></h1>
 
   <% if @organizers.any? %>
     <div class="flex justify-center flex-wrap">

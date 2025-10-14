@@ -37,6 +37,10 @@ class OrganizerPositionInvite
 
     scope :active, -> { where(deactivated_at: nil).where("? <= created_at + expires_in * interval '1 sec'", Time.now) }
 
+    def active?
+      !deactivated? && Time.now.before?(created_at + expires_in.seconds)
+    end
+
     def deactivated?
       deactivated_at.present?
     end

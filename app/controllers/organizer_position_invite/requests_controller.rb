@@ -5,10 +5,12 @@ class OrganizerPositionInvite
     before_action :set_request, except: :create
 
     def create
-      skip_authorization
+      link = OrganizerPositionInvite::Link.find_by_hashid!(params[:link_id])
+      authorize request = OrganizerPositionInvite::Request.build(requester: current_user, link:)
 
-      OrganizerPositionInvite::Request.create!(requester: current_user, link: OrganizerPositionInvite::Link.find_by_hashid!(params[:link_id]))
+      request.save!
 
+      flash[:success] = "Your request has been submitted and is pending approval."
       redirect_to root_path
     end
 
