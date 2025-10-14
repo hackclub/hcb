@@ -28,8 +28,8 @@ class OrganizerPositionInvite
 
       if service.run
         ActiveRecord::Base.transaction do
-          @invite.accept
           @request.approve!
+          @invite.accept
         end
 
         redirect_back_or_to event_team_path(link.event)
