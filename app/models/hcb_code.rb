@@ -507,6 +507,7 @@ class HcbCode < ApplicationRecord
 
     return true if [:card_charge, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
 
+    # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
     false
   end
 
