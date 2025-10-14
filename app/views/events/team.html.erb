@@ -138,7 +138,6 @@
                           },
                           'aria-label': "Approve",
                           disabled: !policy(invite_request).approve? %>
-          <%# how do i get this to refresh the page content on submit? %>
           <%= pop_icon_to "forbidden",
                           deny_request_path(invite_request),
                           class: "error tooltipped tooltipped--w h-8 w-8",

@@ -30,6 +30,7 @@ class OrganizerPositionInvite
         @invite.accept
         @request.approve!
 
+        redirect_back_or_to event_team_path(link.event)
       else
         flash[:error] = service.model.errors.full_messages.to_sentence
         redirect_back_or_to event_team_path(link.event)
@@ -40,6 +41,7 @@ class OrganizerPositionInvite
       authorize @request
 
       @request.deny!
+      redirect_back_or_to event_team_path(@request.link.event)
     end
 
     private

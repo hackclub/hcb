@@ -3,6 +3,5 @@
 <%= form_with(local: true, url: approve_request_path(invite_request), html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
   <%= render "organizer_position_invites/role_and_control_form", form: form %>
 
-  <%# how do i get this to refresh the page content on submit? %>
   <%= form.submit "Submit" %>
 <% end %>
