@@ -15,6 +15,12 @@ class OrganizerPositionInvite
     def show
       authorize @link
 
+      unless @link.active?
+        flash[:error] = "This invite link has expired."
+        redirect_to root_path and return
+      end
+
+
       if @link.event.users.include?(current_user)
         flash[:success] = "You already have access to #{@link.event.name}!"
         redirect_to event_path(@link.event) and return

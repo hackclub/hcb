@@ -48,7 +48,9 @@ class OrganizerPositionInvite
     end
 
     def deactivate(user:)
-      update!(deactivated_at: Time.now, deactivator: user)
+      return false if deactivated?
+
+      update(deactivated_at: Time.now, deactivator: user)
     end
 
   end
