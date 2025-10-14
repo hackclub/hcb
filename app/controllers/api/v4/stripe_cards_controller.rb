@@ -52,7 +52,7 @@ module Api
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
-          current_session: { ip: request.remote_ip },
+          ip_address: request.remote_ip,
           event_id: event.id,
           card_type: card[:card_type],
           stripe_shipping_name: card[:shipping_name],

@@ -115,7 +115,7 @@ module Api
 
         authorize @card_grant
 
-        @card_grant.create_stripe_card(current_session)
+        @card_grant.create_stripe_card(request.remote_ip)
 
         render :show
 
