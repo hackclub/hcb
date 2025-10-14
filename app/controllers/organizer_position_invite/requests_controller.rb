@@ -6,9 +6,9 @@ class OrganizerPositionInvite
 
     def create
       link = OrganizerPositionInvite::Link.find_by_hashid!(params[:link_id])
-      authorize request = OrganizerPositionInvite::Request.build(requester: current_user, link:)
+      authorize @request = OrganizerPositionInvite::Request.build(requester: current_user, link:)
 
-      request.save!
+      @request.save!
 
       flash[:success] = "Your request has been submitted and is pending approval."
       redirect_to root_path
