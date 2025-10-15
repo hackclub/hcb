@@ -15,13 +15,13 @@ module Api
 
       def create
         permitted_params = [
-          :routing_number, 
-          :account_number, 
-          :recipient_email, 
-          :bank_name, 
-          :recipient_name, 
-          :amount_money, 
-          :payment_for, 
+          :routing_number,
+          :account_number,
+          :recipient_email,
+          :bank_name,
+          :recipient_name,
+          :amount_money,
+          :payment_for,
           :send_email_notification,
           :invoiced_at,
           :file,
