@@ -6,12 +6,6 @@ module Api
       include SetEvent
 
       before_action :set_api_event, only: [:create]
-      before_action :set_ach_transfer, only: [:show]
-
-      def show
-        authorize @ach_transfer
-        render :show
-      end
 
       def create
         permitted_params = [
@@ -58,12 +52,6 @@ module Api
         end
 
         render :show, status: :created
-      end
-
-      private
-
-      def set_ach_transfer
-        @ach_transfer = AchTransfer.find_by_public_id!(params[:id])
       end
 
     end
