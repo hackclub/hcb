@@ -48,6 +48,7 @@ RSpec.describe Api::V4::CardGrantsController do
         "created_at"                        => event.created_at.iso8601(3),
         "fee_percentage"                    => 0.0,
         "icon"                              => nil,
+        "donation_page_available"           => true,
         "playground_mode"                   => false,
         "playground_mode_meeting_requested" => false,
         "transparent"                       => true
