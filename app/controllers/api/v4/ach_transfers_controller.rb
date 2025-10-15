@@ -64,7 +64,6 @@ module Api
 
       def set_ach_transfer
         @ach_transfer = AchTransfer.find_by_public_id!(params[:id])
-        @event = @ach_transfer.event
       end
 
     end
