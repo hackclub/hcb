@@ -34,7 +34,7 @@ module Api
         ach_transfer_params = params.require(:ach_transfer).permit(*permitted_params)
 
         @ach_transfer = @event.ach_transfers.build(ach_transfer_params.merge(creator: current_user))
-        
+
         authorize @ach_transfer
 
         if @ach_transfer.amount > SudoModeHandler::THRESHOLD_CENTS
