@@ -654,6 +654,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
     t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
   end
 
+  create_table "discord_messages", force: :cascade do |t|
+    t.string "discord_message_id", null: false
+    t.string "discord_channel_id", null: false
+    t.string "discord_guild_id", null: false
+    t.bigint "activity_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_id"], name: "index_discord_messages_on_activity_id"
+    t.index ["discord_message_id"], name: "index_discord_messages_on_discord_message_id", unique: true
+  end
+
   create_table "document_downloads", force: :cascade do |t|
     t.bigint "document_id"
     t.bigint "user_id"
@@ -1021,10 +1032,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
     t.bigint "parent_id"
     t.string "discord_guild_id"
     t.string "discord_channel_id"
-    t.index ["discord_channel_id"], name: "index_events_on_discord_channel_id", unique: true
-    t.index ["discord_guild_id"], name: "index_events_on_discord_guild_id", unique: true
     t.boolean "fee_waiver_eligible", default: false, null: false
     t.boolean "fee_waiver_applied", default: false, null: false
+    t.index ["discord_channel_id"], name: "index_events_on_discord_channel_id", unique: true
+    t.index ["discord_guild_id"], name: "index_events_on_discord_guild_id", unique: true
     t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
@@ -2543,6 +2554,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
   add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
   add_foreign_key "disbursements", "users", column: "requested_by_id"
+  add_foreign_key "discord_messages", "activities"
   add_foreign_key "document_downloads", "documents"
   add_foreign_key "document_downloads", "users"
   add_foreign_key "documents", "events"
