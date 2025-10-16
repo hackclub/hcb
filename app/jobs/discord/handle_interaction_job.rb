@@ -5,7 +5,6 @@ module Discord
     queue_as :critical
 
     include Discord::Support
-    include ApplicationHelper
 
     def perform(interaction, responded: true)
       @responded = responded
@@ -112,7 +111,7 @@ module Discord
         "type": 9,
         "data": {
           "custom_id": "attach_receipt:#{hcb_code.hashid}",
-          "title": "#{render_money(hcb_code.amount_cents.abs)} for #{hcb_code.memo}",
+          "title": "#{Money.from_cents(hcb_code.amount_cents.abs).format} for #{hcb_code.memo}",
           "components": [
             {
               "type": 18,
