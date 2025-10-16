@@ -33,7 +33,7 @@ module Api
 
         if @ach_transfer.amount > SudoModeHandler::THRESHOLD_CENTS
           # Don't let API submit ACH transfers above sudo mode threshold
-          return render json: { error: "invalid_operation", messages: ["ACH transfers above the sudo mode threshold of $#{SudoModeHandler::THRESHOLD_CENTS / 100} are not allowed."] }, status: :bad_request
+          return render json: { error: "invalid_operation", messages: ["ACH transfers above the sudo mode threshold of #{ApplicationController.helpers.render_money(SudoModeHandler::THRESHOLD_CENTS)} are not allowed."] }, status: :bad_request
         end
 
 
