@@ -198,6 +198,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      category: @category,
       merchant: @merchant,
       order_by: @order_by.to_sym
     ).run
@@ -314,7 +315,9 @@ class EventsController < ApplicationController
       @indirect_access = access_levels
     end
 
-    @pending = @event.organizer_position_invites.pending.includes(:sender)
+    @invites = @event.organizer_position_invites.pending.includes(:sender)
+    @invite_requests = @event.organizer_position_invite_requests.pending
+    @invite_links = @event.organizer_position_invite_links.active
   end
 
   # GET /events/1/edit
@@ -1275,6 +1278,7 @@ class EventsController < ApplicationController
     @missing_receipts = params[:missing_receipts].present?
     @merchant = params[:merchant]
     @direction = params[:direction]
+    @category = TransactionCategory.find_by(slug: params[:category])
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
@@ -1302,6 +1306,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      category: @category,
       merchant: @merchant,
       order_by: @order_by&.to_sym || "date"
     ).run

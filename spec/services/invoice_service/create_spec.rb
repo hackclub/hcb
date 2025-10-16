@@ -132,6 +132,7 @@ RSpec.describe InvoiceService::Create, type: :model do
       expect(invoice.statement_descriptor).to eq("Statement Descriptor")
       expect(invoice.status).to eq("paid")
       expect(invoice.stripe_charge_id).to eq("ch_1234")
+      expect(invoice.finalized_at).to be_present
     end
   end
 

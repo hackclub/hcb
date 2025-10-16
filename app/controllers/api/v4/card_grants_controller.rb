@@ -110,6 +110,21 @@ module Api
         render :show
       end
 
+      def activate
+        @card_grant = CardGrant.find_by_public_id!(params[:id])
+
+        authorize @card_grant
+
+        @card_grant.create_stripe_card(request.remote_ip)
+
+        render :show
+
+      rescue Stripe::InvalidRequestError => e
+        return render json: { error: "invalid_operation", messages: ["This card could not be activated: #{e.message}"] }, status: :bad_request
+      rescue Errors::StripeInvalidNameError => e
+        return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
+      end
+
     end
   end
 end
