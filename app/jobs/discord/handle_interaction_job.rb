@@ -141,7 +141,7 @@ module Discord
       filename = file[:filename] if file.present?
       content_type = file[:content_type] if file.present?
 
-      io = URI.open(url) if url.present?
+      io = URI(url).open if url.present?
 
       blob = ActiveStorage::Blob.create_and_upload!(
         io:,
