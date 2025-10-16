@@ -48,7 +48,7 @@ module Discord
       components
     end
 
-    def self.color
+    def color
       if Rails.env.development?
         0x33d6a6
       else
