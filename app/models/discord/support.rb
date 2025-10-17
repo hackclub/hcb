@@ -56,11 +56,13 @@ module Discord
       end
     end
 
+    DISCORD_EMOJI_IDS = {
+      payment_docs: "1428571025804890245"
+    }.freeze
+
     def emoji_icon(name)
       {
-        id: {
-          payment_docs: "1428571025804890245"
-        }[name]
+        id: DISCORD_EMOJI_IDS[name]
       }
     end
   end
