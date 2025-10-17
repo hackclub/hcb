@@ -34,8 +34,6 @@ module Discord
         text = ApplicationController.renderer.render(partial:, locals:)
         json = JSON.parse(text)
 
-        ap json
-
         embed = {
           description: "No description",
           timestamp: @activity.created_at.iso8601,
