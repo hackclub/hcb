@@ -6,7 +6,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_manager? && record.event.plan.card_grants_enabled?
+    admin_or_manager? && sender_admin_or_manager? && record.event.plan.card_grants_enabled?
   end
 
   def show?
@@ -87,6 +87,10 @@ class CardGrantPolicy < ApplicationPolicy
 
   def admin_or_manager?
     user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+  end
+
+  def sender_admin_or_manager?
+    record.sent_by.admin? || OrganizerPosition.find_by(user: record.sent_by, event: record.event)&.manager?
   end
 
   private
