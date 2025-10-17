@@ -55,5 +55,15 @@ module Discord
         0xec3750
       end
     end
+
+    DISCORD_EMOJI_IDS = {
+      payment_docs: "1428571025804890245"
+    }.freeze
+
+    def emoji_icon(name)
+      {
+        id: DISCORD_EMOJI_IDS[name]
+      }
+    end
   end
 end
