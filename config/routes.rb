@@ -482,7 +482,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
-      get "receipt_status"
       post "invoice_as_personal_transaction"
       post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
@@ -491,6 +490,10 @@ Rails.application.routes.draw do
       scope module: "hcb_code" do
         get "subscriptions/transactions", to: "subscriptions#transactions"
       end
+    end
+
+    collection do
+      get "receipt_status"
     end
   end
 

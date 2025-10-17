@@ -4,7 +4,7 @@ class HcbCodesController < ApplicationController
   include TagsHelper
 
   skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
-  skip_after_action :verify_authorized, only: [:receipt]
+  skip_after_action :verify_authorized, only: [:receipt, :receipt_status]
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
@@ -203,13 +203,8 @@ class HcbCodesController < ApplicationController
   end
 
   def receipt_status
-    @hcb_code = HcbCode.find(params[:id])
     @secret = params[:s]
-
-    authorize @hcb_code
-
-  rescue Pundit::NotAuthorizedError
-    raise unless HcbCode.find_signed(@secret, purpose: :receipt_status) == @hcb_code
+    @hcb_code = HcbCode.find_signed(@secret, purpose: :receipt_status)
   end
 
   def toggle_tag
