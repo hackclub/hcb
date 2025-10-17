@@ -23,6 +23,8 @@ class PublicActivity::Activity
   include PublicIdentifiable
   set_public_id_prefix :act
 
+  has_one :discord_message, class_name: "Discord::Message", inverse_of: :activity
+
   after_create_commit -> {
     # this code has been tested
     # but because this will run so often
