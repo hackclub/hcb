@@ -55,7 +55,7 @@ RSpec.describe("session expiry", type: :controller) do
       session = sign_in(user)
       max_expiry = UserSession::MAX_SESSION_DURATION.from_now
 
-      travel(UserSession::MAX_SESSION_DURATION - 1.week)
+      travel(2.weeks - 1.day)
       get(:index)
       expect(response).to have_http_status(:ok)
       expect(session.reload.expiration_at).to eq(max_expiry)
