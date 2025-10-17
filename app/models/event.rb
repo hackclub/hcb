@@ -288,6 +288,8 @@ class Event < ApplicationRecord
   has_many :slugs, -> { order(id: :desc) }, class_name: "FriendlyId::Slug", as: :sluggable, dependent: :destroy
 
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_invite_links, class_name: "OrganizerPositionInvite::Link"
+  has_many :organizer_position_invite_requests, through: :organizer_position_invite_links, source: :requests
   has_many :organizer_positions, dependent: :destroy
 
   def ancestor_organizer_positions
