@@ -152,6 +152,7 @@ module Discord
 
         respond(embeds: [{
                   title: "Your receipt has been uploaded!",
+                  description: "<@#{@user_id}>, your receipt for #{link_to("#{Money.from_cents(hcb_code.amount_cents.abs).format} at #{hcb_code.memo}", url_helpers.hcb_code_url(hcb_code))} has been uploaded successfully.",
                   color:
                 }], components: button_to("View receipt", url_helpers.hcb_code_url(hcb_code)))
       end

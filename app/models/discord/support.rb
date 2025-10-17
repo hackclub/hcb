@@ -55,5 +55,13 @@ module Discord
         0xec3750
       end
     end
+
+    def emoji_icon(name)
+      {
+        id: {
+          payment_docs: "1428571025804890245"
+        }[name]
+      }
+    end
   end
 end
