@@ -141,18 +141,20 @@ module Discord
 
       io = URI(url).open if url.present?
 
-      blob = ActiveStorage::Blob.create_and_upload!(
-        io:,
-        filename:,
-        content_type:
-      )
+      ActiveRecord::Base.transaction do
+        blob = ActiveStorage::Blob.create_and_upload!(
+          io:,
+          filename:,
+          content_type:
+        )
 
-      receipt = ::ReceiptService::Create.new(attachments: [blob], uploader: @user, upload_method: :discord_bot_modal, receiptable: hcb_code).run!
+        ::ReceiptService::Create.new(attachments: [blob], uploader: @user, upload_method: :discord_bot_modal, receiptable: hcb_code).run!
 
-      respond(embeds: [{
-                title: "Your receipt has been uploaded!",
-                color:
-              }], components: button_to("View receipt", url_helpers.hcb_code_url(hcb_code)))
+        respond(embeds: [{
+                  title: "Your receipt has been uploaded!",
+                  color:
+                }], components: button_to("View receipt", url_helpers.hcb_code_url(hcb_code)))
+      end
     end
 
     def reimburse_component
