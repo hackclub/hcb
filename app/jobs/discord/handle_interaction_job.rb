@@ -99,7 +99,7 @@ module Discord
     end
 
     def attach_receipt_component
-      hcb_code = HcbCode.find(@params)
+      hcb_code = HcbCode.find_by_hashid!(@params)
       discord_message = Discord::Message.find_by(discord_message_id: @interaction.dig(:message, :id))
       activity = PublicActivity::Activity.find_by(id: discord_message&.activity_id)
 
