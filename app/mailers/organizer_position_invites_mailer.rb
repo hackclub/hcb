@@ -19,7 +19,7 @@ class OrganizerPositionInvitesMailer < ApplicationMailer
         invite: @invite,
         author: User.system_user
       ).create
-      
+
       mail to: @emails, subject: "#{@invite.user.name} has accepted their invitation to join #{@invite.event.name}"
     end
   end
