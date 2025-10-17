@@ -14,7 +14,7 @@ class OrganizerPositionInvitesMailer < ApplicationMailer
   def accepted
     unless @invite.event.organizer_position_invite_requests.approved.where(requester: current_user).any?
       @emails = (@invite.event.users.excluding(@invite.user).map(&:email_address_with_name) + [@invite.event.config.contact_email]).compact
-      
+
       @announcement = Announcement::Templates::NewTeamMember.new(
         invite: @invite,
         author: User.system_user
