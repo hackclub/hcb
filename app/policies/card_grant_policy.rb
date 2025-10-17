@@ -90,6 +90,8 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def sender_admin_or_manager?
+    return false if record.sent_by.nil? # May be nil if used to authorize after build on #new page.
+
     record.sent_by.admin? || OrganizerPosition.find_by(user: record.sent_by, event: record.event)&.manager?
   end
 
