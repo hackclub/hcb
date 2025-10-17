@@ -132,8 +132,6 @@ module Discord
 
       return respond(content: "This Discord server is not currently linked to the same HCB organization") unless hcb_code.event.id == @current_event&.id
 
-      ap @interaction
-
       attachments = @interaction.dig(:data, :resolved, :attachments)
 
       file = attachments.values.first if attachments.present? && attachments.values.first[:content_type]&.start_with?("image/")
