@@ -3,7 +3,7 @@
 class HcbCodesController < ApplicationController
   include TagsHelper
 
-  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :show]
+  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
   skip_after_action :verify_authorized, only: [:receipt]
 
   def show
