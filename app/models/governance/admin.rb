@@ -4,8 +4,7 @@ module Governance
   module Admin
     TRANSFER_APPROVAL_LIMITS = {
       admin: Money.new(5_000_00), # $5k USD
-      # superadmin: Money.new(200_000_00) # $200k USD
-      superadmin: Money.new(200) # TODO: teseting
+      superadmin: Money.new(200_000_00) # $200k USD
     }.freeze
 
     class InsufficientApprovalLimitError < Governance::Error; end
