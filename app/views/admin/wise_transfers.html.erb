@@ -27,7 +27,7 @@
   </thead>
   <tbody>
     <% @wise_transfers.each do |wise_transfer| %>
-      <tr class="<%= "admin-bg-pending" if wise_transfer.pending? %>">
+      <tr class="<%= "admin-bg-pending" if wise_transfer.pending? %> <%= "admin-bg-transit" if wise_transfer.approved? %>">
         <td><%= wise_transfer.id %></td>
         <td><%= wise_transfer.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= wise_transfer.event.name %></td>
