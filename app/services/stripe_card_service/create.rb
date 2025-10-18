@@ -2,14 +2,14 @@
 
 module StripeCardService
   class Create
-    def initialize(current_user:, current_session:, event_id:,
+    def initialize(current_user:, ip_address:, event_id:,
                    card_type:, subledger: nil,
                    stripe_shipping_name: nil, stripe_shipping_address_city: nil,
                    stripe_shipping_address_state: nil, stripe_shipping_address_line1: nil,
                    stripe_shipping_address_line2: nil, stripe_shipping_address_postal_code: nil,
                    stripe_shipping_address_country: "US", stripe_card_personalization_design_id: nil)
       @current_user = current_user
-      @current_session = current_session
+      @ip_address = ip_address
       @event_id = event_id
       @subledger = subledger
 
@@ -120,7 +120,7 @@ module StripeCardService
     def cardholder_attrs
       {
         current_user: @current_user,
-        current_session: @current_session,
+        ip_address: @ip_address,
         event_id: event.id
       }
     end

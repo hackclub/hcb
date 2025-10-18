@@ -34,6 +34,7 @@ class PaypalTransfersController < ApplicationController
 
   def approve
     authorize @paypal_transfer
+    Governance::Admin.ensure_may_approve_transfer!(current_user, @paypal_transfer.amount_cents)
 
     @paypal_transfer.mark_approved!
 

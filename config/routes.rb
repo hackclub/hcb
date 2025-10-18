@@ -72,6 +72,7 @@ Rails.application.routes.draw do
     get "settings/previews", to: "users#edit_featurepreviews"
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
+    get "settings/integrations", to: "users#edit_integrations"
     get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
 
@@ -144,6 +145,7 @@ Rails.application.routes.draw do
       get "previews", to: "users#edit_featurepreviews"
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"
+      get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
       get "admin_details", to: "users#admin_details"
 
@@ -480,7 +482,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
-      get "receipt_status"
       post "invoice_as_personal_transaction"
       post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
@@ -489,6 +490,10 @@ Rails.application.routes.draw do
       scope module: "hcb_code" do
         get "subscriptions/transactions", to: "subscriptions#transactions"
       end
+    end
+
+    collection do
+      get "receipt_status"
     end
   end
 
@@ -681,6 +686,7 @@ Rails.application.routes.draw do
 
         resources :card_grants, only: [:show, :update] do
           member do
+            post "activate"
             post "topup"
             post "withdraw"
             post "cancel"
@@ -715,6 +721,8 @@ Rails.application.routes.draw do
   get "discord/setup", to: "discord#setup"
   get "discord/unlink_server", to: "discord#unlink_server"
   post "discord/unlink_server", to: "discord#unlink_server_action"
+  get "discord/unlink_user", to: "discord#unlink_user"
+  post "discord/unlink_user", to: "discord#unlink_user_action"
   post "discord/create_server_link", to: "discord#create_server_link"
 
   post "extract/invoice", to: "extraction#invoice"
@@ -784,6 +792,21 @@ Rails.application.routes.draw do
     end
   end
 
+  scope module: "organizer_position_invite" do
+    resources :links, path: "invite_links", only: :show do
+      member do
+        post "deactivate"
+      end
+    end
+
+    resources :requests, path: "invite_requests", only: [:create] do
+      member do
+        post "approve"
+        post "deny"
+      end
+    end
+  end
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
@@ -849,9 +872,6 @@ Rails.application.routes.draw do
     resources :wires, only: [:new, :create]
     resources :wise_transfers, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
-    resources :organizer_position_invites,
-              only: [:new, :create],
-              path: "invites"
     resources :g_suites, only: [:new, :create, :edit, :update]
     resources :documents, only: [:index]
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
@@ -860,6 +880,16 @@ Rails.application.routes.draw do
     resources :affiliations, only: [:create, :update, :destroy], controller: "event/affiliations"
     resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
+    resources :organizer_position_invites,
+              only: [:new, :create],
+              path: "invites"
+
+    scope module: "organizer_position_invite" do
+      resources :links,
+                only: [:new, :create, :index],
+                path: "invite_links",
+                as: :invite_links
+    end
 
     namespace :donation do
       resource :goals, only: [:create, :update]
