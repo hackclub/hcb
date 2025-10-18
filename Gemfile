@@ -116,7 +116,7 @@ gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
-gem "webauthn", "~> 3.2"
+gem "webauthn", "~> 3.4"
 
 gem "ahoy_matey" # analytics
 gem "blazer" # business intelligence tool/dashboard
