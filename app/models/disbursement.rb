@@ -188,6 +188,8 @@ class Disbursement < ApplicationRecord
   end
 
   def approve_by_admin(user)
+    Governance::Admin.ensure_may_approve_transfer!(user, amount)
+
     if scheduled_on.present?
       mark_scheduled!(user)
     else
