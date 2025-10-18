@@ -201,6 +201,8 @@ module Reimbursement
 
     def admin_approve
       authorize @report
+      # TODO: This does NOT consider currency
+      Governance::Admin.ensure_may_approve_transfer!(current_user, @report.amount_to_reimburse_cents)
 
       begin
         @report.with_lock do
