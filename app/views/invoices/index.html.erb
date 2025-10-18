@@ -1,14 +1,17 @@
 <% title "Invoices for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :invoices %>
+<% 
+  @is_empty = @invoices.size == 0
+%>
 
 <h1 class="heading">
   <span class="flex items-center">
     Invoices
-    <%= badge_for @invoices.size, class: "bg-muted" %>
+    <%= badge_for @invoices.size, class: "bg-muted" if !@is_empty %>
   </span>
 
-  <% if organizer_signed_in?(as: :member) %>
+  <% if organizer_signed_in?(as: :member) && !@is_empty %>
     <%= link_to new_event_invoice_path(event_id: @event.slug),
         class: "btn btn--icon bg-success",
         data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
@@ -22,7 +25,8 @@
   <%= render "modal" %>
 <% end %>
 
-<div class="statset mt3 mb3">
+<% if !@is_empty %>
+<div class="statset mt3 mb2">
   <div class="stat tooltipped tooltipped--s" aria-label="This excludes archived invoices">
     <span class="stat__label">Total invoiced</span>
     <span class="stat__value"><%= render_money_amount @stats[:total] %></span>
@@ -49,9 +53,6 @@
   <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
 
-<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
-
-<% if @invoices.size > 0 %>
 <article class="table-container">
 <table>
   <thead>
@@ -96,5 +97,13 @@
 </table>
 </article>
 <% else %>
-  <%= blankslate "No invoices yet" %>
+  <%= blankslate "It's quiet here...", "Invoices will appear here as you send them to a sponsor. Send an invoice below to get started!", { screen: true } do %>
+      <%= link_to new_event_invoice_path(event_id: @event.slug),
+        class: "btn btn--icon",
+        data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+      <%= inline_icon "send" %>
+      Send an invoice
+    <% end %>
+  <% end %>
 <% end %>
+</div>
