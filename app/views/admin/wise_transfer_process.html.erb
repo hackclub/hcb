@@ -176,7 +176,7 @@
         <% end %>
       </fieldset>
 
-      <fieldset class="px-6 py-3" x-data="{ amount: null, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
+      <fieldset class="px-6 py-3" x-data="{ amount: null, pending_amount: <%= @wise_transfer.quoted_usd_amount_cents %>, balance: <%= @wise_transfer.event.balance_available_v2_cents %> }">
         <legend class="py-0 px-2">Send</legend>
 
         <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
@@ -190,11 +190,11 @@
               "@keyup": "amount = +$event.target.value * 100",
               data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
           </div>
-          <p x-show="amount && balance >= amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
+          <p x-show="amount && balance >= (amount - pending_amount)" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
             <%= inline_icon "checkmark", class: "text-green" %>
             Sufficient funds available
           </p>
-          <p x-show="amount && balance < amount" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
+          <p x-show="amount && balance < (amount - pending_amount)" class="mx-0 bold flex flex-row justify-start items-center gap-2 my-2">
             <%= inline_icon "important", class: "text-red" %>
             Insufficient funds, please reject this transfer
           </p>

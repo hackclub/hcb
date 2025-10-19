@@ -45,6 +45,7 @@ class IncreaseChecksController < ApplicationController
   def approve
     authorize @check
 
+    Governance::Admin.ensure_may_approve_transfer!(current_user, @check.amount)
     @check.send_check!
 
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }

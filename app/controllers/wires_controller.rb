@@ -41,6 +41,7 @@ class WiresController < ApplicationController
 
   def approve
     authorize @wire
+    Governance::Admin.ensure_may_approve_transfer!(current_user, @wire.usd_amount_cents)
 
     @wire.mark_approved!
 
@@ -69,6 +70,7 @@ class WiresController < ApplicationController
   def send_wire
     authorize @wire
 
+    Governance::Admin.ensure_may_approve_transfer!(current_user, @wire.usd_amount_cents)
     @wire.send_wire!
 
     if params[:charge_fee] == "1"
