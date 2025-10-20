@@ -10,7 +10,9 @@ module Api
         @invitations = current_user.organizer_position_invites.pending
       end
 
-      def show; end
+      def show
+        authorize @invitation
+      end
 
       def create
         @event = Event.find_by_public_id(params[:event_id])
@@ -28,17 +30,16 @@ module Api
           return render json: { error: "User already has a pending invitation" }, status: :unprocessable_entity
         end
 
-        @invitation = OrganizerPositionInvite.new(
-          event: @event,
-          email: params[:email],
-          position_role: params[:role],
-          invited_by: current_user
-        )
+        service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email: params[:email], is_signee: false, role: params[:role], enable_spending_controls: params[:enable_spending_controls], initial_control_allowance_amount: params[:initial_control_allowance_amount])
 
-        if @invitation.save
+        @invitation = service.model
+
+        authorize @invitation
+
+        if service.run
           render :show, status: :created
         else
-          render json: { errors: @invitation.errors }, status: :unprocessable_entity
+          render json: { error: "Failed to create invitation" }, status: :unprocessable_entity
         end
       end
 
