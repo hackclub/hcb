@@ -25,12 +25,17 @@ module Api
           event_id: @event.id,
           search: filters[:q].presence,
           tag_id: filters[:tag].presence,
+          expenses: filters[:expenses].presence,
+          revenue: filters[:revenue].presence,
           minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
           maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
-          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
           start_date: filters[:start_at].presence,
           end_date: filters[:end_at].presence,
-          missing_receipts: filters[:missing_receipts].present?
+          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
+          missing_receipts: filters[:missing_receipts].present?,
+          category: filters[:category].presence,
+          merchant: filters[:merchant].presence,
+          order_by: filters[:order_by].presence
         ).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @settled_transactions, event: @event).run!
 
@@ -38,12 +43,17 @@ module Api
           event_id: @event.id,
           search: filters[:q].presence,
           tag_id: filters[:tag].presence,
+          expenses: filters[:expenses].presence,
+          revenue: filters[:revenue].presence,
           minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
           maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
-          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
           start_date: filters[:start_at].presence,
           end_date: filters[:end_at].presence,
-          missing_receipts: filters[:missing_receipts].present?
+          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
+          missing_receipts: filters[:missing_receipts].present?,
+          category: filters[:category].presence,
+          merchant: filters[:merchant].presence,
+          order_by: filters[:order_by].presence
         ).run
         PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions: @pending_transactions, event: @event).run!
 
