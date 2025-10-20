@@ -19,42 +19,10 @@ module Api
       def transactions
         authorize @event, :show_in_v4?
 
-        filters = params[:filters] || {}
-
-        @settled_transactions = TransactionGroupingEngine::Transaction::All.new(
-          event_id: @event.id,
-          search: filters[:q].presence,
-          tag_id: filters[:tag].presence,
-          expenses: filters[:expenses].presence,
-          revenue: filters[:revenue].presence,
-          minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
-          maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
-          start_date: filters[:start_at].presence,
-          end_date: filters[:end_at].presence,
-          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
-          missing_receipts: filters[:missing_receipts].present?,
-          category: filters[:category].presence,
-          merchant: filters[:merchant].presence,
-          order_by: filters[:order_by].presence
-        ).run
+        @settled_transactions = TransactionGroupingEngine::Transaction::All.new(filters).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @settled_transactions, event: @event).run!
 
-        @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(
-          event_id: @event.id,
-          search: filters[:q].presence,
-          tag_id: filters[:tag].presence,
-          expenses: filters[:expenses].presence,
-          revenue: filters[:revenue].presence,
-          minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
-          maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
-          start_date: filters[:start_at].presence,
-          end_date: filters[:end_at].presence,
-          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
-          missing_receipts: filters[:missing_receipts].present?,
-          category: filters[:category].presence,
-          merchant: filters[:merchant].presence,
-          order_by: filters[:order_by].presence
-        ).run
+        @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(filters).run
         PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions: @pending_transactions, event: @event).run!
 
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
@@ -88,6 +56,41 @@ module Api
         @has_more = transactions.length > start_index + limit
 
         transactions.slice(start_index, limit)
+      end
+
+      def filters
+        filter_params = params.require(:filters).permit(
+          :search,
+          :tag_id,
+          :expenses,
+          :revenue,
+          :minimum_amount,
+          :maximum_amount,
+          :start_date,
+          :end_date,
+          :user_id,
+          :missing_receipts,
+          :category,
+          :merchant,
+          :order_by
+        )
+
+        return {
+          event_id: @event.id
+          search: filter_params[:search].presence,
+          tag_id: filter_params[:tag_id].presence,
+          expenses: filter_params[:expenses].presence,
+          revenue: filter_params[:revenue].presence,
+          minimum_amount: filter_params[:minimum_amount].presence ? Money.from_amount(filter_params[:minimum_amount].to_f) : nil,
+          maximum_amount: filter_params[:maximum_amount].presence ? Money.from_amount(filter_params[:maximum_amount].to_f) : nil,
+          start_date: filter_params[:start_date].presence,
+          end_date: filter_params[:end_date].presence,
+          user: filter_params[:user_id] ? @event.users.find_by_public_id(filter_params[:user_id]) : nil,
+          missing_receipts: filter_params[:missing_receipts].present?,
+          category: filter_params[:category].presence,
+          merchant: filter_params[:merchant].presence,
+          order_by: filter_params[:order_by].presence
+        }
       end
 
     end
