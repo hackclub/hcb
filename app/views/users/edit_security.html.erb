@@ -1,5 +1,7 @@
 <% title "Account settings" %>
 <% page_md %>
+<% disabled = !policy(@user).update? %>
+
 <%= render "users/nav", selected: :settings %>
 
 <h1>
@@ -22,7 +24,8 @@
                 <%= form.label :use_sms_auth do %>
                   <%= form.check_box :use_sms_auth,
                     data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
-                    switch: true %>
+                    switch: true,
+                    disabled: %>
                   <span class="slider"></span>
                 <% end %>
               </div>
@@ -33,22 +36,27 @@
                 <%= form.label :use_two_factor_authentication do %>
                   <%= form.check_box :use_two_factor_authentication,
                     data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
-                    switch: true %>
+                    switch: true,
+                    disabled: %>
                   <span class="slider"></span>
                 <% end %>
               </div>
             </div>
-            <%= form.submit "Update preferences" %>
+            <%= form.submit "Update preferences", disabled: %>
           <% end %>
         <% else %>
-          <p>
-            To send login codes to your phone or enable two factor authentication, first
-            <action data-behavior="modal_trigger" data-modal="verify_phone">
-              <a>
-                verify your phone number.
-              </a>
-            </action>
-          </p>
+          <% if disabled %>
+            <p><%= @user.name %> doesn't have their phone number verified.</p>
+          <% else %>
+            <p>
+              To send login codes to your phone or enable two factor authentication, first
+              <action data-behavior="modal_trigger" data-modal="verify_phone">
+                <a class="underline">
+                  verify your phone number.
+                </a>
+              </action>
+            </p>
+          <% end %>
         <% end %>
       <% end %>
     </div>
@@ -61,11 +69,19 @@
       <div class="card border b--info mt0 mb3">
         <% if @user.totp.present? %>
           <p>
-            You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
+            <% if disabled %>
+              <%= @user.name %> set up time-based one time passwords on <%= format_date @user.totp.created_at %>
+            <% else %>
+              You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
+            <% end %>
           </p>
         <% else %>
           <p>
-            You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %> to setup your TOTP.
+            <% if disabled %>
+              <%= @user.name %> currently doesn't have time-based one time passwords set up.
+            <% else %>
+                You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %> to setup your TOTP.
+            <% end %>
           </p>
         <% end %>
       </div>
@@ -76,7 +92,7 @@
       <span class="h2 bold">Security keys</span>
       <%= badge_for @user.webauthn_credentials.count, class: "bg-muted" %>
     </legend>
-    <button class="btn px2 h4" data-behavior="modal_trigger" data-modal="webauthn_register">
+    <button class="btn px2 h4 <%= "disabled" if disabled %>" data-behavior="modal_trigger" data-modal="webauthn_register">
       <%= inline_icon "plus", size: home_action_size %>
       Set up
     </button>
@@ -98,12 +114,12 @@
     </legend>
     <div class="flex flex-row gap-x-2">
       <% if @user.backup_codes_enabled? %>
-        <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your current codes immediately." } do %>
+        <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your current codes immediately." }, disabled: do %>
           <%= inline_icon "minus", size: home_action_size %>
           Disable backup codes
         <% end %>
       <% end %>
-      <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'" do %>
+      <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'", disabled: do %>
         <%= inline_icon "plus", size: home_action_size %>
         <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
       <% end %>
@@ -128,7 +144,7 @@
       <%= badge_for @all_sessions.count, class: "bg-muted" %>
     </legend>
     <%= link_to logout_all_user_path(@user), method: :delete,
-            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) do %>
+            class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) || disabled do %>
       <%= inline_icon "door-leave", size: home_action_size %>
       Sign out everywhere else
     <% end %>
@@ -137,20 +153,20 @@
   <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
     <div class="field">
       <%= form.label :session_validity_preference, "Sign me out after" %>
-      <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, selected: @user.session_validity_preference %>
+      <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>
     </div>
 
     <div class="submit">
-      <%= form.submit "Save" %>
+      <%= form.submit "Save", disabled: %>
     </div>
   <% end %>
 
   <div class="grid grid--split">
     <% @all_sessions.each do |session| %>
       <% if session.is_a? UserSession %>
-        <%= render "user_session", session: %>
+        <%= render "user_session", session:, disabled: %>
       <% elsif session.respond_to? :authorization_count %>
-        <%= render "oauth_authorization", authorization: session %>
+        <%= render "oauth_authorization", authorization: session, disabled: %>
       <% end %>
     <% end %>
   </div>
