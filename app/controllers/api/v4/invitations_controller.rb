@@ -3,8 +3,11 @@
 module Api
   module V4
     class InvitationsController < ApplicationController
+      include SetEvent
+
       skip_after_action :verify_authorized, only: [:index]
       before_action :set_invitation, except: [:index]
+      before_action :set_api_event, only: [:create]
 
       def index
         @invitations = current_user.organizer_position_invites.pending
@@ -15,7 +18,6 @@ module Api
       end
 
       def create
-        @event = Event.find_by_public_id(params[:event_id])
         authorize @event
 
         unless policy(@event).can_invite_user?
