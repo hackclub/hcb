@@ -1030,10 +1030,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
-    t.string "discord_guild_id"
-    t.string "discord_channel_id"
     t.boolean "fee_waiver_eligible", default: false, null: false
     t.boolean "fee_waiver_applied", default: false, null: false
+    t.string "discord_guild_id"
+    t.string "discord_channel_id"
     t.index ["discord_channel_id"], name: "index_events_on_discord_channel_id", unique: true
     t.index ["discord_guild_id"], name: "index_events_on_discord_guild_id", unique: true
     t.index ["parent_id"], name: "index_events_on_parent_id"
