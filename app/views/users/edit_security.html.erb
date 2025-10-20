@@ -164,7 +164,7 @@
     <div class="grid grid--split">
       <% @all_sessions.each do |session| %>
         <% if session.is_a? UserSession %>
-          <%= render "user_session", session:, disabled: %>
+          <%= render "user_session", session: %>
         <% elsif session.respond_to? :authorization_count %>
           <%= render "oauth_authorization", authorization: session %>
         <% end %>
