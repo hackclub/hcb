@@ -27,7 +27,7 @@ module Api
           tag_id: filters[:tag].presence,
           minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
           maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
-          user: filters[:user_id] ? @event.users.find_by(id: filters[:user_id]) : nil,
+          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
           start_date: filters[:start_at].presence,
           end_date: filters[:end_at].presence,
           missing_receipts: filters[:missing_receipts].present?
@@ -40,7 +40,7 @@ module Api
           tag_id: filters[:tag].presence,
           minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
           maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
-          user: filters[:user_id] ? @event.users.find_by(id: filters[:user_id]) : nil,
+          user: filters[:user_id] ? @event.users.find_by_public_id(filters[:user_id]) : nil,
           start_date: filters[:start_at].presence,
           end_date: filters[:end_at].presence,
           missing_receipts: filters[:missing_receipts].present?
