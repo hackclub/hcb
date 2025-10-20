@@ -47,6 +47,7 @@ class WiseTransfersController < ApplicationController
 
   def approve
     authorize @wise_transfer
+    Governance::Admin.ensure_may_approve_transfer!(current_user, @wise_transfer.quoted_usd_amount_cents)
 
     @wise_transfer.mark_approved!
 

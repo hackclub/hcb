@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  rescue_from Governance::Admin::InsufficientApprovalLimitError do |e|
+    redirect_back fallback_location: root_path, flash: { error: e.message }
+  end
+
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym

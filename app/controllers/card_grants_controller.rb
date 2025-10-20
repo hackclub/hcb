@@ -147,7 +147,7 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
-    @card_grant.create_stripe_card(current_session)
+    @card_grant.create_stripe_card(request.remote_ip)
 
     redirect_to @card_grant
   rescue Stripe::InvalidRequestError => e

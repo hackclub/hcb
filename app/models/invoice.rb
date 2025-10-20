@@ -280,7 +280,14 @@ class Invoice < ApplicationRecord
     self.auto_advance = inv.auto_advance
     self.due_date = Time.at(inv.due_date).to_datetime # convert from unixtime
     self.ending_balance = inv.ending_balance
-    self.finalized_at = inv.respond_to?(:status_transitions) ? inv.status_transitions.finalized_at : inv.try(:finalized_at)
+
+    finalized_value = if inv.respond_to?(:status_transitions)
+                        inv.status_transitions.finalized_at
+                      else
+                        inv.try(:finalized_at)
+                      end
+    self.finalized_at = finalized_value ? Time.at(finalized_value.to_i).to_datetime : nil
+
     self.hosted_invoice_url = inv.hosted_invoice_url
     self.invoice_pdf = inv.invoice_pdf
     self.livemode = inv.livemode
