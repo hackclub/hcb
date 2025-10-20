@@ -66,7 +66,8 @@ class HcbCode < ApplicationRecord
   def popover_path(**params)
     author_img_param = "&transaction_show_author_img=#{params[:transaction_show_author_img]}" if params[:transaction_show_author_img]
     receipt_button_param = "&transaction_show_receipt_button=#{params[:transaction_show_receipt_button]}" if params[:transaction_show_receipt_button]
-    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}"
+    ledger_instance_param = "&ledger_instance=#{params[:ledger_instance]}" if params[:ledger_instance]
+    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}#{ledger_instance_param}"
   end
 
   def receipt_upload_email
@@ -499,9 +500,15 @@ class HcbCode < ApplicationRecord
   def receipt_required?
     return false if pt&.declined?
 
-    (type == :card_charge) ||
-      # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check, :paypal_transfer, :wire, :wise_transfer].include?(type) && created_at > Time.utc(2024, 2, 1))
+    return false unless event&.plan&.receipts_required?
+
+    # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
+    return false if [:ach, :check, :increase_check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
+
+    return true if [:card_charge, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
+
+    # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
+    false
   end
 
   def receipt_optional?

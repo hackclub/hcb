@@ -1,0 +1,16 @@
+<%# locals: (event:, perks_available:) %>
+
+<% if event.hackathon? || event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
+  <div class="card pb0 mb3 <%= "muted" unless perks_available %>" id="hackathons-page">
+    <div class="card__banner card__banner--top flex justify-between items-center promo-hackathons-page">
+      <%= image_tag "https://assets.hackclub.com/flag-standalone.svg", height: 90, class: "p-4" %>
+      <%= link_to perks_available ? "Apply" : "Ineligible",
+        "https://dash.hackathons.hackclub.com/hackathons/submissions/new",
+        class: "btn #{'disabled' unless perks_available}",
+        target: :_blank %>
+    </div>
+    <p>
+      Are you running a high school student-led hackathon? If you would like to get <%= event.name %> listed on <%= link_to "hackathons.hackclub.com", "https://hackathons.hackclub.com/" %>, apply here!
+    </p>
+  </div>
+<% end %>

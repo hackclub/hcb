@@ -15,7 +15,7 @@
       <%= "is requesting " unless @report.closed? %>
       <%= render "total", report: @report %>
       <% if @report.maximum_amount_cents %>
-        (<%= render_money @report.maximum_amount_cents %> cap)
+        (<%= render_money @report.maximum_amount_cents %> <%= "USD" unless @report.currency == "USD" %> cap)
       <% end %>
       <%= "from #{@event.name}" if @event && @use_user_nav %> for
     </span>
@@ -162,10 +162,69 @@
   <% end %>
 <% end %>
 
+<% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
+  <% admin_tool("mt-4") do %>
+    <h3 class="mt-0">Process Wise reimbursement</h3>
+
+    <div class="flex flex-row items-start justify-start gap-2 my-4">
+      <span class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">3</span>
+      <strong class="m-0">
+        You may now send the Wise transfer
+      </strong>
+    </div>
+
+    <%= render partial: "wise_information", locals: { report: @report } %>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <%= form_with(model: false, local: true, url: reimbursement_report_admin_send_wise_transfer_path(@report), method: :post) do |form| %>
+        <h4 class="mt-0">Process transfer</h4>
+
+        <div class="field">
+          <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %>
+          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+        </div>
+        <div class="field">
+          <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %>
+          <%= form.text_field(
+                :wise_recipient_id,
+                style: "width: 400px;",
+                class: "mt-0 !max-w-full",
+                placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              ) %>
+        </div>
+        <%= form.submit "Mark transfer as sent" %>
+      <% end %>
+      <div>
+        <% locked_usd_amount = render_money @report.payout_holding.amount_cents %>
+        <h4 class="mt-0">⚠️ Transaction failed? Here's what to do!</h4>
+        <p>Reach out to the user to request new information from them (for example an updated account number or address). Inform them that the USD amount of this report has been locked at <%= locked_usd_amount %> and that after we receive the updated information from them, we will send the <%= @report.currency %> equivalent of <%= locked_usd_amount %>.</p>
+        <p><strong>Upon resending the new information, send a Wise transfer with the updated information with a USD value of <%= locked_usd_amount %>.</strong></p>
+        <p>If you would prefer to abort this reimbursement report, please reach out to an engineer to cancel the report. Cancelling a report is a destructive action and the report can not be resubmitted afterwards.</p>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
 <div id="expenses">
   <%= render partial: "expenses", locals: { report: @report } %>
   <%= render partial: "blankslate", locals: { report: @report } %>
 </div>
+
+<% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
+  <% footer = capture do %>
+    <%= turbo_frame_tag :wise_transfer_quote, loading: :lazy, src: reimbursement_report_wise_transfer_quote_path(@report) do %>
+      Fetching latest estimate...
+    <% end %>
+  <% end %>
+  <%= render "callout",
+      type: "info",
+      icon: "wise",
+      title: "Important information about Wise reimbursements",
+      class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-4",
+      footer: footer || link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+    We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to your organization.
+  <% end %>
+<% end %>
 
 <%= render partial: "actions", locals: { report: @report, user: @user } %>
 

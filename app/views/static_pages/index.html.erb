@@ -112,7 +112,31 @@
       </ul>
     <% end %>
 
-    <%= render "static_pages/index/teen_raffle" %>
+    <% if @invite_requests.any? %>
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending join requests</h2>
+      <ul class="grid grid--narrow text-left w-full mt-2">
+        <% @invite_requests.each do |invite_request| %>
+          <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+            <span class="w-full flex gap-2 items-center align-middle">
+              <%= status_badge "info" %>
+              <strong><%= invite_request.link.event.name %></strong>
+              <div class="flex-grow"></div>
+              <%= pop_icon_to "view-close-small",
+                deny_request_path(invite_request),
+                class: "error tooltipped tooltipped--w h-8 w-8",
+                data: {
+                  turbo_method: :post,
+                  turbo_confirm: "Are you sure you want to cancel this join request?",
+                },
+                'aria-label': "Cancel",
+                disabled: !policy(invite_request).deny? %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <%= render "static_pages/index/teenager_raffle" %>
 
     <%# Latest HCB announcement %>
     <% if @latest_hcb_announcement %>
@@ -151,7 +175,7 @@
     <% end %>
   <% end %>
   <% if auditor_signed_in? %>
-    <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :lazy, target: "_top", class: "w-full") do %>
+    <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :eager, target: "_top", class: "w-full") do %>
       <p>Loading admin tools</p>
     <% end %>
   <% end %>

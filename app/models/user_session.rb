@@ -74,10 +74,14 @@ class UserSession < ApplicationRecord
 
   LAST_SEEN_AT_COOLDOWN = 5.minutes
 
-  def touch_last_seen_at
+  MAX_SESSION_DURATION = 3.weeks
+
+  def update_session_timestamps
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
-    update_columns(last_seen_at: Time.now)
+    updates = { last_seen_at: Time.now }
+    updates[:expiration_at] = [created_at + MAX_SESSION_DURATION, user.session_validity_preference.seconds.from_now].min unless impersonated?
+    update_columns(**updates)
   end
 
   def expired?

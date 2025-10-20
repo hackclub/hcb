@@ -147,7 +147,7 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
-    @card_grant.create_stripe_card(current_session)
+    @card_grant.create_stripe_card(request.remote_ip)
 
     redirect_to @card_grant
   rescue Stripe::InvalidRequestError => e
@@ -201,6 +201,15 @@ class CardGrantsController < ApplicationController
     @card_grant.update(one_time_use: !@card_grant.one_time_use)
 
     redirect_to @card_grant, flash: { success: "#{@card_grant.one_time_use ? "Enabled" : "Disabled"} one time use for this card grant." }
+  end
+
+  def disable_pre_authorization
+    authorize @card_grant
+
+    @card_grant.pre_authorization&.destroy!
+    @card_grant.update(pre_authorization_required: false)
+
+    redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
   end
 
   def edit

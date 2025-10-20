@@ -113,7 +113,7 @@ class StripeCardsController < ApplicationController
 
     new_card = ::StripeCardService::Create.new(
       current_user:,
-      current_session:,
+      ip_address: current_session.ip,
       event_id: event.id,
       card_type: sc[:card_type],
       stripe_shipping_name: sc[:stripe_shipping_name],
@@ -128,8 +128,6 @@ class StripeCardsController < ApplicationController
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
   rescue => e
-    Rails.error.report(e)
-
     if event.present?
       redirect_to event_cards_new_path(event), flash: { error: e.message }
     else

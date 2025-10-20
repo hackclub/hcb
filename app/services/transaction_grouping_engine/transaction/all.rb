@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -15,6 +15,8 @@ module TransactionGroupingEngine
         @end_date = end_date&.to_datetime
         @user = user
         @missing_receipts = missing_receipts
+        @category = category
+        @merchant = merchant
         @order_by = order_by
       end
 
@@ -102,14 +104,34 @@ module TransactionGroupingEngine
         ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user.stripe_cardholder.stripe_id])
       end
 
-      def user_joins_for(type)
-        return "" unless @user.present?
+      def category_modifier
+        return "" unless @category.present?
+
+        ActiveRecord::Base.sanitize_sql_array(["and transaction_category_mappings.transaction_category_id = ?", @category.id])
+      end
+
+      def merchant_modifier
+        return "" unless @merchant.present?
+
+        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id' = ?", @merchant])
+      end
+
+      def stripe_joins_for(type)
+        return "" unless @user.present? || @merchant.present?
 
         type = type.to_s
 
         return "left join raw_stripe_transactions on raw_stripe_transactions.id = transaction_source_id AND transaction_source_type = 'RawStripeTransaction'" if type == "ct"
 
         "left join raw_stripe_transactions on raw_stripe_transactions.id = raw_pending_stripe_transaction_id"
+      end
+
+      def category_joins_for(type)
+        return "" unless @category.present?
+
+        ct_type = type == :ct ? "CanonicalTransaction" : "CanonicalPendingTransaction"
+
+        return "left join transaction_category_mappings on #{type}.id = transaction_category_mappings.categorizable_id AND transaction_category_mappings.categorizable_type = '#{ct_type}'"
       end
 
       def modifiers
@@ -140,7 +162,7 @@ module TransactionGroupingEngine
         end
 
         conditions << "q1.amount_cents < 0" if @expenses
-        conditions << "q1.amount_cents >= 0" if @revenue
+        conditions << "q1.amount_cents > 0" if @revenue
 
         if @minimum_amount
           conditions << "ABS(q1.amount_cents) >= :min_cents"
@@ -202,7 +224,8 @@ module TransactionGroupingEngine
           from
             canonical_pending_transactions pt
           #{order_by_mapped_at ? "left join canonical_pending_event_mappings cpem on cpem.canonical_pending_transaction_id = pt.id" : ""}
-          #{user_joins_for :pt}
+          #{category_joins_for :pt}
+          #{stripe_joins_for :pt}
           where
             fronted = true -- only included fronted pending transactions
             and
@@ -237,6 +260,8 @@ module TransactionGroupingEngine
             )
             #{search_modifier_for :pt}
             #{user_modifier}
+            #{category_modifier}
+            #{merchant_modifier}
           group by
             coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
         SQL
@@ -252,7 +277,8 @@ module TransactionGroupingEngine
           from
             canonical_transactions ct
           #{order_by_mapped_at ? "left join canonical_event_mappings cem on cem.canonical_transaction_id = ct.id" : ""}
-          #{user_joins_for :ct}
+          #{category_joins_for :ct}
+          #{stripe_joins_for :ct}
           where
             ct.id in (
               select
@@ -265,6 +291,8 @@ module TransactionGroupingEngine
             )
             #{search_modifier_for :ct}
             #{user_modifier}
+            #{category_modifier}
+            #{merchant_modifier}
           group by
             coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
         SQL
