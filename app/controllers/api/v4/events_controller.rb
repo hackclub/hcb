@@ -76,7 +76,7 @@ module Api
         )
 
         return {
-          event_id: @event.id
+          event_id: @event.id,
           search: filter_params[:search].presence,
           tag_id: filter_params[:tag_id].presence,
           expenses: filter_params[:expenses].presence,
