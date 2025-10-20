@@ -5,7 +5,7 @@ class TopupStripeJob < ApplicationJob
 
   # Don't retry jobs w/ balance anomalies, reattempt at next run
   discard_on(Errors::StripeIssuingBalanceAnomaly) do |job, error|
-    Airbrake.notify(error)
+    Rails.error.report error
   end
 
   def perform
@@ -47,7 +47,7 @@ class TopupStripeJob < ApplicationJob
       # It appears we're spending our top-up money too quickly. Our ideal "age"
       # of money is at least two weeks (see above). This notification is a sign
       # we may need to increase our buffer.
-      Airbrake.notify(<<~MSG.squish)
+      Rails.error.unexpected <<~MSG.squish
         Stripe Issuing balance: Low age of money.
         We only have #{ActionController::Base.helpers.number_to_percentage((available / buffer.to_f) * 100, precision: 2)}
         of the buffer available for spending.

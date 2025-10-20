@@ -35,6 +35,10 @@ class Event
         "high school hackathon (2024 fee waiver)"
       end
 
+      def description
+        "Used for high school hackathons that have their HCB fees waived. Has access to all standard features."
+      end
+
     end
 
   end

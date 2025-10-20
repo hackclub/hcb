@@ -16,9 +16,31 @@
     <%= @use_sms_auth ? "your phone number ending in " + @phone_last_four : mail_to(@email, { target: "_blank" }) %>
   </p>
   <%= form_tag complete_login_path(@login) do %>
-    <%= text_field :login_code, "", placeholder: "Enter your login code", name: "login_code", class: "!max-w-full w-max", required: true, autofocus: true unless Flipper.enabled?(:otp_single_input, @login.user) %>
+    <% if Flipper.enabled?(:otp_single_input, @login.user) %>
+      <%= text_field_tag(
+            :login_code,
+            "",
+            class: "otp_code",
+            autocomplete: "one-time-code",
+            required: true,
+            inputmode: "numeric",
+            maxlength: "6",
+            autofocus: true,
+            data: { behavior: "otp_input" }
+          ) %>
+    <% else %>
+      <%= text_field_tag(
+            :login_code,
+            "",
+            placeholder: "Enter your login code",
+            class: "!max-w-full w-max",
+            autocomplete: "one-time-code",
+            required: true,
+            autofocus: true,
+            inputmode: "numeric",
+          ) %>
+    <% end %>
 
-    <%= text_field :login_code, "", class: "otp_code", autocomplete: "one-time-code", required: true, inputmode: "numeric", maxlength: "6", autofocus: true, data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
     <%= hidden_field_tag :method, :login_code %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>
@@ -26,12 +48,12 @@
     <%= hidden_field_tag :timezone %>
     <%= hidden_field_tag :return_to, @return_to if @return_to %>
     <% if @use_sms_auth %>
-      <%= hidden_field_tag :sms %>
+      <%= hidden_field_tag :sms, true %>
     <% else %>
       <p class="h5 muted"><em>Make sure to check your spam folder</em></p>
     <% end %>
     <div class="flex flex-row justify-between items-center mt-4 gap-2">
-      <% if @webauthn_available || @totp_available %>
+      <% if @login.webauthn_available? || @login.totp_available? || @login.backup_code_available? %>
         <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt-0 no-underline" %>
       <% end %>
       <button data-webauthn-auth-target="continueButton" type="submit" class="gap-2 btn">

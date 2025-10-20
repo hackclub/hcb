@@ -53,6 +53,13 @@ class DonationsController < ApplicationController
 
     tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
+    @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
+    @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
+    if params[:tier_id] && @tier.nil?
+      redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." }
+    end
+
+
     @donation = Donation.new(
       name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
       email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),

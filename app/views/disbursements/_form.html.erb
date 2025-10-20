@@ -1,16 +1,18 @@
-<% disabled = @source_event.present? && !policy(@source_event).create_transfer? %>
+<%# locals: (disbursement:, event: nil, source_event: nil, destination_event: nil, allowed_source_events:, allowed_destination_events:) %>
+
+<% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: @allowed_source_events, default_event: @source_event, sending: true } %>
-  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: @allowed_destination_events, default_event: nil, receiving: true, allow_custom_events: @source_event&.plan&.unrestricted_disbursements_enabled? } %>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
 
-  <% if admin_signed_in? %>
-    <div class="admin-tools field field--checkbox" x-show="fee > 0" x-cloak x-transition.duration.500ms>
-      <%= form.check_box :should_charge_fee %>
+  <% if auditor_signed_in? %>
+    <div class="admin-tools field field--checkbox">
+      <%= form.check_box :should_charge_fee, disabled: !admin_signed_in? %>
       <%= form.label :should_charge_fee do %>
-        Charge <span x-text="Math.round(fee * 100) || '0'"></span>% fiscal sponsorship fee?
+        Charge fiscal sponsorship fee?
       <% end %>
     </div>
   <% end %>
@@ -19,7 +21,7 @@
   <div class="field">
     <div class="flex items-center">
       <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount, value: (@disbursement&.amount.nil? ? nil : (@disbursement.amount.to_f / 100)),
+      <%= form.number_field :amount, value: (disbursement&.amount.nil? ? nil : (disbursement&.amount.to_f / 100)),
                                      placeholder: "500.00",
                                      step: 0.01,
                                      min: 0.01,
@@ -34,6 +36,28 @@
     <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, disabled: %>
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
+
+  <% admin_tool do %>
+      <% category_select = ->(field) {
+           form.select(
+             field,
+             options_for_select(
+               TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] }
+             ),
+             include_blank: "None",
+           )
+         } %>
+
+    <div class="field">
+      <%= form.label(:source_transaction_category_slug, "Source transaction category") %>
+      <%= category_select.call(:source_transaction_category_slug) %>
+    </div>
+
+    <div class="field">
+      <%= form.label(:destination_transaction_category_slug, "Destination transaction category") %>
+      <%= category_select.call(:destination_transaction_category_slug) %>
+    </div>
+  <% end %>
 
   <%= form.label :file, "Attach a receipt / invoice (optional)", class: "mt2" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
@@ -69,7 +93,7 @@
 
   <div
       class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"
-      aria-label="<%= @event&.demo_mode? ? "Transfers are disabled in Playground mode" : disabled ? "Only managers can make transfers!" : nil %>">
+      aria-label="<%= event&.demo_mode? ? "Transfers are disabled in Playground mode" : (disabled ? "Only managers can make transfers!" : nil) %>">
     <%= form.submit "Make transfer", class: "btn", disabled: %>
   </div>
 <% end %>

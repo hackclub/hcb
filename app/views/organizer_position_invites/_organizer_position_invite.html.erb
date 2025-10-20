@@ -1,18 +1,43 @@
 <div class="card pt1 pb1">
   <div class="flex g2 justify-between items-center">
-    <p class="h4 m0 overflow-auto" style="<%= "filter: blur(0.15em)" unless organizer_signed_in? %>">
-      <strong><%= organizer_signed_in? ? organizer_position_invite.user.email : "user@example.com" %></strong>
-    </p>
+    <% if organizer_signed_in? %>
+      <p class="h4 m0">
+        <strong>
+          <%= copy_to_clipboard(organizer_position_invite.user.email, tooltip_direction: "e") do %>
+            <%= organizer_position_invite.user.email %>
+          <% end %>
+        </strong>
+      </p>
+    <% else %>
+      <p class="h4 m0 overflow-auto" style="filter: blur(0.15em)">
+        <strong>user@example.com</strong>
+      </p>
+    <% end %>
 
     <div class="flex g1 items-center">
       <% if admin_signed_in? %>
         <% if organizer_position_invite.organizer_position_contract&.pending? || organizer_position_invite.organizer_position_contract&.sent? %>
           <div class="flex">
-            <div class="line-height-0 tooltipped tooltipped--w" aria-label="Pending signature, click to void this contract.">
+            <div class="line-height-0 tooltipped tooltipped--w" aria-label="Pending signature, click to manage this contract.">
               <div class="warning">
-                <%= link_to void_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), class: "primary", data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :POST } do %>
-                  <%= inline_icon("clock", size: 24) %>
-                <% end %>
+                <div data-controller="menu" data-menu-placement-value="bottom-start">
+                  <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                    <%= inline_icon("clock", size: 24) %>
+                  </div>
+                  <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+                    <%= link_to void_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
+                      Void this contract
+                    <% end %>
+                    <%= link_to resend_to_user_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), data: { turbo_method: :post } do %>
+                      Resend to the user
+                    <% end %>
+                    <% if organizer_position_invite.organizer_position_contract.cosigner_email.present? %>
+                      <%= link_to resend_to_cosigner_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), data: { turbo_method: :post } do %>
+                        Resend to the cosigner
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -58,34 +83,28 @@
 
   <div class="inline muted h6 m0">
     Invited <%= relative_timestamp(organizer_position_invite.created_at) %>
+    as a
+    <div class="inline" data-controller="menu" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
+      <% can_change_role = policy(organizer_position_invite).change_position_role? %>
 
-    <% if Flipper.enabled?(:user_permissions_2024_03_09, @event) && organizer_signed_in? %>
-      as a
-      <div class="inline" data-controller="menu" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
-        <% can_change_role = organizer_signed_in?(as: :manager) %>
+      <span class="h6 bold info <%= "pointer" if can_change_role %>"><%= organizer_position_invite.role %></span>
 
-        <span class="h6 bold info <%= "pointer" if can_change_role %>"><%= organizer_position_invite.role %></span>
-
-        <% if can_change_role %>
-          <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-            <% OrganizerPositionInvite.roles.keys.each do |role| %>
-              <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: "post", turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
-                <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
-              <% end %>
+      <% if can_change_role %>
+        <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+          <% OrganizerPositionInvite.roles.keys.each do |role| %>
+            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
+              <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
             <% end %>
-            <div class="menu__divider"></div>
-            <%= link_to "What do these mean?", roles_path %>
-          </div>
-        <% end %>
-      </div>
-      <% if organizer_position_invite.initial_control_allowance_amount_cents.present? && !organizer_position_invite.initial_control_allowance_amount_cents.zero? %>
-        with a <%= render_money organizer_position_invite.initial_control_allowance_amount_cents %> allowance
+          <% end %>
+          <div class="menu__divider"></div>
+          <%= link_to "What do these mean?", roles_path %>
+        </div>
       <% end %>
-      <%= "and contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
-    <% else %>
-      <%= "as a contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
+    </div>
+    <% if organizer_position_invite.initial_control_allowance_amount_cents.present? && !organizer_position_invite.initial_control_allowance_amount_cents.zero? %>
+      with a <%= render_money organizer_position_invite.initial_control_allowance_amount_cents %> allowance
     <% end %>
+    <%= "and contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
     by <%= organizer_position_invite.sender.name %>
   </div>
-
 </div>

@@ -7,6 +7,7 @@
 #  id             :bigint           not null, primary key
 #  aasm_state     :string
 #  archived_at    :datetime
+#  category       :integer          default("general"), not null
 #  deleted_at     :datetime
 #  name           :text
 #  slug           :text
@@ -41,12 +42,21 @@ class Document < ApplicationRecord
   belongs_to :archived_by, class_name: "User", optional: true
 
   has_one_attached :file
+  validates :file, size: { less_than_or_equal_to: 25.megabytes }, if: -> { attachment_changes["file"].present? }
+
   has_many :downloads, class_name: "DocumentDownload", dependent: :destroy
 
   validates_presence_of :user, :name
   validate :ensure_file_attached
 
   scope :common, -> { where(event_id: nil) }
+
+  enum :category, {
+    general: 0,
+    nonprofit_status: 1,
+    tax_exemption: 2,
+    forms: 3
+  }
 
   aasm timestamps: true do
     state :active, initial: true
@@ -70,14 +80,9 @@ class Document < ApplicationRecord
 
   def preview_url(resize: "500x500")
     return nil unless file
+    return nil unless file.previewable?
 
-    case file.content_type
-    when "application/pdf"
-      return nil unless file.previewable?
-
-      file.preview(resize:)
-    else
-    end
+    file.preview(resize:)
   end
 
   def common?

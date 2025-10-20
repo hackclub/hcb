@@ -3,23 +3,26 @@
 module Api
   module V4
     class DonationsController < ApplicationController
-      def create
-        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
+      include SetEvent
 
+      before_action :set_api_event, only: [:create]
+
+      def create
         @donation = Donation.new({
                                    amount: params[:amount_cents],
                                    event_id: @event.id,
                                    collected_by_id: current_user.id,
                                    in_person: true,
-                                   name: params[:name] || nil,
-                                   email: params[:email] || nil
+                                   name: params[:name].presence,
+                                   email: params[:email].presence,
+                                   tax_deductible: params[:tax_deductible] || true
                                  })
 
         authorize @donation
 
         @donation.save!
 
-        render "show"
+        render "show", status: :created
       end
 
     end

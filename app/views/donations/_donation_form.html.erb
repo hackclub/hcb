@@ -1,12 +1,14 @@
 <%= turbo_frame_tag :donation do %>
-  <ul class="tab-container max-width-1 mx-auto bg-transparent">
-      <li class="<%= "active" unless @monthly %>">
-          <%= link_to "One-time", start_donation_donations_path(@event), data: { turbo: true } %>
-      </li>
-      <li class="<%= "active" if @monthly %>">
-          <%= link_to "Monthly", start_donation_donations_path(@event, monthly: true), data: { turbo: true } %>
-      </li>
-  </ul>
+  <% unless @tier %>
+    <ul class="tab-container max-width-1 mx-auto bg-transparent">
+        <li class="<%= "active" unless @monthly %>">
+            <%= link_to "One-time", upsert_query_params(monthly: nil), data: { turbo: true } %>
+        </li>
+        <li class="<%= "active" if @monthly %>">
+            <%= link_to "Monthly", upsert_query_params(monthly: true), data: { turbo: true } %>
+        </li>
+    </ul>
+  <% end %>
 
   <%= form_with(model: @monthly ? [@event, @recurring_donation] : donation, local: true, url: (make_donation_donations_path unless @monthly),
                 class: "card mx-auto max-width-1 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
@@ -17,7 +19,7 @@
 
     <div class="field mb2">
       <%= form.label :name, "Your name" %>
-      <%= form.text_field :name, placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
+      <%= form.text_field :name, placeholder: "John Smith", required: true, autofocus: !@tier, autocomplete: "off" %>
     </div>
 
     <div class="field mb2">
@@ -44,7 +46,7 @@
             return '0.00';
         }
     }">
-      <div class="field">
+      <div class="field <%= "hidden" if @tier %>">
         <% if @international %>
           <%= form.label :amount, "Donation amount (USD)" %>
         <% else %>
@@ -53,7 +55,7 @@
         <div class="flex items-center">
           <span class="bold muted shrink-none" style="width: 1rem;">$</span>
           <%= form.number_field :amount,
-                                value: (donation.amount.nil? ? nil : ("%.2f" % (donation.amount.to_f / 100))),
+                                value: @tier ? ("%.2f" % (@tier.amount_cents.to_f / 100)) : (donation.amount.nil? ? nil : ("%.2f" % (donation.amount.to_f / 100))),
                                 placeholder: @placeholder_amount,
                                 step: 0.01,
                                 min: 1, # Limitations placed by Stripe
@@ -92,8 +94,8 @@
     <% if @event.config.anonymous_donations %>
       <div class="field field--checkbox mb0">
         <%= form.check_box :anonymous, style: "margin-left: 0;" %>
-        <%= form.label :anonymous, "Keep my donation private.", style: "display: inline; flex-grow: 1;" %>
-        <a class="tooltipped tooltipped--w link--ignore flex" aria-label='When you donate anonymously, you will appear as "Anonymous donor" on public pages. Team members, however, can still see your name.' tabindex="0">
+        <%= form.label :anonymous, "Don't display my name publicly.", style: "display: inline; flex-grow: 1;" %>
+        <a class="tooltipped tooltipped--w link--ignore flex" aria-label='When you donate anonymously, you will appear as "Anonymous donor" on public pages. Team members, however, can still see your information.' tabindex="0">
           <%= inline_icon "info", width: 24 %>
         </a>
       </div>

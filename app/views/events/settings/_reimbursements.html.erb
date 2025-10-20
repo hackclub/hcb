@@ -1,17 +1,15 @@
-<% disabled = !policy(@event).update? %>
+<%# locals: (event:, frame:) %>
+
+<% disabled = !policy(event).update? %>
 
 <%= turbo_frame_tag :reimbursements_settings do %>
-  <%= form_with(model: event, local: true, class: @frame ? "" : "card") do |form| %>
+  <%= form_with(model: event, local: true, class: frame ? "" : "card") do |form| %>
     <%= form_errors event, "organization" %>
     <% unless event.unapproved? %>
       <% if event.users.size > 1 %>
         <div class="field field--checkbox">
           <%= form.check_box :reimbursements_require_organizer_peer_review, disabled:, switch: true %>
-          <% if Flipper.enabled?(:user_permissions_2024_03_09, event) %>
-            <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers." %>
-          <% else %>
-            <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by team members." %>
-          <% end %>
+          <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers." %>
         </div>
       <% end %>
       <div class="field field--checkbox">
@@ -23,7 +21,7 @@
         <%= form.text_area :public_reimbursement_page_message, placeholder: "#{event.name} uses HCB to reimburse its volunteers…", class: "w-100 fit mt1", disabled: %>
         <%= inline_icon "markdown", size: 32, class: "muted right" %>
       </div>
-      <%= form.submit "Update", disabled:, data: { turbo_frame: @frame ? "_top" : "" } %>
+      <%= form.submit "Update", disabled:, data: { turbo_frame: frame ? "_top" : "" } %>
     <% end %>
   <% end %>
 <% end %>

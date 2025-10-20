@@ -1,19 +1,25 @@
 <% turbo_page_requires_reload if params[:require_reload].present? %>
-<% title "Sign in" %>
+<% title "Sign #{params[:signup] ? "up" : "in"}" %>
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <div class="my-auto">
     <%= render "header", label: "Hack Club" do %>
-      Sign in to HCB
+      Sign <%= params[:signup] ? "up for" : "in to" %> HCB
     <% end %>
     <%= form_tag logins_path, class: "mt-1", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
       <div data-webauthn-auth-target="error" class="mb2 display-none">
         <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
       </div>
       <%= hidden_field_tag :return_to, @return_to if @return_to %>
+      <%= hidden_field_tag :referral_program_id, @referral_program.hashid if @referral_program %>
       <%= email_field_tag :email, @prefill_email, placeholder: "Enter your email...", autofocus: true, autocomplete: "username", class: "!max-w-full w-full", style: "padding: 12px 15px", required: true, "data-webauthn-auth-target" => "loginEmailInput" %>
-      <div class="flex">
-        <button data-webauthn-auth-target="continueButton" type="submit" class="ml-auto mt-4 gap-2 btn">
+      <div class="flex justify-between items-center gap-4">
+        <% if params[:signup] %>
+          <%= link_to "Sign in", auth_users_path(return_to: @return_to), class: "mt-3" %>
+        <% else %>
+          <%= link_to "Sign up", auth_users_path(signup: true, return_to: @return_to), class: "mt-3" %>
+        <% end %>
+        <button data-webauthn-auth-target="continueButton" type="submit" class="mt-4 gap-2 btn">
           Continue
         </button>
       </div>

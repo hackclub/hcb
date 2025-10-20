@@ -6,6 +6,7 @@ json.name event.name
 json.country event.country
 json.slug event.slug
 json.icon event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : nil
+json.donation_page_available event.donation_page_available?
 json.playground_mode event.demo_mode?
 json.playground_mode_meeting_requested event.demo_mode_request_meeting_at.present?
 json.transparent event.is_public?
@@ -32,6 +33,6 @@ if expand?(:users)
   json.users event.organizer_positions.includes(:user).order(created_at: :desc) do |op|
     json.partial! "api/v4/users/user", user: op.user
     json.joined_at op.created_at
-    json.role op.role if Flipper.enabled?(:user_permissions_2024_03_09, event)
+    json.role op.role
   end
 end

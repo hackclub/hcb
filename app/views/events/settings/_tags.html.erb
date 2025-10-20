@@ -1,16 +1,35 @@
-<% disabled = !policy(@event).update? %>
+<%# locals: (event:) %>
+
+<% disabled = !policy(event).update? %>
 
 <%= turbo_frame_tag :tags_settings do %>
   <h3 class="mb1" id="cards_heading">Create a new tag</h3>
   <div class="card mb3">
-    <%= form_with(url: event_tags_path(@event)) do |form| %>
-      <div class="field">
-        <%= form.label :label, "Tag name", class: "mb-1" %>
-        <%= form.text_field :label, placeholder: ["🧃 Food & drinks", "🧋 Bubble tea", "🚕 Transportation", "🛬 Flights", "🔨 Supplies"].sample, disabled: %>
+    <%= form_with(url: event_tags_path(event)) do |form| %>
+      <div class="flex gap-3">
+        <% placeholder = [
+             { emoji: "🧃", label: "Food & drinks" },
+             { emoji: "🧋", label: "Bubble tea" },
+             { emoji: "🚕", label: "Transportation" },
+             { emoji: "🛬", label: "Flights" },
+             { emoji: "🔨", label: "Supplies" }
+           ].sample %>
+        <div class="field">
+          <div data-controller="emoji-picker" class="relative" data-emoji-picker-target="container">
+            <%= form.label :emoji, "Emoji", class: "mb-1" %>
+            <%= form.text_field :emoji, placeholder: placeholder[:emoji], class: "!w-10 placeholder:opacity-50", disabled:, data: { "emoji-picker-target": "input", "action": "focus->emoji-picker#togglePicker input->emoji-picker#validateInput" }, required: true %>
+            <emoji-picker data-emoji-picker-target="picker" data-action="emoji-click->emoji-picker#addEmoji" class="fixed mt-3 z-[300]" style="display: none;"></emoji-picker>
+          </div>
+        </div>
+
+        <div class="field">
+          <%= form.label :label, "Name", class: "mb-1" %>
+          <%= form.text_field :label, placeholder: placeholder[:label], disabled:, required: true %>
+        </div>
       </div>
 
       <div class="field">
-        <%= form.label :tag_name, "Tag color", class: "mb-1" %>
+        <%= form.label :tag_name, "Color", class: "mb-1" %>
 
         <% Tag::COLORS.each do |color| %>
           <label class="tags__radio w-8 mt-[2px] mx-1">
@@ -24,13 +43,13 @@
       <%= form.submit "Create tag", disabled: %>
     <% end %>
   </div>
-  <% unless @event.tags.none? %>
-    <h3 class="mb2" id="cards_heading"><%= possessive(@event.name) %> tags</h3>
+  <% if event.tags.any? %>
+    <h3 class="mb2" id="cards_heading"><%= possessive(event.name) %> tags</h3>
   <% end %>
-  <% @event.tags.each do |tag| %>
+  <% event.tags.each do |tag| %>
     <div class="card mb2 flex justify-between items-center">
       <div class="flex items-center">
-        <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+        <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
         <p class="bold mb0 mt0"><%= tag.label %></p>
       </div>
       <div class="flex items-center justify-center">
@@ -42,9 +61,16 @@
             disabled: %>
           <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_tag_<%= tag.id %>">
             <%= modal_header("Edit tag") %>
-            <%= form_with url: event_tag_path(@event, tag.id), method: "patch", id: "edit_tag_form" do |form| %>
+            <%= form_with url: event_tag_path(event, tag.id), method: :patch, id: "edit_tag_form" do |form| %>
               <div class="flex flex-col gap-3 mb-2">
-                <%= form.text_field :label, autofocus: true, placeholder: "Tag name", value: tag.label, style: "max-width: 100%", autocomplete: "off", required: true %>
+                <div class="flex gap-3">
+                  <div data-controller="emoji-picker" class="relative" data-emoji-picker-target="container">
+                    <%= form.text_field :emoji, placeholder: "🏦", value: tag.emoji, class: "!w-10 placeholder:opacity-50", autocomplete: "off", data: { "emoji-picker-target": "input", "action": "focus->emoji-picker#togglePicker input->emoji-picker#validateInput" }, required: true %>
+                    <emoji-picker data-emoji-picker-target="picker" data-action="emoji-click->emoji-picker#addEmoji" class="fixed mt-3 z-[300]" style="display: none;"></emoji-picker>
+                  </div>
+
+                  <%= form.text_field :label, autofocus: true, placeholder: "Tag name", value: tag.label, style: "max-width: 100%", autocomplete: "off", required: true %>
+                </div>
                 <div class="flex gap-3">
                   <% Tag::COLORS.each do |color| %>
                     <label class="tags__radio">
@@ -54,12 +80,12 @@
                   <% end %>
                 </div>
               </div>
-              <%= form.submit "Edit", class: "btn bg-info mt-2 float-right" %>
+              <%= form.submit "Update", class: "btn bg-info mt-2 float-left" %>
             <% end %>
           </section>
         </div>
         <%= pop_icon_to "delete",
-          event_tag_path(@event, tag.id),
+          event_tag_path(event, tag.id),
           method: :delete,
           icon_size: 26,
           class: "tooltipped tooltipped--w h-8 w-8",
