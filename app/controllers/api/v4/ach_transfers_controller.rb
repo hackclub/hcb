@@ -49,6 +49,8 @@ module Api
           end
         rescue ArgumentError => e
           render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
+        rescue ActiveRecord::RecordInvalid => e
+          render json: { error: @ach_transfer.errors.full_message.to_sentence }, status: :unprocessable_entity
         end
 
         render :show, status: :created
