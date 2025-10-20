@@ -166,7 +166,7 @@
         <% if session.is_a? UserSession %>
           <%= render "user_session", session:, disabled: %>
         <% elsif session.respond_to? :authorization_count %>
-          <%= render "oauth_authorization", authorization: session, disabled: %>
+          <%= render "oauth_authorization", authorization: session %>
         <% end %>
       <% end %>
     </div>
