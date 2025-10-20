@@ -8,7 +8,7 @@
     <%= badge_for @invoices.size, class: "bg-muted" %>
   </span>
 
-  <% if organizer_signed_in? %>
+  <% if organizer_signed_in?(as: :member) %>
     <%= link_to new_event_invoice_path(event_id: @event.slug),
         class: "btn btn--icon bg-success",
         data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
@@ -42,25 +42,14 @@
 </div>
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <div class="input input-group max-w-none" tabindex="0">
-      <%= inline_icon "search" %>
-      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
-      <% if params[:q] && params[:q] != "" %>
-        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
-          <%= inline_icon "view-close", size: 24 %>
-        </button>
-      <% end %>
-    </div>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "events/search", form: %>
   <% end %>
-  <div>
-    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["paid", "unpaid", "overdue", "archived", "voided"].include?(params[:filter]), role: "tab" %>
-    <%= link_to "Paid", "?filter=paid", class: "filterbar__item", "aria-selected": params[:filter] == "paid", role: "tab" %>
-    <%= link_to "Unpaid", "?filter=unpaid", class: "filterbar__item", "aria-selected": params[:filter] == "unpaid", role: "tab" %>
-    <%= link_to "Archived", "?filter=archived", class: "filterbar__item", "aria-selected": params[:filter] == "archived", role: "tab" %>
-    <%= link_to "Voided", "?filter=voided", class: "filterbar__item", "aria-selected": params[:filter] == "voided", role: "tab" %>
-  </div>
+
+  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
+
+<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <% if @invoices.size > 0 %>
 <article class="table-container">

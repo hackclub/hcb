@@ -1,0 +1,78 @@
+<div id="screenshot_upload_form" class="flex-shrink-0 h-[200px]">
+  <div class="<%= "mb3" if defined?(include_spacing) %> h-100" style="position: relative;">
+    <%= form_with model: false, url: card_grant_pre_authorizations_path, method: :patch, remote: true, class: "flex flex-col justify-center h-100", data: {
+          turbo: defined?(turbo) ? turbo : "false",
+          controller: "file-drop form",
+          action: defined?(disabled) && disabled ? "" : "
+            dragover@window->file-drop#dragover
+            drop@window->file-drop#drop
+            dragenter@window->file-drop#dragenter
+            dragleave@window->file-drop#dragleave
+          ",
+
+          "file-drop-title-value" => "Drop to add a screenshot.",
+          "file-drop-global-paste-value" => "true"
+        }.compact, html: {
+          onsubmit: "
+            const button = $('#upload-screenshot-button', this);
+            $('span', button).text('Uploading...');
+            button.attr('disabled', 'disabled');
+          "
+        } do |form| %>
+
+      <div class="card h-100 flex flex-col<%= " pt0" if defined?(show_banner) && defined?(uploaded_files) && uploaded_files.any? %> justify-center px-8" id="upload_screenshot_form">
+        <% if defined?(show_banner) %>
+          <% if defined?(uploaded_files) && uploaded_files.any? %>
+            <p class="card__banner bg-success white bold flex items-center mt0 mb2">
+              <%= inline_icon "checkmark", size: 24, class: "mr2" %>
+              <%= pluralize uploaded_files.count, "screenshot" %>
+              added
+            </p>
+          <% end %>
+        <% end %>
+        <div class="container container--md pt2">
+
+          <% if local_assigns[:redirect_url] %>
+            <%= form.hidden_field :redirect_url, value: local_assigns[:redirect_url] %>
+          <% end %>
+          <%= (form.hidden_field :pre_authorization_id, value: pre_authorization.id) if defined?(pre_authorization) %>
+          <%= (form.hidden_field :show_link, value: true) if defined?(inline_linking) %>
+
+          <%= form.file_field :screenshot,
+                              multiple: true,
+                              include_hidden: false,
+                              required: true,
+                              class: "display-none",
+                              accept: "image/*,image/heic,.pdf",
+                              direct_upload: true,
+                              data: {
+                                "file-drop-target" => "fileInput",
+                                "action"           => "change->form#submit"
+                              } %>
+          <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
+            <%= form.label :screenshot, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-screenshot-button", disabled: false do %>
+              <%= inline_icon "cloud-upload" %>
+              <% if local_assigns[:success] || local_assigns[:error] %>
+                <span id="upload-screenshot-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
+                <script>
+                  // JavaScript to revert changes after 2 seconds
+                  setTimeout(function() {
+                    if (document.getElementById("upload-screenshot-button") && document.getElementById("upload-screenshot-button-text")) {
+                      document.getElementById("upload-screenshot-button-text").innerHTML = 'Upload screenshot';
+                      document.getElementById("upload-screenshot-button").classList.remove("bg-success", "bg-error");
+                    }
+                  }, 2000);
+                </script>
+              <% else %>
+                <span>Upload screenshot</span>
+              <% end %>
+            <% end %>
+          </span>
+
+          <p class="center muted">Or drag & drop your screenshot here</p>
+        </div>
+      </div>
+
+    <% end %>
+  </div>
+</div>

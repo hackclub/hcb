@@ -10,7 +10,8 @@ export default class extends Controller {
   }
 
   updateActiveCheck() {
-    const selectedTheme = getCookie('theme')
+    const selectedTheme = getCookie('theme') || 'system'
+    this.updateBlogEmbed(selectedTheme)
     this.toggleTargets.forEach(target => {
       const check = target.querySelector('svg')
       const targetTheme = target.getAttribute('data-value')
@@ -26,7 +27,17 @@ export default class extends Controller {
         const selectedTheme = target.getAttribute('data-value')
         BK.setDark(selectedTheme)
         this.updateActiveCheck() // Update the check after changing the theme
+        this.updateBlogEmbed(selectedTheme)
       })
     })
+  }
+
+  updateBlogEmbed(theme) {
+    const resolvedTheme = theme === 'system' ? BK.resolveSystemTheme() : theme
+
+    const blogEmbed = document.getElementById('blog-widget-embed')
+    if (blogEmbed) {
+      blogEmbed.src = `${blogEmbed.src.split('?')[0]}?theme=${resolvedTheme}`
+    }
   }
 }

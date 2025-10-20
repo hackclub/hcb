@@ -6,7 +6,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_manager? && record.event.plan.card_grants_enabled?
+    admin_or_manager? && sender_admin_or_manager? && record.event.plan.card_grants_enabled?
   end
 
   def show?
@@ -17,12 +17,56 @@ class CardGrantPolicy < ApplicationPolicy
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
+  def edit_actions?
+    admin_or_manager?
+  end
+
+  def edit_usage_restrictions?
+    admin_or_manager?
+  end
+
+  def edit_overview?
+    admin_or_manager?
+  end
+
+  def edit_balance?
+    admin_or_manager?
+  end
+
+  def edit_purpose?
+    admin_or_manager?
+  end
+
+  def edit_topup?
+    admin_or_manager?
+  end
+
+  def edit_withdraw?
+    admin_or_manager?
+  end
+
   def activate?
-    user&.admin? || record.user == user
+    user&.admin? || (record.user == user && authorized_to_activate?)
   end
 
   def cancel?
-    admin_or_user? || record.user == user
+    (admin_or_manager? || record.user == user) && record.active?
+  end
+
+  def convert_to_reimbursement_report?
+    (admin_or_manager? || record.user == user) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
+  end
+
+  def edit?
+    admin_or_manager? && record.active?
+  end
+
+  def toggle_one_time_use?
+    admin_or_manager? && record.active?
+  end
+
+  def disable_pre_authorization?
+    admin_or_manager? && record.pre_authorization_required?
   end
 
   def topup?
@@ -34,11 +78,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def update?
-    admin_or_manager?
-  end
-
-  def convert_to_reimbursement_report?
-    (admin_or_manager? || record.user == user) && record.card_grant_setting.reimbursement_conversions_enabled?
+    admin_or_manager? && record.active?
   end
 
   def admin_or_user?
@@ -49,10 +89,20 @@ class CardGrantPolicy < ApplicationPolicy
     user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 
+  def sender_admin_or_manager?
+    return true if record.sent_by.nil? # May be nil if used to authorize after build on #new page.
+
+    record.sent_by.admin? || OrganizerPosition.find_by(user: record.sent_by, event: record.event)&.manager?
+  end
+
   private
 
   def user_in_event?
     record.event.users.include?(user)
+  end
+
+  def authorized_to_activate?
+    record.pre_authorization.nil? || record.pre_authorization.approved? || record.pre_authorization.fraudulent?
   end
 
 end

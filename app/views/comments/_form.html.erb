@@ -35,7 +35,7 @@
         <%= form.file_field :file,
             multiple: false,
             required: false,
-            style: "margin: 8px 0px; max-width: 120px;",
+            style: "margin: 8px 0px; max-width: 160px;",
             class: "field--fileupload__field",
             id: "comment_file_upload" %>
       </div>
@@ -58,7 +58,7 @@
 
   </div>
 
-  <%= form.submit "Add comment", disabled: !organizer_signed_in? && current_user != commentable&.try(:user) %>
+  <%= form.submit "Add comment", disabled: !policy(commentable.comments.build).create? %>
 <% end %>
 
 <% unless @popover %>

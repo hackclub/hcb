@@ -1,0 +1,16 @@
+<turbo-frame id="edit_balance_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
+    <div class="flex flex-row justify-start items-center gap-6">
+        <%= link_to edit_topup_event_card_grant_path(@card_grant),
+                    data: { turbo: true },
+                    class: "btn !w-max",
+                    disabled: !policy(@card_grant).topup? do %>
+            <%= inline_icon "plus", size: 20 %> Topup
+        <% end %>
+        <%= link_to edit_withdraw_event_card_grant_path(@card_grant),
+                    data: { turbo: true },
+                    class: "btn bg-warning",
+                    disabled: !policy(@card_grant).withdraw? do %>
+            <%= inline_icon "minus", size: 20 %> Withdraw
+        <% end %>
+    </div>
+</turbo-frame>

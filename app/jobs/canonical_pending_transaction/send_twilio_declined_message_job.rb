@@ -16,8 +16,6 @@ class CanonicalPendingTransaction
       @webhook_declined_reason = @rpst.stripe_transaction.dig("metadata", "declined_reason")
       @user = User.find(user_id)
 
-      return unless Flipper.enabled?(:sms_receipt_notifications_2022_11_23, @user)
-
       return unless IN_PERSON_AUTH_METHODS.include? auth_method
 
       return unless @user.phone_number.present? && @user.phone_number_verified?
@@ -37,6 +35,8 @@ class CanonicalPendingTransaction
                              "because this card isn't allowed to make purchases at #{@merchant}"
                            when "cash_withdrawals_not_allowed"
                              "because cash withdrawals are not enabled on it"
+                           when "user_cards_locked"
+                             "because your cards are locked (you need to upload receipts)"
                            else
                              "at #{@merchant} due to insufficient funds"
                            end

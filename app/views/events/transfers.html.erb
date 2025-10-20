@@ -1,6 +1,7 @@
 <% title "Transfers for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :transfers %>
+<%= render "card_grants/create_modal" %>
 
 <h1 class="heading">
   <span class="flex items-center">
@@ -8,7 +9,7 @@
     <%= badge_for @transfers.total_count, class: "bg-muted" %>
   </span>
 
-  <% if organizer_signed_in? %>
+  <% if organizer_signed_in?(as: :member) %>
     <%= link_to event_transfers_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
       <%= inline_icon "payment-transfer" %>
       Send
@@ -32,16 +33,8 @@
 </div>
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <div class="input input-group max-w-none" tabindex="0">
-      <%= inline_icon "search" %>
-      <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
-      <% if params[:q] && params[:q] != "" %>
-        <button data-behavior="clear" type="submit" class="pop muted w-7 h-7">
-          <%= inline_icon "view-close", size: 24 %>
-        </button>
-      <% end %>
-    </div>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "search", form: %>
   <% end %>
   <div>
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
@@ -99,6 +92,10 @@
               <span class="tooltipped tooltipped--e inline-block" aria-label="International wire">
                 <%= inline_icon "web" %>
               </span>
+            <% elsif d.is_a?(WiseTransfer) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="Wise transfer">
+                <%= inline_icon "wise" %>
+              </span>
             <% else %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
                 <%= inline_icon "door-leave" %>
@@ -106,7 +103,7 @@
             <% end %>
           </td>
           <td>
-            <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text&.capitalize %></span>
+            <span class="ml0 badge bg-<%= d.try(:state) || d.state_color %>"><%= d.state_text&.capitalize %></span>
           </td>
           <td>
             <%= format_date d.created_at %>
@@ -138,10 +135,22 @@
             <% end %>
           </td>
           <td style="text-align: right;">
-            <% if d.is_a? CardGrant %>
-              <span class="<%= "muted line-through" if d.balance.zero? %>"><%= d.balance.format %></span>
-            <% elsif d.is_a? Wire %>
+            <% case d %>
+            <% when Wire %>
               <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+            <% when WiseTransfer %>
+              <% ledger_amount = capture do %>
+                <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+              <% end %>
+
+              <% if d.currency == "USD" %>
+                <%= ledger_amount %>
+              <% else %>
+                <% fx_tooltip = d.amount.format(with_currency: true) %>
+                <span class="tooltipped tooltipped--w inline-block" aria-label="<%= fx_tooltip %>">
+                  <%= ledger_amount %>
+                </span>
+              <% end %>
             <% else %>
               <%= render_money(d.amount) %>
             <% end %>

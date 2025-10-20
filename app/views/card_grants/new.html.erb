@@ -1,42 +1,7 @@
 <% page_sm %>
 <%= render "events/nav", selected: :transfers %>
-<% disabled = !policy(@card_grant).create? %>
 
-<%= turbo_frame_tag :transfer_form do %>
-  <%= modal_header "Send a grant" %>
+<% title "Send a card grant" %>
+<h1>Send a card grant</h1>
 
-  <% if @event.card_grant_setting.present? %>
-    <p class="muted">See your <%= link_to "card grant settings", edit_event_path(@event, tab: "card_grants"), data: { turbo_frame: "_top" } %>.</p>
-  <% end %>
-
-  <%= form_with model: [@event, @card_grant], data: { turbo_frame: "_top" } do |form| %>
-    <div class="field">
-      <%= form.label :email %>
-      <%= form.email_field :email, value: @prefill_email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: %>
-    </div>
-
-    <div class="field">
-      <%= form.label :amount_cents, "Amount" %>
-      <div class="flex items-center">
-        <span class="bold muted shrink-none" style="width: 1rem;">$</span>
-        <%= form.number_field :amount_cents, value: (@card_grant.amount_cents.nil? ? nil : ("%.2f" % (@card_grant.amount_cents.to_f / 100))), placeholder: "10.00", required: true, min: 0.01, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, disabled: %>
-      </div>
-    </div>
-
-    <div class="field">
-      <%= form.label :purpose, "Purpose (optional, shown to recipient)" %>
-      <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled: %>
-    </div>
-
-    <div class="actions">
-      <%= form.submit "Send grant", disabled: %>
-    </div>
-  <% end %>
-
-  <script>
-    // this is used to refresh the modal when someone clicks off of the card grant modal
-    $("body").on($.modal.CLOSE, function(event, m) {
-        Turbo.visit(window.location.pathname, { action: "replace" })
-    });
-  </script>
-<% end %>
+<%= render "create_form", card_grant: @card_grant %>

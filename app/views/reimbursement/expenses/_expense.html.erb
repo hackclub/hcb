@@ -14,6 +14,7 @@
         expense card mt2 pt0 border
         b--<%= expense.status_color %>
         <%= "translucent" if expense.rejected? && !expense.report.rejected? %>
+        <%= "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]" if expense.is_fee? %>
       "
       data-expense-form-target="card"
       <% if new %>
@@ -26,13 +27,17 @@
               #<%= expense.expense_number %>
             </code>
           <% else %>
-            <code
-              data-behavior="mention"
-              data-mention-title="<%= expense.memo %>"
-              class="bg-white tooltipped tooltipped--e pointer click_to_mention"
-              aria-label="Click to reference in comment">
-              #<%= expense.expense_number %>
-            </code>
+            <% if expense.is_fee? %>
+              <%= inline_icon "wise", size: 26 %>
+            <% else %>
+              <code
+                data-behavior="mention"
+                data-mention-title="<%= expense.memo %>"
+                class="bg-white tooltipped tooltipped--e pointer click_to_mention"
+                aria-label="Click to reference in comment">
+                #<%= expense.expense_number %>
+              </code>
+            <% end %>
           <% end %>
           <div style="flex-grow: 1" data-expense-form-target="memo" class="bold <%= "muted" unless expense.memo.presence %>">
             <%= expense.card_label.presence || "Untitled Expense" %>
@@ -45,7 +50,7 @@
             <% end %>
             <%= user_mention expense.approved_by, avatar: { style: "vertical-align: sub;" }, disable_tooltip: true, default_name: "Unknown User" %>
           <% end %>
-          <% unless expense.report.reimbursed? %>
+          <% unless expense.report.reimbursed? || expense.is_fee? %>
             <button class="edit-or-save pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is read-only. #{"Mark it as a draft to edit." unless expense.report.closed? || read_only}" %>">
               <% if expense.report.locked? || read_only %>
                 <%= inline_icon "private" %>
@@ -101,7 +106,7 @@
       <div class="field event-select-target">
         <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
         <%= form.select(:reimbursement_report_id,
-            current_user.admin? ?
+            admin_signed_in? ?
               (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
             current_user == expense.report.user ?
               current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :

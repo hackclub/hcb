@@ -32,6 +32,13 @@
       </p>
     <% end %>
 
+    <% if stripe_card.frozen? && stripe_card.last_frozen_by && stripe_card.last_frozen_by != User.system_user %>
+      <div class="fs-mask">
+        <strong>Frozen by</strong>
+        <%= user_mention stripe_card.last_frozen_by %>
+      </div>
+    <% end %>
+
     <% if stripe_card.cash_withdrawal_enabled? %>
       <p>
         <strong>Cash withdrawals</strong>
@@ -66,6 +73,11 @@
     </div>
 
     <div class="fs-mask">
+      <strong>Expiration date</strong>
+      <%= copy_to_clipboard(render_short_exp_date(stripe_card), class: "w-fit", tooltip_direction: "e") { render_exp_date stripe_card } %>
+    </div>
+
+    <div class="fs-mask">
       <strong>CVC</strong>
       <div class="flex justify-between font-mono items-center">
         <% if stripe_card.user == current_user && stripe_card.virtual? %>
@@ -96,8 +108,33 @@
     <% end %>
 
     <div class="fs-mask">
-      <strong>Expiration date</strong>
-      <%= copy_to_clipboard(render_short_exp_date(stripe_card), class: "w-fit", tooltip_direction: "e") { render_exp_date stripe_card } %>
+      <strong class="inline-flex items-center" style="gap: 4px">
+        Address
+        <% if stripe_card.cardholder.stripe_billing_address_line2.presence %> line 1<% end %>
+        <% if stripe_card.user == current_user && stripe_card.cardholder.default_billing_address? %>
+          <%= link_to settings_address_path, class: "info tooltipped tooltipped--e", "aria-label": "You're using HCB's default billing address, not your home address. You can change it in your user settings if you'd like.", style: "display: flex;", data: { turbo: false } do %>
+            <%= inline_icon "info", size: 18, style: "position: unset;" %>
+          <% end %>
+        <% end %>
+      </strong>
+      <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_line1, class: "w-fit", tooltip_direction: "e") %>
+    </div>
+
+    <% if stripe_card.cardholder.stripe_billing_address_line2.presence %>
+      <div class="fs-mask">
+        <strong>Address line 2</strong>
+        <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_line2, class: "w-fit", tooltip_direction: "e") %>
+      </div>
+    <% end %>
+
+    <div class="fs-mask">
+      <strong>City</strong>
+      <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_city, class: "w-fit", tooltip_direction: "e") %>
+    </div>
+
+    <div class="fs-mask">
+      <strong>State</strong>
+      <%= copy_to_clipboard(stripe_card.cardholder.stripe_billing_address_state, class: "w-fit", tooltip_direction: "e") %>
     </div>
 
     <div class="fs-mask">
@@ -105,19 +142,17 @@
       <%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, class: "w-fit", tooltip_direction: "e") %>
     </div>
 
-    <div>
-      <strong class="inline-flex items-center" style="gap: 4px">
-        Billing address
-        <% if stripe_card.user == current_user && stripe_card.cardholder.default_billing_address? %>
-          <%= link_to settings_address_path, class: "info tooltipped tooltipped--e", "aria-label": "You're using HCB's default billing address, not your home address. You can change it in your user settings if you'd like.", style: "display: flex;", data: { turbo: false } do %>
+    <% if stripe_card.user.phone_number %>
+      <div class="fs-mask">
+        <strong class="inline-flex items-center" style="gap: 4px">
+          Phone number
+          <span class="info tooltipped tooltipped--e h-[18px]" aria-label="This is your phone number - use this if asked during checkout.">
             <%= inline_icon "info", size: 18, style: "position: unset;" %>
-          <% end %>
-        <% end %>
-      </strong>
-      <div class="flex justify-between">
-        <%= render_address stripe_card.cardholder %>
+          </span>
+        </strong>
+        <%= copy_to_clipboard(stripe_card.user.pretty_phone_number, class: "w-fit", tooltip_direction: "e") %>
       </div>
-    </div>
+    <% end %>
 
     <div>
       <strong>Type</strong>
@@ -150,7 +185,7 @@
 
   <section class="card__banner card__banner--bottom card__darker pt2 pb2">
     <p class="muted mt0 mb0">
-      Alert us if there are fraudulent or incorrect charges on your card. <%= help_message %>
+      Alert us if there are fraudulent or incorrect charges on your card, or if your card was stolen or compromised. <%= help_message %>
     </p>
   </section>
 </article>

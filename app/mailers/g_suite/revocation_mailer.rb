@@ -12,7 +12,7 @@ class GSuite
     }
 
     def revocation_warning
-      mail subject: "[Action Required] Your Google Workspace access for #{@g_suite.domain} will be revoked on #{@g_suite_revocation.scheduled_at.strftime("%B %d, %Y")}"
+      mail subject: "[Action Required] Issue detected with your Google Workspace for #{@g_suite.domain}"
     end
 
     def revocation_one_week_warning

@@ -1,0 +1,45 @@
+<% title "My feed" %>
+<% page_md %>
+<%= render "users/nav", selected: :feed %>
+<%= render "my/following_modal", event_follows: @event_follows %>
+
+<h1 class="heading flex items-center">
+  <span class="flex-grow">Feed</span>
+  <% if @event_follows.any? %>
+    <%= link_to my_feed_path, class: "btn bg-blue flex", data: { behavior: "modal_trigger", modal: "edit_following" } do %>
+      <%= inline_icon "settings" %>
+      Manage
+    <% end %>
+  <% end %>
+</h1>
+
+<% if @announcements.empty? %>
+  <div class="flex flex-1 flex-col items-center justify-center">
+    <div class="text-center">
+      <h3 class="text-2xl font-bold mb-0">
+        It's quiet here...
+      </h3>
+      <% if @event_follows.any? %>
+        <p class="text-gray-500 my-1 max-w-sm">
+          No announcements are posted yet.
+        </p>
+      <% else %>
+        <p class="text-gray-500 my-1 max-w-sm">
+          Follow a transparent organization to see updates from them here.
+        </p>
+        <%= link_to "https://hackclub.com/fiscal-sponsorship/directory?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
+          View all organizations
+          <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-2">
+    <% @announcements.each do |announcement| %>
+      <%= render partial: "announcements/announcement_card", locals: { announcement:, show_event: true } %>
+    <% end %>
+  </div>
+<% end %>
+
+<%= paginate @announcements %>
