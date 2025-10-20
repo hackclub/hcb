@@ -155,7 +155,7 @@
         <%= form.label :session_validity_preference, "Sign me out after" %>
         <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>
       </div>
-  
+
       <div class="submit">
         <%= form.submit "Save", disabled: %>
       </div>
