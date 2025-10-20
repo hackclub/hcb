@@ -23,8 +23,8 @@ module Api
 
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(
           event_id: @event.id,
-          search: filters[:q],
-          tag_id: filters[:tag] ? @event.tags.find_by(label: filters[:tag])&.id : nil,
+          search: filters[:q].presence,
+          tag_id: filters[:tag].presence,
           minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
           maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
           user: filters[:user_id] ? @event.users.find_by(id: filters[:user_id]) : nil,
@@ -36,8 +36,8 @@ module Api
 
         @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(
           event_id: @event.id,
-          search: filters[:q],
-          tag_id: filters[:tag] ? @event.tags.find_by(label: filters[:tag])&.id : nil,
+          search: filters[:q].presence,
+          tag_id: filters[:tag].presence,
           minimum_amount: filters[:minimum_amount].presence ? Money.from_amount(filters[:minimum_amount].to_f) : nil,
           maximum_amount: filters[:maximum_amount].presence ? Money.from_amount(filters[:maximum_amount].to_f) : nil,
           user: filters[:user_id] ? @event.users.find_by(id: filters[:user_id]) : nil,
