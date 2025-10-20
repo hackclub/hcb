@@ -17,7 +17,7 @@
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
     <% elsif !session.expired? %>
-      <%= link_to logout_session_users_path(user: @user, id: session.id), data: { turbo_method: :delete, turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this session", disabled: do %>
+      <%= link_to logout_session_users_path(user: @user, id: session.id), data: { turbo_method: :delete, turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this session", disabled: !policy(@user).logout_session? do %>
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
     <% end %>
