@@ -6,6 +6,7 @@ module Api
       include SetEvent
 
       before_action :set_api_event, only: [:create]
+      before_action :set_card_grant, except: [:index, :create]
 
       def index
         if params[:event_id].present?
@@ -70,15 +71,12 @@ module Api
       require_oauth2_scope "card_grants:write", :create
 
       def show
-        @card_grant = CardGrant.find_by_public_id!(params[:id])
-
         authorize @card_grant
       end
 
       def topup
-        @card_grant = CardGrant.find_by_public_id!(params[:id])
-
         authorize @card_grant
+
         begin
           @card_grant.topup!(amount_cents: params["amount_cents"], topped_up_by: current_user)
         rescue ArgumentError => e
@@ -87,9 +85,8 @@ module Api
       end
 
       def withdraw
-        @card_grant = CardGrant.find_by_public_id!(params[:id])
-
         authorize @card_grant
+
         begin
           @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
         rescue ArgumentError => e
@@ -98,8 +95,6 @@ module Api
       end
 
       def update
-        @card_grant = CardGrant.find_by_public_id!(params[:id])
-
         authorize @card_grant
 
         @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions))
@@ -108,8 +103,6 @@ module Api
       end
 
       def cancel
-        @card_grant = CardGrant.find_by_public_id!(params[:id])
-
         authorize @card_grant
 
         begin
@@ -122,8 +115,6 @@ module Api
       end
 
       def activate
-        @card_grant = CardGrant.find_by_public_id!(params[:id])
-
         authorize @card_grant
 
         @card_grant.create_stripe_card(request.remote_ip)
@@ -134,6 +125,12 @@ module Api
         return render json: { error: "invalid_operation", messages: ["This card could not be activated: #{e.message}"] }, status: :bad_request
       rescue Errors::StripeInvalidNameError => e
         return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
+      end
+
+      private
+
+      def set_card_grant
+        @card_grant = CardGrant.find_by_public_id!(params[:id])
       end
 
     end
