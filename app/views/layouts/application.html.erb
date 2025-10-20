@@ -75,6 +75,7 @@
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <div id="tooltip-container"></div>
     <%= react_component "tour/TourOverlay",
                         tour: @tour&.name,
                         id: @tour&.id,
@@ -87,6 +88,14 @@
                duration: 30.minutes,
                learn_more_url: "https://blog.hcb.hackclub.com/posts/7th-may-maintenance" %>
 
+    <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
+      <div class="w-100 px4 !bg-red transparency-banner">
+        <p class="h5 medium center mt1 mb1 text-white text-xl">
+          ⚠️ Admin users are required to
+          <%= link_to("enable two-factor authentication", settings_security_path, class: "text-inherit") %>
+        </p>
+      </div>
+    <% end %>
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
@@ -106,23 +115,6 @@
         <p class="h5 font-medium text-center text-balance mt1 mb1">
           This HCB organization has made their finances public.
           Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=hcb-transparency&utm_content=banner", target: "_blank", class: "primary" %>
-        </p>
-      </div>
-    <% end %>
-    <% if organizer_signed_in? && @event && (@event.activated_at || @event.created_at) >= "2025-07-03" && !@event.demo_mode? && @event.organized_by_teenagers? && @event.active_teenagers <= 3 && !@hide_three_teens_banner %>
-      <div class="w-100s px3 bg-red card--hover" data-behavior="hide_iframe">
-        <%= link_to fillout_form("o5bgWXhPgfus", { "email" => current_user.email, "name" => current_user.name, "organization_name" => @event.name, "organization_link" => event_url(@event) }), class: "no-underline hover:underline hover:decoration-white hover:decoration-2" do %>
-          <p class="h3 font-medium text-center text-balance mt2 mb0 white">
-            Add three teens, get $5 each!
-          </p>
-        <% end %>
-        <p class="h4 text-center text-balance mt0 mb1 white">
-          For a limited time, you will recieve $5 for every new teen you invite to your organization! This is valid for up to 3 teenagers.
-        </p>
-        <p class="h4 text-center text-balance mt0 mb2 white">
-          <%= link_to toggle_three_teens_banner_path, data: { turbo: false }, method: :post, class: "white" do %>
-            <i>Maybe later - thanks!</i>
-          <% end %>
         </p>
       </div>
     <% end %>
@@ -146,6 +138,14 @@
         <div class="w-full dev-banner dev-banner--info rounded-b no-underline">
           <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
             <p class="font-bold text-xl m0"><%= @event.name %> has been terminated, thanks for working with HCB!</p>
+          </div>
+        </div>
+      <% elsif @event.organizer_position_contracts.any? && @event.organizer_position_contracts.signed.none? %>
+        <div class="w-full dev-banner dev-banner--info rounded-b no-underline">
+          <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+            <p class="font-bold text-xl m0">
+              <%= @event.name %> is currently inactive on HCB; to activate the organization, a fiscal sponsorship contract must be signed.
+            </p>
           </div>
         </div>
       <% else %>

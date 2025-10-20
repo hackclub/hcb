@@ -18,6 +18,8 @@
 
 require "simplecov"
 require "faker"
+require "webmock/rspec"
+require "sidekiq/testing"
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
@@ -97,4 +99,7 @@ RSpec.configure do |config|
   #   # test failures related to randomization by passing the same `--seed` value
   #   # as the one that triggered the failure.
   #   Kernel.srand config.seed
+
+  # Uncomment to allow the test suite to make network calls
+  # WebMock.allow_net_connect!
 end

@@ -271,6 +271,8 @@ class AchTransfer < ApplicationRecord
   end
 
   def approve!(processed_by = nil, send_realtime: false)
+    Governance::Admin.ensure_may_approve_transfer!(processed_by, amount)
+
     if scheduled_on.present?
       mark_scheduled!
     elsif send_realtime

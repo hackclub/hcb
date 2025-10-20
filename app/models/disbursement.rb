@@ -4,41 +4,47 @@
 #
 # Table name: disbursements
 #
-#  id                       :bigint           not null, primary key
-#  aasm_state               :string
-#  amount                   :integer
-#  deposited_at             :datetime
-#  errored_at               :datetime
-#  in_transit_at            :datetime
-#  name                     :string
-#  pending_at               :datetime
-#  rejected_at              :datetime
-#  scheduled_on             :date
-#  should_charge_fee        :boolean          default(FALSE)
-#  created_at               :datetime         not null
-#  updated_at               :datetime         not null
-#  destination_subledger_id :bigint
-#  event_id                 :bigint
-#  fulfilled_by_id          :bigint
-#  requested_by_id          :bigint
-#  source_event_id          :bigint
-#  source_subledger_id      :bigint
+#  id                                  :bigint           not null, primary key
+#  aasm_state                          :string
+#  amount                              :integer
+#  deposited_at                        :datetime
+#  errored_at                          :datetime
+#  in_transit_at                       :datetime
+#  name                                :string
+#  pending_at                          :datetime
+#  rejected_at                         :datetime
+#  scheduled_on                        :date
+#  should_charge_fee                   :boolean          default(FALSE)
+#  created_at                          :datetime         not null
+#  updated_at                          :datetime         not null
+#  destination_subledger_id            :bigint
+#  destination_transaction_category_id :bigint
+#  event_id                            :bigint
+#  fulfilled_by_id                     :bigint
+#  requested_by_id                     :bigint
+#  source_event_id                     :bigint
+#  source_subledger_id                 :bigint
+#  source_transaction_category_id      :bigint
 #
 # Indexes
 #
-#  index_disbursements_on_destination_subledger_id  (destination_subledger_id)
-#  index_disbursements_on_event_id                  (event_id)
-#  index_disbursements_on_fulfilled_by_id           (fulfilled_by_id)
-#  index_disbursements_on_requested_by_id           (requested_by_id)
-#  index_disbursements_on_source_event_id           (source_event_id)
-#  index_disbursements_on_source_subledger_id       (source_subledger_id)
+#  index_disbursements_on_destination_subledger_id             (destination_subledger_id)
+#  index_disbursements_on_destination_transaction_category_id  (destination_transaction_category_id)
+#  index_disbursements_on_event_id                             (event_id)
+#  index_disbursements_on_fulfilled_by_id                      (fulfilled_by_id)
+#  index_disbursements_on_requested_by_id                      (requested_by_id)
+#  index_disbursements_on_source_event_id                      (source_event_id)
+#  index_disbursements_on_source_subledger_id                  (source_subledger_id)
+#  index_disbursements_on_source_transaction_category_id       (source_transaction_category_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (destination_transaction_category_id => transaction_categories.id)
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (fulfilled_by_id => users.id)
 #  fk_rails_...  (requested_by_id => users.id)
 #  fk_rails_...  (source_event_id => events.id)
+#  fk_rails_...  (source_transaction_category_id => transaction_categories.id)
 #
 class Disbursement < ApplicationRecord
   include PgSearch::Model
@@ -71,6 +77,9 @@ class Disbursement < ApplicationRecord
 
   has_one :raw_pending_incoming_disbursement_transaction
   has_one :raw_pending_outgoing_disbursement_transaction
+
+  belongs_to(:source_transaction_category, class_name: "TransactionCategory", optional: true)
+  belongs_to(:destination_transaction_category, class_name: "TransactionCategory", optional: true)
 
   has_one :card_grant, required: false
 
@@ -114,7 +123,7 @@ class Disbursement < ApplicationRecord
       memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
       css_class: "transaction--fancy",
       icon: "sam",
-      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::ARGOSY_GRANT_FUND && d.created_at > Date.new(2024, 9, 1) }
+      qualifier: ->(d) { d.source_event_id.in?([EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025]) && d.created_at > Date.new(2024, 9, 1) }
     },
     first_transparency_grant: {
       title: "FIRST® Transparency grant",
@@ -179,6 +188,12 @@ class Disbursement < ApplicationRecord
   end
 
   def approve_by_admin(user)
+    # Don't check admin transfer limits for card grants. This method is also
+    # used to auto-approve card grants; even ones NOT sent by admins.
+    unless source_event == destination_event
+      Governance::Admin.ensure_may_approve_transfer!(user, amount)
+    end
+
     if scheduled_on.present?
       mark_scheduled!(user)
     else
@@ -215,6 +230,10 @@ class Disbursement < ApplicationRecord
 
   def canonical_pending_transactions
     @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
+  end
+
+  def transactions_helper
+    @transactions_helper ||= Disbursement::TransactionsHelper.new(self)
   end
 
   def processed?

@@ -29,13 +29,15 @@
 #  updated_at                :datetime         not null
 #  column_id                 :text
 #  event_id                  :bigint           not null
+#  payment_recipient_id      :bigint
 #  user_id                   :bigint           not null
 #
 # Indexes
 #
-#  index_wires_on_column_id  (column_id) UNIQUE
-#  index_wires_on_event_id   (event_id)
-#  index_wires_on_user_id    (user_id)
+#  index_wires_on_column_id             (column_id) UNIQUE
+#  index_wires_on_event_id              (event_id)
+#  index_wires_on_payment_recipient_id  (payment_recipient_id)
+#  index_wires_on_user_id               (user_id)
 #
 # Foreign Keys
 #
@@ -56,8 +58,13 @@ class Wire < ApplicationRecord
 
   include AASM
   include Freezable
+  include Payment
 
   include HasWireRecipient
+
+  def payment_recipient_attributes
+    %i[address_line1 address_line2 address_city address_state address_postal_code recipient_country account_number bic_code recipient_information]
+  end
 
   belongs_to :event
   belongs_to :user
@@ -171,7 +178,11 @@ class Wire < ApplicationRecord
     return -1 * local_hcb_code.amount_cents unless local_hcb_code.nil? || local_hcb_code.no_transactions?
 
     eu_bank = EuCentralBank.new
-    eu_bank.update_rates
+    if Rails.env.test?
+      eu_bank.update_rates(Rails.root.join("spec/fixtures/files/eurofxref-daily.xml"))
+    else
+      eu_bank.update_rates
+    end
     eu_bank.exchange(amount_cents, currency, "USD").cents
   end
 

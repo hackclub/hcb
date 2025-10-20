@@ -1,0 +1,53 @@
+<%# locals: (event:, stripe_card:, show_card_details:, side: "left") %>
+
+<div
+  class="stripe-card
+        <%= stripe_card.status_text.downcase %>
+        <%= "virtual" if stripe_card.virtual? %>
+        <%= "platinum" if stripe_card.platinum? %>
+        <%= "stripe-card--#{stripe_card.personalization_design.color}" if stripe_card.personalization_design %>
+        <%= "deactivated" if stripe_card.canceled? %>
+        <%= "canceled-#{side}" if stripe_card.canceled? %>
+        mt1
+  "
+  aria-hidden="<%= side == "right" && stripe_card.canceled? ? "true" : "false" %>"
+  data-behavior="hover_tilt"
+  style="background-image: <%= GeoPattern.generate(stripe_card.public_id).to_data_uri unless stripe_card.platinum? || stripe_card.personalization_design.present? %>">
+  <% if stripe_card.platinum? %>
+    <span class="bold caps h6 absolute flex items-center" style="opacity: 50%; right: 10px; top: 10px;">
+      <%= inline_icon "bank-account" %>
+      Platinum
+    </span>
+  <% end %>
+  <% if stripe_card.personalization_design.present? %>
+    <div class="stripe-card__personalization absolute" style="right: 16px; top: 16px;">
+      <div class="stripe-card__personalization_image_wrapper">
+        <div class="stripe-card__personalization_inner_image_wrapper">
+          <%= image_tag rails_blob_url(stripe_card.personalization_design.logo), class: "stripe-card__personalization-image" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  <p class="stripe-card__number fs-mask">
+    <% if stripe_card.user != current_user %>
+      <% if OrganizerPosition.role_at_least?(current_user, stripe_card.event, :reader) %>
+        <%= stripe_card.hidden_card_number_with_last_four %>
+      <% else %>
+        <%= stripe_card.hidden_card_number %>
+      <% end %>
+    <% elsif show_card_details %>
+      <%= stripe_card.formatted_card_number %>
+    <% else %>
+      <%= stripe_card.hidden_card_number_with_last_four %>
+    <% end %>
+  </p>
+  <p class="stripe-card__name flex justify-between items-center">
+    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+      <%= event.present? ? stripe_card.user.name : stripe_card.event.name %>
+    </span>
+    <span class="ml2 badge h6 stripe-card__status">
+      <%= stripe_card.status_text %>
+    </span>
+  </p>
+  <div class="stripe-card__overlay"></div>
+</div>

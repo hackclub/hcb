@@ -230,25 +230,25 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe "#session_duration_seconds" do
-    it "must be present" do
-      user = described_class.new(email: "test@example.com", session_duration_seconds: nil)
-      user.validate
-      expect(user.errors[:session_duration_seconds]).to include("can't be blank")
+  describe "#use_two_factor_authentication" do
+    it "cannot be disabled by admins" do
+      user = create(:user, :make_admin, use_two_factor_authentication: true)
+
+      expect(user.update(use_two_factor_authentication: false)).to eq(false)
+      expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
-    it "must be one of the valid values" do
-      user = described_class.new(email: "test@example.com")
+    it "cannot be disabled by admins pretending not to be admins" do
+      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true)
 
-      SessionsHelper::SESSION_DURATION_OPTIONS.each_value do |valid_value|
-        user.session_duration_seconds = valid_value
-        user.validate
-        expect(user.errors[:session_duration_seconds]).to be_empty
-      end
+      expect(user.update(use_two_factor_authentication: false)).to eq(false)
+      expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
+    end
 
-      user.session_duration_seconds = 1.year.seconds.to_i
-      user.validate
-      expect(user.errors[:session_duration_seconds]).to include("is not included in the list")
+    it "can be disabled by regular users" do
+      user = create(:user, use_two_factor_authentication: true)
+
+      expect(user.update(use_two_factor_authentication: false)).to eq(true)
     end
   end
 end

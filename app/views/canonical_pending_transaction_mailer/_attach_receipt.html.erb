@@ -1,5 +1,9 @@
 <% if hcb_code.receipt_required? %>
-  <%= link_to "Upload your receipt for this charge (this link can be used by anyone for two weeks)", upload_url %>.
+
+  <%= link_to upload_url do %>
+    <img style="display: block; margin-top: 10px;" src="<%= receipt_status_hcb_codes_url(format: :svg, s: @cpt.local_hcb_code.signed_id(purpose: :receipt_status)) %>" alt="Click to upload your receipt">
+  <% end %>
+  <p><em>This link can be used by anyone for two weeks to upload a receipt for this charge.</em></p>
 
   <p>
     Alternatively, <em>reply to this email with an image or PDF receipt attached</em>. When responding with a receipt, include a line beginning with <em>@rename</em> to rename the transaction or with <em>@tag</em> to tag the transaction.

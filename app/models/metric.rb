@@ -78,4 +78,8 @@ class Metric < ApplicationRecord
     metric
   end
 
+  def self.year
+    2025
+  end
+
 end

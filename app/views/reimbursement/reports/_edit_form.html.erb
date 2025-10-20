@@ -31,9 +31,15 @@
       <%= form.collection_select :reviewer_id, @report.event.managers, :id, :name, include_blank: "Anyone" %>
     </div>
   <% end %>
-  <%= form.submit "Update report", class: "left mt2" %>
-<% end %>
+  <div class="flex items-center w-full justify-between">
+    <%= form.submit "Update report", class: "left mt2" %>
 
-<% admin_tool_if !@report.draft? do %>
-  <%= button_to "Delete report", reimbursement_report_path(@report), class: "right mt2 bg-error btn", method: :delete, type: "button" %>
+    <% if current_user.admin? && !@report.draft? %>
+      <% admin_tool("right mt2") do %>
+        <%= button_to "Delete report", reimbursement_report_path(@report), class: "bg-error btn", method: :delete, type: "button" %>
+      <% end %>
+    <% else %>
+      <%= button_to "Delete report", reimbursement_report_path(@report), class: "right mt2 bg-error btn", method: :delete, type: "button" %>
+    <% end %>
+  </div>
 <% end %>

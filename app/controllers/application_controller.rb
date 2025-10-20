@@ -19,7 +19,7 @@ class ApplicationController < ActionController::Base
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.touch_last_seen_at }
+  before_action { current_session&.update_session_timestamps }
 
   # This cookie is used for Safari PWA prompts
   before_action do
@@ -27,11 +27,6 @@ class ApplicationController < ActionController::Base
 
     @first_visit = cookies[:first_visit] != "1"
     cookies.permanent[:first_visit] = 1
-  end
-
-  # This cookie is used for Safari PWA prompts
-  before_action do
-    @hide_three_teens_banner = cookies[:hide_three_teens_banner] == "1"
   end
 
   before_action do
@@ -57,10 +52,12 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  rescue_from ActionView::MissingTemplate, with: :not_found
+
   rescue_from Rack::Timeout::RequestTimeoutException do
     respond_to do |format|
       format.html { render "errors/timeout" }
-      format.all { render text: "This request timed out, sorry." }
+      format.all { render plain: "This request timed out, sorry." }
     end
   end
 
@@ -93,6 +90,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  rescue_from Governance::Admin::InsufficientApprovalLimitError do |e|
+    redirect_back fallback_location: root_path, flash: { error: e.message }
+  end
+
+
   def find_current_auditor
     current_user if auditor_signed_in?
   end
@@ -104,7 +106,6 @@ class ApplicationController < ActionController::Base
       redirect_to my_settings_path
     end
   end
-
 
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."

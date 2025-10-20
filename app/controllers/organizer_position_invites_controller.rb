@@ -113,9 +113,10 @@ class OrganizerPositionInvitesController < ApplicationController
 
   def invite_params
     permitted_params = [:email, :role, :enable_controls, :initial_control_allowance_amount]
-    permitted_params << :cosigner_email if admin_signed_in?
-    permitted_params << :include_videos if admin_signed_in?
-    permitted_params << :is_signee if admin_signed_in?
+
+    if admin_signed_in?
+      permitted_params.push(:cosigner_email, :include_videos, :is_signee)
+    end
     params.require(:organizer_position_invite).permit(permitted_params)
   end
 

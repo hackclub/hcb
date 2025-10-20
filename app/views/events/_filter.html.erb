@@ -1,7 +1,7 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant %>
 
 <div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
       <%= render "search", form: %>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
@@ -25,6 +25,27 @@
         <%= link_to "All transactions (JSON)", transactions_exports_path(event: @event, format: :json), target: :_blank %>
         <%= link_to "All transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger), target: :_blank %>
         <%= link_to "Monthly statements", event_statements_path(@event) %>
+      </div>
+    </div>
+  <% end %>
+
+  <% admin_tool "overflow-hidden" do %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger">
+      <button
+        type="button"
+        class="pop menu__toggle menu__toggle--arrowless overflow-visible"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle">
+        <%= inline_icon "list", size: 28 %>
+      </button>
+      <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+        <% ["date", "mapped_at"].each do |order_by| %>
+          <div class="flex items-center">
+            <%= link_to(upsert_query_params(order_by:), class: "flex-auto menu__action #{"menu__action--active" if @order_by == order_by}", data: { turbo_prefetch: "false" }) do %>
+              <%= order_by.humanize %>
+            <% end %>
+          </div>
+        <% end %>
       </div>
     </div>
   <% end %>
@@ -67,7 +88,7 @@
       <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
         <% [10, 25, 50, 100, 200].each do |amount| %>
           <div class="flex items-center">
-            <%= link_to(upsert_query_params(per: amount), class: "flex-auto menu__action", data: { turbo_prefetch: "false" }) do %>
+            <%= link_to(event_ledger_path(@event, upsert_query_params(per: amount)), class: "flex-auto menu__action", data: { turbo_prefetch: "false" }) do %>
               <%= amount %> Transactions Per Page
             <% end %>
           </div>
@@ -81,7 +102,7 @@
   <div class="flex items-center filter-menu">
     <%= render partial: "filter_menu" %>
 
-    <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
+    <%= link_to event_ledger_path(@event), class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
       <%= inline_icon "view-close", size: 28 %>
     <% end %>
 
@@ -91,7 +112,7 @@
           <%= render partial: "canonical_transactions/tag_icon", locals: { tag: @tag } %>
           <%= @tag.label %>
 
-          <%= link_to event_ledger_url(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
@@ -101,7 +122,7 @@
           <%= avatar_for @user, size: 18 %>
           <%= @user.name %>
 
-          <%= link_to event_ledger_url(@event, upsert_query_params(user: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(user: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
@@ -109,7 +130,7 @@
       <% if @type %>
         <div class="badge badge-large bg-muted">
           <%= @type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
-          <%= link_to event_ledger_url(@event, upsert_query_params(type: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(type: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
@@ -117,7 +138,7 @@
       <% if @direction %>
         <div class="badge badge-large bg-muted">
           <%= @direction.humanize.gsub("In", "Incoming").gsub("Out", "Outgoing") %>
-          <%= link_to event_ledger_url(@event, upsert_query_params(direction: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(direction: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
@@ -129,7 +150,7 @@
           <%= @end_date && @start_date ? " and " : "" %>
           <%= @end_date&.to_datetime&.strftime("%m/%d/%Y") || "" %>
 
-          <%= link_to event_ledger_url(@event, upsert_query_params(start: nil, end: nil, commit: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(start: nil, end: nil, commit: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
@@ -141,7 +162,23 @@
           <%= @minimum_amount && @maximum_amount ? " and " : "" %>
           <%= render_money @maximum_amount if @maximum_amount %>
 
-          <%= link_to event_ledger_url(@event, upsert_query_params(minimum_amount: nil, maximum_amount: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(minimum_amount: nil, maximum_amount: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @category %>
+        <div class="badge badge-large bg-muted">
+          <%= @category.definition.label %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(category: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @merchant %>
+        <div class="badge badge-large bg-muted">
+          <%= @merchant_name %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(merchant: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>
@@ -149,7 +186,7 @@
       <% if @missing_receipts %>
         <div class="badge badge-large bg-muted">
           Missing receipts
-          <%= link_to event_ledger_url(@event, upsert_query_params(missing_receipts: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= link_to event_ledger_path(@event, upsert_query_params(missing_receipts: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>
         </div>

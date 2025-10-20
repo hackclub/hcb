@@ -34,29 +34,12 @@ RSpec.describe Login do
 
     it "is true when the login is a reauthentication and one factor was used regardless of 2fa" do
       user = create(:user, use_two_factor_authentication: true)
-      initial_login = create(:login, user:)
-      login = create(:login, user:, initial_login:)
+      login = create(:login, user:, is_reauthentication: true)
 
       login.update!(authenticated_with_email: true)
 
       expect(login).to be_reauthentication
       expect(login).to be_complete
-    end
-  end
-
-  describe "#reauthentication?" do
-    it "is false by default" do
-      login = create(:login)
-
-      expect(login).not_to be_reauthentication
-    end
-
-    it "is true when there is an initial login" do
-      user = create(:user)
-      initial_login = create(:login, user:)
-      login = create(:login, user:, initial_login:)
-
-      expect(login).to be_reauthentication
     end
   end
 end

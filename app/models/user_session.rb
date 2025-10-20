@@ -44,12 +44,6 @@ class UserSession < ApplicationRecord
   belongs_to :impersonated_by, class_name: "User", optional: true
   belongs_to :webauthn_credential, optional: true
   has_many(:logins)
-  has_one(
-    :initial_login,
-    -> { initial },
-    class_name: "Login",
-    inverse_of: :user_session,
-  )
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record.impersonated_by || record.user }, recipient: proc { |controller, record| record.impersonated_by || record.user }, only: [:create]
@@ -80,10 +74,14 @@ class UserSession < ApplicationRecord
 
   LAST_SEEN_AT_COOLDOWN = 5.minutes
 
-  def touch_last_seen_at
+  MAX_SESSION_DURATION = 3.weeks
+
+  def update_session_timestamps
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
-    update_columns(last_seen_at: Time.now)
+    updates = { last_seen_at: Time.now }
+    updates[:expiration_at] = [created_at + MAX_SESSION_DURATION, user.session_validity_preference.seconds.from_now].min unless impersonated?
+    update_columns(**updates)
   end
 
   def expired?

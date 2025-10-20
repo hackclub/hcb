@@ -71,6 +71,8 @@ class CheckDeposit < ApplicationRecord
 
   has_one_attached :front
   has_one_attached :back
+  validates :front, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["front"].present? }
+  validates :back, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["back"].present? }
 
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true
   validates :front, attached: true, content_type: [:png, :jpeg], on: :create

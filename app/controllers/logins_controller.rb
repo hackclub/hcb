@@ -171,6 +171,8 @@ class LoginsController < ApplicationController
         redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
       end
     end
+  rescue SessionsHelper::AccountLockedError => e
+    redirect_to(auth_users_path, flash: { error: e.message })
   end
 
   def reauthenticate
@@ -184,7 +186,7 @@ class LoginsController < ApplicationController
   def set_login
     begin
       if params[:id]
-        @login = Login.incomplete.active.find_by_hashid!(params[:id])
+        @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
         @referral_program = @login.referral_program
         unless valid_browser_token?
           # error! browser token doesn't match the cookie.

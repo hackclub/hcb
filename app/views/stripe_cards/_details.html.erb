@@ -32,6 +32,13 @@
       </p>
     <% end %>
 
+    <% if stripe_card.frozen? && stripe_card.last_frozen_by && stripe_card.last_frozen_by != User.system_user %>
+      <div class="fs-mask">
+        <strong>Frozen by</strong>
+        <%= user_mention stripe_card.last_frozen_by %>
+      </div>
+    <% end %>
+
     <% if stripe_card.cash_withdrawal_enabled? %>
       <p>
         <strong>Cash withdrawals</strong>
@@ -139,9 +146,9 @@
       <div class="fs-mask">
         <strong class="inline-flex items-center" style="gap: 4px">
           Phone number
-          <%= link_to "#", class: "info tooltipped tooltipped--e", "aria-label": "Seem familiar? This is your number! Use this if asked during checkout :)", style: "display: flex;", data: { turbo: false } do %>
+          <span class="info tooltipped tooltipped--e h-[18px]" aria-label="This is your phone number - use this if asked during checkout.">
             <%= inline_icon "info", size: 18, style: "position: unset;" %>
-          <% end %>
+          </span>
         </strong>
         <%= copy_to_clipboard(stripe_card.user.pretty_phone_number, class: "w-fit", tooltip_direction: "e") %>
       </div>

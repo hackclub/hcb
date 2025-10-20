@@ -3,8 +3,8 @@
 class HcbCodesController < ApplicationController
   include TagsHelper
 
-  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :show]
-  skip_after_action :verify_authorized, only: [:receipt]
+  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
+  skip_after_action :verify_authorized, only: [:receipt, :receipt_status]
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
@@ -40,10 +40,13 @@ class HcbCodesController < ApplicationController
       @show_ach_details = true
     end
 
+    @reverse_receipt_id = params[:reverse]
+
     if params[:frame]
       @frame = true
       @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
       @transaction_show_author_img = params[:transaction_show_author_img].nil? ? false : params[:transaction_show_author_img]
+      @ledger_instance = params[:ledger_instance]
 
       render :show, layout: false
     else
@@ -197,6 +200,13 @@ class HcbCodesController < ApplicationController
     else
       redirect_to @hcb_code, flash: { error: error_reason }
     end
+  end
+
+  def receipt_status
+    @secret = params[:s]
+    @hcb_code = HcbCode.find_signed(@secret, purpose: :receipt_status)
+
+    raise Pundit::NotAuthorizedError if @hcb_code.nil?
   end
 
   def toggle_tag

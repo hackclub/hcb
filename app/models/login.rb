@@ -8,9 +8,9 @@
 #  aasm_state               :string
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
+#  is_reauthentication      :boolean          default(FALSE), not null
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
-#  initial_login_id         :bigint
 #  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
@@ -21,25 +21,15 @@
 #  index_logins_on_user_id              (user_id)
 #  index_logins_on_user_session_id      (user_session_id)
 #
-# Foreign Keys
-#
-#  fk_rails_...  (initial_login_id => logins.id)
-#
 class Login < ApplicationRecord
   include AASM
   include Hashid::Rails
 
   belongs_to :user
   belongs_to :user_session, optional: true
-  belongs_to(
-    :initial_login,
-    optional: true,
-    class_name: "Login",
-    inverse_of: nil
-  )
 
-  scope(:initial, -> { where(initial_login_id: nil) })
-  scope(:reauthentication, -> { where.not(initial_login_id: nil) })
+  scope(:initial, -> { where(is_reauthentication: false) })
+  scope(:reauthentication, -> { where(is_reauthentication: true) })
 
   belongs_to :referral_program, class_name: "Referral::Program", optional: true
 
@@ -86,6 +76,8 @@ class Login < ApplicationRecord
     mark_complete! if may_mark_complete?
   end
 
+  before_create(:sync_is_reauthentication)
+
   def authentication_factors_count
     return 0 if authentication_factors.nil?
 
@@ -130,7 +122,7 @@ class Login < ApplicationRecord
   end
 
   def reauthentication?
-    initial_login_id.present?
+    is_reauthentication?
   end
 
   private
@@ -146,6 +138,10 @@ class Login < ApplicationRecord
     else
       1
     end
+  end
+
+  def sync_is_reauthentication
+    self.is_reauthentication = reauthentication?
   end
 
 end

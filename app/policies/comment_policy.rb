@@ -17,15 +17,17 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def create?
+    return false if record.admin_only && !user.auditor?
+
     user.auditor? || users.include?(user)
   end
 
   def edit?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   def update?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   def react?
@@ -37,7 +39,7 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   private

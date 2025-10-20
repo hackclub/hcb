@@ -26,7 +26,7 @@ RSpec.describe StripeCardsController do
     response
       .parsed_body
       .css("article.card section.details > *")
-      .map { |el| el.text.gsub(/\s+/, " ").strip }
+      .map { |el| el.text.squish }
   end
 
   describe "#show" do
@@ -75,7 +75,7 @@ RSpec.describe StripeCardsController do
         :login,
         user:,
         authenticated_with_email: true,
-        initial_login: user_session.initial_login
+        is_reauthentication: true
       )
       login.update!(user_session:)
 

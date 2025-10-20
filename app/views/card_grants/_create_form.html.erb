@@ -7,7 +7,7 @@
 <%= form_with model: [@event, card_grant], data: { turbo_frame: "_top" } do |form| %>
   <div class="field">
     <%= form.label :email %>
-    <%= form.email_field :email, value: @prefill_email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: %>
+    <%= form.email_field :email, value: card_grant.email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: %>
   </div>
 
   <div class="field">
@@ -20,7 +20,7 @@
 
   <div class="field">
     <%= form.label :purpose, "Purpose (optional, shown to recipient)" %>
-    <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled: %>
+    <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled:, maxlength: CardGrant::MAXIMUM_PURPOSE_LENGTH %>
   </div>
 
   <div class="field">
@@ -29,16 +29,22 @@
   </div>
 
   <div class="field">
-    <%= form.label :one_time_use do %>
+    <%= form.label :one_time_use, class: "flex gap-2 items-center" do %>
       <%= form.check_box :one_time_use, disabled: %>
-      One time use? (freezes after first charge)
+      One time use?
+      <span class="info tooltipped tooltipped--e h-5" aria-label="Card will freeze after the first charge">
+        <%= inline_icon "info", size: 20 %>
+      </span>
     <% end %>
   </div>
 
   <div class="field">
-    <%= form.label :pre_authorization_required do %>
+    <%= form.label :pre_authorization_required, class: "flex gap-2 items-center" do %>
       <%= form.check_box :pre_authorization_required, disabled: %>
-      Require pre-authorization? (documentation before activation compared with purpose)
+      Require pre-authorization?
+      <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient will submit documentation of their purchase before activation, which will be compared with the grant's purpose and flagged if it is potentially fraudulent">
+        <%= inline_icon "info", size: 20 %>
+      </span>
     <% end %>
   </div>
 

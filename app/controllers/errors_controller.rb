@@ -22,7 +22,6 @@ class ErrorsController < ApplicationController
 
   def error
     @code = params[:code]
-    Rails.error.unexpected "/#{@code} rendered."
     render status: params[:code], layout: "application"
   end
 

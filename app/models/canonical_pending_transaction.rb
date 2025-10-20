@@ -29,6 +29,7 @@
 #  reimbursement_expense_payout_id                  :bigint
 #  reimbursement_payout_holding_id                  :bigint
 #  wire_id                                          :bigint
+#  wise_transfer_id                                 :bigint
 #
 # Indexes
 #
@@ -38,6 +39,7 @@
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
 #  index_canonical_pending_transactions_on_paypal_transfer_id       (paypal_transfer_id)
 #  index_canonical_pending_transactions_on_wire_id                  (wire_id)
+#  index_canonical_pending_transactions_on_wise_transfer_id         (wise_transfer_id)
 #  index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id        (raw_pending_bank_fee_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_donation_tx_id        (raw_pending_donation_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_invoice_tx_id         (raw_pending_invoice_transaction_id)
@@ -57,6 +59,8 @@
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
+  include Categorizable
+
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
   pg_search_scope :pg_text_search, lambda { |query, options_hash| { query: }.merge(options_hash) }
@@ -75,6 +79,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
+  belongs_to :wise_transfer, optional: true
   belongs_to :check_deposit, optional: true
   belongs_to :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", optional: true
   belongs_to :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", optional: true
@@ -98,6 +103,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :outgoing_check, -> { where("raw_pending_outgoing_check_transaction_id is not null") }
   scope :increase_check, -> { where.not(increase_check_id: nil) }
   scope :wire, -> { where.not(wire: nil) }
+  scope :wise_transfer, -> { where.not(wise_transfer: nil) }
   scope :check_deposit, -> { where.not(check_deposit_id: nil) }
   scope :donation, -> { where("raw_pending_donation_transaction_id is not null") }
   scope :invoice, -> { where("raw_pending_invoice_transaction_id is not null") }

@@ -14,6 +14,8 @@ module Api
         authorize @event, :show?
       end
 
+      require_oauth2_scope "organizations:read", :show
+
       def transactions
         authorize @event, :show?
 
