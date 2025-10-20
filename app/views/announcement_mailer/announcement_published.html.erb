@@ -1,4 +1,7 @@
-<h1><%= @announcement.title %></h1>
-<%= @announcement.render_html %>
+<%= render "announcement_mailer/announcement", announcement: @announcement %>
+
+<br>
+<i><%= link_to "View this announcement in your browser", @announcement %></i>
+<br>
 <br>
 <i><%= link_to "This email was sent because you are following #{@event.name}. If you would like to unsubscribe, please click here.", event_url(@event) %></i>

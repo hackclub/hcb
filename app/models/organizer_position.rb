@@ -38,7 +38,7 @@ class OrganizerPosition < ApplicationRecord
 
   has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
-  has_many :tours, as: :tourable
+  has_many :tours, as: :tourable, dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
 
@@ -58,8 +58,20 @@ class OrganizerPosition < ApplicationRecord
     return false unless event.present? && role.present?
     return true if user&.admin?
 
-    current = find_by(user:, event:)&.role
-    current && roles[current] >= roles[role]
+    if role.to_s == "reader"
+      return event.ancestor_organizer_positions.reader_access.where(user:).exists?
+    end
+
+    if role.to_s == "member"
+      # Only check direct organizer positions, unless the user is a manager of an ancestor
+      return event.organizer_positions.member_access.where(user:).exists? || event.ancestor_organizer_positions.manager_access.where(user:).exists?
+    end
+
+    if role.to_s == "manager"
+      return event.ancestor_organizer_positions.manager_access.where(user:).exists?
+    end
+
+    false
   end
 
   private

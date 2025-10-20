@@ -14,6 +14,8 @@ module InvoiceService
     end
 
     def run
+      Governance::Admin.ensure_may_approve_transfer!(@user, invoice.item_amount)
+
       raise ArgumentError, "reason is required" if @reason.blank?
       if remote_invoice.paid? && !remote_invoice.paid_out_of_band
         raise ArgumentError, "can not manually mark an invoice as paid when it was already paid through Stripe"

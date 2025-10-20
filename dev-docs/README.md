@@ -93,7 +93,7 @@ HCB's operations team perform their work through the admin dashboard on HCB and 
 
 ### Deployment & Monitoring
 
-HCB is deployed on [Heroku](https://www.heroku.com/). We have two dynos, one for Rails and one for our [Sidekiq](https://github.com/sidekiq/sidekiq) workers. We handle errors using [Airbrake](https://www.airbrake.io/) and [AppSignal](https://www.appsignal.com/). We also run [status.hackclub.com](https://status.hackclub.com/) using [Checkly](https://www.checklyhq.com/).
+HCB is deployed on [Heroku](https://www.heroku.com/). We have two dynos, one for Rails and one for our [Sidekiq](https://github.com/sidekiq/sidekiq) workers. We handle errors using [AppSignal](https://www.appsignal.com/). We also run [status.hackclub.com](https://status.hackclub.com/) using [Checkly](https://www.checklyhq.com/).
 
 ***
 

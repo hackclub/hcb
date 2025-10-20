@@ -42,10 +42,6 @@ transaction_grouping_engine_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "TransactionGroupingEngine::NightlyJob"
 
-event_mapping_engine_nightly_job:
-  cron: "0 7 * * *" # run at 7am UTC each morning
-  class: "EventMappingEngine::NightlyJob"
-
 sync_payouts_job:
   cron: "0,30 * * * *" # run every 30 minutes
   class: "SyncPayoutsJob"
@@ -94,6 +90,10 @@ payout_nightly_job:
 reimbursement_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "Reimbursement::NightlyJob"
+
+reimbursement_expense_approved_notification_job:
+  cron: "*/20 * * * *" # run every 20 minutes
+  class: "Reimbursement::Expense::ApprovedNotificationJob"
 
 payroll_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
@@ -172,6 +172,11 @@ update_teenager_column_job:
   cron: "0 7 * * *" # run every 1 day
   class: "User::UpdateTeenagerColumnJob"
 
+clear_old_user_sessions:
+  cron: "0 3 * * *" # every day at 3:00 AM
+  class: "UserSession::ClearOldUserSessionsJob"
+  queue: low
+
 card_grant_expiration_job:
   cron: "0 7 * * *" # run every 1 day
   class: "CardGrant::ExpirationJob"
@@ -187,6 +192,10 @@ stripe_service_fee_job:
 user_seen_at_history_snapshot_job:
   cron: "0,30 * * * *" # twice every hour
   class: "User::SeenAtHistory::SnapshotJob"
+  
+user_update_card_locking_recurring:
+  cron: "*/5 * * * *" # Every 5 minutes
+  class: "User::UpdateCardLocking::RecurringJob"
 
 column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
@@ -200,6 +209,10 @@ events_sync_to_airtable_job:
   cron: "0 0 * * *" # run every 1 day
   class: "Event::SyncToAirtableJob"
 
+events_apply_fee_waiver_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Event::ApplyFeeWaiverJob"
+
 monthly_donation_summary_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "MonthlyDonationSummaryJob"
@@ -211,3 +224,23 @@ weekly_ysws_event_summary_job:
 monthly_follower_summary_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "MonthlyFollowerSummaryJob"
+
+announcement_monthly_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "Announcement::MonthlyJob"
+
+announcement_seven_day_warning_job:
+  cron: "0 12 -7 * *" # run at 8am ET; 7 days before the end of the month
+  class: "Announcement::SevenDayWarningJob"
+
+announcement_two_day_warning_job:
+  cron: "0 12 -2 * *" # run at 8am ET; 2 days before the end of the month
+  class: "Announcement::TwoDayWarningJob"
+
+announcement_delete_unsaved_job:
+  cron: "0 0 1 * *" # run first day of each month
+  class: "Announcement::DeleteUnsavedJob"
+
+notify_events_with_negative_balance_job:
+  cron: "0 13 * * 1" # run at 9am est on monday
+  class: "NotifyEventsWithNegativeBalanceJob"

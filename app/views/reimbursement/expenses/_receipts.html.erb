@@ -2,7 +2,7 @@
 
 <%= turbo_frame_tag "receipts_for_#{expense.id}" do %>
   <div class="w-100 h-100 flex">
-    <%= form_with(url: receipts_path, method: "post", class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
+    <%= form_with(url: receipts_path, method: :post, class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
       data: {
         turbo: "true",
         controller: "file-drop form",
@@ -23,7 +23,9 @@
         "
       }) do |form| %>
 
-      <% if expense.receipts.any? %>
+      <% if expense.is_fee? %>
+        <p class="my-0">This fee is imposed by Wise to process your transaction. <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %></p>
+      <% elsif expense.receipts.any? %>
         <div class="flex flex-col p1" id="link_receipt__form">
           <% column_amount = [((expense.receipts.length - 1) / 2.to_f).ceil, expense.receipts.length == 2 ? 2 : 1].max %>
           <div class="receipts" style="grid-template-columns: 1fr repeat(<%= column_amount %>, 1fr)">

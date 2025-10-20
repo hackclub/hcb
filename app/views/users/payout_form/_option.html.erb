@@ -1,0 +1,16 @@
+<%# locals: (form:, model:, title:, description:, icon:) %>
+
+<%= form.radio_button :payout_method_type, model.name, disabled: model.unsupported? %>
+<%= form.label :payout_method_type, value: model.name do %>
+  <%= inline_icon icon, size: 28 %>
+  <strong><%= title %></strong>
+
+  <%= yield %><%# in case you wanna add more flare to a specific option %>
+
+  <% if model.unsupported? %>
+    <div class="badge bg-warning m1 mt0 w-fit"><%= model.unsupported_details[:status_badge] %></div>
+    <small><%= model.unsupported_details[:reason] %></small>
+  <% else %>
+    <small><%= description %></small>
+  <% end %>
+<% end %>

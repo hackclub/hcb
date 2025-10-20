@@ -189,13 +189,27 @@ We've transitioned to using development keys and seed data in development, but h
 
 - Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
 
+#### Pulling data from production
+
+On the postgres server:
+```bash
+su - postgres
+pg_dump -Fc --no-acl --no-owner -h localhost -U rails -d hcb_production -f /tmp/hcb_production.dump
+```
+
+On your laptop:
+```bash
+scp hcb-postgres-3:/tmp/hcb_production.dump hcb_production.dump
+pg_restore --verbose --clean --no-acl --no-owner -h localhost -U postgres -d bank_development hcb_production.dump
+```
+
 ## Flipper
 
 [Flipper](https://github.com/flippercloud/flipper) is used to toggle feature flags on HCB. Flipper can be accessed at [localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a flag, press "Add Feature", paste in the name of a feature from [this list](https://hcb.hackclub.com/api/flags), and then press "Fully Enable".
 
 ## Getting an OAuth token
 
-There is two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference.
+There are two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference. Both described here use the `authorization_code` grant type, but HCB also supports the `device_code` grant type. See the [device grant gem docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage) for instructions on how to use this flow, keeping in mind that HCB uses a scope of `api/v4/oauth` instead of just `oauth`.
 
 1. Go to [localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing, the redirect URI to [`http://localhost:3000/`](http://localhost:3000/), and scopes to `read write`. For the purposes of this guide, you should leave confidential checked (see more context [here](oauth.net/2/client-types)). Press "Submit" and then save the info on the new page that appears and press "Authorize."
 

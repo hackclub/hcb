@@ -144,7 +144,7 @@
         </div>
         <div class="field">
           <%= form.label :due_date %>
-          <%= form.date_field :due_date, min: Date.today, value: 30.days.from_now, class: "!max-w-full", disabled: @event.demo_mode? %>
+          <%= form.date_field :due_date, min: 3.days.from_now, value: 30.days.from_now, class: "!max-w-full", disabled: @event.demo_mode? %>
         </div>
         <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
           <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || @event.demo_mode? %>

@@ -1,0 +1,36 @@
+<%# locals: (event:, perks_available:, active_teenagers_count:) %>
+
+<div class="card pb0 mb3 promo-pins-keychains" id="premium-pins">
+  <div class="card__banner card__banner--top flex justify-between items-center">
+    <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
+      <span class="flex-grow">Pins & Keychains</span>
+      <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
+    </h3>
+
+    <% if !event.plan.promotions_enabled? %>
+      <% pins_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
+    <% elsif !perks_available %>
+      <% pins_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+    <% elsif active_teenagers_count < 5 %>
+      <% pins_ineligible_reason = "Organization must have 5 or more active teenagers" %>
+    <% end %>
+    <% if pins_ineligible_reason %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="<%= pins_ineligible_reason %>">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% else %>
+      <%= link_to "Apply",
+        fillout_form("2XR9U2gBNDus", { "orgname" => event.name, "hcburl" => event_team_url(event), "name" => current_user.name, "email" => current_user.email }),
+        class: "btn promo-premium-header bg-clip-padding",
+        target: :_blank %>
+    <% end %>
+  </div>
+
+  <p>
+    Ever wish you were just a little more dripped out in HCB swag?
+    We'll ship you some super cool custom HCB pins and keychains for free if you have 5 or more active teenagers!
+  </p>
+  <section class="card__banner card__darker secondary border-top italic">
+    You currently have <%= active_teenagers_count %>/5 active teenagers in your organization!
+  </section>
+</div>

@@ -1,50 +1,78 @@
-<div data-controller="menu" class="inline-flex items-center" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-start">
+<div
+  data-controller="menu"
+  class="inline-flex items-center"
+  data-menu-append-to-value="turbo-frame#ledger"
+  data-menu-placement-value="bottom-start">
+
   <button
     type="button"
     class="pop my-2 cursor-pointer tooltipped tooltipped--s"
     aria-label="Add filters..."
-    data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+    data-menu-target="toggle"
+    data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
   </button>
-  <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 290px; padding: 0.5rem" data-menu-target="content">
+
+  <div
+    class="menu__content menu__content--2 menu__content--compact h5"
+    style="width: 290px; padding: 0.5rem"
+    data-menu-target="content">
+
     <div data-controller="tabs" data-tabs-default-tab-value="<%= filters[0][:label] %>">
+
       <% filters.each do |filter| %>
-        <button id="<%= filter[:label] %>" data-tabs-target="btn" data-action="tabs#select"><%= filter[:label].humanize %></button>
+        <button
+          id="<%= filter[:label] %>"
+          data-tabs-target="btn"
+          data-action="tabs#select">
+          <%= filter[:label].humanize %>
+        </button>
       <% end %>
+
       <div class="menu__divider"></div>
+
       <% filters.each do |filter| %>
         <div data-tabs-target="tab" id="<%= filter[:label] %>">
-          <% if filter[:type] == "select" %>
+          <% case filter[:type] %>
+          <% when "select" %>
             <% if filter[:options].empty? %>
               <p class="p-1 text-center">No <%= filter[:label].pluralize %> found</p>
             <% end %>
             <% filter[:options].each do |option| %>
-              <% if option.is_a?(Array) %>
-                <%= link_to option[0], upsert_query_params(filter[:label].downcase => option[1]), class: "menu__action !border-none #{"menu__action--active" if params[filter[:label].downcase] == option[1].to_s}" %>
-              <% else %>
-                <%= link_to option.humanize, upsert_query_params(filter[:label].downcase => option), class: "menu__action !border-none #{"menu__action--active" if params[filter[:label].downcase] == option.to_s}" %>
-              <% end %>
+              <% label, value = option.is_a?(Array) ? option : [option.humanize, option] %>
+              <%= link_to label,
+                          upsert_query_params(filter[:key] => value),
+                          class: "menu__action !border-none #{'menu__action--active' if params[filter[:key]] == value.to_s}" %>
             <% end %>
-          <% elsif filter[:type] == "date_range" %>
-            <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
-                <p class="bold mb0 mt0">After...</p>
-                <%= form.date_field "#{filter[:key].sub '_*', '' }_after", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_after"] %>
-              <p class="bold mb0 mt0">Before...</p>
-                <%= form.date_field "#{filter[:key].sub '_*', '' }_before", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_before"] %>
-              <% request.query_parameters.except(:start, :end).each do |key, value| %>
-                <%= hidden_field_tag key, value %>
+
+          <% when "date_range" %>
+            <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
+              <% ["after", "before"].each do |suffix| %>
+                <label class="bold"><%= suffix.humanize %>...</label>
+                <%= form.date_field "#{filter[:key_base]}_#{suffix}", class: "border mb1", value: params["#{filter[:key_base]}_#{suffix}"] %>
               <% end %>
+
+              <% request.query_parameters.except("#{filter[:key_base]}_before", "#{filter[:key_base]}_after").each do |k, v| %>
+                <%= hidden_field_tag k, v %>
+              <% end %>
+
               <%= form.submit "Filter..." %>
             <% end %>
-            <% elsif filter[:type] == "amount_range" %>
-            <%= form_with(model: nil, local: true, method: :get, class: "flex-auto p1") do |form| %>
-              <p class="bold mb0 mt0">Less than...</p>
-              <%= form.number_field "#{filter[:key].sub('_*', '')}_less_than", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_less_than"] %>
-              <p class="bold mb0 mt0">Greater than...</p>
-              <%= form.number_field "#{filter[:key].sub('_*', '')}_greater_than", class: "border mb1", value: params["#{filter[:key].sub('_*', '')}_greater_than"] %>
-              <% request.query_parameters.except(:start, :end).each do |key, value| %>
-              <%= hidden_field_tag key, value %>
+
+          <% when "amount_range" %>
+            <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
+                <% ["less_than", "greater_than"].each do |suffix| %>
+                  <label class="bold"><%= suffix.humanize %>...</label>
+                  <div class="input p-0 mb-2 flex border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3 items-center">
+                    <span class="bold muted text-md" style="width: 1rem;">$</span>
+                    <%= form.number_field "#{filter[:key_base]}_#{suffix}", class: "bg-transparent !border-none", value: params["#{filter[:key_base]}_#{suffix}"] %>
+                  </div>
+                <% end %>
+
+              <% request.query_parameters.except("#{filter[:key_base]}_less_than", "#{filter[:key_base]}_greater_than").each do |k, v| %>
+                <%= hidden_field_tag k, v %>
               <% end %>
+
               <%= form.submit "Filter..." %>
             <% end %>
           <% end %>
@@ -53,4 +81,5 @@
     </div>
   </div>
 </div>
+
 <%= yield %>

@@ -271,6 +271,8 @@ class AchTransfer < ApplicationRecord
   end
 
   def approve!(processed_by = nil, send_realtime: false)
+    Governance::Admin.ensure_may_approve_transfer!(processed_by, amount)
+
     if scheduled_on.present?
       mark_scheduled!
     elsif send_realtime
@@ -349,6 +351,7 @@ class AchTransfer < ApplicationRecord
 
     now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
 
+    return scheduled_on if scheduled_on.present?
     return now if realtime?
 
     if same_day? && now.workday?

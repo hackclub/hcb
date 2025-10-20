@@ -20,6 +20,7 @@ class EmployeesController < ApplicationController
   def show
     @employee = Employee.find(params[:id])
     @event = @employee.event
+    @frame = params[:frame].present?
     authorize @employee
   end
 

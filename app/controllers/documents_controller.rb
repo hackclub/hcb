@@ -17,12 +17,14 @@ class DocumentsController < ApplicationController
     @active_common_documents = Document.common.active.order(created_at: :desc)
     @archived_documents = @event.documents.includes(:user).archived.order(created_at: :desc)
     @archived_common_documents = Document.common.archived.order(created_at: :desc)
+
+    authorize @event, policy_class: DocumentPolicy
   end
 
   def new
     # documents whose event_id is nil is shared across
     # all events
-    @document = Document.new(event: @event || nil)
+    @document = Document.new(event: @event.presence)
     authorize @document
   end
 
@@ -40,6 +42,13 @@ class DocumentsController < ApplicationController
   end
 
   def show
+    # For common documents (event_id: nil), redirect non-admin users to the download URL
+    if @document.common? && !admin_signed_in?
+      authorize @document, :download?
+      redirect_to document_download_path(@document)
+      return
+    end
+
     authorize @document
   end
 
@@ -127,7 +136,7 @@ class DocumentsController < ApplicationController
   private
 
   def document_params
-    params.require(:document).permit(:event_id, :name, :file)
+    params.require(:document).permit(:event_id, :name, :file, :category)
   end
 
   def set_document

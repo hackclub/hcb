@@ -12,9 +12,6 @@ module Api
         @hcb_code = HcbCode.find_by_public_id!(params[:transaction_id])
 
         admin_only = params[:admin_only] || false
-        if admin_only && !admin_signed_in?
-          return render json: { error: "not_authorized", message: "Only administrators can create admin-only comments" }, status: :forbidden
-        end
 
         @comment = @hcb_code.comments.build(
           content: params[:content],
@@ -27,7 +24,7 @@ module Api
 
         @comment.save!
 
-        render "show"
+        render "show", status: :created
       end
 
     end
