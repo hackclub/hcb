@@ -1,4 +1,4 @@
-<%# locals: (event:, show_category_badge: false, show_date_stat: false) %>
+<%# locals: (event:, show_category_badge: false, show_date_stat: false, show_scoped_tags: false) %>
 
 <%= link_to event, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
   <li class="card card--hover flex flex-col justify-between h-full mx-auto <%= "card--background-image" if event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
@@ -33,6 +33,15 @@
           <%= tag %>
         </span>
         <span class="bg-red bg-orange bg-yellow bg-green bg-blue bg-purple"></span>
+      </div>
+    <% end %>
+    <% if local_assigns[:show_scoped_tags] %>
+      <div class="flex flex-row items-center gap-1 mb-2 m-0 mt-[-4px]">
+        <% event.scoped_tags.each do |tag| %>
+          <span class="badge m-0">
+            <%= tag.name %>
+          </span>
+        <% end %>
       </div>
     <% end %>
     <div class="h4 line-height-2 mb2 mt-1 flex justify-between item-center">
