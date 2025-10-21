@@ -100,7 +100,11 @@
     </div>
     <% if @user.webauthn_credentials.length > 0 %>
       <div class="grid grid--split mb3">
-        <%= render @user.webauthn_credentials.order(created_at: :desc) %>
+        <%= render partial: "webauthn_credentials/webauthn_credential",
+                   collection: @user.webauthn_credentials.order(created_at: :desc),
+                   as: :webauthn_credential,
+                   locals: { disabled: }
+        %>
       </div>
     <% else %>
       <div class="secondary center mb4">
@@ -166,7 +170,7 @@
         <% if session.is_a? UserSession %>
           <%= render "user_session", session: %>
         <% elsif session.respond_to? :authorization_count %>
-          <%= render "oauth_authorization", authorization: session %>
+          <%= render "oauth_authorization", authorization: session, disabled: %>
         <% end %>
       <% end %>
     </div>
@@ -181,7 +185,7 @@
           <% if session.is_a? UserSession %>
             <%= render "user_session", session: %>
           <% elsif session.respond_to? :authorization_count %>
-            <%= render "oauth_authorization", authorization: session %>
+            <%= render "oauth_authorization", authorization: session, disabled: %>
           <% end %>
         <% end %>
       </div>
