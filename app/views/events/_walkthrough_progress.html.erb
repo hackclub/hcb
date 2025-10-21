@@ -1,14 +1,15 @@
-  <% steps = local_assigns[:steps] || [
-       { name: "Home", completed: true },
-       { name: "Announcements", completed: true },
-       { name: "Donations", completed: true },
-       { name: "Check deposits", completed: false }
-     ] %>
-<div data-behavior="modal_trigger" data-modal="walkthrough_modal" style="border-width:2px;border-style:solid" class="cursor-pointer flex border-gray-200 bg-white p-0 pr-3 rounded-xl -mx-2">
+<% steps = local_assigns[:steps] || [
+      { name: "Home", completed: true },
+      { name: "Announcements", completed: false },
+      { name: "Donations", completed: false },
+      { name: "Check deposits", completed: false },
+      { name: "Check deposits", completed: false }
+    ] %>
+<div data-behavior="modal_trigger" data-modal="walkthrough_modal" style="border-width:2px;border-style:solid" class="cursor-pointer flex border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 p-0 pr-3 rounded-xl -mx-2">
   <div class="flex items-center w-full">
     <svg width="77" height="77" viewBox="-9.625 -9.625 96.25 96.25" version="1.1" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-90deg)">
-      <circle r="28.5" cx="38.5" cy="38.5" fill="transparent" stroke="#e0e0e0" stroke-width="10"></circle>
-      <circle r="28.5" cx="38.5" cy="38.5" stroke="#76e5b1" stroke-width="10" stroke-linecap="round" stroke-dashoffset="38px" fill="transparent" stroke-dasharray="178.98000000000002px"></circle>
+      <circle r="28.5" cx="38.5" cy="38.5" fill="transparent" class="stroke-[#e0e0e0] dark:stroke-gray-600" stroke-width="10"></circle>
+      <circle r="28.5" cx="38.5" cy="38.5" stroke="#76e5b1" stroke-width="10" stroke-linecap="round" stroke-dashoffset="<%= 180 * (steps.any? ? (steps.count { |s| !s[:completed] }.fdiv(steps.count)).round(1) : 0) %>px" fill="transparent" stroke-dasharray="178.98000000000002px"></circle>
     </svg>
     <div class="flex-1">
       <p class="my-0 font-bold" style="line-height:1.2">
