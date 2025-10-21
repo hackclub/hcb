@@ -16,6 +16,8 @@ gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
 gem "sidekiq-cron", "~> 2.3" # run Sidekiq jobs at scheduled intervals
 gem "activejob-traffic_control" # throttle jobs
+gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob-traffic_control
+# explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"

@@ -74,7 +74,7 @@ class UserSession < ApplicationRecord
 
   LAST_SEEN_AT_COOLDOWN = 5.minutes
 
-  MAX_SESSION_DURATION = 2.weeks
+  MAX_SESSION_DURATION = 3.weeks
 
   def update_session_timestamps
     return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
