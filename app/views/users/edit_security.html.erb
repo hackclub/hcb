@@ -103,8 +103,7 @@
         <%= render partial: "webauthn_credentials/webauthn_credential",
                    collection: @user.webauthn_credentials.order(created_at: :desc),
                    as: :webauthn_credential,
-                   locals: { disabled: }
-        %>
+                   locals: { disabled: } %>
       </div>
     <% else %>
       <div class="secondary center mb4">
