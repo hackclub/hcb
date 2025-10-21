@@ -42,7 +42,7 @@ class OrganizerPosition
       end
 
       def enabled?
-        Flipper.enabled?(:spending_controls_2024_06_03, record.organizer_position.event)
+        true
       end
 
     end
