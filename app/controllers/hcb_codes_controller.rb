@@ -206,7 +206,7 @@ class HcbCodesController < ApplicationController
     @secret = params[:s]
     @hcb_code = HcbCode.find_signed(@secret, purpose: :receipt_status)
 
-    if @hcb_code.nil? && HcbCode.find_signed(@secret, purpose: :receipt_status) != @hcb_code
+    if @hcb_code.nil?
       raise Pundit::NotAuthorizedError
     end
 
