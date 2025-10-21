@@ -206,7 +206,13 @@ class HcbCodesController < ApplicationController
     @secret = params[:s]
     @hcb_code = HcbCode.find_signed(@secret, purpose: :receipt_status)
 
-    raise Pundit::NotAuthorizedError if @hcb_code.nil?
+    if @hcb_code.nil? && HcbCode.find_signed(@secret, purpose: :receipt_status) != @hcb_code
+      raise Pundit::NotAuthorizedError
+    end
+
+    file_name = @hcb_code.missing_receipt? ? "receipt_status_upload.png" : "receipt_status_uploaded.png"
+
+    send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
   end
 
   def toggle_tag
