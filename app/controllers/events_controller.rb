@@ -883,7 +883,8 @@ class EventsController < ApplicationController
       is_public: @event.is_public,
       plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
-      parent_event: @event
+      parent_event: @event,
+      scoped_tags: params[:scoped_tags]
     ).run
 
     redirect_to subevent
