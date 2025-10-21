@@ -158,7 +158,6 @@
             </p>
           <% end %>
           <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-          <%# how do i disable this? %>
           <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required">
           <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
             <p class="h5 mt1 m0 warning flex items-center">
@@ -181,7 +180,7 @@
                                  disabled: %>
             <% unless @user.birthday.nil? %>
               <% admin_tool do %>
-                <%= @user.teenager ? "✅ Teenager" : "Not a teenager" %>
+                <%= @user.teenager? ? "✅ Teenager" : "Not a teenager" %>
               <% end %>
             <% end %>
           </div>
