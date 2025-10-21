@@ -11,7 +11,8 @@
 #
 class Event
   class ScopedTag < ApplicationRecord
-    has_and_belongs_to_many :events, foreign_key: :event_scoped_tag_id, inverse_of: :scoped_tags
+    has_many :event_scoped_tags_events, foreign_key: :event_scoped_tag_id, inverse_of: :event_scoped_tag, class_name: "Event::ScopedTagsEvent"
+    has_many :events, through: :event_scoped_tags_events
 
   end
 
