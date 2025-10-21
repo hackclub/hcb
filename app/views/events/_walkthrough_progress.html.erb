@@ -12,7 +12,7 @@
     </svg>
     <div class="flex-1">
       <p class="my-0 font-bold" style="line-height:1.2">
-        Make the most of HCB's features
+        Make the most of HCB
       </p>
       <p class="my-0 text-sm muted">
         <%= steps.select { |s| s[:completed] }.count %>/<%= steps.count %> completed
@@ -25,6 +25,67 @@
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="walkthrough_modal">
   <header>
     <h3 class="text-center my-0">Welcome to <%= @event.name %>!</h3>
-    <p class="muted text-center mt-3">Make the most of HCB's features</p>
+    <p class="muted text-center mt-1">Select at least three features you're interested in using</p>
   </header>
+  <div>
+    <div class="field field--options trio">
+      <%# Checkboxes (removed hidden inputs so unchecked boxes aren't submitted) %>
+      <input id="walkthrough_steps_announcements" type="checkbox" name="walkthrough[steps][]" value="announcements">
+      <label class="option option--checkbox" for="walkthrough_steps_announcements">
+        <span class="font-bold">Announcements</span>
+        <span class="text-sm">Keep your community informed with event updates</span>
+      </label>
+
+      <input id="walkthrough_steps_donations" type="checkbox" name="walkthrough[steps][]" value="donations">
+      <label class="option option--checkbox" for="walkthrough_steps_donations">
+        <span class="font-bold">Donations</span>
+        <span class="text-sm">Accept contributions from your community</span>
+      </label>
+
+      <input id="walkthrough_steps_reimbursements" type="checkbox" name="walkthrough[steps][]" value="reimbursements">
+      <label class="option option--checkbox" for="walkthrough_steps_reimbursements">
+        <span class="font-bold">Reimbursements</span>
+        <span class="text-sm">
+          Easily reimburse team members for event-related expenses
+        </span>
+      </label>
+
+      <input id="walkthrough_steps_invoices" type="checkbox" name="walkthrough[steps][]" value="invoices">
+      <label class="option option--checkbox" for="walkthrough_steps_invoices">
+        <span class="font-bold">Invoices</span>
+        <span class="text-sm">
+          Collect payments from sponsors or donors
+        </span>
+      </label>
+
+      <input id="walkthrough_steps_transfers" type="checkbox" name="walkthrough[steps][]" value="transfers">
+      <label class="option option--checkbox" for="walkthrough_steps_transfers">
+        <span class="font-bold">Transfers</span>
+        <span class="text-sm">
+          Send funds to vendors, partners, or team members
+        </span>
+      </label>
+
+      <input id="walkthrough_steps_cards" type="checkbox" name="walkthrough[steps][]" value="cards">
+      <label class="option option--checkbox" for="walkthrough_steps_cards">
+        <span class="font-bold">Cards</span>
+        <span class="text-sm">Issue physical and virtual debit cards for your team</span>
+      </label>
+
+      <input id="walkthrough_steps_team" type="checkbox" name="walkthrough[steps][]" value="team">
+      <label class="option option--checkbox" for="walkthrough_steps_team">
+        <span class="font-bold">Team</span>
+        <span class="text-sm">Invite members to read, contribute, and manage your event</span>
+      </label>
+
+      <input id="walkthrough_steps_perks" type="checkbox" name="walkthrough[steps][]" value="perks">
+      <label class="option option--checkbox" for="walkthrough_steps_perks">
+        <span class="font-bold">Perks</span>
+        <span class="text-sm">
+          Explore HCB's partner perks for useful tools and resources.
+        </span>
+      </label>
+
+    </div>
+  </div>
 </section>
