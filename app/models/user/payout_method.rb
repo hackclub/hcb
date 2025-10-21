@@ -17,8 +17,8 @@ class User
       User::PayoutMethod::WiseTransfer   => {
         status_badge: "Temporarily Unavailable",
         reason: "Wise Transfers are currently under maintenance."
-      }.freeze
-    }
+      }
+    }.freeze
     SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
 
     def kind
