@@ -13,7 +13,7 @@
     </svg>
     <div class="flex-1">
       <p class="my-0 font-bold" style="line-height:1.2">
-        Make the most of HCB
+        Make the most of HCB's features
       </p>
       <p class="my-0 text-sm muted">
         <%= steps.select { |s| s[:completed] }.count %>/<%= steps.count %> completed
@@ -30,15 +30,15 @@
   </header>
   <div>
     <% options = [
-         { id: "walkthrough_steps_announcements", value: "announcements", title: "Announcements", desc: "Keep your community informed with event updates", icon: "announcement" },
-         { id: "walkthrough_steps_donations", value: "donations", title: "Donations", desc: "Accept contributions from your community", icon: "support" },
-         { id: "walkthrough_steps_reimbursements", value: "reimbursements", title: "Reimbursements", desc: "Easily reimburse team members for event-related expenses", icon: "attachment" },
-         { id: "walkthrough_steps_invoices", value: "invoices", title: "Invoices", desc: "Collect payments from sponsors or donors", icon: "briefcase" },
-         { id: "walkthrough_steps_transfers", value: "transfers", title: "Transfers", desc: "Send funds to vendors, partners, or team members", icon: "payment-transfer" },
-         { id: "walkthrough_steps_cards", value: "cards", title: "Cards", desc: "Issue physical and virtual debit cards for your team", icon: "card" },
-         { id: "walkthrough_steps_team", value: "team", title: "Team", desc: "Invite members to read, contribute, and manage your event", icon: "leader" },
-         { id: "walkthrough_steps_perks", value: "perks", title: "Perks", desc: "Explore HCB's partner perks for useful tools and resources.", icon: "shirt" },
-         { id: "walkthrough_steps_transactions", value: "transactions", title: "Transactions", desc: "Learn how to read the transactions list", icon: "transactions" }
+         { id: "walkthrough_steps_transactions", value: "transactions", title: "Dashboard", icon: "home" },
+         { id: "walkthrough_steps_announcements", value: "announcements", title: "Announcements", icon: "announcement" },
+         { id: "walkthrough_steps_donations", value: "donations", title: "Donations", icon: "support" },
+         { id: "walkthrough_steps_reimbursements", value: "reimbursements", title: "Reimbursements", desc: "Get paid back for out of pocket expenses", icon: "attachment" },
+         { id: "walkthrough_steps_invoices", value: "invoices", title: "Invoices", desc: "Collect payments from sponsors and vendors", icon: "briefcase" },
+         { id: "walkthrough_steps_transfers", value: "transfers", title: "Transfers", desc: "Send money to other bank accounts", icon: "payment-transfer" },
+         { id: "walkthrough_steps_cards", value: "cards", title: "Cards", icon: "card" },
+         { id: "walkthrough_steps_team", value: "team", title: "Team", icon: "leader" },
+         { id: "walkthrough_steps_perks", value: "perks", title: "Perks", icon: "shirt" }
        ] %>
 
     <div class="field field--options trio">
@@ -46,7 +46,7 @@
         <div class="option-wrapper">
           <input id="<%= opt[:id] %>" type="checkbox" name="walkthrough[steps][]" value="<%= opt[:value] %>">
           <label for="<%= opt[:id] %>" class="option option--checkbox">
-            <%= inline_icon opt[:icon] %>
+            <%= inline_icon opt[:icon], class: "mb-1.5" %>
             <span class="font-bold"><%= opt[:title] %></span>
             <span class="text-sm"><%= opt[:desc] %></span>
           </label>
@@ -54,8 +54,9 @@
       <% end %>
     </div>
 
-    <div class="flex">
-      <button type="submit" class="btn pr-2 ml-auto gap-3 btn--primary mt-4" data-behavior="walkthrough_submit">
+    <div class="flex mt-4 items-center justify-between">
+      <a href="#">Skip tutorial</a>
+      <button type="submit" class="btn pr-2 gap-3 btn--primary" data-behavior="walkthrough_submit">
         Continue
         <%= inline_icon "view-forward" %>
       </button>
