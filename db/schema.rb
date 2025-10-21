@@ -977,7 +977,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_21_013806) do
   end
 
   create_table "event_scoped_tags", force: :cascade do |t|
-    t.string "name"
+    t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
