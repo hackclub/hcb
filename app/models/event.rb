@@ -378,6 +378,7 @@ class Event < ApplicationRecord
 
   has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent"
   has_many :scoped_tags, through: :event_scoped_tags_events, source: :event_scoped_tag
+  has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id
 
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 

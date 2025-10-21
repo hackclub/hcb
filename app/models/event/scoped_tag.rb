@@ -4,15 +4,26 @@
 #
 # Table name: event_scoped_tags
 #
-#  id         :bigint           not null, primary key
-#  name       :string           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id              :bigint           not null, primary key
+#  name            :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  parent_event_id :bigint           not null
+#
+# Indexes
+#
+#  index_event_scoped_tags_on_parent_event_id  (parent_event_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (parent_event_id => events.id)
 #
 class Event
   class ScopedTag < ApplicationRecord
     has_many :event_scoped_tags_events, foreign_key: :event_scoped_tag_id, inverse_of: :event_scoped_tag, class_name: "Event::ScopedTagsEvent"
     has_many :events, through: :event_scoped_tags_events
+
+    belongs_to :parent_event, class_name: "Event"
 
   end
 
