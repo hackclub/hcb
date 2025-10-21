@@ -4,6 +4,8 @@ module Discord
   class HandleInteractionJob < ApplicationJob
     queue_as :critical
 
+    include Discord::Support
+
     def perform(interaction, responded: true)
       @responded = responded
       @interaction = interaction
@@ -18,6 +20,7 @@ module Discord
 
       return command_router if @interaction[:type] == 2
       return component_router if @interaction[:type] == 3
+      return modal_router if @interaction[:type] == 5
     rescue => e
       if Rails.env.development?
         backtrace = e.backtrace.join("\n")
@@ -59,6 +62,14 @@ module Discord
       send("#{@interaction_name.gsub("-", "_")}_component")
     end
 
+    def modal_router
+      custom_id = @interaction.dig(:data, :custom_id)
+
+      @interaction_name, @params = custom_id.split(":", 2)
+
+      send("#{@interaction_name.gsub("-", "_")}_modal")
+    end
+
     def generate_discord_link_url
       @generate_discord_link_url ||= url_helpers.discord_link_url(signed_discord_id: Discord.generate_signed(@user_id, purpose: :link_user))
     end
@@ -85,6 +96,66 @@ module Discord
           ]
         }
       }
+    end
+
+    def attach_receipt_component
+      hcb_code = HcbCode.find_by_hashid!(@params)
+      discord_message = Discord::Message.find_by(discord_message_id: @interaction.dig(:message, :id))
+      activity = PublicActivity::Activity.find_by(id: discord_message&.activity_id)
+
+      return respond(content: "Could not find the transaction to attach a receipt to.") unless activity&.key == "raw_pending_stripe_transaction.create"
+
+      return respond(content: "This Discord server is not currently linked to the same HCB organization") unless activity.event_id == @current_event&.id && activity.event_id == hcb_code.event.id
+
+      {
+        "type": 9,
+        "data": {
+          "custom_id": "attach_receipt:#{hcb_code.hashid}",
+          "title": "#{Money.from_cents(hcb_code.amount_cents.abs).format} for #{hcb_code.memo}",
+          "components": [
+            {
+              "type": 18,
+              "label": "Attach receipt",
+              "component":
+                {
+                  "type": 19,
+                  "custom_id": "receipt:#{hcb_code.hashid}",
+                }
+            },
+          ]
+        }
+      }
+    end
+
+    def attach_receipt_modal
+      hcb_code = HcbCode.find(@params)
+
+      return respond(content: "This Discord server is not currently linked to the same HCB organization") unless hcb_code.event.id == @current_event&.id
+
+      attachments = @interaction.dig(:data, :resolved, :attachments)
+
+      file = attachments.values.first if attachments.present? && attachments.values.first[:content_type]&.start_with?("image/")
+      url = file[:url] if file.present?
+      filename = file[:filename] if file.present?
+      content_type = file[:content_type] if file.present?
+
+      io = URI(url).open if url.present?
+
+      ActiveRecord::Base.transaction do
+        blob = ActiveStorage::Blob.create_and_upload!(
+          io:,
+          filename:,
+          content_type:
+        )
+
+        ::ReceiptService::Create.new(attachments: [blob], uploader: @user, upload_method: :discord_bot_modal, receiptable: hcb_code).run!
+
+        respond(embeds: [{
+                  title: "Your receipt has been uploaded!",
+                  description: "<@#{@user_id}>, your receipt for #{link_to("#{Money.from_cents(hcb_code.amount_cents.abs).format} at #{hcb_code.memo}", url_helpers.hcb_code_url(hcb_code))} has been uploaded successfully.",
+                  color:
+                }], components: button_to("View receipt", url_helpers.hcb_code_url(hcb_code)))
+      end
     end
 
     def reimburse_component
@@ -258,7 +329,7 @@ module Discord
           fields: [
             {
               name: "Discord Account (`@#{user_name}`) ↔ Your HCB Account",
-              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@user.present? ? "✅ Linked to #{@user.preferred_name.presence || @user.first_name} on HCB" : "❌ Not linked. #{link_to("Set up here", generate_discord_link_url)}"}\n",
+              value: "Allows you to open reimbursement reports, view missing receipts, and take action on HCB.\n\n#{@user.present? ? "✅ Linked to #{@user.preferred_name.presence || @user.first_name} on HCB (#{link_to("disconnect", url_helpers.discord_unlink_user_url)})" : "❌ Not linked. #{link_to("Set up here", generate_discord_link_url)}"}\n",
             },
             (if @guild_id.present?
                {
@@ -277,44 +348,8 @@ module Discord
       respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed, flags: 1 << 6
     end
 
-    def button_to(label, url_or_custom_id, **options)
-      if url_or_custom_id.start_with?("http")
-        {
-          type: 2,
-          url: url_or_custom_id,
-          label:,
-          style: 5,
-          emoji: { id: "1424492375295791185" }
-        }
-      else
-        {
-          type: 2,
-          custom_id: url_or_custom_id,
-          label: label,
-          style: 1,
-        }.merge(options || {})
-      end
-    end
-
-    def link_to(label, url)
-      "[#{label}](#{url})"
-    end
-
     def respond(**body)
-      if body[:components].present?
-        if !body[:components].is_a?(Array)
-          body[:components] = [body[:components]]
-        end
-
-        if body[:components].any? && body[:components].first[:type] != 1
-          body[:components] = [
-            {
-              type: 1,
-              components: body[:components]
-            }
-          ]
-        end
-      end
+      body[:components] = format_components(body[:components]) if body[:components].present?
 
       unless @responded
         return { type: 4, data: body }
@@ -332,20 +367,8 @@ module Discord
       MSG
     end
 
-    def color
-      if Rails.env.development?
-        0x33d6a6
-      else
-        0xec3750
-      end
-    end
-
     def can_manage_guild?
       @permissions & 0x0000000000000020 == 0x0000000000000020
-    end
-
-    def url_helpers
-      Rails.application.routes.url_helpers
     end
 
   end

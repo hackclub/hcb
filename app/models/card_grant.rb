@@ -228,14 +228,14 @@ class CardGrant < ApplicationRecord
     stripe_card&.cancel!
   end
 
-  def create_stripe_card(session)
+  def create_stripe_card(ip_address)
     return if stripe_card.present?
 
     self.stripe_card = StripeCardService::Create.new(
       card_type: "virtual",
       event_id:,
       current_user: user,
-      current_session: session,
+      ip_address:,
       subledger:,
     ).run
 

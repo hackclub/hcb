@@ -18,6 +18,7 @@
         <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
         <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
         <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
+        <button id="category" data-tabs-target="btn" data-action="click->tabs#select">Category</button>
         <button id="merchant" data-tabs-target="btn" data-action="click->tabs#select">Merchant</button>
         <button id="receipts" data-tabs-target="btn" data-action="click->tabs#select">Receipts</button>
       </div>
@@ -111,6 +112,13 @@
               <%= link_to(event_ledger_path(@event, upsert_query_params(direction: nil)), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
               Both
               <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div data-tabs-target="tab" id="category">
+          <% TransactionCategory.order(slug: :asc).each do |category| %>
+            <div class="flex items-center">
+              <%= link_to(category.definition.label, event_ledger_path(@event, upsert_query_params(category: category.slug)), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_prefetch: "false" }) %>
             </div>
           <% end %>
         </div>
