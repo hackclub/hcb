@@ -37,9 +37,9 @@
     <% end %>
     <% if local_assigns[:show_scoped_tags] %>
       <div class="flex flex-row items-center gap-1 mb-2 m-0 mt-[-4px]">
-        <% event.scoped_tags.each do |tag| %>
-          <span class="badge m-0">
-            <%= tag.name %>
+        <% event.scoped_tags.each do |scoped_tag| %>
+          <span class="badge m-0" data-scoped-tag="<%= scoped_tag.id %>">
+            <%= scoped_tag.name %>
           </span>
         <% end %>
       </div>

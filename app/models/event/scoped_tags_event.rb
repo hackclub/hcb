@@ -22,6 +22,8 @@
 #
 class Event
   class ScopedTagsEvent < ApplicationRecord
+    self.primary_key = [:event_id, :event_scoped_tag_id]
+
     belongs_to :event
     belongs_to :event_scoped_tag, class_name: "Event::ScopedTag"
 
