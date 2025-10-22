@@ -26,7 +26,7 @@
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="walkthrough_modal">
   <header>
     <h3 class="text-center my-0">Welcome to <%= @event.name %>!</h3>
-    <p class="muted text-center mt-1">Select at least four features you're interested in using</p>
+    <p class="muted text-center mt-1">Select four or more features you're interested in</p>
   </header>
   <div>
     <% options = [
@@ -48,13 +48,13 @@
           <label for="<%= opt[:id] %>" class="option option--checkbox">
             <%= inline_icon opt[:icon], class: "mb-1.5" %>
             <span class="font-bold"><%= opt[:title] %></span>
-            <span class="text-sm"><%= opt[:desc] %></span>
+            <span class="text-xs mt-1"><%= opt[:desc] %></span>
           </label>
         </div>
       <% end %>
     </div>
 
-    <div class="flex mt-4 items-center justify-between">
+    <div class="flex mt-5 items-center justify-between">
       <a href="#">Skip tutorial</a>
       <button type="submit" class="btn pr-2 gap-3 btn--primary" data-behavior="walkthrough_submit">
         Continue
