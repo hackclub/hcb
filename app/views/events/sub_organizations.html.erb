@@ -60,22 +60,23 @@
       </div>
 
       <div id="add_scoped_tag_field" class="field" data-controller="menu text-filter" data-menu-update-on-resize-value="true" data-menu-content-id-value="scoped_tag_menu" data-menu-append-to-value="#add_scoped_tag_field">
-        <%= form.label "scoped_tags[]", "Tags", class: "bold" %>
+        <%= form.label "scoped_tags[]", "Tags", class: "bold mb-1" %>
 
         <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
           <%= form.hidden_field "scoped_tags[]", "x-bind:value": "scoped_tag.id" %>
         </template>
 
         <template x-if="scoped_tags.length == 0">
-          <p>No tags added</p>
+          <p class="my-0">No tags added</p>
         </template>
 
-        <div class="flex flex-col">
+        <div class="flex gap-3 flex-wrap">
           <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
             <span class="badge m0 w-fit">
               <span x-text="scoped_tag.name"></span>
-              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset"
-                <%= inline_icon "view-close", size: 16 %>>
+              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset">
+                <%= inline_icon "view-close", size: 16 %>
+              </button>
             </span>
           </template>
         </div>
