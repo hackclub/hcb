@@ -36,7 +36,7 @@
 
 <% if policy(@event).create_sub_organization? %>
   <section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
-    <%= form_with(url: event_create_sub_organization_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [] }" }) do |form| %>
+    <%= form_with(url: event_create_sub_organization_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [], query: '' }" }) do |form| %>
       <%= modal_header "Create a sub-organization" %>
       <div class="card border b--info mt2 mb2 container--sm mx-auto">
         <p class="mt0 mb0">
@@ -59,7 +59,7 @@
         <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18", value: params[:cosigner_email] %>
       </div>
 
-      <div id="add_scoped_tag_field" class="field" data-controller="menu text-filter" data-controller="menu text-filter" data-menu-content-id-value="scoped-tag-search" data-menu-append-to-value="#add_scoped_tag_field" data-text-filter-empty-class="display-none">
+      <div id="add_scoped_tag_field" class="field" data-controller="menu text-filter" data-menu-update-on-resize-value="true" data-menu-content-id-value="scoped_tag_menu" data-menu-append-to-value="#add_scoped_tag_field">
         <%= form.label "scoped_tags[]", "Tags", class: "bold" %>
 
         <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
@@ -86,8 +86,9 @@
           <%= text_field_tag :scoped_tag_name, nil,
                               class: "!w-fit flex-grow",
                               role: "combobox",
-                              placeholder: "Search tags...",
-                              "aria-controls": "scoped-tag-search",
+                              placeholder: "Find or create a tag...",
+                              "aria-controls": "#scoped_tag_menu > .scoped_tag_results",
+                              "x-model": "query",
                               data: {
                                 action: "
                                   keydown.enter->text-filter#selectFirst
@@ -103,25 +104,19 @@
                               } %>
         </div>
         
-        <% if @event.subevent_scoped_tags.any? %>
-          <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
+        <div class="menu__content menu__content--2" data-menu-target="content" style="width: 24rem">
+          <div role="listbox" class="scoped_tag_results">
             <% @event.subevent_scoped_tags.each do |scoped_tag| %>
-              <div class="flex items-center" data-scoped-tag="<%= scoped_tag.id %>">
-                <button
-                  type="button"
-                  class="menu__action flex justify-between flex-auto mr1"
-                  data-action="input#focus menu#close"
-                  data-tag="<%= {id: scoped_tag.id, name: scoped_tag.name}.to_json %>"
-                  @click="scoped_tags.push(JSON.parse($el.dataset.tag))">
-                  <span class="truncate"><%= scoped_tag.name %></span>
-                </button>
-                <%= link_to event_scoped_tag_path(@event, scoped_tag), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this tag?" }, "@click" => "scoped_tags = scoped_tags.filter(t => t.id !== #{scoped_tag.id})" do %>
-                  <%= inline_icon "view-close", size: 24, class: "align-middle" %>
-                <% end %>
-              </div>
+              <%= render partial: "events/scoped_tag_option", locals: { scoped_tag: }%>
             <% end %>
           </div>
-        <% end %>
+
+          <template x-if="query.length > 0 && $el.parentElement.checkVisibility()">
+            <%= link_to "#", data: { turbo_method: :post }, "x-bind:href": "`#{event_scoped_tags_url(@event)}?name=${query}`" do %>
+              <%= inline_icon "plus", size: 15 %> Create tag "<span x-text="query"></span>"
+            <% end %>
+          </template>
+        </div>
       </div>
 
       <small class="muted mt-0 mb-4">This project will be created on the <strong><%= @event.plan.label %></strong> plan</small>

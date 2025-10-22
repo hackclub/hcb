@@ -3,7 +3,7 @@
 class Event
   class ScopedTagPolicy < ApplicationPolicy
     def create?
-      OrganizerPosition.role_at_least?(user, record, :manager)
+      OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
     end
 
     def update?

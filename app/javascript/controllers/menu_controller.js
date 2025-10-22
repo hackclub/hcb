@@ -16,6 +16,7 @@ export default class extends Controller {
     appendTo: String,
     placement: { type: String, default: 'bottom-start' },
     contentId: String,
+    updateOnResize: { type: Boolean, default: false } // See https://github.com/hackclub/hcb/issues/8588
   }
 
   initialize() {
@@ -60,7 +61,7 @@ export default class extends Controller {
       this.content,
       this.computePosition.bind(this, false),
       {
-        elementResize: false, // See https://github.com/hackclub/hcb/issues/8588
+        elementResize: this.updateOnResizeValue,
       }
     )
   }
