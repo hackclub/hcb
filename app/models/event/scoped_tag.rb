@@ -25,6 +25,16 @@ class Event
 
     belongs_to :parent_event, class_name: "Event"
 
+    validate :name_is_unique_within_parent_event
+
+    private
+
+    def name_is_unique_within_parent_event
+      if parent_event.subevent_scoped_tags.where(name:).exists?
+        errors.add(:name, "is not unique within the parent event")
+      end
+    end
+
   end
 
 end
