@@ -3,19 +3,25 @@
 class Event
   class ScopedTagPolicy < ApplicationPolicy
     def create?
-      OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
+      admin_or_manager?
     end
 
     def update?
-      OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
+      admin_or_manager?
     end
 
     def destroy?
-      OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
+      admin_or_manager?
     end
 
     def toggle_tag?
-      OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
+      admin_or_manager?
+    end
+
+    private
+
+    def admin_or_manager?
+      user&.admin? || OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
     end
 
   end
