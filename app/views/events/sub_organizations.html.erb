@@ -65,7 +65,7 @@
         <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
           <%= form.hidden_field "scoped_tags[]", "x-bind:value": "scoped_tag.id" %>
         </template>
-        
+
         <template x-if="scoped_tags.length == 0">
           <p>No tags added</p>
         </template>
@@ -74,13 +74,12 @@
           <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
             <span class="badge m0 w-fit">
               <span x-text="scoped_tag.name"></span>
-              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset" @click="scoped_tags = scoped_tags.filter(t => t.id !== scoped_tag.id)">
-                <%= inline_icon "view-close", size: 16 %>
-              </button>
+              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset"
+                <%= inline_icon "view-close", size: 16 %>>
             </span>
           </template>
         </div>
-        
+
         <div class="flex gap-3 items-center">
           <p>Add tag</p>
           <%= text_field_tag :scoped_tag_name, nil,
@@ -103,11 +102,11 @@
                                 menu_target: "toggle",
                               } %>
         </div>
-        
+
         <div class="menu__content menu__content--2" data-menu-target="content" style="width: 24rem">
           <div role="listbox" class="scoped_tag_results">
             <% @event.subevent_scoped_tags.each do |scoped_tag| %>
-              <%= render partial: "events/scoped_tag_option", locals: { scoped_tag: }%>
+              <%= render partial: "events/scoped_tag_option", locals: { scoped_tag: } %>
             <% end %>
           </div>
 

@@ -5,8 +5,7 @@
     type="button"
     class="menu__action flex justify-between flex-auto mr1"
     data-action="input#focus menu#close"
-    data-tag="<%= {id: scoped_tag.id, name: scoped_tag.name}.to_json %>"
-    @click="scoped_tags.push(JSON.parse($el.dataset.tag))">
+    data-tag="<%= { id: scoped_tag.id, name: scoped_tag.name }.to_json %>">
     <span class="truncate"><%= scoped_tag.name %></span>
   </button>
   <%= link_to event_scoped_tag_path(scoped_tag.parent_event, scoped_tag), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this tag?" }, "@click" => "scoped_tags = scoped_tags.filter(t => t.id !== #{scoped_tag.id})" do %>
