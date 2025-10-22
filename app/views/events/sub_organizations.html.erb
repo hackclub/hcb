@@ -28,7 +28,10 @@
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
+  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
+
+<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <ul class="grid grid--medium-narrow left-align w-100 mt0">
   <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
