@@ -164,10 +164,6 @@ class Event < ApplicationRecord
     Event.where(id: descendant_ids)
   end
 
-  def descendant_total_balance_cents
-    subevents.to_a.sum(&:balance_available_v2_cents)
-  end
-
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
