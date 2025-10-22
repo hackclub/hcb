@@ -86,7 +86,7 @@
         <% end %>
       </div>
 
-      <% if !@frame && defined?(show_tags) && show_tags && organizer_signed_in?(as: :member) && !pt.instance_of?(OpenStruct) %>
+      <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, pt).update? && !pt.instance_of?(OpenStruct) %>
         <% if suggestion = pt.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
