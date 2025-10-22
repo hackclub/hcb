@@ -1,0 +1,8 @@
+<%# locals: (scoped_tag:, subevent:) %>
+
+<span class="badge m-0 mr-1" data-scoped-tag="<%= scoped_tag.id %>">
+  <%= scoped_tag.name %>
+  <%= button_to toggle_tag_event_scoped_tag_path(subevent, scoped_tag), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
+    <%= inline_icon "view-close", size: 16 %>
+  <% end %>
+</span>
