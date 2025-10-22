@@ -74,7 +74,7 @@
           <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
             <span class="badge m0 w-fit">
               <span x-text="scoped_tag.name"></span>
-              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset">
+              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset" @click="scoped_tags = scoped_tags.filter(t => t.id !== scoped_tag.id)">
                 <%= inline_icon "view-close", size: 16 %>
               </button>
             </span>
