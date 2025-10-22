@@ -183,6 +183,11 @@ class UsersController < ApplicationController
     authorize @user
   end
 
+  def edit_integrations
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+  end
+
   def generate_totp
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user

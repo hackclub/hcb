@@ -1,5 +1,7 @@
 <% title "Account settings" %>
 <% page_md %>
+<% disabled = !policy(@user).update? %>
+
 <%= render "users/nav", selected: :settings_security %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
@@ -129,34 +131,19 @@
     <% end %>
   </div>
 
-  <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
-    <div class="field">
-      <%= form.label :session_validity_preference, "Sign me out after" %>
-      <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, selected: @user.session_validity_preference %>
-    </div>
+    <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
+      <div class="field">
+        <%= form.label :session_validity_preference, "Sign me out after" %>
+        <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>
+      </div>
 
-    <div class="submit">
-      <%= form.submit "Save" %>
-    </div>
-  <% end %>
-
-  <div class="grid grid--split">
-    <% @all_sessions.each do |session| %>
-      <% if session.is_a? UserSession %>
-        <%= render "user_session", session: %>
-      <% elsif session.respond_to? :authorization_count %>
-        <%= render "oauth_authorization", authorization: session %>
-      <% end %>
+      <div class="submit">
+        <%= form.submit "Save", disabled: %>
+      </div>
     <% end %>
-  </div>
 
-  <% if @expired_sessions.any? %>
-    <h3 class="inline-flex items-center">
-      Recently logged out
-      <%= badge_for @expired_sessions.count, class: "bg-muted" %>
-    </h3>
     <div class="grid grid--split">
-      <% @expired_sessions.each do |session| %>
+      <% @all_sessions.each do |session| %>
         <% if session.is_a? UserSession %>
           <%= render "user_session", session: %>
         <% elsif session.respond_to? :authorization_count %>
@@ -164,15 +151,30 @@
         <% end %>
       <% end %>
     </div>
-  <% end %>
-</fieldset>
 
-<% if @user.phone_number.present? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
-    <%= modal_header "Verify phone number" %>
-    <%= react_component "settings/SmsVerification",
-            phone_number: @user.phone_number,
-            enroll_sms_auth: true %>
-  </section>
-<% end %>
+    <% if @expired_sessions.any? %>
+      <h3 class="inline-flex items-center">
+        Recently logged out
+        <%= badge_for @expired_sessions.count, class: "bg-muted" %>
+      </h3>
+      <div class="grid grid--split">
+        <% @expired_sessions.each do |session| %>
+          <% if session.is_a? UserSession %>
+            <%= render "user_session", session: %>
+          <% elsif session.respond_to? :authorization_count %>
+            <%= render "oauth_authorization", authorization: session %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </fieldset>
+
+  <% if @user.phone_number.present? %>
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
+      <%= modal_header "Verify phone number" %>
+      <%= react_component "settings/SmsVerification",
+              phone_number: @user.phone_number,
+              enroll_sms_auth: true %>
+    </section>
+  <% end %>
 </turbo-frame>

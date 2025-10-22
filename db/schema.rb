@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_05_204939) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -652,6 +652,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_05_204939) do
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
     t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
+  end
+
+  create_table "discord_messages", force: :cascade do |t|
+    t.string "discord_message_id", null: false
+    t.string "discord_channel_id", null: false
+    t.string "discord_guild_id", null: false
+    t.bigint "activity_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_id"], name: "index_discord_messages_on_activity_id"
+    t.index ["discord_message_id"], name: "index_discord_messages_on_discord_message_id", unique: true
   end
 
   create_table "document_downloads", force: :cascade do |t|
@@ -1523,6 +1534,29 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_05_204939) do
     t.index ["closed_by_id"], name: "index_organizer_position_deletion_requests_on_closed_by_id"
     t.index ["organizer_position_id"], name: "index_organizer_deletion_requests_on_organizer_position_id"
     t.index ["submitted_by_id"], name: "index_organizer_position_deletion_requests_on_submitted_by_id"
+  end
+
+  create_table "organizer_position_invite_links", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "creator_id", null: false
+    t.datetime "deactivated_at"
+    t.bigint "deactivator_id"
+    t.integer "expires_in", default: 2592000, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_organizer_position_invite_links_on_creator_id"
+    t.index ["deactivator_id"], name: "index_organizer_position_invite_links_on_deactivator_id"
+    t.index ["event_id"], name: "index_organizer_position_invite_links_on_event_id"
+  end
+
+  create_table "organizer_position_invite_requests", force: :cascade do |t|
+    t.bigint "organizer_position_invite_link_id", null: false
+    t.bigint "requester_id", null: false
+    t.string "aasm_state", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organizer_position_invite_link_id"], name: "idx_on_organizer_position_invite_link_id_241807b5ee"
+    t.index ["requester_id"], name: "index_organizer_position_invite_requests_on_requester_id"
   end
 
   create_table "organizer_position_invites", force: :cascade do |t|
@@ -2531,6 +2565,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_05_204939) do
   add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
   add_foreign_key "disbursements", "users", column: "requested_by_id"
+  add_foreign_key "discord_messages", "activities"
   add_foreign_key "document_downloads", "documents"
   add_foreign_key "document_downloads", "users"
   add_foreign_key "documents", "events"
@@ -2598,6 +2633,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_05_204939) do
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "closed_by_id"
   add_foreign_key "organizer_position_deletion_requests", "users", column: "submitted_by_id"
+  add_foreign_key "organizer_position_invite_links", "events"
+  add_foreign_key "organizer_position_invite_links", "users", column: "creator_id"
+  add_foreign_key "organizer_position_invite_links", "users", column: "deactivator_id"
+  add_foreign_key "organizer_position_invite_requests", "organizer_position_invite_links"
+  add_foreign_key "organizer_position_invite_requests", "users", column: "requester_id"
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"
   add_foreign_key "organizer_position_invites", "users"

@@ -36,6 +36,9 @@
     <%= settings_tab active: @settings_tab == "features" do %>
       <%= link_to "Feature previews", edit_event_path(@event, tab: "features"), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
+    <%= settings_tab active: @settings_tab == "integrations" do %>
+      <%= link_to "Integrations", edit_event_path(@event, tab: "integrations"), data: { turbo: true, turbo_action: "advance" } %>
+    <% end %>
     <%= settings_tab active: @settings_tab == "audit_log" do %>
       <%= link_to "Audit log", edit_event_path(@event, tab: "audit_log"), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
@@ -59,6 +62,8 @@
   <%= render "events/settings/affiliations", event: @event %>
 <% elsif @settings_tab == "features" %>
   <%= render "events/settings/features", event: @event %>
+<% elsif @settings_tab == "integrations" %>
+  <%= render "events/settings/integrations", event: @event %>
 <% elsif @settings_tab == "audit_log" %>
   <%= render "events/settings/audit_log", event: @event, activities: @activities, activities_before: @activities_before %>
 <% elsif @settings_tab == "admin" && auditor_signed_in? %>

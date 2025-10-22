@@ -15,7 +15,7 @@
       <%= "is requesting " unless @report.closed? %>
       <%= render "total", report: @report %>
       <% if @report.maximum_amount_cents %>
-        (<%= render_money @report.maximum_amount_cents %> cap)
+        (<%= render_money @report.maximum_amount_cents %> <%= "USD" unless @report.currency == "USD" %> cap)
       <% end %>
       <%= "from #{@event.name}" if @event && @use_user_nav %> for
     </span>
