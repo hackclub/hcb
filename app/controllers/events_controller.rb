@@ -845,7 +845,7 @@ class EventsController < ApplicationController
         relation = relation.order(created_at: :desc)
 
         @filter_options = [
-          { key: "tag", label: "Tag", type: "select", options: @event.subevent_scoped_tags.map { |scoped_tag| scoped_tag.name } }
+          { key: "tag", label: "Tag", type: "select", options: @event.subevent_scoped_tags.map(&:name) }
         ]
         @has_filter = helpers.check_filters?(@filter_options, params)
 
