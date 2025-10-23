@@ -27,7 +27,7 @@ module Api
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
         @total_count = @hcb_codes.size
-        @has_more = false # TODO: implement pagination
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       def create
