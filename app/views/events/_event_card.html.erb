@@ -50,7 +50,7 @@
     <% if local_assigns[:show_scoped_tags] && event.parent.present? %>
       <div class="mb-2 m-0 mt-[-4px]">
         <span class="event_<%= event.id %>_scoped_tags">
-          <%= render partial: "events/scoped_tags/scoped_tag", collection: event.scoped_tags, locals: { subevent: event } %>
+          <%= render partial: "events/scoped_tags/scoped_tag", collection: event.valid_scoped_tags, locals: { subevent: event } %>
         </span>
 
         <% if policy(event).toggle_scoped_tag? %>
