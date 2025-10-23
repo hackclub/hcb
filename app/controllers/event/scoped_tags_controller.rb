@@ -22,7 +22,7 @@ class Event
         end
 
         respond_to do |format|
-          format.turbo_stream { render turbo_stream: turbo_stream.append_all(".scoped_tag_results", partial: "events/scoped_tag_option", locals: { scoped_tag: @scoped_tag }) }
+          format.turbo_stream { render turbo_stream: turbo_stream.append_all(".scoped_tag_results", partial: "events/scoped_tags/scoped_tag_option", locals: { scoped_tag: @scoped_tag }) }
           format.any do
             flash[:success] = "Successfully created new sub-organization tag"
             redirect_back fallback_location: event_sub_organizations_path(@event)
