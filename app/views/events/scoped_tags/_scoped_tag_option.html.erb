@@ -1,0 +1,15 @@
+<%# locals: (scoped_tag:) %>
+
+<div class="flex items-center" data-scoped-tag="<%= scoped_tag.id %>" data-name="<%= scoped_tag.name %>">
+  <button
+    type="button"
+    class="menu__action flex justify-between flex-auto mr1"
+    data-action="input#focus menu#close"
+    data-tag="<%= { id: scoped_tag.id, name: scoped_tag.name }.to_json %>"
+    @click="scoped_tags.push(JSON.parse($el.dataset.tag)); query = ''">
+    <span class="truncate"><%= scoped_tag.name %></span>
+  </button>
+  <%= link_to event_scoped_tag_path(scoped_tag.parent_event, scoped_tag), data: { turbo_method: :delete, turbo_confirm: scoped_tag.removal_confirmation_message }, "@click" => "scoped_tags = scoped_tags.filter(t => t.id !== #{scoped_tag.id})" do %>
+    <%= inline_icon "view-close", size: 24, class: "align-middle" %>
+  <% end %>
+</div>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_21_013806) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -974,6 +974,24 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
     t.datetime "inactive_at"
     t.string "type"
     t.index ["event_id"], name: "index_event_plans_on_event_id"
+  end
+
+  create_table "event_scoped_tags", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "parent_event_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_event_id"], name: "index_event_scoped_tags_on_parent_event_id"
+  end
+
+  create_table "event_scoped_tags_events", id: false, force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "event_scoped_tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_scoped_tags_events_on_event_id"
+    t.index ["event_scoped_tag_id", "event_id"], name: "idx_on_event_scoped_tag_id_event_id_4b716d1ac0", unique: true
+    t.index ["event_scoped_tag_id"], name: "index_event_scoped_tags_events_on_event_scoped_tag_id"
   end
 
   create_table "event_tags", force: :cascade do |t|
@@ -2587,6 +2605,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_16_033216) do
   add_foreign_key "event_group_memberships", "events"
   add_foreign_key "event_groups", "users"
   add_foreign_key "event_plans", "events"
+  add_foreign_key "event_scoped_tags", "events", column: "parent_event_id"
+  add_foreign_key "event_scoped_tags_events", "event_scoped_tags"
+  add_foreign_key "event_scoped_tags_events", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"
   add_foreign_key "fee_relationships", "events"
