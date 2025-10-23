@@ -73,11 +73,7 @@
           <%= form.hidden_field "scoped_tags[]", "x-bind:value": "scoped_tag.id" %>
         </template>
 
-        <template x-if="scoped_tags.length == 0">
-          <p class="my-0">No tags added</p>
-        </template>
-
-        <div class="flex gap-3 flex-wrap">
+        <div class="flex gap-1 flex-wrap">
           <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
             <span class="badge m0 w-fit">
               <span x-text="scoped_tag.name"></span>
@@ -88,28 +84,25 @@
           </template>
         </div>
 
-        <div class="flex gap-3 items-center">
-          <p>Add tag</p>
-          <%= text_field_tag :scoped_tag_name, nil,
-                              class: "!w-fit flex-grow",
-                              role: "combobox",
-                              placeholder: "Find or create a tag...",
-                              "aria-controls": "#scoped_tag_menu > .scoped_tag_results",
-                              "x-model": "query",
-                              data: {
-                                action: "
-                                  keydown.enter->text-filter#selectFirst
+        <%= text_field_tag :scoped_tag_name, nil,
+                            class: "mt-2",
+                            role: "combobox",
+                            placeholder: "Find or create a tag...",
+                            "aria-controls": "#scoped_tag_menu > .scoped_tag_results",
+                            "x-model": "query",
+                            data: {
+                              action: "
+                                keydown.enter->text-filter#selectFirst
 
-                                  click->menu#open
-                                  focus->menu#open
-                                  click@document->menu#close
-                                  keydown@document->menu#keydown
+                                click->menu#open
+                                focus->menu#open
+                                click@document->menu#close
+                                keydown@document->menu#keydown
 
-                                  input->text-filter#query
-                                ",
-                                menu_target: "toggle",
-                              } %>
-        </div>
+                                input->text-filter#query
+                              ",
+                              menu_target: "toggle",
+                            } %>
 
         <div class="menu__content menu__content--2" data-menu-target="content" style="width: 24rem">
           <div role="listbox" class="scoped_tag_results">
