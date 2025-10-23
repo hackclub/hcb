@@ -33,7 +33,7 @@ class Event
       message = "Are you sure you'd like to delete this tag?"
 
       if events.length > 0
-        message + " It will be removed from #{pluralize(events.length, 'event')}."
+        message + " It will be removed from #{pluralize(events.length, 'organization')}."
       else
         message
       end
