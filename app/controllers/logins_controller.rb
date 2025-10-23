@@ -34,12 +34,11 @@ class LoginsController < ApplicationController
 
     has_webauthn_enabled = @user&.webauthn_credentials&.any?
 
-    case login_preference
-    when "totp"
+    if login_preference == "totp" && login.totp_available?
       redirect_to totp_login_path(login, return_to: params[:return_to]), status: :temporary_redirect
-    when "email"
+    elsif login_preference == "email" || login_preference.nil?
       redirect_to email_login_path(login, return_to: params[:return_to]), status: :temporary_redirect
-    when "sms"
+    elsif login_preference == "sms" && login.sms_available?
       redirect_to sms_login_path(login, return_to: params[:return_to]), status: :temporary_redirect
     else
       session[:auth_email] = login.user.email
@@ -72,10 +71,8 @@ class LoginsController < ApplicationController
     end
   end
 
-  # post to request login code
+  # post to request email login code
   def email
-    puts "EMAILLLL"
-
     resp = LoginCodeService::Request.new(email: @email, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     @use_sms_auth = false
@@ -92,6 +89,7 @@ class LoginsController < ApplicationController
     redirect_to auth_users_path
   end
 
+  # post to request sms login code
   def sms
     initialize_sms_params
 
