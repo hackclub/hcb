@@ -49,7 +49,7 @@
 
     <% if local_assigns[:show_scoped_tags] && event.parent.present? %>
       <div class="flex flex-row items-center mb-2 m-0 mt-[-4px]">
-        <div class="event_<%= event.id %>_scoped_tags gap-1 empty:m-0">
+        <div class="event_<%= event.id %>_scoped_tags">
           <%= render partial: "events/scoped_tags/scoped_tag", collection: event.scoped_tags, locals: { subevent: event } %>
         </div>
 
