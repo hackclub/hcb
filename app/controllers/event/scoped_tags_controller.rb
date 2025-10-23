@@ -40,7 +40,11 @@ class Event
       @scoped_tag.destroy!
 
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.remove_all("[data-scoped-tag='#{@scoped_tag.id}']") }
+        format.turbo_stream do
+          streams = [turbo_stream.remove_all("[data-scoped-tag='#{@scoped_tag.id}']")]
+          streams << turbo_stream.remove_all(".scoped-tags__divider") if @event.subevent_scoped_tags.none?
+          render turbo_stream: streams
+        end
         format.any { redirect_back fallback_location: event_sub_organizations_path(@scoped_tag.parent_event) }
       end
     end

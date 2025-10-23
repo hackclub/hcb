@@ -70,7 +70,7 @@
               <% end %>
 
               <% if event.parent.subevent_scoped_tags.any? %>
-                <div class="menu__divider tags__divider"></div>
+                <div class="menu__divider scoped-tags__divider"></div>
               <% end %>
 
               <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" onclick="document.getElementById('create_scoped_tag_subevent_id').value = <%= event.id.to_json %>">
