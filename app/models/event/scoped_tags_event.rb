@@ -24,6 +24,9 @@ class Event
   class ScopedTagsEvent < ApplicationRecord
     self.primary_key = [:event_id, :event_scoped_tag_id]
 
+    after_create_commit { broadcast_render_later_to([event_scoped_tag.parent_event, :scoped_tags], partial: "events/scoped_tags/create", locals: { subevent: event, scoped_tag: event_scoped_tag, streamed: true }) }
+    after_destroy_commit { broadcast_render_to([event_scoped_tag.parent_event, :scoped_tags], partial: "events/scoped_tags/destroy", locals: { subevent: event, scoped_tag: event_scoped_tag, streamed: true }) }
+
     belongs_to :event
     belongs_to :event_scoped_tag, class_name: "Event::ScopedTag"
 
