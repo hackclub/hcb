@@ -55,7 +55,7 @@
 
         <% if policy(event).toggle_scoped_tag? %>
           <div data-controller="menu" class="inline">
-            <button class="badge m-0 menu__toggle menu__toggle--arrowless border-none" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <button class="badge m-0 menu__toggle menu__toggle--arrowless border-none bg-muted" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
             <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
               <% event.parent.subevent_scoped_tags.each do |scoped_tag| %>
                 <div class="flex items-center" data-scoped-tag="<%= scoped_tag.id %>">
