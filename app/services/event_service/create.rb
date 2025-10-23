@@ -37,7 +37,7 @@ module EventService
       @invited_by = invited_by
       @cosigner_email = cosigner_email
       @include_onboarding_videos = include_onboarding_videos
-      @scoped_tags = scoped_tags
+      @scoped_tags = scoped_tags || []
     end
 
     def run
