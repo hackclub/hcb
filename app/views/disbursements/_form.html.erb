@@ -37,6 +37,28 @@
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
+  <% admin_tool do %>
+      <% category_select = ->(field) {
+           form.select(
+             field,
+             options_for_select(
+               TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] }
+             ),
+             include_blank: "None",
+           )
+         } %>
+
+    <div class="field">
+      <%= form.label(:source_transaction_category_slug, "Source transaction category") %>
+      <%= category_select.call(:source_transaction_category_slug) %>
+    </div>
+
+    <div class="field">
+      <%= form.label(:destination_transaction_category_slug, "Destination transaction category") %>
+      <%= category_select.call(:destination_transaction_category_slug) %>
+    </div>
+  <% end %>
+
   <%= form.label :file, "Attach a receipt / invoice (optional)", class: "mt2" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
     <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {

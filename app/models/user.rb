@@ -22,6 +22,7 @@
 #  receipt_report_option         :integer          default("weekly"), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
+#  session_validity_preference   :integer          default(259200), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
 #  teenager                      :boolean
@@ -29,13 +30,15 @@
 #  use_two_factor_authentication :boolean          default(FALSE)
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
+#  discord_id                    :string
 #  payout_method_id              :bigint
 #  webauthn_id                   :string
 #
 # Indexes
 #
-#  index_users_on_email  (email) UNIQUE
-#  index_users_on_slug   (slug) UNIQUE
+#  index_users_on_discord_id  (discord_id) UNIQUE
+#  index_users_on_email       (email) UNIQUE
+#  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
@@ -81,6 +84,7 @@ class User < ApplicationRecord
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", inverse_of: :requester, dependent: :destroy
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
@@ -133,6 +137,7 @@ class User < ApplicationRecord
   has_many :wise_transfers
 
   has_one_attached :profile_picture
+  validates :profile_picture, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
 
   has_many :w9s, class_name: "W9", as: :entity
 
@@ -176,9 +181,13 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
 
+  validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
+
   validate :profile_picture_format
 
   validate(:admins_cannot_disable_2fa, on: :update)
+
+  validates :discord_id, uniqueness: { message: "is already linked to another user. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
   enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
 
@@ -193,9 +202,10 @@ class User < ApplicationRecord
   end
 
   SYSTEM_USER_EMAIL = "bank@hackclub.com"
+  SYSTEM_USER_ID = 2891
 
   def self.system_user
-    User.find_by!(email: SYSTEM_USER_EMAIL)
+    User.find(SYSTEM_USER_ID)
   end
 
   after_save do
@@ -471,6 +481,18 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  def has_discord_account?
+    discord_id.present?
+  end
+
+  def discord_account
+    return unless discord_id.present?
+
+    @discord_bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
+
+    @discord_account ||= @discord_bot.user(discord_id)
+  end
+
   private
 
   def update_stripe_cardholder
@@ -522,8 +544,15 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    unless payout_method_type.nil? || payout_method.is_a?(User::PayoutMethod::Check) || payout_method.is_a?(User::PayoutMethod::AchTransfer) || payout_method.is_a?(User::PayoutMethod::PaypalTransfer) || payout_method.is_a?(User::PayoutMethod::Wire) || payout_method.is_a?(User::PayoutMethod::WiseTransfer)
-      errors.add(:payout_method, "is an invalid method, must be check, PayPal, wire, Wise transfer, or ACH transfer")
+    if payout_method_type_changed? && payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
+      # I'm using `try` here in the slim chance that `payout_method` is some
+      # random model and doesn't include `User::PayoutMethod::Shared`.
+      if payout_method.try(:unsupported?)
+        reason = payout_method.unsupported_details[:reason]
+        errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
+      else
+        errors.add(:payout_method, "is invalid. Please choose another option.")
+      end
     end
   end
 

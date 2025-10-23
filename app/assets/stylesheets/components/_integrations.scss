@@ -1,0 +1,19 @@
+.integration-discord {
+  color: white;
+
+  background: #32406e;
+  background: linear-gradient(
+    33deg,
+    rgba(50, 64, 110, 1) 0%,
+    rgba(88, 101, 242, 1) 100%
+  );
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+html[data-dark='true'] {
+  .integration-discord {
+    background-color: #363a44;
+  }
+}

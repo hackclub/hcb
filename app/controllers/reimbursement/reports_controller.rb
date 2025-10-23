@@ -109,6 +109,15 @@ module Reimbursement
       flash[:error] = e.message
     end
 
+    def convert_to_wise_transfer
+      authorize @report
+
+      wise_transfer = @report.convert_to_wise_transfer!(as: current_user)
+
+      flash[:success] = "Report successfully converted to Wise transfer."
+      redirect_to wise_transfer_process_admin_path(wise_transfer)
+    end
+
     def finished
     end
 
@@ -192,6 +201,8 @@ module Reimbursement
 
     def admin_approve
       authorize @report
+      # TODO: This does NOT consider currency
+      Governance::Admin.ensure_may_approve_transfer!(current_user, @report.amount_to_reimburse_cents)
 
       begin
         @report.with_lock do
@@ -216,7 +227,7 @@ module Reimbursement
 
             conversion_rate = (wise_total_without_fees_cents / @report.amount_to_reimburse_cents).round(4)
             @report.update(conversion_rate:)
-            approved_amount_usd_cents = @report.expenses.approved.sum { |expense| expense.amount_cents * expense.conversion_rate }
+            approved_amount_usd_cents = @report.expenses.approved.sum { |expense| (expense.amount_cents * expense.conversion_rate).floor }
             fee_expense_value = (wise_total_including_fees_cents - approved_amount_usd_cents.to_f) / 100
 
             @report.expenses.create!(

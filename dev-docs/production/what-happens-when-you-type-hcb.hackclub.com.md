@@ -9,7 +9,7 @@ environment is configured.
 1. You type [`hcb.hackclub.com`](https://hcb.hackclub.com/) into your browser.
 2. Your device performs a DNS lookup.
     - Hack Club's DNS for [`hackclub.com`](https://hackclub.com/) (and other domains) is served
-      by [DNSimple](https://dnsimple.com/), and configured
+      by [Cloudflare](https://cloudflare.com/), and configured
       at [https://github.com/hackclub/dns](https://github.com/hackclub/dns)
     - [`hcb.hackclub.com`](https://hcb.hackclub.com/) is an `A` record to our Hetzner load balancer
 3. Your browser opens a TCP socket and does all the TLS/HTTPS handshake stuff.

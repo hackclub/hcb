@@ -30,6 +30,8 @@
 class CardGrant
   class PreAuthorization < ApplicationRecord
     has_many_attached :screenshots, dependent: :destroy
+    validates :screenshots, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["screenshots"].present? }
+
     belongs_to :card_grant
     has_one :event, through: :card_grant
     has_one :user, through: :card_grant
@@ -183,6 +185,13 @@ class CardGrant
       end
 
       broadcast_refresh_to self
+    rescue Faraday::Error => e
+      # Modify the original exception to append the response body to the message
+      # so these are easier to debug
+      raise(e.exception(<<~MSG))
+        #{e.message}
+        \tresponse_body: #{e.response_body.inspect}
+      MSG
     end
 
     def unauthorized?
