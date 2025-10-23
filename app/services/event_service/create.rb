@@ -84,7 +84,7 @@ module EventService
         financially_frozen: true,
         parent: @parent_event,
         plan: Event::Plan.new(type: @plan),
-        scoped_tags: @scoped_tags.map { |scoped_tag_id| Event::ScopedTag.find(scoped_tag_id) }
+        event_scoped_tags_events_attributes: @scoped_tags.map { |scoped_tag_id| { event_scoped_tag_id: scoped_tag_id } }
       }.tap do |hash|
         hash[:risk_level] = @risk_level if @risk_level.present?
       end
