@@ -20,12 +20,24 @@
 #
 class Event
   class ScopedTag < ApplicationRecord
+    include ActionView::Helpers::TextHelper # for `pluralize`
+
     has_many :event_scoped_tags_events, foreign_key: :event_scoped_tag_id, inverse_of: :event_scoped_tag, class_name: "Event::ScopedTagsEvent", dependent: :destroy
     has_many :events, through: :event_scoped_tags_events
 
     belongs_to :parent_event, class_name: "Event"
 
     validate :name_is_unique_within_parent_event
+
+    def removal_confirmation_message
+      message = "Are you sure you'd like to delete this tag?"
+
+      if events.length > 0
+        message + " It will be removed from #{pluralize(events.length, 'event')}."
+      else
+        message
+      end
+    end
 
     private
 

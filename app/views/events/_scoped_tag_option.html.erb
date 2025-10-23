@@ -9,7 +9,7 @@
     @click="scoped_tags.push(JSON.parse($el.dataset.tag)); query = ''">
     <span class="truncate"><%= scoped_tag.name %></span>
   </button>
-  <%= link_to event_scoped_tag_path(scoped_tag.parent_event, scoped_tag), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this tag?" }, "@click" => "scoped_tags = scoped_tags.filter(t => t.id !== #{scoped_tag.id})" do %>
+  <%= link_to event_scoped_tag_path(scoped_tag.parent_event, scoped_tag), data: { turbo_method: :delete, turbo_confirm: scoped_tag.removal_confirmation_message }, "@click" => "scoped_tags = scoped_tags.filter(t => t.id !== #{scoped_tag.id})" do %>
     <%= inline_icon "view-close", size: 24, class: "align-middle" %>
   <% end %>
 </div>
