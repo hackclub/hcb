@@ -136,7 +136,7 @@ class LoginsController < ApplicationController
     when "sms"
       ok = service.process_login_code(
         code: params[:login_code],
-        sms: ActiveRecord::Type::Boolean.new.cast(params[:sms])
+        sms: true
       )
 
       unless ok
@@ -148,7 +148,7 @@ class LoginsController < ApplicationController
     when "email"
       ok = service.process_login_code(
         code: params[:login_code],
-        sms: ActiveRecord::Type::Boolean.new.cast(params[:sms])
+        sms: false
       )
 
       unless ok

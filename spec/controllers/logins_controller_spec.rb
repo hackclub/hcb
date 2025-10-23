@@ -140,7 +140,7 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "email",
               login_code: "123-456"
             }
           )
@@ -158,7 +158,7 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "email",
               login_code: login_code.code
             }
           )
@@ -194,7 +194,7 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "sms",
               login_code: "123-456",
               sms: "1",
             }
@@ -221,9 +221,8 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "sms",
               login_code: "123-456",
-              sms: "1",
             }
           )
 
@@ -375,7 +374,7 @@ RSpec.describe LoginsController do
           :complete,
           params: {
             id: login.hashid,
-            method: "login_code",
+            method: "email",
             login_code: login_code.code
           }
         )
@@ -416,7 +415,7 @@ RSpec.describe LoginsController do
         :complete,
         params: {
           id: login.hashid,
-          method: "login_code",
+          method: "email",
           login_code: login_code.code
         }
       )
@@ -434,7 +433,7 @@ RSpec.describe LoginsController do
         :complete,
         params: {
           id: login.hashid,
-          method: "login_code",
+          method: "email",
           login_code: login_code.code
         }
       )
