@@ -37,8 +37,9 @@ module Governance
 
         has_paper_trail
 
-        include Governance::Admin::Transfer::ApprovalAttempt::Decision
         include Governance::Admin::Transfer::ApprovalAttempt::LimitSnapshot
+        include Governance::Admin::Transfer::ApprovalAttempt::Decision
+        include Governance::Admin::Transfer::ApprovalAttempt::Reporting
 
         belongs_to :limit,
                    class_name: "Governance::Admin::Transfer::Limit",
