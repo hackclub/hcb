@@ -48,13 +48,13 @@
     <% end %>
 
     <% if local_assigns[:show_scoped_tags] && event.parent.present? %>
-      <div class="flex flex-row items-center mb-2 m-0 mt-[-4px]">
-        <div class="event_<%= event.id %>_scoped_tags">
+      <div class="mb-2 m-0 mt-[-4px]">
+        <span class="event_<%= event.id %>_scoped_tags">
           <%= render partial: "events/scoped_tags/scoped_tag", collection: event.scoped_tags, locals: { subevent: event } %>
-        </div>
+        </span>
 
         <% if policy(event).toggle_scoped_tag? %>
-          <div data-controller="menu">
+          <div data-controller="menu" class="inline">
             <button class="badge m-0 menu__toggle menu__toggle--arrowless border-none" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
             <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
               <% event.parent.subevent_scoped_tags.each do |scoped_tag| %>

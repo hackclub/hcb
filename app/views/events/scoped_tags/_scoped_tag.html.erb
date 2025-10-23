@@ -1,6 +1,6 @@
 <%# locals: (scoped_tag:, subevent:, streamed: false) %>
 
-<span class="badge m-0 last:mr-1" data-scoped-tag="<%= scoped_tag.id %>">
+<span class="badge m-0 mb-1" data-scoped-tag="<%= scoped_tag.id %>">
   <%= scoped_tag.name %>
 
   <% if local_assigns[:streamed] || policy(scoped_tag).toggle_tag? %>
