@@ -90,6 +90,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  rescue_from Governance::Admin::InsufficientApprovalLimitError do |e|
+    redirect_back fallback_location: root_path, flash: { error: e.message }
+  end
+
+
   def find_current_auditor
     current_user if auditor_signed_in?
   end
