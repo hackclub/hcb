@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-# Used to restrict access of Sidekiq to admins. See routes.rbfor more info.
+# Used to restrict access of Sidekiq to admins. See routes.rb for more info.
 class AdminConstraint
   include Rails.application.routes.url_helpers
 
-  def matches?(request)
+  def self.matches?(request)
     cookies = ActionDispatch::Cookies::CookieJar.build(request, request.cookies)
     session_token = cookies.encrypted[:session_token]
 

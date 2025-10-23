@@ -2,8 +2,9 @@
 
 class OrganizerPositionInvitesController < ApplicationController
   include SetEvent
+  include ChangePositionRole
 
-  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :toggle_signee_status]
+  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :resend]
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
@@ -19,15 +20,21 @@ class OrganizerPositionInvitesController < ApplicationController
   def create
     user_email = invite_params[:email]
     role = invite_params[:role]
-    is_signee = invite_params[:is_signee]
+    is_signee = invite_params[:is_signee] || false
 
-    service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email:, is_signee:, role:)
+    enable_spending_controls = (invite_params[:enable_controls] == "true") && (role != "manager")
+    initial_control_allowance_amount = invite_params[:initial_control_allowance_amount]
+
+    service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email:, is_signee:, role:, enable_spending_controls:, initial_control_allowance_amount:)
 
     @invite = service.model
 
     authorize @invite
 
     if service.run
+      if @invite.is_signee
+        OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
+      end
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
     else
@@ -39,7 +46,7 @@ class OrganizerPositionInvitesController < ApplicationController
     # If the user's not signed in, redirect them to login page
     unless signed_in?
       skip_authorization
-      return redirect_to auth_users_path(email: @invite.user.email, return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }
+      return redirect_to auth_users_path(return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }
     end
 
     authorize @invite
@@ -60,7 +67,7 @@ class OrganizerPositionInvitesController < ApplicationController
     if @invite.accept
       redirect_to @invite.event
     else
-      flash[:error] = "Failed to accept"
+      flash[:error] = @invite.pending_signature? ? "Before accepting the invite, the associated contract needs to be signed by all parties." : "Failed to accept"
       redirect_to @invite
     end
   end
@@ -89,32 +96,13 @@ class OrganizerPositionInvitesController < ApplicationController
     end
   end
 
-  def toggle_signee_status
+  def resend
     authorize @invite
-    unless @invite.update(is_signee: !@invite.is_signee?)
-      flash[:error] = @invite.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
-    end
-    redirect_back(fallback_location: event_team_path(@invite.event))
-  end
 
-  def change_position_role
-    organizer_position_invite = OrganizerPositionInvite.find(params[:id])
-    authorize organizer_position_invite
+    @invite.deliver
 
-    was = organizer_position_invite.role
-    to = params[:to]
-
-    if was != to
-      organizer_position_invite.update!(role: to)
-
-      flash[:success] = "Changed #{organizer_position_invite.user.name}'s role from #{was} to #{to}."
-    end
-
-  rescue => e
-    Airbrake.notify(e)
-    flash[:error] = organizer_position_invite&.errors&.full_messages&.to_sentence.presence || "Failed to change the role."
-  ensure
-    redirect_back(fallback_location: event_team_path(organizer_position_invite.event))
+    flash[:success] = "Invite successfully resent to #{@invite.user.email}"
+    redirect_to event_team_path @invite.event
   end
 
   private
@@ -124,7 +112,12 @@ class OrganizerPositionInvitesController < ApplicationController
   end
 
   def invite_params
-    params.require(:organizer_position_invite).permit(:email, :is_signee, :role)
+    permitted_params = [:email, :role, :enable_controls, :initial_control_allowance_amount]
+
+    if admin_signed_in?
+      permitted_params.push(:cosigner_email, :include_videos, :is_signee)
+    end
+    params.require(:organizer_position_invite).permit(permitted_params)
   end
 
 end

@@ -1,3 +1,5 @@
 # frozen_string_literal: true
 
-json.partial! @event, expand: [:balance_cents, :users, :account_number]
+expand :balance_cents, :users, :account_number do
+  json.partial! @event
+end

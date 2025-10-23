@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/integer/time"
+require_relative "../../app/lib/credentials"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -79,7 +80,7 @@ Rails.application.configure do
   # config.i18n.raise_on_missing_translations = true
 
   # Annotate rendered view with file names.
-  # config.action_view.annotate_rendered_view_with_filenames = true
+  config.action_view.annotate_rendered_view_with_filenames = true
 
   # Use an evented file watcher to asynchronously detect changes in source code,
   # routes, locales, etc. This feature depends on the listen gem.
@@ -92,11 +93,22 @@ Rails.application.configure do
 
   # Configure the URL host for links
   config.action_mailer.default_url_options = {
-    host: Rails.application.credentials.default_url_host[:test]
+    host: Credentials.fetch(:TEST_URL_HOST)
   }
 
-  Rails.application.routes.default_url_options[:host] = Rails.application.credentials.default_url_host[:test]
+  Rails.application.routes.default_url_options[:host] = Credentials.fetch(:TEST_URL_HOST)
 
   # SMTP config
   config.action_mailer.delivery_method = :letter_opener_web
+
+  # Bullet for finding N+1s
+  config.after_initialize do
+    Bullet.enable        = true
+    Bullet.console       = true
+    Bullet.rails_logger  = true
+  end
+
+  if ENV["RAILS_LOG_TO_STDOUT"].present?
+    config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new($stdout))
+  end
 end

@@ -1,28 +1,30 @@
-<% title "ORGANIZATION BALANCES" %>
-
-<h1>ORGANIZATION BALANCES</h1>
+<% title "Organization Balances" %>
 
 <%= form_with local: true, action: :balances, method: :get, data: { "turbo": "false" } do |form| %>
-  <%= form.text_field :q, value: params[:q], style: "vertical-align: top;", placeholder: "Search" %>
   <div class="inline-block">
-    <%= render partial: "events_filter", locals: { form:, submit_disable_with_false: true } %>
+    <%= form.text_field :q, value: params[:q], style: "vertical-align: top;", placeholder: "Search" %>
+    <%= button_tag("Search") %>
+    <%= render partial: "events_filter", locals: { form:, submit_disable_with_false: true, show_new: false } %>
     <br><br>
 
     <div style="display: flex; justify-content: space-between; align-items: center; column-gap: 0.5rem;">
       <div>
         <%= form.label :start_date do %>
-          Start Date
-          <%= form.date_field :start_date, class: "fit", style: "width: min-content", value: @start_date %>
+          <b>Start Date</b>
+          <%= form.date_field :start_date, class: "fit mr1", style: "width: min-content", value: @start_date %>
         <% end %>
-        |
         <%= form.label :end_date do %>
-          End Date
+          <b>End Date</b>
           <%= form.date_field :end_date, class: "fit", style: "width: min-content", value: @end_date %>
         <% end %>
       </div>
 
       <div>
-        <span class='mr1'>EXPORT</span>
+        <span class='mr1'>
+          <b>
+            EXPORT
+          </b>
+        </span>
         <%= button_tag("CSV", value: "csv", name: "format", disable_with: false, formtarget: "_blank") %>
         <%= button_tag("JSON", value: "json", name: "format", disable_with: false, formtarget: "_blank") %>
         <%= button_tag("CSV (breakdown)", value: "true", name: "monthly_breakdown", type: "submit", formaction: "/admin/balances.csv", disable_with: false, formtarget: "_blank") %>
@@ -32,7 +34,7 @@
 
 <% end %>
 
-<p><small><%= pluralize(@count, "result") %></small></p>
+<p><%= pluralize(@count, "result") %></p>
 
 <table>
   <thead>
@@ -52,7 +54,7 @@
       <td><%= row[4] %></td>
 
       <% if !row[5] && !row[6] %>
-        <td colspan="2">All time</td>
+        <td colspan="2">All&nbsp;time</td>
       <% else %>
         <td><%= row[5] %></td>
         <td><%= row[6] %></td>

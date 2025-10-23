@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/integer/time"
+require_relative "../../app/lib/credentials"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -36,10 +37,6 @@ Rails.application.configure do
   # Do not fallback to assets pipeline if a precompiled asset is missed.
   config.assets.compile = false
 
-  # Enable serving of images, stylesheets, and JavaScripts from an asset server.
-  #   config.asset_host = "https://d19o3k50vack1b.cloudfront.net"
-  # config.asset_host = 'http://assets.example.com'
-
   # Specifies the header that your server uses for sending files.
   # config.action_dispatch.x_sendfile_header = 'X-Sendfile' # for Apache
   # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for NGINX
@@ -63,7 +60,7 @@ Rails.application.configure do
   config.log_tags = [:request_id]
 
   # Use a different cache store in production.
-  config.cache_store = :redis_cache_store, { url: ENV["REDIS_URL"], ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+  config.cache_store = :redis_cache_store, { url: ENV["REDIS_CACHE_URL"], ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
 
   # Use a real queuing backend for Active Job (and separate queues per environment).
   # config.active_job.queue_adapter     = :resque
@@ -109,9 +106,9 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   config.action_mailer.default_url_options = {
-    host: Rails.application.credentials.default_url_host[:live]
+    host: Credentials.fetch(:LIVE_URL_HOST)
   }
-  Rails.application.routes.default_url_options[:host] = Rails.application.credentials.default_url_host[:live]
+  Rails.application.routes.default_url_options[:host] = Credentials.fetch(:LIVE_URL_HOST)
 
   # Inserts middleware to perform automatic connection switching.
   # The `database_selector` hash is used to pass options to the DatabaseSelector
@@ -133,4 +130,5 @@ Rails.application.configure do
   # config.active_record.database_selector = { delay: 2.seconds }
   # config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
   # config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
+
 end

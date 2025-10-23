@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ApplicationMailer < ActionMailer::Base
+  self.delivery_job = MailDeliveryJob
+
   OPERATIONS_EMAIL = "hcb@hackclub.com"
 
   DOMAIN = Rails.env.production? ? "hackclub.com" : "staging.hcb.hackclub.com"
@@ -10,12 +12,17 @@ class ApplicationMailer < ActionMailer::Base
   # allow usage of application helper
   helper :application
 
-  protected
+  def self.deliver_mail(mail)
+    # Our SMTP service will throw an error if we attempt
+    # to deliver an email without recipients. Occasionally
+    # that happens due to events without members. This
+    # will prevent those attempts from being made.
+    return if mail.recipients.compact.empty?
 
-  def admin_email
-    env = Rails.env.production? ? :prod : :dev
-    Rails.application.credentials.admin_email[env]
+    super(mail)
   end
+
+  protected
 
   def hcb_email_with_name_of(object)
     name = object.try(:name)
@@ -26,6 +33,10 @@ class ApplicationMailer < ActionMailer::Base
     end
 
     email_address_with_name("hcb@hackclub.com", name)
+  end
+
+  def no_recipients?
+    mail.recipients.compact.empty?
   end
 
 end

@@ -1,8 +1,10 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-dark="<%= @is_dark %>">
   <head>
     <title>
-      <%= yield(:title).concat(" –") if content_for?(:title) %>
+      <%= "#{yield(:title)} –" if content_for?(:title) %>
       HCB Admin
     </title>
 
@@ -10,86 +12,108 @@
     <%= csp_meta_tag %>
     <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
     <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
-    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
+    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body>
-    <% flash.each do |key, value| %>
-      <% if key == "error" %>
-        <p style="text-align:center;background:red;color:white;"><%= value %></p>
-      <% elsif key == "success" %>
-        <p style="text-align:center;background:green;color:white;"><%= value %></p>
-      <% else %>
-        <p style="text-align:center;background:darkblue;color:white;"><%= value %></p>
-      <% end %>
-      <hr>
-    <% end %>
+    <a class="skip-to-main" href="#main">Skip to main content</a>
 
-    <p>
-      <a class="skip-to-main" href="#main">Skip to main content</a>
-      <%= link_to "admin", root_path %>
-      |
-      <%= link_to "bank accounts (#{BankAccount.failing.count})", bank_accounts_admin_index_path %>
-      |
-      <%= link_to "partners (#{Partner.count})", partners_admin_index_path %>
-      |
-      <%= link_to "partnered signups (#{PartneredSignup.applicant_signed.count})", partnered_signups_admin_index_path %>
-      |
-      <%= link_to "partner organizations (#{Event.partner.count})", partner_organizations_admin_index_path %>
-      |
-      <%= link_to "organizations (#{Event.approved.count})", events_admin_index_path %>
-      |
-      <%= link_to "organization balances", balances_admin_index_path %>
-      |
-      <%= link_to "bank fees (#{BankFee.in_transit_or_pending.count})", bank_fees_admin_index_path %>
-      |
-      <%= link_to "users", users_admin_index_path %>
-      |
-      <%= link_to "raw transactions (#{RawCsvTransaction.unhashed.count})", raw_transactions_admin_index_path %>
-      |
-      <%= link_to "ledger (#{CanonicalTransaction.not_stripe_top_up.unmapped.count})", ledger_admin_index_path %>
-      |
-      <%= link_to "pending ledger (#{CanonicalPendingTransaction.unsettled.count})", pending_ledger_admin_index_path %>
-      |
-      <%= link_to "achs (#{AchTransfer.pending.count})", ach_admin_index_path %>
-      |
-      <%= link_to "checks (#{IncreaseCheck.pending.count})", increase_checks_admin_index_path %>
-      |
-      <%= link_to "Partner donations", partner_donations_admin_index_path %>
-      |
-      <%= link_to "donations", donations_admin_index_path %>
-      |
-      <%= link_to "Recurring donations", recurring_donations_admin_index_path %>
-      |
-      <%= link_to "disbursements (#{Disbursement.reviewing.count})", disbursements_admin_index_path %>
-      |
-      <%= link_to "invoices", invoices_admin_index_path %>
-      |
-      <%= link_to "sponsors", sponsors_admin_index_path %>
-      |
-      <%= link_to "google workspaces (#{GSuite.needs_ops_review.count})", google_workspaces_admin_index_path %>
-      |
-      <%= link_to "hcb codes", hcb_codes_admin_index_path %>
-      |
-      <%= link_to "stripe cards", stripe_cards_admin_index_url %>
-      |
-      <%= link_to "column statements", column_statements_admin_index_url %>
-      |
-      <%= link_to "ledger audits (#{Admin::LedgerAudit.pending.count})", admin_ledger_audits_path %>
-      |
-      <%= link_to "reimbursements (#{Reimbursement::Report.reimbursement_requested.count})", reimbursements_admin_index_path %>
-    </p>
+    <% title = yield(:title) if content_for?(:title) %>
 
-    <hr>
+    <% nav = Admin::Nav.new(page_title: title) %>
 
-    <div id="main" class="overflow-x-auto overflow-y-auto">
+    <nav style="display: flex; flex-direction: column; background: var(--hcb-bg-2-5); gap: 0px">
+      <div style="width: 100%; display: flex; gap: 8px; align-items: center; font-size: 22px; padding: 8px; border-bottom: 1px solid var(--hcb-bg-2);">
+        <%= link_to root_path, class: "text-decoration-none", style: "height: 36px; margin-right: 8px;" do %>
+          <% logo_env = Rails.env.local? ? "development" : Rails.env %>
+          <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+              name: "header-logo",
+              class: "logo",
+              height: @home_size || 36,
+              alt: "HCB logo" %>
+        <% end %>
+
+        <% if title %>
+          <span>
+            <%= nav.active_section&.name || "Admin" %>
+          </span>
+          <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
+          <b style="font-weight: 600;">
+            <%= title %>
+          </b>
+        <% else %>
+          <b>
+            <%= current_user.access_level.capitalize %>
+          </b>
+        <% end %>
+
+        <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
+          <%= render partial: "application/blog_widget" %>
+          <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "tooltipped tooltipped--w" do %>
+            <%= inline_icon "payment-docs", size: home_action_size %>
+          <% end %>
+          <%= render partial: "application/theme_toggle", locals: { top: true } %>
+          <%= button_to logout_users_path, method: :delete, style: "background: none; padding: 0px;", id: "admin-logout-button", 'aria-label': "Sign out", class: "tooltipped tooltipped--w" do %>
+            <%= inline_icon "door-leave", size: home_action_size %>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="nav-row" style="width: 100%; display: flex; padding: 8px 0px;">
+        <% nav.sections.each do |section| %>
+          <details open class="admin-nav-item pb0">
+            <summary class="nav-item" style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
+              <%= section.name %>
+              <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
+                <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
+              </span>
+            </summary>
+            <div class="dropdown">
+              <div class="sub-items">
+                <% section.items.each do |item| %>
+                  <%= link_to item.path, style: item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
+                    <%= item.name %>
+                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
+                      <%= item.count %>
+                    </span>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </details>
+        <% end %>
+      </div>
+    </nav>
+
+    <%= render(partial: "admin/flash") %>
+
+    <div id="main" class="overflow-x-auto overflow-y-auto" style="padding: 2rem; margin: 0 auto">
       <%= yield %>
     </div>
 
-    <%= render "application/footer" unless (@no_app_shell || @hide_footer) %>
+    <%= render "application/footer" unless @no_app_shell || @hide_footer %>
     <%= render "application/command_bar" %>
+    <script>
+      document.addEventListener("turbo:load", () => {
+        const updateAdminDropdowns = () => {
+          let details = document.querySelectorAll(".admin-nav-item");
+          if(window.innerWidth >= 800){
+            details.forEach((detail) => {
+              detail.open = true;
+            });
+          }
+          else {
+            details.forEach((detail) => {
+              detail.open = false;
+            });
+          }
+        }
+        updateAdminDropdowns()
+        window.onresize = updateAdminDropdowns
+      })
+    </script>
   </body>
 </html>

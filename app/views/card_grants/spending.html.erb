@@ -1,14 +1,16 @@
 <%= render "events/nav", selected: :transfers unless @frame %>
 
-<div class="mt4 mb4 check--form flex justify-center" style="gap: 3rem">
-  <div>
-    <%= render @card_grant.stripe_card if @card_grant.stripe_card.present? %>
-    <%= render partial: "balance", locals: { card_grant: @card_grant } %>
+<%= turbo_frame_tag "spending_#{@card_grant.public_id}" do %>
+  <div class="mt4 mb4 check--form flex justify-center" style="gap: 3rem">
+    <div>
+      <%= render @card_grant.stripe_card if @card_grant.stripe_card.present? %>
+      <%= render partial: "balance", locals: { card_grant: @card_grant } %>
+    </div>
   </div>
-</div>
 
-<%= render partial: "details", locals: { card_grant: @card_grant } if organizer_signed_in? %>
+  <%= render partial: "details", locals: { card_grant: @card_grant } if organizer_signed_in? %>
 
-<hr>
+  <hr>
 
-<%= render partial: "transactions", locals: { hcb_codes: @hcb_codes, public: true } %>
+  <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes, public: true } %>
+<% end %>

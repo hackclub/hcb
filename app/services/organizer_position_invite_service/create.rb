@@ -2,13 +2,15 @@
 
 module OrganizerPositionInviteService
   class Create
-    def initialize(event:, sender: nil, user_email: nil, initial: false, is_signee: nil, role: nil)
+    def initialize(event:, sender: nil, user_email: nil, initial: false, is_signee: false, role: nil, enable_spending_controls: false, initial_control_allowance_amount: nil)
       @event = event
       @sender = sender
-      @user_email = normalize_email(user_email)
+      @user_email = user_email
       @initial = initial
       @is_signee = is_signee
       @role = role
+      @enable_spending_controls = enable_spending_controls
+      @initial_control_allowance_amount = initial_control_allowance_amount
 
       args = {}
       args[:event] = @event
@@ -16,6 +18,7 @@ module OrganizerPositionInviteService
       args[:initial] = @initial
       args[:is_signee] = @is_signee
       args[:role] = @role if role
+      args[:initial_control_allowance_amount_cents] = @enable_spending_controls ? Monetize.parse(@initial_control_allowance_amount).cents : nil
 
       @model = OrganizerPositionInvite.new(args)
     end
@@ -48,13 +51,7 @@ module OrganizerPositionInviteService
 
     def find_or_create_user
       # Create the invited user now if it doesn't exist
-      @model.user = User.find_or_create_by!(email: @user_email)
-    end
-
-    def normalize_email(email)
-      # canonicalize emails as soon as possible -- otherwise, HCB gets
-      # confused about who's invited and who's not when they log in.
-      email&.downcase
+      @model.user = User.create_with(creation_method: :organizer_position_invite).find_or_create_by!(email: @user_email)
     end
 
   end

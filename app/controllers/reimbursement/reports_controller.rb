@@ -8,15 +8,21 @@ module Reimbursement
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
+    invisible_captcha only: [:create], honeypot: :subtitle
+
     # POST /reimbursement_reports
     def create
-      @event = Event.friendly.find(report_params[:event_id])
-      user = User.find_or_create_by!(email: report_params[:email].downcase)
-      @report = @event.reimbursement_reports.build(report_params.except(:email).merge(user:, inviter: current_user))
+      @event = Event.find(report_params[:event_id])
+      user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
+      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil, currency: user.payout_method&.currency || "USD"))
 
       authorize @report
 
       if @report.save
+        if report_params[:receipt_id]
+          @expense = @report.expenses.create!(value: report_params[:value], memo: report_params[:report_name])
+          Receipt.find(report_params[:receipt_id]).update!(receiptable: @expense)
+        end
         if current_user && user == current_user
           redirect_to @report
         elsif admin_signed_in? || organizer_signed_in?
@@ -26,24 +32,25 @@ module Reimbursement
           redirect_to finished_reimbursement_reports_path(@event)
         end
       else
-        redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
+        redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
       end
     end
 
     def quick_expense
-      @event = Event.friendly.find(report_params[:event_id])
+      @event = Event.find(report_params[:event_id])
       @report = @event.reimbursement_reports.build({ user: current_user, inviter: current_user })
 
       authorize @report, :create?
 
       if @report.save
         @expense = @report.expenses.create!(amount_cents: 0)
-        ::ReceiptService::Create.new(
+        receipt = ::ReceiptService::Create.new(
           receiptable: @expense,
           uploader: current_user,
           attachments: params[:reimbursement_report][:file],
           upload_method: :quick_expense
         ).run!
+        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt&.first&.suggested_memo
         redirect_to reimbursement_report_path(@report, edit: @expense.id)
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
@@ -61,16 +68,54 @@ module Reimbursement
       authorize @report
       @commentable = @report
       @comments = @commentable.comments
-      @comment = Comment.new
-      @use_user_nav = current_user == @user && !@event.users.include?(@user) && !admin_signed_in?
+      @use_user_nav = @event.nil? || current_user == @user && !@event.users.include?(@user) && !auditor_signed_in?
       @editing = params[:edit].to_i
 
     end
 
+    def wise_transfer_quote
+      authorize @report
+
+      @with_fees_quote_amount = @report.wise_transfer_quote_amount
+      @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
+      @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+    end
+
     def start
-      if !@event.public_reimbursement_page_enabled?
+      unless @event.public_reimbursement_page_available?
         return not_found
       end
+    end
+
+    def update_currency
+      authorize @report
+
+      old_currency = @report.currency
+      new_currency = @report.user.payout_method.currency
+
+      ActiveRecord::Base.transaction do
+        @report.update!(currency: new_currency)
+
+        @report.expenses.each do |expense|
+          fractional = Money.from_amount(expense.value, old_currency).cents
+          full = Money.from_cents(fractional, new_currency).amount
+
+          expense.update!(value: full)
+        end
+      end
+
+      flash[:success] = "Report successfully updated to #{new_currency}."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
+    end
+
+    def convert_to_wise_transfer
+      authorize @report
+
+      wise_transfer = @report.convert_to_wise_transfer!(as: current_user)
+
+      flash[:success] = "Report successfully converted to Wise transfer."
+      redirect_to wise_transfer_process_admin_path(wise_transfer)
     end
 
     def finished
@@ -104,7 +149,7 @@ module Reimbursement
 
       begin
         @report.mark_draft!
-        flash[:success] = "Report marked as a draft, you can now make edits."
+        flash[:success] = "Report marked as a draft."
       rescue => e
         flash[:error] = e.message
       end
@@ -156,16 +201,99 @@ module Reimbursement
 
     def admin_approve
       authorize @report
+      # TODO: This does NOT consider currency
+      Governance::Admin.ensure_may_approve_transfer!(current_user, @report.amount_to_reimburse_cents)
 
       begin
-        @report.mark_reimbursement_approved!
+        @report.with_lock do
+          if params[:wise_total_without_fees] && params[:wise_total_including_fees]
+            unless params[:wise_total_including_fees].to_f >= params[:wise_total_without_fees].to_f
+              flash[:error] = "The total including fees must be greater than or equal to the total without fees."
+              return redirect_to @report
+            end
+
+            wise_total_including_fees_cents = params[:wise_total_including_fees].to_f * 100
+            wise_total_without_fees_cents = params[:wise_total_without_fees].to_f * 100
+
+            unless ::Shared::AmpleBalance.ample_balance?(wise_total_including_fees_cents, @report.event)
+              flash[:error] = "This organization does not have sufficient funds to cover the transfer."
+              return redirect_to @report
+            end
+
+            if @report.maximum_amount_cents.present? && wise_total_including_fees_cents > @report.maximum_amount_cents
+              flash[:error] = "This amount is above the maximum amount set by the organizers."
+              return redirect_to @report
+            end
+
+            conversion_rate = (wise_total_without_fees_cents / @report.amount_to_reimburse_cents).round(4)
+            @report.update(conversion_rate:)
+            approved_amount_usd_cents = @report.expenses.approved.sum { |expense| (expense.amount_cents * expense.conversion_rate).floor }
+            fee_expense_value = (wise_total_including_fees_cents - approved_amount_usd_cents.to_f) / 100
+
+            @report.expenses.create!(
+              value: fee_expense_value,
+              memo: "Wise transfer fee",
+              type: Reimbursement::Expense::Fee,
+              aasm_state: :approved,
+              approved_by: current_user,
+              approved_at: Time.now
+            )
+          end
+          @report.mark_reimbursement_approved!
+        end
         flash[:success] = "Reimbursement has been approved; the team & report creator will be notified."
       rescue => e
         flash[:error] = e.message
       end
 
-      # ReimbursementJob::Nightly.perform_later
+      # Reimbursement::NightlyJob.perform_later
 
+      redirect_to @report
+    end
+
+    def admin_send_wise_transfer
+      authorize @report
+
+      clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+      payout_holding = @report.payout_holding
+      payout_holding.expense_payouts.pending.each do |expense_payout|
+        Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
+      end
+      Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
+      payout_holding.reload
+      payout_holding.mark_settled!
+      @report.user.payout_method.update(wise_recipient_id: params[:wise_recipient_id])
+      wise_transfer = clearinghouse.wise_transfers.create!(
+        payment_for: "Reimbursement for #{@report.name}.",
+        address_line1: @report.user.payout_method.address_line1,
+        address_line2: @report.user.payout_method.address_line2,
+        address_city: @report.user.payout_method.address_city,
+        address_state: @report.user.payout_method.address_state,
+        address_postal_code: @report.user.payout_method.address_postal_code,
+        recipient_country: @report.user.payout_method.recipient_country,
+        recipient_email: @report.user.email,
+        recipient_name: @report.user.full_name,
+        bank_name: @report.user.payout_method.bank_name,
+        recipient_information: @report.user.payout_method.recipient_information,
+        currency: @report.currency,
+        user: User.system_user,
+        usd_amount_cents: payout_holding.amount_cents,
+        quoted_usd_amount_cents: payout_holding.amount_cents,
+        amount_cents: @report.amount_to_reimburse_cents,
+        wise_id: params[:wise_id],
+        wise_recipient_id: params[:wise_recipient_id],
+        sent_at: Time.now,
+        recipient_phone_number: @report.user.phone_number,
+      )
+      wise_transfer.mark_approved!
+      wise_transfer.mark_sent!
+      payout_holding.wise_transfer = wise_transfer
+      payout_holding.save!
+      payout_holding.mark_sent!
+
+      redirect_to @report
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
       redirect_to @report
     end
 
@@ -181,7 +309,7 @@ module Reimbursement
         flash[:error] = e.message
       end
 
-      # ReimbursementJob::Nightly.perform_later
+      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end
@@ -195,6 +323,24 @@ module Reimbursement
         flash[:success] = "Rejected & closed the report; no further changes can be made."
       rescue => e
         flash[:error] = e.message
+      end
+
+      redirect_to @report
+    end
+
+    def reverse
+
+      authorize @report
+
+      if @report.payout_holding.nil?
+        flash[:error] = "This report can't be reversed yet."
+      else
+        begin
+          @report.payout_holding.reverse!
+          flash[:success] = "Reversed the report."
+        rescue => e
+          flash[:error] = e.message
+        end
       end
 
       redirect_to @report
@@ -239,7 +385,7 @@ module Reimbursement
 
       @report.destroy
 
-      if organizer_signed_in?
+      if organizer_signed_in? && @event
         redirect_to event_reimbursements_path(@event)
       else
         redirect_to my_reimbursements_path
@@ -257,13 +403,13 @@ module Reimbursement
     end
 
     def report_params
-      params.require(:reimbursement_report).permit(:report_name, :maximum_amount, :event_id, :email, :invite_message).compact_blank
+      params.require(:reimbursement_report).permit(:report_name, :maximum_amount, :event_id, :email, :invite_message, :receipt_id, :value).compact_blank
     end
 
     def update_reimbursement_report_params
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
-      reimbursement_report_params.delete(:maximum_amount) unless current_user.admin? || @event.users.include?(current_user)
-      reimbursement_report_params.delete(:maximum_amount) unless @report.draft?
+      reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || @event&.users&.include?(current_user)
+      reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
       reimbursement_report_params
     end
 

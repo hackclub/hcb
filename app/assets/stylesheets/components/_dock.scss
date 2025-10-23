@@ -58,11 +58,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    border-bottom: rgba(255, 255, 255, 0.98) solid 1rem;
     padding: 0.5rem 1rem;
-    @supports (padding: env(safe-area-inset-bottom)) {
-      padding-bottom: env(safe-area-inset-bottom) !important;
-    }
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0rem)) !important;
 
     position: fixed;
     overflow: visible;
@@ -73,7 +70,6 @@
     background-color: rgba(255, 255, 255, 0.98);
     @supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
       background-color: rgba(255, 255, 255, 0.9);
-      border-bottom: rgba(255, 255, 255, 0.9) solid 1rem;
       -webkit-backdrop-filter: saturate(180%) blur(12px);
       backdrop-filter: saturate(180%) blur(12px);
     }
@@ -105,13 +101,13 @@
 }
 
 .hide__pwa__prompt .pwa__prompt {
-  display: none!important
+  display: none !important;
 }
 
 .pwa__prompt__hide {
-  position: absolute; 
-  right: 5px; 
-  top: 5px; 
+  position: absolute;
+  right: 5px;
+  top: 5px;
   cursor: pointer;
 }
 
@@ -121,30 +117,28 @@
     display: block;
   }
   @media (min-width: 56em) {
-    display: none!important;
+    display: none !important;
   }
-  flex: 1 0 100%; 
-  background: #ec3750; 
-  padding: 8px 16px; 
-  text-align: center; 
+  flex: 1 0 100%;
+  background: #ec3750;
+  padding: 8px 16px;
+  text-align: center;
   color: white;
-  margin-bottom: -16px
+  margin-bottom: -16px;
 }
-
 
 .pwa__prompt > b {
   font-weight: 600;
 }
 
 .pwa__prompt__icon {
-  transform: translateY(2.5px)
+  transform: translateY(2.5px);
 }
 
 .dock__item {
   font-size: 0.875rem;
   text-decoration: none;
   width: 100%;
-  font-weight: 600;
   flex-shrink: 1;
   flex: 1;
   display: inline-flex;
@@ -189,12 +183,11 @@
     border-radius: 0.75rem;
     cursor: pointer;
     line-height: 1.75;
-    font-size: 1.125rem;
+    font-size: 1rem;
     outline: 0;
     transition:
       color 0.125s ease-in-out,
       background-color 0.125s ease-in-out;
-    font-family: $brand-font-family;
     padding: 0.5rem 1.5rem 0.5rem 0.75rem;
     margin: 0 0 0 -0.75rem;
     width: fit-content;
@@ -248,6 +241,7 @@
     line-height: initial;
     color: white;
     font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
     min-width: 1rem;
     min-height: 1rem;
     text-align: center;

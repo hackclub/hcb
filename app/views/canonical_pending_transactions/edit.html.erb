@@ -15,15 +15,13 @@
 <strong>Pending transaction memo</strong>
 <pre class="bg-smoke mt0"><%= organizer_signed_in? ? @canonical_pending_transaction.friendly_memo : "REDACTED– SIGN IN TO REVEAL" %></pre>
 
-<%= form_with(model: @canonical_pending_transaction, url: set_custom_memo_canonical_pending_transaction_path(@canonical_pending_transaction), method: :post, local: true) do |form| %>
+<%= form_with(model: @canonical_pending_transaction) do |form| %>
   <div class="field">
     <%= form.label :custom_memo, "Custom Memo" %>
     <%= form.text_field :custom_memo, list: "custom-memos", placeholder: @canonical_pending_transaction.smart_memo, autofocus: true %>
     <datalist id='custom-memos'>
-      <% if Flipper.enabled?(:suggested_memo_2022_08_02, current_user) %>
-        <%= @suggested_memos.each do |s_memo| %>
-          <option><%= s_memo %></option>
-        <% end %>
+      <%= @suggested_memos.each do |s_memo| %>
+        <option><%= s_memo %></option>
       <% end %>
     </datalist>
     <span class="muted block h5">
@@ -40,7 +38,7 @@
     <% if @canonical_pending_transaction.amount_cents > 0 %>
       <div class="field field--checkbox">
         <%= form.check_box :fee_waived %>
-        <%= form.label :fee_waived, "Fee waived?" %>
+        <%= form.label :fee_waived, "Fee (#{number_to_percentage(@canonical_pending_transaction.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true)}) waived?" %>
       </div>
     <% end %>
   <% end %>

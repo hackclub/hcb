@@ -1,17 +1,21 @@
-<% title "RAW TRANSACTIONS" %>
-
-<h1>RAW TRANSACTIONS <small><%= link_to "New Raw Transaction", raw_transaction_new_admin_index_path %></small></h1>
-
-<%= paginate @raw_transactions %>
+<% title "Raw Transactions" %>
 
 <%= form_with local: true, url: raw_transactions_admin_index_path, method: :get do |form| %>
-  <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { include_blank: true, selected: @unique_bank_identifier }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
+  <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { include_blank: "Select Bank Account", selected: @unique_bank_identifier }, { width: 250, style: "max-width: 250px" }) %>
   <%= form.submit "Search" %>
+  <%= link_to raw_transaction_new_admin_index_path do %>
+    <button class="bg-primary">
+      New Raw Transaction
+    </button>
+  <% end %>
 <% end %>
 
-<%= page_entries_info @raw_transactions, entry_name: "transactions" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @raw_transactions, entry_name: "transactions" %>
+  </div>
+  <%= paginate @raw_transactions %>
+</div>
 
 <table>
   <thead>

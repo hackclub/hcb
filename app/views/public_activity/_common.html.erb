@@ -1,0 +1,36 @@
+<li class="mt1" style="font-size: 14px">
+  <div class="flex flex-row" style="gap: 8px; margin-left: 4px">
+    <% if defined?(icon) && defined?(color) %>
+      <%= inline_icon icon, width: 24, class: "bg-#{color}", style: "height: 24px; color: white; border-radius: 999px; padding: 4px;" %>
+    <% else %>
+      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png") %>
+    <% end %>
+    <div class="flex flex-col" style="transform: translateY(-3px); line-height: 1.6">
+      <span>
+        <% unless defined?(hide_owner) && hide_owner %>
+          <% if activity.owner == current_user %>
+            <% if local_assigns[:possessive] %>
+              Your
+            <% else %>
+              You
+            <% end %>
+          <% else %>
+            <span class="muted"><%= activity.owner&.name || "A user" %></span><%= "'s" if local_assigns[:possessive] %>
+          <% end %>
+        <% end %>
+        <%= yield %>
+      </span>
+      <div class="flex items-center">
+        <% url = hcb_code_path(activity.trackable.hcb_code) if activity.trackable.try(:hcb_code) %>
+        <% if defined?(url) && url %>
+          <%= link_to url, class: "flex items-center", target: "_blank" do %>
+            <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
+          <% end %>
+        <% end %>
+        <span class="align-middle timestamp" style="cursor: default" data-controller="timestamp" data-timestamp-time-value="<%= activity.created_at.to_i * 1000 %>">
+          <%= time_ago_in_words activity.created_at %> ago
+        </span>
+      </div>
+    </div>
+  </div>
+</li>

@@ -1,10 +1,9 @@
 <%# locals: (stripe_card:) %>
 
-<% if stripe_card.stripe_status == "active" %>
-  <div class="tooltipped tooltipped--n" aria-label="<%= policy(stripe_card).update_name? ? "Rename your card" : "You don't have permission to rename this card" %>">
+<% if stripe_card.stripe_status == "active" && policy(stripe_card).update? %>
+  <div class="tooltipped tooltipped--n" aria-label="Rename your card">
     <%= link_to edit_stripe_card_path(stripe_card),
-                class: "btn bg-success ml1",
-                disabled: !policy(stripe_card).update_name?,
+                class: "btn bg-success",
                 data: { behavior: "modal_trigger", modal: "name_card" } do %>
       <%= inline_icon "edit" %>
       Name
@@ -12,10 +11,8 @@
   </div>
 
   <%# Modal for naming card %>
-  <% if policy(stripe_card).update_name? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="name_card">
-      <%= modal_header "Name your card" %>
-      <%= render "stripe_cards/name_form", stripe_card: StripeCard.new %>
-    </section>
-  <% end %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="name_card">
+    <%= modal_header "Name your card" %>
+    <%= render "stripe_cards/name_form", stripe_card: StripeCard.new %>
+  </section>
 <% end %>

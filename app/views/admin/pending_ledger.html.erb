@@ -1,24 +1,23 @@
-<% title "PENDING LEDGER" %>
-
-<h1>PENDING LEDGER</h1>
-
-<%= paginate @canonical_pending_transactions %>
+<% title "Pending Ledger" %>
 
 <%= form_with local: true, url: pending_ledger_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :unsettled do %>
-    <%= form.check_box :unsettled, checked: @unsettled %>
-    Unsettled
-  <% end %>
-  |
-
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <div class="mb1">
+    <%= form.label :unsettled do %>
+      <%= form.check_box :unsettled, checked: @unsettled %>
+      Unsettled
+    <% end %>
+  </div>
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @canonical_pending_transactions, entry_name: "transactions" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @canonical_pending_transactions, entry_name: "transactions" %>
+  </div>
+  <%= paginate @canonical_pending_transactions %>
+</div>
 
 <table>
   <thead>
@@ -29,6 +28,7 @@
       <th>Amount</th>
       <th>HCB Code</th>
       <th>Event</th>
+      <th>Category</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -36,7 +36,12 @@
     <% @canonical_pending_transactions.each do |cpt| %>
       <tr class="<%= "admin-bg-pending" if cpt.unsettled? %>">
         <td><%= cpt.id %></td>
-        <td><%= cpt.date %></td>
+        <td>
+          <%= cpt.date %>
+          <% if cpt.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <% if cpt.event %>
           <td><%= link_to cpt.memo, cpt.local_hcb_code %></td>
         <% else %>
@@ -45,6 +50,12 @@
         <td><%= cpt.amount %></td>
         <td><%= cpt.hcb_code %></td>
         <td><%= cpt.event.try(:id) %></td>
+        <td>
+          <%= render(
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: cpt, admin_context: true }
+              ) %>
+        </td>
         <td>
           <%#= link_to "Process", transaction_admin_path(cpt) unless cpt.event.present? %>
           <%#= link_to "View", transaction_admin_path(cpt) if cpt.event.present? %>

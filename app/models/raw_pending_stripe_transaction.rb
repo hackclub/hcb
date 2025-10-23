@@ -27,12 +27,19 @@ class RawPendingStripeTransaction < ApplicationRecord
   scope :reversed, -> { where("stripe_transaction->>'status' = 'reversed'") }
   scope :pending, -> { where("stripe_transaction->>'status' = 'pending'") }
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| record.stripe_card&.user || User.system_user }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
+
   def date
     date_posted
   end
 
   def memo
     stripe_transaction.dig("merchant_data", "name")
+  end
+
+  def merchant_category
+    stripe_transaction&.dig("merchant_data", "category")
   end
 
   def likely_event_id

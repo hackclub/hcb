@@ -8,7 +8,8 @@ class TagsController < ApplicationController
   def create
     authorize @event, policy_class: TagPolicy
 
-    tag = @event.tags.find_or_create_by(label: params[:label].strip)
+    tag = Tag.where(label: params[:label].strip, event: @event)
+    tag = tag.create_with(color: params[:color], emoji: params[:emoji]).first_or_create
 
     if params[:hcb_code_id]
       hcb_code = HcbCode.find(params[:hcb_code_id])
@@ -22,6 +23,16 @@ class TagsController < ApplicationController
     redirect_back fallback_location: @event
   end
 
+  def update
+    tag = Tag.find(params[:id])
+
+    authorize tag
+
+    tag.update(label: params[:label].strip, color: params[:color], emoji: params[:emoji])
+
+    redirect_back fallback_location: @event
+  end
+
   def destroy
     tag = Tag.find(params[:id])
 
@@ -29,7 +40,14 @@ class TagsController < ApplicationController
 
     tag.destroy!
 
-    redirect_back fallback_location: @event
+    respond_to do |format|
+      format.turbo_stream do
+        streams = [turbo_stream.remove_all("[data-tag='#{tag.id}']")]
+        streams << turbo_stream.remove_all(".tags__divider") if @event.tags.none?
+        render turbo_stream: streams
+      end
+      format.any { redirect_back fallback_location: @event }
+    end
   end
 
 end

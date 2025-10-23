@@ -4,29 +4,26 @@
 
 <h1 class="heading">Deposit a check</h1>
 
-<div class="flex justify-center" style="flex-wrap: wrap-reverse; gap: 48px">
-  <div class="flex-auto" style="flex-basis: calc(50% - 40px);">
-    <%= render "new" %>
-  </div>
-  <div class="max-width-1">
-    <%= render "callout", type: "warning", title: "Important info about depositing checks", footer: :questions do %>
-      <ul>
-        <li>
-          The check must be made out to
-          <strong class='primary nowrap'>Hack Club</strong> or
-          <strong class='primary nowrap'>The Hack Foundation</strong>.
-        </li>
-        <li>Take clear photos of the entire front & back of the check.</li>
-        <li>You don't need to sign the back of the check.</li>
-        <li>Make sure the amount you enter here matches the amount on the
-          check.
-        </li>
-        <li>We only accept checks from U.S. financial institutions, in U.S.
-          dollars.
-        </li>
-      </ul>
-    <% end %>
-  </div>
+<div class="grid grid--spacious lg:grid-columns-[3fr_2fr]">
+  <%= render "new", event: @event %>
+  <%= render "callout", type: "info", title: "Check deposit basics", footer: :questions do %>
+    <ul class="pl-4">
+      <li>
+        The check must be made out to
+        <strong class='primary nowrap'>Hack Club</strong> or
+        <strong class='primary nowrap'>The Hack Foundation</strong>.
+      </li>
+      <li>Take clear photos of the entire front & back of the check.</li>
+      <li>You don't need to sign the back of the check.</li>
+      <li>Make sure the amount you enter here matches the amount on the
+        check.
+      </li>
+      <li>We only accept checks from U.S. financial institutions, in U.S.
+        dollars.
+      </li>
+      <li>For information on how to physically deposit checks, <%= link_to "view our Help Center", "https://help.hcb.hackclub.com/article/42-how-do-i-deposit-checks" %>.</li>
+    </ul>
+  <% end %>
 </div>
 
 <% if @check_deposits.count > 0 %>
@@ -37,7 +34,7 @@
   <div class="table-container">
     <table>
       <thead>
-        <% if @check_deposits.any? { |cd| policy(cd).view_image? } %>
+        <% if (can_view_any_check_images = @check_deposits.any? { |cd| policy(cd).view_image? }) %>
           <th></th>
         <% end %>
         <th>Status</th>
@@ -51,11 +48,13 @@
           <tr>
             <% if policy(check_deposit).view_image? %>
               <td style="width: 0%"><%= image_tag check_deposit.front.representation(resize_to_limit: [64, 64]), class: "rounded mr1", width: 40 %></td>
+            <% elsif can_view_any_check_images %>
+              <td></td>
             <% end %>
             <td><span class="badge bg-<%= check_deposit.state %> m0"><%= check_deposit.state_text %></span></td>
             <td><%= format_date check_deposit.created_at %></td>
             <td><%= render_money check_deposit.amount_cents %></td>
-            <td><%= link_to "Details", check_deposit.local_hcb_code.url %></td>
+            <td><%= link_to "Details", url_for(check_deposit.local_hcb_code) %></td>
           </tr>
         <% end %>
       </tbody>

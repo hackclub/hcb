@@ -1,45 +1,43 @@
-<% title "DONATIONS" %>
-
-<h1>DONATIONS</h1>
-
-<%= paginate @donations %>
+<% title "Donations" %>
 
 <%= form_with local: true, url: donations_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
   <%= form.text_field :ip_address, value: params[:ip_address], placeholder: "IP Address" %>
   <%= form.text_field :user_agent, value: params[:user_agent], placeholder: "User Agent" %>
-  <%= form.label :deposited do %>
-    <%= form.check_box :deposited, checked: @deposited %>
-    Deposited
-  <% end %>
-  |
-  <%= form.label :in_transit do %>
-    <%= form.check_box :in_transit, checked: @in_transit %>
-    In Transit
-  <% end %>
-  |
-  <%= form.label :failed do %>
-    <%= form.check_box :failed, checked: @failed %>
-    Failed
-  <% end %>
-  |
-  <%= form.label :missing_payout do %>
-    <%= form.check_box :missing_payout, checked: @missing_payout %>
-    Missing Payout
-  <% end %>
-  |
-  <%= form.label :missing_fee_reimbursement do %>
-    <%= form.check_box :missing_fee_reimbursement, checked: @missing_fee_reimbursement %>
-    Missing FeeReimbursement
-  <% end %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
 
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
+  <fieldset>
+    <%= form.label :deposited do %>
+      <%= form.check_box :deposited, checked: @deposited %>
+      Deposited
+    <% end %>
+    <%= form.label :in_transit do %>
+      <%= form.check_box :in_transit, checked: @in_transit, class: "ml1" %>
+      In Transit
+    <% end %>
+    <%= form.label :failed do %>
+      <%= form.check_box :failed, checked: @failed, class: "ml1" %>
+      Failed
+    <% end %>
+    <%= form.label :missing_payout do %>
+      <%= form.check_box :missing_payout, checked: @missing_payout, class: "ml1" %>
+      Missing Payout
+    <% end %>
+    <%= form.label :missing_fee_reimbursement do %>
+      <%= form.check_box :missing_fee_reimbursement, checked: @missing_fee_reimbursement, class: "ml1" %>
+      Missing FeeReimbursement
+    <% end %>
+  </fieldset>
 
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @donations, entry_name: "donations" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @donations, entry_name: "donations" %>
+  </div>
+  <%= paginate @donations %>
+</div>
 
 <table>
   <thead>
@@ -48,6 +46,7 @@
       <th>Date</th>
       <th>Recipient</th>
       <th>Anonymous</th>
+      <th>Tax-Deductible</th>
       <th>Amount</th>
       <th>Status</th>
       <th>PayoutId</th>
@@ -61,13 +60,19 @@
     <% @donations.each do |donation| %>
       <tr class="<%= "admin-bg-transit" if donation.in_transit? %>">
         <td><%= donation.id %></td>
-        <td><%= donation.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= donation.created_at.strftime("%Y-%m-%d") %>
+          <% if donation.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
         <td>
           <%= link_to donation_path(donation) do %>
             <%= donation.event.name.upcase %>: <%= donation.name(show_anonymous: true) %>
           <% end %>
         </td>
         <td><%= donation.anonymous? %></td>
+        <td><%= donation.tax_deductible? %></td>
         <td><%= render_money_amount(donation.amount) %></td>
         <td><%= donation.aasm_state.upcase %></td>
         <td><%= donation.payout_id %></td>

@@ -7,7 +7,7 @@
     Card activation
   </span>
 </h1>
-<p>Enter the last 4 digits of your card number to activate it.</p>
+<p>Enter the last four digits of your card number to activate it.</p>
 
 <%= form_with url: stripe_cards_activation_path, method: :post do |form| %>
   <a class="text-decoration-none flex justify-start">
@@ -16,7 +16,7 @@
         <span>••••</span>
         <span>••••</span>
         <span>••••</span>
-        <%= form.number_field :last4, placeholder: "XXXX", required: true, autofocus: true, oninput: "this.value = this.value.replace(/[^0-9]/g, '').substring(0, 4)", class: "placeholder:text-white placeholder:opacity-50 !min-h-8 backdrop-blur-sm font-semibold !text-xl !inline-block font-mono center mb1 !w-20 !bg-white/30" %>
+        <%= form.number_field :last4, placeholder: "XXXX", required: true, pattern: "\d*", autofocus: true, oninput: "this.value = this.value.replace(/[^0-9]/g, '').substring(0, 4)", class: "placeholder:text-white placeholder:opacity-50 !min-h-8 backdrop-blur-sm font-semibold !text-xl !inline-block font-mono center mb1 !w-20 !bg-white/30" %>
       </p>
       <p class="stripe-card__name flex justify-between items-center">
         <span class="truncate">

@@ -1,50 +1,46 @@
-<% title "LEDGER" %>
-
-<h1>LEDGER</h1>
-
-<%= paginate @canonical_transactions %>
+<% title "Ledger" %>
 
 <%= form_with local: true, url: ledger_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :unmapped do %>
-    <%= form.check_box :unmapped, checked: @unmapped %>
-    Unmapped
-  <% end %>
-  |
+  <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "mr2" %>
+  <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "mr2" %>
 
-  <%= form.label :exclude_top_ups do %>
-    <%= form.check_box :exclude_top_ups, checked: @exclude_top_ups %>
-    Exclude Top Ups
-  <% end %>
-  |
-
-  <%= form.label :exclude_spending do %>
-    <%= form.check_box :exclude_spending, checked: @exclude_spending %>
-    Exclude Spending
-  <% end %>
-  |
-
-  <%= form.label :mapped_by_human do %>
-    <%= form.check_box :mapped_by_human, checked: @mapped_by_human %>
-    Mapped by Human
-  <% end %>
-  |
-
-  <%= form.label :event do %>
-    Event
-    <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  <% end %>
-  |
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, class: "mr2", style: "max-width: 250px" }) %>
 
   <%= form.label :user do %>
-    User (Card transactions only)
-    <%= form.collection_select(:user_id, User.all, :id, :admin_dropdown_description, { include_blank: true, selected: @user_id }, { width: 150, style: "max-width: 150px" }) %>
+
+    <%= form.collection_select(:user_id, User.all, :id, :admin_dropdown_description, { include_blank: "Select a User (Card-only)", selected: @user_id }, { width: 250, style: "max-width: 250px" }) %>
   <% end %>
+  <fieldset>
+    <%= form.label :unmapped do %>
+      <%= form.check_box :unmapped, checked: @unmapped %>
+      Unmapped
+    <% end %>
+
+    <%= form.label :exclude_top_ups do %>
+      <%= form.check_box :exclude_top_ups, checked: @exclude_top_ups, class: "ml2" %>
+      Exclude Top Ups
+    <% end %>
+
+    <%= form.label :exclude_spending do %>
+      <%= form.check_box :exclude_spending, checked: @exclude_spending %>
+      Exclude Spending
+    <% end %>
+
+    <%= form.label :mapped_by_human do %>
+      <%= form.check_box :mapped_by_human, checked: @mapped_by_human, class: "ml2" %>
+      Mapped by Human
+    <% end %>
+  </fieldset>
 
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
+  </div>
+  <%= paginate @canonical_transactions %>
+</div>
 
 <%= form_with local: true, url: set_event_multiple_transactions_path, method: :post do |form| %>
   <table>

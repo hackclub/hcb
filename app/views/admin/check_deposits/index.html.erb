@@ -1,0 +1,47 @@
+<% title "Check Deposits" %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @check_deposits %>
+  </div>
+  <%= paginate @check_deposits %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-24">ID</th>
+      <th class="w-32">Date</th>
+      <th>Organization</th>
+      <th class="w-32">Amount</th>
+      <th>Status</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @check_deposits.each do |check_deposit| %>
+      <tr class="<%= "admin-bg-pending" if check_deposit.manual_submission_required? %>">
+        <td><%= check_deposit.id %></td>
+        <td><%= check_deposit.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= link_to check_deposit.event.name, check_deposit.event %></td>
+        <td><%= check_deposit.amount.format %></td>
+        <td>
+          <% if check_deposit.manual_submission_required? %>
+            Manual Submission Required
+          <% else %>
+            <%= check_deposit.state_text %>
+          <% end %>
+        </td>
+        <td>
+          <% if check_deposit.manual_submission_required? %>
+            <%= link_to "Process", [:admin, check_deposit] %>
+          <% else %>
+            <%= link_to "View", url_for(check_deposit.local_hcb_code) %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @check_deposits %>

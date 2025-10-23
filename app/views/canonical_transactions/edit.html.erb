@@ -22,10 +22,8 @@
     <% end %>
     <%= form.text_field :custom_memo, list: "custom-memos", placeholder: @canonical_transaction.smart_memo, autofocus: true, class: "fit" %>
     <datalist id='custom-memos'>
-      <% if Flipper.enabled?(:suggested_memo_2022_08_02, current_user) %>
-        <%= @suggested_memos.each do |s_memo| %>
-          <option><%= s_memo %></option>
-        <% end %>
+      <%= @suggested_memos.each do |s_memo| %>
+        <option><%= s_memo %></option>
       <% end %>
     </datalist>
     <span class="muted block h5">

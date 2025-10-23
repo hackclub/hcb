@@ -2,11 +2,10 @@
 
 module UserService
   class ExchangeLoginCodeForUser
-    def initialize(user_id:, login_code:, cookies:, sms: false)
+    def initialize(user_id:, login_code:, sms: false)
       @user_id = user_id
       @login_code = login_code
       @sms = sms
-      @cookies = cookies
     end
 
     def run
@@ -37,22 +36,10 @@ module UserService
 
       raise ::Errors::InvalidLoginCode if login_code.nil?
       raise ::Errors::InvalidLoginCode if login_code.created_at < (Time.current - 15.minutes)
-      raise ::Errors::BrowserMismatch unless browser_token_valid?(login_code)
 
       login_code.update(used_at: Time.current)
 
       login_code.user
-    end
-
-    def browser_token_cookie(login_code)
-      @cookies.signed[:"browser_token_#{login_code.id}"]
-    end
-
-    def browser_token_valid?(login_code)
-      return true if login_code.browser_token.nil?
-      return false if browser_token_cookie(login_code).nil?
-
-      ActiveSupport::SecurityUtils.secure_compare(login_code.browser_token, browser_token_cookie(login_code))
     end
 
   end

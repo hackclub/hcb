@@ -3,6 +3,7 @@
 require "csv"
 
 class CanonicalTransactionsController < ApplicationController
+  include TurboStreamFlash
   def show
     @canonical_transaction = CanonicalTransaction.find(params[:id])
 
@@ -33,6 +34,33 @@ class CanonicalTransactionsController < ApplicationController
     redirect_to params[:redirect_to] || @canonical_transaction.local_hcb_code
   end
 
+  def set_category
+    @canonical_transaction = CanonicalTransaction.find(params[:id])
+
+    authorize @canonical_transaction
+
+    slug = params.dig(:canonical_transaction, :category_slug)
+
+    TransactionCategoryService
+      .new(model: @canonical_transaction)
+      .set!(slug:, assignment_strategy: "manual")
+
+    message = "Transaction category was successfully updated."
+
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[:success] = message
+        update_flash_via_turbo_stream(use_admin_layout: params[:context] == "admin")
+      end
+      format.html do
+        redirect_to(
+          canonical_transaction_path(@canonical_transaction),
+          flash: { success: message }
+        )
+      end
+    end
+  end
+
   def waive_fee
     authorize CanonicalTransaction
 
@@ -40,7 +68,7 @@ class CanonicalTransactionsController < ApplicationController
 
     fee = ct.fee
     fee.amount_cents_as_decimal = 0
-    fee.reason = "REVENUE WAIVED"
+    fee.reason = :revenue_waived
     fee.save!
 
     redirect_to transaction_url(params[:id])
@@ -54,9 +82,9 @@ class CanonicalTransactionsController < ApplicationController
     raise ArgumentError unless ct.amount_cents > 0
 
     fee = ct.fee
-    fee.amount_cents_as_decimal = BigDecimal(ct.amount_cents.to_s) * BigDecimal(ct.event.sponsorship_fee.to_s)
+    fee.amount_cents_as_decimal = BigDecimal(ct.amount_cents.to_s) * BigDecimal(ct.event.revenue_fee.to_s)
 
-    fee.reason = "REVENUE"
+    fee.reason = :revenue
     fee.save!
 
     redirect_to transaction_url(params[:id])
@@ -68,7 +96,7 @@ class CanonicalTransactionsController < ApplicationController
     ct = CanonicalTransaction.find(params[:id])
 
     fee = ct.fee
-    fee.reason = "HACK CLUB FEE"
+    fee.reason = :hack_club_fee
     fee.save!
 
     redirect_to transaction_url(params[:id])

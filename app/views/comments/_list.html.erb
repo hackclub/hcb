@@ -1,6 +1,6 @@
 <section class="comments">
 
-  <%= render partial: "comments/item", collection: policy_scope(comments).order(created_at: :asc), as: :comment %>
+  <%= render partial: "comments/item", collection: policy_scope(comments).includes(:user, :versions).with_attached_file.order(created_at: :asc), as: :comment %>
 
   <% if policy_scope(comments).empty? && defined?(show_blankslate) %>
     <%= blankslate "No comments yet." %>

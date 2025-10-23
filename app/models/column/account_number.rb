@@ -5,6 +5,7 @@
 # Table name: column_account_numbers
 #
 #  id                        :bigint           not null, primary key
+#  account_number_bidx       :string
 #  account_number_ciphertext :text
 #  bic_code_ciphertext       :text
 #  deposit_only              :boolean          default(TRUE), not null
@@ -16,7 +17,8 @@
 #
 # Indexes
 #
-#  index_column_account_numbers_on_event_id  (event_id)
+#  index_column_account_numbers_on_account_number_bidx  (account_number_bidx)
+#  index_column_account_numbers_on_event_id             (event_id)
 #
 # Foreign Keys
 #
@@ -28,6 +30,8 @@ module Column
 
     has_encrypted :account_number, :routing_number, :bic_code
 
+    blind_index :account_number
+
     before_create :create_column_account_number
 
     validate :event_is_not_demo_mode
@@ -37,7 +41,7 @@ module Column
     private
 
     def create_column_account_number
-      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})")
+      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})", idempotency_key: self.id.to_s)
 
       self.column_id = account_number["id"]
       self.account_number = account_number["account_number"]
@@ -46,7 +50,7 @@ module Column
     end
 
     def event_is_not_demo_mode
-      errors.add(:base, "Can't create an account number for a Playground Mode org") if event.demo_mode? || event.outernet_guild?
+      errors.add(:base, "Can't create an account number for a Playground Mode org") if event.demo_mode?
     end
 
   end

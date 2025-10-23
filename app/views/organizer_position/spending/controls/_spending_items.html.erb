@@ -1,0 +1,20 @@
+<% if items.none? %>
+  <%= blankslate "Nothing to see here" %>
+<% else %>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Memo</th>
+          <th>Created by</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <%= render partial: "organizer_position/spending/controls/spending_item", collection: items, as: :item %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

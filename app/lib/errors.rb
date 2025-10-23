@@ -7,7 +7,13 @@ module Errors
   class ValidationError < StandardError
   end
 
-  class BrowserMismatch < StandardError
+  class InvalidStripeCardLogoError < StandardError
+  end
+
+  class StripeIssuingBalanceAnomaly < StandardError
+  end
+
+  class StripeInvalidNameError < StandardError
   end
 
 end

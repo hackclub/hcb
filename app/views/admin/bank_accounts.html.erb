@@ -1,11 +1,12 @@
-<% title "BANK ACCOUNTS" %>
+<% title "Bank Accounts" %>
 
-<h1>BANK ACCOUNTS</h1>
+<p class="mb2">
+  Displaying <%= pluralize(@count, "Bank Account") %>.
+</p>
+
 <%= link_to new_bank_account_path do %>
   <button class="mb2">Link new bank account</button>
 <% end %>
-
-<p><small><%= pluralize(@count, "result") %></small></p>
 
 <table>
   <thead>

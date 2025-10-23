@@ -2,39 +2,65 @@
 
 <%= render "events/nav" if @event %>
 
-<%= render partial: "hcb_codes/admin_tools" %>
-<%= render partial: "hcb_codes/rich_metadata" %>
+<% title @hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event) unless content_for? :title %>
 
-<% if @hcb_code.canonical_transactions.any? {|ct| ct.amount_cents.positive? } && !@hcb_code.event&.hcb_internals? %>
-  <% admin_tool("mt3") do %>
-    <%= link_to "View Usage Breakdown", breakdown_hcb_code_path(@hcb_code, format: :pdf), class: "btn bg-accent" %>
+<%= turbo_frame_tag @hcb_code.public_id, target: "_top" do %>
+  <%= render partial: "hcb_codes/admin_tools" %>
+  <div id="rich_metadata">
+    <%= render partial: "hcb_codes/rich_metadata" %>
+  </div>
+
+  <% if @hcb_code.accepts_receipts? %>
+    <% admin_tool("mt1") do %>
+      💌 Bonjour!
+      <%= mail_to @hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
+    <% end %>
+    <% admin_tool("mt1") do %>
+      🌸 Aloha!
+      <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@hcb_code) %>
+    <% end %>
+    <% admin_tool("mt1") do %>
+      ☎️ moshi moshi?
+      <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), method: :post %>
+    <% end %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
+    <% admin_tool_if @hcb_code.receipt_optional? do %>
+      <%= begin receipt_upload_form_config = {
+            receiptable: @hcb_code,
+            enable_linking: true,
+            upload_method: "transaction_page",
+            include_spacing: true,
+            turbo: true
+          }
+
+                receipt_upload_form_config[:restricted_dropzone] = true if @frame
+                receipt_upload_form_config[:inline_linking] = true if @frame
+                receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
+                receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
+                receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
+                receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
+                render partial: "receipts/form_v3", locals: receipt_upload_form_config
+          end %>
+    <% end %>
+  <% end %>
+
+  <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
+
+  <%= render "comments/list", comments: @hcb_code.comments %>
+  <%= render "comments/form", commentable: @hcb_code %>
+
+  <% admin_tool("mt2") do %>
+    <%= render partial: "hcb_codes/transaction_history" %>
+    <%= render partial: "hcb_codes/pending_transaction_history" %>
   <% end %>
 <% end %>
 
-<% if @hcb_code.accepts_receipts? %>
-  <%= render "receipts/list_v2" %>
-  <% admin_tool_if @hcb_code.receipt_optional? do %>
-    <%= begin receipt_upload_form_config = {
-          receiptable: @hcb_code,
-          enable_linking: true,
-          upload_method: "transaction_page",
-          include_spacing: true,
-          turbo: false
-        }
+<% if @reverse_receipt_id.present? %>
+  <section id="reverse_receipt_modal" class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" data-modal-auto-open="true" data-modal="reverse_receipt_modal">
+    <%= modal_header("Reverse receipt pairing") %>
+    <p>Are you sure you would like to reverse the receipt pairing for this transaction?</p>
 
-              receipt_upload_form_config[:restricted_dropzone] = true if @frame
-              receipt_upload_form_config[:inline_linking] = true if @frame
-              receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
-              render partial: "receipts/form_v3", locals: receipt_upload_form_config end %>
-  <% end %>
+    <%= button_to "Yes", reverse_receipt_path(@reverse_receipt_id, format: :html), class: "left bg-success btn", method: :post %>
+    <a href="#" class="right bg-error btn" rel="modal:close">No</a>
+  </section>
 <% end %>
-
-<%= render "comments/list", comments: @hcb_code.comments %>
-<%= render "comments/form", commentable: @hcb_code %>
-
-<% admin_tool do %>
-  <%= render partial: "hcb_codes/transaction_history" %>
-  <%= render partial: "hcb_codes/pending_transaction_history" %>
-<% end %>
-
-<% title "Transaction for #{number_to_currency(@hcb_code.amount)}" unless content_for :title %>

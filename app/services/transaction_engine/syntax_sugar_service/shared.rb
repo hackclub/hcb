@@ -65,6 +65,10 @@ module TransactionEngine
         @canonical_transaction.raw_increase_transaction&.increase_transaction&.dig("source", "category") == "check_deposit_acceptance"
       end
 
+      def column_check_deposit?
+        @canonical_transaction.column_transaction_type&.start_with?("check.outgoing_debit")
+      end
+
       def outgoing_ach?
         memo_upcase.include?(OUTGOING_ACH_MEMO_PART)
       end
@@ -75,6 +79,14 @@ module TransactionEngine
 
       def column_ach?
         @canonical_transaction.column_transaction_type&.start_with?("ach.outgoing_transfer")
+      end
+
+      def column_realtime_transfer?
+        @canonical_transaction.column_transaction_type&.start_with?("realtime.outgoing_transfer")
+      end
+
+      def column_wire?
+        @canonical_transaction.column_transaction_type&.start_with?("swift.outgoing_transfer")
       end
 
       def likely_outgoing_ach_name

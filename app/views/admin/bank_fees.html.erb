@@ -1,18 +1,17 @@
-<% title "HCB FEES" %>
-
-<h1>HCB FEES</h1>
-
-<%= paginate @bank_fees %>
+<% title "HCB Fees" %>
 
 <%= form_with local: true, url: bank_fees_admin_index_path, method: :get do |form| %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
-  <%= form.submit "Search" %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { selected: @event_id, include_blank: "Select An Event" }, { width: 250, style: "max-width: 250px" } ) %>
+  <%= form.submit "Search", class: "ml1" %>
 <% end %>
 
-<%= page_entries_info @bank_fees, entry_name: "HCB fees" %>
-<p><small><%= render_money @sum %></small></p>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @bank_fees, entry_name: "HCB fees" %>
+    (<%= render_money @sum %>)
+  </div>
+  <%= paginate @bank_fees %>
+</div>
 
 <table>
   <thead>

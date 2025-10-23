@@ -1,0 +1,20 @@
+<p>
+  Hey <%= @request.user.first_name %>,
+</p>
+
+<p>
+  A request was made to update your HCB login email from <%= @request.original %> to <b>this email</b> (<%= @request.replacement %>).
+</p>
+
+<p>
+  <%= link_to "Click here to verify that change.", verify_email_updates_url(verification_token: @request.verification_token) %>
+</p>
+
+<p>
+  Thanks,<br>
+  The HCB Team
+</p>
+
+<p>
+  <small>If you did not make this request, it can be safely ignored.</small>
+</p>

@@ -1,34 +1,36 @@
-<% title "DISBURSEMENTS" %>
-
-<h1>DISBURSEMENTS <small><%= link_to "New Disbursement", new_disbursement_path %></small></h1>
-
-<%= paginate @disbursements %>
+<% title "Disbursements" %>
 
 <%= form_with local: true, url: disbursements_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :reviewing do %>
-    <%= form.check_box :reviewing, checked: @reviewing %>
-    Reviewing
-  <% end %>
-  |
-  <%= form.label :pending do %>
-    <%= form.check_box :pending, checked: @pending %>
-    Pending
-  <% end %>
-  |
-  <%= form.label :processing do %>
-    <%= form.check_box :processing, checked: @processing %>
-    Processing
-  <% end %>
-  |
-
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <fieldset>
+    <%= form.label :reviewing do %>
+      <%= form.check_box :reviewing, checked: @reviewing %>
+      Reviewing
+    <% end %>
+    <%= form.label :pending do %>
+      <%= form.check_box :pending, checked: @pending, class: "ml1" %>
+      Pending
+    <% end %>
+    <%= form.label :processing do %>
+      <%= form.check_box :processing, checked: @processing, class: "ml1" %>
+      Processing
+    <% end %>
+  </fieldset>
   <%= form.submit "Search" %>
+  <%= link_to disbursement_new_admin_index_path do %>
+    <button class="bg-primary">
+      New Disbursement
+    </button>
+  <% end %>
 <% end %>
 
-<%= page_entries_info @disbursements, entry_name: "disbursements" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @disbursements, entry_name: "disbursements" %>
+  </div>
+  <%= paginate @disbursements %>
+</div>
 
 <table>
   <thead>
@@ -51,13 +53,24 @@
             <%= disbursement.source_event.name.upcase %>: <%= disbursement.name %>
           <% end %>
         </td>
-        <td><%= render_money(disbursement.amount) %></td>
-        <td><%= disbursement.aasm.human_state %></td>
+        <td><%= render_money_amount(disbursement.amount) %></td>
         <td>
-          <% if disbursement.reviewing? %>
-            <%= link_to "Process", disbursement_process_admin_path(disbursement) %>
-          <% elsif disbursement.pending? %>
+          <%= disbursement.aasm.human_state %>
+          <% if disbursement.pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
+        <td>
+          <% if disbursement.pending? %>
             AUTOMATED
+          <% end %>
+
+          <%= link_to(disbursement_process_admin_path(disbursement)) do %>
+            <% if disbursement.reviewing? %>
+              Process
+            <% else %>
+              View
+            <% end %>
           <% end %>
         </td>
       </tr>

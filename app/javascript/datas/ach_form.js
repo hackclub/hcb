@@ -12,6 +12,8 @@ export default ({ payment_recipient, editing }) => ({
     this.$watch('editing', (n, o) => {
       if (n == true && o == false) {
         this.$nextTick(() => {
+          document.getElementById('ach_transfer_recipient_email').value =
+            this.payment_recipient.email
           document.getElementById('ach_transfer_bank_name').value =
             this.payment_recipient.bank_name
           document.getElementById('ach_transfer_routing_number').value =

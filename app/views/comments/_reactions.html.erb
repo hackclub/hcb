@@ -1,0 +1,3 @@
+<%= turbo_frame_tag "reactions_#{comment.id}" do %>
+  <%= render partial: "comments/reaction_bar", locals: { comment: } %>
+<% end %>

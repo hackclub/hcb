@@ -1,25 +1,30 @@
 @media screen and (max-width: 62em) {
   #action-wrapper {
-    flex-direction: row-reverse!important;
+    flex-direction: row-reverse !important;
     justify-content: start;
     gap: 1rem;
-    #actions > div, form, .btn {
+    #actions > div,
+    form,
+    .btn {
       width: 100%;
-      flex-grow: 0!important;
+      flex-grow: 0 !important;
     }
   }
 
-  #actions div:has(> a.btn), #actions div > a.btn,
-  #actions div:has(> div > div.btn), #actions div > div:has(> div.btn), #actions div > div > div.btn {
+  #actions div:has(> a.btn),
+  #actions div > a.btn,
+  #actions div:has(> div > div.btn),
+  #actions div > div:has(> div.btn),
+  #actions div > div > div.btn {
     width: 100%;
-    flex-grow: 0!important;
-    height: min-content!important;
+    flex-grow: 0 !important;
+    height: min-content !important;
   }
 
   #actions {
     display: flex;
     flex-direction: column;
-    justify-content: start!important;
+    justify-content: start !important;
     gap: 1rem;
     flex-grow: 1;
   }
@@ -29,12 +34,12 @@
   }
 
   #button-hint {
-    display: block!important;
+    display: block !important;
   }
 
   #summary:not(.closed) {
-    flex-direction: column!important;
-    flex-shrink: initial!important;
+    flex-direction: column !important;
+    flex-shrink: initial !important;
     min-width: fit-content;
     .stat {
       width: fit-content;
@@ -50,16 +55,16 @@
 
 @media screen and (max-width: 40em) {
   div.card:has(#summary-stats) {
-    flex-shrink: initial!important;
+    flex-shrink: initial !important;
     min-width: 7.5rem;
   }
 }
 
 #summary {
-  flex-shrink: 0; 
-  display: flex; 
-  flex-direction: row; 
-  justify-content: start; 
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
   gap: 1.5rem;
 }
 

@@ -2,10 +2,11 @@
 
 class SearchController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  before_action :signed_in_admin # This feature is only available to admins for the time being
   # GET /search
   def index
     begin
+      raise Errors::ValidationError, "Please provide a query parameter." unless params[:query]
+
       query = SearchService::Parser.new(params[:query]).run
       results = SearchService::Authorizer.new(
         SearchService::Engine.new(query, current_user).run,

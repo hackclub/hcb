@@ -1,0 +1,14 @@
+<p>Hi there,</p>
+
+<p>
+  Your Google Workspace for <strong><%= @g_suite.domain %></strong> has encountered an error while attempting to verify DNS records. Please make sure that all DNS records are entered correctly. After doing so, click the "Retry Verification" button.
+</p>
+
+<p>
+  Follow the steps <%= link_to "here on your Google Workspace page", event_g_suite_overview_url(event_id: @g_suite.event.slug) %> to set up your domain for Google Workspace. Please don't hesitate to message us with any questions.
+</p>
+
+<p>
+  Best,<br>
+  The HCB Team
+</p>

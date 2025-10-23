@@ -1,0 +1,55 @@
+.homepage-transaction {
+  display: flex;
+  color: inherit !important;
+  text-decoration: none;
+  padding: 0.35rem 1rem;
+}
+
+.homepage-eyebrow {
+  font-weight: 800;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.homepage-row {
+  display: flex;
+  gap: 20px;
+
+  &:empty {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .homepage-row {
+    flex-direction: column;
+  }
+}
+
+// Heatmap styles
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(53, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  gap: 2px;
+  max-width: 100%;
+}
+@media (max-width: 768px) {
+  .grid-container {
+    gap: 0px;
+  }
+}
+
+.grid-item {
+  border: 0.5px solid;
+  border-radius: 3px;
+  aspect-ratio: 1 / 1;
+}
+
+@media screen and (max-width: 768px) {
+  .grid-item {
+    border-radius: 1px;
+  }
+}

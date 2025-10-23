@@ -1,0 +1,15 @@
+.tiptap p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap p:first-child {
+  margin-top: 0px;
+}
+
+.tiptap p:last-child {
+  margin-bottom: 0px;
+}

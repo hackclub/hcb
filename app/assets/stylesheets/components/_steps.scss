@@ -25,7 +25,7 @@
       background-color: map-get($palette, success);
       color: $white;
       border-radius: 50%;
-      font-weight: bold;
+      font-weight: 600;
       text-align: center;
 
       @media screen and (max-width: 32em) {

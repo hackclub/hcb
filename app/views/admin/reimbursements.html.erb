@@ -1,24 +1,23 @@
 <% title "Reimbursements" %>
 
-<h1>Reimbursements</h1>
-
-<%= paginate @reports %>
-
 <%= form_with local: true, url: reimbursements_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "w-100" %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select an event", selected: @event_id }, { class: "w-100" }) %>
+  <fieldset>
   <%= form.label :pending do %>
     <%= form.check_box :pending, checked: @pending %>
     Reimbursement Requested (Awaiting Review)
   <% end %>
-  |
-
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
+  </fieldset>
   <%= form.submit "Search" %>
 <% end %>
 
-<%= page_entries_info @reports, entry_name: "transfers" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @reports, entry_name: "reports" %>
+  </div>
+  <%= paginate @reports %>
+</div>
 
 <table>
   <thead>
@@ -39,11 +38,15 @@
         <td class="w-16"><%= report.id %></td>
         <td class="w-32"><%= report.created_at.strftime("%Y-%m-%d") %></td>
         <td>
-          <%= link_to event_path(report.event) do %>
-            <%= report.event.name.upcase %>
+          <% if report.event %>
+            <%= link_to event_path(report.event) do %>
+              <%= report.event.name.upcase %>
+            <% end %>
+          <% else %>
+            None
           <% end %>
         </td>
-        <td>
+        <td class="max-width-2">
           <%= link_to reimbursement_report_path(report) do %>
             <%= report.name %>
           <% end %>
@@ -51,7 +54,7 @@
         <td>
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
-        <td class="w-24"><%= render_money(report.amount) %></td>
+        <td class="w-24"><%= report.amount.format %></td>
         <td><%= report.admin_status_text %></td>
         <td>
           <%= link_to "View", reimbursement_report_path(report) %>

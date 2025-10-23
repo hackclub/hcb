@@ -3,7 +3,7 @@
 class CommentPolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user.admin?
+      if user.auditor?
         scope.all
       else
         scope.not_admin_only
@@ -13,29 +13,47 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def new?
-    user.admin? || users.include?(user)
+    user.auditor? || users.include?(user)
   end
 
   def create?
-    user.admin? || users.include?(user)
+    return false if record.admin_only && !user.auditor?
+
+    user.auditor? || users.include?(user)
   end
 
   def edit?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   def update?
-    user.admin? || (users.include?(user) && record.user == user)
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
+  end
+
+  def react?
+    show?
   end
 
   def show?
-    user.admin? || (users.include?(user) && !record.admin_only)
+    user&.auditor? || (users.include?(user) && !record.admin_only)
+  end
+
+  def destroy?
+    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
   private
 
   def users
-    record.commentable.respond_to?(:events) ? record.commentable.events.collect(&:users).flatten : record.commentable.event.users
+    if record.commentable.respond_to?(:events)
+      record.commentable.events.collect(&:users).flatten
+    elsif record.commentable.is_a?(Reimbursement::Report)
+      [record.commentable.user] + (record.commentable.event&.users || [])
+    elsif record.commentable.is_a?(Event)
+      record.commentable.users
+    else
+      record.commentable.event.users
+    end
   end
 
 end

@@ -1,0 +1,54 @@
+<% title "Organization Account Numbers" %>
+
+<%= form_with method: :get do |form| %>
+  <div class="flex" style="gap: 12px">
+    <div class="flex flex-col bold" style="gap: 4px">
+      <%= form.label "Account Number" %>
+      <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+    </div>
+    <div class="flex flex-col bold" style="gap: 4px">
+      <%= form.label "Event" %>
+      <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { style: "max-width: 250px" }) %>
+    </div>
+    <div class="flex flex-col bold" style="gap: 4px">
+      <%= form.label "Type" %>
+      <%= form.select :account_number_type, [["All", "0"], ["Deposit only", "1"], ["Spend + Deposit", "2"]], selected: @account_number_type %>
+    </div>
+  </div>
+  <%= form.submit "Search" %>
+<% end %>
+
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @account_numbers, entry_name: "Account Number" %>
+  </div>
+  <%= paginate @account_numbers %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Event</th>
+      <th>Account Number</th>
+      <th>Routing Number</th>
+      <th>Deposit Only</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @account_numbers.each do |an| %>
+      <tr>
+        <td><%= an.id %></td>
+        <td>
+          <%= link_to event_path(an.event) do %>
+            <%= an.event.name.upcase %>
+          <% end %>
+          (#<%= an.event.id %>)
+        </td>
+        <td><%= an.account_number %></td>
+        <td><%= an.routing_number %></td>
+        <td><%= an.deposit_only ? "✅" : "🚫" %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

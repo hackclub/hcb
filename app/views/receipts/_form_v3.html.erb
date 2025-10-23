@@ -1,7 +1,7 @@
 <% instance = local_assigns.__id__ %>
-<div id="receipt_upload_form">
+<div id="<%= defined?(receiptable) ? "#{receiptable.id}_" : "" %>receipt_upload_form">
   <div class="<%= "mb3" if defined?(include_spacing) %>" style="position: relative;">
-    <%= form_with model: nil, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
+    <%= form_with model: false, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
           turbo: defined?(turbo) ? turbo : "false",
           controller: "file-drop form",
           action: "
@@ -11,7 +11,8 @@
             dragleave#{"@window" unless defined?(restricted_dropzone)}->file-drop#dragleave
           ",
           "file-drop-target" => ("dropzone" if defined?(restricted_dropzone)),
-          "file-drop-title-value" => defined?(restricted_dropzone) ? "Drop to add to Receipt Bin." : "Drop to instantly add a receipt."
+          "file-drop-title-value" => defined?(restricted_dropzone) ? "Drop to add to Receipt Bin." : "Drop to instantly add a receipt.",
+          "file-drop-global-paste-value" => defined?(global_paste) && global_paste ? "true" : "false"
         }.compact, html: {
           onsubmit: "
             const button = $('#upload-receipt-button', this);
@@ -42,12 +43,15 @@
           <% end %>
           <%= (form.hidden_field :receiptable_type, value: receiptable.class) if defined?(receiptable) %>
           <%= (form.hidden_field :receiptable_id, value: receiptable.id) if defined?(receiptable) %>
-          <%= (form.hidden_field :popover, value: local_assigns[:popover]) %>
+          <%= form.hidden_field :popover, value: local_assigns[:popover] %>
           <%= (form.hidden_field :show_link, value: true) if defined?(inline_linking) %>
           <%= form.hidden_field :upload_method, value: upload_method, data: { "file-drop-target" => "uploadMethod" } %>
-          <%= (form.hidden_field :s, value: secret) if defined?(secret) %>
+          <%= form.hidden_field :show_receipt_button, value: local_assigns[:show_receipt_button] %>
+          <%= form.hidden_field :show_author_img, value: local_assigns[:show_author_img] %>
+          <%= form.hidden_field :ledger_instance, value: @ledger_instance %>
+          <%= form.hidden_field :s, value: local_assigns[:secret] %>
 
-          <%= form.file_field :file,
+          <%= form.file_field @ledger_instance.present? ? "file_#{@ledger_instance}" : "file",
                               multiple: true,
                               include_hidden: false,
                               required: true,
@@ -59,35 +63,32 @@
                                 "action"           => "change->form#submit"
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
-            <%= form.label :file, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-receipt-button" do %>
-              <%= inline_icon "share" %>
-              <% if defined?(photo_upload_button) %>
-                <span class="md-hide lg-hide">Take photo</span>
-                <span class="xs-hide sm-hide">Upload photo</span>
-              <% else %>
-                <% if local_assigns[:success] || local_assigns[:error] %>
-                  <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
-                  <script>
-                    // JavaScript to revert changes after 2 seconds
+            <% additional_classes = [].tap do |array|
+                 array << "bg-success" if local_assigns[:success]
+                 array << "bg-error" if local_assigns[:error]
+                 array << "disabled" if defined?(receiptable) && current_user && !ReceiptablePolicy.new(current_user, receiptable).upload?
+               end.join(", ") %>
+            <%= form.label @ledger_instance.present? ? "file_#{@ledger_instance}" : "file", class: "btn m1 #{additional_classes}", id: "upload-receipt-button" do %>
+              <%= inline_icon "cloud-upload" %>
+              <% if local_assigns[:success] || local_assigns[:error] %>
+                <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
+                <script>
+                  // JavaScript to revert changes after 2 seconds
+                  setTimeout(function() {
                     if (document.getElementById("upload-receipt-button") && document.getElementById("upload-receipt-button-text")) {
-                      setTimeout(function() {
-                        document.getElementById("upload-receipt-button-text").innerHTML = 'Upload receipt';
-                        document.getElementById("upload-receipt-button").classList.remove("bg-success", "bg-error");
-                      }, 2000);
+                      document.getElementById("upload-receipt-button-text").innerHTML = 'Upload receipt';
+                      document.getElementById("upload-receipt-button").classList.remove("bg-success", "bg-error");
                     }
-                  </script>
-                <% else %>
-                  <span>Upload receipt</span>
-                <% end %>
+                  }, 2000);
+                </script>
+              <% else %>
+                <span>Upload receipt</span>
               <% end %>
             <% end %>
-            <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-              <% if defined?(enable_linking) %>
-
-                <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
-                  <%= inline_icon "payment-docs" %>
-                  <span>Select from Receipt Bin</span>
-                <% end %>
+            <% if defined?(enable_linking) %>
+              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1 #{"disabled" if defined?(receiptable) && !ReceiptablePolicy.new(current_user, receiptable).link_modal?}", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
+                <%= inline_icon "payment-docs" %>
+                <span>Select from Receipt Bin</span>
               <% end %>
             <% end %>
           </span>
@@ -104,14 +105,13 @@
           <%= pop_icon_to "view-close", nil, class: "modal__close muted m1", tabindex: 0, onclick: "event.preventDefault(); $('#link_receipt_#{instance.to_json}_select').hide(); $('#link_receipt_#{instance.to_json}_form').show();" %>
           <h2 class="h1 mt0 mb0 pb0 border-none">Select receipt</h2>
         </header>
-        <%= async_frame_to link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false"), as: :span do %>
-          <img style="display: none;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" onload="let e = this.parentElement; $.get($(e).data('src'), data => $(e).replaceWith(data));">  <!-- This inline JS is needed to load an async frame that enters the DOM after the initial page load. -->
+        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
           <strong>Loading...</strong>
         <% end %>
       </section>
     <% end %>
 
-    <% if defined?(receiptable) && receiptable.missing_receipt? %>
+    <% if defined?(receiptable) && receiptable&.missing_receipt? %>
       <div class="flex muted justify-end items-center mt1">
         <%= inline_icon "forbidden", size: 20 %>
         <%= link_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id), method: :post do %>
@@ -123,16 +123,12 @@
     <% end %>
   </div>
 
-  <hr>
-
-  <% if Flipper.enabled?(:receipt_bin_2023_04_07, current_user) %>
-    <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>
-      <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
-        <%= modal_header "Select receipt" %>
-        <%= async_frame_to link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false"), as: :span do %>
-          <strong>Loading...</strong>
-        <% end %>
-      </section>
-    <% end %>
+  <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>
+    <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
+      <%= modal_header "Select receipt" %>
+      <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
+        <strong>Loading...</strong>
+      <% end %>
+    </section>
   <% end %>
 </div>

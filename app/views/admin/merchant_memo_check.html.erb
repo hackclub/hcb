@@ -1,0 +1,30 @@
+<% title "Merchant memo check" %>
+
+<table>
+  <thead>
+    <tr>
+        <th>YellowPages name</th>
+        <th>Real memos (unique)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @data.each do |d| %>
+      <tr>
+        <td>
+          <%= d[:yp_name] %>
+          <span class="h6 muted"><%= d[:yp_network_id] %></span>
+        </td>
+        <td>
+          <details>
+            <summary><%= d[:memos].count %> memos</summary>
+            <div class="h6 inline-grid grid-cols-3">
+              <% d[:memos].each do |m| %>
+                <p><%= m %></p>
+              <% end %>
+            </div>
+          </details>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

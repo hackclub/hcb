@@ -1,4 +1,4 @@
-web: rm -f tmp/pids/server.pid; bin/rails server -p 3000 -b "0.0.0.0"
+web: rm -f tmp/pids/server.pid; RAILS_LOG_TO_STDOUT=1 bin/rails server -b "0.0.0.0"
 js: NODE_ENV=development yarn build --watch
 stripe: stripe listen --events charge.dispute.funds_withdrawn,invoice.paid,issuing_authorization.created,issuing_authorization.request,issuing_authorization.updated,issuing_card.updated,issuing_transaction.created,payment_intent.succeeded,customer.subscription.updated,customer.subscription.deleted,setup_intent.succeeded,source.transaction.created,charge.refunded,payout.updated,payout.canceled,payout.failed,payout.paid --forward-to http://localhost:3000/stripe/webhook
 css: NODE_ENV=development yarn build:css --watch --verbose

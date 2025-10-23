@@ -9,6 +9,7 @@
 #  anonymous                           :boolean          default(FALSE), not null
 #  canceled_at                         :datetime
 #  email                               :text
+#  fee_covered                         :boolean          default(FALSE), not null
 #  last4_ciphertext                    :text
 #  message                             :text
 #  migrated_from_legacy_stripe_account :boolean          default(FALSE)
@@ -16,6 +17,7 @@
 #  stripe_client_secret                :text
 #  stripe_current_period_end           :datetime
 #  stripe_status                       :text
+#  tax_deductible                      :boolean          default(TRUE), not null
 #  url_hash                            :text
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
@@ -36,6 +38,9 @@
 #
 class RecurringDonation < ApplicationRecord
   include Hashid::Rails
+
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "subscriptions", :stripe_subscription_id
 
   has_paper_trail
 
@@ -58,6 +63,8 @@ class RecurringDonation < ApplicationRecord
                           on: :create,
                           conditions: -> { where(stripe_status: "active") },
                           message: ->(recurring_donation, data) { "You're already donating to #{recurring_donation.event.name}." }
+
+  normalizes :email, with: ->(email) { email.strip.downcase }
 
   enum :stripe_status, {
     active: "active",
@@ -82,7 +89,7 @@ class RecurringDonation < ApplicationRecord
     self.stripe_client_secret = subscription.latest_invoice&.payment_intent&.client_secret
     self.stripe_current_period_end = Time.at(subscription.current_period_end)
     self.stripe_status = subscription.status
-    self.last4 = subscription.default_payment_method&.card&.last4
+    self.last4 = subscription.default_payment_method&.try(:card)&.last4
     self.canceled_at = Time.at(subscription.canceled_at) if subscription.canceled_at
     self.stripe_customer_id = subscription.customer
 
@@ -149,7 +156,7 @@ class RecurringDonation < ApplicationRecord
       currency: "usd",
       unit_amount: amount,
       recurring: { interval: "month" },
-      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.name) }
+      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.short_name) }
     )
 
     subscription = StripeService::Subscription.create(
@@ -159,7 +166,8 @@ class RecurringDonation < ApplicationRecord
       ],
       payment_behavior: "default_incomplete",
       payment_settings: { save_default_payment_method: "on_subscription" },
-      expand: ["latest_invoice.payment_intent", "default_payment_method"]
+      expand: ["latest_invoice.payment_intent", "default_payment_method"],
+      metadata: { event_id: event.id }
     )
 
     sync_with_stripe_subscription!(subscription)

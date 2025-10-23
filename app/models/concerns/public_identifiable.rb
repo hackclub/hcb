@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# (@msw) Stripe-like public IDs that don't require adding a column to the
-# database. They're given out to partners (givebutter at time of writing), and
-# will impact partners if changed.
+# (@msw) Stripe-like public IDs that don't require adding a column to the database.
 module PublicIdentifiable
   extend ActiveSupport::Concern
 
@@ -33,7 +31,7 @@ module PublicIdentifiable
 
     def find_by_public_id!(id)
       obj = find_by_public_id id
-      raise ActiveRecord::RecordNotFound if obj.nil?
+      raise ActiveRecord::RecordNotFound.new(nil, self.name) if obj.nil?
 
       obj
     end

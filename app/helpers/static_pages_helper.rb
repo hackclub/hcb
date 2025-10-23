@@ -3,12 +3,12 @@
 module StaticPagesHelper
   extend ActionView::Helpers::NumberHelper
 
-  def card_to(name, path, options = {})
+  def card_to(name, path, **options)
     badge = if options[:badge].present?
-              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted pr2 h-fit-content" : "bg-accent pr2 h-fit-content")
+              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit-content" : "bg-accent h-fit-content")
             elsif options[:async_badge].present?
               turbo_frame_tag options[:async_badge], src: admin_task_size_path(task_name: options[:async_badge]) do
-                badge_for "⏳", class: "bg-muted pr2"
+                badge_for "⏳", class: "bg-muted"
               end
             else
               content_tag(:div, "") # Empty div if no badge is present
@@ -20,9 +20,10 @@ module StaticPagesHelper
                             content_tag(:strong, name, class: "card-name"),
                             pin,
                             content_tag(:span, "", style: "flex-grow: 1"),
-                            badge
+                            badge,
+                            inline_icon("view-forward", size: 24, class: "ml-1 -mr-2 muted fill-current")
                           ].join.html_safe,
-                          class: "card card--item card--hover flex justify-between items-center"),
+                          class: "card card--hover flex justify-between items-center"),
               path, class: "link-reset", method: options[:method]
     end
   end
@@ -37,22 +38,16 @@ module StaticPagesHelper
 
   def airtable_info
     {
-      grant: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Github%20Grant",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblsYQ54Rg1Pjz1xP/viwjETKo05TouqYev"
-      },
       onboard_id: {
         id: "app4Bs8Tjwvk5qcD4",
-        table: "Verifications",
+        table: "Verifications%20-%20Depreciated",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/app4Bs8Tjwvk5qcD4/tblVZwB8QMUSDAd41/viwJ15CT6VHCZ0UZ4"
       },
       bank_applications: {
         id: "apppALh5FEOKkhjLR",
         table: "Events",
-        query: { filterByFormula: "Pending='Pending'" },
+        query: { filterByFormula: "OR(Status='⭐️ New Application', Status='Applied - Approved', Status='Applied - Need Rejection')" },
         destination: "https://airtable.com/tblctmRFEeluG4do7/viwGhv19cV1ZRj61a"
       },
       stickers: {
@@ -60,24 +55,6 @@ module StaticPagesHelper
         table: "Bank%20Stickers",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblyhkntth4OyQxiO/viwHcxhOKMZnPXUUU"
-      },
-      stickermule: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "StickerMule",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblwYTdp2fiBv7JqA/viwET9tCYBwaZ3NIq"
-      },
-      replit: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Repl.it%20Hacker%20Plan",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl6cbpdId4iA96mD/viw2T8d98ZhhacHCf"
-      },
-      sendy: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Sendy",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl1MRaNpF4KphbOd/viwb7ELYyxpuAz6gQ"
       },
       domains: {
         id: "appEzv7w2IBMoxxHe",
@@ -103,23 +80,11 @@ module StaticPagesHelper
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblWlQxkf6L7mEjC4/viwzbku7oWsw5GFEa"
       },
-      first_grant: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Hackathon%20Grant",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblnNB5iMbidfB552/viwjF8iDPU3gAiXJU"
-      },
       wire_transfers: {
         id: "appEzv7w2IBMoxxHe",
         table: "Wire%20Transfers",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tbloFbH16HI7t3mfG/viwzgt8VLHOC82m8n"
-      },
-      paypal_transfers: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "PayPal%20Transfers",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbloGiW2jhja8ivtV/viwzhAnWYhpFNhvmC"
       },
       disputed_transactions: {
         id: "appEzv7w2IBMoxxHe",
@@ -133,19 +98,35 @@ module StaticPagesHelper
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblOmqLjWtJZWXn4O/viwuk2j4xsKJo5EqA"
       },
-      wallets: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Wallets",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblJtjtY9qAOG3FS8/viwUz9aheNAvXwzjg"
-      },
       google_workspace_waitlist: {
         id: "appEzv7w2IBMoxxHe",
         table: "Google%20Workspace%20Waitlist",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/appEzv7w2IBMoxxHe/tbl9CkfZHKZYrXf1T/viwgfJvrrD9Jn9VLj"
+      },
+      you_ship_we_ship: {
+        id: "appre1xwKlj49p0d4",
+        table: "Users",
+        query: { filterByFormula: "{Verification Status}='Unknown'" },
+        destination: "https://airtable.com/appre1xwKlj49p0d4/tbl2Q2aCWqyBGi9mj/viwVYhUQYyNJOi0EH"
+      },
+      boba: {
+        id: "app05mIKwNPO2l1vT",
+        table: "Event%20Codes",
+        query: { filterByFormula: "Status='Under Review'" },
+        destination: "https://airtable.com/app05mIKwNPO2l1vT/tblcIuVemD63IbBuY/viw1Zo5lX8e7t2Vzu"
+      },
+      marketing_shipment_request: {
+        id: "appK53aN0fz3sgJ4w",
+        table: "tblvSJMqoXnQyN7co",
+        destination: "https://airtable.com/appK53aN0fz3sgJ4w/tblvSJMqoXnQyN7co/viwk107ZoZqAsFfRS"
       }
     }
+  end
+
+  def apply_form_url(user = current_user, **query_params)
+    query_params = { userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year, utm_source: "hcb", utm_medium: "web" }.merge(query_params) # allow method arguments to override default.
+    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form(query_params.compact)}"
   end
 
   def render_permissions(permissions, depth = 0)
@@ -173,7 +154,7 @@ module StaticPagesHelper
 
             needed_role_num = OrganizerPosition.roles[v]
 
-            OrganizerPosition.roles.each do |_role, role_num|
+            OrganizerPosition.roles.each_value do |role_num|
               if role_num >= needed_role_num
                 concat content_tag(:td, "✅")
               else

@@ -1,14 +1,13 @@
 .avatar-row {
   display: flex;
   align-items: center;
-  overflow-x: hidden;
-  overflow-y: hidden;
 
-  img {
+  img,
+  div {
     margin-right: -5px;
     box-shadow: 0 0 0 2px $white;
 
-    html[data-dark="true"] & {
+    html[data-dark='true'] & {
       box-shadow: 0 0 0 2px $darkless;
     }
   }
@@ -19,16 +18,21 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .avatar-row {
-    img {
-      transition: 0.125s margin-right ease-in-out, 0.5s transform ease-in-out;
+  .avatar-row:not(.avatar-row--no-transform) {
+    img,
+    div {
+      transition:
+        0.125s margin-right ease-in-out,
+        0.5s transform ease-in-out;
     }
 
-    img:hover {
+    img:hover,
+    div:hover {
       transform: rotate(-180deg);
     }
 
-    &:hover img {
+    &:hover img,
+    &:hover div {
       margin-right: 4px;
     }
   }
@@ -37,7 +41,7 @@
     transition: 0.125s transform ease-in-out;
   }
 
-  .avatar-grow:hover img {
+  .avatar-row:not(.avatar-row--no-transform) .avatar-grow:hover img {
     transform: scale(1.125);
   }
 }

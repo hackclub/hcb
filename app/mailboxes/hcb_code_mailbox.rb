@@ -38,6 +38,7 @@ class HcbCodeMailbox < ApplicationMailbox
       reply_to: @hcb_code.receipt_upload_email,
       renamed_to: @renamed_to,
       tagged_with: @tagged_with,
+      reversed_pairing: @reversed_pairing,
       receipts_count: result&.size || 0
     ).bounce_success.deliver_now
   end
@@ -64,7 +65,7 @@ class HcbCodeMailbox < ApplicationMailbox
       @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: command["argument"]) }
       @renamed_to = command["argument"]
     when "@tag"
-      return unless command["argument"] && Flipper.enabled?(:transaction_tags_2022_07_29, @hcb_code.event)
+      return unless command["argument"]
 
       event = @hcb_code.event
       tag = event.tags.search_label(command["argument"]).first
@@ -84,7 +85,7 @@ class HcbCodeMailbox < ApplicationMailbox
   end
 
   def set_user
-    @user = User.find_by(email: mail.from[0].downcase)
+    @user = User.find_by(email: mail.from[0])
   end
 
   def bounce_missing_user

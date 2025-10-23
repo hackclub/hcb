@@ -1,14 +1,17 @@
 .stat {
   display: block;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat__value {
   font-size: 3rem;
   line-height: 1;
   margin-bottom: 0.25rem;
+  --unit: '$';
 }
+
 .stat:not(.stat--plain) .stat__value:before {
-  content: '$';
+  content: var(--unit);
   color: map-get($palette, muted);
   font-size: 1.5rem;
   vertical-align: top;
@@ -17,7 +20,7 @@
 .stat__label {
   display: block;
   font-size: 0.75rem;
-  font-weight: bold;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
@@ -52,7 +55,8 @@
   // On larger screens, 4 columns
   @media (min-width: 48em) {
     grid-gap: 1rem;
-    grid-template-columns: repeat(4, 1fr);
+    // First stat is larger than the rest
+    grid-template-columns: 3fr 2fr 2fr 2fr;
   }
 }
 

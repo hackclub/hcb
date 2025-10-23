@@ -1,10 +1,11 @@
-<% title "CHECKS" %>
+<% title "Checks" %>
 
-<h1>CHECKS</h1>
-
-<%= paginate @checks %>
-
-<%= page_entries_info @checks, entry_name: "check" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @checks, entry_name: "check" %>
+  </div>
+  <%= paginate @checks %>
+</div>
 
 <table>
   <thead>

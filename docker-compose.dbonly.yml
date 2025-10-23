@@ -1,0 +1,21 @@
+# To use this DB-only ("dockerless") setup, pass a `-f docker-compose.dbonly.yml` to docker compose.
+# e.g. `docker compose -f docker-compose.dbonly.yml up`
+services:
+  db:
+    image: "postgres:15.13"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5432:5432
+  redis:
+    image: redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - 6379:6379
+
+volumes:
+  pg-data:
+  redis-data:

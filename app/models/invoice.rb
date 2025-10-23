@@ -95,21 +95,30 @@
 #  fk_rails_...  (voided_by_id => users.id)
 #
 class Invoice < ApplicationRecord
+  MAX_CARD_AMOUNT = 10_000_00 # Maximum amount we allow to be paid via credit card, in cents
+
   has_paper_trail skip: [:payment_method_ach_credit_transfer_account_number] # ciphertext columns will still be tracked
   has_encrypted :payment_method_ach_credit_transfer_account_number
 
   include PublicIdentifiable
   set_public_id_prefix :inv
 
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "invoices", :stripe_invoice_id
+
   extend FriendlyId
   include AASM
-  include Commentable
+
+  include Freezable
+
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   include PgSearch::Model
   pg_search_scope :search_description, associated_against: { sponsor: :name }, against: [:item_description, :item_amount], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "invoices.created_at"
 
-  scope :unarchived, -> { where(archived_at: nil).where.not(aasm_state: "void_v2") }
-  scope :archived, -> { where.not(archived_at: nil).where.not(aasm_state: "void_v2") }
+  scope :unarchived, -> { where(archived_at: nil).where.not(aasm_state: "void_v2", manually_marked_as_paid_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil).where.not(aasm_state: "void_v2", manually_marked_as_paid_at: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :missing_payout, -> { where("payout_id is null and payout_creation_balance_net is not null") } # some invoices are missing a payout but it is ok because they were paid by check. that is why we additionally check on payout_creation_balance_net
   scope :unpaid, -> { where("aasm_state != 'paid_v2'").where("aasm_state != 'void_v2'") }
@@ -139,23 +148,37 @@ class Invoice < ApplicationRecord
 
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
+  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment0"].present? }
 
   aasm timestamps: true do
     state :open_v2, initial: true
     state :paid_v2
+    state :deposited_v2
     state :void_v2
+    state :refunded_v2
 
     event :mark_paid do
       transitions from: :open_v2, to: :paid_v2
+      after do
+        create_activity(key: "invoice.paid", owner: nil)
+      end
+    end
+
+    event :mark_deposited do
+      transitions from: :paid_v2, to: :deposited_v2
     end
 
     event :mark_void do
       transitions from: :open_v2, to: :void_v2
     end
+
+    event :mark_refunded do
+      transitions from: :paid_v2, to: :refunded_v2
+    end
   end
 
-  enum status: {
-    draft: "draft", # only 3 invoices [203, 204, 128] leftover from when drafts existed
+  enum :status, {
+    draft: "draft", # no invoices use this status anymore
     open: "open",
     paid: "paid",
     void: "void"
@@ -169,8 +192,18 @@ class Invoice < ApplicationRecord
 
   before_create :set_defaults
 
+  after_create_commit -> {
+    unless OrganizerPosition.find_by(user: creator, event: event)&.manager?
+      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
+    end
+  }
+
   # Stripe syncing…
   before_destroy :close_stripe_invoice
+
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
+  end
 
   def fee_reimbursed?
     !fee_reimbursement.nil?
@@ -181,11 +214,11 @@ class Invoice < ApplicationRecord
   end
 
   def payout_transaction
-    self&.payout&.t_transaction
+    self.payout&.t_transaction
   end
 
   def completed_deprecated?
-    (payout_transaction && !self&.fee_reimbursement) || (payout_transaction && self&.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
+    (payout_transaction && !self.fee_reimbursement) || (payout_transaction && self.fee_reimbursement&.t_transaction) || manually_marked_as_paid?
   end
 
   def archived?
@@ -199,8 +232,10 @@ class Invoice < ApplicationRecord
   def state
     return :success if paid_v2? && deposited?
     return :success if paid_v2? && event.can_front_balance?
+    return :success if manually_marked_as_paid?
     return :info if paid_v2?
     return :error if void_v2?
+    return :info if refunded_v2?
     return :muted if archived?
     return :error if due_date < Time.current
     return :warning if due_date < 3.days.from_now
@@ -211,7 +246,9 @@ class Invoice < ApplicationRecord
   def state_text
     return "Deposited" if paid_v2? && (event.can_front_balance? || deposited?)
     return "In Transit" if paid_v2?
+    return "Paid" if manually_marked_as_paid?
     return "Voided" if void_v2?
+    return "Refunded" if refunded_v2?
     return "Archived" if archived?
     return "Overdue" if due_date < Time.current
     return "Due soon" if due_date < 3.days.from_now
@@ -243,7 +280,14 @@ class Invoice < ApplicationRecord
     self.auto_advance = inv.auto_advance
     self.due_date = Time.at(inv.due_date).to_datetime # convert from unixtime
     self.ending_balance = inv.ending_balance
-    self.finalized_at = inv.finalized_at
+
+    finalized_value = if inv.respond_to?(:status_transitions)
+                        inv.status_transitions.finalized_at
+                      else
+                        inv.try(:finalized_at)
+                      end
+    self.finalized_at = finalized_value ? Time.at(finalized_value.to_i).to_datetime : nil
+
     self.hosted_invoice_url = inv.hosted_invoice_url
     self.invoice_pdf = inv.invoice_pdf
     self.livemode = inv.livemode
@@ -252,13 +296,17 @@ class Invoice < ApplicationRecord
     self.starting_balance = inv.starting_balance
     self.statement_descriptor = inv.statement_descriptor
     self.status = inv.status
-    self.stripe_charge_id = inv&.charge&.id
+    if inv&.charge.is_a?(String)
+      self.stripe_charge_id = inv.charge
+    else
+      self.stripe_charge_id = inv&.charge&.id
+      # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
+      self.payment_method_type = type = inv&.charge&.payment_method_details&.type
+    end
     self.subtotal = inv.subtotal
     self.tax = inv.tax
-    self.tax_percent = inv.tax_percent
+    # self.tax_percent = inv.tax_percent
     self.total = inv.total
-    # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
-    self.payment_method_type = type = inv&.charge&.payment_method_details&.type
     return unless self.payment_method_type
 
     details = inv&.charge&.payment_method_details&.[](self.payment_method_type)
@@ -283,18 +331,8 @@ class Invoice < ApplicationRecord
     end
   end
 
-  def stripe_dashboard_url
-    url = "https://dashboard.stripe.com"
-
-    url += "/test" if StripeService.mode == :test
-
-    url += "/invoices/#{self.stripe_invoice_id}"
-
-    url
-  end
-
   def arrival_date
-    arrival = self&.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and Bank processing time
     arrival + 1.day
@@ -330,7 +368,7 @@ class Invoice < ApplicationRecord
   end
 
   def smart_memo
-    sponsor.name.upcase
+    sponsor.name
   end
 
   def hcb_code

@@ -1,0 +1,37 @@
+.filter-menu {
+  height: 50px;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  &__chips {
+    border-left: 1px solid $smoke;
+    height: 100%;
+    display: flex;
+    flex: 1;
+    padding-left: 1rem;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: auto;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    & .badge {
+      margin: 0;
+      flex-shrink: 0;
+    }
+
+    [data-dark='true'] & {
+      border-color: $slate;
+    }
+
+    &:not(:has(> div)) {
+      &::after {
+        content: 'No filters applied';
+        opacity: 0.5;
+      }
+    }
+  }
+}

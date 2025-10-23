@@ -3,7 +3,7 @@
 module LoginCodeService
   class Request
     def initialize(email:, ip_address:, user_agent:, sms: false)
-      @email = email.downcase
+      @email = email
       @sms = sms
       @ip_address = ip_address
       @user_agent = user_agent
@@ -54,7 +54,6 @@ module LoginCodeService
         email: user.email,
         status: "login code sent",
         method: :email,
-        browser_token: login_code.browser_token,
         login_code:
       }
     end

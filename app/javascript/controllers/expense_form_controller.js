@@ -19,19 +19,33 @@ export default class extends Controller {
 
   connect() {
     for (const field of this.fieldTargets) {
-      field.readOnly = !this.enabledValue
-      field.addEventListener('dblclick', () => this.edit())
-      this.#addTooltip(field, 'Double-click to edit...')
+      if (field.nodeName == 'SELECT') {
+        field.disabled = !this.enabledValue
+      } else {
+        field.readOnly = !this.enabledValue
+        field.addEventListener('dblclick', () => this.edit())
+        this.#addTooltip(field, 'Double-click to edit...')
+      }
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && this.enabledValue) {
+          this.formTarget.reset()
+          this.close()
+        }
+      })
     }
 
-    this.buttonTarget.addEventListener('click', e => {
-      e.preventDefault()
-      if (this.enabledValue) {
-        this.formTarget.requestSubmit()
-      } else {
-        this.edit(e)
-      }
-    })
+    // we don't render the button if the report is reimbursed
+    if (this.hasButtonTarget) {
+      this.buttonTarget.addEventListener('click', e => {
+        e.preventDefault()
+        if (this.enabledValue) {
+          this.formTarget.requestSubmit()
+        } else {
+          this.edit(e)
+        }
+      })
+    }
 
     this.#buttons()
     this.#label()
@@ -40,6 +54,31 @@ export default class extends Controller {
     this.#card()
     this.#move()
     this.#lightbox()
+  }
+
+  close(e) {
+    if (this.lockedValue) return
+    this.enabledValue = false
+
+    this.#buttons()
+    this.#label()
+    this.#memo()
+    this.#card()
+    this.#move()
+    this.#lightbox()
+
+    for (const field of this.fieldTargets) {
+      if (field.nodeName == 'SELECT') {
+        field.disabled = true
+      } else {
+        field.readOnly = true
+        this.#addTooltip(field, 'Double-click to edit...')
+      }
+    }
+
+    if (e) {
+      e.target?.focus()
+    }
   }
 
   edit(e) {
@@ -54,8 +93,12 @@ export default class extends Controller {
     this.#lightbox()
 
     for (const field of this.fieldTargets) {
-      field.readOnly = false
-      this.#removeTooltip(field)
+      if (field.nodeName == 'SELECT') {
+        field.disabled = false
+      } else {
+        field.readOnly = false
+        this.#removeTooltip(field)
+      }
     }
 
     if (e) {
@@ -65,11 +108,14 @@ export default class extends Controller {
 
   #memoInput() {
     if (this.enabledValue) {
-      this.memoFieldTarget.focus()
+      // this.memoFieldTarget.focus()
     }
   }
 
   #buttons() {
+    if (!this.hasButtonTarget) {
+      return
+    }
     if (!this.lockedValue) {
       this.buttonTarget.querySelector('[aria-label=checkmark]').style.display =
         this.enabledValue ? 'block' : 'none'
@@ -83,11 +129,13 @@ export default class extends Controller {
   #card() {
     if (this.enabledValue && !this.lockedValue) {
       this.cardTarget.classList.add('b--warning')
+    } else {
+      this.cardTarget.classList.remove('b--warning')
     }
   }
 
   #label() {
-    if (!this.lockedValue) {
+    if (!this.lockedValue && this.hasButtonTarget) {
       this.buttonTarget.ariaLabel =
         this.enabledValue && !this.lockedValue
           ? 'Save edits'
@@ -104,11 +152,14 @@ export default class extends Controller {
   #memo() {
     this.memoTarget.innerText =
       this.enabledValue && !this.lockedValue
-        ? `Unsaved Changes`
+        ? `Unsaved changes`
         : this.memoValue
     if (this.enabledValue && !this.lockedValue) {
       this.memoTarget.classList.add('warning')
       this.memoTarget.classList.remove('muted')
+    } else {
+      this.memoTarget.classList.remove('warning')
+      // this.memoTarget.classList.add('muted')
     }
   }
 
@@ -120,6 +171,8 @@ export default class extends Controller {
     fieldWrapper.appendChild(field)
     fieldWrapper.classList.add('tooltipped', 'tooltipped--n')
     fieldWrapper.setAttribute('aria-label', label)
+
+    window.attachTooltipListener()
   }
 
   #removeTooltip(field) {
@@ -138,6 +191,11 @@ export default class extends Controller {
         e.preventDefault()
         this.formTarget.requestSubmit()
       })
+    } else {
+      this.lightboxTarget.style.display = 'none'
+      this.cardTarget.style.position = 'relative'
+      this.cardTarget.style.zIndex = 'auto'
+      document.querySelector('.app__sidebar').style.zIndex = 'auto'
     }
   }
 }

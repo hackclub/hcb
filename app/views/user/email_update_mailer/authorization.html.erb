@@ -1,0 +1,16 @@
+<p>
+  Hey <%= @request.user.first_name %>,
+</p>
+
+<p>
+  A request was made to update your HCB login email from <%= @request.original %> to <b><%= @request.replacement %></b>.
+</p>
+
+<p>
+  <%= link_to "Click here to authorize that change.", authorize_email_updates_url(authorization_token: @request.authorization_token) %> If you didn't make this request, please contact us urgently.
+</p>
+
+<p>
+  Thanks,<br>
+  The HCB Team
+</p>

@@ -31,6 +31,9 @@
 
 en:
   activerecord:
+    models:
+      event: Organization
+      hcb_code: Transaction
     attributes:
       event:
         slug: "URL"

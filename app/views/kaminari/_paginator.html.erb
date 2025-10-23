@@ -1,5 +1,5 @@
 <%= paginator.render do -%>
-  <ul class="pagination flex items-center justify-center list-reset pt2">
+  <ul class="pagination flex items-center justify-center list-reset pt2 gap-2">
     <%= first_page_tag unless current_page.first? %>
     <%= prev_page_tag unless current_page.first? %>
     <%= next_page_tag unless current_page.last? %>

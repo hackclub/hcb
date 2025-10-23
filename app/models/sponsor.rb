@@ -34,6 +34,9 @@ class Sponsor < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :spr
 
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "customers", :stripe_customer_id
+
   extend FriendlyId
 
   include PgSearch::Model
@@ -53,6 +56,8 @@ class Sponsor < ApplicationRecord
   before_update :update_stripe_customer
   before_destroy :destroy_invoices
   before_destroy :destroy_stripe_customer
+
+  normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
 
   def status
     i = invoices.last
@@ -106,18 +111,6 @@ class Sponsor < ApplicationRecord
 
   def destroy_invoices
     self.invoices.destroy_all
-  end
-
-  def stripe_dashboard_url
-    url = "https://dashboard.stripe.com"
-
-    if StripeService.mode == :test
-      url += "/test"
-    end
-
-    url += "/customers/#{self.stripe_customer_id}"
-
-    url
   end
 
   private

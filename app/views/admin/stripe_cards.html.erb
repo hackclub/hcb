@@ -1,9 +1,7 @@
-<% title "Stripe Cards" %>
-
-<h1>STRIPE CARDS</h1>
+<% title "Stripe cards" %>
 
 <%= form_with method: :get do |form| %>
-  <%= form.text_field :q, value: @q, placeholder: "Search" %>
+  <%= form.text_field :q, value: @q, placeholder: "Search", class: "w-100" %>
 <% end %>
 
 <%= page_entries_info @cards, entry_name: "cards" %>

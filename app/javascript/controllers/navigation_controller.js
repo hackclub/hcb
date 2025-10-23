@@ -12,4 +12,11 @@ export default class extends Controller {
       Turbo.visit(location)
     }
   }
+  navigateOnShiftClick(e) {
+    if (event.shiftKey) {
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      this.navigate(e)
+    }
+  }
 }

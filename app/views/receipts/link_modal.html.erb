@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "link_modal_#{@receiptable.id}" do %>
-  <%= form_with url: link_receipts_path, method: :post, data: {
+  <%= form_with url: link_receipts_path, method: :post, class: "relative", data: {
         controller: "receipt-select",
         turbo: @streams
       } do |form| %>
@@ -17,10 +17,12 @@
       <%= form.hidden_field :receiptable_type, value: @receiptable.class %>
       <%= form.hidden_field :show_link, value: @show_link %>
       <%= (form.hidden_field :popover, value: @popover) if defined?(@popover) %>
+      <%= form.hidden_field :show_receipt_button, value: @show_receipt_button %>
+      <%= form.hidden_field :show_author_img, value: @show_author_img %>
 
       <ul class="grid grid--narrow left-align w-100 grid--spacious mt0 justify-center">
         <% @receipts.each do |receipt| %>
-          <li class="flex grid flex-col justify-between h-100 mx4 modal__<%= receipt.id %>">
+          <li class="flex grid flex-col justify-between h-100 mx4 modal__<%= receipt.id %>" id="modal_receipt_<%= receipt.id %>">
             <%= render partial: "receipts/receipt", locals: { receipt:, selectable: true, textual_content: true, pairing: @suggested_receipt_ids.include?(receipt.id), size: 169 } %>
           </li>
         <% end %>
@@ -29,7 +31,7 @@
       <%= blankslate "No receipts found.", class: "mt3 mb5", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
     <% end %>
 
-    <footer class="modal__action-row flex justify-end <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
+    <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
       <%= link_to my_inbox_path, target: "_blank", class: "btn btn--primary mr2" do %>
         Manage receipts
       <% end %>

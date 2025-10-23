@@ -2,12 +2,14 @@
 
 module StripeCardService
   class Create
-    def initialize(current_user:, current_session:, event_id:,
+    def initialize(current_user:, ip_address:, event_id:,
                    card_type:, subledger: nil,
-                   stripe_shipping_name: nil, stripe_shipping_address_city: nil, stripe_shipping_address_state: nil,
-                   stripe_shipping_address_line1: nil, stripe_shipping_address_line2: nil, stripe_shipping_address_postal_code: nil, stripe_shipping_address_country: "US")
+                   stripe_shipping_name: nil, stripe_shipping_address_city: nil,
+                   stripe_shipping_address_state: nil, stripe_shipping_address_line1: nil,
+                   stripe_shipping_address_line2: nil, stripe_shipping_address_postal_code: nil,
+                   stripe_shipping_address_country: "US", stripe_card_personalization_design_id: nil)
       @current_user = current_user
-      @current_session = current_session
+      @ip_address = ip_address
       @event_id = event_id
       @subledger = subledger
 
@@ -19,6 +21,8 @@ module StripeCardService
       @stripe_shipping_address_line2 = stripe_shipping_address_line2
       @stripe_shipping_address_postal_code = stripe_shipping_address_postal_code
       @stripe_shipping_address_country = stripe_shipping_address_country
+      @stripe_card_personalization_design_id = stripe_card_personalization_design_id
+      @stripe_personalization_design_id = @stripe_card_personalization_design_id ? StripeCard::PersonalizationDesign.find(@stripe_card_personalization_design_id).stripe_id : nil
     end
 
     def run
@@ -42,7 +46,7 @@ module StripeCardService
     private
 
     def attrs
-      {
+      attrs = {
         card_type: @card_type,
         subledger: @subledger,
         stripe_cardholder_id: stripe_cardholder.id,
@@ -54,10 +58,14 @@ module StripeCardService
         stripe_shipping_address_line2: formatted_stripe_shipping_address_line2,
         stripe_shipping_address_postal_code: @stripe_shipping_address_postal_code
       }.compact
+
+      attrs[:stripe_card_personalization_design_id] = @stripe_card_personalization_design_id if physical?
+
+      attrs
     end
 
     def formatted_stripe_shipping_address_line2
-      @stripe_shipping_address_line2.present? ? @stripe_shipping_address_line2 : nil
+      @stripe_shipping_address_line2.presence
     end
 
     def create_remote_stripe_card!
@@ -68,6 +76,8 @@ module StripeCardService
       attrs = {
         cardholder: stripe_cardholder.stripe_id,
         type: @card_type,
+        # https://heroku-app97991095.airbrake.io/projects/288439/groups/3892032265003954513 for context behind regex.
+        second_line: event.short_name(length: 24).gsub(/\s/, " ").gsub(/[^a-zA-Z0-9\/\-&:().' ]/, "").strip,
         currency: "usd",
         status: "active",
         spending_controls: {
@@ -93,6 +103,7 @@ module StripeCardService
             postal_code: @stripe_shipping_address_postal_code
           }.compact
         }.compact
+        attrs[:personalization_design] = @stripe_personalization_design_id if @stripe_personalization_design_id
       end
 
       attrs
@@ -109,13 +120,13 @@ module StripeCardService
     def cardholder_attrs
       {
         current_user: @current_user,
-        current_session: @current_session,
+        ip_address: @ip_address,
         event_id: event.id
       }
     end
 
     def event
-      @event ||= Event.friendly.find(@event_id)
+      @event ||= Event.find(@event_id)
     end
 
     def virtual?

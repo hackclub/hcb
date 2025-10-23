@@ -22,12 +22,21 @@
 
     <p>
       <strong>Submitter email</strong>
-      <%= @opdr.submitted_by.email %>
+      <%= copy_to_clipboard(@opdr.submitted_by.email) do %>
+        <%= @opdr.submitted_by.email %>
+      <% end %>
     </p>
 
     <p>
       <strong>Requesting deletion for</strong>
       <%= user_mention @opdr.organizer_position.user %>
+    </p>
+
+    <p>
+      <strong>User email</strong>
+      <%= copy_to_clipboard(@opdr.organizer_position.user.email) do %>
+        <%= @opdr.organizer_position.user.email %>
+      <% end %>
     </p>
 
     <p>

@@ -1,6 +1,7 @@
 <% title "Transfers for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :transfers %>
+<%= render "card_grants/create_modal" %>
 
 <h1 class="heading">
   <span class="flex items-center">
@@ -8,12 +9,7 @@
     <%= badge_for @transfers.total_count, class: "bg-muted" %>
   </span>
 
-  <% if organizer_signed_in? %>
-    <% if Flipper.enabled?(:reimbursements_2024_03_10, @event) %>
-      <%= link_to "Reimbursement", event_reimbursements_path(@event), class: "btn" %>
-    <% else %>
-      <%= link_to "Reimbursement", "expensify", class: "btn" %>
-    <% end %>
+  <% if organizer_signed_in?(as: :member) %>
     <%= link_to event_transfers_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
       <%= inline_icon "payment-transfer" %>
       Send
@@ -21,8 +17,8 @@
   <% end %>
 </h1>
 
-<div class="statset mt3 mb2">
-  <div class="stat stat--small">
+<div class="statset mt3 mb3">
+  <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
   </div>
@@ -36,22 +32,17 @@
   </div>
 </div>
 
-<hr>
-
-<div style="text-align: center;">
-  <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
-  <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
-  <%= link_to "In Transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>
-  <%= link_to "Canceled", "?filter=canceled", class: "filterbar__item", "aria-selected": params[:filter] == "canceled", role: "tab" %>
-</div>
-
-<%= form_with(model: nil, local: true, method: :get) do |form| %>
-  <div class="filterbar flex flex-wrap items-center width-100">
-
-    <%= form.text_field :q, placeholder: "Search…", class: "flex-auto md-mr2", style: "width auto; max-width: none;", value: params[:q] %>
-
+<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "search", form: %>
+  <% end %>
+  <div>
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
+    <%= link_to "In transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>
+    <%= link_to "Canceled", "?filter=canceled", class: "filterbar__item", "aria-selected": params[:filter] == "canceled", role: "tab" %>
   </div>
-<% end %>
+</div>
 
 <% if @transfers.size > 0 %>
 <article class="table-container">
@@ -60,16 +51,25 @@
     <thead>
       <tr>
         <th></th>
-        <th>STATUS</th>
-        <th>DATE</th>
-        <th>TO</th>
-        <th style="text-align: right;">AMOUNT</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>To</th>
+        <th>For</th>
+        <th class="text-right">Amount</th>
         <th></th>
       </tr>
     </thead>
 
     <tbody>
       <% @transfers.each do |d| %>
+        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) && !show_mock_data? %>
+          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>" data-state-url="<%= hcb_code_url(d.hcb_code) %>" data-state-title="Transfer of <%= render_money(d.local_hcb_code.amount_cents_by_event(@event).abs) %>">
+            <%= modal_header("Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}", external_link: hcb_code_url(d.hcb_code)) %>
+            <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
+              <%= render partial: "application/loading_container" %>
+            <% end %>
+          </section>
+        <% end %>
         <tr>
           <td class="transaction__icon">
             <% if d.is_a?(Check) || d.is_a?(IncreaseCheck) %>
@@ -81,8 +81,20 @@
                 <%= inline_icon "bank-account" %>
               </span>
             <% elsif d.is_a?(CardGrant) %>
-              <span class="tooltipped tooltipped--e inline-block" aria-label="Card Grant">
+              <span class="tooltipped tooltipped--e inline-block" aria-label="Card grant">
                 <%= inline_icon "bag" %>
+              </span>
+            <% elsif d.is_a?(PaypalTransfer) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="PayPal transfer">
+                <%= inline_icon "paypal" %>
+              </span>
+            <% elsif d.is_a?(Wire) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="International wire">
+                <%= inline_icon "web" %>
+              </span>
+            <% elsif d.is_a?(WiseTransfer) %>
+              <span class="tooltipped tooltipped--e inline-block" aria-label="Wise transfer">
+                <%= inline_icon "wise" %>
               </span>
             <% else %>
               <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
@@ -91,12 +103,12 @@
             <% end %>
           </td>
           <td>
-            <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text&.capitalize %></span>
+            <span class="ml0 badge bg-<%= d.try(:state) || d.state_color %>"><%= d.state_text&.capitalize %></span>
           </td>
           <td>
             <%= format_date d.created_at %>
           </td>
-          <td style="max-width: 40ch;" class="overflow-hidden truncate" title="<%= d.name %>">
+          <td style="max-width: 15ch;" class="overflow-hidden truncate" title="<%= d.name %>">
             <% if d.is_a?(Disbursement) %>
               <strong>
                 <% if d.destination_event.is_public? || organizer_signed_in?(d.destination_event) %>
@@ -105,8 +117,6 @@
                   <%= d.destination_event.name %>
                 <% end %>
               </strong>
-              for
-              <%= d.name %>
             <% elsif d.is_a? CardGrant %>
               <strong>
                 <%= link_to d.user.name, organizer_signed_in? ? d : spending_card_grant_path(d) %>
@@ -115,9 +125,32 @@
               <%= d.name %>
             <% end %>
           </td>
+          <td style="max-width: 25ch;" class="overflow-hidden truncate">
+            <% if d.is_a?(Disbursement) %>
+              <%= d.name %>
+            <% elsif d.is_a?(CardGrant) %>
+              <%= d.purpose.presence || d.disbursement.local_hcb_code.memo %>
+            <% else %>
+              <%= d.try(:payment_for) %>
+            <% end %>
+          </td>
           <td style="text-align: right;">
-            <% if d.is_a? CardGrant %>
-              <span class="<%= "muted line-through" if d.balance.zero? %>"><%= d.balance.format %></span>
+            <% case d %>
+            <% when Wire %>
+              <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+            <% when WiseTransfer %>
+              <% ledger_amount = capture do %>
+                <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+              <% end %>
+
+              <% if d.currency == "USD" %>
+                <%= ledger_amount %>
+              <% else %>
+                <% fx_tooltip = d.amount.format(with_currency: true) %>
+                <span class="tooltipped tooltipped--w inline-block" aria-label="<%= fx_tooltip %>">
+                  <%= ledger_amount %>
+                </span>
+              <% end %>
             <% else %>
               <%= render_money(d.amount) %>
             <% end %>
@@ -128,7 +161,7 @@
                 <%= render "card_grant_actions", card_grant: d %>
               <% else %>
                 <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-                <%= link_to "Details", hcb_code_url(d.hcb_code) %>
+                <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) ? { behavior: "modal_trigger", modal: "transfer_modal_#{d.hcb_code}" } : nil %>
               <% end %>
             <% end %>
           </td>
@@ -145,13 +178,5 @@
 <% end %>
 
 <% if organizer_signed_in? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_transfer">
-    <%= turbo_frame_tag :transfer_form do %>
-      <%= modal_header "Transfer money" %>
-
-      <%= render "events/transfers/unauthorized_callout" unless policy(@event).create_transfer? %>
-
-      <%= render "transfer_form" %>
-    <% end %>
-  </section>
+  <%= render "transfer_modal" %>
 <% end %>

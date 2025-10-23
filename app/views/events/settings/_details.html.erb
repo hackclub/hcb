@@ -1,0 +1,238 @@
+<%# locals: (event:) %>
+
+<% disabled = !policy(event).update? %>
+
+<%= form_with(model: event, local: true, class: "mb3") do |form| %>
+  <%= form_errors event, "organization" %>
+
+  <div class="card flex flex-col items-start gap-2 p0">
+    <div class="event_settings__banner">
+      <% if event.background_image.persisted? %>
+        <%= image_tag event.background_image, height: 200, class: "banner__image" %>
+      <% end %>
+
+      <% if policy(event).update? %>
+       <button
+          type="button"
+          data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
+          class="pop menu__toggle z1 event_settings__banner--edit">
+          <%= inline_icon "photo", size: 24 %>
+          <div class="menu__content h5" data-behavior="menu_content">
+            <div class="field--fileupload">
+              <%= form.label :background_image, "Choose file", class: "field--fileupload__label" %>
+              <%= form.file_field :background_image, accept: "image/png,image/jpeg", class: "field--fileupload__field" %>
+            </div>
+            <% if event.background_image.attached? %>
+              <div class="menu__divider"></div>
+              <%= link_to "Remove background image", event_remove_background_image_path(event), method: :post, style: "padding: 0.25rem 0.5rem" %>
+            <% end %>
+          </div>
+        </button>
+      <% end %>
+
+      <div class="event_settings__banner--logo">
+        <% if event.logo.persisted? %>
+          <%= image_tag event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
+        <% else %>
+          <%= image_tag "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
+        <% end %>
+
+        <% if policy(event).update? %>
+          <button
+            type="button"
+            data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
+            class="pop menu__toggle z1 event_settings__logo--edit">
+            <%= inline_icon "photo", size: 24 %>
+            <div class="menu__content menu__content--left h5" data-behavior="menu_content">
+              <div class="field--fileupload">
+                <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
+                <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", disabled: %>
+              </div>
+              <% if event.logo.attached? %>
+                <div class="menu__divider"></div>
+                <%= link_to "Remove logo", event_remove_logo_path(event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
+              <% end %>
+            </div>
+          </button>
+        <% end %>
+      </div>
+    </div>
+    <div class="event_settings__content">
+      <h2><%= event.name %></h2>
+      <div class="w-full">
+        <% if event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
+          <div class="field flex-1">
+            <%= form.label :short_name, "Nickname" %>
+            <p class="h5 muted mt0 mb1">
+              At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
+            </p>
+            <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
+          </div>
+        <% end %>
+        <div class="field flex-1">
+          <%= form.label :website, "Website URL" %>
+          <%= form.text_field :website, type: :url, placeholder: "https://hackclub.com", disabled: %>
+        </div>
+        <div class="field flex-1">
+          <%= form.label :description, "Mission statement" %>
+          <%= form.text_area :description, placeholder: "A short description of your organization’s goals.", disabled: %>
+        </div>
+      </div>
+      <div class="md:flex items-center">
+        <div class="float-left flex gap-3 items-center flex-1 max-w-2xl mr-auto">
+          <%= inline_icon "info", size: 24, class: "muted" %>
+          <p class="h5 muted m0">
+            Your logo is displayed on the
+            <%= link_to "donation page",
+              event.donation_page_available? ? start_donation_donations_path(event) : { tab: "donations" },
+              target: event.donation_page_available? ? "_blank" : nil %>
+            and your
+            <%= link_to "public reimbursement page",
+              event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(event) : { tab: "reimbursements" },
+              target: event.public_reimbursement_page_available? ? "_blank" : nil %>. Organization banners are visible on the homepage only.
+          </p>
+        </div>
+        <%= form.submit "Update", disabled:, class: "md:ml-3 mt-2 md:mt-0" %>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="mb1" id="transparency_mode_heading">Transparency Mode</h3>
+
+  <div class="card mb3" data-controller="accordion">
+    <div class="field field--checkbox">
+      <span style="font-weight: 700">Make <%= possessive(event.name) %> finances transparent</span>
+      <div class="field--checkbox--switch ml-auto">
+        <%= form.label :is_public do %>
+          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", accordion_target: "checkbox" }, disabled:, switch: true %>
+          <span class="slider"></span>
+        <% end %>
+      </div>
+    </div>
+    <ul class="mt0 pl2 mb2">
+      <li>Unauthenticated users will be able to access a <strong>read-only</strong> version of your account.</li>
+      <li>None of HCB’s pages will change for signed in team members.</li>
+      <li>We’ll do our best to redact contact info, but we can’t guarantee it doesn't show up in these
+        fields:
+        <ul>
+          <li>Transaction display names</li>
+          <li>Sponsor company names</li>
+          <li>ACH transfer recipients</li>
+          <li>Check recipients</li>
+        </ul>
+      </li>
+      <li>With transparency mode off, your announcements page will only be visible once you have published your first announcement. It will always be visible with transparency mode on.</li>
+    </ul>
+    <div data-accordion-target="content">
+      <div class="menu__divider" style="margin:0px"></div>
+      <div class="field mt-2">
+        <%= inline_icon "markdown", size: 32, class: "muted right" %>
+        <%= form.label :public_message, "Message to show visitors" %>
+        <%= form.text_area :public_message, class: "w-100 fit", disabled: %>
+      </div>
+      <div class="field field--checkbox">
+        <%= form.check_box :is_indexable, disabled:, switch: true %>
+        <%= form.label :is_indexable, "List #{event.name} in HCB’s public directory" %>
+      </div>
+      <% unless !winter?(override_preference: true) %>
+        <div class="field field--checkbox">
+          <%= form.check_box :holiday_features, disabled:, switch: true %>
+          <%= form.label :holiday_features, "Enable Holiday Features ⛄ for Transparency Mode" %>
+        </div>
+      <% end %>
+    </div>
+    <%= form.submit "Update", disabled: %>
+  </div>
+
+  <h3 class="mb1" id="cards_heading">HCB card</h3>
+  <div class="card mb3">
+    <div class="field">
+      <%= form.label :stripe_card_logo, "Card logo" %>
+      <p class="h5 muted mt0 mb2">
+        Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
+        The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
+      </p>
+      <% if event.stripe_card_logo.persisted? %>
+        <%= image_tag event.stripe_card_logo, width: 48 %>
+      <% end %>
+      <div class="field--fileupload mt2">
+        <%= form.label :stripe_card_logo, "Choose file", class: "field--fileupload__label" %>
+        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
+      </div>
+    </div>
+    <%= form.submit "Update", disabled: %>
+  </div>
+
+  <h3 class="mb1" id="announcements_heading">Announcements</h3>
+  <div class="card mb3">
+    <div class="field field--checkbox">
+      <span style="font-weight: 700">Generate monthly announcements</span>
+      <div class="field--checkbox--switch ml-auto">
+        <%= form.fields_for :config do |config| %>
+          <%= config.label :generate_monthly_announcement do %>
+            <%= config.check_box :generate_monthly_announcement, disabled:, switch: true %>
+            <span class="slider"></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+    <p class="h5 muted mt0 mb1">
+      Use this to enable auto-scheduled monthly announcements.
+      <% if event.config.generate_monthly_announcement %>
+        If disabled, the current monthly announcement draft will be discarded.
+      <% end %>
+    </p>
+    <%= form.submit "Update", disabled: %>
+  </div>
+
+  <h3 class="mb1" id="cards_heading">Contact information</h3>
+  <div class="card mb3">
+    <div class="field">
+      <%= form.fields_for :config do |config| %>
+        <%= config.label :contact_email, "Your team's contact email" %>
+        <p class="h5 muted mt0 mb1">
+          If you'd prefer for the HCB operations team to reach out to a shared email, configure that here.
+        </p>
+        <%= config.email_field :contact_email, placeholder: "team@lioncityhacks.com", disabled: %>
+      <% end %>
+    </div>
+    <%= form.submit "Update", disabled: %>
+  </div>
+
+  <h3 class="mb1">Danger zone</h3>
+  <div class="card border b--warning mb3"
+    data-controller="external-validation"
+    data-external-validation-url-value="<%= validate_slug_event_path(event) %>"
+    data-external-validation-hint-success-class="success">
+
+    <div class="flex items-center warning">
+      <%= inline_icon "important", size: 32, class: "mr1" %>
+      <p class="bold mt0 mb0">If you change your URL, beware:</p>
+    </div>
+    <ul class="mt1 mb2">
+      <li>
+        We’ll automatically redirect most pages to your organization’s new URL, including:
+        <ul>
+          <li>Your donation page</li>
+          <li>Transparency Mode pages</li>
+          <li>Transaction bookmarks</li>
+        </ul>
+      </li>
+      <li>However, another organization may claim your current URL and you could be
+        <span class="bold">unable to get it back.</span>
+      </li>
+    </ul>
+    <%= form.label :slug, "Organization URL" %>
+    <div class="input flex mt1" onclick="this.querySelector('input').focus()" tabindex="0" style="gap: 0.15rem">
+      <span class="secondary flex items-center opacity-70 select-none" style="gap: 0.15rem">
+        <span>hcb.hackclub.com</span>
+        <span>/</span>
+      </span>
+      <%= form.text_field :slug, class: "!p-0 !border-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
+    </div>
+    <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
+    <div class="actions">
+      <%= form.submit "Update", disabled: %>
+    </div>
+  </div>
+<% end %>

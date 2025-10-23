@@ -2,63 +2,260 @@
 
 user = User.first
 
+email = Rails.env.staging? ? "staging@bank.engineering" : "admin@bank.engineering"
+
 if user.nil?
-  puts "Woah there, there aren't any users! Creating an user (admin@example.com)."
-  user = User.create!(email: "admin@example.com")
+  puts "Woah there, there aren't any users! Creating an user (#{email})."
+  user = User.create!(email:, full_name: "Stagey McStageface", phone_number: "+19064225632")
 end
 
 puts "Continuing with #{user.email}..."
 
 user.make_admin! unless user.admin?
 
+admin = User.create_with(email: User::SYSTEM_USER_EMAIL).find_or_create_by!(id: User::SYSTEM_USER_ID)
+admin.make_admin!
+
+# DEMO
 demo_event = Event.create_with(
   name: "DevHacks (Demo Event)",
   slug: "devhacks",
   can_front_balance: true,
   point_of_contact: user,
-  sponsorship_fee: 0.07,
-  category: 4,
   demo_mode: true,
-  organization_identifier: "bank_#{SecureRandom.hex}",
   created_at: 7.days.ago
 ).find_or_create_by!(slug: "devhacks")
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: demo_event,
   user:,
   sender: user,
 )
 
+# NON_TRANSPARENT
 non_transparent_event = Event.create_with(
   name: "ExpensiCon 2023 (Non-Transparent Event)",
   slug: "expensicon23",
   can_front_balance: true,
   point_of_contact: user,
-  sponsorship_fee: 0.07,
-  category: 2,
-  organization_identifier: "bank_#{SecureRandom.hex}",
-  created_at: 10.days.ago
+  created_at: 10.days.ago,
+  is_public: false
 ).find_or_create_by!(slug: "expensicon23")
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: non_transparent_event,
   user:,
   sender: user,
 )
 
+# TRANSPARENT
 transparent_event = Event.create_with(
   name: "Hack The Seas (Transparent Event)",
   slug: "hack_the_seas",
   can_front_balance: true,
   point_of_contact: user,
-  sponsorship_fee: 0.00,
-  category: 7,
-  organization_identifier: "bank_#{SecureRandom.hex}",
-  created_at: 14.days.ago
+  created_at: 14.days.ago,
+  is_public: true
 ).find_or_create_by!(slug: "hack_the_seas")
 
-OrganizerPositionInvite.create!(
+OrganizerPositionInvite.find_or_create_by!(
   event: transparent_event,
+  user:,
+  sender: user,
+)
+
+# INCOMING_FEES
+incoming_fees_event = Event.create_with(
+  name: "Incoming Fees",
+  slug: "incoming-fees",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: false
+).find_or_create_by!(id: EventMappingEngine::EventIds::INCOMING_FEES)
+
+incoming_fees_event.plan.update(type: Event::Plan::Internal)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: incoming_fees_event,
+  user:,
+  sender: user,
+)
+
+# HACK_CLUB_BANK
+hack_club_bank_event = Event.create_with(
+  name: "HCB Operations",
+  slug: "bank",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+
+hack_club_bank_event.plan.update(type: Event::Plan::HackClubAffiliate)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: hack_club_bank_event,
+  user:,
+  sender: user,
+)
+
+# NOEVENT
+noevent_event = Event.create_with(
+  name: "Hack Club NoEvent",
+  slug: "noevent",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: false
+).find_or_create_by!(id: EventMappingEngine::EventIds::NOEVENT)
+
+noevent_event.plan.update(type: Event::Plan::Internal)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: noevent_event,
+  user:,
+  sender: user,
+)
+
+# HACKATHON_GRANT_FUND
+hackathon_grant_fund_event = Event.create_with(
+  name: "Hackathon Grant Fund",
+  slug: "hackathon-grant-fund",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
+
+hackathon_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: hackathon_grant_fund_event,
+  user:,
+  sender: user,
+)
+
+# WINTER_HARDWARE_WONDERLAND_GRANT_FUND
+winter_hardware_wonderland_grant_fund_event = Event.create_with(
+  name: "Winter Hardware Wonderland",
+  slug: "winter-hardware-wonderland",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND)
+
+winter_hardware_wonderland_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: winter_hardware_wonderland_grant_fund_event,
+  user:,
+  sender: user,
+)
+
+# ARGOSY_GRANT_FUND
+argosy_grant_fund_event = Event.create_with(
+  name: "Argosy Foundation Grant Fund",
+  slug: "argosy-foundation-grant",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: argosy_grant_fund_event,
+  user:,
+  sender: user,
+)
+
+# ARGOSY_GRANT_FUND_2025
+argosy_grant_fund_2025_event = Event.create_with(
+  name: "Argosy Foundation Grant Fund",
+  slug: "argosy-hardship-rookie-grant-2025-26-season",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025)
+
+argosy_grant_fund_2025_event.plan.update(type: Event::Plan::FeeWaived)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: argosy_grant_fund_2025_event,
+  user:,
+  sender: user,
+)
+
+# FIRST_TRANSPARENCY_GRANT_FUND
+first_transparency_grant_fund_event = Event.create_with(
+  name: "Transparency Grant Fund",
+  slug: "transparency-grant-fund",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND)
+
+first_transparency_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: first_transparency_grant_fund_event,
+  user:,
+  sender: user,
+)
+
+# HACK_FOUNDATION_INTEREST
+hack_foundation_interest_event = Event.create_with(
+  name: "Hack Foundation Interest Earnings",
+  slug: "hack-foundation-interest-earnings",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+
+hack_foundation_interest_event.plan.update(type: Event::Plan::HackClubAffiliate)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: hack_foundation_interest_event,
+  user:,
+  sender: user,
+)
+
+# REIMBURSEMENT_CLEARING
+reimbursement_clearing_event = Event.create_with(
+  name: "HCB Reimbursement Clearinghouse",
+  slug: "reimbursement-clearinghouse",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+
+reimbursement_clearing_event.plan.update(type: Event::Plan::Internal)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: reimbursement_clearing_event,
+  user:,
+  sender: user,
+)
+
+# SVB_SWEEPS
+svb_sweeps_event = Event.create_with(
+  name: "HCB Sweeps",
+  slug: "hcb-sweeps",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).find_or_create_by!(id: EventMappingEngine::EventIds::SVB_SWEEPS)
+
+svb_sweeps_event.plan.update(type: Event::Plan::Internal)
+
+OrganizerPositionInvite.find_or_create_by!(
+  event: svb_sweeps_event,
   user:,
   sender: user,
 )

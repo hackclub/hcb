@@ -1,0 +1,9 @@
+<p>
+  <b>Event:</b> <%= @hcb_code.event.name %>
+</p>
+
+<p>
+  <b>User:</b> <%= @hcb_code.stripe_card.user.name %>
+</p>
+
+<%= link_to "View transaction", @hcb_code %>

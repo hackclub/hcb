@@ -2,9 +2,9 @@
 
 module StripeCardholderService
   class Create
-    def initialize(current_user:, current_session:, event_id:)
+    def initialize(current_user:, ip_address:, event_id:)
       @current_user = current_user
-      @current_session = current_session
+      @ip_address = ip_address
       @event_id = event_id
     end
 
@@ -43,40 +43,17 @@ module StripeCardholderService
           address: StripeCardholder::DEFAULT_BILLING_ADDRESS.compact
         },
         individual: {
-          first_name:,
-          last_name:,
+          first_name: StripeCardholder.first_name(@current_user),
+          last_name: StripeCardholder.last_name(@current_user),
           dob: DateOfBirthAgeRestrictedExtractor.new(user: @current_user).run,
           card_issuing: {
             user_terms_acceptance: {
               date: DateTime.now.to_i,
-              ip: @current_session.ip
+              ip: @ip_address
             }
           }
         }
       }
-    end
-
-    def first_name
-      clean_name(@current_user.first_name(legal: true))
-    end
-
-    def last_name
-      clean_name(@current_user.last_name(legal: true))
-    end
-
-    def clean_name(name)
-      name = ActiveSupport::Inflector.transliterate(name || "")
-
-      # Remove invalid characters
-      requirements = <<~REQ.squish
-        First and Last names must contain at least 1 letter, and may not
-        contain any numbers, non-latin letters, or special characters except
-        periods, commas, hyphens, spaces, and apostrophes.
-      REQ
-      name = name.gsub(/[^a-zA-Z.,\-\s']/, "").strip
-      raise ArgumentError, requirements if name.gsub(/[^a-z]/i, "").blank?
-
-      name
     end
 
     def email
@@ -96,7 +73,7 @@ module StripeCardholderService
     end
 
     def event
-      @event ||= Event.friendly.find(@event_id)
+      @event ||= Event.find(@event_id)
     end
 
   end

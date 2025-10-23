@@ -1,0 +1,57 @@
+<article class="card pb0 mt3 mb1">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
+    <span style="flex-grow: 1">
+      <span class="regular muted"><%= @hcb_code.paypal_transfer.deposited? ? "Transferred " : "Transferring " %> </span>
+      <%= @hcb_code.paypal_transfer.recipient_name %>
+      <span class="regular"><%= render_money @hcb_code.amount.abs %></span>
+      <span class="regular muted">via PayPal</span>
+    </span>
+    <span class="badge h4 md-right ml0 bg-<%= @hcb_code.paypal_transfer.state %> nowrap">
+      <%= @hcb_code.paypal_transfer.state_text %>
+    </span>
+  <% end %>
+
+  <section class="card__banner card__darker details-horiz border-top border-bottom">
+    <p>
+      <strong>Sent by</strong>
+      <%= user_mention @hcb_code.paypal_transfer.user %>
+    </p>
+    <p>
+      <strong>Sent at</strong>
+      <%= format_datetime @hcb_code.paypal_transfer.created_at %>
+    </p>
+  </section>
+  <turbo-frame id="details">
+    <section class="details pt2 pb2">
+      <p>
+        <strong>Recipient name</strong>
+        <%= @hcb_code.paypal_transfer.recipient_name %>
+      </p>
+
+      <p>
+        <strong>Recipient email</strong>
+        <%= @hcb_code.paypal_transfer.recipient_email %>
+      </p>
+
+      <p>
+        <strong>Payment purpose</strong>
+        <%= @hcb_code.paypal_transfer.payment_for %>
+      </p>
+
+      <p>
+        <strong>Amount</strong>
+        <%= render_money @hcb_code.paypal_transfer.amount %>
+      </p>
+
+      <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+    </section>
+  </turbo-frame>
+
+  <% if admin_signed_in? && @hcb_code.paypal_transfer.may_mark_rejected? %>
+    <div class="card__banner card__darker border-top overflow-hidden">
+      <% admin_tool "w-fit" do %>
+        <%= button_to "Process", paypal_transfer_process_admin_path(@hcb_code.paypal_transfer), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+      <% end %>
+    </div>
+  <% end %>
+</article>

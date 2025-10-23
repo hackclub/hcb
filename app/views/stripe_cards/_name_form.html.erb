@@ -1,20 +1,16 @@
-<%= form_with(model: StripeCard.new, local: true, url: update_name_stripe_card_path(@card), method: "post", id: "stripe_card_name_form") do |form| %>
-  <section class="grid grid--split">
-    <div class="field">
-      <%= form.label :name, "Name" %>
-      <div class="flex" style="gap: 0.75rem;">
-        <%= form.text_field :name, value: @card.name, placeholder: "Online Retailers" %>
-        <% if @card.name %>
-          <div class="stat tooltipped tooltipped--s" aria-label="Clear Name">
-            <button class="btn bg-error" style="padding-left:10px; padding-right:10px; height:100%;" id="clear_name_btn" onclick="clearName();" type="button">
-              <%= inline_icon "delete", style: "margin-right: 0px; margin-left: 0px;" %>
-            </button>
-          </div>
-        <% end %>
-      </div>
-    </div>
+<%= form_with(model: @card, id: "stripe_card_name_form") do |form| %>
+  <div class="field">
+    <%= form.label :name %>
 
-  </section>
+    <div class="flex gap-3 items-stretch">
+      <%= form.text_field :name, placeholder: "Online Retailers" %>
+      <% if @card.name.present? %>
+        <button class="btn bg-error px-3 tooltipped tooltipped--s overflow-visible" aria-label="Clear name" id="clear_name_btn" onclick="clearName();" type="button">
+          <%= inline_icon "delete", class: "!m-0" %>
+        </button>
+      <% end %>
+    </div>
+  </div>
 
   <div class="actions">
     <%= form.submit "Save" %>

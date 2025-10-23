@@ -1,23 +1,23 @@
-<% title "SPONSORS" %>
-
-<h1>SPONSORS</h1>
-
-<%= paginate @sponsors %>
+<% title "Sponsors" %>
 
 <%= form_with local: true, url: sponsors_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.label :open do %>
-    <%= form.check_box :open, checked: @open %>
-    Open
-  <% end %>
-
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
-
-  <%= form.submit "Search" %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <div>
+    <%= form.label :open do %>
+      <%= form.check_box :open, checked: @open %>
+      Open
+    <% end %>
+  </div>
+  <%= form.submit "Search", class: "mt1" %>
 <% end %>
 
-<%= page_entries_info @sponsors, entry_name: "sponsors" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @sponsors, entry_name: "sponsors" %>
+  </div>
+  <%= paginate @sponsors %>
+</div>
 
 <table>
   <thead>

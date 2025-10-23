@@ -7,51 +7,71 @@ module Reimbursement
     end
 
     def create?
-      !record.event.demo_mode && (record.event.public_reimbursement_page_enabled? || admin || team_member)
+      !record.event.demo_mode && (record.event.public_reimbursement_page_available? || admin || OrganizerPosition.role_at_least?(user, record.event, :member))
     end
 
     def show?
-      admin || team_member || creator
+      admin || team_member || creator || auditor
+    end
+
+    def wise_transfer_quote?
+      admin || team_member || creator || auditor
     end
 
     def edit?
-      admin || team_member || (creator && unlocked)
+      admin || manager || (creator && unlocked)
     end
 
     def update?
-      admin || team_member || (creator && open)
+      admin || manager || (creator && open)
     end
 
     def submit?
-      unlocked && (admin || team_member || creator)
+      unlocked && (admin || manager || creator)
     end
 
     def draft?
-      (admin || team_member || creator) && open
+      ((admin || manager || creator) && open) || ((admin || manager) && record.rejected?)
     end
 
     def request_reimbursement?
-      (admin || (team_member && !creator)) && open
+      (admin || (manager && !creator)) && open
+    end
+
+    def convert_to_wise_transfer?
+      admin && !record.event.financially_frozen?
     end
 
     def request_changes?
-      (admin || team_member) && open
+      (admin || manager) && open
     end
 
     def approve_all_expenses?
-      (admin || (team_member && !creator)) && open
+      (admin || (manager && !creator)) && open
     end
 
     def reject?
-      (admin || team_member) && open
+      (admin || manager) && open
+    end
+
+    def update_currency?
+      (admin || creator) && open && record.mismatched_currency?
     end
 
     def admin_approve?
       admin && open
     end
 
+    def admin_send_wise_transfer?
+      admin
+    end
+
+    def reverse?
+      admin
+    end
+
     def destroy?
-      ((team_member || creator) && record.initial_draft?) || (admin && !record.reimbursed?)
+      ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
     end
 
     private
@@ -60,8 +80,16 @@ module Reimbursement
       user&.admin?
     end
 
+    def auditor
+      user&.auditor?
+    end
+
+    def manager
+      record.event && OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    end
+
     def team_member
-      record.event.users.include?(user)
+      record.event&.users&.include?(user)
     end
 
     def creator

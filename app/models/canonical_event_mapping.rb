@@ -26,12 +26,15 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CanonicalEventMapping < ApplicationRecord
+  broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
+
   belongs_to :canonical_transaction
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :user, optional: true
 
   has_one :fee, dependent: :destroy
+  validates_associated :fee
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
 

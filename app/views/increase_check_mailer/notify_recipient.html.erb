@@ -3,10 +3,12 @@
 </p>
 
 <p>
-  <%= @check.event.name %> has just sent you a
+  <%= @check.event.name %> has just mailed you a
   <%= render_money(@check.amount) %> check for
   <i>"<%= @check.payment_for %>"</i>.
 </p>
+
+<p>You must deposit this check within <%= IncreaseCheck::VALID_DURATION.inspect %>. It will expire on <%= (@check.approved_at + IncreaseCheck::VALID_DURATION).strftime("%b %e, %Y") %>.
 
 <p>
   If you have any questions about this transfer, please contact <%= @check.event.name %>.

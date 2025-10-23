@@ -10,20 +10,21 @@
 #  transaction_memo :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  stripe_topup_id  :bigint
 #
 # Indexes
 #
+#  index_fee_reimbursements_on_stripe_topup_id   (stripe_topup_id)
 #  index_fee_reimbursements_on_transaction_memo  (transaction_memo) UNIQUE
 #
 class FeeReimbursement < ApplicationRecord
   has_paper_trail
 
-  include Commentable
-
   has_one :invoice, required: false
   has_one :donation, required: false
-  has_one :ach_payment, required: false
   has_one :t_transaction, class_name: "Transaction", inverse_of: :fee_reimbursement
+
+  belongs_to :stripe_topup, optional: true
 
   before_create :default_values
 
@@ -95,13 +96,10 @@ class FeeReimbursement < ApplicationRecord
   def default_values
     if invoice
       self.transaction_memo ||= "HCB-#{invoice.local_hcb_code.short_code}"
-      self.amount ||= invoice.item_amount - invoice.payout_creation_balance_net
+      self.amount ||= invoice.payout_creation_balance_stripe_fee
     elsif donation
       self.transaction_memo ||= "HCB-#{donation.local_hcb_code.short_code}"
       self.amount ||= donation.payout_creation_balance_stripe_fee
-    elsif ach_payment
-      self.transaction_memo ||= "HCB-#{ach_payment.local_hcb_code.short_code}"
-      self.amount ||= ach_payment.stripe_fee
     end
   end
 
@@ -113,21 +111,21 @@ class FeeReimbursement < ApplicationRecord
   def calculate_fee_amount
     if amount < 100
       if invoice.present?
-        return (amount * self.invoice.event.sponsorship_fee) + (100 - amount)
+        return (amount * self.invoice.event.revenue_fee) + (100 - amount)
       else
-        return (amount * self.donation.event.sponsorship_fee) + (100 - amount)
+        return (amount * self.donation.event.revenue_fee) + (100 - amount)
       end
     else
       if invoice.present?
-        return amount * self.invoice.event.sponsorship_fee
+        return amount * self.invoice.event.revenue_fee
       else
-        return amount * self.donation.event.sponsorship_fee
+        return amount * self.donation.event.revenue_fee
       end
     end
   end
 
   def canonical_transaction
-    @canonical_transaction ||= event.canonical_transactions.where("memo ilike '#{transaction_memo}%' and date >= ?", created_at - 1.day).first
+    @canonical_transaction ||= event.canonical_transactions.where("memo ilike ? and date >= ?", "#{sanitize_sql_like(transaction_memo)}%", created_at - 1.day).first
   end
 
 end

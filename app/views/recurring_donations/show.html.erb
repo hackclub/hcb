@@ -3,14 +3,14 @@
 <% @hide_footer = true %>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="change_payment_details">
-  <%= modal_header "Update payment details", level: "h1" %>
+  <%= modal_header "Update payment details" %>
   <%= turbo_frame_tag :update_recurring_donation_payment_method, src: edit_recurring_donation_path(@recurring_donation.url_hash), loading: "lazy" do %>
     <p class="center muted mt3 h3">One moment...</p>
   <% end %>
 </section>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="change_amount">
-  <%= modal_header "Update donation amount", level: "h1" %>
+  <%= modal_header "Update donation amount" %>
 
   <%= form_with model: @recurring_donation, url: recurring_donation_path(@recurring_donation.url_hash) do |form| %>
     <div class="field">
@@ -23,7 +23,7 @@
                               min: 1, # Limitations placed by Stripe
                               max: 999_999.99, # Limitations placed by Stripe
                               required: true,
-                              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
+                              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
         <span class="muted nowrap ml1">/ month</span>
       </div>
     </div>
@@ -37,7 +37,7 @@
 </section>
 
 <% admin_tool "mt1" do %>
-  <%= link_to "View subscription on Stripe", "https://dashboard.stripe.com/subscriptions/#{@recurring_donation.stripe_subscription_id}", class: "btn bg-accent", target: "_blank" %>
+  <%= link_to "View subscription on Stripe", @recurring_donation.stripe_dashboard_url, class: "btn bg-accent", target: "_blank" %>
 <% end %>
 
 <div class="card mb3 center mt4">

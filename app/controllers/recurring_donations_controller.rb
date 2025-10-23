@@ -15,7 +15,15 @@ class RecurringDonationsController < ApplicationController
   def create
     params[:recurring_donation][:amount] = Monetize.parse(params[:recurring_donation][:amount]).cents
 
-    @recurring_donation = RecurringDonation.new(params.require(:recurring_donation).permit(:name, :email, :amount, :message, :anonymous).merge(event: @event))
+    if params[:recurring_donation][:fee_covered] == "1" && @event.config.cover_donation_fees
+      params[:recurring_donation][:amount] = (params[:recurring_donation][:amount] / (1 - @event.revenue_fee)).ceil
+    end
+
+    tax_deductible = params[:recurring_donation][:goods].nil? || params[:recurring_donation][:goods] == "0"
+
+    @recurring_donation = RecurringDonation.new(
+      params.require(:recurring_donation).permit(:name, :email, :amount, :message, :anonymous, :fee_covered).merge(event: @event, tax_deductible:)
+    )
 
     authorize @recurring_donation
 
@@ -53,7 +61,7 @@ class RecurringDonationsController < ApplicationController
     setup_intent = StripeService::SetupIntent.create(
       customer: @recurring_donation.stripe_customer_id,
       usage: "off_session",
-      metadata: { recurring_donation_id: @recurring_donation.id }
+      metadata: { recurring_donation_id: @recurring_donation.id, event_id: @recurring_donation.event.id }
     )
 
     @client_secret = setup_intent.client_secret
@@ -70,7 +78,7 @@ class RecurringDonationsController < ApplicationController
   def cancel
     @recurring_donation.cancel!
 
-    redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "Your donation has been canceled." }
+    redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "This donation has been canceled." }
   end
 
   private

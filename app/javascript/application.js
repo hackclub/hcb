@@ -1,9 +1,8 @@
 import $ from 'jquery'
+import ReactRailsUJS from 'react_ujs'
 
 // Support component names relative to this directory:
 var componentRequireContext = require.context('./components', true)
-import ReactRailsUJS from 'react_ujs'
-// eslint-disable-next-line react-hooks/rules-of-hooks
 ReactRailsUJS.useContext(componentRequireContext)
 
 ReactRailsUJS.handleEvent('turbo:load', ReactRailsUJS.handleMount)
@@ -16,11 +15,11 @@ ReactRailsUJS.handleEvent('turbo:frame-render', ReactRailsUJS.handleUnmount)
 // Bad stuff happens if you don't do this. Trust me. ~ @cjdenio
 document.addEventListener('turbo:frame-render', () => {
   // prettier-ignore
-  window.$('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').remove()
+  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').remove()
 })
 
 document.addEventListener('turbo:before-cache', () => {
-  const currentModal = window.$.modal.getCurrent()
+  const currentModal = $.modal.getCurrent()
 
   if (currentModal) {
     currentModal.options.doFade = false
@@ -35,13 +34,17 @@ import './controllers'
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo
 
-import Alpine from 'alpinejs'
 import persist from '@alpinejs/persist'
+import Alpine from 'alpinejs'
 import ach_form from './datas/ach_form'
+import wire_form from './datas/wire_form'
+import check_form from './datas/check_form'
 
 window.Alpine = Alpine
 Alpine.plugin(persist)
 Alpine.data('ach', ach_form)
+Alpine.data('wire', wire_form)
+Alpine.data('check', check_form)
 
 Alpine.start()
 
@@ -50,3 +53,4 @@ LocalTime.start()
 
 import '@github/text-expander-element'
 import '@oddbird/popover-polyfill'
+import 'emoji-picker-element'

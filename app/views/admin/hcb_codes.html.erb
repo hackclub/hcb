@@ -1,37 +1,35 @@
-<% title "HCB CODES" %>
-
-<h1>HCB CODES</h1>
-
-<%= paginate @hcb_codes %>
+<% title "HCB Codes" %>
 
 <%= form_with local: true, url: hcb_codes_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  |
+  <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "mr1" %>
   <%= form.label :has_receipt do %>
-    Receipt
+    <b class="mr1">Receipt status:</b>
     <%= form.select :has_receipt, [["All", "all"], ["Has receipt", "yes"], ["Missing receipt", "no"], ["Lost receipt", "lost"]], selected: @has_receipt %>
   <% end %>
-  |
-  <%= form.label :start_date do %>
-    Start date
-    <%= form.text_field :start_date, value: @start_date, placeholder: "YYYY-MM-DD" %>
-  <% end %>
-  |
-  <%= form.label :end_date do %>
-    End date
-    <%= form.text_field :end_date, value: @end_date, placeholder: "YYYY-MM-DD" %>
-  <% end %>
-  |
-
-  <%= form.submit "Search" %>
-  |
-
-  <%= link_to @params.merge(format: :csv) do %>
-    <button type="button" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
-  <% end %>
+  <div>
+    <%= form.label :start_date do %>
+      <b>Start date:</b>
+      <%= form.text_field :start_date, value: @start_date, placeholder: "YYYY-MM-DD" %>
+    <% end %>
+    <%= form.label :end_date do %>
+      <b class="ml1">End date:</b>
+      <%= form.text_field :end_date, value: @end_date, placeholder: "YYYY-MM-DD" %>
+    <% end %>
+  </div>
+  <div>
+    <%= form.submit "Search" %>
+    <%= link_to @params.merge(format: :csv) do %>
+      <button type="button" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
+    <% end %>
+  </div>
 <% end %>
 
-<%= page_entries_info @hcb_codes, entry_name: "HCB codes" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @hcb_codes, entry_name: "HCB codes" %>
+  </div>
+  <%= paginate @hcb_codes %>
+</div>
 
 <table>
   <thead>
@@ -51,9 +49,14 @@
   <tbody>
     <% @hcb_codes.each do |hcb_code| %>
       <tr>
-        <td><%= hcb_code.created_at.strftime("%Y-%m-%d") %></td>
-        <td><%= link_to hcb_code.memo, hcb_code.url %></td>
-        <td><%= link_to hcb_code.event.name, hcb_code.event %></td>
+        <td>
+          <%= hcb_code.created_at.strftime("%Y-%m-%d") %>
+          <% if hcb_code.has_pending_expired? %>
+            <span>⚠️ (Overdue)</span>
+          <% end %>
+        </td>
+        <td><%= link_to hcb_code.memo, url_for(hcb_code) %></td>
+        <td><%= link_to hcb_code.event&.name, hcb_code.event %></td>
         <td>
           <% if hcb_code.stripe_card? && hcb_code.card&.user %>
            <%= link_to hcb_code.card.user.name, hcb_code.card.user %>

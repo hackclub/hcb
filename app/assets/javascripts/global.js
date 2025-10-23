@@ -1,7 +1,37 @@
+/* eslint-disable no-undef */
+
 // BK is our global namespace for utilities
 const BK = {
-  blocked: false
+  blocked: false,
 }
+
+window.getCookie = (name) => {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
+
+window.setCookie = (name, value, days) => {
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+
+// A FOUC is unavoidable, so we set another cookie called `system_preference`. It'll still glitch on first load, but it'll be fixed on the next page load.
+window.addEventListener("load", () => {
+  setCookie('system_preference', window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light', 365)
+})
+
 // BK.s('some_behavior') is a shortcut for selecting elements by data-behavior
 BK.s = (selector, filter = '') =>
   $(`[data-behavior~=${selector}]`).filter(
@@ -15,50 +45,73 @@ BK.deselect = (selector, filter = '[aria-selected=true]') =>
 BK.select = (selector, filter) =>
   BK.s(selector, filter).attr('aria-selected', true)
 
-// document.getElementsByTagName('html')[0].getAttribute('data-dark') === 'true'
 BK.isDark = () => {
   try {
-    return localStorage.getItem('dark') === 'true' || document.getElementsByTagName('html')[0].getAttribute('data-dark') === "true"
-  } catch(e) {
+    const cookieSetting = getCookie('theme')
+    const isDark = cookieSetting === 'dark' || (cookieSetting === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches);
+    return (
+      isDark || document.getElementsByTagName('html')[0].getAttribute('data-dark') === 'true'
+    )
+  } catch {
     return false
   }
 }
-BK.styleDark = theme => {
+
+BK.resolveSystemTheme = () => window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? "dark" : "light"
+
+BK.styleDark = _theme => {
+  const theme = (_theme === "system" ? BK.resolveSystemTheme() : _theme) === "dark";
+
+  window.dispatchEvent(new CustomEvent('theme-toggle', { detail: theme }))
+
+  const css = document.createElement('style')
+  css.type = 'text/css'
+  css.appendChild(
+    document.createTextNode(
+      `* {
+         -webkit-transition: none !important;
+         -moz-transition: none !important;
+         -o-transition: none !important;
+         -ms-transition: none !important;
+         transition: none !important;
+      }`
+    )
+  )
+  document.head.appendChild(css)
   document.getElementsByTagName('html')[0].setAttribute('data-dark', theme)
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content', theme ? '#17171d' : '#f9fafc')
-  BK.s('toggle_theme').find('svg').toggle()
+  document
+    .querySelector('meta[name=theme-color]')
+    ?.setAttribute('content', theme ? '#17171d' : '#f9fafc')
+  // Calling getComputedStyle forces the browser to redraw
+  document.head.removeChild(css)
 }
+
 BK.toggleDark = () => {
   theme = !BK.isDark()
   window.dispatchEvent(new CustomEvent('theme-toggle', { detail: theme }))
   return BK.setDark(theme)
 }
-BK.setDark = dark => {
-  theme = !!dark
 
-  // animate background color
-  // not in base CSS because otherwise theme restore has background animation on load
-  $('body').css({
-    transition: 'background-color 0.125s ease-in-out, color 0.0625s ease-in-out'
-  })
+BK.setDark = theme => {
   BK.styleDark(theme)
-  localStorage.setItem('dark', theme)
+  setCookie('theme', theme, 365)
   return theme
 }
 
 document.addEventListener('turbo:load', () => {
   const dark = BK.isDark()
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#17171d' : '#f9fafc')
+  document
+    .querySelector('meta[name=theme-color]')
+    ?.setAttribute('content', dark ? '#17171d' : '#f9fafc')
 })
 
 // Listen for Browser dark mode preference changes (`prefers-color-scheme`)
 if (window.matchMedia) {
   window
     .matchMedia('(prefers-color-scheme: dark)')
-    .addEventListener('change', e => {
+    .addEventListener('change', () => {
       // This will only be called on changes (not during initial page load)
-      const prefersDarkMode = e.matches
-      BK.setDark(prefersDarkMode)
+      BK.setDark(getCookie("theme"))
     })
 }
 
@@ -80,19 +133,6 @@ $(document).ready(() => {
     }
   }, 3000)
 })
-
-// https://css-tricks.com/snippets/jquery/get-query-params-object/
-BK.getQueryParams = () => {
-  const result = {}
-  const kvPairs = window.location.search.substr(1).split('&')
-  for (let i = 0; i < kvPairs.length; i++) {
-    const [k, v] = kvPairs[i].split('=')
-    if (k) {
-      result[k] = decodeURIComponent(v)
-    }
-  }
-  return result
-}
 
 BK.money = amount => {
   if (typeof amount !== 'number') return '–'

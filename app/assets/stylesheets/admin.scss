@@ -1,15 +1,31 @@
+$font-family:
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  'Fira Sans',
+  Oxygen,
+  Ubuntu,
+  'Helvetica Neue',
+  sans-serif;
+$mono:
+  ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
+
 @import 'variables';
 @import 'basscss';
 @import 'space';
 @import 'utilities';
+@import 'components/badges';
+@import 'dark';
+@import 'components/menus';
 @import 'components/receipts';
 @import 'components/modals';
-
-$font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-  'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
-$brand-font-family: ui-rounded, $font-family;
+@import 'components/tooltips';
+@import 'kbar';
 
 @import 'components/buttons';
+@import 'components/steps';
 
 // // https://raw.githubusercontent.com/waldyrious/downstyler/master/downstyler.css
 // /* ---------------------------------------------------------------------------------------------- */
@@ -100,8 +116,9 @@ html {
 /* ---------------------------------------------------------------------------------------------- */
 
 :root {
-  --hcb-font-sans: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Fira Sans', Oxygen,
-    Ubuntu, 'Helvetica Neue', sans-serif;
+  --hcb-font-sans:
+    ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
   --hcb-font-mono: 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 }
 
@@ -110,6 +127,7 @@ html {
   --hcb-tx-2: #1a1a1a;
   --hcb-bg-1: #ffffff;
   --hcb-bg-2: #e0e6ed;
+  --hcb-bg-2-5: #f9fafc;
   --hcb-bg-3: #e0e6ed;
   --hcb-link-1: #8492a6;
   --hcb-link-2: #3c4858;
@@ -129,6 +147,7 @@ html[data-dark='true'] {
   --hcb-tx-2: #e0e6ed;
   --hcb-bg-1: #17171d;
   --hcb-bg-2: #121217;
+  --hcb-bg-2-5: #121217;
   --hcb-bg-3: #252429;
   --hcb-link-1: #8492a6;
   --hcb-link-2: #3c4858;
@@ -146,14 +165,14 @@ html[data-dark='true'] {
   --kbar-background: #ffffff;
   --kbar-foreground: #252429;
   --kbar-overlay: rgba(0 0 0 / 0.05);
-  --kbar-admin-overlay: rgba(241,196,15,0.125)
+  --kbar-admin-overlay: rgba(241, 196, 15, 0.125);
 }
 
 html[data-dark='true'] {
   --kbar-background: #252429;
   --kbar-foreground: #e0e6ed;
   --kbar-overlay: rgba(255 255 255 / 0.05);
-  --kbar-admin-overlay: rgba(255,140,55,0.0625);
+  --kbar-admin-overlay: rgba(255, 140, 55, 0.0625);
 }
 
 * {
@@ -175,7 +194,7 @@ figure,
 form,
 input,
 iframe,
-img,
+*:not(.mention) > img,
 meter,
 nav,
 ol,
@@ -206,8 +225,6 @@ button {
 body {
   /* Center body in page */
   margin: 0 auto;
-  max-width: 1500px;
-  padding: 2rem;
   border-radius: 6px;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -497,13 +514,19 @@ th {
   padding: 0.5rem;
 }
 
-th {
+thead th {
   background: var(--hcb-bg-2);
 }
 
 tr:nth-child(even) {
   /* Set every other cell slightly darker. Improves readability. */
   background: var(--hcb-bg-2);
+}
+
+table.no-stripes {
+  tr:nth-child(even) {
+    background: inherit;
+  }
 }
 
 table caption {
@@ -591,7 +614,7 @@ video {
 .pagination span.current,
 .pagination span.gap {
   float: left;
-  padding: 0 8px 0 0;
+  padding: 8px;
   line-height: 19px;
   text-decoration: none;
   border-left-width: 0;
@@ -692,6 +715,273 @@ video {
 .table--autosize {
   width: auto;
   min-width: 0;
+}
+
+.pagination {
+  margin-bottom: 0rem !important;
+  gap: 4px;
+}
+
+.pagination > li {
+  margin-top: 0rem !important;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+/* The navigation bar used for admin pages */
+
+.nav-row {
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+
+.nav-row > *:not(:last-child) > summary {
+  border-right: 1px solid var(--hcb-bg-3) !important;
+}
+
+@media screen and (min-width: 800px) {
+  .nav-row {
+    flex-direction: row;
+  }
+
+  .admin-nav-item:active {
+    pointer-events: none;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .admin-nav-item[open] {
+    /* Adjust the <details> padding while open */
+    padding-bottom: 0rem;
+    margin-bottom: 0 !important;
+  }
+
+  .admin-nav-item[open] summary {
+    /* Adjust the <details> padding while open */
+    margin-bottom: 0px !important;
+  }
+
+  .dropdown {
+    position: absolute;
+    top: 32px;
+    padding-top: 4px;
+  }
+
+  summary:hover + detail,
+  detail:hover,
+  details:hover > .dropdown {
+    display: block;
+  }
+
+  detail,
+  .dropdown {
+    display: none;
+  }
+
+  .role-badge {
+    margin-bottom: 0px !important;
+  }
+}
+
+.sub-items {
+  display: flex;
+  flex-direction: column;
+  background: var(--hcb-bg-2-5);
+  outline: 1px solid var(--hcb-bg-3);
+  border-radius: 0px 0px 4px 4px;
+  z-index: 999;
+  overflow: visible;
+  position: relative;
+  margin-top: 4px;
+}
+
+.sub-items > a:last-child {
+  border-radius: 0px 0px 4px 4px;
+}
+
+.sub-items > a {
+  text-transform: capitalize;
+  pointer-events: auto;
+  color: var(--hcb-tx-1);
+  text-decoration: none;
+  background: var(--hcb-bg-2-5);
+  min-width: 220px;
+  padding: 8px 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  &:not(:first-child) {
+    border-top: 1px solid var(--hcb-bg-3);
+  }
+}
+
+.badge {
+  margin-left: 0.4rem;
+}
+
+.nav-item > .badge {
+  margin-left: 0.2rem;
+}
+
+.sub-items > a:hover {
+  color: var(--hcb-tx-1);
+  background: var(--hcb-bg-2);
+}
+
+.nav-item {
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-item > .dropdown {
+  background: var(--hcb-bg-2-5);
+}
+
+.role-badge {
+  padding-right: 12px;
+  margin-bottom: 16px;
+}
+
+.role-badge > b {
+  text-transform: uppercase;
+}
+
+.badge-admin {
+  background: rgba(236, 55, 80, 0.4);
+}
+
+.h-38 {
+  height: 38px;
+}
+
+.admin-nav-item {
+  position: relative;
+}
+
+.admin-nav-item {
+  /* Make the <details> look more "clickable" */
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: none !important;
+}
+
+summary {
+  /* Makes the <summary> look more like a "clickable" link with the pointer cursor */
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.events-filter-select {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.events-filter-select > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 300px;
+  margin-right: 16px;
+}
+
+.events-filter-select > label > select,
+.events-filter-select > label > input {
+  flex-grow: 1;
+}
+
+.logo {
+  height: 36px;
+}
+
+#admin-theme-toggle,
+#admin-logout-button {
+  color: var(--hcb-link-1);
+  background: none;
+  padding: 0px;
+}
+#admin-theme-toggle:hover,
+#admin-logout-button:hover {
+  color: var(--hcb-link-2);
+}
+form:has(> #admin-logout-button) {
+  margin: 0px;
+}
+
+@keyframes flash-slide-in {
+  from {
+    translate: 0 calc(100% + var(--flash-offset, 0));
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+#flash-container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 50ch;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+
+  article.flash {
+    --flash-offset: 1rem;
+    border: 1px solid var(--hcb-bg-3);
+    border-top: 3px solid var(--hcb-accent);
+    border-radius: 4px;
+    background: var(--hcb-bg-1);
+    padding: 1rem;
+    margin: 0 var(--flash-offset) var(--flash-offset) 0;
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 2px hsl(240 3.8% 46.1% / 12%);
+    animation-duration: 0.5s;
+    animation-name: flash-slide-in;
+    z-index: 999;
+
+    &.flash--success {
+      border-top-color: var(--hcb-accent-active);
+    }
+
+    &.flash--error {
+      border-top-color: var(--hcb-primary);
+    }
+
+    &.flash--dismissed {
+      translate: 0 calc(100% + var(--flash-offset));
+      display: none;
+      transition-property: translate display;
+      transition-duration: 0.5s;
+      transition-behavior: allow-discrete;
+    }
+
+    .flash--content {
+      flex: 1;
+    }
+  }
+
+  .flash--close-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+  }
 }
 
 @tailwind base;

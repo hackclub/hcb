@@ -1,19 +1,15 @@
-<tr
-  class="transaction--<%= transaction.amount.negative? ? "negative" : "positive" %>"
-  id="retrofees__transaction"
-  data-behavior="filterbar_row"
-  data-filter="<%= transaction.filter_data.to_json %>">
+<tr class="transaction" id="retrofees__transaction">
   <td class="transaction__icon tooltipped tooltipped--e" aria-label="Free money!">
     <%= inline_icon "rep" %>
   </td>
   <td>
-    <%= transaction.date %>
+    <%= format_date transaction.date %>
   </td>
   <td>
     🎉 HCB Gift 🎉
   </td>
   <td class="right-align">
-    <%= render_money transaction.amount %>
+    <%= render_transaction_amount transaction.amount %>
   </td>
   <% if organizer_signed_in? %>
     <td>
@@ -24,13 +20,13 @@
 <section class="modal" data-behavior="modal" role="dialog" id="retrofees">
   <%= modal_header "Surprise! Free money." %>
   <p>
-    Awhile ago, <a href="https://changelog.hcb.hackclub.com/we're-making-payment-processing-fees-disappear-101088">we announced the
+    Awhile ago, <a href="https://blog.hcb.hackclub.com/posts/were-making-payment-processing-fees-disappear-101088">we announced the
     abolishment of credit card processing fees on HCB.</a>
   </p>
   <p>
     Well, there’s more good news—we also reimbursed all of
     your previous processing fees from before the change.
-    This project got <%= render_money transaction.amount %>.
+    This organization got <%= render_money transaction.amount %>.
   </p>
   <p>
     With ❤️,<br>

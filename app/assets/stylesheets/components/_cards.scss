@@ -1,4 +1,5 @@
 .card {
+  --card-bg: #ffffff;
   background-color: $white;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.125);
   padding: 1rem;
@@ -13,12 +14,14 @@
   }
 
   &.b--warning {
-    box-shadow: 0 0 2px 0 rgba(map-get($palette, warning), 0.0625),
+    box-shadow:
+      0 0 2px 0 rgba(map-get($palette, warning), 0.0625),
       0 4px 8px 0 rgba(map-get($palette, warning), 0.125);
   }
 
   &.b--info {
-    box-shadow: 0 0 2px 0 rgba(map-get($palette, info), 0.0625),
+    box-shadow:
+      0 0 2px 0 rgba(map-get($palette, info), 0.0625),
       0 4px 8px 0 rgba(map-get($palette, info), 0.125);
   }
 
@@ -32,14 +35,22 @@
     transform: translateY(-1px);
   }
 
-  &.card--background-image {
+  &.card--background-image,
+  .card__banner--top.card--background-image {
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.95) 90%), var(--bg-image);
+    background-image:
+      linear-gradient(
+        rgba(255, 255, 255, 0.75) 0%,
+        rgba(255, 255, 255, 0.95) 90%
+      ),
+      var(--bg-image);
 
     html[data-dark='true'] & {
-      background-image: linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%), var(--bg-image);
+      background-image:
+        linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%),
+        var(--bg-image);
     }
   }
 }
@@ -48,7 +59,8 @@
   z-index: 999;
 }
 
-.draggable-source--is-dragging .card {
+.draggable-source--is-dragging .card,
+.draggable-source--is-dragging.card {
   opacity: 0.5;
 }
 
@@ -85,7 +97,8 @@ a.card {
   max-width: 32rem;
   border: 1px solid map-get($palette, error);
   margin-bottom: 1.5rem;
-  box-shadow: 0 0 2px 0 rgba(map-get($palette, error), 0.025),
+  box-shadow:
+    0 0 2px 0 rgba(map-get($palette, error), 0.025),
     0 4px 8px 0 rgba(map-get($palette, error), 0.125);
 
   h2 {
@@ -108,6 +121,7 @@ a.card {
   margin-right: auto;
   padding: 1rem;
   text-align: center;
+  text-wrap: balance;
   line-height: 1.25;
 }
 .banner--archived {
@@ -153,4 +167,21 @@ a.card {
 
 .card--sunset {
   background-image: url('https://cloud-awvmmj0xe.vercel.app/sunset_card.png');
+}
+
+.card--breakdown {
+  @extend .card;
+  @extend .border;
+  padding: 20px;
+  padding-top: 0px;
+  padding-bottom: 24px;
+  border: 1px solid map-get($palette, smoke);
+
+  & .error {
+    color: saturate(lighten(map-get($palette, error), 40%), 60%);
+  }
+}
+
+#card-pin {
+  width: 64px;
 }

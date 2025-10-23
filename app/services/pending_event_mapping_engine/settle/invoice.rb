@@ -7,7 +7,7 @@ module PendingEventMappingEngine
         unsettled.find_each(batch_size: 100) do |cpt|
           # 1. identify invoice
           invoice = cpt.invoice
-          Airbrake.notify("invoice not found for canonical pending transaction #{cpt.id}") unless invoice
+          Rails.error.unexpected("invoice not found for canonical pending transaction #{cpt.id}") unless invoice
           next unless invoice
 
           event = invoice.event
@@ -19,7 +19,7 @@ module PendingEventMappingEngine
             # 2. look up canonical - scoped to event for added accuracy
             cts = event.canonical_transactions.where(
               "memo ilike ? and date >= ?",
-              "%PAYOUT% #{ActiveRecord::Base.sanitize_sql_like prefix}%",
+              "%PAYOUT% #{ActiveRecord::Base.sanitize_sql_like(prefix)}%",
               cpt.date
             ).order("date asc")
 
@@ -28,7 +28,7 @@ module PendingEventMappingEngine
 
             next if cts.count < 1 # no match found yet. not processed.
 
-            Airbrake.notify("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
             ct = cts.first
 
             # 3. mark no longer pending
@@ -41,32 +41,37 @@ module PendingEventMappingEngine
             # special case for invoices that are marked paid but are missing a payout! these seem to be sent to bill.com
             # these typically can match based on amount cents and nearest date as a result
 
-            cts = event.canonical_transactions.where("memo ilike '%bill.com%' and amount_cents = #{invoice.amount_due} and date > '#{invoice.created_at.strftime("%Y-%m-%d")}'")
-            cts = event.canonical_transactions.where("memo ilike 'DEPOSIT' and amount_cents = #{invoice.amount_due} and date > '#{invoice.created_at.strftime("%Y-%m-%d")}'") unless cts.present? # see sachacks examples
+            cts = event.canonical_transactions.where("memo ilike '%bill.com%' and amount_cents = ? and date > ?", invoice.amount_due, invoice.created_at.strftime("%Y-%m-%d"))
+            cts = event.canonical_transactions.where("memo ilike 'DEPOSIT' and amount_cents = ? and date > ?", invoice.amount_due, invoice.created_at.strftime("%Y-%m-%d")) unless cts.present? # see sachacks examples
             unless cts.present?
               prefix = grab_prefix_old(invoice:)
               cts = event.canonical_transactions.where(
                 "memo ilike ? and date > ?",
-                "HACK CLUB EVENT TRANSFER PAYOUT - #{ActiveRecord::Base.sanitize_sql_like prefix}%",
+                "HACK CLUB EVENT TRANSFER PAYOUT - #{ActiveRecord::Base.sanitize_sql_like(prefix)}%",
                 invoice.created_at.strftime("%Y-%m-%d").to_s
               )
             end
 
-            cts = event.canonical_transactions.missing_pending.where("amount_cents = ? and date > ?", cpt.amount_cents, cpt.date) unless cts.present? # see example canonical transaction 198588
+            # this code is dangerous: https://hackclub.slack.com/archives/C047Y01MHJQ/p1724699279740259
+            # cts = event.canonical_transactions.missing_pending.where("amount_cents = ? and date > ?", cpt.amount_cents, cpt.date) unless cts.present? # see example canonical transaction 198588
 
             if cts.empty? # no match found yet. not processed.
-              Airbrake.notify("Old manually marked as paid invoice #{invoice.id} still doesn't have a matching CT.") if invoice.manually_marked_as_paid_at&.> 2.weeks.ago
+              Rails.error.unexpected("Old manually marked as paid invoice #{invoice.id} still doesn't have a matching CT.") if invoice.manually_marked_as_paid_at&.> 2.weeks.ago
               next
             end
 
-            Airbrake.notify("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
             ct = cts.first
 
+            # this code is dangerous: https://hackclub.slack.com/archives/C047Y01MHJQ/p1748710247626659
+
+            Rails.error.unexpected "#{cpt.id} potentially should be mapped to #{ct.id}"
+
             # 3. mark no longer pending
-            CanonicalPendingTransactionService::Settle.new(
-              canonical_transaction: ct,
-              canonical_pending_transaction: cpt
-            ).run!
+            # CanonicalPendingTransactionService::Settle.new(
+            #  canonical_transaction: ct,
+            #  canonical_pending_transaction: cpt
+            # ).run!
           end
         end
       end

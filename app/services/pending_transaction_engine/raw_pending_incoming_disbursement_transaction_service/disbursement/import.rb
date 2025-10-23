@@ -13,7 +13,10 @@ module PendingTransactionEngine
         private
 
         def disbursements
-          ::Disbursement.where.missing :raw_pending_incoming_disbursement_transaction
+          ::Disbursement
+            .not_scheduled
+            .or(::Disbursement.where("scheduled_on <= ?", Time.now))
+            .where.missing :raw_pending_incoming_disbursement_transaction
         end
 
       end

@@ -2,15 +2,15 @@
 
 class AchTransferPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def new?
-    is_public? || user_who_can_transfer?
+    admin_or_user?
   end
 
   def create?
-    user_who_can_transfer? && !record.event.demo_mode && !record.event.outernet_guild?
+    user_who_can_transfer? && !record.event.demo_mode
   end
 
   def show?
@@ -50,6 +50,10 @@ class AchTransferPolicy < ApplicationPolicy
 
   def user_who_can_transfer?
     EventPolicy.new(user, record.event).create_transfer?
+  end
+
+  def admin_or_user?
+    user&.admin? || record.event.users.include?(user)
   end
 
   def admin_or_manager?

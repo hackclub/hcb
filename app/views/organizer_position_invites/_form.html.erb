@@ -1,23 +1,24 @@
-<p class="muted mb1">This person will have full access to your project finances.</p>
-
-<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path) do |form| %>
+<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
   <%= form_errors invite, "user" %>
-  <div x-data="{ email: '' }">
-    <div class="field flex items-end">
-      <div class="mr2 flex-auto">
-        <%= form.label :email %>
-        <%= form.email_field :email, "x-model": "email" %>
-      </div>
-      <%= form.submit "Send" %>
+
+  <div class="field" x-data="{ email: '' }">
+    <%= form.label :email, class: "mb1" %>
+
+    <div class="flex items-center">
+      <%= form.email_field :email, class: "mr1", "x-model": "email", placeholder: "fiona@hackclub.com" %>
     </div>
-    <template x-if="/^(team|webmaster|marketing|admin|info|about|support|sales|hq|hello)@/.test(email)">
-      <div class="warning mt1">⚠️ For security, we discourage team emails on HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!</div>
+    <template x-if="/(team|webmaster|marketing|admin|info|about|support|sales|hello)/.test(email)">
+      <div class="warning mt1">⚠️ For security, we discourage team emails on
+        HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!
+      </div>
     </template>
   </div>
-  <% admin_tool("mt1") do %>
-    <div class="field field--checkbox m0">
-      <%= form.check_box :is_signee %>
-      <%= form.label :is_signee, "Signed contract" %>
-    </div>
+
+  <%= render "organizer_position_invites/role_and_control_form", form: form %>
+
+  <% admin_tool("mt2 mb2 flex g1") do %>
+    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
   <% end %>
+
+  <%= form.submit "Submit" %>
 <% end %>

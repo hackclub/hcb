@@ -10,7 +10,7 @@ module CanonicalTransactionService
 
       def run
         {
-          transactions_volume: tx.sum("@amount_cents"),
+          transactions_volume: tx.sum("abs(amount_cents)"),
           expenses: tx.expense.sum(:amount_cents),
           raised: tx.revenue.sum(:amount_cents),
           revenue: tx.includes(:fee).sum("fees.amount_cents_as_decimal").to_i,

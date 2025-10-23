@@ -18,9 +18,15 @@ module Column
       end
 
     rescue Faraday::Error => e
-      notify_airbrake(e)
+      Rails.error.report(e)
       redirect_to account_number_event_path(@event), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
 
+    end
+
+    def update
+      authorize @event.column_account_number
+      @event.column_account_number.update!(params.require(:column_account_number).permit(:deposit_only))
+      redirect_back_or_to account_number_event_path(@event)
     end
 
   end

@@ -1,13 +1,33 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  skip_before_action :signed_in_user, only: [:auth, :auth_submit, :choose_login_preference, :set_login_preference, :webauthn_options, :webauthn_auth, :login_code, :exchange_login_code]
+  skip_before_action :signed_in_user, only: [:webauthn_options]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
-  skip_after_action :verify_authorized, except: [:edit, :update]
+  skip_after_action :verify_authorized, only: [:show,
+                                               :revoke_oauth_application,
+                                               :edit_address,
+                                               :edit_payout,
+                                               :impersonate,
+                                               :delete_profile_picture,
+                                               :webauthn_options,
+                                               :logout,
+                                               :unimpersonate,
+                                               :receipt_report,
+                                               :edit_featurepreviews,
+                                               :edit_security,
+                                               :edit_notifications,
+                                               :edit_admin,
+                                               :toggle_sms_auth,
+                                               :complete_sms_auth_verification,
+                                               :start_sms_auth_verification]
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
-  before_action :migrate_return_to, only: [:auth, :auth_submit, :choose_login_preference, :login_code, :exchange_login_code, :webauthn_auth]
 
   wrap_parameters format: :url_encoded_form
+
+  def show
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    redirect_to admin_user_path(@user)
+  end
 
   def impersonate
     authorize current_user
@@ -29,80 +49,10 @@ class UsersController < ApplicationController
     redirect_to params[:return_to] || root_path, flash: { info: "Welcome back, 007. You're no longer impersonating #{impersonated_user.name}" }
   end
 
-  # view to log in
-  def auth
-    @prefill_email = params[:email] if params[:email].present?
-    @return_to = params[:return_to]
-  end
-
-  def auth_submit
-    @email = params[:email]&.downcase
-    user = User.find_by(email: @email)
-
-    has_webauthn_enabled = user&.webauthn_credentials&.any?
-    login_preference = session[:login_preference]
-
-    if !has_webauthn_enabled || login_preference == "email"
-      redirect_to login_code_users_path, status: :temporary_redirect
-    else
-      session[:auth_email] = @email
-      redirect_to choose_login_preference_users_path(return_to: params[:return_to])
-    end
-  end
-
-  def choose_login_preference
-    @email = session[:auth_email]
-    @user = User.find_by_email(@email)
-    @return_to = params[:return_to]
-    return redirect_to auth_users_path if @email.nil?
-
-    session.delete :login_preference
-  end
-
-  def set_login_preference
-    @email = params[:email]
-    remember = params[:remember] == "1"
-
-    case params[:login_preference]
-    when "email"
-      session[:login_preference] = "email" if remember
-      redirect_to login_code_users_path, status: :temporary_redirect
-    when "webauthn"
-      # This should never happen, because WebAuthn auth is handled on the frontend
-      redirect_to choose_login_preference_users_path
-    end
-  end
-
-  # post to request login code
-  def login_code
-    @return_to = params[:return_to]
-    @email = params.require(:email)&.downcase
-    @force_use_email = params[:force_use_email]
-
-    initialize_sms_params
-
-    resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.ip, user_agent: request.user_agent).run
-
-    @use_sms_auth = resp[:method] == :sms
-
-    if resp[:error].present?
-      flash[:error] = resp[:error]
-      return redirect_to auth_users_path
-    end
-
-    if resp[:login_code]
-      cookies.signed[:"browser_token_#{resp[:login_code].id}"] = { value: resp[:browser_token], expires: LoginCode::EXPIRATION.from_now }
-    end
-
-    @user_id = resp[:id]
-
-    @webauthn_available = User.find_by(email: @email)&.webauthn_credentials&.any?
-
-    render status: :unprocessable_entity
-
-  rescue ActionController::ParameterMissing
-    flash[:error] = "Please enter an email address."
-    redirect_to auth_users_path
+  def toggle_pretend_is_not_admin
+    authorize current_user
+    current_user.update(pretend_is_not_admin: !current_user.pretend_is_not_admin)
+    head :ok
   end
 
   def webauthn_options
@@ -110,7 +60,7 @@ class UsersController < ApplicationController
 
     session[:auth_email] = params[:email]
 
-    return head :not_found if params[:require_webauthn_preference] && session[:login_preference] != "webauthn"
+    return head :not_found if params[:require_webauthn_preference] == "true" && session[:login_preference] != "webauthn"
 
     user = User.find_by(email: params[:email])
 
@@ -126,119 +76,29 @@ class UsersController < ApplicationController
     render json: options
   end
 
-  def webauthn_auth
-    user = User.find_by(email: params[:email])
-
-    if !user
-      return redirect_to auth_users_path
-    end
-
-    webauthn_credential = WebAuthn::Credential.from_get(JSON.parse(params[:credential]))
-
-    stored_credential = user.webauthn_credentials.find_by!(webauthn_id: webauthn_credential.id)
-
-    begin
-      webauthn_credential.verify(
-        session[:webauthn_challenge],
-        public_key: stored_credential.public_key,
-        sign_count: stored_credential.sign_count
-      )
-
-      stored_credential.update!(sign_count: webauthn_credential.sign_count)
-
-      fingerprint_info = {
-        fingerprint: params[:fingerprint],
-        device_info: params[:device_info],
-        os_info: params[:os_info],
-        timezone: params[:timezone],
-        ip: request.remote_ip
-      }
-
-      session[:login_preference] = "webauthn" if params[:remember] == "true"
-
-      sign_in(user:, fingerprint_info:, webauthn_credential: stored_credential)
-
-      redirect_to(params[:return_to] || root_path)
-
-    rescue WebAuthn::SignCountVerificationError, WebAuthn::Error => e
-      redirect_to auth_users_path, flash: { error: "Something went wrong." }
-    rescue ActiveRecord::RecordInvalid => e
-      redirect_to auth_users_path, flash: { error: e.record.errors&.full_messages&.join(". ") }
-    end
-  end
-
-  # post to exchange auth token for access token
-  def exchange_login_code
-    fingerprint_info = {
-      fingerprint: params[:fingerprint],
-      device_info: params[:device_info],
-      os_info: params[:os_info],
-      timezone: params[:timezone],
-      ip: request.remote_ip
-    }
-
-    user = UserService::ExchangeLoginCodeForUser.new(
-      user_id: params[:user_id],
-      login_code: params[:login_code],
-      sms: params[:sms],
-      cookies:
-    ).run
-
-    sign_in(user:, fingerprint_info:)
-
-    # Clear the flash - this prevents the error message showing up after an unsuccessful -> successful login
-    flash.clear
-
-    if user.full_name.blank? || user.phone_number.blank?
-      redirect_to edit_user_path(user.slug)
-    else
-      redirect_to(params[:return_to] || root_path)
-    end
-  rescue Errors::InvalidLoginCode, Errors::BrowserMismatch => e
-    message = case e
-              when Errors::InvalidLoginCode
-                "Invalid login code!"
-              when Errors::BrowserMismatch
-                "Looks like this isn't the browser that requested that code!"
-              end
-
-    flash.now[:error] = message
-    # Propagate the to the login_code page on invalid code
-    @user_id = params[:user_id]
-    @email = params[:email]
-    @force_use_email = params[:force_use_email]
-    initialize_sms_params
-    return render :login_code, status: :unprocessable_entity
-  rescue ActiveRecord::RecordInvalid => e
-    flash[:error] = e.record.errors&.messages&.values&.flatten&.join(". ")
-    redirect_to auth_users_path
-  end
-
   def logout
     sign_out
     redirect_to root_path
   end
 
   def logout_all
-    sign_out_of_all_sessions
-    redirect_back_or_to security_user_path(current_user), flash: { success: "Success" }
+    user = User.friendly.find(params[:id])
+    authorize user
+    sign_out_of_all_sessions(user)
+    redirect_back_or_to security_user_path(user), flash: { success: "Success" }
   end
 
   def logout_session
     begin
       session = UserSession.find(params[:id])
-      if session.user.id != current_user.id
-        Rail.logger.error "User id: #{user.id} tried to delete session #{session.id}"
-        flash[:error] = "Error deleting the session"
-        return
-      end
+      authorize session.user
 
-      session.destroy
-      flash[:success] = "Deleted session!"
+      session.update(signed_out_at: Time.now, expiration_at: Time.now)
+      flash[:success] = "Logged out of session!"
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "Session is not found"
     end
-    redirect_to root_path
+    redirect_back_or_to settings_security_path
   end
 
   def revoke_oauth_application
@@ -246,71 +106,34 @@ class UsersController < ApplicationController
     redirect_back_or_to security_user_path(current_user)
   end
 
+  def make_oauth_authorization_eternal
+    token = ApiToken.find(params[:id])
+    authorize token, :make_eternal?
+
+    if token.update(expires_in: nil)
+      flash[:success] = "Authorization made eternal."
+    else
+      flash[:error] = "Failed to make authorization eternal."
+    end
+    redirect_back_or_to security_user_path(token.user)
+  end
+
   def receipt_report
-    ReceiptReportJob::Send.perform_later(current_user.id, force_send: true)
+    ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
     redirect_to settings_previews_path
   end
 
-  FEATURES = { # the keys are current feature flags, the values are emojis that show when-enabled.
-    receipt_bin_2023_04_07: %w[🧾 🗑️ 💰],
-    sms_receipt_notifications_2022_11_23: %w[📱 🧾 🔔 💬],
-    hcb_code_popovers_2023_06_16: nil,
-    rename_on_homepage_2023_12_06: %w[🖊️ ⚡ ⌨️]
-  }.freeze
-
-  def enable_feature
-    @user = current_user
-    @feature = params[:feature]
-    authorize @user
-    if FEATURES.key?(@feature.to_sym) || @user.admin?
-      if Flipper.enable_actor(@feature, @user)
-        confetti!(emojis: FEATURES[@feature.to_sym])
-        flash[:success] = "Opted into beta"
-      else
-        flash[:error] = "Error while opting into beta"
-      end
-    else
-      flash[:error] = "Beta doesn't exist."
-    end
-    redirect_back fallback_location: settings_previews_path
-  end
-
-  def disable_feature
-    @user = current_user
-    @feature = params[:feature]
-    authorize @user
-    if FEATURES.key?(@feature.to_sym) || @user.admin?
-      if Flipper.disable_actor(@feature, @user)
-        flash[:success] = "Opted out of beta"
-      else
-        flash[:error] = "Error while opting out of beta"
-      end
-    else
-      flash[:error] = "Beta doesn't exist."
-    end
-    redirect_back fallback_location: settings_previews_path
-  end
-
   def edit
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.onboarding?
-    @mailbox_address = @user.active_mailbox_address
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+    set_onboarding
     authorize @user
   end
 
   def edit_address
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @states = [
-      ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] },
-      ISO3166::Country.new("CA").subdivisions.values.map { |s| [s.translations["en"], s.code] }
-    ].flatten(1)
+    @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     redirect_to edit_user_path(@user) unless @user.stripe_cardholder
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
 
@@ -321,33 +144,107 @@ class UsersController < ApplicationController
 
   def edit_featurepreviews
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     authorize @user
   end
 
   def edit_security
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
+    show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
-    @oauth_authorizations = @user.api_tokens
-                                 .where.not(application_id: nil)
-                                 .select("application_id, MAX(api_tokens.created_at) AS created_at, MIN(api_tokens.created_at) AS first_authorized_at, COUNT(*) AS authorization_count")
-                                 .accessible
-                                 .group(:application_id)
-                                 .includes(:application)
-    @all_sessions = (@sessions + @oauth_authorizations).sort_by { |s| s.created_at }.reverse!
+    @sessions = @sessions.not_expired
+    oauth_tokens_by_app = @user.api_tokens
+                               .where.not(application_id: nil)
+                               .accessible
+                               .includes(:application)
+                               .order(created_at: :desc)
+                               .group_by(&:application)
+    oauth_authorizations = oauth_tokens_by_app.map do |app, tokens|
+      OpenStruct.new(
+        application: app,
+        created_at: tokens.max_by(&:created_at).created_at,
+        first_authorized_at: tokens.min_by(&:created_at).created_at,
+        authorization_count: tokens.size,
+        tokens: tokens,
+      )
+    end
+    @all_sessions = (@sessions + oauth_authorizations).sort_by { |s| s.created_at }.reverse!
+
+    @expired_sessions = @user
+                        .user_sessions
+                        .recently_expired_within(1.week.ago)
+                        .not_impersonated
+                        .order(created_at: :desc)
 
     authorize @user
   end
 
+  def edit_notifications
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+  end
+
+  def edit_integrations
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+  end
+
+  def generate_totp
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.totp&.mark_expired!
+    @user.unverified_totp&.destroy!
+    @totp = @user.create_unverified_totp
+  end
+
+  def enable_totp
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @totp = @user.unverified_totp
+    if @totp.may_mark_verified? && @totp.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
+      @user.totp&.mark_expired!
+      @totp.mark_verified!
+      redirect_back_or_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
+    else
+      @invalid = true
+      render :generate_totp
+    end
+  end
+
+  def disable_totp
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.totp&.mark_expired!
+    redirect_back_or_to security_user_path(@user)
+  end
+
+  def generate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @previewed_backup_codes = @user.generate_backup_codes!
+  end
+
+  def activate_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.activate_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
+  def disable_backup_codes
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+    @user.disable_backup_codes!
+    redirect_back_or_to security_user_path(@user)
+  end
+
   def edit_admin
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-    @onboarding = @user.full_name.blank?
-    show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-    @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+
+    authorize @user
+  end
+
+  def admin_details
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
 
     # User Information
     @invoices = Invoice.where(creator: @user)
@@ -356,46 +253,76 @@ class UsersController < ApplicationController
     @lob_checks = Check.where(creator: @user)
     @ach_transfers = AchTransfer.where(creator: @user)
     @disbursements = Disbursement.where(requested_by: @user)
+    @permissions_overview = User::PermissionsOverview.new(user: @user)
 
     authorize @user
   end
 
   def update
+    return_to = params[:return_to]
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     @user = User.friendly.find(params[:id])
     authorize @user
 
-    if @user.admin? && params[:user][:running_balance_enabled].present?
-      enable_running_balance = params[:user][:running_balance_enabled] == "1"
-      if @user.running_balance_enabled? != enable_running_balance
-        @user.update_attribute(:running_balance_enabled, enable_running_balance)
-      end
+    @user.assign_attributes(user_params)
+
+    if @user.use_two_factor_authentication_changed?
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
 
-    if params[:user][:locked].present?
+    if admin_signed_in?
+      if @user.auditor? && params[:user][:running_balance_enabled].present?
+        enable_running_balance = params[:user][:running_balance_enabled] == "1"
+        if @user.running_balance_enabled? != enable_running_balance
+          @user.update_attribute(:running_balance_enabled, enable_running_balance)
+        end
+      end
+
       locked = params[:user][:locked] == "1"
-      if locked && @user == current_user
-        flash[:error] = "As much as you might desire to, you cannot lock yourself out."
-        return redirect_to admin_user_path(@user)
-      elsif locked && @user.admin?
-        flash[:error] = "Contact a engineer to lock out another admin."
-        return redirect_to admin_user_path(@user)
-      elsif locked
-        @user.lock!
-      else
-        @user.unlock!
+      if @user.locked? != locked
+        if @user == current_user
+          flash[:error] = "As much as you might desire to, you cannot lock yourself out."
+          return redirect_to admin_user_path(@user)
+        elsif @user.admin? && !superadmin_signed_in?
+          flash[:error] = "Only superadmins can lock or unlock admins."
+          return redirect_to admin_user_path(@user)
+        elsif locked && @user.superadmin?
+          flash[:error] = "To lock this user, demote them to a regular admin first."
+          return redirect_to admin_user_path(@user)
+        elsif locked
+          @user.lock!
+        else
+          @user.unlock!
+        end
       end
     end
 
-    if @user.update(user_params)
+    if params[:user][:email].present? && params[:user][:email] != @user.email
+      begin
+        email_update = User::EmailUpdate.new(
+          user: @user,
+          original: @user.email,
+          replacement: params[:user][:email],
+          updated_by: current_user
+        )
+        email_update.save!
+      rescue
+        flash[:error] = email_update.errors.full_messages.to_sentence
+        return redirect_back_or_to edit_user_path(@user)
+      end
+    end
+
+    if @user.save
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
 
       if @user.full_name_before_last_save.blank?
         flash[:success] = "Profile created!"
-        redirect_to root_path
+        redirect_to(return_to || root_path)
       else
         if @user.payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
+        elsif email_update&.requested?
+          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and a authorization link to your old email (#{@user.email}), please click them both to confirm this change."
         else
           flash[:success] = @user == current_user ? "Updated your profile!" : "Updated #{@user.first_name}'s profile!"
         end
@@ -405,19 +332,24 @@ class UsersController < ApplicationController
         redirect_back_or_to edit_user_path(@user)
       end
     else
-      @onboarding = User.friendly.find(params[:id]).full_name.blank?
-      show_impersonated_sessions = admin_signed_in? || current_session.impersonated?
-      @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
+      set_onboarding
+
       if @user.stripe_cardholder&.errors&.any?
         flash.now[:error] = @user.stripe_cardholder.errors.first.full_message
-        render :edit_address, status: :unprocessable_entity and return
+        render :edit_address, status: :unprocessable_entity
+        return
       end
+
       if @user.payout_method&.errors&.any?
-        flash.now[:error] = @user.payout_method.errors.first.full_message
-        render :edit_payout, status: :unprocessable_entity and return
+        flash.now[:error] = @user.payout_method.errors.full_messages.to_sentence
+        render :edit_payout, status: :unprocessable_entity
+        return
       end
+
       render :edit, status: :unprocessable_entity
     end
+  rescue Errors::StripeInvalidNameError => e
+    redirect_back_or_to edit_user_path(@user), flash: { error: e.message }
   end
 
   def delete_profile_picture
@@ -471,6 +403,11 @@ class UsersController < ApplicationController
     @shown_private_feature_previews = params[:classified_top_secret]&.split(",") || []
   end
 
+  def set_onboarding
+    @onboarding = @user.onboarding?
+    @hide_seasonal_decorations = true if @onboarding
+  end
+
   def user_params
     attributes = [
       :full_name,
@@ -479,12 +416,14 @@ class UsersController < ApplicationController
       :profile_picture,
       :pretend_is_not_admin,
       :sessions_reported,
-      :session_duration_seconds,
+      :session_validity_preference,
       :receipt_report_option,
       :birthday,
       :seasonal_themes_enabled,
-      :payout_method_type,
-      :comment_notifications
+      :comment_notifications,
+      :charge_notifications,
+      :use_sms_auth,
+      :use_two_factor_authentication
     ]
 
     if @user.stripe_cardholder
@@ -500,58 +439,81 @@ class UsersController < ApplicationController
       }
     end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::Check.name
-      attributes << {
-        payout_method_attributes: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :address_country
-        ]
-      }
-    end
+    if @user.can_update_payout_method?
+      attributes << :payout_method_type
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Check.name
+        attributes << {
+          payout_method_attributes: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :address_country
+          ]
+        }
+      end
 
-    if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
-      attributes << {
-        payout_method_attributes: [
-          :account_number,
-          :routing_number
-        ]
-      }
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
+        attributes << {
+          payout_method_wire: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :recipient_country,
+            :bic_code,
+            :account_number
+          ] + Wire.recipient_information_accessors
+        }
+      end
+
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::WiseTransfer.name
+        attributes << {
+          payout_method_wise_transfer: [
+            :address_line1,
+            :address_line2,
+            :address_city,
+            :address_state,
+            :address_postal_code,
+            :recipient_country,
+            :currency,
+          ] + User::PayoutMethod::WiseTransfer.recipient_information_accessors
+        }
+      end
+
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
+        attributes << {
+          payout_method_attributes: [
+            :account_number,
+            :routing_number
+          ]
+        }
+      end
+
+      if params.require(:user)[:payout_method_type] == User::PayoutMethod::PaypalTransfer.name
+        attributes << {
+          payout_method_attributes: [
+            :recipient_email
+          ]
+        }
+      end
     end
 
     if superadmin_signed_in?
       attributes << :access_level
     end
 
-    params.require(:user).permit(attributes)
-  end
+    p = params.require(:user).permit(attributes)
 
-  def initialize_sms_params
-    return if @force_use_email
+    # The Wire payout method attributes are under the `payout_method_wire` param instead of `payout_method_attributes` to prevent conflict with existing keys for other payout methods such as AchTransfer.
+    # Rails requires that DOM form inputs have unique names.
+    p[:payout_method_attributes] = p.delete(:payout_method_wire) if p[:payout_method_wire]
+    # Same thing for Wise transfer payouts
+    p[:payout_method_attributes] = p.delete(:payout_method_wise_transfer) if p[:payout_method_wise_transfer]
 
-    user = User.find_by(email: @email)
-    if user&.use_sms_auth
-      @use_sms_auth = true
-      @phone_last_four = user.phone_number.last(4)
-    end
-  end
-
-  # HCB used to run on bank.hackclub.com— this ensures that any old references to `bank.` URLs are translated into `hcb.`
-  def migrate_return_to
-    if params[:return_to].present?
-      uri = URI(params[:return_to])
-
-      if uri&.host == "bank.hackclub.com"
-        uri.host = "hcb.hackclub.com"
-        params[:return_to] = uri.to_s
-      end
-    end
-
-  rescue URI::InvalidURIError
-    params.delete(:return_to)
+    p
   end
 
 end

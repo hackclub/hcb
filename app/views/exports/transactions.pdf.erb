@@ -31,7 +31,7 @@
 
 <table>
   <tr>
-    <th>Date</th>
+    <th>Settled</th>
     <th>Description</th>
     <th style="text-align: center;">ID</th>
     <th style="text-align: center;">Amount</th>
@@ -47,13 +47,15 @@
     </td>
   </tr>
   <% @transactions.reverse.each do |ct| %>
-    <tr>
-      <td style="white-space: nowrap;"><%= ct.date %></td>
-      <td><%= transaction_memo(ct) %></td>
-      <td style="white-space: nowrap;"><%= ct.local_hcb_code.public_id %></td>
-      <td style="text-align: center; white-space: nowrap;"><%= number_to_currency ct.amount %></td>
-      <td style="text-align: center; white-space: nowrap;"><%= number_to_currency ct.running_balance %></td>
-    </tr>
+    <% unless ct.likely_account_verification_related? && !organizer_signed_in? %>
+      <tr>
+        <td style="white-space: nowrap;"><%= ct.date %></td>
+        <td><%= transaction_memo(ct) %></td>
+        <td style="white-space: nowrap;"><%= ct.local_hcb_code.public_id %></td>
+        <td style="text-align: center; white-space: nowrap;"><%= number_to_currency ct.amount %></td>
+        <td style="text-align: center; white-space: nowrap;"><%= number_to_currency ct.running_balance %></td>
+      </tr>
+    <% end %>
   <% end %>
   <tr>
     <td></td>

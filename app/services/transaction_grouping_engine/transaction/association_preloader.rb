@@ -17,11 +17,12 @@ module TransactionGroupingEngine
         included_models = [
           :receipts,
           :comments,
+          { suggested_hcb_code_tag_suggestions: [:tag] },
           { canonical_transactions: [:canonical_event_mapping, :transaction_source] },
-          { canonical_pending_transactions: [:event, :canonical_pending_declined_mapping] },
+          { canonical_pending_transactions: [:event, :canonical_pending_declined_mapping, :raw_pending_stripe_transaction] },
           { reimbursement_expense_payout: { expense: [:report] } }
         ]
-        included_models << :tags if Flipper.enabled?(:transaction_tags_2022_07_29, @event)
+        included_models << :tags
         hcb_code_objects = HcbCode
                            .includes(included_models)
                            .where(hcb_code: hcb_code_codes)
@@ -61,7 +62,7 @@ module TransactionGroupingEngine
           ct.raw_stripe_transaction = raw_stripe_transactions_by_id[ct.transaction_source_id] if ct.transaction_source_type == "RawStripeTransaction"
 
           hashed_transactions = hashed_transactions_by_canonical_transaction_id[ct.id] || []
-          Airbrake.notify("There was more (or less) than 1 hashed_transaction for canonical_transaction: #{ct.id}") if hashed_transactions.length > 1
+          Rails.error.unexpected("There was more (or less) than 1 hashed_transaction for canonical_transaction: #{ct.id}") if hashed_transactions.length > 1
           ct.hashed_transaction = hashed_transactions.first
         end
 

@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto">
+<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0">
   <div>
     <% if current_user.hack_clubber? %>
       <a
@@ -22,8 +22,9 @@
 
 <% if current_user.card_grants.not_activated.size > 0 %>
   <% current_user.card_grants.not_activated.each do |grant| %>
-    <div class="card border b--info container--sm mx-auto mb-12 text-center">
-      <p class="mt-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
+    <div class="card border b--info container--sm mx-auto mb-12 mt-6 text-center">
+      <p class="my-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
+      <p class="mt-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
       <%= link_to "Activate my grant", grant, class: "btn" %>
     </div>
   <% end %>
@@ -34,17 +35,20 @@
 
   <div class="grid grid--wide mb-12">
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
-      <%= render grant.stripe_card, headless: true, href: card_grant_path(grant) %>
+      <%= render grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
     <% end %>
   </div>
 <% end %>
 
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
+
+    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 border-none ml-0 pl-0">Your organizations</h2>
+
     <% if @events.any? %>
       <% if @show_event_reorder_tip %>
         <% if @events.size > 1 %>
-          <%= link_to "https://changelog.hcb.hackclub.com/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
+          <%= link_to "https://blog.hcb.hackclub.com/posts/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
             <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
           <% end %>
         <% end %>
@@ -58,48 +62,121 @@
 
         <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
 
-        <%= link_to "https://hackclub.com/hcb/apply/?#{URI.encode_www_form({ userEmail: current_user.email, firstName: current_user.first_name, lastName: current_user.last_name, returningUser: "Yes, I have used HCB before", userPhone: current_user.phone_number, userBirthday: current_user.birthday }.compact)}" do %>
-          <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: 90vw">
+        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "returning-organizer") do %>
+          <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
             <div class="center">
               <div class="pop success mx-auto flex mb-1">
                 <%= inline_icon "plus", size: 28 %>
               </div>
-              New Project
+              New organization
             </div>
           </li>
         <% end %>
       </ul>
-
-      <% if @events.hidden.any? %>
-        <details class="w-full text-left">
-          <summary><h4 class="inline-block pb-0 border-none muted">Hidden projects</h4></summary>
-          <ul class="grid grid--medium-narrow text-left mt-0">
-            <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
-          </ul>
-        </details>
-      <% end %>
-
     <% end %>
+
+    <% if @events.hidden.any? %>
+      <details class="w-full text-left">
+        <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
+        <ul class="grid grid--medium-narrow text-left mt-0">
+          <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
+        </ul>
+      </details>
+    <% end %>
+
+    <% if @events.empty? %>
+      <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border flex flex-col w-full items-center justify-center">
+        <span>
+          You aren't a part of an organization yet, looking to start one?
+        </span>
+        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
+          <%= inline_icon "plus" %>
+          New organization
+        <% end %>
+      </div>
+    <% end %>
+
     <% if @invites.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none">Your pending invitations</h2>
-      <ul class="grid grid--narrow text-left w-full mt-0">
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending invitations</h2>
+      <ul class="grid grid--narrow text-left w-full mt-2">
         <% @invites.each do |invite| %>
           <%= link_to invite do %>
-            <li class="card card--item">
-              <%= status_badge "info" %>
-              <strong><%= invite.event.name %></strong>
+            <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+              <span>
+                <%= status_badge "info" %>
+                <strong><%= invite.event.name %></strong>
+              </span>
             </li>
           <% end %>
         <% end %>
       </ul>
     <% end %>
-    <% if @events.empty? && @invites.empty? && !current_user.admin? %>
-      <%= blankslate "No projects associated with your account yet." %>
-      <a href="https://hackclub.com/hcb/apply/?userEmail=<%= current_user.email %>&firstName=<%= current_user.first_name %>&lastName=<%= current_user.last_name %>&returningUser=No,%20first%20time!&userPhone=<%= current_user.phone_number %>" class="btn bg-success">
-        <%= inline_icon "plus" %>
-        New project
-      </a>
+
+    <% if @invite_requests.any? %>
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending join requests</h2>
+      <ul class="grid grid--narrow text-left w-full mt-2">
+        <% @invite_requests.each do |invite_request| %>
+          <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+            <span class="w-full flex gap-2 items-center align-middle">
+              <%= status_badge "info" %>
+              <strong><%= invite_request.link.event.name %></strong>
+              <div class="flex-grow"></div>
+              <%= pop_icon_to "view-close-small",
+                deny_request_path(invite_request),
+                class: "error tooltipped tooltipped--w h-8 w-8",
+                data: {
+                  turbo_method: :post,
+                  turbo_confirm: "Are you sure you want to cancel this join request?",
+                },
+                'aria-label': "Cancel",
+                disabled: !policy(invite_request).deny? %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <%= render "static_pages/index/teenager_raffle" %>
+
+    <%# Latest HCB announcement %>
+    <% if @latest_hcb_announcement %>
+      <div class="flex flex-row w-full justify-between items-center">
+        <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+          The latest from HCB
+        </h2>
+        <%= link_to event_announcement_overview_path(Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK)), class: "muted", target: :_blank do %>
+          View all announcements
+          <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
+        <% end %>
+      </div>
+      <div class="mb-4 text-left w-full self-stretch">
+        <%= render partial: "announcements/announcement_card", locals: { announcement: @latest_hcb_announcement } %>
+      </div>
+    <% end %>
+
+    <%= render "static_pages/index/explore" %>
+
+    <% if current_user.organizer_position_contracts.sent.any? %>
+      <h2 class="w-full text-left mt-4 pb-0 border-none">Your pending contracts</h2>
+      <p class="text-left my0 w-100 muted">Contracts are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
+      <ul class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
+        <% current_user.organizer_position_contracts.sent.each do |contract| %>
+          <%= link_to contract.user_signature_url, target: "_blank" do %>
+            <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
+              <%= status_badge "info" %>
+              <strong>Fiscal sponsorship contract for <%= contract.organizer_position_invite.event.name %></strong>
+              <small class="muted flex-grow" style="margin-left: 3.5px">
+                sent <%= time_ago_in_words contract.created_at %> ago
+              </small>
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
     <% end %>
   <% end %>
-  <%= render partial: "static_pages/admin" %>
+  <% if auditor_signed_in? %>
+    <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :eager, target: "_top", class: "w-full") do %>
+      <p>Loading admin tools</p>
+    <% end %>
+  <% end %>
 </main>

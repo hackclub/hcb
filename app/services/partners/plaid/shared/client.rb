@@ -18,27 +18,26 @@ module Partners
         end
 
         def plaid_client_id
-          Rails.application.credentials.plaid[:client_id]
+          Credentials.fetch(:PLAID, :CLIENT_ID)
         end
 
         def plaid_secret
           case plaid_env
           when "development"
-            Rails.application.credentials.plaid[:development_secret]
+            Credentials.fetch(:PLAID, :DEVELOPMENT_SECRET)
           when "sandbox"
-            Rails.application.credentials.plaid[:sandbox_secret]
+            Credentials.fetch(:PLAID, :SANDBOX_SECRET)
+          when "production"
+            Credentials.fetch(:PLAID, :PRODUCTION_SECRET)
           end
         end
 
         def plaid_public_key
-          Rails.application.credentials.plaid[:public_key]
+          Credentials.fetch(:PLAID, :PUBLIC_KEY)
         end
 
         def plaid_env
-          # Since we're only using one account & Plaid's development plan supports up
-          # to 100 accounts, we're just going to stick with the development key in
-          # production for now. Plaid is essentially read-only, so this also works in development.
-          "development"
+          "production"
         end
       end
     end

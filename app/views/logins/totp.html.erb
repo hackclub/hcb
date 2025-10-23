@@ -1,0 +1,59 @@
+<% title "Enter TOTP code" %>
+<% content_for(:page_class) { "bg-snow" } %>
+
+<div class="flex flex-col flex-1 justify-center">
+  <div class="flex flex-col justify-between items-start">
+    <%= render "header", label: "Sign in to HCB" do %>
+      One-time code
+    <% end %>
+    <%= render "badge", user: @login.user %>
+  </div>
+  <p>
+    <% if @login.authentication_factors_count > 0 %>
+      For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
+  </p>
+  <%= form_tag complete_login_path(@login) do %>
+    <% if Flipper.enabled?(:otp_single_input, @login.user) %>
+      <%= text_field_tag(
+            :code,
+            "",
+            class: "otp_code",
+            autocomplete: "one-time-code",
+            required: true,
+            autofocus: true,
+            inputmode: "numeric",
+            maxlength: "6",
+            data: { behavior: "otp_input" }
+          ) %>
+    <% else %>
+      <%= text_field_tag(
+            :code,
+            "",
+            placeholder: "Enter your one time password code",
+            autocomplete: "one-time-code",
+            class: "left-align mb2 !max-w-full w-max",
+            required: true,
+            autofocus: true
+          ) %>
+    <% end %>
+
+    <%= hidden_field_tag :email, @email %>
+    <%= hidden_field_tag :method, :totp %>
+    <%= hidden_field_tag :fingerprint %>
+    <%= hidden_field_tag :device_info %>
+    <%= hidden_field_tag :os_info %>
+    <%= hidden_field_tag :timezone %>
+    <%= hidden_field_tag :return_to, @return_to if @return_to %>
+    <div class="flex flex-row justify-between items-center mt-4">
+      <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt0 no-underline" %>
+      <button type="submit" class="gap-2 btn" data-1p-ignore>
+        Continue
+      </button>
+    </div>
+  <% end %>
+  <%= javascript_include_tag "otp.js", defer: true %>
+  <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
+  <%= javascript_include_tag "fingerprint.js" %>
+</div>
+<%= render partial: "environment_banner" %>
+<%= render partial: "footer" %>

@@ -3,13 +3,18 @@
 module ApplicationHelper
   include ActionView::Helpers
 
+  def upsert_query_params(**new_params)
+    params = request.query_parameters || {}
+    params.merge(new_params)
+  end
+
   def render_money(amount, opts = {})
     amount = amount.cents if amount.is_a?(Money)
 
     unit = opts[:unit] || "$"
     trunc = opts[:trunc] || false
 
-    num = BigDecimal(amount || 0) / 100
+    num = BigDecimal((amount || 0).to_s) / 100
     if trunc
       if num >= 1_000_000
         "#{number_to_currency(num / 1_000_000, precision: 1, unit:)}m"
@@ -32,6 +37,14 @@ module ApplicationHelper
     render_money(amount, opts)
   end
 
+  def render_transaction_amount(amount)
+    if amount > 0
+      content_tag(:span, "+#{render_money amount}", class: "success-dark medium")
+    else
+      render_money amount
+    end
+  end
+
   def render_percentage(decimal, params = {})
     precision = params[:precision] || 2
     number_to_percentage(decimal * 100, precision:)
@@ -45,39 +58,24 @@ module ApplicationHelper
     content_tag(:span, content.join.html_safe)
   end
 
-  def async_frame_to(url, options = { as: :div }, &block)
-    content_tag options[:as].to_sym,
-                block_given? ? capture(&block) : nil,
-                data: {
-                  src: url,
-                  behavior: "async_frame",
-                  loading: options[:lazy] ? "lazy" : nil
-                },
-                **options
-  end
-
-  def blankslate(text, options = {})
+  def blankslate(text, **options)
     other_options = options.except(:class)
-    content_tag(:p, text, class: "center mt0 mb0 pt2 pb2 slate bold h3 mx-auto max-width-2 #{options[:class]}", **other_options)
+    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
   end
 
-  def filterbar_blankslate(text, options = {})
-    blankslate(text, 'data-behavior': "filterbar_blankslate", class: "mt2 mb2", **options)
-  end
-
-  def list_badge_for(count, item, glyph, options = { optional: false, required: false })
-    return nil if options[:optional] && count == 0
+  def list_badge_for(count, item, glyph, optional: false, required: false, **options)
+    return nil if optional && count == 0
 
     icon = inline_icon(glyph, size: 20, 'aria-hidden': true)
 
     content_tag(:span,
                 icon + count.to_s,
                 'aria-label': pluralize(count, item),
-                class: "list-badge tooltipped tooltipped--w #{options[:required] && count == 0 ? 'b--warning warning' : ''} #{options[:class]}")
+                class: "list-badge tooltipped tooltipped--w #{required && count == 0 ? 'b--warning warning' : ''} #{options[:class]}")
   end
 
-  def badge_for(count, options = {})
-    content_tag :span, count, class: "badge #{options[:class]} #{'bg-muted' if count == 0}"
+  def badge_for(value, **options)
+    content_tag :span, value, class: "badge #{options[:class]} #{'bg-muted' if [0, "Pending"].include?(value)}"
   end
 
   def status_badge(type = :pending)
@@ -88,9 +86,9 @@ module ApplicationHelper
     status_badge(type) if condition
   end
 
-  def pop_icon_to(icon, url, options = { class: "info" })
-    link_to url, options.merge(class: "pop #{options[:class]}") do
-      inline_icon icon, size: 28
+  def pop_icon_to(icon, url, icon_size: 28, **options)
+    link_to url, options.merge(class: "pop #{options[:class] || "info"}") do
+      inline_icon icon, size: icon_size
     end
   end
 
@@ -127,11 +125,11 @@ module ApplicationHelper
     pop_icon_to "external", external_link, target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
   end
 
-  def modal_header(text, level: "h0", external_link: nil)
+  def modal_header(text, external_link: nil)
     content_tag :header, class: "pb2" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
-        content_tag(:h2, text.html_safe, class: "#{level} mt0 mb0 pb0 border-none")
+        content_tag(:h2, text.html_safe, class: "h1 mt0 mb0 pb0 border-none")
     end
   end
 
@@ -141,11 +139,11 @@ module ApplicationHelper
         inline_icon "view-back", size: 40
       end) +
         (content_tag :div, class: "carousel__items" do
-          (content.map.with_index do |item, index|
+          content.map.with_index do |item, index|
             content_tag :div, class: "carousel__item #{index == current_slide ? 'carousel__item--active' : ''}" do
               block.call(item, index)
             end
-          end).join.html_safe
+          end.join.html_safe
         end) +
         (content_tag :button, class: "carousel__button carousel__button--right pop", data: { "carousel-target": "right" } do
           inline_icon "view-back", size: 40
@@ -153,7 +151,7 @@ module ApplicationHelper
     end
   end
 
-  def relative_timestamp(time, options = {})
+  def relative_timestamp(time, **options)
     content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
   end
 
@@ -165,7 +163,7 @@ module ApplicationHelper
     content_tag :pre, pp(item.attributes.to_yaml)
   end
 
-  def inline_icon(filename, options = {})
+  def inline_icon(filename, **options)
     # cache parsed SVG files to reduce file I/O operations
     @icon_svg_cache ||= {}
     if !@icon_svg_cache.key?(filename)
@@ -185,16 +183,33 @@ module ApplicationHelper
     doc.to_html.html_safe
   end
 
+  def merchant_icon(yellow_pages_merchant, **options)
+    @icon_svg_cache ||= {}
+
+    unless @icon_svg_cache.key?(yellow_pages_merchant)
+      icon = yellow_pages_merchant.icon
+      @icon_svg_cache[yellow_pages_merchant] = icon.present? ? Nokogiri::HTML::DocumentFragment.parse(icon) : nil
+    end
+
+    icon = @icon_svg_cache[yellow_pages_merchant]
+    return nil if icon.nil?
+
+    doc = icon.dup
+    svg = doc.at_css "svg"
+    options[:style] ||= ""
+    if options[:size]
+      options[:width] ||= options[:size]
+      options[:height] ||= options[:size]
+      options.delete(:size)
+    end
+    options.each { |key, value| svg[key.to_s] = value }
+    doc.to_html.html_safe
+  end
+
   def anchor_link(id)
     link_to "##{id}", class: "absolute top-0 -left-8 transition-opacity opacity-0 group-hover/summary:opacity-100 group-target/item:opacity-100 anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: id), action: "clipboard#copy" } do
       inline_icon "link", size: 28
     end
-  end
-
-  def filterbar_item(label, name, selected = false)
-    content_tag :a, label, class: "filterbar__item",
-                tabindex: 0, role: "tab", 'aria-selected': selected,
-                data: { name: name.to_s, behavior: "filterbar_item" }
   end
 
   def help_message
@@ -202,16 +217,16 @@ module ApplicationHelper
   end
 
   def help_email
-    mail_to "hcb@hackclub.com"
+    mail_to "hcb@hackclub.com", class: "nowrap"
   end
 
   def help_phone
-    phone_to "+18442372290", "+1 (844) 237 2290"
+    phone_to "+18442372290", "+1 (844) 237 2290", class: "nowrap"
   end
 
   def format_date(date)
     if date.nil?
-      Airbrake.notify("Hey! date is nil here")
+      Rails.error.unexpected "Hey! date is nil here"
       return nil
     end
 
@@ -228,6 +243,10 @@ module ApplicationHelper
 
   def page_xl
     content_for(:container_class) { "container--xl" }
+  end
+
+  def page_full
+    content_for(:container_class) { "container--full" }
   end
 
   def page_md
@@ -249,48 +268,6 @@ module ApplicationHelper
   def title(text)
     content_for :title, text
   end
-
-  def commit_name
-    @short_hash ||= commit_hash[0...7]
-    @commit_name ||= begin
-      if commit_dirty?
-        "#{@short_hash}-dirty"
-      else
-        @short_hash
-      end
-    end
-  end
-
-  def commit_dirty?
-    ::Util.commit_dirty?
-  end
-
-  def commit_hash
-    ::Util.commit_hash
-  end
-
-  def commit_time
-    @commit_time ||= begin
-      heroku_time = ENV["HEROKU_RELEASE_CREATED_AT"]
-      git_time = `git log -1 --format=%at`&.chomp
-
-      return nil if heroku_time.blank? && git_time.blank?
-
-      heroku_time.blank? ? git_time.to_i : Time.parse(heroku_time)
-    end
-
-    @commit_time
-  end
-
-  def commit_duration
-    @commit_duration ||= begin
-      return nil if commit_time.nil?
-
-      distance_of_time_in_words Time.at(commit_time), Time.now
-    end
-  end
-
-  module_function :commit_hash, :commit_time
 
   def admin_inspectable_attributes(record)
     stripe_obj = begin
@@ -318,10 +295,14 @@ module ApplicationHelper
       "More, tonight at 9.",
       "Go wild.",
       "But, the night is still young.",
-      "You pansy.",
+      "You coward.",
       "Now go write some code?",
       "AKA a world of pure imagination"
     ].sample
+  end
+
+  def tooltipped_logo?
+    !Rails.env.production? || user_birthday?
   end
 
   require "json"
@@ -361,4 +342,75 @@ module ApplicationHelper
     css_classes = "pointer tooltipped tooltipped--#{tooltip_direction} #{options.delete(:class)}"
     tag.span "data-controller": "clipboard", "data-clipboard-text-value": clipboard_value, class: css_classes, "aria-label": "Click to copy", "data-action": "click->clipboard#copy", **options, &block
   end
+
+  def settings_tab(active: false, &block)
+    if active
+      tag.li(class: "active", data: { controller: "scroll-into-view" }, &block)
+    else
+      tag.li(&block)
+    end
+  end
+
+  def possessive(name)
+    name + (name.ends_with?("s") ? "'" : "'s")
+  end
+
+  def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
+    block.call
+  rescue => e
+    Rails.error.report(e) unless e.in?(ignored_errors)
+
+    return content_tag(:p, fallback_text || "That didn't work, sorry.") unless fallback
+
+    fallback
+  end
+
+  # Link to a User-generated content that we can't trust. User-provided URIs may
+  # contain XSS (https://brakemanscanner.org/docs/warning_types/link_to_href/).
+  #
+  # This method is almost compatible with `link_to`, except that the second
+  # positional argument must be a string, and it doesn't support the block form.
+  def ugc_link_to(name, string, *options)
+    begin
+      uri = URI.parse(string)
+    rescue URI::InvalidURIError
+      # no op
+    end
+    parse_failure = uri.nil?
+    safe = uri&.scheme.nil? || uri&.scheme&.in?(%w[http https])
+
+    if parse_failure || !safe
+      # Could be either an invalid URI, or a non http/https link (such as
+      # javascript XSS attack). Either way, we don't want to link to it.
+      return capture { content_tag(:a, name, *options) } # empty href
+    end
+
+    # The link is safe, render it like normal
+    capture { link_to(name, uri.to_s, *options) }
+  end
+
+  def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
+    return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
+      (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
+        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}", **options[:button_options] do
+          (inline_icon options[:button_icon]) +
+          (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
+        end) +
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+          inline_icon "down-caret", class: "!mr-0"
+        end)
+      end) +
+      (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
+        content_tag :div do
+          options[:options].map.with_index do |option, index|
+            (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
+            (options[:form].label options[:name], value: option[1] do
+              (tag.strong option[0]) + (tag.p option[2])
+            end)
+          end.join.html_safe
+        end
+      end)
+    end
+  end
+
 end

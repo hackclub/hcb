@@ -1,15 +1,18 @@
+/* eslint-disable no-unused-vars */
+/* global html2canvas */
+
 function changeCode(id) {
-  const activeQRCode = document.querySelector(".qrCode--active");
+  const activeQRCode = document.querySelector("qr-code.\\!block");
   document.getElementById("downloadButton").innerText = "Download";
   if (activeQRCode) {
-    activeQRCode.classList.remove("qrCode--active");
+    activeQRCode.classList.remove("!block");
   }
-  document.getElementById(`qrCode--${id}`).classList.add("qrCode--active");
+  document.getElementById(`qrCode--${id}`).classList.add("!block");
 }
 
 function saveActiveQRCodeAsImage() {
   document.getElementById("downloadButton").innerText = "Downloading...";
-  const activeQRCode = document.querySelector(".qrCode--active");
+  const activeQRCode = document.querySelector("qr-code.\\!block");
   if (!activeQRCode) {
     return;
   }
@@ -25,8 +28,8 @@ function saveActiveQRCodeAsImage() {
     downloadLink.click();
     document.getElementById("downloadButton").innerText = "Download";
   })
-  .catch((error) => {
-    console.error(error);
-    document.getElementById("downloadButton").innerText = "Try Again";
-  });
+    .catch((error) => {
+      console.error(error);
+      document.getElementById("downloadButton").innerText = "Try Again";
+    });
 }

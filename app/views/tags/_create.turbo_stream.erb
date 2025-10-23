@@ -1,0 +1,8 @@
+<%= turbo_stream.update_all ".hcb_code_#{hcb_code.hashid}_tags" do %>
+  <%= render partial: "canonical_transactions/tag", collection: hcb_code.tags, locals: { hcb_code:, streamed: local_assigns[:streamed] } %>
+<% end %>
+
+<%= turbo_stream.update_all tag_dom_class(hcb_code, tag, "_toggle") do %>
+  <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+  <%= tag.label %> ✓
+<% end %>

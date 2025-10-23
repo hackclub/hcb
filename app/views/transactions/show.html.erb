@@ -1,4 +1,4 @@
-<% title "Transaction for #{@transaction.amount}" %>
+<% title "Transaction for #{render_money @transaction.amount}" %>
 <% page_sm %>
 
 <%= render "events/nav" if @event %>
@@ -41,7 +41,7 @@
     <%= pop_icon_to "edit",
       edit_canonical_transaction_path(@transaction),
       disabled: !organizer_signed_in?,
-      class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" %>
+      class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
   </div>
 
   <section class="details">
@@ -142,15 +142,6 @@
 
   </section>
 
-  <% unless using_transaction_engine_v2? || @transaction.is_a?(CanonicalTransaction) %>
-  <% admin_tool("py0") do %>
-      <p>
-        Bank Account:
-        <%= link_to "##{@transaction.bank_account.id} (#{@transaction.bank_account.name})", @transaction.bank_account %>
-      </p>
-  <% end %>
-  <% end %>
-
   <% if @transaction&.disbursement %>
     <% admin_tool("py0 mt2") do %>
       <%# admin tools because disbursements are not designed
@@ -166,7 +157,7 @@
 
 <% if @hcb_code %>
   <h2>Receipts</h2>
-  <%= render "receipts/list_v2" %>
+  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @hcb_code,
         enable_linking: true,

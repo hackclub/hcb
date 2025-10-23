@@ -3,7 +3,7 @@
 module Column
   class StatementJob < ApplicationJob
     queue_as :low
-    def perform(date = Date.today.prev_month)
+    def perform(date = DateTime.current.prev_month)
       start_date = date.beginning_of_month
       end_date = date.end_of_month
 
@@ -14,7 +14,7 @@ module Column
 
       template = [
         # Must be wrapped in lambdas
-        [:date_posted, ->(t) { t["effective_at"] }],
+        [:date_posted, ->(t) { t["effective_at_utc"] }],
         [:description, ->(t) {
                          transaction_id = t["transaction_id"]
                          if transaction_id.start_with? "acht" # TODO: use `transaction_type` instead
@@ -26,10 +26,15 @@ module Column
                          elsif transaction_id.start_with? "book"
                            book_transfer = ColumnService.get "/transfers/book/#{transaction_id}"
                            return book_transfer["description"]
+                         elsif transaction_id.start_with? "rttr_"
+                           realtime = ColumnService.get "/transfers/realtime/#{transaction_id}"
+                           return realtime["description"]
                          end
                          "TRANSACTION"
                        }],
         [:amount_cents, ->(t) { t["available_amount"] }],
+        [:bank_account_id, ->(t) { t["bank_account_id"] }],
+        [:available_balance, ->(t) { t["available_balance"] }],
         [:check_number, ->(t) {
           transaction_id = t["transaction_id"]
           if transaction_id.start_with? "chkt"
@@ -50,8 +55,10 @@ module Column
 
       rows = []
 
-      transactions_by_report.each do |report_id, transactions|
-        transactions.each_with_index do |transaction, transaction_index|
+      transactions_by_report.each_value do |transactions|
+        transactions.reverse.each_with_index do |transaction, transaction_index|
+          next if transaction["effective_at"] == transaction["effective_at_utc"] && transaction["effective_at_utc"] < "2024-10-07T04:00:00Z" # see TransactionEngine::Nightly#import_raw_column_transactions! for a description of this logic
+
           rows << serializer.call(transaction).values
         end
       end
@@ -65,6 +72,10 @@ module Column
         column_statement.file.attach(io: File.open(file), filename: "column_statement_report_#{end_date.iso8601}.csv")
         column_statement.start_date = start_date
         column_statement.end_date = end_date
+        first_txn = transactions_by_report[transactions_by_report.keys.last].first
+        last_txn = transactions_by_report[transactions_by_report.keys.first].last
+        column_statement.starting_balance = ::ColumnService.balance_over_time(from_date: start_date, to_date: end_date)[:starting]
+        column_statement.closing_balance = ::ColumnService.balance_over_time(from_date: start_date, to_date: end_date)[:closing]
         column_statement.save!
       end
 

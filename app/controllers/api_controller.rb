@@ -1,24 +1,33 @@
 # frozen_string_literal: true
 
 class ApiController < ApplicationController
-  before_action :check_token
+  before_action :check_token, except: [:the_current_user, :flags]
   skip_before_action :verify_authenticity_token # do not use CSRF token checking for API routes
   skip_after_action :verify_authorized # do not force pundit
   skip_before_action :signed_in_user
 
   rescue_from(ActiveRecord::RecordNotFound) { render json: { error: "Record not found" }, status: :not_found }
 
+  def the_current_user
+    return head :not_found unless signed_in?
+
+    render json: {
+      avatar: helpers.profile_picture_for(current_user),
+      name: current_user.name,
+    }
+  end
+
   def create_demo_event
     event = EventService::CreateDemoEvent.new(
       name: params[:name],
       email: params[:email],
       country: params[:country],
-      category: params[:category],
-      postal_code: params[:postal_code],
-      is_public: params[:transparent].nil? ? true : params[:transparent],
+      postal_code: ValidatesZipcode.valid?(params[:postal_code], params[:country]) ? params[:postal_code] : nil,
+      is_public: params[:transparent].nil? || params[:transparent],
     ).run
 
     render json: {
+      id: event.id,
       name: event.name,
       slug: event.slug,
       email: params[:email],
@@ -53,18 +62,22 @@ class ApiController < ApplicationController
       email: user.email,
       slug: user.slug,
       id: user.id,
-      orgs: user.events.not_hidden.map { |e| { name: e.name, slug: e.slug, demo: e.demo_mode?, balance: e.balance_available, service_level: e.service_level } },
+      orgs: user.events.not_hidden.map { |e| { name: e.name, slug: e.slug, demo: e.demo_mode?, balance: e.balance_available, service_level: e.service_level, point_of_contact: e.point_of_contact&.name || "none" } },
       card_count: user.stripe_cards.count,
       recent_transactions:,
       timezone: user.user_sessions.where.not(timezone: nil).order(created_at: :desc).first&.timezone,
     }
   end
 
+  def flags
+    render json: Flipper.features.collect { |f| f.name }
+  end
+
   private
 
   def check_token
     authed = authenticate_with_http_token do |token|
-      ActiveSupport::SecurityUtils.secure_compare(token, Rails.application.credentials.api_token)
+      ActiveSupport::SecurityUtils.secure_compare(token, Credentials.fetch(:API_TOKEN))
     end
 
     render json: { error: "Unauthorized" }, status: :unauthorized unless authed

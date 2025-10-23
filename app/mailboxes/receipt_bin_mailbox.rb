@@ -25,17 +25,32 @@ class ReceiptBinMailbox < ApplicationMailbox
 
     return bounce_error if result.empty?
 
+    paired_with = result.map { |r| r.reload.receiptable }.select(&:present?)
+
     ReceiptBinMailer.with(
       mail: inbound_email,
       reply_to: mail.to.first,
-      receipts_count: result.size
+      receipts_count: result.size,
+      paired_with:
     ).bounce_success.deliver_now
   end
 
   private
 
+  RECEIPTS_ADDRESSES = ["receipts@hackclub.com", "receipts@hcb.gg"].freeze
+
   def set_user
-    @user = MailboxAddress.activated.find_by(address: mail.to.first)&.user
+    if mail.recipients.any? { |addr| RECEIPTS_ADDRESSES.include?(addr) }
+      @user = User.find_by(email: mail.from[0])
+    else
+      @user =
+        MailboxAddress
+        .activated
+        .where(address: mail.recipients)
+        .order(id: :desc)
+        .first
+        &.user
+    end
   end
 
   def bounce_missing_user

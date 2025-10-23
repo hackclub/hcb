@@ -1,4 +1,11 @@
-<% title "Deposit of a #{render_money(@hcb_code.check_deposit.amount_cents)} check" %>
+<%= turbo_stream_from @hcb_code.check_deposit %>
+
+<% if @hcb_code.check_deposit.column_id.present? %>
+  <% admin_tool("mt3") do %>
+    <%= link_to "View check on Column", "https://dashboard.column.com/app/transfers/edit/check/#{@hcb_code.check_deposit.column_id}", class: "btn bg-accent", target: "_blank" %>
+    <%= link_to @hcb_code.check_deposit.canonical_pending_transaction.fronted ? "De-front check" : "Front check", toggle_fronted_event_check_deposit_path(@event, @hcb_code.check_deposit), class: "btn bg-accent", data: { turbo_method: :post } %>
+  <% end %>
+<% end %>
 
 <% if @hcb_code.check_deposit.rejected? %>
   <div class="banner error-card mt3">
@@ -17,7 +24,7 @@
 <% end %>
 
 <article class="card pb0 mt3 mb1">
-  <h2 class="h2 mt0 border-none flex items-center justify-between gap-4">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span class="grow">
       Check deposit
       <span class="regular muted">
@@ -25,11 +32,8 @@
       </span>
       <span class="regular"><%= render_money @hcb_code.check_deposit.amount_cents %></span>
     </span>
-    <span class="badge h4 md-right ml0 bg-<%= @hcb_code.check_deposit.state %>">
-      <%= @hcb_code.check_deposit.state_text %>
-    </span>
-    <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>
-  </h2>
+    <%= render "check_deposits/status", check_deposit: @hcb_code.check_deposit %>
+  <% end %>
 
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
@@ -38,19 +42,21 @@
     </p>
     <% if @hcb_code.ct %>
       <p>
-        <strong>Deposited at</strong>
-        <%= format_datetime @hcb_code.ct.raw_increase_transaction&.increase_transaction&.dig("created_at") %>
+        <strong>Deposited on</strong>
+        <%= format_date @hcb_code.ct.date %>
       </p>
     <% else %>
       <p>
         <strong>Requested at</strong>
         <%= format_datetime @hcb_code.check_deposit.created_at %>
       </p>
+      <% if @hcb_code.check_deposit.estimated_arrival_date %>
+        <p>
+          <strong>Estimated arrival</strong>
+          <%= @hcb_code.check_deposit.estimated_arrival_date.strftime("%b %e, %Y") %>
+        </p>
+      <% end %>
     <% end %>
-    <p>
-      <strong>Transaction memo</strong>
-      <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
-    </p>
   </section>
 
   <div class="grid gap-4 grid-cols-2 grid-rows-[auto_auto] place-items-center my-4">
@@ -80,9 +86,14 @@
     <div class="muted">Back image</div>
   </div>
 
-  <% if @hcb_code.check_deposit.pending? %>
+  <% if @hcb_code.check_deposit.pending? || @hcb_code.fee_waived? %>
     <section class="card__banner card__darker secondary border-top italic">
-      Checks may take up to 5 business days to deposit.
+      <% if @hcb_code.check_deposit.pending? %>
+        Checks may take up to 2 weeks to deposit.
+      <% end %>
+      <% if @hcb_code.fee_waived? %>
+        Fees were waived on this transaction — enjoy!
+      <% end %>
     </section>
   <% end %>
 

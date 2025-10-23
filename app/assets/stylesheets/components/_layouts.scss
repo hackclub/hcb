@@ -4,6 +4,12 @@
   margin: 0 auto;
   padding: 0 1rem;
 }
+
+.container--full {
+  max-width: none;
+  padding: 0px;
+}
+
 .container--xl {
   max-width: 96rem;
 }
@@ -55,6 +61,8 @@
 
   h1:first-child {
     margin-top: 2rem;
+    text-box-trim: start;
+    text-box-edge: cap alphabetic;
   }
 }
 

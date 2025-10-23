@@ -1,0 +1,46 @@
+<% title "Tasks" %>
+<% page_md %>
+<%= render "users/nav" %>
+<%= turbo_stream_from current_user, :tasks %>
+
+<h1 class="heading">
+  Tasks
+</h1>
+
+<% @tasks.incomplete.each do |task| %>
+  <%= link_to task.url, class: "text-decoration-none", target: "_blank"  do %>
+    <div class="card bg-none flex items-center g2 mt2">
+      <input type="checkbox" style="height: 24px; width: 24px; pointer-events: none">
+      <div class="flex flex-col">
+        <div class="bold"><%= task.text %></div>
+        <div>
+          Created
+          <span data-controller="timestamp" data-timestamp-time-value="<%= task.created_at.to_i * 1000 %>">
+            <%= time_ago_in_words task.created_at %> ago
+          </span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<% if @tasks.complete.where("completed_at > ?", 24.hours.ago).any? %>
+  <h3>Recently completed</h3>
+
+  <% @tasks.complete.where("completed_at > ?", 24.hours.ago).order(completed_at: :desc).first(5).each do |task| %>
+    <%= link_to task.url, class: "text-decoration-none", target: "_blank" do %>
+      <div class="card bg-none flex items-center g2 mt2">
+        <input type="checkbox" checked style="height: 24px; width: 24px; pointer-events: none">
+        <div class="flex flex-col">
+          <div class="bold"><%= task.text %></div>
+          <div>
+            Completed
+            <span data-controller="timestamp" data-timestamp-time-value="<%= task.completed_at.to_i * 1000 %>">
+              <%= time_ago_in_words task.completed_at %> ago
+            </span>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

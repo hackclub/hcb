@@ -1,0 +1,73 @@
+<%= link_to admin_check_deposits_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to check deposits
+<% end %>
+
+<h1>Process Check Deposit #<%= @check_deposit.id %></h1>
+
+<p><small><%= render_money @check_deposit.amount %> check submitted by <%= user_mention @check_deposit.created_by %></small></p>
+
+<ol class="steps">
+  <li>
+    <p>Download check images</p>
+
+    <div>
+      <%= link_to rails_blob_path(@check_deposit.front, disposition: "attachment"), class: "btn mr-2" do %>
+        <%= inline_icon :download %>
+        Download front
+      <% end %>
+      <%= link_to rails_blob_path(@check_deposit.back, disposition: "attachment"), class: "btn" do %>
+        <%= inline_icon :download %>
+        Download back
+      <% end %>
+    </div>
+  </li>
+
+  <li>
+    <p>Sign into Column</p>
+
+    <a href="https://dashboard.column.com/app/transfers/edit/rdc" class="btn bg-accent" target="_blank">Open Column</a>
+  </li>
+
+  <li>
+    <p>Upload the front & back images</p>
+
+    <%= image_tag "admin-check-deposit-upload.png", width: 500 %>
+  </li>
+
+  <li>
+    <p>Set the bank account to "FS Main"</p>
+
+    <%= image_tag "admin-check-deposit-bank-account.png", width: 500 %>
+  </li>
+
+  <li>
+    Verify the amount + other details are correct!
+  </li>
+
+  <li>
+    Click "Create Transfer"
+  </li>
+
+  <li>
+    <p>Grab the check ID</p>
+
+    <%= image_tag "admin-check-deposit-id.png", width: 500 %>
+  </li>
+
+  <li>
+    <p>Paste it here:</p>
+
+    <%= form_with url: submit_admin_check_deposit_path do |form| %>
+      <%= form.text_field :column_id, required: true, placeholder: "chkt_1234", pattern: "^chkt_.+" %>
+      <%= form.submit "Process" %>
+    <% end %>
+  </li>
+
+  <h3>Something gone wrong? Reject the check here:</h3>
+
+  <%= form_with url: reject_admin_check_deposit_path, class: "mt2" do |form| %>
+    <%= form.select :reason, CheckDeposit.rejection_descriptions.invert, { prompt: "Select a reason" } %>
+    <%= form.submit "Process" %>
+  <% end %>
+</ol>

@@ -1,8 +1,9 @@
-<% has_window = local_assigns.key?(:datetime) && local_assigns.key?(:duration) %>
+<%# locals: (datetime:, duration:, learn_more_url: nil, notice_duration: 1.day) %>
+<% datetime = datetime.to_datetime %>
 <% not_demo_mode = !@event&.demo_mode? %>
 
-<% if signed_in? && has_window && not_demo_mode %>
-  <% if (datetime + duration) > Time.now %><%# if it hasn't already passed %>
+<% if signed_in? && not_demo_mode %>
+  <% if Time.now.between?(datetime - notice_duration, datetime + duration) %><%# if it hasn't already passed %>
 
     <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
       <p class="h5 medium center mt1 mb1" style="text-wrap: balance;">
@@ -15,10 +16,9 @@
           <%= local_time(datetime + duration, format: "%l:%M %P") %>.
         </strong>
         <br>
-        You will not be able to access your account and
-        <i>card transactions will decline</i> during this time.
+        You will not be able to access your account during this time.
 
-        <% if local_assigns.has_key? :learn_more_url %>
+        <% if learn_more_url.present? %>
           <%= link_to "Learn more", learn_more_url, target: "_blank" %>
         <% end %>
       </p>

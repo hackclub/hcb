@@ -1,0 +1,9 @@
+<%= turbo_frame_tag :raised do %>
+  <% if @raised.zero? %>
+    <span class="muted">
+      <%= render_money 0 %>
+    </span>
+  <% else %>
+    <%= render_money @raised %>
+  <% end %>
+<% end %>

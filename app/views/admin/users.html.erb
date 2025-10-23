@@ -1,26 +1,28 @@
-<% title "USERS" %>
-
-<h1>USERS</h1>
-
-<%= paginate @users %>
+<% title "Users" %>
 
 <%= form_with local: true, url: users_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
 
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: true, selected: @event_id }, { width: 150, style: "max-width: 150px" }) %>
-  |
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
 
   <%= form.select :access_level, User.access_levels.keys.map { |level| [level.humanize, level] }, { include_blank: "All user types", selected: @access_level } %>
-  |
+  <%= form.select :referral_program_id, @referral_programs.map { |program| [program.name, program.id] }, { include_blank: "No referral filter", selected: @referral_program_id } %>
 
-  <%= form.submit "Search" %>
-  |
+  <div>
+    <%= form.submit "Search" %>
+  </div>
+
   <%= link_to @params.merge(format: :csv) do %>
     <button type="button" <%= "disabled" if @users.count == 0 %>>Export <%= pluralize @users.count, "record" %></button>
   <% end %>
 <% end %>
 
-<%= page_entries_info @users, entry_name: "users" %>
+<div class="flex items-center mb2">
+  <div class="flex-grow">
+    <%= page_entries_info @users, entry_name: "users" %>
+  </div>
+  <%= paginate @users %>
+</div>
 
 <table>
   <thead>
@@ -29,6 +31,7 @@
       <th class="w-32">Created</th>
       <th>Name</th>
       <th>Email</th>
+      <th>Phone</th>
       <th>Org Positions</th>
       <th class="w-48">Card Grants</th>
       <th># Receipts Missing</th>
@@ -37,7 +40,7 @@
   </thead>
   <tbody>
     <% @users.each do |user| %>
-      <tr style="<%= "background: #ff8c38;" if user.admin? %>">
+      <tr style="<%= "background: #ff8c38;" if user.auditor? %>">
         <td><%= user.id %></td>
         <td><%= user.created_at.strftime("%Y-%m-%d") %></td>
         <td>
@@ -45,7 +48,18 @@
             <%= user.name %>
           <% end %>
         </td>
-        <td><%= user.email %></td>
+        <td>
+          <%= user.email %>
+          <% user.email_updates.confirmed.order(created_at: :desc).pluck(:original).excluding(user.email).each do | email | %>
+            <br><small><i><%= email %></i></small>
+          <% end %>
+        </td>
+        <td>
+          <%= user.phone_number %>
+          <% unless user.phone_number_verified %>
+            <br><small><i>⚠️ Unverified</i></small>
+          <% end %>
+        </td>
         <td>
           <% user.organizer_positions.with_deleted.each do |op| %>
             <% if op.deleted? %>
@@ -79,7 +93,7 @@
           <%= user.transactions_missing_receipt.count %>
         </td>
         <td>
-          <%= link_to "Impersonate", impersonate_user_path(user.id), data: { turbo_confirm: "Are you sure?", turbo_method: "post" } %>
+          <%= link_to "Impersonate", impersonate_user_path(user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
           <%= link_to "More Info", admin_user_path(user) %>
         </td>
       </tr>

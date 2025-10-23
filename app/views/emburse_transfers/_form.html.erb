@@ -19,7 +19,7 @@
       <span class="bold muted" style="width: 1rem;">$</span>
       <%= form.text_field :load_amount,
         value: emburse_transfer.load_amount.nil? ? nil : (emburse_transfer.load_amount / 100.00),
-        max: (current_user&.admin? ? nil : (@event.available_balance / 100.00)),
+        max: (admin_signed_in? ? nil : (@event.available_balance / 100.00)),
         step: 0.01, placeholder: "100.00",
         autofocus: true, disabled: @event.balance_available == 0, data: { 'behavior': "money" } %>
     </div>

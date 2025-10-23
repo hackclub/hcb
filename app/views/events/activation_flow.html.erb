@@ -1,0 +1,62 @@
+<% title "Activate #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :activation_flow %>
+
+<h1 class="heading">
+  <span class="flex items-center">
+    Activate <%= @event.name %>
+  </span>
+</h1>
+
+<%= render "events/settings/admin/tags", event: @event %>
+
+<%= form_with(model: @event, url: event_activate_path, method: :post, local: true, class: "mb3 mt3") do |form| %>
+  <%= form_errors @event, "organization" %>
+  <div class="grid">
+    <div class="field pr2" id="admin_settings">
+      <%= form.label :name %>
+      <%= form.text_field :name %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :country %>
+      <%= form.collection_select :country, Event.countries_for_select, :first, :last, { include_blank: "Select a country" }, { required: true } %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :point_of_contact_id, "Point of contact" %>
+      <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @current_user.id %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :plan, "Assign a plan" %>
+      <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: @event.plan&.type, include_blank: "Select a plan..." %>
+    </div>
+
+    <div class="field pr2">
+      <%= form.label :risk_level %>
+      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
+    </div>
+  </div>
+
+  <div class="action">
+    <%= form.submit "Activate" %>
+  </div>
+<% end %>
+
+<h2 class="mb2">
+  Team members & contract signees
+</h2>
+
+<%= turbo_frame_tag "team_position" do %>
+  <table>
+    <thead>
+      <tr>
+      </tr>
+    </thead>
+    <tbody>
+    <%= turbo_frame_tag "team_position" do %>
+      <%= render partial: "organizer_positions/organizer_position_row", collection: @event.organizer_positions, as: :organizer_position %>
+    <% end %>
+  </table>
+<% end %>

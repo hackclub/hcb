@@ -12,18 +12,10 @@ class FlavorTextService
   end
 
   def generate
-    return development_flavor_texts.sample(random: @random) if @env == "development"
-    return holiday_flavor_texts.sample(random: @random) if winter?
-    return @random.rand > 0.5 ? spooky_flavor_texts.sample(random: @random) : flavor_texts.sample(random: @random) if fall? # ~50% chance of spookiness
-    return birthday_flavor_texts.sample(random: @random) if @user&.birthday?
+    flavor_text = sample
+    flavor_text = flavor_text.call if flavor_text.respond_to? :call
 
-    in_frc_team = @user&.events&.exists?(category: Event.categories["robotics team"])
-
-    if in_frc_team
-      (flavor_texts + frc_flavor_texts).sample(random: @random)
-    else
-      flavor_texts.sample(random: @random)
-    end
+    flavor_text
   end
 
   def development_flavor_texts
@@ -103,13 +95,14 @@ class FlavorTextService
       "🧛",
       "🎃",
       "Pumpkin spice is the pumpkin spice of life.",
-      "Happy Easter - Oh wait wrong holiday."
+      "Happy Easter - Oh wait wrong holiday.",
+      "<a href='https://www.youtube.com/watch?v=PmzwhVE5Ly4' target='_blank' style='color: inherit'>ITS A SPOOKY MONTH!</a>".html_safe,
     ]
   end
 
   def frc_flavor_texts
     [
-      "Built by someone from team ##{[1759, 8724, 461, 6763, 1519].sample(random: @random)}!",
+      "Built by someone from team ##{[1759, 8724, 461, 6763, 1519, 6238].sample(random: @random)}!",
       "Safety FIRST!",
       "Safety glasses == invincible",
       "Stop! Where are your safety glasses?",
@@ -122,12 +115,18 @@ class FlavorTextService
       "Duct tape, ductape, duck tape",
       "🦆 📼",
       "Build season? HCB season!",
-      "Build season already?"
+      "Build season already?",
+      "Graciously accepting your team's donations",
+      "Your team may graciously decline, but your cards won't",
+      "<s>Not</s> held together with zip ties".html_safe,
+      "3, 2, 1, HCB!",
+      "If you have transparency mode on, is that money-pit-scouting?"
     ]
   end
 
   def flavor_texts
     [
+      "duck.",
       "The hivemind known as HCB",
       "How often does time happen?",
       "To an extent",
@@ -266,7 +265,7 @@ class FlavorTextService
       "Made with Rails, Ruby and did I forget to mention Rails?",
       "Did you see the price of #{%w[Ðogecoin ₿itcoin Ξtherium].sample(random: @random)}?!",
       "Guess how much it costs to run this thing!",
-      "Bytes served fresh daily by Heroku",
+      "Bytes served fresh daily by Hetzner",
       "Running with Ruby on Rails #{Rails.gem_version.canonical_segments.first}",
       "Running on Rails on Ruby",
       "Try saying that 5 times fast!",
@@ -404,8 +403,8 @@ class FlavorTextService
       "Hey there cutie!",
       "You're looking great today :)",
       "Great! You're here!",
-      "No time to explain: #{%w[quack bark honk].sample(random: @random)} as loud as you can!",
-      "Please see attached #{%w[gif avi mp3 wav zip].sample(random: @random)}",
+      "No time to explain: #{%w[quack bark honk meow].sample(random: @random)} as loud as you can!",
+      "Please see attached #{%w[gif avi mp3 wav zip .rar docx].sample(random: @random)}",
       "Cont. on page 42",
       "See fig. 42",
       "<span class='hide-print'>Try printing this, I dare you</span><span class='hide-non-print'>Gottem!</span>".html_safe,
@@ -493,11 +492,57 @@ class FlavorTextService
       "I would rather check my Facebook than face my checkbook.",
       "The only part not outstanding is our balance",
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
-      "Wanna&nbsp;<a href='#{Rails.configuration.constants.hack_on_hcb_form_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
+      "Wanna&nbsp;<a href='#{Rails.configuration.constants.github_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
+      "everyone's favorite money thing!",
+      -> { "#{UserSession.not_impersonated.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
+      "We Column like we see 'em!",
+      "Raccoon-tested, dinosaur-approved.",
+      "original recipe!",
+      "now sugar-free!",
+      "low-sodium edition",
+      'we put the ":3" in "501(c)(3)"!',
+      'we put the "fun" in "restricted fund"!',
+      "we send checks <i>and</i> balances!".html_safe,
+      "do not adjust your television set.",
+      "It's giving... fiscal sponsorship",
+      "Bored of Directors",
+      "FedNow or Never",
+      "In Wise we Trust",
+      "You had me at fiscally sponsored...",
+      "Catch 'em if you IBAN",
+      "KYC me maybe",
+      "Keep calm and IBAN on",
+      "ACH you later",
+      "Wire we doing this?",
+      "Live fast, settle faster",
+      "I'm a SWIFTie",
+      "IBAN there, done that",
+      "KYC? I hardly know her",
+      "Wire me up before you go-go",
+      "Gone SEPA-rate ways",
+      "I like my fiscal sponsors like I like my relationships: regulated and auditable",
+      "🤧 ACHoo",
+      '#{FlavorTextService.new.generate}', # rubocop:disable Lint/InterpolationCheck
+      -> { missing_receipts = HcbCode.missing_receipt.receipt_required.count; "only #{missing_receipts} missing #{"receipt".pluralize(missing_receipts)}!" }, # => "only 20 missing receipts!"
     ]
   end
 
   private
+
+  def sample
+    return development_flavor_texts.sample(random: @random) if @env == "development"
+    return holiday_flavor_texts.sample(random: @random) if winter?
+    return @random.rand > 0.5 ? spooky_flavor_texts.sample(random: @random) : flavor_texts.sample(random: @random) if fall? # ~50% chance of spookiness
+    return birthday_flavor_texts.sample(random: @random) if @user&.birthday?
+
+    in_frc_team = @user&.events&.robotics_team&.any?
+
+    if in_frc_team
+      (flavor_texts + frc_flavor_texts).sample(random: @random)
+    else
+      flavor_texts.sample(random: @random)
+    end
+  end
 
   # Used by `SeasonalHelper`
   def current_user

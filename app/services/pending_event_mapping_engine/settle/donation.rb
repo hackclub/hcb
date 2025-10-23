@@ -7,7 +7,7 @@ module PendingEventMappingEngine
         unsettled.find_each(batch_size: 100) do |cpt|
           # 1. identify donation
           donation = cpt.raw_pending_donation_transaction.donation
-          Airbrake.notify("Donation not found for canonical pending transaction #{cpt.id}") unless donation
+          Rails.error.unexpected("Donation not found for canonical pending transaction #{cpt.id}") unless donation
           next unless donation
 
           next unless donation.payout
@@ -17,17 +17,17 @@ module PendingEventMappingEngine
           prefix = grab_prefix(donation:)
 
           # 2. look up canonical - using HCB short code
-          cts ||= event.canonical_transactions.where("memo ilike 'HCKCLB HCB-#{cpt.local_hcb_code.short_code}%'")
+          cts ||= event.canonical_transactions.where("memo ilike ?", "HCKCLB HCB-#{ActiveRecord::Base.sanitize_sql_like(cpt.local_hcb_code.short_code)}%")
 
           # 2b. look up canonical - scoped to event for added accuracy
-          cts ||= event.canonical_transactions.where("memo ilike '%DONAT% #{prefix}%'")
+          cts ||= event.canonical_transactions.where("memo ilike ?", "%DONAT% #{ActiveRecord::Base.sanitize_sql_like(prefix)}%")
 
           # 2.b special case if donation is quite old & now results
-          cts ||= event.canonical_transactions.where("memo ilike '%DONAT% #{prefix[0]}%'") if cts.count < 1 && donation.created_at < Time.utc(2020, 1, 1) # shorter prefix. see Donation id 1 for example.
+          cts ||= event.canonical_transactions.where("memo ilike ?", "%DONAT% #{ActiveRecord::Base.sanitize_sql_like(prefix[0])}%") if cts.count < 1 && donation.created_at < Time.utc(2020, 1, 1) # shorter prefix. see Donation id 1 for example.
 
           next if cts.count < 1 # no match found yet. not processed.
 
-          Airbrake.notify("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+          Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
           ct = cts.first
 
           # 3. mark no longer pending

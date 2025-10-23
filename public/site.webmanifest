@@ -1,6 +1,7 @@
 {
     "name": "HCB",
     "short_name": "HCB",
+    "start_url": "/",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
@@ -15,5 +16,91 @@
     ],
     "theme_color": "#ec3750",
     "background_color": "#ec3750",
-    "display": "standalone"
+    "display": "standalone",
+    "handle_links": "preferred",
+    "prefer_related_applications": true,
+    "categories": [
+        "finance",
+        "business",
+        "nonprofit"
+    ],
+    "screenshots": [
+        {
+            "src": "/pwa-screenshots/1.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "The foundation for your nonprofit",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/pwa-screenshots/2.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Receive Donations",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/pwa-screenshots/3.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Send Invoices",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/pwa-screenshots/4.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Issue Cards",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/pwa-screenshots/5.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Get reimbursed",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/pwa-screenshots/6.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Transfer Money",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/pwa-screenshots/2.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Receive Donations",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "/pwa-screenshots/3.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Send Invoices",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "/pwa-screenshots/4.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Issue Cards",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "/pwa-screenshots/5.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Get reimbursed",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "/pwa-screenshots/6.png",
+            "sizes": "1080x1350",
+            "type": "image/png",
+            "label": "Transfer Money",
+            "form_factor": "narrow"
+        }
+    ]
 }

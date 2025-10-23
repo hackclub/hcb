@@ -23,6 +23,8 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CanonicalPendingEventMapping < ApplicationRecord
+  broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
+
   belongs_to :canonical_pending_transaction
   belongs_to :event
   belongs_to :subledger, optional: true

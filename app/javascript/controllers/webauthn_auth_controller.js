@@ -1,8 +1,9 @@
 import { Controller } from '@hotwired/stimulus'
 import { get } from '@github/webauthn-json'
-import UAParser from 'ua-parser-js'
+import { UAParser } from 'ua-parser-js'
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 import submitForm from '../common/submitForm'
+import { appsignal } from '../appsignal'
 
 export default class extends Controller {
   static targets = [
@@ -18,6 +19,7 @@ export default class extends Controller {
   static values = {
     returnTo: String,
     requireWebauthnPreference: Boolean,
+    loginId: String,
   }
 
   initialize() {
@@ -59,14 +61,19 @@ export default class extends Controller {
 
       this.storeLoginEmail(loginEmail)
 
-      submitForm('/users/webauthn', {
-        credential: JSON.stringify(credential),
-        email: loginEmail,
-        return_to: this.returnToValue,
-        remember:
-          this.hasRememberInputTarget && this.rememberInputTarget.checked,
-        ...(await this.fingerprint()),
-      })
+      submitForm(
+        this.loginIdValue
+          ? `/logins/${this.loginIdValue}/complete`
+          : `/logins/complete`,
+        {
+          credential: JSON.stringify(credential),
+          return_to: this.returnToValue,
+          method: 'webauthn',
+          remember:
+            this.hasRememberInputTarget && this.rememberInputTarget.checked,
+          ...(await this.fingerprint()),
+        }
+      )
     } catch (e) {
       if (e.message == "User doesn't have WebAuthn enabled") {
         // Submit the form normally
@@ -80,6 +87,9 @@ export default class extends Controller {
         this.continueButtonTarget.value = 'Continue'
 
         this.errorTarget.classList.remove('display-none')
+
+        console.error(e)
+        appsignal.sendError(e)
       }
     }
   }

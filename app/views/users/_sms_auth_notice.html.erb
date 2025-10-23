@@ -6,3 +6,12 @@
     </span>
   </article>
 <% end %>
+
+<% if Flipper.enabled?(:email_auth_notice) %>
+  <article role="alertdialog" class="flash flex items-center mt2 mb2 mx-auto shrink-none pl1">
+    <svg class="mr1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="important" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32"><g><path fill-rule="evenodd" d="M26 16c0 5.523-4.477 10-10 10S6 21.523 6 16 10.477 6 16 6s10 4.477 10 10zm2 0c0 6.627-5.373 12-12 12S4 22.627 4 16 9.373 4 16 4s12 5.373 12 12z" clip-rule="evenodd" /><path d="M16 23a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16 19c1.5 0 2-5 2-7.5C18 10 17.5 9 16 9s-2 1-2 2.5c0 2.5.5 7.5 2 7.5z" /></g></svg>
+    <span class="flex-auto flex justify-between items-center">
+      <span class="left-align">We're currently having issues with sending login emails to our users. If you have a phone number linked, please try using SMS login codes. If you urgently need to access your account, please email hcb@hackclub.com.</span>
+    </span>
+  </article>
+<% end %>

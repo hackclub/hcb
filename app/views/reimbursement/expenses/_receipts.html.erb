@@ -1,6 +1,8 @@
+<% instance = expense.id %>
+
 <%= turbo_frame_tag "receipts_for_#{expense.id}" do %>
   <div class="w-100 h-100 flex">
-    <%= form_with(url: receipts_path, method: "post", class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
+    <%= form_with(url: receipts_path, method: :post, class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
       data: {
         turbo: "true",
         controller: "file-drop form",
@@ -21,28 +23,39 @@
         "
       }) do |form| %>
 
-      <% if expense.receipts.any? %>
+      <% if expense.is_fee? %>
+        <p class="my-0">This fee is imposed by Wise to process your transaction. <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %></p>
+      <% elsif expense.receipts.any? %>
         <div class="flex flex-col p1" id="link_receipt__form">
-          <% column_amount = [((expense.receipts.count - 1) / 2.to_f).ceil, expense.receipts.count == 2 ? 2 : 1].max %>
+          <% column_amount = [((expense.receipts.length - 1) / 2.to_f).ceil, expense.receipts.length == 2 ? 2 : 1].max %>
           <div class="receipts" style="grid-template-columns: 1fr repeat(<%= column_amount %>, 1fr)">
-            <% unless expense.report.locked? %>
-              <label for="file_<%= expense.id %>" class="card card--sunken flex flex-col items-center justify-center flash info" style="cursor: pointer;">
-                <span class="flex items-center justify-center">
-                  <h1 class="mt0 mb0 text-info add" id="upload-receipt-button"><b>+</b></h1>
-                </span>
-              </label>
+            <% if policy(expense).update? %>
+              <div class="card card--sunken bg-transparent flex flex-col items-center justify-center g1 p-0 h-100" id="link_receipt__form" style="min-width: 200px">
+                <label for="file_<%= expense.id %>" class="w-full flex-grow h-full flash info flex items-center justify-center cursor-pointer" id="upload-receipt-button" style="transform: scale(1)!important; box-shadow: none;">
+                  <%= inline_icon "cloud-upload" %>
+                  <span>Upload</span>
+                </label>
+                <%= link_to my_receipts_upload_path(current_user), class: "w-full flex-grow h-full flash flex items-center justify-center", style: "transform: scale(1)!important; color: #c44355; background-color: rgba(236, 55, 80, 0.13); box-shadow: none;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+                  <%= inline_icon "payment-docs" %>
+                  <span>Receipt Bin</span>
+                <% end %>
+              </div>
             <% end %>
             <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :desc), as: :receipt, locals: { hide_info: false, delete_on_hover: !expense.report.locked?, style: "margin: 0px; min-width: 150px; max-width: 300px; height: 100%; object-fit: cover;" } %>
           </div>
         </div>
-      <% else %>
+      <% elsif policy(expense).update? %>
         <div class="card card--sunken flex flex-col items-center justify-center g2 h-100" id="link_receipt__form">
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
             <label for="file_<%= expense.id %>" class="btn m1" id="upload-receipt-button">
-              <%= inline_icon "share" %>
+              <%= inline_icon "cloud-upload" %>
               <span>Upload</span>
             </label>
           </span>
+          <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+            <%= inline_icon "payment-docs" %>
+            <span>Select from Receipt Bin</span>
+          <% end %>
           <p class="center muted mt0 mb0">Or drag & drop your receipt here</p>
         </div>
       <% end %>
@@ -54,6 +67,7 @@
 
       <%= form.file_field :file,
                           id: "file_#{expense.id}",
+                          direct_upload: true,
                           multiple: true,
                           include_hidden: false,
                           required: true,
@@ -67,3 +81,10 @@
     <% end %>
   </div>
 <% end %>
+
+<section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
+  <%= modal_header "Select receipt" %>
+  <%= turbo_frame_tag "link_modal_#{expense.id}", src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
+    <strong>Loading...</strong>
+  <% end %>
+</section>

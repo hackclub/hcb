@@ -17,10 +17,14 @@ module TransactionEngine
           return likely_dda_check if dda_check?
           return likely_increase_check if increase_check?
           return likely_check_deposit if check_deposit?
+          return likely_column_check_deposit if column_check_deposit?
 
           return likely_ach if outgoing_ach?
           return likely_increase_ach if increase_ach?
           return likely_column_ach if column_ach?
+          return likely_column_realtime_transfer if column_realtime_transfer?
+
+          return likely_column_wire if column_wire?
 
           return likely_invoice if incoming_invoice?
 
@@ -35,6 +39,10 @@ module TransactionEngine
           return reimbursement_expense_payout if reimbursement_expense_payout
 
           return reimbursement_payout_holding if reimbursement_payout_holding
+
+          return paypal_transfer if paypal_transfer
+
+          return wire if wire
 
           nil
         end
@@ -86,6 +94,10 @@ module TransactionEngine
         CheckDeposit.find_by(increase_id: increase_check_deposit_id)
       end
 
+      def likely_column_check_deposit
+        CheckDeposit.find_by(column_id: @canonical_transaction.column_transaction_id)
+      end
+
       def likely_ach
         return nil unless event
 
@@ -109,10 +121,20 @@ module TransactionEngine
         return AchTransfer.find_by(column_id: column_ach_transfer_id)
       end
 
+      def likely_column_realtime_transfer
+        column_realtime_transfer_id = @canonical_transaction.raw_column_transaction&.column_transaction&.dig("transaction_id")
+        return AchTransfer.find_by(column_id: column_realtime_transfer_id)
+      end
+
+      def likely_column_wire
+        column_wire_id = @canonical_transaction.raw_column_transaction&.column_transaction&.dig("transaction_id")
+        return Wire.find_by(column_id: column_wire_id)
+      end
+
       def likely_invoice
         return nil unless event
 
-        potential_payouts = event.payouts.where("invoice_payouts.statement_descriptor ilike 'PAYOUT #{likely_incoming_invoice_short_name}%' and invoice_payouts.amount = #{amount_cents}")
+        potential_payouts = event.payouts.where("invoice_payouts.statement_descriptor ilike ? and invoice_payouts.amount = ?", "PAYOUT #{ActiveRecord::Base.sanitize_sql_like(likely_incoming_invoice_short_name)}%", amount_cents)
 
         return nil unless potential_payouts.present?
 
@@ -122,7 +144,7 @@ module TransactionEngine
       def likely_invoice_or_donation_for_fee_refund
         return nil unless event
 
-        fee_reimbursement = FeeReimbursement.where("transaction_memo ilike '%#{likely_donation_for_fee_refund_hex_random_id}%'").first
+        fee_reimbursement = FeeReimbursement.where("transaction_memo ilike ?", "%#{ActiveRecord::Base.sanitize_sql_like(likely_donation_for_fee_refund_hex_random_id)}%").first
 
         return nil unless fee_reimbursement
 
@@ -132,7 +154,7 @@ module TransactionEngine
       def likely_donation
         return nil unless event
 
-        potential_donation_payouts = event.donation_payouts.where("donation_payouts.statement_descriptor ilike 'DONATE #{likely_donation_short_name}%' and donation_payouts.amount = #{amount_cents}")
+        potential_donation_payouts = event.donation_payouts.where("donation_payouts.statement_descriptor ilike ? and donation_payouts.amount = ?", "DONATE #{ActiveRecord::Base.sanitize_sql_like(likely_donation_short_name)}%", amount_cents)
 
         return nil unless potential_donation_payouts.present?
 
@@ -155,6 +177,14 @@ module TransactionEngine
         return nil unless @canonical_transaction.transaction_source_type == "Reimbursement::PayoutHolding"
 
         Reimbursement::PayoutHolding.find(@canonical_transaction.transaction_source_id)
+      end
+
+      def paypal_transfer
+        @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == PaypalTransfer.name
+      end
+
+      def wire
+        @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == Wire.name
       end
 
       def event

@@ -2,7 +2,7 @@
 
 class RecurringDonationPolicy < ApplicationPolicy
   def create?
-    record.event.donation_page_enabled && !record.event.demo_mode?
+    record.event.donation_page_available? && !record.event.demo_mode?
   end
 
   def pay?

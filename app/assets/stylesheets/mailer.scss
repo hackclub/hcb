@@ -1,6 +1,10 @@
 @import 'basscss';
 @import 'space';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Yo! FYI, CSS declarations in this file (and in any mailer) MUST be a single
    line... or else `premailer-rails` is gonna give you the silent treatment by
    not rendering your CSS ٩◔̯◔۶ */
@@ -54,11 +58,33 @@ blockquote {
 }
 
 .mention {
-  img, svg {
+  img,
+  svg {
     display: none;
   }
 }
 
 .info {
   color: #338eda;
+}
+
+.card {
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.border {
+  border-color: #e0e6ed;
+}
+
+.pm-content img {
+  max-width: 100%;
+}
+
+.badge {
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }

@@ -5,7 +5,7 @@
 <%= render "header" %>
 
 <%= turbo_frame_tag :donation do %>
-  <div class="card mb3">
+  <div class="card mb3 mt3">
     <p class="mt1">
       Hi <strong><%= @donation.name(show_anonymous: true) %></strong>,
     </p>
@@ -19,7 +19,7 @@
       data-controller="stripe"
       data-stripe-api-key-value="<%= StripeService.publishable_key %>"
       data-stripe-client-secret-value="<%= @donation.stripe_client_secret %>"
-      data-stripe-return-url-value="<%= finished_donation_donations_url(@event, @donation.url_hash) %>"
+      data-stripe-return-url-value="<%= finished_donation_donations_url(@event, @donation.url_hash, { background: @background }.compact_blank) %>"
       data-action="theme-toggle@window->stripe#themeToggle">
 
       <div data-stripe-target="errors"></div>

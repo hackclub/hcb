@@ -24,7 +24,8 @@
 
 .promo-domains {
   background-color: #f5f5f5;
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       to right,
       rgba(245, 246, 252, 0.25),
       rgba(248, 248, 248, 0.05)
@@ -36,8 +37,9 @@
 
 .promo-stickerninja {
   background-color: #f5f5f5;
-  background-image: linear-gradient(
-    to right,
+  background-image:
+    linear-gradient(
+      to right,
       rgba(245, 246, 252, 0.25),
       rgba(248, 248, 248, 0.05)
     ),
@@ -47,12 +49,9 @@
 }
 
 .promo-stickers {
-  background-image: linear-gradient(
-    to right,
-    rgba(20, 20, 20, 0.3),
-    rgba(248, 248, 248, 0.05)
-  ),
-  url('https://cloud-gjqy3yr8t-hack-club-bot.vercel.app/0hero.jpg');
+  background-image:
+    linear-gradient(to right, rgba(20, 20, 20, 0.3), rgba(248, 248, 248, 0.05)),
+    url('https://cloud-gjqy3yr8t-hack-club-bot.vercel.app/0hero.jpg');
   background-size: cover;
   background-position: 0% 30%;
 
@@ -79,6 +78,14 @@
   background-repeat: no-repeat;
 }
 
+.promo-hackathons-page {
+  background-image:
+    linear-gradient(to right, rgba(20, 20, 20, 0.3), rgba(248, 248, 248, 0.05)),
+    url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/8c401650b4f472f22eb9048d6b75b351ef562957_image.png');
+  background-size: cover;
+  background-position: 0% 55%;
+}
+
 .promo-event-helper {
   background-color: rgb(238, 188, 36);
   color: black;
@@ -102,14 +109,121 @@
   border: 2px solid $red;
 
   .card__banner--top {
-    background-image: linear-gradient(to right, $dark 10%, transparent),
+    background-image:
+      linear-gradient(to right, $dark 10%, transparent),
       url('https://cloud-3aeson6ue-hack-club-bot.vercel.app/0lahacks3.jpeg');
     background-size: cover;
     background-position: left center;
   }
 }
 
+.promo-bin {
+  .card__banner--top {
+    h3 {
+      color: #363a44 !important;
+    }
+
+    background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/2screenshot_2024-05-15_at_17.37.21.png');
+    background-size: cover;
+    background-position: left center;
+  }
+}
+
+.promo-onboard {
+  .card__banner--top {
+    background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/0zxcv.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-robotics {
+  .card__banner--top {
+    background-color: #ff0000;
+    background-image:
+      linear-gradient(to right, rgba(0, 38, 255, 0.25), rgba(255, 0, 0, 0.05)),
+      url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/3f1f414fcaec2dc9b09025d1b571b6434a47d3bc_event-experience.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-jukebox {
+  .card__banner--top {
+    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/12731aa3617060c36f265d53a2f5f4bb4034f0e6_gemini_generated_image_buc4z9buc4z9buc4.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-robotics-raffle {
+  background-color: #0066b3;
+
+  .card__banner--top {
+    background-color: #0066b3;
+  }
+}
+
+.promo-pins-keychains {
+  .card__banner--top {
+    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/dfe0b30bf00cf429157c8179509d8f7049f4d887_Frame_1__8_.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-premium-domains {
+  .card__banner--top {
+    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/943ff1edeafaab2f39a66a97b7207f047de2647d_Frame_2__4_.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+@property --scroll-progress {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: false;
+}
+
+.promo-premium-header {
+  background: linear-gradient(-60deg, #ec3750, #ff8c37, #ec3750);
+  background-size: 200%;
+  animation: premium-scroll-gradient linear;
+  animation-timeline: scroll(root);
+  background-position: 0% center;
+
+  .badge {
+    background-color: rgba(100, 111, 126, 0.7) !important;
+    color: map-get($palette, smoke) !important;
+  }
+}
+
+@keyframes premium-scroll-gradient {
+  0% {
+    background-position: 0% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
 html[data-dark='true'] {
+  .promo-premium-banner {
+    background-color: $dark;
+  }
+
+  .promo-bin {
+    .card__banner--top {
+      h3 {
+        color: #fff !important;
+      }
+
+      background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/3screenshot_2024-05-15_at_17.37.30.png');
+    }
+  }
+
   .promo-pvsa {
     background: repeating-linear-gradient(
       135deg,

@@ -1,171 +1,73 @@
 <% title "#{@event.name} Settings" %>
-<% page_sm %>
+<% page_md %>
 <%= render "nav", selected: :settings %>
 
-<h1>Settings</h1>
+<% unless params[:frame] %>
+  <h1>Settings</h1>
+  <%= render "events/settings/account_info", event: @event %>
 
-<% admin_tool do %>
-  <strong>Event slug history:</strong> <%= @event.slugs.pluck(:slug).join ", " %>
-<% end %>
-
-<%= render partial: "admin_viewer", locals: { record: @event } %>
-
-<% admin_tool do %>
-  <details>
-    <summary>Audit log</summary>
-
-    <%= turbo_frame_tag :audit_log, src: audit_log_event_path(@event), loading: :lazy do %>
-      <p class="center muted mt3 h3">One moment...</p>
+  <ul class="tab-container">
+    <%= settings_tab active: @settings_tab == "details" || @settings_tab.nil? do %>
+      <%= link_to "Organization details", edit_event_path(@event, tab: "details"), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
-  </details>
-<% end %>
-
-<h3 class="mb1 flex items-center">
-  Account information
-</h3>
-
-<div class="card mb3">
-  <section class="details">
-    <p>
-      <strong>Current plan</strong>
-      <span><%= @event.plan_name.titleize %></span>
-    </p>
-
-    <% unless @event.demo_mode? %>
-      <p>
-        <strong>Fee on revenue</strong>
-        <span><%= number_to_percentage(@event.sponsorship_fee_in_database * 100, significant: true, strip_insignificant_zeros: true) %></span>
-      </p>
-      <% if @event.high_school_hackathon? && @event.sponsorship_fee == 0 %>
-        <p>
-          <strong>
-            <a
-              href="https://changelog.hcb.hackclub.com/bank-now-provides-free-durian-241524">Fee waiver</a> expiration
-          </strong>
-          <span>December 31st, 2024</span>
-        </p>
+    <% if @event.approved? %>
+      <% if @event.plan.donations_enabled? %>
+        <%= settings_tab active: @settings_tab == "donations" do %>
+          <%= link_to "Donations", edit_event_path(@event, tab: "donations"), data: { turbo: true, turbo_action: "advance" } %>
+        <% end %>
+      <% end %>
+      <% if @event.plan.reimbursements_enabled? %>
+        <%= settings_tab active: @settings_tab == "reimbursements" do %>
+          <%= link_to "Reimbursements", edit_event_path(@event, tab: "reimbursements"), data: { turbo: true, turbo_action: "advance" } %>
+        <% end %>
+      <% end %>
+      <% if @event.plan.card_grants_enabled? %>
+        <%= settings_tab active: @settings_tab == "card_grants" do %>
+          <%= link_to "Card grants", edit_event_path(@event, tab: "card_grants"), data: { turbo: true, turbo_action: "advance" } %>
+        <% end %>
       <% end %>
     <% end %>
-  </section>
-</div>
-
-<h3 class="mb1">Feature previews</h3>
-
-<div class="card pb0 mb3" id="user-permissions">
-  <div class="card__banner card__banner--top flex justify-between items-center feature-user-permissions <%= "b--info" if Flipper.enabled?(:user_permissions_2024_03_09, @event) %> ">
-    <h3 class="h1 pt2 pb2 my0 color-black">User Roles</h3>
-    <% if Flipper.enabled?(:user_permissions_2024_03_09) %>
-      <%# Feature is enabled for all users, don't include a choice %>
-      <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="This feature is now generally available!">
-        <span class="btn bg-accent disabled">Shipped!</span>
-      </div>
-      <%# link_to "Shipped!", enable_feature_path(feature: :transfers_2022_04_21), method: :post, class: 'btn bg-accent' %>
-    <% elsif @event.demo_mode? %>
-      <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="Not available in demo mode.">
-        <span class="btn bg-accent disabled">Enable</span>
-      </div>
-    <% elsif Flipper.enabled?(:user_permissions_2024_03_09, @event) %>
-      <%# Feature is enabled, let the user opt-out %>
-      <% non_manager_count = @event.organizer_positions.where.not(role: :manager).count %>
-      <% non_manager_invite_count = @event.organizer_position_invites.pending.where.not(role: :manager).count %>
-      <%= link_to "Disable",
-                  disable_feature_event_path(feature: :user_permissions_2024_03_09),
-                  class: "btn bg-accent #{"disabled" unless policy(@event).disable_feature?} tooltipped tooltipped--w",
-                  "aria-label": "Only managers can disable feature previews.",
-                  data: {
-                    turbo_confirm: non_manager_count > 0 || non_manager_invite_count > 0 ? "⚠️ You have #{non_manager_count} non-manager user#{"s" unless non_manager_count == 1} #{"and #{non_manager_invite_count} non-manager pending user invite#{"s" unless non_manager_invite_count == 1} " if non_manager_invite_count > 0}in your org ⚠️\n\nDisabling the user permissions feature will turn them into #{non_manager_count + non_manager_invite_count > 1 ? "managers" : "a manager"}. Are you sure you want to disable this feature?" : nil,
-                    turbo_method: "post"
-                  } %>
-    <% else %>
-      <%# Feature is disabled, let the user opt-in %>
-      <%= link_to "Enable", enable_feature_event_path(feature: :user_permissions_2024_03_09), method: :post, class: "btn bg-info #{"disabled" unless policy(@event).enable_feature?} tooltipped tooltipped--w", "aria-label": "Only managers can enable feature previews." %>
+    <%= settings_tab active: @settings_tab == "tags" do %>
+      <%= link_to "Tags", edit_event_path(@event, tab: "tags"), data: { turbo: true, turbo_action: "advance" } %>
     <% end %>
-  </div>
-  <p>
-    Disallow certain users from performing critical financial actions!
-    <%= link_to "Read more about user roles here.", roles_path %>
-  </p>
-</div>
-
-<% if Flipper.enabled?(:reimbursements_2024_03_10, current_user) || Flipper.enabled?(:reimbursements_2024_03_10, @event) %>
-  <%# Only allow users with access enable this on orgnizations and allow orgs with it enabled to turn it off %>
-  <div class="card pb0 mb3" id="reimbursements">
-    <div class="card__banner card__banner--top flex justify-between items-center feature-reimbursements <%= "b--info" if Flipper.enabled?(:reimbursements_2024_03_10, @event) %> ">
-      <h3 class="h1 pt2 pb2 my0 color-black">Reimbursements</h3>
-      <% if Flipper.enabled?(:reimbursements_2024_03_10) %>
-        <%# Feature is enabled for all users, don't include a choice %>
-        <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="This feature is now generally available!">
-          <span class="btn bg-accent disabled">Shipped!</span>
-        </div>
-        <%# link_to "Shipped!", enable_feature_path(feature: :transfers_2022_04_21), method: :post, class: 'btn bg-accent' %>
-      <% elsif @event.demo_mode? %>
-        <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="Not available in demo mode.">
-          <span class="btn bg-accent disabled">Enable</span>
-        </div>
-      <% elsif Flipper.enabled?(:reimbursements_2024_03_10, @event) %>
-        <%# Feature is enabled, let the user opt-out %>
-        <%= link_to "Disable", disable_feature_event_path(feature: :reimbursements_2024_03_10), method: :post, class: "btn bg-accent #{"disabled" unless policy(@event).disable_feature?} tooltipped tooltipped--w", "aria-label": "Only managers can disable feature previews." %>
-      <% else %>
-        <%# Feature is disabled, let the user opt-in %>
-        <%= link_to "Enable", enable_feature_event_path(feature: :reimbursements_2024_03_10), method: :post, class: "btn bg-info #{"disabled" unless policy(@event).enable_feature?} tooltipped tooltipped--w", "aria-label": "Only managers can enable feature previews." %>
+    <%= settings_tab active: @settings_tab == "affiliations" do %>
+      <%= link_to "Affiliations", edit_event_path(@event, tab: "affiliations"), data: { turbo: true, turbo_action: "advance" } %>
+    <% end %>
+    <%= settings_tab active: @settings_tab == "features" do %>
+      <%= link_to "Feature previews", edit_event_path(@event, tab: "features"), data: { turbo: true, turbo_action: "advance" } %>
+    <% end %>
+    <%= settings_tab active: @settings_tab == "integrations" do %>
+      <%= link_to "Integrations", edit_event_path(@event, tab: "integrations"), data: { turbo: true, turbo_action: "advance" } %>
+    <% end %>
+    <%= settings_tab active: @settings_tab == "audit_log" do %>
+      <%= link_to "Audit log", edit_event_path(@event, tab: "audit_log"), data: { turbo: true, turbo_action: "advance" } %>
+    <% end %>
+    <% admin_tool("py0 px2 overflow-hidden") do %>
+      <%= settings_tab active: @settings_tab == "admin" do %>
+        <%= link_to "Admin", edit_event_path(@event, tab: "admin"), data: { turbo: true, turbo_action: "advance" } %>
       <% end %>
-    </div>
-    <p>
-      Reimburse team members and volunteers directly through HCB!
-    </p>
-  </div>
+    <% end %>
+  </ul>
 <% end %>
 
-<div class="card pb0 mb3" id="transaction-tags">
-  <div class="card__banner card__banner--top flex justify-between items-center feature-transaction-tags <%= "b--info" if Flipper.enabled?(:transaction_tags_2022_07_29, @event) %> ">
-    <h3 class="h1 pt2 pb2 my0 color-black">Transaction Tags</h3>
-    <% if Flipper.enabled?(:transaction_tags_2022_07_29) %>
-      <%# Feature is enabled for all users, don't include a choice %>
-      <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="This feature is now generally available!">
-        <span class="btn bg-accent disabled">Shipped!</span>
-      </div>
-      <%# link_to "Shipped!", enable_feature_path(feature: :transfers_2022_04_21), method: :post, class: 'btn bg-accent' %>
-    <% elsif @event.demo_mode? %>
-      <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="Not available in demo mode.">
-        <span class="btn bg-accent disabled">Enable</span>
-      </div>
-    <% elsif Flipper.enabled?(:transaction_tags_2022_07_29, @event) %>
-      <%# Feature is enabled, let the user opt-out %>
-      <%= link_to "Disable", disable_feature_event_path(feature: :transaction_tags_2022_07_29), method: :post, class: "btn bg-accent #{"disabled" unless policy(@event).disable_feature?} tooltipped tooltipped--w", "aria-label": "Only managers can disable feature previews." %>
-    <% else %>
-      <%# Feature is disabled, let the user opt-in %>
-      <%= link_to "Enable", enable_feature_event_path(feature: :transaction_tags_2022_07_29), method: :post, class: "btn bg-info #{"disabled" unless policy(@event).enable_feature?} tooltipped tooltipped--w", "aria-label": "Only managers can enable feature previews." %>
-    <% end %>
-  </div>
-  <p>
-    Categorize and filter transactions using tags!
-  </p>
-</div>
-
-<div class="card pb0 mb3" id="anonymous-donations">
-  <div class="card__banner card__banner--top flex justify-between items-center feature-anonymous-donations <%= "b--info" if Flipper.enabled?(:anonymous_donations_2024_01_29, @event) %> ">
-    <h3 class="h1 pt2 pb2 my0 color-black">Anonymous Donations</h3>
-    <% if Flipper.enabled?(:anonymous_donations_2024_01_29) %>
-      <%# Feature is enabled for all users, don't include a choice %>
-      <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="This feature is now generally available!">
-        <span class="btn bg-accent disabled">Shipped!</span>
-      </div>
-      <%# link_to "Shipped!", enable_feature_path(feature: :transfers_2022_04_21), method: :post, class: 'btn bg-accent' %>
-    <% elsif @event.demo_mode? %>
-      <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="Not available in demo mode.">
-        <span class="btn bg-accent disabled">Enable</span>
-      </div>
-    <% elsif Flipper.enabled?(:anonymous_donations_2024_01_29, @event) %>
-      <%# Feature is enabled, let the user opt-out %>
-      <%= link_to "Disable", disable_feature_event_path(feature: :anonymous_donations_2024_01_29), method: :post, class: "btn bg-accent #{"disabled" unless policy(@event).disable_feature?}" %>
-    <% else %>
-      <%# Feature is disabled, let the user opt-in %>
-      <%= link_to "Enable", enable_feature_event_path(feature: :anonymous_donations_2024_01_29), method: :post, class: "btn bg-info #{"disabled" unless policy(@event).enable_feature?}" %>
-    <% end %>
-  </div>
-  <p>
-    Allow donors to appear anonymously in Transparency Mode!
-  </p>
-</div>
-
-<%= render "form", event: @event %>
+<% if @settings_tab == "donations" && @event.approved? && @event.plan.donations_enabled? %>
+  <%= render "events/settings/donations", event: @event, frame: @frame %>
+<% elsif @settings_tab == "reimbursements" && @event.approved? && @event.plan.reimbursements_enabled? %>
+  <%= render "events/settings/reimbursements", event: @event, frame: @frame %>
+<% elsif @settings_tab == "card_grants" && @event.approved? && @event.plan.card_grants_enabled? %>
+  <%= render "events/settings/card_grants", event: @event %>
+<% elsif @settings_tab == "tags" %>
+  <%= render "events/settings/tags", event: @event %>
+<% elsif @settings_tab == "affiliations" %>
+  <%= render "events/settings/affiliations", event: @event %>
+<% elsif @settings_tab == "features" %>
+  <%= render "events/settings/features", event: @event %>
+<% elsif @settings_tab == "integrations" %>
+  <%= render "events/settings/integrations", event: @event %>
+<% elsif @settings_tab == "audit_log" %>
+  <%= render "events/settings/audit_log", event: @event, activities: @activities, activities_before: @activities_before %>
+<% elsif @settings_tab == "admin" && auditor_signed_in? %>
+  <%= render "events/settings/admin", event: @event %>
+<% else %>
+  <%= render "events/settings/details", event: @event %>
+<% end %>

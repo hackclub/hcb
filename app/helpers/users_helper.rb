@@ -13,22 +13,24 @@ module UsersHelper
     "https://gravatar.com/avatar/#{hex}?s=#{size}&d=https%3A%2F%2Fui-avatars.com%2Fapi%2F/#{CGI.escape(name)}/#{size}/#{get_user_color(id)}/fff"
   end
 
-  def profile_picture_for(user, size = 24)
+  def profile_picture_for(user, size = 24, default_image: nil)
+    default_image ||= "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png"
+
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
-      src = "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png"
-    elsif Rails.env.production? && (user.is_a?(User) && user&.profile_picture&.attached?)
-      src = Rails.application.routes.url_helpers.url_for(user.profile_picture.variant(
-                                                           thumbnail: "#{size * 2}x#{size * 2}^",
-                                                           gravity: "center",
-                                                           extent: "#{size * 2}x#{size * 2}"
-                                                         ))
+      default_image
+    elsif Rails.env.production? && user.is_a?(User) && user.profile_picture&.persisted?
+      Rails.application.routes.url_helpers.url_for(
+        user.profile_picture.variant(
+          thumbnail: "#{size * 2}x#{size * 2}^",
+          gravity: "center",
+          extent: "#{size * 2}x#{size * 2}"
+        )
+      )
     else
-      src = gravatar_url(user.email, user.initials, user.id, size * 2)
+      gravatar_url(user.email, user.initials, user.id, size * 2)
     end
-
-    src
   end
 
   def current_user_flavor_text
@@ -51,16 +53,19 @@ module UsersHelper
       "Yahoo!",
       "dats me!",
       "dats u!",
-      "byte me!"
+      "byte me!",
+      "despite everything, it's still you!",
+      "the person reading this :-)",
+      "our favorite user currently reading this text!"
     ]
   end
 
-  def avatar_for(user, size = 24, options = {}, click_to_mention: false)
-    src = profile_picture_for(user, size)
+  def avatar_for(user, size: 24, click_to_mention: false, default_image: nil, **options)
+    src = profile_picture_for(user, size, default_image:)
     current_user = defined?(current_user) ? current_user : nil
 
     klasses = ["rounded-full", "shrink-none"]
-    klasses << "avatar--current-user" if user == current_user
+    klasses << "avatar--current-user" if user && user == current_user
     klasses << options[:class] if options[:class]
     klass = klasses.join(" ")
 
@@ -73,27 +78,31 @@ module UsersHelper
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
-  def user_mention(user, options = {}, default_name = "No User", click_to_mention: false, comment_mention: false)
+  def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
-    current_user = defined?(current_user) ? current_user : nil
-    avi = avatar_for user, 24, options[:avatar] || {}, click_to_mention:
+    viewer = defined?(current_user) ? current_user : nil
+    avi = avatar_for(user, click_to_mention:, default_image:, **options[:avatar])
 
     klasses = ["mention"]
-    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.admin? && !options[:disable_tooltip]
-    klasses << %w[mention--current-user tooltipped tooltipped--n] if current_user && (user&.id == current_user.id) && !options[:disable_tooltip]
+    klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
+    klasses << %w[mention--current-user tooltipped tooltipped--n] if viewer && (user&.id == viewer.id) && !options[:disable_tooltip]
     klasses << %w[badge bg-muted ml0] if comment_mention
     klasses << options[:class] if options[:class]
     klass = klasses.uniq.join(" ")
 
-    aria = if user.nil?
-             "No user found"
-           elsif user.id == current_user&.id
-             current_user_flavor_text.sample
-           elsif user.admin?
-             "#{user.name} is an admin"
-           end
+    aria_label = if options[:aria_label]
+                   options[:aria_label]
+                 elsif user.nil?
+                   "No user found"
+                 elsif user.id == viewer&.id
+                   current_user_flavor_text.sample
+                 elsif user.admin?
+                   "#{user.name} is an admin"
+                 elsif user.auditor?
+                   "#{user.name} is an auditor"
+                 end
 
-    content = if user&.admin? && !options[:hide_avatar]
+    content = if user&.auditor? && !options[:hide_avatar]
                 bolt = inline_icon "admin-badge", size: 20
                 avi + bolt + name
               elsif options[:hide_avatar]
@@ -102,11 +111,18 @@ module UsersHelper
                 avi + name
               end
 
-    content_tag :span, content, class: klass, 'aria-label': aria
+    unless user.nil?
+      link = content_tag :span, (inline_icon "link", size: 16), onclick: "window.open(`#{admin_user_url(user)}`, '_blank').focus()", class: "mention__link"
+      email = content_tag :span, (inline_icon "email", size: 16), onclick: "window.open(`mailto:#{user.email}`, '_blank').focus()", class: "mention__link"
+
+      content = content + email + link if viewer&.auditor?
+    end
+
+    content_tag :span, content, class: klass, 'aria-label': aria_label
   end
 
   def admin_tool(class_name = "", element = "div", override_pretend: false, **options, &block)
-    return unless current_user&.admin? || (override_pretend && current_user&.admin_override_pretend?)
+    return unless current_user&.auditor? || (override_pretend && current_user&.admin_override_pretend?)
 
     concat content_tag(element, class: "admin-tools #{class_name}", **options, &block)
   end
@@ -119,21 +135,7 @@ module UsersHelper
     admin_tool(*args, **options, &block)
   end
 
-  def admin_tools(*args, **options, &block)
-    concat content_tag(:span, "You're using the deprecated admin_tools. Replace it with the new admin_tool.", class: "error")
-    admin_tool(*args, **options, &block)
-  end
-
-  def admin_tools_if(condition, *args, **options, &block)
-    # If condition is false, it displays the content for ALL users. Otherwise,
-    # it's only visible to admins.
-    yield and return unless condition
-
-    concat content_tag("span", "You're using the deprecated admin_tools_if. Replace it with the new admin_tool_if.", class: "error")
-    admin_tool_if(condition, *args, **options, &block)
-  end
-
-  def creator_bar(object, options = {})
+  def creator_bar(object, **options)
     creator = if defined?(object.creator)
                 object.creator
               elsif defined?(object.sender)
@@ -141,7 +143,7 @@ module UsersHelper
               else
                 object.user
               end
-    mention = user_mention(creator, options, default_name = "Anonymous User")
+    mention = user_mention(creator, default_name: "Anonymous User", **options)
     content_tag :div, class: "comment__name" do
       mention + relative_timestamp(object.created_at, prefix: options[:prefix], class: "h5 muted")
     end
@@ -151,19 +153,58 @@ module UsersHelper
     user&.birthday?
   end
 
+  def onboarding_gallery
+    [
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/0image.png",
+        url: "https://hcb.hackclub.com/zephyr",
+        overlay_color: "#802434",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/1image.png",
+        url: "https://hcb.hackclub.com/the-charlotte-bridge",
+        overlay_color: "#805b24",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/2image.png",
+        url: "https://hcb.hackclub.com/windyhacks",
+        overlay_color: "#807f0a",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/3image.png",
+        url: "https://hcb.hackclub.com/the-innovation-circuit",
+        overlay_color: "#22806c",
+        object_position: "center"
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/4image.png",
+        url: "https://hcb.hackclub.com/zephyr",
+        overlay_color: "#3c7d80",
+        object_position: "center"
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/5image.png",
+        url: "https://hcb.hackclub.com/hackpenn",
+        overlay_color: "#225c80",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/6image.png",
+        url: "https://hcb.hackclub.com/wild-wild-west",
+        overlay_color: "#6c2280",
+      },
+      {
+        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/7image.png",
+        url: "https://hcb.hackclub.com/hq",
+        overlay_color: "#802434",
+      }
+    ]
+  end
+
   private
 
   def get_user_color(id)
     alphabet = ("A".."Z").to_a
     colors = ["ec3750", "ff8c37", "f1c40f", "33d6a6", "5bc0de", "338eda"]
     colors[id.to_i % colors.length] || colors.last
-  end
-
-  def settings_tab(active: false, &block)
-    if active
-      tag.li(class: "active", data: { controller: "scroll-into-view" }, &block)
-    else
-      tag.li(&block)
-    end
   end
 end

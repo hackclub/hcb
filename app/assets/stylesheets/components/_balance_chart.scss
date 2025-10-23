@@ -1,0 +1,30 @@
+#balance-chart {
+  position: absolute;
+  opacity: 20%;
+  z-index: -5;
+  pointer-events: all;
+
+  &:hover {
+    opacity: 60%;
+    z-index: 10;
+  }
+}
+
+.sparkline--up {
+  stroke: $green;
+  &.sparkline--filled {
+    fill: rgba($green, 0.3);
+  }
+
+  opacity: 35% !important;
+  &:hover {
+    opacity: 75% !important;
+  }
+}
+
+.sparkline--down {
+  stroke: $red;
+  &.sparkline--filled {
+    fill: rgba($red, 0.3);
+  }
+}

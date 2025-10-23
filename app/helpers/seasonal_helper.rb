@@ -9,7 +9,7 @@ module SeasonalHelper
     winter: [[12, 1], [12, 31]],
   }.freeze
 
-  SEASONS.each do |key, value|
+  SEASONS.each_key do |key|
     define_method "#{key}?" do |override_preference = false|
       user = (current_user if self.respond_to? :current_user, true)
       if !override_preference && (user&.seasonal_themes_disabled? || @hide_seasonal_decorations) # rubocop:disable Rails/HelperInstanceVariable
@@ -33,7 +33,7 @@ module SeasonalHelper
   end
 
   def current_season(override_preference: false)
-    SEASONS.each do |key, value|
+    SEASONS.each_key do |key|
       return key if send("#{key}?", override_preference)
     end
 

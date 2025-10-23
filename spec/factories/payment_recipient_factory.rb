@@ -6,5 +6,6 @@ FactoryBot.define do
     account_number { Faker::Bank.account_number }
     bank_name { Faker::Bank.name }
     name { Faker::Name.name }
+    email { Faker::Internet.email }
   end
 end

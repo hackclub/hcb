@@ -1,16 +1,18 @@
-<div style="position: relative; display: block;" class="max-width-1" data-controller="clipboard" data-clipboard-text-value="<%= mailbox_address.address %>">
-  <input type="text" value="<%= mailbox_address.address %>" readonly style="cursor: text;">
+<div class="relative block" data-controller="clipboard" data-clipboard-text-value="<%= mailbox_address.address %>">
+  <input type="text" value="<%= mailbox_address.address %>" readonly style="cursor: text;" class="fit">
 
   <%= pop_icon_to "view-reload",
       mailbox_addresses_path,
-      class: "mr2 align-middle", "aria-label": "Generate a new address",
+      class: "mr2 align-middle tooltipped tooltipped--n",
+      "aria-label": "Regenerate address",
       style: "position: absolute; top: 50%; right: 32px; transform: translateY(-50%) scale(0.9);",
       data: { turbo: true, "turbo-method" => "post" } %>
 
   <% if mailbox_address.previewed? %>
     <%= pop_icon_to "thumbsup",
         activate_mailbox_address_path(mailbox_address),
-        class: "mr2 align-middle success", "aria-label": "Activate this address",
+        class: "mr2 align-middle success tooltipped tooltipped--n",
+        "aria-label": "Activate this address",
         style: "position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);",
         data: { turbo: true, "turbo-method" => "post" } %>
   <% elsif mailbox_address.activated? %>

@@ -6,7 +6,7 @@
 
 <%= turbo_frame_tag :donation do %>
   <div
-    class="card mb3"
+    class="card mb3 mt3"
     data-controller="stripe"
     data-stripe-api-key-value="<%= StripeService.publishable_key %>"
     data-stripe-client-secret-value="<%= @recurring_donation.stripe_client_secret %>"

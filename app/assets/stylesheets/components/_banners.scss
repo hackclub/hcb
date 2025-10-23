@@ -1,40 +1,47 @@
 @import '../variables';
 
 .dev-banner {
-    $col1: rgba(map-get($palette, info), 0.15);
-    $col2: rgba(map-get($palette, info), 0.2);
+  $col1: rgba(map-get($palette, info), 0.15);
+  $col2: rgba(map-get($palette, info), 0.2);
 
-    position: sticky;
-    top: 0;
-    width: 100%;
-    // background-color: rgba(map-get($palette, primary), 0.2);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.125);
-    backdrop-filter: blur(2rem);
-    z-index: 100;
-    border: 1px solid map-get($palette, primary);
+  position: sticky;
+  top: 0;
+  width: 100%;
+  // background-color: rgba(map-get($palette, primary), 0.2);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.125);
+  backdrop-filter: blur(2rem);
+  z-index: 100;
+  border: 1px solid map-get($palette, primary);
 
+  background-image: linear-gradient(
+    135deg,
+    $col1 25%,
+    $col2 25%,
+    $col2 50%,
+    $col1 50%,
+    $col1 75%,
+    $col2 75%,
+    $col2 100%
+  );
+  background-size: 250px 250px;
 
-
-    background-image: linear-gradient(135deg, $col1 25%, $col2 25%, $col2 50%, $col1 50%, $col1 75%, $col2 75%, $col2 100%);
-    background-size: 250px 250px;
-
-    &--info {
-        background-color: rgba(map-get($palette, info), 0.2);
-        border-color: map-get($palette, info);
-    }
+  &--info {
+    background-color: rgba(map-get($palette, info), 0.2);
+    border-color: map-get($palette, info);
+  }
 }
 
 .banner-content {
-	grid-template-columns: 1fr 2fr 1fr;
-	place-items: center;
-  
-	@media (max-width: 660px) {
-		display: flex;
-		flex-direction: column-reverse;
-		gap: 1rem;
-		
-		.playground-desc {
-			order: 1;
-		}
-	}
+  grid-template-columns: 1fr 2fr 1fr;
+  place-items: center;
+
+  @media (max-width: 660px) {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1rem;
+
+    .playground-desc {
+      order: 1;
+    }
+  }
 }

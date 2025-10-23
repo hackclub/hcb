@@ -1,0 +1,54 @@
+<div data-controller="menu" data-menu-placement-value="<%= content_for?(:nav) || request.path.include?("auth") || request.path.include?("logins") ? "bottom-start" : "bottom-center" %>">
+  <%= link_to root_path,
+    class: "header-center text-decoration-none flex items-center #{'tooltipped tooltipped--s' if tooltipped_logo?}",
+    'aria-label': tooltipped_logo? ?
+      (user_birthday? ? "Happy birthday! #{['🎂', '🎈', '🎉', '🥳'].sample}" : "You’re in #{Rails.env} mode. #{development_mode_flavor}") :
+      "",
+    data: { "controller" => "analytics #{"ar" if current_page?(auth_users_path)}", "analytics-event-name-value" => "Icon right-clicked", "ar-usdz-href-value" => "/bank.usdz", "action" => "contextmenu->menu#toggle contextmenu->analytics#track click@document->menu#close keydown@document->menu#keydown", "menu-target" => "toggle" } do %>
+
+    <% logo_env = Rails.env.local? ? "development" : Rails.env %>
+
+    <%= image_tag user_birthday? ? "logo-party-dark.gif" : by_season("logo-#{logo_env}-dark.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+        name: "header-logo",
+        class: "logo-dark",
+        height: @home_size || 36,
+        alt: "HCB logo" %>
+    <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+        name: "header-logo",
+        class: "logo",
+        height: @home_size || 36,
+        alt: "HCB logo" %>
+  <% end %>
+
+  <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+    <% if fall? %>
+      <a href="https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png" download class="flex">
+        <%= image_tag "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png", class: "mr1", height: 24 %>
+        Download spooky icon
+      </a>
+    <% end %>
+    <a href="/brand/hcb-icon-icon-original.png" download class="flex">
+      <%= image_tag "logo-production.svg", class: "mr1", size: 24 %>
+      Download PNG icon
+    </a>
+    <a href="/brand/hcb-icon-icon-dark.png" download class="flex">
+      <%= image_tag "logo-production-dark.svg", class: "mr1", size: 24 %>
+      Download PNG icon
+    </a>
+    <div class="menu__divider"></div>
+    <a href="/branding">Brand guidelines</a>
+    <div class="menu__divider"></div>
+    <a href="/" target="_blank">Open link in new tab</a>
+    <% if current_user&.admin_override_pretend? %>
+      <div class="menu__divider" data-label="Admin"></div>
+      <%= button_to "#{"✔ " if current_user.pretend_is_not_admin}Pretend not to be an admin", user_path(current_user), method: :patch, params: { pretend_is_not_admin: !current_user.pretend_is_not_admin }, class: "menu__action admin-tools", data: { turbo: false } %>
+    <% end %>
+    <% if Rails.env.development? %>
+      <div class="menu__divider" data-label="Development"></div>
+      <a
+        href="/letter_opener"
+        target="_blank"
+        class="menu__action dev-tools border-none"><%= "Open LetterOpener (#{LetterOpenerWeb::Letter.search.count})" %></a>
+    <% end %>
+  </div>
+</div>

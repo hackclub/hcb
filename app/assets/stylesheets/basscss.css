@@ -31,9 +31,7 @@
 .text-decoration-none {
   text-decoration: none;
 }
-.bold {
-  font-weight: 700;
-}
+.bold,
 .semibold {
   font-weight: 600;
 }
@@ -253,6 +251,9 @@
 @media (max-width: 32em) {
   .xs-hide {
     display: none !important;
+  }
+  .xs-capitalize {
+    text-transform: capitalize;
   }
 }
 @media (min-width: 32em) and (max-width: 48em) {

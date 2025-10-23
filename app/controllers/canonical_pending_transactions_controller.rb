@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CanonicalPendingTransactionsController < ApplicationController
+  include TurboStreamFlash
+
   def show
     @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
     authorize @canonical_pending_transaction
@@ -18,7 +20,7 @@ class CanonicalPendingTransactionsController < ApplicationController
     @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @canonical_pending_transaction.local_hcb_code, event: @event).run.first(4)
   end
 
-  def set_custom_memo
+  def update
     @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
 
     authorize @canonical_pending_transaction
@@ -26,9 +28,37 @@ class CanonicalPendingTransactionsController < ApplicationController
     @canonical_pending_transaction.update!(canonical_pending_transaction_params)
 
     unless params[:no_flash]
-      flash[:success] = "Renamed pending transaction"
+      flash[:success] = "Updated pending transaction"
     end
     redirect_to params[:redirect_to] || @canonical_pending_transaction.local_hcb_code
+  end
+
+
+  def set_category
+    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
+
+    authorize @canonical_pending_transaction
+
+    slug = params.dig(:canonical_pending_transaction, :category_slug)
+
+    TransactionCategoryService
+      .new(model: @canonical_pending_transaction)
+      .set!(slug:, assignment_strategy: "manual")
+
+    message = "Transaction category was successfully updated."
+
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[:success] = message
+        update_flash_via_turbo_stream(use_admin_layout: params[:context] == "admin")
+      end
+      format.html do
+        redirect_to(
+          canonical_pending_transaction_path(@canonical_pending_transaction),
+          flash: { success: message }
+        )
+      end
+    end
   end
 
   private

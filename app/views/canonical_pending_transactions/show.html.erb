@@ -23,7 +23,7 @@
 <article class="card mt2">
   <h1 class="heading h1 mt0 mb0">
     <span class="flex-auto">
-      Pending Transaction
+      Pending transaction
     </span>
     <span class="h2 regular">
       <%= @canonical_pending_transaction.amount %>
@@ -76,6 +76,22 @@
         <%= link_to "A donation of #{render_money @canonical_pending_transaction.donation.amount}", @canonical_pending_transaction.donation %>
       </p>
     <% end %>
+    <div>
+      <% admin_tool(style: "margin-right: 0px; padding-right: 0px;") do %>
+        <strong>Fee</strong>
+      <% end %>
+      <% admin_tool(style: "margin-left: -0.5rem; padding-left: 0px;") do %>
+        <% if @canonical_pending_transaction.amount_cents > 0 %>
+          <%= form_with model: @canonical_pending_transaction, html: { data: { controller: "form" } } do |form| %>
+            <%= hidden_field_tag :redirect_to, request.original_fullpath %>
+            <div class="field--checkbox">
+              <%= form.check_box :fee_waived, data: { action: "form#submit" } %>
+              <%= form.label :fee_waived, "Fee (#{number_to_percentage(@canonical_pending_transaction.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true)}) waived?" %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
 
   </section>
 
@@ -83,7 +99,7 @@
 
 <% if @hcb_code %>
   <h2>Receipts</h2>
-  <%= render "receipts/list_v2" %>
+  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @hcb_code,
         enable_linking: true,

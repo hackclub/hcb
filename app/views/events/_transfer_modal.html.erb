@@ -1,0 +1,9 @@
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_transfer">
+  <%= turbo_frame_tag :transfer_form do %>
+    <%= modal_header "Transfer money" %>
+
+    <%= render partial: "events/unauthorized_callout", locals: { action: "transfer money" } unless policy(@event).create_transfer? %>
+
+    <%= render "transfer_form" %>
+  <% end %>
+</section>

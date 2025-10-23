@@ -25,6 +25,12 @@ class SuggestedPairingsController < ApplicationController
     @receiptable = @pairing.hcb_code
     @receipt = @pairing.receipt
 
+    if params[:memo] == "true"
+      custom_memo = @receipt.suggested_memo
+      @receiptable.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+      @receiptable.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    end
+
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
@@ -36,6 +42,19 @@ class SuggestedPairingsController < ApplicationController
 
   def generate_streams
     streams = []
+
+    pairings = current_user.receipt_bin.suggested_receipt_pairings
+
+    current_slide = [pairings.size - 1, Integer(params[:current_slide] || 0)].min
+
+    streams.append(
+      turbo_stream.replace(
+        "suggested_pairings",
+        partial: "static_pages/suggested_pairings",
+        locals: { pairings:, current_slide: }
+      )
+    )
+
     if @receiptable
       if @receiptable.canonical_transactions&.any?
         @receiptable.canonical_transactions.each do |ct|
@@ -61,17 +80,6 @@ class SuggestedPairingsController < ApplicationController
       streams.append(turbo_stream.refresh_link_modals)
     end
 
-    pairings = current_user.receipt_bin.suggested_receipt_pairings
-
-    current_slide = [pairings.size - 1, Integer(params[:current_slide] || 0)].min
-
-    streams.append(
-      turbo_stream.replace(
-        "suggested_pairings",
-        partial: "static_pages/suggested_pairings",
-        locals: { pairings:, current_slide: }
-      )
-    )
     streams
   end
 

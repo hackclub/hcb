@@ -123,7 +123,7 @@ class EmburseTransfer < ApplicationRecord
   private
 
   def normalize_blank_values
-    attributes.each do |column, value|
+    attributes.each_key do |column|
       self[column].present? || self[column] = nil
     end
   end

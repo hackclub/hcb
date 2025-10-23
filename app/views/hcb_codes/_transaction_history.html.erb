@@ -1,5 +1,5 @@
 <!-- transaction history -->
-<h2>Transaction History</h2>
+<h2>Transaction history</h2>
 
 <article class="table-container">
   <table>
@@ -13,15 +13,15 @@
     </thead>
     <tbody>
       <% @hcb_code.canonical_transactions.each do |ct| %>
-        <% if current_user.admin? || ct.event.try(:users).try(:include?, current_user) %>
+        <% if auditor_signed_in? || ct.event.try(:users).try(:include?, current_user) %>
           <tr>
-            <td><%= ct.date %></td>
+            <td><%= format_date ct.date %></td>
             <td><%= ct.smart_memo %></td>
             <td style="text-align: right;"><%= number_to_currency(ct.amount) %></td>
             <td>
               <%= pop_icon_to "edit",
                   edit_canonical_transaction_path(ct),
-                  class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in? %>
+                  class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
             </td>
           </tr>
         <% end %>

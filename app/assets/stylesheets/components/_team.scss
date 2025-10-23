@@ -1,25 +1,25 @@
-.organizer-position-invite {
+.organizer-position {
   grid-template-columns: 1fr auto;
   grid-template-rows: 1fr 1fr;
   gap: 0.5rem;
   grid-auto-flow: row;
   grid-template-areas:
-      "invite-info invite-cancel"
-      "invite-date invite-cancel";
+    'invite-info invite-cancel'
+    'invite-date invite-cancel';
 
-  & .organizer-position-invite__cancel {
+  & .organizer-position__cancel {
     grid-area: invite-cancel;
   }
 
-  & .organizer-position-invite__info {
+  & .organizer-position__info {
     grid-area: invite-info;
   }
 
-  & .organizer-position-invite__date {
+  & .organizer-position__date {
     grid-area: invite-date;
   }
-  
-  & .organizer-position-invite__contact-block {
+
+  & .organizer-position__contact-block {
     flex-wrap: wrap;
   }
 
@@ -31,12 +31,13 @@
 }
 
 @media (max-width: 26rem) {
-  .organizer-position-invite__main-info, .organizer-position-invite__contact-block {
+  .organizer-position__main-info,
+  .organizer-position__contact-block {
     flex-direction: column;
     gap: 0.5rem;
   }
 
-  .organizer-position-invite__contact-block-separator {
+  .organizer-position__contact-block-separator {
     display: none;
   }
 }

@@ -5,6 +5,8 @@ $darker: #121217;
 $darkless: #252429;
 
 html[data-dark='true'] {
+  color-scheme: dark;
+
   body {
     background-color: $dark;
     color: map-get($palette, smoke);
@@ -19,13 +21,13 @@ html[data-dark='true'] {
   input[type='text'],
   input[type='url'],
   select,
+  .input,
   textarea {
-    color-scheme: dark;
     background-color: $darkless;
     color: map-get($palette, white);
     border-color: $darkless;
 
-    &:focus {
+    &:focus-within {
       border-color: map-get($palette, info);
     }
   }
@@ -88,7 +90,7 @@ html[data-dark='true'] {
   .flash {
     border: 0;
   }
-  
+
   .menu__content {
     input[type='date'],
     input[type='email'],
@@ -110,6 +112,7 @@ html[data-dark='true'] {
   .card,
   .menu__content,
   .modal {
+    --card-bg: #252429;
     background-color: $darkless;
   }
   .modal--scroll.bg-snow {
@@ -133,7 +136,8 @@ html[data-dark='true'] {
   .modal,
   .card,
   .menu__content {
-    box-shadow: -2px -4px 8px rgba(0, 0, 0, 0.125),
+    box-shadow:
+      -2px -4px 8px rgba(0, 0, 0, 0.125),
       4px 8px 16px rgba(0, 0, 0, 0.25);
   }
 
@@ -160,6 +164,9 @@ html[data-dark='true'] {
     textarea {
       background: $dark;
       border-color: $dark;
+      &:focus-within {
+        border-color: map-get($palette, info);
+      }
     }
 
     pre {
@@ -168,15 +175,15 @@ html[data-dark='true'] {
     &.b--warning {
       border-color: rgba(map-get($palette, warning), 0.375);
     }
-    
+
     &.b--info {
       border-color: rgba(map-get($palette, info), 0.375);
     }
-    
+
     &.b--success {
       border-color: rgba(map-get($palette, success), 0.375);
     }
-    
+
     &.b--primary {
       border-color: rgba(map-get($palette, primary), 0.375);
     }
@@ -189,7 +196,7 @@ html[data-dark='true'] {
   a > .card {
     color: map-get($palette, smoke);
   }
-  
+
   .dock__item.disabled span {
     color: map-get($palette, muted);
   }
@@ -221,7 +228,7 @@ html[data-dark='true'] {
   .comments .card.current-user {
     background-color: mix($darkless, map-get($palette, info), 90%);
   }
-  
+
   .comments .card.comment--admin {
     border: 1px dashed map-get($palette, warning);
     background-color: mix($darkless, map-get($palette, warning), 90%);
@@ -231,14 +238,17 @@ html[data-dark='true'] {
   .transaction--positive {
     background-color: rgba(map-get($palette, success), 0.25);
   }
+
   .card__banner.bg-error,
   .transaction--negative {
     background-color: rgba(map-get($palette, error), 0.25);
   }
+
   .shade-neutral,
   .transaction--zero {
     background-color: $darkless;
   }
+
   .shade-yellow {
     background-color: rgba(map-get($palette, pending), 0.125);
   }
@@ -298,6 +308,10 @@ html[data-dark='true'] {
     background-color: rgba(0, 0, 0, 0.125);
   }
 
+  .list-badge.quick-action {
+    border: 1px solid darken(map-get($palette, muted), 20%);
+  }
+
   .filterbar__item:active,
   .filterbar__item[aria-selected='true'] {
     background-color: rgba(map-get($palette, info), 0.125);
@@ -307,6 +321,11 @@ html[data-dark='true'] {
   .pop,
   .pop.info {
     background-color: rgba(map-get($palette, info), 0.125);
+  }
+
+  .badge.bg-snow {
+    background-color: rgba(map-get($palette, white), 1);
+    color: black;
   }
 
   .flash.accent,
@@ -353,7 +372,7 @@ html[data-dark='true'] {
   }
 
   .bg-smoke-important {
-    background: $darkless!important;
+    background: $darkless !important;
     color: map-get($palette, white);
   }
 
@@ -425,8 +444,25 @@ html[data-dark='true'] {
       @include gradient(info);
     }
   }
-  
+
   .mention-suggestions {
     border: 1px solid map-get($palette, slate);
+  }
+
+  .transaction--positive > td > span > span > span.success-dark.medium {
+    font-weight: 400;
+  }
+
+  .recharts-rectangle.recharts-tooltip-cursor {
+    opacity: 0.2;
+  }
+
+  #card-pin {
+    color: #1f2d3d !important;
+    filter: invert(1);
+  }
+
+  .modal__close {
+    background-color: rgb(23 23 29) !important;
   }
 }
