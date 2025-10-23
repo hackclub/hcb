@@ -43,7 +43,7 @@ class Event
 
     def name_is_unique_within_parent_event
       if parent_event.subevent_scoped_tags.where(name:).exists?
-        errors.add(:name, "is not unique within the parent event")
+        errors.add(:name, "is not unique within the parent organization")
       end
     end
 
