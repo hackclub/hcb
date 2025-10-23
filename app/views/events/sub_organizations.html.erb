@@ -135,16 +135,18 @@
   </section>
 <% end %>
 
-<section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="create_scoped_tag">
-  <%= modal_header("Create sub-organization tag") %>
-  <%= form_with url: event_scoped_tags_path(@event), id: "create_scoped_tag_form", data: { turbo: false } do |form| %>
-    <%= form.hidden_field :subevent_id, value: "", id: "create_scoped_tag_subevent_id" %>
+<% if policy(@event).toggle_scoped_tag? %>
+  <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="create_scoped_tag">
+    <%= modal_header("Create sub-organization tag") %>
+    <%= form_with url: event_scoped_tags_path(@event), id: "create_scoped_tag_form", data: { turbo: false } do |form| %>
+      <%= form.hidden_field :subevent_id, value: "", id: "create_scoped_tag_subevent_id" %>
 
-    <div class="field">
-      <%= form.label :name, "Tag name" %>
-      <%= form.text_field :name, autofocus: true, style: "max-width: 100%", autocomplete: "off", data: { turbo: true }, required: true %>
-    </div>
+      <div class="field">
+        <%= form.label :name, "Tag name" %>
+        <%= form.text_field :name, autofocus: true, style: "max-width: 100%", autocomplete: "off", data: { turbo: true }, required: true %>
+      </div>
 
-    <%= form.submit "Create", class: "btn bg-info mt-2 float-right" %>
-  <% end %>
-</section>
+      <%= form.submit "Create", class: "btn bg-info mt-2 float-right" %>
+    <% end %>
+  </section>
+<% end %>
