@@ -4,6 +4,7 @@ module Api
   module V4
     class TransactionsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
       before_action :set_api_event, only: [:update, :memo_suggestions]
       skip_after_action :verify_authorized, only: [:missing_receipt]
