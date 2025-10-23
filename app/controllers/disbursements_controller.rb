@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class DisbursementsController < ApplicationController
+  include TurboStreamFlash
+
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
   def show
@@ -37,7 +39,7 @@ class DisbursementsController < ApplicationController
   def new
     @destination_event = Event.friendly.find(params[:event_id]) if params[:event_id]
     @source_event = Event.friendly.find(params[:source_event_id]) if params[:source_event_id]
-    @event = @source_event
+    @event = @source_event # this is to render the navigation bar for the correct event.
     @disbursement = Disbursement.new(
       destination_event: @destination_event,
       source_event: @source_event,
@@ -46,19 +48,20 @@ class DisbursementsController < ApplicationController
     )
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
+    user_accesible_events = Event.where(id: current_user.events.pluck(:id) + current_user.events.collect(&:descendant_ids).flatten)
 
-    @allowed_source_events = if current_user.admin?
+    @allowed_source_events = if admin_signed_in?
                                Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
-                               current_user.events.not_hidden.filter_demo_mode(false)
+                               user_accesible_events.not_hidden.filter_demo_mode(false)
                              end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-    @allowed_destination_events = if current_user.admin?
+    @allowed_destination_events = if admin_signed_in?
                                     Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    allowed_destination_event_ids = current_user.events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
+                                    allowed_destination_event_ids = user_accesible_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
                                     Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
                                   else
-                                    current_user.events.not_hidden.filter_demo_mode(false)
+                                    user_accesible_events.not_hidden.filter_demo_mode(false)
                                   end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
 
     authorize @disbursement
@@ -71,7 +74,7 @@ class DisbursementsController < ApplicationController
 
     authorize @disbursement
 
-    if current_user.admin? && disbursement_params["scheduled_on(1i)"].present?
+    if admin_signed_in? && disbursement_params["scheduled_on(1i)"].present?
       scheduled_on = Date.new(disbursement_params["scheduled_on(1i)"].to_i,
                               disbursement_params["scheduled_on(2i)"].to_i,
                               disbursement_params["scheduled_on(3i)"].to_i)
@@ -85,7 +88,9 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: @source_event.plan.front_disbursements_enabled?
+      fronted: @source_event.plan.front_disbursements_enabled?,
+      source_transaction_category_slug: disbursement_params[:source_transaction_category_slug].presence,
+      destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
     ).run
 
     if disbursement_params[:file]
@@ -99,7 +104,7 @@ class DisbursementsController < ApplicationController
 
     flash[:success] = "Transfer successfully requested."
 
-    if current_user.admin?
+    if admin_signed_in?
       redirect_to disbursements_admin_index_path
     else
       redirect_to event_transfers_path(@source_event)
@@ -127,6 +132,49 @@ class DisbursementsController < ApplicationController
     authorize @disbursement
     @disbursement.mark_rejected!
     redirect_to @disbursement.local_hcb_code
+  end
+
+  def set_transaction_categories
+    @disbursement = Disbursement.find(params[:disbursement_id])
+    authorize @disbursement
+
+    category_params =
+      params
+      .require(:disbursement)
+      .permit(:source_transaction_category_slug, :destination_transaction_category_slug )
+
+    updates = {}
+
+    [:source_transaction_category, :destination_transaction_category].each do |field|
+      param = "#{field}_slug"
+      next unless category_params.key?(param)
+
+      slug = category_params[param]
+
+      updates[field] =
+        if slug.blank?
+          nil
+        else
+          TransactionCategory.find_or_initialize_by(slug:)
+        end
+    end
+
+    @disbursement.update!(updates)
+
+    message = "Transaction category was successfully updated."
+
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[:success] = message
+        update_flash_via_turbo_stream(use_admin_layout: true)
+      end
+      format.html do
+        redirect_to(
+          disbursement_path(@disbursement),
+          flash: { success: message }
+        )
+      end
+    end
   end
 
   def mark_fulfilled
@@ -169,7 +217,14 @@ class DisbursementsController < ApplicationController
       :scheduled_on,
       { file: [] }
     ]
-    attributes << :should_charge_fee if admin_signed_in?
+
+    if admin_signed_in?
+      attributes.push(
+        :should_charge_fee,
+        :source_transaction_category_slug,
+        :destination_transaction_category_slug
+      )
+    end
 
     params.require(:disbursement).permit(attributes)
   end

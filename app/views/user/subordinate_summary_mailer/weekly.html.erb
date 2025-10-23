@@ -58,7 +58,7 @@
   </ul>
 <% end %>
 
-<h1>Missing Receipts</h1>
+<h1>Missing receipts</h1>
 <p>Your reports have a total
   of <%= @subordinates.sum(&:transactions_missing_receipt_count) %> missing
   receipts.</p>

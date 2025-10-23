@@ -8,13 +8,25 @@
       <%= link_to params.to_unsafe_h.merge(format: :csv) do %>
         <button type="button" class="bg-muted ml2" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
       <% end %>
-      <%= link_to request_balance_export_admin_index_path, method: :POST do %>
-        <button type="button" class="bg-muted ml2">Export balances (all events)</button>
-      <% end %>
     <% end %>
     <%= render partial: "events_filter", locals: { form:, action_buttons: export_button } %>
   </div>
 <% end %>
+
+<details class="mt2">
+  <summary>Export all event balances</summary>
+  <%= form_with(url: request_balance_export_admin_index_path, method: :post) do |form| %>
+    <p class="bold mb0 mt0">
+      Up until...
+    </p>
+    <p>
+      <%= form.date_field :end_date, class: "border mb1", value: nil %>
+    </p>
+    <p>
+      <%= form.submit "Export balances (all events)" %>
+    </p>
+  <% end %>
+</details>
 
 <div class="flex items-center mb2">
   <div class="flex-grow">
@@ -36,6 +48,7 @@
       <th>Fee</th>
       <th>Country</th>
       <th>Status</th>
+      <th>Active teenagers</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -81,9 +94,13 @@
           <% end %>
         </td>
         <td>
+          <%= event.users.active_teenager.count %>
+        </td>
+        <td>
           <%= link_to "Process", event_process_admin_path(event) if event.pending? || event.unapproved? %>
           <%= link_to "Edit", edit_event_path(event, tab: "admin") unless event.pending? || event.unapproved? %>
           <%= link_to "Review", event_process_admin_path(event) unless event.pending? || event.unapproved? %>
+          <%= render(partial: "event_groups_link", locals: { event: }) %>
         </td>
       </tr>
     <% end %>

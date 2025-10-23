@@ -41,8 +41,8 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       // prettier-ignore
-      AIRBRAKE_PROJECT_ID: JSON.stringify(process.env.AIRBRAKE_PROJECT_ID || null),
-      AIRBRAKE_API_KEY: JSON.stringify(process.env.AIRBRAKE_API_KEY || null),
+      APPSIGNAL_FRONTEND: JSON.stringify(process.env.APPSIGNAL_FRONTEND || null),
+      HATCHBOX_REVISION: JSON.stringify(process.env.HATCHBOX_REVISION || null)
     }),
   ],
   externals: {

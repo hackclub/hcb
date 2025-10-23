@@ -33,6 +33,13 @@
     </p>
 
     <p>
+      <strong>User email</strong>
+      <%= copy_to_clipboard(@opdr.organizer_position.user.email) do %>
+        <%= @opdr.organizer_position.user.email %>
+      <% end %>
+    </p>
+
+    <p>
       <strong>Submitted at</strong>
       <%= format_datetime @opdr.created_at %>
     </p>

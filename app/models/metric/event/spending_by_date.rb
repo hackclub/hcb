@@ -25,7 +25,7 @@ class Metric
       def calculate
         CanonicalTransaction
           .joins("LEFT JOIN canonical_event_mappings ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id")
-          .where("canonical_event_mappings.event_id = ? AND EXTRACT(YEAR FROM canonical_transactions.created_at) = ?", event.id, 2024)
+          .where("canonical_event_mappings.event_id = ? AND EXTRACT(YEAR FROM canonical_transactions.created_at) = ?", event.id, Metric.year)
           .group("date(canonical_transactions.created_at)")
           .select(
             "date(canonical_transactions.created_at) AS transaction_date",

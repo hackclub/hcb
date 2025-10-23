@@ -33,7 +33,7 @@
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
              "draft_created"           => ["plus", "success", "created this draft report"],
              "reimbursed"              => ["payment-transfer", "purple", reimbursed_change_text],
-             "reversed"                => ["sad", "warning", "cancelled this reimbursement"],
+             "reversed"                => ["sad", "warning", "canceled this reimbursement"],
            } %>
         <% state_change = item.changeset["aasm_state"]&.second %>
         <% if state_change %>
@@ -80,32 +80,37 @@
             </li>
           <% end %>
         <% else %>
-          <li class="conversation_item mt2" style="margin-bottom: 24px;">
-            <div class="flex flex-row items-center" style="gap: 16px">
-              <div class="pop bg-smoke-important no_hover relative z2">
-                <%= inline_icon "post", width: 30 %>
+          <% changes = item.changeset.excluding("updated_at", "conversion_rate").select { |field, changes| changes.any?(&:present?) } %>
+          <% unless item.event == "update" && changes.empty? %>
+            <li class="conversation_item mt2" style="margin-bottom: 24px;">
+              <div class="flex flex-row items-center" style="gap: 16px">
+                <div class="pop bg-smoke-important no_hover relative z2">
+                  <%= inline_icon "post", width: 30 %>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px">
+                  <span class="muted; margin-right: -0.25em;">
+                    <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
+                  </span>
+                  <span class="align-middle">
+                    <%= item.event %><%= item.event.ends_with?("e") ? "d" : "ed" %> this report
+                  </span>
+                  <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
+                    <%= time_ago_in_words item.created_at %> ago</span>
+                </div>
               </div>
-              <div style="display: flex; align-items: center; gap: 4px">
-                <span class="muted; margin-right: -0.25em;">
-                  <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png" %>
-                </span>
-                <span class="align-middle"><%= item.event %>d this report</span>
-                <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
-                  <%= time_ago_in_words item.created_at %> ago</span>
-              </div>
-            </div>
-            <% if item.event == "update" %>
-              <ul class="list-reset" style="margin-left: 52px;">
-                <% item.changeset.excluding("updated_at").select { |field, changes| changes.any?(&:present?) }.each do |field, changes| %>
-                  <li>
-                    <strong class="muted"><%= render_audit_log_field(field) %>:</strong>
-                    <%= render_audit_log_value(field, changes[0], color: "primary") %> →
-                    <%= render_audit_log_value(field, changes[1], color: "success") %>
-                  </li>
-                <% end %>
-              </ul>
-            <% end %>
-          </li>
+              <% if item.event == "update" %>
+                <ul class="list-reset" style="margin-left: 52px;">
+                  <% changes.each do |field, changes| %>
+                    <li>
+                      <strong class="muted"><%= render_audit_log_field(field) %>:</strong>
+                      <%= render_audit_log_value(field, changes[0], color: "primary") %> →
+                      <%= render_audit_log_value(field, changes[1], color: "success") %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+            </li>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

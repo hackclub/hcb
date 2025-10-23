@@ -58,7 +58,7 @@
 
   </div>
 
-  <%= form.submit "Add comment", disabled: !organizer_signed_in? && current_user != commentable&.try(:user) %>
+  <%= form.submit "Add comment", disabled: !policy(commentable.comments.build).create? %>
 <% end %>
 
 <% unless @popover %>

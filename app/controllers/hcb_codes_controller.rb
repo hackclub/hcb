@@ -3,8 +3,8 @@
 class HcbCodesController < ApplicationController
   include TagsHelper
 
-  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :show]
-  skip_after_action :verify_authorized, only: [:receipt]
+  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
+  skip_after_action :verify_authorized, only: [:receipt, :receipt_status]
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
@@ -40,10 +40,13 @@ class HcbCodesController < ApplicationController
       @show_ach_details = true
     end
 
+    @reverse_receipt_id = params[:reverse]
+
     if params[:frame]
       @frame = true
       @transaction_show_receipt_button = params[:transaction_show_receipt_button].nil? ? false : params[:transaction_show_receipt_button]
       @transaction_show_author_img = params[:transaction_show_author_img].nil? ? false : params[:transaction_show_author_img]
+      @ledger_instance = params[:ledger_instance]
 
       render :show, layout: false
     else
@@ -128,7 +131,13 @@ class HcbCodesController < ApplicationController
       return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
-    redirect_to @hcb_code
+    if @hcb_code.card_grant?
+      @card_grant = @hcb_code.card_grant
+      @event = @card_grant.event
+      return render partial: "card_grants/details", locals: { card_grant: @card_grant }
+    else
+      redirect_to @hcb_code
+    end
   end
 
   def comment
@@ -193,6 +202,13 @@ class HcbCodesController < ApplicationController
     end
   end
 
+  def receipt_status
+    @secret = params[:s]
+    @hcb_code = HcbCode.find_signed(@secret, purpose: :receipt_status)
+
+    raise Pundit::NotAuthorizedError if @hcb_code.nil?
+  end
+
   def toggle_tag
     hcb_code = HcbCode.find(params[:id])
     tag = Tag.find(params[:tag_id])
@@ -230,7 +246,7 @@ class HcbCodesController < ApplicationController
 
     authorize hcb_code
 
-    if hcb_code.amount_cents >= -100
+    if hcb_code.amount_cents > -100
       flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
       return redirect_to hcb_code
     end

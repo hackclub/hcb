@@ -30,9 +30,10 @@ export default class extends Controller {
       this.showNewSponsorCard()
     }
 
-    this.sponsorFormTarget.querySelectorAll('input').forEach(input => {
-      input.addEventListener('input', this.validateForm.bind(this))
-    })
+    this.sponsorFormTarget.addEventListener(
+      'change',
+      this.validateForm.bind(this)
+    )
 
     this.validateForm()
   }

@@ -32,7 +32,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features
+        Event::Plan.available_features - %w[promotions]
       end
 
       def exempt_from_wire_minimum?

@@ -4,22 +4,27 @@
 #
 # Table name: card_grants
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer
-#  category_lock   :string
-#  email           :string           not null
-#  keyword_lock    :string
-#  merchant_lock   :string
-#  purpose         :string
-#  status          :integer          default("active"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint
-#  event_id        :bigint           not null
-#  sent_by_id      :bigint           not null
-#  stripe_card_id  :bigint
-#  subledger_id    :bigint
-#  user_id         :bigint           not null
+#  id                         :bigint           not null, primary key
+#  amount_cents               :integer
+#  banned_categories          :string
+#  banned_merchants           :string
+#  category_lock              :string
+#  email                      :string           not null
+#  instructions               :text
+#  keyword_lock               :string
+#  merchant_lock              :string
+#  one_time_use               :boolean
+#  pre_authorization_required :boolean          default(FALSE), not null
+#  purpose                    :string
+#  status                     :integer          default("active"), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  disbursement_id            :bigint
+#  event_id                   :bigint           not null
+#  sent_by_id                 :bigint           not null
+#  stripe_card_id             :bigint
+#  subledger_id               :bigint
+#  user_id                    :bigint           not null
 #
 # Indexes
 #
@@ -60,6 +65,9 @@ class CardGrant < ApplicationRecord
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
+  has_one :pre_authorization
+  after_create :create_pre_authorization!, if: :pre_authorization_required?
+
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
   before_create :create_subledger
@@ -73,10 +81,14 @@ class CardGrant < ApplicationRecord
 
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
+  serialize :banned_merchants, coder: CommaSeparatedCoder
+  serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :purpose, length: { maximum: 30 }
+
+  MAXIMUM_PURPOSE_LENGTH = 30
+  validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
@@ -94,7 +106,7 @@ class CardGrant < ApplicationRecord
     elsif pending_invite?
       "info"
     elsif stripe_card.frozen? || stripe_card.inactive?
-      "info"
+      "warning"
     else
       "success"
     end
@@ -112,6 +124,15 @@ class CardGrant < ApplicationRecord
     else
       "Active"
     end
+  end
+
+  def status_badge_type
+    s = state.to_sym
+    return :success if s == :success
+    return :error if s == :muted
+    return :warning if s == :info
+
+    :muted
   end
 
   def pending_invite?
@@ -141,7 +162,7 @@ class CardGrant < ApplicationRecord
 
   def withdraw!(amount_cents:, withdrawn_by: sent_by)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
-    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents > balance.amount * 100
+    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents >= balance.amount * 100
 
     custom_memo = "Withdrawal from grant to #{user.name}"
 
@@ -174,11 +195,11 @@ class CardGrant < ApplicationRecord
   end
 
   def expire!
-    hcb_user = User.find_by!(email: "bank@hackclub.com")
+    hcb_user = User.system_user
     cancel!(hcb_user, expired: true)
   end
 
-  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.find_by!(email: "bank@hackclub.com"), allow_topups: false)
+  def zero!(custom_memo: "Return of funds from grant to #{user.name}", requested_by: User.system_user, allow_topups: false)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
     raise ArgumentError, "Card grant should have a positive balance." unless balance.positive? || allow_topups
 
@@ -196,7 +217,7 @@ class CardGrant < ApplicationRecord
     disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
   end
 
-  def cancel!(canceled_by = User.find_by!(email: "bank@hackclub.com"), expired: false)
+  def cancel!(canceled_by = User.system_user, expired: false)
     raise ArgumentError, "Grant is already #{status}" unless active?
 
     zero!(custom_memo: "Returning #{expired ? "expired" : "canceled"} grant to #{user.name}", requested_by: canceled_by) if balance > 0
@@ -207,14 +228,14 @@ class CardGrant < ApplicationRecord
     stripe_card&.cancel!
   end
 
-  def create_stripe_card(session)
+  def create_stripe_card(ip_address)
     return if stripe_card.present?
 
     self.stripe_card = StripeCardService::Create.new(
       card_type: "virtual",
       event_id:,
       current_user: user,
-      current_session: session,
+      ip_address:,
       subledger:,
     ).run
 
@@ -225,12 +246,20 @@ class CardGrant < ApplicationRecord
     (merchant_lock + (setting&.merchant_lock || [])).uniq
   end
 
+  def disallowed_merchants
+    (banned_merchants + (setting&.banned_merchants || [])).uniq
+  end
+
   def allowed_merchant_names
     allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name || "Unnamed Merchant (#{merchant_id})" }.uniq
   end
 
   def allowed_categories
     (category_lock + (setting&.category_lock || [])).uniq
+  end
+
+  def disallowed_categories
+    (banned_categories + (setting&.banned_categories || [])).uniq
   end
 
   def allowed_category_names

@@ -20,21 +20,6 @@
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 
-    <% if signed_in? %>
-      <script>
-        document.addEventListener("turbo:load", () => {
-          try {
-            Headway.init({
-              selector: "#changelog-icon",
-              account:  "7z8ovy",
-              trigger: "#changelog-icon"
-            })
-          } catch {}
-        })
-      </script>
-      <script async src="https://cdn.headwayapp.co/widget.js"></script>
-    <% end %>
-
     <% unless Rails.env.production? %>
       <meta name="turbo-prefetch" content="false">
     <% end %>
@@ -62,7 +47,7 @@
     *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
           Come hack on HCB with us!
-  <%= Rails.configuration.constants.hack_on_hcb_form_url %>
+  <%= Rails.configuration.constants.hack_on_hcb_form_url %> <%# erb_lint:disable ErbSafety %>
   `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
       </script>
     <% end %>
@@ -94,7 +79,7 @@
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
         <p class="h5 medium center mt1 mb1">
-          <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
+          <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
         </p>
       </div>
     <% end %>
@@ -144,7 +129,7 @@
 
             <div class="welcome__content">
               <div class="center">
-                <h3 class="h3 caps secondary block m0">Welcome to</h3>
+                <h3 class="h3 caps secondary block my-0">Welcome to</h3>
                 <h1 class="primary mt0 border-none"><%= @organizer_position&.initial? ? "HCB" : @event.name %></h1>
               </div>
 

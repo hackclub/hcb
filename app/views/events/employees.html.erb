@@ -52,7 +52,7 @@
 <% end %>
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-1 my-3 w-full sm:w-auto") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 my-3 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
   <div style="text-align: center;">
@@ -67,7 +67,7 @@
 <% else %>
   <div class="grid grid-cols-1 lg:grid-cols-2">
     <% @employees.each do |employee| %>
-      <%= link_to employee_path(employee), class: "card card--hover" do %>
+      <%= link_to employee_path(employee), class: "card card--hover", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "employee_#{employee.hashid}" } do %>
         <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
           <strong class="h4 flex-grow"><%= employee.user.name %></strong>
           <span class="block"><%= employee.aasm_state.humanize %></span>
@@ -79,6 +79,16 @@
           <% end %>
         </span>
       <% end %>
+
+       <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="employee_<%= employee.hashid %>" data-state-url="<%= employee_path(employee) %>" data-state-title="<%= "#{employee.user.name}'s payroll" %>">
+          <%= modal_header("#{employee.user.name}'s payroll", external_link: employee_path(employee)) %>
+          <%= turbo_frame_tag "employee_#{employee.hashid}", src: employee.popover_path, loading: :lazy do %>
+            <%= render partial: "application/loading_container" %>
+          <% end %>
+        </section>
+      <% end %>
+
     <% end %>
   </div>
 <% end %>

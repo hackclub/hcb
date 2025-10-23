@@ -23,11 +23,11 @@
 
     <% filters.select { |f| f[:type] == "amount_range" }.each do |filter| %>
       <% ["less_than", "greater_than"].each do |suffix| %>
-        <% param_key = "#{filter[:key].sub('_*', '')}_#{suffix}" %>
+        <% param_key = "#{filter[:key_base]}_#{suffix}" %>
         <% if params[param_key].present? %>
           <div class="badge badge-large bg-muted">
-            <%= "#{filter[:label].gsub('Amount ', '').humanize} #{suffix.humanize}" %>
-            <%= Money.new(params[param_key].to_i, "USD").format %>
+            <%= suffix.humanize %>
+            <%= Money.new(params[param_key].to_i * 100, "USD").format %>
             <%= link_to upsert_query_params(param_key => nil),
               class: "flex items-center",
               data: { turbo_prefetch: "false" } do %>
@@ -40,7 +40,7 @@
 
     <% filters.select { |f| f[:type] == "date_range" }.each do |filter| %>
       <% ["after", "before"].each do |suffix| %>
-        <% param_key = "#{filter[:key].sub('_*', '')}_#{suffix}" %>
+        <% param_key = "#{filter[:key_base]}_#{suffix}" %>
         <% if params[param_key].present? %>
           <div class="badge badge-large bg-muted">
             <%= "#{filter[:label].gsub('Date ', '').humanize} #{suffix}" %>
