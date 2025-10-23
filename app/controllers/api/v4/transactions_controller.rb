@@ -27,7 +27,7 @@ module Api
         @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
 
         @total_count = @hcb_codes.size
-        @has_more = false # TODO: implement pagination
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       def update

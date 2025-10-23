@@ -13,6 +13,18 @@ module Api
         json.has_more @has_more
       end
 
+      def paginate_hcb_codes(hcb_codes)
+        limit = params[:limit]&.to_i || 25
+        start_index = if params[:after]
+                        hcb_codes.index { |hcb_code| hcb_code.public_id == params[:after] } + 1
+                      else
+                        0
+                      end
+        @has_more = hcb_codes.length > start_index + limit
+
+        hcb_codes.slice(start_index, limit)
+      end
+
       def transaction_amount(tx, event: nil)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
