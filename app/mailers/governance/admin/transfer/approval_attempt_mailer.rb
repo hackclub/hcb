@@ -22,6 +22,7 @@ module Governance
         end
 
         def set_approval_attempt = @approval_attempt = params[:approval_attempt]
+
       end
     end
   end
