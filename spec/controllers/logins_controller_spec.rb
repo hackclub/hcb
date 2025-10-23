@@ -38,7 +38,7 @@ RSpec.describe LoginsController do
       login = Login.last
       expect(login.user.email).to eq(email)
       expect(login).not_to be_reauthentication
-      expect(response).to redirect_to(login_code_login_path(login))
+      expect(response).to redirect_to(email_login_path(login))
     end
 
     it "uses the existing user if the email matches" do
@@ -49,7 +49,7 @@ RSpec.describe LoginsController do
 
       login = Login.last
       expect(login.user).to eq(user)
-      expect(response).to redirect_to(login_code_login_path(login))
+      expect(response).to redirect_to(email_login_path(login))
     end
   end
 

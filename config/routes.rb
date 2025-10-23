@@ -194,7 +194,8 @@ Rails.application.routes.draw do
       post "login_preference", to: "logins#set_login_preference", as: :set_login_preference
 
       # Request a login code
-      post "login_code"
+      post "email"
+      post "sms"
 
       # TOTP
       get "totp"
