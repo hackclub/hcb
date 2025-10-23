@@ -59,7 +59,7 @@ RSpec.describe LoginsController do
       login = create(:login, user:)
 
       expect {
-        get(:login_code, params: { id: login.hashid })
+        get(:email, params: { id: login.hashid })
       }.to send_email(to: user.email)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -79,7 +79,7 @@ RSpec.describe LoginsController do
       expect(verification_service).to receive(:send_verification_request).with(user.phone_number)
       expect(TwilioVerificationService).to receive(:new).and_return(verification_service)
 
-      get(:login_code, params: { id: login.hashid })
+      get(:sms, params: { id: login.hashid })
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("SMS code")
@@ -90,7 +90,7 @@ RSpec.describe LoginsController do
       user = create(:user, email: "text@example.com")
       login = create(:login, user:, is_reauthentication: true)
 
-      get(:login_code, params: { id: login.hashid })
+      get(:email, params: { id: login.hashid })
 
       expect(flash[:error]).to eq("Please start again.")
       expect(response).to redirect_to(auth_users_path)
