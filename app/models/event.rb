@@ -19,6 +19,8 @@
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
 #  donation_tiers_enabled                       :boolean          default(FALSE), not null
+#  fee_waiver_applied                           :boolean          default(FALSE), not null
+#  fee_waiver_eligible                          :boolean          default(FALSE), not null
 #  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
@@ -38,6 +40,8 @@
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
+#  discord_channel_id                           :string
+#  discord_guild_id                             :string
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
 #  parent_id                                    :bigint
@@ -45,6 +49,8 @@
 #
 # Indexes
 #
+#  index_events_on_discord_channel_id   (discord_channel_id) UNIQUE
+#  index_events_on_discord_guild_id     (discord_guild_id) UNIQUE
 #  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
@@ -156,10 +162,6 @@ class Event < ApplicationRecord
 
   def descendants
     Event.where(id: descendant_ids)
-  end
-
-  def descendant_total_balance_cents
-    subevents.to_a.sum(&:balance_available_v2_cents)
   end
 
   belongs_to :parent, class_name: "Event", optional: true
@@ -282,6 +284,8 @@ class Event < ApplicationRecord
   has_many :slugs, -> { order(id: :desc) }, class_name: "FriendlyId::Slug", as: :sluggable, dependent: :destroy
 
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_invite_links, class_name: "OrganizerPositionInvite::Link"
+  has_many :organizer_position_invite_requests, through: :organizer_position_invite_links, source: :requests
   has_many :organizer_positions, dependent: :destroy
 
   def ancestor_organizer_positions
@@ -368,6 +372,11 @@ class Event < ApplicationRecord
   has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
 
+  has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent", dependent: :destroy
+  has_many :scoped_tags, through: :event_scoped_tags_events, source: :event_scoped_tag
+  has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id, dependent: :destroy
+  accepts_nested_attributes_for :event_scoped_tags_events
+
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits
@@ -387,15 +396,19 @@ class Event < ApplicationRecord
 
   has_one_attached :donation_header_image
   validates :donation_header_image, content_type: [:png, :jpeg]
+  validates :donation_header_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
   validates :background_image, content_type: [:png, :jpeg, :gif]
+  validates :background_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
+  validates :logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["logo"].present? }
 
   has_one_attached :stripe_card_logo
   validates :stripe_card_logo, content_type: [:png, :jpeg]
+  validates :stripe_card_logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
 
   include HasMetrics
 
@@ -421,6 +434,8 @@ class Event < ApplicationRecord
   validates :website, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { website.present? }
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
+
+  validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
@@ -884,6 +899,14 @@ class Event < ApplicationRecord
     @point_of_contact_history ||= versions
                                   .filter_map { |v| v.changeset["point_of_contact_id"].presence }
                                   .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
+  end
+
+  def has_discord_guild?
+    discord_guild_id.present?
+  end
+
+  def valid_scoped_tags
+    scoped_tags.where(parent_event_id: parent_id)
   end
 
   private

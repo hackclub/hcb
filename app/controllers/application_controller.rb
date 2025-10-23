@@ -30,10 +30,6 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
-    @hide_promotional_banner = cookies[:hide_robotics_raffle_banner] == "1"
-  end
-
-  before_action do
     # Disallow indexing
     response.set_header("X-Robots-Tag", "noindex")
   end
@@ -93,6 +89,11 @@ class ApplicationController < ActionController::Base
       redirect_to root_url
     end
   end
+
+  rescue_from Governance::Admin::InsufficientApprovalLimitError do |e|
+    redirect_back fallback_location: root_path, flash: { error: e.message }
+  end
+
 
   def find_current_auditor
     current_user if auditor_signed_in?

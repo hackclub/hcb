@@ -42,6 +42,8 @@ class Document < ApplicationRecord
   belongs_to :archived_by, class_name: "User", optional: true
 
   has_one_attached :file
+  validates :file, size: { less_than_or_equal_to: 25.megabytes }, if: -> { attachment_changes["file"].present? }
+
   has_many :downloads, class_name: "DocumentDownload", dependent: :destroy
 
   validates_presence_of :user, :name

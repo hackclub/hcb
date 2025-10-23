@@ -198,6 +198,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      category: @category,
       merchant: @merchant,
       order_by: @order_by.to_sym
     ).run
@@ -314,7 +315,9 @@ class EventsController < ApplicationController
       @indirect_access = access_levels
     end
 
-    @pending = @event.organizer_position_invites.pending.includes(:sender)
+    @invites = @event.organizer_position_invites.pending.includes(:sender)
+    @invite_requests = @event.organizer_position_invite_requests.pending
+    @invite_links = @event.organizer_position_invite_links.active
   end
 
   # GET /events/1/edit
@@ -397,6 +400,14 @@ class EventsController < ApplicationController
     @event.destroy
     flash[:success] = "Organization successfully deleted."
     redirect_to root_path
+  end
+
+  def toggle_fee_waiver_eligible
+    authorize @event
+
+    @event.update!(fee_waiver_eligible: !@event.fee_waiver_eligible)
+
+    redirect_back fallback_location: event_promotions_path(@event)
   end
 
   def emburse_card_overview
@@ -774,7 +785,11 @@ class EventsController < ApplicationController
     authorize @event
 
     @active_teenagers_count = @event.users.active_teenager.count
-    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.eligible_for_perks?
+
+    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
+
+    # I'm so sorry, this is awful & temporary
+    @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025)
   end
 
   def reimbursements
@@ -822,10 +837,17 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.html do
         search = params[:q] || params[:search]
+        scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
 
         relation = @event.subevents
         relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+        relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
         relation = relation.order(created_at: :desc)
+
+        @filter_options = [
+          { key: "tag", label: "Tag", type: "select", options: @event.subevent_scoped_tags.map(&:name) }
+        ]
+        @has_filter = helpers.check_filters?(@filter_options, params)
 
         @sub_organizations = relation
       end
@@ -868,7 +890,8 @@ class EventsController < ApplicationController
       is_public: @event.is_public,
       plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
-      parent_event: @event
+      parent_event: @event,
+      scoped_tags: params[:scoped_tags]
     ).run
 
     redirect_to subevent
@@ -1263,6 +1286,7 @@ class EventsController < ApplicationController
     @missing_receipts = params[:missing_receipts].present?
     @merchant = params[:merchant]
     @direction = params[:direction]
+    @category = TransactionCategory.find_by(slug: params[:category])
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
@@ -1290,6 +1314,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      category: @category,
       merchant: @merchant,
       order_by: @order_by&.to_sym || "date"
     ).run
