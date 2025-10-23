@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_21_013806) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_23_034712) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1190,6 +1190,34 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_21_013806) do
     t.boolean "immune_to_revocation", default: false, null: false
     t.index ["created_by_id"], name: "index_g_suites_on_created_by_id"
     t.index ["event_id"], name: "index_g_suites_on_event_id"
+  end
+
+  create_table "governance_admin_transfer_approval_attempts", force: :cascade do |t|
+    t.bigint "governance_admin_transfer_limit_id", null: false
+    t.bigint "user_id", null: false
+    t.string "transfer_type", null: false
+    t.bigint "transfer_id", null: false
+    t.integer "attempted_amount_cents", null: false
+    t.string "result", null: false
+    t.string "denial_reason"
+    t.datetime "current_limit_window_started_at", null: false
+    t.datetime "current_limit_window_ended_at", null: false
+    t.integer "current_limit_amount_cents", null: false
+    t.integer "current_limit_used_amount_cents", null: false
+    t.integer "current_limit_remaining_amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["governance_admin_transfer_limit_id"], name: "idx_on_governance_admin_transfer_limit_id_3dfaba4d9a"
+    t.index ["transfer_type", "transfer_id"], name: "index_governance_admin_transfer_approval_attempts_on_transfer"
+    t.index ["user_id"], name: "index_governance_admin_transfer_approval_attempts_on_user_id"
+  end
+
+  create_table "governance_admin_transfer_limits", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_governance_admin_transfer_limits_on_user_id", unique: true
   end
 
   create_table "hashed_transactions", force: :cascade do |t|
@@ -2618,6 +2646,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_21_013806) do
   add_foreign_key "g_suite_revocations", "g_suites"
   add_foreign_key "g_suites", "events"
   add_foreign_key "g_suites", "users", column: "created_by_id"
+  add_foreign_key "governance_admin_transfer_approval_attempts", "governance_admin_transfer_limits"
+  add_foreign_key "governance_admin_transfer_approval_attempts", "users"
+  add_foreign_key "governance_admin_transfer_limits", "users"
   add_foreign_key "hashed_transactions", "raw_plaid_transactions"
   add_foreign_key "hcb_code_personal_transactions", "hcb_codes"
   add_foreign_key "hcb_code_personal_transactions", "invoices"

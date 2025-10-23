@@ -2,6 +2,10 @@
 
 module Governance
   module Admin
+    def self.table_name_prefix
+      "governance_admin_"
+    end
+
     TRANSFER_APPROVAL_LIMITS = {
       admin: Money.new(5_000_00), # $5k USD
       superadmin: Money.new(200_000_00) # $200k USD
