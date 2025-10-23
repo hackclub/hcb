@@ -251,7 +251,7 @@ RSpec.describe LoginsController do
           }
         )
 
-        expect(response).to redirect_to(choose_login_preference_login_path(login))
+        expect(response).to redirect_to(totp_login_path(login))
         expect(flash[:error]).to include("Invalid TOTP code")
       end
 
@@ -379,7 +379,7 @@ RSpec.describe LoginsController do
           }
         )
 
-        expect(response).to redirect_to(totp_login_path(login))
+        expect(response).to redirect_to(choose_login_preference_login_path(login))
 
         login.reload
         expect(login).not_to be_complete
