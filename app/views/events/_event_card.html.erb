@@ -53,31 +53,33 @@
           <%= render partial: "events/scoped_tags/scoped_tag", collection: event.scoped_tags, locals: { subevent: event } %>
         </div>
 
-        <div data-controller="menu">
-          <button class="badge m-0 menu__toggle menu__toggle--arrowless border-none" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
-          <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
-            <% event.parent.subevent_scoped_tags.each do |scoped_tag| %>
-              <div class="flex items-center" data-scoped-tag="<%= scoped_tag.id %>">
-                <%= button_to toggle_tag_event_scoped_tag_path(event, scoped_tag), class: "menu__action event_#{event.id}_scoped_tag_#{scoped_tag.id}_toggle", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                  <%= scoped_tag.name %>
-                  <%= "✓" if event.scoped_tags.include?(scoped_tag) %>
-                <% end %>
-                <%= button_to event_scoped_tag_path(event, scoped_tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => "Are you sure you want to delete this tag?" } do %>
-                  <%= inline_icon "delete", size: 18, style: "margin: 0" %>
-                <% end %>
-              </div>
-            <% end %>
+        <% if policy(event).toggle_scoped_tag? %>
+          <div data-controller="menu">
+            <button class="badge m-0 menu__toggle menu__toggle--arrowless border-none" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
+              <% event.parent.subevent_scoped_tags.each do |scoped_tag| %>
+                <div class="flex items-center" data-scoped-tag="<%= scoped_tag.id %>">
+                  <%= button_to toggle_tag_event_scoped_tag_path(event, scoped_tag), class: "menu__action event_#{event.id}_scoped_tag_#{scoped_tag.id}_toggle", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                    <%= scoped_tag.name %>
+                    <%= "✓" if event.scoped_tags.include?(scoped_tag) %>
+                  <% end %>
+                  <%= button_to event_scoped_tag_path(event, scoped_tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => "Are you sure you want to delete this tag?" } do %>
+                    <%= inline_icon "delete", size: 18, style: "margin: 0" %>
+                  <% end %>
+                </div>
+              <% end %>
 
-            <% if event.parent.subevent_scoped_tags.any? %>
-              <div class="menu__divider tags__divider"></div>
-            <% end %>
+              <% if event.parent.subevent_scoped_tags.any? %>
+                <div class="menu__divider tags__divider"></div>
+              <% end %>
 
-            <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" onclick="document.getElementById('create_scoped_tag_subevent_id').value = <%= event.id.to_json %>">
-              <%= inline_icon "plus", size: 15 %>
-                Create tag
-            </button>
+              <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" onclick="document.getElementById('create_scoped_tag_subevent_id').value = <%= event.id.to_json %>">
+                <%= inline_icon "plus", size: 15 %>
+                  Create tag
+              </button>
+            </div>
           </div>
-        </div>
+        <% end %>
       </div>
     <% end %>
 
