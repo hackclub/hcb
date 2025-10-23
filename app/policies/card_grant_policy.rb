@@ -6,7 +6,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_manager? && record.event.plan.card_grants_enabled?
+    admin_or_manager? && sender_admin_or_manager? && record.event.plan.card_grants_enabled?
   end
 
   def show?
@@ -65,6 +65,10 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager? && record.active?
   end
 
+  def disable_pre_authorization?
+    admin_or_manager? && record.pre_authorization_required?
+  end
+
   def topup?
     admin_or_manager? && record.active?
   end
@@ -83,6 +87,12 @@ class CardGrantPolicy < ApplicationPolicy
 
   def admin_or_manager?
     user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+  end
+
+  def sender_admin_or_manager?
+    return true if record.sent_by.nil? # May be nil if used to authorize after build on #new page.
+
+    record.sent_by.admin? || OrganizerPosition.find_by(user: record.sent_by, event: record.event)&.manager?
   end
 
   private

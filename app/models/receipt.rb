@@ -72,6 +72,7 @@ class Receipt < ApplicationRecord
   end
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
+  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -119,7 +120,9 @@ class Receipt < ApplicationRecord
     transaction_popover_drag_and_drop: 17,
     email_reimbursement: 18,
     sms_reimbursement: 19,
-    employee_payment: 20
+    employee_payment: 20,
+    duplicate: 21,
+    discord_bot_modal: 22
   }
 
   enum :textual_content_source, {

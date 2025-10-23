@@ -28,6 +28,7 @@ class EventPolicy < ApplicationPolicy
 
   alias_method :transactions?, :show?
   alias_method :ledger?, :transactions?
+  alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
     user&.admin?
@@ -67,6 +68,8 @@ class EventPolicy < ApplicationPolicy
   alias enable_feature? update?
 
   alias disable_feature? update?
+
+  alias toggle_fee_waiver_eligible? update?
 
   def validate_slug?
     admin_or_member?
@@ -113,7 +116,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def statement_of_activity?
-    show? && admin?
+    show? && auditor?
   end
 
   def async_balance?
@@ -145,7 +148,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def promotions?
-    auditor_or_reader? && record.plan.promotions_enabled?
+    auditor_or_reader?
   end
 
   def reimbursements_pending_review_icon?
@@ -161,7 +164,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def sub_organizations?
-    auditor_or_reader? && (record.subevents_enabled? || record.subevents.any?)
+    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
   end
 
   def create_sub_organization?
@@ -169,7 +172,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def donation_overview?
-    show? && record.approved? && record.plan.donations_enabled?
+    show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
   def invoices?
@@ -210,6 +213,10 @@ class EventPolicy < ApplicationPolicy
 
   def activate?
     user&.admin? && record.demo_mode?
+  end
+
+  def toggle_scoped_tag?
+    admin_or_manager?
   end
 
   private

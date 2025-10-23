@@ -1,8 +1,6 @@
 <%# locals: (block:, is_email: false, tags:, start_date:, end_date:) %>
 
-<%= render "announcements/blocks/block_shell", block:, type: "topTags", is_email: do %>
-  <p><strong>Top tags for <%= block.announcement.event.name %> <%= "from #{start_date.strftime("%B %e, %Y")}" if start_date.present? %> until <%= end_date.strftime("%B %e, %Y") %>:</strong></p>
-
+<%= render "announcements/blocks/block_shell", block:, type: "topTags", is_email:, title: "Top tags for #{block.announcement.event.name} #{"from #{start_date.strftime("%B %e, %Y")}" if start_date.present?} until #{end_date.strftime("%B %e, %Y")}" do %>
   <% if block.empty? %>
     <p><%= block.announcement.event.name %> does not have any tag data for this period.</p>
   <% else %>

@@ -11,7 +11,7 @@
       target="_blank">
       <img
         src="<%= @announcement.event.logo.present? ? Rails.application.routes.url_helpers.url_for(@announcement.event.logo) : Rails.application.routes.url_helpers.root_url + "brand/hcb-icon-icon-original.png" %>"
-        style="height: 2.5rem; max-width: 80%">
+        style="height: 2.5rem; max-width: 80%" height="40">
     </a>
   <% else %>
     <a
@@ -19,7 +19,7 @@
       target="_blank">
       <img
         src="<%= Rails.application.routes.url_helpers.root_url %>brand/hcb-icon-icon-original.png"
-        style="height: 2.5rem">
+        style="height: 2.5rem" height="40">
     </a>
   <% end %>
 </div>

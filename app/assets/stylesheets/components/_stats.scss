@@ -7,10 +7,11 @@
   font-size: 3rem;
   line-height: 1;
   margin-bottom: 0.25rem;
+  --unit: '$';
 }
 
 .stat:not(.stat--plain) .stat__value:before {
-  content: '$';
+  content: var(--unit);
   color: map-get($palette, muted);
   font-size: 1.5rem;
   vertical-align: top;

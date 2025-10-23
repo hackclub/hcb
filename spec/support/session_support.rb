@@ -7,7 +7,7 @@ module SessionSupport
   # @param user [User]
   # @return [UserSession]
   def sign_in(user)
-    expiration_at = user.session_duration_seconds.seconds.from_now
+    expiration_at = user.session_validity_preference.seconds.from_now
 
     required_factor_count = user.use_two_factor_authentication ? 2 : 1
     login = build(:login, user:)
@@ -25,7 +25,7 @@ module SessionSupport
 
     cookies.encrypted[:session_token] = {
       value: user_session.session_token,
-      expires: expiration_at,
+      expires: UserSession::MAX_SESSION_DURATION.from_now,
       httponly: true,
       secure: true,
     }

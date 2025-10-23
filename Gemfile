@@ -2,11 +2,11 @@
 
 source "https://rubygems.org"
 
-ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
+ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", git: "https://github.com/rails/rails.git", branch: "7-2-stable"
+gem "rails", "~> 7.2"
 
 gem "puma", "~> 6.6" # app server
 
@@ -14,8 +14,10 @@ gem "pg", ">= 0.18", "< 2.0" # database
 gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
-gem "sidekiq-cron", "~> 2.1" # run Sidekiq jobs at scheduled intervals
+gem "sidekiq-cron", "~> 2.3" # run Sidekiq jobs at scheduled intervals
 gem "activejob-traffic_control" # throttle jobs
+gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob-traffic_control
+# explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -25,7 +27,7 @@ gem "jsbundling-rails", "~> 1.3"
 gem "terser", "~> 1.2" # JS compressor
 gem "jquery-rails"
 gem "react-rails"
-gem "turbo-rails", "~> 2.0.13"
+gem "turbo-rails", "~> 2.0.17"
 
 gem "invisible_captcha"
 gem "local_time" # client-side timestamp converter for cache-safe rendering
@@ -35,7 +37,7 @@ gem "country_select", "~> 8.0"
 gem "faraday" # web requests
 
 gem "stripe", "11.7.0"
-gem "plaid", "~> 34.0"
+gem "plaid", "~> 44.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
 
 gem "aws-sdk-s3", require: false
@@ -73,6 +75,8 @@ gem "business_time"
 gem "poppler" # PDF parsing
 gem "wicked_pdf" # HTML to PDF conversion
 
+gem "write_xlsx" # Export Excel files
+gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
 
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
@@ -99,6 +103,7 @@ gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
+gem "reverse_markdown" # public activity to discord
 
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
@@ -189,6 +194,7 @@ gem "jbuilder", "~> 2.13"
 
 gem "ledgerjournal"
 gem "doorkeeper", "~> 5.8"
+gem "doorkeeper-device_authorization_grant"
 
 gem "cssbundling-rails", "~> 1.4"
 
@@ -222,3 +228,6 @@ gem "pstore"
 gem "bcrypt", "~> 3.1.7"
 
 gem "prosemirror_to_html"
+
+gem "ed25519"
+gem "discordrb"
