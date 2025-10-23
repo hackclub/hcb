@@ -16,7 +16,10 @@ module Api
       def paginate_hcb_codes(hcb_codes)
         limit = params[:limit]&.to_i || 25
         start_index = if params[:after]
-                        hcb_codes.index { |hcb_code| hcb_code.public_id == params[:after] } + 1
+                        index = hcb_codes.index { |hcb_code| hcb_code.public_id == params[:after] }
+                        return render json: { error: "invalid_operation", messages: "After parameter '#{params[:after]}' not found" }, status: :bad_request if index.nil?
+
+                        index + 1
                       else
                         0
                       end
