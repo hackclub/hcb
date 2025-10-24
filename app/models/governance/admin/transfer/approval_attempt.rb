@@ -76,6 +76,13 @@ module Governance
               You have #{attempt.current_limit_remaining_amount.format} remaining in your transfer limit."
             STR
           end,
+          impersonation: ->(attempt) do
+            <<~STR.squish
+              **sniff sniff** 👃 You don't smell very much like
+              #{attempt.request_context.user.name || "the current user"}.
+              Please end your impersonation session and try again 😉.
+            STR
+          end
         }.freeze
         enum :denial_reason, DENIAL_REASONS.map { |k, _v| [k, k.to_s] }.to_h, prefix: :denied_for
 
@@ -87,6 +94,9 @@ module Governance
 
         validates :denial_reason, absence: true, if: :approved?
         validate :user_matches_limit_user
+
+        delegate :impersonator, :impersonated?, to: :request_context, allow_nil: true
+        def actor = request_context&.impersonator || user
 
         private
 

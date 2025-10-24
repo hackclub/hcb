@@ -62,6 +62,8 @@ module Governance
       )
     end
 
+    def impersonated? = impersonator.present?
+
     private
 
     def authentication_session_is_user_session

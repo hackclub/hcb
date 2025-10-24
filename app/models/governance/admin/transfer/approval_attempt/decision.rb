@@ -18,15 +18,23 @@ module Governance
               snapshot_limit
 
               # 2. Based on the snapshot, find reasons to deny the attempt
+              if request_context&.impersonated?
+                return deny_for :impersonation
+              end
+
               if attempted_amount_cents > current_limit_remaining_amount_cents
-                self.result = :denied
-                self.denial_reason = :insufficient_limit
+                return deny_for :insufficient_limit
               end
 
               # 3. Approve if no denial reasons were found
               self.result ||= :approved
             end
 
+          end
+
+          def deny_for(denial_reason)
+            self.result = :denied
+            self.denial_reason = denial_reason
           end
         end
 
