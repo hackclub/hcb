@@ -18,13 +18,7 @@ module GovernanceService
         end
 
         def ensure_may_approve!
-          @approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.new(
-            transfer: @transfer,
-            attempted_amount_cents: @amount_cents,
-            user: @user,
-            limit:,
-            request_context: @request_context
-          )
+          @approval_attempt = new_approval_attempt
 
           # Prevent race conditions
           limit.with_lock do
@@ -37,6 +31,25 @@ module GovernanceService
           else
             raise Governance::Admin::Transfer::ApprovalAttempt::DeniedError.new(@approval_attempt.denial_message)
           end
+        end
+
+        def may_approve?
+          @approval_attempt = new_approval_attempt
+          @approval_attempt.make_decision
+          # Don't save to DB. We just want to check if it would be approved
+          @approval_attempt.approved?
+        end
+
+        private
+
+        def new_approval_attempt
+          Governance::Admin::Transfer::ApprovalAttempt.new(
+            transfer: @transfer,
+            attempted_amount_cents: @amount_cents,
+            user: @user,
+            limit:,
+            request_context: @request_context
+          )
         end
 
         def limit
