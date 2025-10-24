@@ -8,7 +8,7 @@ module Admin
           transfer:,
           amount_cents:,
           user: current_user,
-          request_context: Governance::RequestContext.from_controller(self)
+          request_context: Current.governance_request_context
         ).ensure_may_approve!
       end
 
