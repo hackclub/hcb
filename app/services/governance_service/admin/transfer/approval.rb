@@ -28,11 +28,11 @@ module GovernanceService
             @approval_attempt.save!
           end
 
-          if @approval_attempt.approved?
-            true # Approval succeeded, return true
-          else
+          unless @approval_attempt.approved?
             raise Governance::Admin::Transfer::ApprovalAttempt::DeniedError.new(@approval_attempt.denial_message)
           end
+
+          true # Approval succeeded, return true
         end
 
         def may_approve?
