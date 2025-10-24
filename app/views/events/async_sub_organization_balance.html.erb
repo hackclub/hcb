@@ -1,0 +1,3 @@
+<%= turbo_frame_tag "sub_event_balance_#{@event.public_id}" do %>
+  <%= render_money_amount(@event.subevents.to_a.sum(&:balance_available_v2_cents)) %>
+<% end %>

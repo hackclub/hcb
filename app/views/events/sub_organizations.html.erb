@@ -22,7 +22,9 @@
       <div class="stat statset__wide" data-tour-step="balance">
         <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
         <span class="stat__value">
-          <%= render_money_amount(@sub_organizations.to_a.sum(&:balance_available_v2_cents)) %>
+          <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
+            <strong>-</strong>
+          <% end %>
         </span>
       </div>
     </div>

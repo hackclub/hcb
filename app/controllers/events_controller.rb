@@ -559,6 +559,12 @@ class EventsController < ApplicationController
     render :async_balance, layout: false
   end
 
+  def async_sub_organization_balance
+    authorize @event
+
+    render :async_balance, layout: false
+  end
+
   def account_number
     @transactions = if @event.column_account_number.present?
                       CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id)).order(created_at: :desc)
@@ -839,7 +845,7 @@ class EventsController < ApplicationController
         search = params[:q] || params[:search]
         scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
 
-        relation = @event.subevents
+        relation = @event.subevents.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
         relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
         relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
         relation = relation.order(created_at: :desc)
