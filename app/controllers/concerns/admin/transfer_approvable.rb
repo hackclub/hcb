@@ -8,7 +8,6 @@ module Admin
           transfer:,
           amount_cents:,
           user: current_user,
-          request_context: Current.governance_request_context
         ).ensure_may_approve!
       end
 

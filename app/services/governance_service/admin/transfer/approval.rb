@@ -2,12 +2,12 @@ module GovernanceService
   module Admin
     module Transfer
       class Approval
-        def initialize(transfer:, amount_cents:, user:, request_context:)
+        def initialize(transfer:, amount_cents:, user:)
           @transfer = transfer
           @amount_cents = amount_cents
           @user = user
-          @request_context = request_context
 
+          @request_context = Current.governance_request_context
           @approval_attempt = nil
         end
 
