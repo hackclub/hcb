@@ -55,8 +55,12 @@ module GovernanceService
         end
 
         def limit
-          @limit = Governance::Admin::Transfer::Limit.find_by(user: @user)
-          raise Governance::Admin::Transfer::Limit::MissingApprovalLimitError unless @limit
+          @limit ||= Governance::Admin::Transfer::Limit.find_by(user: @user)
+          unless @limit
+            raise Governance::Admin::Transfer::Limit::MissingApprovalLimitError.new(
+              "Unable to approve transfer. #{@user.name} does not have an admin transfer limit configured."
+            )
+          end
 
           @limit
         end
