@@ -6,4 +6,5 @@ class SuborganizationsController < ApplicationController
   def new
     authorize @event, :create_sub_organization?
   end
+
 end
