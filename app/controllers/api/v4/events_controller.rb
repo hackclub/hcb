@@ -31,7 +31,7 @@ module Api
 
         if @transactions.any?
 
-          page_settled = @transactions.select { |tx| tx.is_a?(::CanonicalTransactionGrouped) }
+          page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
           page_pending = @transactions.select { |tx| tx.is_a?(CanonicalPendingTransaction) }
 
           if page_settled.any?
