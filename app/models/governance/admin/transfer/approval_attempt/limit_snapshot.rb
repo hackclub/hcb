@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Governance
   module Admin
     module Transfer
