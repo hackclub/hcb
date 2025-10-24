@@ -365,8 +365,28 @@ class User < ApplicationRecord
     return events.organized_by_hack_clubbers.any?
   end
 
+  def age_on(date)
+    return unless birthday
+
+    dob = birthday.to_date
+    y = date.year
+
+    # Safely handle leap years. Clamp the day to the number of days in dob.month for given year.
+    day = [dob.day, Time.days_in_month(dob.month, y)].min
+    bday_this_year = Date.new(y, dob.month, day)
+
+    age = y - dob.year
+    age -= 1 if date < bday_this_year
+    age
+  end
+
+  def age
+    age_on(Date.current)
+  end
+
   def teenager?
-    birthday&.after?(19.years.ago)
+    # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
+    age&.<=(18)
   end
 
   def last_seen_at

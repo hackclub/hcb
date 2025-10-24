@@ -4,6 +4,7 @@ module Api
   module V4
     class TransactionsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
       before_action :set_api_event, only: [:update, :memo_suggestions]
       skip_after_action :verify_authorized, only: [:missing_receipt]
@@ -27,7 +28,7 @@ module Api
         @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
 
         @total_count = @hcb_codes.size
-        @has_more = false # TODO: implement pagination
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       def update
