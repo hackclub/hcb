@@ -15,7 +15,7 @@
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  governance_admin_transfer_limit_id   :bigint           not null
-#  governance_request_context_id        :bigint           not null
+#  governance_request_context_id        :bigint
 #  transfer_id                          :bigint           not null
 #  user_id                              :bigint           not null
 #
@@ -52,7 +52,7 @@ module Governance
         belongs_to :user
         belongs_to :transfer, polymorphic: true
 
-        belongs_to :request_context, class_name: "Governance::RequestContext", foreign_key: "governance_request_context_id"
+        belongs_to :request_context, class_name: "Governance::RequestContext", foreign_key: "governance_request_context_id", optional: true
 
         monetize :attempted_amount_cents
         validates :attempted_amount_cents, numericality: { greater_than: 0 }

@@ -6,7 +6,7 @@ class AddGovernanceRequestContextToGovernanceAdminTransferApprovalAttempt < Acti
     # 1) Add the column + concurrent index
     add_reference :governance_admin_transfer_approval_attempts,
                   :governance_request_context,
-                  null: false,
+                  null: true,
                   index: { algorithm: :concurrently }
 
     # 2) Add FK as NOT VALID (non-blocking)

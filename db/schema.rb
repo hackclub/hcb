@@ -1207,7 +1207,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
     t.integer "current_limit_remaining_amount_cents", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "governance_request_context_id", null: false
+    t.bigint "governance_request_context_id"
     t.index ["governance_admin_transfer_limit_id"], name: "idx_on_governance_admin_transfer_limit_id_3dfaba4d9a"
     t.index ["governance_request_context_id"], name: "idx_on_governance_request_context_id_bec1adb1c2"
     t.index ["transfer_type", "transfer_id"], name: "index_governance_admin_transfer_approval_attempts_on_transfer"
