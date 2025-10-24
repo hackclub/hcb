@@ -15,18 +15,21 @@
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  governance_admin_transfer_limit_id   :bigint           not null
+#  governance_request_context_id        :bigint           not null
 #  transfer_id                          :bigint           not null
 #  user_id                              :bigint           not null
 #
 # Indexes
 #
 #  idx_on_governance_admin_transfer_limit_id_3dfaba4d9a           (governance_admin_transfer_limit_id)
+#  idx_on_governance_request_context_id_bec1adb1c2                (governance_request_context_id)
 #  index_governance_admin_transfer_approval_attempts_on_transfer  (transfer_type,transfer_id)
 #  index_governance_admin_transfer_approval_attempts_on_user_id   (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (governance_admin_transfer_limit_id => governance_admin_transfer_limits.id)
+#  fk_rails_...  (governance_request_context_id => governance_request_contexts.id)
 #  fk_rails_...  (user_id => users.id)
 #
 module Governance
@@ -48,6 +51,8 @@ module Governance
 
         belongs_to :user
         belongs_to :transfer, polymorphic: true
+
+        belongs_to :request_context, class_name: "Governance::RequestContext", foreign_key: "governance_request_context_id"
 
         monetize :attempted_amount_cents
         validates :attempted_amount_cents, numericality: { greater_than: 0 }

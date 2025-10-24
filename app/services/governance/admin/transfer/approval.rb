@@ -2,10 +2,11 @@ module Governance
   module Admin
     module Transfer
       class Approval
-        def initialize(transfer:, amount_cents:, user:)
+        def initialize(transfer:, amount_cents:, user:, request_context:)
           @transfer = transfer
           @amount_cents = amount_cents
           @user = user
+          @request_context = request_context
 
           @approval_attempt = nil
         end
@@ -22,6 +23,7 @@ module Governance
             attempted_amount_cents: @amount_cents,
             user: @user,
             limit:,
+            request_context: @request_context
           )
 
           # Prevent race conditions
