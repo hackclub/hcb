@@ -96,7 +96,6 @@ module Governance
         validate :user_matches_limit_user
 
         delegate :impersonator, :impersonated?, to: :request_context, allow_nil: true
-        def actor = request_context&.impersonator || user
 
         private
 
