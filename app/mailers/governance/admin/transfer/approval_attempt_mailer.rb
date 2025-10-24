@@ -24,7 +24,7 @@ module Governance
 
         def report_recipients
           REPORT_RECIPIENTS.filter_map do |public_id|
-            User.find_by_public_id(public_id).email_address_with_name
+            User.find_by_public_id(public_id)&.email_address_with_name
           end
         end
 
