@@ -79,7 +79,7 @@ module Governance
           impersonation: ->(attempt) do
             <<~STR.squish
               **sniff sniff** 👃 You don't smell very much like
-              #{attempt.request_context.user.name || "the current user"}.
+              #{attempt.user.name || "the current user"}.
               Please end your impersonation session and try again 😉.
             STR
           end
