@@ -1,6 +1,6 @@
 <% if @approval_attempt.impersonated? %>
   <%= link_to @approval_attempt.impersonator.name, admin_user_url(@approval_attempt.impersonator) %>
-  (<%= @approval_attempt.impersonator.email %>) who was impersonating
+  (<%= @approval_attempt.impersonator.email %>) while impersonating
 <% end %>
 
 <%= link_to @approval_attempt.user.name, admin_user_url(@approval_attempt.user) %>
