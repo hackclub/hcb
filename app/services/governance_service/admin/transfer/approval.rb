@@ -1,4 +1,4 @@
-module Governance
+module GovernanceService
   module Admin
     module Transfer
       class Approval
@@ -13,12 +13,12 @@ module Governance
 
         def run
           ensure_may_approve!
-        rescue Transfer::ApprovalAttempt::DeniedError
+        rescue Governance::Admin::Transfer::ApprovalAttempt::DeniedError
           false
         end
 
         def ensure_may_approve!
-          @approval_attempt = ApprovalAttempt.new(
+          @approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.new(
             transfer: @transfer,
             attempted_amount_cents: @amount_cents,
             user: @user,
@@ -35,13 +35,13 @@ module Governance
           if @approval_attempt.approved?
             true # Approval succeeded, return true
           else
-            raise Transfer::ApprovalAttempt::DeniedError.new(@approval_attempt.denial_message)
+            raise Governance::Admin::Transfer::ApprovalAttempt::DeniedError.new(@approval_attempt.denial_message)
           end
         end
 
         def limit
           @limit = Governance::Admin::Transfer::Limit.find_by(user: @user)
-          raise MissingApprovalLimitError unless @limit
+          raise Governance::Admin::Transfer::Limit::MissingApprovalLimitError unless @limit
 
           @limit
         end

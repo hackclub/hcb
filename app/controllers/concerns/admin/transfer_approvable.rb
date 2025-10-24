@@ -4,7 +4,7 @@ module Admin
 
     included do
       def ensure_admin_may_approve!(transfer, amount_cents:)
-        Governance::Admin::Transfer::Approval.new(
+        GovernanceService::Admin::Transfer::Approval.new(
           transfer:,
           amount_cents:,
           user: current_user,
