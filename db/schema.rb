@@ -2186,17 +2186,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
     t.index ["event_id"], name: "index_subledgers_on_event_id"
   end
 
-  create_table "subscriptions", force: :cascade do |t|
-    t.string "merchant"
-    t.string "card"
-    t.json "hcb_codes"
-    t.string "last_hcb_code"
-    t.decimal "average_date_difference"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["merchant", "card"], name: "index_subscriptions_on_merchant_and_card", unique: true
-  end
-
   create_table "suggested_pairings", force: :cascade do |t|
     t.bigint "receipt_id", null: false
     t.bigint "hcb_code_id", null: false
@@ -2518,6 +2507,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
     t.index ["uploaded_by_id"], name: "index_w9s_on_uploaded_by_id"
   end
 
+  create_table "walkthroughs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "key", null: false
+    t.integer "progress", default: 0
+    t.bigint "user_id", null: false
+    t.bigint "event_id", null: false
+    t.index ["event_id"], name: "index_walkthroughs_on_event_id"
+    t.index ["user_id", "event_id", "key"], name: "index_walkthroughs_on_user_id_and_event_id_and_key", unique: true
+    t.index ["user_id"], name: "index_walkthroughs_on_user_id"
+  end
+
   create_table "webauthn_credentials", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name"
@@ -2767,6 +2768,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
   add_foreign_key "w9s", "users", column: "uploaded_by_id"
+  add_foreign_key "walkthroughs", "events"
+  add_foreign_key "walkthroughs", "users"
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
   add_foreign_key "wires", "users"
