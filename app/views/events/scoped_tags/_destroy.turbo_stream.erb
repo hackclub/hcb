@@ -1,0 +1,9 @@
+<%# locals: (scoped_tag:, subevent:, scoped_tags_event: nil, streamed: false) %>
+
+<%= turbo_stream.update_all ".event_#{subevent.id}_scoped_tags" do %>
+  <%= render partial: "events/scoped_tags/scoped_tag", collection: subevent.valid_scoped_tags, locals: { subevent:, streamed: } %>
+<% end %>
+
+<%= turbo_stream.update_all ".event_#{subevent.id}_scoped_tag_#{scoped_tag.id}_toggle" do %>
+  <%= scoped_tag.name %>
+<% end %>

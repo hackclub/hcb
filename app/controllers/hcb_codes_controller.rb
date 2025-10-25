@@ -246,7 +246,7 @@ class HcbCodesController < ApplicationController
 
     authorize hcb_code
 
-    if hcb_code.amount_cents >= -100
+    if hcb_code.amount_cents > -100
       flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
       return redirect_to hcb_code
     end
