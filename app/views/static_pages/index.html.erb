@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3">
+<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>
     <% if current_user.hack_clubber? %>
       <a
@@ -17,7 +17,7 @@
       Welcome to <span class="primary">HCB</span>
     </span>
   </div>
-  <span class="badge ml-0 text-sm caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
+  <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
 <% if current_user.card_grants.not_activated.size > 0 %>
