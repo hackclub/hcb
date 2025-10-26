@@ -78,7 +78,7 @@ module DisbursementService
           i_cpt.update(fronted: @fronted)
         end
 
-        if requested_by_admin? || disbursement.source_event == disbursement.destination_event # Auto-fulfill disbursements between subledgers in the same event
+        if requested_by_admin_with_approval_permission?(disbursement) || disbursement.source_event == disbursement.destination_event # Auto-fulfill disbursements between subledgers in the same event
           disbursement.approve_by_admin(requested_by)
         end
 
@@ -110,6 +110,14 @@ module DisbursementService
 
     def requested_by_admin?
       !@skip_auto_approve && requested_by&.admin?
+    end
+
+    def requested_by_admin_with_approval_permission?(disbursement)
+      requested_by_admin? && GovernanceService::Admin::Transfer::Approval.new(
+        transfer: disbursement,
+        amount_cents: disbursement.amount,
+        user: requested_by,
+      ).may_approve?
     end
 
     def amount_cents

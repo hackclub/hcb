@@ -13,10 +13,8 @@ puts "Continuing with #{user.email}..."
 
 user.make_admin! unless user.admin?
 
-if User.find_by(email: User::SYSTEM_USER_EMAIL).nil?
-  admin = User.create!(email: User::SYSTEM_USER_EMAIL)
-  admin.make_admin!
-end
+admin = User.create_with(email: User::SYSTEM_USER_EMAIL).find_or_create_by!(id: User::SYSTEM_USER_ID)
+admin.make_admin!
 
 # DEMO
 demo_event = Event.create_with(
