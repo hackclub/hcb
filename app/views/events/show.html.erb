@@ -109,12 +109,12 @@
     <% end %>
   </div>
 
-  <div class="flex justify-between items-center mb-2">
-    <h2>Graphs</h2>
+  <div class="flex justify-between items-center mb-2 mt-10">
+    <h2 class="my-0">Insights</h2>
     <% if @event.created_at < 1.week.ago %>
       <div data-controller="menu" data-menu-append-to-value="#tags-chart">
         <button
-          class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-dark flex items-center cursor-pointer"
+          class="whitespace-nowrap homepage-eyebrow my-0 border-0 bg-transparent flex items-center cursor-pointer"
           data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
           data-menu-target="toggle">
           <span data-event-home-target="button">All time</span>
@@ -150,7 +150,7 @@
   </div>
 
   <div class="homepage-row">
-    <%= turbo_frame_tag "tags", src: event_tags_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100 mb-4", data: { "event-home-target": "tags" } do %>
+    <%= turbo_frame_tag "tags", src: event_tags_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown shadow-none w-100 mb-4" , data: { "event-home-target": "tags" } do %>
       <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>

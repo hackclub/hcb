@@ -15,7 +15,7 @@
           <i class="muted">Nothing has happened recently.</i>
         </p>
       <% end %>
-      <ul class="list-reset comments w-100 my-0 pb-2 p-4 pt-1 flex-1">
+      <ul class="list-reset comments w-100 my-0 pb-2 p-4 pt-0 -mt-2 flex-1">
         <%= render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
       </ul>
     </div>
