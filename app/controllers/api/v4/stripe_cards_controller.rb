@@ -4,6 +4,7 @@ module Api
   module V4
     class StripeCardsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
       def index
         if params[:event_id].present?
@@ -27,7 +28,7 @@ module Api
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
         @total_count = @hcb_codes.size
-        @has_more = false # TODO: implement pagination
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       def create
@@ -52,7 +53,7 @@ module Api
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
-          current_session: { ip: request.remote_ip },
+          ip_address: request.remote_ip,
           event_id: event.id,
           card_type: card[:card_type],
           stripe_shipping_name: card[:shipping_name],

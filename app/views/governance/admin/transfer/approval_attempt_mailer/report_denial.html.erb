@@ -1,0 +1,21 @@
+<% if @approval_attempt.impersonated? %>
+  <%= link_to @approval_attempt.impersonator.name, admin_user_url(@approval_attempt.impersonator) %>
+  (<%= @approval_attempt.impersonator.email %>) while impersonating
+<% end %>
+
+<%= link_to @approval_attempt.user.name, admin_user_url(@approval_attempt.user) %>
+(<%= @approval_attempt.user.email %>) attempted to approve a
+<%= link_to "#{@approval_attempt.attempted_amount.format} #{@approval_attempt.transfer_type}", @approval_attempt.transfer.local_hcb_code %>
+but was denied for the following reason:
+
+<blockquote>
+  <%= @approval_attempt.denial_message %>
+</blockquote>
+
+<% if @approval_attempt.denied_for_insufficient_limit? %>
+  Consider increasing their limit.
+<% end %>
+
+<pre>
+  <%== ap @approval_attempt %>
+</pre>

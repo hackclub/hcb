@@ -62,7 +62,7 @@ export default class extends Controller {
   get listboxElement() {
     const listbox = this.comboboxElement.getAttribute('aria-controls')
 
-    return document.getElementById(listbox)
+    return document.querySelector(listbox)
   }
 
   get optionElements() {
