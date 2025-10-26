@@ -42,7 +42,7 @@ module Discord
         }.merge(json["embed"] || {})
 
         components = format_components(json["components"])
-      rescue ActionView::MissingTemplate # fallback to HTML (which already exists for all activities)
+      rescue ActionView::MissingTemplate, ActionView::Template::Error # fallback to HTML (which already exists for all activities)
         html = ApplicationController.renderer.render(partial: "public_activity/activity", locals:)
         html = Loofah.scrub_html5_fragment(html, discord_scrubber)
 

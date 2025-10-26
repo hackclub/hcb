@@ -862,6 +862,7 @@ Rails.application.routes.draw do
     get "reimbursements"
     get "employees"
     get "sub_organizations"
+    get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
@@ -947,6 +948,12 @@ Rails.application.routes.draw do
     end
 
     resources :payment_recipients, only: [:destroy]
+
+    resources :scoped_tags, module: :event, only: [:create, :update, :destroy] do
+      member do
+        post "toggle_tag"
+      end
+    end
 
     member do
       get "account-number", to: "events#account_number"
