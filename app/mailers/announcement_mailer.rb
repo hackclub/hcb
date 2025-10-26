@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class AnnouncementMailer < ApplicationMailer
-  before_action :set_warning_variables, only: [:seven_day_warning, :two_day_warning]
+  before_action :set_warning_variables, only: [:seven_day_warning, :two_day_warning, :canceled]
 
   def announcement_published
     @announcement = params[:announcement]
@@ -11,19 +11,32 @@ class AnnouncementMailer < ApplicationMailer
   end
 
   def seven_day_warning
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-m")}"
+    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}")}"
   end
 
   def two_day_warning
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%b %-m")}"
+    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}")}"
+  end
+
+  def canceled
+    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been canceled"
+  end
+
+  def notice
+    @event = params[:event]
+    @emails = @event.organizer_contact_emails(only_managers: true)
+
+    @monthly_announcement = params[:monthly_announcement]
+    @scheduled_for = Date.today.next_month.beginning_of_month
+
+    mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
   end
 
   def set_warning_variables
     @announcement = params[:announcement]
     @event = @announcement.event
 
-    @emails = @event.managers.map(&:email_address_with_name)
-    @emails << @event.config.contact_email if @event.config.contact_email.present?
+    @emails = @event.organizer_contact_emails(only_managers: true)
 
     @scheduled_for = Date.today.next_month.beginning_of_month
   end

@@ -24,7 +24,7 @@
       <% if receipt.extracted_total_amount_cents %>
         <div class="fs-mask" style="grid-template-columns: 7rem auto;">
           <strong style="font-weight: 600;">Amount</strong>
-          <%= render_money receipt.extracted_total_amount_cents %>
+          <%= receipt.extracted_total_amount.format %>
         </div>
       <% end %>
 

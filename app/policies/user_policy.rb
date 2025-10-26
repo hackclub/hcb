@@ -57,8 +57,16 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || record == user
   end
 
+  def edit_integrations?
+    user.auditor? || record == user
+  end
+
   def edit_admin?
     user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
+  def admin_details?
+    user.auditor?
   end
 
   def update?
@@ -99,6 +107,10 @@ class UserPolicy < ApplicationPolicy
 
   def logout_all?
     user.admin? || record == user
+  end
+
+  def toggle_pretend_is_not_admin?
+    user.auditor? || (record == user && user.admin_override_pretend?)
   end
 
 end

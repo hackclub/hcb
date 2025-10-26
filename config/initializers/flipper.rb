@@ -8,7 +8,7 @@ Rails.application.configure do
 
   # Setting to `true` or `:raise` will raise error when a feature doesn't exist.
   # Use `:warn` to log a warning instead.
-  config.flipper.strict = :warn
+  config.flipper.strict = false
 
   # Don't limit to 100 actors per feature
   config.flipper.actor_limit = false

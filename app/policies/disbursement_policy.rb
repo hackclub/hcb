@@ -58,6 +58,10 @@ class DisbursementPolicy < ApplicationPolicy
     user.admin?
   end
 
+  def set_transaction_categories?
+    user.admin?
+  end
+
   private
 
   def auditor_or_user?

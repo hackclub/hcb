@@ -12,6 +12,8 @@ class SudoModeHandler
     email: 4,
   }.freeze
 
+  THRESHOLD_CENTS = 500_00
+
   Params = Struct.new(
     # When the form is submitted, `submit_method` determines which
     # authentication method the user selected, which in turn determines whether
@@ -41,7 +43,12 @@ class SudoModeHandler
       return false
     end
 
-    login = Login.incomplete.active.find_by_hashid(sudo_params.login_id)
+    login =
+      Login
+      .incomplete
+      .active
+      .reauthentication
+      .find_by_hashid(sudo_params.login_id)
 
     # If the login doesn't exist, was completed, or has expired, treat this as a
     # new request
@@ -138,6 +145,8 @@ class SudoModeHandler
   # Extracts the request parameters as a flat list of key-value pairs (instead
   # of following Rack's nesting conventions) so that we can re-submit them along
   # with the sudo credentials.
+  #
+  # @return [Hash<String, Array<String>>]
   def forwarded_params
     # Mimic the behaviour of `ActionDispatch::Http::Parameters#parameters` to
     # obtain a single hash of both request and query parameters.
@@ -158,16 +167,15 @@ class SudoModeHandler
           name.start_with?("_sudo")
         end
       end
-      .each_with_object([]) do |(name, value_or_values), array|
+      .transform_values do |value_or_values|
         # `Rack::Utils.parse_query` returns a hash of param names to values but
         # returns an array of values for repeated params (as is the convention
-        # params like `tags[]`)
+        # params like `tags[]`). Rather than dealing with both cases we just
+        # make everything an array.
         if value_or_values.is_a?(Array)
-          value_or_values.each do |value|
-            array << [name, value]
-          end
+          value_or_values
         else
-          array << [name, value_or_values]
+          [value_or_values]
         end
       end
   end
@@ -180,12 +188,33 @@ class SudoModeHandler
 
     return existing if existing
 
-    raise("Session does not have an initial login") unless current_session.initial_login
+    Login.create!(user: current_user, is_reauthentication: true)
+  end
 
-    Login.create!(
-      user: current_user,
-      initial_login: current_session.initial_login
-    )
+  def form_locals
+    if request.request_method_symbol == :get
+      {
+        # In the case where we get a GET request, we want to avoid submitting the
+        # reauthentication form to the same endpoint as
+        # 1. We'd end up with sudo params in the query string
+        # 2. We would be altering server state on a safe request, which breaks HTTP
+        #    semantics (https://developer.mozilla.org/en-US/docs/Glossary/Safe/HTTP)
+        # Instead, we submit the request to a different endpoint and redirect back to
+        # where we were going.
+        form_action: Rails.application.routes.url_helpers.reauthenticate_logins_path,
+        form_method: :post,
+        # All necessary params should already be contained in `request.fullpath`
+        # (path + query string), so the only thing we need to set and
+        # subsequently preserve is `return_to`.
+        forwarded_params: { return_to: [params[:return_to].presence || request.fullpath], },
+      }
+    else
+      {
+        form_action: request.path,
+        form_method: request.request_method_symbol,
+        forwarded_params:,
+      }
+    end
   end
 
   def render_reauthentication_page(login: find_or_create_login!)
@@ -214,10 +243,15 @@ class SudoModeHandler
         login:,
         additional_factors:,
         default_factor:,
-        forwarded_params:
+        break_out_of_turbo_frame:,
+        **form_locals,
       },
       status: :unauthorized
     )
+  end
+
+  def break_out_of_turbo_frame
+    request.get? && controller_instance.send(:turbo_frame_request?)
   end
 
 end

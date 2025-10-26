@@ -16,11 +16,20 @@ import { RenderResults } from './results'
 import { generateResultActions } from './search/results'
 import Icon from '@hackclub/icons'
 
-export default function CommandBar({ admin = false, adminUrls = {} }) {
+export default function CommandBar({
+  admin = false,
+  admin_override_pretend = false,
+  adminUrls = {},
+}) {
   return (
     <div style={{ position: 'relative', zIndex: '1000' }}>
       <KBarProvider
-        actions={[...initalActions, ...(admin ? adminActions(adminUrls) : [])]}
+        actions={[
+          ...initalActions,
+          ...(admin || admin_override_pretend
+            ? adminActions(adminUrls, !admin && admin_override_pretend)
+            : []),
+        ]}
         options={{
           disableScrollbarManagement: true,
           disableDocumentLock: true,

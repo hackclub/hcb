@@ -75,11 +75,6 @@ class HcbCodeMailbox < ApplicationMailbox
         @hcb_code.tags << tag
       end
       @tagged_with << tag.label
-    when "@reverse"
-      @reversed_pairing = SuggestedPairing.find_by(hcb_code_id: @hcb_code.id, aasm_state: :accepted)
-      return unless @reversed_pairing
-
-      @reversed_pairing.mark_reveresed!
     end
   end
 

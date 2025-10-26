@@ -8,6 +8,21 @@
 
       <section class="details">
         <div class="fs-mask">
+          <strong>Status</strong>
+          <span class="flex items-baseline g-1">
+            <%= status_badge stripe_card.status_badge_type %>
+            <%= stripe_card.status_text.capitalize %>
+          </span>
+        </div>
+
+        <% if stripe_card.frozen? && stripe_card.last_frozen_by && stripe_card.last_frozen_by != User.system_user %>
+          <div class="fs-mask">
+            <strong>Frozen by</strong>
+            <%= user_mention stripe_card.last_frozen_by %>
+          </div>
+        <% end %>
+
+        <div class="fs-mask">
           <strong>Card number</strong>
           <div class="flex justify-between font-mono items-center">
             <% if stripe_card.user == current_user && stripe_card.virtual? %>
@@ -33,9 +48,9 @@
         <div class="fs-mask">
           <strong class="inline-flex items-center" style="gap: 4px">
             Expiration date
-            <%= link_to "#", class: "text-yellow tooltipped tooltipped--e", "aria-label": "This is what you enter when asked for expiration date at checkout. This is different than your grant's expiration date.", style: "display: flex;", data: { turbo: false } do %>
+            <span class="text-yellow tooltipped tooltipped--e h-[18px]" aria-label="This is what you enter when asked for expiration date at checkout. This is different than your grant's expiration date.">
               <%= inline_icon "important", size: 18, style: "position: unset;" %>
-            <% end %>
+            </span>
           </strong>
           <%= copy_to_clipboard(render_short_exp_date(stripe_card), class: "w-fit", tooltip_direction: "e") { render_exp_date stripe_card } %>
         </div>
@@ -109,9 +124,9 @@
           <div class="fs-mask">
             <strong class="inline-flex items-center" style="gap: 4px">
               Phone number
-              <%= link_to "#", class: "info tooltipped tooltipped--e", "aria-label": "Seem familiar? This is your number! Use this if asked during checkout :)", style: "display: flex;", data: { turbo: false } do %>
+              <span class="info tooltipped tooltipped--e h-[18px]" aria-label="This is your phone number - use this if asked during checkout.">
                 <%= inline_icon "info", size: 18, style: "position: unset;" %>
-              <% end %>
+              </span>
             </strong>
             <%= copy_to_clipboard(stripe_card.user.pretty_phone_number, class: "w-fit", tooltip_direction: "e") %>
           </div>

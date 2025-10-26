@@ -139,11 +139,11 @@ module ApplicationHelper
         inline_icon "view-back", size: 40
       end) +
         (content_tag :div, class: "carousel__items" do
-          (content.map.with_index do |item, index|
+          content.map.with_index do |item, index|
             content_tag :div, class: "carousel__item #{index == current_slide ? 'carousel__item--active' : ''}" do
               block.call(item, index)
             end
-          end).join.html_safe
+          end.join.html_safe
         end) +
         (content_tag :button, class: "carousel__button carousel__button--right pop", data: { "carousel-target": "right" } do
           inline_icon "view-back", size: 40
@@ -355,10 +355,10 @@ module ApplicationHelper
     name + (name.ends_with?("s") ? "'" : "'s")
   end
 
-  def error_boundary(fallback: nil, fallback_text: nil, &block)
+  def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
     block.call
   rescue => e
-    Rails.error.report(e)
+    Rails.error.report(e) unless e.in?(ignored_errors)
 
     return content_tag(:p, fallback_text || "That didn't work, sorry.") unless fallback
 
@@ -402,12 +402,12 @@ module ApplicationHelper
       end) +
       (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
         content_tag :div do
-          (options[:options].map.with_index do |option, index|
+          options[:options].map.with_index do |option, index|
             (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
             (options[:form].label options[:name], value: option[1] do
               (tag.strong option[0]) + (tag.p option[2])
             end)
-          end).join.html_safe
+          end.join.html_safe
         end
       end)
     end

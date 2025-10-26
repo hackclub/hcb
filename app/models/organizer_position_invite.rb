@@ -77,7 +77,7 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :sender, class_name: "User"
 
   belongs_to :organizer_position, optional: true
-  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract"
+  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract", dependent: :destroy
 
   validate :not_already_organizer
   validate :not_already_invited, on: :create
@@ -143,7 +143,10 @@ class OrganizerPositionInvite < ApplicationRecord
       end
     end
 
-    OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+    # Don't send mailer if this is the first organizer
+    if self.event.users.size > 1
+      OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+    end
 
     true
   end

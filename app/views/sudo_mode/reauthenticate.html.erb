@@ -1,13 +1,19 @@
 <% content_for(:container_class, "container--sm py-20") %>
 
-<% content_for(:head) do %>
-  <%#
-    If sudo mode is triggered from within a Turbo frame, the default behaviour
-    would be to render the response within that frame. This meta tag tells Turbo
-    to treat it as a full page navigation.
-    https://turbo.hotwired.dev/handbook/frames#%E2%80%9Cbreaking-out%E2%80%9D-from-a-frame
-  %>
-  <meta name="turbo-visit-control" content="reload">
+<%#
+  If sudo mode is triggered from within a Turbo frame, the default behaviour
+  would be to render the response within that frame. This meta tag tells Turbo
+  to treat it as a full page navigation.
+  https://turbo.hotwired.dev/handbook/frames#%E2%80%9Cbreaking-out%E2%80%9D-from-a-frame
+
+  Note that we only do this for GET requests as in the case of a POST this
+  results in a subsequent GET request being made to the same path, which breaks
+  the interception flow (and often results in a 404).
+%>
+<% if break_out_of_turbo_frame %>
+  <% content_for(:head) do %>
+    <meta name="turbo-visit-control" content="reload">
+  <% end %>
 <% end %>
 
 <div class="flex">
@@ -21,15 +27,17 @@
 <%= user_mention(current_user, class: "badge bg-muted pl-1 m-0 tooltipped") %>
 
 <%= form_tag(
-      request.path,
-      method: request.request_method_symbol,
+      form_action,
+      method: form_method,
       data: {
         controller: ("webauthn-reauth" if default_factor == :webauthn),
         webauthn_reauth_options_url_value: webauthn_auth_options_users_path(email: current_user.email),
       }
     ) do %>
-  <% forwarded_params.each do |name, value| %>
-    <%= hidden_field_tag(name, value) %>
+  <% forwarded_params.each do |name, values| %>
+    <% values.each do |value| %>
+      <%= hidden_field_tag(name, value) %>
+    <% end %>
   <% end %>
 
   <%= hidden_field_tag("_sudo[login_id]", login.hashid) %>
@@ -42,6 +50,7 @@
          required: true,
          autofocus: true,
          autocomplete: "one-time-code",
+         inputmode: "numeric",
        )
      } %>
 

@@ -41,28 +41,18 @@
   <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
 </h1>
 
-<% if organizer_signed_in? && @event.demo_mode %>
-  <div class="card border b--info pb0 mb-4" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
-    <p class="mt0">
-      <strong>Welcome to Playground Mode</strong>
-      <br>
-      While in Playground mode, explore the dashboard with mock data, and invite your team.
-    </p>
-  </div>
-<% end %>
-
 <div class="flex flex-col gap-[20px]" data-controller="event-home">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden">
-      <%= link_to "#", class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+      <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
         <%= inline_icon "payment-transfer", size: 20 %>
         Transfer money
       <% end %>
-      <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
+      <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
         <%= inline_icon "attachment", size: 20 %>
         Get reimbursed
       <% end %>
-      <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action" do %>
+      <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
         <%= inline_icon "cheque", size: 20 %>
         Deposit a check
       <% end %>
@@ -70,14 +60,20 @@
         <%= inline_icon "bank-account", size: 20 %>
         Account numbers
       <% end %>
-      <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+      <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
         <%= inline_icon "briefcase", size: 20 %>
         Send an invoice
       <% end %>
     </div>
     <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
     <%= render "transfer_modal" %>
+    <%= render "card_grants/create_modal" %>
     <%= render "invoices/modal" %>
+
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
+      <%= modal_header "Deposit a check" %>
+      <%= render "check_deposits/new", event: @event %>
+    </section>
   <% end %>
 
   <%= render "events/public_message" %>

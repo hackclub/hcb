@@ -19,6 +19,8 @@
 #  donation_reply_to_email                      :text
 #  donation_thank_you_message                   :text
 #  donation_tiers_enabled                       :boolean          default(FALSE), not null
+#  fee_waiver_applied                           :boolean          default(FALSE), not null
+#  fee_waiver_eligible                          :boolean          default(FALSE), not null
 #  financially_frozen                           :boolean          default(FALSE), not null
 #  hidden_at                                    :datetime
 #  holiday_features                             :boolean          default(TRUE), not null
@@ -38,6 +40,8 @@
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
+#  discord_channel_id                           :string
+#  discord_guild_id                             :string
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
 #  parent_id                                    :bigint
@@ -45,6 +49,8 @@
 #
 # Indexes
 #
+#  index_events_on_discord_channel_id   (discord_channel_id) UNIQUE
+#  index_events_on_discord_guild_id     (discord_guild_id) UNIQUE
 #  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
@@ -154,12 +160,15 @@ class Event < ApplicationRecord
     Event.where(id: ancestor_ids)
   end
 
-  def descendant_total_balance_cents
-    subevents.to_a.sum(&:balance_available_v2_cents)
+  def descendants
+    Event.where(id: descendant_ids)
   end
 
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
+
+  MAX_PARENT_DEPTH = 50
+  validate(:parent_id_is_acyclical)
 
   scope :event_ids_with_pending_fees, -> do
     query = <<~SQL
@@ -172,12 +181,11 @@ class Event < ApplicationRecord
 
       from (
           select
-          cem.event_id,
+          f.event_id,
           COALESCE(sum(f.amount_cents_as_decimal), 0) as sum
-          from canonical_event_mappings cem
-          inner join fees f on cem.id = f.canonical_event_mapping_id
-          inner join events e on e.id = cem.event_id
-          group by cem.event_id
+          from fees f
+          inner join events e on e.id = f.event_id
+          group by f.event_id
       ) as q1 left outer join (
           select
           cem.event_id,
@@ -276,6 +284,8 @@ class Event < ApplicationRecord
   has_many :slugs, -> { order(id: :desc) }, class_name: "FriendlyId::Slug", as: :sluggable, dependent: :destroy
 
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_invite_links, class_name: "OrganizerPositionInvite::Link"
+  has_many :organizer_position_invite_requests, through: :organizer_position_invite_links, source: :requests
   has_many :organizer_positions, dependent: :destroy
 
   def ancestor_organizer_positions
@@ -283,17 +293,21 @@ class Event < ApplicationRecord
   end
 
   has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
+  has_many :readers, -> { where(organizer_positions: { role: :reader }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
 
-  has_many :event_follows, class_name: "Event::Follow"
+  has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
+
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -322,6 +336,8 @@ class Event < ApplicationRecord
   has_many :paypal_transfers
 
   has_many :wires
+
+  has_many :wise_transfers
 
   has_many :sponsors
   has_many :invoices, through: :sponsors
@@ -356,6 +372,11 @@ class Event < ApplicationRecord
   has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
 
+  has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent", dependent: :destroy
+  has_many :scoped_tags, through: :event_scoped_tags_events, source: :event_scoped_tag
+  has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id, dependent: :destroy
+  accepts_nested_attributes_for :event_scoped_tags_events
+
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits
@@ -375,15 +396,19 @@ class Event < ApplicationRecord
 
   has_one_attached :donation_header_image
   validates :donation_header_image, content_type: [:png, :jpeg]
+  validates :donation_header_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
   validates :background_image, content_type: [:png, :jpeg, :gif]
+  validates :background_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
+  validates :logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["logo"].present? }
 
   has_one_attached :stripe_card_logo
   validates :stripe_card_logo, content_type: [:png, :jpeg]
+  validates :stripe_card_logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
 
   include HasMetrics
 
@@ -395,7 +420,7 @@ class Event < ApplicationRecord
   attr_accessor :demo_mode_limit_email
 
   validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
-  validate :contract_signed, unless: :demo_mode?
+  validate :contract_signed, unless: -> { demo_mode? || financially_frozen? }
 
   validates :name, presence: true
   before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
@@ -410,6 +435,8 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
+  validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
+
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   before_update if: -> { demo_mode_changed?(to: false) } do
@@ -417,7 +444,7 @@ class Event < ApplicationRecord
   end
 
   before_validation do
-    build_plan(type: parent&.subevent_plan&.class || parent&.plan&.class || Event::Plan::Standard) if plan.nil?
+    build_plan(type: fallback_plan_class) if plan.nil?
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -426,13 +453,23 @@ class Event < ApplicationRecord
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
   before_save :enable_monthly_announcements
 
+  # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
+  # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
+  after_destroy_commit do
+    organizer_positions.with_deleted.each do |position|
+      position.organizer_position_deletion_requests.destroy_all
+    end
+  end
+
   comma do
     id
+    created_at
     name
     revenue_fee
-    slug "url" do |slug| "https://hcb.hackclub.com/#{slug}" end
     country
-    is_public "transparent"
+    slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
+    is_public "Transparent"
+    users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
   CUSTOM_SORT = Arel.sql(
@@ -552,8 +589,8 @@ class Event < ApplicationRecord
   def fronted_incoming_balance_v2_cents(start_date: nil, end_date: nil)
     pts = canonical_pending_transactions.incoming.fronted.not_declined
 
-    pts = pts.where("date >= ?", @start_date) if @start_date
-    pts = pts.where("date <= ?", @end_date) if @end_date
+    pts = pts.where("date >= ?", start_date) if start_date
+    pts = pts.where("date <= ?", end_date) if end_date
 
     sum_fronted_amount(pts)
   end
@@ -793,6 +830,10 @@ class Event < ApplicationRecord
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
 
+  def eligible_for_disabling_transparency?
+    !parent&.is_public?
+  end
+
   def eligible_for_indexing?
     eligible_for_transparency? && !risk_level.in?(%w[moderate high])
   end
@@ -801,6 +842,7 @@ class Event < ApplicationRecord
     # Sync stats to application's airtable record
     ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
       app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
+      app["HCB POC Email"] = point_of_contact.email
 
       # For Anish's TUB
       app["Referral New Signee Under 18"] = organizer_positions.includes(:user).where(is_signee: true, user: { teenager: true }).any?
@@ -830,11 +872,41 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails
-    emails = users.map(&:email_address_with_name)
+  def organizer_contact_emails(only_managers: false)
+    included_users = only_managers ? managers : users
+
+    emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
 
     emails
+  end
+
+  def merchants
+    settled_merchants = canonical_transactions.map do |ct|
+      rst = ct.raw_stripe_transaction
+      stripe_transaction_merchant(rst) if rst.present?
+    end.select(&:present?)
+
+    pending_merchants = canonical_pending_transactions.map do |cpt|
+      rpst = cpt.raw_pending_stripe_transaction
+      stripe_transaction_merchant(rpst) if rpst.present?
+    end.select(&:present?)
+
+    settled_merchants.concat(pending_merchants)
+  end
+
+  def point_of_contact_history
+    @point_of_contact_history ||= versions
+                                  .filter_map { |v| v.changeset["point_of_contact_id"].presence }
+                                  .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
+  end
+
+  def has_discord_guild?
+    discord_guild_id.present?
+  end
+
+  def valid_scoped_tags
+    scoped_tags.where(parent_event_id: parent_id)
   end
 
   private
@@ -888,6 +960,10 @@ class Event < ApplicationRecord
       self.is_indexable = false
     end
 
+    unless eligible_for_disabling_transparency?
+      self.is_public = true
+    end
+
     unless eligible_for_indexing?
       self.is_indexable = false
     end
@@ -898,6 +974,53 @@ class Event < ApplicationRecord
     if is_public_changed?(to: true)
       config.update(generate_monthly_announcement: true)
     end
+  end
+
+  def stripe_transaction_merchant(transaction)
+    merchant_data = transaction.stripe_transaction["merchant_data"]
+    yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+    { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
+  end
+
+  def parent_id_is_acyclical
+    return unless parent_id.present? && parent_id_changed?
+
+    current_event = self
+    visited_event_ids = Set.new
+
+    visited_event_ids << id if id.present?
+
+    outcome = 1.upto(MAX_PARENT_DEPTH) do
+      if current_event.parent
+        if visited_event_ids.add?(current_event.parent_id)
+          current_event = current_event.parent
+          next
+        else
+          errors.add(:parent, "is cyclical")
+          break :halted
+        end
+      else
+        break :halted
+      end
+    end
+
+    if outcome != :halted
+      errors.add(:parent, "max depth exceeded")
+    end
+  end
+
+  def fallback_plan_class
+    if parent
+      if parent.config&.subevent_plan.present?
+        return parent.config.subevent_plan.constantize
+      end
+
+      if parent.plan
+        return parent.plan.class
+      end
+    end
+
+    Event::Plan::Standard
   end
 
 end

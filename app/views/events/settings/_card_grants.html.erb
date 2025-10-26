@@ -1,4 +1,6 @@
-<% disabled = !policy(@event).update? %>
+<%# locals: (event:) %>
+
+<% disabled = !policy(event).update? %>
 
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>
@@ -6,7 +8,7 @@
 
     <%= form.fields_for :card_grant_setting, event.card_grant_setting do |card_grant_setting_fields| %>
       <h3 class="mb1" id="transparency_mode_heading">Grant settings</h3>
-      <div class="card" data-controller="accordion">
+      <div class="card">
 
         <%= card_grant_setting_fields.hidden_field :id, value: event.card_grant_setting.id %>
 
@@ -39,7 +41,7 @@
           <div class="field--checkbox--switch" style="flex-shrink:0">
             <%= card_grant_setting_fields.label :reimbursement_conversions_enabled do %>
               <%= card_grant_setting_fields.check_box :reimbursement_conversions_enabled,
-                data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+                disabled:,
                 switch: true %>
               <span class="slider"></span>
             <% end %>
@@ -56,7 +58,7 @@
           <div class="field--checkbox--switch" style="flex-shrink:0">
             <%= card_grant_setting_fields.label :pre_authorization_required do %>
               <%= card_grant_setting_fields.check_box :pre_authorization_required,
-                data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+                disabled:,
                 switch: true %>
               <span class="slider"></span>
             <% end %>
@@ -68,7 +70,7 @@
       </div>
 
       <h3 class="mb1" id="transparency_mode_heading">Spending restrictions</h3>
-      <div class="card mb-4" data-controller="accordion">
+      <div class="card mb-4">
         <div class="flex flex-col md:flex-row gap-4">
           <div class="w-full flex-grow">
 

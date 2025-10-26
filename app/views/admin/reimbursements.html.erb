@@ -54,7 +54,7 @@
         <td>
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
-        <td class="w-24"><%= render_money(report.amount) %></td>
+        <td class="w-24"><%= report.amount.format %></td>
         <td><%= report.admin_status_text %></td>
         <td>
           <%= link_to "View", reimbursement_report_path(report) %>

@@ -29,7 +29,7 @@
     <%= render partial: "hcb_codes/rich_metadata" %>
   </div>
   <div class="receipts_wrapper_mobile">
-    <%= render "receipts/list_v2" %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   </div>
   <div class="event_wrapper">
     <%= link_to event, style: "max-width: 90vw", class: "draggable text-decoration-none" do %>
@@ -113,7 +113,7 @@
     <% end %>
   </div>
   <div class="receipts_wrapper_desktop">
-    <%= render "receipts/list_v2" %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   </div>
 </div>
 

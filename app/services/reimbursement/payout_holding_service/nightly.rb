@@ -35,6 +35,7 @@ module Reimbursement
                 wire.save!
                 wire.send_wire!
               rescue
+                wire.mark_rejected!
                 payout_holding.mark_failed!
                 reason = "There was an error creating the wire transfer."
                 reason = wire.errors.full_messages.join(", ") if wire.errors.any?
@@ -114,6 +115,10 @@ module Reimbursement
               payout_holding.paypal_transfer = paypal_transfer
               payout_holding.save!
               payout_holding.mark_sent!
+            end
+          when User::PayoutMethod::WiseTransfer
+            if payout_holding.created_at < 20.minutes.ago
+              Rails.error.unexpected "🚨 WiseTransfer payout holding (#{payout_holding.id}) created more than 20 minutes ago but still unsent."
             end
           else
             raise ArgumentError, "🚨⚠️ unsupported payout method!"

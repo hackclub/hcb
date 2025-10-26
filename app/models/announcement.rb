@@ -4,19 +4,17 @@
 #
 # Table name: announcements
 #
-#  id                  :bigint           not null, primary key
-#  aasm_state          :string
-#  content             :jsonb            not null
-#  deleted_at          :datetime
-#  published_at        :datetime
-#  rendered_email_html :text
-#  rendered_html       :text
-#  template_type       :string
-#  title               :string           not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  author_id           :bigint           not null
-#  event_id            :bigint           not null
+#  id            :bigint           not null, primary key
+#  aasm_state    :string
+#  content       :jsonb            not null
+#  deleted_at    :datetime
+#  published_at  :datetime
+#  template_type :string
+#  title         :string           not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  author_id     :bigint           not null
+#  event_id      :bigint           not null
 #
 # Indexes
 #
@@ -56,15 +54,19 @@ class Announcement < ApplicationRecord
     end
   end
 
-  scope :saved, -> { where.not(aasm_state: :template_draft) }
-  scope :monthly, -> { where(template_type: Announcement::Templates::Monthly.name) }
+  scope :all_monthly, -> { where(template_type: Announcement::Templates::Monthly.name) }
+  scope :monthly, -> { all_monthly.joins(event: :config).where("event_configurations.generate_monthly_announcement" => true) }
+  scope :all_monthly_for, ->(date) { all_monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
   scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
+  scope :approved_monthly_for, ->(date) { monthly_for(date).draft }
   validate :content_is_json
 
-  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}) }
+  scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
   belongs_to :author, class_name: "User"
   belongs_to :event
+
+  has_many :blocks, dependent: :destroy
 
   validates :title, presence: true, if: :published?
 

@@ -5,7 +5,7 @@ class EventMailer < ApplicationMailer
   before_action { @emails = @event.organizer_contact_emails }
 
   def monthly_donation_summary
-    @donations = @event.donations.where(aasm_state: [:in_transit, :deposited], created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
+    @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
 
     return if @donations.none?
     return if @emails.none?
@@ -39,6 +39,12 @@ class EventMailer < ApplicationMailer
     ).create
 
     mail to: @emails, subject: "#{@event.name} has reached its donation goal!"
+  end
+
+  def negative_balance
+    @balance = params.fetch(:balance)
+
+    mail(to: @emails, subject: "#{@event.name} has a negative balance")
   end
 
 end

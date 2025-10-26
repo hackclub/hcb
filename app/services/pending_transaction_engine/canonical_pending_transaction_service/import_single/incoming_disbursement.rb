@@ -11,10 +11,23 @@ module PendingTransactionEngine
         def run
           return existing_canonical_pending_transaction if existing_canonical_pending_transaction
 
-          ::CanonicalPendingTransaction.find_or_create_by!(attrs) do |cpt|
-            # In-review disbursements shouldn't be fronted.
-            cpt.fronted = !@rpidt.disbursement.reviewing?
-            cpt.fee_waived = @rpidt.disbursement.fee_waived?
+          ActiveRecord::Base.transaction do
+            cpt = ::CanonicalPendingTransaction.find_or_create_by!(attrs) do |cpt|
+              # In-review disbursements shouldn't be fronted.
+              cpt.fronted = !@rpidt.disbursement.reviewing?
+              cpt.fee_waived = @rpidt.disbursement.fee_waived?
+            end
+
+            if @rpidt.disbursement.destination_transaction_category
+              TransactionCategoryService
+                .new(model: cpt)
+                .set!(
+                  slug: @rpidt.disbursement.destination_transaction_category.slug,
+                  assignment_strategy: "manual"
+                )
+            end
+
+            cpt
           end
         end
 

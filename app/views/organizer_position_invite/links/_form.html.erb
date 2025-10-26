@@ -1,0 +1,10 @@
+<%# locals: (event:) %>
+
+<%= form_with(url: event_invite_links_path(event_id: event.id)) do |form| %>
+  <div class="field">
+    <%= form.label :expires_at, "Expires on" %>
+    <%= form.date_field :expires_on, value: OrganizerPositionInvite::Link::DEFAULT_EXPIRATION.from_now.strftime("%Y-%m-%d") %>
+  </div>
+
+  <%= form.submit "Create", class: "btn" %>
+<% end %>

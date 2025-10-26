@@ -2,8 +2,13 @@
 
 require "rails_helper"
 
-RSpec.describe Donation, type: :modal do
+RSpec.describe Donation, type: :model do
   include ActiveJob::TestHelper
+  include DonationSupport
+
+  before do
+    stub_donation_payment_intent_creation
+  end
 
   it "is valid" do
     donation = create(:donation)

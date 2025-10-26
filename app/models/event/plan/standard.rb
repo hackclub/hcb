@@ -43,6 +43,10 @@ class Event
         Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
+      def receipts_required?
+        true
+      end
+
       def exempt_from_wire_minimum?
         false
       end
@@ -79,8 +83,8 @@ class Event
         true
       end
 
-      def eligible_for_perks?
-        true
+      def contract_docuseal_template_id
+        487784
       end
 
     end

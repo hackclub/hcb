@@ -47,7 +47,7 @@ RSpec.describe UserSession, type: :model do
         user = create(:user)
         Flipper.enable(:sudo_mode_2015_07_21, user)
         user_session = create(:user_session, user:)
-        initial_login = create(
+        _initial_login = create(
           :login,
           user:,
           user_session:,
@@ -60,7 +60,7 @@ RSpec.describe UserSession, type: :model do
 
         _login = create(
           :login,
-          initial_login:,
+          is_reauthentication: true,
           user:,
           user_session:,
           aasm_state: "complete",
@@ -88,14 +88,52 @@ RSpec.describe UserSession, type: :model do
       initial_login.update!(user_session:)
 
       travel(1.hour)
-      reauth1 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth1 = create(:login, user: user_session.user, authenticated_with_email: true, is_reauthentication: true)
       reauth1.update!(user_session:)
 
       travel(1.hour)
-      reauth2 = create(:login, user: user_session.user, authenticated_with_email: true, initial_login:)
+      reauth2 = create(:login, user: user_session.user, authenticated_with_email: true, is_reauthentication: true)
       reauth2.update!(user_session:)
 
       expect(user_session.last_reauthenticated_at).to eq(reauth2.created_at)
+    end
+  end
+
+  describe "public activity" do
+    specify "new sessions are tracked in public activity" do
+      user = create(:user, full_name: "Hack Clubber")
+
+      PublicActivity.with_tracking do
+        create(:user_session, user:)
+      end
+
+      activity = PublicActivity::Activity.sole
+      rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: user))
+      expect(rendered).to eq("You logged into HCB less than a minute ago")
+    end
+
+    specify "impersonated sessions are only rendered to admins" do
+      admin = create(:user, :make_admin, full_name: "Orpheus the Dinosaur")
+      user = create(:user, full_name: "Hack Clubber")
+
+      PublicActivity.with_tracking do
+        create(:user_session, user:, impersonated_by: admin)
+      end
+
+      activity = PublicActivity::Activity.sole
+      user_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: user))
+      expect(user_rendered).to eq("")
+
+      activity = PublicActivity::Activity.sole
+      admin_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: admin))
+      expect(admin_rendered).to eq("You impersonated Hack Clubber on HCB less than a minute ago")
+    end
+
+    def rendered_text(raw_html)
+      Nokogiri::HTML5
+        .fragment(raw_html)
+        .text
+        .squish
     end
   end
 end
