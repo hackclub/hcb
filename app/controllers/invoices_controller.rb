@@ -261,8 +261,8 @@ class InvoicesController < ApplicationController
   end
 
   def filter_options
-    min_amount = @event.invoices.min_by(&:item_amount)&.item_amount || 0
-    max_amount = @event.invoices.max_by(&:item_amount)&.item_amount || 0
+    min_amount = @event.invoices.minimum(:item_amount) || 0
+    max_amount = @event.invoices.maximum(:item_amount) || 0
 
     [
       { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
