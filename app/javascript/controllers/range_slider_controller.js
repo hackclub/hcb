@@ -131,8 +131,14 @@ export default class extends Controller {
       this.container.className = 'w-full select-none'
       this.container.innerHTML = `
         <div class="range-slider--inputs">
-          <input type="number" class="range-slider--input" name="${this.keyBaseValue}_greater_than" />
-          <input type="number" class="range-slider--input" name="${this.keyBaseValue}_less_than" />
+          <div class="flex items-center gap-1">
+            <span>$</span>
+            <input type="number" class="range-slider--input" name="${this.keyBaseValue}_greater_than" />
+          </div>
+          <div class="flex items-center gap-1">
+            <span>$</span>
+            <input type="number" class="range-slider--input" name="${this.keyBaseValue}_less_than" />
+          </div>
         </div>
         <div class="range-slider--track">
           <div class="range-slider--bar"></div>
