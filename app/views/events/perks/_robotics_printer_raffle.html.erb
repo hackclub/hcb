@@ -11,7 +11,7 @@
         <% if event.robotics_team? || event.affiliations.robotics.any? || @is_argosy %>
           <span class="btn disabled bg-clip-padding"><%= pluralize(active_teenagers_count, "ticket") %></span>
         <% else %>
-          <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a robotics team or have a robotics affiliation.">
+          <div class="tooltipped tooltipped--w inline-block" aria-label="Must be tagged as a robotics team or have a robotics affiliation">
             <span class="btn disabled bg-clip-padding">Ineligible</span>
           </div>
         <% end %>

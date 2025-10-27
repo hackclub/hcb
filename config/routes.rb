@@ -484,7 +484,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
-      get "receipt_status"
       post "invoice_as_personal_transaction"
       post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
@@ -493,6 +492,10 @@ Rails.application.routes.draw do
       scope module: "hcb_code" do
         get "subscriptions/transactions", to: "subscriptions#transactions"
       end
+    end
+
+    collection do
+      get "receipt_status"
     end
   end
 
@@ -861,6 +864,7 @@ Rails.application.routes.draw do
     get "reimbursements"
     get "employees"
     get "sub_organizations"
+    get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
@@ -946,6 +950,12 @@ Rails.application.routes.draw do
     end
 
     resources :payment_recipients, only: [:destroy]
+
+    resources :scoped_tags, module: :event, only: [:create, :update, :destroy] do
+      member do
+        post "toggle_tag"
+      end
+    end
 
     member do
       get "account-number", to: "events#account_number"

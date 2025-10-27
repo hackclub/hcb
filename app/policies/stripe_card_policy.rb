@@ -45,7 +45,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def ephemeral_keys?
-    cardholder? || user&.auditor?
+    cardholder?
   end
 
   def enable_cash_withdrawal?

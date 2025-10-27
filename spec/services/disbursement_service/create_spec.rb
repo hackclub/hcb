@@ -65,6 +65,7 @@ RSpec.describe DisbursementService::Create do
 
   it "auto-approves when requested by an admin" do
     requestor = create(:user, :make_admin)
+    create(:governance_admin_transfer_limit, user: requestor)
     source_event = create(:event, :with_positive_balance)
     create(:organizer_position, event: source_event, user: requestor)
 

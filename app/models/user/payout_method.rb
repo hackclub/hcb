@@ -13,6 +13,10 @@ class User
       User::PayoutMethod::PaypalTransfer => {
         status_badge: "Unavailable",
         reason: "Due to integration issues, transfers via PayPal are currently unavailable."
+      },
+      User::PayoutMethod::WiseTransfer   => {
+        status_badge: "Temporarily Unavailable",
+        reason: "Wise Transfers are currently under maintenance."
       }
     }.freeze
     SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys

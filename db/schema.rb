@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -654,6 +654,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
     t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
   end
 
+  create_table "discord_messages", force: :cascade do |t|
+    t.string "discord_message_id", null: false
+    t.string "discord_channel_id", null: false
+    t.string "discord_guild_id", null: false
+    t.bigint "activity_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_id"], name: "index_discord_messages_on_activity_id"
+    t.index ["discord_message_id"], name: "index_discord_messages_on_discord_message_id", unique: true
+  end
+
   create_table "document_downloads", force: :cascade do |t|
     t.bigint "document_id"
     t.bigint "user_id"
@@ -965,6 +976,24 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
     t.index ["event_id"], name: "index_event_plans_on_event_id"
   end
 
+  create_table "event_scoped_tags", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "parent_event_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_event_id"], name: "index_event_scoped_tags_on_parent_event_id"
+  end
+
+  create_table "event_scoped_tags_events", id: false, force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "event_scoped_tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_scoped_tags_events_on_event_id"
+    t.index ["event_scoped_tag_id", "event_id"], name: "idx_on_event_scoped_tag_id_event_id_4b716d1ac0", unique: true
+    t.index ["event_scoped_tag_id"], name: "index_event_scoped_tags_events_on_event_scoped_tag_id"
+  end
+
   create_table "event_tags", force: :cascade do |t|
     t.string "name", null: false
     t.string "description"
@@ -1019,12 +1048,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
+    t.boolean "fee_waiver_eligible", default: false, null: false
+    t.boolean "fee_waiver_applied", default: false, null: false
     t.string "discord_guild_id"
     t.string "discord_channel_id"
     t.index ["discord_channel_id"], name: "index_events_on_discord_channel_id", unique: true
     t.index ["discord_guild_id"], name: "index_events_on_discord_guild_id", unique: true
-    t.boolean "fee_waiver_eligible", default: false, null: false
-    t.boolean "fee_waiver_applied", default: false, null: false
     t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["point_of_contact_id"], name: "index_events_on_point_of_contact_id"
   end
@@ -1161,6 +1190,58 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
     t.boolean "immune_to_revocation", default: false, null: false
     t.index ["created_by_id"], name: "index_g_suites_on_created_by_id"
     t.index ["event_id"], name: "index_g_suites_on_event_id"
+  end
+
+  create_table "governance_admin_transfer_approval_attempts", force: :cascade do |t|
+    t.bigint "governance_admin_transfer_limit_id", null: false
+    t.bigint "user_id", null: false
+    t.string "transfer_type", null: false
+    t.bigint "transfer_id", null: false
+    t.integer "attempted_amount_cents", null: false
+    t.string "result", null: false
+    t.string "denial_reason"
+    t.datetime "current_limit_window_started_at", null: false
+    t.datetime "current_limit_window_ended_at", null: false
+    t.integer "current_limit_amount_cents", null: false
+    t.integer "current_limit_used_amount_cents", null: false
+    t.integer "current_limit_remaining_amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "governance_request_context_id"
+    t.index ["governance_admin_transfer_limit_id"], name: "idx_on_governance_admin_transfer_limit_id_3dfaba4d9a"
+    t.index ["governance_request_context_id"], name: "idx_on_governance_request_context_id_bec1adb1c2"
+    t.index ["transfer_type", "transfer_id"], name: "index_governance_admin_transfer_approval_attempts_on_transfer"
+    t.index ["user_id"], name: "index_governance_admin_transfer_approval_attempts_on_user_id"
+  end
+
+  create_table "governance_admin_transfer_limits", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_governance_admin_transfer_limits_on_user_id", unique: true
+  end
+
+  create_table "governance_request_contexts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "impersonator_id"
+    t.string "authentication_session_type", null: false
+    t.bigint "authentication_session_id", null: false
+    t.inet "ip_address", null: false
+    t.string "user_agent", null: false
+    t.string "request_id", null: false
+    t.string "http_method", null: false
+    t.string "path", null: false
+    t.string "controller_name", null: false
+    t.string "action_name", null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["authentication_session_type", "authentication_session_id"], name: "index_governance_request_contexts_on_authentication_session"
+    t.index ["impersonator_id"], name: "index_governance_request_contexts_on_impersonator_id"
+    t.index ["ip_address"], name: "index_governance_request_contexts_on_ip_address"
+    t.index ["request_id"], name: "index_governance_request_contexts_on_request_id", unique: true
+    t.index ["user_id"], name: "index_governance_request_contexts_on_user_id"
   end
 
   create_table "hashed_transactions", force: :cascade do |t|
@@ -2543,6 +2624,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
   add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
   add_foreign_key "disbursements", "users", column: "requested_by_id"
+  add_foreign_key "discord_messages", "activities"
   add_foreign_key "document_downloads", "documents"
   add_foreign_key "document_downloads", "users"
   add_foreign_key "documents", "events"
@@ -2575,6 +2657,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
   add_foreign_key "event_group_memberships", "events"
   add_foreign_key "event_groups", "users"
   add_foreign_key "event_plans", "events"
+  add_foreign_key "event_scoped_tags", "events", column: "parent_event_id"
+  add_foreign_key "event_scoped_tags_events", "event_scoped_tags"
+  add_foreign_key "event_scoped_tags_events", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"
   add_foreign_key "fee_relationships", "events"
@@ -2585,6 +2670,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_07_224935) do
   add_foreign_key "g_suite_revocations", "g_suites"
   add_foreign_key "g_suites", "events"
   add_foreign_key "g_suites", "users", column: "created_by_id"
+  add_foreign_key "governance_admin_transfer_approval_attempts", "governance_admin_transfer_limits"
+  add_foreign_key "governance_admin_transfer_approval_attempts", "governance_request_contexts"
+  add_foreign_key "governance_admin_transfer_approval_attempts", "users"
+  add_foreign_key "governance_admin_transfer_limits", "users"
+  add_foreign_key "governance_request_contexts", "users"
+  add_foreign_key "governance_request_contexts", "users", column: "impersonator_id"
   add_foreign_key "hashed_transactions", "raw_plaid_transactions"
   add_foreign_key "hcb_code_personal_transactions", "hcb_codes"
   add_foreign_key "hcb_code_personal_transactions", "invoices"

@@ -215,6 +215,10 @@ class EventPolicy < ApplicationPolicy
     user&.admin? && record.demo_mode?
   end
 
+  def toggle_scoped_tag?
+    admin_or_manager?
+  end
+
   private
 
   def admin_or_member?
