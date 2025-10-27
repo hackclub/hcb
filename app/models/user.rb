@@ -231,10 +231,13 @@ class User < ApplicationRecord
     ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
   end
 
-  # admin? takes into account an admin user's preference
+  # admin? by default, takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
-  def admin?
-    ["admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  def admin?(override_pretend: false)
+    has_admin_role = ["admin", "superadmin"].include?(self.access_level)
+    return has_admin_role if override_pretend
+
+    has_admin_role && !self.pretend_is_not_admin
   end
 
   # admin_override_pretend? ignores an admin user's
