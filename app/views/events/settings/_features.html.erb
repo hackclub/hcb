@@ -15,6 +15,7 @@
   <%= render partial: "features/preview", locals: {
         id: "donation-tiers",
         classes: ["feature-generic"],
+        feature_flag: :donation_tiers_2025_06_24,
         fully_shipped: true,
         name: "Donation Tiers",
         description: "Offer preset monthly donation options with custom names, prices, and perks.",
@@ -26,6 +27,7 @@
         classes: ["feature-generic"],
         fully_shipped: true,
         name: "HCB Card Logo",
+        feature_flag: :card_logos_2024_08_27,
         description: "Add a custom logo to every HCB card printed for your organization.",
         event:
       } %>
@@ -35,6 +37,7 @@
         classes: ["feature-spending-controls", "feature-generic"],
         fully_shipped: true,
         name: "Spending Controls",
+        feature_flag: :spending_controls_2024_06_03,
         description: content_tag(:span) do
           concat "Control your members' spending with preauthorized card limits!"
         end,
@@ -45,6 +48,7 @@
         id: "transaction-tags",
         classes: ["feature-transaction-tags"],
         fully_shipped: true,
+        feature_flag: :transaction_tags_2022_07_29,
         name: "Transaction Tags",
         description: "Categorize and filter transactions using tags!",
         event:
