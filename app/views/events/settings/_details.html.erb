@@ -59,7 +59,7 @@
     </div>
     <div class="event_settings__content">
       <h2><%= event.name %></h2>
-      <div class="w-full">
+      <div class="w-full mt-4">
         <% if event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
           <div class="field flex-1">
             <%= form.label :short_name, "Nickname" %>
@@ -166,7 +166,15 @@
   <h3 class="mb1" id="announcements_heading">Announcements</h3>
   <div class="card mb3">
     <div class="field field--checkbox">
-      <span style="font-weight: 700">Generate monthly announcements</span>
+      <div>
+        <span style="font-weight: 700">Generate monthly announcements</span>
+        <p class="h5 muted mt0 mb1 pr-4">
+          Use this to enable auto-scheduled monthly announcements.
+          <% if event.config.generate_monthly_announcement %>
+            If disabled, the current monthly announcement draft will be discarded.
+          <% end %>
+        </p>
+      </div>
       <div class="field--checkbox--switch ml-auto">
         <%= form.fields_for :config do |config| %>
           <%= config.label :generate_monthly_announcement do %>
@@ -176,12 +184,6 @@
         <% end %>
       </div>
     </div>
-    <p class="h5 muted mt0 mb1">
-      Use this to enable auto-scheduled monthly announcements.
-      <% if event.config.generate_monthly_announcement %>
-        If disabled, the current monthly announcement draft will be discarded.
-      <% end %>
-    </p>
     <%= form.submit "Update", disabled: %>
   </div>
 
@@ -228,7 +230,7 @@
         <span>hcb.hackclub.com</span>
         <span>/</span>
       </span>
-      <%= form.text_field :slug, class: "!p-0 !border-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
+      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
     </div>
     <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">
