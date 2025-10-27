@@ -564,7 +564,7 @@ class EventsController < ApplicationController
 
     @sub_organizations = filtered_sub_organizations
 
-    render :async_balance, layout: false
+    render :async_sub_organization_balance, layout: false
   end
 
   def account_number
