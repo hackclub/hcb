@@ -562,6 +562,8 @@ class EventsController < ApplicationController
   def async_sub_organization_balance
     authorize @event
 
+    @sub_organizations = filtered_sub_organizations
+
     render :async_balance, layout: false
   end
 
@@ -842,20 +844,7 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        search = params[:q] || params[:search]
-        scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
-
-        relation = @event.subevents.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
-        relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
-        relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
-        relation = relation.order(created_at: :desc)
-
-        @filter_options = [
-          { key: "tag", label: "Tag", type: "select", options: @event.subevent_scoped_tags.map(&:name) }
-        ]
-        @has_filter = helpers.check_filters?(@filter_options, params)
-
-        @sub_organizations = relation
+        @sub_organizations = filtered_sub_organizations
       end
 
       # CSV export intentionally does not consider filters
@@ -1147,6 +1136,23 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def filtered_sub_organizations(sub_organizations = @event.subevents)
+    search = params[:q] || params[:search]
+    scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
+
+    relation = sub_organizations.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
+    relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+    relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
+    relation = relation.order(created_at: :desc)
+
+    @filter_options = [
+      { key: "tag", label: "Tag", type: "select", options: @event.subevent_scoped_tags.map(&:name) }
+    ]
+    @has_filter = helpers.check_filters?(@filter_options, params)
+
+    relation
+  end
 
   # Only allow a trusted parameter "white list" through.
   def event_params
