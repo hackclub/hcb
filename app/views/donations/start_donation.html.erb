@@ -35,6 +35,9 @@
   <%= render "donations/donation_form", donation: @donation %>
 <% end %>
 
+<%= render "donations/top_donors" if @event.show_top_donors %>
+<%= render "donations/recent_donors" if @event.show_recent_donors %>
+
 <% if @event.demo_mode? %>
   <div class="container container--sm">
     <div class="card border b--info mt3 mb3 pb0 pt0 public-message">

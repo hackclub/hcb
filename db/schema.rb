@@ -1048,6 +1048,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
+    t.boolean "show_top_donors", default: false
+    t.boolean "show_recent_donors", default: false
     t.boolean "fee_waiver_eligible", default: false, null: false
     t.boolean "fee_waiver_applied", default: false, null: false
     t.string "discord_guild_id"

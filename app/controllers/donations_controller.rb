@@ -51,6 +51,22 @@ class DonationsController < ApplicationController
       return not_found
     end
 
+    if @event.show_top_donors
+      @top_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(amount: :desc).limit(5)
+      @top_donors = [*@top_donors, *@top_donors, *@top_donors, *@top_donors, *@top_donors, *@top_donors]
+
+      if @top_donors.size < 5
+        @top_donors = []
+      end
+    end
+
+    if @event.show_recent_donors
+      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(5)
+      if @recent_donors.size < 5
+        @recent_donors = []
+      end
+    end
+
     tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
     @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
