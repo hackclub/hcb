@@ -18,7 +18,7 @@ export default class extends Controller {
       this.clamp(
         this.lowValue ?? this.minValue,
         this.minValue,
-        this.maxValue - this.minDistanceValue
+        Math.max(0, this.maxValue - this.minDistanceValue)
       ),
       this.clamp(
         this.highValue ? this.highValue : this.maxValue,
@@ -48,7 +48,7 @@ export default class extends Controller {
 
   setLo(next) {
     this.value = [
-      this.clamp(next, this.minValue, this.value[1] - this.minDistanceValue),
+      this.clamp(next, this.minValue, Math.max(0, this.value[1] - this.minDistanceValue)),
       this.value[1],
     ]
     this.render()
