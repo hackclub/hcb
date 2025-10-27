@@ -64,8 +64,8 @@
   <% end %>
 <% end %>
 
-<div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+<div class="flex flex-row justify-between items-center width-100 gap-2 mb-3">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1") do |form| %>
     <%= render "search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>

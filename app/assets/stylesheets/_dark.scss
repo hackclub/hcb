@@ -352,7 +352,9 @@ html[data-dark='true'] {
   .dock__item:hover {
     background-color: $darkless;
   }
-  .filterbar__item:hover {
+  .filterbar__item:hover,
+  .filterbar__item:focus {
+    outline: none;
     background-color: $darkless;
     color: map-get($palette, muted);
   }
