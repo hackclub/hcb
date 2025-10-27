@@ -133,11 +133,11 @@ export default class extends Controller {
         <div class="range-slider--inputs">
           <div class="flex items-center gap-1">
             <span>$</span>
-            <input type="number" class="range-slider--input" name="${this.keyBaseValue}_greater_than" />
+            <input placeholder="Min" type="number" class="range-slider--input" name="${this.keyBaseValue}_greater_than" />
           </div>
           <div class="flex items-center gap-1">
             <span>$</span>
-            <input type="number" class="range-slider--input" name="${this.keyBaseValue}_less_than" />
+            <input placeholder="Max" type="number" class="range-slider--input" name="${this.keyBaseValue}_less_than" />
           </div>
         </div>
         <div class="range-slider--track">
