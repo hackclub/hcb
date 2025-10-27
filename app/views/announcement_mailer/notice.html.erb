@@ -2,9 +2,9 @@
   Hey<%= " all" if @emails.size > 1 %>,
 </p>
 
-<% if @cancellation_email.present? %>
+<% if @cancellation_email.present? || @warning_email.present? %>
   <p> 
-    You recently received an email from HCB saying that your scheduled monthly announcement has been canceled.
+    You recently received an email from HCB saying that your scheduled monthly announcement <%= @cancellation_email.present? ? "has been canceled" : "will go out in 7 days" %>.
     This is related to a new feature on HCB, organization announcements, which will help you send out announcements on HCB to people who follow your organization.
   </p>
 
@@ -15,7 +15,9 @@
 
   <p>
     This feature was automatically enabled for <%= @event.name %>, which is why you were sent the email about your scheduled monthly announcement.
-    HCB will cancel sending monthly announcements if they are not edited or if there is no recent activity to include in the announcement.
+    <% if @cancellation_email.present? %>
+      HCB will cancel sending monthly announcements if they are not edited or if there is no recent activity to include in the announcement.
+    <% end %>
   </p>
 <% else %>
   <p>
