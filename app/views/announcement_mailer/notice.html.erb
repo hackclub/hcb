@@ -3,7 +3,7 @@
 </p>
 
 <% if @cancellation_email.present? || @warning_email.present? %>
-  <p> 
+  <p>
     You recently received an email from HCB saying that your scheduled monthly announcement <%= @cancellation_email.present? ? "has been canceled" : "will go out in 7 days" %>.
     This is related to a new feature on HCB, organization announcements, which will help you send out announcements on HCB to people who follow your organization.
   </p>
