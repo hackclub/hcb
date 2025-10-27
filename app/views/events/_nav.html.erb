@@ -16,7 +16,7 @@
     <% events_nav(@event, selected: local_assigns[:selected]).each do |item| %>
       <% if item[:section] %>
         <span class="mx-1 dock__section"><%= item[:section] %></span>
-        <hr class="opacity-40 border-none h-[1px] bg-gray-200">
+        <hr class="opacity-80 border-none h-[1px] bg-gray-200">
       <% else %>
         <%= dock_item item[:name],
             item[:path],

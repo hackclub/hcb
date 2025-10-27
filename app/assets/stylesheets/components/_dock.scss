@@ -163,13 +163,20 @@ summary.dock__item {
     }
 
     &:hover {
-      background-color: map-get($palette, white);
-      box-shadow: var(--shadow-border-xs);
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    &:active {
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
     &[aria-current='page'] {
-      background-color: map-get($palette, white);
-      box-shadow: var(--shadow-border-sm);
+      background-color: rgba(map-get($palette, primary), 0.1);
+      &:hover {
+        background-color: rgba(map-get($palette, primary), 0.15);
+      }
+      &:active {
+        background-color: rgba(map-get($palette, primary), 0.2);
+      }
     }
   }
 

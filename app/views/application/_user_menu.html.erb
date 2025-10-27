@@ -1,12 +1,12 @@
 <div class="lg:w-72 px-3 gap-2 flex flex-col lg:p-1">
-  <div class="bg-neutral-200 dark:bg-neutral-800 shadow-lg h-[1px] w-full hidden lg:block -mb-1"></div>
+  <div class="bg-neutral-200 dark:bg-neutral-800 h-[0.5px] w-full hidden lg:block -mb-1"></div>
   <div class="flex flex-row-reverse lg:flex-row items-center gap-2">
     <div data-controller="menu" class="flex flex-1 min-w-1" data-menu-placement-value="bottom-end">
       <% if signed_in? %>
         <button
           data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
           data-menu-target="toggle"
-          class="dock__item user-menu-trigger max-w-full">
+          class="dock__item user-menu-trigger max-w-full !shadow-none">
           <%= avatar_for current_user, size: 28 if current_user %>
           <div class="text-left flex-1 truncate hidden lg:block" style="flex:1;overflow: hidden;">
             <span class="truncate"><%= @current_user.name %></span>

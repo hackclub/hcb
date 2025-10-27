@@ -233,7 +233,14 @@ html[data-dark='true'] {
     color: map-get($palette, muted);
   }
   .dock__item[aria-current='page'] {
-    background-color: $darkless;
+    background-color: rgba(map-get($palette, primary), 0.2);
+
+    &:hover {
+      background-color: rgba(map-get($palette, primary), 0.25);
+    }
+    &:active {
+      background-color: rgba(map-get($palette, primary), 0.3);
+    }
   }
 
   pre,
@@ -350,7 +357,10 @@ html[data-dark='true'] {
   }
 
   .dock__item:hover {
-    background-color: $darkless;
+    background-color: rgba(255, 255, 255, 0.05);
+    &:active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
   }
   .filterbar__item:hover,
   .filterbar__item:focus {
