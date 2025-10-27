@@ -124,7 +124,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def async_sub_organization_balance?
-    show?
+    sub_organizations?
   end
 
   def create_transfer?
