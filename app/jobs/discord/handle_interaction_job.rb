@@ -101,7 +101,7 @@ module Discord
     def attach_receipt_component
       discord_message = Discord::Message.find_by(discord_message_id: @interaction.dig(:message, :id))
       activity = PublicActivity::Activity.find_by(id: discord_message&.activity_id)
-      hcb_code = activity.trackable&.canonical_pending_transaction&.local_hcb_code
+      hcb_code = activity&.trackable&.canonical_pending_transaction&.local_hcb_code
 
       return respond(content: "Could not find the transaction to attach a receipt to.") unless activity&.key == "raw_pending_stripe_transaction.create"
 
