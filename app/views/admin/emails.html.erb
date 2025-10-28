@@ -3,8 +3,7 @@
 <%= form_with local: true, url: emails_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
   <%= form.text_field :to, value: params[:to], placeholder: "Email address (to)" %>
-
-  <%= form.collection_select(:user_id, User.all.order(Arel.sql("COALESCE(preferred_name, full_name, email) ASC")), :id, :admin_dropdown_description, { include_blank: "Select a user", selected: @user_id }, { width: 250, style: "max-width: 250px" }) %>
+  <%= form.text_field :user_id, value: params[:user_id], placeholder: "User ID" %>
 
   <div>
     <%= form.submit "Search" %>
@@ -29,10 +28,6 @@
   </thead>
   <tbody>
     <% @messages.each do |msg| %>
-      <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
-        <%= modal_header "Email to #{msg.user&.name || "unknown user"}" %>
-        <iframe loading="lazy" src="<%= url_for(controller: "admin", action: "email", message_id: msg.id) %>" class="w-full h-full absolute border-none -mt-8 -ml-8 pb-24">iframes are not supported</iframe>
-      </section>
       <tr>
         <td><%= msg.id %></td>
         <td><%= msg.sent_at.strftime("%Y-%m-%d") %></td>
@@ -55,5 +50,14 @@
     <% end %>
   </tbody>
 </table>
+
+<% @messages.each do |msg| %>
+  <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
+    <%= modal_header "Email to #{msg.user&.name || "unknown user"}" %>
+    <%= turbo_frame_tag dom_id(msg), src: url_for(controller: "admin", action: "email", message_id: msg.id), loading: "lazy" do %>
+      loading...
+    <% end %>
+  </section>
+<% end %>
 
 <%= paginate @messages %>
