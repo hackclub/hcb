@@ -31,7 +31,14 @@ class AnnouncementMailer < ApplicationMailer
 
     @cancellation_email = Ahoy::Message.where(sent_at: Date.today.beginning_of_month.., subject: "[#{@event.name}] Your scheduled monthly announcement has been canceled").first
 
-    mail to: @emails, subject: "[#{@event.name}] #{@cancellation_email.present? ? "Explaining monthly announcements" : "Monthly announcements are enabled for your organization"}"
+    if @cancellation_email.present?
+      email = Mail.read_from_string(@cancellation_email.content)
+      message_id = email.message_id
+
+      mail to: @emails, subject: "[#{@event.name}] Explaining monthly announcements", in_reply_to: message_id, references: message_id
+    else
+      mail to: @emails, subject: "[#{@event.name}] Monthly announcements are enabled for your organization"
+    end
   end
 
   def set_warning_variables
