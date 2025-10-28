@@ -854,6 +854,7 @@ Rails.application.routes.draw do
     get "transfers/new", to: "events#new_transfer"
 
     get "async_balance"
+    get "async_sub_organization_balance"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
