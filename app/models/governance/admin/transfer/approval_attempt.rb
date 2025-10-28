@@ -60,8 +60,10 @@ module Governance
         validates :attempted_amount_cents, numericality: { greater_than: 0 }
         validate :one_successful_approval_per_transfer, on: :create
 
+        SUCCESS_STATES = %i[approved redundantly_approved].freeze
         enum :result, {
           approved: "approved",
+          redundantly_approved: "redundantly_approved",
           denied: "denied"
         }
         DENIAL_REASONS = {
@@ -97,6 +99,19 @@ module Governance
 
         delegate :impersonator, :impersonated?, to: :request_context, allow_nil: true
 
+        def successful?
+          SUCCESS_STATES.include?(result.to_sym)
+        end
+
+        def previously_approved_attempt
+          # There theoretically could only be one
+          ApprovalAttempt.find_by(transfer:, user:, result: :approved)
+        end
+
+        def previously_approved?
+          previously_approved_attempt.present?
+        end
+
         private
 
         def user_matches_limit_user
@@ -108,9 +123,15 @@ module Governance
         def one_successful_approval_per_transfer
           # The goal here is to prevent users from eating up their transfer
           # limits by approving the same transfer multiple times.
-          return if ApprovalAttempt.where(transfer:, result: :approved).none?
-
-          errors.add(:transfer, "was already approved!")
+          #
+          # Different users should be able to approve the same transfer
+          # independently; we do this primarily for logging purposes. This may
+          # happen if the first approval succeeds, but transfer isn't sent due
+          # to validation/network errors. Then, a second person attempts it.
+          if previously_approved? && approved?
+            Rails.error.unexpected("Detected multiple successful approval attempts for the same transfer. Ensure second approvals are marked as `redundantly_approved`.")
+            errors.add(:transfer, "was already approved! Report this issue to an engineer.")
+          end
         end
 
       end
