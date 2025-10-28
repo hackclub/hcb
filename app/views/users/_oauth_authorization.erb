@@ -38,7 +38,7 @@
               <% if token.expires_in %>
                 <%= link_to make_authorization_eternal_users_path(id: token.id), method: :post,
                             class: "btn bg-success py1 px2 h4",
-                            disabled: !admin_signed_in? do %>
+                            disabled: !policy(token).make_eternal? do %>
                   <%= inline_icon "clock", size: home_action_size %>
                   Make eternal
                 <% end %>
