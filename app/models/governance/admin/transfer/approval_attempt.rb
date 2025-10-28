@@ -60,7 +60,7 @@ module Governance
         validates :attempted_amount_cents, numericality: { greater_than: 0 }
         validate :one_successful_approval_per_transfer, on: :create
 
-        SUCCESS_STATES = %i[approved redundantly_approved].freeze
+        SUCCESSFUL_RESULTS = %i[approved redundantly_approved].freeze
         enum :result, {
           approved: "approved",
           redundantly_approved: "redundantly_approved",
@@ -100,7 +100,7 @@ module Governance
         delegate :impersonator, :impersonated?, to: :request_context, allow_nil: true
 
         def successful?
-          SUCCESS_STATES.include?(result.to_sym)
+          SUCCESSFUL_RESULTS.include?(result.to_sym)
         end
 
         def previously_approved_attempt
