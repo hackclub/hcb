@@ -55,7 +55,7 @@
   <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
     <%= modal_header "Email to #{msg.user&.name || "unknown user"}" %>
     <%= turbo_frame_tag dom_id(msg), src: url_for(controller: "admin", action: "email", message_id: msg.id), loading: "lazy" do %>
-      loading...
+      Loading...
     <% end %>
   </section>
 <% end %>
