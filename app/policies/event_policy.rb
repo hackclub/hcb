@@ -123,6 +123,10 @@ class EventPolicy < ApplicationPolicy
     show?
   end
 
+  def async_sub_organization_balance?
+    sub_organizations?
+  end
+
   def create_transfer?
     admin_or_manager? && !record.demo_mode?
   end
@@ -213,6 +217,10 @@ class EventPolicy < ApplicationPolicy
 
   def activate?
     user&.admin? && record.demo_mode?
+  end
+
+  def toggle_scoped_tag?
+    admin_or_manager?
   end
 
   private

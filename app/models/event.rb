@@ -164,10 +164,6 @@ class Event < ApplicationRecord
     Event.where(id: descendant_ids)
   end
 
-  def descendant_total_balance_cents
-    subevents.to_a.sum(&:balance_available_v2_cents)
-  end
-
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
@@ -376,6 +372,11 @@ class Event < ApplicationRecord
   has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
 
+  has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent", dependent: :destroy
+  has_many :scoped_tags, through: :event_scoped_tags_events, source: :event_scoped_tag
+  has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id, dependent: :destroy
+  accepts_nested_attributes_for :event_scoped_tags_events
+
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits
@@ -450,7 +451,6 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
-  before_save :enable_monthly_announcements
 
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
@@ -904,6 +904,10 @@ class Event < ApplicationRecord
     discord_guild_id.present?
   end
 
+  def valid_scoped_tags
+    scoped_tags.where(parent_event_id: parent_id)
+  end
+
   private
 
   def point_of_contact_is_admin
@@ -961,13 +965,6 @@ class Event < ApplicationRecord
 
     unless eligible_for_indexing?
       self.is_indexable = false
-    end
-  end
-
-  def enable_monthly_announcements
-    # We'll enable monthly announcements when transparency mode is turned on
-    if is_public_changed?(to: true)
-      config.update(generate_monthly_announcement: true)
     end
   end
 

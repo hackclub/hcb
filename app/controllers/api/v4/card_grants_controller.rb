@@ -21,7 +21,7 @@ module Api
       def create
         sent_by = current_user
 
-        if current_user.admin? && params[:sent_by_email].present?
+        if current_user.admin? && params.key?(:sent_by_email)
           found_user = User.find_by(email: params[:sent_by_email])
 
           if found_user.nil?

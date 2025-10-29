@@ -1,8 +1,17 @@
 GIT
   remote: https://github.com/hackclub/yellow_pages.git
-  revision: 2422773b5728afb5461682f887a91b76c7669745
+  revision: 7b94816da4f17e4f3179fa5514352346d8f04cf5
   specs:
     yellow_pages (0.4.0)
+
+GIT
+  remote: https://github.com/instacart/suo.git
+  revision: e93ab4a6b5e19ed0ba915092a1a8fcab6d306258
+  specs:
+    suo (0.4.0)
+      dalli
+      msgpack
+      redis
 
 GEM
   remote: https://rubygems.org/
@@ -817,10 +826,6 @@ GEM
     stripe (11.7.0)
     strong_migrations (1.8.0)
       activerecord (>= 5.2)
-    suo (0.4.0)
-      dalli
-      msgpack
-      redis
     terser (1.2.6)
       execjs (>= 0.3.0, < 3)
     thor (1.4.0)
@@ -1023,6 +1028,7 @@ DEPENDENCIES
   statsd-instrument (~> 3.9)
   stripe (= 11.7.0)
   strong_migrations (~> 1)
+  suo!
   terser (~> 1.2)
   turbo-rails (~> 2.0.17)
   twilio-ruby
@@ -1039,7 +1045,7 @@ DEPENDENCIES
   yellow_pages!
 
 RUBY VERSION
-   ruby 3.4.5p51
+   ruby 3.4.7p58
 
 BUNDLED WITH
    2.5.22

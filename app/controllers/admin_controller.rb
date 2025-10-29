@@ -713,15 +713,18 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @event_id = params[:event_id].presence
+    @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
 
     @wise_transfers = WiseTransfer.all
 
     @wise_transfers = @wise_transfers.search_recipient(@q) if @q
 
-    @wise_transfers.where(event_id: @event_id) if @event_id
+    @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
+    @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
       "created_at desc"
     )
   end
@@ -1298,6 +1301,10 @@ class AdminController < Admin::BaseController
   end
 
   def email
+    @message = Ahoy::Message.find(params[:message_id])
+  end
+
+  def email_html
     @message_id = params[:message_id]
 
     respond_to do |format|
@@ -1320,7 +1327,6 @@ class AdminController < Admin::BaseController
     @count = messages.count
 
     @messages = messages.page(@page).per(@per).order(sent_at: :desc)
-
   end
 
   def unknown_merchants
