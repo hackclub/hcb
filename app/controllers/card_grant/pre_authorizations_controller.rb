@@ -29,9 +29,9 @@ class CardGrant
     def organizer_request_resubmit
       authorize @pre_authorization
 
-      # Create a comment if feedback was provided
+      # Create a comment on the card grant if feedback was provided
       if params[:feedback].present?
-        comment = @pre_authorization.comments.build(
+        comment = @card_grant.comments.build(
           content: params[:feedback],
           user: current_user,
           action: :changes_requested

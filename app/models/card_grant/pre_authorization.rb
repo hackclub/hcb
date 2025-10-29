@@ -37,7 +37,6 @@ class CardGrant
     has_one :user, through: :card_grant
 
     include Turbo::Broadcastable
-    include Commentable
 
     validates :product_url, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { product_url.present? }
     validates :product_url, presence: true, unless: :draft?

@@ -49,7 +49,7 @@
   <% end %>
 <% end %>
 
-<% if @pre_authorization.comments.any? && @pre_authorization.draft? %>
+<% if @card_grant.comments.any? && @pre_authorization.draft? %>
   <%= render "callout", title: "Feedback from Organizer", type: "warning", class: "mb-4" do %>
     <p class="m-0">
       <strong>An organizer has requested changes to your pre-authorization.</strong>
@@ -106,9 +106,9 @@
   <input type="submit" class="btn bg-warning" value="Submitted..." form="pre_authorization_form" disabled>
 <% end %>
 
-<% if @pre_authorization.comments.any? %>
+<% if @card_grant.comments.any? %>
   <h3 class="mt-4">Comments</h3>
-  <% @comments = @pre_authorization.comments %>
-  <% @commentable = @pre_authorization %>
+  <% @comments = @card_grant.comments %>
+  <% @commentable = @card_grant %>
   <%= render "comments/comments" %>
 <% end %>
