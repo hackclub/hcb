@@ -48,8 +48,25 @@
                         <%= inline_icon "checkmark" %> Approve
                     <% end %>
 
+                    <button type="button" class="btn bg-muted" onclick="document.getElementById('resubmit_form_container').style.display = 'block'; this.style.display = 'none';">
+                        <%= inline_icon "refresh" %> Request Resubmit
+                    </button>
+
                     <%= button_to organizer_reject_card_grant_pre_authorizations_path(pre_authorization.card_grant), method: :post, class: "btn bg-warning", data: { turbo_confirm: "Are you sure you want to reject this pre-authorization?" } do %>
                         <%= inline_icon "view-close-small" %> Reject
+                    <% end %>
+                </div>
+
+                <div id="resubmit_form_container" style="display: none;" class="mt-3">
+                    <%= form_with url: organizer_request_resubmit_card_grant_pre_authorizations_path(pre_authorization.card_grant), method: :post, data: { turbo: false } do |form| %>
+                        <div class="field mb-2">
+                            <%= label_tag :feedback, "Feedback for submitter (optional)" %>
+                            <%= text_area_tag :feedback, nil, class: "card", placeholder: "Explain what needs to be changed...", rows: 4 %>
+                        </div>
+                        <div class="flex flex-row gap-2">
+                            <%= form.submit "Send back for resubmission", class: "btn bg-muted" %>
+                            <button type="button" class="btn" onclick="document.getElementById('resubmit_form_container').style.display = 'none'; document.querySelector('[onclick*=resubmit_form_container]').style.display = 'inline-flex';">Cancel</button>
+                        </div>
                     <% end %>
                 </div>
             <% end %>

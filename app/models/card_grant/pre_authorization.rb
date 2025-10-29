@@ -37,6 +37,7 @@ class CardGrant
     has_one :user, through: :card_grant
 
     include Turbo::Broadcastable
+    include Commentable
 
     validates :product_url, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { product_url.present? }
     validates :product_url, presence: true, unless: :draft?
@@ -77,6 +78,10 @@ class CardGrant
         after do |rejected_by|
           card_grant.cancel!(rejected_by)
         end
+      end
+
+      event :mark_resubmit_requested do
+        transitions from: :fraudulent, to: :draft
       end
     end
 
