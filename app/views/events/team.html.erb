@@ -173,11 +173,11 @@
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
     <%= modal_header "Invite a team member" %>
 
-    <h3 class="mb-0">Links</h3>
+    <h3 class="mb-0 mb-2">Links</h3>
     <%= render "organizer_position_invite/links/form", event: @event %>
     <%= render "organizer_position_invite/links/link_list", event: @event, invite_links: @invite_links %>
 
-    <h3 class="mt-4 mb-0">Email</h3>
+    <h3 class="mt-4 mb-2">Email</h3>
     <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
   </section>
 <% end %>

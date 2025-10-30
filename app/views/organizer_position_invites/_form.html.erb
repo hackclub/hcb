@@ -2,10 +2,8 @@
   <%= form_errors invite, "user" %>
 
   <div class="field" x-data="{ email: '' }">
-    <%= form.label :email, class: "mb1" %>
-
     <div class="flex items-center">
-      <%= form.email_field :email, class: "mr1", "x-model": "email", placeholder: "fiona@hackclub.com" %>
+      <%= form.email_field :email, class: "!max-w-full w-full", "x-model": "email", placeholder: "Email address" %>
     </div>
     <template x-if="/(team|webmaster|marketing|admin|info|about|support|sales|hello)/.test(email)">
       <div class="warning mt1">⚠️ For security, we discourage team emails on
