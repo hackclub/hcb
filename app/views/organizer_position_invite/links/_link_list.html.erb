@@ -5,16 +5,29 @@
 <% else %>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% invite_links.each do |link| %>
-      <li class="overflow-visible card flex flex-row justify-between items-center gap-2">
+      <li class="overflow-visible flex flex-row justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">
             <div class="flex flex-col">
-              <p class="my-0 font-bold"><%= link_to link_url(link), link_url(link) %></p>
-              <p class="my-0">Created by <%= user_mention link.creator %> on <%= link.created_at.strftime("%B %e, %Y") %></p>
-              <p class="my-0">Expires in <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %></p>
+              <%= link_to link_url(link), class: "gap-1 my-0 font-bold flex items-center" do %>
+                <%= inline_icon "link", size: 24 %>
+                <%= link.hashid %>
+              <% end %>
+              <p class="my-0 text-sm flex items-center gap-1 text-muted">
+                <%= link.created_at.strftime("%B %e, %Y") %> &bull;
+                <%= user_mention link.creator %>&bull;
+                Expires <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %>
+              </p>
               <p class="my-0">Used <%= pluralize(link.requests.size, "times") %></p>
             </div>
             <div class="flex-grow"></div>
-            <%= pop_icon_to "view-close-small",
+            <%= pop_icon_to "copy",
+                            link_url(link),
+                            class: "tooltipped",
+                            data: {
+                              clipboard_text: link_url(link),
+                            },
+                            "aria-label": "Copy link to clipboard" %>
+            <%= pop_icon_to "delete",
                             deactivate_link_path(link),
                             class: "error tooltipped",
                             data: {
@@ -25,6 +38,7 @@
                             "aria-label": "Deactivate invite link",
                             disabled: !policy(link).deactivate? %>
         </span>
+        <hr>
       </li>
     <% end %>
   </ul>
