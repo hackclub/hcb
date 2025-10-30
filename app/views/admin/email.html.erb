@@ -1,0 +1,14 @@
+<%#
+We're doing this crazy level of nesting to prevent excess web requests.
+
+emails (index page) -> lazy turboframe with inside iframe -> email_html action
+
+This is because just having iframes on the index page causes a huge number of
+web requests from browser extensions, etc. So, we lazy load the iframes.
+
+And, Rails has a hard time with the email HTML when passed through ERB, so we
+respond with the email HTML directly in the controller action.
+%>
+<%= turbo_frame_tag dom_id(@message) do %>
+  <iframe loading="lazy" src="<%= url_for(controller: "admin", action: "email_html", message_id: @message.id) %>" class="w-full h-full absolute border-none -mt-8 -ml-8 pb-24">iframes are not supported</iframe>
+<% end %>

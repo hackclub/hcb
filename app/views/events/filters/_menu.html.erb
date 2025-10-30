@@ -59,19 +59,22 @@
             <% end %>
           <% when "amount_range" %>
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
-                <% ["less_than", "greater_than"].each do |suffix| %>
-                  <label class="bold"><%= suffix.humanize %>...</label>
-                  <div class="input p-0 mb-2 flex border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3 items-center">
-                    <span class="bold muted text-md" style="width: 1rem;">$</span>
-                    <%= form.number_field "#{filter[:key_base]}_#{suffix}", class: "bg-transparent !border-none", value: params["#{filter[:key_base]}_#{suffix}"] %>
-                  </div>
-                <% end %>
+              <div
+                data-controller="range-slider"
+                data-range-slider-min-value="<%= filter[:range][0] %>"
+                data-range-slider-max-value="<%= filter[:range][1] %>"
+                data-range-slider-low-value="<%= params[filter[:key_base] + "_greater_than"] %>"
+                data-range-slider-high-value="<%= params[filter[:key_base] + "_less_than"] %>"
+                data-range-slider-key-base-value="<%= filter[:key_base] %>"
+                data-action="range:change->filters#updatePrice">
+                <div data-range-slider-target="root" class="w-full select-none"></div>
+              </div>
 
               <% request.query_parameters.except("#{filter[:key_base]}_less_than", "#{filter[:key_base]}_greater_than").each do |k, v| %>
                 <%= hidden_field_tag k, v %>
               <% end %>
 
-              <%= form.submit "Filter..." %>
+              <%= form.submit "Filter...", class: "w-full mt-5" %>
             <% end %>
           <% end %>
         </div>
