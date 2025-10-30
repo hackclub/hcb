@@ -19,11 +19,11 @@
             <small>United States</small>
           <% end %>
           <% if Flipper.enabled?(:wise_transfers_2025_07_31, current_user) %>
-            <%= link_to new_event_wise_transfer_path(@event), class: "text-decoration-none btn--form-option opacity-75 pointer-events-none", data: { turbo_frame: "_top" }, disabled: true do %>
+            <%= link_to new_event_wise_transfer_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" }, disabled: true do %>
               <%= inline_icon "wise", size: 28 %>
+              <div class="badge badge--corner bg-warning m1 mt0" style="width: fit-content;">Preview</div>
               <strong>Wise transfer</strong>
-              <div class="badge bg-warning m1 mt0" style="width: fit-content;">Temporarily Unavailable</div>
-              <small>Wise Transfers are currently under maintenance.</small>
+              <small>International</small>
             <% end %>
           <% end %>
           <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" } do %>

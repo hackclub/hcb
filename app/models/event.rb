@@ -451,7 +451,6 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
-  before_save :enable_monthly_announcements
 
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
@@ -966,13 +965,6 @@ class Event < ApplicationRecord
 
     unless eligible_for_indexing?
       self.is_indexable = false
-    end
-  end
-
-  def enable_monthly_announcements
-    # We'll enable monthly announcements when transparency mode is turned on
-    if is_public_changed?(to: true)
-      config.update(generate_monthly_announcement: true)
     end
   end
 
