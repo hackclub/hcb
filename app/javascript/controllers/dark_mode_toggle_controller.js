@@ -11,7 +11,7 @@ export default class extends Controller {
 
   updateActiveCheck() {
     const selectedTheme = getCookie('theme') || 'system'
-    // this.updateBlogEmbed(selectedTheme)
+    this.updateBlogEmbed(selectedTheme)
     this.toggleTargets.forEach(target => {
       const check = target.querySelector('svg')
       const targetTheme = target.getAttribute('data-value')
