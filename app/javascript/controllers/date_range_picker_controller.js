@@ -11,13 +11,12 @@ export default class extends Controller {
   }
 
   connect() {
-    this.start = this.#clampDay(this.#parseDate(this.initialStartValue) || null)
-    this.end = this.#clampDay(this.#parseDate(this.initialEndValue) || null)
+    this.start = this.#clampDay(this.#parseDate(this.initialStartValue))
+    this.end = this.#clampDay(this.#parseDate(this.initialEndValue))
     this.hovered = null
     this.view = this.start || new Date()
     this.typedStart = this.#formatDate(this.start)
     this.typedEnd = this.#formatDate(this.end)
-
     this.#render()
   }
 
@@ -35,98 +34,86 @@ export default class extends Controller {
     return { start: this.start, end: this.end }
   }
 
-  #startOfMonth(d) {
-    const x = new Date(d)
-    x.setDate(1)
-    x.setHours(0, 0, 0, 0)
-    return x
+  #startOfMonth(date) {
+    const result = new Date(date)
+    result.setDate(1)
+    result.setHours(0, 0, 0, 0)
+    return result
   }
-  #endOfMonth(d) {
-    const x = new Date(d)
-    x.setMonth(x.getMonth() + 1, 0)
-    x.setHours(23, 59, 59, 999)
-    return x
-  }
-  #addMonths(d, n) {
-    const x = new Date(d)
-    x.setMonth(x.getMonth() + n)
-    return x
-  }
-  #isSameDay(a, b) {
-    return (
-      a &&
-      b &&
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate()
-    )
-  }
-  #isBefore(a, b) {
-    return (
-      a &&
-      b &&
-      new Date(a).setHours(0, 0, 0, 0) < new Date(b).setHours(0, 0, 0, 0)
-    )
-  }
-  #clampDay(d) {
-    if (!d) return null
-    const x = new Date(d)
-    x.setHours(0, 0, 0, 0)
-    return x
-  }
-  #formatDate(d) {
-    if (!d) return ''
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    return `${yyyy}-${mm}-${dd}`
-  }
-  #parseDate(str) {
-    if (!str) return null
-    const s = String(str).trim()
 
-    let m = s.match(/^\s*(\d{4})-(\d{1,2})-(\d{1,2})\s*$/)
-    if (m) {
-      const y = +m[1],
-        mo = +m[2] - 1,
-        d = +m[3]
-      const dt = new Date(y, mo, d)
-      return dt.getMonth() === mo && dt.getDate() === d ? dt : null
+  #addMonths(date, monthsToAdd) {
+    const result = new Date(date)
+    result.setMonth(result.getMonth() + monthsToAdd)
+    return result
+  }
+  #isSameDay(dateA, dateB) {
+    return dateA && dateB &&
+      dateA.getFullYear() === dateB.getFullYear() &&
+      dateA.getMonth() === dateB.getMonth() &&
+      dateA.getDate() === dateB.getDate()
+  }
+  #isBefore(dateA, dateB) {
+    return dateA && dateB &&
+      new Date(dateA).setHours(0, 0, 0, 0) < new Date(dateB).setHours(0, 0, 0, 0)
+  }
+  #clampDay(date) {
+    if (!date) return null
+    const result = new Date(date)
+    result.setHours(0, 0, 0, 0)
+    return result
+  }
+  #formatDate(date) {
+    if (!date) return ''
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  #parseDate(dateString) {
+    if (!dateString) return null
+    const trimmed = String(dateString).trim()
+
+    let match = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
+    if (match) {
+      const [, year, monthStr, dayStr] = match
+      const month = +monthStr - 1
+      const day = +dayStr
+      const parsedDate = new Date(+year, month, day)
+      return parsedDate.getMonth() === month && parsedDate.getDate() === day ? parsedDate : null
     }
 
-    m = s.match(/^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*$/)
-    if (m) {
-      const mo = +m[1] - 1,
-        d = +m[2],
-        y = +m[3]
-      const dt = new Date(y, mo, d)
-      return dt.getMonth() === mo && dt.getDate() === d ? dt : null
+    match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+    if (match) {
+      const [, monthStr, dayStr, year] = match
+      const month = +monthStr - 1
+      const day = +dayStr
+      const parsedDate = new Date(+year, month, day)
+      return parsedDate.getMonth() === month && parsedDate.getDate() === day ? parsedDate : null
     }
 
     return null
   }
 
   #monthMatrix(viewDate) {
-    const start = this.#startOfMonth(viewDate)
-    const end = this.#endOfMonth(viewDate)
-    const firstDay = new Date(start)
-    const dayOfWeek = (firstDay.getDay() + 7) % 7
-    firstDay.setDate(firstDay.getDate() - dayOfWeek)
+    const monthStart = this.#startOfMonth(viewDate)
+    const firstDayOfCalendar = new Date(monthStart)
+    const dayOfWeek = firstDayOfCalendar.getDay()
+    firstDayOfCalendar.setDate(firstDayOfCalendar.getDate() - dayOfWeek)
     const weeks = []
-    let cur = new Date(firstDay)
-    for (let w = 0; w < 6; w++) {
+    let currentDay = new Date(firstDayOfCalendar)
+    for (let weekIndex = 0; weekIndex < 6; weekIndex++) {
       const week = []
-      for (let d = 0; d < 7; d++) {
-        week.push(new Date(cur))
-        cur.setDate(cur.getDate() + 1)
+      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+        week.push(new Date(currentDay))
+        currentDay.setDate(currentDay.getDate() + 1)
       }
       weeks.push(week)
     }
-    return { weeks, start, end }
+    return { weeks, start: monthStart }
   }
 
-  #formatInputDate(v) {
-    let value = v.replace(/\D/g, '')
+  #formatInputDate(inputValue) {
+    let value = inputValue.replace(/\D/g, '')
     if (value.length > 8) value = value.slice(0, 8)
 
     if (value.length > 6) {
@@ -147,16 +134,12 @@ export default class extends Controller {
     this.$monthTitle = this.element.querySelector('[data-role="month-title"]')
     this.$weeksGrid = this.element.querySelector('[data-role="weeks"]')
 
-    this.$typedStart.addEventListener('input', e => {
-      const value = this.#formatInputDate(e.target.value)
-      this.typedStart = value
-      this.$typedStart.value = value
+    this.$typedStart.addEventListener('input', event => {
+      this.typedStart = this.$typedStart.value = this.#formatInputDate(event.target.value)
     })
 
-    this.$typedEnd.addEventListener('input', e => {
-      const value = this.#formatInputDate(e.target.value)
-      this.typedEnd = value
-      this.$typedEnd.value = value
+    this.$typedEnd.addEventListener('input', event => {
+      this.typedEnd = this.$typedEnd.value = this.#formatInputDate(event.target.value)
     })
 
     this.$typedStart.addEventListener('blur', () => this.#commitTyped('start'))
@@ -191,124 +174,120 @@ export default class extends Controller {
     ]
     this.$monthTitle.textContent = `${monthNames[this.view.getMonth()]} ${this.view.getFullYear()}`
 
-    const { weeks, start: mStart } = this.#monthMatrix(this.view)
-    const flat = weeks.flat()
-    const frag = document.createDocumentFragment()
+    const { weeks, start: monthStart } = this.#monthMatrix(this.view)
+    const allDays = weeks.flat()
+    const fragment = document.createDocumentFragment()
 
-    flat.forEach(day => {
-      const selectedStart = this.start && this.#isSameDay(day, this.start)
-      const selectedEnd = this.end && this.#isSameDay(day, this.end)
-      const between = this.#inRange(day)
-      const muted = day.getMonth() !== mStart.getMonth()
+    allDays.forEach(day => {
+      const isSelectedStart = this.start && this.#isSameDay(day, this.start)
+      const isSelectedEnd = this.end && this.#isSameDay(day, this.end)
+      const isInRange = this.#inRange(day)
+      const isOutsideCurrentMonth = day.getMonth() !== monthStart.getMonth()
 
-      let bg = between ? 'bg-info text-white' : 'bg-transparent'
-      let text = muted
+      const backgroundClasses = isInRange ? 'bg-info text-white' : 'bg-transparent'
+      const textClasses = isOutsideCurrentMonth
         ? 'text-gray-400 dark:text-gray-600'
         : 'text-gray-800 dark:text-white'
 
-      const btn = document.createElement('button')
-      btn.type = 'button'
-      btn.setAttribute('aria-label', day.toDateString())
-      btn.className = `border-0 relative ${bg} ${text} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black`
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.setAttribute('aria-label', day.toDateString())
+      button.className = `border-0 relative ${backgroundClasses} ${textClasses} h-7 select-none text-sm transition-shadow hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black`
+      button.__day = this.#clampDay(day)
 
-      btn.__day = this.#clampDay(day)
-
-      btn.addEventListener('click', e => {
-        e.stopPropagation()
-        this.#pickDay(btn.__day)
+      button.addEventListener('click', event => {
+        event.stopPropagation()
+        this.#pickDay(button.__day)
       })
 
-      btn.addEventListener('mouseenter', () => {
-        this.hovered = btn.__day
+      button.addEventListener('mouseenter', () => {
+        this.hovered = button.__day
         this.#paintHover()
       })
-      btn.addEventListener('mouseleave', () => {
+      button.addEventListener('mouseleave', () => {
         this.hovered = null
         this.#paintHover()
       })
 
       const span = document.createElement('span')
-      span.className = `inline-flex h-full w-full items-center justify-center ${selectedStart || selectedEnd ? 'font-semibold' : ''}`
-      span.textContent = String(day.getDate())
+      span.className = `inline-flex h-full w-full items-center justify-center ${isSelectedStart || isSelectedEnd ? 'font-semibold' : ''}`
+      span.textContent = day.getDate()
 
-      btn.appendChild(span)
-      frag.appendChild(btn)
+      button.appendChild(span)
+      fragment.appendChild(button)
     })
 
-    this.$weeksGrid.replaceChildren(frag)
+    this.$weeksGrid.replaceChildren(fragment)
     this.$dayButtons = Array.from(this.$weeksGrid.children)
 
-    this.$typedStart.value = this.start ? this.#formatDate(this.start) : ''
-    this.$typedEnd.value = this.end ? this.#formatDate(this.end) : ''
+    this.$typedStart.value = this.#formatDate(this.start)
+    this.$typedEnd.value = this.#formatDate(this.end)
 
     this.#paintHover()
   }
 
-  #shiftDay(d, n) {
-    const x = new Date(d)
-    x.setDate(x.getDate() + n)
-    return this.#clampDay(x)
+  #shiftDay(date, daysToShift) {
+    const result = new Date(date)
+    result.setDate(result.getDate() + daysToShift)
+    return this.#clampDay(result)
   }
 
   #paintHover() {
     if (!this.$dayButtons) return
 
-    const inR = day => this.#inRange(day)
-
-    for (const btn of this.$dayButtons) {
-      const day = btn.__day
+    for (const button of this.$dayButtons) {
+      const day = button.__day
       const isStart = this.#isSameDay(day, this.start)
       const isEnd = this.#isSameDay(day, this.end)
-      const on = inR(day)
+      const isHighlighted = this.#inRange(day)
 
-      btn.classList.toggle('bg-info', !!on)
-      btn.classList.toggle('text-white', !!on)
-      btn.classList.toggle('bg-transparent', !on)
+      button.classList.toggle('bg-info', isHighlighted)
+      button.classList.toggle('text-white', isHighlighted)
+      button.classList.toggle('bg-transparent', !isHighlighted)
 
-      btn.style.borderRadius =
-        btn.style.borderTopLeftRadius =
-        btn.style.borderTopRightRadius =
-        btn.style.borderBottomLeftRadius =
-        btn.style.borderBottomRightRadius =
+      button.style.borderRadius =
+        button.style.borderTopLeftRadius =
+        button.style.borderTopRightRadius =
+        button.style.borderBottomLeftRadius =
+        button.style.borderBottomRightRadius =
           ''
 
-      if (on) {
-        const col = day.getDay()
-        const left = col > 0 && inR(this.#shiftDay(day, -1))
-        const right = col < 6 && inR(this.#shiftDay(day, +1))
-        const up = inR(this.#shiftDay(day, -7))
-        const down = inR(this.#shiftDay(day, +7))
+      if (isHighlighted) {
+        const columnIndex = day.getDay()
+        const hasLeftNeighbor = columnIndex > 0 && this.#inRange(this.#shiftDay(day, -1))
+        const hasRightNeighbor = columnIndex < 6 && this.#inRange(this.#shiftDay(day, 1))
+        const hasTopNeighbor = this.#inRange(this.#shiftDay(day, -7))
+        const hasBottomNeighbor = this.#inRange(this.#shiftDay(day, 7))
 
-        const r = '10px'
-        const tl = !left && !up
-        const tr = !right && !up
-        const bl = !left && !down
-        const br = !right && !down
+        const radius = '10px'
+        const roundTopLeft = !hasLeftNeighbor && !hasTopNeighbor
+        const roundTopRight = !hasRightNeighbor && !hasTopNeighbor
+        const roundBottomLeft = !hasLeftNeighbor && !hasBottomNeighbor
+        const roundBottomRight = !hasRightNeighbor && !hasBottomNeighbor
 
-        if (tl && tr && bl && br) {
-          btn.style.borderRadius = r
+        if (roundTopLeft && roundTopRight && roundBottomLeft && roundBottomRight) {
+          button.style.borderRadius = radius
         } else {
-          btn.style.borderTopLeftRadius = tl ? r : '0px'
-          btn.style.borderTopRightRadius = tr ? r : '0px'
-          btn.style.borderBottomLeftRadius = bl ? r : '0px'
-          btn.style.borderBottomRightRadius = br ? r : '0px'
+          button.style.borderTopLeftRadius = roundTopLeft ? radius : '0px'
+          button.style.borderTopRightRadius = roundTopRight ? radius : '0px'
+          button.style.borderBottomLeftRadius = roundBottomLeft ? radius : '0px'
+          button.style.borderBottomRightRadius = roundBottomRight ? radius : '0px'
         }
       }
 
-      const span = btn.firstElementChild
-      if (span) span.classList.toggle('font-semibold', !!(isStart || isEnd))
+      button.firstElementChild?.classList.toggle('font-semibold', isStart || isEnd)
     }
   }
 
   #pickDay(day) {
-    const prevViewMonth = this.view.getMonth()
-    const prevViewYear = this.view.getFullYear()
+    const previousViewMonth = this.view.getMonth()
+    const previousViewYear = this.view.getFullYear()
 
-    if (!this.start || (this.start && this.end)) {
+    if (!this.start || this.end) {
       this.start = day
       this.end = null
       this.view = day
-    } else if (this.start && !this.end) {
+    } else {
       if (this.#isBefore(day, this.start)) {
         this.end = this.start
         this.start = day
@@ -320,14 +299,15 @@ export default class extends Controller {
     this.typedStart = this.#formatDate(this.start)
     this.typedEnd = this.#formatDate(this.end)
 
-    const monthChanged =
-      this.view.getMonth() !== prevViewMonth ||
-      this.view.getFullYear() !== prevViewYear
-    if (monthChanged) {
+    const hasMonthChanged =
+      this.view.getMonth() !== previousViewMonth ||
+      this.view.getFullYear() !== previousViewYear
+
+    if (hasMonthChanged) {
       this.#renderCalendar()
     } else {
-      this.$typedStart.value = this.start ? this.#formatDate(this.start) : ''
-      this.$typedEnd.value = this.end ? this.#formatDate(this.end) : ''
+      this.$typedStart.value = this.#formatDate(this.start)
+      this.$typedEnd.value = this.#formatDate(this.end)
       this.#paintHover()
     }
 
@@ -339,56 +319,49 @@ export default class extends Controller {
       return !this.#isBefore(day, this.start) && !this.#isBefore(this.end, day)
     }
     if (this.start && this.hovered) {
-      const a = this.#isBefore(this.hovered, this.start)
+      const rangeStart = this.#isBefore(this.hovered, this.start)
         ? this.hovered
         : this.start
-      const b = this.#isBefore(this.hovered, this.start)
+      const rangeEnd = this.#isBefore(this.hovered, this.start)
         ? this.start
         : this.hovered
-      return !this.#isBefore(day, a) && !this.#isBefore(b, day)
+      return !this.#isBefore(day, rangeStart) && !this.#isBefore(rangeEnd, day)
     }
     return false
   }
 
-  #commitTyped(which) {
-    if (which === 'start') {
-      const d = this.#parseDate(this.typedStart)
-      if (d) {
-        const day = this.#clampDay(d)
-        if (this.end && this.#isBefore(this.end, day)) this.end = null
-        const needRerender =
-          this.view.getMonth() !== day.getMonth() ||
-          this.view.getFullYear() !== day.getFullYear()
-        this.start = day
-        this.view = day
-        if (needRerender) this.#renderCalendar()
-        else {
-          this.#paintHover()
-        }
-        this.#emitChange()
-      } else {
-        this.$typedStart.value = ''
-      }
-    } else {
-      const d = this.#parseDate(this.typedEnd)
-      if (d) {
-        const day = this.#clampDay(d)
-        if (this.start && this.#isBefore(day, this.start)) this.start = day
-        const needRerender =
-          this.view.getMonth() !== day.getMonth() ||
-          this.view.getFullYear() !== day.getFullYear()
-        this.end = day
-        if (needRerender) {
-          this.view = day
-          this.#renderCalendar()
-        } else {
-          this.#paintHover()
-        }
-        this.#emitChange()
-      } else {
-        this.$typedEnd.value = ''
-      }
+  #commitTyped(whichField) {
+    const parsedDate = this.#parseDate(whichField === 'start' ? this.typedStart : this.typedEnd)
+    const inputField = whichField === 'start' ? this.$typedStart : this.$typedEnd
+
+    if (!parsedDate) {
+      inputField.value = ''
+      return
     }
+
+    const day = this.#clampDay(parsedDate)
+
+    if (whichField === 'start') {
+      if (this.end && this.#isBefore(this.end, day)) this.end = null
+      this.start = day
+    } else {
+      if (this.start && this.#isBefore(day, this.start)) this.start = day
+      this.end = day
+    }
+
+    const needsRerender =
+      this.view.getMonth() !== day.getMonth() ||
+      this.view.getFullYear() !== day.getFullYear()
+
+    this.view = day
+
+    if (needsRerender) {
+      this.#renderCalendar()
+    } else {
+      this.#paintHover()
+    }
+
+    this.#emitChange()
   }
 
   #emitChange() {
@@ -421,7 +394,7 @@ export default class extends Controller {
           </div>
 
           <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-500">
-            ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="py-1">${d}</div>`).join('')}
+            ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(dayName => `<div class="py-1">${dayName}</div>`).join('')}
           </div>
 
           <div data-role="weeks" class="grid grid-cols-7 gap-0 py-2"></div>
