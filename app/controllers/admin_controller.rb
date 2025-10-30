@@ -1301,6 +1301,10 @@ class AdminController < Admin::BaseController
   end
 
   def email
+    @message = Ahoy::Message.find(params[:message_id])
+  end
+
+  def email_html
     @message_id = params[:message_id]
 
     respond_to do |format|
@@ -1323,7 +1327,6 @@ class AdminController < Admin::BaseController
     @count = messages.count
 
     @messages = messages.page(@page).per(@per).order(sent_at: :desc)
-
   end
 
   def unknown_merchants

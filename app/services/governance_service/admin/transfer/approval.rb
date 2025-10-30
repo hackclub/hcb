@@ -28,7 +28,7 @@ module GovernanceService
             @approval_attempt.save!
           end
 
-          unless @approval_attempt.approved?
+          unless @approval_attempt.successful?
             raise Governance::Admin::Transfer::ApprovalAttempt::DeniedError.new(@approval_attempt.denial_message)
           end
 
