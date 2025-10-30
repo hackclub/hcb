@@ -47,14 +47,21 @@ export default class extends Controller {
     return result
   }
   #isSameDay(dateA, dateB) {
-    return dateA && dateB &&
+    return (
+      dateA &&
+      dateB &&
       dateA.getFullYear() === dateB.getFullYear() &&
       dateA.getMonth() === dateB.getMonth() &&
       dateA.getDate() === dateB.getDate()
+    )
   }
   #isBefore(dateA, dateB) {
-    return dateA && dateB &&
-      new Date(dateA).setHours(0, 0, 0, 0) < new Date(dateB).setHours(0, 0, 0, 0)
+    return (
+      dateA &&
+      dateB &&
+      new Date(dateA).setHours(0, 0, 0, 0) <
+        new Date(dateB).setHours(0, 0, 0, 0)
+    )
   }
   #clampDay(date) {
     if (!date) return null
@@ -79,7 +86,9 @@ export default class extends Controller {
       const month = +monthStr - 1
       const day = +dayStr
       const parsedDate = new Date(+year, month, day)
-      return parsedDate.getMonth() === month && parsedDate.getDate() === day ? parsedDate : null
+      return parsedDate.getMonth() === month && parsedDate.getDate() === day
+        ? parsedDate
+        : null
     }
 
     match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
@@ -88,7 +97,9 @@ export default class extends Controller {
       const month = +monthStr - 1
       const day = +dayStr
       const parsedDate = new Date(+year, month, day)
-      return parsedDate.getMonth() === month && parsedDate.getDate() === day ? parsedDate : null
+      return parsedDate.getMonth() === month && parsedDate.getDate() === day
+        ? parsedDate
+        : null
     }
 
     return null
@@ -135,11 +146,15 @@ export default class extends Controller {
     this.$weeksGrid = this.element.querySelector('[data-role="weeks"]')
 
     this.$typedStart.addEventListener('input', event => {
-      this.typedStart = this.$typedStart.value = this.#formatInputDate(event.target.value)
+      this.typedStart = this.$typedStart.value = this.#formatInputDate(
+        event.target.value
+      )
     })
 
     this.$typedEnd.addEventListener('input', event => {
-      this.typedEnd = this.$typedEnd.value = this.#formatInputDate(event.target.value)
+      this.typedEnd = this.$typedEnd.value = this.#formatInputDate(
+        event.target.value
+      )
     })
 
     this.$typedStart.addEventListener('blur', () => this.#commitTyped('start'))
@@ -184,7 +199,9 @@ export default class extends Controller {
       const isInRange = this.#inRange(day)
       const isOutsideCurrentMonth = day.getMonth() !== monthStart.getMonth()
 
-      const backgroundClasses = isInRange ? 'bg-info text-white' : 'bg-transparent'
+      const backgroundClasses = isInRange
+        ? 'bg-info text-white'
+        : 'bg-transparent'
       const textClasses = isOutsideCurrentMonth
         ? 'text-gray-400 dark:text-gray-600'
         : 'text-gray-800 dark:text-white'
@@ -254,8 +271,10 @@ export default class extends Controller {
 
       if (isHighlighted) {
         const columnIndex = day.getDay()
-        const hasLeftNeighbor = columnIndex > 0 && this.#inRange(this.#shiftDay(day, -1))
-        const hasRightNeighbor = columnIndex < 6 && this.#inRange(this.#shiftDay(day, 1))
+        const hasLeftNeighbor =
+          columnIndex > 0 && this.#inRange(this.#shiftDay(day, -1))
+        const hasRightNeighbor =
+          columnIndex < 6 && this.#inRange(this.#shiftDay(day, 1))
         const hasTopNeighbor = this.#inRange(this.#shiftDay(day, -7))
         const hasBottomNeighbor = this.#inRange(this.#shiftDay(day, 7))
 
@@ -265,17 +284,27 @@ export default class extends Controller {
         const roundBottomLeft = !hasLeftNeighbor && !hasBottomNeighbor
         const roundBottomRight = !hasRightNeighbor && !hasBottomNeighbor
 
-        if (roundTopLeft && roundTopRight && roundBottomLeft && roundBottomRight) {
+        if (
+          roundTopLeft &&
+          roundTopRight &&
+          roundBottomLeft &&
+          roundBottomRight
+        ) {
           button.style.borderRadius = radius
         } else {
           button.style.borderTopLeftRadius = roundTopLeft ? radius : '0px'
           button.style.borderTopRightRadius = roundTopRight ? radius : '0px'
           button.style.borderBottomLeftRadius = roundBottomLeft ? radius : '0px'
-          button.style.borderBottomRightRadius = roundBottomRight ? radius : '0px'
+          button.style.borderBottomRightRadius = roundBottomRight
+            ? radius
+            : '0px'
         }
       }
 
-      button.firstElementChild?.classList.toggle('font-semibold', isStart || isEnd)
+      button.firstElementChild?.classList.toggle(
+        'font-semibold',
+        isStart || isEnd
+      )
     }
   }
 
@@ -331,8 +360,11 @@ export default class extends Controller {
   }
 
   #commitTyped(whichField) {
-    const parsedDate = this.#parseDate(whichField === 'start' ? this.typedStart : this.typedEnd)
-    const inputField = whichField === 'start' ? this.$typedStart : this.$typedEnd
+    const parsedDate = this.#parseDate(
+      whichField === 'start' ? this.typedStart : this.typedEnd
+    )
+    const inputField =
+      whichField === 'start' ? this.$typedStart : this.$typedEnd
 
     if (!parsedDate) {
       inputField.value = ''
