@@ -101,12 +101,6 @@
     float: right;
   }
 }
-.z1 {
-  z-index: 1;
-}
-.z2 {
-  z-index: 2;
-}
 .border {
   border-style: solid;
   border-width: 1px;
