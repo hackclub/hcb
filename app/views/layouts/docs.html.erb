@@ -3,7 +3,6 @@
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
   <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
-  <!-- UI3 (remove this comment later) -->
   <head>
     <title>
       <%= yield(:title).concat(" –") if content_for?(:title) %>
