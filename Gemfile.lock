@@ -821,7 +821,7 @@ GEM
       activesupport (>= 6.1)
       sprockets (>= 3.0.0)
     stackprof (0.2.27)
-    statsd-instrument (3.9.9)
+    statsd-instrument (3.9.10)
     stringio (3.1.7)
     stripe (11.7.0)
     strong_migrations (1.8.0)
