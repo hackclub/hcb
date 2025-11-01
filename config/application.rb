@@ -47,7 +47,10 @@ module Bank
 
     config.active_support.cache_format_version = 7.1
 
-    config.autoload_lib(ignore: %w(assets tasks))
+    # Please, add to the `ignore` list any other `lib` subdirectories that do
+    # not contain `.rb` files, or that should not be reloaded or eager loaded.
+    # Common ones are `templates`, `generators`, or `middleware`, for example.
+    config.autoload_lib(ignore: %w[assets tasks])
     config.eager_load_paths << "#{config.root}/spec/mailers/previews"
 
     config.action_view.form_with_generates_remote_forms = false
