@@ -1,13 +1,16 @@
 <%# locals: (top: false) %>
-<a data-dark-mode-toggle-target="toggle" data-value="system">
-  System
-  <%= inline_icon "check", class: "hidden ml-auto", size: 24, style: "margin-right: -5px" %>
-</a>
-<a data-dark-mode-toggle-target="toggle" data-value="dark">
-  Dark
-  <%= inline_icon "check", class: "hidden ml-auto", size: 24, style: "margin-right: -5px" %>
-</a>
-<a data-dark-mode-toggle-target="toggle" data-value="light">
-  Light
-  <%= inline_icon "check", class: "hidden ml-auto", size: 24, style: "margin-right: -5px" %>
-</a>
+<p class="muted font-medium h5 pl-2 p-1 m0">Theme</p>
+<div class="flex items-center">
+  <a data-dark-mode-toggle-target="toggle" data-value="system" class="menu__action flex-1 justify-center items-center">
+    System
+    <%= inline_icon "check", class: "hidden", size: 24 %>
+  </a>
+  <a data-dark-mode-toggle-target="toggle" data-value="dark" class="menu__action flex-1 justify-center items-center">
+    Dark
+    <%= inline_icon "check", class: "hidden", size: 24 %>
+  </a>
+  <a data-dark-mode-toggle-target="toggle" data-value="light" class="menu__action flex-1 justify-center items-center">
+    Light
+    <%= inline_icon "check", class: "hidden", size: 24 %>
+  </a>
+</div>
