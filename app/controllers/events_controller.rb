@@ -1106,9 +1106,12 @@ class EventsController < ApplicationController
       }
     }
 
-    if type
-      filter = type_filters[type]
-      if filter
+    if type.present?
+      types = Array(type)
+      types.each do |t|
+        filter = type_filters[t]
+        next unless filter
+
         settled_transactions = settled_transactions.select(&filter["settled"])
         pending_transactions = pending_transactions.select(&filter["pending"])
       end
@@ -1288,7 +1291,9 @@ class EventsController < ApplicationController
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
 
-    @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
+    @users = if params[:user].present?
+               Array(params[:user]).map { |u| @event.users.friendly.find(u, allow_nil: true) }.compact
+             end
 
     @type = params[:type]
     @start_date = params[:start].presence
