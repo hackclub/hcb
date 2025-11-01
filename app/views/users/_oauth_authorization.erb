@@ -3,7 +3,7 @@
     <span class="bold flex items-center">
       <span><%= authorization.application.name %></span> <span class="badge bg-info ml1">App</span>
     </span>
-    <%= link_to revoke_oauth_application_users_path(authorization.application.id), method: :delete, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this app" do %>
+    <%= link_to revoke_oauth_application_users_path(authorization.application.id), method: :delete, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this app", disabled: do %>
       <%= inline_icon "door-leave", size: home_action_size %>
     <% end %>
   </span>
@@ -37,7 +37,8 @@
             <td>
               <% if token.expires_in %>
                 <%= link_to make_authorization_eternal_users_path(id: token.id), method: :post,
-                            class: "btn bg-success py1 px2 h4" do %>
+                            class: "btn bg-success py1 px2 h4",
+                            disabled: !policy(token).make_eternal? do %>
                   <%= inline_icon "clock", size: home_action_size %>
                   Make eternal
                 <% end %>
