@@ -2,9 +2,9 @@
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_following">
   <%= modal_header "Following" %>
-  <ul class="grid grid-cols-1 text-left w-full mt-2">
+  <ul class="grid gap-0 grid-cols-1 text-left w-full mt-2">
     <% event_follows.each do |event_follow| %>
-      <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+      <li class="overflow-visible flex flex-row justify-between items-center gap-2 last:!border-none py-1" style="border-bottom: 1px solid var(--smoke); ">
         <span class="w-full flex gap-2 items-center align-middle">
           <% if event_follow.event.logo.attached? %>
             <%= image_tag event_follow.event.logo, height: 24, width: 24, class: "rounded align-bottom" %>
@@ -12,7 +12,7 @@
           <strong class="flex-grow"><%= link_to event_follow.event.name, event_announcement_overview_path(event_follow.event) %></strong>
           <%= pop_icon_to "member-remove",
                           follow_path(event_follow),
-                          class: "error",
+                          class: "error bg-transparent",
                           data: {
                             turbo_frame: "_top",
                             turbo_method: :delete,
