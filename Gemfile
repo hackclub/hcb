@@ -6,7 +6,7 @@ ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", "~> 8.0"
 
 gem "puma", "~> 6.6" # app server
 
