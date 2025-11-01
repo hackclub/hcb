@@ -677,6 +677,10 @@ Rails.application.routes.draw do
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
+          collection do
+            get "card_designs"
+          end
+
           member do
             get "transactions"
             get "ephemeral_keys"
