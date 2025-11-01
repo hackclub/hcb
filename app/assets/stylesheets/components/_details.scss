@@ -87,6 +87,8 @@
   }
 
   &:not(.details-horiz--lg) {
+    margin-left: -15px;
+    margin-right: -15px;
     @media (min-width: 32em) {
       flex-direction: row;
 

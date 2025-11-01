@@ -170,7 +170,8 @@ html[data-dark='true'] {
   }
 
   .blocker {
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(1px);
   }
 
   .card {
