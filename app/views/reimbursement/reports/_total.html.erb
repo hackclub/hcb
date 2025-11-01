@@ -1,6 +1,7 @@
 <span id="total">
   <% if report.amount_cents > 0 %>
     <%= report.amount.format %>
+    <%= report.currency unless report.currency == "USD" %>
     <% if report.currency != "USD" %>
       (<%= convert_to_usd(report.amount_cents, report.currency).format %> USD)
     <% end %>
