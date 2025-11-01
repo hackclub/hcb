@@ -86,6 +86,7 @@
       <%= render partial: "features/preview", locals: {
             id: "weekly-receipt-email",
             classes: ["feature-weekly-receipt-email", "feature-generic"],
+            feature_flag: :receipt_report_2023_04_19,
             fully_shipped: true,
             name: "Receipt Report",
             description: "Opting into this preview will send you a weekly reminder with a list of all your missing receipts.",
@@ -124,6 +125,7 @@
       <%= render partial: "features/preview", locals: {
             id: "suggested-memos",
             classes: ["feature-disbursements"],
+            feature_flag: :ai_memos_2024_06_20,
             fully_shipped: true,
             name: "Transaction Memo Suggestions",
             description: "Renaming transactions is a great way for donors and team members to
