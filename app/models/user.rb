@@ -291,6 +291,20 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
+  # gary@hackclub.com → g***y@hackclub.com
+  # gt@hackclub.com → g*@hackclub.com
+  # g@hackclub.com → g@hackclub.com
+  def redacted_email
+    handle, domain = email.split("@")
+    redacted_handle =
+      if handle.length <= 2
+        handle[0] + "*" * (handle.length - 1)
+      else
+        "#{handle[0]}***#{handle[-1]}"
+      end
+    "#{redacted_handle}@#{domain}"
+  end
+
   def pretty_phone_number
     Phonelib.parse(self.phone_number).national
   end

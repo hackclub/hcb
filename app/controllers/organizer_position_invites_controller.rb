@@ -59,6 +59,13 @@ class OrganizerPositionInvitesController < ApplicationController
     elsif @invite.rejected?
       redirect_to root_path, flash: { error: "You’ve already rejected this invitation." }
     end
+  rescue Pundit::NotAuthorizedError
+    if @invite.user != current_user
+      flash[:error] = "This invitation was sent to #{@invite.user.redacted_email}, but you are currently logged in as #{current_user.email }."
+      redirect_to root_path and return
+    end
+
+    raise
   end
 
   def accept
