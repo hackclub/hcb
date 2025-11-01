@@ -51,7 +51,7 @@
   <h2 class="w-full text-left mt-8 pb-0 border-none">All contractors</h2>
 <% end %>
 
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
+<div class="flex items-center gap-2 flex-col-reverse sm:flex-row">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 my-3 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
