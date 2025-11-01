@@ -1,21 +1,41 @@
 <% title "Donations to #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :donations %>
+<% @is_empty = @donations.size == 0 %>
+
+<% 
+  share_trigger = <<~HTML
+  <action type="button" class="pop menu__toggle" data-behavior="menu_toggle" aria-expanded="false" tabindex="0">
+    #{inline_icon("share")}
+    <div class="menu__content" data-behavior="menu_content">
+      #{link_to(qr_code_donations_path(@event.slug), data: { behavior: "modal_trigger", modal: "qr_code" }) do
+        "QR code"
+      end}
+      #{link_to(start_donation_donations_url(@event), data: { behavior: "modal_trigger", modal: "embed_code" }) do
+        "Embed code"
+      end}
+      #{link_to("#", data: { behavior: "modal_trigger", modal: "prefilled_link" }) do
+        "Prefilled amount"
+      end}
+    </div>
+  </action>
+HTML
+%>
 
 <h1 class="heading">
   <span class="flex items-center flex-grow">
     Donations
-    <%= badge_for @donations.count, class: "bg-muted" %>
+    <%= badge_for @donations.count, class: "bg-muted" if !@is_empty %>
   </span>
-  <% if organizer_signed_in? && !show_mock_data? %>
-    <div class="tooltipped tooltipped--s" style="line-height: 0;" aria-label="<%= @all_donations.not_pending.any? ? "Email all donors" : "You can't email donors when you don't have any donations!" %>">
+  <% if organizer_signed_in? && !show_mock_data? && @all_donations.not_pending.any? %>
+    <div class="tooltipped tooltipped--s" style="line-height: 0;" aria-label="Email all donors">
       <%= pop_icon_to "email",
         "mailto:?bcc=#{@all_donations.pluck(:email).uniq.compact.join(',')}",
         target: "_blank",
         disabled: @all_donations.not_pending.none? %>
     </div>
   <% end %>
-  <% if @event.donation_page_available? %>
+  <% if @event.donation_page_available? && !@is_empty %>
     <%= render partial: "share_donation_page" %>
   <% end %>
   <%= pop_icon_to "settings",
@@ -35,16 +55,18 @@
   <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
 <% end %>
 
-<div class="mt3 mb2 statset">
-  <div class="stat">
-    <span class="stat__label">Total</span>
-    <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
+<% if @stats[:deposited] > 0 || @recurring_donations_monthly_sum > 0 %>
+  <div class="mt3 mb2 statset">
+    <div class="stat">
+      <span class="stat__label">Total</span>
+      <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
+    </div>
+    <div class="stat stat--small ml3">
+      <span class="stat__label">Per month</span>
+      <span class="stat__value"><%= render_money_amount @recurring_donations_monthly_sum %></span>
+    </div>
   </div>
-  <div class="stat stat--small">
-    <span class="stat__label">Per month</span>
-    <span class="stat__value"><%= render_money_amount @recurring_donations_monthly_sum %></span>
-  </div>
-</div>
+<% end %>
 
 <% if @recurring_donations.size > 0 && @donations.current_page == 1 %>
   <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
@@ -94,7 +116,9 @@
   </div>
 <% end %>
 
-<h2 class="heading mt3 pb1 w-full inline-flex justify-between" style="margin-bottom: 16px;">
+<% if @donations.size > 0 %>
+
+<h2 class="heading mt4 pb1 w-full inline-flex justify-between" style="margin-bottom: 16px;">
   Past donations
 
     <div data-controller="menu" data-menu-placement-value="bottom-end">
@@ -125,7 +149,6 @@
   </div>
 </div>
 
-<% if @donations.size > 0 %>
 <article class="table-container">
   <table>
     <thead>
@@ -186,7 +209,22 @@
 </article>
 
 <% else %>
-  <%= blankslate "No donations yet" %>
+  <%= blankslate "Let the community fund your dreams", "With HCB, you can recieve donations from anyone. Just share your donation page to get started!", { image: "/blankslates/donations.png", screen: true } do %>
+   <% if @event.donation_page_enabled %>
+      <div class="flex items-center gap-4">
+        <%= link_to start_donation_donations_path(@event), target: "_blank", class: "btn" do %>
+          <%= inline_icon "external" %>
+          Donate page
+        <% end %>
+        <%= raw share_trigger %>
+      </div>
+    <% else %>
+    <%= link_to "Enable donations",
+      edit_event_path(@event, tab: "donations"),
+      data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "donation_settings" } : {},
+      class: "btn" %>
+    <% end %>
+  <% end %>
 <% end %>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
