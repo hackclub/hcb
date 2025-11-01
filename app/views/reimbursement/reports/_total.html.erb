@@ -4,7 +4,6 @@
     <% if report.currency != "USD" %>
       (<%= convert_to_usd(report.amount_cents, report.currency).format %> USD)
     <% end %>
-    <%= report.currency unless report.currency == "USD" %>
   <% else %>
     reimbursement
   <% end %>
