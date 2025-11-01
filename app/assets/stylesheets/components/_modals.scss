@@ -8,7 +8,6 @@
   bottom: 0;
   z-index: 10;
   background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(1px);
   display: flex;
   flex-direction: column;
 }
@@ -20,7 +19,7 @@
   background-color: $white;
   box-shadow: var(--shadow-modal);
   padding: 2rem 1rem;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
   display: none;
   margin: auto;
@@ -29,11 +28,17 @@
   position: relative;
   z-index: 2;
   text-align: left;
+  transform: scale(0.9);
+  transition: transform 0.2s ease-in-out;
+
+  .jquery-modal:not(:not([style*='opacity: 1'])) & {
+    transform: scale(1);
+  }
 
   &.modal--popover {
     position: absolute;
     right: 0px;
-    transform: translateX(100%);
+    transform: translateX(90%);
     bottom: 0px;
     max-width: 800px;
     max-height: 100vh;
@@ -51,7 +56,7 @@
 
     @media (min-width: 48em) {
       height: calc(100vh - 24px);
-      border-radius: 8px;
+      border-radius: var(--radius-xl);
       margin: 12px;
     }
 

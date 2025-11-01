@@ -5,7 +5,7 @@
     <header class="pb-8">
       <%= modal_close %>
       <h2 class="mt-0 mb-4">Share</h2>
-      <div class="flex -mx-[35px] px-[23px]">
+      <div class="flex -mx-[35px] px-[23px] sm:-mb-1">
         <button id="link" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Link</button>
         <button id="qr" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">QR code</button>
         <% if @event.is_public? %>

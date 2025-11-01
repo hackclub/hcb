@@ -14,6 +14,8 @@ const loadModals = element => {
       e.stopPropagation()
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
+      fadeDuration: 200,
+      fadeDelay: 0.75,
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
