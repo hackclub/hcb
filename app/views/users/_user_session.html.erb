@@ -31,7 +31,7 @@
   <% end %>
   <span class="flex items-center">
     <% if current_session.id == session.id %>
-      <span class="badge bg-success medium ml-0 mr1">Current&nbsp;Session</span>
+      <span class="badge bg-success medium ml-0 mr1">Current&nbsp;session</span>
     <% end %>
     <% if session.ip.present? %>
       <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= session.timezone %>"><%= session.ip %></code>
