@@ -26,12 +26,36 @@
     }
 
     & .command-bar-trigger {
-      @apply h-10 shadow-none w-100 justify-start px-3 hover:shadow-none hidden md:flex bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 border-none flex items-center cursor-pointer;
+      @apply h-10 shadow-none w-100 justify-start px-3 hidden md:flex items-center cursor-pointer border-none;
       color: inherit;
       font-size: 15px;
+      transition: background 0.2s ease-in-out;
 
-      & .key {
-        background: rgba(200, 200, 200, 0.3);
+      background: rgba(200, 200, 200, 0.1);
+      --key-bg: rgba(200, 200, 200, 0.3);
+
+      &:hover {
+        background: rgba(200, 200, 200, 0.2);
+      }
+      &:active {
+        background: rgba(200, 200, 200, 0.25);
+        --key-bg: rgba(200, 200, 200, 0.45);
+      }
+
+      .key {
+        transition: background 0.2s ease-in-out;
+        background: var(--key-bg);
+      }
+
+      /* Dark mode overrides */
+      [data-dark='true'] & {
+        --key-bg: rgba(200, 200, 200, 0.1);
+        &:hover {
+          --key-bg: rgba(200, 200, 200, 0.2);
+        }
+        &:active {
+          --key-bg: rgba(200, 200, 200, 0.25);
+        }
       }
     }
 
