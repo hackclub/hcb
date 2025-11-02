@@ -1,0 +1,91 @@
+<%# locals: (event:) %>
+
+<div class="flex items-center gap-2">
+  <div id="format-menus"></div>
+
+  <%= render "announcements/modals/hcb_code" %>
+  <%= render "announcements/modals/donation_summary" %>
+  <%= render "announcements/modals/top_merchants" %>
+  <%= render "announcements/modals/top_categories" %>
+  <%= render "announcements/modals/top_tags" %>
+  <%= render "announcements/modals/top_users" %>
+
+  <div data-controller="menu" data-menu-append-to-value="#format-menus">
+    <button
+      data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+      data-menu-target="toggle"
+      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md font-bold flex gap-1"
+      type="button">
+      H <%= inline_icon "down-caret", size: 18 %>
+    </button>
+
+    <div data-menu-target="content" class="menu__content menu__content--compact text-sm">
+      <button data-action="tiptap#h1" type="button" class="menu__action">Large</button>
+      <button data-action="tiptap#h2" type="button" class="menu__action">Medium</button>
+      <button data-action="tiptap#h3" type="button" class="menu__action">Small</button>
+    </div>
+  </div>
+
+  <button data-action="tiptap#bold" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md font-bold">B</button>
+  <button data-action="tiptap#italic" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md italic">I</button>
+  <button data-action="tiptap#underline" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md underline">U</button>
+  <button data-action="tiptap#strike" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md line-through">S</button>
+
+  <button data-action="tiptap#link" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md"><%= inline_icon "link", size: 18 %></button>
+
+  <div data-controller="menu" data-menu-append-to-value="#format-menus">
+    <button
+      data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+      data-menu-target="toggle"
+      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md font-mono flex gap-1"
+      type="button">
+      Code <%= inline_icon "down-caret", size: 18 %>
+    </button>
+
+    <div data-menu-target="content" class="menu__content menu__content--compact text-sm">
+      <button data-action="tiptap#code" type="button" class="menu__action">Inline</button>
+      <button data-action="tiptap#codeBlock" type="button" class="menu__action">Block</button>
+    </div>
+  </div>
+
+  <div data-controller="menu" data-menu-append-to-value="#format-menus">
+    <button
+      data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+      data-menu-target="toggle"
+      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md flex gap-1"
+      type="button">
+      List <%= inline_icon "down-caret", size: 18 %>
+    </button>
+
+    <div data-menu-target="content" class="menu__content menu__content--compact text-sm">
+      <button data-action="tiptap#bulletList" type="button" class="menu__action">Bullet</button>
+      <button data-action="tiptap#orderedList" type="button" class="menu__action">Ordered</button>
+    </div>
+  </div>
+
+  <button data-action="tiptap#blockQuote" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md"><%= inline_icon "quote", size: 18 %></button>
+  <button data-action="tiptap#image" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md"><%= inline_icon "photo", size: 18 %></button>
+
+  <div data-controller="menu" data-menu-append-to-value="#format-menus">
+    <button
+      data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+      data-menu-target="toggle"
+      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md flex gap-1"
+      type="button">
+      HCB <%= inline_icon "down-caret", size: 18 %>
+    </button>
+
+    <div data-menu-target="content" class="menu__content menu__content--compact text-sm">
+      <% if event.donation_goal.present? %>
+        <button data-action="tiptap#donationGoal" type="button" class="menu__action">Donation Goal</button>
+      <% end %>
+
+      <button data-behavior="modal_trigger" data-modal="insert_hcb_code_modal" type="button" class="menu__action">Transaction</button>
+      <button data-behavior="modal_trigger" data-modal="insert_donation_summary_modal" type="button" class="menu__action">Donation summary</button>
+      <button data-behavior="modal_trigger" data-modal="insert_top_merchants_modal" type="button" class="menu__action">Top merchants</button>
+      <button data-behavior="modal_trigger" data-modal="insert_top_categories_modal" type="button" class="menu__action">Top categories</button>
+      <button data-behavior="modal_trigger" data-modal="insert_top_tags_modal" type="button" class="menu__action">Top tags</button>
+      <button data-behavior="modal_trigger" data-modal="insert_top_users_modal" type="button" class="menu__action">Top users</button>
+    </div>
+  </div>
+</div>

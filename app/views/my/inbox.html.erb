@@ -4,7 +4,7 @@
 
 <h1 class="heading">
   <span>
-    My receipts
+    Receipts
   </span>
 </h1>
 
@@ -86,35 +86,57 @@
   <% end %>
 </h2>
 
-<% @cards.each do |card| %>
+<% if @time_based_sorting %>
   <section class="mb3 card p0 receipt-card">
-    <h2 class="heading line-height-4 p1 pl2 mt0 ml0 flex justify-between items-center">
-      <%= link_to card.event.name, event_path(card.event), class: "no-underline" %>
-
-      <%= link_to card, class: "regular h3 mention flex items-center" do %>
-        <%= inline_icon "card", class: "mr1", size: 25 %>
-        <%= card.last_four %>
-      <% end %>
-    </h2>
-
     <div class="table-container">
-      <table>
+        <table>
         <tbody data-behavior="transactions">
-          <% @card_hcb_codes[card.to_global_id.to_s].each do |hcb_code| %>
+            <% @hcb_codes.each do |hcb_code| %>
             <% if hcb_code.canonical_transactions.any? %>
-              <% hcb_code.canonical_transactions.each do |ct| %>
+                <% hcb_code.canonical_transactions.each do |ct| %>
                 <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-              <% end %>
+                <% end %>
             <% else %>
-              <% hcb_code.canonical_pending_transactions.each do |pt| %>
+                <% hcb_code.canonical_pending_transactions.each do |pt| %>
                 <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-              <% end %>
+                <% end %>
             <% end %>
-          <% end %>
+            <% end %>
         </tbody>
-      </table>
+        </table>
     </div>
   </section>
+<% else %>
+  <% @cards.each do |card| %>
+    <section class="mb3 card p0 receipt-card">
+      <h2 class="heading line-height-4 p1 pl2 mt0 ml0 flex justify-between items-center">
+        <%= link_to card.event.name, event_path(card.event), class: "no-underline" %>
+
+        <%= link_to card, class: "regular h3 mention flex items-center" do %>
+          <%= inline_icon "card", class: "mr1", size: 25 %>
+          <%= card.last_four %>
+        <% end %>
+      </h2>
+
+      <div class="table-container">
+        <table>
+          <tbody data-behavior="transactions">
+            <% @card_hcb_codes[card.to_global_id.to_s].each do |hcb_code| %>
+              <% if hcb_code.canonical_transactions.any? %>
+                <% hcb_code.canonical_transactions.each do |ct| %>
+                  <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
+                <% end %>
+              <% else %>
+                <% hcb_code.canonical_pending_transactions.each do |pt| %>
+                  <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
+                <% end %>
+              <% end %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
 <% end %>
 
 <% if @count == 0 %>

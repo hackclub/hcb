@@ -1,8 +1,19 @@
 <%# locals: (card_grant:) %>
 
-<%= link_to toggle_one_time_use_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-            method: :post,
-            class: "btn bg-slate",
-            disabled: !policy(card_grant).toggle_one_time_use? do %>
-  <%= inline_icon "private", size: 20 %> <%= card_grant.one_time_use ? "Disable" : "Enable" %> one time use
-<% end %>
+<% totu_tooltip = if policy(card_grant).toggle_one_time_use?
+                    if card_grant.one_time_use
+                      "Allow for unlimited authorizations on this card"
+                    else
+                      "Lock the card after one purchase"
+                    end
+                  else
+                    "You don't have permission to perform this action"
+                  end %>
+<div class="tooltipped tooltipped--n" aria-label="<%= totu_tooltip %>">
+  <%= link_to toggle_one_time_use_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+              method: :post,
+              class: "btn bg-slate",
+              disabled: !policy(card_grant).toggle_one_time_use? do %>
+    <%= inline_icon "private", size: 20 %> <%= card_grant.one_time_use ? "Disable" : "Enable" %> one time use
+  <% end %>
+</div>

@@ -66,7 +66,7 @@
 <% end %>
 
 <% if @paypal_transfer.may_mark_rejected? %>
-  <%= form_with(model: nil, local: true, url: reject_paypal_transfer_path(@paypal_transfer), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: reject_paypal_transfer_path(@paypal_transfer), method: :post) do |form| %>
     <div class="field">
       <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>

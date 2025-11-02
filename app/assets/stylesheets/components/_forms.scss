@@ -497,39 +497,6 @@ input:where([data-behavior='otp_input']) {
   margin-top: 8px;
 }
 
-.dropdown-button__menu--hidden {
-  animation: dropdown-button__menu--close 0.1s ease-out forwards;
-}
-
-.dropdown-button__menu--show {
-  animation: dropdown-button__menu--open 0.1s ease-out forwards;
-  display: flex;
-}
-
-@keyframes dropdown-button__menu--open {
-  from {
-    opacity: 0;
-    display: none;
-  }
-
-  to {
-    opacity: 1;
-    display: flex;
-  }
-}
-
-@keyframes dropdown-button__menu--close {
-  from {
-    opacity: 1;
-    display: flex;
-  }
-
-  to {
-    opacity: 0;
-    display: none;
-  }
-}
-
 .dropdown-button__menu div {
   display: flex;
   flex-direction: column;
@@ -562,6 +529,8 @@ input:where([data-behavior='otp_input']) {
 .dropdown-button__container {
   display: flex;
   border-radius: 0.75rem;
+
+  width: fit-content;
 
   transform: scale(1);
   transition:

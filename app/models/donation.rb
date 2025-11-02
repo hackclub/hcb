@@ -100,6 +100,7 @@ class Donation < ApplicationRecord
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
   scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
+  scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -364,15 +365,29 @@ class Donation < ApplicationRecord
     else
       DonationMailer.with(donation: self).notification.deliver_later
     end
+
+    if reached_donation_goal?
+      EventMailer.with(event:).donation_goal_reached.deliver_later
+    end
   end
 
   def first_donation?
     self.event.donations.succeeded.size == 1
   end
 
-  def create_payment_intent_attrs
+  def reached_donation_goal?
+    return false unless event.donation_goal.present?
+    return false unless event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents
+    # this prevents us from sending the email after the organization has already reached the goal
+    return false if (event.donation_goal.progress_amount_cents - amount) >= event.donation_goal.amount_cents
+
+    true
+  end
+
+  def create_payment_intent_attrs(customer)
     {
       amount:,
+      customer: customer.id,
       currency: "usd",
       statement_descriptor: "HCB",
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
@@ -381,7 +396,8 @@ class Donation < ApplicationRecord
   end
 
   def create_stripe_payment_intent
-    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs)
+    customer = StripeService::Customer.create(email:, name:)
+    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs(customer))
 
     self.stripe_payment_intent_id = payment_intent.id
 

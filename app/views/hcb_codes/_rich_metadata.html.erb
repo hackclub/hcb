@@ -68,6 +68,11 @@
   <%= render "wire" %>
 <% end %>
 
+<%# wise_transfer %>
+<% if @hcb_code.wise_transfer? && @hcb_code.wise_transfer.present? %>
+  <%= render "wise_transfer" %>
+<% end %>
+
 <%# unknown (most likely a direct to bank account transaction) %>
 <% if @hcb_code.unknown? || @hcb_code.outgoing_fee_reimbursement? %>
   <%= render partial: "hcb_codes/unknown", locals: {} %>

@@ -1,0 +1,62 @@
+<%# locals: { pre_authorization:, link_to_pre_authorization: false } %>
+
+<% reader = OrganizerPosition.role_at_least?(current_user, pre_authorization.event, :reader) %>
+<% manager = OrganizerPosition.role_at_least?(current_user, pre_authorization.event, :manager) %>
+
+<% if reader %>
+    <% no_data = capture do %>
+        <span class="muted">No data</span>
+    <% end %>
+
+    <%= render "callout", type: "info", title: "Fraud prevention information", class: "mb-4" do %>
+    <p class="m-0">Here's some information about the fraud check process as part of this card grant's pre-authorization configuration.</p>
+        <section class="details details--wide details--tall mt-3">
+            <p>
+                <strong>Fraud check</strong>
+                <span><%= render partial: "card_grant/pre_authorizations/status_badge", locals: { pre_authorization:, organizer: true } %></span>
+            </p>
+            <% unless pre_authorization.extracted_valid_purchase.nil? %>
+                <p>
+                    <strong>Fraud </strong>
+                    <span><meter value="<%= pre_authorization.extracted_fraud_rating.presence || 0 %>" low="4.5" optimum="0" high="8" min="0" max="10"></meter> <%= pre_authorization.extracted_fraud_rating ? "#{pre_authorization.extracted_fraud_rating}/10" : no_data %></span>
+                </p>
+                <p>
+                    <strong>Reasoning</strong>
+                    <span><%= pre_authorization.extracted_validity_reasoning.presence || no_data %></span>
+                </p>
+                <p>
+                    <strong>Product name</strong>
+                    <span><%= pre_authorization.extracted_product_name.presence || no_data %></span>
+                </p>
+                <p>
+                    <strong>Product price</strong>
+                    <span><%= pre_authorization.extracted_product_price_cents ? number_to_currency(pre_authorization.extracted_product_price_cents / 100.0) : no_data %></span>
+                </p>
+                <p>
+                    <strong>Total price</strong>
+                    <span><%= pre_authorization.extracted_total_price_cents ? number_to_currency(pre_authorization.extracted_total_price_cents / 100.0) : no_data %></span>
+                </p>
+            <% end %>
+        </section>
+
+        <% if manager && pre_authorization.fraudulent? %>
+            <% if link_to_pre_authorization %>
+                <strong class="warning mt-3">Action needed!</strong>
+            <% else %>
+                <div class="flex flex-row gap-4 mt-3">
+                    <%= button_to organizer_approve_card_grant_pre_authorizations_path(pre_authorization.card_grant), method: :post, class: "btn bg-success", data: { turbo_confirm: "Are you sure you want to approve this pre-authorization?" } do %>
+                        <%= inline_icon "checkmark" %> Approve
+                    <% end %>
+
+                    <%= button_to organizer_reject_card_grant_pre_authorizations_path(pre_authorization.card_grant), method: :post, class: "btn bg-warning", data: { turbo_confirm: "Are you sure you want to reject this pre-authorization?" } do %>
+                        <%= inline_icon "view-close-small" %> Reject
+                    <% end %>
+                </div>
+            <% end %>
+        <% end %>
+
+        <% if link_to_pre_authorization %>
+            <%= link_to "Open pre-authorization", card_grant_pre_authorizations_path(pre_authorization.card_grant), class: "btn mt-3" %>
+        <% end %>
+    <% end %>
+<% end %>

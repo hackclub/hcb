@@ -7,6 +7,7 @@
 #  id                              :bigint           not null, primary key
 #  data_extracted                  :boolean          default(FALSE), not null
 #  extracted_card_last4_ciphertext :text
+#  extracted_currency              :string
 #  extracted_date                  :datetime
 #  extracted_merchant_name         :string
 #  extracted_merchant_url          :string
@@ -39,6 +40,9 @@ class Receipt < ApplicationRecord
   blind_index :textual_content
   has_encrypted :extracted_card_last4
 
+  monetize :extracted_subtotal_amount_cents, as: "extracted_subtotal_amount", with_model_currency: :extracted_currency, allow_nil: true
+  monetize :extracted_total_amount_cents, as: "extracted_total_amount", with_model_currency: :extracted_currency, allow_nil: true
+
   include StripeAuthorizationsHelper
 
   include PublicIdentifiable
@@ -68,6 +72,7 @@ class Receipt < ApplicationRecord
   end
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
+  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -75,7 +80,7 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt
@@ -115,7 +120,9 @@ class Receipt < ApplicationRecord
     transaction_popover_drag_and_drop: 17,
     email_reimbursement: 18,
     sms_reimbursement: 19,
-    employee_payment: 20
+    employee_payment: 20,
+    duplicate: 21,
+    discord_bot_modal: 22
   }
 
   enum :textual_content_source, {

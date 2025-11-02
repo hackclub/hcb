@@ -1,6 +1,8 @@
-<% disabled = !policy(@event.check_deposits.build).create? %>
+<%# locals: (event:) %>
 
-<%= form_with model: [@event, @event.check_deposits.build], class: "pt-2" do |form| %>
+<% disabled = !policy(event.check_deposits.build).create? %>
+
+<%= form_with model: [event, event.check_deposits.build], class: "pt-2" do |form| %>
   <div class="field">
     <%= form.label :front, "Front of check" %>
     <div class="field--image-upload" data-controller="image-upload-preview">
@@ -26,7 +28,7 @@
   </div>
 
   <div class="actions">
-    <% if @event.demo_mode? %>
+    <% if event.demo_mode? %>
       <%= form.submit "Unavailable in Playground Mode", disabled: true %>
     <% else %>
       <%= form.submit "Submit deposit", disabled:, class: "shrink-0", data: { disable_with: "Uploading..." } %>

@@ -1,15 +1,17 @@
-<% disabled = !policy(@event).update? %>
+<%# locals: (event:) %>
+
+<% disabled = !policy(event).update? %>
 
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>
 
   <div class="card flex flex-col items-start gap-2 p0">
     <div class="event_settings__banner">
-      <% if @event.background_image.attached? %>
-        <%= image_tag @event.background_image, height: 200, class: "banner__image" %>
+      <% if event.background_image.persisted? %>
+        <%= image_tag event.background_image, height: 200, class: "banner__image" %>
       <% end %>
 
-      <% if policy(@event).update? %>
+      <% if policy(event).update? %>
        <button
           type="button"
           data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
@@ -20,22 +22,22 @@
               <%= form.label :background_image, "Choose file", class: "field--fileupload__label" %>
               <%= form.file_field :background_image, accept: "image/png,image/jpeg", class: "field--fileupload__field" %>
             </div>
-            <% if @event.background_image.attached? %>
+            <% if event.background_image.attached? %>
               <div class="menu__divider"></div>
-              <%= link_to "Remove background image", event_remove_background_image_path(@event), method: :post, style: "padding: 0.25rem 0.5rem" %>
+              <%= link_to "Remove background image", event_remove_background_image_path(event), method: :post, style: "padding: 0.25rem 0.5rem" %>
             <% end %>
           </div>
         </button>
       <% end %>
 
       <div class="event_settings__banner--logo">
-        <% if @event.logo.attached? %>
-          <%= image_tag @event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
+        <% if event.logo.persisted? %>
+          <%= image_tag event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
         <% else %>
           <%= image_tag "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
         <% end %>
 
-        <% if policy(@event).update? %>
+        <% if policy(event).update? %>
           <button
             type="button"
             data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
@@ -46,9 +48,9 @@
                 <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
                 <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", disabled: %>
               </div>
-              <% if @event.logo.attached? %>
+              <% if event.logo.attached? %>
                 <div class="menu__divider"></div>
-                <%= link_to "Remove logo", event_remove_logo_path(@event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
+                <%= link_to "Remove logo", event_remove_logo_path(event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
               <% end %>
             </div>
           </button>
@@ -56,15 +58,15 @@
       </div>
     </div>
     <div class="event_settings__content">
-      <h2><%= @event.name %></h2>
+      <h2><%= event.name %></h2>
       <div class="w-full">
-        <% if @event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
+        <% if event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
           <div class="field flex-1">
             <%= form.label :short_name, "Nickname" %>
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
             </p>
-            <%= form.text_field :short_name, placeholder: "#{@event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
+            <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
           </div>
         <% end %>
         <div class="field flex-1">
@@ -82,12 +84,12 @@
           <p class="h5 muted m0">
             Your logo is displayed on the
             <%= link_to "donation page",
-              @event.donation_page_available? ? start_donation_donations_path(@event) : { tab: "donations" },
-              target: @event.donation_page_available? ? "_blank" : nil %>
+              event.donation_page_available? ? start_donation_donations_path(event) : { tab: "donations" },
+              target: event.donation_page_available? ? "_blank" : nil %>
             and your
             <%= link_to "public reimbursement page",
-              @event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(@event) : { tab: "reimbursements" },
-              target: @event.public_reimbursement_page_available? ? "_blank" : nil %>. Organization banners are visible on the homepage only.
+              event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(event) : { tab: "reimbursements" },
+              target: event.public_reimbursement_page_available? ? "_blank" : nil %>. Organization banners are visible on the homepage only.
           </p>
         </div>
         <%= form.submit "Update", disabled:, class: "md:ml-3 mt-2 md:mt-0" %>
@@ -99,10 +101,10 @@
 
   <div class="card mb3" data-controller="accordion">
     <div class="field field--checkbox">
-      <span style="font-weight: 700">Make <%= possessive(@event.name) %> finances transparent</span>
+      <span style="font-weight: 700">Make <%= possessive(event.name) %> finances transparent</span>
       <div class="field--checkbox--switch ml-auto">
         <%= form.label :is_public do %>
-          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", target: "accordion.checkbox" }, disabled:, switch: true %>
+          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", accordion_target: "checkbox" }, disabled:, switch: true %>
           <span class="slider"></span>
         <% end %>
       </div>
@@ -119,6 +121,7 @@
           <li>Check recipients</li>
         </ul>
       </li>
+      <li>With transparency mode off, your announcements page will only be visible once you have published your first announcement. It will always be visible with transparency mode on.</li>
     </ul>
     <div data-accordion-target="content">
       <div class="menu__divider" style="margin:0px"></div>
@@ -129,7 +132,7 @@
       </div>
       <div class="field field--checkbox">
         <%= form.check_box :is_indexable, disabled:, switch: true %>
-        <%= form.label :is_indexable, "List #{@event.name} in HCB’s public directory" %>
+        <%= form.label :is_indexable, "List #{event.name} in HCB’s public directory" %>
       </div>
       <% unless !winter?(override_preference: true) %>
         <div class="field field--checkbox">
@@ -149,14 +152,36 @@
         Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
         The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
       </p>
-      <% if @event.stripe_card_logo.attached? %>
-        <%= image_tag @event.stripe_card_logo, width: 48 %>
+      <% if event.stripe_card_logo.persisted? %>
+        <%= image_tag event.stripe_card_logo, width: 48 %>
       <% end %>
       <div class="field--fileupload mt2">
         <%= form.label :stripe_card_logo, "Choose file", class: "field--fileupload__label" %>
         <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
       </div>
     </div>
+    <%= form.submit "Update", disabled: %>
+  </div>
+
+  <h3 class="mb1" id="announcements_heading">Announcements</h3>
+  <div class="card mb3">
+    <div class="field field--checkbox">
+      <span style="font-weight: 700">Generate monthly announcements</span>
+      <div class="field--checkbox--switch ml-auto">
+        <%= form.fields_for :config do |config| %>
+          <%= config.label :generate_monthly_announcement do %>
+            <%= config.check_box :generate_monthly_announcement, disabled:, switch: true %>
+            <span class="slider"></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+    <p class="h5 muted mt0 mb1">
+      Use this to enable auto-scheduled monthly announcements.
+      <% if event.config.generate_monthly_announcement %>
+        If disabled, the current monthly announcement draft will be discarded.
+      <% end %>
+    </p>
     <%= form.submit "Update", disabled: %>
   </div>
 
@@ -177,7 +202,7 @@
   <h3 class="mb1">Danger zone</h3>
   <div class="card border b--warning mb3"
     data-controller="external-validation"
-    data-external-validation-url-value="<%= validate_slug_event_path(@event) %>"
+    data-external-validation-url-value="<%= validate_slug_event_path(event) %>"
     data-external-validation-hint-success-class="success">
 
     <div class="flex items-center warning">

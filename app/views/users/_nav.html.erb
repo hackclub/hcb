@@ -19,12 +19,17 @@
     </button>
   </div>
 
-  <nav class="dock font-medium mt1">
+  <nav class="dock dock--desktop font-medium mt1">
     <%= dock_item "Home",
       root_path,
       tooltip: "See all your organizations",
       icon: "home",
       selected: local_assigns[:selected] == :home %>
+    <%= dock_item "Feed",
+      my_feed_path,
+      tooltip: "See announcements for organizations you're following",
+      icon: "announcement",
+      selected: local_assigns[:selected] == :feed %>
     <%= dock_item "Cards",
       my_cards_path,
       tooltip: "See all your cards",
@@ -66,6 +71,55 @@
     <% end %>
   </nav>
 
+  <nav class="dock dock--mobile font-medium mt1">
+    <%= dock_item "Home",
+      root_path,
+      tooltip: "See all your organizations",
+      icon: "home",
+      selected: local_assigns[:selected] == :home %>
+    <%= dock_item "Cards",
+      my_cards_path,
+      tooltip: "See all your cards",
+      icon: "card",
+      selected: local_assigns[:selected] == :cards %>
+    <%= dock_item "Receipts",
+      my_inbox_path,
+      tooltip: "See transactions awaiting receipts",
+      icon: "payment-docs",
+      async_badge: my_missing_receipts_icon_path,
+      selected: local_assigns[:selected] == :receipts %>
+    <%= dock_item "Reimbursements",
+      my_reimbursements_path,
+      tooltip: "See expense reimbursements",
+      icon: "attachment",
+      async_badge: my_reimbursements_icon_path,
+      selected: local_assigns[:selected] == :reimbursements %>
+    <% if @first_visit %>
+      <div class="pwa__prompt" style="position: relative">
+        <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">
+          <%= inline_icon "private-fill", size: 24, class: "pwa__prompt__icon" %>
+        </div>
+        <b>Looking for a mobile app?</b>
+        <br>
+        Click <%= inline_icon "share", size: 18, class: "pwa__prompt__icon" %>
+        and then <%= inline_icon "plus", size: 18, class: "pwa__prompt__icon" %>
+        <i>Add To Home Screen</i>.
+      </div>
+    <% end %>
+    <button class="dock__item bg-transparent border-none menu__toggle" data-behavior="menu_toggle">
+      <div class="line-height-0 relative"><%= inline_icon "more", size: 32, class: "primary" %></div>
+      <span class="line-height-3">More</span>
+
+      <div class="menu__content" data-behavior="menu_content">
+        <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
+        <div class="menu__divider"></div>
+        <%= link_to "Feed", my_feed_path if current_user.followed_events.any? %>
+        <%= link_to "Pay", my_payroll_path if current_user.jobs.any? %>
+        <%= link_to "Settings", my_settings_path %>
+      </div>
+    </button>
+  </nav>
+
   <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
     <div id="bank-wrapped-dialog" style="display: none;">
       <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background: url('https://cloud-7sn7fc3g0-hack-club-bot.vercel.app/0frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
@@ -92,7 +146,7 @@
       <span class="flex items-center w-100">
           <span class="flex-grow">Recent activity</span>
           <% if auditor_signed_in? %>
-            <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :POST } do %>
+            <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :post } do %>
               <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
                 👤 <%= User.currently_online.count %>
               <% end %>

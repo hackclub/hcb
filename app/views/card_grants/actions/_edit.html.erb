@@ -1,16 +1,32 @@
 <%# locals: (card_grant:) %>
 
-<div class="tooltipped tooltipped--n" aria-label="Set this grant's purpose">
+<% if card_grant.pre_authorization&.unauthorized? %>
+  <div class="tooltipped tooltipped--w">
+    <%= link_to card_grant_pre_authorizations_path(card_grant),
+                class: "btn bg-accent" do %>
+      <%= inline_icon "pre-authorization" %>
+      View pre-authorization
+    <% end %>
+  </div>
+<% end %>
+
+<div class="tooltipped tooltipped--w" aria-label="Manage this grant">
   <%= link_to edit_card_grant_path(card_grant),
-              class: "btn bg-success",
-              data: { behavior: "modal_trigger", modal: "edit_card_grant" },
-              disabled: !policy(card_grant).edit? do %>
-    <%= inline_icon "edit" %>
-    Set purpose
+              class: "btn",
+              data: { behavior: "modal_trigger", modal: "edit_card_grant" } do %>
+    <% if policy(card_grant).edit? %>
+      <%= inline_icon "settings" %>
+      Manage grant
+    <% else %>
+      <%= inline_icon "settings" %>
+      View grant settings
+    <% end %>
   <% end %>
 </div>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="edit_card_grant">
-  <%= modal_header "What's this grant for?" %>
-  <%= render "card_grants/edit_form" %>
-</section>
+<% if policy(card_grant).edit_overview? %>
+  <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="edit_card_grant">
+    <%= modal_header "Manage grant" %>
+    <%= turbo_frame_tag "edit_#{card_grant.id}", src: edit_overview_event_card_grant_path(card_grant) %>
+  </section>
+<% end %>

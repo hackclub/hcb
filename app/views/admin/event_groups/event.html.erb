@@ -1,0 +1,51 @@
+<%= turbo_frame_tag(dom_id(@event, :event_groups_frame)) do %>
+  <header>
+    <%= modal_close %>
+    <h2 class="m-0 p-0">Groups for <%= @event.name %></h2>
+  </header>
+
+  <%= form_tag(
+        event_admin_event_groups_path(@event),
+        method: :patch,
+        id: dom_id(@event, :event_groups_form)
+      ) do %>
+    <table class="no-stripes min-w-0 w-auto">
+      <tbody>
+      <% @event_groups.each do |group| %>
+        <% check_box_id = [dom_id(@event), dom_id(group)].join("_") %>
+        <tr>
+          <td class="w-8">
+            <%= check_box_tag(
+                  "event[event_group_ids][]",
+                  group.id,
+                  group.events.include?(@event),
+                  id: check_box_id
+                ) %>
+          </td>
+          <td>
+            <%= label_tag(check_box_id) do %>
+              <%= group.name %>
+              (<%= group.user.full_name || group.user.email %>)
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      <tr>
+        <td class="w-8"></td>
+        <td>
+          <%= text_field_tag(
+                "event[new_event_group_name]",
+                "",
+                placeholder: "New group name"
+              ) %>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+  <% end %>
+
+  <footer class="flex justify-between">
+    <%= button_tag("Save changes", type: "submit", form: dom_id(@event, :event_groups_form)) %>
+  </footer>
+<% end %>

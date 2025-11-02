@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
+  include SetGovernanceRequestContext
 
   protect_from_forgery
 
@@ -19,7 +20,7 @@ class ApplicationController < ActionController::Base
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.touch_last_seen_at }
+  before_action { current_session&.update_session_timestamps }
 
   # This cookie is used for Safari PWA prompts
   before_action do
@@ -52,10 +53,12 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  rescue_from ActionView::MissingTemplate, with: :not_found
+
   rescue_from Rack::Timeout::RequestTimeoutException do
     respond_to do |format|
       format.html { render "errors/timeout" }
-      format.all { render text: "This request timed out, sorry." }
+      format.all { render plain: "This request timed out, sorry." }
     end
   end
 
@@ -100,11 +103,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
-
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
       redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end

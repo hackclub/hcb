@@ -234,6 +234,7 @@ summary {
 @import 'components/tooltips';
 @import 'components/transactions';
 @import 'components/promos';
+@import 'components/prosemirror';
 @import 'components/features';
 @import 'components/loading';
 @import 'components/file_dropzone';
@@ -252,10 +253,13 @@ summary {
 @import 'components/event_settings';
 @import 'components/reactions';
 @import 'components/tags';
+@import 'components/tiptap';
 @import 'components/filter_tabs';
 @import 'components/filter_menu';
 @import 'components/home_page';
 @import 'components/send_invoice_modal';
+@import 'components/dual_range_slider';
+@import 'components/integrations';
 
 .turbo-progress-bar {
   height: 0.125rem;
@@ -538,4 +542,37 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 // Phone number input container
 .iti {
   width: 100%;
+}
+
+.fade-card-hide {
+  animation: fade-card-close 0.1s ease-out forwards;
+}
+
+.fade-card-show {
+  animation: fade-card-open 0.1s ease-out forwards;
+  display: flex;
+}
+
+@keyframes fade-card-open {
+  from {
+    opacity: 0;
+    display: none;
+  }
+
+  to {
+    opacity: 1;
+    display: flex;
+  }
+}
+
+@keyframes fade-card-close {
+  from {
+    opacity: 1;
+    display: flex;
+  }
+
+  to {
+    opacity: 0;
+    display: none;
+  }
 }

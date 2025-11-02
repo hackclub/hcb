@@ -153,7 +153,9 @@
     },
 
     show: function () {
-      Turbo.cache.clear()
+      if (typeof Turbo != "undefined") {
+        Turbo.cache.clear()
+      }
       this.$elm.trigger($.modal.BEFORE_OPEN, [this._ctx()])
       if (this.options.showClose) {
         this.closeButton = $(
@@ -241,7 +243,7 @@
     clickClose: true,
     closeText: 'Close',
     closeClass: '',
-    modalClass: 'modal',
+    modalClass: 'modal modal--scroll bg-snow',
     blockerClass: 'jquery-modal',
     spinnerHtml:
       '<div class="rect1"></div><div class="rect2"></div><div class="rect3"></div><div class="rect4"></div>',

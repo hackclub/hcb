@@ -20,7 +20,7 @@ services:
       - ../.env.development
 
   db:
-    image: "postgres:11.16"
+    image: "postgres:15.13"
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
