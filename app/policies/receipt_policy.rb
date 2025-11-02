@@ -7,7 +7,7 @@ class ReceiptPolicy < ApplicationPolicy
     
     # any members of events should be able to modify receipts.
     if record.receiptable&.event
-      return true if OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) && unlocked?
+      return OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) && unlocked?
     end
     
     # the receipt is in receipt bin.
