@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ReceiptPolicy < ApplicationPolicy
-  def destroy?  
+  def destroy?
     return true if user.admin?
     return false if record.nil?
 
