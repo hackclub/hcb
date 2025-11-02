@@ -69,8 +69,8 @@
             <% if @event.logo.attached? %>
               <%= image_tag @event.logo, slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('logo')" %>
             <% end %>
-            <%= image_tag "logo-production.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('bank')" %>
-            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('bank-dark')" %>
+            <%= image_tag "logo-production.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-full", onclick: "changeCode('bank')" %>
+            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-full", onclick: "changeCode('bank-dark')" %>
           </div>
           <button class="btn mt-2 w-full" onclick="saveActiveQRCodeAsImage()" id="downloadButton">Download</button>
         </div>
