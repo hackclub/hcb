@@ -2,7 +2,6 @@
   box-shadow: var(--shadow-border);
   border-radius: var(--radius-md);
   height: 36px;
-  padding: 4px;
   overflow-x: auto;
   display: flex;
   max-width: 100%;
@@ -10,7 +9,7 @@
 
 .pagination a,
 .filterbar__item {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   cursor: pointer;
   display: inline-flex;
   flex-shrink: 0;
@@ -33,7 +32,7 @@
   &:focus {
     color: map-get($palette, slate);
     background-color: map-get($palette, white);
-    box-shadow: var(--shadow-border-xs);
+    box-shadow: var(--shadow-border-md);
   }
 
   &[aria-current='page'],
@@ -46,9 +45,7 @@
 
     &:hover,
     &:focus {
-      box-shadow:
-        var(--shadow-border-lg),
-        inset 0 0 0px 0.5px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--shadow-border-md);
     }
   }
 }

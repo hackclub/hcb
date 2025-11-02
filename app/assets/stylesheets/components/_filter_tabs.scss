@@ -13,6 +13,7 @@
   font-size: inherit;
   font-weight: 500;
   transition: background-color 0.125s ease;
+  white-space: nowrap;
 
   &:hover {
     background-color: rgba(200, 200, 200, 0.2);
