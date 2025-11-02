@@ -215,7 +215,7 @@ RSpec.describe SudoModeHandler do
 
       get(:index, params: { q: "dinosaurs", sort_by: "name", sort_direction: "asc" })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       form = response.parsed_body.css("form").sole
@@ -270,7 +270,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create, params: { _sudo: { login_id: login.hashid, submit_method: "email" } })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(flash[:error]).to eq("Login has expired. Please try again.")
 
