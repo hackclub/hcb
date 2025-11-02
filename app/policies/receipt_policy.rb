@@ -17,7 +17,7 @@ class ReceiptPolicy < ApplicationPolicy
     
     # the receipt is on a reimbursement report. people making reports may not be in the organization.
     if record.receiptable.instance_of?(Reimbursement::Expense)
-      return true if record.receiptable.report.user == user && unlocked?
+      return record.receiptable.report.user == user && unlocked?
     end
     
     return false
