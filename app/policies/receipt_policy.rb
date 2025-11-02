@@ -4,15 +4,15 @@ class ReceiptPolicy < ApplicationPolicy
   def destroy?  
     return true if user.admin?
     return false if record.nil?
-    
-    # any members of events should be able to modify receipts.
-    if record.receiptable&.event
-      return OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) && unlocked?
-    end
-    
+
     # the receipt is in receipt bin.
     if record.receiptable.nil?
       return record.user == user
+    end
+    
+    # any members of events should be able to modify receipts.
+    if record.receiptable.event
+      return OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) && unlocked?
     end
     
     # the receipt is on a reimbursement report. people making reports may not be in the organization.
