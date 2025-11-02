@@ -665,6 +665,7 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
+          resources :ach_transfers, only: [:create]
 
           resources :donations, path: "donations", only: [:create]
 
