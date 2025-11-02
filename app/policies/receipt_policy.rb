@@ -14,7 +14,7 @@ class ReceiptPolicy < ApplicationPolicy
     if record.receiptable.event
       return OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) && unlocked?
     end
-    
+
     # the receipt is on a reimbursement report. people making reports may not be in the organization.
     if record.receiptable.instance_of?(Reimbursement::Expense)
       return record.receiptable.report.user == user && unlocked?
