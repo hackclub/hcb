@@ -19,7 +19,7 @@ class ReceiptPolicy < ApplicationPolicy
     if record.receiptable.instance_of?(Reimbursement::Expense)
       return record.receiptable.report.user == user && unlocked?
     end
-    
+
     return false
   end
 
