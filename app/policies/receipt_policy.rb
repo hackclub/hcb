@@ -1,19 +1,6 @@
 # frozen_string_literal: true
 
 class ReceiptPolicy < ApplicationPolicy
-  def destroy?
-    user&.admin? ||
-      (record&.receiptable&.event &&
-        OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) &&
-        unlocked?
-      ) ||
-      # Checking if receiptable is nil prevents unauthorized
-      # deletion when user no longer has access to an org
-      (record&.receiptable.nil? && record&.user == user) ||
-      (record&.receiptable.instance_of?(Reimbursement::Expense) && record&.user == user && unlocked?) ||
-      (user && record&.receiptable.try(:card_grant)&.user == user && record.receiptable.card_grant.active?)
-  end
-
   def destroy?  
     return true if user.admin?
     return false if record.nil?
