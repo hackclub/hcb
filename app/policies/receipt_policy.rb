@@ -6,7 +6,7 @@ class ReceiptPolicy < ApplicationPolicy
     return false if record.nil?
     
     # any members of events should be able to modify receipts.
-    if record.receiptable.event
+    if record.receiptable&.event
       return true if OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) && unlocked?
     end
     
