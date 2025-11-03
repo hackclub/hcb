@@ -21,4 +21,4 @@ json.embed do
 
 end
 
-json.components Discord.button_to("Attach receipt", "attach_receipt:#{hcb_code.hashid}", style: 3, emoji: Discord.emoji_icon(:payment_docs)) if hcb_code.present?
+json.components Discord.button_to("Attach receipt", "attach_receipt", style: 3, emoji: Discord.emoji_icon(:payment_docs))

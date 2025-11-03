@@ -253,6 +253,7 @@ Rails.application.routes.draw do
       get "employee_payments", to: "admin#employee_payments"
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
+      get "email_html", to: "admin#email_html"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
       post "referral_program_create", to: "admin#referral_program_create"
@@ -853,6 +854,7 @@ Rails.application.routes.draw do
     get "transfers/new", to: "events#new_transfer"
 
     get "async_balance"
+    get "async_sub_organization_balance"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
