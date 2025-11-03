@@ -4,7 +4,7 @@
   class="stripe-card
         <%= stripe_card.status_text.downcase %>
         <%= "virtual" if stripe_card.virtual? %>
-        <%= "platinum" if stripe_card.platinum? %>
+        <%= "white" if stripe_card.platinum? %>
         <%= "stripe-card--#{stripe_card.personalization_design.color}" if stripe_card.personalization_design %>
         <%= "deactivated" if stripe_card.canceled? %>
         <%= "canceled-#{side}" if stripe_card.canceled? %>
@@ -16,7 +16,7 @@
   <% if stripe_card.platinum? %>
     <span class="bold caps h6 absolute flex items-center" style="opacity: 50%; right: 10px; top: 10px;">
       <%= inline_icon "bank-account" %>
-      Platinum
+      White
     </span>
   <% end %>
   <% if stripe_card.personalization_design.present? %>
