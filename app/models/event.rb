@@ -646,7 +646,7 @@ class Event < ApplicationRecord
 
     feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * revenue_fee)).ceil
+    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * BigDecimal(revenue_fee))).ceil
   end
 
   # This intentionally does not include fees on fronted transactions to make sure they aren't actually charged
