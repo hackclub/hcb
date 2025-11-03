@@ -3,17 +3,17 @@
     } do |form| %>
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
-    <div class="field field--options" style="max-width: none;">
-      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::AchTransfer, title: "ACH transfer", description: "(1-3 biz. days)", icon: "payment-transfer" %>
+    <div class="field field--options mb-4" style="max-width: none;">
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer" %>
 
-      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Check, title: "Mailed check", description: "(10-12 biz. days)", icon: "email" %>
-
-      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Wire, title: "International wire", description: "(1-5 biz. days)", icon: "web" do %>
-        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-      <% end %>
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email" %>
 
       <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
-        <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "(1-3 biz. days)", icon: "wise" %>
+        <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise" %>
+      <% end %>
+
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web" do %>
+        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
       <% end %>
     </div>
   </fieldset>
@@ -89,6 +89,15 @@
         <%= form.hidden_field :wise_recipient_id, value: "" %>
 
         <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: User::PayoutMethod::WiseTransfer } %>
+
+        <%= render "callout",
+          type: "info",
+          icon: "wise",
+          title: "Important information about Wise reimbursements",
+          class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-5 mb-4",
+          footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+          We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you.
+        <% end %>
 
         <div class="actions inline-block mt1">
           <%= form.submit "Save" %>
