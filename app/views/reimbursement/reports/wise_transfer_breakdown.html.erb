@@ -1,0 +1,50 @@
+<%= turbo_frame_tag :wise_transfer_breakdown do %>
+  <%= link_to "#", class: "no-underline", data: { behavior: "modal_trigger", modal: "wise_fee_breakdown" } do %>
+    This report will total approximately <strong><%= @with_fees_quote_amount.format %> USD</strong>
+  <% end %>
+
+  <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="wise_fee_breakdown">
+    <%= modal_header "How much will this transfer cost?" %>
+    <p class="mt-0">HCB never charges fees for transfers or reimbursements. However, when using Wise to send money internationally, Wise charges additional fees that vary based on the amount and destination of the transfer. These amounts are estimates and could change.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <td class="bold">Expense</td>
+          <td class="bold">Amount (<%= @report.currency %>)</td>
+          <td class="bold">Converted amount (USD)</td>
+        </tr>
+      </thead>
+      <tbody>
+        <% conversion_rate = (@without_fees_quote_amount.cents / @report.amount_cents.to_f) %>
+
+        <% @report.expenses.each do |expense| %>
+          <tr>
+            <td style="white-space: normal"><%= expense.memo %></td>
+            <td><%= expense.amount.format %></td>
+            <td><%= render_money(expense.amount_cents * conversion_rate) %></td>
+          </tr>
+        <% end %>
+
+        <tr>
+          <td>
+            Wise transfer fee
+          </td>
+          <td class="muted">-</td>
+          <td><%= @fees_amount.format %></td>
+        </tr>
+
+        <tr class="border-none">
+          <td class="pr1"><strong>Total</strong></td>
+          <td class="muted">-</td>
+          <td><%= @with_fees_quote_amount.format %></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <footer class="flex flex-row justify-between items-center">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/b574a59805cf292d77458a187750674aa7858dd3_vector__10_.svg" alt="Wise logo" height="16">
+      <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise", target: :_blank %>
+    </footer>
+  </section>
+<% end %>
