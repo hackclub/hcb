@@ -32,6 +32,13 @@ module HasWiseRecipient
           label: "Account holder's full name",
           description: "Must match the name on the bank account exactly"
         }
+
+        fields << {
+          type: :text_field,
+          key: "bank_name",
+          placeholder: "Silicon Valley Bank",
+          label: "Name of financial institution"
+        }
       end
 
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
