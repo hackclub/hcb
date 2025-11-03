@@ -516,10 +516,6 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
-  def preferred_login_methods
-    logins.complete.last&.authentication_factors&.filter_map { |key, value| key if value } || []
-  end
-
   private
 
   def update_stripe_cardholder

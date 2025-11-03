@@ -38,7 +38,7 @@ RSpec.describe LoginsController do
       login = Login.last
       expect(login.user.email).to eq(email)
       expect(login).not_to be_reauthentication
-      expect(response).to redirect_to(email_login_path(login))
+      expect(response).to redirect_to(login_code_login_path(login))
     end
 
     it "uses the existing user if the email matches" do
@@ -49,7 +49,7 @@ RSpec.describe LoginsController do
 
       login = Login.last
       expect(login.user).to eq(user)
-      expect(response).to redirect_to(email_login_path(login))
+      expect(response).to redirect_to(login_code_login_path(login))
     end
   end
 
@@ -59,7 +59,7 @@ RSpec.describe LoginsController do
       login = create(:login, user:)
 
       expect {
-        get(:email, params: { id: login.hashid })
+        get(:login_code, params: { id: login.hashid })
       }.to send_email(to: user.email)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -79,7 +79,7 @@ RSpec.describe LoginsController do
       expect(verification_service).to receive(:send_verification_request).with(user.phone_number)
       expect(TwilioVerificationService).to receive(:new).and_return(verification_service)
 
-      get(:sms, params: { id: login.hashid })
+      get(:login_code, params: { id: login.hashid })
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("SMS code")
@@ -90,7 +90,7 @@ RSpec.describe LoginsController do
       user = create(:user, email: "text@example.com")
       login = create(:login, user:, is_reauthentication: true)
 
-      get(:email, params: { id: login.hashid })
+      get(:login_code, params: { id: login.hashid })
 
       expect(flash[:error]).to eq("Please start again.")
       expect(response).to redirect_to(auth_users_path)
@@ -140,7 +140,7 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "email",
+              method: "login_code",
               login_code: "123-456"
             }
           )
@@ -158,7 +158,7 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "email",
+              method: "login_code",
               login_code: login_code.code
             }
           )
@@ -194,7 +194,7 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "sms",
+              method: "login_code",
               login_code: "123-456",
               sms: "1",
             }
@@ -221,8 +221,9 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "sms",
+              method: "login_code",
               login_code: "123-456",
+              sms: "1",
             }
           )
 
@@ -374,12 +375,12 @@ RSpec.describe LoginsController do
           :complete,
           params: {
             id: login.hashid,
-            method: "email",
+            method: "login_code",
             login_code: login_code.code
           }
         )
 
-        expect(response).to redirect_to(choose_login_preference_login_path(login))
+        expect(response).to redirect_to(totp_login_path(login))
 
         login.reload
         expect(login).not_to be_complete
@@ -415,7 +416,7 @@ RSpec.describe LoginsController do
         :complete,
         params: {
           id: login.hashid,
-          method: "email",
+          method: "login_code",
           login_code: login_code.code
         }
       )
@@ -433,7 +434,7 @@ RSpec.describe LoginsController do
         :complete,
         params: {
           id: login.hashid,
-          method: "email",
+          method: "login_code",
           login_code: login_code.code
         }
       )
