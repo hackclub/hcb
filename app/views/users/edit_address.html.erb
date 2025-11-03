@@ -45,7 +45,7 @@
 
           <div class="field flex-auto">
             <%= form.label :country %>
-            <%= form.country_select :stripe_billing_address_country, nil, { only: ["US"] }, { required: true, disabled: true } %>
+            <%= form.country_select :stripe_billing_address_country, nil, { only: ["US"] }, { required: true, disabled: } %>
           </div>
         </div>
 
