@@ -1,6 +1,9 @@
 <%= turbo_frame_tag :wise_transfer_breakdown do %>
   <%= link_to "#", class: "no-underline", data: { behavior: "modal_trigger", modal: "wise_fee_breakdown" } do %>
-    This report will total approximately <strong><%= @with_fees_quote_amount.format %> USD</strong>
+    <div class="flex lg:flex-row lg:justify-between flex-col items-start justify-start gap-1 flex-grow">
+      <span>This report will total approximately <strong><%= @with_fees_quote_amount.format %> USD</strong></span>
+      <span class="bold">See breakdown →</span>
+    </div>
   <% end %>
 
   <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="wise_fee_breakdown">

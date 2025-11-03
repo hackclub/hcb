@@ -403,11 +403,13 @@
           <%= button_hint %>
         </p>
       </div>
-      <div class="border-top card__banner card__darker secondary mt-3 box-content mb-[-1rem] w-100">
-        <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(@report) do %>
-          Fetching latest estimate...
-        <% end %>
-      </div>
+      <% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+        <div class="border-top card__banner card__darker secondary mt-3 box-content mb-[-1rem] w-100">
+          <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(@report) do %>
+            Fetching latest estimate...
+          <% end %>
+        </div>
+      <% end %>
     </div>
   <% end %>
 </div>
