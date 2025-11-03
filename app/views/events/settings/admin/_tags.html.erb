@@ -10,7 +10,7 @@
             <span class="bold italic"><%= tag.purpose.titleize %>:</span>&nbsp;
           <% end %>
           <%= tag.name %>
-          <%= button_to toggle_event_tag_event_path(id: event.id, event_tag_id: tag.id), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" }, disabled: !admin_signed_in? do %>
+          <%= button_to toggle_event_tag_event_path(id: event.id, event_tag_id: tag.id), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" }, disabled: !policy(event).toggle_event_tag? do %>
             <%= inline_icon "view-close", size: 16 %>
           <% end %>
         </span>
