@@ -159,7 +159,7 @@ module Api
       def card_designs
         if params[:event_id].present?
           set_api_event
-          authorize @event, :create_stripe_card?
+          authorize @event, :create_stripe_card?, policy_class: EventPolicy
 
           @designs = [event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
         else
