@@ -19,6 +19,11 @@ class OrganizerPositionInvite
 
       link = @request.link
       role = params[:role] || :reader
+
+      if role == "owner" && !admin_signed_in?
+        role = "manager"
+      end
+
       enable_spending_controls = (params[:enable_controls] == "true") && (role != "manager")
       initial_control_allowance_amount = params[:initial_control_allowance_amount]
 
