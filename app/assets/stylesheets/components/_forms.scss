@@ -480,11 +480,17 @@ input:where([data-behavior='otp_input']) {
   position: absolute !important;
   top: 110%;
   left: 0px;
+  border-radius: 0.75rem;
+  padding: 0.3rem !important;
 
   display: none;
   opacity: 0;
   z-index: 10;
   margin-top: 8px;
+
+  [data-dark='true'] & {
+    background-color: $darkless;
+  }
 }
 
 .dropdown-button__menu div {
@@ -510,7 +516,12 @@ input:where([data-behavior='otp_input']) {
 }
 
 .dropdown-button__menu input:checked + label {
-  background-color: color-mix(in srgb, $green-dark 20%, transparent);
+  background-color: lighten(map-get($palette, info), 35%);
+  color: inherit;
+
+  [data-dark='true'] & {
+    background-color: darken(map-get($palette, info), 15%);
+  }
 }
 
 .dropdown-button__container {
