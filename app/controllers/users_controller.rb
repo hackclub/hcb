@@ -183,6 +183,11 @@ class UsersController < ApplicationController
     authorize @user
   end
 
+  def edit_integrations
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+    authorize @user
+  end
+
   def generate_totp
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
@@ -248,6 +253,7 @@ class UsersController < ApplicationController
     @lob_checks = Check.where(creator: @user)
     @ach_transfers = AchTransfer.where(creator: @user)
     @disbursements = Disbursement.where(requested_by: @user)
+    @permissions_overview = User::PermissionsOverview.new(user: @user)
 
     authorize @user
   end
@@ -335,7 +341,7 @@ class UsersController < ApplicationController
       end
 
       if @user.payout_method&.errors&.any?
-        flash.now[:error] = @user.payout_method.errors.first.full_message
+        flash.now[:error] = @user.payout_method.errors.full_messages.to_sentence
         render :edit_payout, status: :unprocessable_entity
         return
       end
@@ -410,6 +416,7 @@ class UsersController < ApplicationController
       :profile_picture,
       :pretend_is_not_admin,
       :sessions_reported,
+      :session_validity_preference,
       :receipt_report_option,
       :birthday,
       :seasonal_themes_enabled,

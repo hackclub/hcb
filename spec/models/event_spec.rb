@@ -92,4 +92,28 @@ RSpec.describe Event, type: :model do
       expect(event4.errors[:parent]).to eq(["max depth exceeded"])
     end
   end
+
+  describe "#plan" do
+    it "uses the parent event's subevent plan by default" do
+      parent = create(:event)
+      parent.config.update!(subevent_plan: Event::Plan::HackClubAffiliate.name)
+      child = create(:event, plan_type: nil, parent:)
+      expect(child.plan).to be_instance_of(Event::Plan::HackClubAffiliate)
+    end
+
+    it "uses the parent's plan if a subevent plan isn't set" do
+      parent = create(:event, plan_type: Event::Plan::HackClubAffiliate)
+      child = create(:event, plan_type: nil, parent:)
+
+      expect(child.plan).to be_instance_of(Event::Plan::HackClubAffiliate)
+    end
+
+    it "uses the standard plan as a fallback" do
+      parent = create(:event)
+      parent.plans.destroy_all
+      child = create(:event, plan_type: nil, parent:)
+
+      expect(child.plan).to be_instance_of(Event::Plan::Standard)
+    end
+  end
 end

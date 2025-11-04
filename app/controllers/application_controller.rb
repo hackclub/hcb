@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
+  include SetGovernanceRequestContext
 
   protect_from_forgery
 
@@ -19,7 +20,7 @@ class ApplicationController < ActionController::Base
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.touch_last_seen_at }
+  before_action { current_session&.update_session_timestamps }
 
   # This cookie is used for Safari PWA prompts
   before_action do
@@ -27,10 +28,6 @@ class ApplicationController < ActionController::Base
 
     @first_visit = cookies[:first_visit] != "1"
     cookies.permanent[:first_visit] = 1
-  end
-
-  before_action do
-    @hide_promotional_banner = cookies[:hide_robotics_raffle_banner] == "1"
   end
 
   before_action do

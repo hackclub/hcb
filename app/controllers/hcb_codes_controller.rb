@@ -3,8 +3,8 @@
 class HcbCodesController < ApplicationController
   include TagsHelper
 
-  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :show]
-  skip_after_action :verify_authorized, only: [:receipt]
+  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
+  skip_after_action :verify_authorized, only: [:receipt, :receipt_status]
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
@@ -203,13 +203,16 @@ class HcbCodesController < ApplicationController
   end
 
   def receipt_status
-    @hcb_code = HcbCode.find(params[:id])
     @secret = params[:s]
+    @hcb_code = HcbCode.find_signed(@secret, purpose: :receipt_status)
 
-    authorize @hcb_code
+    if @hcb_code.nil?
+      raise Pundit::NotAuthorizedError
+    end
 
-  rescue Pundit::NotAuthorizedError
-    raise unless HcbCode.find_signed(@secret, purpose: :receipt_status) == @hcb_code
+    file_name = @hcb_code.missing_receipt? ? "receipt_status_upload.png" : "receipt_status_uploaded.png"
+
+    send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
   end
 
   def toggle_tag
@@ -249,7 +252,7 @@ class HcbCodesController < ApplicationController
 
     authorize hcb_code
 
-    if hcb_code.amount_cents >= -100
+    if hcb_code.amount_cents > -100
       flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
       return redirect_to hcb_code
     end
