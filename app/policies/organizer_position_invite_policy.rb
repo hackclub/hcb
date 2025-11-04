@@ -10,7 +10,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def create?
-    if role == :owner
+    if record.role == :owner
       user&.admin?
     else
       admin_or_manager?
