@@ -1,6 +1,8 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings_billing_address %>
+<% disabled = !policy(@user).update? %>
+
+<%= render "users/nav", selected: :settings %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_header", active: "address" %>
@@ -15,38 +17,38 @@
       <%= form.fields_for :stripe_cardholder, @user.stripe_cardholder do |form| %>
         <div class="field mb1">
           <%= form.label :stripe_billing_address_line1, "Street address" %>
-          <%= form.text_field :stripe_billing_address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1], required: true %>
+          <%= form.text_field :stripe_billing_address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1], required: true, disabled: %>
         </div>
 
         <div class="field mt1">
-          <%= form.text_field :stripe_billing_address_line2, placeholder: "(Building / Apartment / Room)" %>
+          <%= form.text_field :stripe_billing_address_line2, placeholder: "(Building / Apartment / Room)", disabled: %>
         </div>
 
         <div class="grid grid--split">
           <div class="field flex-auto">
             <%= form.label :stripe_billing_address_city, "City" %>
-            <%= form.text_field :stripe_billing_address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city], required: true %>
+            <%= form.text_field :stripe_billing_address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city], required: true, disabled: %>
           </div>
           <div class="field flex-auto">
             <%= form.label :address_state, "State / Province" %>
-            <%= form.select :stripe_billing_address_state, @states %>
+            <%= form.select :stripe_billing_address_state, @states, {}, disabled: %>
           </div>
         </div>
 
         <div class="grid grid--split">
           <div class="field flex-auto">
             <%= form.label :postal_code %>
-            <%= form.text_field :stripe_billing_address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code], required: true %>
+            <%= form.text_field :stripe_billing_address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code], required: true, disabled: %>
           </div>
 
           <div class="field flex-auto">
             <%= form.label :country %>
-            <%= form.country_select :stripe_billing_address_country, nil, { only: ["US"] }, { required: true } %>
+            <%= form.country_select :stripe_billing_address_country, nil, { only: ["US"] }, { required: true, disabled: } %>
           </div>
         </div>
 
         <div class="actions inline-block mt1">
-          <%= form.submit "Save" %>
+          <%= form.submit "Save", disabled: %>
         </div>
       <% end %>
     <% end %>
