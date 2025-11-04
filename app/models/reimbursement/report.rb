@@ -162,7 +162,7 @@ module Reimbursement
       event :mark_draft do
         transitions from: [:submitted, :reimbursement_requested, :rejected, :reimbursement_approved], to: :draft
         after do
-          # Delete Wise fee expenses when unapproving a report
+          # Once a report becomes unlocked, any changes would render existing fees outdated
           expenses.where(type: Reimbursement::Expense::Fee.name, memo: WISE_TRANSFER_FEE_MEMO).destroy_all
         end
       end
