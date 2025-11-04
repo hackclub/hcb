@@ -163,7 +163,7 @@ module Reimbursement
         transitions from: [:submitted, :reimbursement_requested, :rejected, :reimbursement_approved], to: :draft
         after do
           # Once a report becomes unlocked, any changes would render existing fees outdated
-          expenses.where(type: Reimbursement::Expense::Fee.name, memo: WISE_TRANSFER_FEE_MEMO).destroy_all
+          expenses.where(type: Reimbursement::Expense::Fee.name).destroy_all
         end
       end
 
