@@ -185,7 +185,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 735,
+          "line": 741,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -219,7 +219,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 735,
+          "line": 741,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -253,7 +253,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 995,
+          "line": 1001,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -321,7 +321,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 923,
+          "line": 929,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -355,7 +355,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 923,
+          "line": 929,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -373,6 +373,29 @@
         79
       ],
       "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "d2a47e20528c2c6e0351aae7660323fd537a18e88baad206e772a68450af3db1",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/concerns/organizer_position/has_role.rb",
+      "line": 27,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "event.organizer_positions.where(\"role >= #{self.class.roles[:manager]}\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OrganizerPosition",
+        "method": "at_least_one_manager"
+      },
+      "user_input": "self.class.roles[:manager]",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "Interpolated value is a constant integer defined in the same file"
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -423,7 +446,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 995,
+          "line": 1001,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -466,6 +489,6 @@
       "note": ""
     }
   ],
-  "updated": "2025-10-13 08:21:43 +0000",
+  "updated": "2025-11-04 03:49:27 +0000",
   "brakeman_version": "6.2.2"
 }
