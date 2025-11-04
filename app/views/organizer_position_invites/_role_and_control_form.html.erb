@@ -9,9 +9,11 @@
     <% end %>
   <% end %>
 
-  <%= form.radio_button :role, "owner", "x-model": "role" %>
-  <%= form.label :role, value: "owner", class: "admin-tools overflow-visible" do %>
-    <strong>Owner <span class="text-sm font-normal">(contract&nbsp;signee)</span></strong>
+  <% if admin_signed_in? %>
+    <%= form.radio_button :role, "owner", "x-model": "role" %>
+    <%= form.label :role, value: "owner", class: "admin-tools overflow-visible" do %>
+      <strong>Owner <span class="text-sm font-normal">(contract&nbsp;signee)</span></strong>
+    <% end %>
   <% end %>
 </div>
 
