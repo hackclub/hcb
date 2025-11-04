@@ -487,15 +487,15 @@ class AdminController < Admin::BaseController
 
     relation = relation.reimbursement_requested if @pending
 
-    @unprocessed_wise_reports = Reimbursement::Report
-                                .where(id: Reimbursement::PayoutHolding.settled.select(:reimbursement_reports_id))
-                                .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
-                                .select(:id)
-                                .pluck(:id)
+    @unprocessed_wise_report_ids = Reimbursement::Report
+                                   .where(id: Reimbursement::PayoutHolding.settled.select(:reimbursement_reports_id))
+                                   .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
+                                   .select(:id)
+                                   .pluck(:id)
 
     @count = relation.count
     @reports = relation.page(@page).per(@per).order(
-      @unprocessed_wise_reports.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_reports.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
+      @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
       Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
       # Arel.sql("aasm_state = 'draft' ASC"),
       "reimbursement_reports.created_at desc"
