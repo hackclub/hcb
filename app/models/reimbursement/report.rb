@@ -44,6 +44,7 @@ module Reimbursement
 
     include PublicIdentifiable
     set_public_id_prefix :rmr
+
     belongs_to :user
 
     belongs_to :event, optional: true
