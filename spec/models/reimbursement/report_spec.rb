@@ -24,7 +24,6 @@ RSpec.describe Reimbursement::Report, type: :model do
   describe "mark_draft event" do
     context "when transitioning from reimbursement_approved to draft" do
       it "deletes Wise fee expenses" do
-
         # Create a report
         report = Reimbursement::Report.create!(
           name: "Test Report",
@@ -106,7 +105,7 @@ RSpec.describe Reimbursement::Report, type: :model do
           aasm_state: :submitted
         )
 
-        # Create a Wise fee expense (edge case)
+        # Create a Wise fee expense
         fee_expense = report.expenses.create!(
           value: 10.00,
           memo: Reimbursement::Report::WISE_TRANSFER_FEE_MEMO,
