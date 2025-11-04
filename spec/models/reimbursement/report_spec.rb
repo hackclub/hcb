@@ -3,24 +3,27 @@
 require "rails_helper"
 
 RSpec.describe Reimbursement::Report, type: :model do
+  let(:user) do
+    create(
+      :user,
+      full_name: "Test User",
+      email: "test@example.com",
+      payout_method: User::PayoutMethod::WiseTransfer.new(
+        address_line1: "123 Main St",
+        address_city: "Test City",
+        address_state: "TS",
+        recipient_country: "US",
+        address_postal_code: "12345",
+        currency: "USD",
+      )
+    )
+  end
+
+  let(:event) { create(:event, name: "Test Event") }
+
   describe "mark_draft event" do
     context "when transitioning from reimbursement_approved to draft" do
       it "deletes Wise fee expenses" do
-        # Set up user with payout method
-        user = create(
-          :user,
-          full_name: "Test User",
-          email: "test@example.com",
-          payout_method: User::PayoutMethod::WiseTransfer.new(
-            address_line1: "123 Main St",
-            address_city: "Test City",
-            address_state: "TS",
-            recipient_country: "US",
-            address_postal_code: "12345",
-            currency: "USD",
-          )
-        )
-        event = create(:event, name: "Test Event")
 
         # Create a report
         report = Reimbursement::Report.create!(
@@ -61,21 +64,6 @@ RSpec.describe Reimbursement::Report, type: :model do
       end
 
       it "does not delete non-Wise fee expenses" do
-        user = create(
-          :user,
-          full_name: "Test User",
-          email: "test@example.com",
-          payout_method: User::PayoutMethod::WiseTransfer.new(
-            address_line1: "123 Main St",
-            address_city: "Test City",
-            address_state: "TS",
-            recipient_country: "US",
-            address_postal_code: "12345",
-            currency: "USD",
-          )
-        )
-        event = create(:event, name: "Test Event")
-
         report = Reimbursement::Report.create!(
           name: "Test Report",
           user:,
@@ -85,8 +73,16 @@ RSpec.describe Reimbursement::Report, type: :model do
         )
 
         # Create regular expenses
-        expense1 = report.expenses.create!(value: 100.00, memo: "Regular expense", aasm_state: :approved)
-        expense2 = report.expenses.create!(value: 50.00, memo: "Another expense", aasm_state: :approved)
+        expense1 = report.expenses.create!(
+          value: 100.00,
+          memo: "Regular expense",
+          aasm_state: :approved
+        )
+        expense2 = report.expenses.create!(
+          value: 50.00,
+          memo: "Another expense",
+          aasm_state: :approved
+        )
 
         # Verify expenses exist
         expect(report.expenses.count).to eq(2)
@@ -102,21 +98,6 @@ RSpec.describe Reimbursement::Report, type: :model do
 
     context "when transitioning from other states to draft" do
       it "deletes Wise fee expenses when transitioning from submitted" do
-        user = create(
-          :user,
-          full_name: "Test User",
-          email: "test@example.com",
-          payout_method: User::PayoutMethod::WiseTransfer.new(
-            address_line1: "123 Main St",
-            address_city: "Test City",
-            address_state: "TS",
-            recipient_country: "US",
-            address_postal_code: "12345",
-            currency: "USD",
-          )
-        )
-        event = create(:event, name: "Test Event")
-
         report = Reimbursement::Report.create!(
           name: "Test Report",
           user:,
