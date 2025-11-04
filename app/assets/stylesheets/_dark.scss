@@ -343,7 +343,10 @@ html[data-dark='true'] {
     background-color: rgba(map-get($palette, error), 0.75) !important;
     color: map-get($palette, smoke) !important;
     &:hover {
-      background-color: rgba(lighten(map-get($palette, error), 7.5%), 0.75) !important;
+      background-color: rgba(
+        lighten(map-get($palette, error), 7.5%),
+        0.75
+      ) !important;
     }
   }
 
