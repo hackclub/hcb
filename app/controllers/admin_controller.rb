@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
-  rescue_from Governance::Admin::InsufficientApprovalLimitError do |e|
-    redirect_back fallback_location: root_path, flash: { error: e.message }
-  end
-
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
@@ -316,6 +312,9 @@ class AdminController < Admin::BaseController
         end
       end
     end
+
+    # Auto mapp the transactions
+    ::EventMappingEngine::Nightly.new.run
 
     duplicates = transactions.count - raw_intrafi_transactions.count
 
@@ -1305,6 +1304,10 @@ class AdminController < Admin::BaseController
   end
 
   def email
+    @message = Ahoy::Message.find(params[:message_id])
+  end
+
+  def email_html
     @message_id = params[:message_id]
 
     respond_to do |format|
@@ -1327,7 +1330,6 @@ class AdminController < Admin::BaseController
     @count = messages.count
 
     @messages = messages.page(@page).per(@per).order(sent_at: :desc)
-
   end
 
   def unknown_merchants

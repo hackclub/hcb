@@ -109,12 +109,12 @@
     <% end %>
   </div>
 
-  <div class="flex justify-between items-center mb-2">
-    <h2>Graphs</h2>
+  <div class="flex justify-between items-center mb-2 mt-10">
+    <h2 class="my-0">Insights</h2>
     <% if @event.created_at < 1.week.ago %>
       <div data-controller="menu" data-menu-append-to-value="#tags-chart">
         <button
-          class="homepage-eyebrow mt0 mb0 border-0 bg-white dark:bg-dark flex items-center cursor-pointer"
+          class="whitespace-nowrap homepage-eyebrow my-0 border-0 bg-transparent flex items-center cursor-pointer"
           data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
           data-menu-target="toggle">
           <span data-event-home-target="button">All time</span>

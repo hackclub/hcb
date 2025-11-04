@@ -43,6 +43,7 @@ RSpec.describe DisbursementsController do
 
     it "allows transaction categories to be set by admins" do
       sender = create(:user, :make_admin)
+      create(:governance_admin_transfer_limit, user: sender)
       source_event = create(:event, :with_positive_balance)
       create(:organizer_position, user: sender, event: source_event)
 

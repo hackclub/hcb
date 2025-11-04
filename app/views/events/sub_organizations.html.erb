@@ -11,7 +11,7 @@
   <%= pop_icon_to "download",
                   { format: :csv },
                   class: "align-middle tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
-  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
+  <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
     <%= inline_icon "plus" %>
     Create a subsidiary
   <% end %>
@@ -22,7 +22,9 @@
       <div class="stat statset__wide" data-tour-step="balance">
         <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
         <span class="stat__value">
-          <%= render_money_amount(@sub_organizations.to_a.sum(&:balance_available_v2_cents)) %>
+          <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, request.query_parameters), loading: :lazy do %>
+            <strong>-</strong>
+          <% end %>
         </span>
       </div>
     </div>
@@ -43,88 +45,8 @@
 
 <% if policy(@event).create_sub_organization? %>
   <section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
-    <%= form_with(url: event_create_sub_organization_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [], query: '' }" }) do |form| %>
-      <%= modal_header "Create a sub-organization" %>
-      <div class="card border b--info mt2 mb2 container--sm mx-auto">
-        <p class="mt0 mb0">
-          Sub-organizations are subsidiaries of your organization. All members of <%= @event.name %> can access and view sub-organizations, but only managers can create and edit them.
-        </p>
-      </div>
-
-      <div class="field">
-        <%= form.label :name, "Project name", class: "bold" %>
-        <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project", value: params[:name] %>
-      </div>
-
-      <div class="field">
-        <%= form.label :email, "Organizer email", class: "bold" %>
-        <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}", value: params[:email] %>
-      </div>
-
-      <div class="field">
-        <%= form.label :cosigner_email, "Co-signer email", class: "bold" %>
-        <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18", value: params[:cosigner_email] %>
-      </div>
-
-      <div id="add_scoped_tag_field" class="field" data-controller="menu text-filter" data-menu-update-on-resize-value="true" data-menu-content-id-value="scoped_tag_menu" data-menu-append-to-value="#add_scoped_tag_field">
-        <%= form.label "scoped_tags[]", "Tags", class: "bold mb-1" %>
-
-        <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
-          <%= form.hidden_field "scoped_tags[]", "x-bind:value": "scoped_tag.id" %>
-        </template>
-
-        <div class="flex gap-1 flex-wrap">
-          <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
-            <span class="badge m0 w-fit">
-              <span x-text="scoped_tag.name"></span>
-              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset" @click="scoped_tags = scoped_tags.filter(t => t.id !== scoped_tag.id)">
-                <%= inline_icon "view-close", size: 16 %>
-              </button>
-            </span>
-          </template>
-        </div>
-
-        <%= text_field_tag :scoped_tag_name, nil,
-                            class: "mt-2",
-                            role: "combobox",
-                            placeholder: "Find or create a tag...",
-                            "aria-controls": "#scoped_tag_menu > .scoped_tag_results",
-                            "x-model": "query",
-                            data: {
-                              action: "
-                                keydown.enter->text-filter#selectFirst
-
-                                click->menu#open
-                                focus->menu#open
-                                click@document->menu#close
-                                keydown@document->menu#keydown
-
-                                input->text-filter#query
-                              ",
-                              menu_target: "toggle",
-                            } %>
-
-        <div class="menu__content menu__content--2" data-menu-target="content" style="width: 24rem">
-          <div role="listbox" class="scoped_tag_results">
-            <% @event.subevent_scoped_tags.each do |scoped_tag| %>
-              <%= render partial: "events/scoped_tags/scoped_tag_option", locals: { scoped_tag: } %>
-            <% end %>
-          </div>
-
-          <template x-if="query.length > 0 && $el.parentElement.checkVisibility()">
-            <%= link_to "#", data: { turbo_method: :post }, "x-bind:href": "`#{event_scoped_tags_url(@event)}?name=${query}`" do %>
-              <%= inline_icon "plus", size: 15 %> Create tag "<span x-text="query"></span>"
-            <% end %>
-          </template>
-        </div>
-      </div>
-
-      <small class="muted mt-0 mb-4">This project will be created on the <strong><%= @event.plan.label %></strong> plan</small>
-
-      <div class="inline-block">
-        <%= form.submit "Create sub-organization", class: "mt1", disabled: @event&.demo_mode? %>
-      </div>
-    <% end %>
+    <%= modal_header "Create a sub-organization" %>
+    <%= render "suborganizations/form", event: @event %>
   </section>
 <% end %>
 

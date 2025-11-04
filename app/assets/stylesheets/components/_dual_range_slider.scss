@@ -1,0 +1,61 @@
+.range-slider--track {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+}
+.range-slider--bar {
+  position: absolute;
+  height: 6px;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.12);
+}
+.range-slider--range {
+  position: absolute;
+  height: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+  background: var(--info);
+  transition: all 0.1s;
+}
+
+.range-slider--thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: white;
+  border: 2px solid var(--info);
+  cursor: grab;
+  transition: all 0.1s;
+  display: block;
+  box-shadow: 0 0 0 8px rgba(0, 123, 255, 0);
+
+  &:hover {
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  }
+}
+
+.range-slider--inputs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  & input {
+    width: 80px;
+    text-align: left;
+    padding: 2px 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-height: 0px;
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+  }
+}
