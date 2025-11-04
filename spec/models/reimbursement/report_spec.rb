@@ -42,20 +42,20 @@ RSpec.describe Reimbursement::Report, type: :model do
         fee_expense = report.expenses.create!(
           value: 10.00,
           memo: Reimbursement::Report::WISE_TRANSFER_FEE_MEMO,
-          type: Reimbursement::Expense::Fee,
+          type: "Reimbursement::Expense::Fee",
           aasm_state: :approved
         )
 
         # Verify both expenses exist
         expect(report.expenses.count).to eq(2)
-        expect(report.expenses.where(type: Reimbursement::Expense::Fee.name).count).to eq(1)
+        expect(report.expenses.where(type: "Reimbursement::Expense::Fee").count).to eq(1)
 
         # Mark the report as draft
         report.mark_draft!
 
         # Verify the Wise fee expense was deleted
         expect(report.expenses.count).to eq(1)
-        expect(report.expenses.where(type: Reimbursement::Expense::Fee.name).count).to eq(0)
+        expect(report.expenses.where(type: "Reimbursement::Expense::Fee").count).to eq(0)
         expect(report.expenses.first.id).to eq(expense.id)
         expect(report.draft?).to be true
       end
@@ -129,7 +129,7 @@ RSpec.describe Reimbursement::Report, type: :model do
         fee_expense = report.expenses.create!(
           value: 10.00,
           memo: Reimbursement::Report::WISE_TRANSFER_FEE_MEMO,
-          type: Reimbursement::Expense::Fee,
+          type: "Reimbursement::Expense::Fee",
           aasm_state: :approved
         )
 
