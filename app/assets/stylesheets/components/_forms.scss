@@ -516,7 +516,7 @@ input:where([data-behavior='otp_input']) {
 }
 
 .dropdown-button__menu input:checked + label {
-  background-color: lighten(map-get($palette, info), 35%);
+  background-color: rgba(51, 142, 218, 0.125);
   color: inherit;
 
   [data-dark='true'] & {
