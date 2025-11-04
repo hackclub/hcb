@@ -22,4 +22,8 @@ class EventMailerPreview < ActionMailer::Preview
       .negative_balance
   end
 
+  def transparency_mode_enabled
+    EventMailer.with(event: Event.first).transparency_mode_enabled
+  end
+
 end

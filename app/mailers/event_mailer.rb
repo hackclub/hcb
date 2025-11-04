@@ -47,4 +47,8 @@ class EventMailer < ApplicationMailer
     mail(to: @emails, subject: "#{@event.name} has a negative balance")
   end
 
+  def transparency_mode_enabled
+    mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
+  end
+
 end
