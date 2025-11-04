@@ -44,9 +44,6 @@ module Reimbursement
 
     include PublicIdentifiable
     set_public_id_prefix :rmr
-
-    WISE_TRANSFER_FEE_MEMO = "Wise transfer fee"
-
     belongs_to :user
 
     belongs_to :event, optional: true
