@@ -32,6 +32,9 @@ class Event
     validates :subevent_plan, inclusion: { in: -> { Event::Plan.available_plans.map(&:name) } }, allow_blank: true
 
     after_save :create_or_destroy_monthly_announcement
+    after_update if: -> { generate_monthly_announcement_previously_changed?(to: true) } do
+      EventMailer.with(event:).monthly_announcements_enabled.deliver_later
+    end
 
     private
 

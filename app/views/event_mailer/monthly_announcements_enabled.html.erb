@@ -1,0 +1,19 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  A manager on your team has enabled monthly announcements for <%= @event.name %>.
+  This is a feature that automatically generates an announcement each month to send out to your followers.
+  For more information about announcements, check out <%= link_to "our blog post", "https://blog.hcb.hackclub.com/posts/organization-announcements" %>.
+</p>
+
+<p>
+  By default, each monthly announcement includes summarized data about your organization from the past month, such as donations and spending analyses, but you can edit the announcement to include whatever you'd like.
+  Your first monthly announcement has been generated and is scheduled to be sent on <%= @scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}") %> - <%= link_to "view or edit it on HCB", announcement_url(@monthly_announcement) %>!
+</p>
+
+<p>Managers can disable monthly announcements at any time in <%= link_to "your organization settings", edit_event_url(@event) %>.</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>
