@@ -84,12 +84,6 @@
 <% if @reports.blank? %>
   <%= blankslate "No reports found!" %>
 <% else %>
-  <h2 class="mb2">Reports created</h2>
-  <%= form_with(model: nil, local: true, method: :get) do |form| %>
-    <div class="flex items-center width-100 mb2">
-      <%= form.text_field :q, placeholder: "Search…", class: "flex-auto", style: "width auto; max-width: none;", value: params[:q] %>
-    </div>
-  <% end %>
   <article class="table-container">
     <table>
       <thead>

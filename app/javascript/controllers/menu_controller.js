@@ -112,7 +112,7 @@ export default class extends Controller {
     computePosition(this.toggleTarget, this.content, {
       placement: this.placementValue,
       middleware: [
-        offset(4),
+        offset(this.placementValue.includes('top') ? 0 : 10),
         flip({ padding: 4 }),
         size({
           padding: 5,

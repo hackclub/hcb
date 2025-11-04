@@ -26,5 +26,5 @@
                 selected: local_assigns[:selected] == :settings_feature_previews %>
   <%= dock_item "Admin",
                 @user == current_user ? settings_admin_path : admin_user_path(@user || current_user),
-                selected: local_assigns[:selected] == :settings_admin %>
+                selected: local_assigns[:selected] == :settings_admin, admin: true %>
 </details>

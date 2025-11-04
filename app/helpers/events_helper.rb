@@ -180,7 +180,7 @@ module EventsHelper
     prefix = icon_tag || badge_tag ? content_tag(:div, icon_tag || badge_tag, class: "line-height-0 relative") : ""
     children = prefix + name.html_safe
     link_to children, (disabled ? "javascript:" : url), options.merge(
-      class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled}",
+      class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",
       'aria-label': tooltip,
       'aria-current': selected ? "page" : "false",
       'aria-disabled': disabled ? "true" : "false",

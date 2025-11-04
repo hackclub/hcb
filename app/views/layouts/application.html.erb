@@ -211,7 +211,7 @@
     </aside>
 
     <%= yield(:mobile_nav) %>
-    <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-screen m-0">
+    <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-[100%] m-0">
       <div class="container p-7 pt-4 pb-[150px] lg:pb-7 <%= content_for :container_class %> mx-auto" style="<%= content_for :container_style %>">
         <div class="lg:hidden">
           <%= render "application/flash" unless @hide_flash %>

@@ -143,14 +143,15 @@ summary.dock__item {
     }
   }
 
+  padding: 0.25rem;
+  border-radius: var(--radius-lg);
+
   @media (min-width: 768px) {
-    border-radius: var(--radius-lg);
     cursor: pointer;
     line-height: 1.75;
     transition: all 0.125s ease-in-out;
     color: $black;
     line-height: 1.25;
-    padding: 0.25rem;
     margin-bottom: 2px;
     color: $black;
 

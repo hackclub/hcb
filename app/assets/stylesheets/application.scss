@@ -324,7 +324,7 @@ summary {
 @import 'components/integrations';
 
 .turbo-progress-bar {
-  height: 0.125rem;
+  height: 0.25rem;
   background-color: map-get($palette, primary);
 }
 
@@ -356,7 +356,9 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 }
 
 .admin-tools {
-  padding: 0.5rem;
+  &:not(.dock__item) {
+    padding: 0.5rem;
+  }
   border-radius: 0.5rem;
   border: 1px dashed map-get($palette, warning);
   background: rgba(map-get($palette, pending), 0.125);
@@ -364,9 +366,11 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 }
 
 .details .admin-tools {
-  padding: 0.25rem 1rem;
-  margin: 0 -1rem;
-  border-radius: 0;
+  &:not(.dock__item) {
+    padding: 0.25rem 1rem;
+    margin: 0 -1rem;
+    border-radius: 0;
+  }
   border: 0;
 }
 
