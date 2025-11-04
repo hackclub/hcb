@@ -57,7 +57,7 @@ module EventService
         # event.mark_approved! if @approved
 
         @emails.each do |email|
-          invite_service = OrganizerPositionInviteService::Create.new(event:, sender: @invited_by || point_of_contact, user_email: email, role: @is_owner ? "owner" : "manager")
+          invite_service = OrganizerPositionInviteService::Create.new(event:, sender: @invited_by || point_of_contact, user_email: email, role: @is_owner ? :owner : :manager)
           invite_service.run!
 
           if @is_owner
