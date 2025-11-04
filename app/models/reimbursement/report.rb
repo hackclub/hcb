@@ -45,6 +45,8 @@ module Reimbursement
     include PublicIdentifiable
     set_public_id_prefix :rmr
 
+    WISE_TRANSFER_FEE_MEMO = "Wise transfer fee"
+
     belongs_to :user
 
     belongs_to :event, optional: true
@@ -161,7 +163,7 @@ module Reimbursement
         transitions from: [:submitted, :reimbursement_requested, :rejected, :reimbursement_approved], to: :draft
         after do
           # Delete Wise fee expenses when unapproving a report
-          expenses.where(type: Reimbursement::Expense::Fee.name, memo: "Wise transfer fee").destroy_all
+          expenses.where(type: Reimbursement::Expense::Fee.name, memo: WISE_TRANSFER_FEE_MEMO).destroy_all
         end
       end
 

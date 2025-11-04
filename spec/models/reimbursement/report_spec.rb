@@ -41,7 +41,7 @@ RSpec.describe Reimbursement::Report, type: :model do
         # Create a Wise fee expense
         fee_expense = report.expenses.create!(
           value: 10.00,
-          memo: "Wise transfer fee",
+          memo: Reimbursement::Report::WISE_TRANSFER_FEE_MEMO,
           type: Reimbursement::Expense::Fee,
           aasm_state: :approved
         )
@@ -128,7 +128,7 @@ RSpec.describe Reimbursement::Report, type: :model do
         # Create a Wise fee expense (edge case)
         fee_expense = report.expenses.create!(
           value: 10.00,
-          memo: "Wise transfer fee",
+          memo: Reimbursement::Report::WISE_TRANSFER_FEE_MEMO,
           type: Reimbursement::Expense::Fee,
           aasm_state: :approved
         )
