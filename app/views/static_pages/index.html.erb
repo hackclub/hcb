@@ -5,7 +5,7 @@
 
 <h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0">
   <div>
-    <% if current_user.hack_clubber? %>
+    <% if current_user.hack_clubber? || current_user.teenager? %>
       <a
         class="text-base caps muted block no-underline"
         href="https://github.com/hackclub/hcb-expansions/tree/main#hcb-what-does-it-stand-for"
