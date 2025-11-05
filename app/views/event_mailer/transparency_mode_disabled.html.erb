@@ -3,7 +3,9 @@
 <p>
   <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (an <%= @event.users.include?(@whodunnit) ? "organization manager" : "HCB admin"%>) has disabled transparency mode for <%= @event.name %>.
   This means your organization is now private to unauthenticated users on HCB.
-  Any published announcements are still visible to the public on your <%= link_to "announcements page", event_announcement_overview_url(@event) %>.
+  <% if @event.announcements.published.any? %>
+    Any published announcements are still visible to the public on your <%= link_to "announcements page", event_announcement_overview_url(@event) %>.
+  <% end %>
 </p>
 
 <p>
