@@ -61,6 +61,7 @@ class EventMailer < ApplicationMailer
     @whodunnit = params[:whodunnit]
     @monthly_announcement = @event.announcements.monthly_for(Date.today).last
     @scheduled_for = Date.today.next_month.beginning_of_month
+    @warning_date = @scheduled_for - 7.days
 
     mail to: @emails, subject: "#{@event.name} has enabled monthly announcements"
   end
