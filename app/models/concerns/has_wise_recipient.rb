@@ -29,7 +29,15 @@ module HasWiseRecipient
           type: :text_field,
           key: "account_holder",
           placeholder: "Fiona Hackworth",
-          label: "Account holder's name"
+          label: "Account holder's full name",
+          description: "Must match the name on the bank account exactly"
+        }
+
+        fields << {
+          type: :text_field,
+          key: "bank_name",
+          placeholder: "Silicon Valley Bank",
+          label: "Name of financial institution"
         }
       end
 

@@ -24,6 +24,8 @@
 #
 class Event
   class Configuration < ApplicationRecord
+    has_paper_trail
+
     belongs_to :event
     validates_email_format_of :contact_email, allow_nil: true, allow_blank: true
     normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }

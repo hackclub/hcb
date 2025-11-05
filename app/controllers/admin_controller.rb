@@ -313,6 +313,9 @@ class AdminController < Admin::BaseController
       end
     end
 
+    # Auto mapp the transactions
+    ::EventMappingEngine::Nightly.new.run
+
     duplicates = transactions.count - raw_intrafi_transactions.count
 
     redirect_to raw_intrafi_transactions_admin_index_path, flash: {

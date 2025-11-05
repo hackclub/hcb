@@ -368,39 +368,48 @@
     <% end %>
   <% end %>
   <% if report.expenses.any? %>
-    <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>" id="summary">
-      <div class="stat stat--small" style="flex-shrink: 0;">
-        <span class="stat__label">Amount requested</span>
-        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
-      </div>
-      <% if report.locked? %>
-        <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label">Expenses approved</span>
-          <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
-        </div>
+    <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>">
+      <div id="summary">
         <div class="stat stat--small" style="flex-shrink: 0;">
-          <span class="stat__label">Amount approved</span>
-        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount_to_reimburse.format(symbol: false) %></span>
+          <span class="stat__label">Amount requested</span>
+          <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
         </div>
-        <% if report.fees_charged_cents > 0 %>
+        <% if report.locked? %>
+          <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
+            <span class="stat__label">Expenses approved</span>
+            <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
+          </div>
           <div class="stat stat--small" style="flex-shrink: 0;">
-            <span class="stat__label">Fees charged</span>
-            <span class="stat__value"><%= render_money report.fees_charged_cents, unit: "" %></span>
+            <span class="stat__label">Amount approved</span>
+          <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount_to_reimburse.format(symbol: false) %></span>
+          </div>
+          <% if report.fees_charged_cents > 0 %>
+            <div class="stat stat--small" style="flex-shrink: 0;">
+              <span class="stat__label">Fees charged</span>
+              <span class="stat__value"><%= render_money report.fees_charged_cents, unit: "" %></span>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
+            <span class="stat__label">Total expenses</span>
+            <span class="stat__value"><%= report.expenses.to_sum.count %></span>
+          </div>
+          <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
+            <span class="stat__label">Complete</span>
+            <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
           </div>
         <% end %>
-      <% else %>
-        <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label">Total expenses</span>
-          <span class="stat__value"><%= report.expenses.to_sum.count %></span>
-        </div>
-        <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label">Complete</span>
-          <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
+        <p class="mt0 mb0" id="summary-hint">
+          <%= button_hint %>
+        </p>
+      </div>
+      <% if report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+        <div class="border-top card__banner card__darker secondary mt-3 box-content mb-[-1rem] w-100">
+          <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(report) do %>
+            Fetching latest estimate...
+          <% end %>
         </div>
       <% end %>
-      <p class="mt0 mb0" id="summary-hint">
-        <%= button_hint %>
-      </p>
     </div>
   <% end %>
 </div>
