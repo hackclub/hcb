@@ -1,0 +1,16 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  A manager on your team has disabled transparency mode for <%= @event.name %>.
+  This means your organization is now private to unauthenticated users on HCB.
+  Any published announcements are still visible to the public.
+</p>
+
+<p>
+  Managers can re-enable transparency mode at any time in <%= link_to "your organization settings", edit_event_url(@event) %>.
+</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

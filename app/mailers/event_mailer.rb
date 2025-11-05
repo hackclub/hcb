@@ -51,11 +51,19 @@ class EventMailer < ApplicationMailer
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end
 
+  def transparency_mode_disabled
+    mail to: @emails, subject: "#{@event.name} has disabled transparency mode"
+  end
+
   def monthly_announcements_enabled
     @monthly_announcement = @event.announcements.monthly_for(Date.today).last
     @scheduled_for = Date.today.next_month.beginning_of_month
 
     mail to: @emails, subject: "#{@event.name} has enabled monthly announcements"
+  end
+
+  def monthly_announcements_disabled
+    mail to: @emails, subject: "#{@event.name} has disabled monthly announcements"
   end
 
 end

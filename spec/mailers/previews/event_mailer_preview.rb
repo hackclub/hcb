@@ -30,4 +30,12 @@ class EventMailerPreview < ActionMailer::Preview
     EventMailer.with(event: Announcement.monthly_for(Date.today).first.event).monthly_announcements_enabled
   end
 
+  def transparency_mode_disabled
+    EventMailer.with(event: Event.first).transparency_mode_disabled
+  end
+
+  def monthly_announcements_disabled
+    EventMailer.with(event: Event.first).monthly_announcements_disabled
+  end
+
 end
