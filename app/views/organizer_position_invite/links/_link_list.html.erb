@@ -8,24 +8,21 @@
       <span class="w-full flex gap-2 items-center align-middle">
           <div class="flex flex-col">
             <%= link_to link_url(link), class: "gap-1 my-0 font-bold flex items-center" do %>
-              <%= inline_icon "link", size: 24 %>
               <%= link.hashid %>
+              <%= inline_icon "copy", size: 24 %>
             <% end %>
-            <p class="my-0 text-sm flex items-center gap-1 text-muted">
-              <%= link.created_at.strftime("%B %e, %Y") %> &bull;
-              <%= user_mention link.creator %>&bull;
-              Expires <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %>
+            <p class="my-0 mt-1 text-sm flex items-center gap-1 text-muted">
+              <%= user_mention link.creator %>
+              <span class="tooltipped -ml-1.5" aria-label="Created <%= link.created_at.strftime("%B %e, %Y") %>">
+                &bull; Expires <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %>
+              </span>
             </p>
-            <p class="my-0">Used <%= pluralize(link.requests.size, "times") %></p>
           </div>
           <div class="flex-grow"></div>
-          <%= pop_icon_to "copy",
-                          link_url(link),
-                          class: "tooltipped",
-                          data: {
-                            clipboard_text: link_url(link),
-                          },
-                          "aria-label": "Copy link to clipboard" %>
+          <div class="tooltipped flex items-center text-muted mr-2 cursor-pointer" aria-label="Used <%= pluralize(link.requests.size, "times") %>">
+              <%= inline_icon "link", size: 24 %>
+              <%= link.requests.size %>
+          </div>
           <%= pop_icon_to "delete",
                           deactivate_link_path(link),
                           class: "error tooltipped",

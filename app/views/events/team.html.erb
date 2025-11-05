@@ -177,7 +177,7 @@
     <%= render "organizer_position_invite/links/form", event: @event %>
     <%= render "organizer_position_invite/links/link_list", event: @event, invite_links: @invite_links %>
 
-    <h3 class="mt-4 mb-2">Email</h3>
+    <h3 class="mt-10 mb-2">Email</h3>
     <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
   </section>
 <% end %>
