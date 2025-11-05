@@ -28,6 +28,7 @@ class AnnouncementMailer < ApplicationMailer
 
     @monthly_announcement = params[:monthly_announcement]
     @scheduled_for = Date.today.next_month.beginning_of_month
+    @warning_date = @scheduled_for - 7.days
 
     mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
   end
