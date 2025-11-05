@@ -23,7 +23,7 @@ class EventMailerPreview < ActionMailer::Preview
   end
 
   def transparency_mode_enabled
-    EventMailer.with(event: Event.first, whodunnit: User.system_user).transparency_mode_enabled
+    EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).transparency_mode_enabled
   end
 
   def monthly_announcements_enabled
