@@ -452,7 +452,7 @@ class Event < ApplicationRecord
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
-  after_update if: -> { is_public_previously_changed? } do
+  after_update if: :is_public_previously_changed? do
     whodunnit = User.find(self.versions.where_object_changes(is_public:).last.whodunnit)
     if is_public
       EventMailer.with(event: self, whodunnit:).transparency_mode_enabled.deliver_later
