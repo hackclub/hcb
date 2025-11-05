@@ -1,7 +1,7 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
 <p>
-  <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (<%= @event.users.include?(@whodunnit) ? "an organization manager" : "a HCB admin"%>) has enabled transparency mode for <%= @event.name %>.
+  <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (an <%= @event.users.include?(@whodunnit) ? "organization manager" : "HCB admin"%>) has enabled transparency mode for <%= @event.name %>.
   With transparency mode enabled:
 </p>
 
