@@ -1,7 +1,7 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
 <p>
-  A manager on your team has enabled transparency mode for <%= @event.name %>.
+  <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (<%= @event.users.include?(@whodunnit) ? "an organization manager" : "a HCB admin"%>) has enabled transparency mode for <%= @event.name %>.
   With transparency mode enabled:
 </p>
 
@@ -17,7 +17,7 @@
       <li>Check recipients</li>
     </ul>
   </li>
-  <li>Your <%= link_to "announcements page", event_announcement_overview(@event) %> will always be visible.</li>
+  <li>Your <%= link_to "announcements page", event_announcement_overview_url(@event) %> will always be visible.</li>
 </ul>
 
 <p>

@@ -1,7 +1,7 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
 <p>
-  A manager on your team has enabled monthly announcements for <%= @event.name %>.
+  <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (<%= @event.users.include?(@whodunnit) ? "an organization manager" : "a HCB admin"%>) has enabled monthly announcements for <%= @event.name %>.
   This is a feature that automatically generates an announcement each month to send out to your followers.
   For more information about announcements, check out <%= link_to "our blog post", "https://blog.hcb.hackclub.com/posts/organization-announcements" %>.
 </p>
