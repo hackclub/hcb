@@ -254,6 +254,7 @@ Rails.application.routes.draw do
       get "employee_payments", to: "admin#employee_payments"
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
+      get "email_html", to: "admin#email_html"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
       post "referral_program_create", to: "admin#referral_program_create"
@@ -548,6 +549,7 @@ Rails.application.routes.draw do
       post "update_currency"
       post "draft"
       get "wise_transfer_quote"
+      get "wise_transfer_breakdown"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"

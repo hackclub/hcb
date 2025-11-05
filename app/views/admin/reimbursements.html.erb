@@ -34,7 +34,7 @@
   </thead>
   <tbody>
     <% @reports.each do |report| %>
-      <tr class="<%= "admin-bg-pending" if report.reimbursement_requested? %>">
+      <tr class="<%= "admin-bg-pending" if report.reimbursement_requested? %> <%= "admin-bg-orange" if report.id.in?(@unprocessed_wise_report_ids) %>">
         <td class="w-16"><%= report.id %></td>
         <td class="w-32"><%= report.created_at.strftime("%Y-%m-%d") %></td>
         <td>

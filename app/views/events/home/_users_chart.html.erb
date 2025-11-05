@@ -1,7 +1,7 @@
 <%= turbo_frame_tag "users" do %>
-  <div id="users-chart">
+  <div id="users-chart" style="height: 100%">
     <% if users.empty? %>
-      <div class="flex flex-1 flex-col items-center justify-center">
+      <div class="flex flex-1 flex-col items-center justify-center" style="height: 100%">
         <div class="text-center">
           <h3 class="text-2xl font-bold mb-0">
             Not enough data
