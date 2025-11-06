@@ -8,4 +8,9 @@
   <p>
     Alternatively, <em>reply to this email with an image or PDF receipt attached</em>. When responding with a receipt, include a line beginning with <em>@rename</em> to rename the transaction or with <em>@tag</em> to tag the transaction.
   </p>
+  <% if @reply_to.present? %>
+    <p>
+      You can also email <a href="mailto:<%= @reply_to %>"><%= @reply_to %></a> with your receipt.
+    </p>
+  <% end %>
 <% end %>
