@@ -38,7 +38,8 @@
   }
 }
 
-.menu__content {
+.menu__content,
+.dropdown-button__menu {
   display: none;
   cursor: initial;
   min-width: 14rem;
@@ -161,9 +162,12 @@
 }
 
 .menu__content > a,
-.menu__action {
-  display: flex;
-  align-items: center;
+.menu__action,
+.dropdown-button__menu label {
+  &:not(.dropdown-button__menu label) {
+    display: flex;
+    align-items: center;
+  }
   font-weight: 500;
   line-height: 1.5;
   padding: 0.75rem 0.5rem;
