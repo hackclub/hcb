@@ -6,5 +6,5 @@ json.array! @designs do |design|
   json.status design.stripe_status
   json.unlisted design.unlisted?
   json.common design.common
-  json.logo_url rails_blob_url(design.logo) if design.logo.attached?
+  json.logo_url design.logo.attached? ? rails_blob_url(design.logo) : nil
 end
