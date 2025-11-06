@@ -3,9 +3,6 @@
 <% disabled = !policy(@user).update? %>
 
 <%= render "users/nav", selected: :settings_notifications %>
-<h1>
-  Settings
-</h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_header", active: "notifications" %>
   <section>
