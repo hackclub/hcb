@@ -2,6 +2,7 @@
 
 class WiseTransfersController < ApplicationController
   include SetEvent
+  include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_wise_transfer, only: %i[update approve reject mark_sent mark_failed]
@@ -35,11 +36,13 @@ class WiseTransfersController < ApplicationController
     else
       render "new", status: :unprocessable_entity
     end
+
   end
 
   def approve
     authorize @wise_transfer
 
+    ensure_admin_may_approve!(@wise_transfer, amount_cents: @wise_transfer.quoted_usd_amount_cents)
     @wise_transfer.mark_approved!
 
     redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "You have assigned yourself to this Wise transfer." }

@@ -3,33 +3,17 @@
     } do |form| %>
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
-    <div class="field field--options" style="max-width: none;">
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::AchTransfer" %>
-      <%= form.label :payout_method_type, value: "User::PayoutMethod::AchTransfer" do %>
-        <%= inline_icon "payment-transfer", size: 28 %>
-        <strong>ACH transfer</strong>
-        <small>(1-3 biz. days)</small>
-      <% end %>
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::Check" %>
-      <%= form.label :payout_method_type, value: "User::PayoutMethod::Check" do %>
-        <%= inline_icon "email", size: 28 %>
-        <strong>Mailed check</strong>
-        <small>(10-12 biz. days)</small>
-      <% end %>
-      <%= form.radio_button :payout_method_type, "User::PayoutMethod::Wire" %>
-      <%= form.label :payout_method_type, value: "User::PayoutMethod::Wire" do %>
-        <%= inline_icon "web", size: 28 %>
-        <strong>International wire</strong>
-        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-        <small>(1-5 biz. days)</small>
-      <% end %>
+    <div class="field field--options mb-4" style="max-width: none;">
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer" %>
+
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email" %>
+
       <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
-        <%= form.radio_button :payout_method_type, "User::PayoutMethod::WiseTransfer" %>
-        <%= form.label :payout_method_type, value: "User::PayoutMethod::WiseTransfer" do %>
-          <%= inline_icon "wise", size: 28 %>
-          <strong>Wise transfer</strong>
-          <small>(1-3 biz. days)</small>
-        <% end %>
+        <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise" %>
+      <% end %>
+
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web" do %>
+        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
       <% end %>
     </div>
   </fieldset>
@@ -40,6 +24,15 @@
   <% end %>
   <section data-behavior="check_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Check) %>">
     <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::Check) ? user.payout_method : User::PayoutMethod::Check.new do |form| %>
+      <%= render "callout",
+        type: "info",
+        icon: "email",
+        title: "Important information about mailed checks",
+        class: "mt-2 mb-5",
+        footer: :questions do %>
+        Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
+      <% end %>
+
       <div class="field">
         <%= form.label :address_line1, "Street address" %>
         <%= form.text_field :address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1] %>
@@ -80,6 +73,15 @@
 
   <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
     <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
+      <%= render "callout",
+        type: "info",
+        icon: "web",
+        title: "Important information about Wire reimbursements",
+        class: "mt-2 mb-5",
+        footer: :questions do %>
+        International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
+      <% end %>
+
       <%= render partial: "wires/recipient_details", locals: { form:, disabled: false, required: false } %>
 
       <%= render partial: "wires/account_details", locals: { form:, disabled: false, required: false, account_number_field_name: :account_number } %>
@@ -95,11 +97,20 @@
   <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
     <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= user.payout_method.try(:currency) ? "'#{user.payout_method.currency}'" : "null" %>, amount: null, account_type: <%= user.payout_method.try(:account_type) ? "'#{user.payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= user.payout_method.try(:use_same_email_for_interac) ? "'#{user.payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
       <%= form.fields_for :payout_method_wise_transfer, user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) ? user.payout_method : User::PayoutMethod::WiseTransfer.new do |form| %>
+        <%= render "callout",
+          type: "info",
+          icon: "wise",
+          title: "Important information about Wise reimbursements",
+          class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-2 mb-5",
+          footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+          We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
+        <% end %>
+
         <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: false } %>
 
         <div class="field">
           <%= form.label :currency, "Currency" %>
-          <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+          <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { "@change" => "currency = $event.target.value;" } %>
         </div>
 
         <%= form.hidden_field :wise_recipient_id, value: "" %>
@@ -169,6 +180,15 @@
       }
     }">
     <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) ? user.payout_method : User::PayoutMethod::AchTransfer.new do |form| %>
+      <%= render "callout",
+        type: "info",
+        icon: "payment-transfer",
+        title: "Important information about ACH transfers",
+        class: "mt-2 mb-5",
+        footer: :questions do %>
+        ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.
+      <% end %>
+
       <div
         class="field"
         data-controller="external-validation"

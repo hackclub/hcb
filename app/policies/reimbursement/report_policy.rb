@@ -15,7 +15,11 @@ module Reimbursement
     end
 
     def wise_transfer_quote?
-      admin || team_member || creator || auditor
+      show?
+    end
+
+    def wise_transfer_breakdown?
+      show?
     end
 
     def edit?
@@ -36,6 +40,10 @@ module Reimbursement
 
     def request_reimbursement?
       (admin || (manager && !creator)) && open
+    end
+
+    def convert_to_wise_transfer?
+      admin && !record.event.financially_frozen?
     end
 
     def request_changes?

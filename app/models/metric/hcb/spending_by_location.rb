@@ -43,7 +43,7 @@ class Metric
           END AS location",
           "(SUM(amount_cents)) * -1 AS amount_spent"
         )
-                            .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
+                            .where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year)
                             .group(
                               "CASE
             WHEN COALESCE(stripe_transaction->'merchant_data'->>'state', '') <> '' THEN

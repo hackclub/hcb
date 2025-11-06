@@ -13,9 +13,9 @@
       </tr>
     <% end %>
     <tr>
-      <td>Name:</td>
+      <td>Name on account:</td>
       <td>
-        <%= report.user.name %>
+        <%= report.user.payout_method.account_holder %>
       </td>
     </tr>
     <tr>
@@ -46,7 +46,7 @@
       <td>Recipient country:</td>
       <td><%= report.user.payout_method.recipient_country %></td>
     </tr>
-    <% WiseTransfer.recipient_information_accessors&.each do |key| %>
+    <% WiseTransfer.recipient_information_accessors.each do |key| %>
       <% if report.user.payout_method.recipient_information[key].presence != nil %>
         <tr>
           <td><%= key.humanize %></td>

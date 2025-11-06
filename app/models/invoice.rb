@@ -148,6 +148,7 @@ class Invoice < ApplicationRecord
 
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
+  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment0"].present? }
 
   aasm timestamps: true do
     state :open_v2, initial: true
@@ -190,6 +191,12 @@ class Invoice < ApplicationRecord
   validates :item_amount, numericality: { greater_than_or_equal_to: 100, message: "must be at least $1" }
 
   before_create :set_defaults
+
+  after_create_commit -> {
+    unless OrganizerPosition.find_by(user: creator, event: event)&.manager?
+      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
+    end
+  }
 
   # Stripe syncing…
   before_destroy :close_stripe_invoice
@@ -273,7 +280,14 @@ class Invoice < ApplicationRecord
     self.auto_advance = inv.auto_advance
     self.due_date = Time.at(inv.due_date).to_datetime # convert from unixtime
     self.ending_balance = inv.ending_balance
-    self.finalized_at = inv.respond_to?(:status_transitions) ? inv.status_transitions.finalized_at : inv.try(:finalized_at)
+
+    finalized_value = if inv.respond_to?(:status_transitions)
+                        inv.status_transitions.finalized_at
+                      else
+                        inv.try(:finalized_at)
+                      end
+    self.finalized_at = finalized_value ? Time.at(finalized_value.to_i).to_datetime : nil
+
     self.hosted_invoice_url = inv.hosted_invoice_url
     self.invoice_pdf = inv.invoice_pdf
     self.livemode = inv.livemode

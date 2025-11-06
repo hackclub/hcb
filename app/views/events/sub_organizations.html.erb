@@ -2,9 +2,16 @@
 <% page_md %>
 <%= render "events/nav", selected: :sub_organizations %>
 
+<% if organizer_signed_in? %>
+  <%= turbo_stream_from @event, :scoped_tags %>
+<% end %>
+
 <h1 class="heading flex">
   <span class="flex-grow">Sub-organizations</span>
-  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
+  <%= pop_icon_to "download",
+                  { format: :csv },
+                  class: "align-middle tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
+  <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
     <%= inline_icon "plus" %>
     Create a subsidiary
   <% end %>
@@ -13,9 +20,11 @@
 <div class="flex items-center details-horiz details-horiz--lg mb-2" style="gap: 8px; pointer-events: none;">
     <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
       <div class="stat statset__wide" data-tour-step="balance">
-        <span class="stat__label">Sub-organization balance</span>
+        <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
         <span class="stat__value">
-          <%= render_money_amount(@event.descendant_total_balance_cents) %>
+          <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, request.query_parameters), loading: :lazy do %>
+            <strong>-</strong>
+          <% end %>
         </span>
       </div>
     </div>
@@ -25,42 +34,34 @@
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "search", form: %>
   <% end %>
+  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
 
+<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
+
 <ul class="grid grid--medium-narrow left-align w-100 mt0">
-  <%= render partial: "events/event_card", collection: @sub_organizations, as: :event %>
+  <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
 </ul>
 
 <% if policy(@event).create_sub_organization? %>
   <section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
-    <%= form_with(url: event_create_sub_organization_path(@event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
-      <%= modal_header "Create a sub-organization" %>
-      <div class="card border b--info mt2 mb2 container--sm mx-auto">
-        <p class="mt0 mb0">
-          Sub-organizations are subsidiaries of your organization. All members of <%= @event.name %> can access and view sub-organizations, but only managers can create and edit them.
-        </p>
-      </div>
+    <%= modal_header "Create a sub-organization" %>
+    <%= render "suborganizations/form", event: @event %>
+  </section>
+<% end %>
+
+<% if policy(@event).toggle_scoped_tag? %>
+  <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="create_scoped_tag">
+    <%= modal_header("Create sub-organization tag") %>
+    <%= form_with url: event_scoped_tags_path(@event), id: "create_scoped_tag_form", data: { turbo: false } do |form| %>
+      <%= form.hidden_field :subevent_id, value: "", id: "create_scoped_tag_subevent_id" %>
 
       <div class="field">
-        <%= form.label :name, "Project name", class: "bold" %>
-        <%= form.text_field :name, placeholder: "#{possessive(@event.name)} latest project" %>
+        <%= form.label :name, "Tag name" %>
+        <%= form.text_field :name, autofocus: true, style: "max-width: 100%", autocomplete: "off", data: { turbo: true }, required: true %>
       </div>
 
-      <div class="field">
-        <%= form.label :email, "Organizer email", class: "bold" %>
-        <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}" %>
-      </div>
-
-      <div class="field">
-        <%= form.label :cosigner_email, "Co-signer email", class: "bold" %>
-        <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18" %>
-      </div>
-
-      <small class="muted mt-0 mb-4">This project will be created on the <strong><%= @event.plan.label %></strong> plan</small>
-
-      <div class="inline-block">
-        <%= form.submit "Create sub-organization", class: "mt1", disabled: @event&.demo_mode? %>
-      </div>
+      <%= form.submit "Create", class: "btn bg-info mt-2 float-right" %>
     <% end %>
   </section>
 <% end %>

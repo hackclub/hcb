@@ -1,9 +1,19 @@
 <%# locals: (announcement:, show_event: false) %>
 
-<div class="card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft? %> w-full">
-  <% if show_event %>
-    <%= link_to announcement.event.name, event_announcement_overview_path(announcement.event) %>
-  <% end %>
+<div class="relative card flex flex-col gap-2 <%= "border-warning border-solid" if announcement.draft? %> w-full">
+  <div class="flex sm:items-center justify-between flex-col sm:flex-row">
+    <p class="my-0">
+      <%= user_mention announcement.author %>
+    </p>
+    <% if show_event %>
+      <p class="hidden sm:inline my-0 muted">&bull;&nbsp;</p>
+      <p class="mb-0 mt-2 sm:!my-0"><%= link_to announcement.event.name, event_announcement_overview_path(announcement.event) %></p>
+    <% end %>
+    <p class="homepage-eyebrow -order-1 sm:order-1 text-sm text-gray-500 sm:ml-auto mt-1 mb-2 sm:!my-0">
+      <%= (announcement.draft? ? announcement.created_at : announcement.published_at).strftime("%B %e, %Y") %>
+    </p>
+  </div>
+  <hr class="my-1 dark:!border-slate border-smoke">
   <div class="flex items-center justify-between">
     <h2 class="font-bold text-2xl my-0 no-underline text-white">
       <% if announcement.draft? %>
@@ -21,10 +31,5 @@
       </div>
     <% end %>
   </div>
-  <p class="italic my-0">
-    <%= announcement.draft? ? "Drafted" : "Published" %> by <%= user_mention announcement.author %> on <%= (announcement.draft? ? announcement.created_at : announcement.published_at).strftime("%B %e, %Y") %>
-  </p>
-  <hr class="my-1 dark:!border-slate border-smoke">
-
   <%= render partial: "announcements/announcement_body", locals: { announcement: } %>
 </div>

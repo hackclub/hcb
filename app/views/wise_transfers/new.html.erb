@@ -42,7 +42,8 @@
 
   <%= render partial: "recipient_details", locals: { form:, disabled: } %>
 
-  <h2 class="mb2 mt3">Payment information</h2>
+  <h2 class="mt3">Payment information</h2>
+  <p>Your payment recipient does not need a Wise account to receive funds. Transfers processed by Wise will be paid out via local bank transfer in the recipient's country.</p>
 
   <%= form.label :amount, "Currency & amount" %>
 

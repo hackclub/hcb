@@ -3,6 +3,8 @@
 module Reimbursement
   class ReportsController < ApplicationController
     include SetEvent
+    include Admin::TransferApprovable
+
     before_action :set_report_user_and_event, except: [:create, :quick_expense, :start, :finished]
     before_action :set_event, only: [:start, :finished]
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
@@ -79,6 +81,18 @@ module Reimbursement
       @with_fees_quote_amount = @report.wise_transfer_quote_amount
       @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
       @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+
+      render :wise_transfer_quote, layout: false
+    end
+
+    def wise_transfer_breakdown
+      authorize @report
+
+      @with_fees_quote_amount = @report.wise_transfer_quote_amount
+      @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
+      @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+
+      render :wise_transfer_breakdown, layout: false
     end
 
     def start
@@ -107,6 +121,15 @@ module Reimbursement
       flash[:success] = "Report successfully updated to #{new_currency}."
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.message
+    end
+
+    def convert_to_wise_transfer
+      authorize @report
+
+      wise_transfer = @report.convert_to_wise_transfer!(as: current_user)
+
+      flash[:success] = "Report successfully converted to Wise transfer."
+      redirect_to wise_transfer_process_admin_path(wise_transfer)
     end
 
     def finished
@@ -192,6 +215,8 @@ module Reimbursement
 
     def admin_approve
       authorize @report
+      # TODO: This does NOT consider currency
+      ensure_admin_may_approve!(@report, amount_cents: @report.amount_to_reimburse_cents)
 
       begin
         @report.with_lock do
@@ -216,7 +241,7 @@ module Reimbursement
 
             conversion_rate = (wise_total_without_fees_cents / @report.amount_to_reimburse_cents).round(4)
             @report.update(conversion_rate:)
-            approved_amount_usd_cents = @report.expenses.approved.sum { |expense| expense.amount_cents * expense.conversion_rate }
+            approved_amount_usd_cents = @report.expenses.approved.sum { |expense| (expense.amount_cents * expense.conversion_rate).floor }
             fee_expense_value = (wise_total_including_fees_cents - approved_amount_usd_cents.to_f) / 100
 
             @report.expenses.create!(
