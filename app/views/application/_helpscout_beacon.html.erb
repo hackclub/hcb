@@ -17,4 +17,11 @@
 
 <script type="text/javascript">
   window.Beacon('init', '<%= Credentials.fetch(:HELPSCOUT, :BEACON_ID) %>')
+  window.Beacon('config', {
+    display: {
+      position: 'left',
+      horizontalOffset: 245,
+      verticalOffset: 45,
+    }
+  });
 </script>
