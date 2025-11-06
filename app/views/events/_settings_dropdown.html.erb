@@ -30,10 +30,6 @@
                   tooltip: "Manage your tags",
                   selected: @settings_tab == "tags",
                   data: { turbo: true, turbo_action: "advance" } %>
-  <%= dock_item "Google Workspace",
-                event_g_suite_overview_path(event_id: @event.slug),
-                selected: local_assigns[:selected] == :google_workspace,
-                data: { turbo: true, turbo_action: "advance" } %>
   <%= dock_item "Feature previews",
                 edit_event_path(@event, tab: "features"),
                 tooltip: "Feature previews",

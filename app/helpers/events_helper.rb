@@ -151,6 +151,16 @@ module EventsHelper
         selected: selected == :promotions,
       }
     end
+    if organizer_signed_in?
+      items << {
+        name: "Google Workspace",
+        path: event_g_suite_overview_path(event_id: @event.slug),
+        tooltip: (!policy(@event).g_suite_overview? ? "Your organization isn't eligible for Google Workspace." : @event.g_suites.any? ? "Manage domain Google Workspace" : Flipper.enabled?(:google_workspace, @event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"),
+        icon: "google",
+        disabled: !policy(@event).g_suite_overview?,
+        selected: selected == :google_workspace,
+      }
+    end
     if policy(event).documentation?
       items << {
         name: "Documents",
