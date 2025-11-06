@@ -15,9 +15,8 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
     to = @cpt.stripe_card.user.email_address_with_name
     subject = "#{@cpt.local_hcb_code.receipt_required? ? "Upload a receipt for your transaction" : "New transaction"} at #{@cpt.smart_memo}"
     @reply_to = HcbCode.find_or_create_by(hcb_code: @cpt.hcb_code).receipt_upload_email
-    reply_to = @reply_to
 
-    mail to:, subject:, reply_to:
+    mail to:, subject:, reply_to: @reply_to
   end
 
   def notify_settled
