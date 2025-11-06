@@ -107,7 +107,7 @@ class StaticPagesController < ApplicationController
           "Cancel a HCB Transfer": :manager,
           "View a HCB Transfer": :reader
         },
-        _preface: "As a general rule, only managers can create/modify financial transfers"
+        _preface: "As a general rule, only owners and managers can create/modify financial transfers"
       },
       Cards: {
         "Order a card": :member,

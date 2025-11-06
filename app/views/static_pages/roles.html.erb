@@ -10,14 +10,15 @@
   </p>
 
   <p>
-    Now, in an organization on HCB, users can have one of three roles:
-    <strong>manager</strong>, <strong>member</strong>, or <strong>reader</strong>.
-    When you're inviting a user, you may select the role they receive.
+    Now, in an organization on HCB, users can have one of four roles:
+    <strong>owner</strong>, <strong>manager</strong>, <strong>member</strong>, or <strong>reader</strong>.
+    When you're inviting a user, you may select any role for them except for owner.
   </p>
 
   <p>The TL;DR is:</p>
   <ul>
-    <li><strong>Managers</strong> can do everything (just like before).</li>
+    <li><strong>Owners</strong> can do everything and sign the fiscal sponsorship contract</li>
+    <li><strong>Managers</strong> can do everything (just like before), but do not sign the contract</li>
     <li>
       <strong>Members</strong> can <em>spend</em>, but not <em>send</em> money,
       and can't edit the organization's settings.
@@ -27,7 +28,7 @@
   </ul>
 
   <%= render "callout", type: "info", title: "By default, your permissions have not changed" do %>
-    <p class="m0">All existing users are now managers.</p>
+    <p class="m0">All existing users are now managers or owners.</p>
   <% end %>
 
   <h2>Detailed breakdown</h2>
