@@ -24,12 +24,14 @@
   <script>
     const helpIcon = document.getElementById('help-icon');
     
-    window.Beacon('config', {
-      display: {
-        position: 'left',
-        horizontalOffset: helpIcon.getBoundingClientRect().left,
-        verticalOffset: document.documentElement.clientHeight - helpIcon.getBoundingClientRect().bottom + 25,
-      }
-    });
+    window.addEventListener("load", () => {
+      window.Beacon('config', {
+        display: {
+          position: 'left',
+          horizontalOffset: helpIcon.getBoundingClientRect().left,
+          verticalOffset: document.documentElement.clientHeight - helpIcon.getBoundingClientRect().bottom + 25,
+        }
+      });
+    })
   </script>
 <% end %>
