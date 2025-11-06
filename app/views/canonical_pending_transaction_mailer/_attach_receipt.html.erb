@@ -10,7 +10,7 @@
   </p>
   <% if @reply_to.present? %>
     <p>
-      You can also email <a href="mailto:<%= @reply_to %>"><%= @reply_to %></a> with your receipt.
+      You can also email <%= mail_to @reply_to %> with your receipt.
     </p>
   <% end %>
 <% end %>
