@@ -155,7 +155,15 @@ module EventsHelper
       items << {
         name: "Google Workspace",
         path: event_g_suite_overview_path(event_id: @event.slug),
-        tooltip: (!policy(@event).g_suite_overview? ? "Your organization isn't eligible for Google Workspace." : @event.g_suites.any? ? "Manage domain Google Workspace" : Flipper.enabled?(:google_workspace, @event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"),
+        tooltip: (if !policy(@event).g_suite_overview?
+                    "Your organization isn't eligible for Google Workspace."
+                  else
+                    if @event.g_suites.any?
+                      "Manage domain Google Workspace"
+                    else
+                      Flipper.enabled?(:google_workspace, @event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"
+                    end
+                  end),
         icon: "google",
         disabled: !policy(@event).g_suite_overview?,
         selected: selected == :google_workspace,
