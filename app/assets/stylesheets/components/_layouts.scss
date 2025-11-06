@@ -160,7 +160,7 @@ ul.mixed-grid {
     }
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 1000px) {
     .mixed-grid {
       grid-template-columns: repeat(3, minmax(5rem, 1fr));
     }
