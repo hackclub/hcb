@@ -9,6 +9,7 @@ json.call(
   :keyword_lock,
   :allowed_merchants,
   :allowed_categories,
+  :purpose,
   :one_time_use,
   :pre_authorization_required,
   :email
