@@ -24,6 +24,9 @@
   <%= dock_item "Feature previews",
                 @user == current_user ? settings_previews_path : previews_user_path(@user || current_user),
                 selected: local_assigns[:selected] == :settings_feature_previews %>
+  <%= dock_item "Integrations",
+                @user == current_user ? settings_integrations_path : integrations_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_integrations %>
   <%= dock_item "Admin",
                 @user == current_user ? settings_admin_path : admin_user_path(@user || current_user),
                 selected: local_assigns[:selected] == :settings_admin, admin: true %>
