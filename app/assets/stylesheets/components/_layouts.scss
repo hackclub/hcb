@@ -160,6 +160,12 @@ ul.mixed-grid {
     }
   }
 
+  @media (min-width: 1024px) {
+    .mixed-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
   a {
     text-decoration: none;
   }
