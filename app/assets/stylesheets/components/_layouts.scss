@@ -72,8 +72,16 @@
     @apply lg:hidden fixed bottom-0 left-0 w-full p-10 z-10 flex justify-center pointer-events-none;
 
     & .mobile-nav--trigger {
-      @apply rounded-full bg-gray-800 text-white px-5 py-3 max-w-full flex items-center pointer-events-auto gap-3 active:scale-90 transition-transform cursor-pointer;
+      @apply rounded-full text-black px-5 py-3 max-w-full flex items-center pointer-events-auto gap-3 active:scale-90 transition-transform cursor-pointer;
       width: 300px;
+      background-color: rgba(200, 200, 200, 0.4);
+      backdrop-filter: blur(15px);
+      box-shadow: var(--shadow-border-lg);
+
+      [data-dark='true'] & {
+        color: white;
+        background-color: rgba(50, 50, 50, 0.4);
+      }
     }
   }
 
