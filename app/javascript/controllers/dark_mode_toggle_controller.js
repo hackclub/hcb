@@ -16,7 +16,7 @@ export default class extends Controller {
       const targetTheme = target.getAttribute('data-value')
       target?.classList?.[selectedTheme === targetTheme ? 'add' : 'remove']?.(
         'hovered',
-        'font-bold'
+        'font-extrabold'
       )
     })
   }
