@@ -69,6 +69,13 @@
   }
 }
 
+@media (max-width: 600px) {
+  .stripe-card,
+  .emburse-card {
+    max-width: 25rem;
+  }
+}
+
 .emburse-card {
   background-color: #54d;
   background-image: radial-gradient(ellipse at top right, #867ae7, transparent);
