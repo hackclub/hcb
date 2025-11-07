@@ -50,7 +50,7 @@ class OrganizerPositionInvite
       authorize @link
 
       if @link.save
-        redirect_to event_team_path(event_id: @event.id), flash: { success: "Invite link successfully created." }
+        redirect_to event_team_path(event: @event), flash: { success: "Invite link successfully created." }
       else
         render :new, status: :unprocessable_entity
       end
@@ -60,9 +60,9 @@ class OrganizerPositionInvite
       authorize @link
 
       if @link.deactivate(user: current_user)
-        redirect_to event_team_path(event_id: @link.event.id), flash: { success: "Invite link successfully deactivated." }
+        redirect_to event_team_path(event: @link.event), flash: { success: "Invite link successfully deactivated." }
       else
-        redirect_to event_team_path(event_id: @link.event.id), flash: { error: "Failed to deactivate invite link." }
+        redirect_to event_team_path(event: @link.event), flash: { error: "Failed to deactivate invite link." }
       end
     end
 
