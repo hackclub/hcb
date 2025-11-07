@@ -217,7 +217,7 @@ ul.mixed-grid {
     grid-template-columns: repeat(2, minmax(10rem, 1fr));
   }
 }
-@media (min-width: 800px) {
+@media (min-width: 1000px) {
   .grid--spacious {
     grid-template-columns: repeat(3, minmax(10rem, 1fr));
     grid-gap: 1rem;
