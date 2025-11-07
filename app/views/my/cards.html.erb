@@ -9,7 +9,7 @@
   </span>
   <div class="flex ml-auto gap-3 items-center -mt-3">
     <%= render partial: "cards_filter_menu" unless @filter_applied %>
-    <button class="btn bg-success" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %>>
+    <button class="!ml-1 btn bg-success" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %>>
       <%= inline_icon "card-add" %>
       Order a card
     </button>

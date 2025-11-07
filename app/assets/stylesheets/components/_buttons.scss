@@ -81,7 +81,7 @@ input[type='submit'],
 
   &.bg-primary {
     background-color: map-get($palette, primary);
-    color: $white;
+    color: darken(map-get($palette, primary), 50%) !important;
 
     &:hover {
       background-color: darken(map-get($palette, primary), 5%);
@@ -104,8 +104,8 @@ input[type='submit'],
   }
 
   &.bg-blue {
-    background-color: map-get($palette, info);
-    color: $white;
+    background-color: lighten(map-get($palette, info), 13%);
+    color: darken(map-get($palette, info), 40%) !important;
 
     &:hover {
       background-color: darken(map-get($palette, info), 5%);
@@ -113,18 +113,19 @@ input[type='submit'],
 
     &:active,
     &:focus {
-      background-color: darken(map-get($palette, info), 10%);
+      background-color: map-get($palette, info);
+      color: darken(map-get($palette, info), 50%) !important;
     }
   }
 
   &.bg-muted {
     background-color: map-get($palette, muted);
-    color: $white;
+    color: darken(map-get($palette, muted), 50%) !important;
   }
 
   &.bg-warning {
     background-color: map-get($palette, warning);
-    color: $white;
+    color: darken(map-get($palette, warning), 33.3%) !important;
 
     html[data-dark='true'] & {
       color: darken(map-get($palette, warning), 33.3%) !important;
@@ -133,7 +134,7 @@ input[type='submit'],
 
   &.bg-purple {
     @include gradient(purple);
-    color: $white;
+    color: darken(map-get($palette, purple), 40%) !important;
 
     &:hover {
       background: darken(map-get($palette, purple), 5%);
@@ -146,7 +147,7 @@ input[type='submit'],
 
   &.bg-slate {
     @include gradient(slate);
-    color: $white;
+    color: darken(map-get($palette, slate), 40%) !important;
 
     &:hover {
       background: darken(map-get($palette, slate), 5%);
@@ -177,7 +178,7 @@ input[type='submit'],
 
   &.bg-accent {
     background-color: map-get($palette, accent);
-    color: darken(map-get($palette, accent), 50%);
+    color: darken(map-get($palette, accent), 50%) !important;
 
     &:hover {
       background-color: darken(map-get($palette, accent), 5%);
@@ -204,16 +205,18 @@ input[type='submit'],
 
 .btn.bg-info,
 input[type='submit'] {
-  background-color: map-get($palette, info);
-  color: $white !important;
+  background-color: lighten(map-get($palette, info), 13%);
+  color: darken(map-get($palette, info), 25%) !important;
 
   &:hover {
     background-color: darken(map-get($palette, info), 5%);
+    color: darken(map-get($palette, info), 40%) !important;
   }
 
   &:active,
   &:focus {
     background-color: darken(map-get($palette, info), 10%);
+    color: darken(map-get($palette, info), 40%) !important;
   }
 }
 

@@ -4,7 +4,7 @@
 <%= render "events/nav", selected: :announcements %>
 <%= render "followers_modal", event_follows: @event.event_follows %>
 
-<h1 class="flex heading items-center">
+<h1 class="flex heading items-center gap-2">
   <span class="flex-grow flex items-center flex-1">
     Announcements
     <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
