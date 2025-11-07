@@ -35,7 +35,7 @@
 <% if current_user.card_grants.activated.size > 0 %>
   <h2 class="user-home-section">Grants</h2>
 
-  <div class="mixed-grid grid--spacious md:grid-cols-[repeat(3,minmax(5rem,1fr))] lg:grid-cols-[repeat(2,minmax(5rem,1fr))] xl:grid-cols-[repeat(3,minmax(5rem,1fr))]" mb-12" style="grid-gap:1rem">
+  <div class="mixed-grid grid--spacious">
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
       <%= render grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
     <% end %>
