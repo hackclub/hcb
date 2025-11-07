@@ -66,6 +66,7 @@ RSpec.describe Api::V4::CardGrantsController do
           "allowed_merchants"          => [],
           "category_lock"              => [],
           "merchant_lock"              => [],
+          "purpose"                    => "Raffle prize",
           "keyword_lock"               => "some keywords",
           "email"                      => "recipient@example.com",
           "disbursements"              => [
