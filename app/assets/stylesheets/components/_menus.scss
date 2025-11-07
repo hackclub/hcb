@@ -193,6 +193,7 @@
   }
 
   &:hover,
+  &.hovered,
   &:focus {
     background-color: map-get($palette, selection);
   }

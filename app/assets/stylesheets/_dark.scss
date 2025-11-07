@@ -97,7 +97,8 @@ html[data-dark='true'] {
       fill: map-get($palette, muted);
     }
 
-    &:hover {
+    &:hover,
+    &.hovered {
       background-color: $dark;
     }
   }

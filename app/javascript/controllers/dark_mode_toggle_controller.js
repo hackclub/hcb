@@ -13,10 +13,10 @@ export default class extends Controller {
     const selectedTheme = getCookie('theme') || 'system'
     this.updateBlogEmbed(selectedTheme)
     this.toggleTargets.forEach(target => {
-      const check = target.querySelector('svg')
       const targetTheme = target.getAttribute('data-value')
-      check?.classList?.[selectedTheme === targetTheme ? 'remove' : 'add']?.(
-        'hidden'
+      target?.classList?.[selectedTheme === targetTheme ? 'add' : 'remove']?.(
+        'hovered',
+        'font-bold'
       )
     })
   }
