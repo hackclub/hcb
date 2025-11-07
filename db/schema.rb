@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -230,6 +230,28 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
+  end
+
+  create_table "applications", force: :cascade do |t|
+    t.string "aasm_state"
+    t.string "airtable_record_id"
+    t.string "status"
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.text "description", null: false
+    t.boolean "political", null: false
+    t.string "address_line1", null: false
+    t.string "address_line2"
+    t.string "address_city", null: false
+    t.string "address_state", null: false
+    t.string "address_postal_code", null: false
+    t.string "address_country", null: false
+    t.string "reference", null: false
+    t.string "referral_code"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_applications_on_user_id"
   end
 
   create_table "audits1984_audits", force: :cascade do |t|
@@ -2594,6 +2616,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
   add_foreign_key "announcements", "events"
   add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "applications", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
   add_foreign_key "canonical_event_mappings", "events"
