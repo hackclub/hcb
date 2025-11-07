@@ -6,18 +6,18 @@ class CreateApplications < ActiveRecord::Migration[8.0]
       t.string :status
 
       t.references :user, null: false, foreign_key: true
-      t.string :name, null: false
-      t.text :description, null: false
-      t.boolean :political, null: false
+      t.string :name
+      t.text :description
+      t.boolean :political
 
-      t.string :address_line1, null: false
+      t.string :address_line1
       t.string :address_line2
-      t.string :address_city, null: false
-      t.string :address_state, null: false
-      t.string :address_postal_code, null: false
-      t.string :address_country, null: false
+      t.string :address_city
+      t.string :address_state
+      t.string :address_postal_code
+      t.string :address_country
 
-      t.string :reference, null: false
+      t.string :reference
       t.string :referral_code
 
       t.text :notes

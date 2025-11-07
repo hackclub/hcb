@@ -6,17 +6,17 @@
 #
 #  id                  :bigint           not null, primary key
 #  aasm_state          :string
-#  address_city        :string           not null
-#  address_country     :string           not null
-#  address_line1       :string           not null
+#  address_city        :string
+#  address_country     :string
+#  address_line1       :string
 #  address_line2       :string
-#  address_postal_code :string           not null
-#  address_state       :string           not null
-#  description         :text             not null
-#  name                :string           not null
+#  address_postal_code :string
+#  address_state       :string
+#  description         :text
+#  name                :string
 #  notes               :text
-#  political           :boolean          not null
-#  reference           :string           not null
+#  political           :boolean
+#  reference           :string
 #  referral_code       :string
 #  status              :string
 #  created_at          :datetime         not null
@@ -33,10 +33,13 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Application < ApplicationRecord
+  include AASM
+
   belongs_to :user
 
   aasm do
-    state :submitted, initial: true
+    state :draft, initial: true
+    state :submitted
     state :approved
     state :rejected
   end

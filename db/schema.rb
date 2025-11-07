@@ -237,16 +237,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
     t.string "airtable_record_id"
     t.string "status"
     t.bigint "user_id", null: false
-    t.string "name", null: false
-    t.text "description", null: false
-    t.boolean "political", null: false
-    t.string "address_line1", null: false
+    t.string "name"
+    t.text "description"
+    t.boolean "political"
+    t.string "address_line1"
     t.string "address_line2"
-    t.string "address_city", null: false
-    t.string "address_state", null: false
-    t.string "address_postal_code", null: false
-    t.string "address_country", null: false
-    t.string "reference", null: false
+    t.string "address_city"
+    t.string "address_state"
+    t.string "address_postal_code"
+    t.string "address_country"
+    t.string "reference"
     t.string "referral_code"
     t.text "notes"
     t.datetime "created_at", null: false
