@@ -2,7 +2,7 @@
 <% page_md %>
 <% disabled = !policy(@user).update? %>
 
-<%= render "users/nav", selected: :settings %>
+<%= render "users/nav", selected: :settings_integrations %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_header", active: "integrations" %>
