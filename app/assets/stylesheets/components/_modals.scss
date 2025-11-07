@@ -41,10 +41,10 @@
     transform: translateX(100%) scale(0.9);
     bottom: 0px;
     max-width: 800px;
-    max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0rem;
     width: 66vw;
-    transition: transform 0.1s ease-in-out;
+    transition: transform 0.2s;
 
     .jquery-modal:not(:not([style*='opacity: 1'])) & {
       transform: translateX(0%);
@@ -55,7 +55,7 @@
     }
 
     @media (min-width: 48em) {
-      height: calc(100vh - 24px);
+      height: calc(100dvh - 24px);
       border-radius: var(--radius-xl);
       margin: 12px;
     }
