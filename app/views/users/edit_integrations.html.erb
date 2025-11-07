@@ -5,7 +5,7 @@
 <%= render "users/nav", selected: :settings %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "integrations" %>
+  <%= render "settings_header", active: "integrations" %>
   <section>
     <%= render "integrations/discord_integration", active: @user.has_discord_account?, unlink_path: discord_unlink_user_path, disabled: do %>
       <%= modal_header "Setup Discord integration" %>
