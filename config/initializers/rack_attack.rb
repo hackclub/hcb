@@ -107,8 +107,14 @@ class Rack::Attack
     end
   end
 
-  throttle("/hq/transactions/ip", limit: 15, period: 20.seconds) do |req|
-    if (req.path.start_with?("/hq/transactions") || req.path.start_with?("/hq/ledger")) && req.cookies[:session_token].nil?
+  throttle("/hq/transactions/ip", limit: 25, period: 1.minute) do |req|
+    if req.path.start_with?("/hq/transactions") && req.cookies[:session_token].nil?
+      req.ip
+    end
+  end
+
+  throttle("/hq/ledger/ip", limit: 30, period: 1.minute) do |req|
+    if req.path.start_with?("/hq/ledger") && req.cookies[:session_token].nil?
       req.ip
     end
   end
