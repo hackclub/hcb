@@ -27,14 +27,6 @@ class Announcement
     has_one :event, through: :announcement
 
     before_save { self.parameters ||= {} }
-    after_create :refresh!
-
-    def refresh!
-      self.rendered_html = render
-      self.rendered_email_html = render(is_email: true)
-
-      save!
-    end
 
     def render(event: nil, is_email: false)
       if event.present? && event != announcement.event
