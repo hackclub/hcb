@@ -80,11 +80,11 @@ input[type='submit'],
   }
 
   &.bg-primary {
-    background-color: map-get($palette, primary);
+    background-color: saturate(lighten(map-get($palette, primary), 13%), 10%);
     color: darken(map-get($palette, primary), 50%) !important;
 
     &:hover {
-      background-color: darken(map-get($palette, primary), 5%);
+      background-color: map-get($palette, primary);
     }
 
     &:active,
@@ -104,7 +104,7 @@ input[type='submit'],
   }
 
   &.bg-blue {
-    background-color: lighten(map-get($palette, info), 13%);
+    background-color: lighten(map-get($palette, info), 15%);
     color: darken(map-get($palette, info), 40%) !important;
 
     &:hover {
@@ -146,15 +146,15 @@ input[type='submit'],
   }
 
   &.bg-slate {
-    @include gradient(slate);
+    background: lighten(map-get($palette, slate), 25%);
     color: darken(map-get($palette, slate), 40%) !important;
 
     &:hover {
-      background: darken(map-get($palette, slate), 5%);
+      background: lighten(map-get($palette, slate), 20%);
     }
     &:active,
     &:focus {
-      background: darken(map-get($palette, slate), 10%);
+      background: lighten(map-get($palette, slate), 15%);
     }
   }
 
@@ -205,7 +205,7 @@ input[type='submit'],
 
 .btn.bg-info,
 input[type='submit'] {
-  background-color: lighten(map-get($palette, info), 13%);
+  background-color: lighten(map-get($palette, info), 15%);
   color: darken(map-get($palette, info), 25%) !important;
 
   &:hover {
