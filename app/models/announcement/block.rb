@@ -4,14 +4,12 @@
 #
 # Table name: announcement_blocks
 #
-#  id                  :bigint           not null, primary key
-#  parameters          :jsonb
-#  rendered_email_html :text
-#  rendered_html       :text
-#  type                :string           not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  announcement_id     :bigint           not null
+#  id              :bigint           not null, primary key
+#  parameters      :jsonb
+#  type            :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  announcement_id :bigint           not null
 #
 # Indexes
 #
@@ -23,6 +21,8 @@
 #
 class Announcement
   class Block < ApplicationRecord
+    self.ignored_columns += ["rendered_html", "rendered_email_html"]
+
     belongs_to :announcement
     has_one :event, through: :announcement
 
