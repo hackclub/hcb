@@ -273,7 +273,6 @@ class EventsController < ApplicationController
 
   def team
     authorize @event
-    @settings_tab = "team"
 
     case params[:filter]
     when "members"
