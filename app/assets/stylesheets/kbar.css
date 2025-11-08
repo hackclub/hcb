@@ -39,3 +39,6 @@ html[data-dark='true'] {
   width: 0;
   height: 0;
 }
+[role='listbox'] * {
+  font-family: inherit !important;
+}

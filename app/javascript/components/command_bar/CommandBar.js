@@ -67,8 +67,6 @@ const animatorStyle = {
   borderRadius: 'var(--radius-2xl)',
   overflow: 'hidden',
   boxShadow: 'var(--shadow-modal)',
-  fontFamily: `ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 
-               Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif`,
 }
 
 function SearchAndResults() {
