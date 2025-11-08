@@ -6,12 +6,6 @@ class InvoicesController < ApplicationController
   before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
-  INVOICE_FILTERS = [
-    { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
-    { key_base: "created", label: "Date", type: "date_range" },
-    { key_base: "amount", label: "Amount", type: "amount_range" }
-  ].freeze
-
   def index
     authorize @event, :invoices?
     relation = @event.invoices
@@ -102,9 +96,10 @@ class InvoicesController < ApplicationController
       end
     end
 
-    @filter_options = INVOICE_FILTERS
-    helpers.validate_filter_options(INVOICE_FILTERS, params)
-    @has_filter = helpers.check_filters?(INVOICE_FILTERS, params)
+
+    @filter_options = filter_options
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def new
@@ -263,6 +258,17 @@ class InvoicesController < ApplicationController
       :sponsor_id,
       sponsor_attributes: policy(Sponsor).permitted_attributes
     )
+  end
+
+  def filter_options
+    min_amount = @event.invoices.minimum(:item_amount) || 0
+    max_amount = @event.invoices.maximum(:item_amount) || 0
+
+    [
+      { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
+      { key_base: "created", label: "Date", type: "date_range" },
+      { key_base: "amount", label: "Amount", type: "amount_range", range: [min_amount / 100, max_amount / 100] }
+    ]
   end
 
 end

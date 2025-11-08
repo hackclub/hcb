@@ -1,0 +1,23 @@
+<% title "Request to join #{@link.event.name}" %>
+
+<main class="center max-width-3 card my-5 md-p3 mx-auto">
+  <p class="muted caps bold mb1">
+    <%= user_mention @link.creator %> invited you to join
+  </p>
+
+  <h1 class="mt0"><%= @link.event.name %></h1>
+
+  <% if @organizers.any? %>
+    <div class="flex justify-center flex-wrap">
+      <% @organizers.each do |position| %>
+        <div class="tooltipped tooltipped--s mr1" aria-label="<%= position.user.name %>">
+          <%= avatar_for position.user, size: 64 %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex justify-center items-center flex-wrap mt3">
+    <%= link_to "Request to join", requests_path(link_id: @link.hashid), method: :post, class: "btn bg-success h2 m1" %>
+  </div>
+</main>

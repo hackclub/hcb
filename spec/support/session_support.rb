@@ -25,7 +25,7 @@ module SessionSupport
 
     cookies.encrypted[:session_token] = {
       value: user_session.session_token,
-      expires: expiration_at,
+      expires: UserSession::MAX_SESSION_DURATION.from_now,
       httponly: true,
       secure: true,
     }

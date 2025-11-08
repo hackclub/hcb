@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
   include Pundit::Authorization
   include SessionsHelper
   include PublicActivity::StoreController
+  include SetGovernanceRequestContext
 
   protect_from_forgery
 
