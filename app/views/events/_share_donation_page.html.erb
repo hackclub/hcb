@@ -62,15 +62,15 @@
           </div>
         </div>
         <div class="flex-1">
-          <div class="w-full iconsGrid grid grid-cols-5 sm:grid-cols-3 gap-2 w-fit *:bg-snow *:rounded-xl *:cursor-pointer">
-            <%= inline_icon "view-close", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('blank')" %>
-            <%= inline_icon "bank-account", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('icon')" %>
-            <%= inline_icon "support", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('support')" %>
+          <div class="w-full iconsGrid grid grid-cols-5 sm:grid-cols-3 gap-2 w-fit *:p-2 *:sm:p-4 *:aspect-square *:w-full *:rounded-xl *:cursor-pointer">
+            <%= inline_icon "view-close", size: 56, class: "btn h-auto", onclick: "changeCode('blank')" %>
+            <%= inline_icon "bank-account", size: 56, class: "btn h-auto", onclick: "changeCode('icon')" %>
+            <%= inline_icon "support", size: 56, class: "btn h-auto", onclick: "changeCode('support')" %>
             <% if @event.logo.attached? %>
-              <%= image_tag @event.logo, slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('logo')" %>
+              <%= image_tag @event.logo, slot: "icon", class: "btn h-auto", onclick: "changeCode('logo')" %>
             <% end %>
-            <%= image_tag "logo-production.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-full", onclick: "changeCode('bank')" %>
-            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-full", onclick: "changeCode('bank-dark')" %>
+            <%= image_tag "logo-production.svg", slot: "icon", class: "btn h-full", onclick: "changeCode('bank')" %>
+            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "btn h-full", onclick: "changeCode('bank-dark')" %>
           </div>
           <button class="btn mt-2 w-full" onclick="saveActiveQRCodeAsImage()" id="downloadButton">Download</button>
         </div>
