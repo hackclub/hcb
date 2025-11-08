@@ -142,6 +142,10 @@ tr.clickable {
 
   & td {
     pointer-events: none;
+
+    & .tooltipped {
+      pointer-events: auto;
+    }
   }
 
   a.stretched-link {
