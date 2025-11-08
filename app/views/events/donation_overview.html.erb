@@ -124,7 +124,6 @@
         <th>Date</th>
         <th>From</th>
         <th class="text-right">Amount</th>
-        <th></th>
       </tr>
     </thead>
 
@@ -155,10 +154,7 @@
           </td>
           <td style="text-align: right;">
             <%= render_money(d.amount) %>
-          </td>
-          <td>
-            <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-            <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
+            <%= link_to "", hcb_code_url(d.hcb_code), class:"stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
           </td>
         </tr>
         <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
