@@ -3,9 +3,9 @@
   border: none;
   margin-top: -0.25rem;
   margin-bottom: -0.5rem;
-  height: 32px;
+  height: 24px;
   border-radius: var(--radius-sm);
-  padding: 0 0.33rem;
+  padding: 0 0.4rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -26,10 +26,6 @@
   &.active {
     color: map-get($palette, info);
     font-weight: 700;
-  }
-
-  &:first-child {
-    margin-left: 0.2rem;
   }
 
   &.bordered {
