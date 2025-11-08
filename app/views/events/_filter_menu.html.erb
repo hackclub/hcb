@@ -10,7 +10,7 @@
   </button>
   <div class="menu__content menu__content--2 menu__content--compact h5 w-[350px] h-[400px] p-0" data-menu-target="content" data-controller="filter">
     <div class="grid grid-cols-3 h-full gap-0" data-controller="tabs" data-tabs-default-tab-value="<%= @tag ? "tags" : @user ? "user" : @type ? "type" : @start_date || @end_date ? "date" : @maximum_amount || @minimum_amount ? "amount" : @event.tags.size > 0 ? "tags" : "user" %>">
-      <div class="bg-smoke dark:bg-dark flex flex-col items-start gap-1 p-3">
+      <div class="bg-gray-100 dark:bg-dark flex flex-col items-start gap-1 p-3">
         <% if @event.tags.size > 0 %>
           <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
         <% end %>

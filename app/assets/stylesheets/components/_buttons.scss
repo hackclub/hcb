@@ -209,7 +209,7 @@ input[type='submit'] {
   color: darken(map-get($palette, info), 25%) !important;
 
   &:hover {
-    background-color: ligthen(map-get($palette, info), 10%);
+    background-color: lighten(map-get($palette, info), 10%);
     color: darken(map-get($palette, info), 40%) !important;
   }
 

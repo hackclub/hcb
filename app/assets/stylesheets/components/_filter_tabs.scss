@@ -1,8 +1,6 @@
 [data-tabs-target='btn'] {
   background: transparent;
   border: none;
-  margin-top: -0.25rem;
-  margin-bottom: -0.5rem;
   height: 24px;
   border-radius: var(--radius-sm);
   padding: 0 0.4rem;
@@ -10,10 +8,11 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: inherit;
+  font-size: 15px;
   font-weight: 500;
   transition: background-color 0.125s ease;
   white-space: nowrap;
+  opacity: 0.6;
 
   &:hover {
     background-color: rgba(200, 200, 200, 0.2);
@@ -25,7 +24,8 @@
 
   &.active {
     color: map-get($palette, info);
-    font-weight: 700;
+    font-weight: 500;
+    opacity: 1;
   }
 
   &.bordered {
