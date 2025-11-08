@@ -140,7 +140,11 @@ tr.clickable {
   transform: rotate(0);
   overflow: visible; // for tooltips
 
-  a.stretched-link::after {
+  & td {
+    pointer-events: none;
+  }
+
+  a.stretched-link {
     position: absolute;
     top: 0;
     right: 0;
@@ -168,7 +172,7 @@ tr.clickable {
     border-color: rgba(0, 0, 0, 0);
   }
 
-  &:hover a.stretched-link::after {
+  &:hover a.stretched-link {
     background-color: map-get($palette, white);
     box-shadow: var(--shadow-border-xs);
 
