@@ -1,7 +1,7 @@
 <%= turbo_frame_tag "categories" do %>
   <% if !@categories.empty? %>
     <div id="categories-chart">
-      <h3 class="mt2 mb2">Top categories</h3>
+      <h3 class="sm:mt-2 mb-2">Top categories</h3>
       <%= react_component "home/Categories", { data: @categories }, { camelize_props: false } %>
     </div>
     <%# Only shown if merchants chart is visible to prevent awkward gap %>

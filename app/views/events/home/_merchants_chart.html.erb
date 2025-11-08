@@ -1,7 +1,7 @@
 <%= turbo_frame_tag "merchants" do %>
   <% if !@merchants.empty? %>
     <div id="merchants-chart">
-      <h3 class="mt2 mb2">Top merchants</h3>
+      <h3 class="sm:mt-2 mb-2">Top merchants</h3>
       <div style="width: calc(100% + 20px)">
         <%= react_component "home/Merchants", { data: @merchants }, { camelize_props: false } %>
       </div>
