@@ -174,7 +174,7 @@ export const initalActions = [
     keywords: 'receipts inbox',
     perform: navigate('/my/inbox'),
     section: 'Pages',
-    icon: <Icon glyph="receipt" size={16} />,
+    icon: <Icon glyph="docs" size={16} />,
     priority: Priority.HIGH,
   },
   {

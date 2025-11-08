@@ -119,18 +119,20 @@ export function KBarInput(props) {
       placeholder ||
       (currentRootActionId && actions[currentRootActionId]
         ? actions[currentRootActionId].label ||
-          actions[currentRootActionId].name
+        actions[currentRootActionId].name
         : defaultText)
     )
   }, [actions, currentRootActionId, defaultPlaceholder, placeholder])
 
   return (
-    <div style={{ marginBottom: '-8px' }}>
+    <div style={{ borderBottom: '1px solid var(--kbar-border)', marginBottom: 10 }}>
       <RichTextarea
         {...rest}
         style={{
-          padding: '12px 16px',
-          fontSize: '16px',
+          padding: '20px',
+          paddingBottom: '10px',
+          fontWeight: '700',
+          fontSize: '20px',
           width: '100%',
           boxSizing: 'border-box',
           outline: 'none',
