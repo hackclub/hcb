@@ -5,13 +5,13 @@
     <header class="pb-8">
       <%= modal_close %>
       <h2 class="mt-0 mb-4">Share</h2>
-      <div class="flex -mx-[35px] px-[23px] sm:-mb-1">
-        <button id="link" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Link</button>
-        <button id="qr" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">QR code</button>
+      <div class="flex -mx-[35px] px-[23px] sm:-mb-3">
+        <button id="link" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">Link</button>
+        <button id="qr" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">QR code</button>
         <% if @event.is_public? %>
-          <button id="donor_graph" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Donor&nbsp;graph</button>
+          <button id="donor_graph" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">Donor&nbsp;graph</button>
         <% end %>
-        <button id="embed" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Embed</button>
+        <button id="embed" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">Embed</button>
       </div>
     </header>
 
