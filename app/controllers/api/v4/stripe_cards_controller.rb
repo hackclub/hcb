@@ -156,6 +156,20 @@ module Api
 
       end
 
+      def card_designs
+        if params[:event_id].present?
+          set_api_event
+          authorize @event, :create_stripe_card?, policy_class: EventPolicy
+
+          @designs = [event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
+        else
+          skip_authorization
+          @designs = StripeCard::PersonalizationDesign.common.available
+        end
+
+        @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
+      end
+
     end
   end
 end

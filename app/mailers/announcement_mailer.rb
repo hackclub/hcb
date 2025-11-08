@@ -28,17 +28,9 @@ class AnnouncementMailer < ApplicationMailer
 
     @monthly_announcement = params[:monthly_announcement]
     @scheduled_for = Date.today.next_month.beginning_of_month
+    @warning_date = @scheduled_for - 7.days
 
-    @cancellation_email = Ahoy::Message.where(sent_at: Date.today.beginning_of_month.., subject: "[#{@event.name}] Your scheduled monthly announcement has been canceled").first
-
-    if @cancellation_email.present?
-      email = Mail.read_from_string(@cancellation_email.content)
-      message_id = email.message_id
-
-      mail to: @emails, subject: "[#{@event.name}] Explaining monthly announcements", in_reply_to: message_id, references: message_id
-    else
-      mail to: @emails, subject: "[#{@event.name}] Monthly announcements are enabled for your organization"
-    end
+    mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
   end
 
   def set_warning_variables
