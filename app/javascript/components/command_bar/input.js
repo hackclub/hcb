@@ -131,7 +131,6 @@ export function KBarInput(props) {
         style={{
           padding: '20px',
           paddingBottom: '10px',
-          fontWeight: '700',
           fontSize: '20px',
           width: '100%',
           boxSizing: 'border-box',

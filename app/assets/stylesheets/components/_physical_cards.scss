@@ -71,6 +71,14 @@
   }
 }
 
+.canceled-card-wrapper:hover .canceled-left,
+.canceled-card-wrapper:hover .canceled-right {
+  transform: none !important;
+  & .js-tilt-glare {
+    display: none;
+  }
+}
+
 @media (max-width: 600px) {
   .stripe-card,
   .emburse-card {
