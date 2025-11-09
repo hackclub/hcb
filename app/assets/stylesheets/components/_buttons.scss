@@ -5,6 +5,10 @@ input[type='submit'],
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-border);
   background-color: $white;
+  [data-dark='true'] & {
+    background-color: $darkless;
+    color: $snow;
+  }
   color: $black;
   cursor: pointer;
   display: inline-flex;
@@ -32,6 +36,10 @@ input[type='submit'],
       var(--shadow-border-md),
       inset 0 0 0px 0.5px rgba(0, 0, 0, 0.1);
     background: darken($white, 5%);
+
+    [data-dark='true'] & {
+      background-color: lighten($darkless, 5%);
+    }
   }
 
   &:focus-visible {
@@ -195,6 +203,9 @@ input[type='submit'],
       box-shadow 0.125s ease,
       background-color 0.125s ease;
     background-color: map-get($palette, white) !important;
+    [data-dark='true'] & {
+      background-color: $darkless !important;
+    }
     color: map-get($palette, error) !important;
 
     &:hover {

@@ -219,7 +219,6 @@ html[data-dark='true'] {
   }
 
   .black,
-  .btn,
   .dock__item,
   label,
   a > .card {
@@ -294,57 +293,6 @@ html[data-dark='true'] {
 
   .card--sunset {
     background-image: url('https://cloud-hlea0o5k2-hack-club-bot.vercel.app/0sunset_card__4_.png');
-  }
-
-  .btn {
-    background-color: $darkless;
-    &:hover {
-      background-color: lighten($darkless, 7.5%);
-    }
-  }
-  input[type='submit'],
-  .btn.bg-info {
-    background-color: rgba(map-get($palette, info), 0.75);
-    &:hover {
-      background-color: rgba(lighten(map-get($palette, info), 7.5%), 0.75);
-    }
-  }
-  .btn.bg-primary {
-    background-color: rgba(map-get($palette, primary), 0.75);
-    &:hover {
-      background-color: rgba(lighten(map-get($palette, primary), 7.5%), 0.75);
-    }
-  }
-  .btn.bg-accent {
-    background-color: rgba(map-get($palette, accent), 0.75);
-    color: map-get($palette, smoke) !important;
-    &:hover {
-      background-color: rgba(lighten(map-get($palette, accent), 7.5%), 0.75);
-    }
-  }
-  .btn.bg-success {
-    background-color: rgba(map-get($palette, success), 0.75);
-    &:hover {
-      background-color: rgba(lighten(map-get($palette, success), 10%), 0.75);
-    }
-  }
-  .btn.bg-warning {
-    background-color: rgba(map-get($palette, warning), 0.75);
-    color: map-get($palette, smoke) !important;
-    &:hover {
-      background-color: rgba(lighten(map-get($palette, warning), 7.5%), 0.75);
-    }
-  }
-  .btn.btn--destroy,
-  .btn.bg-error {
-    background-color: rgba(map-get($palette, error), 0.75) !important;
-    color: map-get($palette, smoke) !important;
-    &:hover {
-      background-color: rgba(
-        lighten(map-get($palette, error), 7.5%),
-        0.75
-      ) !important;
-    }
   }
 
   .badge {
@@ -437,7 +385,6 @@ html[data-dark='true'] {
     background-color: rgba(map-get($palette, muted), 0.125);
   }
   .flash.error,
-  .btn--destroy,
   .error-card,
   .badge.bg-error,
   .pop.error {
