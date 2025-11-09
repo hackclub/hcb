@@ -1,11 +1,11 @@
 <%# locals: (stripe_card:) %>
 
-<div class="mt3 flex justify-center flex-wrap g2">
+<div class="mt-6 mb-2 flex justify-center flex-wrap gap-1">
   <% if !stripe_card.initially_activated? %>
     <%= render "stripe_cards/actions/activate", stripe_card: %>
   <% else %>
-    <%= render "stripe_cards/actions/freeze", stripe_card: %>
     <%= render "stripe_cards/actions/rename", stripe_card: %>
+    <%= render "stripe_cards/actions/freeze", stripe_card: %>
   <% end %>
   <%= render "stripe_cards/actions/cancel", stripe_card: %>
 
