@@ -4,27 +4,31 @@
 <%= render "events/nav", selected: :announcements %>
 <%= render "followers_modal", event_follows: @event.event_follows %>
 
-<h1 class="flex heading items-center gap-2">
-  <span class="flex-grow flex items-center flex-1">
+<h1 class="flex heading flex-col sm:flex-row items-center gap-2">
+  <span class="flex-grow flex-col sm:flex-row flex items-center flex-1">
     Announcements
-    <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
-      <%= inline_icon "rss", size: 30 %>
-    <% end %>
-    <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
-      <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
-        <%= inline_icon "person", size: 20 %>
-        <%= pluralize(@event.followers.count, "follower") %>
+   <span class="*:no-underline flex items-center">
+     <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
+        <%= inline_icon "rss", size: 30 %>
       <% end %>
-    <% end %>
+      <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
+        <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
+          <%= inline_icon "person", size: 20 %>
+          <%= pluralize(@event.followers.count, "follower") %>
+        <% end %>
+      <% end %>
+    </span>
   </span>
 
-  <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
-  <% if organizer_signed_in?(as: :member) %>
-    <%= link_to event_announcements_new_path(@event), class: "btn bg-success #{"disabled" if !policy(@announcement).new?}" do %>
-      <%= inline_icon "plus" %>
-      Create
+  <div class="mt-1 sm:mt-0 flex items-center gap-2">
+    <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_announcements_new_path(@event), class: "btn bg-success #{"disabled" if !policy(@announcement).new?}" do %>
+        <%= inline_icon "plus" %>
+        Create
+      <% end %>
     <% end %>
-  <% end %>
+    </div>
 </h1>
 
 <% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>

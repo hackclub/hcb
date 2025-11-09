@@ -154,7 +154,7 @@
           </td>
           <td style="text-align: right;">
             <%= render_money(d.amount) %>
-            <%= link_to "", hcb_code_url(d.hcb_code), class:"stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
+            <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
           </td>
         </tr>
         <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
