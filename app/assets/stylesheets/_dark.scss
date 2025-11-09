@@ -246,7 +246,7 @@ html[data-dark='true'] {
   }
 
   .card__darker {
-    background: $dark;
+    background: lighten($darkless, 5%);
     color: map-get($palette, muted) !important;
   }
 
@@ -346,9 +346,8 @@ html[data-dark='true'] {
   }
   .badge.bg-info,
   .flash.info,
-  .pop,
   .pop.info {
-    background-color: rgba(map-get($palette, info), 0.125);
+    background-color: rgba(map-get($palette, info), 0.2);
   }
 
   .badge.bg-snow {
@@ -359,13 +358,13 @@ html[data-dark='true'] {
   .flash.accent,
   .badge.bg-accent,
   .pop.accent {
-    background-color: rgba(map-get($palette, accent), 0.125);
+    background-color: rgba(map-get($palette, accent), 0.2);
   }
 
   .flash.success,
   .badge.bg-success,
   .pop.success {
-    background-color: rgba(map-get($palette, success), 0.125);
+    background-color: rgba(map-get($palette, success), 0.2);
   }
 
   .success-dark {
@@ -375,20 +374,24 @@ html[data-dark='true'] {
   .flash.warning,
   .badge.bg-warning,
   .pop.warning {
-    background-color: rgba(map-get($palette, warning), 0.125);
+    background-color: rgba(map-get($palette, warning), 0.3);
   }
 
   .flash.muted,
   .badge,
+  .pop,
   .badge.bg-muted,
   .pop.muted {
-    background-color: rgba(map-get($palette, muted), 0.125);
+    background-color: rgba(map-get($palette, muted), 0.2);
+  }
+  .pop {
+    color: lighten(map-get($palette, muted), 20%);
   }
   .flash.error,
   .error-card,
   .badge.bg-error,
   .pop.error {
-    background-color: rgba(map-get($palette, error), 0.125);
+    background-color: rgba(map-get($palette, error), 0.3);
   }
 
   .error {

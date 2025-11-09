@@ -1,6 +1,6 @@
 <% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant %>
 
-<div class="flex flex-row justify-between items-center width-100 gap-3">
+<div class="flex flex-row justify-between items-center width-100 gap-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
       <%= render "search", form: %>
     <% if @tag %>
@@ -11,7 +11,7 @@
   <%= render partial: "filter_menu" unless filter_applied %>
 
   <% if @event.canonical_transactions.any? %>
-    <div data-controller="menu" data-menu-placement-value="bottom-end">
+    <div data-controller="menu" data-menu-placement-value="bottom-end" class="-mb-1">
       <button
         type="button"
         class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
@@ -30,7 +30,7 @@
   <% end %>
 
   <% admin_tool "overflow-hidden" do %>
-    <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger">
+    <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger" class="-mb-1">
       <button
         type="button"
         class="pop menu__toggle menu__toggle--arrowless overflow-visible"

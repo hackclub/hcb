@@ -127,8 +127,15 @@ input[type='submit'],
   }
 
   &.bg-muted {
-    background-color: map-get($palette, muted);
+    background-color: lighten(map-get($palette, muted), 10%);
     color: darken(map-get($palette, muted), 50%) !important;
+    &:hover {
+      background-color: lighten(map-get($palette, muted), 15%) !important;
+    }
+    &:active,
+    &:focus {
+      background-color: lighten(map-get($palette, muted), 20%) !important;
+    }
   }
 
   &.bg-warning {
@@ -203,10 +210,15 @@ input[type='submit'],
       box-shadow 0.125s ease,
       background-color 0.125s ease;
     background-color: map-get($palette, white) !important;
+
     [data-dark='true'] & {
       background-color: $darkless !important;
+      color: lighten(map-get($palette, error), 50%);
     }
-    color: map-get($palette, error) !important;
+
+    [data-dark='false'] & {
+      color: map-get($palette, error);
+    }
 
     &:hover {
       background-color: rgba(map-get($palette, primary), 0.125) !important;
@@ -219,15 +231,30 @@ input[type='submit'] {
   background-color: lighten(map-get($palette, info), 15%);
   color: darken(map-get($palette, info), 25%) !important;
 
+  [data-dark='true'] & {
+    background-color: darken(map-get($palette, info), 30%);
+    color: lighten(map-get($palette, info), 40%) !important;
+  }
+
   &:hover {
     background-color: lighten(map-get($palette, info), 10%);
     color: darken(map-get($palette, info), 40%) !important;
+
+    [data-dark='true'] & {
+      background-color: darken(map-get($palette, info), 20%);
+      color: lighten(map-get($palette, info), 30%) !important;
+    }
   }
 
   &:active,
   &:focus {
     background-color: darken(map-get($palette, info), 10%);
     color: darken(map-get($palette, info), 40%) !important;
+
+    [data-dark='true'] & {
+      background-color: map-get($palette, info);
+      color: lighten(map-get($palette, info), 50%) !important;
+    }
   }
 }
 

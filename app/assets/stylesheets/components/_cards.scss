@@ -75,7 +75,7 @@ a.card {
 }
 
 .card__darker {
-  background: map-get($palette, snow);
+  background: darken(map-get($palette, snow), 2%);
 }
 
 .card__banner {
