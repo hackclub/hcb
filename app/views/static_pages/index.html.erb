@@ -148,7 +148,7 @@
     <%# Latest HCB announcement %>
     <% if @latest_hcb_announcement %>
       <div class="flex flex-row w-full justify-between items-center">
-        <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+        <h2 class="heading h2 line-height-4 my-2 mt-4 mr-auto py-2 px-4 ml-0 pl-0 border-none">
           The latest from HCB
         </h2>
         <%= link_to event_announcement_overview_path(Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK)), class: "muted", target: :_blank do %>
