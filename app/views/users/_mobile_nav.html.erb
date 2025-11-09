@@ -1,5 +1,5 @@
-<div class="lg:hidden fixed bottom-0 left-0 w-full p-10 z-10 flex justify-center pointer-events-none">
-  <div class="rounded-full bg-gray-800 text-white px-5 py-3 w-[250px] max-w-full flex items-center pointer-events-auto gap-3 active:scale-90 transition-transform !shadow-xl cursor-pointer" data-behavior="modal_trigger" data-modal="mobile_nav">
+<div class="mobile-nav">
+  <div class="mobile-nav--trigger" data-behavior="modal_trigger" data-modal="mobile_nav">
     <%= inline_icon users_mobile_nav(selected: local_assigns[:selected]).find { |e| e[:selected] }&.[](:icon) || "settings" %>
     <span class="text-lg truncate"><%= users_mobile_nav(selected: local_assigns[:selected]).find { |e| e[:selected] }&.[](:name) || "Settings" %></span>
     <%= inline_icon "up-caret", class: "ml-auto" %>
