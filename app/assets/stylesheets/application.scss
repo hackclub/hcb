@@ -157,10 +157,9 @@ tr.clickable {
     left: 0;
     z-index: -1;
     pointer-events: auto;
-    margin-top: -1px;
     content: '';
+    margin-bottom: 1px;
     background-color: transparent;
-    border-radius: var(--radius-lg);
   }
 
   border-radius: var(--radius-lg);
@@ -172,14 +171,13 @@ tr.clickable {
   color: $black;
   line-height: 1.25;
   padding: 0.25rem;
-
-  &:hover {
-    border-color: rgba(0, 0, 0, 0);
-  }
+  border: 1px solid rgba(200, 200, 200, 0.3);
+  border-left-width: 0px;
+  border-right-width: 0px;
 
   &:hover a.stretched-link {
     background-color: map-get($palette, white);
-    box-shadow: var(--shadow-border-xs);
+    box-shadow: var(--shadow-sm);
 
     [data-dark='true'] & {
       background-color: rgba(map-get($palette, slate), 0.3);
