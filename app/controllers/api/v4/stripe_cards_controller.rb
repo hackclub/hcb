@@ -161,7 +161,7 @@ module Api
           set_api_event
           authorize @event, :create_stripe_card?, policy_class: EventPolicy
 
-          @designs = [event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
+          @designs = [@event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
         else
           skip_authorization
           @designs = StripeCard::PersonalizationDesign.common.available
