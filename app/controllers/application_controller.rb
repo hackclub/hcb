@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
-  include RedirectToUI3
+  include RedirectToUi3
 
   include Pundit::Authorization
   include SessionsHelper
