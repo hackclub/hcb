@@ -26,7 +26,7 @@
                 <%= user_mention card_grant.user %>
               </td>
               <td>
-                <%= link_to card_grant.purpose.presence || Disbursement.find_by(id: card_grant.disbursement_id).local_hcb_code.memo, spending_card_grant_path(card_grant) %>
+                <%= link_to card_grant.purpose.presence || card_grant.disbursement.local_hcb_code.memo, spending_card_grant_path(card_grant) %>
               </td>
               <td>
                 <%= render_money card_grant.amount_cents %>
