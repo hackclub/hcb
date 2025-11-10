@@ -91,16 +91,16 @@ module UsersHelper
     klass = klasses.uniq.join(" ")
 
     aria_label = if options[:aria_label]
-                  options[:aria_label]
-                elsif user.nil?
-                  "No user found"
-                elsif user.id == viewer&.id
-                  current_user_flavor_text.sample
-                elsif user.admin?
-                  "#{user.name} is an admin"
-                elsif user.auditor?
-                  "#{user.name} is an auditor"
-                end
+                   options[:aria_label]
+                 elsif user.nil?
+                   "No user found"
+                 elsif user.id == viewer&.id
+                   current_user_flavor_text.sample
+                 elsif user.admin?
+                   "#{user.name} is an admin"
+                 elsif user.auditor?
+                   "#{user.name} is an auditor"
+                 end
 
     content = if user&.auditor? && !options[:hide_avatar]
                 bolt = inline_icon "admin-badge", size: 20
@@ -124,19 +124,19 @@ module UsersHelper
 
       # Menu content items
       menu_items = safe_join([
-        link_to(
-          safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
-          "mailto:#{user.email}",
-          target: "_blank",
-          class: "menu__item menu__item--icon"
-        ),
-        link_to(
-          safe_join([inline_icon("link", size: 16), content_tag(:span, "Open in Admin", class: "ml1")]),
-          admin_user_url(user),
-          target: "_blank",
-          class: "menu__item menu__item--icon"
-        )
-      ])
+                               link_to(
+                                 safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
+                                 "mailto:#{user.email}",
+                                 target: "_blank",
+                                 class: "menu__item menu__item--icon", rel: "noopener"
+                               ),
+                               link_to(
+                                 safe_join([inline_icon("link", size: 16), content_tag(:span, "Open in Admin", class: "ml1")]),
+                                 admin_user_url(user),
+                                 target: "_blank",
+                                 class: "menu__item menu__item--icon", rel: "noopener"
+                               )
+                             ])
 
       menu_content = content_tag(
         :div,
