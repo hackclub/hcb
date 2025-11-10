@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  include RedirectToUI3
+
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper

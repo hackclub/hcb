@@ -2,6 +2,8 @@
 
 module Admin
   class BaseController < ApplicationController
+    include RedirectToUI3
+
     skip_after_action :verify_authorized # do not force pundit
     before_action :signed_in_admin
 
