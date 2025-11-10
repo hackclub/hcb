@@ -7,7 +7,7 @@ class EventsController < ApplicationController
   include SetEvent
 
   include Rails::Pagination
-  before_action :set_event, except: [:index, :new, :create]
+  before_action :set_event, except: [:index]
   before_action :set_transaction_filters, only: [:transactions, :ledger]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
@@ -1344,20 +1344,21 @@ class EventsController < ApplicationController
   end
 
   def set_cacheable
-    return false unless params[:q].blank? &&
-                        params[:page].blank? &&
-                        params[:per].blank? &&
-                        @user.nil? &&
-                        @tag.blank? &&
-                        @type.blank? &&
-                        @start_date.blank? &&
-                        @end_date.blank? &&
-                        @minimum_amount.nil? &&
-                        @maximum_amount.nil? &&
-                        !@missing_receipts
-    return false if organizer_signed_in?
+    has_filters = !(
+      params[:q].blank? &&
+        params[:page].blank? &&
+        params[:per].blank? &&
+        @user.nil? &&
+        @tag.blank? &&
+        @type.blank? &&
+        @start_date.blank? &&
+        @end_date.blank? &&
+        @minimum_amount.nil? &&
+        @maximum_amount.nil? &&
+        !@missing_receipts
+    )
 
-    true
+    @cacheable = !(organizer_signed_in? || has_filters)
   end
 
   def set_mock_data
