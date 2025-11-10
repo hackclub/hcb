@@ -19,7 +19,7 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement).order(created_at: :desc)
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card).order(created_at: :desc)
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
 
