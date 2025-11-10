@@ -131,7 +131,7 @@ module UsersHelper
                                  class: "menu__item menu__item--icon", rel: "noopener"
                                ),
                                link_to(
-                                 safe_join([inline_icon("link", size: 16), content_tag(:span, "Open in Admin", class: "ml1")]),
+                                 safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
                                  admin_user_url(user),
                                  target: "_blank",
                                  class: "menu__item menu__item--icon", rel: "noopener"
