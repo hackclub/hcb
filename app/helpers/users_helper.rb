@@ -114,8 +114,8 @@ module UsersHelper
     if user && viewer&.auditor?
       button = content_tag(
         :a,
-        content + inline_icon("down-caret", size: 18, style: "vertical-align: middle"),
-        class: "menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
+        content + inline_icon("down-caret", size: 18, class: "ml-0 -mr-1"),
+        class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
           action: "menu#toggle click@document->menu#close keydown@document->menu#keydown"
