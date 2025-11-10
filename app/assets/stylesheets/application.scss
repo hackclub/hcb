@@ -128,6 +128,11 @@ tr {
   a {
     color: map-get($palette, slate);
   }
+
+  thead & {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.01);
+  }
 }
 
 tr.clickable {
@@ -159,6 +164,9 @@ tr.clickable {
     pointer-events: auto;
     content: '';
     margin-bottom: 1px;
+    [data-dark='true'] & {
+      margin-top: 1px;
+    }
     background-color: transparent;
   }
 
@@ -180,7 +188,7 @@ tr.clickable {
     box-shadow: var(--shadow-sm);
 
     [data-dark='true'] & {
-      background-color: rgba(map-get($palette, slate), 0.3);
+      background-color: $darker;
     }
   }
 
