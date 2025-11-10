@@ -173,8 +173,10 @@
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
     <%= modal_header "Invite a team member" %>
 
-    <h3 class="mb-0 mb-2">Links</h3>
-    <%= render "organizer_position_invite/links/form", event: @event %>
+    <h3 class="mb-0 mb-2 flex items-center justify-between">
+      Links
+      <%= render "organizer_position_invite/links/form", event: @event %>
+    </h3>
     <%= render "organizer_position_invite/links/link_list", event: @event, invite_links: @invite_links %>
 
     <h3 class="mt-10 mb-2">Email</h3>

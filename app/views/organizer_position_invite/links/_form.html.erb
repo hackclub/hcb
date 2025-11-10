@@ -1,12 +1,20 @@
 <%# locals: (event:) %>
 
-<%= form_with(url: event_invite_links_path(event_id: event.id)) do |form| %>
-  <div class="flex items-center gap-4">
-    <div class="field">
-      <%= form.label :expires_at, "Expires on" %>
-      <%= form.date_field :expires_on, class: "!max-w-full w-full", value: OrganizerPositionInvite::Link::DEFAULT_EXPIRATION.from_now.strftime("%Y-%m-%d") %>
-    </div>
-
-    <%= form.submit "Create", class: "btn" %>
+<div data-controller="menu" data-menu-placement-value="bottom-end">
+  <button
+    type="button"
+    class="btn btn-small menu__toggle menu__toggle--arrowless overflow-visible"
+    data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+    <%= inline_icon "add", size: 28 %>
+    Create
+  </button>
+  <div class="menu__content menu__content--2 menu__content--compact h5 p-3" data-menu-target="content">
+    <%= form_with(url: event_invite_links_path(event_id: event.id)) do |form| %>
+      <div class="field">
+        <%= form.label :expires_at, "Expires on" %>
+        <%= form.date_field :expires_on, class: "!max-w-full w-full", value: OrganizerPositionInvite::Link::DEFAULT_EXPIRATION.from_now.strftime("%Y-%m-%d") %>
+      </div>
+      <%= form.submit "Continue", class: "btn -mt-1 w-full" %>
+    <% end %>
   </div>
-<% end %>
+</div>
