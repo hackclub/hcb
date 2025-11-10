@@ -354,7 +354,7 @@ class StripeCard < ApplicationRecord
     canonical_transaction_hcb_codes + canonical_pending_transaction_hcb_codes
   end
 
-  def hcb_codes
+  def local_hcb_codes
     @hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
   end
 
