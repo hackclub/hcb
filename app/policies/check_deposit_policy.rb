@@ -2,7 +2,7 @@
 
 class CheckDepositPolicy < ApplicationPolicy
   def index?
-    auditor_or_user && check_deposits_enabled
+    auditor_or_member && check_deposits_enabled
   end
 
   def create?
@@ -41,8 +41,8 @@ class CheckDepositPolicy < ApplicationPolicy
     record.event.plan.check_deposits_enabled?
   end
 
-  def auditor_or_user
-    auditor || user?
+  def auditor_or_member
+    auditor || member
   end
 
   def auditor_or_manager
