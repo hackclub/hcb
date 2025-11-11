@@ -93,12 +93,12 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
-  def organizer_position_contract
-    organizer_position_contracts.where.not(aasm_state: :voided).last
+  def contract
+    contracts.where.not(aasm_state: :voided).last
   end
 
   def pending_signature?
-    is_signee && organizer_position_contracts.where(aasm_state: :signed).none?
+    is_signee && contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -229,7 +229,7 @@ class OrganizerPositionInvite < ApplicationRecord
     deliver
 
     # Unfreeze the event if this is the first signed contract
-    if event.organizer_position_contracts.signed.count == 1
+    if event.contracts.signed.count == 1
       event.update!(financially_frozen: false)
     end
   end
