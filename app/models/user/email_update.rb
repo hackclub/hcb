@@ -104,13 +104,13 @@ class User
 
     def non_hcb_email
       if GSuiteAccount.where(address: replacement).any? || GSuiteAlias.where(address: replacement).any?
-        errors.add(:email, "must not be provided through a HCB account's Google Workspace.")
+        errors.add(:email, "must not be provided through a HCB account's Google Workspace")
       end
     end
 
     def non_existing_email
       if User.where(email: replacement).any?
-        errors.add(:email, "is currently in use on HCB, please use another address.")
+        errors.add(:email, "is currently in use on HCB, please use another address")
       end
     end
 
