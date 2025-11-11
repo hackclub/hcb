@@ -25,7 +25,7 @@ class Announcement
     private
 
     def admin_or_manager
-      admin? || manager
+      admin || manager
     end
 
     def admin
