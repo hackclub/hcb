@@ -6,7 +6,7 @@ ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", "~> 8.0"
 
 gem "puma", "~> 6.6" # app server
 
@@ -108,9 +108,7 @@ gem "reverse_markdown" # public activity to discord
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
 gem "safely_block"
-gem "strong_migrations", "~> 1" # protects against risky migrations
-# [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
-#               2.x is incompatible with Postgres 11.
+gem "strong_migrations", "~> 2" # protects against risky migrations
 gem "xxhash" # fast hashing
 gem "memo_wise"
 

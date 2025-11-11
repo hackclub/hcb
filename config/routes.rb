@@ -252,6 +252,7 @@ Rails.application.routes.draw do
       get "employee_payments", to: "admin#employee_payments"
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
+      get "email_html", to: "admin#email_html"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
       post "referral_program_create", to: "admin#referral_program_create"
@@ -546,6 +547,7 @@ Rails.application.routes.draw do
       post "update_currency"
       post "draft"
       get "wise_transfer_quote"
+      get "wise_transfer_breakdown"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"
@@ -677,6 +679,10 @@ Rails.application.routes.draw do
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
+          collection do
+            get "card_designs"
+          end
+
           member do
             get "transactions"
             get "ephemeral_keys"
@@ -846,12 +852,16 @@ Rails.application.routes.draw do
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
+    get "card_grants", to: "card_grants#index", as: :card_grant_overview
+    get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
+    get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
 
     resources :follows, only: [:create], controller: "event/follows"
 
     get "transfers/new", to: "events#new_transfer"
 
     get "async_balance"
+    get "async_sub_organization_balance"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
