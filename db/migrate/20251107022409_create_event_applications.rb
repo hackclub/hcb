@@ -3,7 +3,7 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
     create_table :event_applications do |t|
       t.string :aasm_state
       t.string :airtable_record_id
-      t.string :status
+      t.string :airtable_status
 
       t.references :user, null: false, foreign_key: true
       t.string :name
@@ -17,7 +17,7 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
       t.string :address_postal_code
       t.string :address_country
 
-      t.string :reference
+      t.string :referrer
       t.string :referral_code
 
       t.text :notes

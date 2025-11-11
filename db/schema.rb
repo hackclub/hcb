@@ -930,7 +930,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
   create_table "event_applications", force: :cascade do |t|
     t.string "aasm_state"
     t.string "airtable_record_id"
-    t.string "status"
+    t.string "airtable_status"
     t.bigint "user_id", null: false
     t.string "name"
     t.text "description"
@@ -941,7 +941,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
     t.string "address_state"
     t.string "address_postal_code"
     t.string "address_country"
-    t.string "reference"
+    t.string "referrer"
     t.string "referral_code"
     t.text "notes"
     t.datetime "created_at", null: false

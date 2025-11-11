@@ -12,13 +12,13 @@
 #  address_line2       :string
 #  address_postal_code :string
 #  address_state       :string
+#  airtable_status     :string
 #  description         :text
 #  name                :string
 #  notes               :text
 #  political           :boolean
-#  reference           :string
 #  referral_code       :string
-#  status              :string
+#  referrer            :string
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  airtable_record_id  :string
