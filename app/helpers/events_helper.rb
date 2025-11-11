@@ -101,6 +101,15 @@ module EventsHelper
           selected: selected == :cards,
         }
     end
+    if policy(event).card_grant_overview?
+      items << {
+        name: "Grants",
+        path: event_card_grant_overview_path(event_id: event.slug),
+        tooltip: "Manage card grants",
+        icon: "bag",
+        selected: selected == :card_grants
+      }
+    end
     if policy(event).transfers?
       items << {
         name: "Transfers",
@@ -327,8 +336,8 @@ module EventsHelper
   private
 
   def validate_date_range(base, params)
-    less = params["#{base}_before"]
-    greater = params["#{base}_after"]
+    less = params["#{base}_after"]
+    greater = params["#{base}_before"]
     return unless less.present? && greater.present?
 
     begin
