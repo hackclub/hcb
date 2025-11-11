@@ -6,8 +6,33 @@ class CardGrantsController < ApplicationController
   skip_before_action :signed_in_user, only: [:show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
 
-  before_action :set_event, only: %i[new create]
-  before_action :set_card_grant, except: %i[new create]
+  before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index]
+  before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index]
+
+  def index
+    authorize @event, :card_grant_overview?
+  end
+
+  def card_index
+    authorize @event, :card_grant_overview?
+
+    card_grants_page = (params[:page] || 1).to_i
+    card_grants_per_page = (params[:per] || 20).to_i
+
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card).order(created_at: :desc)
+    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+  end
+
+  def transaction_index
+    authorize @event, :card_grant_overview?
+
+    transactions_page = (params[:page] || 1).to_i
+    transactions_per_page = (params[:per] || 20).to_i
+
+    @all_stripe_cards = @event.stripe_cards.where.associated(:card_grant)
+    @hcb_codes = HcbCode.where(hcb_code: @all_stripe_cards.flat_map(&:all_hcb_codes)).order(created_at: :desc)
+    @paginated_hcb_codes = @hcb_codes.page(transactions_page).per(transactions_per_page)
+  end
 
   def new
     @card_grant = @event.card_grants.build(email: params[:email])
@@ -49,7 +74,7 @@ class CardGrantsController < ApplicationController
     end
 
     flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
-    redirect_to event_transfers_path(@event)
+    redirect_back_or_to event_transfers_path(@event)
   end
 
   def edit_overview

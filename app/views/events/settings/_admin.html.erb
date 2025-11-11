@@ -150,7 +150,7 @@
       <%= form.fields_for :config do |config| %>
         <div class="field">
           <%= config.label :subevent_plan, "Sub-organization default plan" %>
-          <%= config.select :subevent_plan, { selected: event.config.subevent_plan }, { disabled: } do %>
+          <%= config.select :subevent_plan, { selected: event.config.subevent_plan }, {}, disabled: do %>
             <optgroup label="🚫 Disabled">
               <option value="">🚫 Disable creating sub-organizations</option>
             </optgroup>

@@ -421,7 +421,7 @@ RSpec.describe SudoModeHandler do
             }
           }
         )
-      end.to raise_error(ActionController::ParameterMissing, "param is missing or the value is empty: submit_method")
+      end.to raise_error(ActionController::ParameterMissing, "param is missing or the value is empty or invalid: submit_method")
 
       expect(login.reload).not_to be_complete
       expect(user_session.reload).not_to be_sudo_mode

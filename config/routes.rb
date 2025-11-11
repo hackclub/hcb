@@ -547,6 +547,7 @@ Rails.application.routes.draw do
       post "update_currency"
       post "draft"
       get "wise_transfer_quote"
+      get "wise_transfer_breakdown"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"
@@ -678,6 +679,10 @@ Rails.application.routes.draw do
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
+          collection do
+            get "card_designs"
+          end
+
           member do
             get "transactions"
             get "ephemeral_keys"
@@ -847,6 +852,9 @@ Rails.application.routes.draw do
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
+    get "card_grants", to: "card_grants#index", as: :card_grant_overview
+    get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
+    get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
 
     resources :follows, only: [:create], controller: "event/follows"
 

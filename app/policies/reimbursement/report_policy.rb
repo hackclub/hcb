@@ -15,7 +15,11 @@ module Reimbursement
     end
 
     def wise_transfer_quote?
-      admin || team_member || creator || auditor
+      show?
+    end
+
+    def wise_transfer_breakdown?
+      show?
     end
 
     def edit?
