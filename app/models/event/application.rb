@@ -41,6 +41,7 @@ class Event
     aasm do
       state :draft, initial: true
       state :submitted
+      state :under_review
       state :approved
       state :rejected
     end
