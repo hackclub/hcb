@@ -33,7 +33,7 @@ class OrganizerPositionInvitesController < ApplicationController
 
     if service.run
       if @invite.is_signee
-        OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
+        @invite.send_contract(cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
       end
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event

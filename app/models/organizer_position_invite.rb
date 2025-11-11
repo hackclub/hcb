@@ -62,6 +62,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   include FriendlyId
   include OrganizerPosition::HasRole
+  include Contractable
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, recipient: proc { |controller, record| record.user }, only: [:create]
@@ -77,7 +78,6 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :sender, class_name: "User"
 
   belongs_to :organizer_position, optional: true
-  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract", dependent: :destroy
 
   validate :not_already_organizer
   validate :not_already_invited, on: :create
@@ -204,6 +204,39 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def signee?
     is_signee
+  end
+
+  def send_contract(cosigner_email: nil, include_videos: false)
+    Contract.create!(contractable: @invite, cosigner_email:, include_videos:)
+    event.set_airtable_status("Documents sent")
+    update!(is_signee: true)
+    organizer_position&.update(is_signee: true)
+  end
+
+  def contract_docuseal_template_id
+    event.plan.contract_docuseal_template_id
+  end
+
+  def contract_user
+    user
+  end
+
+  def contract_event
+    event
+  end
+
+  def on_contract_signed
+    deliver
+
+    # Unfreeze the event if this is the first signed contract
+    if event.organizer_position_contracts.signed.count == 1
+      event.update!(financially_frozen: false)
+    end
+  end
+
+  def on_contract_voided
+    update(is_signee: false)
+    organizer_position&.update(is_signee: false)
   end
 
   private

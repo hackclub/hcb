@@ -37,27 +37,14 @@ class Contract < ApplicationRecord
   acts_as_paranoid
   has_paper_trail
 
-  belongs_to :organizer_position_invite
   belongs_to :document, optional: true
 
   validate :one_non_void_contract
-
-  # this does not run unless placed before the following callback idk why
-  after_create_commit do
-    organizer_position_invite.event.set_airtable_status("Documents sent")
-  end
 
   after_create_commit :send_using_docuseal!, unless: :sent_with_manual?
 
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
-
-  # does not run when placed after the send_using_docuseal callback, aka here
-  # dont think this is needed anyways bc is_signee is alr set to true by the creation form but will leave here bc idk
-  after_create_commit do
-    organizer_position_invite.update(is_signee: true)
-    organizer_position_invite.organizer_position&.update(is_signee: true)
-  end
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -68,20 +55,15 @@ class Contract < ApplicationRecord
     event :mark_sent do
       transitions from: :pending, to: :sent
       after do
-        OrganizerPosition::ContractsMailer.with(contract: self).notify.deliver_later
-        OrganizerPosition::ContractsMailer.with(contract: self).notify_cosigner.deliver_later if cosigner_email.present?
+        ContractMailer.with(contract: self).notify.deliver_later
+        ContractMailer.with(contract: self).notify_cosigner.deliver_later if cosigner_email.present?
       end
     end
 
     event :mark_signed do
       transitions from: [:pending, :sent], to: :signed
       after do
-        organizer_position_invite.deliver
-        # Unfreeze the event if this is the first signed contract
-        event = organizer_position_invite.event
-        if event.organizer_position_contracts.signed.count == 1
-          event.update!(financially_frozen: false)
-        end
+        contractable.on_contract_signed
       end
     end
 
@@ -89,8 +71,7 @@ class Contract < ApplicationRecord
       transitions from: [:pending, :sent], to: :voided
       after do
         archive_on_docuseal!
-        organizer_position_invite.update(is_signee: false)
-        organizer_position_invite.organizer_position&.update(is_signee: false)
+        contractable.on_contract_voided
       end
     end
   end
@@ -132,32 +113,32 @@ class Contract < ApplicationRecord
     raise ArgumentError, "can only send contracts when pending" unless pending?
 
     payload = {
-      template_id: organizer_position_invite.event.plan.contract_docuseal_template_id,
+      template_id: contractable.contract_docuseal_template_id,
       send_email: false,
       order: "preserved",
       submitters: [
         {
           role: "Contract Signee",
-          email: organizer_position_invite.user.email,
+          email: user.email,
           fields: [
             {
               name: "Contact Name",
-              default_value: organizer_position_invite.user.full_name,
+              default_value: user.full_name,
               readonly: false
             },
             {
               name: "Telephone",
-              default_value: organizer_position_invite.user.phone_number,
+              default_value: user.phone_number,
               readonly: false
             },
             {
               name: "Email",
-              default_value: organizer_position_invite.user.email,
+              default_value: user.email,
               readonly: false
             },
             {
               name: "Organization",
-              default_value: organizer_position_invite.event.name,
+              default_value: event.name,
               readonly: true
             }
           ]
@@ -175,7 +156,7 @@ class Contract < ApplicationRecord
           fields: [
             {
               name: "HCB ID",
-              default_value: organizer_position_invite.event.id,
+              default_value: event.id,
               readonly: true
             },
             {
@@ -185,7 +166,7 @@ class Contract < ApplicationRecord
             },
             {
               name: "The Project",
-              default_value: organizer_position_invite.event.airtable_record&.[]("Tell us about your event"),
+              default_value: event.airtable_record&.[]("Tell us about your event"),
               readonly: false
             }
           ]
@@ -205,8 +186,8 @@ class Contract < ApplicationRecord
   end
 
   def one_non_void_contract
-    if organizer_position_invite.organizer_position_contracts.where.not(aasm_state: :voided).excluding(self).any?
-      self.errors.add(:base, "organizer already has a contract!")
+    if contractable.contracts.where.not(aasm_state: :voided).excluding(self).any?
+      self.errors.add(:base, "source already has a contract!")
     end
   end
 
@@ -215,6 +196,14 @@ class Contract < ApplicationRecord
     return nil unless user_id
 
     User.find_by_id(user_id)
+  end
+
+  def user
+    contractable.contract_user
+  end
+
+  def event
+    contractable.contract_event
   end
 
   private
