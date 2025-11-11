@@ -932,6 +932,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
     t.string "airtable_record_id"
     t.string "airtable_status"
     t.bigint "user_id", null: false
+    t.bigint "event_id"
     t.string "name"
     t.text "description"
     t.boolean "political"
@@ -946,6 +947,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_applications_on_event_id"
     t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
@@ -2672,6 +2674,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_affiliations", "events"
+  add_foreign_key "event_applications", "events"
   add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"

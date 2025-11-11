@@ -6,6 +6,7 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
       t.string :airtable_status
 
       t.references :user, null: false, foreign_key: true
+      t.references :event, foreign_key: true
       t.string :name
       t.text :description
       t.boolean :political
