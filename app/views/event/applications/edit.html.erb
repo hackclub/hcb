@@ -1,0 +1,7 @@
+<% title "Apply" %>
+
+<h1>Apply for HCB</h1>
+
+<%= turbo_frame_tag :application_step, src: application_step_path(@application) do %>
+  <p>Loading application...</p>
+<% end %>

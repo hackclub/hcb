@@ -813,6 +813,14 @@ Rails.application.routes.draw do
     end
   end
 
+  scope module: :event do
+    get "apply", to: "applications#new"
+
+    resources :applications, only: [:create, :edit, :update] do
+      get "step"
+    end
+  end
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 

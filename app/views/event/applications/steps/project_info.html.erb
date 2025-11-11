@@ -1,0 +1,22 @@
+<%= turbo_frame_tag :application_step do %>
+  <%= form_with url: application_path(@application), method: :patch do |form| %>
+    <%= form.hidden_field :step, value: Event::Application::APPLICATION_STEPS.find_index(:project_info) %>
+
+    <div class="field">
+      <%= form.label :name, "Project name" %>
+      <%= form.text_field :name %>
+    </div>
+
+    <div class="field">
+      <%= form.label :description, "Tell us about your project" %>
+      <%= form.text_area :description %>
+    </div>
+
+    <div class="field">
+      <%= form.label :political, "Is your project involved with political activity?" %>
+      <%= form.select :political, options_for_select([["Yes", true], ["No", false]]) %>
+    </div>
+    
+    <%= form.submit "Next" %>
+  <% end %>
+<% end %>
