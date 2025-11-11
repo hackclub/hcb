@@ -62,8 +62,8 @@ class OrganizerPosition
       event :mark_sent do
         transitions from: :pending, to: :sent
         after do
-          OrganizerPosition::ContractsMailer.with(contract: self).notify.deliver_later
-          OrganizerPosition::ContractsMailer.with(contract: self).notify_cosigner.deliver_later if cosigner_email.present?
+          ContractMailer.with(contract: self).notify.deliver_later
+          ContractMailer.with(contract: self).notify_cosigner.deliver_later if cosigner_email.present?
         end
       end
 

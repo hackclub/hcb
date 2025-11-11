@@ -5,7 +5,7 @@ class DocusealController < ActionController::Base
 
   def webhook
     ActiveRecord::Base.transaction do
-      contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
+      contract = Contract.find_by(external_id: params[:data][:submission_id])
       return render json: { success: true } unless contract # sometimes contracts are sent using Docuseal that aren't in HCB
 
       return render json: { success: false } unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
@@ -38,10 +38,10 @@ class DocusealController < ActionController::Base
         contract.mark_voided!
       elsif cosigner.present? && cosigner["status"] != "completed"
         # send email about cosigner needing to pay
-        OrganizerPosition::ContractsMailer.with(contract:).pending_cosigner.deliver_later
+        ContractMailer.with(contract:).pending_cosigner.deliver_later
       elsif signee["status"] == "completed" && (cosigner.nil? || cosigner["status"] == "completed")
         # send email about hcb needing to sign
-        OrganizerPosition::ContractsMailer.with(contract:).pending_hcb.deliver_later
+        ContractMailer.with(contract:).pending_hcb.deliver_later
       end
     end
   rescue => e
