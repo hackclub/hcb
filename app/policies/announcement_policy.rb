@@ -37,8 +37,8 @@ class AnnouncementPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def auditor?
-    user&.auditor
+  def auditor
+    user&.auditor?
   end
 
   def manager
