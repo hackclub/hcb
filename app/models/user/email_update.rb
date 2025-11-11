@@ -103,7 +103,7 @@ class User
     end
 
     def non_hcb_email
-      if GSuiteAccount.where(address: replacement).any?
+      if GSuiteAccount.where(address: replacement).any? || GSuiteAlias.where(address: replacement).any?
         errors.add(:email, "must not be provided through a HCB account's Google Workspace.")
       end
     end
