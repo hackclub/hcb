@@ -232,28 +232,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
-  create_table "applications", force: :cascade do |t|
-    t.string "aasm_state"
-    t.string "airtable_record_id"
-    t.string "status"
-    t.bigint "user_id", null: false
-    t.string "name"
-    t.text "description"
-    t.boolean "political"
-    t.string "address_line1"
-    t.string "address_line2"
-    t.string "address_city"
-    t.string "address_state"
-    t.string "address_postal_code"
-    t.string "address_country"
-    t.string "reference"
-    t.string "referral_code"
-    t.text "notes"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_applications_on_user_id"
-  end
-
   create_table "audits1984_audits", force: :cascade do |t|
     t.integer "status", default: 0, null: false
     t.text "notes"
@@ -947,6 +925,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
+  end
+
+  create_table "event_applications", force: :cascade do |t|
+    t.string "aasm_state"
+    t.string "airtable_record_id"
+    t.string "status"
+    t.bigint "user_id", null: false
+    t.string "name"
+    t.text "description"
+    t.boolean "political"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_city"
+    t.string "address_state"
+    t.string "address_postal_code"
+    t.string "address_country"
+    t.string "reference"
+    t.string "referral_code"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -2616,7 +2616,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
   add_foreign_key "announcements", "events"
   add_foreign_key "announcements", "users", column: "author_id"
   add_foreign_key "api_tokens", "users"
-  add_foreign_key "applications", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
   add_foreign_key "canonical_event_mappings", "events"
@@ -2673,6 +2672,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_07_022409) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_affiliations", "events"
+  add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"

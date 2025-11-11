@@ -1,6 +1,6 @@
-class CreateApplications < ActiveRecord::Migration[8.0]
+class CreateEventApplications < ActiveRecord::Migration[8.0]
   def change
-    create_table :applications do |t|
+    create_table :event_applications do |t|
       t.string :aasm_state
       t.string :airtable_record_id
       t.string :status

@@ -2,7 +2,7 @@
 
 # == Schema Information
 #
-# Table name: applications
+# Table name: event_applications
 #
 #  id                  :bigint           not null, primary key
 #  aasm_state          :string
@@ -26,22 +26,25 @@
 #
 # Indexes
 #
-#  index_applications_on_user_id  (user_id)
+#  index_event_applications_on_user_id  (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (user_id => users.id)
 #
-class Application < ApplicationRecord
-  include AASM
+class Event
+  class Application < ApplicationRecord
+    include AASM
 
-  belongs_to :user
+    belongs_to :user
 
-  aasm do
-    state :draft, initial: true
-    state :submitted
-    state :approved
-    state :rejected
+    aasm do
+      state :draft, initial: true
+      state :submitted
+      state :approved
+      state :rejected
+    end
+
   end
 
 end
