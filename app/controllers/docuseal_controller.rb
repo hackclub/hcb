@@ -17,8 +17,8 @@ class DocusealController < ActionController::Base
         return render json: { success: true } if contract.signed?
 
         document = Document.new(
-          event: contract.organizer_position_invite.event,
-          name: "Fiscal sponsorship contract with #{contract.organizer_position_invite.user.name}"
+          event: contract.event,
+          name: "Fiscal sponsorship contract with #{contract.user.name}"
         )
 
         response = Faraday.get(params[:data][:documents][0][:url]) do |req|
@@ -30,7 +30,7 @@ class DocusealController < ActionController::Base
           filename: "#{params[:data][:documents][0][:name]}.pdf"
         )
 
-        document.user = User.find_by(email: params[:data][:email]) || contract.organizer_position_invite.event.point_of_contact
+        document.user = User.find_by(email: params[:data][:email]) || contract.event.point_of_contact
         document.save!
         contract.update(document:)
         contract.mark_signed!

@@ -8,14 +8,14 @@ class ContractsController < ApplicationController
     authorize @contract
     @contract.save!
     flash[:success] = "Contract sent succesfully."
-    redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
+    redirect_back(fallback_location: event_team_path(@contract.event))
   end
 
   def void
     authorize @contract
     @contract.mark_voided!
     flash[:success] = "Contract voided succesfully."
-    redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
+    redirect_back(fallback_location: event_team_path(@contract.event))
   end
 
   def resend_to_user
@@ -24,7 +24,7 @@ class ContractsController < ApplicationController
     ContractMailer.with(contract: @contract).notify.deliver_later
 
     flash[:success] = "Contract resent to user succesfully."
-    redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
+    redirect_back(fallback_location: event_team_path(@contract.event))
   end
 
   def resend_to_cosigner
@@ -37,7 +37,7 @@ class ContractsController < ApplicationController
       flash[:error] = "This contract has no cosigner."
     end
 
-    redirect_back(fallback_location: event_team_path(@contract.organizer_position_invite.event))
+    redirect_back(fallback_location: event_team_path(@contract.event))
   end
 
   private

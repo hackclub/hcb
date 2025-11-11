@@ -164,7 +164,7 @@
           <%= link_to contract.user_signature_url, target: "_blank" do %>
             <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
               <%= status_badge "info" %>
-              <strong>Fiscal sponsorship contract for <%= contract.organizer_position_invite.event.name %></strong>
+              <strong>Fiscal sponsorship contract for <%= contract.event.name %></strong>
               <small class="muted flex-grow" style="margin-left: 3.5px">
                 sent <%= time_ago_in_words contract.created_at %> ago
               </small>

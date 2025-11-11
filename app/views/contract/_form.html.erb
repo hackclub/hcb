@@ -2,8 +2,8 @@
   <%= form.hidden_field :organizer_position_invite_id %>
 
   <p class="muted">
-    This will send <%= contract.organizer_position_invite.user.name %> a fiscal sponsorship agreement
-    for <%= contract.organizer_position_invite.event.name %>. <strong>If they are under 18, <%= contract.organizer_position_invite.user.name %> will need to have a parent sign on their behalf.</strong>
+    This will send <%= contract.user.name %> a fiscal sponsorship agreement
+    for <%= contract.event.name %>. <strong>If they are under 18, <%= contract.user.name %> will need to have a parent sign on their behalf.</strong>
   <p>
 
   <div class="field field--checkbox">
