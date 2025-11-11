@@ -2,11 +2,11 @@
 
 class WiseTransferPolicy < ApplicationPolicy
   def new?
-    admin_or_user?
+    admin_or_user
   end
 
   def create?
-    user_who_can_transfer?
+    user_who_can_transfer
   end
 
   def approve?
@@ -14,7 +14,7 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def reject?
-    user_who_can_transfer?
+    user_who_can_transfer
   end
 
   def update?
@@ -26,7 +26,7 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def mark_failed?
-    user_who_can_transfer?
+    user_who_can_transfer
   end
 
   def generate_quote?
@@ -35,11 +35,11 @@ class WiseTransferPolicy < ApplicationPolicy
 
   private
 
-  def admin_or_user?
+  def admin_or_user
     user&.admin? || record.event.users.include?(user)
   end
 
-  def user_who_can_transfer?
+  def user_who_can_transfer
     EventPolicy.new(user, record.event).create_transfer? && Flipper.enabled?(:wise_transfers_2025_07_31, user)
   end
 

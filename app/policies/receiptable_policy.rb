@@ -2,7 +2,7 @@
 
 class ReceiptablePolicy < ApplicationPolicy
   def upload?
-    user&.admin? || present_in_events? || Pundit.policy(user, record).try(:receiptable_upload?)
+    user&.admin? || present_in_events || Pundit.policy(user, record).try(:receiptable_upload?)
   end
 
   def link?
@@ -19,7 +19,7 @@ class ReceiptablePolicy < ApplicationPolicy
 
   private
 
-  def present_in_events?
+  def present_in_events
     # Assumption: Receiptable has an association to Event
     events = (record.try(:events) || [record.event]).compact
     events.any? { |event| OrganizerPosition.role_at_least?(user, event, :member) }

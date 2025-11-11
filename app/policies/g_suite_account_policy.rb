@@ -6,7 +6,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_manager?
+    admin_or_manager
   end
 
   def show?
@@ -14,7 +14,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def reset_password?
-    admin_or_manager?
+    admin_or_manager
   end
 
   def edit?
@@ -34,12 +34,12 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def toggle_suspension?
-    admin_or_manager?
+    admin_or_manager
   end
 
   private
 
-  def admin_or_manager?
+  def admin_or_manager
     return true if user&.admin?
 
     revocation = record.is_a?(GSuite) ? record.revocation : record&.g_suite&.revocation
