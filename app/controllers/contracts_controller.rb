@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class OrganizerPositionContractsController < ApplicationController
+class ContractsController < ApplicationController
   before_action :set_opc, only: [:void, :resend_to_user, :resend_to_cosigner]
 
   def create
