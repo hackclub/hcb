@@ -25,14 +25,14 @@
                     <%= inline_icon("clock", size: 24) %>
                   </div>
                   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-                    <%= link_to void_organizer_position_contract_path(organizer_position_invite.contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
+                    <%= link_to void_contract_path(organizer_position_invite.contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
                       Void this contract
                     <% end %>
-                    <%= link_to resend_to_user_organizer_position_contract_path(organizer_position_invite.contract), data: { turbo_method: :post } do %>
+                    <%= link_to resend_to_user_contract_path(organizer_position_invite.contract), data: { turbo_method: :post } do %>
                       Resend to the user
                     <% end %>
                     <% if organizer_position_invite.contract.cosigner_email.present? %>
-                      <%= link_to resend_to_cosigner_organizer_position_contract_path(organizer_position_invite.contract), data: { turbo_method: :post } do %>
+                      <%= link_to resend_to_cosigner_contract_path(organizer_position_invite.contract), data: { turbo_method: :post } do %>
                         Resend to the cosigner
                       <% end %>
                     <% end %>
