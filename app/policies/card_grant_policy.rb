@@ -10,11 +10,11 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || record.user == user || user_in_event?
+    user&.auditor? || record.user == user || user_in_event
   end
 
   def spending?
-    record.event.is_public? || user&.auditor? || user_in_event?
+    record.event.is_public? || user&.auditor? || user_in_event
   end
 
   def edit_actions?
@@ -46,7 +46,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def activate?
-    user&.admin? || (record.user == user && authorized_to_activate?)
+    user&.admin? || (record.user == user && authorized_to_activate)
   end
 
   def cancel?
@@ -97,11 +97,11 @@ class CardGrantPolicy < ApplicationPolicy
 
   private
 
-  def user_in_event?
+  def user_in_event
     record.event.users.include?(user)
   end
 
-  def authorized_to_activate?
+  def authorized_to_activate
     record.pre_authorization.nil? || record.pre_authorization.approved? || record.pre_authorization.fraudulent?
   end
 
