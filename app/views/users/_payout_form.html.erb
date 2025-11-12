@@ -1,196 +1,227 @@
-<% title "Account settings" %>
-<% page_md %>
-<% disabled = !policy(@user).update? %>
-
-<%= render "users/nav", selected: :settings_security %>
-
-<turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_header", active: "security" %>
+<%= form_with model: user, html: {
+      "x-data": "{ country: #{user.payout_method.instance_of?(User::PayoutMethod::Wire) ? "'#{user.payout_method.recipient_country}'" : "null"} }"
+    } do |form| %>
   <fieldset>
-    <% unless @user.phone_number.blank? %>
-      <%= turbo_frame_tag :sms_auth_card do %>
-        <legend class="flex flex-row justify-start items-center mt0 pb2">
-          <span class="h2 bold">Login preferences</span>
-        </legend>
-        <div class="card border b--info mt0 mb3">
-          <% if @user.phone_number_verified %>
-            <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
-              <div class="field field--checkbox mt1">
-                <span style="font-weight: 700">Prefer login codes via SMS</span>
-                <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-                  <%= form.label :use_sms_auth do %>
-                    <%= form.check_box :use_sms_auth,
-                      data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
-                      switch: true,
-                      disabled: %>
-                    <span class="slider"></span>
-                  <% end %>
-                </div>
-              </div>
-              <div class="field field--checkbox">
-                <span style="font-weight: 700">Enable two factor authentication</span>
-                <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-                  <%= form.label :use_two_factor_authentication do %>
-                    <%= form.check_box :use_two_factor_authentication,
-                      data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
-                      switch: true,
-                      disabled: %>
-                    <span class="slider"></span>
-                  <% end %>
-                </div>
-              </div>
-              <%= form.submit "Update preferences", disabled: %>
-            <% end %>
-          <% else %>
-            <% if disabled %>
-              <p><%= @user.name %> doesn't have their phone number verified.</p>
-            <% else %>
-              <p>
-                To send login codes to your phone or enable two factor authentication, first
-                <action data-behavior="modal_trigger" data-modal="verify_phone">
-                  <a class="underline">
-                    verify your phone number.
-                  </a>
-                </action>
-              </p>
-            <% end %>
-          <% end %>
-        <% end %>
+    <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
+    <div class="field field--options mb-4" style="max-width: none;">
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer" %>
+
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email" %>
+
+      <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
+        <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise" %>
+      <% end %>
+
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web" do %>
+        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
+      <% end %>
+    </div>
+  </fieldset>
+  <% if user.payout_method&.errors&.any? %>
+    <p class="error">
+      <%= user.payout_method.errors.full_messages.to_sentence %>.
+    </p>
+  <% end %>
+  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::Check) %>">
+    <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::Check) ? user.payout_method : User::PayoutMethod::Check.new do |form| %>
+      <%= render "callout",
+        type: "info",
+        icon: "email",
+        title: "Important information about mailed checks",
+        class: "mt-2 mb-5",
+        footer: :questions do %>
+        Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
+      <% end %>
+
+      <div class="field">
+        <%= form.label :address_line1, "Street address" %>
+        <%= form.text_field :address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1] %>
+      </div>
+
+      <div class="field">
+        <%= form.text_field :address_line2, placeholder: "(Building / Apartment / Room)" %>
+      </div>
+
+      <div class="grid grid--split">
+        <div class="field flex-auto">
+          <%= form.label :address_city, "City" %>
+          <%= form.text_field :address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city] %>
+        </div>
+        <div class="field flex-auto">
+          <%= form.label :address_state, "State / Province" %>
+          <%= form.select :address_state, ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }, { prompt: "Select a state" } %>
+        </div>
+      </div>
+
+      <div class="grid grid--split">
+        <div class="field flex-auto">
+          <%= form.label :postal_code %>
+          <%= form.text_field :address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code] %>
+        </div>
+
+        <div class="field flex-auto">
+          <%= form.label :address_country, "Country" %>
+          <%= form.text_field :address_country, value: "United States", disabled: true %>
+        </div>
+      </div>
+
+      <div class="actions inline-block mt1">
+        <%= form.submit "Save" %>
       </div>
     <% end %>
-    <div>
-      <legend class="flex flex-row justify-start items-center mt3 pb2">
-        <span class="h2 bold">Time-based one time passwords</span>
-      </legend>
-      <%= turbo_frame_tag :totp_auth_card do %>
-        <div class="card border b--info mt0 mb3">
-          <% if @user.totp.present? %>
-            <p>
-              <% if disabled %>
-                <%= @user.name %> set up time-based one time passwords on <%= format_date @user.totp.created_at %>
-              <% else %>
-                You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
-              <% end %>
-            </p>
-          <% else %>
-            <p>
-              <% if disabled %>
-                <%= @user.name %> currently doesn't have time-based one time passwords set up.
-              <% else %>
-                  You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %> to setup your TOTP.
-              <% end %>
-            </p>
-          <% end %>
+  </section>
+
+  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
+    <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
+      <%= render "callout",
+        type: "info",
+        icon: "web",
+        title: "Important information about Wire reimbursements",
+        class: "mt-2 mb-5",
+        footer: :questions do %>
+        International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
+      <% end %>
+
+      <%= render partial: "wires/recipient_details", locals: { form:, disabled: false, required: false } %>
+
+      <%= render partial: "wires/account_details", locals: { form:, disabled: false, required: false, account_number_field_name: :account_number } %>
+
+      <%= render partial: "wires/country_specific_details", locals: { form:, disabled: false, required: false, excluded_fields: ["remittance_info", "purpose_code"] } %>
+
+      <div class="actions inline-block mt1">
+        <%= form.submit "Save" %>
+      </div>
+    <% end %>
+  </section>
+
+  <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
+    <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= user.payout_method.try(:currency) ? "'#{user.payout_method.currency}'" : "null" %>, amount: null, account_type: <%= user.payout_method.try(:account_type) ? "'#{user.payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= user.payout_method.try(:use_same_email_for_interac) ? "'#{user.payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
+      <%= form.fields_for :payout_method_wise_transfer, user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) ? user.payout_method : User::PayoutMethod::WiseTransfer.new do |form| %>
+        <%= render "callout",
+          type: "info",
+          icon: "wise",
+          title: "Important information about Wise reimbursements",
+          class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-2 mb-5",
+          footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+          We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
+        <% end %>
+
+        <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: false } %>
+
+        <div class="field">
+          <%= form.label :currency, "Currency" %>
+          <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+        </div>
+
+        <%= form.hidden_field :wise_recipient_id, value: "" %>
+
+        <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: User::PayoutMethod::WiseTransfer } %>
+
+        <div class="actions inline-block mt1">
+          <%= form.submit "Save" %>
         </div>
       <% end %>
-    </div>
-    <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="security-keys">
-      <legend class="flex flex-row justify-start items-center">
-        <span class="h2 bold">Security keys</span>
-        <%= badge_for @user.webauthn_credentials.count, class: "bg-muted" %>
-      </legend>
-      <button class="btn px2 h4 <%= "disabled" if disabled %>" data-behavior="modal_trigger" data-modal="webauthn_register">
-        <%= inline_icon "plus", size: home_action_size %>
-        Set up
-      </button>
-      <%= render "webauthn_credentials/modal" %>
-    </div>
-    <% if @user.webauthn_credentials.length > 0 %>
-      <div class="grid grid--split mb3">
-        <%= render @user.webauthn_credentials.order(created_at: :desc) %>
-      </div>
-    <% else %>
-      <div class="secondary center mb4">
-        <%= inline_icon "fingerprint", width: "40px", class: "secondary block mx-auto mb1" %>
-        Sign in to HCB using your fingerprint or a hardware security key.
-      </div>
-    <% end %>
-    <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="backup-codes">
-      <legend class="flex flex-row justify-start items-center">
-        <span class="h2 bold">Backup codes</span>
-      </legend>
-      <div class="flex flex-row gap-x-2">
-        <% if @user.backup_codes_enabled? %>
-          <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your current codes immediately." }, disabled: do %>
-            <%= inline_icon "minus", size: home_action_size %>
-            Disable backup codes
-          <% end %>
-        <% end %>
-        <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'", disabled: do %>
-          <%= inline_icon "plus", size: home_action_size %>
-          <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
-        <% end %>
-      </div>
-    </div>
-    <%= turbo_frame_tag :backup_codes_card do %>
-      <div class="card border b--info mb3">
-        <% if @user.backup_codes_enabled? %>
-          <p>
-            You last generated a set of 10 backup codes on <span class="font-bold"><%= @user.backup_codes.where(aasm_state: [:active, :used]).maximum(:created_at).strftime("%B %e, %Y") %></span>, of which <span class="font-bold"><%= @user.backup_codes.active.size %></span> are still valid. If you'd like to regenerate your backup codes, click the button above to do so. Generating a new set of codes will invalidate your current codes.
-          </p>
-        <% else %>
-          <p>
-            You haven't generated any backup codes yet. We highly recommend doing so in case you lose access to your other two-factor authentication methods. Click the button above to generate a set of 10 backup codes.
-          </p>
-        <% end %>
-      </div>
-    <% end %>
-    <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2">
-      <legend class="flex flex-row justify-start items-center">
-        <span class="h2 bold">Sessions</span>
-        <%= badge_for @all_sessions.count, class: "bg-muted" %>
-      </legend>
-      <%= link_to logout_all_user_path(@user), method: :delete,
-              class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) || disabled do %>
-        <%= inline_icon "door-leave", size: home_action_size %>
-        Sign out everywhere else
-      <% end %>
-    </div>
-
-    <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
-      <div class="field">
-        <%= form.label :session_validity_preference, "Sign me out after" %>
-        <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>
-      </div>
-
-      <div class="submit">
-        <%= form.submit "Save", disabled: %>
-      </div>
-    <% end %>
-
-    <div class="grid grid--split">
-      <% @all_sessions.each do |session| %>
-        <% if session.is_a? UserSession %>
-          <%= render "user_session", session: %>
-        <% elsif session.respond_to? :authorization_count %>
-          <%= render "oauth_authorization", authorization: session, disabled: %>
-        <% end %>
-      <% end %>
-    </div>
-
-    <% if @expired_sessions.any? %>
-      <h3 class="inline-flex items-center">
-        Recently logged out
-        <%= badge_for @expired_sessions.count, class: "bg-muted" %>
-      </h3>
-      <div class="grid grid--split">
-        <% @expired_sessions.each do |session| %>
-          <% if session.is_a? UserSession %>
-            <%= render "user_session", session: %>
-          <% elsif session.respond_to? :authorization_count %>
-            <%= render "oauth_authorization", authorization: session, disabled: %>
-          <% end %>
-        <% end %>
-      </div>
-    <% end %>
-  </fieldset>
-
-  <% if @user.phone_number.present? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
-      <%= modal_header "Verify phone number" %>
-      <%= react_component "settings/SmsVerification",
-              phone_number: @user.phone_number,
-              enroll_sms_auth: true %>
     </section>
   <% end %>
-</turbo-frame>
+
+  <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
+    <%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions do %>
+      Please update your payout method to either an ACH transfer or a mailed check.
+    <% end %>
+
+    <%= render "callout",
+        type: "info",
+        title: "Important info about PayPal reimbursements" do %>
+        <p>PayPal will charge domestic recipients 3% on the money sent to them via a HCB reimbursement.</p>
+        <p>Outside of the US, PayPal will charge recipients both a $5 flat fee as well as ~10% fee. Governments may tax these transfers and recipients may have to pay an additional withdrawal fee.</p>
+    <% end %>
+    <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) ? user.payout_method : User::PayoutMethod::PaypalTransfer.new do |form| %>
+      <div class="field">
+        <%= form.label :recipient_email, "PayPal email" %>
+        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com" %>
+      </div>
+
+      <div class="actions inline-block mt1">
+        <%= form.submit "Save" %>
+      </div>
+    <% end %>
+  </section>
+  <% if user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) %>
+    <% errored = !user.payout_method.valid? %>
+    <% r_no = user.payout_method.routing_number %>
+    <% obfuscated_routing_number = "•" * [r_no.length - 4, 0].max + r_no[[-4, -1 * r_no.length].max..] %>
+    <% a_no = user.payout_method.account_number %>
+    <% obfuscated_account_number = "•" * [a_no.length - 4, 0].max + a_no[[-4, -1 * a_no.length].max..] %>
+  <% else %>
+    <% errored = false %>
+    <% r_no = "" %>
+    <% obfuscated_routing_number = "" %>
+    <% a_no = "" %>
+    <% obfuscated_account_number = "" %>
+  <% end %>
+  <section
+    data-behavior="ach_transfer_payout_method_inputs"
+    class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) %>"
+    x-data="
+    {
+      routingNumber: '<%= errored ? r_no : obfuscated_routing_number %>',
+      accountNumber: '<%= errored ? a_no : obfuscated_account_number %>',
+      editing: <%= errored %>,
+      toggle() {
+        if(!this.editing) {
+          this.routingNumber = '';
+          this.accountNumber = '';
+          this.editing = true;
+        } else if (this.routingNumber == '' && this.accountNumber == '') {
+          this.editing = false;
+          this.routingNumber = '<%= errored ? "" : obfuscated_routing_number %>';
+          this.accountNumber = '<%= errored ? "" : obfuscated_account_number %>';
+        }
+      }
+    }">
+    <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) ? user.payout_method : User::PayoutMethod::AchTransfer.new do |form| %>
+      <%= render "callout",
+        type: "info",
+        icon: "payment-transfer",
+        title: "Important information about ACH transfers",
+        class: "mt-2 mb-5",
+        footer: :questions do %>
+        ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.
+      <% end %>
+
+      <div
+        class="field"
+        data-controller="external-validation"
+        data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
+        <%= form.label :routing_number, "Bank routing number" %>
+        <%= form.text_field :routing_number,
+                            placeholder: "123456789",
+                            class: "fs-mask",
+                            "@focus": "toggle()",
+                            "@blur": "toggle()",
+                            "x-model": "routingNumber",
+                            data: { action: "input->external-validation#validate" },
+                            value: "" %>
+        <span class="muted" data-external-validation-target="hint"></span>
+      </div>
+
+      <div class="field">
+        <%= form.label :account_number, "Bank account number" %>
+        <%= form.text_field :account_number,
+                            placeholder: "0913338883",
+                            class: "fs-mask",
+                            "@focus": "toggle()",
+                            "@blur": "toggle()",
+                            "x-model": "accountNumber",
+                            value: "" %>
+      </div>
+
+      <div class="actions inline-block mt1">
+        <%= form.submit "Save", ':disabled': "!editing", 'x-transition.duration.500ms': "" %>
+      </div>
+    <% end %>
+  </section>
+  <% if defined?(report) %>
+    <%= form.hidden_field :report_id, value: report.id %>
+  <% end %>
+<% end %>
