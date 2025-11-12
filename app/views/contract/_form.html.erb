@@ -1,5 +1,5 @@
 <%= form_with(model: contract, local: true, data: { turbo: false }) do |form| %>
-  <%= form.hidden_field :organizer_position_invite_id %>
+  <%= form.hidden_field :contractable_id %>
 
   <p class="muted">
     This will send <%= contract.user.name %> a fiscal sponsorship agreement
