@@ -13,7 +13,6 @@ class CreateContracts < ActiveRecord::Migration[8.0]
 
       t.references :contractable, polymorphic: true
       t.references :document, foreign_key: true
-      t.references :organizer_position, foreign_key: true
 
       t.timestamps
     end
@@ -31,13 +30,13 @@ class CreateContracts < ActiveRecord::Migration[8.0]
           signed_at: row.signed_at,
           void_at: row.void_at,
           deleted_at: row.deleted_at,
-          contractable: row.organizer_position_invite,
-          document: row.document,
-          organizer_position: row.organizer_position
+          contractable_id: row.organizer_position_invite_id,
+          contractable_type: "OrganizerPositionInvite",
+          document_id: row.document_id,
         }
+      end
 
       ActiveRecord::Base.transaction { Contract.insert_all(new_rows) }
-      end
     end
     
     # rename papertrail item types

@@ -4,32 +4,29 @@
 #
 # Table name: contracts
 #
-#  id                    :bigint           not null, primary key
-#  aasm_state            :string
-#  contractable_type     :string
-#  cosigner_email        :string
-#  deleted_at            :datetime
-#  external_service      :integer
-#  include_videos        :boolean
-#  signed_at             :datetime
-#  void_at               :datetime
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  contractable_id       :bigint
-#  document_id           :bigint
-#  external_id           :string
-#  organizer_position_id :bigint
+#  id                :bigint           not null, primary key
+#  aasm_state        :string
+#  contractable_type :string
+#  cosigner_email    :string
+#  deleted_at        :datetime
+#  external_service  :integer
+#  include_videos    :boolean
+#  signed_at         :datetime
+#  void_at           :datetime
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  contractable_id   :bigint
+#  document_id       :bigint
+#  external_id       :string
 #
 # Indexes
 #
-#  index_contracts_on_contractable           (contractable_type,contractable_id)
-#  index_contracts_on_document_id            (document_id)
-#  index_contracts_on_organizer_position_id  (organizer_position_id)
+#  index_contracts_on_contractable  (contractable_type,contractable_id)
+#  index_contracts_on_document_id   (document_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (document_id => documents.id)
-#  fk_rails_...  (organizer_position_id => organizer_positions.id)
 #
 
 class Contract < ApplicationRecord
@@ -38,6 +35,7 @@ class Contract < ApplicationRecord
   has_paper_trail
 
   belongs_to :document, optional: true
+  belongs_to :contractable, polymorphic: true
 
   validate :one_non_void_contract
 

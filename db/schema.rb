@@ -635,12 +635,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_025217) do
     t.string "contractable_type"
     t.bigint "contractable_id"
     t.bigint "document_id"
-    t.bigint "organizer_position_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["contractable_type", "contractable_id"], name: "index_contracts_on_contractable"
     t.index ["document_id"], name: "index_contracts_on_document_id"
-    t.index ["organizer_position_id"], name: "index_contracts_on_organizer_position_id"
   end
 
   create_table "disbursements", force: :cascade do |t|
@@ -2639,7 +2637,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_025217) do
   add_foreign_key "comment_reactions", "comments"
   add_foreign_key "comment_reactions", "users", column: "reactor_id"
   add_foreign_key "contracts", "documents"
-  add_foreign_key "contracts", "organizer_positions"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
   add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
