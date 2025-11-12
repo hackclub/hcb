@@ -1,23 +1,20 @@
 # frozen_string_literal: true
 
-class OrganizerPosition
-  class ContractPolicy < ApplicationPolicy
-    def create?
-      user&.admin?
-    end
+class ContractPolicy < ApplicationPolicy
+  def create?
+    user&.admin?
+  end
 
-    def void?
-      user&.admin?
-    end
+  def void?
+    user&.admin?
+  end
 
-    def resend_to_user?
-      user&.admin?
-    end
+  def resend_to_user?
+    user&.admin?
+  end
 
-    def resend_to_cosigner?
-      user&.admin?
-    end
-
+  def resend_to_cosigner?
+    user&.admin?
   end
 
 end
