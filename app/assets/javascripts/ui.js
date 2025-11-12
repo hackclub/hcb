@@ -497,7 +497,7 @@ $(document).on('turbo:load', function () {
     .addListener(() => setTilt())
 })
 
-$(document).on('turbo:frame-load', function () {
+const initPayoutMethodToggles = function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
@@ -575,7 +575,10 @@ $(document).on('turbo:frame-load', function () {
       }
     )
   }
-})
+}
+
+$(document).on('turbo:load', initPayoutMethodToggles)
+$(document).on('turbo:frame-load', initPayoutMethodToggles)
 
 $(document).on(
   'keydown',
