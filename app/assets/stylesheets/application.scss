@@ -143,6 +143,7 @@ tr.clickable {
   display: table-row;
   align-items: center;
   transform: rotate(0);
+  position: relative;
   overflow: visible; // for tooltips
 
   & td {
