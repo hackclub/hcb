@@ -3,7 +3,7 @@
 class ReceiptPolicy < ApplicationPolicy
   def destroy?
     return false if record.nil?
-    return true if user.admin?
+    return true if user&.admin?
 
     # the receipt is in receipt bin.
     if record.receiptable.nil?
