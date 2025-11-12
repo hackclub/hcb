@@ -38,6 +38,8 @@ class CreateContracts < ActiveRecord::Migration[8.0]
 
       ActiveRecord::Base.transaction { Contract.insert_all(new_rows) }
     end
+
+    ActiveRecord::Base.connection.reset_pk_sequence!('contracts')
     
     # rename papertrail item types
     PaperTrail::Version.where(item_type: "OrganizerPosition::Contract").update_all(item_type: "Contract")
