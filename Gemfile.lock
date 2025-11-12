@@ -895,9 +895,9 @@ GEM
       activesupport
       ostruct
     wkhtmltopdf-binary (0.12.6.8)
-    write_xlsx (1.12.2)
+    write_xlsx (1.12.3)
       nkf
-      rubyzip (~> 2.4.0)
+      rubyzip (>= 2.4.0, < 4.0)
     xxhash (0.7.0)
     yard (0.9.37)
     yard-solargraph (0.1.0)
