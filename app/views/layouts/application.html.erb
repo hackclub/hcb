@@ -212,7 +212,7 @@
           <%= yield(:nav_footer) %>
         </div>
       <% else %>
-        <div class="h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
+        <div class="hidden lg:flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
       <% end %>
       <%= render "application/user_menu" %>
     </aside>

@@ -12,7 +12,7 @@
             <span class="text-xs -mt-0.5 block opacity-60 truncate" style="font-weight: 400"><%= @current_user.email %></span>
           </div>
         </button>
-        <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 lg:mt-2 h5" data-menu-target="content" style="z-index: 999;">
+        <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 -mt-2 lg:mt-2 h5" data-menu-target="content" style="z-index: 999;">
           <%= render partial: "application/theme_toggle" %>
           <hr>
           <% if signed_in? %>
