@@ -244,7 +244,8 @@ class Invoice < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if (paid_v2? && event.can_front_balance?) || deposited?
+    return "Deposited" if paid_v2? && event.can_front_balance? # paid, and will be deposited soon
+    return "Deposited" if deposited?
     return "In Transit" if paid_v2?
     return "Paid" if manually_marked_as_paid?
     return "Voided" if void_v2?
