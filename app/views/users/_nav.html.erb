@@ -67,21 +67,26 @@
   <% if (current_user.teenager? && current_user.only_card_grant_user?) %>
     <%= render partial: "users/card_grant_conversion_callout" %>
   <% end %>
+<% end %>
 
-  <% if @activities %>
-    <h4 class="w-100 mb0 text-left mt3 border-bottom border-gray-200 pb1 activity">
-      <span class="flex items-center w-100">
-          <span class="flex-grow">Recent activity</span>
-          <% if auditor_signed_in? %>
-            <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :post } do %>
-              <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
-                👤 <%= User.currently_online.count %>
+<% content_for(:nav_footer) do %>
+  <div class="card border border-gray-200 dark:!border-neutral-700 flex flex-col h-full p-0">
+    <% if @activities %>
+      <h4 class="p-3 pb-2 w-100 mb0 text-left mt-0 !border-gray-200 dark:!border-neutral-700 activity" style="border-bottom: 1px solid">
+        <span class="flex items-center w-100">
+            <span class="flex-grow">Recent activity</span>
+            <% if auditor_signed_in? %>
+              <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :post } do %>
+                <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
+                  👤 <%= User.currently_online.count %>
+                <% end %>
               <% end %>
             <% end %>
-          <% end %>
-      </span>
-    </h4>
-  <% end %>
-
-  <%= render partial: "my/activities" if @activities %>
+        </span>
+      </h4>
+    <% end %>
+    <div class="h-full overflow-y-auto">
+      <%= render partial: "my/activities" if @activities %>
+    </div>
+  </div>
 <% end %>
