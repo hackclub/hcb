@@ -165,9 +165,6 @@ tr.clickable {
     pointer-events: auto;
     content: '';
     margin-bottom: 1px;
-    [data-dark='true'] & {
-      margin-top: 1px;
-    }
     background-color: transparent;
   }
 
