@@ -769,8 +769,9 @@ video {
 
   .dropdown {
     position: absolute;
-    top: 32px;
+    top: 33px;
     padding-top: 4px;
+    margin-left: -12px;
   }
 
   summary:hover + detail,
@@ -838,6 +839,7 @@ video {
   padding: 4px 12px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
 }
 
