@@ -5,11 +5,9 @@ module OneTimeJobs
     queue_as :default
 
     def perform
-      Invoice.find_in_batches(batch_size: 100) do |batch|
-        batch.each do |invoice|
-          if invoice.deposited?
-            invoice.update_column(:aasm_state, :deposited_v2)
-          end
+      Invoice.find_each do |invoice|
+        if invoice.deposited?
+          invoice.mark_deposited!
         end
       end
     end
