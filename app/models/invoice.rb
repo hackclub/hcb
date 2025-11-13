@@ -230,7 +230,8 @@ class Invoice < ApplicationRecord
   end
 
   def state
-    return :success if (paid_v2? && event.can_front_balance?) || deposited?
+    return :success if (paid_v2? && event.can_front_balance?) # paid, and will be deposited soon
+    return :success if deposited?
     return :success if manually_marked_as_paid?
     return :info if paid_v2?
     return :error if void_v2?
