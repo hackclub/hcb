@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneTimeJobs
-  class BackfillDepositedStateForInvoices
+  class BackfillDepositedStateForInvoices < ApplicationJob
     queue_as :default
 
     def perform
