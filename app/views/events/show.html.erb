@@ -115,7 +115,7 @@
           <span data-event-home-target="button">All time</span>
           <%= inline_icon "down-caret", size: 20 %>
         </button>
-        <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+        <div class="menu__content menu__content--2 menu__content--compact h5 -mt-2 ml-1" data-menu-target="content">
           <a data-action="event-home#updateTimeframe click->menu#close">All time</a>
           <% if @event.created_at < 1.year.ago %>
             <a data-action="event-home#updateTimeframe click->menu#close">Past year</a>
