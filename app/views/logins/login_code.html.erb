@@ -7,7 +7,7 @@
   <% end %>
   <%= render "badge", user: @login.user %>
   <%= render partial: "users/sms_auth_notice" %>
-  <p>
+  <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
       For additional security, we've just sent a login code to
     <% else %>
