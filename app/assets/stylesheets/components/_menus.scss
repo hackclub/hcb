@@ -179,7 +179,7 @@
   background-color: transparent;
   transition: 0.125s ease background-color;
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
 
   &.menu__action--active::after {
     content: '✔';
