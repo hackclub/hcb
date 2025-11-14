@@ -2,7 +2,7 @@
 <% page_sm %>
 <%= render "events/nav" if @event %>
 
-<article class="card mt3">
+<article class="card mt-6">
   <div class="mb2">
     <%= link_to "Back", organizer_position_deletion_requests_path, class: "breadcrumb" %>
   </div>
@@ -112,19 +112,23 @@
   <% end %>
 </div>
 
-<% if @opdr.under_review? %>
-  <%= link_to "Close Request",
-    organizer_position_deletion_request_close_path(@opdr.id),
-    method: :post,
-    data: { confirm: "This will mark the request as processed. Only continue if no follow-up is needed for this request." },
-    class: "btn bg-accent" %>
-<% else %>
-  <%= link_to "Open Request",
-    organizer_position_deletion_request_open_path(@opdr.id),
-    method: :post,
-    data: { confirm: "This will re-open the request." },
-    class: "btn bg-info" %>
-<% end %>
+<div class="px-7">
+  <% if @opdr.under_review? %>
+    <%= link_to "Close Request",
+      organizer_position_deletion_request_close_path(@opdr.id),
+      method: :post,
+      data: { confirm: "This will mark the request as processed. Only continue if no follow-up is needed for this request." },
+      class: "btn bg-accent" %>
+  <% else %>
+    <%= link_to "Open Request",
+      organizer_position_deletion_request_open_path(@opdr.id),
+      method: :post,
+      data: { confirm: "This will re-open the request." },
+      class: "btn bg-info" %>
+  <% end %>
+</div>
 </article>
 
-<%= render "comments/comments" %>
+<div class="pr-8 lg:mt-6 pl-8 lg:pl-0">
+  <%= render "comments/comments" %>
+</div>
