@@ -1,18 +1,20 @@
 <%= form_with(model: invite, local: true, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
   <%= form_errors invite, "user" %>
 
-  <div class="field" x-data="{ email: '' }">
-    <div class="flex items-center">
-      <%= form.email_field :email, class: "!max-w-full w-full", "x-model": "email", placeholder: "Email address" %>
-    </div>
-    <template x-if="/(team|webmaster|marketing|admin|info|about|support|sales|hello)/.test(email)">
-      <div class="warning mt1">⚠️ For security, we discourage team emails on
-        HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!
+  <div class="border rounded-xl overflow-hidden">
+    <div class="field" x-data="{ email: '' }">
+      <div class="flex items-center">
+        <%= form.email_field :email, class: "!max-w-full w-full !border-0 !px-4 !max-h-10", "x-model": "email", placeholder: "Email address" %>
       </div>
-    </template>
-  </div>
+      <template x-if="/(team|webmaster|marketing|admin|info|about|support|sales|hello)/.test(email)">
+        <div class="warning mt1">⚠️ For security, we discourage team emails on
+          HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!
+        </div>
+      </template>
+    </div>
 
-  <%= render "organizer_position_invites/role_and_control_form", form: form %>
+    <%= render "organizer_position_invites/role_and_control_form", form: form %>
+  </div>
 
   <% admin_tool("mt2 mb2 flex g1") do %>
     <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>

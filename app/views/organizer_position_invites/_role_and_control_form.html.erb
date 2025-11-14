@@ -1,13 +1,11 @@
 <%# locals: (form:) %>
 
-<%= form.label :role, class: "mb1" %>
-<div class="field field--options flex">
-  <% OrganizerPositionInvite.roles.keys.map do |role| %>
-    <%= form.radio_button :role, role, "x-model": "role" %>
-    <%= form.label :role, value: role do %>
-      <strong><%= role.titleize %></strong>
-    <% end %>
-  <% end %>
+<div class="field px-4 flex items-center">
+  <%= form.label :role, "Role" %>
+  <%= form.select :role,
+                  OrganizerPositionInvite.roles.keys.map { |role| [role.titleize, role] },
+                  {}, 
+                  "x-model": "role" %>
 </div>
 
 <p class="muted mb1"><span class="bold info">Managers</span> can do everything
