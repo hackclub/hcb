@@ -572,6 +572,8 @@ GEM
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
+    pghero (3.7.0)
+      activerecord (>= 7.1)
     phonelib (0.10.11)
     pkg-config (1.6.2)
     plaid (44.0.0)
@@ -988,6 +990,7 @@ DEPENDENCIES
   paper_trail (~> 16.0.0)
   pg (>= 0.18, < 2.0)
   pg_search
+  pghero (~> 3.7)
   phonelib
   plaid (~> 44.0)
   poppler
