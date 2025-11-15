@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <div class="nav-row px-3 !border-gray-200 dark:!border-gray-700 py-2" style="width: 100%; display: flex;border-top:1px solid">
+      <div class="nav-row !border-gray-200 dark:!border-gray-700 py-2" style="width: 100%; display: flex;border-top:1px solid">
         <% nav.sections.each do |section| %>
           <details open class="admin-nav-item pb-0 flex-1">
             <summary class="nav-item" style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
@@ -68,11 +68,11 @@
               </span>
             </summary>
             <div class="dropdown">
-              <div class="sub-items">
+              <div class="sub-items" style="backdrop-filter:blur(10px)">
                 <% section.items.each do |item| %>
                   <%= link_to item.path, style: item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
                     <%= item.name %>
-                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
+                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content ml-auto">
                       <%= item.count %>
                     </span>
                   <% end %>

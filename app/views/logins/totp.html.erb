@@ -8,7 +8,7 @@
     <% end %>
     <%= render "badge", user: @login.user %>
   </div>
-  <p>
+  <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
       For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
   </p>

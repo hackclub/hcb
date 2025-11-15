@@ -54,7 +54,7 @@ html {
 *,
 *:before,
 *:after {
-  box-sizing: inherit;
+  box-sizing: border-box;
 }
 
 // /* ---------------------------------------------------------------------------------------------- */
@@ -771,7 +771,6 @@ video {
     position: absolute;
     top: 33px;
     padding-top: 4px;
-    margin-left: -12px;
   }
 
   summary:hover + detail,
@@ -793,13 +792,17 @@ video {
 .sub-items {
   display: flex;
   flex-direction: column;
-  background: var(--hcb-bg-2-5);
-  outline: 1px solid var(--hcb-bg-3);
+  background: #fff;
+  border: 1px solid var(--hcb-bg-3);
+  box-shadow: var(--shadow-lg);
+  border-top: none;
   border-radius: 0px 0px 4px 4px;
   z-index: 999;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
-  margin-top: 4px;
+  margin-top: -5px;
+  padding-top: 9px;
+  margin-left: -2px;
 }
 
 .sub-items > a:last-child {
@@ -811,7 +814,7 @@ video {
   pointer-events: auto;
   color: var(--hcb-tx-1);
   text-decoration: none;
-  background: var(--hcb-bg-2-5);
+  background: #fff;
   min-width: 220px;
   padding: 8px 12px;
   font-weight: 600;
