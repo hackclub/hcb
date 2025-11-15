@@ -12,13 +12,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_15_001440) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_stat_statements"
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.bigint "event_id"
@@ -1001,6 +1001,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_15_001440) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "purpose"
+    t.index ["name", "purpose"], name: "index_event_tags_on_name_and_purpose", unique: true
   end
 
   create_table "event_tags_events", id: false, force: :cascade do |t|
