@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_15_001440) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -489,6 +489,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_000844) do
     t.text "instructions"
     t.string "banned_merchants"
     t.string "banned_categories"
+    t.string "invite_message"
     t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
