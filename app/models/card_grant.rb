@@ -345,4 +345,5 @@ class CardGrant < ApplicationRecord
       self.invite_message = setting.invite_message
     end
   end
+
 end
