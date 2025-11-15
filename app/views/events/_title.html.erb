@@ -2,7 +2,7 @@
   <% if @event.ancestors.present? %>
     <div class="muted -mt-2 -mb-1.5 ml-1 text-sm">
       <% @event.ancestors[0...-1].each do |ancestor| %>
-        <%= link_to ancestor.name, ancestor, class: "no-underline hover:underline" %> 
+        <%= link_to ancestor.name, ancestor, class: "no-underline hover:underline" %>
       <% end %>
     </div>
   <% end %>
