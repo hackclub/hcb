@@ -6,8 +6,8 @@
   </div>
 </div>
 
-<section class="lg:invisible modal modal--scroll modal--popover p-3 bg-transparent shadow-none" style="height: auto" data-behavior="modal" role="dialog" id="mobile_nav">
-  <div class="bg-gray-800 text-white flex-1 mt-auto overflow-hidden rounded-xl">
+<section class="lg:invisible modal modal--scroll modal--popover p-3 bg-transparent shadow-none" style="height: auto;padding-bottom:40px" data-behavior="modal" role="dialog" id="mobile_nav">
+  <div class="backdrop-blur-xl bg-white/70 flex-1 mt-auto overflow-hidden rounded-xl">
     <div class="overflow-y-auto overflow-x-hidden p-5">
       <% users_mobile_nav(selected: local_assigns[:selected]).each do |item| %>
         <div>
