@@ -74,6 +74,9 @@
 .canceled-card-wrapper:hover .canceled-left,
 .canceled-card-wrapper:hover .canceled-right {
   transform: none !important;
+  &.canceled-right {
+    transform: translateX(-1px) !important;
+  }
   & .js-tilt-glare {
     display: none;
   }
