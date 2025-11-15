@@ -195,6 +195,9 @@
   &.hovered,
   &:focus {
     background-color: map-get($palette, selection);
+    [data-dark='true'] & {
+      background-color: map-get($palette, darker);
+    }
   }
 
   svg {

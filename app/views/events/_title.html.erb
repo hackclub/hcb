@@ -1,11 +1,12 @@
-<div class="muted">
-  <% @event.ancestors[0...-1].each do |ancestor| %>
-    <%= link_to ancestor.name, ancestor, class: "no-underline hover:underline" %> /
+<div data-controller="menu" class="-mb-2">
+  <% if @event.ancestors.present? %>
+    <div class="muted -mt-2 -mb-2 ml-1 text-sm">
+      <% @event.ancestors[0...-1].each do |ancestor| %>
+        <%= link_to ancestor.name, ancestor, class: "no-underline hover:underline" %> 
+      <% end %>
+    </div>
   <% end %>
-</div>
-
-<div data-controller="menu">
-  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none gap-2 text-inherit event-title -ml-5 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
+  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none gap-2 text-inherit event-title -ml-1 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
     <h3 class="my-0 flex max-w-[180px] items-center">
       <span class="truncate flex-1 min-w-0">
         <%= @event.name %>
