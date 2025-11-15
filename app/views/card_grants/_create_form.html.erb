@@ -21,7 +21,7 @@
   <div class="field">
     <%= form.label :invite_message, "Invitation message" %>
     <p class="h5 muted m-0">
-      This message is included in emails sent to card grant recipients when invited to activate a card grant.
+      This message is included in the card grant invitation email sent to the recipient.
     </p>
 
     <%= form.text_area :invite_message, placeholder: "It's pizza time!", value: @event&.card_grant_setting&.invite_message, disabled: %>
