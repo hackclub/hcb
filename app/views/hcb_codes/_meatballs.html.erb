@@ -3,8 +3,9 @@
 <% flagable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && !hcb_code.personal_transaction.present? %>
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
+<% reversible_disbursement = hcb_code.disbursement? && hcb_code.disbursement.present? && policy(hcb_code.disbursement.destination_event).create_transfer? %>
 
-<% if (disputable || flagable || pinnable || open_invoice) && organizer_signed_in?(as: :member) %>
+<% if (disputable || flagable || pinnable || open_invoice || reversible_disbursement) && organizer_signed_in?(as: :member) %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
@@ -15,6 +16,17 @@
         <%= link_to pin_hcb_code_path(hcb_code, event: @event), method: :post, class: "flex items-center", data: { confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
           <%= inline_icon "pin-fill", size: 24 %>
           <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
+        <% end %>
+      <% end %>
+      <% if reversible_disbursement %>
+        <%= link_to new_disbursement_path(
+              source_event_id: hcb_code.disbursement.destination_event.id,
+              event_id: hcb_code.disbursement.source_event.id,
+              amount: (hcb_code.disbursement.amount.to_f / 100),
+              message: "Reversing: #{hcb_code.disbursement.name}"
+            ), class: "flex items-center" do %>
+          <%= inline_icon "reply", size: 24 %>
+          Reverse HCB transfer
         <% end %>
       <% end %>
       <% if flagable %>
