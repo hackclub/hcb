@@ -19,7 +19,7 @@
 
 <div class="flex items-center details-horiz details-horiz--lg mb-2" style="gap: 8px; pointer-events: none;">
     <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
-      <div class="stat statset__wide" data-tour-step="balance">
+      <div class="stat statset__wide">
         <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
         <span class="stat__value">
           <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, request.query_parameters), loading: :lazy do %>
