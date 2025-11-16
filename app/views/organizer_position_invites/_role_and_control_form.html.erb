@@ -38,7 +38,7 @@
     </label>
     <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
       <%= form.label :enable_controls do %>
-        <%= form.check_box :enable_controls,  { data: { action: "change->accordion#toggle", accordion_target: "checkbox" } }, true, false %>
+        <%= form.check_box :enable_controls, { data: { action: "change->accordion#toggle", accordion_target: "checkbox" } }, true, false %>
         <span class="slider"></span>
       <% end %>
     </div>
