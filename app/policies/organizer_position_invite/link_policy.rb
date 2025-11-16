@@ -3,7 +3,7 @@
 class OrganizerPositionInvite
   class LinkPolicy < ApplicationPolicy
     def index?
-      admin_or_manager?
+      admin_or_manager
     end
 
     def show?
@@ -11,29 +11,29 @@ class OrganizerPositionInvite
     end
 
     def new?
-      admin_or_manager?
+      admin_or_manager
     end
 
     def create?
-      admin_or_manager?
+      admin_or_manager
     end
 
     def deactivate?
-      admin_or_manager?
+      admin_or_manager
     end
 
     private
 
-    def admin?
+    def admin
       user&.admin?
     end
 
-    def manager?
+    def manager
       OrganizerPosition.find_by(user:, event: record.event)&.manager?
     end
 
-    def admin_or_manager?
-      admin? || manager?
+    def admin_or_manager
+      admin || manager
     end
 
   end

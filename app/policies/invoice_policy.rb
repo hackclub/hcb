@@ -13,7 +13,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def new?
-    !unapproved? && (is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader))
+    !unapproved && (is_public || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader))
   end
 
   def create?
@@ -70,7 +70,7 @@ class InvoicePolicy < ApplicationPolicy
     record&.sponsor&.event&.is_public?
   end
 
-  def unapproved?
+  def unapproved
     record&.sponsor&.event&.unapproved?
   end
 

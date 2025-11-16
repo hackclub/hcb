@@ -6,7 +6,7 @@ class PaypalTransferPolicy < ApplicationPolicy
   end
 
   def create?
-    user_who_can_transfer?
+    user_who_can_transfer
   end
 
   def approve?
@@ -14,7 +14,7 @@ class PaypalTransferPolicy < ApplicationPolicy
   end
 
   def reject?
-    user_who_can_transfer?
+    user_who_can_transfer
   end
 
   def mark_failed?
@@ -23,7 +23,7 @@ class PaypalTransferPolicy < ApplicationPolicy
 
   private
 
-  def user_who_can_transfer?
+  def user_who_can_transfer
     EventPolicy.new(user, record.event).create_transfer?
   end
 

@@ -2,7 +2,7 @@
 
 class CheckDepositPolicy < ApplicationPolicy
   def index?
-    auditor_or_user? && check_deposits_enabled?
+    auditor_or_member && check_deposits_enabled
   end
 
   def create?
@@ -16,41 +16,37 @@ class CheckDepositPolicy < ApplicationPolicy
     # - You're a manager of the event
     # - You're an organizer of the event (e.g. reader, member, etc.), but ALSO
     #   was the person who uploaded the check deposit.
-    auditor_or_manager? || (user? && record.created_by == user)
+    auditor_or_manager || (member && record.created_by == user)
   end
 
   def toggle_fronted?
-    admin?
+    admin
   end
 
   private
 
-  def admin?
+  def admin
     user&.admin?
   end
 
-  def auditor?
+  def auditor
     user&.auditor?
   end
 
-  def user?
+  def member
     record.event.users.include?(user)
   end
 
-  def check_deposits_enabled?
+  def check_deposits_enabled
     record.event.plan.check_deposits_enabled?
   end
 
-  def auditor_or_user?
-    auditor? || user?
+  def auditor_or_member
+    auditor || member
   end
 
-  def auditor_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
-  end
-
-  def user_who_can_transfer?
-    EventPolicy.new(user, record.event).create_transfer?
+  def auditor_or_manager
+    auditor || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 
 end

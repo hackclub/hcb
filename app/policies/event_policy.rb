@@ -7,11 +7,11 @@ class EventPolicy < ApplicationPolicy
 
   # Event homepage
   def show?
-    is_public || auditor_or_reader?
+    is_public || auditor_or_reader
   end
 
   def show_in_v4?
-    auditor_or_reader?
+    auditor_or_reader
   end
 
   # Turbo frames for the event homepage (show)
@@ -31,32 +31,32 @@ class EventPolicy < ApplicationPolicy
   alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
-    user&.admin?
+    admin
   end
 
   def new?
-    user&.admin?
+    admin
   end
 
   def create?
-    user&.admin?
+    admin
   end
 
   def balance_by_date?
-    is_public || auditor_or_reader?
+    is_public || auditor_or_reader
   end
 
   def edit?
-    auditor_or_member?
+    auditor_or_member
   end
 
   # pinning a transaction to an event
   def pin?
-    admin_or_member?
+    admin_or_member
   end
 
   def update?
-    admin_or_manager?
+    admin_or_manager
   end
 
   alias remove_header_image? update?
@@ -72,19 +72,19 @@ class EventPolicy < ApplicationPolicy
   alias toggle_fee_waiver_eligible? update?
 
   def validate_slug?
-    admin_or_member?
+    admin_or_member
   end
 
   def destroy?
-    user&.admin? && record.demo_mode?
+    admin && record.demo_mode?
   end
 
   def team?
-    is_public || auditor_or_reader?
+    is_public || auditor_or_reader
   end
 
   def announcement_overview?
-    is_public || record.announcements.published.any? || auditor_or_reader?
+    is_public || record.announcements.published.any? || auditor_or_reader
   end
 
   def feed?
@@ -92,7 +92,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def emburse_card_overview?
-    is_public || auditor_or_reader?
+    is_public || auditor_or_reader
   end
 
   def card_overview?
@@ -104,11 +104,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_stripe_card?
-    admin_or_member? && is_not_demo_mode?
+    admin_or_member && is_not_demo_mode
   end
 
   def documentation?
-    auditor_or_reader? && record.plan.documentation_enabled?
+    auditor_or_reader && record.plan.documentation_enabled?
   end
 
   def statements?
@@ -116,7 +116,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def statement_of_activity?
-    show? && auditor?
+    show? && auditor
   end
 
   def async_balance?
@@ -128,23 +128,23 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_transfer?
-    admin_or_manager? && !record.demo_mode?
+    admin_or_manager && !record.demo_mode?
   end
 
   def new_transfer?
-    admin_or_manager? && !record.demo_mode?
+    admin_or_manager && !record.demo_mode?
   end
 
   def g_suite_overview?
-    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_reader && is_not_demo_mode && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
-    admin_or_manager? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    admin_or_manager && is_not_demo_mode && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
-    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_reader && is_not_demo_mode && record.plan.google_workspace_enabled?
   end
 
   def transfers?
@@ -152,11 +152,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def card_grant_overview?
-    (is_public || auditor_or_reader?) && (record.plan.card_grants_enabled? || record.card_grants.any?)
+    (is_public || auditor_or_reader) && (record.plan.card_grants_enabled? || record.card_grants.any?)
   end
 
   def promotions?
-    auditor_or_reader?
+    auditor_or_reader
   end
 
   def reimbursements_pending_review_icon?
@@ -164,19 +164,19 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements?
-    auditor_or_reader? && record.plan.reimbursements_enabled?
+    auditor_or_reader && record.plan.reimbursements_enabled?
   end
 
   def employees?
-    auditor_or_reader?
+    auditor_or_reader
   end
 
   def sub_organizations?
-    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
+    (is_public || auditor_or_reader) && (record.subevents_enabled? || record.subevents.any?)
   end
 
   def create_sub_organization?
-    admin_or_manager? && record.subevents_enabled?
+    admin_or_manager && record.subevents_enabled?
   end
 
   def donation_overview?
@@ -188,11 +188,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    (auditor? || member?) && record.plan.account_number_enabled?
+    (auditor || member) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
-    user.admin?
+    admin
   end
 
   def receive_grant?
@@ -200,76 +200,72 @@ class EventPolicy < ApplicationPolicy
   end
 
   def audit_log?
-    user.auditor?
+    auditor
   end
 
   def termination?
-    user&.auditor?
+    auditor
   end
 
   def can_invite_user?
-    admin_or_manager?
+    admin_or_manager
   end
 
   def claim_point_of_contact?
-    user&.admin?
+    admin
   end
 
   def activation_flow?
-    user&.admin? && record.demo_mode?
+    admin && record.demo_mode?
   end
 
   def activate?
-    user&.admin? && record.demo_mode?
+    admin && record.demo_mode?
   end
 
   def toggle_scoped_tag?
-    admin_or_manager?
+    admin_or_manager
   end
 
   private
 
-  def admin_or_member?
-    admin? || member?
+  def admin_or_member
+    admin || member
   end
 
-  def auditor_or_reader?
-    auditor? || reader?
+  def auditor_or_reader
+    auditor || reader
   end
 
-  def auditor_or_member?
-    auditor? || member?
+  def auditor_or_member
+    auditor || member
   end
 
-  def admin?
+  def admin
     user&.admin?
   end
 
-  def auditor?
+  def auditor
     user&.auditor?
   end
 
-  def reader?
+  def reader
     OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
-  def member?
+  def member
     OrganizerPosition.role_at_least?(user, record, :member)
   end
 
-  def manager?
+  def manager
     OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
-  def admin_or_manager?
-    admin? || manager?
+  def admin_or_manager
+    admin || manager
   end
 
-  def admin_or_reader?
-    admin? || reader?
-  end
-
-  def is_not_demo_mode?
+  def is_not_demo_mode
     !record.demo_mode?
   end
 
