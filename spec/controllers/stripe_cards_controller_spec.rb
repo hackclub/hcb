@@ -65,7 +65,7 @@ RSpec.describe StripeCardsController do
 
       get(:show, params: { id: card.id, show_details: true })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       # Simulate a reauthentication (this would happen in

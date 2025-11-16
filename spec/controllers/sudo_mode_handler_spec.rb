@@ -66,7 +66,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       form = response.parsed_body.css("form").sole
@@ -88,7 +88,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(extract_submit_method(response)).to eq("email")
     end
@@ -102,7 +102,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(extract_submit_method(response)).to eq("sms")
     end
@@ -118,7 +118,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(extract_submit_method(response)).to eq("email")
     end
@@ -132,7 +132,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create, params: { _sudo: { switch_method: "email" } })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(extract_submit_method(response)).to eq("email")
     end
@@ -158,7 +158,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       # If there isn't an explicit user preference we favor WebAuthn
@@ -189,7 +189,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create, params:)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       form_params =
@@ -215,7 +215,7 @@ RSpec.describe SudoModeHandler do
 
       get(:index, params: { q: "dinosaurs", sort_by: "name", sort_direction: "asc" })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       form = response.parsed_body.css("form").sole
@@ -241,7 +241,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       login_id = response.parsed_body.css("[name='_sudo[login_id]']").sole.attr("value")
@@ -259,7 +259,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create, params: { _sudo: { login_id: "nope", submit_method: "email" } })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(flash[:error]).to eq("Login has expired. Please try again.")
     end
@@ -270,7 +270,7 @@ RSpec.describe SudoModeHandler do
 
       post(:create, params: { _sudo: { login_id: login.hashid, submit_method: "email" } })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(flash[:error]).to eq("Login has expired. Please try again.")
 
@@ -455,7 +455,7 @@ RSpec.describe SudoModeHandler do
         }
       )
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(flash[:error]).to eq("Turn it off and on again")
     end
