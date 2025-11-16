@@ -159,6 +159,10 @@ module Reimbursement
 
       event :mark_draft do
         transitions from: [:submitted, :reimbursement_requested, :rejected], to: :draft
+        after do
+          # Once a report becomes unlocked, any changes would render existing fees outdated
+          expenses.where(type: Reimbursement::Expense::Fee.name).destroy_all
+        end
       end
 
       event :mark_reimbursed do
