@@ -94,8 +94,8 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
     organizer_stripe_cards.active
   end
 
-  def organizer_last_signee?
-    event.signees.size == 1 && organizer_position.signee?
+  def organizer_last_owner?
+    event.owners.size == 1 && organizer_position.owner?
   end
 
   private

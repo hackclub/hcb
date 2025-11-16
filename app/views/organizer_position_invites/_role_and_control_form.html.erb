@@ -2,10 +2,17 @@
 
 <%= form.label :role, class: "mb1" %>
 <div class="field field--options flex">
-  <% OrganizerPositionInvite.roles.keys.map do |role| %>
+  <% OrganizerPositionInvite.roles.keys.excluding("owner").map do |role| %>
     <%= form.radio_button :role, role, "x-model": "role" %>
     <%= form.label :role, value: role do %>
       <strong><%= role.titleize %></strong>
+    <% end %>
+  <% end %>
+
+  <% if admin_signed_in? %>
+    <%= form.radio_button :role, "owner", "x-model": "role" %>
+    <%= form.label :role, value: "owner", class: "admin-tools overflow-visible" do %>
+      <strong>Owner <span class="text-sm font-normal">(contract&nbsp;signee)</span></strong>
     <% end %>
   <% end %>
 </div>

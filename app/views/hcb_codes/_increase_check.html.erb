@@ -116,7 +116,7 @@
       <% if policy(@hcb_code.increase_check).reject? %>
         <%= cancel_button %>
       <% else %>
-        <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel checks!">
+        <div class="tooltipped tooltipped--e w-fit" aria-label="Only owners or managers can cancel checks!">
           <%= cancel_button %>
         </div>
       <% end %>
