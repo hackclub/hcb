@@ -26,7 +26,7 @@
   </div>
   <%= form.select :role,
                   OrganizerPositionInvite.roles.keys.map { |role| [role.titleize, role] },
-                  { }, 
+                  {},
                   style: "max-width:120px !important",
                   "x-model": "role" %>
 </div>
