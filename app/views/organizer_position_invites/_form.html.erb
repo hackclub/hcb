@@ -1,4 +1,4 @@
-<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
+<%= form_with(model: invite, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
   <%= form_errors invite, "user" %>
 
   <div class="field" x-data="{ email: '' }">

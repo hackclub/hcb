@@ -1,0 +1,12 @@
+<div id="pending_invitations">
+  <% if invites.any? %>
+    <h2 class="flex items-center mt3 mb2">
+      Pending invitations
+      <%= badge_for invites.size, class: "bg-muted" %>
+    </h2>
+
+    <div class="flex flex-col" style="gap: 0.5rem">
+      <%= render partial: "organizer_position_invites/organizer_position_invite", collection: invites %>
+    </div>
+  <% end %>
+</div>

@@ -36,7 +36,13 @@ class OrganizerPositionInvitesController < ApplicationController
         OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
       end
       flash[:success] = "Invite successfully sent to #{user_email}"
-      redirect_to event_team_path @invite.event
+
+      respond_to do |format|
+        format.turbo_stream do
+          @invites = @event.organizer_position_invites.pending.order(created_at: :desc)
+        end
+        format.html { redirect_to event_team_path @invite.event }
+      end
     else
       render :new, status: :unprocessable_entity
     end
@@ -89,7 +95,13 @@ class OrganizerPositionInvitesController < ApplicationController
 
     if @invite.cancel
       flash[:success] = "#{@invite.user.email}\'s invitation has been canceled."
-      redirect_to event_team_path(@invite.event)
+
+      respond_to do |format|
+        format.turbo_stream do
+          @invites = @invite.event.organizer_position_invites.pending.order(created_at: :desc)
+        end
+        format.html { redirect_to event_team_path(@invite.event) }
+      end
     else
       flash[:error] = "Failed to cancel the invitation."
       redirect_to @invite.event
@@ -102,7 +114,13 @@ class OrganizerPositionInvitesController < ApplicationController
     @invite.deliver
 
     flash[:success] = "Invite successfully resent to #{@invite.user.email}"
-    redirect_to event_team_path @invite.event
+
+    respond_to do |format|
+      format.turbo_stream do
+        @invites = @invite.event.organizer_position_invites.pending.order(created_at: :desc)
+      end
+      format.html { redirect_to event_team_path @invite.event }
+    end
   end
 
   private

@@ -1,0 +1,16 @@
+<%= turbo_stream.replace "pending_invitations" do %>
+  <%= render "organizer_position_invites/pending_invitations", invites: @invites %>
+<% end %>
+
+<%= turbo_stream.append "flash-container" do %>
+  <article role="alertdialog" class="flash flex items-center mt3 mb2 mx-auto shrink-none success" data-behavior="flash" data-turbo-temporary>
+    <span style="flex-grow: 1"><%= flash[:success] %></span>
+    <%= inline_icon "view-close", size: 32, class: "pointer" %>
+  </article>
+<% end %>
+
+<script>
+  // Close the modal after successful invite creation
+  document.querySelector('[data-behavior="modal"][id="invite_member"]')?.classList.remove('show');
+  document.body.classList.remove('modal-open');
+</script>
