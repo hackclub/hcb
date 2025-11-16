@@ -7,7 +7,7 @@ class EventsController < ApplicationController
   include SetEvent
 
   include Rails::Pagination
-  before_action :set_event, except: [:index, :new, :create]
+  before_action :set_event, except: [:index]
   before_action :set_transaction_filters, only: [:transactions, :ledger]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
@@ -559,6 +559,14 @@ class EventsController < ApplicationController
     render :async_balance, layout: false
   end
 
+  def async_sub_organization_balance
+    authorize @event
+
+    @sub_organizations = filtered_sub_organizations
+
+    render :async_sub_organization_balance, layout: false
+  end
+
   def account_number
     @transactions = if @event.column_account_number.present?
                       CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id)).order(created_at: :desc)
@@ -836,13 +844,7 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        search = params[:q] || params[:search]
-
-        relation = @event.subevents
-        relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
-        relation = relation.order(created_at: :desc)
-
-        @sub_organizations = relation
+        @sub_organizations = filtered_sub_organizations
       end
 
       # CSV export intentionally does not consider filters
@@ -883,7 +885,8 @@ class EventsController < ApplicationController
       is_public: @event.is_public,
       plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
-      parent_event: @event
+      parent_event: @event,
+      scoped_tags: params[:scoped_tags]
     ).run
 
     redirect_to subevent
@@ -1134,6 +1137,23 @@ class EventsController < ApplicationController
 
   private
 
+  def filtered_sub_organizations(sub_organizations = @event.subevents)
+    search = params[:q] || params[:search]
+    scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
+
+    relation = sub_organizations.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
+    relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+    relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
+    relation = relation.order(created_at: :desc)
+
+    @filter_options = [
+      { key: "tag", label: "Tag", type: "select", options: @event.subevent_scoped_tags.map(&:name) }
+    ]
+    @has_filter = helpers.check_filters?(@filter_options, params)
+
+    relation
+  end
+
   # Only allow a trusted parameter "white list" through.
   def event_params
     permitted_params = [
@@ -1324,20 +1344,24 @@ class EventsController < ApplicationController
   end
 
   def set_cacheable
-    return false unless params[:q].blank? &&
-                        params[:page].blank? &&
-                        params[:per].blank? &&
-                        @user.nil? &&
-                        @tag.blank? &&
-                        @type.blank? &&
-                        @start_date.blank? &&
-                        @end_date.blank? &&
-                        @minimum_amount.nil? &&
-                        @maximum_amount.nil? &&
-                        !@missing_receipts
-    return false if organizer_signed_in?
+    has_filters = !(
+      params[:q].blank? &&
+        params[:page].blank? &&
+        params[:per].blank? &&
+        @user.nil? &&
+        @tag.blank? &&
+        @type.blank? &&
+        @start_date.blank? &&
+        @end_date.blank? &&
+        @minimum_amount.nil? &&
+        @maximum_amount.nil? &&
+        @direction.nil? &&
+        @category.nil? &&
+        @merchant.nil? &&
+        !@missing_receipts
+    )
 
-    true
+    @cacheable = !(organizer_signed_in? || has_filters)
   end
 
   def set_mock_data

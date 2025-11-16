@@ -3,6 +3,8 @@
 module Reimbursement
   class ReportsController < ApplicationController
     include SetEvent
+    include Admin::TransferApprovable
+
     before_action :set_report_user_and_event, except: [:create, :quick_expense, :start, :finished]
     before_action :set_event, only: [:start, :finished]
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
@@ -79,6 +81,24 @@ module Reimbursement
       @with_fees_quote_amount = @report.wise_transfer_quote_amount
       @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
       @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+
+      render :wise_transfer_quote, layout: false
+    end
+
+    def wise_transfer_breakdown
+      authorize @report
+
+      if @report.payout_holding.present?
+        @with_fees_quote_amount = Money.from_cents(@report.payout_holding.amount_cents)
+        @fees_amount = Money.from_cents(@report.fees_charged_cents)
+        @without_fees_quote_amount = @with_fees_quote_amount - @fees_amount
+      else
+        @with_fees_quote_amount = @report.wise_transfer_quote_amount
+        @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
+        @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+      end
+
+      render :wise_transfer_breakdown, layout: false
     end
 
     def start
@@ -202,7 +222,7 @@ module Reimbursement
     def admin_approve
       authorize @report
       # TODO: This does NOT consider currency
-      Governance::Admin.ensure_may_approve_transfer!(current_user, @report.amount_to_reimburse_cents)
+      ensure_admin_may_approve!(@report, amount_cents: @report.amount_to_reimburse_cents)
 
       begin
         @report.with_lock do
