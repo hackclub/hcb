@@ -42,9 +42,9 @@ plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 
-# Report stats to AppSignal
-plugin :appsignal
-
+# Report stats to AppSignal, pull credentials before loading plugin
 require_relative "../app/lib/credentials"
 
 Credentials.load if ENV["DOPPLER_TOKEN"]
+
+plugin :appsignal
