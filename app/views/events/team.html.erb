@@ -81,23 +81,25 @@
 </div>
 <% if @view == "list" %>
   <% if @all_positions.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Date invited</th>
-        <th>Name</th>
-        <th>Role</th>
-        <th>Contact</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-    <% if @all_positions.any? %>
-      <%= turbo_frame_tag "team_position" do %>
-        <%= render partial: "organizer_positions/organizer_position_row", collection: @positions, as: :organizer_position %>
+  <article class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date invited</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Contact</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      <% if @all_positions.any? %>
+        <%= turbo_frame_tag "team_position" do %>
+          <%= render partial: "organizer_positions/organizer_position_row", collection: @positions, as: :organizer_position %>
+        <% end %>
       <% end %>
-    <% end %>
-  </table>
+    </table>
+  </article>
   <%= paginate @positions %>
   <% else %>
     <%= blankslate @event.organizer_positions.none? ? "No team members" : "No team members found" %>

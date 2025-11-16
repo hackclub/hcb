@@ -6,15 +6,17 @@
   <%= turbo_stream_from @event, :scoped_tags %>
 <% end %>
 
-<h1 class="heading flex">
+<h1 class="heading flex items-center gap-2 flex-col sm:flex-row">
   <span class="flex-grow">Sub-organizations</span>
-  <%= pop_icon_to "download",
-                  { format: :csv },
-                  class: "align-middle tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
-  <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
-    <%= inline_icon "plus" %>
-    Create a subsidiary
-  <% end %>
+  <div class="flex items-center gap-2">
+    <%= pop_icon_to "download",
+                    { format: :csv },
+                    class: "tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
+    <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
+      <%= inline_icon "plus" %>
+      Create a subsidiary
+    <% end %>
+  </div>
 </h1>
 
 <div class="flex items-center details-horiz details-horiz--lg mb-2" style="gap: 8px; pointer-events: none;">
