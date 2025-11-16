@@ -1,7 +1,9 @@
 <%# locals: (event:, invite_links:) %>
 
 <% if invite_links.empty? %>
-  <p><%= event.name %> does not currently have any active invite links</p>
+  <div class="banner border shadow-none">
+    <p><%= event.name %> does not currently have any active invite links</p>
+  </div>
 <% else %>
   <% invite_links.each do |link| %>
     <div class="overflow-visible justify-between items-center gap-2">
