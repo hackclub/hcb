@@ -129,7 +129,7 @@ GEM
       activerecord (>= 6.0.0)
       activesupport (>= 6.0.0)
     api-pagination (6.0.0)
-    appsignal (4.5.4)
+    appsignal (4.7.5)
       logger
       rack (>= 2.0.0)
     argon2-kdf (0.3.0)
@@ -382,6 +382,9 @@ GEM
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-logging-utils (0.2.0)
+    google-protobuf (4.33.1)
+      bigdecimal
+      rake (>= 13)
     googleauth (1.14.0)
       faraday (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
@@ -569,9 +572,13 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.5.9)
+    pg_query (6.1.0)
+      google-protobuf (>= 3.25.3)
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
+    pghero (3.7.0)
+      activerecord (>= 7.1)
     phonelib (0.10.11)
     pkg-config (1.6.2)
     plaid (44.0.0)
@@ -825,8 +832,8 @@ GEM
     statsd-instrument (3.9.9)
     stringio (3.1.7)
     stripe (11.7.0)
-    strong_migrations (1.8.0)
-      activerecord (>= 5.2)
+    strong_migrations (2.5.1)
+      activerecord (>= 7.1)
     terser (1.2.6)
       execjs (>= 0.3.0, < 3)
     thor (1.4.0)
@@ -987,7 +994,9 @@ DEPENDENCIES
   namae
   paper_trail (~> 16.0.0)
   pg (>= 0.18, < 2.0)
+  pg_query (>= 2)
   pg_search
+  pghero (~> 3.7)
   phonelib
   plaid (~> 44.0)
   poppler
@@ -1030,7 +1039,7 @@ DEPENDENCIES
   stackprof
   statsd-instrument (~> 3.9)
   stripe (= 11.7.0)
-  strong_migrations (~> 1)
+  strong_migrations (~> 2)
   suo!
   terser (~> 1.2)
   turbo-rails (~> 2.0.17)
