@@ -1,0 +1,37 @@
+<%= turbo_frame_tag :subscriptions_list do %>
+  <% unless @subscriptions.empty? %>
+    <h2>Subscriptions</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Card</th>
+          <th>Amount</th>
+          <th>Every</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @subscriptions.each do |subscription| %>
+          <tr>
+            <td><%= subscription.merchant %></td>
+            <td><%= subscription.card_last4 %></td>
+            <td><%= render_money(HcbCode.find_by(hcb_code: subscription.last_hcb_code).amount_cents) %></td>
+            <td><%= subscription.average_date_difference %> days</td>
+            <td>
+              <%= link_to "Details",
+                  my_subscriptions_details_path(merchant: subscription.merchant, card: subscription.card_id),
+                  data: { behavior: "modal_trigger", modal: "subscription_details_#{subscription.merchant}_#{subscription.card_id}" } %>
+            </td>
+
+          <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="subscription_details_<%= subscription.merchant %>_<%= subscription.card_id %>">
+            <%= modal_header "Subscription" %>
+            <%= turbo_frame_tag "stripe_card_#{subscription.merchant}_#{subscription.card_id}", src: subscription.popover_path, loading: :lazy do %>
+              <%= render partial: "application/loading_container" %>
+            <% end %>
+          </section>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+<% end %>

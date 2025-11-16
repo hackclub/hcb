@@ -2188,6 +2188,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
     t.index ["event_id"], name: "index_subledgers_on_event_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.string "merchant"
+    t.string "card"
+    t.json "hcb_codes"
+    t.string "last_hcb_code"
+    t.decimal "average_date_difference"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merchant", "card"], name: "index_subscriptions_on_merchant_and_card", unique: true
+  end
+
   create_table "suggested_pairings", force: :cascade do |t|
     t.bigint "receipt_id", null: false
     t.bigint "hcb_code_id", null: false
