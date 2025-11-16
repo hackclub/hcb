@@ -79,7 +79,7 @@ class StripeCardsController < ApplicationController
     @show_card_details = params[:show_details] == "true"
     @event = @card.event
 
-    @hcb_codes = @card.hcb_codes
+    @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
                       .page(params[:page]).per(25)
 

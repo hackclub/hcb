@@ -156,7 +156,7 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.hcb_codes
+    @hcb_codes = @card&.local_hcb_codes
 
     @frame = params[:frame].present?
     @force_no_popover = @frame
