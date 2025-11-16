@@ -56,7 +56,7 @@
           <% unless state_change == "reimbursement_requested" && whodunnit == @report.user && !@report.team_review_required? %>
             <li class="conversation_item mt2" style="margin-bottom: 24px;">
               <div class="flex flex-row items-center" style="gap: 16px">
-                <div class="flex items-center justify-center z2 pop no_hover bg-<%= color %>-important" style="color: white;">
+                <div class="flex items-center justify-center z-[2] pop no_hover bg-<%= color %>-important" style="color: white;">
                   <%= inline_icon icon, width: 30 %>
                 </div>
                 <div class="conversation_item_text">
@@ -84,7 +84,7 @@
           <% unless item.event == "update" && changes.empty? %>
             <li class="conversation_item mt2" style="margin-bottom: 24px;">
               <div class="flex flex-row items-center" style="gap: 16px">
-                <div class="pop bg-smoke-important no_hover relative z2">
+                <div class="pop bg-smoke-important no_hover relative z-[2]">
                   <%= inline_icon "post", width: 30 %>
                 </div>
                 <div style="display: flex; align-items: center; gap: 4px">

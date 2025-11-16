@@ -1,0 +1,68 @@
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="account_numbers">
+  <header>
+    <%= modal_close %>
+    <h2 class="heading mt0 pb0 border-none">
+      Account numbers
+      <% if @event.column_account_number&.deposit_only? %>
+        <div class="badge bg-info ml0 self-end tooltipped tooltipped--s" aria-label="This account number can only receive funds. You can’t use it to send money.">
+          <%= inline_icon "info", size: 20, style: "margin-left: -0.25rem;" %> Receive-only
+        </div>
+      <% else %>
+        <div class="badge bg-success ml0 self-end tooltipped tooltipped--s" aria-label="This account number can be used to deposit and withdraw from your account.">
+          <%= inline_icon "info", size: 20, style: "margin-left: -0.25rem;" %> Receive + send
+        </div>
+      <% end %>
+    </h2>
+    <p class="h4 muted mt1 mb1">
+      Connect your HCB account to GoFundMe, Shopify, Venmo, and more.
+    </p>
+  </header>
+
+  <section class="details-horiz my-6 overflow-visible !mx-0">
+    <p>
+      <strong class="">Account number</strong>
+      <span class="h2 font-mono"><%= copy_to_clipboard @event.column_account_number&.account_number, tooltip_direction: :s %></span>
+    </p>
+    <p>
+      <strong class="tooltipped tooltipped--s" aria-label="Used to receive ACH transfers and wires within the US">Routing number<sup class="muted help"> ?</sup></strong>
+      <span class="h2 font-mono"><%= copy_to_clipboard @event.column_account_number&.routing_number, tooltip_direction: :s %></span>
+    </p>
+  </section>
+
+  <p class="h5 muted text-balance flex gap-2 mt1 mb2">
+    <%= inline_icon "info", size: 24 %>
+    You may need to tap "Verify bank manually" or similar when linking your account to apps like Venmo.
+  </p>
+
+  <% admin_tool do %>
+    <%= button_to @event.column_account_number&.deposit_only? ? "Enable debits" : "Make deposit-only",
+                  event_column_account_number_path(@event),
+                  method: :patch,
+                  params: { column_account_number: { deposit_only: !@event.column_account_number&.deposit_only } },
+                  class: "btn bg-muted text-sm py-1 px-3",
+                  data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+  <% end %>
+
+  <section class="details border-top pt2 mt2">
+    <p>
+      <strong>SWIFT BIC code<sup class="muted tooltipped tooltipped--n help" aria-label="Used to receive international wire transfers from outside the US"> ?</sup></strong>
+      <span><%= copy_to_clipboard @event.column_account_number&.bic_code, tooltip_direction: :e %></span>
+    </p>
+    <p>
+      <strong>Company name</strong>
+      <span><%= @event.name %> C/O Hack Club</span>
+    </p>
+    <p>
+      <strong>Company address</strong>
+      <span>8605 Santa Monica Blvd #86294<br>West Hollywood, CA 90069</span>
+    </p>
+    <p>
+      <strong>Bank name</strong>
+      <span>Column N.A.</span>
+    </p>
+    <p>
+      <strong>Bank address</strong>
+      <span>1110 Gorgas Avenue, Suite A4-700<br>San Francisco, CA 94129</span>
+    </p>
+  </section>
+</section>
