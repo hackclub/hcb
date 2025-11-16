@@ -44,20 +44,30 @@ class OrganizerPositionInvitesController < ApplicationController
         format.turbo_stream {
           flash.now[:success] = "Invite successfully sent to #{user_email}"
           @invite = OrganizerPositionInviteService::Create.new(event: @event).model
-          render turbo_stream: turbo_stream.replace("invite_member_form",
-            partial: "organizer_position_invites/form",
-            locals: { invite: @invite }
-          )
+          render turbo_stream: [
+            turbo_stream.replace("invite_member_form",
+              partial: "organizer_position_invites/form",
+              locals: { invite: @invite }
+            ),
+            turbo_stream.replace("flash-container",
+              partial: "application/flash"
+            )
+          ]
         }
       end
     else
       respond_to do |format|
         format.html { render :new, status: :unprocessable_entity }
         format.turbo_stream {
-          render turbo_stream: turbo_stream.replace("invite_member_form",
-            partial: "organizer_position_invites/form",
-            locals: { invite: @invite }
-          ), status: :unprocessable_entity
+          render turbo_stream: [
+            turbo_stream.replace("invite_member_form",
+              partial: "organizer_position_invites/form",
+              locals: { invite: @invite }
+            ),
+            turbo_stream.replace("flash-container",
+              partial: "application/flash"
+            )
+          ], status: :unprocessable_entity
         }
       end
     end

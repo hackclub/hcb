@@ -55,7 +55,11 @@ class OrganizerPositionInvite
         respond_to do |format|
           format.html { redirect_to event_team_path(event_id: @event.id), flash: { success: "Invite link successfully created." } }
           format.turbo_stream {
-            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links })
+            flash.now[:success] = "Invite link successfully created."
+            render turbo_stream: [
+              turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }),
+              turbo_stream.replace("flash-container", partial: "application/flash")
+            ]
           }
         end
       else
@@ -73,7 +77,11 @@ class OrganizerPositionInvite
         respond_to do |format|
           format.html { redirect_to event_team_path(event_id: @event.id), flash: { success: "Invite link successfully deactivated." } }
           format.turbo_stream {
-            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links })
+            flash.now[:success] = "Invite link successfully deactivated."
+            render turbo_stream: [
+              turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }),
+              turbo_stream.replace("flash-container", partial: "application/flash")
+            ]
           }
         end
       else
@@ -84,7 +92,10 @@ class OrganizerPositionInvite
           format.html { redirect_to event_team_path(event_id: @event.id), flash: { error: "Failed to deactivate invite link." } }
           format.turbo_stream {
             flash.now[:error] = "Failed to deactivate invite link."
-            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }), status: :unprocessable_entity
+            render turbo_stream: [
+              turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }),
+              turbo_stream.replace("flash-container", partial: "application/flash")
+            ], status: :unprocessable_entity
           }
         end
       end
