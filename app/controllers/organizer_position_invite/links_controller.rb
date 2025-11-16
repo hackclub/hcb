@@ -66,9 +66,9 @@ class OrganizerPositionInvite
     def deactivate
       authorize @link
 
+      @event = @link.event
+      @invite_links = @event.organizer_position_invite_links.active
       if @link.deactivate(user: current_user)
-        @event = @link.event
-        @invite_links = @event.organizer_position_invite_links.active
 
         respond_to do |format|
           format.html { redirect_to event_team_path(event_id: @event.id), flash: { success: "Invite link successfully deactivated." } }
@@ -77,8 +77,6 @@ class OrganizerPositionInvite
           }
         end
       else
-        @event = @link.event
-        @invite_links = @event.organizer_position_invite_links.active
 
         respond_to do |format|
           format.html { redirect_to event_team_path(event_id: @event.id), flash: { error: "Failed to deactivate invite link." } }
