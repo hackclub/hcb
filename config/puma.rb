@@ -44,3 +44,7 @@ pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 
 # Report stats to AppSignal
 plugin :appsignal
+
+require_relative "../app/lib/credentials"
+
+Credentials.load if ENV["DOPPLER_TOKEN"]

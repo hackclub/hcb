@@ -1355,6 +1355,9 @@ class EventsController < ApplicationController
         @end_date.blank? &&
         @minimum_amount.nil? &&
         @maximum_amount.nil? &&
+        @direction.nil? &&
+        @category.nil? &&
+        @merchant.nil? &&
         !@missing_receipts
     )
 
