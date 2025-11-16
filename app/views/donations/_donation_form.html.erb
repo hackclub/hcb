@@ -24,7 +24,7 @@
 
     <div class="field mb2">
       <%= form.label :email, "Your email" %>
-      <span class="muted block h5">We’ll send <%= @monthly ? "receipts" : "a receipt" %> here for your tax records.</span>
+      <span class="muted block h5"><% @event.name %> will send <%= @monthly ? "receipts" : "a receipt" %> here for your tax records, and may use it to communicate with you.</span>
       <%= form.email_field :email, placeholder: "jsmith@gmail.com", required: true, autocomplete: "off" %>
       <% donation.errors.messages_for(:email).each do |message| %>
         <div class="primary"><%= message %></div>
