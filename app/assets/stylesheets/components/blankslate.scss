@@ -1,0 +1,19 @@
+.blankslate-screen {
+  // min-height: calc(100vh - 100px)
+  margin-bottom: calc(100vh - 600px);
+}
+
+.blankslate-card {
+  border: 1px solid $smoke;
+  background-color: $white;
+  backdrop-filter: blur(5px);
+
+  [data-dark='true'] & {
+    background-color: $darker;
+    border-color: $darkless;
+
+    & img {
+      filter: invert(1) contrast(0.6);
+    }
+  }
+}

@@ -58,11 +58,23 @@ module ApplicationHelper
     content_tag(:span, content.join.html_safe)
   end
 
-  def blankslate(text, **options)
+  def blankslate(heading, subheading = nil, options = { image: nil, screen: false, card: false }, &block)
     other_options = options.except(:class)
-    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
+    content_tag :div, class: "rounded-lg flex p-10 justify-center z-10 gap-10 items-center blankslate-card #{options[:class]} #{options[:screen] ? "blankslate-screen" : "border max-w-sm w-full mx-auto"}", **other_options do
+      # <img src="https://assets.hackclub.com/test.png" class="w-24 h-24" alt="Flag"> using content_tag
+      if options[:image]
+        content_tag :img, nil, src: options[:image], class: "w-32", alt: "Flag"
+      else
+        content_tag :div, class: "hidden" do end
+      end +
+        content_tag(:div, class: "text-lg font-bold", **other_options) do
+          content_tag(:div, heading, class: "text-3xl font-bold my-2") +
+            content_tag(:div, subheading, class: "text-md text-muted mb-5") +
+            (block_given? ? capture(&block) : "")
+        end
+    end
   end
-
+  
   def list_badge_for(count, item, glyph, optional: false, required: false, **options)
     return nil if optional && count == 0
 
