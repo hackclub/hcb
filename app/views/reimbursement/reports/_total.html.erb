@@ -1,7 +1,13 @@
 <span id="total">
   <% if report.amount_cents > 0 %>
-    <%= report.amount.format %>
-    <%= report.currency unless report.currency == "USD" %>
+    <% if report.currency != "USD" %>
+      <span class="tooltipped tooltipped--n" aria-label="USD conversion: <%= convert_to_usd(report.amount_cents, report.currency).format %>">
+        <%= report.amount.format %>
+        <%= report.currency %>
+      </span>
+    <% else %>
+      <%= report.amount.format %>
+    <% end %>
   <% else %>
     reimbursement
   <% end %>
