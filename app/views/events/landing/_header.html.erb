@@ -6,7 +6,7 @@
 </div>
 
 <%= content_for(:header) do %>
-  <% if organizer_signed_in? %>
+  <% if policy(@event).update? %>
     <div class="flex items-center m2 absolute z-10 top-0 left-0">
       <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
         <%= form.file_field :donation_header_image, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
