@@ -31,7 +31,7 @@
                   "x-model": "role" %>
 </div>
 
-<div data-controller="accordion" class="border-t px-4 pb-2 -mb-2">
+<div data-controller="accordion" class="border-t px-4 pb-2 -mb-2" x-show="role !== 'reader' && role !== 'manager'">
   <div class="flex items-center gap-4 field field--checkbox">
     <label class="flex flex-col">
       <span>Spending controls</span>
