@@ -127,7 +127,6 @@ module Reimbursement
             end
           end
 
-        end
       end
 
     end
