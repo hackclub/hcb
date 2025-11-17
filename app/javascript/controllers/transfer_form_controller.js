@@ -20,6 +20,7 @@ export default class extends Controller {
     ach: String,
     check: String,
     wire: String,
+    wise: String,
   }
 
   static questions = [
@@ -28,8 +29,15 @@ export default class extends Controller {
       question: 'Does your recipient live within the US?',
       yes: 2,
       no: {
-        type: 'International wire',
-        link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
+        question: 'Are you transferring under $500 USD?',
+        yes: {
+          type: 'Wise transfer',
+          link: 'https://help.hcb.hackclub.com/article/65-wise',
+        },
+        no: {
+          type: 'International wire',
+          link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
+        },
       },
     },
     {
@@ -71,6 +79,11 @@ export default class extends Controller {
 
       this.yesClickHandler = () => this.renderQuestion(question.yes)
       this.noClickHandler = () => this.renderQuestion(question.no)
+    } else if (payload.question) {
+      this.questionTarget.innerHTML = payload.question
+
+      this.yesClickHandler = () => this.renderQuestion(payload.yes)
+      this.noClickHandler = () => this.renderQuestion(payload.no)
     } else {
       this.answerTextTarget.innerHTML = payload.type
       this.answerCTATarget.dataset.answer = payload.type
@@ -87,6 +100,7 @@ export default class extends Controller {
     if (answer == 'ACH transfer') value = 'ach'
     if (answer == 'Mailed check') value = 'check'
     if (answer == 'International wire') value = 'wire'
+    if (answer == 'Wise transfer') value = 'wise'
     window.Turbo.visit(this[`${value}Value`])
   }
 }
