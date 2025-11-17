@@ -49,6 +49,14 @@
       </tbody>
     </table>
   <% end %>
+  <% latest_token_with_ip = authorization.tokens.find { |t| t.ip_address.present? } %>
+  <% if latest_token_with_ip&.latitude %>
+    <img class="w-full rounded mt-3 aspect-square" src="https://maps.hackclub.com/api/shipping?latitude=<%= latest_token_with_ip.latitude %>&longitude=<%= latest_token_with_ip.longitude %>">
+  <% elsif latest_token_with_ip %>
+    <div class="w-full rounded mt-3 aspect-square bg-smoke dark:bg-black opacity-50 flex items-center justify-center text-xl">
+      Location unavailable
+    </div>
+  <% end %>
   <p class="regular italic muted text-sm m-0 mt-1">
     <%= authorization.authorization_count == 1 ? "Authorized" : "Last authorized" %> <%= local_time_ago authorization.created_at %>
   </p>

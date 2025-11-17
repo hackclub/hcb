@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_17_030308) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -227,7 +227,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
     t.string "refresh_token"
     t.integer "expires_in"
     t.string "scopes"
+    t.inet "ip_address"
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
+    t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end

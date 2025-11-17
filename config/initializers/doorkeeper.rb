@@ -357,7 +357,7 @@ Doorkeeper.configure do
   # tokens, you can check that the requested data belongs to the specified tenant.
   #
   # Default value is an empty Array: []
-  # custom_access_token_attributes [:tenant_id]
+  custom_access_token_attributes [:ip_address]
 
   # Hook into the strategies' request & response life-cycle in case your
   # application needs advanced customization or logging:
@@ -366,9 +366,12 @@ Doorkeeper.configure do
   #   puts "BEFORE HOOK FIRED! #{request}"
   # end
   #
-  # after_successful_strategy_response do |request, response|
-  #   puts "AFTER HOOK FIRED! #{request}, #{response}"
-  # end
+  after_successful_strategy_response do |request, response|
+    if response.respond_to?(:token) && response.token.is_a?(ApiToken)
+      ip = ActionController::Base.current&.request&.remote_ip if defined?(ActionController::Base)
+      response.token.update_column(:ip_address, ip) if ip.present?
+    end
+  end
 
   # Hook into Authorization flow in order to implement Single Sign Out
   # or add any other functionality. Inside the block you have an access

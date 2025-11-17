@@ -6,6 +6,7 @@
 #
 #  id               :bigint           not null, primary key
 #  expires_in       :integer
+#  ip_address       :inet
 #  refresh_token    :string
 #  revoked_at       :datetime
 #  scopes           :string
@@ -19,6 +20,7 @@
 # Indexes
 #
 #  index_api_tokens_on_application_id  (application_id)
+#  index_api_tokens_on_ip_address      (ip_address)
 #  index_api_tokens_on_token_bidx      (token_bidx) UNIQUE
 #  index_api_tokens_on_user_id         (user_id)
 #
@@ -52,5 +54,20 @@ class ApiToken < ApplicationRecord
   end
 
   def abbreviated = "#{token[..7]}...#{token[-3..]}"
+
+  def geocode_result
+    return nil unless ip_address.present?
+    return @geocode_result if defined?(@geocode_result)
+
+    @geocode_result = Geocoder.search(ip_address.to_s)&.first
+  end
+
+  def latitude
+    geocode_result&.latitude
+  end
+
+  def longitude
+    geocode_result&.longitude
+  end
 
 end
