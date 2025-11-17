@@ -6,7 +6,7 @@ module Reimbursement
       def run
         clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
         Reimbursement::PayoutHolding.settled.find_each(batch_size: 100) do |payout_holding|
-          payout_holding.with_lock.do
+          payout_holding.with_lock do
             next unless payout_holding.settled?
 
             case payout_holding.report.user.payout_method
@@ -126,6 +126,7 @@ module Reimbursement
               raise ArgumentError, "🚨⚠️ unsupported payout method!"
             end
           end
+        end
 
       end
 
