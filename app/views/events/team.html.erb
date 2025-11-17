@@ -103,7 +103,10 @@
 <% end %>
 
 <% if @invite_requests.any? %>
-  <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending join requests</h2>
+  <h2 class="flex items-center mt3 mb2">
+    Pending join requests
+    <%= badge_for @invite_requests.size, class: "bg-muted" %>
+  </h2>
   <ul class="grid grid--narrow text-left w-full mt-2">
     <% @invite_requests.each do |invite_request| %>
       <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="approve_invite_request_<%= invite_request.hashid %>">
