@@ -18,7 +18,7 @@ class CreateContracts < ActiveRecord::Migration[8.0]
     end
 
     # migrate records from organizer_position_contracts
-    OrganizerPosition::Contract.all.in_batches(of: 1000).each do |relation|
+    OrganizerPosition::Contract.all.in_batches.each do |relation|
       new_rows = relation.map do |row|
         {
           id: row.id,
