@@ -369,7 +369,7 @@ Doorkeeper.configure do
   after_successful_strategy_response do |request, response|
     if response.respond_to?(:token) && response.token.is_a?(ApiToken)
       ip = ActionController::Base.current&.request&.remote_ip if defined?(ActionController::Base)
-      response.token.update_column(:ip_address, ip) if ip.present?
+      response.token.update(ip_address: ip) if ip.present?
     end
   end
 
