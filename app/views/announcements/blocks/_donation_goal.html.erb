@@ -1,20 +1,18 @@
-<%# locals: (goal: nil, percentage: 0, is_email: false, block: nil) %>
+<%# locals: (block:, is_email: false, goal: nil, percentage: 0) %>
 
-<%= turbo_frame_tag "block_#{block.id}", class: "donationGoal relative card shadow-none border flex flex-col py-2 my-2" do %>
+<%= render "announcements/blocks/block_shell", block:, type: "donationGoal", is_email:, title: "#{block.event.name}'s donation goal" do %>
   <% if goal.nil? %>
     <p>This organization doesn't have a donation goal yet! Organizers can configure one in the organization settings.</p>
-    <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
   <% else %>
     <% if is_email %>
       <p><strong><%= render_money goal.progress_amount_cents %></span> raised of <span class="font-bold"><%= render_money goal.amount_cents %></span> goal</strong></p>
     <% else %>
-      <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
       <p class="text-center italic mt-0">
         <span class="font-bold"><%= render_money goal.progress_amount_cents %></span> raised of <span class="font-bold"><%= render_money goal.amount_cents %></span> goal
       </p>
       <div class="bg-gray-200 dark:bg-neutral-700 rounded-full w-full">
         <div class="h-full bg-primary rounded flex items-center justify-center" style="width: <%= percentage * 100 %>%">
-          <p class="text-sm text-black p-[1px] my-0"><%= number_with_precision(percentage * 100, precision: 1) %>%</p>
+          <p class="text-sm text-black p-[1px] my-0 h-5"><%= "#{number_with_precision(percentage * 100, precision: 1)}%" if percentage > 0 %></p>
         </div>
       </div>
     <% end %>

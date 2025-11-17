@@ -6,38 +6,75 @@ class CardGrantsController < ApplicationController
   skip_before_action :signed_in_user, only: [:show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
 
-  before_action :set_event, only: %i[new create]
-  before_action :set_card_grant, except: %i[new create]
+  before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index]
+  before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index]
+
+  def index
+    authorize @event, :card_grant_overview?
+  end
+
+  def card_index
+    authorize @event, :card_grant_overview?
+
+    card_grants_page = (params[:page] || 1).to_i
+    card_grants_per_page = (params[:per] || 20).to_i
+
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card).order(created_at: :desc)
+    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+  end
+
+  def transaction_index
+    authorize @event, :card_grant_overview?
+
+    transactions_page = (params[:page] || 1).to_i
+    transactions_per_page = (params[:per] || 20).to_i
+
+    @all_stripe_cards = @event.stripe_cards.where.associated(:card_grant)
+    @hcb_codes = HcbCode.where(hcb_code: @all_stripe_cards.flat_map(&:all_hcb_codes)).order(created_at: :desc)
+    @paginated_hcb_codes = @hcb_codes.page(transactions_page).per(transactions_per_page)
+  end
 
   def new
-    @card_grant = @event.card_grants.build
+    @card_grant = @event.card_grants.build(email: params[:email])
 
     authorize @card_grant
 
-    @prefill_email = params[:email]
-
-    @event.create_card_grant_setting unless @event.card_grant_setting.present?
-
-    last_card_grant = @event.card_grants.order(created_at: :desc).first
+    @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
   end
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
-    @card_grant.save!
+    begin
+      # There's no way to save a card grant without potentially triggering an
+      # exception as under the hood it calls `DisbursementService::Create` and a
+      # number of other methods (e.g. `save!`) which either succeed or raise.
+      @card_grant.save!
+    rescue => e
+      case e
+      when ActiveRecord::RecordInvalid
+        # We expect to encounter validation errors from `CardGrant`, but anything
+        # else is the result of downstream logic which shouldn't fail.
+        raise e unless e.record.is_a?(CardGrant)
+
+        flash[:error] = @card_grant.errors.full_messages.to_sentence
+      when DisbursementService::Create::UserError
+        flash[:error] = e.message
+      else
+        raise e
+      end
+
+      render(:new, status: :unprocessable_entity)
+      return
+    end
 
     flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
-
-  rescue => e
-    flash[:error] = "Something went wrong. #{e.message}"
-    Rails.error.report(e)
-  ensure
-    redirect_to event_transfers_path(@event)
+    redirect_back_or_to event_transfers_path(@event)
   end
 
   def edit_overview
@@ -71,7 +108,7 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose))
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
       flash[:success] = "Grant's purpose has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
@@ -135,11 +172,13 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
-    @card_grant.create_stripe_card(current_session)
+    @card_grant.create_stripe_card(request.remote_ip)
 
     redirect_to @card_grant
   rescue Stripe::InvalidRequestError => e
     redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
+  rescue Errors::StripeInvalidNameError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def cancel
@@ -156,6 +195,8 @@ class CardGrantsController < ApplicationController
     @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
 
     redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+  rescue DisbursementService::Create::UserError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def withdraw
@@ -185,6 +226,15 @@ class CardGrantsController < ApplicationController
     @card_grant.update(one_time_use: !@card_grant.one_time_use)
 
     redirect_to @card_grant, flash: { success: "#{@card_grant.one_time_use ? "Enabled" : "Disabled"} one time use for this card grant." }
+  end
+
+  def disable_pre_authorization
+    authorize @card_grant
+
+    @card_grant.pre_authorization&.destroy!
+    @card_grant.update(pre_authorization_required: false)
+
+    redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
   end
 
   def edit

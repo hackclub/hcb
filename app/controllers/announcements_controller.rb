@@ -13,6 +13,8 @@ class AnnouncementsController < ApplicationController
 
     authorize @announcement
 
+    @show_announcement_explanation = Announcement.where(author: current_user).where.not(published_at: nil).empty?
+
     @announcement.save!
   end
 
@@ -55,7 +57,7 @@ class AnnouncementsController < ApplicationController
 
     content_hash = JSON.parse(params[:announcement][:json_content])
     @announcement.transaction do
-      @announcement.update!(announcement_params.merge(content: ProsemirrorService::Renderer.set_html(content_hash), author: current_user))
+      @announcement.update!(announcement_params.merge({ content: ProsemirrorService::Renderer.set_html(content_hash), author: @announcement.author == User.system_user ? current_user : nil }.compact))
       @announcement.mark_draft! if @announcement.template_draft?
 
       if params[:announcement][:draft] == "false" && !@announcement.published?

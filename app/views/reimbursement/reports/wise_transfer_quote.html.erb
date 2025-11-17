@@ -1,0 +1,14 @@
+<%= turbo_frame_tag :wise_transfer_quote do %>
+  <div class="flex flex-row items-center mt-2 md:max-w-[50%]">
+    <div style="flex-grow: 1;">
+      <label class="bold" for="reimbursement_expense_memo">Memo</label>
+      <input required="required" type="text" value="Estimated Wise fee" name="reimbursement_expense[memo]" readonly="">
+    </div>
+
+      <span class="bold muted flex self-end items-center justify-center ml1" style="width: 1rem; height: 48px;">$</span>
+    <div class="ml1">
+      <label class="bold" for="reimbursement_expense_value">Amount (USD)</label>
+        <input value="<%= @fees_amount.format(symbol: false) %>" type="text" name="reimbursement_expense[value]" readonly="">
+    </div>
+  </div>
+<% end %>

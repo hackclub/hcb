@@ -1,0 +1,21 @@
+<%# locals: (event:, perks_available:) %>
+
+<div class="card mb3 pb0" id="stickers">
+  <div class="card__banner card__banner--top flex justify-between items-center promo-stickers">
+    <span class="flex flex-row items-center">
+      <h3 class="h1 white py-4 my0 card-title z1">
+        HCB Stickers
+      </h3>
+    </span>
+    <%= link_to "Request",
+      perks_available ? fillout_form("umhwJ5s1fNus", { "Recipient Name" => current_user.name, "Login Email" => current_user.email, "Organization" => event.name }, prefix: "prefill_") : root_path,
+      class: "btn #{"disabled" unless perks_available}",
+      target: :_blank %>
+  </div>
+
+  <div class="mb0">
+    <p><strong>Want some HCB stickers?</strong> You can request an envelope full of them for yourself or your teammates! Every shipment request is manually sent out by the HCB team, and every envelope is personally prepared, packed, and mailed, with the address handwritten.</p>
+    <p><em><strong>With great power comes great responsibility...</strong></em></p>
+    <p>Please enjoy responsibly. HCB operates at a loss that donors pay for, and stickers are not cheap—every package costs real donor money.</p>
+  </div>
+</div>

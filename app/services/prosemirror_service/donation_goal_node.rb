@@ -2,9 +2,7 @@
 
 module ProsemirrorService
   class DonationGoalNode < ProsemirrorToHtml::Nodes::Node
-    include ApplicationHelper
-
-    @node_type = "donationGoal"
+    @node_type = "Announcement::Block::DonationGoal"
     @tag_name = "div"
 
     def tag

@@ -2,7 +2,7 @@
 
 module ProsemirrorService
   class HcbCodeNode < ProsemirrorToHtml::Nodes::Node
-    @node_type = "hcbCode"
+    @node_type = "Announcement::Block::HcbCode"
     @tag_name = "div"
 
     def tag

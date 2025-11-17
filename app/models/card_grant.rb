@@ -11,6 +11,7 @@
 #  category_lock              :string
 #  email                      :string           not null
 #  instructions               :text
+#  invite_message             :string
 #  keyword_lock               :string
 #  merchant_lock              :string
 #  one_time_use               :boolean
@@ -71,6 +72,7 @@ class CardGrant < ApplicationRecord
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
   before_create :create_subledger
+  before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
@@ -86,7 +88,9 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :purpose, length: { maximum: 30 }
+
+  MAXIMUM_PURPOSE_LENGTH = 30
+  validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
@@ -160,7 +164,7 @@ class CardGrant < ApplicationRecord
 
   def withdraw!(amount_cents:, withdrawn_by: sent_by)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
-    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents > balance.amount * 100
+    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents >= balance.amount * 100
 
     custom_memo = "Withdrawal from grant to #{user.name}"
 
@@ -226,14 +230,14 @@ class CardGrant < ApplicationRecord
     stripe_card&.cancel!
   end
 
-  def create_stripe_card(session)
+  def create_stripe_card(ip_address)
     return if stripe_card.present?
 
     self.stripe_card = StripeCardService::Create.new(
       card_type: "virtual",
       event_id:,
       current_user: user,
-      current_session: session,
+      ip_address:,
       subledger:,
     ).run
 
@@ -330,6 +334,16 @@ class CardGrant < ApplicationRecord
 
   def send_email
     CardGrantMailer.with(card_grant: self).card_grant_notification.deliver_later
+  end
+
+  def set_defaults
+    # If it's blank, allow it to continue being blank. This likely means the
+    # user explicitly cleared the field in the UI.
+    # However, if it's `nil`, then use the default from the setting. The field
+    # was likely left unset via the API.
+    if self.invite_message.nil?
+      self.invite_message = setting.invite_message
+    end
   end
 
 end

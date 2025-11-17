@@ -1,0 +1,66 @@
+<%# locals: (affiliation:, form:) %>
+
+<% disabled = !policy(affiliation).update? %>
+
+<div class="field">
+  <%# not applying a disabled here so readers can discover the different affiliations available %>
+  <%= form.label :type, "Type" %>
+  <%= form.select :type, [["FIRST", "first"], ["VEX", "vex"], ["Hack Club", "hack_club"]], { required: true, include_blank: "Select a type", selected: affiliation.name || "first" }, { "@change": "type = $event.target.value" } %>
+</div>
+
+<template x-if="type == 'first'">
+  <div class="field">
+    <%= form.label :league, "League" %>
+    <%= form.select :league, [["FRC", "frc"], ["FTC", "ftc"], ["FLL", "fll"]], { required: true, include_blank: "Select a league", selected: affiliation.league }, disabled: %>
+  </div>
+</template>
+<template x-if="type == 'first'">
+  <div class="field">
+    <%= form.label :team_number, "Team number" %>
+    <%= form.text_field :team_number, { required: true, placeholder: "9101", value: affiliation.team_number, disabled: } %>
+  </div>
+</template>
+<template x-if="type == 'first'">
+  <div class="field">
+    <%= form.label :size, "Size" %>
+    <%= form.number_field :size, { required: true, placeholder: 0, value: affiliation.size, disabled: } %>
+  </div>
+</template>
+
+<template x-if="type == 'vex'">
+  <div class="field">
+    <%= form.label :league, "League" %>
+    <%= form.select :league, [["123", "123"], ["GO", "go"], ["AIM", "aim"], ["IQ", "iq"], ["EXP", "exp"], ["V5", "v5"], ["CTE", "cte"], ["AIR", "air"]], { required: true, include_blank: "Select a league", selected: affiliation.league }, disabled: %>
+  </div>
+</template>
+<template x-if="type == 'vex'">
+  <div class="field">
+    <%= form.label :team_number, "Team number" %>
+    <%= form.text_field :team_number, { required: true, placeholder: "11981B", value: affiliation.team_number, disabled: } %>
+  </div>
+</template>
+<template x-if="type == 'vex'">
+  <div class="field">
+    <%= form.label :size, "Size" %>
+    <%= form.number_field :size, { required: true, placeholder: 0, value: affiliation.size, disabled: } %>
+  </div>
+</template>
+
+<template x-if="type == 'hack_club'">
+  <div class="field">
+    <%= form.label :venue_name, "Venue name" %>
+    <%= form.text_field :venue_name, { required: true, placeholder: "Pierson Library", value: affiliation.venue_name, disabled: } %>
+  </div>
+</template>
+<template x-if="type == 'hack_club'">
+  <div class="field">
+    <%= form.label :size, "Size" %>
+    <%= form.number_field :size, { required: true, placeholder: 0, value: affiliation.size, disabled: } %>
+  </div>
+</template>
+
+<template x-if="type == ''">
+  <p>Please select an affiliation type.</p>
+</template>
+
+<%= form.submit (affiliation.new_record? ? "Add affiliation" : "Update").to_s, disabled: %>

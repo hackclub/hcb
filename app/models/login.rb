@@ -8,9 +8,9 @@
 #  aasm_state               :string
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
+#  is_reauthentication      :boolean          default(FALSE), not null
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
-#  initial_login_id         :bigint
 #  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
@@ -21,16 +21,16 @@
 #  index_logins_on_user_id              (user_id)
 #  index_logins_on_user_session_id      (user_session_id)
 #
-# Foreign Keys
-#
-#  fk_rails_...  (initial_login_id => logins.id)
-#
 class Login < ApplicationRecord
   include AASM
   include Hashid::Rails
 
   belongs_to :user
   belongs_to :user_session, optional: true
+
+  scope(:initial, -> { where(is_reauthentication: false) })
+  scope(:reauthentication, -> { where(is_reauthentication: true) })
+
   belongs_to :referral_program, class_name: "Referral::Program", optional: true
 
   has_encrypted :browser_token
@@ -66,7 +66,7 @@ class Login < ApplicationRecord
     event :mark_complete do
       transitions from: :incomplete, to: :complete do
         guard do
-          authentication_factors_count == (user.use_two_factor_authentication? ? 2 : 1)
+          authentication_factors_count == required_authentication_factors_count
         end
       end
     end
@@ -75,6 +75,8 @@ class Login < ApplicationRecord
   before_save do
     mark_complete! if may_mark_complete?
   end
+
+  before_create(:sync_is_reauthentication)
 
   def authentication_factors_count
     return 0 if authentication_factors.nil?
@@ -117,6 +119,29 @@ class Login < ApplicationRecord
     factors << :totp if totp_available?
     factors << :backup_code if backup_code_available?
     factors
+  end
+
+  def reauthentication?
+    is_reauthentication?
+  end
+
+  private
+
+  # The number of authentication factors required to consider this login
+  # complete (based on the user's 2FA setting and whether this is a
+  # reauthentication)
+  #
+  # @return [Integer]
+  def required_authentication_factors_count
+    if user.use_two_factor_authentication? && !reauthentication?
+      2
+    else
+      1
+    end
+  end
+
+  def sync_is_reauthentication
+    self.is_reauthentication = reauthentication?
   end
 
 end

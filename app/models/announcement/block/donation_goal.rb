@@ -24,11 +24,30 @@
 class Announcement
   class Block
     class DonationGoal < ::Announcement::Block
-      def render_html(is_email: false)
-        goal = announcement.event.donation_goal
+      before_create :goal_param
+
+      def custom_locals
         percentage = (goal.progress_amount_cents.to_f / goal.amount_cents) if goal.present?
 
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/donation_goal", locals: { goal:, percentage:, is_email:, block: self }
+        { goal:, percentage: }
+      end
+
+      def empty?
+        goal.nil?
+      end
+
+      def editable?
+        false
+      end
+
+      private
+
+      def goal
+        @goal ||= Donation::Goal.find_by(event: announcement.event, id: goal_param) || announcement.event.donation_goal
+      end
+
+      def goal_param
+        self.parameters["goal"] ||= announcement.event.donation_goal&.id
       end
 
     end

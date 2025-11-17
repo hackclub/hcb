@@ -1,18 +1,20 @@
-<%# locals: (donations: nil, total: 0, start_date:, is_email: false, block: nil) %>
+<%# locals: (block:, is_email: false, start_date:, end_date:, donations:, total:) %>
 
-<%= turbo_frame_tag "block_#{block.id}", class: "donationSummary relative card shadow-none border flex flex-col py-2 my-2" do %>
-  <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
-  <p><strong>Donation summary for <%= start_date.strftime("%B %e, %Y") %> - <%= Time.now.strftime("%B %e, %Y") %></strong></p>
-  <ul>
-    <% donations.each do |donation| %>
-      <li>
-        <%= donation.name %> donated <%= render_money donation.amount %>
-        <% if donation.recurring? %>
-          <% recurring_times = (donation.recurring_donation.donations.find_index(donation) + 1) %>
-          - this is their <%= "#{recurring_times}#{recurring_times.ordinal}" %> monthly donation
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
-  <p>In total, <strong><%= render_money total %></strong> was raised!</p>
+<%= render "announcements/blocks/block_shell", block:, type: "donationSummary", is_email:, title: "Donation summary for #{start_date.strftime("%B %e, %Y")} - #{end_date.strftime("%B %e, %Y")}" do %>
+  <% if block.empty? %>
+    <p><%= block.announcement.event.name %> did not get any donations during this period.</p>
+  <% else %>
+    <ul>
+      <% donations.each do |donation| %>
+        <li>
+          <%= donation.name %> donated <%= render_money donation.amount %>
+          <% if donation.recurring? %>
+            <% recurring_times = (donation.recurring_donation.donations.find_index(donation) + 1) %>
+            - this is their <%= "#{recurring_times}#{recurring_times.ordinal}" %> monthly donation
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p>In total, <strong><%= render_money total %></strong> was raised!</p>
+  <% end %>
 <% end %>

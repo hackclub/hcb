@@ -37,6 +37,14 @@
           <% end %>
         </div>
       </fieldset>
+      <div id="currency_wrapper">
+        <% if current_user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+          <div class="field">
+            <%= form.label :currency, "Currency", class: "mt-4 bold" %>
+            <%= form.select :currency, [current_user.payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
+          </div>
+        <% end %>
+      </div>
       <div id="external_contributor_wrapper">
         <div class="field">
           <%= form.label :user_email, "Teammate", class: "display-none-not-important bold" %>
@@ -68,12 +76,25 @@
       <%= form.label :event_id, "Organization", class: "mt1 bold" %>
       <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
 
+      <% if current_user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+        <%= form.label :currency, "Currency", class: "mt-4 bold" %>
+        <%= form.select :currency, [current_user.payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
+      <% end %>
+
       <% if defined?(receipt) %>
+        <% payout_currency = current_user.payout_method&.currency || "USD" %>
+
         <%= form.label :value, "Amount", class: "mt1 bold" %>
         <div class="flex items-center">
-          <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;">$</span>
+          <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;"><%= Money::Currency.new(current_user.payout_method&.currency || "USD").symbol %></span>
           <div class="ml1">
-            <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+            <% value = Money.from_cents(receipt.extracted_total_amount_cents, payout_currency).amount if (receipt.extracted_currency || "USD") == payout_currency && receipt.extracted_total_amount_cents.present? %>
+
+            <% if Money.from_amount(1, payout_currency).cents == 100 %>
+              <%= form.number_field :value, placeholder: "500.00", value:, step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+            <% else %>
+              <%= form.number_field :value, placeholder: "500", value:, step: 1, min: 1, data: { controller: "truncate-decimal", "truncate-decimal-places-value": "0", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+            <% end %>
           </div>
         </div>
         <div class="mt2">

@@ -1,4 +1,4 @@
-<%# locals: (disbursement:, event: nil, source_event: nil, allowed_source_events:, allowed_destination_events:) %>
+<%# locals: (disbursement:, event: nil, source_event: nil, destination_event: nil, allowed_source_events:, allowed_destination_events:) %>
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
@@ -6,7 +6,7 @@
   <%= form_errors(disbursement, "Disbursements") %>
 
   <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
-  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: nil, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
+  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
 
   <% if auditor_signed_in? %>
     <div class="admin-tools field field--checkbox">
@@ -36,6 +36,28 @@
     <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, disabled: %>
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
+
+  <% admin_tool do %>
+      <% category_select = ->(field) {
+           form.select(
+             field,
+             options_for_select(
+               TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] }
+             ),
+             include_blank: "None",
+           )
+         } %>
+
+    <div class="field">
+      <%= form.label(:source_transaction_category_slug, "Source transaction category") %>
+      <%= category_select.call(:source_transaction_category_slug) %>
+    </div>
+
+    <div class="field">
+      <%= form.label(:destination_transaction_category_slug, "Destination transaction category") %>
+      <%= category_select.call(:destination_transaction_category_slug) %>
+    </div>
+  <% end %>
 
   <%= form.label :file, "Attach a receipt / invoice (optional)", class: "mt2" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">

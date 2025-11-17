@@ -24,14 +24,34 @@
 class Announcement
   class Block
     class HcbCode < ::Announcement::Block
-      def render_html(is_email: false)
-        hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
+      validate :hcb_code_in_event
 
-        unless hcb_code&.event == announcement.event
-          hcb_code = nil
+      def custom_locals
+        { hcb_code:, event: announcement.event }
+      end
+
+      def empty?
+        hcb_code.nil?
+      end
+
+      private
+
+      def hcb_code
+        @hcb_code ||= ::HcbCode.find_by_hashid(parameters["hcb_code"])
+
+        unless @hcb_code&.event == announcement.event
+          @hcb_code = nil
         end
 
-        Announcements::BlocksController.renderer.render partial: "announcements/blocks/hcb_code", locals: { hcb_code:, event: announcement.event, is_email:, block: self }
+        @hcb_code
+      end
+
+      def hcb_code_in_event
+        hcb_code = ::HcbCode.find_by_hashid(parameters["hcb_code"])
+
+        if hcb_code.nil? || hcb_code.event != announcement.event
+          errors.add(:base, "Transaction can not be found.")
+        end
       end
 
     end

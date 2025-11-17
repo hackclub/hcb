@@ -3,7 +3,7 @@
 class AchTransfersController < ApplicationController
   include SetEvent
 
-  before_action :set_ach_transfer, except: [:new, :create, :index, :validate_routing_number]
+  before_action :set_ach_transfer, except: [:new, :create, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
   skip_before_action :signed_in_user, except: [:validate_routing_number]
   skip_after_action :verify_authorized, only: [:validate_routing_number]
@@ -50,6 +50,10 @@ class AchTransfersController < ApplicationController
     @ach_transfer = @event.ach_transfers.build(ach_transfer_params.except(:file).merge(creator: current_user))
 
     authorize @ach_transfer
+
+    if @ach_transfer.amount > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
     if @ach_transfer.save
       if ach_transfer_params[:file]

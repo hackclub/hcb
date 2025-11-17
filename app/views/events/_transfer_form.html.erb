@@ -6,30 +6,42 @@
     data-transfer-form-wire-value="<%= new_event_wire_path(@event) %>">
     <div data-transfer-form-target="home">
       <fieldset>
-        <legend class="heading h2 pt2 pb2">What type of transfer?</legend>
+        <legend class="heading h2 pb2">What type of transfer?</legend>
         <div class="field field--options fit">
           <%= link_to new_event_ach_transfer_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "payment-transfer", size: 28 %>
             <strong>ACH transfer</strong>
+            <small>United States</small>
           <% end %>
           <%= link_to new_event_increase_check_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "email", size: 28 %>
             <strong>Mailed check</strong>
+            <small>United States</small>
           <% end %>
-          <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
+          <% if Flipper.enabled?(:wise_transfers_2025_07_31, current_user) %>
+            <%= link_to new_event_wise_transfer_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" }, disabled: true do %>
+              <%= inline_icon "wise", size: 28 %>
+              <div class="badge badge--corner bg-warning m1 mt0" style="width: fit-content;">Preview</div>
+              <strong>Wise transfer</strong>
+              <small>International</small>
+            <% end %>
+          <% end %>
+          <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "web", size: 28 %>
-            <strong>International wire</strong>
+            <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
+            <strong>Wire transfer</strong>
+            <small>International</small>
           <% end %>
           <%= link_to new_disbursement_path(source_event_id: @event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "bank-account", size: 28 %>
             <strong>HCB transfer</strong>
-            <small>(between HCB organizations)</small>
+            <small>Any HCB organization</small>
           <% end %>
           <% if @event.plan.card_grants_enabled? %>
             <%= link_to new_event_card_grant_path(@event), class: "text-decoration-none btn--form-option", data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "create_card_grant" } do %>
               <%= inline_icon "card", size: 28 %>
               <strong>Card grant</strong>
-              <small>A grant sent through an HCB card.</small>
+              <small>A grant sent through HCB</small>
             <% end %>
           <% end %>
         </div>

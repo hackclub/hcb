@@ -74,6 +74,14 @@ module EventsHelper
     return "Yes" if value == true
     return "No" if value == false
 
+    if field.ends_with?("_at")
+      begin
+        return local_time(value)
+      rescue
+        return value
+      end
+    end
+
     return value
   end
 
@@ -92,14 +100,64 @@ module EventsHelper
   end
 
   def check_filters?(filter_options, params)
-    filter_options.any? do |option|
-      key = option[:key]
-      if key.to_s.end_with?("_*") && option[:type] == "date_range"
-        base = key.to_s.chomp("_*")
-        params["#{base}_before"].present? || params["#{base}_after"].present?
+    filter_options.any? do |opt|
+      key = opt[:key].to_s
+
+      case opt[:type]
+      when "date_range"
+        params["#{opt[:key_base]}_before"].present? || params["#{opt[:key_base]}_after"].present?
+      when "amount_range"
+        params["#{opt[:key_base]}_less_than"].present? || params["#{opt[:key_base]}_greater_than"].present?
       else
         params[key].present?
       end
+    end
+  end
+
+  def validate_filter_options(filter_options, params)
+    filter_options.each do |opt|
+      case opt[:type]
+      when "date_range"
+        validate_date_range(opt[:key_base], params)
+      when "amount_range"
+        validate_amount_range(opt[:key_base], params)
+      end
+    end
+  end
+
+  def auto_discover_feed(event)
+    if event.announcements.any?
+      content_for :head do
+        auto_discovery_link_tag :atom, event_feed_url(event, format: :atom), title: "Announcements for #{event.name}"
+      end
+    end
+  end
+
+  private
+
+  def validate_date_range(base, params)
+    less = params["#{base}_after"]
+    greater = params["#{base}_before"]
+    return unless less.present? && greater.present?
+
+    begin
+      less_date = Date.parse(less)
+      greater_date = Date.parse(greater)
+      if greater_date < less_date
+        flash[:error] = "Invalid date range: 'after' date is greater than 'before' date"
+      end
+    rescue ArgumentError
+      flash[:error] = "Invalid date format"
+    end
+  end
+
+  def validate_amount_range(base, params)
+    less = params["#{base}_less_than"]
+    greater = params["#{base}_greater_than"]
+    return unless less.present? && greater.present?
+
+    if greater.to_f > less.to_f
+      flash[:error] = "Invalid amount range: minimum is greater than maximum"
     end
   end
 

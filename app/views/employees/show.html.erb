@@ -12,12 +12,12 @@
       <% end %>
     <% end %>
     <% if policy(@employee).destroy? %>
-      <%= link_to @employee, class: "btn bg-error", method: :DELETE do %>
+      <%= link_to @employee, class: "btn bg-error", method: :delete do %>
         <%= inline_icon "delete" %>
         Delete
       <% end %>
     <% elsif policy(@employee).terminate? && @employee.may_mark_terminated? %>
-      <%= link_to employee_terminate_path(@employee), class: "btn bg-error", method: :POST do %>
+      <%= link_to employee_terminate_path(@employee), class: "btn bg-error", method: :post do %>
         <%= inline_icon "member-remove" %>
         Terminate
       <% end %>

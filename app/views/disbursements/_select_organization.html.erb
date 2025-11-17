@@ -1,50 +1,46 @@
 <%# locals: (form:, field_name:, disabled:, events:, default_event:, lazy_load_balances: false, sending: false, receiving: false, allow_custom_events: false) %>
 
 <div class="field" data-controller="organization-select">
-    <%= form.label field_name, sending ? "From" : "To" %>
-    <select name="disbursement[<%= field_name %>]" id="disbursement_<%= field_name %>" <%= "disabled" if disabled %> class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer disabled:cursor-default" data-organization-select-target="dropdown">
-        <option value>Select one...</option>
-        <option <%= "default" if default_event.present? %> value="<%= default_event.public_id if default_event.present? %>"><%= default_event.name if default_event.present? %></option>
-    </select>
+  <%= form.label field_name, sending ? "From" : "To" %>
+  <select name="disbursement[<%= field_name %>]" id="disbursement_<%= field_name %>" <%= "disabled" if disabled %> class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer disabled:cursor-default" data-organization-select-target="dropdown">
+    <option value>Select one...</option>
+    <option <%= "default" if default_event.present? %> value="<%= default_event.public_id if default_event.present? %>"><%= default_event.name if default_event.present? %></option>
+  </select>
 
-    <div data-organization-select-target="wrapper" style="max-width: 384px;">
-        <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
+  <div data-organization-select-target="wrapper" style="max-width: 384px;">
+    <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
 
-        <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
-            <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px; content-visibility: auto;">
-                <div>
-                    <% events.each_with_index.map do |event, i| %>
-                    <% disabled_message = nil %>
-                    <% disabled_message = "Insufficient balance" if sending && !admin_signed_in? && event.balance_available <= 0 %>
-                    <% disabled_message = "HCB transfers disabled" if sending && !policy(event).create_transfer? %>
-                    <div data-id="<%= event.public_id %>" data-slug="<%= event.slug %>" data-name="<%= event.name %>" data-organization-select-target="organization" style="<%= i > 50 ? "display: none" : "" %>" data-index="<%= i %>">
-                        <button <%= "disabled" if disabled_message %> aria-label="<%= disabled_message %>" class="<%= "tooltipped tooltipped--i" if disabled_message %> text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer disabled:cursor-default hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
-                            <div class="text-left"><%= event.name %></div>
-                            <div class="text-muted pl-2">
-                                <% if admin_signed_in? %>
-                                    <%= event.id %>
-                                <% else %>
-                                    <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
-                                        <strong>-</strong>
-                                    <% end %>
-                                <% end %>
-                            </div>
-                        </button>
-                        <hr class="my-0">
-                    </div>
-                    <% end %>
-                    <% if receiving && allow_custom_events %>
-                    <div data-id="other" data-organization-select-target="other">
-                        <button class="text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer disabled:cursor-default hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
-                            <div class="text-left other-name"></div>
-                            <div></div>
-                        </button>
-                        <hr class="my-0">
-                    </div>
-                    <% end %>
+    <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
+      <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px; content-visibility: auto;">
+        <div>
+          <% events.each_with_index.map do |event, i| %>
+            <% disabled_message = nil %>
+            <% disabled_message = "Insufficient balance" if sending && !admin_signed_in? && event.balance_available <= 0 %>
+            <% disabled_message = "HCB transfers disabled" if sending && !policy(event).create_transfer? %>
+            <div data-id="<%= event.public_id %>" data-slug="<%= event.slug %>" data-name="<%= event.name %>" data-organization-select-target="organization" style="<%= i > 50 ? "display: none" : "" %>" data-index="<%= i %>">
+              <button <%= "disabled" if disabled_message %> aria-label="<%= disabled_message %>" class="<%= "tooltipped tooltipped--i" if disabled_message %> text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer disabled:cursor-default hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150" type="button">
+                <div class="text-left <%= "tooltipped tooltipped--e" if admin_signed_in? %>" aria-label="<%= "ID: #{event.id}" if admin_signed_in? %>"><%= event.name %></div>
+
+                <div class="text-muted pl-2">
+                  <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event, symbol: true), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
+                    <strong>-</strong>
+                  <% end %>
                 </div>
+              </button>
+              <hr class="my-0">
             </div>
+          <% end %>
+          <% if receiving && allow_custom_events %>
+            <div data-id="other" data-organization-select-target="other">
+              <button class="text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer disabled:cursor-default hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150">
+                <div class="text-left other-name"></div>
+                <div></div>
+              </button>
+              <hr class="my-0">
+            </div>
+          <% end %>
         </div>
+      </div>
     </div>
-
+  </div>
 </div>

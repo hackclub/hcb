@@ -1,0 +1,21 @@
+<%= turbo_frame_tag "users" do %>
+  <div id="users-chart" style="height: 100%">
+    <% if users.empty? %>
+      <div class="flex flex-1 flex-col items-center justify-center" style="height: 100%">
+        <div class="text-center">
+          <h3 class="text-2xl font-bold mb-0">
+            Not enough data
+          </h3>
+          <p class="text-gray-500 my-1">
+            To see users here, make sure they have at least one transaction. If not, invite team members to get
+            started!
+          </p>
+          <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
+        </div>
+      </div>
+    <% else %>
+      <h3 class="mt2 mb2">Top users</h3>
+      <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
+    <% end %>
+  </div>
+<% end %>

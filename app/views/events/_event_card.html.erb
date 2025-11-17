@@ -1,8 +1,8 @@
-<%# locals: (event:, show_category_badge: false, show_date_stat: false) %>
+<%# locals: (event:, show_category_badge: false, show_date_stat: false, show_scoped_tags: false) %>
 
-<%= link_to event, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
-  <li class="card card--hover flex flex-col justify-between h-full mx-auto <%= "card--background-image" if event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
-    <div id="event-<%= event.id %>-title" class="flex mb-4">
+<% card_contents = capture do %>
+  <li class="group card flex flex-col justify-between h-full mx-auto <%= "card--background-image" if event.background_image.attached? %> <%= "card--hover" unless show_scoped_tags %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
+    <% event_title_contents = capture do %>
       <% if event.logo.attached? %>
         <div class="flex gap-2 items-center">
           <%= image_tag event.logo, height: 24, width: 24, class: "rounded align-bottom" %>
@@ -15,7 +15,18 @@
           <%= event.name %>
         </strong>
       <% end %>
-    </div>
+    <% end %>
+
+    <% if show_scoped_tags %>
+      <%= link_to event, id: "event-#{event.id}-title", class: "flex mb-4 font-bold no-underline text-black dark:text-smoke hover:underline" do %>
+        <%= event_title_contents %>
+      <% end %>
+    <% else %>
+      <div id="event-<%= event.id %>-title" class="flex mb-4">
+        <%= event_title_contents %>
+      </div>
+    <% end %>
+
     <% if event.demo_mode? %>
       <div class="badge bg-info ml0 mb2 w-fit">Playground Mode</div>
     <% end %>
@@ -35,6 +46,43 @@
         <span class="bg-red bg-orange bg-yellow bg-green bg-blue bg-purple"></span>
       </div>
     <% end %>
+
+    <% if local_assigns[:show_scoped_tags] && event.parent.present? %>
+      <div class="mb-2 m-0 mt-[-4px]">
+        <span class="event_<%= event.id %>_scoped_tags">
+          <%= render partial: "events/scoped_tags/scoped_tag", collection: event.valid_scoped_tags, locals: { subevent: event } %>
+        </span>
+
+        <% if policy(event).toggle_scoped_tag? %>
+          <div data-controller="menu" class="inline">
+            <button class="badge m-0 menu__toggle menu__toggle--arrowless border-none bg-muted" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
+              <% event.parent.subevent_scoped_tags.each do |scoped_tag| %>
+                <div class="flex items-center" data-scoped-tag="<%= scoped_tag.id %>">
+                  <%= button_to toggle_tag_event_scoped_tag_path(event, scoped_tag), class: "menu__action event_#{event.id}_scoped_tag_#{scoped_tag.id}_toggle", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                    <%= scoped_tag.name %>
+                    <%= "✓" if event.scoped_tags.include?(scoped_tag) %>
+                  <% end %>
+                  <%= button_to event_scoped_tag_path(event, scoped_tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => scoped_tag.removal_confirmation_message } do %>
+                    <%= inline_icon "delete", size: 18, style: "margin: 0" %>
+                  <% end %>
+                </div>
+              <% end %>
+
+              <% if event.parent.subevent_scoped_tags.any? %>
+                <div class="menu__divider scoped-tags__divider"></div>
+              <% end %>
+
+              <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" onclick="document.getElementById('create_scoped_tag_subevent_id').value = <%= event.id.to_json %>">
+                <%= inline_icon "plus", size: 15 %>
+                  Create tag
+              </button>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
     <div class="h4 line-height-2 mb2 mt-1 flex justify-between item-center">
       <span class="flex items-center gap-1 whitespace-nowrap tabular-nums">
         <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
@@ -45,7 +93,7 @@
       <% if local_assigns[:show_date_stat] %>
         <span class="flex items-center gap-1 tabular-nums">
           <%= inline_icon "event-add", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
-          <%= time_ago_in_words(event.created_at).sub("about ", "").sub("over ", "") %> ago
+          <%= time_ago_in_words(event.created_at).sub("about ", "").sub("over ", "").sub("almost ", "") %> ago
         </span>
       <% else %>
         <span class="flex items-center gap-1 tabular-nums">
@@ -65,4 +113,14 @@
       <% end %>
     </div>
   </li>
+<% end %>
+
+<% if show_scoped_tags %>
+  <div style="max-width: calc(100vw - 2rem)" class="draggable no-underline">
+    <%= card_contents %>
+  </div>
+<% else %>
+  <%= link_to event, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+    <%= card_contents %>
+  <% end %>
 <% end %>

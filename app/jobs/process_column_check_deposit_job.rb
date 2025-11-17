@@ -5,7 +5,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
   class ApiError < StandardError; end
 
   def perform(check_deposit:, validate: true)
-    raise ArgumentError, "check deposit already processed" if check_deposit.column_id.present? || check_deposit.increase_id.present?
+    return if check_deposit.column_id.present? || check_deposit.increase_id.present?
 
     conn = Faraday.new url: "https://api.column.com" do |f|
       f.request :basic_auth, "", Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :API_KEY)
