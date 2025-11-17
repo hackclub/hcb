@@ -35,29 +35,10 @@ class OrganizerPositionInvitesController < ApplicationController
       if @invite.is_signee
         OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
       end
-
-      respond_to do |format|
-        format.html {
-          flash[:success] = "Invite successfully sent to #{user_email}"
-          redirect_to event_team_path(@invite.event)
-        }
-        format.turbo_stream {
-          flash.now[:success] = "Invite successfully sent to #{user_email}"
-          @invite = OrganizerPositionInviteService::Create.new(event: @event).model
-          render turbo_stream: turbo_stream.replace("invite_member_form",
-                                                    partial: "organizer_position_invites/form",
-                                                    locals: { invite: @invite })
-        }
-      end
+      flash[:success] = "Invite successfully sent to #{user_email}"
+      redirect_to event_team_path @invite.event
     else
-      respond_to do |format|
-        format.html { render :new, status: :unprocessable_entity }
-        format.turbo_stream {
-          render turbo_stream: turbo_stream.replace("invite_member_form",
-                                                    partial: "organizer_position_invites/form",
-                                                    locals: { invite: @invite }), status: :unprocessable_entity
-        }
-      end
+      render :new, status: :unprocessable_entity
     end
   end
 
