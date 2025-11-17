@@ -32,7 +32,7 @@ module Api
           sent_by = found_user
         end
 
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:))
+        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:))
 
         authorize @card_grant
 

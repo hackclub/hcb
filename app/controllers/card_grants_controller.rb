@@ -46,7 +46,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -156,7 +156,7 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.hcb_codes
+    @hcb_codes = @card&.local_hcb_codes
 
     @frame = params[:frame].present?
     @force_no_popover = @frame

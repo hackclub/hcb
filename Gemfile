@@ -229,3 +229,6 @@ gem "prosemirror_to_html"
 
 gem "ed25519"
 gem "discordrb"
+
+gem "pghero", "~> 3.7"
+gem "pg_query", ">= 2"
