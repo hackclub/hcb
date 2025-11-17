@@ -355,7 +355,7 @@ class StripeCard < ApplicationRecord
   end
 
   def local_hcb_codes
-    HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
+    @local_hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
   end
 
   def remote_shipping_status
