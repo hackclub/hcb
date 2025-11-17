@@ -49,7 +49,7 @@
       </tbody>
     </table>
   <% end %>
-  <% latest_token_with_ip = authorization.tokens.find { |t| t.ip_address.present? } %>
+  <% latest_token_with_ip = authorization.tokens.where.not(ip_address: nil).order(created_at: :desc).first %>
   <% if latest_token_with_ip&.latitude %>
     <img class="w-full rounded mt-3 aspect-square" src="https://maps.hackclub.com/api/shipping?latitude=<%= latest_token_with_ip.latitude %>&longitude=<%= latest_token_with_ip.longitude %>">
     <% if latest_token_with_ip.ip_address.present? %>
