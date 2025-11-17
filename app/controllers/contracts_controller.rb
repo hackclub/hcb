@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class ContractsController < ApplicationController
-  before_action :set_opc, only: [:void, :resend_to_user, :resend_to_cosigner]
+  before_action :set_contract, only: [:void, :resend_to_user, :resend_to_cosigner]
 
   def create
-    @contract = Contract.new(opc_params)
+    @contract = Contract.new(contract_params)
     authorize @contract
     @contract.save!
     flash[:success] = "Contract sent succesfully."
@@ -42,11 +42,11 @@ class ContractsController < ApplicationController
 
   private
 
-  def set_opc
+  def set_contract
     @contract = Contract.find(params[:id])
   end
 
-  def opc_params
+  def contract_params
     params.require(:contract).permit(:contractable_id, :contractable_type, :cosigner_email, :include_videos)
   end
 
