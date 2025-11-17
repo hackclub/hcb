@@ -16,9 +16,11 @@
 
   <%= render "organizer_position_invites/role_and_control_form", form: form %>
 
-  <% admin_tool("mt2 mb2 flex g1") do %>
-    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
-  <% end %>
+  <div x-show="role == 'manager'" x-cloak x-transition.duration.500ms>
+    <% admin_tool("mt2 mb2 flex g1") do %>
+      <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
+    <% end %>
+  </div>
 
   <%= form.submit "Submit" %>
 <% end %>

@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   static values = {
-    condition: String,
+    showCondition: String,
   }
 
   static targets = ['field', 'select']
@@ -14,6 +14,6 @@ export default class extends Controller {
   toggle() {
     const selectedValue = this.selectTarget.value
 
-    this.fieldTarget.hidden = selectedValue === this.conditionValue
+    this.fieldTarget.hidden = selectedValue !== this.showConditionValue
   }
 }
