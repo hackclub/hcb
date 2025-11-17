@@ -13,8 +13,10 @@ puts "Continuing with #{user.email}..."
 
 user.make_admin! unless user.admin?
 
-admin = User.create_with(email: User::SYSTEM_USER_EMAIL).find_or_create_by!(id: User::SYSTEM_USER_ID)
-admin.make_admin!
+Governance::Admin::Transfer::Limit.create(user_id: user.id, amount_cents: 1000000000)
+
+system_user = User.create_with(email: User::SYSTEM_USER_EMAIL).find_or_create_by!(id: User::SYSTEM_USER_ID)
+system_user.make_admin! unless system_user.admin?
 
 # DEMO
 demo_event = Event.create_with(
