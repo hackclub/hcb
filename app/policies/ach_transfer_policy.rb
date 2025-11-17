@@ -6,28 +6,28 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def new?
-    admin_or_user?
+    admin_or_user
   end
 
   def create?
-    user_who_can_transfer? && !record.event.demo_mode
+    user_who_can_transfer && !record.event.demo_mode
   end
 
   def show?
-    # Semantically, this should be admin_or_manager?, right?
-    is_public? || user_who_can_transfer?
+    # Semantically, this should be admin_or_manager, right?
+    is_public || user_who_can_transfer
   end
 
   def view_account_routing_numbers?
-    admin_or_manager?
+    admin_or_manager
   end
 
   def cancel?
-    user_who_can_transfer?
+    user_who_can_transfer
   end
 
   def transfer_confirmation_letter?
-    user_who_can_transfer?
+    user_who_can_transfer
   end
 
   def start_approval?
@@ -48,19 +48,19 @@ class AchTransferPolicy < ApplicationPolicy
 
   private
 
-  def user_who_can_transfer?
+  def user_who_can_transfer
     EventPolicy.new(user, record.event).create_transfer?
   end
 
-  def admin_or_user?
+  def admin_or_user
     user&.admin? || record.event.users.include?(user)
   end
 
-  def admin_or_manager?
+  def admin_or_manager
     user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 
-  def is_public?
+  def is_public
     record.event.is_public?
   end
 

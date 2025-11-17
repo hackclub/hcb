@@ -31,7 +31,7 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def transfer_confirmation_letter?
-    auditor_or_user?
+    auditor_or_user
   end
 
   def edit?
@@ -64,7 +64,7 @@ class DisbursementPolicy < ApplicationPolicy
 
   private
 
-  def auditor_or_user?
+  def auditor_or_user
     user&.auditor? || record.event.users.include?(user)
   end
 

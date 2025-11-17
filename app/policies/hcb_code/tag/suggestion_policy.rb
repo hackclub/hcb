@@ -4,7 +4,7 @@ class HcbCode
   module Tag
     class SuggestionPolicy < ApplicationPolicy
       def accept?
-        admin_or_user?
+        admin_or_user
       end
 
       def reject?
@@ -13,7 +13,7 @@ class HcbCode
 
       private
 
-      def admin_or_user?
+      def admin_or_user
         user&.admin? || OrganizerPosition.role_at_least?(user, record.tag.event, :member)
       end
 

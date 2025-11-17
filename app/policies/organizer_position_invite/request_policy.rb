@@ -7,25 +7,25 @@ class OrganizerPositionInvite
     end
 
     def approve?
-      admin_or_manager?
+      admin_or_manager
     end
 
     def deny?
-      admin_or_manager? || record.requester == user
+      admin_or_manager || record.requester == user
     end
 
     private
 
-    def admin?
+    def admin
       user&.admin?
     end
 
-    def manager?
+    def manager
       OrganizerPosition.find_by(user:, event: record.link.event)&.manager?
     end
 
-    def admin_or_manager?
-      admin? || manager?
+    def admin_or_manager
+      admin || manager
     end
 
   end
