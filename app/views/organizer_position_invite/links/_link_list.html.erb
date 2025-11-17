@@ -10,7 +10,7 @@
       <div class="overflow-visible justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">
             <div class="flex flex-col">
-                <%= copy_to_clipboard(link_url(link), class: "muted underline gap-1 my-0 font-bold items-center inline-flex") do %>
+                <%= copy_to_clipboard(link_url(link), class: "muted underline gap-1 my-0 font-bold items-center inline-flex mr-auto") do %>
                   <%= link.hashid %>
                   <%= inline_icon "copy", size: 24 %>
                 <% end %>
