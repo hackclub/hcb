@@ -5,7 +5,7 @@
     <div class="field" x-data="{ email: '' }">
       <div class="flex items-center !border-gray-200 dark:border-neutral-700 pr-2" style="border-bottom:1px solid">
         <%= form.email_field :email, class: "!max-w-full w-full !border-0 bg-transparent !rounded-none !h-[50px] !px-4 font-bold !text-lg", "x-model": "email", placeholder: "Email address" %>
-        <button type="submit" class="btn btn-small">
+        <button type="submit" class="btn btn-small bg-info">
           Send
           <%= inline_icon "send", class: "!ml-1 !-mr-1" %>
         </button>
