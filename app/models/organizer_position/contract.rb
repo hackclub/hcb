@@ -203,12 +203,6 @@ class OrganizerPosition
       docuseal_client.delete("/submissions/#{external_id}")
     end
 
-    def one_non_void_contract
-      if organizer_position_invite.organizer_position_contracts.where.not(aasm_state: :voided).excluding(self).any?
-        self.errors.add(:base, "organizer already has a contract!")
-      end
-    end
-
     def creator
       user_id = versions.first&.whodunnit
       return nil unless user_id
@@ -217,6 +211,12 @@ class OrganizerPosition
     end
 
     private
+
+    def one_non_void_contract
+      if organizer_position_invite.organizer_position_contracts.where.not(aasm_state: :voided).excluding(self).any?
+        self.errors.add(:base, "organizer already has a contract!")
+      end
+    end
 
     def docuseal_client
       @docuseal_client || begin
