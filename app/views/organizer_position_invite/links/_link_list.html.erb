@@ -5,7 +5,7 @@
     <p><%= event.name %> does not currently have any active invite links</p>
   </div>
 <% else %>
-  <div class="border rounded-xl overflow-hidden banner border shadow-none">
+  <div class="border border-gray-200 dark:border-neutral-700 rounded-xl overflow-hidden banner border shadow-none">
     <% invite_links.each_with_index do |link, index| %>
       <div class="overflow-visible justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">
