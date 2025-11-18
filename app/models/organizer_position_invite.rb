@@ -211,9 +211,9 @@ class OrganizerPositionInvite < ApplicationRecord
       Contract.create!(contractable: self, cosigner_email:, include_videos:)
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
-    end
 
-    event.set_airtable_status("Documents sent")
+      event.set_airtable_status("Documents sent")
+    end
   end
 
   def contract_docuseal_template_id
