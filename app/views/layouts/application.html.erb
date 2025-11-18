@@ -225,6 +225,7 @@
         </div>
         <%= yield(:container) %>
         <%= yield %>
+        <%= render "application/footer" unless @no_app_shell || @hide_footer %>
       </div>
     </article>
   </main>
