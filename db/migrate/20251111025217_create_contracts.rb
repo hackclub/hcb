@@ -39,6 +39,9 @@ class CreateContracts < ActiveRecord::Migration[8.0]
       Contract.insert_all(new_rows)
     end
 
+    # When we backfill the new contracts table with the old organizer position contracts,
+    # we need to reset the primary key sequence so that any new contracts get a unique ID
+    # instead of 1.
     ActiveRecord::Base.connection.reset_pk_sequence!('contracts')
     
     # rename papertrail item types
