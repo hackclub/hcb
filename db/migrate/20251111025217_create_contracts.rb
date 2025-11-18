@@ -36,7 +36,7 @@ class CreateContracts < ActiveRecord::Migration[8.0]
         }
       end
 
-      ActiveRecord::Base.transaction { Contract.insert_all(new_rows) }
+      Contract.insert_all(new_rows)
     end
 
     ActiveRecord::Base.connection.reset_pk_sequence!('contracts')
