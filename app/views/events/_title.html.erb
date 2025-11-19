@@ -1,11 +1,23 @@
-<div data-controller="menu" class="-mb-2">
-  <% if @event.ancestors.present? %>
-    <div class="muted -mt-2 -mb-1.5 ml-1 text-sm">
+<% if @event.ancestors[0...-1].present? %>
+  <div data-controller="menu" class="-mb-2">
+    <button
+      type="button"
+      class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible w-5 h-5"
+      data-menu-target="toggle"
+      data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+    >
+      <%= inline_icon "more", size: 24 %>
+    </button>
+    <div class="menu__content menu__content--switcher h5" data-menu-target="content">
+      <span class="muted font-medium h5 pl-2 p-1 m0">Parent organizations</span>
       <% @event.ancestors[0...-1].each do |ancestor| %>
-        <%= link_to ancestor.name, ancestor, class: "no-underline hover:underline" %>
+        <%= link_to ancestor.name, ancestor %>
       <% end %>
     </div>
-  <% end %>
+  </div>
+  <span class="-mx-1.5 text-xl opacity-40">/</span>
+<% end %>
+<div data-controller="menu">
   <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} text-decoration-none gap-2 text-inherit event-title -ml-1 px-2 rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
     <h3 class="my-0 flex max-w-[180px] items-center">
       <span class="truncate flex-1 min-w-0">
