@@ -732,61 +732,38 @@ video {
 
 /* The navigation bar used for admin pages */
 
-.nav-row {
-  flex-direction: column;
-  flex-wrap: wrap;
-}
-
-.nav-row > *:not(:last-child) > summary {
+.nav-row-scroll-container .nav-item:not(:last-child) {
   border-right: 1px solid var(--hcb-bg-3) !important;
 }
 
-@media screen and (min-width: 800px) {
-  .nav-row {
-    flex-direction: row;
-  }
+.nav-row .nav-row-scroll-container {
+  flex-direction: row;
+}
 
-  .admin-nav-item:active {
-    pointer-events: none;
-  }
+.admin-nav-item:active {
+  pointer-events: none;
+}
 
-  nav {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .admin-nav-item[open] {
-    /* Adjust the <details> padding while open */
-    padding-bottom: 0rem;
-    margin-bottom: 0 !important;
-  }
+nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  .admin-nav-item[open] summary {
-    /* Adjust the <details> padding while open */
-    margin-bottom: 0px !important;
-  }
+summary:hover + detail,
+detail:hover,
+details:hover > .dropdown {
+  display: block;
+}
 
-  .dropdown {
-    position: absolute;
-    top: 33px;
-    padding-top: 4px;
-  }
+detail,
+.dropdown {
+  display: none;
+}
 
-  summary:hover + detail,
-  detail:hover,
-  details:hover > .dropdown {
-    display: block;
-  }
-
-  detail,
-  .dropdown {
-    display: none;
-  }
-
-  .role-badge {
-    margin-bottom: 0px !important;
-  }
+.role-badge {
+  margin-bottom: 0px !important;
 }
 
 .sub-items {
@@ -844,10 +821,6 @@ video {
   align-items: center;
   justify-content: center;
   gap: 4px;
-}
-
-.nav-item > .dropdown {
-  background: var(--hcb-bg-2-5);
 }
 
 .role-badge {

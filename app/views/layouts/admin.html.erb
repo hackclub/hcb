@@ -16,6 +16,7 @@
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body class="bg-snow">
@@ -58,29 +59,35 @@
         </div>
       </div>
 
-      <div class="nav-row !border-gray-200 dark:!border-gray-700 py-2" style="width: 100%; display: flex;border-top:1px solid">
-        <% nav.sections.each do |section| %>
-          <details open class="admin-nav-item pb-0 flex-1">
-            <summary class="nav-item" style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
-              <%= section.name %>
-              <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
-                <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
-              </span>
-            </summary>
-            <div class="dropdown">
-              <div class="sub-items" style="backdrop-filter:blur(10px)">
+      <div class="nav-row !border-gray-200 dark:!border-gray-700 overflow-x-auto" style="width: 100%; border-top:1px solid">
+        <div class="nav-row-scroll-container flex">
+          <% nav.sections.each do |section| %>
+            <div data-controller="menu" class="pb-0 sm:flex-1 shrink-0 flex item">
+              <button
+                type="button"
+                class="nav-item menu__toggle menu__toggle--arrowless flex-1 h-12 rounded-none bg-transparent"
+                style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>"
+                data-menu-target="toggle"
+                data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                <%= section.name %>
+                <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
+                  <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
+                </span>
+              </button>
+              <div class="menu__content rounded-t-none -mt-2.5" data-menu-target="content" style="min-width: calc(100vw / 6); width: calc(100vw / 6)">
                 <% section.items.each do |item| %>
-                  <%= link_to item.path, style: item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
+                  <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
                     <%= item.name %>
                     <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content ml-auto">
                       <%= item.count %>
                     </span>
                   <% end %>
+                  <div class="menu__divider last:hidden"></div>
                 <% end %>
               </div>
             </div>
-          </details>
-        <% end %>
+          <% end %>
+        </div>
       </div>
     </nav>
 
@@ -91,24 +98,5 @@
     </div>
 
     <%= render "application/command_bar" %>
-    <script>
-      document.addEventListener("turbo:load", () => {
-        const updateAdminDropdowns = () => {
-          let details = document.querySelectorAll(".admin-nav-item");
-          if(window.innerWidth >= 800){
-            details.forEach((detail) => {
-              detail.open = true;
-            });
-          }
-          else {
-            details.forEach((detail) => {
-              detail.open = false;
-            });
-          }
-        }
-        updateAdminDropdowns()
-        window.onresize = updateAdminDropdowns
-      })
-    </script>
   </body>
 </html>
