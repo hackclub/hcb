@@ -1,5 +1,5 @@
 <div class="flex items-center gap-2" data-controller="clipboard" data-clipboard-text-value="<%= mailbox_address.address %>">
-  <input type="text" value="<%= mailbox_address.address %>" readonly style="cursor: text;" class="fit font-mono">
+  <input type="text" value="<%= mailbox_address.address %>" readonly style="cursor: text;" class="fit font-mono select-all">
 
   <%= pop_icon_to "view-reload",
       mailbox_addresses_path,
