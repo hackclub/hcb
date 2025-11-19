@@ -71,6 +71,14 @@
   .mobile-nav {
     @apply lg:hidden fixed bottom-0 left-0 w-full p-10 z-10 flex justify-center pointer-events-none;
 
+    & .mobile-nav--backdrop {
+      @apply backdrop-blur-xl bg-white/70 dark:bg-darkless/70 flex-1 mt-auto overflow-hidden rounded-xl;
+
+      @supports not (backdrop-filter: blur(15px)) {
+        @apply bg-white dark:bg-darkless;
+      }
+    }
+
     & .mobile-nav--trigger {
       @apply rounded-full text-black px-5 py-3 max-w-full flex items-center pointer-events-auto gap-3 active:scale-90 transition-transform cursor-pointer;
       width: 300px;
