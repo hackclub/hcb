@@ -68,14 +68,6 @@
     }
   }
 
-  & .mobile-nav--popover {
-    @apply backdrop-blur-xl bg-white/70 dark:bg-darkless/70 flex-1 mt-auto overflow-hidden rounded-xl;
-
-    @supports not (backdrop-filter: blur(15px)) {
-      @apply bg-white dark:bg-darkless;
-    }
-  }
-
   .mobile-nav {
     @apply lg:hidden fixed bottom-0 left-0 w-full p-10 z-10 flex justify-center pointer-events-none;
 
@@ -97,6 +89,14 @@
     @apply lg:invisible modal modal--scroll modal--popover p-3 bg-transparent shadow-none;
     height: auto !important;
     max-height: 80vh !important;
+  }
+}
+
+.mobile-nav--popover {
+  @apply backdrop-blur-xl flex-1 mt-auto overflow-hidden rounded-xl;
+
+  @supports not (backdrop-filter: blur(15px)) {
+    @apply bg-white dark:bg-darkless;
   }
 }
 
