@@ -175,6 +175,10 @@ class EventsController < ApplicationController
   end
 
   def ledger
+    unless turbo_frame_request?
+      return redirect_to event_transactions_path(@event)
+    end
+
     begin
       authorize @event
     rescue Pundit::NotAuthorizedError
