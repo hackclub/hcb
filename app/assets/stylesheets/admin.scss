@@ -744,6 +744,16 @@ video {
   pointer-events: none;
 }
 
+.admin-menu-content {
+  min-width: calc(100vw / 6);
+  width: calc(100vw / 6);
+
+  @media (max-width: 768px) {
+    min-width: unset;
+    width: unset;
+  }
+}
+
 nav {
   display: flex;
   align-items: center;
