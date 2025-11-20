@@ -391,11 +391,11 @@ module ApplicationHelper
   def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
     return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
       (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
-        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}", **options[:button_options] do
+        (content_tag :button, class: "btn !transform-none rounded-l-md rounded-r-none #{button_class}", **options[:button_options] do
           (inline_icon options[:button_icon]) +
           (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
         end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-md rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +
@@ -403,7 +403,7 @@ module ApplicationHelper
         content_tag :div do
           options[:options].map.with_index do |option, index|
             (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
-            (options[:form].label options[:name], value: option[1] do
+            (options[:form].label options[:name], class: "!h-auto", value: option[1] do
               (tag.strong option[0]) + (tag.p option[2])
             end)
           end.join.html_safe
