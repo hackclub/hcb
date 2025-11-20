@@ -5,6 +5,6 @@
                               disabled: !policy(@card_grant).topup? do %>
           <% end %>
           <%= form.number_field :amount, placeholder: "500.00", required: true, step: 0.01, min: 0, style: "width: " %>
-        <%= form.submit("Withdraw", class: "bg-warning", data: { turbo: true, turbo_frame: "_top" }) %>
+        <%= form.submit("Withdraw", class: "bg-primary", data: { turbo: true, turbo_frame: "_top" }) %>
       <% end %>
 </turbo-frame>

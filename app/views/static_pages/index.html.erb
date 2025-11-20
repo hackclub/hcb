@@ -22,7 +22,7 @@
 
 <% if current_user.card_grants.not_activated.size > 0 %>
   <% current_user.card_grants.not_activated.each do |grant| %>
-    <div class="card border b--info container--sm mx-auto mb-12 mt-6 text-center sm:text-left flex items-center flex-col sm:flex-row">
+    <div class="card container--sm mx-auto mb-12 mt-6 text-center sm:text-left flex items-center flex-col sm:flex-row">
       <div class="flex-1">
         <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
         <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
