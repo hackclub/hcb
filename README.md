@@ -5,7 +5,7 @@
   </picture>
   <h1>HCB by Hack Club</h1>
 
-  ![Transactions last week](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_week.size.total&style=flat&label=past%20week&color=%23ec3750&suffix=%20transactions) ![Transactions today](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_day.size.total&style=flat&label=today&color=%23338eda&suffix=%20transactions) ![Currently online](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.currently_online&style=flat&label=currently%20online&color=%2333d6a6&suffix=%20users)
+![Transactions last week](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_week.size.total&style=flat&label=past%20week&color=%23ec3750&suffix=%20transactions) ![Transactions today](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.last_day.size.total&style=flat&label=today&color=%23338eda&suffix=%20transactions) ![Currently online](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fhcb.hackclub.com%2Fstats&query=%24.currently_online&style=flat&label=currently%20online&color=%2333d6a6&suffix=%20users)
 
 </div>
 <br>
@@ -22,7 +22,7 @@ provide high schoolers with a 501(c)(3) status-backed restricted fund for their
 organization. Behind the scenes, HCB is a Ruby on Rails application (learn more
 by reading [our documentation](/dev-docs)).
 
-<img width="1377" alt="Screenshot of Hack Club HQ's finances on HCB" src="https://github.com/hackclub/hcb/assets/39828164/b19a83b2-ba81-46b0-9f6f-2772f4249071">
+<img width="1377" alt="Screenshot of Hack Club HQ's finances on HCB" src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7e971dff173d8399f05468de3fbe12644e3b52e7_pawelzmarlak-2025-11-20t00_10_15.272z.png">
 
 ## Table of Contents
 
