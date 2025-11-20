@@ -34,7 +34,7 @@
     <% end %>
   </td>
   <td>
-    <div class="flex items-center gap-4 justify-end">
+    <div class="flex items-center gap-2 justify-end">
     <% if admin_signed_in? %>
       <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.organizer_position_invite.organizer_position_contract.present? ? organizer_position.organizer_position_invite.organizer_position_contract.signed? ? "Contract signee" : "Pending signature, click to manage." : "No contract signature") %>">
         <div class="warning">
