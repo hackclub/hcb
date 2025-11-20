@@ -20,7 +20,7 @@ module ReceiptReport
     def hcb_ids
       @hcb_ids ||= begin
         @user.stripe_cards.flat_map do |card|
-          card.hcb_codes.missing_receipt.receipt_required.pluck(:id)
+          card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id)
         end
       end
     end
