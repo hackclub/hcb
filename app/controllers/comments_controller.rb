@@ -48,14 +48,21 @@ class CommentsController < ApplicationController
 
   def destroy
     authorize @comment
+    commentable = @comment.commentable
     @comment.destroy!
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.remove(@comment)
+        render turbo_stream: turbo_stream.replace(
+          "comments",
+          partial: "comments/list",
+          locals: {
+            comments: commentable.comments,
+            show_blankslate: commentable.comments.empty? }
+        )
       end
 
-      format.any { redirect_back_or_to @comment.commentable }
+      format.any { redirect_back_or_to commentable }
     end
   end
 
