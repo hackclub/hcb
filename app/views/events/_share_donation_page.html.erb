@@ -79,8 +79,8 @@
     <div data-tabs-target="tab" id="donor_graph" class="flex gap-4 flex-col sm:flex-row">
       <div class="flex-1">
         <p class="mt0">Use this image URL to show a donor graph on your website, GitHub repo, or anywhere in between.</p>
-        <pre class="bg-gray-200 dark:bg-gray-700">https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
-        <pre class="bg-gray-200 dark:bg-gray-700"><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
+        <pre class="bg-gray-200 dark:bg-gray-700 select-all">https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
+        <pre class="bg-gray-200 dark:bg-gray-700 select-all"><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
 
         <p class="muted text-sm">
           To use additional styling and image options,
@@ -95,7 +95,7 @@
     </div>
     <div data-tabs-target="tab" id="embed">
       <p class="mt0">Paste this HTML code into your website to embed your donation page. Feel free to change the styling.</p>
-      <pre class="bg-gray-200 dark:bg-gray-700"><%= html_escape "<iframe src='#{start_donation_donations_url @event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='512px' allowfullscreen></iframe>".gsub("'", '"') %></pre>
+      <pre class="bg-gray-200 dark:bg-gray-700 select-all"><%= html_escape "<iframe src='#{start_donation_donations_url @event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='512px' allowfullscreen></iframe>".gsub("'", '"') %></pre>
     </div>
   </div>
 </section>
