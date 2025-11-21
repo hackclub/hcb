@@ -368,34 +368,29 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     transform: translateY(35px) translateX(0.75rem);
   }
 }
-
 .admin-tools {
-  &:not(.dock__item) {
-    padding: 0.5rem;
+  position: relative;
+  overflow: visible !important;
+
+  &.badge {
+    background: transparent;
   }
+  &.badge::before {
+    border-radius: 99px;
+  }
+}
+
+.admin-tools::before {
+  content: '';
   border-radius: 0.5rem;
-  border: 1px dashed map-get($palette, warning);
-  background: rgba(map-get($palette, pending), 0.125);
-  overflow: auto;
-}
-
-.details .admin-tools {
-  &:not(.dock__item) {
-    padding: 0.25rem 1rem;
-    margin: 0 -1rem;
-    border-radius: 0;
-  }
-  border: 0;
-}
-
-.details-horiz .admin-tools {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  padding-right: 1rem;
-  margin-top: -0.75rem;
-  margin-bottom: -0.75rem;
-  border-radius: 0;
-  border: 0;
+  border: 2px dotted rgba(map-get($palette, warning), 0.3);
+  background: rgba(map-get($palette, pending), 0.08);
+  position: absolute;
+  top: -2.5px;
+  right: -2.5px;
+  bottom: -2.5px;
+  pointer-events: none;
+  left: -2.5px;
 }
 
 .dev-tools {

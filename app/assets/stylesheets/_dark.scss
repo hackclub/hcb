@@ -255,7 +255,7 @@ html[data-dark='true'] {
     background-color: rgba(map-get($palette, dark), 0.75);
   }
 
-  .admin-tools {
+  .admin-tools::before {
     background-color: rgba(map-get($palette, warning), 0.0625);
   }
 
