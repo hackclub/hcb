@@ -1,8 +1,16 @@
-<% title "Statements" %>
+<% title "Statements for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :documentation %>
 
-<h1>Documents</h1>
+<h1 class="flex">
+  Documents
+  <% admin_tool "w-fit ml-auto p-0 -mt-1" do %>
+    <%= link_to "Upload a document",
+    new_document_path(event_id: @event.slug),
+    class: "btn bg-success -mt-2",
+    disabled: !admin_signed_in? %>
+  <% end %>
+</h1>
 
 <ul class="tab-container">
   <%= settings_tab do %>
