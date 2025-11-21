@@ -36,8 +36,10 @@
       browser history since it's attempt to set the URL to this frame's. So, i'm
       manually doing it here.
     %>
-    <script>
-      window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
-    </script>
+    <% if !params[:subledger] %>
+      <script>
+        window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
+      </script>
+    <% end %>
   <% end %>
 <% end %>

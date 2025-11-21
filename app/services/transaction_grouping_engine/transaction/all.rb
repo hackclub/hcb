@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -18,6 +18,7 @@ module TransactionGroupingEngine
         @category = category
         @merchant = merchant
         @order_by = order_by
+        @subledger = subledger
       end
 
       def run
@@ -236,7 +237,7 @@ module TransactionGroupingEngine
                 canonical_pending_event_mappings cpem
               where
                 #{ActiveRecord::Base.sanitize_sql_for_conditions(["cpem.event_id = ?", @event_id])}
-                and cpem.subledger_id is null
+                and cpem.subledger_id is #{@subledger ? "not null" : "null"}
               except ( -- hide pending transactions that have either settled or been declined.
                 select
                   cpsm.canonical_pending_transaction_id
@@ -287,7 +288,7 @@ module TransactionGroupingEngine
                 canonical_event_mappings cem
               where
                 #{ActiveRecord::Base.sanitize_sql_for_conditions(["cem.event_id = ?", @event_id])}
-                and cem.subledger_id is null
+                and cem.subledger_id is #{@subledger ? "not null" : "null"}
             )
             #{search_modifier_for :ct}
             #{user_modifier}

@@ -200,7 +200,8 @@ class EventsController < ApplicationController
       missing_receipts: @missing_receipts,
       category: @category,
       merchant: @merchant,
-      order_by: @order_by.to_sym
+      order_by: @order_by.to_sym,
+      subledger: params[:subledger]
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -1328,7 +1329,8 @@ class EventsController < ApplicationController
       missing_receipts: @missing_receipts,
       category: @category,
       merchant: @merchant,
-      order_by: @order_by&.to_sym || "date"
+      order_by: @order_by&.to_sym || "date",
+      subledger: params[:subledger]
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
