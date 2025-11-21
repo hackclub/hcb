@@ -28,12 +28,10 @@
     <% end %>
     <%= dock_item "Tags",
                     edit_event_path(@event, tab: "tags"),
-                    tooltip: "Manage your tags",
                     selected: @settings_tab == "tags",
                     data: { turbo: true, turbo_action: "advance" } %>
     <%= dock_item "Affiliations",
                     edit_event_path(@event, tab: "affiliations"),
-                    tooltip: "Manage affiliations",
                     selected: @settings_tab == "affiliations",
                     data: { turbo: true, turbo_action: "advance" } %>
     <%= dock_item "Integrations",
@@ -42,7 +40,6 @@
                     data: { turbo: true, turbo_action: "advance" } %>
     <%= dock_item "Feature previews",
                   edit_event_path(@event, tab: "features"),
-                  tooltip: "Feature previews",
                   selected: @settings_tab == "features",
                   data: { turbo: true, turbo_action: "advance" } %>
     <%= dock_item "Audit log",
