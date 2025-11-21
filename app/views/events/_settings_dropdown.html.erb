@@ -31,6 +31,11 @@
                     tooltip: "Manage your tags",
                     selected: @settings_tab == "tags",
                     data: { turbo: true, turbo_action: "advance" } %>
+    <%= dock_item "Affiliations",
+                    edit_event_path(@event, tab: "affiliations"),
+                    tooltip: "Manage affiliations",
+                    selected: @settings_tab == "affiliations",
+                    data: { turbo: true, turbo_action: "advance" } %>
     <%= dock_item "Integrations",
                     edit_event_path(@event, tab: "integrations"),
                     selected: @settings_tab == "integrations",

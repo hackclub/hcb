@@ -12,7 +12,7 @@
   <% end %>
 </h1>
 
-<ul class="tab-container">
+<ul class="tab-container -mt-3">
   <%= settings_tab active: true do %>
     <%= link_to "Legal documents", event_documents_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
