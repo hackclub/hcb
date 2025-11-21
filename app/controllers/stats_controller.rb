@@ -102,8 +102,10 @@ class StatsController < ApplicationController
             LEFT JOIN canonical_pending_declined_mappings cpdm ON cpdm.canonical_pending_transaction_id = cpt.id
             INNER JOIN canonical_pending_event_mappings cpem ON cpem.canonical_pending_transaction_id = cpt.id
             INNER JOIN events ON events.id = cpem.event_id
+            INNER JOIN event_plans ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'
             WHERE sc.user_id = users.id
             AND   receipts.id IS NULL AND cpdm.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at IS NULL
+            AND   event_plans.type != 'Event::Plan::SalaryAccount'
         )
       FROM users
       WHERE id IN (?)
