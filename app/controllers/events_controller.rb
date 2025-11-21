@@ -707,7 +707,7 @@ class EventsController < ApplicationController
     @increase_checks = @event.increase_checks
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
 
-    @disbursements = @disbursements.not_card_grant_related if @event.plan.card_grants_enabled?
+    @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
       deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents),
