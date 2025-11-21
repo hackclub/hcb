@@ -16,10 +16,16 @@ class CardGrantsController < ApplicationController
   def card_index
     authorize @event, :card_grant_overview?
 
+    # The search query name was historically `search`. It has since been renamed
+    # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
     @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :subledger).order(created_at: :desc)
+    # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
+    @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
 
