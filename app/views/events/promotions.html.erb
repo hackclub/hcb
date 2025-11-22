@@ -13,6 +13,8 @@
   <%= render "events/perks/premium_pins", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
   <%= render "events/perks/premium_domains", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
 
+  <%= render "events/perks/stickerninja", perks_available: @perks_available %>
+
   <%= render "events/perks/fee_waiver", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
 
   <%= render "events/perks/hackathons_page", event: @event, perks_available: @perks_available %>
@@ -33,8 +35,6 @@
       Expired promotions
     </h3>
   </summary>
-
-  <%= render "events/perks/stickerninja", perks_available: @perks_available %>
 
   <%= render "events/perks/onboard", event: @event %>
 
