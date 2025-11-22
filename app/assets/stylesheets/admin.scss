@@ -938,7 +938,7 @@ form:has(> #admin-logout-button) {
     box-shadow: 0 1px 2px hsl(240 3.8% 46.1% / 12%);
     animation-duration: 0.5s;
     animation-name: flash-slide-in;
-    z-index: 999;
+    z-index: 999999;
 
     &.flash--success {
       border-top-color: var(--hcb-accent-active);
