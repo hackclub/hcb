@@ -382,6 +382,9 @@ GEM
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-logging-utils (0.2.0)
+    google-protobuf (4.33.1)
+      bigdecimal
+      rake (>= 13)
     googleauth (1.14.0)
       faraday (>= 1.0, < 3.a)
       google-cloud-env (~> 2.2)
@@ -569,9 +572,13 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.5.9)
+    pg_query (6.1.0)
+      google-protobuf (>= 3.25.3)
     pg_search (2.3.7)
       activerecord (>= 6.1)
       activesupport (>= 6.1)
+    pghero (3.7.0)
+      activerecord (>= 7.1)
     phonelib (0.10.11)
     pkg-config (1.6.2)
     plaid (44.0.0)
@@ -987,7 +994,9 @@ DEPENDENCIES
   namae
   paper_trail (~> 16.0.0)
   pg (>= 0.18, < 2.0)
+  pg_query (>= 2)
   pg_search
+  pghero (~> 3.7)
   phonelib
   plaid (~> 44.0)
   poppler
