@@ -500,7 +500,7 @@ class HcbCode < ApplicationRecord
   # we optionally take an event parameter here. this
   # is a performance optimisation because it allows us to
   # load the event once on the ledger and never again
-  def receipt_required?(event = event)
+  def receipt_required?(event = self.event)
     return false if pt&.declined?
 
     return false unless event&.plan&.receipts_required?
@@ -514,7 +514,7 @@ class HcbCode < ApplicationRecord
     false
   end
 
-  def receipt_optional?(event = event)
+  def receipt_optional?(event = self.event)
     !receipt_required?(event)
   end
 
