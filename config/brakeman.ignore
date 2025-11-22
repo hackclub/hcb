@@ -179,7 +179,7 @@
       "file": "app/views/admin/wise_transfer_process.html.erb",
       "line": 14,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0\", :target => \"_blank\")",
+      "code": "ugc_link_to(\"#{inline_icon('wise')} Open Wise\".html_safe, WiseTransfer.find(params[:id]).wise_url || \"https://wise.com/send\", :class => \"btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0\", :target => \"_blank\")",
       "render_path": [
         {
           "type": "controller",
@@ -202,7 +202,7 @@
       "cwe_id": [
         79
       ],
-      "note": "This parameter is validated to match a specific format"
+      "note": "Fixed with ugc_link_to which validates URL schemes"
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -213,7 +213,7 @@
       "file": "app/views/admin/wise_transfer_process.html.erb",
       "line": 89,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"view on Wise\", WiseTransfer.find(params[:id]).wise_recipient_url, :target => \"_blank\")",
+      "code": "ugc_link_to(\"view on Wise\", WiseTransfer.find(params[:id]).wise_recipient_url, :target => \"_blank\")",
       "render_path": [
         {
           "type": "controller",
@@ -236,7 +236,7 @@
       "cwe_id": [
         79
       ],
-      "note": "`wise_recipient_url` is constructed from validated fields and uses `CGI.escape`"
+      "note": "Fixed with ugc_link_to which validates URL schemes"
     },
     {
       "warning_type": "Cross-Site Scripting",
