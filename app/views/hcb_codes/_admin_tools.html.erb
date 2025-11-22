@@ -1,39 +1,41 @@
 <%= turbo_frame_tag "#{@hcb_code.public_id}:admin_tools", target: "_top" do %>
   <% admin_tool("mt3") do %>
-    <table class="mb2">
-      <tr>
-        <th>HCB CODE</th>
-        <th>OBJECT</th>
-      </tr>
-      <tr>
-        <td><%= @hcb_code.hcb_code %></td>
+    <div class="overflow-x-auto px-3">
+      <table class="mb2">
+        <tr>
+          <th>HCB CODE</th>
+          <th>OBJECT</th>
+        </tr>
+        <tr>
+          <td><%= @hcb_code.hcb_code %></td>
 
-        <td>
-          <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? %>
-            <%= link_to "ACH TRANSFER #{@hcb_code.ach_transfer.id}", @hcb_code.ach_transfer %>
-          <% else %>
-            N/A
-          <% end %>
-        </td>
+          <td>
+            <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? %>
+              <%= link_to "ACH TRANSFER #{@hcb_code.ach_transfer.id}", @hcb_code.ach_transfer %>
+            <% else %>
+              N/A
+            <% end %>
+          </td>
 
-      </tr>
-    </table>
-    <%= render(
-          partial: "transactions_table",
-          locals: {
-            canonical_transactions:
-              @hcb_code
-                .canonical_pending_transactions
-                .preload(:category)
-                .strict_loading,
-            canonical_pending_transactions:
-              @hcb_code
-                .canonical_transactions
-                .preload(:category)
-                .strict_loading
-                .to_a,
-            t_transaction: @hcb_code.ach_transfer&.t_transaction
-          }
-        ) %>
-  <% end %>
+        </tr>
+      </table>
+      <%= render(
+            partial: "transactions_table",
+            locals: {
+              canonical_transactions:
+                @hcb_code
+                  .canonical_pending_transactions
+                  .preload(:category)
+                  .strict_loading,
+              canonical_pending_transactions:
+                @hcb_code
+                  .canonical_transactions
+                  .preload(:category)
+                  .strict_loading
+                  .to_a,
+              t_transaction: @hcb_code.ach_transfer&.t_transaction
+            }
+          ) %>
+    <% end %>
+  </div>
 <% end %>
