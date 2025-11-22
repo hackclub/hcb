@@ -30,6 +30,16 @@ $mono:
   -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  /* Set background color for selected text */
+  background: map-get($palette, info);
+  color: white;
+}
+
+img {
+  user-select: none;
+}
+
 html,
 body {
   min-height: 100%;

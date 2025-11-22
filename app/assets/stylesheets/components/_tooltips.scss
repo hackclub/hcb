@@ -2,6 +2,7 @@
   position: absolute;
   padding: 0.25rem 0.75rem;
   color: map-get($palette, white);
+  user-select: none;
   background-color: rgba(map-get($palette, black), 0.875);
   [data-dark='true'] & {
     color: map-get($palette, black);

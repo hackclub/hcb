@@ -197,7 +197,7 @@
     <%= render "application/native_changelog" if @latest_changelog_post %>
     <%= render "application/the_bin" if @the_bin %>
 
-    <aside class="sidebar">
+    <aside class="sidebar select-none">
       <div class="sidebar--scroll-container">
         <%= yield(:header) %>
         <div class="hidden lg:block">
