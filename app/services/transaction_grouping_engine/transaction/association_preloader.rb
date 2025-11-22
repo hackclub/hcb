@@ -55,7 +55,7 @@ module TransactionGroupingEngine
                                                           .where(canonical_hashed_mappings: { canonical_transaction_id: canonical_transaction_ids })
                                                           .group_by { |ht| ht.canonical_hashed_mapping.canonical_transaction_id }
 
-        raw_stripe_transactions_by_id = RawStripeTransaction.find(canonical_transactions.where(transaction_source_type: RawStripeTransaction.name).select(:transaction_source_id)).index_by(&:id)
+        raw_stripe_transactions_by_id = RawStripeTransaction.find(canonical_transactions.where(transaction_source_type: RawStripeTransaction.name).pluck(:transaction_source_id)).index_by(&:id)
 
         canonical_transactions.each do |ct|
           ct.fee_payment = hack_club_fees_by_canonical_transaction_id[ct.id].present?
