@@ -11,10 +11,7 @@
 
   <div class="flex-grow"></div>
 
-  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0", target: "_blank") do %>
-    <%= inline_icon "wise" %>
-    Open Wise
-  <% end %>
+  <%= ugc_link_to("#{inline_icon('wise')} Open Wise".html_safe, @wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0", target: "_blank") %>
 </div>
 
 <h1>Process Wise Transfer #<%= @wise_transfer.id %></h1>
@@ -86,7 +83,7 @@
           <td>
             <%= @wise_transfer.recipient_name %>
             <% if @wise_transfer.wise_recipient_url %>
-              (<%= link_to("view on Wise", @wise_transfer.wise_recipient_url, target: "_blank") %>)
+              (<%= ugc_link_to("view on Wise", @wise_transfer.wise_recipient_url, target: "_blank") %>)
             <% end %>
           </td>
         </tr>
