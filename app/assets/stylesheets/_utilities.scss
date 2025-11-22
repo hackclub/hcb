@@ -154,7 +154,7 @@ $shades: (
 }
 
 .b--muted {
-  border-color: map-get($palette, muted);
+  border-color: lighten(map-get($palette, muted), 20%);
 }
 
 .b--success {
