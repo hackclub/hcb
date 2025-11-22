@@ -18,8 +18,8 @@
               </div>
               <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
                 <% OrganizerPosition.roles.keys.each do |role| %>
-                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
-                    <%= role.humanize %><%= " ✔" if organizer_position.role == role %>
+                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), class: "#{'menu__action--active' if organizer_position.role == role}", data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
+                    <%= role.humanize %>
                   <% end %>
                 <% end %>
                 <div class="menu__divider"></div>
