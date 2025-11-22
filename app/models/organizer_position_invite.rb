@@ -77,6 +77,9 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
+  belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
+  belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
+
   belongs_to :organizer_position, optional: true
 
   validate :not_already_organizer
@@ -218,14 +221,6 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def contract_docuseal_template_id
     event.plan.contract_docuseal_template_id
-  end
-
-  def contract_user
-    user
-  end
-
-  def contract_event
-    event
   end
 
   def on_contract_signed
