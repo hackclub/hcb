@@ -24,8 +24,8 @@
   </div>
 </section>
 
-<div class="flex items-center justify-center g1">
-  <%= button_to "Connect", oauth_authorization_path, class: "btn bg-success h2", params: {
+<div class="flex flex-col gap-2">
+  <%= button_to "Cancel", oauth_authorization_path, method: :delete, class: "btn bg-muted", params: {
         client_id: @pre_auth.client.uid,
         redirect_uri: @pre_auth.redirect_uri,
         state: @pre_auth.state,
@@ -35,7 +35,7 @@
         code_challenge: @pre_auth.code_challenge,
         code_challenge_method: @pre_auth.code_challenge_method,
       }, form: { data: { turbo: false } } %>
-  <%= button_to "Cancel", oauth_authorization_path, method: :delete, class: "btn bg-muted", params: {
+  <%= button_to "Connect", oauth_authorization_path, class: "btn bg-success", params: {
         client_id: @pre_auth.client.uid,
         redirect_uri: @pre_auth.redirect_uri,
         state: @pre_auth.state,
