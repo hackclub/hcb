@@ -6,7 +6,7 @@
   </div>
 </div>
 
-<section class="mobile-nav--modal !bg-transparent" data-behavior="modal" role="dialog" id="mobile_nav" style="height: 100vh!important;padding-bottom:40px">
+<section class="mobile-nav--modal !bg-transparent md:!shadow-none" data-behavior="modal" role="dialog" id="mobile_nav" style="height: 100vh!important;padding-bottom:40px">
   <div class="backdrop-blur-xl bg-white/70 flex-1 h-full overflow-hidden rounded-xl">
     <div class="h-full overflow-y-auto overflow-x-hidden p-4">
       <% events_nav(@event, selected: local_assigns[:selected]).each do |item| %>
