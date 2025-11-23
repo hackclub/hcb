@@ -7,7 +7,7 @@
 <% disabled ||= false %>
 <% organizer_signed_in = current_user && (organizer_signed_in?(@event || hcb_code.event) || (hcb_code.events && organizer_signed_in?(hcb_code.events.last))) %>
 
-<% memo = hcb_code.custom_memo.nil? ? Rails.cache.fetch("#{@event.public_id}/#{hcb_code.hcb_code}/cached_memo", expires_in: 10.minutes) { hcb_code.memo(event: @event) } : hcb_code.memo(event: @event) %>
+<% memo = hcb_code.custom_memo.nil? && @event && location == "ledger" ? Rails.cache.fetch("#{@event.public_id}/#{hcb_code.hcb_code}/cached_memo", expires_in: 10.minutes) { hcb_code.memo(event: @event) } : hcb_code.memo(event: @event) %>
 
 <% if (organizer_signed_in && (@event || hcb_code.event) || force_display_details) && !(@event || hcb_code.event)&.demo_mode? %>
   <%= turbo_frame_tag "#{location}:#{dom_id(hcb_code)}:memo", class: "flex gap-1", style: "flex-grow: 1"  do %>
