@@ -7,7 +7,21 @@
   cursor: default;
 
   &.clickable {
-    @apply hover:transition-none hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600;
+    @apply hover:transition-none transition-colors;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      &:active {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    [data-dark='true'] &:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      &:active {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+    }
   }
 }
 
