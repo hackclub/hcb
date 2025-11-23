@@ -41,9 +41,13 @@
 
 <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
-<ul class="grid grid--medium-narrow left-align w-100 mt0">
-  <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
-</ul>
+<% if @sub_organizations.any? %>
+  <ul class="grid grid--medium-narrow left-align w-100 mt0">
+    <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
+  </ul>
+<% else %>
+  <%= blankslate "No sub-organizations yet" %>
+<% end %>
 
 <% if policy(@event).create_sub_organization? %>
   <section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
