@@ -10,7 +10,7 @@
     <% @recent_transactions.each do |transaction| %>
       <% rendered_transaction = capture do %>
         <div style="min-width:0;flex:1">
-          <span class="truncate block"><%= transaction_memo(transaction) %></span>
+          <span class="truncate block truncate"><%= transaction_memo(transaction) %></span>
           <div class="muted">
             <% if transaction.is_a?(CanonicalPendingTransaction) %>
               Pending &bull;
