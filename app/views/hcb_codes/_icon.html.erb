@@ -52,7 +52,7 @@
       <% label = local_assigns[:special_appearance][:title] %>
       <% icon = inline_icon(local_assigns[:special_appearance]&.[]("icon") || "door-enter") %>
     <% end %>
-  <% elsif tx.local_hcb_code.card_grant? %>
+  <% elsif Rails.cache.fetch("tx_#{tx.hcb_code}/card_grant", expires_in: 12.hours) { tx.local_hcb_code.card_grant? } %>
     <% label = "Outgoing grant" %>
     <% icon = inline_icon "bag" %>
   <% elsif tx.local_hcb_code.disbursement? %>
