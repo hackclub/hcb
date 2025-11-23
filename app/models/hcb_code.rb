@@ -191,7 +191,7 @@ class HcbCode < ApplicationRecord
   def subledger
     subledgers.first
   end
-  
+
   def event
     events.first
   end
