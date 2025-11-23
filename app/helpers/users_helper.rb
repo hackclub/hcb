@@ -170,11 +170,48 @@ module UsersHelper
                 avi + name
               end
 
-    unless user.nil?
-      link = content_tag :span, (inline_icon "link", size: 16), onclick: "window.open(`#{admin_user_url(user)}`, '_blank').focus()", class: "mention__link"
-      email = content_tag :span, (inline_icon "email", size: 16), onclick: "window.open(`mailto:#{user.email}`, '_blank').focus()", class: "mention__link"
+    if user && viewer&.auditor?
+      button = content_tag(
+        :a,
+        content + inline_icon("down-caret", size: 18, class: "ml-0 -mr-1"),
+        class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
+        data: {
+          "menu-target": "toggle",
+          action: "menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        },
+      )
 
-      content = content + email + link if viewer&.auditor?
+      # Menu content items
+      menu_items = safe_join([
+                               link_to(
+                                 safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
+                                 "mailto:#{user.email}",
+                                 target: "_blank",
+                                 class: "menu__item menu__item--icon", rel: "noopener"
+                               ),
+                               link_to(
+                                 safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
+                                 admin_user_url(user),
+                                 target: "_blank",
+                                 class: "menu__item menu__item--icon", rel: "noopener"
+                               )
+                             ])
+
+      menu_content = content_tag(
+        :div,
+        menu_items,
+        class: "menu__content menu__content--2 menu__content--compact h5",
+        data: { "menu-target": "content" }
+      )
+
+      menu_wrapper = content_tag(
+        :div,
+        button + menu_content,
+        data: { controller: "menu", "menu-placement-value": "bottom-start" },
+        class: "mention__menu"
+      )
+
+      content = menu_wrapper
     end
 
     content_tag :span, content, class: klass, 'aria-label': aria_label
