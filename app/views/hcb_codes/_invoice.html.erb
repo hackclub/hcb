@@ -1,15 +1,12 @@
 <% @invoice = @hcb_code.invoice %>
 <% @sponsor = @invoice.sponsor %>
-
 <%= render partial: "admin_viewer", locals: { record: @invoice } %>
-
 <% admin_tool("mt3") do %>
   <%= link_to "View on Stripe", @invoice.stripe_dashboard_url, class: "btn bg-accent" %>
   <% if @invoice.paid? %>
     <button class="btn bg-error" data-behavior="modal_trigger" data-modal="refund">Issue refund</button>
   <% end %>
 <% end %>
-
 <% if admin_signed_in? %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
     <%= modal_header "Issue refund" %>
@@ -28,7 +25,6 @@
     <% end %>
   </section>
 <% end %>
-
 <% if @invoice.void_v2? && !@invoice.manually_marked_as_paid? %>
   <div class="banner banner--archived mt3">
     <span class="bold block mb1">This invoice was voided by <%= user_mention @invoice.voided_by %> on <%= format_date @invoice.void_v2_at %>.</span>
@@ -41,7 +37,6 @@
     <span>You can <%= link_to "un-archive it", invoice_unarchive_path(@invoice), method: :post %>.</span>
   </div>
 <% end %>
-
 <article class="card pb0 mt3 mb1">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
@@ -49,7 +44,6 @@
       <span class="regular muted"> invoiced for </span>
       <span class="regular"><%= render_money @invoice.item_amount %></span>
     </span>
-
     <span class="md-right">
       <% if @invoice.personal_transaction.present? %>
         <span class="badge h4 bg-warning">
@@ -57,14 +51,12 @@
           <%= inline_icon :info, size: 20 %>
         </span>
       <% end %>
-
       <span class="badge h4 bg-<%= @invoice.state %>">
         <%= @invoice.state_text %>
         <%= inline_icon @invoice.state_icon, size: 20 if @invoice.state_icon %>
       </span>
     </span>
   <% end %>
-
   <section class="card__banner card__darker details-horiz border-top border-bottom">
     <p>
       <strong>Sent by</strong>
@@ -172,7 +164,6 @@
       </tbody>
     </table>
   </section>
-
   <section class="card__banner border-top flex flex-wrap">
     <div class="btn-group mr-auto">
       <%= link_to organizer_signed_in? ? invoice_hosted_path(@invoice.hashid) : root_path,
@@ -203,7 +194,6 @@
     class: "btn bg-muted" unless @invoice.void_v2? || InvoicePolicy.new(@user, @hcb_code).archive? %>
   </section>
 </article>
-
 <% if @invoice.paid_v2? or @invoice.deposited? %>
   <article class="card pb0 mt3 mb2">
     <h2 class="h2 mt0 border-none">
@@ -295,7 +285,6 @@
       </section>
       <%# if @invoice.payment_method_type == 'ach_credit_transfer' %>
     <% end %>
-
     <% unless @invoice.deposited? %>
       <% if @invoice.event.can_front_balance? %>
         <section class="card__banner card__darker secondary border-top">
@@ -309,7 +298,6 @@
         </section>
       <% end %>
     <% end %>
-
     <% if (@invoice.deposited? || !@invoice.event.can_front_balance?) && @hcb_code.fee_waived? %>
       <section class="card__banner card__darker secondary border-top">
         <p class="my0 italic">
@@ -317,14 +305,11 @@
         </p>
       </section>
     <% end %>
-
   </article>
 <% end %>
-
 <% if @invoice.payment_method_type == 'card' %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payment_details">
     <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(@invoice, class: "h3 font-sans slate regular") %>
-
     <article class="details-horiz">
       <div class="details">
         <p>
