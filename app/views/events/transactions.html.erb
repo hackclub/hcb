@@ -57,8 +57,8 @@
     <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
       <div class="stat statset__wide" data-tour-step="balance">
         <span class="stat__label">Account balance</span>
-        <% if @event.fee_balance_v2_cents < 0
-             # this event has a fee credit (owes negative fees) %>
+        <%# this event has a fee credit (owes negative fees) %>
+        <% if @event.fee_balance_v2_cents < 0 %>
           <span class="stat__value"><%= render_money_amount @event.balance_v2_cents %></span>
           <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
             fee credit</span>
@@ -78,8 +78,8 @@
       data-balance-graph-slug-value="<%= @event.slug %>">
       <div class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="stat">
         <span class="stat__label" data-balance-graph-target="label">Account balance</span>
-        <% if @event.fee_balance_v2_cents < 0
-             # this event has a fee credit (owes negative fees) %>
+        <%# this event has a fee credit (owes negative fees) %>
+        <% if @event.fee_balance_v2_cents < 0 %>
           <span class="stat__value" data-balance-graph-target="balance"><%= render_money_amount @event.balance_v2_cents %></span>
           <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
             fee credit</span>
@@ -92,8 +92,8 @@
 
       <div data-nosnippet style="position: absolute; top: 0px; left: 0px; visibility: hidden;" aria-hidden="true" class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="size">
         <span class="stat__label">Account balance</span>
-        <% if @event.fee_balance_v2_cents < 0
-             # this event has a fee credit (owes negative fees) %>
+        <%# this event has a fee credit (owes negative fees) %>
+        <% if @event.fee_balance_v2_cents < 0 %>
           <span class="stat__value" data-balance-graph-target="sizing"><%= render_money_amount @event.balance_v2_cents %></span>
           <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
             fee credit</span>
