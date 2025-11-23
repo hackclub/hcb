@@ -350,9 +350,12 @@ class StripeCard < ApplicationRecord
     @canonical_transactions ||= CanonicalTransaction.stripe_transaction.where("raw_stripe_transactions.stripe_transaction->>'card' = ?", stripe_id)
   end
 
-  def hcb_codes
-    all_hcb_codes = canonical_transaction_hcb_codes + canonical_pending_transaction_hcb_codes
-    @hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
+  def all_hcb_codes
+    canonical_transaction_hcb_codes + canonical_pending_transaction_hcb_codes
+  end
+
+  def local_hcb_codes
+    @local_hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
   end
 
   def remote_shipping_status

@@ -81,6 +81,11 @@
       icon: "card",
       data: { tour_step: "cards" },
       selected: local_assigns[:selected] == :cards if policy(@event).card_overview? %>
+    <%= dock_item "Grants",
+      event_card_grant_overview_path(event_id: @event.slug),
+      tooltip: "Manage card grants",
+      icon: "bag",
+      selected: local_assigns[:selected] == :card_grants if policy(@event).card_grant_overview? %>
     <%= dock_item "Transfers",
       event_transfers_path(event_id: @event.slug),
       tooltip: "Send & transfer money",
@@ -175,6 +180,7 @@
           <h4 class="mb0 h5 muted left-align pl1 mt1">Spend</h4>
           <div class="menu__divider"></div>
           <%= link_to "Cards", event_cards_overview_path(@event) if policy(@event).card_overview? %>
+          <%= link_to "Grants", event_card_grant_overview_path(event_id: @event.slug) if policy(@event).card_grant_overview? %>
           <%= link_to "Transfers", event_transfers_path(@event) if policy(@event).transfers? %>
           <%= link_to "Reimbursements", event_reimbursements_path(@event) if policy(@event).reimbursements? %>
         </div>
