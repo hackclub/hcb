@@ -520,6 +520,11 @@ class HcbCode < ApplicationRecord
     !receipt_required?(event)
   end
 
+  # we have a custom implementation here for caching
+  def missing_receipt?(event = self.event)
+    receipt_required?(event) && without_receipt? && !no_or_lost_receipt?
+  end
+
   def receipts
     return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout.present?
 
