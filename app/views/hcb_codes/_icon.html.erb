@@ -46,11 +46,11 @@
     <% icon = inline_icon "support" %>
   <% elsif local_assigns[:special_appearance].present? %>
     <% if tx.amount.negative? %>
-      <% label = "Outgoing #{local_assigns[:special_appearance]&.dig(:title) || "transfer"}" %>
+      <% label = "Outgoing #{local_assigns[:special_appearance]&.[]("title") || "transfer"}" %>
       <% icon = inline_icon "door-leave" %>
     <% else %>
       <% label = local_assigns[:special_appearance][:title] %>
-      <% icon = inline_icon(local_assigns[:special_appearance]&.dig(:icon) || "door-enter") %>
+      <% icon = inline_icon(local_assigns[:special_appearance]&.[]("icon") || "door-enter") %>
     <% end %>
   <% elsif tx.local_hcb_code.card_grant? %>
     <% label = "Outgoing grant" %>
