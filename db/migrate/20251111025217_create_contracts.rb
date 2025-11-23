@@ -34,7 +34,7 @@ class CreateContracts < ActiveRecord::Migration[8.0]
           contractable_id: row.organizer_position_invite_id,
           contractable_type: "OrganizerPositionInvite",
           document_id: row.document_id,
-          type: :fiscal_sponsorship,
+          type: "Contract::FiscalSponsorship",
         }
       end
 
