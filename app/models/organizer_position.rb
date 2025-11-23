@@ -45,6 +45,7 @@ class OrganizerPosition < ApplicationRecord
   has_many :tours, as: :tourable, dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
+  validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_will_change? }
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
@@ -79,5 +80,11 @@ class OrganizerPosition < ApplicationRecord
   end
 
   private
+
+  def fs_contract_is_proper_type
+    if fiscal_sponsorship_contract.present? && !fiscal_sponsorship_contract.is_a?(Contract::FiscalSponsorship)
+      errors.add(:fiscal_sponsorship_contract, "must be of type Contract::FiscalSponsorship")
+    end
+  end
 
 end
