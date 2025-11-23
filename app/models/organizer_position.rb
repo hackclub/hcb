@@ -82,7 +82,7 @@ class OrganizerPosition < ApplicationRecord
   private
 
   def fs_contract_is_proper_type
-    if fiscal_sponsorship_contract.present? && !fiscal_sponsorship_contract.is_a?(Contract::FiscalSponsorship)
+    if fiscal_sponsorship_contract.present? && !fiscal_sponsorship_contract.is_a?(::Contract::FiscalSponsorship)
       errors.add(:fiscal_sponsorship_contract, "must be of type Contract::FiscalSponsorship")
     end
   end
