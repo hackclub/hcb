@@ -162,7 +162,7 @@ input[type='submit'],
 
     html[data-dark='true'] & {
       background: $darkless !important;
-      color: darken(map-get($palette, warning), 33.3%) !important;
+      color: lighten(map-get($palette, warning), 33.3%) !important;
     }
   }
 
