@@ -10,7 +10,7 @@ module Api
       def create
         amount = params[:amount_cents]
         if params[:fee_covered] && @event.config.cover_donation_fees
-          amount = (params[:amount_cents] / (1 - @event.revenue_fee)).ceil
+          amount /= (1 - @event.revenue_fee)).ceil
         end
 
         @donation = Donation.new({
