@@ -1,6 +1,7 @@
 class CreateContracts < ActiveRecord::Migration[8.0]
   def up
     create_table :contracts do |t|
+      t.string :type, null: false
       t.string :aasm_state
       t.string :cosigner_email
       t.integer :external_service
@@ -33,6 +34,7 @@ class CreateContracts < ActiveRecord::Migration[8.0]
           contractable_id: row.organizer_position_invite_id,
           contractable_type: "OrganizerPositionInvite",
           document_id: row.document_id,
+          type: :fiscal_sponsorship,
         }
       end
 
@@ -45,7 +47,7 @@ class CreateContracts < ActiveRecord::Migration[8.0]
     ActiveRecord::Base.connection.reset_pk_sequence!('contracts')
     
     # rename papertrail item types
-    PaperTrail::Version.where(item_type: "OrganizerPosition::Contract").update_all(item_type: "Contract")
+    PaperTrail::Version.where(item_type: "OrganizerPosition::Contract").update_all(item_type: "Contract::FiscalSponsorship")
   end
 
   def down

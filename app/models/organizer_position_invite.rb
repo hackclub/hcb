@@ -211,7 +211,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def send_contract(cosigner_email: nil, include_videos: false)
     ActiveRecord::Base.transaction do
-      Contract.create!(contractable: self, cosigner_email:, include_videos:)
+      Contract::FiscalSponsorship.create!(contractable: self, cosigner_email:, include_videos:)
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
 

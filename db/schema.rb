@@ -17,8 +17,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
-  enable_extension "pg_stat_statements"
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.bigint "event_id"
@@ -191,13 +191,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   end
 
   create_table "announcement_blocks", force: :cascade do |t|
-    t.text "rendered_html"
-    t.text "rendered_email_html"
     t.jsonb "parameters"
     t.bigint "announcement_id", null: false
     t.string "type", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "rendered_email_html"
+    t.text "rendered_html"
     t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
   end
 
@@ -625,6 +625,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   end
 
   create_table "contracts", force: :cascade do |t|
+    t.string "type", null: false
     t.string "aasm_state"
     t.string "cosigner_email"
     t.integer "external_service"
@@ -1068,10 +1069,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
     t.boolean "financially_frozen", default: false, null: false
     t.boolean "donation_tiers_enabled", default: false, null: false
     t.bigint "parent_id"
-    t.boolean "fee_waiver_eligible", default: false, null: false
-    t.boolean "fee_waiver_applied", default: false, null: false
     t.string "discord_guild_id"
     t.string "discord_channel_id"
+    t.boolean "fee_waiver_eligible", default: false, null: false
+    t.boolean "fee_waiver_applied", default: false, null: false
     t.index ["discord_channel_id"], name: "index_events_on_discord_channel_id", unique: true
     t.index ["discord_guild_id"], name: "index_events_on_discord_guild_id", unique: true
     t.index ["parent_id"], name: "index_events_on_parent_id"
