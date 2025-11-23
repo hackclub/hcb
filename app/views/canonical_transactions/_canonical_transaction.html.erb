@@ -120,7 +120,7 @@
       <% end %>
       <% if ct.local_hcb_code %>
         <%= list_badge_for auditor_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
-        <%= list_badge_for ct.local_hcb_code.receipts.size, "receipt", "receipt", optional: ct.local_hcb_code.receipt_optional?, required: ct.local_hcb_code.missing_receipt? %>
+        <%= list_badge_for ct.local_hcb_code.receipts.size, "receipt", "receipt", optional: ct.local_hcb_code.receipt_optional?(event), required: ct.local_hcb_code.missing_receipt?(event) %>
       <% end %>
     </div>
   </td>
@@ -140,22 +140,24 @@
   <% end %>
 
   <% if local_assigns[:show_author_column] %>
-    <% author = ct.local_hcb_code.author %>
-    <% author_name = ct.local_hcb_code.author_name %>
-    <td>
-      <div class="flex items-center justify-center <%= "tooltipped tooltipped--w" if author_name %>" aria-label="<%= author_name %>">
-        <% if author.present? %>
-          <%= avatar_for author, class: "align-middle author" %>
-        <% elsif ct.local_hcb_code.fallback_avatar %>
-          <%= image_tag(ct.local_hcb_code.fallback_avatar, loading: "lazy", width: 24, height: 24, class: "rounded-full shrink-none") %>
-        <% end %>
-      </div>
+    <% cache "ct_#{instance}_author", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
+      <% author = ct.local_hcb_code.author %>
+      <% author_name = ct.local_hcb_code.author_name %>
+      <td>
+        <div class="flex items-center justify-center <%= "tooltipped tooltipped--w" if author_name %>" aria-label="<%= author_name %>">
+          <% if author.present? %>
+            <%= avatar_for author, class: "align-middle author", cached: true %>
+          <% elsif ct.local_hcb_code.fallback_avatar %>
+            <%= image_tag(ct.local_hcb_code.fallback_avatar, loading: "lazy", width: 24, height: 24, class: "rounded-full shrink-none") %>
+          <% end %>
+        </div>
     </td>
+    <% end %>
   <% end %>
 
   <% if local_assigns[:receipt_upload_button] %>
     <td style="width: 1%">
-      <% if ct.local_hcb_code.missing_receipt? || !local_assigns[:updated_via_turbo_stream] %>
+      <% if ct.local_hcb_code.missing_receipt?(event) || !local_assigns[:updated_via_turbo_stream] %>
         <%= form_with url: receipts_path, data: { controller: "form", "file-drop-target" => "form", "turbo" => true } do |form| %>
           <%= form.file_field :file, id: "file_#{ct.local_hcb_code.hashid}", multiple: true, include_hidden: false, required: true, class: "display-none", data: { action: "change->form#submit", "file-drop-target" => "fileInput" } %>
           <%= form.hidden_field :redirect_url, value: @card_grant ? card_grant_path(@card_grant) : my_inbox_path %>

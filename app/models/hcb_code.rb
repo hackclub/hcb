@@ -499,7 +499,10 @@ class HcbCode < ApplicationRecord
               ")
   }
 
-  def receipt_required?
+  # we optionally take an event parameter here. this
+  # is a performance optimisation because it allows us to
+  # load the event once on the ledger and never again
+  def receipt_required?(event = self.event)
     return false if pt&.declined?
 
     return false unless event&.plan&.receipts_required?
@@ -513,8 +516,13 @@ class HcbCode < ApplicationRecord
     false
   end
 
-  def receipt_optional?
-    !receipt_required?
+  def receipt_optional?(event = self.event)
+    !receipt_required?(event)
+  end
+
+  # we have a custom implementation here for caching
+  def missing_receipt?(event = self.event)
+    receipt_required?(event) && without_receipt? && !no_or_lost_receipt?
   end
 
   def receipts
