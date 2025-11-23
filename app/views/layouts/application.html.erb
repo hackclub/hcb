@@ -196,7 +196,7 @@
 
         <aside class="app__sidebar">
           <%= render "application/header" %>
-          <%= render "application/flash" %>
+          <%= render "application/flash", klass: "mt3" %>
           <%= yield(:nav) %>
         </aside>
         <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
