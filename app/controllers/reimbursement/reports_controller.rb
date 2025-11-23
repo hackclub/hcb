@@ -88,9 +88,15 @@ module Reimbursement
     def wise_transfer_breakdown
       authorize @report
 
-      @with_fees_quote_amount = @report.wise_transfer_quote_amount
-      @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
-      @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+      if @report.payout_holding.present?
+        @with_fees_quote_amount = Money.from_cents(@report.payout_holding.amount_cents)
+        @fees_amount = Money.from_cents(@report.fees_charged_cents)
+        @without_fees_quote_amount = @with_fees_quote_amount - @fees_amount
+      else
+        @with_fees_quote_amount = @report.wise_transfer_quote_amount
+        @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
+        @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+      end
 
       render :wise_transfer_breakdown, layout: false
     end

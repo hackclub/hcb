@@ -1,7 +1,14 @@
 <%= turbo_frame_tag :wise_transfer_breakdown do %>
   <%= link_to "#", class: "no-underline", data: { behavior: "modal_trigger", modal: "wise_fee_breakdown" } do %>
     <div class="flex lg:flex-row lg:justify-between flex-col items-start justify-start gap-1 flex-grow">
-      <span>This report will total approximately <strong><%= @with_fees_quote_amount.format %> USD</strong></span>
+      <span>
+        <% if @report.payout_holding.present? %>
+          This report totaled
+        <% else %>
+          This report will total approximately
+        <% end %>
+        <strong><%= @with_fees_quote_amount.format %> USD</strong>
+      </span>
       <span class="bold">See breakdown →</span>
     </div>
   <% end %>
@@ -21,7 +28,7 @@
       <tbody>
         <% conversion_rate = (@without_fees_quote_amount.cents / @report.amount_cents.to_f) %>
 
-        <% @report.expenses.each do |expense| %>
+        <% @report.expenses.to_sum.each do |expense| %>
           <tr>
             <td style="white-space: normal"><%= expense.memo %></td>
             <td><%= expense.amount.format %></td>
