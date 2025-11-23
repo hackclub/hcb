@@ -2,6 +2,7 @@
 <% event = @event || ct.local_hcb_code.event %>
 <% tagged_with = ct.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
 <% subscription = local_assigns[:subscription] %>
+<% type = Rails.cache.fetch("#{ct.hcb_code}/cached_type", expires_in: 12.hours) { ct.local_hcb_code.type } %>
 
 <% special_appearance = Rails.cache.fetch("ct_#{ct.hcb_code}/special_appearance", expires_in: 12.hours) do
      if !ct.amount.negative? && ct.local_hcb_code.disbursement&.special_appearance?
@@ -132,7 +133,7 @@
       <% end %>
       <% if ct.local_hcb_code %>
         <%= list_badge_for auditor_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
-        <%= list_badge_for ct.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: ct.local_hcb_code.receipt_optional?(event), required: ct.local_hcb_code.missing_receipt?(event) %>
+        <%= list_badge_for ct.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: ct.local_hcb_code.receipt_optional?(event, type), required: ct.local_hcb_code.missing_receipt?(event, type) %>
       <% end %>
     </div>
   </td>
@@ -169,7 +170,7 @@
 
   <% if local_assigns[:receipt_upload_button] %>
     <td style="width: 1%">
-      <% if ct.local_hcb_code.missing_receipt?(event) || !local_assigns[:updated_via_turbo_stream] %>
+      <% if ct.local_hcb_code.missing_receipt?(event, type) || !local_assigns[:updated_via_turbo_stream] %>
         <%= form_with url: receipts_path, data: { controller: "form", "file-drop-target" => "form", "turbo" => true } do |form| %>
           <%= form.file_field :file, id: "file_#{ct.local_hcb_code.hashid}", multiple: true, include_hidden: false, required: true, class: "display-none", data: { action: "change->form#submit", "file-drop-target" => "fileInput" } %>
           <%= form.hidden_field :redirect_url, value: @card_grant ? card_grant_path(@card_grant) : my_inbox_path %>
