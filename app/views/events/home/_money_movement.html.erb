@@ -30,7 +30,7 @@
         <% if organizer_signed_in? %>
           <% popover_enabled = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
           <a
-            class="homepage-transaction <%= 'clickable' if popover_enabled %>"
+            class="homepage-transaction <%= "clickable" if popover_enabled %>"
             href="<%= url_for(transaction.local_hcb_code) %>"
             data-behavior="modal_trigger"
             data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
@@ -83,7 +83,7 @@
         <% if organizer_signed_in? %>
           <% popover_enabled = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
           <a
-            class="homepage-transaction <%= 'clickable' if popover_enabled %>"
+            class="homepage-transaction <%= "clickable" if popover_enabled %>"
             href="<%= url_for(transaction.local_hcb_code) %>"
             data-behavior="modal_trigger"
             data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
