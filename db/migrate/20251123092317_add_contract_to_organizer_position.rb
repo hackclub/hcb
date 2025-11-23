@@ -1,4 +1,6 @@
 class AddContractToOrganizerPosition < ActiveRecord::Migration[8.0]
+  disable_ddl_transaction!
+  
   def up
     add_reference :organizer_positions, :contract, foreign_key: true
 
