@@ -95,6 +95,11 @@
 .mobile-nav--popover {
   @apply backdrop-blur-xl flex-1 mt-auto overflow-hidden rounded-xl;
 
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  [data-dark='true'] & {
+    background-color: rgba(37, 36, 41, 0.5) !important;
+  }
+
   @supports not (backdrop-filter: blur(15px)) {
     @apply bg-white dark:bg-darkless;
   }
