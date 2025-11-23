@@ -1,10 +1,6 @@
 <% @has_header_image = @event.donation_header_image.attached? %>
 <% page_sm %>
 
-<div class="absolute top-0 right-0 m2">
-  <%= render partial: "application/theme_toggle", locals: { top: true } %>
-</div>
-
 <%= content_for(:header) do %>
   <% if organizer_signed_in? %>
     <div class="flex items-center m2 absolute z-10 top-0 left-0">
