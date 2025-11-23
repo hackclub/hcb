@@ -116,6 +116,7 @@ summary.dock__item {
   color: inherit !important;
   font-size: 0.875rem;
   text-decoration: none;
+  cursor: default !important;
   user-select: none;
   width: 100%;
   flex-shrink: 1;
@@ -158,6 +159,7 @@ summary.dock__item {
 
     &:hover {
       background-color: rgba(0, 0, 0, 0.05);
+      transition-duration: 0s;
     }
     &:active {
       background-color: rgba(0, 0, 0, 0.1);

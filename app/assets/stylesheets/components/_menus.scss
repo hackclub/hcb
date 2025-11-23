@@ -191,9 +191,12 @@
     transition: color 125ms ease-in-out;
   }
 
+  cursor: default;
+
   &:hover,
   &.hovered,
   &:focus {
+    transition-duration: 0s;
     background-color: map-get($palette, selection);
     [data-dark='true'] & {
       background-color: map-get($palette, darker);
