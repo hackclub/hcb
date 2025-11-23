@@ -3,7 +3,7 @@
   background-color: $white;
   box-shadow: var(--shadow-border-sm);
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   transition: 0.125s ease-in-out;
   transition-property: transform, box-shadow;
@@ -25,14 +25,17 @@
       0 4px 8px 0 rgba(map-get($palette, info), 0.125);
   }
 
+  &.card--hover {
+    transition: background-color 0.125s ease;
+    cursor: pointer;
+  }
   :not(.draggable-source--is-dragging) > &.card--hover:hover,
   &.card--hover:focus {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-border-lg);
-  }
+    background: lighten($white, 2.5%);
 
-  &.card--hover:active {
-    transform: translateY(-1px);
+    [data-dark='true'] & {
+      background-color: darken($darkless, 2.5%);
+    }
   }
 
   &.card--background-image,
