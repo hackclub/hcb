@@ -4,28 +4,28 @@
 #
 # Table name: organizer_positions
 #
-#  id          :bigint           not null, primary key
-#  deleted_at  :datetime
-#  first_time  :boolean          default(TRUE)
-#  is_signee   :boolean          default(FALSE)
-#  role        :integer          default("manager"), not null
-#  sort_index  :integer
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  contract_id :bigint
-#  event_id    :bigint
-#  user_id     :bigint
+#  id                             :bigint           not null, primary key
+#  deleted_at                     :datetime
+#  first_time                     :boolean          default(TRUE)
+#  is_signee                      :boolean          default(FALSE)
+#  role                           :integer          default("manager"), not null
+#  sort_index                     :integer
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  event_id                       :bigint
+#  fiscal_sponsorship_contract_id :bigint
+#  user_id                        :bigint
 #
 # Indexes
 #
-#  index_organizer_positions_on_contract_id  (contract_id)
-#  index_organizer_positions_on_event_id     (event_id)
-#  index_organizer_positions_on_user_id      (user_id)
+#  index_organizer_positions_on_event_id                        (event_id)
+#  index_organizer_positions_on_fiscal_sponsorship_contract_id  (fiscal_sponsorship_contract_id)
+#  index_organizer_positions_on_user_id                         (user_id)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (contract_id => contracts.id)
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (fiscal_sponsorship_contract_id => contracts.id)
 #  fk_rails_...  (user_id => users.id)
 #
 class OrganizerPosition < ApplicationRecord
@@ -38,7 +38,7 @@ class OrganizerPosition < ApplicationRecord
 
   belongs_to :user
   belongs_to :event
-  belongs_to :contract, optional: true
+  belongs_to :fiscal_sponsorship_contract, optional: true, class_name: "Contract"
 
   has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests

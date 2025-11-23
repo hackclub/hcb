@@ -37,6 +37,8 @@ class Contract < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :contractable, polymorphic: true
 
+  has_one :organizer_position, required: false
+
   validate :one_non_void_contract
 
   after_create_commit :send_using_docuseal!, unless: :sent_with_manual?

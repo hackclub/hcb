@@ -232,14 +232,14 @@ class OrganizerPositionInvite < ApplicationRecord
         event.update!(financially_frozen: false)
       end
 
-      organizer_position&.update!(contract:)
+      organizer_position&.update!(fiscal_sponsorship_contract:)
     end
   end
 
   def on_contract_voided(contract)
     if contract.is_a?(Contract::FiscalSponsorship)
       update(is_signee: false)
-      organizer_position&.update(is_signee: false, contract: nil)
+      organizer_position&.update(is_signee: false, fiscal_sponsorship_contract: nil)
     end
   end
 
