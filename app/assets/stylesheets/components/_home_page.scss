@@ -4,6 +4,11 @@
   text-decoration: none;
   padding: 0.5rem 1rem;
   margin: 0 1px;
+  cursor: default;
+
+  &.clickable {
+    @apply hover:transition-none hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600;
+  }
 }
 
 .homepage-row {
