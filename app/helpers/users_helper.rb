@@ -172,28 +172,33 @@ module UsersHelper
 
     if user && viewer&.auditor?
       button = content_tag(
-        :a,
+        :div,
         content + inline_icon("down-caret", size: 18, class: "ml-0 -mr-1"),
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          action: "contextmenu->menu#toggle click@document->menu#close keydown@document->menu#keydown"
         },
       )
 
       # Menu content items
       menu_items = safe_join([
-                               link_to(
+                               content_tag(
+                                 :div,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
-                                 "mailto:#{user.email}",
-                                 target: "_blank",
-                                 class: "menu__item menu__item--icon", rel: "noopener"
+                                 onclick: "window.open('mailto:#{user.email}'); return false;",
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                ),
-                               link_to(
+                               content_tag(
+                                 :div,
+                                 nil,
+                                 class: "menu__divider"
+                               ),
+                               content_tag(
+                                 :div,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
-                                 admin_user_url(user),
-                                 target: "_blank",
-                                 class: "menu__item menu__item--icon", rel: "noopener"
+                                 onclick: "window.open('#{admin_user_url(user)}', '_blank'); return false;",
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                )
                              ])
 
