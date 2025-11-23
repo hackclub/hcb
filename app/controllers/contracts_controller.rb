@@ -5,21 +5,21 @@ class ContractsController < ApplicationController
 
   def create
     @contract = Contract.new(contract_params)
-    authorize @contract
+    authorize @contract, policy_class: ContractPolicy
     @contract.save!
     flash[:success] = "Contract sent succesfully."
     redirect_back(fallback_location: event_team_path(@contract.event))
   end
 
   def void
-    authorize @contract
+    authorize @contract, policy_class: ContractPolicy
     @contract.mark_voided!
     flash[:success] = "Contract voided succesfully."
     redirect_back(fallback_location: event_team_path(@contract.event))
   end
 
   def resend_to_user
-    authorize @contract
+    authorize @contract, policy_class: ContractPolicy
 
     ContractMailer.with(contract: @contract).notify.deliver_later
 
@@ -28,7 +28,7 @@ class ContractsController < ApplicationController
   end
 
   def resend_to_cosigner
-    authorize @contract
+    authorize @contract, policy_class: ContractPolicy
 
     if @contract.cosigner_email.present?
       ContractMailer.with(contract: @contract).notify_cosigner.deliver_later

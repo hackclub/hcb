@@ -215,7 +215,7 @@ class OrganizerPositionInvite < ApplicationRecord
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
 
-      event.set_airtable_status("Documents sent")
+      # event.set_airtable_status("Documents sent")
     end
   end
 
