@@ -160,6 +160,14 @@
   }
 }
 
+.menu__content .admin-tools .menu__action {
+  &:hover,
+  &:focus,
+  &:active {
+    background: rgba(map-get($palette, pending), 0.08);
+  }
+}
+
 .menu__content > a,
 .menu__action,
 .dropdown-button__menu label {
